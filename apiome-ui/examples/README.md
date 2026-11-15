@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1537 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1538 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -66,7 +66,7 @@ The corpus holds **1537 files** across **110 format directories**. Every file ha
 | `matter/` | Matter clusters and device types | rpc | `<configurator>` root with `<cluster>` (name/code/define) or `<deviceType>` | 15 |
 | `onc-rpc/` | ONC RPC / XDR | rpc | `program {} = N` + XDR types | 11 |
 | `openrpc/` | OpenRPC (JSON-RPC) | rpc | top-level `openrpc:` version | 11 |
-| `protobuf/` | Protobuf / gRPC | rpc | `syntax = "proto3"` | 17 |
+| `protobuf/` | Protobuf / gRPC | rpc | `syntax = "proto3"` | 18 |
 | `protobuf-editions/` | Protobuf editions (2023/2024) | rpc | `edition = "2023"` / `"2024"` in place of `syntax` | 14 |
 | `ros2/` | ROS 2 interfaces | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
 | `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 12 |
@@ -2020,6 +2020,7 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `07-inventory-source.proto` ⚠ | typical | `protobuf` ≥ 0.95 | valid | `proto3`, `service`, `rpc`, `message`, `enum`, `map`, `package`, `binary-pair`, `binary-pair-source` |
 | `08-inventory-descriptor-set.binpb` ⚠ | typical | `protobuf` ≥ 0.9 | valid | `binary`, `descriptor-set`, `binary-pair`, `binary-pair-descriptor-set` |
 | `09-inventory-buf-image.binpb` ⚠ | typical | `protobuf` ≥ 0.9 | valid | `binary`, `buf-image`, `binary-pair`, `binary-pair-buf-image` |
+| `10-protovalidate-accounts.proto` ⚠ | composition | `protobuf` ≥ 0.95 | valid | `proto3`, `service`, `rpc`, `message`, `enum`, `oneof`, `import`, `protovalidate`, `cel` |
 | `negative/01-syntactic-unclosed-message.proto` | — | `protobuf` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-message` |
 | `negative/02-semantic-duplicate-field-number.proto` | — | `protobuf` (no guarantee) | invalid | `negative`, `semantic`, `duplicate-field-number` |
 | `negative/03-truncated-mid-message.proto` | — | `protobuf` (no guarantee) | invalid | `negative`, `truncated`, `mid-message` |
@@ -2033,6 +2034,8 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`08-inventory-descriptor-set.binpb`** — Paired fixture (IXH-7.5): must import to the same canonical model as protobuf/07-inventory-source.proto.
 
 > ⚠ **`09-inventory-buf-image.binpb`** — Paired fixture (IXH-7.5): must import to the same canonical model as protobuf/07-inventory-source.proto.
+
+> ⚠ **`10-protovalidate-accounts.proto`** — Protovalidate (XPC-3.3): the standard buf.validate rules import as canonical constraints, the CEL rule is recorded as unsupported_constraint and never evaluated.
 
 ### `protobuf-editions/` — Protobuf editions (2023/2024)
 
@@ -2862,7 +2865,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1537 | `Apache-2.0` |
+| `hand-authored` | 1538 | `Apache-2.0` |
 
 ## Trying an import
 

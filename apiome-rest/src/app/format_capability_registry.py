@@ -1052,6 +1052,8 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             coverage=ProjectionCoverage.PARTIAL,
             dropped_constructs=[
                 "protobuf.custom_options",
+                "protobuf.buf_validate.cel",
+                "protobuf.buf_validate.predefined_rules",
                 "protobuf.extension_ranges",
                 "protobuf.features.default_symbol_visibility",
                 "protobuf.features.enforce_naming_style",
@@ -1087,6 +1089,18 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "Custom options and extension declarations are preserved in the descriptor set and "
             "in the retained source, and only there — the canonical model has no vocabulary for "
             "a user-defined option, so it is neither named nor counted.",
+            "**Protovalidate** (`buf.validate`) is the exception: the standard rules are read "
+            "into the canonical constraint vocabulary — `required`, string lengths, patterns "
+            "and well-known formats, numeric ranges, `const`/`in`, repeated item counts and "
+            "uniqueness become the same constraints an OpenAPI schema fills, and every other "
+            "standard rule (`string.prefix`, `enum.defined_only`, timestamp and duration "
+            "bounds, map and item rules, `not_in`) is kept verbatim on its field. A `.proto` "
+            "export writes all of them back.",
+            "Protovalidate **CEL is never evaluated**: a `cel` rule, a `cel_expression` and "
+            "`message.cel` are kept verbatim, written back on a `.proto` export, and recorded "
+            "in the import coverage ledger as `unsupported_constraint` with the expression "
+            "text; every other export reports them as a loss. A predefined rule — a "
+            "user-declared rule extension, itself backed by CEL — is not read at all.",
         ],
     ),
     "edix12": _Seed(

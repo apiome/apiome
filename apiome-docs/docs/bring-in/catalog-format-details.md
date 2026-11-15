@@ -479,6 +479,56 @@ For copybook sources the tab renders the record layout — **record → group �
 - An item whose PICTURE cannot be sized has no length, and nothing after it has an
   offset.
 
+## Protobuf: Protovalidate rules
+
+[Protovalidate](https://protovalidate.com/) is where a `.proto` says which values are valid: options
+such as `(buf.validate.field).string.min_len = 3` on its fields, messages and oneofs. When you import
+a `.proto` (or a descriptor set) that carries them, Apiome reads the **standard rules** into the same
+validation constraints an OpenAPI schema fills. The JSON Schema export, the contract suite and the
+export fidelity report then see them like any other constraint. You do not have to supply
+`buf/validate/validate.proto`: Apiome provides it when a file imports it.
+
+| Protovalidate rule | What the catalog item records |
+| --- | --- |
+| `required` | The field is required (non-nullable) |
+| `string.min_len`, `string.max_len`, `string.len` | `minLength`, `maxLength` (`len` sets both) |
+| `string.pattern` | `pattern` |
+| `string.const`, `string.in` | `enum` |
+| `string.email`, `hostname`, `ipv4`, `ipv6`, `uri`, `uri_ref`, `uuid` | `format` (`email`, `hostname`, `ipv4`, `ipv6`, `uri`, `uri-reference`, `uuid`) |
+| Numeric `gte`, `gt`, `lte`, `lt` (every numeric type) | `minimum`, `exclusiveMinimum`, `maximum`, `exclusiveMaximum` |
+| Numeric `const`, `in`; `bool.const` | `enum` |
+| `repeated.min_items`, `repeated.max_items`, `repeated.unique` | `minItems`, `maxItems`, `uniqueItems` |
+| `(buf.validate.oneof).required` | The message lists the oneof as required |
+| Every other standard rule: `string.prefix`, `suffix`, `contains`, `not_in`, byte lengths, `enum.defined_only`, `enum.in`, `bytes`, `map`, `any`, `duration`, `timestamp` and `field_mask` rules, `repeated.items` | Kept exactly as written, on the field. No JSON Schema keyword matches these |
+| `cel`, `cel_expression`, `(buf.validate.message).cel` | Kept exactly as written and **reported, never evaluated** (see below) |
+
+Four cases stay as written rather than becoming a constraint, because the constraint would say
+something different:
+
+- **A reversed range.** `gt: 100, lt: 10` means *outside* 10–100 in Protovalidate. A `minimum` above
+  a `maximum` would allow nothing.
+- **A 64-bit bound beyond 2<sup>53</sup>.** A JSON number cannot hold it exactly.
+- **Byte lengths** (`string.max_bytes`, every `bytes` rule). They count bytes; `maxLength` counts
+  characters.
+- **A field marked `ignore = IGNORE_ALWAYS`.** Its rules are declared but switched off, so none
+  of them becomes a constraint.
+
+**Where the Protovalidate reader's knowledge ends:**
+
+- **CEL expressions are not evaluated.** A `cel` rule, a `cel_expression` and a message-level
+  `cel` are preserved and written back when you export to `.proto`. Nothing checks a value against
+  them: not the contract suite, not a mock. The import's coverage ledger lists each one as
+  `unsupported_constraint`, with the expression text and the field or message it sits on.
+- **Predefined rules are not read.** A predefined rule is a rule your own `.proto` declares as an
+  extension, backed by CEL. The ledger lists each one as `unsupported_constraint` and it is dropped
+  on every export.
+- The hosted mock does not check requests against these rules yet. That arrives with the Connect
+  route on the mock.
+
+The ledger marks a CEL rule **partially mapped**, because the rule itself is kept, and an unread
+predefined rule **not parsed by the adapter**. How each rule fares on export is on
+[Understand export fidelity](../ship/export-fidelity.md#protovalidate-rules).
+
 ## What absence means: the capability panel
 
 At the bottom of the tab, the **"_Format_ — what apiome records"** panel is the honest
@@ -545,6 +595,8 @@ one. `valueVisibility` can only narrow what the record stored.
 
 ### Authoritative format references
 
+- [Protovalidate standard rules](https://protovalidate.com/reference/rules/) (Buf) — every
+  `buf.validate` rule by field type; the source the rule table above is checked against.
 - [EDI X12 message hierarchy](https://docs.oracle.com/en/cloud/paas/application-integration/integration-b2b/edi-x12.html)
   (Oracle) — interchange → functional group → transaction set → segments/elements.
 - [Enterprise COBOL for z/OS Language Reference](https://www.ibm.com/docs/en/SS6SG3_6.5/pdf/lrmvs.pdf)

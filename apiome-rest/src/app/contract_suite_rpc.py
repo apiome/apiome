@@ -23,7 +23,8 @@ with. Cases are built in the order every adapter uses:
    (``int32`` bounded to 32 bits, nested messages as ``$defs``, one member per ``oneof``).
 3. **Negative cases** — each required field omitted, one field given a value of the wrong JSON
    type, and an unknown field added. A field is *required* when proto2 declares it ``required``
-   or an Editions file resolves it ``LEGACY_REQUIRED`` (XPC-3.3 adds Protovalidate rules later).
+   or an Editions file resolves it ``LEGACY_REQUIRED``, or — XPC-3.3 — when Protovalidate
+   declares it ``(buf.validate.field).required``.
    The last two only the JSON encoding can express — binary protobuf has no way to carry a
    wrong-typed or an unknown *named* field — so they are marked ``json_only`` and a native gRPC
    run records them as skipped.
@@ -58,6 +59,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from .canonical_model import (
     CanonicalApi,
     CanonicalField,
+    Constraints,
     Message,
     MessageRole,
     Operation,
@@ -98,6 +100,7 @@ from .contract_suite import (
     _select_operations,
 )
 from .proto_editions import FIELD_PRESENCE_EXTRA_KEY, FIELD_PRESENCE_LEGACY_REQUIRED
+from .proto_validate import ONEOFS_REQUIRED_EXTRA_KEY, is_protovalidate_required
 from .schema_instance_synthesis import INSTANCE_FULL, INSTANCE_MINIMAL, synthesize_instances
 from .schema_instance_validation import validate_json_instance
 from .schema_validation import DRAFT_2020_12_META_URI
@@ -531,10 +534,16 @@ class _SchemaBuilder:
         A request schema keeps only the first member (by field number) of each ``oneof``, since
         a message may set at most one of them and the generator would otherwise set them all. A
         response schema allows every member, under its JSON name and its original name.
+
+        The canonical constraints Protovalidate rules were read into (XPC-3.3) narrow each
+        field, so a generated request satisfies them and a response that breaks one fails; the
+        kept member of a ``oneof`` declared ``(buf.validate.oneof).required`` is required in a
+        request.
         """
         properties: Dict[str, Any] = {}
         required: List[str] = []
         oneofs_seen: set = set()
+        oneofs_required = type_.extras.get(ONEOFS_REQUIRED_EXTRA_KEY) or []
         ordered = sorted(type_.fields, key=lambda item: (item.field_number or 0, item.name))
         for member in ordered:
             oneof = member.extras.get("oneof")
@@ -544,10 +553,13 @@ class _SchemaBuilder:
                 oneofs_seen.add(oneof)
             name = json_name(member.name)
             schema = self.position(member.type)
+            _apply_constraints(schema, member.constraints)
             properties[name] = schema
             if self.mode == _MODE_RESPONSE and member.name != name:
                 properties[member.name] = copy.deepcopy(schema)
-            if is_required_field(member):
+            if is_required_field(member) or (
+                self.mode == _MODE_REQUEST and oneof and oneof in oneofs_required
+            ):
                 required.append(name)
         return {
             "type": "object",
@@ -564,14 +576,67 @@ def is_required_field(member: CanonicalField) -> bool:
         member: The field.
 
     Returns:
-        ``True`` for a proto2 ``required`` field and an Editions ``LEGACY_REQUIRED`` one. A proto3
-        field never is: protobuf-JSON omits a field holding its default value.
+        ``True`` for a proto2 ``required`` field, an Editions ``LEGACY_REQUIRED`` one and a field
+        Protovalidate declares ``required`` (XPC-3.3). Any other proto3 field never is:
+        protobuf-JSON omits a field holding its default value — which is also why a
+        Protovalidate-required field *is* always present: the rule forbids the default.
     """
     extras = member.extras
     return (
         extras.get("label") == "required"
         or extras.get(FIELD_PRESENCE_EXTRA_KEY) == FIELD_PRESENCE_LEGACY_REQUIRED
+        or is_protovalidate_required(member)
     )
+
+
+#: Canonical constraint facets → the JSON Schema keyword each narrows a field's schema with.
+_CONSTRAINT_KEYWORDS: Tuple[Tuple[str, str], ...] = (
+    ("exclusive_minimum", "exclusiveMinimum"),
+    ("exclusive_maximum", "exclusiveMaximum"),
+    ("min_length", "minLength"),
+    ("max_length", "maxLength"),
+    ("pattern", "pattern"),
+    ("format", "format"),
+    ("min_items", "minItems"),
+    ("max_items", "maxItems"),
+    ("unique_items", "uniqueItems"),
+)
+
+
+def _bound(value: Any) -> Any:
+    """Spell a whole-number ``float`` bound as an ``int``, so an integer field's stays integral."""
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+def _apply_constraints(schema: Dict[str, Any], constraints: Optional[Constraints]) -> None:
+    """Narrow one field's protobuf-JSON schema by its canonical constraints, in place.
+
+    A constraint only ever tightens: an inclusive bound is merged with the one the scalar's
+    own range already sets, and no keyword the protobuf-JSON encoding put there (the decimal
+    ``pattern`` of a 64-bit integer) is replaced. ``enum`` is skipped where the schema accepts
+    more than one JSON type for the same value — a 64-bit integer in a response may arrive as a
+    number or as a decimal string, and an ``enum`` of numbers would refuse the string form.
+
+    Args:
+        schema: The field's schema, as :meth:`_SchemaBuilder.position` built it.
+        constraints: The field's canonical constraints, or ``None``.
+    """
+    if constraints is None:
+        return
+    if constraints.minimum is not None:
+        low = _bound(constraints.minimum)
+        schema["minimum"] = max(schema.get("minimum", low), low)
+    if constraints.maximum is not None:
+        high = _bound(constraints.maximum)
+        schema["maximum"] = min(schema.get("maximum", high), high)
+    for facet, keyword in _CONSTRAINT_KEYWORDS:
+        value = getattr(constraints, facet)
+        if value is not None:
+            schema.setdefault(keyword, _bound(value))
+    if constraints.enum and "enum" not in schema and not isinstance(schema.get("type"), list):
+        schema["enum"] = list(constraints.enum)
 
 
 # ===========================================================================

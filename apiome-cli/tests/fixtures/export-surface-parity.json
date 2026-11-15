@@ -671,14 +671,16 @@
             "emit_services": true,
             "http_annotations": false,
             "package": null,
-            "persisted_field_numbers": {}
+            "persisted_field_numbers": {},
+            "protovalidate": true
           },
           "key": "protobuf",
           "options": [
             "emit_services",
             "http_annotations",
             "package",
-            "persisted_field_numbers"
+            "persisted_field_numbers",
+            "protovalidate"
           ],
           "preserved_percent": 20,
           "tier": "lossy"
@@ -1306,14 +1308,16 @@
             "emit_services": true,
             "http_annotations": false,
             "package": null,
-            "persisted_field_numbers": {}
+            "persisted_field_numbers": {},
+            "protovalidate": true
           },
           "key": "protobuf",
           "options": [
             "emit_services",
             "http_annotations",
             "package",
-            "persisted_field_numbers"
+            "persisted_field_numbers",
+            "protovalidate"
           ],
           "preserved_percent": 50,
           "tier": "lossy"
@@ -1913,14 +1917,16 @@
             "emit_services": true,
             "http_annotations": false,
             "package": null,
-            "persisted_field_numbers": {}
+            "persisted_field_numbers": {},
+            "protovalidate": true
           },
           "key": "protobuf",
           "options": [
             "emit_services",
             "http_annotations",
             "package",
-            "persisted_field_numbers"
+            "persisted_field_numbers",
+            "protovalidate"
           ],
           "preserved_percent": 20,
           "tier": "lossy"

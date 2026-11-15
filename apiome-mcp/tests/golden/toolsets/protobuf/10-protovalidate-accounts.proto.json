@@ -1,0 +1,128 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.accounts.v1.Account.",
+      "inputSchema": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "handle": {
+            "maxLength": 32,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          },
+          "invite_code": {
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "phone": {
+            "type": "string"
+          },
+          "plan": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          },
+          "referral_code": {
+            "type": "string"
+          },
+          "seats": {},
+          "trial_days": {}
+        },
+        "required": [
+          "email",
+          "handle",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "name": "CreateAccount",
+      "operation": "example.accounts.v1.AccountService.CreateAccount",
+      "output": {
+        "schema": {
+          "properties": {
+            "created_at": {},
+            "handle": {
+              "maxLength": 32,
+              "minLength": 3,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "plan": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "example.accounts.v1.Account"
+      }
+    },
+    {
+      "description": "Returns example.accounts.v1.Account.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GetAccount",
+      "operation": "example.accounts.v1.AccountService.GetAccount",
+      "output": {
+        "schema": {
+          "properties": {
+            "created_at": {},
+            "handle": {
+              "maxLength": 32,
+              "minLength": 3,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "plan": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "example.accounts.v1.Account"
+      }
+    }
+  ]
+}

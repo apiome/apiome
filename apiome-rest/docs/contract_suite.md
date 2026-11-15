@@ -173,8 +173,8 @@ Every **unary** method of a Protobuf version (`StreamingMode.NONE`) becomes one 
 | Source | Message | `expect_code` |
 |---|---|---|
 | `declared_example` | `extras.example` (or the first of `extras.examples`) on the request message or the input type, when an importer recorded one; dropped with `EXAMPLE_SCHEMA_MISMATCH` when it breaks the request schema | `ok` |
-| `generated_minimal` / `generated_full` | Seeded from a request schema built for the input type: required fields only, then every field (one member per `oneof`; 64-bit integers generated as 32-bit numbers) | `ok` |
-| `negative_missing_parameter` | The minimal message without one `required` field (proto2 `required`, Editions `LEGACY_REQUIRED`) | `invalid_argument` |
+| `generated_minimal` / `generated_full` | Seeded from a request schema built for the input type: required fields only, then every field (one member per `oneof`; 64-bit integers generated as 32-bit numbers). The canonical constraints read from Protovalidate rules (XPC-3.3: lengths, patterns, formats, ranges, allowed values, item counts) narrow the schema, so a generated message satisfies them; the first member of a `(buf.validate.oneof).required` oneof is required | `ok` |
+| `negative_missing_parameter` | The minimal message without one `required` field (proto2 `required`, Editions `LEGACY_REQUIRED`, Protovalidate `(buf.validate.field).required`) | `invalid_argument` |
 | `negative_parameter_type` | One field given a wrong JSON type (`true`, or a string for a boolean) — `json_only` | `invalid_argument` |
 | `negative_unknown_field` | The minimal message plus `apiomeUnknownField` — `json_only` | `invalid_argument` |
 

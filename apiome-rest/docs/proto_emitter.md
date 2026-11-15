@@ -54,13 +54,16 @@ the same key.
 
 ## Fidelity — what proto3 cannot carry
 
-Protobuf is an RPC/type vocabulary with no validation facets, no first-class union, and no pub/sub.
+Protobuf is an RPC/type vocabulary with no native validation facets (they are written as
+Protovalidate rules — see below), no first-class union, and no pub/sub.
 Rather than drop such a construct silently, the emitter records an `EmitResult.losses` entry (the
 material the gRPC fidelity pack (MFX-12.3 `ProtoFidelityRulePack`) turns into `APPROX`/`DROP`/`SYNTH` verdicts):
 
 | Loss `subject` | When |
 |---|---|
-| `field-constraints` | a field carried `Constraints` (min/max/pattern/…), which proto3 has no syntax for |
+| `field-constraints` | a field carried a `Constraints` facet no standard Protovalidate rule expresses for its type (`multiple_of`, a `date-time` format, a fractional bound on an integer) — or any `Constraints` at all when `protovalidate` is off |
+| `protovalidate-rules-dropped` | `protovalidate` is off and the model carried imported rules (a required field or oneof, verbatim rules, message rules) |
+| `protovalidate-unrecognized-rule` | the source carried a rule the reader did not recognize (a predefined rule); it cannot be written back |
 | `proto3-default` | a proto2 `default` value (proto3 has no field defaults) |
 | `synthesized-field-number` | a field arrived without a number; the next free one was assigned (reuses a persisted assignment on re-export when available) |
 
@@ -74,6 +77,24 @@ unit tests without the database.
 | `synthesized-enum-number` / `synthesized-enum-zero` | an enum lacked wire numbers, or lacked the proto3-required zero value |
 | `union-as-oneof` | a `UNION` type, approximated as a message wrapping a `oneof` |
 | `event-operation` / `synthesized-request` / `synthesized-response` | a non-RPC (pub/sub/one-way) operation reframed as a unary `rpc`, using `google.protobuf.Empty` where a message was missing |
+
+## Protovalidate rules (XPC-3.3)
+
+`ProtoEmitOptions.protovalidate` (default `true`, inherited by the `connectrpc` target) writes
+validation constraints as `(buf.validate.field)` options and adds `import
+"buf/validate/validate.proto"`. It is the inverse of the normalizer's reading (`app/proto_validate.py`
+holds both directions): the verbatim rules under `Constraints.extras['protovalidate']` are restored
+first, then the named facets are set under the rule family of the field's emitted type —
+`string`, one of the twelve numeric families, `bool`, or `repeated` for a list. A single option is
+written inline; several are written one per line. Message rules become `option
+(buf.validate.message).… ;` lines and a required oneof `option (buf.validate.oneof).required = true;`.
+CEL rules are written back verbatim and never interpreted.
+
+`required` is written only for a field flagged `extras['protovalidate_required']`: the rule also
+refuses the zero value, which another format's `required` (a non-nullable `TypeRef`) does not.
+
+`ProtoFidelityRulePack` mirrors this: a constrained field is `APPROX` only for the facets
+`render_field_options` leaves unwritten, and for every constraint when the option is off.
 
 ## `google.api.http` annotations (MFX-12.6)
 

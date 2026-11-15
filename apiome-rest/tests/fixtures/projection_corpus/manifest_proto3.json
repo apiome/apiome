@@ -184,26 +184,6 @@
       "target_mapping": null
     },
     {
-      "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
-      "documentation": {
-        "anchor": null,
-        "documentation_unavailable": false,
-        "note": null,
-        "specification": "Protocol Buffers Language Guide (proto3)",
-        "url": "https://protobuf.dev/programming-guides/proto3/",
-        "version": null
-      },
-      "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
-      "id": "projects:User.age#0",
-      "reason": "destination_unsupported",
-      "relation": "projects",
-      "severity": "warn",
-      "source": "canonical:User.age",
-      "status": "approximated",
-      "target": null,
-      "target_mapping": "constraints → doc comment"
-    },
-    {
       "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
       "documentation": {
         "anchor": null,
@@ -214,7 +194,7 @@
         "version": null
       },
       "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
-      "id": "projects:User.age#1",
+      "id": "projects:User.age#0",
       "reason": "destination_unsupported",
       "relation": "projects",
       "severity": "warn",
@@ -234,7 +214,7 @@
         "version": null
       },
       "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
-      "id": "projects:User.age#2",
+      "id": "projects:User.age#1",
       "reason": "destination_unsupported",
       "relation": "projects",
       "severity": "warn",
@@ -264,26 +244,6 @@
       "target_mapping": "required/non-null → proto3 field (presence not enforced)"
     },
     {
-      "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
-      "documentation": {
-        "anchor": null,
-        "documentation_unavailable": false,
-        "note": null,
-        "specification": "Protocol Buffers Language Guide (proto3)",
-        "url": "https://protobuf.dev/programming-guides/proto3/",
-        "version": null
-      },
-      "explanation": "The destination format cannot represent `User.email`; its specification has no equivalent construct.",
-      "id": "projects:User.email#1",
-      "reason": "destination_unsupported",
-      "relation": "projects",
-      "severity": "warn",
-      "source": "canonical:User.email",
-      "status": "approximated",
-      "target": null,
-      "target_mapping": "constraints → doc comment"
-    },
-    {
       "detail": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
       "documentation": {
         "anchor": null,
@@ -294,7 +254,7 @@
         "version": null
       },
       "explanation": "The destination format cannot represent `User.email`; its specification has no equivalent construct.",
-      "id": "projects:User.email#2",
+      "id": "projects:User.email#1",
       "reason": "destination_unsupported",
       "relation": "projects",
       "severity": "warn",
@@ -544,7 +504,7 @@
     }
   ],
   "reason_counts": {
-    "destination_unsupported": 11,
+    "destination_unsupported": 9,
     "emitter_unsupported": 0,
     "not_applicable": 0,
     "option_excluded": 0,
@@ -554,7 +514,7 @@
     "target_tool_unavailable": 0
   },
   "status_counts": {
-    "approximated": 6,
+    "approximated": 4,
     "dropped": 2,
     "not-applicable": 0,
     "retained": 3,

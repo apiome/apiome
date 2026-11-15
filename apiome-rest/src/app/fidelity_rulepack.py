@@ -74,6 +74,12 @@ from .lossiness import (
     LossinessReportBuilder,
     LossinessSeverity,
 )
+from .proto_validate import (
+    ONEOFS_REQUIRED_EXTRA_KEY,
+    PROTOVALIDATE_EXTRA_KEY,
+    verbatim_rule_names,
+    verbatim_rules,
+)
 
 __all__ = [
     "ROOT_CONSTRUCT_KEY",
@@ -528,11 +534,71 @@ class FidelityRulePack(ABC):
         for type_ in api.types:
             self._record(builder, type_.key, self.type_verdicts(type_))
             if type_.kind is TypeKind.RECORD:
+                self._record(builder, type_.key, self.message_rule_verdicts(type_))
                 for field in type_.fields:
                     self._record(builder, field.key, self.field_verdicts(field))
+                    self._record(builder, field.key, self.verbatim_rule_verdicts(field))
         for key, verdict in self.synthesized_verdicts(api):
             self._record(builder, key, [verdict])
         return builder.build()
+
+    def message_rule_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """``APPROX`` when a message carries Protovalidate rules only ``.proto`` can hold.
+
+        Message-level rules (``message.cel``, ``message.oneof``) and required oneofs have no
+        canonical facet (XPC-3.3): they ride verbatim in the type's extras, so a target that
+        is not protobuf carries the message without them, and CEL is never evaluated anywhere.
+        Asked by the drive loop beside :meth:`type_verdicts` — not through it — so a pack that
+        overrides that method cannot lose the report by accident; only the protobuf pack, which
+        writes the rules back, overrides this one.
+
+        Args:
+            type_: A RECORD type.
+
+        Returns:
+            One verdict naming the rules, or ``[]`` when the message has none.
+        """
+        names = verbatim_rule_names(type_.extras.get(PROTOVALIDATE_EXTRA_KEY))
+        names.extend(
+            f"oneof {name} required" for name in type_.extras.get(ONEOFS_REQUIRED_EXTRA_KEY) or []
+        )
+        if not names:
+            return []
+        label = getattr(self, "target_label", "the target")
+        return [
+            FidelityVerdict.approx(
+                message=f"{label} has no equivalent of the Protovalidate message rules "
+                f"({', '.join(names)}); they are not carried",
+                target_mapping="buf.validate message rules → not carried",
+            )
+        ]
+
+    def verbatim_rule_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """``APPROX`` when a field carries Protovalidate rules with no canonical facet.
+
+        A rule with no JSON-Schema analogue (``string.prefix``, ``timestamp.gt_now``, a CEL
+        expression) rides verbatim under ``constraints.extras['protovalidate']`` (XPC-3.3).
+        Only a ``.proto`` export writes it back, so every other target — including one that
+        carries the named facets — loses it, and says so here. Asked by the drive loop beside
+        :meth:`field_verdicts`, for the reason :meth:`message_rule_verdicts` gives.
+
+        Args:
+            field: A record field.
+
+        Returns:
+            One verdict naming the rules, or ``[]`` when the field has none.
+        """
+        names = verbatim_rule_names(verbatim_rules(field.constraints))
+        if not names:
+            return []
+        label = getattr(self, "target_label", "the target")
+        return [
+            FidelityVerdict.approx(
+                message=f"{label} has no equivalent of the Protovalidate rules "
+                f"{', '.join(names)}; they are not carried",
+                target_mapping="buf.validate rules → not carried",
+            )
+        ]
 
     @staticmethod
     def _record(

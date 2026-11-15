@@ -101,15 +101,18 @@ _MAX_PROTO_FILES = 2000
 #: leading dunder keeps it from colliding with a real ``.proto`` the caller supplied.
 _DESCRIPTOR_OUTPUT_NAME = "__apiome_descriptor__.binpb"
 
-#: Where the vendored googleapis protos live (MFI-22.8): ``google/api/annotations.proto`` and
-#: the ``google/api/http.proto`` it imports. ``buf build`` runs with no network, so a source that
-#: annotates its methods with ``option (google.api.http)`` could not otherwise compile.
+#: Where the vendored protos live: the googleapis ``google/api/annotations.proto`` and the
+#: ``google/api/http.proto`` it imports (MFI-22.8), and Protovalidate's
+#: ``buf/validate/validate.proto`` (XPC-3.3). ``buf build`` runs with no network, so a source
+#: that annotates its methods with ``option (google.api.http)`` or its fields with
+#: ``(buf.validate.field)`` could not otherwise compile.
 _VENDORED_PROTO_ROOT = os.path.join(os.path.dirname(__file__), "data", "proto_vendor")
 
 #: The vendored files, each with the vendored files it imports, in the order they are added.
 _VENDORED_PROTOS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("google/api/http.proto", ()),
     ("google/api/annotations.proto", ("google/api/http.proto",)),
+    ("buf/validate/validate.proto", ()),
 )
 
 _IMPORT_RE = re.compile(r'^\s*import\s+(?:public\s+|weak\s+)?"([^"]+)"\s*;', re.MULTILINE)
@@ -596,12 +599,13 @@ def materialize_proto_module(
 
 
 def vendored_proto_imports(files: Sequence[ProtoFile]) -> List[ProtoFile]:
-    """Return the vendored googleapis protos ``files`` import but do not supply (MFI-22.8).
+    """Return the vendored protos ``files`` import but do not supply (MFI-22.8, XPC-3.3).
 
     A source that imports ``google/api/annotations.proto`` (to declare ``google.api.http``
-    bindings) or ``google/api/http.proto`` gets the vendored copy of that file and of what it
-    imports in turn. A file the caller supplied under the same path always wins, so a fileset
-    that carries its own googleapis tree compiles against exactly that tree.
+    bindings), ``google/api/http.proto`` or ``buf/validate/validate.proto`` (to declare
+    Protovalidate rules) gets the vendored copy of that file and of what it imports in turn. A
+    file the caller supplied under the same path always wins, so a fileset that carries its own
+    googleapis or Protovalidate tree compiles against exactly that tree.
 
     Args:
         files: The caller's ``.proto`` files.
@@ -672,8 +676,9 @@ async def compile_proto_descriptor_set(
     active_runner = runner if runner is not None else default_runner
     spec = _buf_build_spec()
 
-    # MFI-22.8: supply the googleapis protos a `google.api.http` annotation needs. They are
-    # written into the module but never flagged as targets, so they arrive as imports.
+    # MFI-22.8 / XPC-3.3: supply the googleapis protos a `google.api.http` annotation needs and
+    # the Protovalidate proto a `buf.validate` rule needs. They are written into the module but
+    # never flagged as targets, so they arrive as imports.
     vendored = vendored_proto_imports(files)
 
     with tempfile.TemporaryDirectory(prefix="apiome-proto-") as scratch:

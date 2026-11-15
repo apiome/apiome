@@ -24427,6 +24427,33 @@
       "notes": "Paired fixture (IXH-7.5): must import to the same canonical model as protobuf/07-inventory-source.proto."
     },
     {
+      "path": "protobuf/10-protovalidate-accounts.proto",
+      "format": "protobuf",
+      "adapter_key": "grpc",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "protobuf",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "proto3",
+        "service",
+        "rpc",
+        "message",
+        "enum",
+        "oneof",
+        "import",
+        "protovalidate",
+        "cel"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; the buf.validate options follow the public Protovalidate rule reference, no third-party text copied.",
+      "rung": "composition",
+      "notes": "Protovalidate (XPC-3.3): the standard buf.validate rules import as canonical constraints, the CEL rule is recorded as unsupported_constraint and never evaluated."
+    },
+    {
       "path": "protobuf/negative/01-syntactic-unclosed-message.proto",
       "format": "protobuf",
       "adapter_key": "grpc",

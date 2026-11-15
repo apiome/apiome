@@ -101,6 +101,18 @@ from .proto_http_annotations import (
     request_field_names,
     unbound_parameters,
 )
+from .proto_validate import (
+    ONEOF_OPTION,
+    ONEOFS_REQUIRED_EXTRA_KEY,
+    PROTOVALIDATE_EXTRA_KEY,
+    PROTOVALIDATE_IMPORT,
+    PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY,
+    is_protovalidate_required,
+    render_field_options,
+    render_message_options,
+    rules_family_for_scalar,
+    verbatim_rules,
+)
 from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 
 __all__ = [
@@ -272,6 +284,15 @@ class ProtoEmitOptions(EmitOptions):
         "rule, and import ``google/api/annotations.proto`` (MFX-12.6). Off, the bindings are "
         "dropped and reported as a loss.",
     )
+    protovalidate: bool = Field(
+        default=True,
+        title="Protovalidate rules",
+        description="Write validation constraints as Protovalidate ``(buf.validate.field)`` "
+        "rules — required fields, lengths, patterns, ranges, allowed values and item counts — "
+        "and import ``buf/validate/validate.proto`` (XPC-3.3). Rules imported from a "
+        "``.proto``, CEL expressions included, are written back verbatim. Off, constraints are "
+        "dropped and reported as a loss, and the output needs no Protovalidate dependency.",
+    )
 
 
 # Well-known types the emitter uses when a source construct has no faithful proto shape.
@@ -280,6 +301,24 @@ _WKT_ANY = "google.protobuf.Any"
 
 # Pub/sub operation kinds the emitter reframes as unary ``rpc`` methods rather than dropping.
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+
+
+def _field_options(options: Sequence[str], pad: str) -> str:
+    """Format a field's bracketed option list: inline for one option, one per line for more.
+
+    Args:
+        options: The option assignments, already rendered.
+        pad: The field declaration's indentation.
+
+    Returns:
+        ``""`` for no options, `` [a = b]`` for one, or a multi-line ``[ … ]`` block.
+    """
+    if not options:
+        return ""
+    if len(options) == 1:
+        return f" [{options[0]}]"
+    inner = pad + _INDENT
+    return " [\n" + ",\n".join(f"{inner}{option}" for option in options) + f"\n{pad}]"
 
 
 def _union_oneof_eligible(type_: Type) -> bool:
@@ -358,6 +397,33 @@ def _emits_proto3_optional(field: CanonicalField) -> bool:
     return field.extras.get(FIELD_PRESENCE_EXTRA_KEY) == FIELD_PRESENCE_EXPLICIT
 
 
+def _rules_family(field: CanonicalField, types_by_key: Mapping[str, Type]) -> Optional[str]:
+    """Predict the Protovalidate rule family of the type a field is emitted as.
+
+    The rule pack's counterpart to what :meth:`_ProtoWriter._field_type_expr` decides while
+    rendering: a list is ``repeated`` whatever its element, a protobuf scalar (or another
+    format's spelling of one, resolved exactly as the writer resolves it) names its own family,
+    and a message, enum or map has none.
+
+    Args:
+        field: The canonical field.
+        types_by_key: The model's types, so a name the model defines is not read as a scalar.
+
+    Returns:
+        The family name, or ``None`` when the field's named facets have no rule.
+    """
+    ref = field.type
+    if ref.is_list():
+        return rules_family_for_scalar(None, repeated=True)
+    name = ref.name
+    if not name or name in types_by_key:
+        return None
+    if name in _PROTO_SCALARS:
+        return rules_family_for_scalar(name)
+    fmt = field.constraints.format if field.constraints is not None else None
+    return rules_family_for_scalar(target_scalar(name, PROTO_SCALAR_FOR_KIND, fmt))
+
+
 class ProtoFidelityRulePack(CapabilityRulePack):
     """Reference fidelity rule pack for the proto3 target — MFX-12.3 (#3881).
 
@@ -377,7 +443,10 @@ class ProtoFidelityRulePack(CapabilityRulePack):
       ``DROP``);
     * **nullability / requiredness** — proto3 ``optional`` carries presence, not JSON Schema
       nullability or ``required`` enforcement (``APPROX``);
-    * **validation constraints** — demoted to doc comments (``APPROX``);
+    * **validation constraints** — written as Protovalidate ``buf.validate`` rules (XPC-3.3);
+      ``APPROX`` only for the facets no standard rule expresses for the field's type
+      (``multiple_of``, a ``date-time`` format), or for every constraint when the
+      ``protovalidate`` option is off;
     * **inheritance / ``allOf`` / GraphQL interfaces** — flattened into one message (
       ``APPROX``);
     * **arbitrary JSON** — mapped to :data:`_WKT_STRUCT` (``APPROX``);
@@ -386,14 +455,15 @@ class ProtoFidelityRulePack(CapabilityRulePack):
     Native pub/sub operations are reframed as unary ``rpc`` methods (``APPROX``), not the
     capability default's critical ``DROP``.
 
-    **REST bindings** (MFX-12.6) depend on the ``http_annotations`` option bound through
+    **REST bindings** (MFX-12.6) depend on the ``http_annotations`` option, and constraints on
+    the ``protovalidate`` one, both bound through
     :meth:`apply_options`: off, an operation's HTTP verb and route are a ``DROP``; on, they are
     carried as ``google.api.http`` — ``OK`` when every route variable and query parameter is a
     request-message field, otherwise ``APPROX`` naming the inputs the rule cannot bind.
     """
 
     def apply_options(self, options: Mapping[str, Any]) -> None:
-        """Bind ``http_annotations`` (MFX-12.6); invalid options fall back to the defaults."""
+        """Bind ``http_annotations`` / ``protovalidate``; invalid options fall back to defaults."""
         try:
             self._options = ProtoEmitOptions.model_validate(dict(options))
         except ValidationError:
@@ -489,6 +559,8 @@ class ProtoFidelityRulePack(CapabilityRulePack):
         """Report nullability/requiredness losses proto3 ``optional`` cannot enforce."""
         if field.extras.get("proto3_optional"):
             return None
+        if is_protovalidate_required(field) and self._bound_options().protovalidate:
+            return None  # written back as `(buf.validate.field).required` — enforced, not lost
         if field.type.nullable is False:
             return FidelityVerdict.approx(
                 message=f"{self.target_label} cannot enforce a non-null/required guarantee; "
@@ -501,16 +573,52 @@ class ProtoFidelityRulePack(CapabilityRulePack):
             target_mapping="nullable → proto3 optional",
         )
 
+    def verbatim_rule_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """Verbatim Protovalidate rules are written back; lost only with the option off.
+
+        The off case is reported once, by :meth:`_constraints_verdict`.
+        """
+        return []
+
+    def message_rule_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """Message rules and required oneofs are written back unless the option is off."""
+        if self._bound_options().protovalidate:
+            return []
+        return super().message_rule_verdicts(type_)
+
+    def _bound_options(self) -> ProtoEmitOptions:
+        """The options :meth:`apply_options` bound, or the defaults when none were."""
+        return getattr(self, "_options", None) or ProtoEmitOptions()
+
     def _constraints_verdict(
         self, field: CanonicalField
     ) -> Optional[FidelityVerdict]:
-        """Demote validation constraints to documentation comments."""
+        """Carry constraints as Protovalidate rules; ``APPROX`` what no standard rule expresses.
+
+        Mirrors :meth:`_ProtoWriter._validation_options`: with the ``protovalidate`` option on,
+        only the facets :func:`~app.proto_validate.render_field_options` leaves unwritten for
+        the field's emitted type are a loss; with it off, every constraint and every imported
+        rule is.
+        """
+        has_rules = is_protovalidate_required(field) or verbatim_rules(field.constraints)
+        if not self._bound_options().protovalidate:
+            if not _has_any_constraint(field.constraints) and not has_rules:
+                return None
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no native validation facets and the "
+                "Protovalidate option is off; the constraints are dropped",
+                target_mapping="constraints → dropped (protovalidate off)",
+            )
         if not _has_any_constraint(field.constraints):
             return None
+        types_by_key = getattr(self, "_types_by_key", {})
+        unwritten = render_field_options(field, _rules_family(field, types_by_key)).unwritten
+        if not unwritten:
+            return None
         return FidelityVerdict.approx(
-            message=f"{self.target_label} cannot enforce validation constraints; "
-            "they are demoted to documentation comments",
-            target_mapping="constraints → doc comment",
+            message=f"{self.target_label} writes constraints as Protovalidate rules, but no "
+            f"standard rule expresses {', '.join(unwritten)} for this field's type",
+            target_mapping="constraints → buf.validate rules (partial)",
         )
 
     def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
@@ -916,6 +1024,7 @@ class _ProtoWriter:
         inner = _INDENT * (level + 1)
         if type_.deprecated:
             lines.append(f"{inner}option deprecated = true;")
+        lines.extend(self._render_message_rules(type_, inner))
 
         lines.extend(self._render_reserved(type_, inner, enum=False))
 
@@ -969,6 +1078,12 @@ class _ProtoWriter:
         """Render a ``oneof`` block with every member field of ``source_name``."""
         inner = pad + _INDENT
         lines = [f"{pad}oneof {safe_name} {{"]
+        if source_name in (type_.extras.get(ONEOFS_REQUIRED_EXTRA_KEY) or []):
+            if self._options.protovalidate:
+                self._imports.add(PROTOVALIDATE_IMPORT)
+                lines.append(f"{inner}option {ONEOF_OPTION}.required = true;")
+            else:
+                self._record_rules_dropped(f"{type_.key}.{source_name}", "the required oneof")
         for field in type_.fields:
             if field.extras.get("oneof") == source_name:
                 lines.append(self._render_field(type_, field, inner, counter, in_oneof=True))
@@ -1003,13 +1118,6 @@ class _ProtoWriter:
         else:
             self.tracker.record(pointer, Provenance.SOURCE)
 
-        if field.constraints is not None:
-            self.losses.record(
-                LossKind.NA,
-                "field-constraints",
-                f"Protobuf has no validation facets; {field.key!r} constraints were dropped.",
-                pointer=field.key,
-            )
         if field.default is not None:
             self.losses.record(
                 LossKind.NA,
@@ -1043,10 +1151,97 @@ class _ProtoWriter:
             )
         self._record_feature_losses(field.extras, field.key, "Field")
 
-        options = " [deprecated = true]" if field.deprecated else ""
-        decl = f"{pad}{prefix}{type_expr} {name} = {number}{options};"
+        option_list = ["deprecated = true"] if field.deprecated else []
+        option_list.extend(self._validation_options(field, type_expr, prefix))
+        decl = f"{pad}{prefix}{type_expr} {name} = {number}{_field_options(option_list, pad)};"
         comment = _comment(field.description, pad)
         return "\n".join([*comment, decl]) if comment else decl
+
+    def _validation_options(
+        self, field: CanonicalField, type_expr: str, prefix: str
+    ) -> List[str]:
+        """Return a field's ``(buf.validate.field)`` option assignments (XPC-3.3).
+
+        The symmetry half of :func:`app.proto_validate.read_field_rules`: every constraint the
+        normalizer reads from a rule is written back as that rule, and the same facets on a
+        model from another format (an OpenAPI ``minLength``) are written the same way. A facet
+        no standard rule expresses for this field's type is recorded as a loss, as is every
+        constraint when the ``protovalidate`` option is off.
+
+        Args:
+            field: The canonical field.
+            type_expr: The emitted type expression (a scalar keyword, ``.pkg.Type``, ``map<…>``).
+            prefix: The emitted label prefix (``"repeated "``, ``"optional "`` or ``""``).
+
+        Returns:
+            The option assignments, empty when the field has no rule to write.
+        """
+        if field.extras.get(PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY):
+            self.losses.record(
+                LossKind.NA,
+                "protovalidate-unrecognized-rule",
+                f"{field.key!r} carried Protovalidate rules this version does not recognize "
+                "(predefined rules or rules of another validate.proto version); they were not "
+                "written back.",
+                pointer=field.key,
+            )
+        if not self._options.protovalidate:
+            if field.constraints is not None:
+                self.losses.record(
+                    LossKind.NA,
+                    "field-constraints",
+                    f"Protobuf has no validation facets; {field.key!r} constraints were dropped.",
+                    pointer=field.key,
+                )
+            if is_protovalidate_required(field) or verbatim_rules(field.constraints):
+                self._record_rules_dropped(field.key, "its Protovalidate rules")
+            return []
+
+        family = rules_family_for_scalar(
+            type_expr if type_expr in _PROTO_SCALARS else None,
+            repeated=prefix == "repeated ",
+        )
+        rendered = render_field_options(field, family)
+        if rendered.unwritten:
+            self.losses.record(
+                LossKind.NA,
+                "field-constraints",
+                f"No standard Protovalidate rule expresses {', '.join(rendered.unwritten)} for "
+                f"{field.key!r} ({prefix}{type_expr}); dropped.",
+                pointer=field.key,
+            )
+        if rendered.options:
+            self._imports.add(PROTOVALIDATE_IMPORT)
+        return rendered.options
+
+    def _render_message_rules(self, type_: Type, pad: str) -> List[str]:
+        """Render a message's verbatim ``(buf.validate.message)`` rules as ``option`` lines."""
+        if type_.extras.get(PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY):
+            self.losses.record(
+                LossKind.NA,
+                "protovalidate-unrecognized-rule",
+                f"{type_.key!r} carried Protovalidate message rules this version does not "
+                "recognize; they were not written back.",
+                pointer=type_.key,
+            )
+        if not type_.extras.get(PROTOVALIDATE_EXTRA_KEY):
+            return []
+        if not self._options.protovalidate:
+            self._record_rules_dropped(type_.key, "its Protovalidate message rules")
+            return []
+        assignments = render_message_options(type_)
+        if assignments:
+            self._imports.add(PROTOVALIDATE_IMPORT)
+        return [f"{pad}option {assignment};" for assignment in assignments]
+
+    def _record_rules_dropped(self, key: str, what: str) -> None:
+        """Record that the ``protovalidate`` option being off dropped imported rules."""
+        self.losses.record(
+            LossKind.NA,
+            "protovalidate-rules-dropped",
+            f"The Protovalidate option is off; {what} on {key!r} was not written.",
+            pointer=key,
+        )
 
     def _field_type_expr(
         self, field: CanonicalField, pointer: str

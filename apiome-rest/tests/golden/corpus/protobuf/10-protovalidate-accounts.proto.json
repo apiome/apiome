@@ -1,0 +1,755 @@
+{
+  "adapter": "grpc",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "protovalidate": {
+        "capability_limits": [
+          {
+            "construct": "Protovalidate CEL rule",
+            "expression": "this.trial_days == 0 || this.plan == 1",
+            "id": "trial.plan",
+            "kind": "unsupported_constraint",
+            "location": "example.accounts.v1.CreateAccountRequest",
+            "message": "only the free plan may start a trial",
+            "path": "cel",
+            "preserved": true
+          }
+        ]
+      }
+    },
+    "format": "protobuf",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "example.accounts.v1",
+      "namespace": "example.accounts.v1"
+    },
+    "paradigm": "rpc",
+    "protocol": "grpc",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "example.accounts.v1.AccountService",
+        "name": "AccountService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "http_method": null,
+            "http_path": null,
+            "key": "example.accounts.v1.AccountService.CreateAccount",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example.accounts.v1.AccountService.CreateAccount#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example.accounts.v1.CreateAccountRequest",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example.accounts.v1.AccountService.CreateAccount#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example.accounts.v1.Account",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "CreateAccount",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "http_method": null,
+            "http_path": null,
+            "key": "example.accounts.v1.AccountService.GetAccount",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example.accounts.v1.AccountService.GetAccount#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example.accounts.v1.GetAccountRequest",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example.accounts.v1.AccountService.GetAccount#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example.accounts.v1.Account",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "GetAccount",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": null,
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "protovalidate": {
+                  "timestamp": {
+                    "lt_now": true
+                  }
+                }
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 4,
+            "key": "example.accounts.v1.Account.created_at",
+            "name": "created_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "google.protobuf.Timestamp",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 3,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 2,
+            "key": "example.accounts.v1.Account.handle",
+            "name": "handle",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "uuid",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 1,
+            "key": "example.accounts.v1.Account.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "protovalidate": {
+                  "enum": {
+                    "defined_only": true
+                  }
+                }
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 3,
+            "key": "example.accounts.v1.Account.plan",
+            "name": "plan",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "example.accounts.v1.Plan",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "example.accounts.v1.Account",
+        "key_type": null,
+        "kind": "record",
+        "name": "Account",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "oneofs": [
+            "verification"
+          ],
+          "oneofs_required": [
+            "verification"
+          ],
+          "protovalidate": {
+            "cel": [
+              {
+                "expression": "this.trial_days == 0 || this.plan == 1",
+                "id": "trial.plan",
+                "message": "only the free plan may start a trial"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "email",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional",
+              "protovalidate_required": true
+            },
+            "field_number": 2,
+            "key": "example.accounts.v1.CreateAccountRequest.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 3,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional",
+              "protovalidate_required": true
+            },
+            "field_number": 1,
+            "key": "example.accounts.v1.CreateAccountRequest.handle",
+            "name": "handle",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional",
+              "oneof": "verification"
+            },
+            "field_number": 9,
+            "key": "example.accounts.v1.CreateAccountRequest.invite_code",
+            "name": "invite_code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 8,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": true
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "repeated"
+            },
+            "field_number": 6,
+            "key": "example.accounts.v1.CreateAccountRequest.labels",
+            "name": "labels",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": true
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional",
+              "oneof": "verification"
+            },
+            "field_number": 8,
+            "key": "example.accounts.v1.CreateAccountRequest.phone",
+            "name": "phone",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "protovalidate": {
+                  "enum": {
+                    "defined_only": true
+                  }
+                }
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 3,
+            "key": "example.accounts.v1.CreateAccountRequest.plan",
+            "name": "plan",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "example.accounts.v1.Plan",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "protovalidate": {
+                  "string": {
+                    "prefix": "ref_"
+                  }
+                }
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 7,
+            "key": "example.accounts.v1.CreateAccountRequest.referral_code",
+            "name": "referral_code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 500.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 4,
+            "key": "example.accounts.v1.CreateAccountRequest.seats",
+            "name": "seats",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                0,
+                14,
+                30
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional"
+            },
+            "field_number": 5,
+            "key": "example.accounts.v1.CreateAccountRequest.trial_days",
+            "name": "trial_days",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "example.accounts.v1.CreateAccountRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "CreateAccountRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "uuid",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "label": "optional",
+              "protovalidate_required": true
+            },
+            "field_number": 1,
+            "key": "example.accounts.v1.GetAccountRequest.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "example.accounts.v1.GetAccountRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetAccountRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "example.accounts.v1.Plan.PLAN_UNSPECIFIED",
+            "name": "PLAN_UNSPECIFIED",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "example.accounts.v1.Plan.PLAN_FREE",
+            "name": "PLAN_FREE",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "example.accounts.v1.Plan.PLAN_TEAM",
+            "name": "PLAN_TEAM",
+            "value": 2
+          }
+        ],
+        "extras": {},
+        "fields": [],
+        "key": "example.accounts.v1.Plan",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Plan",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "protobuf/10-protovalidate-accounts.proto",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "protobuf"
+  },
+  "fingerprint": "sha256:57286e35e9a01be920d639758989f035ece9ba49a63d51fc9f83676f966c38ac",
+  "lint": {
+    "findings": 25,
+    "grade": "F",
+    "report_fingerprint": "454a58e8e15657b674f68dc26048ab4a32adfacafad56255be5ad2b79be81ad6",
+    "score": 57,
+    "severity_counts": {
+      "error": 0,
+      "info": 19,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}
