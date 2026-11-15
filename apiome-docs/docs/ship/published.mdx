@@ -91,7 +91,8 @@ served on this deployment yet.* Open it in a browser for GraphiQL, or see
 
 An **AsyncAPI** version's cell also says where its events go. *Events · WebSocket/SSE only — no
 broker bound* means the mock serves its channels over WebSocket and Server-Sent Events only.
-*Events · Kafka broker bound, plus WebSocket/SSE* means the version is bound to a Kafka broker. See
+*Events · Kafka broker bound, plus WebSocket/SSE* means the version is bound to a Kafka broker, and
+the mock publishes each channel's events to its topic every interval while the switch is on. See
 [Event mock brokers](../reference/mock-runtime/event-mock-brokers.md).
 
 That same `/graphql` URL can be the target of a contract run. Register it as a verification target

@@ -67,6 +67,28 @@ is a reminder that **subscriptions are not served yet**: a subscription returns 
 
 <Screenshot id="mock-graphql-published-cell" alt="Published: the People Graph v1.0.0 Mock cell is on, shows its /graphql URL and notes that subscriptions are not served yet" />
 
+## Publish events to Kafka
+
+An AsyncAPI version whose mock is bound to a Kafka broker publishes its events there. It sends one
+message per channel every couple of seconds while the mock is on. Binding a version is done through
+the REST API; see [Event mock brokers](../reference/mock-runtime/event-mock-brokers.md).
+
+1. On **Published**, **check** that the AsyncAPI version's **Mock** cell reads *Events · Kafka broker
+   bound, plus WebSocket/SSE*.
+2. **Point a Kafka consumer** at the broker and the channel's topic. `user/signedup` publishes to
+   `user.signedup`.
+3. To send one message right away, **post** to the channel's `publish` route. Add a JSON body to
+   choose the payload:
+
+```bash
+curl -X POST https://mock.apiome.dev/acme/user-events/1.1.0/__channels__/user/signedup/publish \
+  -H 'Content-Type: application/json' \
+  -d '{"userId": "u-1", "email": "ada@example.com"}'
+```
+
+A payload that doesn't match the message schema is refused (`422`) and never sent. `GET …/__channels__`
+lists each channel's topic, encoding and whether it can be published.
+
 ## Test-drive an export
 
 <Route path="/ade/dashboard/export/studio" />

@@ -249,6 +249,11 @@ services:
       # `broker` profile's Redpanda is up; without the profile the host does not resolve and /health
       # is unchanged. The mock never waits on it.
       APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ${APIOME_MOCK_DEV_BROKER_BOOTSTRAP:-redpanda:9092}
+      # Kafka mock producer (XPC-2.2, #5736). The mock opens bound brokers' SASL credentials with
+      # the same key map rest seals them with (must match rest's value byte for byte), and applies
+      # the same broker address rule, including the private-address escape hatch.
+      APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS:-}
+      APIOME_MOCK_BROKER_ALLOW_PRIVATE: ${APIOME_MOCK_BROKER_ALLOW_PRIVATE:-false}
     depends_on:
       postgres:
         condition: service_healthy

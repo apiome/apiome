@@ -96,6 +96,21 @@ GRAPHQL_SETTINGS_KEY = "graphql"
 """``mock_settings`` key holding the GraphQL mock settings (#5729, XPC-1.1)."""
 
 
+CHANNEL_PUBLISH_METHOD = "PUBLISH"
+"""Method word of a scenario key that addresses an AsyncAPI channel: ``PUBLISH /user/signedup``
+(#5736, XPC-2.2). Mirrors ``apiome_mock.event_payloads.channel_scenario_key``."""
+
+
+def channel_scenario_key(channel_key: str) -> str:
+    """The scenario operation key that addresses one AsyncAPI channel (#5736, XPC-2.2)."""
+    return f"{CHANNEL_PUBLISH_METHOD} /{channel_key.strip('/')}"
+
+
+def is_channel_publish_key(key: str) -> bool:
+    """Whether a normalized operation key addresses an AsyncAPI channel (``PUBLISH /…``)."""
+    return key.startswith(f"{CHANNEL_PUBLISH_METHOD} /")
+
+
 def is_graphql_coordinate(key: str) -> bool:
     """Whether an operation key is a GraphQL ``Type.field`` coordinate (#5729, XPC-1.1)."""
     return bool(GRAPHQL_COORDINATE_PATTERN.match(key.strip()))
@@ -343,6 +358,7 @@ def validate_mock_scenarios(
     spec: Mapping[str, Any],
     *,
     graphql_operations: AbstractSet[str] = frozenset(),
+    channel_operations: AbstractSet[str] = frozenset(),
 ) -> List[str]:
     """Validate scenario definitions against structural limits and the OpenAPI spec.
 
@@ -351,6 +367,9 @@ def validate_mock_scenarios(
         spec: The version's generated OpenAPI document.
         graphql_operations: The version's GraphQL root-field coordinates (``Query.user``);
             empty for a version that is not GraphQL (#5729, XPC-1.1).
+        channel_operations: The version's AsyncAPI channel keys in scenario form
+            (``PUBLISH /user/signedup``); empty for a version that is not event-driven. A canned
+            body for one becomes the payload the mock publishes on that channel (#5736, XPC-2.2).
 
     Returns:
         A list of human-readable error strings; empty when everything is valid.
@@ -387,6 +406,21 @@ def validate_mock_scenarios(
                     continue
                 # A canned body becomes the root field's value (#5729, XPC-1.1); there is no
                 # OpenAPI response schema to check it against, exactly as for the wildcard.
+                _validate_operation_override(
+                    override,
+                    operation=None,
+                    spec=spec,
+                    context=context,
+                    errors=errors,
+                )
+                continue
+            if is_channel_publish_key(op_key) and op_key not in operations_by_key:
+                if op_key not in channel_operations:
+                    channel = op_key[len(f"{CHANNEL_PUBLISH_METHOD} /") :]
+                    errors.append(f"{context}: no event channel {channel} exists in this version.")
+                    continue
+                # A canned body becomes the event payload (#5736, XPC-2.2); the mock validates it
+                # against the message schema before publishing, so it is not checked here.
                 _validate_operation_override(
                     override,
                     operation=None,
@@ -625,6 +659,15 @@ def chaos_from_storage(mock_settings: Any) -> Tuple[Optional[Dict[str, Any]], bo
     if not isinstance(chaos, dict):
         return None, False
     return chaos, True
+
+
+def uses_channel_keys(scenarios: Mapping[str, MockScenarioSpec]) -> bool:
+    """Whether a scenarios write names any ``PUBLISH /<channel>`` key (#5736, XPC-2.2).
+
+    The route only loads the version's canonical model (to list its channels) when this is true.
+    """
+    keys = (normalize_operation_key(key) for scenario in scenarios.values() for key in scenario.operations)
+    return any(key is not None and is_channel_publish_key(key) for key in keys)
 
 
 def uses_graphql_coordinates(

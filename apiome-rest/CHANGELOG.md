@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.705.0] - 2026-11-14
+
+### Added
+- **Scenario overrides for AsyncAPI channels (XPC-2.2, #5736)** — OpenAPI 1.565.0:
+  - `PUT …/versions/{t}/{p}/{v}/mock/scenarios` accepts an operation key `PUBLISH /<channel key>`
+    (e.g. `PUBLISH /user/signedup`) on an event-driven version; the canned body becomes the payload
+    the hosted mock publishes to the version's bound Kafka broker. A key naming no channel of the
+    version is refused. `MockScenarioSpec.operations` documents the new key form.
+  - The Kafka producer itself ships in apiome-mock 0.19.0: periodic and on-demand
+    (`POST /{t}/{p}/{v}/__channels__/{channel}/publish`) publishing through the XPC-2.1 binding,
+    JSON / Avro / Protobuf encoding, schema validation before sending, and per-channel support
+    status (`GET …/__channels__`). Publish counts by channel and encoding land in
+    `apiome.mock_event_publish_usage` (V373).
+
 ## [1.704.0] - 2026-11-14
 
 ### Added

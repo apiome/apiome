@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.564.0
+  version: 1.565.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -177699,7 +177699,9 @@ components:
           type: object
           title: Operations
           description: Overrides keyed by "METHOD /path/{template}" operation identifiers,
-            or by a GraphQL root-field coordinate such as "Query.user".
+            by a GraphQL root-field coordinate such as "Query.user", or by an AsyncAPI
+            channel as "PUBLISH /user/signedup" (the canned body becomes the published
+            event payload).
         chaos:
           anyOf:
           - $ref: '#/components/schemas/MockChaosSpec'
@@ -177726,7 +177728,9 @@ components:
           type: object
           title: Operations
           description: Overrides keyed by "METHOD /path/{template}" operation identifiers,
-            or by a GraphQL root-field coordinate such as "Query.user".
+            by a GraphQL root-field coordinate such as "Query.user", or by an AsyncAPI
+            channel as "PUBLISH /user/signedup" (the canned body becomes the published
+            event payload).
         chaos:
           anyOf:
           - $ref: '#/components/schemas/MockChaosSpec'

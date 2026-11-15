@@ -79,6 +79,8 @@ from .mock_scenario_settings import (
     graphql_settings_to_storage,
     scenarios_from_storage,
     scenarios_to_storage,
+    channel_scenario_key,
+    uses_channel_keys,
     uses_graphql_coordinates,
     validate_active_scenario,
     validate_mock_chaos,
@@ -2687,6 +2689,23 @@ def _graphql_operations_for_version(version: Dict[str, Any], tenant_id: str) -> 
     return frozenset(operation.key for operation in api.operations())
 
 
+def _channel_operations_for_version(version: Dict[str, Any], tenant_id: str) -> frozenset[str]:
+    """List an AsyncAPI version's channels as scenario keys (``PUBLISH /user/signedup``; #5736).
+
+    Args:
+        version: The version row.
+        tenant_id: The owning tenant.
+
+    Returns:
+        One key per channel of the version's canonical model; empty when the version has no
+        canonical model or is not event-driven.
+    """
+    api = db.load_canonical_api(tenant_id=tenant_id, version_id=str(version["id"]))
+    if api is None or api.paradigm is not ApiParadigm.EVENT:
+        return frozenset()
+    return frozenset(channel_scenario_key(channel.key) for channel in api.channels)
+
+
 def _scenarios_response(mock_settings: Any, version_record_id: str) -> VersionMockScenariosResponse:
     """Build the scenarios response from a raw ``mock_settings`` value (#4454 SIM-4.2).
 
@@ -2792,7 +2811,17 @@ async def set_version_mock_scenarios(
         else frozenset()
     )
     spec = _generated_spec_for_version(existing, tenant_slug)
-    errors = validate_mock_scenarios(request.scenarios, spec, graphql_operations=graphql_operations)
+    channel_operations = (
+        _channel_operations_for_version(existing, auth_data["tenant_id"])
+        if uses_channel_keys(request.scenarios)
+        else frozenset()
+    )
+    errors = validate_mock_scenarios(
+        request.scenarios,
+        spec,
+        graphql_operations=graphql_operations,
+        channel_operations=channel_operations,
+    )
     errors.extend(validate_mock_chaos(request.chaos, spec, graphql_operations=graphql_operations))
     errors.extend(validate_active_scenario(active_scenario, request.scenarios))
     if errors:

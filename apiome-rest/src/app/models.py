@@ -4986,8 +4986,9 @@ class MockScenarioSpec(BaseModel):
     description: str = Field(default="", max_length=500, description="Human summary of the situation.")
     operations: Dict[str, MockScenarioOperationSpec] = Field(
         default_factory=dict,
-        description='Overrides keyed by "METHOD /path/{template}" operation identifiers, or by a '
-        'GraphQL root-field coordinate such as "Query.user".',
+        description='Overrides keyed by "METHOD /path/{template}" operation identifiers, by a '
+        'GraphQL root-field coordinate such as "Query.user", or by an AsyncAPI channel as '
+        '"PUBLISH /user/signedup" (the canned body becomes the published event payload).',
     )
     chaos: Optional[MockChaosSpec] = Field(
         default=None,

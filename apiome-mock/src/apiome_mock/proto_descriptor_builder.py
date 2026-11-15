@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Dict, Tuple
 
 from app.canonical_model import (
@@ -39,8 +40,19 @@ _SCALAR_MAP: Dict[str, _FD.Type.ValueType] = {
 
 
 def _package_name(api: CanonicalApi) -> str:
-    namespace = api.identity.namespace or api.identity.name
-    return namespace.replace("/", ".").strip(".") or "apiome.mock"
+    """The protobuf package for an API: its namespace (or name) as a legal package identifier.
+
+    Each dot-separated segment keeps ``[A-Za-z0-9_]`` (anything else becomes ``_``) and gains a
+    leading ``_`` when it would start with a digit, so a display name such as ``User Events``
+    (an AsyncAPI title, #5736) still builds a descriptor.
+    """
+    namespace = (api.identity.namespace or api.identity.name or "").replace("/", ".")
+    segments = []
+    for segment in namespace.split("."):
+        cleaned = re.sub(r"[^A-Za-z0-9_]", "_", segment.strip())
+        if cleaned:
+            segments.append(f"_{cleaned}" if cleaned[0].isdigit() else cleaned)
+    return ".".join(segments) or "apiome.mock"
 
 
 def _message_name(type_key: str) -> str:

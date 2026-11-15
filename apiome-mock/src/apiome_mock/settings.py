@@ -115,6 +115,19 @@ class Settings(BaseSettings):
             "/health reports `broker: reachable|unreachable` while it resolves."
         ),
     )
+    broker_producer_enabled: bool = Field(
+        default=True,
+        description=(
+            "Publish example/synthesized messages to versions' bound Kafka brokers on each channel's "
+            "interval (#5736, XPC-2.2). Turn off on all but one replica of a multi-replica deployment."
+        ),
+    )
+    broker_refresh_seconds: float = Field(
+        default=30.0,
+        gt=0,
+        le=3600.0,
+        description="How often the producer re-reads which versions have a broker binding (#5736).",
+    )
     capture_enabled: bool = Field(
         default=False,
         description="Permit guarded upstream proxy capture on this deployment (#4747, PMR-2.4).",
