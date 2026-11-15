@@ -411,6 +411,9 @@ def plan_go_client(
             license_header=branding.license_header,
             user_agent=branding.user_agent,
             max_operations=MAX_KIT_OPERATIONS,
+            # RDG-1.7 (#4736): the opt-in compatibility beacon reports against this revision.
+            revision_id=coordinates.version_record_id,
+            api_version=coordinates.version_label or coordinates.version_slug,
         )
     except Exception as exc:  # noqa: BLE001 - a kit ships its snippets even when codegen cannot.
         return GoClientPlan(
@@ -1206,6 +1209,16 @@ def _go_client_manifest(plan: GoClientPlan) -> Dict[str, Any]:
             "type_count": len(package.types),
             "auth_options": list(package.auth_options),
             "example_groups": list(package.example_groups),
+            # RDG-1.7 (#4736): the opt-in compatibility beacon. Off unless the consumer passes
+            # WithTelemetry; its reports carry this manifest's operation ids and the kit's
+            # provenance.version_record_id, which is how an owner lines them up with this manifest.
+            "telemetry": {
+                "default": "off",
+                "option": "WithTelemetry",
+                "endpoint": "/v1/tenants/{tenant}/usage/sdk-beacon",
+                "schema": "apiome.sdk.beacon/v1",
+                "outcomes": ["ok", "client_error", "server_error", "network", "incompatible"],
+            },
             "methods": [
                 {
                     "name": method.name,

@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.712.0] - 2026-11-15
+
+### Added
+- **Opt-in SDK compatibility beacon (RDG-1.7 / SGD-3.1, #4736)** — OpenAPI 1.572.0:
+  - `POST /v1/tenants/{tenant}/usage/sdk-beacon` accepts `apiome.sdk.beacon/v1` reports from opted-in generated
+    SDKs: per (operation, outcome) counts naming only the SDK name and version, the API version and published
+    revision the SDK was generated from, the kit manifest's `operation_id`, and an outcome (`ok`, `client_error`,
+    `server_error`, `network`, `incompatible`). Unknown keys and values that are not version- or id-shaped are
+    refused (`422`); there is no field for a body, header, status, latency, URL, host, credential or caller
+    identifier, and counts land on the server's receive day. Takes a `usage:ingest` key (a session is
+    `403 usage-ingest-key-required`) and an enabled `sdk_beacon` usage source (`403 usage-source-disabled`,
+    `409 usage-source-kind-mismatch`); events naming a revision that is not a published revision of the source's
+    project are rejected by index (`revision-unknown`).
+  - `GET /v1/tenants/{tenant}/usage/sdk-beacons?project=&days=` returns the counts grouped by the kit manifest's
+    keys (`spec_revision_id`, `api_version`, `sdk_name`, `sdk_version`, `operation_id`, `outcome`). Needs
+    `consumer_contracts:view`.
+  - apiome-db V380 `usage_sdk_beacon_daily` + `purge_usage_sdk_beacons()`, pruned by the usage sweep on the tier's
+    `usage_rollup_retention_days` (`sdk_beacons_purged` in the sweep result).
+  - The SDK kit's generated **Go client** gains `telemetry.go`: `WithTelemetry(TelemetryConfig{…})` turns the
+    beacon on — **off by default**, documented in the module README — and `do` classifies each call's outcome;
+    reports use their own HTTP client and key (never the API's headers or credentials), flush every 100 calls and
+    on `FlushTelemetry`, and a failed report is dropped. `ManifestRevisionID` / `ManifestAPIVersion` are baked in
+    from the kit, and `manifest.json` gains a `go_client.telemetry` block.
+
 ## [1.711.0] - 2026-11-15
 
 ### Added

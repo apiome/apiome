@@ -1,0 +1,25 @@
+---
+slug: sdk-compatibility-beacon
+title: SDK compatibility beacon — learn which releases break your SDK users
+description: "Opt-in, privacy-preserving outcome counts from generated Go clients."
+authors: [apiome]
+---
+
+The generated Go client in the SDK kit can now tell you, if its user opts in, how calls to your API
+turn out. You see which releases your SDK users find incompatible, without collecting their data.
+
+{/* truncate */}
+
+- **Off by default.** Nothing is sent unless the SDK user passes `WithTelemetry` with the endpoint,
+  reporting key and source id you give them. The client's README says so.
+- **Counts, not traffic.** A report holds only the SDK and its version, the API version and
+  published revision it was generated from, the operation, the outcome (`ok`, `client_error`,
+  `server_error`, `network`, `incompatible`) and a count. It never holds bodies, headers, URLs,
+  status codes, latencies, credentials or anything that identifies the user.
+- **Your controls.** Reports arrive under an `sdk_beacon` usage source: switch it off with its
+  `enabled` flag, and counts age out with your plan's usage retention.
+- **Lines up with the manifest.** Counts are grouped by the revision and the kit manifest's
+  operation ids (`GET …/usage/sdk-beacons`), so a spike in `incompatible` points at the release
+  that caused it.
+
+See [SDK compatibility beacon](/ship/sdk-compatibility-beacon).
