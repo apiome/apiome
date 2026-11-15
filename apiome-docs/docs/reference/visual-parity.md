@@ -20,6 +20,14 @@ yarn test:e2e:visual -g catalog      # one route
 
 The harness starts its own app on port 3300. It needs no REST API and no database.
 
+## Which mockup a route is compared against
+
+Each route is compared against the **page mockup** that draws it, such as `build/versions.html`
+or `sources/catalog.html`. The round-2 proposals (`docs/mockups/proposals/versions-status-strip.html`,
+`catalog-quiet.html`, `launcher-focused.html` and `rail-compact.html`) were adopted in the quiet
+pass and folded into those page mockups by HIVE-13.4 (#5617). They stay in the ledger as
+`adopted` records of the change, and no route is compared against them.
+
 ## The first-row budget
 
 `PROPOSALS.md` found that

@@ -39,6 +39,30 @@
   .page-title { white-space: nowrap; flex-wrap: wrap; row-gap: 6px; }
   .page-header__row > .min-w-0 { flex: 1 1 auto; }
   .page-actions { flex-wrap: wrap; justify-content: flex-end; }
+  /* Quiet pass (HIVE-11.2 / 11.3): breadcrumb switcher and the status strip */
+  .crumb-switch { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px 0 8px; margin: -3px -6px; border-radius: var(--r-sm); color: var(--fg); font-weight: 500; font-size: var(--fs-xs); background: transparent; border: 0; cursor: pointer; }
+  .crumb-switch:hover { background: var(--bg-subtle); }
+  .crumb-switch [data-lucide] { width: 12px; height: 12px; opacity: .7; }
+
+  /* Status strip — one row, one open detail at a time */
+  .status-strip { background: var(--bg-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+  .status-strip__row { display: flex; align-items: center; gap: 6px; padding: 8px 10px; flex-wrap: wrap; }
+  .status-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 9px; border-radius: var(--r-full); font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); background: transparent; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px var(--border); }
+  .status-chip [data-lucide] { width: 14px; height: 14px; }
+  .status-chip:hover { background: var(--bg-subtle); color: var(--fg); }
+  .status-chip.is-open { box-shadow: none; color: var(--fg); }
+  .status-chip--ok [data-lucide] { color: var(--ok); }      .status-chip--ok.is-open { background: var(--ok-soft); color: var(--ok-fg); }
+  .status-chip--accent [data-lucide] { color: var(--accent); } .status-chip--accent.is-open { background: var(--accent-soft); color: var(--accent-fg); }
+  .status-chip--warn [data-lucide] { color: var(--warn); }  .status-chip--warn.is-open { background: var(--warn-soft); color: var(--warn-fg); }
+  .status-chip .dot { width: 6px; height: 6px; }
+  .status-strip__detail { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px 12px; border-top: 1px solid var(--border); font-size: var(--fs-sm); color: var(--fg-muted); }
+  .status-strip__detail .banner-title { color: var(--fg); font-weight: 600; }
+  .status-strip__detail .banner-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  .status-strip__detail [data-lucide] { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
+  .status-strip__detail[data-tone="ok"] [data-lucide]:first-child { color: var(--ok); }
+  .status-strip__detail[data-tone="accent"] [data-lucide]:first-child { color: var(--accent); }
+  .status-strip__detail[data-tone="warn"] [data-lucide]:first-child { color: var(--warn); }
+  .status-chip--warn.is-open .flag { background: transparent; }
 </style>
 </head>
 <body data-shell="app" data-nav="projects" data-page="build/versions" data-tenant="Acme Corp">
@@ -47,7 +71,7 @@
     <div class="page-header__inner">
       <div class="page-header__row">
         <div class="min-w-0">
-          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Build</span><i data-lucide="chevron-right"></i><a href="projects.html">Projects</a><i data-lucide="chevron-right"></i><span>Payments API</span></div>
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Build</span><i data-lucide="chevron-right"></i><a href="projects.html">Projects</a><i data-lucide="chevron-right"></i><button class="crumb-switch" data-action="open" data-target="project-switch" aria-haspopup="menu" title="Switch project">Payments API<i data-lucide="chevrons-up-down"></i></button></div>
           <h1 class="page-title">Payments API
             <span class="fmt fmt--openapi">OpenAPI 3.1</span>
             <span class="badge badge--dot" data-status="draft" title="Head revision v2.4.0 is a draft">v2.4.0 draft</span>
@@ -56,10 +80,9 @@
           <p class="page-desc">Revisions and releases for this project · <a href="../ship/sunset-timeline.html">Sunset timeline (EOL schedule)</a></p>
         </div>
         <div class="page-actions">
-          <select class="select" style="width:190px" aria-label="Select project" title="Catalog items are excluded — convert one to OpenAPI to make it publishable"><option>Payments API</option><option>Orders Service</option><option>Inventory Events</option><option disabled>Legacy Gateway (deleted)</option></select>
-          <button class="btn" data-action="open" data-target="import-dialog" title="Import a specification into a new project"><i data-lucide="upload"></i>Import</button>
           <a class="btn" href="version-dialogs.html#compare" title="Compare two revisions (needs at least 2 versions)"><i data-lucide="git-compare-arrows"></i>Compare</a>
-          <button class="btn btn--icon" disabled title="Merge branches — create at least two named branches to merge (FEATURE_GITLIKE)" aria-label="Merge branches"><i data-lucide="git-merge"></i></button>
+          <button class="btn" data-action="open" data-target="import-dialog" title="Import a specification into a new project"><i data-lucide="upload"></i>Import</button>
+          <button class="btn btn--icon" data-action="open" data-target="more-menu" aria-label="More actions" aria-haspopup="menu" title="More actions"><i data-lucide="ellipsis"></i></button>
           <button class="btn btn--primary" data-action="open" data-target="new-version" title="Start a new version (fresh release line, defaults to a minor bump)"><i data-lucide="git-fork"></i>New version</button>
         </div>
       </div>
@@ -73,23 +96,45 @@
     </div>
   </header>
 
-  <!-- [GITLIKE] ServerAheadPushBanner -->
-  <div class="banner banner--warn banner--bar" role="status">
-    <i data-lucide="cloud-alert"></i>
-    <div><span class="banner-title">Server is ahead of your last push.</span> <span class="banner-body">Another revision landed on <span class="mono">main</span> after your base (409 STALE_HEAD). Pull first, or open a merge.</span></div>
-    <div class="banner-actions"><span class="flag" title="Compiled but hidden today (FEATURE_GITLIKE=false)"><i data-lucide="flag"></i>gitlike</span><button class="btn btn--sm"><i data-lucide="download"></i>Pull</button><a class="btn btn--sm" href="version-dialogs.html#merge"><i data-lucide="git-merge"></i>Open merge</a></div>
-  </div>
-
   <div class="page-body" id="main-views">
     <!-- ================= TIMELINE (default view) ================= -->
     <div data-tab-panel="timeline" class="col gap-6">
 
-      <!-- Banners: compatibility · what's new · deprecation -->
-      <div class="col gap-2">
-        <div class="banner banner--ok"><i data-lucide="shield-check"></i><div><span class="banner-title">Compatible.</span> <span class="banner-body">Parent → head check recorded 2h ago: <span class="mono">v2.3.1 → v2.4.0</span> has 3 additive changes and no breaking changes.</span></div><div class="banner-actions"><a class="btn btn--sm btn--ghost" href="version-dialogs.html#compare">View report</a></div></div>
-        <div class="banner"><i data-lucide="sparkles"></i><div><span class="banner-title">What’s new in v2.4.0 (draft).</span> <span class="banner-body">Refund reasons on <span class="mono">POST /refunds</span>, payout webhook events, <span class="mono">Idempotency-Key</span> documented on all writes.</span></div><div class="banner-actions"><button class="btn btn--sm btn--ghost" data-action="tab" data-target="changes">Open changes</button></div></div>
-        <div class="banner banner--warn"><i data-lucide="sunset"></i><div><span class="banner-title">v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.</span> <span class="banner-body">Successor <span class="mono">v2.3.1</span>. Consumers see the same warning on compatibility checks (#507).</span></div><div class="banner-actions"><a class="btn btn--sm btn--ghost" href="../ship/sunset-timeline.html">Sunset timeline</a><a class="btn btn--sm btn--ghost" href="#" target="_blank" rel="noopener">Migration guide <i data-lucide="arrow-up-right"></i></a></div></div>
-      </div>
+      <!-- Status strip (DESIGN.md §5.4, HIVE-11.2): the three banners and the gitlike “Server ahead”
+           notice as one row of chips, one detail open at a time, most severe first. -->
+      <section class="status-strip" aria-label="Project status">
+        <div class="status-strip__row" role="group" aria-label="Project status">
+          <span class="t-caps" style="margin-right:4px">Status</span>
+          <button class="status-chip status-chip--ok" data-detail="compat" aria-expanded="false"><i data-lucide="shield-check"></i>Compatible <span class="t-faint">v2.3.1 → v2.4.0</span></button>
+          <button class="status-chip status-chip--accent" data-detail="new" aria-expanded="false"><i data-lucide="sparkles"></i>What’s new <span class="t-faint">v2.4.0 draft</span></button>
+          <button class="status-chip status-chip--warn is-open" data-detail="sunset" aria-expanded="true"><i data-lucide="sunset"></i>v2.2.0 deprecated <span class="t-faint">· sunset 30 Sep</span></button>
+          <button class="status-chip status-chip--warn" data-detail="ahead" aria-expanded="false" title="FEATURE_GITLIKE only"><i data-lucide="cloud-alert"></i>Server ahead <span class="t-faint">main</span></button>
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn btn--ghost btn--sm" data-collapse-strip title="Hide the detail row">Collapse<i data-lucide="chevron-up"></i></button>
+        </div>
+        <div aria-live="polite">
+        <div class="status-strip__detail" data-tone="ok" data-detail-for="compat" hidden>
+          <i data-lucide="shield-check"></i>
+          <div><span class="banner-title">Compatible.</span> Parent → head check recorded 2h ago: <span class="mono">v2.3.1 → v2.4.0</span> has 3 additive changes and no breaking changes.</div>
+          <div class="banner-actions"><a class="btn btn--sm" href="version-dialogs.html#compat-report">View report</a></div>
+        </div>
+        <div class="status-strip__detail" data-tone="accent" data-detail-for="new" hidden>
+          <i data-lucide="sparkles"></i>
+          <div><span class="banner-title">What’s new in v2.4.0 (draft).</span> Refund reasons on <span class="mono">POST /refunds</span>, payout webhook events, <span class="mono">Idempotency-Key</span> documented on all writes.</div>
+          <div class="banner-actions"><button class="btn btn--sm" data-action="tab" data-target="changes">Open changes</button></div>
+        </div>
+        <div class="status-strip__detail" data-tone="warn" data-detail-for="sunset">
+          <i data-lucide="sunset"></i>
+          <div><span class="banner-title">v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.</span> Successor <span class="mono">v2.3.1</span>. Consumers see the same warning on compatibility checks (#507).</div>
+          <div class="banner-actions"><a class="btn btn--sm" href="../ship/sunset-timeline.html">Sunset timeline</a><a class="btn btn--sm" href="#" target="_blank" rel="noopener">Migration guide<i data-lucide="arrow-up-right"></i></a></div>
+        </div>
+        <div class="status-strip__detail" data-tone="warn" data-detail-for="ahead" hidden>
+          <i data-lucide="cloud-alert"></i>
+          <div><span class="banner-title">Server is ahead of your last push.</span> Another revision landed on <span class="mono">main</span> after your base (409 STALE_HEAD). Pull first, or open a merge.</div>
+          <div class="banner-actions"><button class="btn btn--sm"><i data-lucide="download"></i>Pull</button><a class="btn btn--sm" href="version-dialogs.html#merge"><i data-lucide="git-merge"></i>Open merge</a></div>
+        </div>
+        </div>
+      </section>
 
         <!-- Related artifacts + project facts -->
         <div class="grid" style="grid-template-columns:minmax(0,1fr) 380px">
@@ -125,18 +170,6 @@
           </section>
         </div>
 
-          <!-- Timeline filter bar -->
-          <section class="card" style="padding:12px 16px">
-            <div class="row wrap gap-3">
-              <span class="t-caps" style="margin-right:4px">Timeline</span>
-              <div class="input-wrap" style="width:230px"><i data-lucide="search"></i><input class="input" placeholder="Message, changelog, commit…" aria-label="Search revisions" /></div>
-              <select class="select" style="width:150px" aria-label="Author"><option>All authors</option><option>Ada Lovelace</option><option>Grace Hopper</option><option>Linus Torvalds</option></select>
-              <label class="row gap-2 t-sm t-muted">From <input class="input" type="date" value="2026-06-01" style="width:140px" aria-label="From date" /></label>
-              <label class="row gap-2 t-sm t-muted">To <input class="input" type="date" style="width:140px" aria-label="To date" /></label>
-              <button class="btn btn--ghost btn--sm"><i data-lucide="rotate-ccw"></i>Reset</button>
-            </div>
-          </section>
-
           <!-- [GITLIKE] Version tags + Named branches chip panels -->
           <section class="card" style="padding:12px 16px">
             <div class="row-between wrap gap-3">
@@ -162,9 +195,13 @@
 
           <!-- Versions table -->
           <section class="table-wrap">
-            <div class="table-toolbar">
+            <!-- One toolbar (HIVE-11.4): the old Timeline filter card's search, author and dates live here -->
+            <div class="table-toolbar wrap">
+              <div class="input-wrap" style="width:220px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Message, changelog, commit…" aria-label="Search revisions" /></div>
               <select class="select select--sm lifecycle-select" aria-label="Lifecycle filter"><option>All lifecycles</option><option>Stable</option><option>Beta</option><option>Deprecated</option><option>Archived</option></select>
               <select class="select select--sm" style="width:200px" aria-label="History filter" title="Filter revisions reachable from a tag"><option>All revisions</option><option>Tag stable → v2.3.1</option><option>Tag lts-2.2 → v2.2.0</option></select>
+              <button class="btn btn--sm" data-action="open" data-target="time-filter" aria-haspopup="dialog"><i data-lucide="calendar"></i>Any time<i data-lucide="chevron-down"></i></button>
+              <button class="btn btn--sm" data-action="open" data-target="author-filter" aria-haspopup="menu"><i data-lucide="user"></i>All authors<i data-lucide="chevron-down"></i></button>
               <span class="chip is-active" data-action="chip">All <span class="t-faint">6</span></span>
               <span class="chip" data-action="chip">Drafts <span class="t-faint">2</span></span>
               <span class="chip" data-action="chip">Published <span class="t-faint">4</span></span>
@@ -361,6 +398,55 @@
 </main>
 
 <!-- ===================== OVERLAYS ===================== -->
+
+<!-- Overflow menu (header ⋯) -->
+<div class="overlay" id="more-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:76px 170px 0 0">
+  <div class="menu" role="menu" style="min-width:260px">
+    <div class="menu__label">This project</div>
+    <a class="menu__item" href="#" aria-disabled="true" style="opacity:.55" title="Create at least two named branches to merge"><i data-lucide="git-merge"></i>Merge branches…<span class="badge badge--outline" style="margin-left:auto">gitlike</span></a>
+    <a class="menu__item" href="../ship/sunset-timeline.html"><i data-lucide="sunset"></i>Sunset timeline</a>
+    <a class="menu__item" href="../ship/published.html"><i data-lucide="globe"></i>Published surface</a>
+    <a class="menu__item" href="../ship/export-studio.html"><i data-lucide="package-open"></i>Export studio</a>
+    <div class="menu__sep"></div>
+    <a class="menu__item" href="#"><i data-lucide="link"></i>Copy link to project<span class="kbd">⌘⇧C</span></a>
+  </div>
+</div>
+
+<!-- Project switcher (breadcrumb) -->
+<div class="overlay" id="project-switch" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:52px 0 0 492px">
+  <div class="menu" role="menu" style="min-width:300px">
+    <div style="padding:4px 4px 8px"><div class="input-wrap"><i data-lucide="search"></i><input class="input input--sm" placeholder="Jump to project…" aria-label="Jump to project" /></div></div>
+    <a class="menu__item" href="#" aria-current="true" style="background:var(--bg-subtle)"><span class="fmt fmt--openapi">OpenAPI</span>Payments API<i data-lucide="check" style="margin-left:auto;color:var(--accent)"></i></a>
+    <a class="menu__item" href="#"><span class="fmt fmt--openapi">OpenAPI</span>Orders Service</a>
+    <a class="menu__item" href="#"><span class="fmt fmt--asyncapi">AsyncAPI</span>Inventory Events</a>
+    <div class="menu__sep"></div>
+    <a class="menu__item" href="projects.html"><i data-lucide="folder-kanban"></i>All projects</a>
+  </div>
+</div>
+
+<!-- Time filter popover -->
+<div class="overlay" id="time-filter" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:690px 0 0 740px">
+  <div class="menu" role="dialog" aria-label="Created between" style="min-width:300px;padding:12px">
+    <div class="t-caps mb-2">Created between</div>
+    <div class="grid grid-2" style="gap:8px">
+      <label class="field"><span class="label t-xs">From</span><input class="input input--sm" type="date" aria-label="From date" /></label>
+      <label class="field"><span class="label t-xs">To</span><input class="input input--sm" type="date" aria-label="To date" /></label>
+    </div>
+    <div class="row gap-1 wrap mt-3"><span class="chip" data-action="chip">Last 7 days</span><span class="chip" data-action="chip">Last 30 days</span><span class="chip" data-action="chip">This quarter</span></div>
+    <div class="row gap-2 mt-3" style="justify-content:flex-end"><button class="btn btn--sm btn--ghost" data-action="close">Clear</button><button class="btn btn--sm btn--primary" data-action="close">Apply</button></div>
+  </div>
+</div>
+
+<!-- Author filter menu -->
+<div class="overlay" id="author-filter" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:690px 0 0 850px">
+  <div class="menu" role="menu" style="min-width:220px">
+    <a class="menu__item" href="#" data-action="close"><i data-lucide="check" style="color:var(--accent)"></i>All authors</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--a">AL</span>Ada Lovelace</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--b">GH</span>Grace Hopper</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--c">LT</span>Linus Torvalds</a>
+  </div>
+</div>
+
 
 <!-- New version -->
 <div class="overlay" id="new-version" data-overlay>
@@ -596,25 +682,47 @@
   <div class="dialog dialog--sm"><div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="upload"></i></span><div><div class="dialog__title">Import a specification</div><div class="dialog__desc">Imports always create a new project; on success this page switches to it (“Imported ‘Name’ — showing its revisions”). Full wizard: <a href="import-wizard.html">import-wizard.html</a>.</div></div><button class="btn btn--ghost btn--icon dialog__close" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div><div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><a class="btn btn--primary" href="import-wizard.html">Open wizard</a></div></div>
 </div>
 
+<script>
+  // Status strip: one detail open at a time; clicking the open chip (or Collapse, or Escape) hides it.
+  document.addEventListener('hive:mounted', () => {
+    const strip = document.querySelector('.status-strip');
+    if (!strip) return;
+    const chips = [...strip.querySelectorAll('.status-chip')];
+    const details = [...strip.querySelectorAll('.status-strip__detail')];
+    const collapse = strip.querySelector('[data-collapse-strip]');
+    const show = (id) => {
+      chips.forEach((c) => { const on = !!id && c.getAttribute('data-detail') === id; c.classList.toggle('is-open', on); c.setAttribute('aria-expanded', on); });
+      details.forEach((d) => { d.hidden = d.getAttribute('data-detail-for') !== id; });
+      collapse.hidden = !id;
+    };
+    chips.forEach((c) => c.addEventListener('click', () => show(c.classList.contains('is-open') ? null : c.getAttribute('data-detail'))));
+    collapse.addEventListener('click', () => show(null));
+    strip.addEventListener('keydown', (e) => { if (e.key === 'Escape') show(null); });
+  });
+</script>
+
 <template id="notes">
   <p class="route">/ade/dashboard/versions?projectId=prj_8f2a1c</p>
   <h4>Replaces</h4>
   <ul><li><code>ade/dashboard/versions/page.tsx</code> (6.3k lines) — header, main-view tab strip, timeline filter bar, table, row menu, New/Edit/Publish/Sunset dialogs, confirms; <code>VersionChangesPanel</code>, <code>ProjectConversionPanel</code>, <code>ProjectRelatedArtifactsSection</code>, <code>VersionLintBadge</code>, <code>VersionMockCell</code>, <code>VersionLineageSnippet</code>, <code>PublishGuideViolationsPanel</code>, <code>BreakingPublishGuardrailPanel</code>, <code>VerificationPolicyDecisionPanel</code>, <code>ServerAheadPushBanner</code>.</li></ul>
   <h4>Keeps (1:1)</h4>
   <ul>
-    <li>Header: breadcrumb Projects › project; project select (catalog items excluded); Import (#5260, disabled until session resolves), Compare (≥2 versions), Merge branches [gitlike], New version (tooltip kept). Sunset timeline link in the description.</li>
+    <li>Header (DESIGN.md §5.3): <b>Compare</b> (≥2 versions) · <b>Import</b> (#5260, disabled until session resolves) · <b>⋯</b> · <b>New version</b> (tooltip kept) — one primary, two secondaries, the rest in the ⋯ menu: Merge branches [gitlike, disabled with its reason, outline badge] · Sunset timeline · Published surface · Export studio · Copy link to project (⌘⇧C). The project switcher is the last breadcrumb: a typeahead menu (format pill per project, current one checked, “All projects” last; catalog items excluded). Sunset timeline link in the description.</li>
     <li>Main tabs Timeline · Changes · Change report [gitlike+env] · Test bench (+ SuiteRegressionBadge) · Conversion (only with provenance rows). Changes + Conversion are inline panels; Change report / Test bench live in <code>version-dialogs.html</code>.</li>
-    <li>Timeline filter bar (search “Message, changelog, commit…”, author, from/to, Reset). Table toolbar: Lifecycle filter (server-side) + History filter (tags). Sortable Version · Revision/changelog · Status · Mock · Created by · Created · Actions.</li>
+    <li>Status strip (DESIGN.md §5.4): Compatible · What’s new · Deprecated · [gitlike] Server ahead as chips, one detail open at a time, the most severe open on first paint; each detail keeps the old banner’s copy and actions (View report · Open changes · Sunset timeline + Migration guide ↗ · Pull + Open merge). The open chip is remembered for the session (<code>hive.versions.status.&lt;projectId&gt;</code>).</li>
+    <li>One table toolbar (search “Message, changelog, commit…” · Lifecycle filter (server-side) · <b>Any time ▾</b> popover with from/to and Last 7 days / 30 days / This quarter · <b>All authors ▾</b> menu · History filter (tags) · state chips · sort); filters keep their URL parameters and a “Clear filters (n)” chip replaces Reset. Sortable Version · Revision/changelog · Status · Mock · Created by · Created · Actions.</li>
     <li>Version cell: mono link (View spec) · lifecycle badge (#739 tooltip) · Published lock chip · Locked shield chip · amber tag chips · <code>VersionLintBadge</code> (stored score, “Lint —” unscored) · violet fork box. Status: Published/Draft + Disabled. Mock cell: switch (aria/tooltips per published/draft), Mock on/Private mock on/Mock off/Draft mock off, PRIVATE badge, URL + copy, Scenarios link, 30-day sparkline. Created: MM/DD/YY + green Published date.</li>
     <li>Row menu: View spec · Export to another format… · [gitlike] Compare with current (disabled on head) · Relationship graph · Branch from here · Rollback… · Fork… · Tag · Schedule sunset (EOL)… · Edit · Publish/Unpublish · [gitlike] Freeze schema · Lock/Unlock revision · Delete. Flag-gated items are rendered with a honey “gitlike” flag instead of being hidden.</li>
     <li>Dialogs: New version (copy source + lineage snippet + compat note; strategy/bump “Version 2.5.0 will be created”; message/external ref/changelog with limits), Edit version (published-admin frozen notes, archived note, validation copy), Schedule sunset, Publish (visibility, note, changelog, three gate panels, force publish + reason, [gitlike] publication change report), Unpublish/Delete/Freeze confirms as <code>.dialog--sm</code>, OpenAPI viewer (JSON/YAML, VersionExportPanel cards, Copy/Download).</li>
     <li>Related artifacts panel (rows with format/protocol pills, Converted/Linked, Unlink, deleted struck-through, Suggest links → dashed suggestion + Link, “Show all representations”).</li>
-    <li>[gitlike] Version tags / Named branches chip panels (Protect/Unprotect/Remove, default/protected pills), ServerAheadPushBanner (Pull / Open merge), history graph strip.</li>
+    <li>[gitlike] Version tags / Named branches chip panels (Protect/Unprotect/Remove, default/protected pills), history graph strip.</li>
   </ul>
   <h4>Adds</h4>
-  <ul><li>Project title with format pill, head status and stored quality badge; Compatibility / What’s new / Deprecation banners; quick Draft/Published chips; hover row actions (publish/edit/sunset) in addition to the menu; project facts aside with Published/Export links.</li></ul>
+  <ul><li>Project title with format pill, head status and stored quality badge; Compatibility / What’s new / Deprecation statuses; quick Draft/Published chips; hover row actions (publish/edit/sunset) in addition to the menu; project facts aside with Published/Export links.</li></ul>
   <h4>States</h4>
-  <ul><li>Loading “Loading versions...” (skeleton row); empty “No versions yet — Get started by creating your first version”; lifecycle-filter / tag-filter / timeline-filter empties with Clear/Reset buttons; branch 401/403 “You do not have permission to view branch metadata for this project.”; toasts (Version created., Only owner or admin can publish/unpublish, Catalog items cannot be published…, Sunset schedule saved., Mock enabled for vX…) unchanged.</li></ul>
+  <ul><li>Loading “Loading versions...” (skeleton row); empty “No versions yet — Get started by creating your first version”; lifecycle-filter / tag-filter / timeline-filter empties with Clear/Reset buttons; branch 401/403 “You do not have permission to view branch metadata for this project.”; all statuses absent: the strip renders nothing; one status: its chip renders already open with no Collapse; toasts (Version created., Only owner or admin can publish/unpublish, Catalog items cannot be published…, Sunset schedule saved., Mock enabled for vX…) unchanged.</li></ul>
+  <h4>History</h4>
+  <ul><li>Quiet pass adopted in HIVE-11.2 (#5598, status strip), HIVE-11.3 (#5599, ⋯ menu and breadcrumb switcher) and HIVE-11.4 (#5600, one toolbar). The proposal and its callouts are kept as <code>proposals/versions-status-strip.html</code>.</li></ul>
 </template>
 </body>
 </html>

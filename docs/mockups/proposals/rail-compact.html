@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rail — fits 900 px (proposal) · Apiome mockup</title>
+<title>Rail — fits 900 px (adopted proposal) · Apiome mockup</title>
 <link rel="stylesheet" href="../assets/hive.css" />
 <script src="../assets/hive.js" defer></script>
 <style>
@@ -14,12 +14,6 @@
   .budget td { padding: 7px 10px; border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
   .budget td.num { text-align: right; font-family: var(--font-mono); }
   .budget tr.total td { font-weight: 600; border-top: 2px solid var(--border-strong); }
-  /* Proposed rail tweaks, applied to the live rail by the script below */
-  .nav-group__label .group-count { margin-left: auto; font-size: var(--fs-2xs); color: var(--fg-faint); font-family: var(--font-mono); display: none; }
-  .nav-group.is-collapsed .nav-group__label .group-count { display: inline; }
-  .nav-group.is-collapsed .nav-group__label [data-lucide] { margin-left: 4px; }
-  .rail__nav .nav-group { margin-top: 6px; }
-  .nav-item .nav-count { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full); background: var(--accent); color: #fff; font-size: var(--fs-2xs); font-weight: 600; display: inline-grid; place-items: center; }
 </style>
 </head>
 <body data-shell="app" data-nav="" data-page="proposals/rail-compact" data-tenant="Acme Corp">
@@ -30,7 +24,7 @@
         <div>
           <div class="crumbs"><a href="../index.html">Mockups</a><i data-lucide="chevron-right"></i><span>Proposals</span><i data-lucide="chevron-right"></i><span>Rail</span></div>
           <h1 class="page-title">Rail that fits 900 px</h1>
-          <p class="page-desc">The rail on the left <em>is</em> the proposal — the shared shell, re-cut by the script on this page. Toggle <strong>Callouts</strong> to number the changes.</p>
+          <p class="page-desc">Adopted in HIVE-12.1 – 12.4: the rail on the left is now the shared shell on every mockup (<a href="../foundations/shell.html">foundations/shell.html</a>). Toggle <strong>Callouts</strong> to number the changes.</p>
         </div>
         <div class="page-actions">
           <button class="btn" data-action="toggle-rail"><i data-lucide="panel-left-close"></i>Collapse rail <span class="kbd">⌘\</span></button>
@@ -71,7 +65,7 @@
           </table>
           <p class="t-xs t-subtle mt-2">* 15 items after Tenants and SDK settings leave, minus the 3 Workspace rows while the group is collapsed. Nothing scrolls at 900 px; below ≈ 860 px the nav scrolls as today, and under 900 px wide the rail collapses to icons.</p>
         </div>
-        <div class="card card--pad"><div class="t-h4">Try it</div><div class="row gap-2 wrap mt-2"><button class="btn btn--sm" data-action="open" data-target="ws-menu">Workspace menu</button><button class="btn btn--sm" data-action="open" data-target="user-menu">User menu</button><button class="btn btn--sm" data-action="open" data-target="palette">⌘K</button></div><p class="t-xs t-subtle mt-2">The shared menus are the current mockup’s; the proposal adds “Manage workspaces…” to the first and “Data browser · Migrations” to the second.</p></div>
+        <div class="card card--pad"><div class="t-h4">Try it</div><div class="row gap-2 wrap mt-2"><button class="btn btn--sm" data-action="open" data-target="ws-menu">Workspace menu</button><button class="btn btn--sm" data-action="open" data-target="user-menu">User menu</button><button class="btn btn--sm" data-action="open" data-target="palette">⌘K</button></div><p class="t-xs t-subtle mt-2">The shared menus carry the adopted rows: “Manage workspaces…” in the first and “Data browser · Migrations” in the second.</p></div>
       </aside>
     </section>
 
@@ -97,55 +91,21 @@
 </main>
 
 <script>
-  // Re-cut the shared rail into the proposed shape, then number the changes.
+  // Adopted (HIVE-12.1 – 12.4): the shared rail in assets/hive.js now draws this shape on every
+  // mockup, so this page only numbers the changes.
   document.addEventListener('hive:mounted', () => {
     const rail = document.querySelector('.rail');
     if (!rail) return;
-    const groupByLabel = (label) => [...rail.querySelectorAll('.nav-group')].find((g) => g.getAttribute('data-group') === label);
-    const removeItem = (id) => { const el = rail.querySelector(`[data-nav-id="${id}"]`); if (el) el.remove(); };
-
-    // 2 · 3 · 4 — items that leave the rail (the shipped rail has no Tools group; the mockup model does)
-    removeItem('tenants'); removeItem('sdk-settings'); removeItem('database'); removeItem('migration');
-    const tools = groupByLabel('Tools'); if (tools) tools.remove();
-
-    // 1 — Workspace starts collapsed, with a count
-    const ws = groupByLabel('Workspace');
-    if (ws) {
-      ws.classList.add('is-collapsed');
-      const lbl = ws.querySelector('.nav-group__label');
-      lbl.setAttribute('aria-expanded', 'false');
-      const count = document.createElement('span'); count.className = 'group-count'; count.textContent = ws.querySelectorAll('.nav-item').length;
-      lbl.insertBefore(count, lbl.querySelector('[data-lucide]'));
-    }
-    // Every group label gets a count (shown only while collapsed)
-    rail.querySelectorAll('.nav-group').forEach((g) => { const lbl = g.querySelector('.nav-group__label'); if (!lbl || lbl.querySelector('.group-count')) return; const c = document.createElement('span'); c.className = 'group-count'; c.textContent = g.querySelectorAll('.nav-item').length; lbl.insertBefore(c, lbl.querySelector('[data-lucide]')); });
-
-    // 6 — Preview pill → honey dot + tooltip
-    const lint = rail.querySelector('[data-nav-id="lint"]');
-    if (lint) { const pill = lint.querySelector('.nav-pill'); if (pill) { const d = document.createElement('span'); d.className = 'dot'; d.style.cssText = 'width:6px;height:6px;background:var(--honey);margin-left:6px'; d.title = 'Preview'; pill.replaceWith(d); } lint.title = 'Lint posture · Preview'; }
-
-    // 5 — Notifications with a count, first in the footer
+    const ws = [...rail.querySelectorAll('.nav-group')].find((g) => g.getAttribute('data-group') === 'Workspace');
     const bottom = rail.querySelector('.rail__bottom');
-    if (bottom) {
-      const n = document.createElement('a'); n.className = 'nav-item'; n.href = '#'; n.innerHTML = '<i data-lucide="bell"></i><span>Notifications</span><span class="nav-count" aria-label="3 unread">3</span>';
-      bottom.insertBefore(n, bottom.firstChild);
-    }
-
-    // Menus: add the moved destinations
-    const wsMenu = document.querySelector('#ws-menu .menu');
-    if (wsMenu) { const sep = document.createElement('div'); sep.className = 'menu__sep'; const a = document.createElement('a'); a.className = 'menu__item'; a.href = '../workspace/tenants.html'; a.innerHTML = '<i data-lucide="building-2"></i>Manage workspaces…'; wsMenu.appendChild(sep); wsMenu.appendChild(a); }
-    const userMenu = document.querySelector('#user-menu .menu');
-    if (userMenu) { const sep = document.createElement('div'); sep.className = 'menu__sep'; const a = document.createElement('a'); a.className = 'menu__item'; a.href = '../tools/database.html'; a.innerHTML = '<i data-lucide="database"></i>Data browser'; const b = document.createElement('a'); b.className = 'menu__item'; b.href = '../tools/migration.html'; b.innerHTML = '<i data-lucide="route"></i>Migrations'; userMenu.appendChild(sep); userMenu.appendChild(a); userMenu.appendChild(b); }
-
-    // Callouts
     const put = (el, n, dx, dy) => { if (!el) return; const dot = document.createElement('span'); dot.className = 'mock-annot'; dot.textContent = n; el.style.position = el.style.position || 'relative'; dot.style.left = (dx ?? -10) + 'px'; dot.style.top = (dy ?? -10) + 'px'; el.appendChild(dot); };
-    put(ws, 1, 214, 0); put(rail.querySelector('.ws-switch'), 2, 214, 10); put(rail.querySelector('.rail__user'), 3, 214, 12); put(rail.querySelector('[data-nav-id="export"]'), 4, 214, 6); put(bottom && bottom.firstChild, 5, 214, 6); put(lint, 6, 214, 6);
+    put(ws, 1, 214, 0); put(rail.querySelector('.ws-switch'), 2, 214, 10); put(rail.querySelector('.rail__user'), 3, 214, 12); put(rail.querySelector('[data-nav-id="export"]'), 4, 214, 6); put(bottom && bottom.firstElementChild, 5, 214, 6); put(rail.querySelector('[data-nav-id="lint"]'), 6, 214, 6);
     if (window.Hive) Hive.icons();
   });
 </script>
 
 <template id="notes">
-  <p class="route">Shell — proposal; amends <code>foundations/shell.html</code> §Rail and DESIGN.md §5.2 / §6. Routes are unchanged.</p>
+  <p class="route">Shell — <b>adopted in HIVE-12.1 – 12.4</b> (#5608 – #5611) and folded into <code>foundations/shell.html</code>, <code>assets/hive.js</code> and DESIGN.md §5.2 / §6. Kept as the record of the change. Routes are unchanged.</p>
   <h4>Problem (measured 2026-10-07 on the shipped shell)</h4>
   <ul>
     <li>The expanded rail carries 17 destinations in 5 groups plus a 4-row footer: ≈ 1 030 px of content (shell fixture, 2026-10-07). At 900 px tall (a 1440 × 900 laptop, or 1536 × 864 at 125 %) the nav scrolls behind a hidden scrollbar and the Workspace group is below the fold.</li>

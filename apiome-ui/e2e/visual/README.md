@@ -78,8 +78,10 @@ measurement mistake.
 
 `routes.ts` holds two lists: the eighteen mockups that **are** compared, and every other page
 mockup with the reason it is not — its redesign has not landed, it is a dialog rather than a
-page, it uses the auth or launcher shell, or its suite builds markup inline instead of
-dumping a fixture. `tests/visual-parity-routes.test.ts` fails if a mockup appears in neither,
+page, it uses the auth or launcher shell, its suite builds markup inline instead of
+dumping a fixture, or it is an adopted round-2 proposal kept only as the record of the change
+(HIVE-13.4 folded each into its page mockup, which is what the route is compared against).
+`tests/visual-parity-routes.test.ts` fails if a mockup appears in neither,
 so a newly drawn screen cannot quietly slip past the harness.
 
 When a redesign ticket lands, move its mockup from `UNCOVERED_MOCKUPS` into `PARITY_ROUTES`

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Catalog — quiet list page (proposal) · Apiome mockup</title>
+<title>Catalog — quiet list page (adopted proposal) · Apiome mockup</title>
 <link rel="stylesheet" href="../assets/hive.css" />
 <script src="../assets/hive.js" defer></script>
 <style>
@@ -185,7 +185,7 @@
         <div class="t-xs t-subtle mt-2">The full list, with docs links, also opens from the Import dialog’s “Which formats?” link.</div>
       </div>
     </div>
-    <div class="dialog__footer"><a class="btn btn--ghost" href="../../guide/supported-formats.md"><i data-lucide="book-open"></i>Supported formats guide</a><button class="btn btn--primary" data-action="close">Got it</button></div>
+    <div class="dialog__footer"><a class="btn btn--ghost" href="../../../apiome-docs/docs/bring-in/supported-formats.md"><i data-lucide="book-open"></i>Supported formats guide</a><button class="btn btn--primary" data-action="close">Got it</button></div>
   </div>
 </div>
 
@@ -205,7 +205,7 @@
 </script>
 
 <template id="notes">
-  <p class="route">/ade/dashboard/catalog — proposal, supersedes the top of <code>sources/catalog.html</code> (cards view, inspectors, dialogs there still apply)</p>
+  <p class="route">/ade/dashboard/catalog — <b>adopted in HIVE-11.5 / 11.6</b> (#5601, #5602) and folded into <code>sources/catalog.html</code>, which is the authority now. Kept as the record of the change.</p>
   <h4>Problem (measured 2026-10-07 on the shipped page)</h4>
   <ul>
     <li>Three standing blocks precede the list on every visit — the non-publishable explainer, the Supported import formats row and the 4-stat strip — so the first catalog row is ≈ 600 px down at 1440 × 900 before any filtering.</li>

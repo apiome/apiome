@@ -1,6 +1,7 @@
 # Apiome “Hive” — design language for the apiome-ui redesign
 
-> **Status:** proposal (mockups). This document is the single reference for the
+> **Status:** adopted — the redesign shipped (P0–P7), the round-2 quiet pass (§12 P8)
+> and the round-3 facelift (§14) are folded in. This document is the single reference for the
 > look, feel and interaction model of the redesigned `apiome-ui`. Every mockup
 > under `docs/mockups/` is built on it (`assets/hive.css`, `assets/hive.js`).
 > Roadmap tickets should cite sections of this file (e.g. “implement §5.2 rail”)
@@ -53,7 +54,7 @@ The mark is a bee on a honeycomb (navy `#16265C`, azure `#1E90E8`, honey
 | --- | --- |
 | **Navy ink** | primary buttons (light theme), page titles, selected text, **the rail on dark themes** (round 3: on a dark-based theme the navigation rail is the mark's navy with white type; on a light theme it follows the page — warm paper, the page's ink) |
 | **Azure accent** | links, focus rings, selected states, info, charts, the underline of the active tab |
-| **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight, **the active rail marker, the HEAD node on the Versions timeline, and the primary button in the signature Dark theme** (round 3). Never used to mean *warning* (warnings are amber with an icon). |
+| **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight, **the active rail marker, the HEAD node on the Versions timeline, and the primary button in the signature Dark theme** (round 3). Never used to mean *warning* (warnings are amber with an icon). **Never a feature-flag or filter colour** (quiet pass): a feature-flag marker is `.badge--outline`, a saved search or filter is a neutral `.chip`, and a standing marker is a 6 px dot rather than a pill (the rail's “Preview”). The token gate that holds the line is HIVE-13.1 (#5614). |
 | **Hexagon** | workspace avatars (`.avatar--hex`), **item avatars filled with the item's format colour** (catalog items, projects; round 3), empty-state art, the faint canvas pattern on auth/launcher pages (`.hex-bg`) and behind the Home hero band. People stay round. |
 
 Voice: confident, brief, kind. “Nothing published yet — publish a version to see it
@@ -206,14 +207,24 @@ tenant pill + version badge + theme + profile) is **retired**. Its jobs move to:
 | Home / Control Panel tabs | rail brand → *All apps* launcher; rail *Home* item |
 | Designer / Developer suite menu | commercial suite entries injected into the rail and launcher by the host at runtime — those products live in their own repositories and are not designed here |
 | Tenant switcher | **Workspace switcher** at the top of the rail (hex avatar + name + role · plan) |
-| Version badge / What’s new | user menu → *What’s new* (honey dot when unread) + build string in menu footer |
+| Version badge / What’s new | user menu → *What’s new* (honey dot when unread) + build string in the menu footer. The build string appears in exactly two places — the user-menu footer and the launcher footer (a button that opens What’s new) — and never beside the brand; the launcher’s top row carries a *What’s new* icon with the same unread dot. |
 | Theme selector | Preferences pane (and quick light/dark toggle in the mock bar) |
 | Profile menu | rail footer user button → Profile · Linked accounts · Preferences · What’s new · Shortcuts · Admin console · All apps · Sign out |
 
 ### 5.2 Rail (`.rail`)
 264 px expanded / 64 px collapsed (`⌘\`, chevron on hover, or Preferences).
 Top-to-bottom: brand (mark + “apiome / Platform”), workspace switcher, search
-trigger (`⌘K`), grouped nav, footer (Help & docs · Preferences · user).
+trigger (`⌘K`), grouped nav, footer (**Notifications** with an unread count · Help & docs ·
+Preferences · user).
+
+**Fits a 900 px window** (quiet pass). A group may declare `defaultCollapsed`; with no stored
+choice it starts folded, and a folded label shows how many destinations it holds (the choice
+persists under `hive.navCollapsed`). **Workspace** (Members · Roles · API keys) starts folded.
+Destinations that are not daily work live where their job already is: **Tenants** is the last
+row of the workspace switcher (“Manage workspaces…”), **Data browser · Migrations** are user-menu
+rows, and **SDK settings** is an Export studio tab. Notifications leads the footer with an accent
+count (capped at “99+”), which becomes a 6 px dot on the bell in the icon rail. A preview
+destination carries a 6 px honey dot after its label, with the word in the tooltip — never a pill.
 Round 3: the rail follows light/dark. On a light theme it is warm paper (`--bg-rail`) with
 the page's ink and a hairline edge; on a dark-based theme it is navy-tinted ink (a gradient
 mixed from `--brand-navy`) with white type. The bee sits in a honey hexagon in both. Nav
@@ -229,6 +240,12 @@ tooltips on hover and hairlines between groups.
 Sticky, translucent (backdrop blur), 1 px hairline. Contains breadcrumb (12 px),
 title (24 px/600/-0.02em, optional badge), one-line description, right-aligned
 actions (**one** primary + secondaries + overflow), optional underline tab row.
+**Action cap** (quiet pass): at most **two** secondary buttons beside the primary; everything
+else goes into a ⋯ menu (`PageHeader` `overflow` slot), where a feature-flagged row carries an
+outline badge and a disabled row says why. A **record switcher** (project, repository, endpoint)
+is the last breadcrumb — a typeahead menu button (`crumbSwitcher` slot) — never a `<select>` in
+the actions. `apiome-ui/tests/page-header-gate.test.tsx` (HIVE-13.2) fails a header that breaks
+either rule.
 Content fills the space beside the rail: the side gutter is `--page-pad` or 2.5 % of that
 space, whichever is larger, so content spans at least 95 % of it, up to a 2400 px safety cap
 (`--page-max`). Reading/forms pages use `.page-body--narrow` (920 px).
@@ -244,6 +261,14 @@ space, whichever is larger, so content spans at least 95 % of it, up to a 2400 p
   `>` for commands.
 * **Toast** — bottom-right, 360 px, icon + title + description + optional action
   (used for Undo on bulk lint decisions).
+* **Status strip** (`.status-strip`, `StatusStrip`; quiet pass) — the overlay-free answer to
+  “several statuses, one page”: one row of status chips (icon · label · muted detail) with at
+  most **one** detail row open below it (icon · title · body · actions). The most severe chip
+  opens on first paint (danger › warn › accent › ok); clicking the open chip, **Collapse** or
+  `Esc` closes it, and the choice persists for the session. One status renders already open
+  with no Collapse; none renders nothing. **A page never stacks more than one banner** under its
+  header — several statuses are a strip (the Versions page: Compatible · What’s new · Deprecated
+  · Server ahead). Gated by `page-header-gate.test.tsx` (HIVE-13.2).
 
 
 ---
@@ -264,11 +289,13 @@ Routes are unchanged; only grouping and labels change.
 | | Sunset timeline | `/ade/dashboard/versions/sunset-timeline` |
 | | Export studio | `/ade/dashboard/export/studio` |
 | **Govern** | Style guides | `/ade/dashboard/style-guides`, `/[guideId]` |
-| | Lint posture *(Preview)* | `/ade/dashboard/lint-workspace` |
+| | Lint posture *(Preview — a honey dot)* | `/ade/dashboard/lint-workspace` |
 | | Access audit | `/ade/dashboard/audit` |
-| **Workspace** | Members · Roles · API keys · Tenants | `/ade/dashboard/{members,roles,api-keys,tenants}` |
-| **Tools** | Data browser · Migrations | `/ade/database`, `/ade/migration` |
+| **Workspace** *(folded by default)* | Members · Roles · API keys | `/ade/dashboard/{members,roles,api-keys}` |
+| workspace switcher | Tenants (“Manage workspaces…”) | `/ade/dashboard/tenants` |
+| Export studio tab | SDK settings | `/ade/dashboard/sdk-settings` |
 | user menu | Profile · Linked accounts | `/ade/dashboard/profile`, `/linked-accounts` |
+| user menu | Data browser · Migrations | `/ade/database`, `/ade/migration` |
 | brand / user menu | All apps (launcher) | `/ade` |
 | user menu | Admin console | `/admin/**` |
 
@@ -288,6 +315,10 @@ stand-in for `lib/platform-nav.ts`).
 | `.tabs .tab .count` `--pills` `.vtabs` | underline tabs with counts | `Tabs` + `tabStyles` |
 | `.badge[data-status] .badge--*` `.fmt--*` `.method--*` `.chip` `.tag` `.dot` | status vocab, format & method pills, filter chips | `Badge`, `ui/catalog/FormatPill`, `ui/mcp/*Pill` |
 | `.card .card__header/body/footer` `--hover --flat --soft --honey --link --selected` | panels | `Card` |
+| `.facts` | a stat strip folded into one tabular line, with *Show stats* revealing the `.stat-grid` in place (quiet pass) | `FactsLine` |
+| `.status-strip` `.status-chip` `.status-strip__detail` | several statuses as one row, one detail open (§5.4) | `StatusStrip` |
+| `.callout--dismiss` | a first-visit explainer: *Learn more* · *Got it*, remembered under `hive.seen.<id>` | `DismissibleCallout` (`lib/seen.ts`) |
+| `.next-line` | unreleased products named once, as text, with a link to What’s new (§10) | `ComingNext` |
 | `.stat` `.stat-grid` `.ring` `.sparkline` `.bars` `.meter` `.progress` | metrics; a stat strip is separate raised tiles, a share draws a ring beside the figure, a history a sparkline under it, and the figure counts up once (round 3 "layers" / "viz" / "motion") | `Stat` (`aside`, `trend`), `Ring`, `Sparkline`, `CountUp` |
 | `.table-wrap .table-toolbar .table .table-foot .pager .bulk-bar` | data tables: sticky caps header, hover, selection, dense variant, sticky bulk bar | new `DataTable` (replaces `dashboardScreenClasses.ts`) |
 | `.empty` `--inline --dashed` | empty states with hex art, title, desc, CTA | `EmptyState` |
@@ -310,11 +341,18 @@ fails CI when a `components/ui` component ships without a specimen on the route.
 
 ## 8. Patterns
 
-* **List page** = page header (title, description, primary “New …”) → optional
-  stat strip → `.table-wrap` with toolbar (search, filter chips, view segmented,
-  sort) → table with hover row actions → foot (count · pager). Selection reveals
-  a sticky `.bulk-bar`. Empty table → `.empty` inside the card. Filters live in
-  the URL (as the lint workspace already does).
+* **List page** (quiet pass) = page header (title, description, primary “New …”) →
+  **facts line** (`.facts`: the page’s numbers as one tabular line; *Show stats* expands the
+  unchanged `.stat-grid` in place and is remembered per device) → **one** `.table-wrap` that owns
+  every toolbar row (search, filters, view chips, view switch, sort) and the table with hover
+  row actions → foot (count · pager). Selection reveals a sticky `.bulk-bar`. Empty table →
+  `.empty` inside the card; the facts line reads “0 …” with no toggle. Filters live in the URL.
+  **Explanatory copy shows once**: a dismissible first-visit `.callout--dismiss` (*Learn more* ·
+  *Got it*, persisted under `hive.seen.<id>`) plus a ghost link in the description (“How the
+  catalog works” → dialog) where it lives afterwards — nothing is lost, nothing stands. A full
+  stat strip stays only where the numbers *are* the page: Home and the Analytics pages. At
+  1440 × 900 the first row of data starts within 360 px on a list page, 560 px on a detail page
+  and 700 px on Versions — the parity harness measures it (HIVE-13.3, `e2e/visual/routes.ts`).
 * **Detail page** = breadcrumb + title + status badge + actions → underline tabs
   → two-column body (main + 340 px aside with metadata `.kv`).
 * **Drawer-first details** for audit events, members, keys, catalog previews,
@@ -367,6 +405,12 @@ Keyboard paths per task: `apiome-docs/docs/workspace/keyboard.md`; contract and 
 Titles are nouns (“Projects”), buttons are verbs (“New project”), descriptions
 answer “what is this for?” in ≤ 14 words. Avoid “Manage”, “Configure” as titles.
 Errors: what happened + what to do (“Slug is taken — try `acme-eu`”).
+
+**“Coming soon”** (quiet pass): an unreleased feature appears **once, as text** — one “Coming
+next: …” line (`ComingNext`) whose only control is a link to What’s new — never as a disabled
+tile, a dead button or a “Soon” row. Roadmap copy is **generated from What’s new** (the
+launcher’s *Recently shipped*), never hand-written, so it cannot advertise something that
+already shipped. `copy-voice-gate.test.ts` fails a “Coming soon” button (HIVE-13.2).
 
 HIVE-10.4 made this a gate as well: `apiome-ui/tests/copy-voice-gate.test.ts` fails on a state
 or page description over 14 words, "No … found" copy, or a "Manage …" / "… Management" title.
@@ -421,38 +465,23 @@ mockup’s **Notes → Keeps (1:1) / Adds / States** as its acceptance criteria.
 | **P5** | Workspace + account | `workspace/*.html`, `account/*.html`, `auth/*.html` | Tenants (drawer-based admin), members, roles, API keys, audit; profile, linked accounts; login, 2FA, OAuth sign-up, onboarding. Replaces every `window.confirm`/`prompt`. |
 | **P6** | Admin + tools | `admin/*.html`, `tools/*.html` | Admin console on the same shell (rose variant), users/tenants/licenses/flags/templates/auth providers; data browser, migrations. Removes the three dead nav links. |
 | **P7** | Polish | all | Empty-state art pass, motion + reduced-motion, a11y sweep (focus, live regions, AAA in High contrast), density audit, copy pass. |
+| **P8** | Quiet pass (round 2) | `build/versions.html`, `sources/catalog.html`, `home/launcher.html`, `foundations/shell.html` (records: `proposals/{versions-status-strip,catalog-quiet,launcher-focused,rail-compact}.html`, rationale `PROPOSALS.md`) | `StatusStrip`, `FactsLine`, `DismissibleCallout`, `ComingNext`; Versions status strip, ⋯ header and one toolbar; the quiet list page on Catalog, Repositories, Primitives, Members and the Govern/Ship notes; a rail that fits 900 px; the focused launcher; the honey, header, banner, dead-control and first-row gates (HIVE-11 / 12 / 13, `docs/ROADMAP_HIVE_11_QUIET_PASS.md`). |
 
 Ordering rule: **P0 → P1 first and in order** (everything else depends on tokens
 and the shell). P2 must precede P3–P5, which are otherwise independent of each
-other. P6 can run in parallel with P3–P5 once P2 lands.
+other. P6 can run in parallel with P3–P5 once P2 lands. P8 depends on nothing and runs
+alongside P6.
 
 ## 13. Page index
 
 See `README.md` for the full mockup → route → components table. Every mockup
 also carries a **Notes** panel (bottom-right mock bar → *Notes*) with the route,
-what it replaces, and per-screen implementation notes.
+what it replaces, and per-screen implementation notes. The round-2 proposals
+(`PROPOSALS.md`, 2026-10-07) were adopted as P8 and folded into the sections above
+(§2, §5.1–5.4, §6, §7, §8, §10, §12); their mockups under `proposals/` are kept as
+the record of the change.
 
-## 14. Round-2 proposals (2026-10-07) — *proposed, not yet adopted*
-
-A look & feel review of the shipped redesign (`apiome-ui` 0.351.0) found that the
-tokens, components and themes hold, and that what remains is **density and
-attention**: standing stat strips and banners push the first row of data 600–870 px
-down at 1440 × 900, headers exceed the one-primary rule, the rail overflows a 900 px
-window, and unopenable “coming soon” surfaces take prime space. The findings, the
-measurements and four mockups are in **`PROPOSALS.md`** and `proposals/`:
-
-| Mockup | Proposes |
-| --- | --- |
-| `proposals/versions-status-strip.html` | status strip (one row, one open detail) instead of stacked banners; ⋯ overflow in the header; record switcher in the breadcrumb; one toolbar per table |
-| `proposals/catalog-quiet.html` | facts line instead of a stat strip on list pages; dismissible first-visit explainer + ghost link; one card per list |
-| `proposals/launcher-focused.html` | only openable tiles; one “Coming next” line; Recently shipped from What’s new; build string in the footer |
-| `proposals/rail-compact.html` | Workspace collapsed by default with counts; Tenants / SDK settings / Tools re-homed; Notifications count; Preview pill → dot |
-
-If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (default-collapsed
-groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
-and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.
-
-## 15. Round-3 proposals (2026-10-30) — the facelift, *adopted 2026-11-02*
+## 14. Round-3 proposals (2026-10-30) — the facelift, *adopted 2026-11-02*
 
 After the quiet pass (HIVE-11/12/13) the app reads as designed but **plain**: every page is
 the same shape, brand lives only on the launcher and login, every surface is a 1 px-bordered

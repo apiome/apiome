@@ -135,6 +135,29 @@ describe('the coverage ledger', () => {
     expect(unknown).toEqual([]);
   });
 
+  it('leaves no round-2 proposal awaiting a redesign that shipped (HIVE-13.4)', () => {
+    // The quiet pass adopted all four; each is the record of its change, and its page mockup —
+    // not the proposal — is the route's authority.
+    const roundTwo = [
+      'proposals/catalog-quiet.html',
+      'proposals/launcher-focused.html',
+      'proposals/rail-compact.html',
+      'proposals/versions-status-strip.html',
+    ];
+    const reasons = Object.fromEntries(
+      UNCOVERED_MOCKUPS.filter((entry) => roundTwo.includes(entry.mockup)).map((entry) => [
+        entry.mockup,
+        entry.reason,
+      ])
+    );
+    expect(reasons).toEqual(Object.fromEntries(roundTwo.map((mockup) => [mockup, 'adopted'])));
+  });
+
+  it('compares Versions and Catalog against the page mockups the proposals were folded into', () => {
+    expect(parityRoute('versions').mockup).toBe('build/versions.html');
+    expect(parityRoute('catalog').mockup).toBe('sources/catalog.html');
+  });
+
   it('lists each excluded mockup once', () => {
     const mockups = UNCOVERED_MOCKUPS.map((entry) => entry.mockup);
     expect(new Set(mockups).size).toBe(mockups.length);

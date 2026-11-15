@@ -100,18 +100,16 @@
           ]},
           { label: 'Govern', items: [
             { id: 'style-guides', label: 'Style guides', icon: 'book-open-check', href: p('govern/style-guides.html') },
-            { id: 'lint', label: 'Lint posture', icon: 'shield-check', href: p('govern/lint-posture.html'), pill: 'Preview' },
+            // A preview is a 6 px honey dot after the label, the word in the tooltip (HIVE-12.4).
+            { id: 'lint', label: 'Lint posture', icon: 'shield-check', href: p('govern/lint-posture.html'), dot: 'Preview' },
             { id: 'audit', label: 'Access audit', icon: 'scroll-text', href: p('workspace/audit.html') },
           ]},
-          { label: 'Workspace', items: [
+          // Admin chores, not daily work: folded until the reader opens it (HIVE-12.1). Tenants
+          // lives in the workspace switcher menu and the Tools in the user menu (HIVE-12.2).
+          { label: 'Workspace', defaultCollapsed: true, items: [
             { id: 'members', label: 'Members', icon: 'users', href: p('workspace/members.html') },
             { id: 'roles', label: 'Roles', icon: 'shield', href: p('workspace/roles.html') },
             { id: 'api-keys', label: 'API keys', icon: 'key-round', href: p('workspace/api-keys.html') },
-            { id: 'tenants', label: 'Tenants', icon: 'building-2', href: p('workspace/tenants.html') },
-          ]},
-          { label: 'Tools', items: [
-            { id: 'database', label: 'Data browser', icon: 'database', href: p('tools/database.html') },
-            { id: 'migration', label: 'Migrations', icon: 'route', href: p('tools/migration.html') },
           ]},
         ],
       },
@@ -158,16 +156,17 @@
     const model = navModel(rel)[kind === 'admin' ? 'admin' : 'app'];
     const tenant = document.body.getAttribute('data-tenant') || 'Acme Corp';
     const initials = tenant.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-    let collapsed = [];
-    try { collapsed = JSON.parse(store.get('hive.navCollapsed', '[]')); } catch (e) { collapsed = []; }
+    // No stored choice yet → the groups the model folds by default (DESIGN.md §5.2).
+    let collapsed = model.groups.filter((g) => g.defaultCollapsed && g.label).map((g) => g.label);
+    try { const saved = store.get('hive.navCollapsed', null); if (saved != null) collapsed = JSON.parse(saved); } catch (e) { /* keep the defaults */ }
     const groups = model.groups.map((g) => `
       <div class="nav-group${g.label && collapsed.includes(g.label) ? ' is-collapsed' : ''}" data-group="${esc(g.label || '')}">
-        ${g.label ? `<div class="nav-group__label" data-action="nav-group" role="button" aria-expanded="${!collapsed.includes(g.label)}">${esc(g.label)}<i data-lucide="chevron-down"></i></div>` : ''}
+        ${g.label ? `<div class="nav-group__label" data-action="nav-group" role="button" aria-expanded="${!collapsed.includes(g.label)}">${esc(g.label)}<span class="nav-group__count" aria-label="${g.items.length} destinations">${g.items.length}</span><i data-lucide="chevron-down"></i></div>` : ''}
         <div class="nav-group__items">
         ${g.items.map((it) => `
-          <a class="nav-item${it.id === activeId ? ' is-active' : ''}${it.disabled ? ' is-disabled' : ''}" href="${it.href}" data-nav-id="${it.id}" ${it.id !== activeId ? `data-tip-side="right"` : ''}>
+          <a class="nav-item${it.id === activeId ? ' is-active' : ''}${it.disabled ? ' is-disabled' : ''}" href="${it.href}" data-nav-id="${it.id}" ${it.id !== activeId ? `data-tip-side="right"` : ''}${it.dot ? ` title="${esc(it.label)} · ${esc(it.dot)}" aria-label="${esc(it.label)}, ${esc(it.dot.toLowerCase())}"` : ''}>
             <i data-lucide="${it.icon}"></i><span class="t-truncate">${esc(it.label)}</span>
-            ${it.pill ? `<span class="badge badge--honey nav-pill">${esc(it.pill)}</span>` : ''}
+            ${it.dot ? `<span class="nav-dot" aria-hidden="true"></span>` : ''}
             ${it.ext ? `<i data-lucide="arrow-up-right" class="nav-ext"></i>` : ''}
           </a>`).join('')}
         </div>
@@ -195,6 +194,7 @@
         </div>
         <nav class="rail__nav">${groups}</nav>
         <div class="rail__bottom">
+          <a class="nav-item" href="#" aria-label="Notifications, 3 unread"><i data-lucide="bell"></i><span>Notifications</span><span class="nav-count" aria-hidden="true">3</span></a>
           <a class="nav-item" href="${rel}foundations/help.html"><i data-lucide="circle-help"></i><span>Help &amp; docs</span></a>
           <a class="nav-item" href="#" data-action="open" data-target="settings-pane"><i data-lucide="settings-2"></i><span>Preferences</span><span class="kbd" style="margin-left:auto">⌘,</span></a>
           <button class="rail__user" data-action="open" data-target="user-menu" aria-haspopup="menu">
@@ -218,8 +218,8 @@
           <a class="menu__item" href="#"><span class="avatar avatar--xs avatar--hex avatar--c">GL</span><span class="grow">Globex Labs</span><span class="badge badge--outline">Admin</span></a>
           <a class="menu__item" href="#"><span class="avatar avatar--xs avatar--hex avatar--d">IN</span><span class="grow">Initech</span><span class="badge badge--outline">Member</span></a>
           <div class="menu__sep"></div>
-          <a class="menu__item" href="${rel}workspace/tenants.html"><i data-lucide="building-2"></i>Manage workspaces</a>
           <a class="menu__item" href="${rel}workspace/tenants.html#create"><i data-lucide="plus"></i>Create workspace</a>
+          <a class="menu__item" href="${rel}workspace/tenants.html"><i data-lucide="building-2"></i>Manage workspaces…</a>
         </div>
       </div>
       <!-- User menu -->
@@ -233,6 +233,8 @@
           <a class="menu__item" href="#" data-action="open" data-target="whats-new"><i data-lucide="sparkles"></i>What’s new<span class="dot dot--honey" style="margin-left:auto"></span></a>
           <a class="menu__item" href="${rel}foundations/help.html"><i data-lucide="keyboard"></i>Keyboard shortcuts<span class="kbd">?</span></a>
           <div class="menu__sep"></div>
+          <a class="menu__item" href="${rel}tools/database.html"><i data-lucide="database"></i>Data browser</a>
+          <a class="menu__item" href="${rel}tools/migration.html"><i data-lucide="route"></i>Migrations</a>
           <a class="menu__item" href="${rel}admin/overview.html"><i data-lucide="shield-half"></i>Admin console<i data-lucide="arrow-up-right" style="margin-left:auto"></i></a>
           <a class="menu__item" href="${rel}home/launcher.html"><i data-lucide="layout-grid"></i>All apps</a>
           <div class="menu__sep"></div>

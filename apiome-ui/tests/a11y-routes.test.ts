@@ -4,8 +4,9 @@
  * "axe gate in CI for all redesigned routes" only means something if "all" is checked. This suite
  * holds the ledger against the visual-parity harness's own record of the redesign: every page
  * mockup that harness compares, or leaves uncovered for any reason other than `awaiting-redesign`
- * or `superseded` (the route is then gated under the proposal that replaced it), must have an
- * entry — and every entry must point at something that exists.
+ * or `adopted` (an adopted round-2 proposal: the route is gated under the page mockup it was
+ * folded into, HIVE-13.4), must have an entry — and every entry must point at something that
+ * exists.
  */
 
 import fs from 'node:fs';
@@ -20,7 +21,7 @@ const E2E = path.join(__dirname, '..', 'e2e');
 const REDESIGNED = [
   ...PARITY_ROUTES.map((route) => route.mockup),
   ...UNCOVERED_MOCKUPS.filter(
-    (entry) => entry.reason !== 'awaiting-redesign' && entry.reason !== 'superseded'
+    (entry) => entry.reason !== 'awaiting-redesign' && entry.reason !== 'adopted'
   ).map((entry) => entry.mockup),
 ];
 

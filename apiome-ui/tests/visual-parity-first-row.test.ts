@@ -171,7 +171,7 @@ function signature(): ParitySignature {
 function scored(firstRow: FirstRowVerdict | null): ParityReport {
   return scoreParity({
     id: 'catalog',
-    mockup: 'proposals/catalog-quiet.html',
+    mockup: 'sources/catalog.html',
     subject: 'hive-catalog/table.html',
     app: signature(),
     mockupSignature: signature(),
