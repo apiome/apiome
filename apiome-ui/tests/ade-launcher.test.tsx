@@ -3,9 +3,12 @@
  *
  * The ticket is a re-skin, so the first thing this suite asserts is *inventory*: every line
  * of the mockup's "Keeps (1:1)" list is still on the page and still does what it did — the
- * build badge that opens What's new, preferences, the account chip, sign out, the greeting
- * and headline, the ordered application grid, the resource rows, the dashed roadmap panel
- * and the footer.
+ * build string that opens What's new, preferences, the account chip, sign out, the greeting
+ * and headline, the ordered application grid, the resource rows and the footer.
+ *
+ * HIVE-12.6 (#5613) moved the build string from the top row to the footer, put a What's new
+ * icon button in its place, and replaced the roadmap panel with "Recently shipped", read
+ * from the What's new notes; both What's new controls carry the user menu's unread dot.
  *
  * On top of that, the four acceptance criteria that are statements about markup rather than
  * about looks: commercial cards come from entitlements and no product route is written down,
@@ -27,6 +30,7 @@ import 'jest-axe/extend-expect';
 
 const mockSignOutEverywhere = jest.fn<Promise<void>, [string]>(async () => undefined);
 const mockOpenPreferences = jest.fn<boolean, [string | undefined]>(() => true);
+const mockOpenShortcutSheet = jest.fn<boolean, []>(() => true);
 
 // A real anchor, so every card and row keeps its link semantics for axe and for the `href`
 // assertions — with the navigation suppressed, which jsdom answers with a "Not implemented"
@@ -71,6 +75,10 @@ jest.mock('@lib/auth/sign-out-client', () => ({
 
 jest.mock('@/app/components/ade/preferences/preferencesDrawerBus', () => ({
   openPreferences: (tab?: string) => mockOpenPreferences(tab),
+}));
+
+jest.mock('@/app/components/shell/shortcutSheetBus', () => ({
+  openShortcutSheet: () => mockOpenShortcutSheet(),
 }));
 
 jest.mock('rehype-raw', () => ({ __esModule: true, default: () => () => {} }));
@@ -159,19 +167,50 @@ beforeEach(() => {
   };
   mockSignOutEverywhere.mockClear();
   mockOpenPreferences.mockClear();
+  mockOpenShortcutSheet.mockClear();
   window.localStorage.clear();
-  // `WhatsNewDialog` fetches the release notes on open; jsdom ships no `fetch`.
-  global.fetch = jest.fn().mockResolvedValue({ text: async () => 'Notes.' }) as unknown as typeof fetch;
+  // `WhatsNewDialog` fetches the release notes on open, and `RecentlyShipped` on mount; jsdom
+  // ships no `fetch`. Plain prose has no entries, so by default the card stays out of the way.
+  mockNotes('Notes.');
 });
 
+/**
+ * Serve `markdown` as `/WHATS_NEW.md` for the rest of the test.
+ *
+ * @param markdown The notes file's body.
+ */
+function mockNotes(markdown: string) {
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ ok: true, text: async () => markdown }) as unknown as typeof fetch;
+}
+
+/** Notes shaped like `public/WHATS_NEW.md`: four entries, so the card has one to leave out. */
+const NOTES = [
+  '# Apiome 11-2026 RC8',
+  '',
+  '## Features/Improvements',
+  '',
+  '- **Access audit** — an append-only ledger of who did what',
+  '- Look and feel:',
+  '  - **Lint posture** — catalog-wide findings and waivers',
+  '- Design system route: every component, every theme',
+  '- **Fourth entry** — not shown',
+  '',
+  '## Bug Fixes',
+  '',
+  '- **A fix** — never "shipped"',
+].join('\n');
+
 describe('launcher — the top row', () => {
-  it('carries the brand, the build, preferences, the account and sign out', () => {
+  it('carries the brand, What’s new, preferences, the account and sign out', () => {
     renderLauncher();
 
+    const top = screen.getByRole('banner');
     expect(screen.getByRole('link', { name: 'Apiome home' })).toHaveAttribute('href', '/ade');
-    expect(screen.getByRole('button', { name: /see what's new/ })).toHaveTextContent(
-      APP_VERSION_BADGE
-    );
+    expect(within(top).getByTestId('launch-whats-new')).toHaveAccessibleName(/^What’s new/);
+    // HIVE-12.6: the build string left the top row for the footer (DESIGN.md §5.1).
+    expect(top).not.toHaveTextContent(APP_VERSION_BADGE);
     expect(screen.getByRole('button', { name: 'Preferences' })).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Account menu for Ada Lovelace' })
@@ -179,12 +218,26 @@ describe('launcher — the top row', () => {
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 
-  it('opens What’s new from the build badge, and marks the build read as it does', async () => {
+  it('orders the top row’s actions What’s new, Preferences, account, Sign out', () => {
+    renderLauncher();
+
+    const actions = Array.from(screen.getByRole('banner').querySelectorAll('a, button'))
+      .map((el) => el.getAttribute('data-testid') ?? el.getAttribute('aria-label'));
+    expect(actions).toEqual([
+      'Apiome home',
+      'launch-whats-new',
+      'Preferences',
+      'Account menu for Ada Lovelace',
+      'Sign out',
+    ]);
+  });
+
+  it('opens What’s new from the top row, and marks the build read as it does', async () => {
     const user = userEvent.setup();
     renderLauncher();
 
     expect(window.localStorage.getItem(WHATS_NEW_SEEN_STORAGE_KEY)).toBeNull();
-    await user.click(screen.getByRole('button', { name: /see what's new/ }));
+    await user.click(screen.getByTestId('launch-whats-new'));
 
     // The launcher's badge and the rail's user menu show the same notes for the same build,
     // so reading them here has to clear the rail's unread dot as well (HIVE-3.4).
@@ -396,8 +449,34 @@ describe('launcher — resources', () => {
     expect(help).toHaveAttribute('href', '/ade/dashboard/help');
     expect(help).not.toHaveAttribute('target');
 
-    // HIVE-12.5: Community and Marketplace moved to the Coming next line.
-    expect(screen.getAllByTestId(/^launch-resource-/)).toHaveLength(1);
+    // HIVE-12.5: Community and Marketplace moved to the Coming next line. HIVE-12.6 added
+    // the two rows the mockup draws: Video walkthroughs and Keyboard shortcuts.
+    expect(screen.getAllByTestId(/^launch-resource-/).map((row) => row.dataset.testid)).toEqual([
+      'launch-resource-help',
+      'launch-resource-videos',
+      'launch-resource-shortcuts',
+    ]);
+  });
+
+  it('opens Video walkthroughs on YouTube in a new tab, and says so (HIVE-12.6)', () => {
+    renderLauncher();
+
+    const videos = screen.getByTestId('launch-resource-videos');
+    expect(videos).toHaveAttribute('href', 'https://www.youtube.com/@apiomedev');
+    expect(videos).toHaveAttribute('target', '_blank');
+    expect(videos).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(videos).toHaveAccessibleName(/opens in a new tab/);
+  });
+
+  it('opens the shortcuts sheet from Keyboard shortcuts rather than navigating (HIVE-12.6)', async () => {
+    const user = userEvent.setup();
+    renderLauncher();
+
+    const row = screen.getByTestId('launch-resource-shortcuts');
+    expect(row.tagName).toBe('BUTTON');
+    expect(row).toHaveTextContent('?');
+    await user.click(row);
+    expect(mockOpenShortcutSheet).toHaveBeenCalledTimes(1);
   });
 
   it('has no roadmap panel (HIVE-12.5)', () => {
@@ -405,6 +484,101 @@ describe('launcher — resources', () => {
 
     expect(screen.queryByTestId('launch-resource-audit')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'On the roadmap' })).not.toBeInTheDocument();
+  });
+});
+
+describe('launcher — recently shipped (HIVE-12.6)', () => {
+  it('lists the three newest What’s new entries — title, one line, release', async () => {
+    mockNotes(NOTES);
+    renderLauncher();
+
+    const card = await screen.findByRole('region', { name: 'Recently shipped' });
+    expect(global.fetch).toHaveBeenCalledWith('/WHATS_NEW.md');
+    const rows = within(card).getAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('.launch-ship__title')?.textContent)).toEqual([
+      'Access audit',
+      'Lint posture',
+      'Design system route',
+    ]);
+    expect(rows[0]).toHaveTextContent('An append-only ledger of who did what');
+    expect(rows[0]).toHaveTextContent('11-2026 RC8');
+    expect(card).not.toHaveTextContent('Fourth entry');
+    expect(card).not.toHaveTextContent('A fix');
+  });
+
+  it('opens What’s new from All release notes, and marks the build read', async () => {
+    mockNotes(NOTES);
+    const user = userEvent.setup();
+    renderLauncher();
+
+    await user.click(await screen.findByRole('button', { name: 'All release notes' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(window.localStorage.getItem(WHATS_NEW_SEEN_STORAGE_KEY)).toBe(APP_VERSION_BADGE);
+  });
+
+  it('is omitted when the notes hold no entries, so Resources spans the row', async () => {
+    renderLauncher();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByTestId('launch-recently-shipped')).not.toBeInTheDocument();
+    const lower = screen.getByRole('region', { name: 'Resources' }).parentElement;
+    expect(lower?.children).toHaveLength(1);
+  });
+
+  it('is omitted when the notes cannot be fetched', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('offline')) as unknown as typeof fetch;
+    renderLauncher();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByTestId('launch-recently-shipped')).not.toBeInTheDocument();
+  });
+
+  it('writes no roadmap copy of its own', async () => {
+    mockNotes(NOTES);
+    renderLauncher();
+    await screen.findByRole('region', { name: 'Recently shipped' });
+
+    expect(screen.queryByText(/On the roadmap|Planned/)).not.toBeInTheDocument();
+  });
+});
+
+describe('launcher — the What’s new unread dot (HIVE-12.6)', () => {
+  it('marks both What’s new controls while this build’s notes are unread', async () => {
+    renderLauncher();
+
+    expect(await screen.findByTestId('launch-whats-new-unread')).toBeInTheDocument();
+    expect(screen.getByTestId('launch-whats-new')).toHaveAccessibleName(
+      'What’s new — 1 unread release note'
+    );
+    expect(screen.getByTestId('launch-build').querySelector('.launch-unread-dot')).not.toBeNull();
+  });
+
+  it('clears both dots once What’s new is opened', async () => {
+    const user = userEvent.setup();
+    renderLauncher();
+
+    await screen.findByTestId('launch-whats-new-unread');
+    await user.click(screen.getByTestId('launch-build'));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByTestId('launch-whats-new-unread')).not.toBeInTheDocument();
+    expect(screen.getByTestId('launch-build').querySelector('.launch-unread-dot')).toBeNull();
+    expect(window.localStorage.getItem(WHATS_NEW_SEEN_STORAGE_KEY)).toBe(APP_VERSION_BADGE);
+  });
+
+  it('draws no dot for a reader who has already read this build’s notes', async () => {
+    window.localStorage.setItem(WHATS_NEW_SEEN_STORAGE_KEY, APP_VERSION_BADGE);
+    renderLauncher();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByTestId('launch-whats-new-unread')).not.toBeInTheDocument();
+    expect(screen.getByTestId('launch-whats-new')).toHaveAccessibleName('What’s new');
   });
 });
 
@@ -457,6 +631,10 @@ describe('launcher — the page frame', () => {
 
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByText(APP_VERSION_BADGE)).toBeInTheDocument();
+    // A button, still spelled the way the rail's user menu spells it (HIVE-3.4).
+    expect(within(footer).getByRole('button', { name: /see what's new/ })).toHaveTextContent(
+      APP_VERSION_BADGE
+    );
     expect(within(footer).getByText('© 2021 – 2026 NobuData LLC')).toBeInTheDocument();
   });
 
@@ -481,6 +659,13 @@ describe('launcher — accessibility', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('has no axe violations with Recently shipped drawn', async () => {
+    mockNotes(NOTES);
+    const { container } = renderLauncher();
+    await screen.findByRole('region', { name: 'Recently shipped' });
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it('has no axe violations without a summary or a commercial card', async () => {
     const { container } = renderLauncher({ commercialHomeCards: [], summary: undefined });
     expect(await axe(container)).toHaveNoViolations();
@@ -489,10 +674,9 @@ describe('launcher — accessibility', () => {
 
 describe('launcher — the a11y gate fixture (HIVE-10.2)', () => {
   it('renders the launcher (and writes its fixture on request)', async () => {
+    mockNotes(NOTES);
     const { container } = renderLauncher();
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await screen.findByRole('region', { name: 'Recently shipped' });
     writeA11yFixture('launcher', container.innerHTML);
   });
 });

@@ -5081,39 +5081,29 @@ button.tfa-reset-notice__close > svg {
   margin-inline-start: auto;
 }
 
-/* The build badge. `height: auto` with a floor, like every other pill in the
-   app: the string inside is mono and the reader may be at the largest font
-   scale, which a frozen height would clip. */
-.launch-ver {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: calc(var(--control-h) * 0.7);
-  padding: 0 var(--space-2);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2xs);
-  font-weight: 500;
-  color: var(--fg-muted);
-  white-space: nowrap;
-  cursor: pointer;
+/* What's new (HIVE-12.6, #5613): the build badge's job in the top row, as an
+   icon button. The build string itself moved to the footer — DESIGN.md §5.1
+   retired the badge-beside-the-brand placement. */
+.launch-whats-new {
+  position: relative;
 }
 
-.launch-ver:hover {
-  background: var(--bg-subtle);
-  color: var(--fg);
-}
-
-/* Honey, because the dot says "there is a build here", not "something is wrong
-   with it" — DESIGN.md §2 reserves honey for exactly that kind of presence. */
-.launch-ver__dot {
+/* The unread dot of the rail's user menu (HIVE-3.4), on the launcher's two What's
+   new controls. Honey, because it says "there is something new here", not
+   "something is wrong" — DESIGN.md §2 reserves honey for that kind of presence.
+   Drawn only while the build's notes are unread. */
+.launch-unread-dot {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 50%;
   background: var(--honey);
   flex: none;
+}
+
+.launch-whats-new .launch-unread-dot {
+  position: absolute;
+  top: var(--space-1);
+  inset-inline-end: var(--space-1);
 }
 
 /* The account chip: avatar plus first name, the same pairing the rail's user
@@ -5428,8 +5418,8 @@ button.tfa-reset-notice__close > svg {
   min-width: 0;
 }
 
-/* One panel spans the row (HIVE-12.5): "On the roadmap" is gone, and until
-   HIVE-12.6 puts "Recently shipped" beside it, Resources is alone. */
+/* One panel spans the row: Recently shipped (HIVE-12.6) draws nothing when the
+   What's new notes hold no entries, and Resources is then alone. */
 .launch-lower > :only-child {
   grid-column: 1 / -1;
 }
@@ -5494,6 +5484,72 @@ button.tfa-reset-notice__close > svg {
   color: var(--accent-fg);
 }
 
+/* ---- Recently shipped (HIVE-12.6, #5613) --------------------------------
+   proposals/launcher-focused.html `.ship-row`: the three newest What's new
+   entries — a status dot, the title over one line, and the release. */
+.launch-ship {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.launch-ship__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.launch-ship__row + .launch-ship__row {
+  border-top: 1px solid var(--border);
+}
+
+/* "Shipped" is a done state, so the dot is `--ok` — never honey (DESIGN.md §2). */
+.launch-ship__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: var(--space-1);
+  border-radius: 50%;
+  background: var(--ok);
+  flex: none;
+}
+
+.launch-ship__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.launch-ship__title {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* One line, as the mockup draws it: the full entry is a click away in What's new. */
+.launch-ship__sub {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launch-ship__when {
+  flex: none;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.launch-ship__all {
+  margin-top: var(--space-2);
+}
+
 /* ---- The footer --------------------------------------------------------- */
 .launch-foot {
   display: flex;
@@ -5505,6 +5561,24 @@ button.tfa-reset-notice__close > svg {
   padding-block: var(--space-6) var(--space-10);
   font-size: var(--fs-xs);
   color: var(--fg-muted);
+}
+
+/* The build string (HIVE-12.6): a quiet button that opens What's new, with the
+   unread dot beside it — the mockup's footer, not a pill. */
+.launch-foot__build {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.launch-foot__build:hover {
+  color: var(--fg);
 }
 
 /* ---- Narrow: the ornament goes ------------------------------------------

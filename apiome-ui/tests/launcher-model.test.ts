@@ -151,7 +151,8 @@ describe('the Coming next line (HIVE-12.5)', () => {
   });
 
   it('leaves Resources with destinations that exist', () => {
-    expect(LAUNCHER_RESOURCES.map((item) => item.id)).toEqual(['help']);
+    // HIVE-12.6 (#5613): read, watch, practise — the three rows the mockup draws.
+    expect(LAUNCHER_RESOURCES.map((item) => item.id)).toEqual(['help', 'videos', 'shortcuts']);
     const resourceIds = new Set(LAUNCHER_RESOURCES.map((item) => item.id));
     expect(LAUNCHER_COMING_NEXT.filter((item) => resourceIds.has(item.id))).toEqual([]);
   });
