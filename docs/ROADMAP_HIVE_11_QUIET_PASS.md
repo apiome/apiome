@@ -391,7 +391,7 @@ Milestone: **RC6** (all epics and issues).
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 12.1 | #5608 | Nav model — default-collapsed groups with counts ✅ | `lib/platform-nav.ts` groups gain `defaultCollapsed`; Workspace starts collapsed; collapsed labels show their item count | `ui`, `redesign`, `mvp` | Y | Y | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx`, `src/app/components/shell/navGroupCollapse.ts`, `e2e/fixtures/hive-a11y/shell.html` |
 | 12.2 | #5609 | Re-home Tenants, Data browser · Migrations and SDK settings ✅ | Tenants → workspace switcher menu (“Manage workspaces…”); Tools → user menu; SDK settings → Export studio tab | `ui`, `redesign`, `mvp` | N | Y | M | `lib/platform-nav.ts`, `src/app/components/shell/WorkspaceSwitcher.tsx`, `src/app/components/shell/UserMenu.tsx`, `src/app/ade/dashboard/export/studio/*`, `src/app/ade/dashboard/sdk-settings/*` |
-| 12.3 | #5610 | Rail footer — Notifications count and order | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
+| 12.3 | #5610 | Rail footer — Notifications count and order ✅ | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
 | 12.4 | #5611 | “Preview” rail pill → honey dot | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
 | 12.5 | #5612 | Launcher — only openable tiles; `ComingNext` line ✅ | Applications shows Control Panel (emphasised), Browser and host-injected tiles; three “coming soon” surfaces collapse into one `ComingNext` text line | `ui`, `dashboard`, `redesign` | Y | N | M | `src/app/components/ade/AdeHome.tsx`, `src/app/components/ade/launcher/*`, `src/app/components/ui/ComingNext.tsx (new)`, `e2e/fixtures/hive-a11y/launcher.html` |
 | 12.6 | #5613 | Launcher — “Recently shipped” from What’s new; build string to the footer | The stale “On the roadmap” card becomes the three latest What’s new entries; the version badge leaves the top row | `ui`, `dashboard`, `redesign` | N | N | S | `src/app/components/ade/AdeHome.tsx`, `src/app/components/shell/whatsNewSeen.ts`, `src/app/components/ade/launcher/ResourceRow.tsx` |
@@ -436,7 +436,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-12.3] Rail footer — Notifications count and order` — [#5610](https://github.com/apiome/apiome/issues/5610)
+### `apiome: [HIVE-12.3] Rail footer — Notifications count and order` ✅ — [#5610](https://github.com/apiome/apiome/issues/5610)
 **Problem statement.** The footer shows a bell with no count, so unread notifications are invisible until the menu is opened.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/rail-compact.html` (callouts 5); rationale: `docs/mockups/PROPOSALS.md`.
@@ -445,8 +445,8 @@ Milestone: **RC6** (all epics and issues).
 - Count comes from the existing notification center query; capped at “99+”.
 
 **Acceptance criteria.**
-- [ ] Count matches the notification center; updates live
-- [ ] Collapsed rail shows the dot; axe clean
+- [x] Count matches the notification center; updates live
+- [x] Collapsed rail shows the dot; axe clean
 
 **Parallelism / dependencies.** Independent.
 

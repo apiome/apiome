@@ -56,6 +56,7 @@ jest.mock('@/app/components/ade/preferences/preferencesDrawerBus', () => ({
 }));
 
 import NotificationsMenu from '../src/app/components/shell/NotificationsMenu';
+import { useNotifications } from '../src/app/hooks/useNotifications';
 import { TooltipProvider } from '../src/app/components/ui/Tooltip';
 import { NOTIFICATION_TYPES, type NotificationRow } from '../lib/notifications';
 import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
@@ -211,14 +212,15 @@ describe('the badge', () => {
   test('says the count in words as well as in colour', async () => {
     unread = { mention: 1 };
     renderBell();
-    await screen.findByTestId('rail-notifications-badge');
-    expect(screen.getByTestId('rail-notifications')).toHaveAccessibleName(
-      /1 unread notification$/
-    );
+    const badge = await screen.findByTestId('rail-notifications-badge');
+    // The mockup's `aria-label="n unread"`, which `role="img"` makes legal on a span.
+    expect(badge).toHaveAttribute('role', 'img');
+    expect(badge).toHaveAttribute('aria-label', '1 unread');
+    expect(screen.getByTestId('rail-notifications')).toHaveAccessibleName('Notifications 1 unread');
   });
 
   test('draws nothing at all at zero', async () => {
-    renderBell();
+    renderBell({ iconRail: true });
     await waitFor(() =>
       expect(screen.getByTestId('rail-notifications')).toHaveAccessibleName(
         /no unread notifications/
@@ -226,6 +228,14 @@ describe('the badge', () => {
     );
     expect(screen.queryByTestId('rail-notifications-badge')).not.toBeInTheDocument();
     expect(screen.queryByTestId('rail-notifications-dot')).not.toBeInTheDocument();
+  });
+
+  test('is named by its label alone in the expanded rail at zero', async () => {
+    const fetchMock = installFetch();
+    renderBell();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(screen.getByTestId('rail-notifications')).toHaveAccessibleName('Notifications');
+    expect(screen.queryByTestId('rail-notifications-badge')).not.toBeInTheDocument();
   });
 
   test('stops counting past ninety-nine rather than widening the rail', async () => {
@@ -240,6 +250,50 @@ describe('the badge', () => {
     unread = { mention: 1 };
     renderBell({ iconRail: true });
     expect(await screen.findByTestId('rail-notifications-dot')).toBeInTheDocument();
+    // The label (and the pill) are hidden there, so the count is said in words.
+    expect(screen.getByTestId('rail-notifications')).toHaveAccessibleName(
+      /Notifications — 1 unread notification$/
+    );
+  });
+
+  test('draws no dot in the expanded rail, where the pill already says the count', async () => {
+    unread = { mention: 1 };
+    renderBell();
+    await screen.findByTestId('rail-notifications-badge');
+    expect(screen.queryByTestId('rail-notifications-dot')).not.toBeInTheDocument();
+  });
+
+  test('carries the count in the collapsed rail’s tooltip', async () => {
+    const user = userEvent.setup();
+    unread = { mention: 3 };
+    renderBell({ iconRail: true });
+    await screen.findByTestId('rail-notifications-dot');
+    await user.hover(screen.getByTestId('rail-notifications'));
+    expect(
+      (await screen.findAllByText('Notifications — 3 unread notifications')).length
+    ).toBeGreaterThan(0);
+  });
+
+  test('follows a mark-read made by another reader in the tab, without waiting for the poll', async () => {
+    const user = userEvent.setup();
+    unread = { mention: 2 };
+    renderBell();
+    expect(await screen.findByTestId('rail-notifications-badge')).toHaveTextContent('2');
+
+    // The notification centre page is the other reader; its hook is the same one.
+    function PageReader() {
+      const { markAllRead } = useNotifications({ enabled: true, poll: false });
+      return (
+        <button type="button" onClick={() => void markAllRead()}>
+          Page mark all read
+        </button>
+      );
+    }
+    render(<PageReader />);
+    await user.click(screen.getByRole('button', { name: 'Page mark all read' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('rail-notifications-badge')).not.toBeInTheDocument()
+    );
   });
 
   test('reads nothing without a workspace', async () => {
@@ -543,6 +597,14 @@ describe('the keyboard, and everyone else', () => {
     const { container } = renderBell();
     await openMenu(user);
     await screen.findByTestId('notification-n1');
+
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  test('has no axe violations on the collapsed rail with a count', async () => {
+    unread = { mention: 4 };
+    const { container } = renderBell({ iconRail: true });
+    await screen.findByTestId('rail-notifications-dot');
 
     expect(await axe(container)).toHaveNoViolations();
   });

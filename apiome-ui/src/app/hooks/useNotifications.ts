@@ -16,6 +16,7 @@ import {
   type NotificationUnreadCounts,
 } from '@lib/notifications';
 
+import { announceNotificationsRead, subscribeNotificationsRead } from './notificationsReadBus';
 import { useNotificationPreferences } from './useNotificationPreferences';
 
 /**
@@ -34,7 +35,10 @@ import { useNotificationPreferences } from './useNotificationPreferences';
  * 2. a {@link POLL_INTERVAL_MS} timer, while the tab is visible;
  * 3. the tab becoming visible again — a reader coming back from a review page should not
  *    wait out the timer;
- * 4. a caller asking, via {@link UseNotificationsResult.refresh}.
+ * 4. a caller asking, via {@link UseNotificationsResult.refresh};
+ * 5. another reader in this tab marking rows read (`notificationsReadBus.ts`, HIVE-12.3) —
+ *    so the bell's count follows the notification centre the moment a row is cleared there,
+ *    rather than a minute later.
  *
  * The timer is suspended while the tab is hidden, because a background tab polling an
  * inbox once a minute forever is a cost nobody asked for; the `visibilitychange` read on
@@ -231,6 +235,15 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
 
   const refresh = useCallback(() => setNonce((value) => value + 1), []);
 
+  /** This reader's identity on the read bus, so it is not told about its own writes. */
+  const [busToken] = useState(() => Symbol('useNotifications'));
+
+  // A write by another reader in this tab — the page marking a row the bell also counts.
+  useEffect(() => {
+    if (!enabled) return;
+    return subscribeNotificationsRead(busToken, refresh);
+  }, [enabled, busToken, refresh]);
+
   // The poll, and the read on the way back to a tab that was hidden. Both only exist while
   // the hook is enabled and polling, so a surface that opts out costs nothing.
   useEffect(() => {
@@ -316,6 +329,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
         }
         setCounts(parseUnreadCounts(payload.unread));
         setError(null);
+        announceNotificationsRead(busToken);
 
         const ids = markedIds === null ? null : new Set(markedIds);
         setLoaded((previous) =>
@@ -334,7 +348,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
         );
       }
     },
-    []
+    [busToken]
   );
 
   const markRead = useCallback(
