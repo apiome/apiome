@@ -62,6 +62,12 @@ jest.mock('../src/app/ade/dashboard/sdk-settings/SdkSettingsClient', () => ({
   },
 }));
 
+/** The SDK compatibility tab (SGD-2.1, #4735) mounts its own client; stub it. */
+jest.mock('../src/app/components/ade/export-studio/compat/SdkCompatClient', () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => <div data-testid="sdk-compat-stub">{props.tabs as React.ReactNode}</div>,
+}));
+
 import ExportStudioPage from '../src/app/ade/dashboard/export/studio/page';
 import { encodeStudioOptions } from '../src/app/components/ade/dashboard/export/exportStudioUrlState';
 
@@ -163,7 +169,7 @@ describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
     render(<ExportStudioPage />);
     const strip = screen.getByRole('navigation', { name: 'Export studio sections' });
     const links = strip.querySelectorAll('a');
-    expect([...links].map((link) => link.textContent)).toEqual(['Export', 'SDK & branding', 'Delivery', 'Presets', 'History']);
+    expect([...links].map((link) => link.textContent)).toEqual(['Export', 'SDK & branding', 'SDK compatibility', 'Delivery', 'Presets', 'History']);
     expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Export' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Export' })).toHaveAttribute(
@@ -196,3 +202,12 @@ describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
   });
 });
 
+describe('Export Studio route — the SDK compatibility tab (SGD-2.1)', () => {
+  it('mounts the compatibility client for ?tab=sdk-compat, with the tab strip', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams('tab=sdk-compat'));
+    render(<ExportStudioPage />);
+    expect(screen.getByTestId('sdk-compat-stub')).toBeInTheDocument();
+    expect(screen.queryByTestId('export-studio-stub')).toBeNull();
+    expect(screen.getByRole('link', { name: 'SDK compatibility' })).toHaveAttribute('aria-current', 'page');
+  });
+});

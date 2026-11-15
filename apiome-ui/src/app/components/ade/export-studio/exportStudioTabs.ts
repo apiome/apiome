@@ -15,7 +15,7 @@
 export const EXPORT_STUDIO_TAB_PARAM = 'tab';
 
 /** One of Export studio's tabs. */
-export type ExportStudioTabId = 'export' | 'sdk' | 'delivery' | 'presets' | 'history';
+export type ExportStudioTabId = 'export' | 'sdk' | 'sdk-compat' | 'delivery' | 'presets' | 'history';
 
 /** A tab of the strip. */
 export interface ExportStudioTab {
@@ -31,6 +31,8 @@ export interface ExportStudioTab {
 export const EXPORT_STUDIO_TABS: readonly ExportStudioTab[] = [
   { id: 'export', label: 'Export', feature: 'export-studio' },
   { id: 'sdk', label: 'SDK & branding', feature: 'sdk-settings' },
+  // SGD-2.1 (#4735): what each generated SDK artifact covers and leaves out, and what to do about it.
+  { id: 'sdk-compat', label: 'SDK compatibility', feature: 'sdk-settings' },
   // MFX-38.4 (#4331): the workspace's delivery profiles — where finished exports are delivered.
   { id: 'delivery', label: 'Delivery', feature: 'export-studio' },
   // MFX-39.3 (#4335): the workspace's export presets — targets, options and delivery saved by name.
@@ -40,13 +42,13 @@ export const EXPORT_STUDIO_TABS: readonly ExportStudioTab[] = [
 ];
 
 /** The `?tab=` values that select a tab other than the export itself. */
-const TAB_PARAM_VALUES: ReadonlySet<string> = new Set(['sdk', 'delivery', 'presets', 'history']);
+const TAB_PARAM_VALUES: ReadonlySet<string> = new Set(['sdk', 'sdk-compat', 'delivery', 'presets', 'history']);
 
 /**
  * Which tab a query string selects.
  *
  * @param params The route's search parameters (anything with a `get`).
- * @returns `sdk`, `delivery`, `presets` or `history` for that `?tab=`; `export` for no `tab`, or one this build
+ * @returns `sdk`, `sdk-compat`, `delivery`, `presets` or `history` for that `?tab=`; `export` for no `tab`, or one this build
  *   does not know.
  */
 export function exportStudioTabFromParams(

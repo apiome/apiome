@@ -33,6 +33,7 @@ Key REST surfaces used by the CLI:
 | Area | Endpoints (representative) |
 |------|----------------------------|
 | Health | `GET /health` (anonymous) |
+| SDK compatibility (SGD-2.1, #4735) | `GET /v1/tenants/{t}/projects/{p}/sdk-compatibility?version=` — `apiome sdk compatibility` renders it; `--fail-on` exits 4 |
 | CLI login (#5501) | `POST /v1/cli/login`, `POST /v1/cli/login/token` (anonymous; RFC 8628-shaped poll, `detail.error` codes), `DELETE /v1/cli/login/key` (`X-API-Key`; revokes only a `cli_login` key) |
 | List / get | `GET /projects`, `GET /properties`, `GET /schemas`, `GET /project-versions`, `GET /types`, `GET /{resource}/{id}` |
 | Paths / workflows | `GET /versions/{version_id}/paths`, `GET /versions/{version_id}/paths/{path_id}`, `GET .../operations`, `GET /versions/{version_id}/workflows`, `GET .../steps` |

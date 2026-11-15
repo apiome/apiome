@@ -1,0 +1,94 @@
+---
+title: SDK compatibility manifest
+description: "What each generated SDK artifact covers, leaves out, and needs to change."
+sidebar_position: 4.69
+tags: [sdk, export, compatibility]
+---
+
+Before you hand a generated SDK to the people who use your API, check that it faithfully
+represents your version. The **SDK compatibility manifest** says, for every artifact the SDK kit
+generates, which operations it covers and which it leaves out and why. It also lists the runtime and
+dependencies it needs, the auth schemes it can and cannot carry, and how it treats pagination. Every
+gap comes with **what to change**.
+
+The artifacts are the ones in the SDK kit that **Get SDK** in Browse serves: TypeScript, Python and
+curl snippets, the Go client, the FastAPI and Express server stubs, the Terraform provider and the MCP
+server. The dashboard and the CLI show the same manifest, from the same endpoint.
+
+---
+
+## Read it in Export studio
+
+1. **Open Export studio** and **click the "SDK compatibility" tab**.
+2. **Choose the project**, and the **version** (**Latest** by default; drafts and private versions
+   work too).
+
+<Screenshot id="export-studio-sdk-compat" alt="The SDK compatibility tab: findings with what to do about each, then a table of generated artifacts with coverage, runtime, auth and pagination" />
+
+- **Findings** come first, most severe first. Each names the artifact, what is left out (an
+  operation, an auth scheme, or the whole artifact), the generator's reason, and **What to do**.
+- **Artifacts** lists each generated artifact:
+  - **Coverage:** how many of the version's operations it carries.
+  - **Runtime** and dependencies, read from the files it generates.
+  - **Auth:** the schemes it can't carry.
+  - **Pagination:** **Manual** means page and cursor parameters are passed through and you request
+    each page yourself. No generator follows pages for you.
+- **Semver and provenance** shows whether the version's labels match the change it makes (below),
+  plus the source and options digests.
+
+## Read it from the CLI
+
+```bash
+apiome sdk compatibility --project widgets --version 1.0.0
+apiome --json sdk compatibility --project widgets          # the manifest as served
+apiome sdk compatibility --project widgets --fail-on warning   # exit 4 in CI when a finding is a warning or worse
+```
+
+`--version` takes a version label or a revision id; without it the latest revision is used. See
+[`apiome sdk`](../reference/cli/sdk.md).
+
+## Findings and what to do
+
+| Code | Means | What to do |
+|---|---|---|
+| `operation-no-http-binding` | The operation has no HTTP method and path (a GraphQL field, a gRPC method, an event), so this artifact can't call it. | Give the operation an HTTP binding in the source, or call it through its own protocol. |
+| `operation-over-limit` | The operation is beyond the generator's operation cap. | Split the API into smaller projects, or generate for the operations you need. |
+| `operations-truncated` | The kit carries only the first operations of a very large API. | Split the API into smaller projects. |
+| `auth-scheme-unsupported` | A declared security scheme the artifact has no option for. Snippets never render security schemes, so every scheme is a finding for them. | Send the credential yourself (add the header to a snippet; in Go, `WithHeader` or `WithRequestEditor`), or declare an apiKey or HTTP bearer/basic scheme. |
+| `artifact-not-generated` | The generator failed, so the artifact isn't in the kit. | Fix the error the finding quotes, and regenerate. The rest of the kit is unaffected. |
+| `terraform-readiness` | The Terraform provider can't map the operations onto a resource (for example, they aren't CRUD-shaped). | Follow the message. |
+| `operation-skipped` | Left out for another reason. | Read the reason and change the operation in the source. |
+
+## Semver
+
+When the version has a classified changelog (it's published and has a previous release), the
+manifest compares the change with the version labels:
+
+- **Breaking** needs a **major** bump, **non-breaking** a **minor** one, and **docs-only** a
+  **patch**.
+- The labels' bump is read from the two versions, for example `0.9.0` → `1.0.0` is **major**.
+- **Consistent** means the labels bump at least as much as the change needs.
+
+A draft, a first release, or a version that hasn't been classified yet reads **Unknown**.
+
+## Digests
+
+Every manifest carries:
+
+- the **source** digest (the captured contract)
+- the **options** digest (the SDK settings in force)
+- a **generator** digest (its name, schema version and the Apiome version)
+- an **artifact** digest per artifact (over its files' sha256)
+
+A digest changes exactly when its input changes, so two manifests with the same digests describe
+the same artifacts.
+
+The [SDK compatibility beacon](./sdk-compatibility-beacon.mdx) reports outcomes per revision and
+operation id, so you can line runtime evidence up with this manifest.
+
+## With the REST API
+
+`GET /v1/tenants/{tenant}/projects/{project}/sdk-compatibility?version=` returns the manifest
+(`apiome.sdk.compat-manifest/v1`). It needs **Projects: view** and is served with a strong `ETag`.
+See **sdk-generation** in the [REST reference](../reference/rest/sdk-generation.md). The JSON Schema
+is `apiome-rest/schemas/sdk-compat-manifest.v1.json`.

@@ -255,6 +255,8 @@ class GoClientPackage:
         types: The exported Go type names generated from the contract's schemas, in order.
         auth_options: The exported auth helper names, sorted.
         skipped: Operations no method was generated for, with reasons.
+        unsupported_auth: Security schemes the contract declares that no ``With…`` option covers
+            (SGD-2.1: reported in the compatibility manifest as actionable findings).
         example_groups: The example program directories, in order.
     """
 
@@ -266,6 +268,7 @@ class GoClientPackage:
     types: List[str] = field(default_factory=list)
     auth_options: List[str] = field(default_factory=list)
     skipped: List[GoClientSkip] = field(default_factory=list)
+    unsupported_auth: List[str] = field(default_factory=list)
     example_groups: List[str] = field(default_factory=list)
 
     def file_map(self) -> Dict[str, str]:
@@ -2769,6 +2772,7 @@ def generate_go_client(
         ],
         types=[entry.go_name for entry in table.entries],
         auth_options=sorted(auth_options),
+        unsupported_auth=list(unrepresentable),
         skipped=list(planner.skipped),
         example_groups=example_groups,
     )

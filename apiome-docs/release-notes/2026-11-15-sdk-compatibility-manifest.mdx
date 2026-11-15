@@ -1,0 +1,24 @@
+---
+slug: sdk-compatibility-manifest
+title: SDK compatibility manifest — know what a generated SDK leaves out before you ship it
+description: "Coverage, gaps and fixes for every generated SDK artifact, in Export studio and the CLI."
+authors: [apiome]
+---
+
+Every artifact the SDK kit generates now comes with a compatibility manifest that says how
+faithfully it represents your version, and what to change where it doesn't.
+
+{/* truncate */}
+
+- **One view, two places.** **Export studio → SDK compatibility** and `apiome sdk compatibility`
+  show the same manifest, from the same endpoint.
+- **Every gap is a finding with a fix.** An operation an artifact can't call, an auth scheme it
+  can't carry, a generator that failed: each is listed with the reason and **what to do**.
+  `--fail-on warning` gates CI on them.
+- **Per artifact:** operation coverage, runtime and dependencies, supported and unsupported auth,
+  and pagination handling for the snippets, the Go client, the server stubs, the Terraform provider
+  and the MCP server.
+- **Evidence you can compare:** source, options, generator and artifact digests, plus whether the
+  version labels bump as much as the classified change requires.
+
+See [SDK compatibility manifest](/ship/sdk-compatibility-manifest).

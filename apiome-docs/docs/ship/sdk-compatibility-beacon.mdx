@@ -87,7 +87,7 @@ The client's `README.md` (**Telemetry (opt-in)**) says the same.
 `spec_revision_id`, `api_version`, `sdk_name`, `sdk_version`, `operation_id` and `outcome`. It needs
 **Consumer contracts: view**.
 
-Those are the keys of the SDK kit's `manifest.json`: `provenance.version_record_id` is the
+Those are the keys of the [SDK compatibility manifest](./sdk-compatibility-manifest.mdx) and of the SDK kit's `manifest.json`: `provenance.version_record_id` is the
 revision, and `operations[].operation_id` the operation. So you can line every count up with the
 manifest of the release it came from. For example, a rise in `incompatible` for `getPet` on
 revision `1.3.0` points at the change that broke it.

@@ -1,6 +1,6 @@
 ---
 title: "SDK generation"
-description: "REST endpoints tagged sdk-generation: 3 operations."
+description: "REST endpoints tagged sdk-generation: 4 operations."
 sidebar_position: 88
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.572.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.573.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `sdk-generation` · 3 operations
+Tag: `sdk-generation` · 4 operations
 
 ## `GET /v1/projects/{tenant_slug}/{project_ref}/sdk-settings` {#get-project-sdk-settings-v1-projects-tenant-slug-project-ref-sdk-settings-get}
 
@@ -122,6 +122,38 @@ Operation id: `delete_project_sdk_settings_v1_projects__tenant_slug___project_re
 | 404 | Project not found in this tenant. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/sdk-compatibility` {#get-sdk-compatibility-v1-tenants-tenant-slug-projects-project-ref-sdk-compatibility-get}
+
+**Get the generator compatibility manifest for a revision**
+
+The `apiome.sdk.compat-manifest/v1` manifest for the SDK kit built from one revision: the canonical constructs the version contains, and for each generated artifact (snippets, the Go client, the FastAPI and Express server stubs, the Terraform provider, the MCP server) its operation coverage, runtime and dependencies, supported and unsupported auth schemes, pagination handling, generator and artifact digests, and **findings** — every construct the artifact leaves out or cannot represent, with a stable `code` and the `action` to take. Source and options digests and the semver compatibility of the revision against its classified changelog's baseline complete it.
+
+`version` is a revision id or version label; the latest revision when omitted. Works for draft and private revisions. Served with a strong `ETag` (`304` on `If-None-Match`).
+
+Requires `projects:view`.
+
+Operation id: `get_sdk_compatibility_v1_tenants__tenant_slug__projects__project_ref__sdk_compatibility_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `version` | query | string or null | no | Revision id or version label; latest when omitted. |
+| `If-None-Match` | header | string or null | no | ETag from a prior response; returns 304 when unchanged. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get the generator compatibility manifest for a revision. | `application/json` [`SdkCompatManifest`](#schema-sdkcompatmanifest) |
+| 304 | Not modified. | — |
+| 404 | Unknown project or version. | — |
+| 422 | The revision has no usable source to generate from. | — |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -131,6 +163,21 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `SdkCompatManifest` {#schema-sdkcompatmanifest}
+
+The generator compatibility manifest for one revision.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `schema_version` | `"apiome.sdk.compat-manifest/v1"` | no | Schema Version. |
+| `api` | `SdkCompatApi` | yes | API. |
+| `source` | `SdkCompatSource` | yes | Provenance source for the record (for example human or imported). |
+| `options` | `SdkCompatOptions` | yes | Options. |
+| `constructs` | `SdkCompatConstructs` | yes | Constructs. |
+| `artifacts` | array of `SdkCompatArtifact` | yes | Artifacts. |
+| `findings_count` | integer | yes | Number of findings. |
+| `semver` | `SdkCompatSemver` | yes | Semver. |
 
 ### `SdkGenerationSettingsOut` {#schema-sdkgenerationsettingsout}
 
