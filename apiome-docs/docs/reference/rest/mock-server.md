@@ -1,6 +1,6 @@
 ---
 title: "Mock server"
-description: "REST endpoints tagged mock-server: 20 operations."
+description: "REST endpoints tagged mock-server: 25 operations."
 sidebar_position: 61
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.563.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.564.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mock-server` · 20 operations
+Tag: `mock-server` · 25 operations
 
 ## `GET /v1/mock/{mock_id}` {#serve-mock-root-get-v1-mock-mock-id-get}
 
@@ -487,7 +487,301 @@ Request body for switch active scenario.
 | 200 | Successful response for switch active scenario. | `application/json` [`MockInstanceResponse`](#schema-mockinstanceresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings` {#list-mock-broker-bindings-v1-versions-tenant-slug-project-id-version-record-id-mock-broker-bindings-get}
+
+**List a version's mock broker bindings (metadata only)**
+
+Where the version's hosted mock publishes AsyncAPI events, beyond WebSocket/SSE. A version with event channels and no binding is served over WebSocket/SSE only.
+
+The SASL credential is **write-only**: it is stored envelope-encrypted and no route ever returns it. Responses carry metadata only: the bootstrap hosts, TLS flags, SASL mechanism, the master-key version that sealed the credential, whether it currently opens (`readable`), and when it was created and rotated.
+
+Requires `versions:view`.
+
+Operation id: `list_mock_broker_bindings_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a version's mock broker bindings (metadata only). | `application/json` [`BrokerBindingListResponse`](#schema-brokerbindinglistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings` {#create-mock-broker-binding-v1-versions-tenant-slug-project-id-version-record-id-mock-broker-bindings-post}
+
+**Bind a version's mock to a broker**
+
+Bind the version's hosted mock to a Kafka broker: `bootstrap` hosts, `tls` flags, an optional `saslMechanism` (`PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512`) with its `credential`, and a `clientIdPrefix`. `mqtt` and `amqp` are reserved and refused.
+
+Every bootstrap host is resolved, and a host that reaches a private, loopback, link-local or otherwise non-public address is refused `422 broker-address-disallowed`. The dev broker named by `APIOME_MOCK_DEV_BROKER_BOOTSTRAP` (the `docker compose --profile broker` Redpanda) is exempt; `APIOME_MOCK_BROKER_ALLOW_PRIVATE=true` lifts the check for local development.
+
+The SASL credential is **write-only**: it is stored envelope-encrypted and no route ever returns it. Responses carry metadata only: the bootstrap hosts, TLS flags, SASL mechanism, the master-key version that sealed the credential, whether it currently opens (`readable`), and when it was created and rotated.
+
+One binding per version and protocol: a second is a `409`.
+
+Requires `versions:edit` (version creator or tenant administrator). Audited as `mock.broker_binding.create`, with metadata only.
+
+Operation id: `create_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for bind a version's mock to a broker.
+
+- `application/json` — [`BrokerBindingCreate`](#schema-brokerbindingcreate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for bind a version's mock to a broker. | `application/json` [`BrokerBindingOut`](#schema-brokerbindingout) |
+| 404 | No such version in this project. | — |
+| 409 | This version already has a binding for that protocol. | — |
+| 422 | `broker-binding-invalid`, `broker-protocol-unsupported`, or `broker-address-disallowed`. | — |
+| 503 | A credential was given and no broker encryption key is configured. | — |
+
+## `DELETE /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}` {#delete-mock-broker-binding-v1-versions-tenant-slug-project-id-version-record-id-mock-broker-bindings-binding-id-delete}
+
+**Delete a broker binding**
+
+Remove the binding and its sealed credential. The version's events go back to WebSocket/SSE only.
+
+Requires `versions:edit`. Audited as `mock.broker_binding.delete`.
+
+Operation id: `delete_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `binding_id` | path | string | yes | Path parameter identifying the binding id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a broker binding. | — |
+| 404 | No such binding on this version. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}/rotate` {#rotate-mock-broker-binding-v1-versions-tenant-slug-project-id-version-record-id-mock-broker-bindings-binding-id-rotate-post}
+
+**Rotate a broker binding's SASL credential**
+
+Replace the SASL credential in place, atomically. The binding keeps its id, address and flags. The body is `{credential: {username, password}}`. The SASL credential is **write-only**: it is stored envelope-encrypted and no route ever returns it. Responses carry metadata only: the bootstrap hosts, TLS flags, SASL mechanism, the master-key version that sealed the credential, whether it currently opens (`readable`), and when it was created and rotated.
+
+Requires `versions:edit`. Audited as `mock.broker_binding.rotate`.
+
+Operation id: `rotate_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__rotate_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `binding_id` | path | string | yes | Path parameter identifying the binding id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for rotate a broker binding's sasl credential.
+
+- `application/json` — [`BrokerBindingRotate`](#schema-brokerbindingrotate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for rotate a broker binding's sasl credential. | `application/json` [`BrokerBindingOut`](#schema-brokerbindingout) |
+| 404 | No such binding on this version. | — |
+| 422 | The binding has no SASL mechanism, or the credential is not acceptable. | — |
+| 503 | No broker encryption key is configured. | — |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}/test` {#probe-mock-broker-binding-v1-versions-tenant-slug-project-id-version-record-id-mock-broker-bindings-binding-id-test-post}
+
+**Test a broker binding (connect and read metadata)**
+
+Connect to one bootstrap host, complete TLS and SASL, and read cluster metadata — nothing is produced, consumed or created. The answer is `reachable` or `unreachable` with a `reason`: `auth`, `credential-unavailable`, `address-disallowed`, `tls`, `timeout`, `connect` or `protocol`. A wrong password is `unreachable: auth`; the broker's own error text is never returned. Every host is SSRF-checked again first.
+
+The result is cached for 60 seconds per binding state (`cached: true`); a rotation tests afresh.
+
+Requires `versions:edit`. Audited as `mock.broker_binding.test`.
+
+Operation id: `probe_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__test_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `binding_id` | path | string | yes | Path parameter identifying the binding id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for test a broker binding (connect and read metadata). | `application/json` [`BrokerProbeResult`](#schema-brokerproberesult) |
+| 404 | No such binding on this version. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
+
+### `BrokerBindingCreate` {#schema-brokerbindingcreate}
+
+Body for binding a version's mock to a broker.
+
+Attributes:
+    protocol: ``kafka``. ``mqtt`` / ``amqp`` are reserved (XPC-2.5) and refused.
+    bootstrap: The broker's ``host:port`` entries, as a list or a comma-separated string.
+    tls: TLS flags.
+    sasl_mechanism: ``PLAIN``, ``SCRAM-SHA-256`` or ``SCRAM-SHA-512``; omit for no SASL.
+    credential: The SASL credential; required exactly when a mechanism is given.
+    client_id_prefix: The Kafka ``client.id`` prefix Apiome's connections present.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `protocol` | enum `"kafka"`, `"mqtt"`, `"amqp"` | no | `kafka`. `mqtt` and `amqp` are reserved for a later release and refused. |
+| `bootstrap` | array of string or string | yes | The broker's bootstrap servers: `host:port` entries (port defaults to 9092), as a list or a comma-separated string. Every host must resolve to a public address. |
+| `tls` | `BrokerTls` | no | TLS flags. |
+| `saslMechanism` | enum `"PLAIN"`, `"SCRAM-SHA-256"`, `"SCRAM-SHA-512"` or null | no | The SASL mechanism, or omit it for a broker without authentication. |
+| `credential` | `BrokerCredentialInput` or null | no | Write-only SASL `{username, password}`; required with `saslMechanism`. Stored encrypted; never returned by any route. |
+| `clientIdPrefix` | string | no | The Kafka `client.id` prefix: 1–64 of `A-Z a-z 0-9 . _ -`. |
+
+### `BrokerBindingListResponse` {#schema-brokerbindinglistresponse}
+
+A version's broker bindings, described.
+
+Attributes:
+    schema_version: The projection's shape.
+    version_id: The version addressed.
+    encryption_configured: Whether this deployment can store a SASL credential.
+    protocols: The protocols a binding can be created for now.
+    reserved_protocols: Protocols reserved for a later release.
+    sasl_mechanisms: The SASL mechanisms accepted.
+    dev_broker_bootstrap: The dev broker's ``host:port`` entries when the compose profile is
+        active, else ``None``.
+    bindings: One entry per stored binding.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `schemaVersion` | string | no | Schema Version. |
+| `versionId` | string | yes | Version ID. |
+| `encryptionConfigured` | boolean | yes | Encryption Configured. |
+| `protocols` | array of string | yes | Protocols. |
+| `reservedProtocols` | array of string | yes | Reserved Protocols. |
+| `saslMechanisms` | array of string | yes | Sasl Mechanisms. |
+| `devBrokerBootstrap` | array of string or null | no | Dev Broker Bootstrap. |
+| `bindings` | array of [`BrokerBindingOut`](#schema-brokerbindingout) | yes | Bindings. |
+
+### `BrokerBindingOut` {#schema-brokerbindingout}
+
+A stored binding, described without revealing its credential.
+
+Attributes:
+    schema_version: The projection's shape.
+    id: The binding id.
+    version_id: The version it belongs to.
+    protocol: ``kafka``.
+    bootstrap: The normalized ``host:port`` entries.
+    dev_broker: Whether the binding points at the configured dev broker.
+    tls: TLS flags.
+    sasl_mechanism: The SASL mechanism, or ``None``.
+    has_credential: Whether a SASL credential is stored.
+    key_version: Which master key sealed the credential, or ``None``.
+    readable: Whether the credential can be opened with the keys configured now (``True``
+        when there is none to open). ``False`` means every connection would fail closed.
+    client_id_prefix: The ``client.id`` prefix.
+    created_at: When it was stored.
+    created_by: Who stored it.
+    rotated_at: When its credential was last replaced, or ``None``.
+    rotated_by: Who last replaced it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `schemaVersion` | string | no | Schema Version. |
+| `id` | string | yes | Stable resource identifier. |
+| `versionId` | string | yes | Version ID. |
+| `protocol` | string | yes | Protocol. |
+| `bootstrap` | array of string | yes | Bootstrap. |
+| `devBroker` | boolean | no | Dev Broker. |
+| `tls` | `BrokerTls` | yes | Tls. |
+| `saslMechanism` | string or null | no | Sasl Mechanism. |
+| `hasCredential` | boolean | no | Has Credential. |
+| `keyVersion` | integer or null | no | Key Version. |
+| `readable` | boolean | no | Readable. |
+| `clientIdPrefix` | string | yes | Client ID Prefix. |
+| `createdAt` | string (date-time) or null | no | Created At. |
+| `createdBy` | string or null | no | Created By. |
+| `rotatedAt` | string (date-time) or null | no | Rotated At. |
+| `rotatedBy` | string or null | no | Rotated By. |
+
+### `BrokerBindingRotate` {#schema-brokerbindingrotate}
+
+Body for replacing a binding's SASL credential in place.
+
+Attributes:
+    credential: The replacement credential.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `credential` | `BrokerCredentialInput` | yes | The replacement `{username, password}`, in the same shape as at creation. |
+
+### `BrokerProbeResult` {#schema-brokerproberesult}
+
+What one connectivity test found.
+
+Attributes:
+    binding_id: The binding tested.
+    status: ``reachable`` or ``unreachable``.
+    reason: Why it is unreachable (one of :data:`REASONS`), or ``None`` when reachable.
+    summary: ``"reachable"`` or ``"unreachable: <reason>"``, for a status line.
+    bootstrap: The entry that answered (reachable) or ``None``.
+    brokers: How many brokers the cluster metadata lists (reachable only).
+    topics: How many topics the metadata lists (reachable only).
+    checked_at: When the probe actually ran (earlier than now when ``cached``).
+    cached: Whether this result came from the 60-second cache.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `bindingId` | string | yes | Binding ID. |
+| `status` | enum `"reachable"`, `"unreachable"` | yes | Status. |
+| `reason` | enum `"auth"`, `"credential-unavailable"`, `"address-disallowed"`, `"tls"`, `"timeout"`, `"connect"`, … or null | no | Reason. |
+| `summary` | string | yes | Short summary suitable for navigation and reference docs. |
+| `bootstrap` | string or null | no | Bootstrap. |
+| `brokers` | integer or null | no | Brokers. |
+| `topics` | integer or null | no | Topics. |
+| `checkedAt` | string (date-time) | yes | Checked At. |
+| `cached` | boolean | no | Cached. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

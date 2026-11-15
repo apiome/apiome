@@ -54,7 +54,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/Too
 import { VersionMockCell, type VersionMockChange } from '@/app/components/ade/dashboard/VersionMockCell';
 import { formatVersionStamp, versionLabel } from '@/app/components/ade/versions/versionsModel';
 import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
-import { isGraphqlSourceFormat } from '@lib/mock/mockUrl';
+import { isAsyncapiSourceFormat, isGraphqlSourceFormat } from '@lib/mock/mockUrl';
 import { cn } from '@lib/utils';
 
 import { PublishedRowMenu } from './PublishedRowMenu';
@@ -205,6 +205,8 @@ export function PublishedTable({
             published
             mockEnabled={Boolean(version.mock_enabled)}
             graphql={isGraphqlSourceFormat(version.source_format)}
+            asyncapi={isAsyncapiSourceFormat(version.source_format)}
+            brokerBound={Boolean(version.mock_broker_bound)}
             mockBaseUrl={version.mock_enabled ? mockBaseUrl(version) : null}
             usageSeries={
               mockUsageByVersion === null

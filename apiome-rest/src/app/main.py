@@ -193,6 +193,8 @@ from .type_namespaces_routes import router as type_namespaces_router
 from .unowned_findings_routes import router as unowned_findings_router
 from .upstream_credential_routes import router as upstream_credential_router
 from .upstream_credentials import validate_upstream_credential_keys
+from .mock_broker_binding_routes import router as mock_broker_binding_router
+from .mock_broker_bindings import validate_broker_credential_keys
 from .slate_cdn_crypto import validate_slate_cdn_credential_keys
 from .usage_ingest_routes import router as usage_ingest_router
 from .verification_evidence_routes import router as verification_evidence_router
@@ -222,7 +224,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.563.0",
+    version="1.564.0",
 )
 
 
@@ -441,6 +443,9 @@ app.include_router(sdk_publish_tenant_router)
 # upstream_credential_router: the AGX-2.2 upstream auth vault under
 # /v1/tenants/{t}/agent-toolsets/{toolset}/upstream-credentials (#4534).
 app.include_router(upstream_credential_router)
+# mock_broker_binding_router: XPC-2.1 broker bindings (Kafka bootstrap, TLS, sealed SASL credential)
+# under /v1/versions/{t}/{project}/{version}/mock/broker-bindings (#5735).
+app.include_router(mock_broker_binding_router)
 # agent_key_router: AGX-3.1 agent keys (kind=agent api_keys bound to a toolset + tool allowlist)
 # under /v1/tenants/{t}/agent-keys (#4537).
 app.include_router(agent_key_router)
@@ -697,6 +702,7 @@ async def startup_event():
     validate_credential_encryption_keys()
     validate_registry_credential_keys()
     validate_upstream_credential_keys()
+    validate_broker_credential_keys()
     validate_slate_cdn_credential_keys()
     validate_linked_account_token_keys()
     validate_auth_config_encryption_keys()

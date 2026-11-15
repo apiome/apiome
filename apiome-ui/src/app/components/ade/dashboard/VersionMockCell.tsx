@@ -14,6 +14,8 @@
  *   setting that makes the default response path answer with values from the request.
  * - GraphQL versions (#5729, XPC-1.1) show and copy their `/graphql` endpoint (GraphiQL on a
  *   browser `GET`), with a note that subscriptions are not served on this deployment yet.
+ * - AsyncAPI versions (#5735, XPC-2.1) say where their events go: a bound Kafka broker, or
+ *   "no broker bound" when they are served over WebSocket/SSE only.
  *
  * Re-skinned in place by HIVE-6.2 (#5313) to `docs/mockups/build/versions.html`'s `.mock-cell`:
  * the switch, the label and the PRIVATE pill on one row, the mono URL with its copy button
@@ -67,6 +69,13 @@ export interface VersionMockCellProps {
    */
   graphql?: boolean;
   /**
+   * When true the version is an AsyncAPI document (#5735): the cell states the broker state of
+   * its event channels (see `brokerBound`).
+   */
+  asyncapi?: boolean;
+  /** AsyncAPI only: whether a Kafka broker binding exists for this version (#5735). */
+  brokerBound?: boolean;
+  /**
    * Chronological 30-day request counts for this version. `undefined` while usage is
    * still loading; `[]` when the version has no recorded usage (empty sparkline state).
    */
@@ -90,6 +99,8 @@ export function VersionMockCell({
   mockBaseUrl,
   mockPrivate = false,
   graphql = false,
+  asyncapi = false,
+  brokerBound = false,
   usageSeries,
   onMockChanged,
 }: VersionMockCellProps) {
@@ -203,6 +214,14 @@ export function VersionMockCell({
         {mockEnabled && graphql && (
           <p className="ver-mock__note" data-testid={`version-mock-graphql-note-${versionRecordId}`}>
             GraphQL · queries and mutations. Subscriptions are not served on this deployment yet.
+          </p>
+        )}
+
+        {mockEnabled && asyncapi && (
+          <p className="ver-mock__note" data-testid={`version-mock-broker-note-${versionRecordId}`}>
+            {brokerBound
+              ? 'Events · Kafka broker bound, plus WebSocket/SSE.'
+              : 'Events · WebSocket/SSE only — no broker bound.'}
           </p>
         )}
 

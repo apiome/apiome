@@ -108,6 +108,13 @@ class Settings(BaseSettings):
         le=60.0,
         description="Ceiling on one callback delivery attempt (seconds).",
     )
+    dev_broker_bootstrap: str | None = Field(
+        default=None,
+        description=(
+            "The opt-in dev broker's host:port list (`docker compose --profile broker`, #5735); "
+            "/health reports `broker: reachable|unreachable` while it resolves."
+        ),
+    )
     capture_enabled: bool = Field(
         default=False,
         description="Permit guarded upstream proxy capture on this deployment (#4747, PMR-2.4).",

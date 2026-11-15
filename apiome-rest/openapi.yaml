@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.563.0
+  version: 1.564.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -22944,6 +22944,466 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for deleteanupstreamcredentialresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings:
+    get:
+      tags:
+      - mock-server
+      summary: List a version's mock broker bindings (metadata only)
+      description: 'Where the version''s hosted mock publishes AsyncAPI events, beyond
+        WebSocket/SSE. A version with event channels and no binding is served over
+        WebSocket/SSE only.
+
+
+        The SASL credential is **write-only**: it is stored envelope-encrypted and
+        no route ever returns it. Responses carry metadata only: the bootstrap hosts,
+        TLS flags, SASL mechanism, the master-key version that sealed the credential,
+        whether it currently opens (`readable`), and when it was created and rotated.
+
+
+        Requires `versions:view`.'
+      operationId: list_mock_broker_bindings_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversionsmockbrokerbindingsmetadataoauthorization schema.
+          - type: 'null'
+            description: Listaversionsmockbrokerbindingsmetadataoauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversionsmockbrokerbindingsmetadatao Xapikey schema.
+          - type: 'null'
+            description: Listaversionsmockbrokerbindingsmetadatao Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a version's mock broker bindings
+            (metadata only).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerBindingListResponse'
+                description: Response payload for listaversionsmockbrokerbindingsmetadataoresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaversionsmockbrokerbindingsmetadataoresponse422.
+    post:
+      tags:
+      - mock-server
+      summary: Bind a version's mock to a broker
+      description: 'Bind the version''s hosted mock to a Kafka broker: `bootstrap`
+        hosts, `tls` flags, an optional `saslMechanism` (`PLAIN`, `SCRAM-SHA-256`,
+        `SCRAM-SHA-512`) with its `credential`, and a `clientIdPrefix`. `mqtt` and
+        `amqp` are reserved and refused.
+
+
+        Every bootstrap host is resolved, and a host that reaches a private, loopback,
+        link-local or otherwise non-public address is refused `422 broker-address-disallowed`.
+        The dev broker named by `APIOME_MOCK_DEV_BROKER_BOOTSTRAP` (the `docker compose
+        --profile broker` Redpanda) is exempt; `APIOME_MOCK_BROKER_ALLOW_PRIVATE=true`
+        lifts the check for local development.
+
+
+        The SASL credential is **write-only**: it is stored envelope-encrypted and
+        no route ever returns it. Responses carry metadata only: the bootstrap hosts,
+        TLS flags, SASL mechanism, the master-key version that sealed the credential,
+        whether it currently opens (`readable`), and when it was created and rotated.
+
+
+        One binding per version and protocol: a second is a `409`.
+
+
+        Requires `versions:edit` (version creator or tenant administrator). Audited
+        as `mock.broker_binding.create`, with metadata only.'
+      operationId: create_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Bindaversionsmocktoabrokerauthorization schema.
+          - type: 'null'
+            description: Bindaversionsmocktoabrokerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Bindaversionsmocktoabroker Xapikey schema.
+          - type: 'null'
+            description: Bindaversionsmocktoabroker Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrokerBindingCreate'
+              description: Request body for bindaversionsmocktoabrokerrequest.
+        description: Request body for bind a version's mock to a broker.
+      responses:
+        '201':
+          description: Successful response for bind a version's mock to a broker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerBindingOut'
+                description: Response payload for bindaversionsmocktoabrokerresponse201.
+        '404':
+          description: No such version in this project.
+        '409':
+          description: This version already has a binding for that protocol.
+        '422':
+          description: '`broker-binding-invalid`, `broker-protocol-unsupported`, or
+            `broker-address-disallowed`.'
+        '503':
+          description: A credential was given and no broker encryption key is configured.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}/rotate:
+    post:
+      tags:
+      - mock-server
+      summary: Rotate a broker binding's SASL credential
+      description: 'Replace the SASL credential in place, atomically. The binding
+        keeps its id, address and flags. The body is `{credential: {username, password}}`.
+        The SASL credential is **write-only**: it is stored envelope-encrypted and
+        no route ever returns it. Responses carry metadata only: the bootstrap hosts,
+        TLS flags, SASL mechanism, the master-key version that sealed the credential,
+        whether it currently opens (`readable`), and when it was created and rotated.
+
+
+        Requires `versions:edit`. Audited as `mock.broker_binding.rotate`.'
+      operationId: rotate_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__rotate_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: binding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Binding Id
+          description: Binding Id schema.
+        description: Path parameter identifying the binding id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Rotateabrokerbindings Saslcredentialauthorization schema.
+          - type: 'null'
+            description: Rotateabrokerbindings Saslcredentialauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Rotateabrokerbindings Saslcredential Xapikey schema.
+          - type: 'null'
+            description: Rotateabrokerbindings Saslcredential Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrokerBindingRotate'
+              description: Request body for rotateabrokerbindings saslcredentialrequest.
+        description: Request body for rotate a broker binding's sasl credential.
+      responses:
+        '200':
+          description: Successful response for rotate a broker binding's sasl credential.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerBindingOut'
+                description: Response payload for rotateabrokerbindings saslcredentialresponse200.
+        '404':
+          description: No such binding on this version.
+        '422':
+          description: The binding has no SASL mechanism, or the credential is not
+            acceptable.
+        '503':
+          description: No broker encryption key is configured.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}/test:
+    post:
+      tags:
+      - mock-server
+      summary: Test a broker binding (connect and read metadata)
+      description: 'Connect to one bootstrap host, complete TLS and SASL, and read
+        cluster metadata — nothing is produced, consumed or created. The answer is
+        `reachable` or `unreachable` with a `reason`: `auth`, `credential-unavailable`,
+        `address-disallowed`, `tls`, `timeout`, `connect` or `protocol`. A wrong password
+        is `unreachable: auth`; the broker''s own error text is never returned. Every
+        host is SSRF-checked again first.
+
+
+        The result is cached for 60 seconds per binding state (`cached: true`); a
+        rotation tests afresh.
+
+
+        Requires `versions:edit`. Audited as `mock.broker_binding.test`.'
+      operationId: probe_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__test_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: binding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Binding Id
+          description: Binding Id schema.
+        description: Path parameter identifying the binding id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testabrokerbindingconnectandreadmetadataauthorization schema.
+          - type: 'null'
+            description: Testabrokerbindingconnectandreadmetadataauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testabrokerbindingconnectandreadmetadata Xapikey schema.
+          - type: 'null'
+            description: Testabrokerbindingconnectandreadmetadata Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for test a broker binding (connect and
+            read metadata).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerProbeResult'
+                description: Response payload for testabrokerbindingconnectandreadmetadataresponse200.
+        '404':
+          description: No such binding on this version.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for testabrokerbindingconnectandreadmetadataresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/broker-bindings/{binding_id}:
+    delete:
+      tags:
+      - mock-server
+      summary: Delete a broker binding
+      description: 'Remove the binding and its sealed credential. The version''s events
+        go back to WebSocket/SSE only.
+
+
+        Requires `versions:edit`. Audited as `mock.broker_binding.delete`.'
+      operationId: delete_mock_broker_binding_v1_versions__tenant_slug___project_id___version_record_id__mock_broker_bindings__binding_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: binding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Binding Id
+          description: Binding Id schema.
+        description: Path parameter identifying the binding id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteabrokerbindingauthorization schema.
+          - type: 'null'
+            description: Deleteabrokerbindingauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteabrokerbinding Xapikey schema.
+          - type: 'null'
+            description: Deleteabrokerbinding Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a broker binding.
+        '404':
+          description: No such binding on this version.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteabrokerbindingresponse422.
   /v1/tenants/{tenant_slug}/agent-keys:
     get:
       tags:
@@ -92821,6 +93281,423 @@ components:
         \ the publish.\n\nAttributes:\n    warn_at_severity: Warn when the worst change\
         \ is at least this severe; ``None`` disables it.\n    fail_at_severity: Fail\
         \ when the worst change is at least this severe; ``None`` disables it."
+    BrokerBindingCreate:
+      properties:
+        protocol:
+          type: string
+          enum:
+          - kafka
+          - mqtt
+          - amqp
+          title: Protocol
+          description: '`kafka`. `mqtt` and `amqp` are reserved for a later release
+            and refused.'
+          default: kafka
+          example: kafka
+        bootstrap:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Broker Binding Create schema.
+          - type: string
+            description: Broker Binding Create schema.
+          title: Bootstrap
+          description: 'The broker''s bootstrap servers: `host:port` entries (port
+            defaults to 9092), as a list or a comma-separated string. Every host must
+            resolve to a public address.'
+        tls:
+          $ref: '#/components/schemas/BrokerTls'
+          description: TLS flags.
+        saslMechanism:
+          anyOf:
+          - type: string
+            enum:
+            - PLAIN
+            - SCRAM-SHA-256
+            - SCRAM-SHA-512
+            description: Broker Binding Create schema.
+          - type: 'null'
+            description: Broker Binding Create schema.
+          title: Saslmechanism
+          description: The SASL mechanism, or omit it for a broker without authentication.
+        credential:
+          anyOf:
+          - $ref: '#/components/schemas/BrokerCredentialInput'
+          - type: 'null'
+            description: Broker Binding Create schema.
+          description: Write-only SASL `{username, password}`; required with `saslMechanism`.
+            Stored encrypted; never returned by any route.
+        clientIdPrefix:
+          type: string
+          title: Clientidprefix
+          description: 'The Kafka `client.id` prefix: 1–64 of `A-Z a-z 0-9 . _ -`.'
+          default: apiome-mock
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - bootstrap
+      title: BrokerBindingCreate
+      description: "Body for binding a version's mock to a broker.\n\nAttributes:\n\
+        \    protocol: ``kafka``. ``mqtt`` / ``amqp`` are reserved (XPC-2.5) and refused.\n\
+        \    bootstrap: The broker's ``host:port`` entries, as a list or a comma-separated\
+        \ string.\n    tls: TLS flags.\n    sasl_mechanism: ``PLAIN``, ``SCRAM-SHA-256``\
+        \ or ``SCRAM-SHA-512``; omit for no SASL.\n    credential: The SASL credential;\
+        \ required exactly when a mechanism is given.\n    client_id_prefix: The Kafka\
+        \ ``client.id`` prefix Apiome's connections present."
+    BrokerBindingListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: xpc.mock-broker-binding.v1
+          description: Schema Version.
+          example: 1.0.0
+        versionId:
+          type: string
+          title: Versionid
+          description: Version ID.
+          example: 1.0.0
+        encryptionConfigured:
+          type: boolean
+          title: Encryptionconfigured
+          description: Encryption Configured.
+          example: false
+        protocols:
+          items:
+            type: string
+          type: array
+          title: Protocols
+          description: Protocols.
+          maxItems: 1000
+        reservedProtocols:
+          items:
+            type: string
+          type: array
+          title: Reservedprotocols
+          description: Reserved Protocols.
+          maxItems: 1000
+        saslMechanisms:
+          items:
+            type: string
+          type: array
+          title: Saslmechanisms
+          description: Sasl Mechanisms.
+          maxItems: 1000
+        devBrokerBootstrap:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for broker binding list.
+          - type: 'null'
+            description: Response payload for broker binding list.
+          title: Devbrokerbootstrap
+          description: Dev Broker Bootstrap.
+        bindings:
+          items:
+            $ref: '#/components/schemas/BrokerBindingOut'
+          type: array
+          title: Bindings
+          description: Bindings.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - versionId
+      - encryptionConfigured
+      - protocols
+      - reservedProtocols
+      - saslMechanisms
+      - bindings
+      title: BrokerBindingListResponse
+      description: "A version's broker bindings, described.\n\nAttributes:\n    schema_version:\
+        \ The projection's shape.\n    version_id: The version addressed.\n    encryption_configured:\
+        \ Whether this deployment can store a SASL credential.\n    protocols: The\
+        \ protocols a binding can be created for now.\n    reserved_protocols: Protocols\
+        \ reserved for a later release.\n    sasl_mechanisms: The SASL mechanisms\
+        \ accepted.\n    dev_broker_bootstrap: The dev broker's ``host:port`` entries\
+        \ when the compose profile is\n        active, else ``None``.\n    bindings:\
+        \ One entry per stored binding."
+    BrokerBindingOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: xpc.mock-broker-binding.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        versionId:
+          type: string
+          title: Versionid
+          description: Version ID.
+          example: 1.0.0
+        protocol:
+          type: string
+          title: Protocol
+          description: Protocol.
+          example: example
+        bootstrap:
+          items:
+            type: string
+          type: array
+          title: Bootstrap
+          description: Bootstrap.
+          maxItems: 1000
+        devBroker:
+          type: boolean
+          title: Devbroker
+          default: false
+          description: Dev Broker.
+          example: false
+        tls:
+          $ref: '#/components/schemas/BrokerTls'
+          description: Tls.
+        saslMechanism:
+          anyOf:
+          - type: string
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Saslmechanism
+          description: Sasl Mechanism.
+        hasCredential:
+          type: boolean
+          title: Hascredential
+          default: false
+          description: Has Credential.
+          example: false
+        keyVersion:
+          anyOf:
+          - type: integer
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Keyversion
+          description: Key Version.
+        readable:
+          type: boolean
+          title: Readable
+          default: true
+          description: Readable.
+          example: false
+        clientIdPrefix:
+          type: string
+          title: Clientidprefix
+          description: Client ID Prefix.
+          example: example
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Createdat
+          description: Created At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Createdby
+          description: Created By.
+        rotatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Rotatedat
+          description: Rotated At.
+        rotatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for broker binding.
+          - type: 'null'
+            description: Response payload for broker binding.
+          title: Rotatedby
+          description: Rotated By.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - versionId
+      - protocol
+      - bootstrap
+      - tls
+      - clientIdPrefix
+      title: BrokerBindingOut
+      description: "A stored binding, described without revealing its credential.\n\
+        \nAttributes:\n    schema_version: The projection's shape.\n    id: The binding\
+        \ id.\n    version_id: The version it belongs to.\n    protocol: ``kafka``.\n\
+        \    bootstrap: The normalized ``host:port`` entries.\n    dev_broker: Whether\
+        \ the binding points at the configured dev broker.\n    tls: TLS flags.\n\
+        \    sasl_mechanism: The SASL mechanism, or ``None``.\n    has_credential:\
+        \ Whether a SASL credential is stored.\n    key_version: Which master key\
+        \ sealed the credential, or ``None``.\n    readable: Whether the credential\
+        \ can be opened with the keys configured now (``True``\n        when there\
+        \ is none to open). ``False`` means every connection would fail closed.\n\
+        \    client_id_prefix: The ``client.id`` prefix.\n    created_at: When it\
+        \ was stored.\n    created_by: Who stored it.\n    rotated_at: When its credential\
+        \ was last replaced, or ``None``.\n    rotated_by: Who last replaced it."
+    BrokerBindingRotate:
+      properties:
+        credential:
+          $ref: '#/components/schemas/BrokerCredentialInput'
+          description: The replacement `{username, password}`, in the same shape as
+            at creation.
+      additionalProperties: false
+      type: object
+      required:
+      - credential
+      title: BrokerBindingRotate
+      description: "Body for replacing a binding's SASL credential in place.\n\nAttributes:\n\
+        \    credential: The replacement credential."
+    BrokerCredentialInput:
+      properties:
+        username:
+          type: string
+          format: password
+          title: Username
+          description: The SASL username.
+          writeOnly: true
+          example: Example
+        password:
+          type: string
+          format: password
+          title: Password
+          description: The SASL password.
+          writeOnly: true
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - username
+      - password
+      title: BrokerCredentialInput
+      description: "The write-only SASL credential.\n\nBoth fields are :class:`~pydantic.SecretStr`,\
+        \ so a model that ends up in a log line prints\n``**********`` instead of\
+        \ the value.\n\nAttributes:\n    username: The SASL username.\n    password:\
+        \ The SASL password."
+    BrokerProbeResult:
+      properties:
+        bindingId:
+          type: string
+          title: Bindingid
+          description: Binding ID.
+          example: example
+        status:
+          type: string
+          enum:
+          - reachable
+          - unreachable
+          title: Status
+          description: Status.
+          example: reachable
+        reason:
+          anyOf:
+          - type: string
+            enum:
+            - auth
+            - credential-unavailable
+            - address-disallowed
+            - tls
+            - timeout
+            - connect
+            - protocol
+            description: Broker Probe schema.
+          - type: 'null'
+            description: Broker Probe schema.
+          title: Reason
+          description: Reason.
+        summary:
+          type: string
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+          example: List pets
+        bootstrap:
+          anyOf:
+          - type: string
+            description: Broker Probe schema.
+          - type: 'null'
+            description: Broker Probe schema.
+          title: Bootstrap
+          description: Bootstrap.
+        brokers:
+          anyOf:
+          - type: integer
+            description: Broker Probe schema.
+          - type: 'null'
+            description: Broker Probe schema.
+          title: Brokers
+          description: Brokers.
+        topics:
+          anyOf:
+          - type: integer
+            description: Broker Probe schema.
+          - type: 'null'
+            description: Broker Probe schema.
+          title: Topics
+          description: Topics.
+        checkedAt:
+          type: string
+          format: date-time
+          title: Checkedat
+          description: Checked At.
+          example: example
+        cached:
+          type: boolean
+          title: Cached
+          default: false
+          description: Cached.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - bindingId
+      - status
+      - summary
+      - checkedAt
+      title: BrokerProbeResult
+      description: "What one connectivity test found.\n\nAttributes:\n    binding_id:\
+        \ The binding tested.\n    status: ``reachable`` or ``unreachable``.\n   \
+        \ reason: Why it is unreachable (one of :data:`REASONS`), or ``None`` when\
+        \ reachable.\n    summary: ``\"reachable\"`` or ``\"unreachable: <reason>\"\
+        ``, for a status line.\n    bootstrap: The entry that answered (reachable)\
+        \ or ``None``.\n    brokers: How many brokers the cluster metadata lists (reachable\
+        \ only).\n    topics: How many topics the metadata lists (reachable only).\n\
+        \    checked_at: When the probe actually ran (earlier than now when ``cached``).\n\
+        \    cached: Whether this result came from the 60-second cache."
+    BrokerTls:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Connect over TLS.
+          default: false
+          example: true
+        verify:
+          type: boolean
+          title: Verify
+          description: Verify the broker certificate and hostname (TLS only).
+          default: true
+          example: false
+      additionalProperties: false
+      type: object
+      title: BrokerTls
+      description: "How the broker connection is secured.\n\nAttributes:\n    enabled:\
+        \ Connect over TLS (``SSL`` / ``SASL_SSL``).\n    verify: Verify the broker's\
+        \ certificate and hostname. Only turn off for a self-signed\n        test\
+        \ cluster."
     BrowseDirectoryStats:
       properties:
         tenant_count:

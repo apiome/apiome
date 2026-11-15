@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.704.0] - 2026-11-14
+
+### Added
+- **Mock broker bindings and the opt-in dev broker (XPC-2.1, #5735)** — OpenAPI 1.564.0:
+  - `GET|POST /v1/versions/{t}/{project}/{version}/mock/broker-bindings`,
+    `POST …/{id}/rotate`, `POST …/{id}/test` and `DELETE …/{id}` (tag `mock-server`) bind a
+    version's hosted mock to a Kafka broker: `bootstrap` (`host:port` list, port 9092 by default),
+    `tls` (`enabled`, `verify`), `saslMechanism` (`PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512`) with
+    a write-only `credential`, and `clientIdPrefix`. One binding per version and protocol (`409`);
+    `mqtt` / `amqp` are reserved and refused `broker-protocol-unsupported`.
+  - Every bootstrap host is resolved and checked against the SSRF address rule on create and on
+    every test; a private or otherwise non-public address is `422 broker-address-disallowed`. The
+    dev broker named by `APIOME_MOCK_DEV_BROKER_BOOTSTRAP` is exempt for its exact `host:port`;
+    `APIOME_MOCK_BROKER_ALLOW_PRIVATE=true` (default false) is the local escape hatch.
+  - The SASL credential is sealed with the shared envelope cipher under its own key map,
+    `APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS` (vault magic `OMBB`), and is never returned; a
+    credential with no key configured is `503 broker-credential-encryption-unconfigured`.
+    Rotation replaces it in place.
+  - `/test` connects to one bootstrap host, completes TLS and SASL, and reads cluster metadata
+    only. It answers `reachable` or `unreachable` with a reason (`auth`, `credential-unavailable`,
+    `address-disallowed`, `tls`, `timeout`, `connect`, `protocol`); a wrong password is
+    `unreachable: auth`, and the broker's own error text is never returned. Results are cached 60 s
+    per binding state.
+  - Guarded by `versions:view` (list) and `versions:edit` (everything else; version creator or
+    tenant administrator), no new RBAC resource. Audited as `mock.broker_binding.create|rotate|
+    test|delete` with metadata only.
+  - New dependency `aiokafka`. New table `apiome.mock_broker_bindings` (V372; the roadmap's V275
+    number was already taken).
+
 ## [1.703.0] - 2026-11-14
 
 ### Added

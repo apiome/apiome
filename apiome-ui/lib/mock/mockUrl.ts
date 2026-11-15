@@ -112,6 +112,18 @@ export function isGraphqlSourceFormat(sourceFormat: string | null | undefined): 
 }
 
 /**
+ * Whether a version's `source_format` is an AsyncAPI document (`asyncapi-2`, `asyncapi-3`, …), so
+ * its hosted mock serves event channels over WebSocket/SSE and, when bound, a Kafka broker
+ * (#5735, XPC-2.1).
+ *
+ * @param sourceFormat - the version's `source_format` column, if known
+ * @returns `true` for any `asyncapi*` format
+ */
+export function isAsyncapiSourceFormat(sourceFormat: string | null | undefined): boolean {
+  return typeof sourceFormat === 'string' && sourceFormat.trim().toLowerCase().startsWith('asyncapi');
+}
+
+/**
  * Build the GraphQL endpoint (`POST` operations, `GET` GraphiQL) of a GraphQL version's mock.
  *
  * @param mockBaseUrl - `{mockHost}/{tenant}/{project}/{version}`, or `null`

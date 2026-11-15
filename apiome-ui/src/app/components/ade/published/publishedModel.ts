@@ -75,6 +75,8 @@ export interface PublishedVersion {
   mock_enabled: boolean;
   /** The imported format (`graphql`, `openapi-3.1`, …); `null` for an ADE-authored version (#5729). */
   source_format?: string | null;
+  /** Whether the version's mock is bound to a Kafka broker (#5735); absent ⇒ not bound. */
+  mock_broker_bound?: boolean;
   /** Revision JSON (#507, #748): `lifecycle`, `deprecated`, `sunsetAt`, `successorRevisionId`. */
   metadata?: Record<string, unknown> | null;
   /** The project's owner team, in its wire shape (CDG-2.4); validated where it is drawn. */

@@ -23,6 +23,7 @@ beside it (`yarn dev` in development, its own image in production).
 | `rest` | `apiome-rest`, the REST API | `8000` (`APIOME_REST_HTTP_PORT`) |
 | `mcp` | `apiome-mcp`, the MCP server | `8765` (`APIOME_MCP_HTTP_PORT`) |
 | `mock` | `apiome-mock`, the mock runtime | `8775` (`APIOME_MOCK_HTTP_PORT`) |
+| `redpanda` | Optional single-node Kafka broker for AsyncAPI mocks; only with `--profile broker` | `19092` (`APIOME_DEV_BROKER_HOST_PORT`) |
 
 Production applies
 `docker-compose.prod.yml` on
@@ -32,6 +33,12 @@ top of `docker-compose.yml`: it adds
 builds from `private-suite/designer/Dockerfile` with the `private-suite` repository checked out
 beside `apiome-ui` in the same tree, so `docker compose build` leaves the web app and Studio on the
 same sign-in code; rebuild both whenever you move the checkout.
+
+`redpanda` is off by default: it starts only with `docker compose --profile broker up`, and no
+other service waits for it. `rest` and `mock` are already wired to it as `redpanda:9092`
+(`APIOME_MOCK_DEV_BROKER_BOOTSTRAP`). Production doesn't use the profile. There, tenants bind their
+own clusters, and `APIOME_MOCK_BROKER_ALLOW_PRIVATE` must stay `false`. See
+[Event mock brokers](../reference/mock-runtime/event-mock-brokers.md).
 
 To try Apiome on one machine, follow [Run Apiome locally](../getting-started/run-locally.md).
 
@@ -171,6 +178,7 @@ closed — without the key the secret is not stored, never stored unencrypted.
 | `APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | npm and PyPI publish tokens |
 | `APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials a managed MCP toolset presents to your API |
 | `APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | CDN purge credentials (Cloudflare, Fastly, custom) for hosted Slate sites |
+| `APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | SASL credentials of the Kafka clusters tenants bind their AsyncAPI mocks to ([Event mock brokers](../reference/mock-runtime/event-mock-brokers.md)) |
 
 Each `…_ENCRYPTION_KEYS` value is a JSON object that maps a key version to a base64-encoded
 32-byte key. Single-quote it in a `.env` file:

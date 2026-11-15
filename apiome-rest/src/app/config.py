@@ -368,6 +368,29 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for mock broker credentials (XPC-2.1, #5735): the SASL username
+    # and password a hosted mock presents to a tenant's own Kafka cluster, stored in
+    # apiome.mock_broker_bindings (V372). A separate map from the vaults above because a broker
+    # credential can write to a tenant's production topics — a different blast radius — and it
+    # seals under its own magic. Unset is allowed: the server starts, a binding without SASL can
+    # still be stored, and storing one with a credential is a 503 naming this variable.
+    broker_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS",
+            "broker_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new broker credentials are sealed under. Defaults to the highest version
+    # present in broker_credential_encryption_keys when unset.
+    broker_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_BROKER_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "broker_credential_active_key_version",
+        ),
+    )
+
     # Envelope encryption-at-rest for Slate CDN purge credentials (Slate 10.2, private-suite#120):
     # the Cloudflare API token, Fastly API key or custom purge-endpoint secret stored in
     # apiome.slate_cdn_providers (V368). A separate map from the vaults above because a CDN token
@@ -692,6 +715,30 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "APIOME_SSRF_ALLOW_PRIVATE",
             "ssrf_allow_private",
+        ),
+    )
+
+    # Mock broker bindings (XPC-2.1, #5735). Every bootstrap host of a tenant's broker binding is
+    # resolved and refused when any address is private, loopback, link-local or otherwise
+    # non-public (the address rule above). Set ``APIOME_MOCK_BROKER_ALLOW_PRIVATE=true`` to lift the
+    # IP filter for broker bindings only, for local development against a broker on your own
+    # network; it mirrors apiome-mock's ``APIOME_MOCK_CALLBACK_ALLOW_PRIVATE``. Default false.
+    mock_broker_allow_private: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_BROKER_ALLOW_PRIVATE",
+            "mock_broker_allow_private",
+        ),
+    )
+    # The opt-in dev broker (`docker compose --profile broker`): a comma-separated ``host:port``
+    # list, e.g. ``redpanda:9092``. When set, a binding to exactly these entries is exempt from the
+    # private-address check (the compose network is private by design); every other host is
+    # still checked. Unset (the default) means no exemption at all.
+    mock_dev_broker_bootstrap: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_DEV_BROKER_BOOTSTRAP",
+            "mock_dev_broker_bootstrap",
         ),
     )
 

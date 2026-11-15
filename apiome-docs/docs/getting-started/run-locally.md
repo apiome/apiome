@@ -25,6 +25,19 @@ Panel”** on the launcher to open **Home**. The default service ports are:
 Every how-to page shows the **UI**, **REST**, and (where applicable) **CLI** way to do the same
 thing, plus a short *verify* step.
 
+## Add a Kafka broker (optional)
+
+AsyncAPI mocks can be bound to a Kafka broker. The stack doesn't include one unless you ask for it:
+
+```bash
+docker compose --profile broker up --build --wait   # adds redpanda (Kafka API on :19092)
+```
+
+This starts a single-node Redpanda. The stack reaches it at `redpanda:9092`, and your machine
+reaches it at `localhost:19092`. While it runs, `curl -s http://localhost:8775/health` on the mock
+returns `"broker": "reachable"`. Without `--profile broker`, nothing changes and no service waits
+for a broker. To bind a version to it, see [Event mock brokers](../reference/mock-runtime/event-mock-brokers.md).
+
 ## Where next
 
 [Sign in](./sign-in.mdx) with `ada@example.com` / `apiome-dev`, then follow the Getting started pages

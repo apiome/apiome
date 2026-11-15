@@ -265,3 +265,29 @@ describe('VersionMockCell — GraphQL versions (#5729)', () => {
     expect(screen.queryByTestId('version-mock-graphql-note-rev-1')).not.toBeInTheDocument();
   });
 });
+
+describe('VersionMockCell — AsyncAPI broker state (#5735)', () => {
+  it('says "no broker bound" for an AsyncAPI version served over WebSocket/SSE only', () => {
+    renderCell({ mockEnabled: true, mockBaseUrl: MOCK_URL, asyncapi: true });
+    expect(screen.getByTestId('version-mock-broker-note-rev-1')).toHaveTextContent(
+      'Events · WebSocket/SSE only — no broker bound.'
+    );
+  });
+
+  it('names the bound Kafka broker when there is one', () => {
+    renderCell({ mockEnabled: true, mockBaseUrl: MOCK_URL, asyncapi: true, brokerBound: true });
+    expect(screen.getByTestId('version-mock-broker-note-rev-1')).toHaveTextContent(
+      'Events · Kafka broker bound, plus WebSocket/SSE.'
+    );
+  });
+
+  it('shows no broker note for other versions, or while the mock is off', () => {
+    renderCell({ mockEnabled: true, mockBaseUrl: MOCK_URL });
+    expect(screen.queryByTestId('version-mock-broker-note-rev-1')).not.toBeInTheDocument();
+  });
+
+  it('shows no broker note while the mock is off', () => {
+    renderCell({ mockEnabled: false, asyncapi: true });
+    expect(screen.queryByTestId('version-mock-broker-note-rev-1')).not.toBeInTheDocument();
+  });
+});

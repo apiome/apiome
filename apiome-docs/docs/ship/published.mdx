@@ -89,6 +89,11 @@ cell shows and copies that URL, with the note *GraphQL · queries and mutations.
 served on this deployment yet.* Open it in a browser for GraphiQL, or see
 [Query a GraphQL mock](./mock-try-out.mdx#query-a-graphql-mock).
 
+An **AsyncAPI** version's cell also says where its events go. *Events · WebSocket/SSE only — no
+broker bound* means the mock serves its channels over WebSocket and Server-Sent Events only.
+*Events · Kafka broker bound, plus WebSocket/SSE* means the version is bound to a Kafka broker. See
+[Event mock brokers](../reference/mock-runtime/event-mock-brokers.md).
+
 That same `/graphql` URL can be the target of a contract run. Register it as a verification target
 with `protocol: graphql`, and every root query and mutation field is called and checked against the
 schema — see [Contract test a GraphQL API](./contract-testing-and-ci-gates.mdx#contract-test-a-graphql-api).
