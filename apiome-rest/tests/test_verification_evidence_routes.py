@@ -451,3 +451,15 @@ def test_an_unknown_run_answers_404_from_the_mock_attestation_route() -> None:
         response = client.get(f"{_BASE}/{_RUN}/mock-attestation")
 
     assert response.status_code == 404
+
+
+def test_a_sarif_export_is_served_as_sarif_json() -> None:
+    """XPC-3.2: `?format=sarif` for code-scanning upload."""
+    with patch("app.verification_evidence_routes.get_run", return_value=_record()):
+        response = client.get(f"{_BASE}/{_RUN}/export", params={"format": "sarif"})
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/sarif+json")
+    assert response.headers["content-disposition"] == (
+        f'attachment; filename="verification-run-{_RUN}.sarif"'
+    )
+    assert response.json()["version"] == "2.1.0"

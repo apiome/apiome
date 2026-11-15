@@ -32256,7 +32256,8 @@ class Database:
             environment: ``mock`` | ``development`` | ``test`` | ``staging`` | ``production``.
             base_url: Normalized base URL.
             description: Optional operator note.
-            protocol: ``http`` or ``graphql`` (V371) — what the target speaks.
+            protocol: ``http``, ``graphql`` (V371), ``grpc`` or ``connect`` (V374) — what the
+                target speaks.
             network_class: ``public`` or ``private``.
             approved_by: Approving user, required for a private-network target.
             approval_reason: Why the private-network exception is justified.

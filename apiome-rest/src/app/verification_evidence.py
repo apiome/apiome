@@ -649,8 +649,8 @@ class VerificationRunInput(BaseModel):
     protocol: str = Field(
         default=PROTOCOL_HTTP,
         description=(
-            "Protocol the suite was executed over: `http`, or `graphql` for a GraphQL "
-            "version's suite (the manifest's own `protocol`)."
+            "Protocol the suite was executed over — the target's: `http`, `graphql` for a "
+            "GraphQL version's suite, and `connect` or `grpc` for a Protobuf version's."
         ),
     )
     started_at: datetime = Field(description="When the run began.")
@@ -1052,7 +1052,8 @@ class VerificationRunSummary(BaseModel):
     target_network_class: str = Field(description="`public` or `private`, at run time.")
     target_base_url: str = Field(description="Base URL at run time.")
     protocol: str = Field(
-        default=PROTOCOL_HTTP, description="`http` or `graphql` — what the suite was run over."
+        default=PROTOCOL_HTTP,
+        description="`http`, `graphql`, `connect`, or `grpc` — what the suite was run over.",
     )
     runner_name: str = Field(description="Which runner produced the evidence.")
     runner_version: Optional[str] = Field(default=None, description="Runner version.")

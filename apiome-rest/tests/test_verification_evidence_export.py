@@ -354,3 +354,96 @@ def test_the_protocol_survives_as_a_property() -> None:
     }
     assert properties["apiome.protocol"] == "graphql"
     assert run_export_document(record)["protocol"] == "graphql"
+
+
+# ===========================================================================
+# SARIF (XPC-3.2, #5742)
+# ===========================================================================
+
+
+def _sarif(record: VerificationRunRecord) -> Dict[str, Any]:
+    from app.verification_evidence_export import export_sarif
+
+    return json.loads(export_sarif(record))
+
+
+def test_sarif_validates_against_the_sarif_2_1_0_schema(repo_root) -> None:
+    """`apiome verify contract --format sarif` must write a file Code Scanning accepts."""
+    import jsonschema
+
+    schema_path = repo_root / "apiome-cli" / "tests" / "fixtures" / "sarif" / "sarif-schema-2.1.0.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    jsonschema.validate(_sarif(_record(protocol="grpc")), schema)
+
+
+def test_sarif_has_one_result_per_failed_or_errored_case() -> None:
+    document = _sarif(_record())
+    results = document["runs"][0]["results"]
+    assert [result["properties"]["caseId"] for result in results] == [
+        "get-pet-negative-1",
+        "post-pets-generated-1",
+    ]
+    failed, errored = results
+    assert failed["level"] == "error"
+    assert errored["level"] == "warning"
+    assert failed["ruleId"] == "apiome-contract/status-mismatch"
+    assert errored["ruleId"] == "apiome-contract/transport-error"
+    assert failed["message"]["text"] == "GET /pets/{petId}: expected 400, got 500"
+
+
+def test_sarif_partial_fingerprints_are_the_case_id_so_reruns_deduplicate() -> None:
+    from app.verification_evidence_export import SARIF_CASE_FINGERPRINT
+
+    first = _sarif(_record())["runs"][0]["results"]
+    again = _sarif(_record(id="44444444-4444-4444-8444-444444444444"))["runs"][0]["results"]
+    assert [item["partialFingerprints"] for item in first] == [
+        item["partialFingerprints"] for item in again
+    ]
+    assert first[0]["partialFingerprints"] == {SARIF_CASE_FINGERPRINT: "get-pet-negative-1"}
+
+
+def test_sarif_names_the_first_located_violation() -> None:
+    operations = _operations()
+    operations[1] = operations[1].model_copy(
+        update={
+            "failure_code": "response-schema-mismatch",
+            "failure_message": "'id' is a required property",
+            "assertions": [
+                AssertionRecord(
+                    id="r1",
+                    sequence=0,
+                    kind="response_schema",
+                    outcome="failed",
+                    subject="rpc:acme.Orders.GetOrder",
+                ),
+                AssertionRecord(
+                    id="r2",
+                    sequence=1,
+                    kind="response_schema",
+                    outcome="failed",
+                    subject="/order/id",
+                ),
+            ],
+        }
+    )
+    result = _sarif(_record(operations=operations, protocol="connect"))["runs"][0]["results"][0]
+    assert result["message"]["text"].endswith("(at /order/id)")
+    assert result["properties"]["pointer"] == "/order/id"
+    assert result["properties"]["protocol"] == "connect"
+
+
+def test_sarif_locates_results_under_the_version_reference() -> None:
+    record = _record(source={"version_ref": "project/orders/1.0.0"})
+    result = _sarif(record)["runs"][0]["results"][0]
+    uri = result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+    assert uri == "project/orders/1.0.0/GET /pets/{petId}"
+    # Without a recorded source, the suite digest stands in.
+    bare = _sarif(_record())["runs"][0]["results"][0]
+    assert bare["locations"][0]["physicalLocation"]["artifactLocation"]["uri"].startswith("suite/")
+
+
+def test_sarif_run_properties_carry_the_run_identity() -> None:
+    properties = _sarif(_record(protocol="grpc"))["runs"][0]["properties"]
+    assert properties["suiteDigest"] == _DIGEST
+    assert properties["protocol"] == "grpc"
+    assert properties["outcome"] == "errored"

@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.706.0] - 2026-11-14
+
+### Added
+- **gRPC/Connect contract suites and runs (XPC-3.2, #5742)** — OpenAPI 1.566.0:
+  - `POST /v1/tenants/{t}/contracts/{ref}/suite` on a **Protobuf** version compiles through the new
+    gRPC/Connect protocol adapter instead of reporting `UNSUPPORTED_PARADIGM`: one set of cases per
+    unary method (a declared example message, generated required-only and every-field messages, then
+    a required field omitted, a wrong-typed field and an unknown field), each carrying a new `rpc`
+    payload (`ContractRpcRequest`: `procedure`, protobuf-JSON `message`, `idempotency_level`,
+    `expect_code`, `json_only`) with `protocol: grpc`. Responses are checked against
+    `rpc:<operation key>`, the protobuf-JSON view of the output type. Streaming methods are listed
+    under `unsupported` (`unsupported: streaming`); a version with only streaming methods answers
+    `ok: false` (`FORMAT_MISMATCH`). Manifest `schema_version` / `compiler_version` 3.
+  - Verification targets accept `protocol: connect` (cases `POST`ed as JSON to
+    `{base_url}/{package.Service}/{Method}` with `Connect-Protocol-Version: 1`) and `protocol: grpc`
+    (a native gRPC channel, TLS for `https`, deadline from the policy, descriptors read through server
+    reflection). A `grpc` suite runs on either; `http`/`graphql` targets are refused `422
+    target-protocol-mismatch`. V374 widens the protocol checks on `verification_target` and
+    `verification_run`; a run now records the **target's** protocol.
+  - `…/run` judges each case by its status code (`ok` / `invalid_argument`), then by its decoded
+    message, pointer-located. New failure codes `rpc-status-mismatch`, `rpc-response-undecodable`,
+    `rpc-negative-json-only` (JSON-only negatives skipped over native gRPC),
+    `rpc-reflection-unavailable` and `rpc-descriptor-mismatch`. Methods without
+    `idempotency_level = NO_SIDE_EFFECTS` obey the mutating-method gate. `ContractRunResponse` gains
+    `unsupported`.
+  - `GET …/verification-runs/{run_id}/export?format=sarif` renders a run as SARIF 2.1.0
+    (`application/sarif+json`): one result per failed or errored case, rule
+    `apiome-contract/<failure code>`, `partialFingerprints.apiomeContractCase/v1` = case id.
+    `apiome verify contract --format sarif` writes it (apiome-cli 0.144.0) and prints the run's
+    protocol and any unsupported operations.
+  - Provider-verification coverage gains `operations_unsupported`; the deploy gate's verification
+    signal reports a would-be pass as `warn` with reason `verification-partial` (and
+    `data.partial` / `data.unsupportedOperations`) when the verified suite left operations out.
+
 ## [1.705.0] - 2026-11-14
 
 ### Added

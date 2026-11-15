@@ -202,3 +202,43 @@ def test_a_graphql_version_with_no_root_fields_is_a_200_with_ok_false() -> None:
     assert response.error is not None
     assert response.error.code == "FORMAT_MISMATCH"
     assert "query or mutation" in (response.error.message or "")
+
+
+
+def _protobuf_revision() -> ResolvedRevisionModel:
+    """A resolved revision carrying the XPC-3.2 Orders fixture's canonical model."""
+    from tests.rpc_contract_fixtures import orders_api
+
+    return _revision(orders_api())
+
+
+def test_a_protobuf_version_compiles_through_the_rpc_adapter() -> None:
+    """XPC-3.2: a gRPC version no longer compiles to UNSUPPORTED_PARADIGM — it has cases."""
+    response = _compile(revision=_protobuf_revision())
+    assert response.ok is True
+    manifest = response.manifest
+    assert manifest is not None
+    assert manifest.protocol == "grpc"
+    assert [operation.key for operation in manifest.operations] == [
+        "acme.orders.v1.Orders.CreateOrder",
+        "acme.orders.v1.Orders.GetOrder",
+    ]
+    assert [item.operation_key for item in manifest.unsupported] == [
+        "acme.orders.v1.Orders.WatchOrders"
+    ]
+    assert "UNSUPPORTED_PARADIGM" not in {finding.code for finding in manifest.findings}
+
+
+def test_a_streaming_only_protobuf_version_is_a_200_with_ok_false() -> None:
+    """Streaming methods alone give a request/response case nothing to call."""
+    revision = _protobuf_revision()
+    for service in revision.api.services:
+        service.operations = [
+            operation for operation in service.operations if operation.name == "WatchOrders"
+        ]
+    response = _compile(revision=revision)
+    assert response.ok is False
+    assert response.manifest is None
+    assert response.error is not None
+    assert response.error.code == "FORMAT_MISMATCH"
+    assert "unary" in (response.error.message or "")

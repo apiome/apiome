@@ -19,7 +19,8 @@ back, and where each case came from.
 |---|---|
 | `app/contract_suite.py` | The pure compiler: options, manifest models, the protocol-adapter seam, the HTTP adapter, findings, canonical bytes, digest. No I/O. |
 | `app/contract_suite_graphql.py` | The GraphQL protocol adapter (XPC-1.2): one set of cases per root `query`/`mutation` field. |
-| `app/contract_protocols.py` | The protocol vocabulary (`http`, `graphql`) shared by the compiler, targets and evidence. |
+| `app/contract_suite_rpc.py` | The gRPC/Connect protocol adapter (XPC-3.2): one set of cases per unary Protobuf method. |
+| `app/contract_protocols.py` | The protocol vocabulary (`http`, `graphql`, `grpc`, `connect`) shared by the compiler, targets and evidence, and which target protocols can run each suite protocol. |
 | `app/contract_suite_examples.py` | Attributes a source document's declared examples to `(path, method, site)` by walking the IXH-5.4 example table. |
 | `app/contract_suite_service.py` | Resolves a version reference to its canonical model, looks up publication state, and returns the manifest. Writes nothing. |
 | `app/contract_suite_routes.py` | `POST /v1/tenants/{tenant}/contracts/{version_ref}/suite`, gated on `versions:view`. |
@@ -106,7 +107,7 @@ Two rules follow from this and are worth stating plainly:
 > apiome#5730 (XPC-1.2) — the seam XPC-2.3 and XPC-3.2 plug into.
 
 How a version's operations become cases depends on its paradigm, so the compiler picks a
-**protocol adapter** for it (`protocol_adapter_for(api.paradigm)`). Every adapter fills the same
+**protocol adapter** for it (`protocol_adapter_for(api.paradigm, api.format)`). Every adapter fills the same
 manifest, uses the same findings, seeding and digest, and stamps its protocol on the manifest
 (`protocol`) and on every case (`case.protocol`).
 
@@ -114,6 +115,7 @@ manifest, uses the same findings, seeding and digest, and stamps its protocol on
 |---|---|---|---|
 | `rest` | HTTP (`contract_suite.py`) | `http` | One request: method, resolved path, parameters, body. |
 | `graph` | GraphQL (`contract_suite_graphql.py`) | `graphql` | One GraphQL document `POST`ed to the target URL. |
+| `rpc`, format `protobuf` | gRPC/Connect (`contract_suite_rpc.py`) | `grpc` | One unary call of `/{package.Service}/{Method}` with a protobuf-JSON message, run over Connect or native gRPC. |
 | anything else | HTTP | `http` | Nothing — each operation is reported (`UNSUPPORTED_PARADIGM`, `MISSING_HTTP_BINDING`). |
 
 ### The GraphQL adapter
@@ -157,6 +159,43 @@ in the status code:
 **Subscriptions** are listed under the manifest's `unsupported` (with `code` and `reason`) and
 reported as `UNSUPPORTED_STREAMING`. A request/response case cannot express a stream. A GraphQL
 version with no query or mutation field at all is answered `ok: false` with `FORMAT_MISMATCH`.
+
+### The gRPC/Connect adapter
+
+> apiome#5742 (XPC-3.2).
+
+Every **unary** method of a Protobuf version (`StreamingMode.NONE`) becomes one operation keyed
+`package.Service.Method`, recorded as `POST /{package.Service}/{Method}`. Each case carries an
+`rpc` block — `service`, `method`, `procedure`, `input_type`, `output_type`, the request
+`message` in **protobuf JSON** (field JSON names, enums by name), `idempotency_level`,
+`expect_code` and `json_only` — and `request.body` holds the same message.
+
+| Source | Message | `expect_code` |
+|---|---|---|
+| `declared_example` | `extras.example` (or the first of `extras.examples`) on the request message or the input type, when an importer recorded one; dropped with `EXAMPLE_SCHEMA_MISMATCH` when it breaks the request schema | `ok` |
+| `generated_minimal` / `generated_full` | Seeded from a request schema built for the input type: required fields only, then every field (one member per `oneof`; 64-bit integers generated as 32-bit numbers) | `ok` |
+| `negative_missing_parameter` | The minimal message without one `required` field (proto2 `required`, Editions `LEGACY_REQUIRED`) | `invalid_argument` |
+| `negative_parameter_type` | One field given a wrong JSON type (`true`, or a string for a boolean) — `json_only` | `invalid_argument` |
+| `negative_unknown_field` | The minimal message plus `apiomeUnknownField` — `json_only` | `invalid_argument` |
+
+A success case validates the reply against `rpc:<operation key>`, the protobuf-JSON view of the
+output type: declared fields only (JSON name or original name), `required` fields present, and the
+lenient forms protobuf JSON allows (a 64-bit integer as a number or a decimal string, an enum by
+name or number, `"NaN"` for a float). Well-known types use their JSON forms (`Timestamp` as an
+RFC 3339 string, `Duration` as `"1.5s"`, wrappers as their scalar). A type the version does not
+define (an import other than a well-known type) is left unconstrained and reported
+`UNRESOLVED_PAYLOAD_TYPE`.
+
+A method is **mutating** unless it declares `idempotency_level = NO_SIDE_EFFECTS`. **Streaming
+methods** are listed under `unsupported` with the reason `unsupported: streaming — …` and reported
+`UNSUPPORTED_STREAMING`. A Protobuf version with no unary method is answered `ok: false` with
+`FORMAT_MISMATCH`. RPC formats other than Protobuf (Smithy, Thrift, JSON-RPC) keep the HTTP
+adapter.
+
+### Manifest version 3
+
+XPC-3.2 raised `schema_version` and `compiler_version` to **3**: every case gained `rpc`, and
+Protobuf versions compile through the new adapter (they used to yield only findings).
 
 ### Manifest version 2
 

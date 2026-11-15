@@ -42,7 +42,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from .contract_protocols import CONTRACT_PROTOCOLS, PROTOCOL_HTTP
+from .contract_protocols import CONTRACT_PROTOCOLS, PROTOCOL_HTTP, target_protocols_for
 from .ssrf_guard import SSRFError, validate_host, validate_url_policy
 
 __all__ = [
@@ -573,9 +573,12 @@ class VerificationTargetInput(BaseModel):
     protocol: str = Field(
         default=PROTOCOL_HTTP,
         description=(
-            "`http` (relative paths are joined onto `base_url`) or `graphql` (`base_url` is the "
-            "GraphQL endpoint every case is posted to). A run refuses a target whose protocol "
-            "is not the suite's."
+            "`http` (relative paths are joined onto `base_url`), `graphql` (`base_url` is the "
+            "GraphQL endpoint every case is posted to), `connect` (gRPC-family cases are "
+            "posted as JSON to `{base_url}/{package.Service}/{Method}`), or `grpc` (a native "
+            "gRPC channel to `base_url`'s host and port — TLS for `https` — with descriptors "
+            "read through server reflection). A run refuses a target that cannot speak the "
+            "suite's protocol; a Protobuf version's suite runs on `connect` or `grpc`."
         ),
     )
     network_class: str = Field(
@@ -694,7 +697,8 @@ class VerificationTargetRecord(BaseModel):
     environment: str = Field(description="Environment class.")
     base_url: str = Field(description="Base URL, normalized (no trailing slash).")
     protocol: str = Field(
-        default=PROTOCOL_HTTP, description="`http` or `graphql` — what the target speaks."
+        default=PROTOCOL_HTTP,
+        description="`http`, `graphql`, `connect`, or `grpc` — what the target speaks.",
     )
     network_class: str = Field(description="`public` or `private`.")
     approved_by: Optional[str] = Field(
@@ -781,7 +785,10 @@ class ResolvedTarget(BaseModel):
     base_url: str = Field(description="Normalized base URL to join relative paths onto.")
     protocol: str = Field(
         default=PROTOCOL_HTTP,
-        description="`http` or `graphql`; for `graphql`, `base_url` is the endpoint itself.",
+        description=(
+            "`http`, `graphql`, `connect`, or `grpc`; for `graphql`, `base_url` is the endpoint "
+            "itself, and for `grpc` only its scheme, host and port are used."
+        ),
     )
     policy: VerificationPolicy = Field(description="The policy the runner must honour.")
     auth: TargetAuthReference = Field(
@@ -812,8 +819,9 @@ def resolve_target_record(
         record: The stored target.
         revalidate_url: Set ``False`` only where a resolution must not depend on DNS (an offline
             or air-gapped path); the shape checks still run.
-        protocol: The protocol the run's suite speaks. When given, a target that declares a
-            different one is refused rather than handed a request it cannot answer.
+        protocol: The protocol the run's suite speaks. When given, a target whose protocol
+            cannot execute it (:func:`~app.contract_protocols.target_protocols_for`) is refused
+            rather than handed a request it cannot answer.
 
     Returns:
         The resolved target.
@@ -833,11 +841,13 @@ def resolve_target_record(
             f"target '{record.slug}' is disabled; enable it before running verification "
             "against it",
         )
-    if protocol is not None and record.protocol != protocol:
+    accepted = target_protocols_for(protocol) if protocol is not None else ()
+    if protocol is not None and record.protocol not in accepted:
+        wanted = " or ".join(f"'{item}'" for item in accepted)
         raise TargetValidationError(
             CODE_PROTOCOL_MISMATCH,
             f"target '{record.slug}' declares protocol '{record.protocol}', but this suite is "
-            f"compiled for '{protocol}'; select a '{protocol}' target or change the target's "
+            f"compiled for '{protocol}'; select a {wanted} target or change the target's "
             "protocol",
         )
 

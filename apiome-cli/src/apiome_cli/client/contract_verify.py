@@ -11,8 +11,8 @@ from typing import Any, Mapping, Optional, Sequence
 
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 
-#: Artifact formats the ECA-1.3 export endpoint accepts.
-EXPORT_FORMATS = ("json", "junit")
+#: Artifact formats the ECA-1.3 export endpoint accepts (``sarif`` since XPC-3.2).
+EXPORT_FORMATS = ("json", "junit", "sarif")
 
 #: Reference kinds the run endpoint addresses, mirroring the suite command.
 REFERENCE_KINDS = ("project", "catalog")
@@ -175,4 +175,26 @@ def format_run_error(error: Mapping[str, Any]) -> list[str]:
     remediation = error.get("remediation")
     if remediation:
         lines.append(f"  remediation: {remediation}")
+    return lines
+
+
+def format_unsupported(payload: Mapping[str, Any]) -> list[str]:
+    """Lines naming the operations a run's suite left out by design (XPC-3.2).
+
+    A streaming gRPC method or a GraphQL subscription is listed under the run response's
+    ``unsupported``; the evidence covers the rest only, so the summary says the run is partial.
+
+    :param payload: A ``ContractRunResponse`` dict.
+    :returns: Indented summary lines; empty when nothing was left out.
+    """
+    entries = payload.get("unsupported") or []
+    if not isinstance(entries, list) or not entries:
+        return []
+    lines = [f"  partial: {len(entries)} operation(s) not covered by design"]
+    for entry in entries:
+        if not isinstance(entry, Mapping):
+            continue
+        key = entry.get("operation_key") or "?"
+        reason = entry.get("reason") or entry.get("code") or ""
+        lines.append(f"    - {key}: {reason}".rstrip(": "))
     return lines

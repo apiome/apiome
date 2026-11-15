@@ -561,6 +561,7 @@ def discover_endpoint(
     channel_credentials: Optional[object] = None,
     timeout: Optional[float] = None,
     transport_factory: Optional[Callable[[ReflectionVersion], ReflectionTransport]] = None,
+    allow_private: bool = False,
 ) -> GrpcReflectionResult:
     """Crawl a live gRPC server's Server Reflection surface into a canonical descriptor set.
 
@@ -593,6 +594,9 @@ def discover_endpoint(
         timeout: Per-RPC deadline in seconds; defaults to 30s.
         transport_factory: A factory ``(version) -> ReflectionTransport`` used instead of building
             a real gRPC channel — a dependency-injection seam for tests. Production callers omit it.
+        allow_private: Skip the SSRF address check. Only for a caller that has already vetted the
+            host under its own, attributable exception — a ``private`` verification target, which
+            V211 refuses to store without an approver (XPC-3.2 contract runs).
 
     Returns:
         A :class:`GrpcReflectionResult`.
@@ -604,10 +608,11 @@ def discover_endpoint(
     # 1) Vet the target host up front — an SSRF rejection is a config/security problem, never a
     #    "the server is just down" outcome.
     host = _host_of(target)
-    try:
-        validate_host(host)
-    except SSRFError as exc:
-        raise GrpcReflectionError(str(exc)) from exc
+    if not allow_private:
+        try:
+            validate_host(host)
+        except SSRFError as exc:
+            raise GrpcReflectionError(str(exc)) from exc
 
     # 2) Resolve auth → call metadata (raises on a malformed credential), then merge extras.
     call_metadata = _auth_metadata(auth_type, auth_payload)

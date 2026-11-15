@@ -177,6 +177,9 @@ REASON_VERIFICATION_UNHEALTHY = "verification-last-run-unhealthy"
 REASON_VERIFICATION_STALE_FAIL = "verification-stale-fail-threshold"
 REASON_VERIFICATION_STALE_WARN = "verification-stale-warn-threshold"
 REASON_VERIFICATION_FRESH = "verification-fresh"
+#: The verification would pass, but its suite left operations out by design (a streaming gRPC
+#: method, a GraphQL subscription): the evidence is partial, so the signal warns (XPC-3.2).
+REASON_VERIFICATION_PARTIAL = "verification-partial"
 
 #: Appended to every "could not read this signal" detail by the service.
 REASON_SIGNAL_UNAVAILABLE = "signal-unavailable"
@@ -903,6 +906,73 @@ def evaluate_consumers(
 
 
 def evaluate_verification(
+    *,
+    source: Optional[str],
+    freshness_seconds: Optional[int],
+    last_status: Optional[str],
+    last_success_at: Optional[datetime] = None,
+    thresholds: VerificationThresholds,
+    link: Optional[str] = None,
+    extra: Optional[Mapping[str, Any]] = None,
+    unsupported_operations: int = 0,
+) -> GateSignal:
+    """Judge how recently, how well, and how completely this version's deployment was verified.
+
+    ``freshness_seconds`` of ``None`` means *unknown*, never *fresh* — CTG-4.4's rule, kept here
+    because a gate is exactly where the difference matters.
+
+    **Partial evidence is never a pass (XPC-3.2).** When the verified suite listed operations as
+    ``unsupported`` — a streaming gRPC method, a GraphQL subscription — the evidence covers only
+    part of the contract. A signal that would otherwise ``pass`` is reported ``warn`` with reason
+    :data:`REASON_VERIFICATION_PARTIAL`, and ``data.partial`` / ``data.unsupportedOperations``
+    say so on every verdict.
+
+    Args:
+        source: ``schedule`` when CTG-4.4 is watching this version, ``report`` when the only
+            evidence is a manual CTG-4.3 run, ``None`` when there is neither.
+        freshness_seconds: Seconds since the last *clean* verification; ``None`` when there has
+            never been one.
+        last_status: The most recent run's outcome (``passed`` / ``failed`` / ``errored``).
+        last_success_at: When it last verified clean, for the payload.
+        thresholds: The verification rungs in force.
+        link: Path to the schedules or reports behind this.
+        extra: Signal-specific facts (which schedules matched, which report was read).
+        unsupported_operations: How many operations the verified suite left out by design.
+
+    Returns:
+        The judged signal.
+    """
+    unsupported = max(0, int(unsupported_operations or 0))
+    facts: Dict[str, Any] = dict(extra or {})
+    if source:
+        facts["partial"] = unsupported > 0
+        facts["unsupportedOperations"] = unsupported
+    signal = _evaluate_verification_freshness(
+        source=source,
+        freshness_seconds=freshness_seconds,
+        last_status=last_status,
+        last_success_at=last_success_at,
+        thresholds=thresholds,
+        link=link,
+        extra=facts,
+    )
+    if signal.status != STATUS_PASS or not source or unsupported == 0:
+        return signal
+    noun = "operation" if unsupported == 1 else "operations"
+    return signal.model_copy(
+        update={
+            "status": STATUS_WARN,
+            "satisfied": False,
+            "reason": REASON_VERIFICATION_PARTIAL,
+            "detail": (
+                f"{signal.detail} The verified suite left {unsupported} {noun} out by design "
+                "(a streaming method or a subscription), so the evidence is partial."
+            ),
+        }
+    )
+
+
+def _evaluate_verification_freshness(
     *,
     source: Optional[str],
     freshness_seconds: Optional[int],

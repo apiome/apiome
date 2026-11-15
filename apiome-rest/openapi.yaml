@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.565.0
+  version: 1.566.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -20350,6 +20350,17 @@ paths:
         false` (`FORMAT_MISMATCH`).
 
 
+        **Protobuf (gRPC) versions** compile through the gRPC/Connect protocol adapter
+        (XPC-3.2): one set of cases per unary method — a declared example message,
+        generated messages, then a required field omitted, a wrong-typed field and
+        an unknown field — each a protobuf-JSON message for `/{package.Service}/{Method}`
+        carried in the case''s `rpc` payload with `protocol: grpc`, expecting status
+        `ok` and a message matching the output type, or `invalid_argument`. Streaming
+        methods are listed under `unsupported` (`unsupported: streaming`); methods
+        without `idempotency_level = NO_SIDE_EFFECTS` are mutating. A Protobuf version
+        with no unary method answers `ok: false` (`FORMAT_MISMATCH`).
+
+
         **Nothing is skipped silently.** A streaming operation, a non-HTTP paradigm,
         an XML-only body, a structured parameter, an undeclared status code — each
         appears in ``findings`` with a stable code, so partial coverage can never
@@ -20466,7 +20477,17 @@ paths:
         to the target URL itself; a case passes on the response envelope — no `errors`
         and `data` matching the selection for a success case, a non-empty `errors`
         array for a negative one. Mutations obey the mutating-method gate; queries
-        do not.'
+        do not.
+
+
+        **Protobuf (gRPC) versions** (XPC-3.2) run on a `connect` target — each case
+        `POST`ed as JSON to `{base_url}/{package.Service}/{Method}` with `Connect-Protocol-Version:
+        1` — or a `grpc` target — a native gRPC channel (TLS for `https`, deadline
+        from the policy) with descriptors read through server reflection; JSON-only
+        negatives are `skipped` (`rpc-negative-json-only`) over native gRPC. A case
+        passes on its status code, then on its decoded message matching the output
+        type (pointer-located). The run records the target''s protocol, and the response
+        lists the suite''s `unsupported` operations (non-empty means partial evidence).'
       operationId: run_contract_suite_for_version_v1_tenants__tenant_slug__contracts__version_ref__run_post
       parameters:
       - name: tenant_slug
@@ -25566,6 +25587,11 @@ paths:
         `<error>`, because that is the distinction contract verification needs. The
         suite digest and target identity travel as `<properties>`.
 
+        * `sarif` — SARIF 2.1.0 (`application/sarif+json`) for code-scanning upload:
+        one result per failed (`error`) or errored (`warning`) case, rule id `apiome-contract/<failure
+        code>`, the first located violation''s JSON Pointer in the message, and `partialFingerprints.apiomeContractCase/v1`
+        set to the case id so repeated runs de-duplicate.
+
 
         Neither exporter recomputes a verdict: the counters come from the stored counts,
         so an export can never disagree with the run it exports.
@@ -25595,10 +25621,10 @@ paths:
         required: false
         schema:
           type: string
-          description: 'Export format: json, junit.'
+          description: 'Export format: json, junit, sarif.'
           default: json
           title: Format
-        description: 'Export format: json, junit.'
+        description: 'Export format: json, junit, sarif.'
       - name: authorization
         in: header
         required: false
@@ -25633,6 +25659,7 @@ paths:
                 description: Response payload for exportoneverificationrunas jsonor
                   junitresponse200.
             application/xml: {}
+            application/sarif+json: {}
         '422':
           description: Validation Error
           content:
@@ -105570,8 +105597,10 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: 'Wire protocol the case is executed over: `http`, or `graphql`
-            for a case whose request is a GraphQL document posted to the target URL.'
+          description: 'Wire protocol the case is executed over: `http`, `graphql`
+            for a case whose request is a GraphQL document posted to the target URL,
+            or `grpc` for a unary call run over Connect or native gRPC as the target
+            declares.'
           default: http
           example: example
         request:
@@ -105585,6 +105614,14 @@ components:
           description: The GraphQL document, variables and operation name. Present
             exactly when `protocol` is `graphql`; `request.body` carries the same
             document as sent.
+        rpc:
+          anyOf:
+          - $ref: '#/components/schemas/ContractRpcRequest'
+          - type: 'null'
+            description: Contract Case schema.
+          description: 'The unary call: procedure, request message and expected status
+            code. Present exactly when `protocol` is `grpc`; `request.body` carries
+            the same message.'
         expect:
           $ref: '#/components/schemas/ContractCaseExpectation'
           description: What must come back.
@@ -105841,6 +105878,87 @@ components:
       - count
       title: ContractRevisionsResponse
       description: A consumer's contract history.
+    ContractRpcRequest:
+      properties:
+        service:
+          type: string
+          title: Service
+          description: Fully-qualified service name (`acme.orders.v1.Orders`).
+          example: example
+        method:
+          type: string
+          title: Method
+          description: Method name (`GetOrder`).
+          example: example
+        procedure:
+          type: string
+          title: Procedure
+          description: The gRPC/Connect procedure path, `/{package.Service}/{Method}`.
+          example: example
+        input_type:
+          type: string
+          title: Input Type
+          description: Fully-qualified request message type.
+          example: example
+        output_type:
+          type: string
+          title: Output Type
+          description: Fully-qualified response message type.
+          example: example
+        message:
+          additionalProperties: true
+          type: object
+          title: Message
+          description: The request message, in protobuf-JSON form.
+        idempotency_level:
+          type: string
+          title: Idempotency Level
+          description: '`no_side_effects`, `idempotent`, or `unknown` (the protobuf
+            default). Only a `no_side_effects` method runs when the target forbids
+            mutating methods.'
+          example: example
+        expect_code:
+          type: string
+          title: Expect Code
+          description: 'The Connect/gRPC status code a conforming server answers with:
+            `ok`, or `invalid_argument` for a negative case.'
+          example: example
+        json_only:
+          type: boolean
+          title: Json Only
+          description: True for a negative that only the JSON encoding can express
+            (a wrong-typed or an unknown field). Binary protobuf cannot carry either,
+            so a native gRPC run records the case as skipped.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - service
+      - method
+      - procedure
+      - input_type
+      - output_type
+      - idempotency_level
+      - expect_code
+      title: ContractRpcRequest
+      description: 'The unary call a ``grpc``-protocol case makes, independent of
+        the transport it runs over.
+
+
+        ``message`` is the request message in its **protobuf-JSON** form (field JSON
+        names, enums by
+
+        name, 64-bit integers as strings or numbers). Over Connect it is posted as
+        is; over native gRPC
+
+        it is parsed into the server''s message type with the descriptors reflection
+        returns and sent
+
+        as binary protobuf. ``idempotency_level`` is what the mutating-method gate
+        reads, because every
+
+        call is a ``POST`` and the verb says nothing about whether it writes.'
     ContractRunRequest:
       properties:
         target_ref:
@@ -105915,6 +106033,15 @@ components:
             description: Response payload for contract run.
           title: Created
           description: True when evidence was newly written; False on idempotent replay.
+        unsupported:
+          items:
+            $ref: '#/components/schemas/SuiteUnsupportedOperation'
+          type: array
+          title: Unsupported
+          description: 'Operations the suite declares but cannot cover by design (a
+            streaming gRPC method, a GraphQL subscription), copied from the manifest.
+            Non-empty means the evidence is partial: those operations were never exercised.'
+          maxItems: 1000
         error:
           anyOf:
           - $ref: '#/components/schemas/SpecImportJobError'
@@ -105954,13 +106081,13 @@ components:
           type: integer
           title: Schema Version
           description: Manifest envelope version.
-          default: 2
+          default: 3
           example: 1
         compiler_version:
           type: integer
           title: Compiler Version
           description: Version of the compilation rules.
-          default: 2
+          default: 3
           example: 1
         digest:
           type: string
@@ -105982,9 +106109,9 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: Protocol of the adapter that compiled the suite — `http` or
-            `graphql`. A run refuses a verification target that declares a different
-            one.
+          description: Protocol of the adapter that compiled the suite — `http`, `graphql`,
+            or `grpc`. A run refuses a verification target that cannot speak it (a
+            `grpc` suite runs on a `grpc` or a `connect` target).
           default: http
           example: example
         api:
@@ -106830,6 +106957,15 @@ components:
           description: 'Operations the suite compiler could not turn into cases at
             all. Reported separately from `operations_skipped`: one was not sendable,
             the other was not sent.'
+          example: 1
+        operations_unsupported:
+          type: integer
+          title: Operations Unsupported
+          description: 'Of `operations_uncompiled`, those the suite lists as `unsupported`
+            by design — a streaming gRPC method, a GraphQL subscription (XPC-3.2).
+            Non-zero makes the run *partial*: the deploy gate never reads it as a
+            plain pass.'
+          default: 0
           example: 1
         uncovered_named:
           type: integer
@@ -151978,8 +152114,9 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: '`http` or `graphql`; for `graphql`, `base_url` is the endpoint
-            itself.'
+          description: '`http`, `graphql`, `connect`, or `grpc`; for `graphql`, `base_url`
+            is the endpoint itself, and for `grpc` only its scheme, host and port
+            are used.'
           default: http
           example: example
         policy:
@@ -151996,7 +152133,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-15T01:46:23Z'
       additionalProperties: false
       type: object
       required:
@@ -170712,8 +170849,9 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: 'Protocol the suite was executed over: `http`, or `graphql`
-            for a GraphQL version''s suite (the manifest''s own `protocol`).'
+          description: 'Protocol the suite was executed over — the target''s: `http`,
+            `graphql` for a GraphQL version''s suite, and `connect` or `grpc` for
+            a Protobuf version''s.'
           default: http
           example: example
         started_at:
@@ -170721,13 +170859,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-15T01:46:23Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-15T01:46:23Z'
         outcome:
           anyOf:
           - type: string
@@ -170896,7 +171034,8 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: '`http` or `graphql` — what the suite was run over.'
+          description: '`http`, `graphql`, `connect`, or `grpc` — what the suite was
+            run over.'
           default: http
           example: example
         runner_name:
@@ -171106,7 +171245,8 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: '`http` or `graphql` — what the suite was run over.'
+          description: '`http`, `graphql`, `connect`, or `grpc` — what the suite was
+            run over.'
           default: http
           example: example
         runner_name:
@@ -171752,9 +171892,13 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: '`http` (relative paths are joined onto `base_url`) or `graphql`
-            (`base_url` is the GraphQL endpoint every case is posted to). A run refuses
-            a target whose protocol is not the suite''s.'
+          description: '`http` (relative paths are joined onto `base_url`), `graphql`
+            (`base_url` is the GraphQL endpoint every case is posted to), `connect`
+            (gRPC-family cases are posted as JSON to `{base_url}/{package.Service}/{Method}`),
+            or `grpc` (a native gRPC channel to `base_url`''s host and port — TLS
+            for `https` — with descriptors read through server reflection). A run
+            refuses a target that cannot speak the suite''s protocol; a Protobuf version''s
+            suite runs on `connect` or `grpc`.'
           default: http
           example: example
         network_class:
@@ -171953,7 +172097,8 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: '`http` or `graphql` — what the target speaks.'
+          description: '`http`, `graphql`, `connect`, or `grpc` — what the target
+            speaks.'
           default: http
           example: example
         network_class:

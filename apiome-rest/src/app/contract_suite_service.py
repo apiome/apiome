@@ -32,13 +32,14 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .canonical_model import ApiParadigm, CanonicalApi, OperationKind
+from .canonical_model import ApiParadigm, CanonicalApi, OperationKind, StreamingMode
 from .contract_suite import (
     ContractSuiteManifest,
     ContractSuiteOptions,
     SuiteSourceInfo,
     compile_contract_suite,
 )
+from .contract_suite_rpc import RPC_FORMATS
 from .database import db
 from .import_source_pipeline import build_job_error
 from .models import SpecImportJobError
@@ -153,12 +154,33 @@ def compile_version_contract_suite(
             ),
         )
 
+    if (
+        revision.api.paradigm is ApiParadigm.RPC
+        and revision.api.format in RPC_FORMATS
+        and not _has_unary_methods(revision.api)
+    ):
+        return ContractSuiteResponse(
+            ok=False,
+            version_ref=version_ref,
+            error=build_job_error(
+                "FORMAT_MISMATCH",
+                "This Protobuf version declares no unary method, so there is no call a contract "
+                "case could make. Streaming methods are not compiled: a request/response case "
+                "cannot express a stream. Add a unary `rpc`.",
+            ),
+        )
+
     manifest = compile_contract_suite(
         revision.api,
         options=request.options,
         source=_source_info(version_ref, revision.coordinates, tenant_id=tenant_id),
     )
     return ContractSuiteResponse(ok=True, version_ref=version_ref, manifest=manifest)
+
+
+def _has_unary_methods(api: CanonicalApi) -> bool:
+    """Return whether a Protobuf model declares a method that is neither side streaming."""
+    return any(operation.streaming is StreamingMode.NONE for operation in api.operations())
 
 
 def _has_root_fields(api: CanonicalApi) -> bool:

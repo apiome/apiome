@@ -30,6 +30,7 @@ from apiome_cli.client.contract_verify import (
     exit_code_for_run,
     format_operation_failure,
     format_run_error,
+    format_unsupported,
     non_passing_operations,
     parse_context_pairs,
 )
@@ -96,12 +97,12 @@ def verify_contract(
     output_format: str = typer.Option(
         "json",
         "--format",
-        help="CI artifact format: json (default) or junit.",
+        help="CI artifact format: json (default), junit, or sarif (SARIF 2.1.0 for code scanning).",
     ),
     out: Optional[Path] = typer.Option(
         None,
         "--out",
-        help="Write the export artifact to this file (JSON or JUnit XML).",
+        help="Write the export artifact to this file (JSON, JUnit XML, or SARIF).",
     ),
     seed: int = typer.Option(
         0,
@@ -148,8 +149,9 @@ def verify_contract(
 ) -> None:
     """Execute a contract suite against a target (POST …/contracts/{ref}/run).
 
-    Prints a summary with the evidence run id and per-case failures. Writes JSON or
-    JUnit via the export endpoint when ``--out`` / ``--format`` ask for an artifact.
+    Prints a summary with the evidence run id, the protocol the run was executed over, any
+    operations left out by design (``partial``) and per-case failures. Writes JSON, JUnit or
+    SARIF via the export endpoint when ``--out`` / ``--format`` ask for an artifact.
     Exits non-zero when the stored outcome is not ``passed``, or when the suite
     cannot run (``ok: false``).
     """
@@ -159,7 +161,7 @@ def verify_contract(
 
     fmt = (output_format or "json").strip().lower()
     if fmt not in EXPORT_FORMATS:
-        raise typer.BadParameter("must be one of json, junit", param_hint="--format")
+        raise typer.BadParameter("must be one of json, junit, sarif", param_hint="--format")
 
     try:
         context = parse_context_pairs(context_pair)
@@ -225,7 +227,7 @@ def verify_contract(
         emit_json(payload)
     elif out is not None:
         _emit_summary(payload, reference=reference, target=target, out=out, fmt=fmt)
-    elif fmt == "junit":
+    elif fmt in ("junit", "sarif"):
         typer.echo(artifact_text)
     else:
         # Human mode, format=json, no --out: actionable summary (artifact available via --out).
@@ -253,6 +255,7 @@ def _emit_summary(
         f"  target: {run.get('target_slug')} ({run.get('target_environment')}) "
         f"{run.get('target_base_url')}"
     )
+    typer.echo(f"  protocol: {run.get('protocol') or 'http'}")
     typer.echo(
         "  counts: {total} total, {passed} passed, {failed} failed, "
         "{errored} errored, {skipped} skipped".format(
@@ -263,6 +266,8 @@ def _emit_summary(
             skipped=counts.get("skipped", 0),
         )
     )
+    for line in format_unsupported(payload):
+        typer.echo(line)
     failures = non_passing_operations(run)
     if failures:
         typer.echo(f"  failures ({len(failures)}):")

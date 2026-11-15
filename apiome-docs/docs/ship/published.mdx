@@ -99,6 +99,12 @@ That same `/graphql` URL can be the target of a contract run. Register it as a v
 with `protocol: graphql`, and every root query and mutation field is called and checked against the
 schema — see [Contract test a GraphQL API](./contract-testing-and-ci-gates.mdx#contract-test-a-graphql-api).
 
+A version imported from **Protobuf** can be contract tested the same way. Register its deployment as
+a verification target with `protocol: connect` (JSON over HTTP) or `protocol: grpc` (a native gRPC
+channel with server reflection), and every unary method is called and checked against the `.proto`;
+streaming methods are listed as not covered — see
+[Contract test a gRPC API](./contract-testing-and-ci-gates.mdx#contract-test-a-grpc-api).
+
 ### Scenarios
 
 **Click “Scenarios”** to open **Mock scenarios for v…** — named situations a consumer picks per
