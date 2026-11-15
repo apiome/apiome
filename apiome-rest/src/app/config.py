@@ -881,6 +881,16 @@ class Settings(BaseSettings):
         ),
     )
 
+    # COL-4.1 (#4525): presence heartbeats and lock actions per user, per tenant. A tab heartbeats
+    # every ~20s, so the default leaves room for many tabs plus lock traffic.
+    presence_rate_limit_per_minute: int = Field(
+        default=240,
+        validation_alias=AliasChoices(
+            "APIOME_PRESENCE_RATE_LIMIT_PER_MINUTE",
+            "presence_rate_limit_per_minute",
+        ),
+    )
+
     # Comment creation rate limiting (COL-1.1, #4513). Opening a thread and replying both write a
     # comment and resolve mentions against the tenant's members, so one user gets a per-tenant
     # budget shared by the two create endpoints, on top of the global middleware. Shares

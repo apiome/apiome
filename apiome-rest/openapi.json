@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.566.0",
+    "version": "1.567.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -42500,6 +42500,794 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for deleteacommentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence": {
+      "get": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Who is viewing a project, and what is locked",
+        "description": "Read the project's live viewers and element locks without announcing the caller.",
+        "operationId": "get_presence_v1_tenants__tenant_slug__projects__project_ref__presence_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whoisviewingaprojectandwhatislockedauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whoisviewingaprojectandwhatislockedauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whoisviewingaprojectandwhatislocked Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whoisviewingaprojectandwhatislocked Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for who is viewing a project, and what is locked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for whoisviewingaprojectandwhatislockedresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for whoisviewingaprojectandwhatislockedresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence/heartbeat": {
+      "post": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Announce a tab and renew its locks",
+        "description": "Mark the tab present for the lease, renew the locks it holds, and read the snapshot.\n\n``lost`` in the answer names held keys that another tab now holds \u2014 the notice a takeover\nhappened. Clients heartbeat at least twice per ``ttl_seconds``.",
+        "operationId": "post_heartbeat_v1_tenants__tenant_slug__projects__project_ref__presence_heartbeat_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Announceatabandrenewitslocksauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Announceatabandrenewitslocksauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Announceatabandrenewitslocks Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Announceatabandrenewitslocks Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest",
+                "description": "Request body for announceatabandrenewitslocksrequest."
+              }
+            }
+          },
+          "description": "Request body for announce a tab and renew its locks."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for announce a tab and renew its locks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for announceatabandrenewitslocksresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for announceatabandrenewitslocksresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence/leave": {
+      "post": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Leave a project (release presence and locks)",
+        "description": "Drop the tab's presence and every lock it holds. Safe to repeat.",
+        "operationId": "post_leave_v1_tenants__tenant_slug__projects__project_ref__presence_leave_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Leaveaprojectreleasepresenceandlocksauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Leaveaprojectreleasepresenceandlocksauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Leaveaprojectreleasepresenceandlocks Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Leaveaprojectreleasepresenceandlocks Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest",
+                "description": "Request body for leaveaprojectreleasepresenceandlocksrequest."
+              }
+            }
+          },
+          "description": "Request body for leave a project (release presence and locks)."
+        },
+        "responses": {
+          "204": {
+            "description": "Successful response for leave a project (release presence and locks)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for leaveaprojectreleasepresenceandlocksresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence/locks/{element_key}": {
+      "put": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Lock an element",
+        "description": "Mark an element as being edited by ``session_id``. ``409 presence-lock-held`` if another live tab holds it.",
+        "operationId": "put_lock_v1_tenants__tenant_slug__projects__project_ref__presence_locks__element_key__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "element_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Element Key",
+              "description": "Element Key schema."
+            },
+            "description": "Path parameter identifying the element key segment."
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id",
+              "description": "Session Id schema."
+            },
+            "description": "Required. Query parameter: session id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lockanelementauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lockanelementauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lockanelement Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lockanelement Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for lock an element.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for lockanelementresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for lockanelementresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Unlock an element",
+        "description": "Release a lock the tab holds.",
+        "operationId": "delete_lock_v1_tenants__tenant_slug__projects__project_ref__presence_locks__element_key__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "element_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Element Key",
+              "description": "Element Key schema."
+            },
+            "description": "Path parameter identifying the element key segment."
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id",
+              "description": "Session Id schema."
+            },
+            "description": "Required. Query parameter: session id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unlockanelementauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unlockanelementauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unlockanelement Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unlockanelement Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for unlock an element.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for unlockanelementresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for unlockanelementresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence/request-takeover/{element_key}": {
+      "post": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Ask the holder to hand an element over",
+        "description": "Notify the holder (on their next heartbeat) that the caller wants the element.",
+        "operationId": "post_request_takeover_v1_tenants__tenant_slug__projects__project_ref__presence_request_takeover__element_key__post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "element_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Element Key",
+              "description": "Element Key schema."
+            },
+            "description": "Path parameter identifying the element key segment."
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id",
+              "description": "Session Id schema."
+            },
+            "description": "Required. Query parameter: session id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Asktheholdertohandanelementoverauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Asktheholdertohandanelementoverauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Asktheholdertohandanelementover Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Asktheholdertohandanelementover Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for ask the holder to hand an element over.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for asktheholdertohandanelementoverresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for asktheholdertohandanelementoverresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/presence/take-over/{element_key}": {
+      "post": {
+        "tags": [
+          "presence"
+        ],
+        "summary": "Take an element over after asking",
+        "description": "Steal a lock once the grace period since the caller's request has passed; the previous holder sees it in ``lost``.",
+        "operationId": "post_take_over_v1_tenants__tenant_slug__projects__project_ref__presence_take_over__element_key__post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "element_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Element Key",
+              "description": "Element Key schema."
+            },
+            "description": "Path parameter identifying the element key segment."
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id",
+              "description": "Session Id schema."
+            },
+            "description": "Required. Query parameter: session id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Takeanelementoverafteraskingauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Takeanelementoverafteraskingauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Takeanelementoverafterasking Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Takeanelementoverafterasking Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for take an element over after asking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresenceSnapshot",
+                  "description": "Response payload for takeanelementoverafteraskingresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for takeanelementoverafteraskingresponse422."
                 }
               }
             }
@@ -160421,6 +161209,47 @@
         "title": "HTTPValidationError",
         "description": "Validation error response emitted when request data fails schema checks."
       },
+      "HeartbeatRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Client-generated id of this tab (8-64 URL-safe chars).",
+            "example": "session_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "view": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for heartbeat."
+              },
+              {
+                "type": "null",
+                "description": "Request body for heartbeat."
+              }
+            ],
+            "title": "View",
+            "description": "Which view the tab is on.",
+            "default": "project"
+          },
+          "held": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Held",
+            "description": "Element keys this tab believes it holds."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "title": "HeartbeatRequest",
+        "description": "Renew a tab's presence and the locks it holds."
+      },
       "IdentitySuggestionRef": {
         "properties": {
           "projectId": {
@@ -166933,6 +167762,70 @@
         ],
         "title": "LintWorkspaceTrendsResponse",
         "description": "Daily trend series separating genuine remediation from policy change (CLX-4.1)."
+      },
+      "LockRecord": {
+        "properties": {
+          "element_key": {
+            "type": "string",
+            "title": "Element Key",
+            "description": "The locked element, ``<kind>:<id>``.",
+            "example": "example"
+          },
+          "holder_user_id": {
+            "type": "string",
+            "title": "Holder User Id",
+            "description": "Who is editing it.",
+            "example": "holder_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "holder_name": {
+            "type": "string",
+            "title": "Holder Name",
+            "description": "Their display name.",
+            "example": "Example"
+          },
+          "holder_session_id": {
+            "type": "string",
+            "title": "Holder Session Id",
+            "description": "The tab holding it.",
+            "example": "holder_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "acquired_at": {
+            "type": "string",
+            "title": "Acquired At",
+            "description": "When it was taken (ISO 8601).",
+            "example": "2026-11-15T02:13:39Z"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At",
+            "description": "When it lapses without a heartbeat (ISO 8601).",
+            "example": "2026-11-15T02:13:39Z"
+          },
+          "takeover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TakeoverRecord"
+              },
+              {
+                "type": "null",
+                "description": "Lock schema."
+              }
+            ],
+            "description": "A pending takeover request."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "element_key",
+          "holder_user_id",
+          "holder_name",
+          "holder_session_id",
+          "acquired_at",
+          "expires_at"
+        ],
+        "title": "LockRecord",
+        "description": "A live advisory lock."
       },
       "LogBody": {
         "properties": {
@@ -187878,6 +188771,57 @@
         ],
         "title": "PrBackSettingsResponse",
         "description": "A repository's PR-back settings."
+      },
+      "PresenceSnapshot": {
+        "properties": {
+          "viewers": {
+            "items": {
+              "$ref": "#/components/schemas/ViewerRecord"
+            },
+            "type": "array",
+            "title": "Viewers",
+            "description": "Viewers.",
+            "maxItems": 1000
+          },
+          "locks": {
+            "items": {
+              "$ref": "#/components/schemas/LockRecord"
+            },
+            "type": "array",
+            "title": "Locks",
+            "description": "Locks.",
+            "maxItems": 1000
+          },
+          "lost": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lost",
+            "description": "Element keys the caller's session claimed to hold that another session now holds \u2014 the previous holder's notice that a takeover happened.",
+            "maxItems": 1000
+          },
+          "server_time": {
+            "type": "string",
+            "title": "Server Time",
+            "description": "Server clock (ISO 8601), for client skew.",
+            "example": "example"
+          },
+          "ttl_seconds": {
+            "type": "integer",
+            "title": "Ttl Seconds",
+            "description": "Heartbeat at least twice per this many seconds.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "server_time",
+          "ttl_seconds"
+        ],
+        "title": "PresenceSnapshot",
+        "description": "Everything a client needs to draw avatars and lock adornments."
       },
       "PreservationClaimBody": {
         "properties": {
@@ -218568,6 +219512,60 @@
         "title": "TailSessionsResponse",
         "description": "A lane's recent live tail sessions."
       },
+      "TakeoverRecord": {
+        "properties": {
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Takeover schema."
+              },
+              {
+                "type": "null",
+                "description": "Takeover schema."
+              }
+            ],
+            "title": "User Id",
+            "description": "Who asked."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Takeover schema."
+              },
+              {
+                "type": "null",
+                "description": "Takeover schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Their display name."
+          },
+          "requested_at": {
+            "type": "string",
+            "title": "Requested At",
+            "description": "When they asked (ISO 8601).",
+            "example": "2026-11-15T02:13:39Z"
+          },
+          "can_force_after": {
+            "type": "string",
+            "title": "Can Force After",
+            "description": "When the request may be forced (ISO 8601).",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "name",
+          "requested_at",
+          "can_force_after"
+        ],
+        "title": "TakeoverRecord",
+        "description": "A pending request to take a lock over."
+      },
       "TargetAuditEntry": {
         "properties": {
           "id": {
@@ -233315,6 +234313,46 @@
         "type": "object",
         "title": "VersionUpdateRequest",
         "description": "Request model for updating a version."
+      },
+      "ViewerRecord": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "The viewer's user id.",
+            "example": "user_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name.",
+            "example": "Pet"
+          },
+          "views": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Views",
+            "description": "Views their tabs are on.",
+            "maxItems": 1000
+          },
+          "sessions": {
+            "type": "integer",
+            "title": "Sessions",
+            "description": "How many live tabs they have open.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "name",
+          "sessions"
+        ],
+        "title": "ViewerRecord",
+        "description": "One person with the project open (their tabs collapsed into one avatar)."
       },
       "VizEdge": {
         "properties": {

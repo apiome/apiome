@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.707.0] - 2026-11-14
+
+### Added
+- **Project presence and element soft locks (COL-4.1, #4525)** — OpenAPI 1.567.0:
+  - `GET …/projects/{project}/presence` reads who has the project open and which elements are locked;
+    `POST …/presence/heartbeat` announces a tab (`session_id`, `view`, `held`), renews the locks it holds and
+    answers the same snapshot, with `lost` naming held elements another tab now holds (the previous holder's
+    takeover notice); `POST …/presence/leave` releases a tab's presence and locks.
+  - Soft locks are advisory leases: `PUT|DELETE …/presence/locks/{element_key}` take and release one
+    (`409 presence-lock-held` names the holder), `POST …/presence/request-takeover/{element_key}` asks the holder to
+    hand over, and `POST …/presence/take-over/{element_key}` forces it 15 seconds after the request. Presence lapses
+    after 45 seconds and locks after 60 without a heartbeat, so a crashed tab never leaves a stuck lock.
+  - `WS …/presence/ws` is the push channel (first frame `{"type":"auth","authorization":"Bearer …"}`; then
+    `heartbeat`, `lock`, `unlock`, `request_takeover`, `take_over`); it sends a snapshot after each frame and every
+    5 seconds, and closing it releases the tab at once. JWT only; API keys use the HTTP routes.
+  - Requires `projects:view`; `APIOME_PRESENCE_RATE_LIMIT_PER_MINUTE` (default 240) bounds a user's calls.
+  - apiome-db V375 adds `project_presence` and `element_locks`.
+
 ## [1.706.0] - 2026-11-14
 
 ### Added
