@@ -522,7 +522,7 @@ def test_provenance_records_source_and_defaults() -> None:
 # ---------------------------------------------------------------------------
 # Losses for constructs proto3 cannot carry
 # ---------------------------------------------------------------------------
-def test_field_constraints_and_default_are_losses() -> None:
+def test_field_default_is_a_loss_and_constraints_become_protovalidate_rules() -> None:
     record = Type(
         key="p.M",
         name="M",
@@ -544,9 +544,16 @@ def test_field_constraints_and_default_are_losses() -> None:
         identity=ApiIdentity(name="p", namespace="p"),
         types=[record],
     )
-    subjects = {loss.subject for loss in ProtoEmitter().emit(api).losses}
-    assert "field-constraints" in subjects
+    # XPC-3.3: the range is written as Protovalidate rules, so only the default is lost...
+    result = ProtoEmitter().emit(api)
+    subjects = {loss.subject for loss in result.losses}
+    assert "field-constraints" not in subjects
     assert "proto3-default" in subjects
+    assert "(buf.validate.field).int32.gte = 0" in str(result.files[0].content)
+    # ...and with the option off the constraints are dropped and reported, as before.
+    off = ProtoEmitter().emit(api, opts=ProtoEmitOptions(protovalidate=False))
+    assert "field-constraints" in {loss.subject for loss in off.losses}
+    assert "buf.validate" not in str(off.files[0].content)
 
 
 def test_missing_field_number_is_synthesized_with_loss() -> None:

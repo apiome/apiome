@@ -186,6 +186,7 @@ from .projection_taxonomy import ProjectionReason, ProjectionStatus
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY as PROTO_EDITIONS_EXTRA_KEY,
 )
+from .proto_validate import PROTOVALIDATE_EXTRA_KEY, UNSUPPORTED_CONSTRAINT_KIND
 from .pydantic_normalizer import PYDANTIC_EXTRAS_KEY
 from .pydantic_parser import PARTIAL_LIMITS as PYDANTIC_PARTIAL_LIMITS
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
@@ -614,7 +615,16 @@ KNOWN_PARSER_LIMITS: Dict[str, Tuple[ParserLimit, ...]] = {
             construct="custom options and extension declarations",
             detail="A user-defined `option` and an `extend` block are preserved in the "
             "compiled descriptor set and the retained source, but the canonical model has no "
-            "vocabulary for them, so they are neither named nor counted.",
+            "vocabulary for them, so they are neither named nor counted. The one exception is "
+            "Protovalidate: the standard `buf.validate` rules are read into canonical "
+            "constraints.",
+        ),
+        ParserLimit(
+            construct="Protovalidate CEL and predefined rules",
+            detail="CEL expressions (`cel`, `cel_expression`, `message.cel`) are never "
+            "evaluated: each is kept verbatim, written back on a `.proto` export and reported "
+            "as `unsupported_constraint`. A predefined rule (a user-declared rule extension, "
+            "itself backed by CEL) is not read at all.",
         ),
     ),
     "wit": (
@@ -1320,6 +1330,7 @@ def _document_scope_rows(
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
+    ledger.extend(_protovalidate_capability_rows(api, capability))
     ledger.extend(_dbt_capability_rows(api))
     ledger.extend(_sql_ddl_capability_rows(api))
 
@@ -2521,6 +2532,71 @@ def _sql_ddl_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         location_label="Relation(s)",
         normalized_noun="relation",
     )
+
+
+def _protovalidate_capability_rows(
+    api: CanonicalApi, capability: CapabilityReference
+) -> List[CoverageEntry]:
+    """Render the XPC-3.3 Protovalidate ``unsupported_constraint`` record as ledger rows.
+
+    The protobuf normalizer reads the standard ``buf.validate`` rules into canonical
+    constraints and lists what it will not enforce under
+    ``extras['protovalidate']['capability_limits']``: every CEL rule, with its expression
+    text, and every rule it did not recognize. A CEL rule is ``partially-mapped`` — it is
+    kept verbatim on its field or message and a ``.proto`` export writes it back; only the
+    ability to *evaluate* it is missing. An unrecognized rule (a predefined rule, or one from
+    another ``validate.proto`` version) could not be kept at all, so it is
+    ``not-parsed-by-adapter`` and names the adapter's capability-registry entry.
+
+    Args:
+        api: The normalized model.
+        capability: The adapter's CLX-2.4 registry reference, carried on every
+            ``not-parsed-by-adapter`` row.
+
+    Returns:
+        One entity-scoped ledger row per recorded rule, or an empty list for a document with
+        no such rule (or for a model the protobuf normalizer did not produce).
+    """
+    report = api.extras.get(PROTOVALIDATE_EXTRA_KEY) if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict):
+        return []
+    rows: List[CoverageEntry] = []
+    for limit in report.get("capability_limits") or []:
+        if not isinstance(limit, dict) or limit.get("kind") != UNSUPPORTED_CONSTRAINT_KIND:
+            continue
+        location = str(limit.get("location") or "")
+        path = str(limit.get("path") or "")
+        preserved = bool(limit.get("preserved"))
+        coverage = (
+            CoverageClass.PARTIALLY_MAPPED if preserved else CoverageClass.NOT_PARSED_BY_ADAPTER
+        )
+        status, reason = STATUS_FOR_COVERAGE[coverage]
+        if preserved:
+            rule_id = f" (id `{limit.get('id')}`)" if limit.get("id") else ""
+            detail = (
+                f"{UNSUPPORTED_CONSTRAINT_KIND}: the CEL expression `{limit.get('expression')}`"
+                f"{rule_id} is not evaluated. It is preserved verbatim and written back on a "
+                ".proto export; every other export drops it, and no mock or contract check "
+                "enforces it."
+            )
+        else:
+            detail = (
+                f"{UNSUPPORTED_CONSTRAINT_KIND}: {limit.get('expression')}. It is not read and "
+                "is dropped on every export."
+            )
+        rows.append(
+            CoverageEntry(
+                source_construct=f"buf.validate#{location}:{path}",
+                coverage=coverage,
+                status=status,
+                reason=reason,
+                detail=detail,
+                entity_key=location or None,
+                document_scoped=True,
+                capability_reference=None if preserved else capability,
+            )
+        )
+    return rows
 
 
 def _kafka_connect_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

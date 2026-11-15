@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.714.0] - 2026-11-15
+
+### Added
+- **Protovalidate mapping into canonical constraints (XPC-3.3, #5743)** — OpenAPI 1.574.0 (no schema change):
+  - The protobuf normalizer reads the standard `buf.validate` rules. `required`, `string.{min_len,max_len,len,pattern}`,
+    the well-known string formats, numeric `{gt,gte,lt,lte,const,in}`, `bool.const`,
+    `repeated.{min_items,max_items,unique}` and `(buf.validate.oneof).required` land in the canonical constraint
+    vocabulary; every other standard rule (`prefix`, `not_in`, `enum.defined_only`, timestamp / duration / map / item
+    rules) is kept verbatim under `Constraints.extras['protovalidate']`. New module `app.proto_validate`.
+  - `buf/validate/validate.proto` (Protovalidate 1.2.2) is vendored and supplied to `buf build` when a source imports
+    it, like the googleapis annotations.
+  - CEL (`cel`, `cel_expression`, `message.cel`) is never evaluated: each rule is preserved and recorded as
+    `unsupported_constraint` with its expression text in `CanonicalApi.extras['protovalidate']`, and rendered as
+    `buf.validate#…` rows in the import preview coverage ledger. Predefined rules are reported, not read.
+  - The `protobuf` and `connectrpc` emitters write the rules back (`(buf.validate.field)`, `(buf.validate.message)`,
+    `(buf.validate.oneof)`), and write constraints from any other source as rules. New emit option `protovalidate`
+    (default `true`); off, constraints are dropped and reported as before.
+  - The JSON Schema export reports the rules it has no keyword for (`protovalidate-rules`), and every target's
+    fidelity report lists them as approximated.
+  - The gRPC contract suite narrows generated messages by the mapped constraints and compiles a required-field
+    negative for `(buf.validate.field).required`.
+
+### Changed
+- An export to `protobuf` / `connectrpc` of a source with validation constraints now contains `buf.validate` options
+  and `import "buf/validate/validate.proto"`. Pass `protovalidate=false` for the previous output.
+- The `field-constraints` loss on those targets is recorded only for facets no standard rule expresses
+  (`multiple_of`, formats other than the seven mapped ones, a fractional bound on an integer field).
+
+### Notes
+- The hosted mock does not validate requests against these constraints yet: the Connect route (XPC-3.1) is not on
+  `main`. It reads the same canonical constraints, so no further mapping work is needed there.
+
+
 ## [1.713.1] - 2026-11-15
 
 ### Changed

@@ -86,6 +86,40 @@ Only the caller's *target* files are mapped. Files the compiler pulled in to sat
 by key with no local `Type` — the same dangling-by-design reference a protobuf `import` is.
 Passing a bare `FileDescriptorSet` (no import flags) maps every file.
 
+### Protovalidate rules (XPC-3.3)
+
+`buf.validate` options are read by `app/proto_validate.py`, the one module that both reads the
+rules and writes them back (the emitter's symmetry rule). A compiled descriptor set carries the
+options as unknown fields of `FieldOptions` / `MessageOptions` / `OneofOptions`; they are re-parsed
+against a private descriptor pool built from the vendored
+`data/proto_vendor/buf/validate/validate.proto` (compiled to `validate.binpb` beside it).
+`compile_proto_descriptor_set` supplies that file to `buf build` when a source imports it.
+
+| Rule | Canonical |
+|---|---|
+| `required` | `TypeRef.nullable = False` + `extras['protovalidate_required']` (the flag tells the emitter to write the rule back) |
+| `string.min_len` / `max_len` / `len` / `pattern` | `Constraints.min_length` / `max_length` / both / `pattern` |
+| `string.email` / `hostname` / `ipv4` / `ipv6` / `uri` / `uri_ref` / `uuid` | `Constraints.format` |
+| numeric `gte` / `gt` / `lte` / `lt` | `minimum` / `exclusive_minimum` / `maximum` / `exclusive_maximum` |
+| `const` / `in` (string, numeric, bool) | `Constraints.enum` |
+| `repeated.min_items` / `max_items` / `unique` | `min_items` / `max_items` / `unique_items` |
+| `(buf.validate.oneof).required` | the type's `extras['oneofs_required']` |
+| every other standard rule | verbatim, protobuf-JSON, under `Constraints.extras['protovalidate']` |
+| `(buf.validate.message)` rules | verbatim under the type's `extras['protovalidate']` |
+
+A reversed range (`gt` above `lt`, Protovalidate's "outside"), a bound a `float` cannot hold
+exactly (beyond 2^53, `NaN`, an infinity) and byte lengths stay verbatim rather than being mapped,
+as does the whole option of a field marked `ignore = IGNORE_ALWAYS` (its rules are switched off).
+
+**CEL is never evaluated.** `cel`, `cel_expression` and `message.cel` are kept verbatim, and each
+is listed in `CanonicalApi.extras['protovalidate']['capability_limits']` with `kind:
+unsupported_constraint`, its `location` (field or type key), `path` and `expression`. A rule the
+reader does not know (a predefined rule, a field of another `validate.proto` version) is recorded
+on the entity as `extras['protovalidate_unrecognized']` and listed the same way with `preserved:
+false`. `import_preview_manifest` renders the list as coverage-ledger rows (`buf.validate#…`).
+
+A source with no `buf.validate` option normalizes byte-for-byte as before.
+
 ## Fingerprint stability (acceptance criterion)
 
 [`fingerprint.py`](../src/app/fingerprint.py) strips `description`/`title`/`raw` before hashing
@@ -119,3 +153,7 @@ Anything else raises `ValueError`.
   number / reserved change.
 * **End-to-end** tests (gated on `buf` being resolvable) compile the committed fixtures with
   the real compiler and normalize the result.
+
+`tests/test_proto_validate.py` covers the Protovalidate mapping from the committed descriptor set
+of `tests/fixtures/proto/protovalidate/rules.proto` — one message per rule family, and a test that
+fails when a family of the vendored `validate.proto` has no fixture.

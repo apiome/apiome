@@ -856,7 +856,14 @@ def test_proto_pack_enumerates_rich_openapi_losses():
     age_kinds = {item.kind for item in _items_for(report, "User.age")}
     assert age_kinds == {LossinessKind.APPROX, LossinessKind.SYNTH}
 
+    # XPC-3.3: the field's constraints are written as Protovalidate rules, so nullability and
+    # the synthesized number are its only losses — until the `protovalidate` option is off.
     email_kinds = sorted(i.kind.value for i in _items_for(report, "User.email"))
+    assert email_kinds == ["approx", "synth"]
+    without_rules = compute_lossiness_for_emitter(
+        _protobuf_rich_api(), ProtoEmitter, options={"protovalidate": False}
+    )
+    email_kinds = sorted(i.kind.value for i in _items_for(without_rules, "User.email"))
     assert email_kinds == ["approx", "approx", "synth"]
 
     assert _items_for(report, "Money")[0].kind is LossinessKind.APPROX

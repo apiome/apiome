@@ -1,0 +1,97 @@
+// Protobuf (proto3) example — an account service validated with Protovalidate.
+//
+// Recognized via the `syntax = "proto3"` marker. The `(buf.validate.field)` options are
+// Protovalidate rules: the standard ones (required fields, string lengths and patterns,
+// numeric ranges, allowed values, item counts) become the same validation constraints an
+// OpenAPI schema carries, so they reach the JSON Schema export and the contract suite. Rules
+// with no JSON Schema counterpart (a string prefix, a timestamp bound) are kept as written,
+// and the CEL expressions are recorded but never evaluated — the import reports each one.
+syntax = "proto3";
+
+package example.accounts.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// Opens and looks up customer accounts.
+service AccountService {
+  // Open a new account.
+  rpc CreateAccount(CreateAccountRequest) returns (Account);
+  // Fetch an account by id.
+  rpc GetAccount(GetAccountRequest) returns (Account);
+}
+
+// The plan an account is billed on.
+enum Plan {
+  PLAN_UNSPECIFIED = 0;
+  PLAN_FREE = 1;
+  PLAN_TEAM = 2;
+}
+
+// A customer account.
+message Account {
+  // Account identifier.
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  // Public handle: lowercase, three to thirty-two characters.
+  string handle = 2 [(buf.validate.field).string = {
+    min_len: 3
+    max_len: 32
+    pattern: "^[a-z][a-z0-9-]*$"
+  }];
+  // Billing plan; a value outside the enum is refused.
+  Plan plan = 3 [(buf.validate.field).enum.defined_only = true];
+  // When the account was opened — never in the future.
+  google.protobuf.Timestamp created_at = 4 [(buf.validate.field).timestamp.lt_now = true];
+}
+
+// Request for CreateAccount.
+message CreateAccountRequest {
+  // A trial may not outlast a year. CEL: recorded on import, not evaluated.
+  option (buf.validate.message).cel = {
+    id: "trial.plan"
+    message: "only the free plan may start a trial"
+    expression: "this.trial_days == 0 || this.plan == 1"
+  };
+
+  // Public handle: lowercase, three to thirty-two characters.
+  string handle = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 3
+      max_len: 32
+      pattern: "^[a-z][a-z0-9-]*$"
+    }
+  ];
+  // Contact address.
+  string email = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.email = true
+  ];
+  // Billing plan.
+  Plan plan = 3 [(buf.validate.field).enum.defined_only = true];
+  // Seats to provision.
+  int32 seats = 4 [(buf.validate.field).int32 = {gte: 1, lte: 500}];
+  // Length of the trial, in days.
+  int32 trial_days = 5 [(buf.validate.field).int32 = {in: [0, 14, 30]}];
+  // Labels: at most eight, no duplicates.
+  repeated string labels = 6 [(buf.validate.field).repeated = {max_items: 8, unique: true}];
+  // Referral code, which always starts with `ref_`.
+  string referral_code = 7 [(buf.validate.field).string.prefix = "ref_"];
+  // How the account is verified: exactly one must be given.
+  oneof verification {
+    option (buf.validate.oneof).required = true;
+    // A phone number to text.
+    string phone = 8;
+    // An invitation code.
+    string invite_code = 9;
+  }
+}
+
+// Request for GetAccount.
+message GetAccountRequest {
+  // Account identifier.
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+}

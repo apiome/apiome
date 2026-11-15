@@ -49,6 +49,7 @@ from .jsonschema_drafts import DRAFT_URIS, JsonSchemaDraft, dialect_of, downgrad
 from .jsonschema_import_source import JSON_SCHEMA_FORMAT, JsonSchemaImportSource
 from .jsonschema_jtd import JTD_LOSS_SUBJECTS, check_jtd_schema, jtd_from_bundle
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .proto_validate import unprojected_rules
 
 __all__ = [
     "JsonSchemaEmitOptions",
@@ -473,6 +474,16 @@ class _JsonSchemaWriter:
         """The model's types as ``$defs`` subschemas; scalars with no JSON type are reported."""
         bundle = build_bundle_schemas(self._api, wire_enums=False)
         self.bundle = bundle
+        # XPC-3.3: the named facets a Protovalidate rule maps to (minLength, pattern, …) are
+        # keywords already; the rules with no JSON Schema analogue, CEL included, are not.
+        for key, names in unprojected_rules(self._api.types):
+            self.losses.record(
+                LossKind.NA,
+                "protovalidate-rules",
+                f"JSON Schema has no keyword for the Protovalidate rules {', '.join(names)} on "
+                f"{key!r}; they were not written (CEL expressions are never evaluated).",
+                pointer=key,
+            )
         for name in bundle.unmapped_scalars:
             self.losses.record(
                 LossKind.INFERRED,

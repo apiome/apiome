@@ -1209,6 +1209,54 @@ The bundle's **buf lint** and **buf build** checks (on the protobuf and Connect 
 the `google/api` files the import needs, so an annotated export compiles without network access.
 `buf lint` reports on your exported files only, not on those `google/api` files.
 
+### Validation rules in a Protobuf or Connect RPC export {#protovalidate-rules}
+
+Protobuf has no validation keywords of its own, so an export to **Protocol Buffers (proto3)** or
+**Connect RPC** writes constraints as [Protovalidate](https://protovalidate.com/) rules, and the file
+imports `buf/validate/validate.proto`:
+
+```proto
+import "buf/validate/validate.proto";
+
+message CreateAccountRequest {
+  string handle = 1 [
+    (buf.validate.field).string.min_len = 3,
+    (buf.validate.field).string.max_len = 32
+  ];
+  int32 seats = 2 [
+    (buf.validate.field).int32.lte = 500,
+    (buf.validate.field).int32.gte = 1
+  ];
+  repeated string labels = 3 [(buf.validate.field).repeated.unique = true];
+}
+```
+
+| Source constraint | Rule written |
+| --- | --- |
+| `minLength`, `maxLength` (equal values become `len`) | `string.min_len`, `string.max_len`, `string.len` |
+| `pattern` | `string.pattern` |
+| `format` of `email`, `hostname`, `ipv4`, `ipv6`, `uri`, `uri-reference` or `uuid` | `string.email`, `string.hostname`, … |
+| `minimum`, `exclusiveMinimum`, `maximum`, `exclusiveMaximum` | `gte`, `gt`, `lte`, `lt` under the field's numeric type |
+| `enum` on a string, number or boolean field | `const` for one value, `in` for several |
+| `minItems`, `maxItems`, `uniqueItems` | `repeated.min_items`, `repeated.max_items`, `repeated.unique` |
+| A rule imported from a `.proto`, CEL included | The same rule, unchanged |
+| `multipleOf`, any other `format`, a fractional bound on an integer field | Nothing: the fidelity report lists it as *dropped*, by name |
+
+A field that is `required` in an OpenAPI source is **not** written as `(buf.validate.field).required`.
+That rule also refuses the zero value (`0`, `""`), which an OpenAPI `required` allows. Only a field
+that was `required` in the Protobuf it was imported from gets the rule back.
+
+The option is **Protovalidate rules** (`protovalidate`), on by default. To export a `.proto` with no
+Protovalidate dependency:
+
+1. **Pick** **Protocol Buffers (proto3)** or **Connect RPC** in the [Export studio](./export-studio.mdx).
+2. On **3. Options**, **untick “Protovalidate rules”**. From the CLI, pass `--option protovalidate=false`.
+3. On **5. Verify**, each constrained field now reads *approximated*: its constraints are dropped.
+
+The bundle's **buf lint** and **buf build** checks supply `buf/validate/validate.proto`, so an export
+with rules compiles without network access. Your own build needs the Protovalidate module: add
+`buf.build/bufbuild/protovalidate` to the `deps` of your `buf.yaml`.
+
 ### Federation subgraph from a GraphQL export {#graphql-federation}
 
 A plain GraphQL SDL export cannot join a federated supergraph on its own: Apollo Federation needs a

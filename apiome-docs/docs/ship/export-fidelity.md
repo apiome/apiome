@@ -138,6 +138,27 @@ also asks for an explicit acknowledgement before you continue. The REST API retu
 it as `advisory` on every preview and export (`show`, `severity`, `requires_ack`, the counts,
 `headline` and `message`); pass `min_severity` to raise it only for `warn` or `critical` losses.
 
+## Validation rules from Protovalidate {#protovalidate-rules}
+
+A Protobuf source can carry [Protovalidate](https://protovalidate.com/) rules (`buf.validate`
+options). On import the standard rules become ordinary validation constraints; the rest are kept as
+written on their field or message
+([the rule table](../bring-in/catalog-format-details.md#protobuf-protovalidate-rules)). What each
+target does with them:
+
+| Target | Standard rules with a constraint (`min_len`, `pattern`, ranges, `in`, item counts, `required`) | Rules kept as written (`prefix`, `defined_only`, timestamp and duration bounds, …) | CEL expressions |
+| --- | --- | --- | --- |
+| **Protocol Buffers (proto3)**, **Connect RPC** | Written back as `buf.validate` rules: *retained* | Written back unchanged: *retained* | Written back unchanged, never evaluated |
+| **JSON Schema**, **OpenAPI** and other targets with validation keywords | Written as keywords (`minLength`, `pattern`, `minimum`, `enum`, `required`, …) | *Approximated*: the report names each rule that was not carried | *Approximated*: named in the report, not carried |
+| Targets with no validation keywords | *Approximated*, as for any other constraint | *Approximated* | *Approximated* |
+
+The rule is symmetric: every constraint the Protobuf import reads from a rule, the Protobuf export
+writes as that rule. The same holds for constraints that came from somewhere else. An OpenAPI
+`minLength: 3` exported to Protobuf is written as `(buf.validate.field).string.min_len = 3`. A
+constraint with no standard rule for the field's type (`multipleOf`, a `date-time` format) is
+reported as *dropped*, by name. To export without Protovalidate rules, see
+[Validation rules in a Protobuf export](./export-a-spec.md#protovalidate-rules).
+
 ## Check the prediction with a round trip
 
 The report is a **prediction**, made before anything is written. To test it, run a round trip: Apiome

@@ -78,6 +78,17 @@ All of that is **gated on ``syntax == "editions"``**. proto2 and proto3 document
 byte-for-byte as they did before: their presence semantics are already carried by ``label``
 and ``proto3_optional``, and re-spelling them as features would move every shipped golden
 without telling a reader anything new.
+
+**Protovalidate — XPC-3.3 (#5743).** ``buf.validate`` options are read through
+:mod:`app.proto_validate`: the standard rules land in the canonical constraint vocabulary
+(:attr:`~app.canonical_model.CanonicalField.constraints` — ``min_length``, ``pattern``,
+``minimum``, ``enum``, ``min_items`` …, the rest verbatim under its ``extras['protovalidate']``),
+``required`` becomes a non-nullable :class:`~app.canonical_model.TypeRef` flagged
+``extras['protovalidate_required']``, a required ``oneof`` is listed in the type's
+``extras['oneofs_required']`` and message rules are kept in the type's ``extras['protovalidate']``.
+CEL expressions are never evaluated: each is kept verbatim and listed, with its text, as an
+``unsupported_constraint`` under ``CanonicalApi.extras['protovalidate']``. A document with no such
+option normalizes byte-for-byte as before.
 """
 
 from __future__ import annotations
@@ -116,6 +127,16 @@ from .proto_editions import (
     available_feature_names,
     enum_is_closed,
     field_has_presence,
+)
+from .proto_validate import (
+    ONEOFS_REQUIRED_EXTRA_KEY,
+    PROTOVALIDATE_EXTRA_KEY,
+    PROTOVALIDATE_REQUIRED_EXTRA_KEY,
+    PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY,
+    read_field_rules,
+    read_message_rules,
+    read_oneof_required,
+    unsupported_constraints,
 )
 
 # ``EDITIONS_PROVENANCE_EXTRA_KEY`` is re-exported for the readers that already import it
@@ -261,7 +282,13 @@ class ProtoNormalizer(Normalizer, register=True):
             if include_raw
             else None,
         )
-        return normalize_ordering(api)
+        api = normalize_ordering(api)
+        # XPC-3.3: the Protovalidate rules that are recorded but never enforced (CEL, rules
+        # this reader does not know). Listed after ordering so the record is byte-stable.
+        unsupported = unsupported_constraints(api.types)
+        if unsupported:
+            api.extras[PROTOVALIDATE_EXTRA_KEY] = {"capability_limits": unsupported}
+        return api
 
     # --- source coercion ----------------------------------------------------
 
@@ -450,6 +477,22 @@ class ProtoNormalizer(Normalizer, register=True):
         extras: Dict[str, Any] = {}
         if real_oneofs:
             extras["oneofs"] = real_oneofs
+        # XPC-3.3: a oneof declared `(buf.validate.oneof).required` must have a member set.
+        required_oneofs = [
+            oneof.name
+            for index, oneof in enumerate(message.oneof_decl)
+            if index not in synthetic and read_oneof_required(oneof.options)
+        ]
+        if required_oneofs:
+            extras[ONEOFS_REQUIRED_EXTRA_KEY] = required_oneofs
+        # Message-level rules (`message.cel`, `message.oneof`) have no canonical facet: they
+        # are kept verbatim so a `.proto` export writes them back.
+        message_rules = read_message_rules(message.options)
+        if message_rules is not None:
+            if message_rules.rules:
+                extras[PROTOVALIDATE_EXTRA_KEY] = message_rules.rules
+            if message_rules.unrecognized:
+                extras[PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY] = message_rules.unrecognized
         reserved = _reserved_extras(message)
         extras.update(reserved)
         if context.is_editions:
@@ -592,12 +635,25 @@ class ProtoNormalizer(Normalizer, register=True):
                     and presence != FIELD_PRESENCE_LEGACY_REQUIRED
                 )
 
+        # XPC-3.3: Protovalidate rules. The standard ones land in the canonical constraint
+        # vocabulary; `required` is spelled the canonical way — a non-nullable type reference —
+        # with a flag so the emitter writes the rule back rather than a proto2 label.
+        rules = read_field_rules(field.options)
+        if rules is not None:
+            if rules.required:
+                extras[PROTOVALIDATE_REQUIRED_EXTRA_KEY] = True
+                if not is_repeated:
+                    nullable_override = False
+            if rules.unrecognized:
+                extras[PROTOVALIDATE_UNRECOGNIZED_EXTRA_KEY] = rules.unrecognized
+
         return CanonicalField(
             key=Keys.field(type_key, field.name),
             name=field.name,
             type=_field_type_ref(field, nullable=nullable_override),
             field_number=field.number,
             default=field.default_value if field.HasField("default_value") else None,
+            constraints=rules.constraints if rules is not None else None,
             deprecated=bool(field.options.deprecated),
             extras=extras,
         )

@@ -49,7 +49,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `flatbuffers` | FlatBuffers | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `flatbuffers` |
 | `gateway-api` | Gateway API HTTPRoute | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 6 | `gateway-api` |
 | `graphql` | GraphQL | graph | 18 | 5 | 0 | 0 | 23 | 6/6 | 14 | `graphql` |
-| `grpc` | gRPC / Protobuf | rpc | 18 | 13 | 0 | 0 | 31 | 6/6 | 16 | `protobuf` |
+| `grpc` | gRPC / Protobuf | rpc | 19 | 13 | 0 | 0 | 32 | 6/6 | 17 | `protobuf` |
 | `haproxy` | HAProxy configuration | rest | 10 | 6 | 0 | 0 | 16 | 6/6 | 8 | — |
 | `har` | HAR (inferred) | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `hl7v2` | HL7 v2 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `hl7v2` |

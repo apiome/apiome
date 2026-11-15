@@ -1,0 +1,35 @@
+---
+slug: protovalidate-rules
+title: Protovalidate rules import as validation constraints
+description: "buf.validate rules in a .proto become constraints, and a Protobuf export writes them back."
+authors: [apiome]
+---
+
+A `.proto` that declares its valid values with [Protovalidate](https://protovalidate.com/) now keeps
+them on import. `(buf.validate.field).string.min_len = 3` becomes `minLength: 3` on the catalog item,
+exactly as if an OpenAPI schema had said so. Before, Apiome read no `buf.validate` option at all.
+
+{/* truncate */}
+
+- **Standard rules become constraints.** `required`, string lengths, patterns and well-known
+  formats, numeric ranges, `const` and `in`, and repeated item counts and uniqueness are read into
+  the same constraints an OpenAPI schema fills. The full table is on
+  [Read a catalog item's format details](/bring-in/catalog-format-details#protobuf-protovalidate-rules).
+- **The JSON Schema export carries them.** `minLength`, `pattern`, `minimum`, `enum` and `required`
+  are written as keywords. Rules with no JSON Schema keyword (`string.prefix`, timestamp bounds) are
+  listed in the fidelity report as not carried, instead of disappearing.
+- **A Protobuf export writes them back.** Exporting to **Protocol Buffers (proto3)** or **Connect
+  RPC** writes every rule it read, and writes constraints from other sources as rules too: an OpenAPI
+  `minLength: 3` becomes `(buf.validate.field).string.min_len = 3`. The new **Protovalidate rules**
+  option is on by default; untick it for a `.proto` with no Protovalidate dependency. See
+  [Validation rules in a Protobuf or Connect RPC export](/ship/export-a-spec#protovalidate-rules).
+- **Contract suites use them.** A gRPC suite now generates request messages that satisfy the rules,
+  and adds a negative case for each field Protovalidate marks `required`.
+- **CEL is recorded, not evaluated.** A `cel` rule, a `cel_expression` and a message-level `cel` are
+  kept and written back on a Protobuf export. The import's coverage ledger lists each one as
+  `unsupported_constraint` with the expression text. Predefined rules are not read.
+- **You do not supply `validate.proto`.** Apiome provides `buf/validate/validate.proto`
+  (Protovalidate 1.2.2) when a file imports it.
+
+Not in this release: the hosted mock does not check requests against these rules yet. That arrives
+with the Connect route on the mock.

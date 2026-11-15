@@ -1771,11 +1771,11 @@
         "protobuf-editions"
       ],
       "fixtures": {
-        "valid": 18,
+        "valid": 19,
         "negative": 13,
         "adversarial": 0,
         "scale": 0,
-        "total": 31
+        "total": 32
       },
       "rungs": [
         "composition",
@@ -1786,7 +1786,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 16,
+      "goldens": 17,
       "golden_directories": [
         "protobuf",
         "protobuf-editions"
