@@ -1182,6 +1182,19 @@ html[data-rail="collapsed"] {
   justify-content: var(--rail-item-justify);
 }
 
+/* A destination's maturity mark (HIVE-12.4): a 6 px honey dot after the label, in place
+   of the "Preview" pill that was the loudest object on every page. It sits inside
+   `.rail-label`, so it hides with the label on the icon rail; the word lives in its
+   `title` and in the row's accessible name. */
+.rail-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  inline-size: calc(var(--space-1) * 1.5);
+  block-size: calc(var(--space-1) * 1.5);
+  border-radius: var(--r-full);
+  background: var(--honey);
+}
+
 /* The brand lock-up (HIVE-1.5) is the rail's first row, and its word is a label like any
    other: `.brand-lockup__text` is already the flex column the vocabulary above expects, so
    the collapsed rail keeps the bee and drops "apiome / Platform". */

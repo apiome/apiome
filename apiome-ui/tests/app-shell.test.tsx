@@ -772,6 +772,66 @@ describe('AppShell — the shortcut is documented where readers look for it', ()
   });
 });
 
+describe('AppShell — the preview dot (HIVE-12.4)', () => {
+  /** The one destination the model marks with a maturity pill. */
+  const PREVIEW_ITEM = RELEASED_ITEMS.find((item) => item.pill)!;
+
+  it('draws no honey badge anywhere in the rail', async () => {
+    await renderShell();
+
+    const nav = screen.getByRole('navigation', { name: 'Primary' });
+    expect(nav.querySelector('.badge--honey')).toBeNull();
+    expect(within(nav).queryByText(PREVIEW_ITEM.pill!)).not.toBeInTheDocument();
+  });
+
+  it('draws a honey dot after the label, with the word in its title', async () => {
+    await renderShell();
+
+    const row = screen.getByTestId(`rail-nav-${PREVIEW_ITEM.id}`);
+    const dot = within(row).getByTestId(`rail-nav-${PREVIEW_ITEM.id}-dot`);
+    expect(dot).toHaveClass('rail-dot');
+    expect(dot).toHaveAttribute('title', PREVIEW_ITEM.pill);
+    expect(dot).toHaveAttribute('aria-hidden');
+    // After the label: the label's text node comes first in the row.
+    expect(dot.previousElementSibling).toHaveTextContent(PREVIEW_ITEM.label);
+  });
+
+  it('announces the link as "Lint posture, preview"', async () => {
+    await renderShell();
+
+    expect(screen.getByRole('link', { name: 'Lint posture, preview' })).toHaveAttribute(
+      'data-testid',
+      `rail-nav-${PREVIEW_ITEM.id}`
+    );
+  });
+
+  it('keeps the word in the gated row\'s name too', async () => {
+    await renderShell({ tenant: false });
+
+    const row = screen.getByRole('button', { name: 'Lint posture, preview' });
+    expect(row).toHaveAttribute('aria-disabled', 'true');
+    expect(row).toHaveAccessibleDescription(platformNavGatedReason(PREVIEW_ITEM.label));
+  });
+
+  it('gives a row without a pill no aria-label and no dot', async () => {
+    await renderShell();
+
+    const home = screen.getByTestId('rail-nav-home');
+    expect(home).not.toHaveAttribute('aria-label');
+    expect(home.querySelector('.rail-dot')).toBeNull();
+  });
+
+  it('puts the word in the icon rail\'s tooltip, where the dot is hidden', async () => {
+    window.localStorage.setItem('hive.rail', 'collapsed');
+    await renderShell();
+
+    fireEvent.focus(screen.getByTestId(`rail-nav-${PREVIEW_ITEM.id}`));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      `${PREVIEW_ITEM.label} · ${PREVIEW_ITEM.pill}`
+    );
+  });
+});
+
 describe('AppShell — accessibility', () => {
   it('has no axe violations, expanded', async () => {
     const { container } = await renderShell();

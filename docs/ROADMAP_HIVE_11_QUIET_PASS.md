@@ -392,7 +392,7 @@ Milestone: **RC6** (all epics and issues).
 | 12.1 | #5608 | Nav model — default-collapsed groups with counts ✅ | `lib/platform-nav.ts` groups gain `defaultCollapsed`; Workspace starts collapsed; collapsed labels show their item count | `ui`, `redesign`, `mvp` | Y | Y | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx`, `src/app/components/shell/navGroupCollapse.ts`, `e2e/fixtures/hive-a11y/shell.html` |
 | 12.2 | #5609 | Re-home Tenants, Data browser · Migrations and SDK settings ✅ | Tenants → workspace switcher menu (“Manage workspaces…”); Tools → user menu; SDK settings → Export studio tab | `ui`, `redesign`, `mvp` | N | Y | M | `lib/platform-nav.ts`, `src/app/components/shell/WorkspaceSwitcher.tsx`, `src/app/components/shell/UserMenu.tsx`, `src/app/ade/dashboard/export/studio/*`, `src/app/ade/dashboard/sdk-settings/*` |
 | 12.3 | #5610 | Rail footer — Notifications count and order ✅ | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
-| 12.4 | #5611 | “Preview” rail pill → honey dot | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
+| 12.4 | #5611 | “Preview” rail pill → honey dot ✅ | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
 | 12.5 | #5612 | Launcher — only openable tiles; `ComingNext` line ✅ | Applications shows Control Panel (emphasised), Browser and host-injected tiles; three “coming soon” surfaces collapse into one `ComingNext` text line | `ui`, `dashboard`, `redesign` | Y | N | M | `src/app/components/ade/AdeHome.tsx`, `src/app/components/ade/launcher/*`, `src/app/components/ui/ComingNext.tsx (new)`, `e2e/fixtures/hive-a11y/launcher.html` |
 | 12.6 | #5613 | Launcher — “Recently shipped” from What’s new; build string to the footer | The stale “On the roadmap” card becomes the three latest What’s new entries; the version badge leaves the top row | `ui`, `dashboard`, `redesign` | N | N | S | `src/app/components/ade/AdeHome.tsx`, `src/app/components/shell/whatsNewSeen.ts`, `src/app/components/ade/launcher/ResourceRow.tsx` |
 
@@ -454,14 +454,14 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-12.4] “Preview” rail pill → honey dot` — [#5611](https://github.com/apiome/apiome/issues/5611)
+### `apiome: [HIVE-12.4] “Preview” rail pill → honey dot` ✅ — [#5611](https://github.com/apiome/apiome/issues/5611)
 **Problem statement.** DESIGN.md §2 reserves honey for brand moments; the rail’s “Preview” pill is the loudest object on every page, in every theme.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/rail-compact.html` (callouts 6); rationale: `docs/mockups/PROPOSALS.md`.
 - `PlatformNavItem.pill` renders as `.dot` (honey) after the label with `title="Preview"` and `aria-label` on the link; the pill style stays available for the command palette’s result rows.
 
 **Acceptance criteria.**
-- [ ] No `.badge--honey` in the rail; screen reader announces “Lint posture, preview”
+- [x] No `.badge--honey` in the rail; screen reader announces “Lint posture, preview”
 - [ ] Contrast test and visual parity green
 
 **Parallelism / dependencies.** Independent.

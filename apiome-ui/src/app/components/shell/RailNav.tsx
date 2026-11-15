@@ -3,7 +3,6 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
-import { Badge } from '@/app/components/ui/Badge';
 import { ICON_SIZE, ICON_STROKE_WIDTH } from '@/app/components/ui/iconSizes';
 import { cn } from '@lib/utils';
 import {
@@ -77,14 +76,20 @@ function RailNavItem({
   iconRail: boolean;
 }) {
   const reasonId = `rail-nav-${item.id}-reason`;
+  const accessibleName = railNavItemName(item);
 
+  // A maturity pill is drawn as a honey dot after the label (HIVE-12.4): the dot is
+  // decorative to assistive technology — the row's own name carries the word instead.
   const label = (
-    <span className="rail-label min-w-0 flex-1 items-center justify-between gap-2">
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+    <span className="rail-label min-w-0 flex-1 items-center gap-1.5">
+      <span className="min-w-0 truncate">{item.label}</span>
       {item.pill ? (
-        <Badge variant="honey" className="shrink-0">
-          {item.pill}
-        </Badge>
+        <span
+          className="rail-dot"
+          title={item.pill}
+          aria-hidden
+          data-testid={`rail-nav-${item.id}-dot`}
+        />
       ) : null}
     </span>
   );
@@ -110,6 +115,7 @@ function RailNavItem({
     <button
       type="button"
       aria-disabled="true"
+      aria-label={accessibleName}
       aria-describedby={item.disabledReason ? reasonId : undefined}
       data-testid={`rail-nav-${item.id}`}
       className={cn(RAIL_ITEM_CLASS, 'cursor-not-allowed text-fg-muted opacity-45')}
@@ -126,6 +132,7 @@ function RailNavItem({
     <Link
       href={item.href}
       aria-current={active ? 'page' : undefined}
+      aria-label={accessibleName}
       data-testid={`rail-nav-${item.id}`}
       target={item.external ? '_blank' : undefined}
       rel={item.external ? 'noreferrer' : undefined}
@@ -143,7 +150,7 @@ function RailNavItem({
   // What the tooltip has to carry: the name, once the label is off screen; the reason,
   // whenever the destination is gated. Neither — no tooltip, because a tooltip repeating a
   // visible label is noise on every hover.
-  const tip = [iconRail ? item.label : null, item.disabledReason ?? null]
+  const tip = [iconRail ? railNavItemTitle(item) : null, item.disabledReason ?? null]
     .filter(Boolean)
     .join(' — ');
 
@@ -152,6 +159,30 @@ function RailNavItem({
       {row}
     </RailTooltip>
   );
+}
+
+/**
+ * A destination's accessible name: its label, plus its maturity pill when it has one.
+ *
+ * The honey dot that stands in for the pill is `aria-hidden`, so without this a reader
+ * would hear "Lint posture" and never learn the destination is a preview.
+ *
+ * @param item The destination.
+ * @returns e.g. `"Lint posture, preview"`, or `undefined` for a row without a pill — its
+ *   visible label already names it, and an `aria-label` would only repeat it.
+ */
+export function railNavItemName(item: Pick<ResolvedPlatformNavItem, 'label' | 'pill'>): string | undefined {
+  return item.pill ? `${item.label}, ${item.pill.toLowerCase()}` : undefined;
+}
+
+/**
+ * The name an icon-rail tooltip shows, once the label and its dot are off screen.
+ *
+ * @param item The destination.
+ * @returns e.g. `"Lint posture · Preview"`, or the bare label for a row without a pill.
+ */
+export function railNavItemTitle(item: Pick<ResolvedPlatformNavItem, 'label' | 'pill'>): string {
+  return item.pill ? `${item.label} · ${item.pill}` : item.label;
 }
 
 /**
