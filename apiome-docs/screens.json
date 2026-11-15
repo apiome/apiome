@@ -982,6 +982,34 @@
       "data": "fixture:hive-a11y/review-publish-gate.html"
     },
     {
+      "id": "merge-request",
+      "route": "/ade/merge-requests/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/merge-request.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/merge-requests"
+      ]
+    },
+    {
+      "id": "merge-request-conflicts",
+      "route": "/ade/merge-requests/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/merge-request-conflicts.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/merge-requests",
+        "apiome-ui/src/app/components/ade/dashboard/VersionMergeConflictList.tsx"
+      ]
+    },
+    {
+      "id": "versions-merge-requests",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/versions-merge-requests.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/merge-requests/MergeRequestsPanel.tsx"
+      ]
+    },
+    {
       "id": "profile",
       "route": "/ade/dashboard/profile",
       "waitFor": "[data-testid=\"profile-identity\"]",

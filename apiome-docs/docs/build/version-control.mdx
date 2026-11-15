@@ -35,6 +35,7 @@ controls in the web app are switched off**. See [Turning on the Git-like control
 | End of life | Deprecate a version and schedule its sunset | **Schedule sunset** in [Version dialogs](./version-dialogs.mdx#schedule-sunset); [Sunset timeline](../ship/sunset-timeline.mdx) | Yes |
 | Branch | Start a named branch at a revision | **Branch from here** | Switched off |
 | Merge | Preview and apply a merge of two branches, resolving conflicts path by path | **Merge branches…** | Switched off |
+| Feature branch, pull request | Draft on a branch off a version line, get it reviewed, and merge it through a merge session | [Draft branches and merge requests](./merge-requests.mdx): the **Merge requests** tab and its page | API; the tab is switched off |
 | Revert, reset | Move a branch back to an earlier revision | **Rollback branch to this revision…** | Switched off |
 | Branch protection | Lock a revision against deletion | **Lock revision (delete policy)** | Switched off |
 
@@ -55,17 +56,19 @@ controls in the web app are switched off**. See [Turning on the Git-like control
 <Flag name="FEATURE_GITLIKE" />
 
 The **Branch from here**, **Merge branches…**, **Rollback branch to this revision…**, **Fork to
-another project…**, **Tag this revision** and **Lock revision (delete policy)** controls are built
-but switched off. `FEATURE_GITLIKE` is a constant in `apiome-ui/lib/feature-flags.ts`, `false` in
+another project…**, **Tag this revision** and **Lock revision (delete policy)** controls, and the
+**Merge requests** tab, are built but switched off. `FEATURE_GITLIKE` is a constant in `apiome-ui/lib/feature-flags.ts`, `false` in
 every shipped build. Turning them on takes a code change and a rebuild. [Version
 dialogs](./version-dialogs.mdx#git-like-features) lists each control and what it does.
 
-The CLI and the API don't depend on this switch: forking and tagging work there today.
+The CLI and the API don't depend on this switch: forking, tagging, draft branches and merge
+requests work there today.
 
 ## Related
 
 - [Versions](./versions.mdx): the timeline, its tabs and the CLI and API.
 - [Version dialogs](./version-dialogs.mdx): every dialog, including the Git-like controls.
+- [Draft branches and merge requests](./merge-requests.mdx): branch, review and merge without Git.
 - [Revision history and merge base](./revision-history.md)
 - [Project activity timeline](./project-timeline.md)
 - [Publish a version](../ship/publish-a-version.md)

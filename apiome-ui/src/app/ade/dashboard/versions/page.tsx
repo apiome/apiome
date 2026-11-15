@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   Upload,
   MessagesSquare,
+  GitPullRequestArrow,
   Network,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
@@ -75,6 +76,7 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
+import { MergeRequestsPanel } from '../../../components/ade/merge-requests/MergeRequestsPanel';
 import { PresenceAvatars } from '../../../components/ade/presence/PresenceAvatars';
 import { usePresence } from '../../../components/ade/presence/usePresence';
 import { VersionBindingPanel } from '../../../components/ade/bindings';
@@ -464,6 +466,7 @@ const Versions = () => {
     | 'test-bench'
     | 'conversion'
     | 'discussion'
+    | 'merge-requests'
     | 'repository'
     | 'sources'
     | 'dependencies'
@@ -951,6 +954,7 @@ const Versions = () => {
     if (appliedDeepLinkRef.current === applied) return;
     appliedDeepLinkRef.current = applied;
     if (tab === 'discussion') setVersionsMainTab('discussion');
+    if (tab === 'merge-requests') setVersionsMainTab('merge-requests');
     if (tab === 'dependencies') setVersionsMainTab('dependencies');
     if (tab === 'sources') setVersionsMainTab('sources');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
@@ -3268,6 +3272,8 @@ const Versions = () => {
   const [discussionUnresolved, setDiscussionUnresolved] = useProjectUnresolvedTotal(selectedProjectId);
   /** Where a thread's "open in Studio" link points; null when the suite is not configured. */
   const studioWorkspaceRoute = useMemo(() => getStudioWorkspaceRoute(), []);
+  /** Branch / merge-request workflow (COL-4.3, #4527) — a git-like surface, so behind its flag. */
+  const showMergeRequestsTab = Boolean(selectedProjectId) && GITLIKE.enabled;
   /** Every project has a Repository tab (GNC-2.1, #4737): a draft is bound to a branch from there. */
   const showRepositoryTab = Boolean(selectedProjectId);
   /** Every project has a Sources tab (REPO-5.7, #2792): its contributing repositories and provenance. */
@@ -3283,6 +3289,7 @@ const Versions = () => {
     (versionsMainTab === 'sources' && !showSourcesTab) ||
     (versionsMainTab === 'dependencies' && !showDependenciesTab) ||
     (versionsMainTab === 'discussion' && !showDiscussionTab) ||
+    (versionsMainTab === 'merge-requests' && !showMergeRequestsTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
     (versionsMainTab === 'test-bench' && !showTestBenchTab) ||
@@ -3639,6 +3646,36 @@ const Versions = () => {
           ) : null}
         </button>
       ) : null}
+      {showMergeRequestsTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'merge-requests'}
+          data-testid="versions-tab-merge-requests"
+          className={tabTriggerClass({ active: effectiveMainTab === 'merge-requests' })}
+          title="Draft branches and their merge requests"
+          onClick={() => setVersionsMainTab('merge-requests')}
+        >
+          <GitPullRequestArrow className="ver-tab-glyph" aria-hidden />
+          Merge requests
+          {GITLIKE.marked ? <GitlikeFlag enabled /> : null}
+        </button>
+      ) : selectedProjectId && GITLIKE.visible && !GITLIKE.flagOn ? (
+        /* Compiled but hidden: the tab is drawn inert with its flag, so the gap is legible. */
+        <button
+          type="button"
+          role="tab"
+          aria-selected={false}
+          disabled
+          title={GITLIKE_FLAG_TITLE}
+          data-testid="versions-tab-merge-requests"
+          className={tabTriggerClass({ active: false, disabled: true })}
+        >
+          <GitPullRequestArrow className="ver-tab-glyph" aria-hidden />
+          Merge requests
+          <GitlikeFlag />
+        </button>
+      ) : null}
       {showRepositoryTab ? (
         <button
           type="button"
@@ -3962,6 +3999,17 @@ const Versions = () => {
             workspaceRoute={studioWorkspaceRoute}
             onUnresolvedTotalChange={setDiscussionUnresolved}
             focusThreadId={focusThreadId}
+          />
+        ) : null}
+
+        {showMergeRequestsTab && effectiveMainTab === 'merge-requests' && selectedProjectId ? (
+          /* Branch / merge-request workflow (COL-4.3, #4527): draft branches off a version line
+             and the merge requests that review and merge them. */
+          <MergeRequestsPanel
+            key={selectedProjectId}
+            projectId={selectedProjectId}
+            branches={versionBranches}
+            onBranchesChanged={() => void loadBranches()}
           />
         ) : null}
 

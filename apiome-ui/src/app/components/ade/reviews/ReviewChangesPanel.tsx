@@ -12,6 +12,10 @@
  *
  * Loading is lazy twice over: the tab's pane only mounts when the Changes tab is first shown, and
  * the two documents behind the plain diff are only built when the plain diff is first shown.
+ *
+ * The merge request page (COL-4.3, #4527) reuses the panel by pointing `routeBase` at its own
+ * routes, which answer the same `/changes` and `/spec?side=` shapes, and naming its baseline (the
+ * merge base) with `baselineRole`.
  */
 
 import * as React from 'react';
@@ -53,8 +57,12 @@ async function getEnvelope<T>(url: string): Promise<Envelope<T>> {
 }
 
 export interface ReviewChangesPanelProps {
-  /** The review whose version is compared. */
-  reviewId: string;
+  /** The review whose version is compared; used when `routeBase` is not given. */
+  reviewId?: string;
+  /** The BFF routes serving `/changes` and `/spec?side=`; defaults to the review's. */
+  routeBase?: string;
+  /** What the baseline is, as the copy names it. */
+  baselineRole?: string;
 }
 
 /**
@@ -63,8 +71,12 @@ export interface ReviewChangesPanelProps {
  * @param props - See {@link ReviewChangesPanelProps}.
  * @returns The panel.
  */
-export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
-  const routeBase = `/api/reviews/${encodeURIComponent(reviewId)}`;
+export function ReviewChangesPanel({
+  reviewId = '',
+  routeBase: routeBaseProp,
+  baselineRole = 'the newest published version',
+}: ReviewChangesPanelProps) {
+  const routeBase = routeBaseProp ?? `/api/reviews/${encodeURIComponent(reviewId)}`;
   const [changes, setChanges] = React.useState<Loaded<ReviewChangesPayload>>({ status: 'loading' });
   const [view, setView] = React.useState<DiffView>('classified');
   const [documents, setDocuments] = React.useState<Loaded<{ base: string; head: string }>>({ status: 'loading' });
@@ -136,7 +148,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
   if (changes.status === 'loading') {
     return (
       <LoadingState
-        message="Comparing with the newest published version…"
+        message={`Comparing with ${baselineRole}…`}
         minHeightClassName="rvw-min-h"
         data-testid="review-changes-loading"
       />
@@ -165,7 +177,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
     );
   }
 
-  const baselineName = formatVersionWithPrefix(data.baseline.label) || 'the newest published version';
+  const baselineName = formatVersionWithPrefix(data.baseline.label) || baselineRole;
   const sections = groupReviewChanges(data);
   const counts = countsSummary(data.counts);
 
@@ -238,8 +250,8 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
     <section className="rvw-changes" aria-label="Changes" data-testid="review-changes">
       <div className="rvw-changes__head">
         <div className="rvw-changes__compare" data-testid="review-changes-compare">
-          Compared with <strong className="rvw-changes__baseline">{baselineName}</strong>, the newest published
-          version{data.classifiedError ? '' : ` · ${counts ?? 'no changes'}`}
+          Compared with <strong className="rvw-changes__baseline">{baselineName}</strong>, {baselineRole}
+          {data.classifiedError ? '' : ` · ${counts ?? 'no changes'}`}
         </div>
         <Segmented
           size="sm"

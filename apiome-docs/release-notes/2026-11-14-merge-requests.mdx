@@ -1,0 +1,23 @@
+---
+slug: merge-requests
+title: Draft branches and merge requests — branch, review and merge without Git
+description: "Draft on a branch off a version line, open a merge request, review it, merge it."
+authors: [apiome]
+---
+
+Teams can now draft a change on a branch, have it reviewed, and merge it into the version line —
+without leaving Apiome or wiring up a Git repository.
+
+{/* truncate */}
+
+- **Draft branches.** **New draft branch** starts a named branch off a version line such as `main`.
+  The branch gets its own copy of the line's tip, so editing it never touches the line.
+- **Merge requests.** **Open merge request** asks reviewers to review the branch. They decide on the
+  review page, as for any review, and the merge request shows what the branch changes as a classified
+  diff from the merge base.
+- **One merge path.** **Merge into main** runs a merge session and merges through the same three-way
+  path as **Merge branches…**; conflicts appear in the same conflict list, on the **Conflicts** tab.
+  The project's approval gate and compatibility gate still apply.
+- **Behind the Git-like switch.** The **Merge requests** tab on Versions is switched off in shipped
+  builds, like the other Git-like controls. The REST API works today; see
+  [Draft branches and merge requests](/build/merge-requests).

@@ -42044,3 +42044,246 @@ tr[data-selected="true"] > td:first-child {
 .sugg-item__outcome--stale {
   color: var(--warn-fg);
 }
+
+/* ==========================================================================
+   Merge requests — COL-4.3 (#4527)
+
+   The Versions screen's Merge requests tab (`.mrq-panel`), its two dialogs'
+   extra fields, and the merge request page, which reuses the review page's
+   `.rvw` grid and `.rvw-card` chrome. Token-only, as the review block above:
+   quiet text is `--fg-muted`; every holder of a branch name, a title or a
+   path has a zero minimum and breaks anywhere, so a long name never scrolls
+   the page sideways.
+   ========================================================================== */
+
+.mrq-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.mrq-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.mrq-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mrq-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 0 0 1px var(--border);
+  min-inline-size: 0;
+}
+
+.mrq-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  min-inline-size: 0;
+}
+
+.mrq-row + .mrq-row {
+  box-shadow: inset 0 1px 0 var(--border);
+}
+
+.mrq-row__glyph,
+.mrq-head__glyph,
+.mrq-blocker__glyph,
+.mrq-review__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.mrq-row__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.mrq-row__meta {
+  flex: 1 1 16rem;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.mrq-row__link,
+.mrq-review__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.mrq-row__link:hover,
+.mrq-review__link:hover {
+  text-decoration: underline;
+}
+
+.mrq-drafts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.mrq-drafts__title {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.mrq-drafts__empty,
+.mrq-reviewers__empty {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* ---- Dialog fields ------------------------------------------------------- */
+
+.mrq-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.mrq-form__field {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+.mrq-reviewers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  max-block-size: 12rem;
+  overflow-y: auto;
+  min-inline-size: 0;
+}
+
+.mrq-reviewers__legend {
+  padding: 0;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.mrq-reviewers__email {
+  color: var(--fg-muted);
+}
+
+/* ---- The merge request page --------------------------------------------- */
+
+.mrq-head {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.mrq-head__tip,
+.mrq-head__by {
+  color: var(--fg-muted);
+}
+
+.mrq-description {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mrq-actions__summary {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.mrq-blockers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mrq-blocker {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.mrq-override {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  box-shadow: inset 0 1px 0 var(--border);
+}
+
+.mrq-actions__buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.mrq-conflicts,
+.mrq-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.mrq-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.mrq-review__tally {
+  flex: 1 1 auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
