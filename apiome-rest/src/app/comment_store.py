@@ -45,6 +45,7 @@ from .comments import (
     CODE_THREAD_NOT_ORPHANED,
     CODE_THREAD_ORPHANED,
     CODE_VERSION_NOT_FOUND,
+    ORIGIN_CONSUMER,
     STATUS_ORPHANED,
     STATUS_RESOLVED,
     CommentRecord,
@@ -92,6 +93,7 @@ class ThreadFilters:
         anchor_type: Only threads on this element kind.
         anchor_id: Only threads on this element.
         mentions_me: Only threads with a comment mentioning the viewer.
+        origin: Only ``internal`` or only ``consumer`` threads (COL-4.4, #4528).
         limit: Page size.
         offset: Threads to skip.
     """
@@ -101,6 +103,7 @@ class ThreadFilters:
     anchor_type: Optional[str] = None
     anchor_id: Optional[str] = None
     mentions_me: bool = False
+    origin: Optional[str] = None
     limit: int = 50
     offset: int = 0
 
@@ -468,6 +471,7 @@ def list_threads(
         "anchor_type": filters.anchor_type,
         "anchor_id": anchor_id,
         "mentioned_user_id": viewer_id if filters.mentions_me else None,
+        "origin": filters.origin,
     }
     rows = db.list_comment_threads(**scope, limit=filters.limit, offset=filters.offset)
     total = db.count_comment_threads(**scope)
@@ -579,6 +583,10 @@ def set_thread_status(
                 version=db.get_version_by_id(str(row["version_id"]), tenant_id),
                 thread=row,
                 actor_id=actor_id,
+                # A consumer thread's opener is a Browse reader, not a workspace member: workspace
+                # notifications (and their links into the Studio) are not for them. They see the
+                # resolution in Browse (COL-4.4, #4528).
+                exclude=[row.get("created_by")] if row.get("origin") == ORIGIN_CONSUMER else (),
             )
         db.set_comment_thread_status(
             tenant_id=tenant_id,

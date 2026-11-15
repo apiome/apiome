@@ -10,10 +10,13 @@ import {
   ANCHOR_TYPE_LABELS,
   COMMENT_ANCHOR_PARAM,
   COMMENT_ANCHOR_TYPES,
+  COMMENT_THREAD_ORIGINS,
   COMMENT_THREAD_PARAM,
   COMMENT_THREAD_STATUSES,
   DEFAULT_DISCUSSION_FILTERS,
   DISCUSSION_ELEMENT_FILTERS,
+  DISCUSSION_ORIGIN_FILTERS,
+  DISCUSSION_ORIGIN_LABELS,
   DISCUSSION_PAGE_SIZE,
   DISCUSSION_STATUS_FILTERS,
   REST_THREAD_PAGE_LIMIT,
@@ -32,7 +35,9 @@ import {
   discussionThreadHref,
   discussionThreadSearch,
   isCommentAnchorType,
+  isCommentThreadOrigin,
   isCommentThreadStatus,
+  isConsumerThread,
   isUuid,
   operationAnchorLabel,
   propertyAnchorLabel,
@@ -91,7 +96,7 @@ describe('wire vocabulary', () => {
 
 describe('filters', () => {
   it('starts on the open threads of every element, whoever they mention', () => {
-    expect(DEFAULT_DISCUSSION_FILTERS).toEqual({ status: 'open', mentionsMe: false, elementType: 'all' });
+    expect(DEFAULT_DISCUSSION_FILTERS).toEqual({ status: 'open', mentionsMe: false, elementType: 'all', origin: 'all' });
     expect(Object.isFrozen(DEFAULT_DISCUSSION_FILTERS)).toBe(true);
     expect(DISCUSSION_STATUS_FILTERS).toEqual(['open', 'resolved', 'orphaned', 'all']);
     expect(DISCUSSION_ELEMENT_FILTERS).toEqual(['all', 'class', 'property', 'path', 'operation', 'version']);
@@ -102,12 +107,12 @@ describe('filters', () => {
       `?status=open&limit=${DISCUSSION_PAGE_SIZE}&offset=0`
     );
     expect(
-      discussionListParams({ status: 'resolved', mentionsMe: true, elementType: 'operation' }, { limit: 10, offset: 20 })
+      discussionListParams({ status: 'resolved', mentionsMe: true, elementType: 'operation', origin: 'all' }, { limit: 10, offset: 20 })
     ).toBe('?status=resolved&mentions_me=true&anchor_type=operation&limit=10&offset=20');
   });
 
   it('omits the facets set to all', () => {
-    expect(discussionListParams({ status: 'all', mentionsMe: false, elementType: 'all' }, { limit: 1 })).toBe(
+    expect(discussionListParams({ status: 'all', mentionsMe: false, elementType: 'all', origin: 'all' }, { limit: 1 })).toBe(
       '?limit=1&offset=0'
     );
   });
@@ -125,9 +130,36 @@ describe('filters', () => {
 
   it('sends only the count-shaping filters to the summary', () => {
     expect(discussionSummaryParams(DEFAULT_DISCUSSION_FILTERS)).toBe('');
-    expect(discussionSummaryParams({ status: 'resolved', mentionsMe: true, elementType: 'path' })).toBe(
+    expect(discussionSummaryParams({ status: 'resolved', mentionsMe: true, elementType: 'path', origin: 'all' })).toBe(
       '?mentions_me=true&anchor_type=path'
     );
+  });
+});
+
+describe('origin (COL-4.4)', () => {
+  it('names the origins apiome-rest stores and guards them', () => {
+    expect(COMMENT_THREAD_ORIGINS).toEqual(['internal', 'consumer']);
+    expect(isCommentThreadOrigin('consumer')).toBe(true);
+    expect(isCommentThreadOrigin('partner')).toBe(false);
+    expect(DISCUSSION_ORIGIN_FILTERS).toEqual(['all', 'internal', 'consumer']);
+    expect(DISCUSSION_ORIGIN_LABELS.consumer).toBe('Consumer feedback');
+  });
+
+  it('sends the origin facet to the list and the summary', () => {
+    const filters = { status: 'open', mentionsMe: false, elementType: 'all', origin: 'consumer' } as const;
+    expect(discussionListParams(filters, { limit: 5 })).toBe('?status=open&origin=consumer&limit=5&offset=0');
+    expect(discussionSummaryParams(filters)).toBe('?origin=consumer');
+  });
+
+  it('forwards only a known origin upstream', () => {
+    expect(sanitizeThreadListParams(new URLSearchParams('origin=consumer')).get('origin')).toBe('consumer');
+    expect(sanitizeThreadListParams(new URLSearchParams('origin=partner')).get('origin')).toBeNull();
+  });
+
+  it('tells consumer feedback apart, treating a missing origin as internal', () => {
+    expect(isConsumerThread({ origin: 'consumer' })).toBe(true);
+    expect(isConsumerThread({ origin: 'internal' })).toBe(false);
+    expect(isConsumerThread({})).toBe(false);
   });
 });
 

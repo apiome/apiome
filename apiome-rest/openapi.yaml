@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.570.0
+  version: 1.571.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -30477,7 +30477,9 @@ paths:
         the version itself; `status` keeps `open`, `resolved`, or `orphaned` (threads
         whose element was deleted, each carrying the element''s last-known `anchor_label`);
         `anchor_type` and `anchor_id` narrow to one kind of element or one element;
-        `mentions_me=true` keeps threads with a comment mentioning the caller.
+        `mentions_me=true` keeps threads with a comment mentioning the caller; `origin`
+        keeps `internal` threads or the `consumer` feedback Browse readers opened
+        (every thread carries its `origin`).
 
 
         Requires `projects:view`.'
@@ -30566,6 +30568,23 @@ paths:
           default: false
           title: Mentions Me
         description: Only threads with a comment mentioning the caller.
+      - name: origin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - internal
+            - consumer
+            type: string
+            description: Listaprojectscommentthreadsorigin schema.
+          - type: 'null'
+            description: Listaprojectscommentthreadsorigin schema.
+          description: '`internal` (workspace members) or `consumer` (Browse reader
+            feedback, COL-4.4).'
+          title: Origin
+        description: '`internal` (workspace members) or `consumer` (Browse reader
+          feedback, COL-4.4).'
       - name: limit
         in: query
         required: false
@@ -89844,6 +89863,371 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for thesignedinreaderresponse422.
+  /v1/portal/{tenant_slug}/feedback/{project_slug}/{version}/threads:
+    get:
+      tags:
+      - portal-feedback
+      summary: List my feedback on a published version
+      description: 'The signed-in reader''s own feedback threads on a published, public
+        version, most recently active first, each with every message — the reader''s
+        and the team''s replies (`from_team`).
+
+
+        Requires a reader session for this tenant (`Authorization: Reader <token>`);
+        otherwise `401 portal-session-invalid`. `404 feedback-version-not-found` for
+        an unknown, unpublished or private version.'
+      operationId: list_my_feedback_v1_portal__tenant_slug__feedback__project_slug___version__threads_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listmyfeedbackonapublishedversionauthorization schema.
+          - type: 'null'
+            description: Listmyfeedbackonapublishedversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      responses:
+        '200':
+          description: Successful response for list my feedback on a published version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackThreadList'
+                description: Response payload for listmyfeedbackonapublishedversionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listmyfeedbackonapublishedversionresponse422.
+    post:
+      tags:
+      - portal-feedback
+      summary: Send feedback on a published version
+      description: 'Open a feedback thread on the whole version (`target: "version"`)
+        or on one operation (`target: "operation"` with its `method` and `path` exactly
+        as published). The owning team sees it in its Discussion panel tagged `consumer`.
+
+
+        `@name` tokens are **not** resolved — feedback never notifies a team member
+        directly.
+
+
+        Requires a reader session for this tenant. `404 feedback-operation-not-found`
+        for an operation the version does not have. Rate limited per reader (`429
+        comment-rate-limited`).'
+      operationId: send_feedback_v1_portal__tenant_slug__feedback__project_slug___version__threads_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Sendfeedbackonapublishedversionauthorization schema.
+          - type: 'null'
+            description: Sendfeedbackonapublishedversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackCreate'
+              description: Request body for sendfeedbackonapublishedversionrequest.
+        description: Request body for send feedback on a published version.
+      responses:
+        '201':
+          description: Successful response for send feedback on a published version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackThread'
+                description: Response payload for sendfeedbackonapublishedversionresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for sendfeedbackonapublishedversionresponse422.
+  /v1/portal/{tenant_slug}/feedback/{project_slug}/{version}/threads/{thread_id}/comments:
+    post:
+      tags:
+      - portal-feedback
+      summary: Reply in my feedback thread
+      description: 'Add a message to one of the reader''s own feedback threads. A
+        resolved thread accepts it and stays resolved. Another reader''s thread is
+        `404 feedback-thread-not-found`.
+
+
+        Requires a reader session for this tenant. Rate limited per reader.'
+      operationId: reply_to_my_feedback_v1_portal__tenant_slug__feedback__project_slug___version__threads__thread_id__comments_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Thread Id
+          description: Thread Id schema.
+        description: Path parameter identifying the thread id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replyinmyfeedbackthreadauthorization schema.
+          - type: 'null'
+            description: Replyinmyfeedbackthreadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackReply'
+              description: Request body for replyinmyfeedbackthreadrequest.
+        description: Request body for reply in my feedback thread.
+      responses:
+        '201':
+          description: Successful response for reply in my feedback thread.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackThread'
+                description: Response payload for replyinmyfeedbackthreadresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for replyinmyfeedbackthreadresponse422.
+  /v1/portal/{tenant_slug}/feedback/{project_slug}/{version}/threads/{thread_id}/resolve:
+    post:
+      tags:
+      - portal-feedback
+      summary: Resolve my feedback thread
+      description: Mark one of the reader's own threads resolved, as the team can
+        from the Discussion panel. Resolving a resolved thread changes nothing. Requires
+        a reader session for this tenant.
+      operationId: resolve_my_feedback_v1_portal__tenant_slug__feedback__project_slug___version__threads__thread_id__resolve_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Thread Id
+          description: Thread Id schema.
+        description: Path parameter identifying the thread id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Resolvemyfeedbackthreadauthorization schema.
+          - type: 'null'
+            description: Resolvemyfeedbackthreadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      responses:
+        '200':
+          description: Successful response for resolve my feedback thread.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackThread'
+                description: Response payload for resolvemyfeedbackthreadresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for resolvemyfeedbackthreadresponse422.
+  /v1/portal/{tenant_slug}/feedback/{project_slug}/{version}/threads/{thread_id}/reopen:
+    post:
+      tags:
+      - portal-feedback
+      summary: Reopen my feedback thread
+      description: Reopen one of the reader's own resolved threads. Reopening an open
+        thread changes nothing. Requires a reader session for this tenant.
+      operationId: reopen_my_feedback_v1_portal__tenant_slug__feedback__project_slug___version__threads__thread_id__reopen_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Thread Id
+          description: Thread Id schema.
+        description: Path parameter identifying the thread id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reopenmyfeedbackthreadauthorization schema.
+          - type: 'null'
+            description: Reopenmyfeedbackthreadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      responses:
+        '200':
+          description: Successful response for reopen my feedback thread.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackThread'
+                description: Response payload for reopenmyfeedbackthreadresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for reopenmyfeedbackthreadresponse422.
   /v1/admin/users/{user_id}/two-factor/reset:
     post:
       tags:
@@ -103393,6 +103777,16 @@ components:
             description: Comment Thread schema.
           title: Orphaned At
           description: When the anchored element was deleted. Set exactly while `orphaned`.
+        origin:
+          type: string
+          enum:
+          - internal
+          - consumer
+          title: Origin
+          description: '`internal` — opened by a workspace member; `consumer` — feedback
+            a Browse reader opened on the published spec (COL-4.4).'
+          default: internal
+          example: internal
         created_by:
           anyOf:
           - type: string
@@ -103443,7 +103837,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-15T04:51:49Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -103566,6 +103960,16 @@ components:
             description: Comment Thread schema.
           title: Orphaned At
           description: When the anchored element was deleted. Set exactly while `orphaned`.
+        origin:
+          type: string
+          enum:
+          - internal
+          - consumer
+          title: Origin
+          description: '`internal` — opened by a workspace member; `consumer` — feedback
+            a Browse reader opened on the published spec (COL-4.4).'
+          default: internal
+          example: internal
         created_by:
           anyOf:
           - type: string
@@ -103616,7 +104020,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-15T04:51:49Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -119029,6 +119433,217 @@ components:
       - path
       title: FederationSourceRef
       description: A repository file, as the history shows it.
+    FeedbackComment:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        body:
+          type: string
+          title: Body
+          description: Markdown.
+          example: example
+        from_team:
+          type: boolean
+          title: From Team
+          description: True when a member of the owning team wrote it; false for the
+            reader.
+          example: false
+        author_name:
+          anyOf:
+          - type: string
+            description: Feedback Comment schema.
+          - type: 'null'
+            description: Feedback Comment schema.
+          title: Author Name
+          description: The writer's display name.
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+        edited_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Feedback Comment schema.
+          - type: 'null'
+            description: Feedback Comment schema.
+          title: Edited At
+          description: Edited At timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - body
+      - from_team
+      - created_at
+      title: FeedbackComment
+      description: One message in a feedback thread, as the reader sees it.
+    FeedbackCreate:
+      properties:
+        target:
+          type: string
+          enum:
+          - version
+          - operation
+          title: Target
+          description: Target.
+          example: version
+        method:
+          anyOf:
+          - type: string
+            maxLength: 16
+            minLength: 1
+            description: Feedback Create schema.
+          - type: 'null'
+            description: Feedback Create schema.
+          title: Method
+          description: Method.
+        path:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            minLength: 1
+            description: Feedback Create schema.
+          - type: 'null'
+            description: Feedback Create schema.
+          title: Path
+          description: Path.
+        body:
+          type: string
+          maxLength: 20000
+          minLength: 1
+          title: Body
+          description: Body.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - target
+      - body
+      title: FeedbackCreate
+      description: "Open a feedback thread.\n\nAttributes:\n    target: ``version``\
+        \ for the whole API, ``operation`` for one operation.\n    method: The operation's\
+        \ HTTP method (``operation`` only).\n    path: The operation's path template\
+        \ (``operation`` only).\n    body: The first message, as Markdown."
+    FeedbackOperation:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: HTTP method, upper case (`GET`).
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Path template as published (`/pets/{petId}`).
+          example: /resources/{id}
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      title: FeedbackOperation
+      description: An operation, named the way the spec names it.
+    FeedbackReply:
+      properties:
+        body:
+          type: string
+          maxLength: 20000
+          minLength: 1
+          title: Body
+          description: Body.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - body
+      title: FeedbackReply
+      description: A message added to a feedback thread.
+    FeedbackThread:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        target:
+          type: string
+          enum:
+          - version
+          - operation
+          title: Target
+          description: '`version` — the whole API; `operation` — one operation.'
+          example: version
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/FeedbackOperation'
+          - type: 'null'
+            description: Feedback Thread schema.
+          description: The operation, for an `operation` target that still exists.
+        status:
+          type: string
+          enum:
+          - open
+          - resolved
+          title: Status
+          description: '`open` or `resolved` (by the team or the reader).'
+          example: open
+        resolved_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Feedback Thread schema.
+          - type: 'null'
+            description: Feedback Thread schema.
+          title: Resolved At
+          description: Resolved At timestamp (ISO 8601).
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+        last_activity_at:
+          type: string
+          format: date-time
+          title: Last Activity At
+          description: Last Activity At timestamp (ISO 8601).
+          example: '2026-11-15T04:51:49Z'
+        comments:
+          items:
+            $ref: '#/components/schemas/FeedbackComment'
+          type: array
+          title: Comments
+          description: Oldest first.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - target
+      - status
+      - created_at
+      - last_activity_at
+      title: FeedbackThread
+      description: A reader's feedback thread with every message in it.
+    FeedbackThreadList:
+      properties:
+        threads:
+          items:
+            $ref: '#/components/schemas/FeedbackThread'
+          type: array
+          title: Threads
+          description: Most recently active first.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: FeedbackThreadList
+      description: The reader's own feedback threads on one version.
     FidelityDivergence:
       properties:
         kind:

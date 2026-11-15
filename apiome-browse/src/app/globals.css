@@ -650,6 +650,175 @@ a.table-row:hover {
   background-color: var(--brand-soft-hover);
 }
 
+/*
+ * Consumer feedback (COL-4.4, #4528): the version page's Feedback tab — the form, the reader's
+ * threads, and the team's replies. Builds on the portal-* sign-in classes; tokens only.
+ */
+.feedback-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.feedback-title {
+  color: var(--text-primary);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.feedback-body {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.feedback-sign-in {
+  align-self: flex-start;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feedback-textarea {
+  resize: vertical;
+  min-height: 6rem;
+  font-family: inherit;
+}
+
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.feedback-hint {
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+}
+
+.feedback-threads {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feedback-thread {
+  padding: 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-sunken);
+}
+
+.feedback-thread-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.feedback-subject {
+  color: var(--text-primary);
+  font-family: var(--app-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.feedback-status {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--brand-soft);
+  color: var(--brand-soft-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.feedback-status-resolved {
+  background-color: var(--success-soft);
+  color: var(--success-soft-text);
+}
+
+.feedback-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.feedback-message {
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+}
+
+.feedback-message-team {
+  border-color: var(--brand-ring);
+}
+
+.feedback-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.feedback-team-badge {
+  padding: 0 0.375rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-soft);
+  color: var(--brand-soft-text);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.feedback-message-body {
+  margin-top: 0.25rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.feedback-reply {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.feedback-reply .portal-input {
+  flex: 1 1 14rem;
+}
+
+.feedback-secondary {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.feedback-secondary:hover {
+  background-color: var(--surface-muted);
+}
+
 @media print {
   .no-print {
     display: none !important;

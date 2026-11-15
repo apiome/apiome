@@ -151,7 +151,7 @@ describe('GET comment-threads', () => {
       body: { threads: [], count: 0, total: 0, limit: 25, offset: 50 },
     }));
     const res = await listThreads(
-      request('', '?status=resolved&anchor_type=operation&mentions_me=true&limit=25&offset=50&version=1.0.0&tenant_slug=evil'),
+      request('', '?status=resolved&anchor_type=operation&mentions_me=true&origin=consumer&limit=25&offset=50&version=1.0.0&tenant_slug=evil'),
       context()
     );
     expect(res.status).toBe(200);
@@ -159,7 +159,7 @@ describe('GET comment-threads', () => {
     expect(url.origin + url.pathname).toBe(
       `http://rest.test/v1/tenants/acme/projects/${PROJECT_ID}/comment-threads`
     );
-    expect(url.search).toBe('?status=resolved&anchor_type=operation&mentions_me=true&limit=25&offset=50');
+    expect(url.search).toBe('?status=resolved&anchor_type=operation&mentions_me=true&origin=consumer&limit=25&offset=50');
     expect((fetchMock.mock.calls[0] as unknown[])[1]).toMatchObject({
       method: 'GET',
       headers: { Authorization: 'Bearer test-token' },
@@ -274,7 +274,7 @@ describe('GET comment-threads/summary', () => {
       };
     });
 
-    const res = await summarizeThreads(request('/summary', '?anchor_type=class&mentions_me=true&status=resolved'), context());
+    const res = await summarizeThreads(request('/summary', '?anchor_type=class&mentions_me=true&origin=consumer&status=resolved'), context());
     const json = (await res.json()) as Record<string, unknown>;
     expect(json).toEqual({
       success: true,
@@ -290,6 +290,7 @@ describe('GET comment-threads/summary', () => {
     for (const url of totalCalls) {
       expect(url.searchParams.get('anchor_type')).toBe('class');
       expect(url.searchParams.get('mentions_me')).toBe('true');
+      expect(url.searchParams.get('origin')).toBe('consumer'); // COL-4.4
     }
     const openPages = urls.filter((url) => url.searchParams.get('limit') === '200');
     expect(openPages).toHaveLength(1);

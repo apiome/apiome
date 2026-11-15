@@ -7,7 +7,8 @@ with a **magic link** — a one-time token mailed to them, valid for 15 minutes 
 a **reader session**: an opaque, tenant-bound token Browse keeps in an ``HttpOnly`` cookie and
 forwards to apiome-rest as ``Authorization: Reader <token>``.
 
-A reader session is **never a REST credential** outside the ``browse`` and ``portal-auth`` tags:
+A reader session is **never a REST credential** outside the ``browse``, ``portal-auth`` and
+``portal-feedback`` (COL-4.4) tags:
 ``validate_authentication`` only understands JWTs and workspace API keys, so the ``Reader`` scheme
 is refused everywhere else without any code having to remember to refuse it
 (``tests/test_portal_reader_rest_refusal.py`` sweeps every ``GET`` route to prove it).

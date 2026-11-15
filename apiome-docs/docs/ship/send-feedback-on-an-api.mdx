@@ -1,0 +1,53 @@
+---
+title: Send feedback on an API
+description: "Readers tell the owning team about a published version or operation."
+sidebar_position: 4.2
+tags: [browse, publish, collaboration]
+---
+
+Someone reading a published API in Browse can tell the team that owns it what is wrong or unclear.
+For example: "this response shape is wrong", or "this description doesn't say what happens on a
+retry". Feedback lands in the team's [Discussion](../build/versions.mdx#consumer-feedback) tab with a
+**Consumer** tag. The team's replies come back to the reader in Browse.
+
+Only a signed-in [reader](./portal-readers.mdx) can send feedback. A visitor who isn't signed in sees
+an invitation to sign in instead.
+
+---
+
+## Send feedback
+
+1. **Open a published version in Browse** and **click the "Feedback" tab**.
+2. If you aren't signed in, **click "Sign in to send feedback"**, sign in with the emailed link, and
+   you return to the **Feedback** tab.
+3. Under **About**, pick **Whole API** or one operation, for example `GET /pets/{petId}`.
+4. **Write your message** and **click "Send feedback"**.
+
+<Screenshot id="browse-feedback-tab" alt="The Feedback tab of a published version for a visitor who is not signed in: an invitation and the Sign in to send feedback button" />
+
+Your feedback appears under **Your feedback**, with the operation it is about and its status
+(**Open** or **Resolved**).
+
+## Follow up
+
+- The team's replies appear in the thread, marked **Team**, with the name of the person who wrote them.
+- **Type in the "Reply" box** and **click "Reply"** to answer.
+- **Click "Resolve"** when your question is settled, or **"Reopen"** to bring it back. The team can
+  resolve and reopen it too.
+
+Only you and the owning team see your feedback. Other readers never see it, and you never see the
+team's internal discussion.
+
+## Limits
+
+- Feedback can only be sent on a **published, public** version.
+- A message can be up to 20,000 characters. Sending and replying share a per-person budget, so
+  many messages in a minute are refused for a short while.
+- `@name` in your message is plain text. It does not notify anyone on the team.
+
+## With the REST API
+
+The `portal-feedback` endpoints are in the [REST reference](../reference/rest/portal-feedback.md).
+Every one needs a reader session for the organization, sent as `Authorization: Reader <token>`.
+The team lists the same threads with `GET /v1/tenants/{tenant}/projects/{project}/comment-threads?origin=consumer`
+([comments](../reference/rest/comments.md)).

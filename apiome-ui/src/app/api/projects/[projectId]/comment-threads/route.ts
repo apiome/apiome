@@ -17,7 +17,7 @@ import {
 } from './comment-threads-proxy';
 
 /**
- * GET /api/projects/[projectId]/comment-threads?status&anchor_type&mentions_me&limit&offset
+ * GET /api/projects/[projectId]/comment-threads?status&anchor_type&mentions_me&origin&limit&offset
  *
  * @param request - The browser's request; only the whitelisted filters are forwarded.
  * @param context - The route parameters.

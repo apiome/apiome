@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.711.0] - 2026-11-15
+
+### Added
+- **Portal consumer feedback (COL-4.4, #4528)** — OpenAPI 1.571.0, new tag `portal-feedback`:
+  - A signed-in Browse reader (PCX-1.1) can open a **feedback thread** on a published, public version — the
+    whole API (`target: "version"`) or one operation (`target: "operation"` with its `method` and `path` as
+    published) — at `POST /v1/portal/{tenant}/feedback/{project}/{version}/threads`, and list
+    (`GET …/threads`), answer (`POST …/threads/{id}/comments`), resolve and reopen (`…/resolve`, `…/reopen`)
+    **their own** threads. Each message says whether it came `from_team`; no user ids, mentions or internal
+    statuses are returned. Reader `@mentions` are never resolved.
+  - Every route needs a live reader session for that tenant (`Authorization: Reader <token>`), otherwise
+    `401 portal-session-invalid` — signed-out users cannot file feedback. `404 feedback-version-not-found` for an
+    unknown, unpublished or private version, `404 feedback-operation-not-found`, and `404 feedback-thread-not-found`
+    for a thread that is not the reader's. Opening and replying share the per-user comment budget
+    (`429 comment-rate-limited`).
+  - Feedback threads are COL-1.1 comment threads with the new `origin: "consumer"` (apiome-db V379; existing
+    threads are `internal`). The team sees, answers and resolves them with the existing
+    `…/projects/{project}/comment-threads` routes; `GET …/comment-threads?origin=consumer|internal` filters, and
+    every thread record carries `origin`. Resolving a consumer thread never sends the reader a workspace
+    notification.
+
 ## [1.710.0] - 2026-11-14
 
 ### Added

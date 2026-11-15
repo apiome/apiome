@@ -25,6 +25,7 @@ import {
   severityLabel,
 } from '../../../../../../lib/changelog/group';
 import { MockCallout } from './MockCallout';
+import { FeedbackPanel } from './FeedbackPanel';
 
 interface Version {
   id: string;
@@ -43,7 +44,7 @@ interface SidebarVersion {
   published_at?: string;
 }
 
-type VersionTab = 'specification' | 'changes';
+type VersionTab = 'specification' | 'changes' | 'feedback';
 
 interface VersionClientProps {
   version: Version;
@@ -56,6 +57,10 @@ interface VersionClientProps {
   restApiBaseUrl: string;
   /** Public mock base URL for this version; null when its mock is disabled (SIM-2.3, #4444). */
   mockBaseUrl: string | null;
+  /** The signed-in reader of this portal, or null (COL-4.4: feedback needs a reader). */
+  readerEmail: string | null;
+  /** The tab to open first (`?tab=feedback` after reader sign-in returns here). */
+  initialTab?: VersionTab;
 }
 
 export function VersionClient({
@@ -67,12 +72,14 @@ export function VersionClient({
   versionSlug,
   restApiBaseUrl,
   mockBaseUrl,
+  readerEmail,
+  initialTab = 'specification',
 }: VersionClientProps) {
   const [spec, setSpec] = useState<unknown>(null);
   const [format, setFormat] = useState<SpecFormat>('openapi');
   const [activeAnchor, setActiveAnchor] = useState<string | undefined>(undefined);
   const [showExport, setShowExport] = useState(false);
-  const [activeTab, setActiveTab] = useState<VersionTab>('specification');
+  const [activeTab, setActiveTab] = useState<VersionTab>(initialTab);
   const [sdkInfo, setSdkInfo] = useState<PublicSdkInfoResponse | null>(null);
 
   const coords = useMemo(
@@ -150,6 +157,7 @@ export function VersionClient({
   const tabs: { value: VersionTab; label: string; count?: number }[] = [
     { value: 'specification', label: 'Specification' },
     { value: 'changes', label: 'Changes', count: changeCount },
+    { value: 'feedback', label: 'Feedback' },
   ];
 
   return (
@@ -303,6 +311,17 @@ export function VersionClient({
             changelog={changelog}
             tenantSlug={tenantSlug}
             projectSlug={projectSlug}
+          />
+        )}
+
+        {activeTab === 'feedback' && (
+          <FeedbackPanel
+            tenantSlug={tenantSlug}
+            projectSlug={projectSlug}
+            versionSlug={versionSlug}
+            tenantName={version.tenant_name || tenantSlug}
+            readerEmail={readerEmail}
+            spec={spec}
           />
         )}
       </div>

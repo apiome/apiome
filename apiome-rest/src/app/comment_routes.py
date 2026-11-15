@@ -55,6 +55,7 @@ from .comments import (
     CommentThreadRelink,
     CommentThreadSummary,
     CommentValidationError,
+    ThreadOrigin,
     ThreadStatus,
 )
 from .config import settings
@@ -205,7 +206,8 @@ def enforce_comment_rate_limit(tenant_id: str, user_id: str) -> None:
         "`status` keeps `open`, `resolved`, or `orphaned` (threads whose element was deleted, "
         "each carrying the element's last-known `anchor_label`); `anchor_type` and `anchor_id` "
         "narrow to one kind of element or one element; `mentions_me=true` keeps threads with a "
-        "comment mentioning the caller.\n\n"
+        "comment mentioning the caller; `origin` keeps `internal` threads or the `consumer` "
+        "feedback Browse readers opened (every thread carries its `origin`).\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -221,6 +223,10 @@ async def list_comment_threads(
     mentions_me: bool = Query(
         default=False, description="Only threads with a comment mentioning the caller."
     ),
+    origin: Optional[ThreadOrigin] = Query(
+        default=None,
+        description="`internal` (workspace members) or `consumer` (Browse reader feedback, COL-4.4).",
+    ),
     limit: int = Query(default=50, ge=1, le=200, description="Page size."),
     offset: int = Query(default=0, ge=0, description="Threads to skip."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -235,6 +241,7 @@ async def list_comment_threads(
         anchor_type: Only threads on this element kind.
         anchor_id: Only threads on this element.
         mentions_me: Only threads mentioning the caller.
+        origin: Only ``internal`` or only ``consumer`` threads.
         limit: Page size.
         offset: Threads to skip.
         auth_data: The authenticated principal.
@@ -254,6 +261,7 @@ async def list_comment_threads(
         anchor_type=anchor_type,
         anchor_id=anchor_id,
         mentions_me=mentions_me,
+        origin=origin,
         limit=limit,
         offset=offset,
     )

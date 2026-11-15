@@ -124,6 +124,15 @@ test.describe('Project Discussion panel', () => {
     expect(live.searchParams.get('thread')).toBe('thread-class');
   });
 
+  test('tags consumer feedback and offers the Origin filter (COL-4.4)', async ({ page }) => {
+    await mount(page);
+    await expect(
+      page.getByTestId('discussion-thread-thread-operation').getByTestId('discussion-consumer-tag')
+    ).toHaveText('Consumer');
+    await expect(page.getByTestId('discussion-thread-thread-class').getByTestId('discussion-consumer-tag')).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'Origin' })).toBeVisible();
+  });
+
   for (const theme of THEMES) {
     test(`axe: no serious or critical violations (${theme ?? 'light'})`, async ({ page }) => {
       await mount(page);

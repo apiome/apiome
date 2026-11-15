@@ -40,6 +40,15 @@ export const COMMENT_THREAD_STATUSES = ['open', 'resolved', 'orphaned'] as const
 /** One thread status. */
 export type CommentThreadStatus = (typeof COMMENT_THREAD_STATUSES)[number];
 
+/**
+ * Where a thread came from (COL-4.4, #4528): `internal` — a workspace member; `consumer` — feedback a
+ * Browse reader opened on the published spec. Mirrors apiome-rest's `comments.THREAD_ORIGINS`.
+ */
+export const COMMENT_THREAD_ORIGINS = ['internal', 'consumer'] as const;
+
+/** `internal` or `consumer`. */
+export type CommentThreadOrigin = (typeof COMMENT_THREAD_ORIGINS)[number];
+
 /** The largest page apiome-rest's thread list returns. */
 export const REST_THREAD_PAGE_LIMIT = 200;
 
@@ -110,6 +119,11 @@ export interface DiscussionThread {
   anchor_label?: string | null;
   /** When the element was deleted — set only while the thread is orphaned. */
   orphaned_at?: string | null;
+  /**
+   * `internal` or `consumer` (COL-4.4). Absent from an apiome-rest older than 1.711.0, which only had
+   * internal threads.
+   */
+  origin?: CommentThreadOrigin;
   /** Who opened the thread. */
   created_by: string | null;
   /** Their display name. */
@@ -200,6 +214,9 @@ export type DiscussionStatusFilter = CommentThreadStatus | 'all';
 /** The element-type facet: one kind, or every kind. */
 export type DiscussionElementFilter = CommentAnchorType | 'all';
 
+/** The origin facet (COL-4.4): internal discussion, consumer feedback, or both. */
+export type DiscussionOriginFilter = CommentThreadOrigin | 'all';
+
 /** Everything the panel filters on. */
 export interface DiscussionFilters {
   /** Which status to list. */
@@ -208,6 +225,8 @@ export interface DiscussionFilters {
   mentionsMe: boolean;
   /** Which kind of element to list. */
   elementType: DiscussionElementFilter;
+  /** Internal threads, consumer feedback, or both (COL-4.4). */
+  origin: DiscussionOriginFilter;
 }
 
 /** Where the panel starts: the open threads, on every element, whoever they mention. */
@@ -215,6 +234,7 @@ export const DEFAULT_DISCUSSION_FILTERS: Readonly<DiscussionFilters> = Object.fr
   status: 'open',
   mentionsMe: false,
   elementType: 'all',
+  origin: 'all',
 });
 
 /** The status chips, in the order they are drawn. */
@@ -253,6 +273,36 @@ export const DISCUSSION_ELEMENT_LABELS: Readonly<Record<DiscussionElementFilter,
   version: 'Versions',
 };
 
+/** The origin chips, in the order they are drawn (COL-4.4). */
+export const DISCUSSION_ORIGIN_FILTERS: readonly DiscussionOriginFilter[] = ['all', 'internal', 'consumer'];
+
+/** Each origin chip's label. */
+export const DISCUSSION_ORIGIN_LABELS: Readonly<Record<DiscussionOriginFilter, string>> = {
+  all: 'All origins',
+  internal: 'Team',
+  consumer: 'Consumer feedback',
+};
+
+/**
+ * Whether a value is a thread origin.
+ *
+ * @param value - The candidate.
+ * @returns True for `internal` or `consumer`.
+ */
+export function isCommentThreadOrigin(value: unknown): value is CommentThreadOrigin {
+  return typeof value === 'string' && (COMMENT_THREAD_ORIGINS as readonly string[]).includes(value);
+}
+
+/**
+ * Whether a thread is consumer feedback (and so carries the **Consumer** tag).
+ *
+ * @param thread - The thread.
+ * @returns True when its origin is `consumer`.
+ */
+export function isConsumerThread(thread: Pick<DiscussionThread, 'origin'>): boolean {
+  return thread.origin === 'consumer';
+}
+
 /** One element kind, singular, for a row's type badge. */
 export const ANCHOR_TYPE_LABELS: Readonly<Record<CommentAnchorType, string>> = {
   class: 'Class',
@@ -265,7 +315,7 @@ export const ANCHOR_TYPE_LABELS: Readonly<Record<CommentAnchorType, string>> = {
 /**
  * The query string the panel sends to its BFF list route.
  *
- * The names are apiome-rest's own (`status`, `mentions_me`, `anchor_type`, `limit`, `offset`), so
+ * The names are apiome-rest's own (`status`, `mentions_me`, `anchor_type`, `origin`, `limit`, `offset`), so
  * the BFF forwards them after {@link sanitizeThreadListParams} rather than translating.
  *
  * @param filters - The panel's filters.
@@ -283,6 +333,7 @@ export function discussionListParams(
   if (filters.status !== 'all') params.set('status', filters.status);
   if (filters.mentionsMe) params.set('mentions_me', 'true');
   if (filters.elementType !== 'all') params.set('anchor_type', filters.elementType);
+  if (filters.origin !== 'all') params.set('origin', filters.origin);
   if (versionId) params.set('version', versionId);
   params.set('limit', String(paging.limit ?? DISCUSSION_PAGE_SIZE));
   params.set('offset', String(paging.offset ?? 0));
@@ -304,6 +355,7 @@ export function discussionSummaryParams(
   const params = new URLSearchParams();
   if (filters.mentionsMe) params.set('mentions_me', 'true');
   if (filters.elementType !== 'all') params.set('anchor_type', filters.elementType);
+  if (filters.origin !== 'all') params.set('origin', filters.origin);
   if (versionId) params.set('version', versionId);
   const query = params.toString();
   return query ? `?${query}` : '';
@@ -331,7 +383,7 @@ function parseCount(raw: string | null): number | null {
  *
  * Only the panel's filters survive: an unknown key is dropped, an unknown `status` or
  * `anchor_type` is dropped (so the list widens to every status rather than failing), `mentions_me`
- * is forwarded only as `true`, and `limit` is clamped to 1–{@link REST_THREAD_PAGE_LIMIT}.
+ * is forwarded only as `true`, `origin` only as `internal` or `consumer` (COL-4.4), and `limit` is clamped to 1–{@link REST_THREAD_PAGE_LIMIT}.
  * `version` is forwarded only as a revision id (a UUID) — the review page's Discussion tab narrows to
  * the version under review (COL-2.2); a version label or anything else is dropped, so the list stays
  * project-wide. `anchor_id` is deliberately not forwarded.
@@ -346,6 +398,8 @@ export function sanitizeThreadListParams(input: ParamReader): URLSearchParams {
   const anchorType = input.get('anchor_type');
   if (isCommentAnchorType(anchorType)) out.set('anchor_type', anchorType);
   if (input.get('mentions_me') === 'true') out.set('mentions_me', 'true');
+  const origin = input.get('origin');
+  if (isCommentThreadOrigin(origin)) out.set('origin', origin);
   const version = input.get('version');
   if (isUuid(version)) out.set('version', version);
   const limit = parseCount(input.get('limit'));

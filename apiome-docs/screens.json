@@ -225,7 +225,12 @@
       "id": "versions-discussion",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:project-discussion/panel.html"
+      "data": "fixture:project-discussion/panel.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/versions",
+        "apiome-ui/src/app/components/ade/discussion/ProjectDiscussionPanel.tsx",
+        "apiome-ui/e2e/fixtures/project-discussion/panel.html"
+      ]
     },
     {
       "id": "versions-repository",
@@ -2205,6 +2210,17 @@
       "data": "signed-out",
       "sources": [
         "apiome-browse/src/app/portal/sign-in",
+        "apiome-browse/src/app/globals.css"
+      ]
+    },
+    {
+      "id": "browse-feedback-tab",
+      "app": "browse",
+      "route": "/tenant/acme-corp/petstore-sample/1.0.0?tab=feedback",
+      "waitFor": "[data-testid=\"feedback-signed-out\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/tenant/[tenantSlug]/[projectSlug]/[versionSlug]/FeedbackPanel.tsx",
         "apiome-browse/src/app/globals.css"
       ]
     }

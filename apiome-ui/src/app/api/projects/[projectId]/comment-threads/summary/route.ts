@@ -29,7 +29,7 @@ import {
 } from '../comment-threads-proxy';
 
 /**
- * GET /api/projects/[projectId]/comment-threads/summary?anchor_type&mentions_me&version
+ * GET /api/projects/[projectId]/comment-threads/summary?anchor_type&mentions_me&origin&version
  *
  * @param request - The browser's request; `anchor_type` and `mentions_me` narrow the status totals,
  *   and `version` narrows every number to one version.
@@ -58,6 +58,8 @@ export async function GET(
       const anchorType = filters.get('anchor_type');
       if (anchorType) query.set('anchor_type', anchorType);
       if (filters.get('mentions_me') === 'true') query.set('mentions_me', 'true');
+      const origin = filters.get('origin');
+      if (origin) query.set('origin', origin);
       const version = filters.get('version');
       if (version) query.set('version', version);
       return query;
