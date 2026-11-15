@@ -103,7 +103,7 @@ function detail(overrides: Partial<ReviewDetail> = {}): ReviewDetail {
 
 describe('tabs', () => {
   it('lists Changes, Spec and Discussion in that order', () => {
-    expect(REVIEW_TABS).toEqual(['changes', 'spec', 'discussion']);
+    expect(REVIEW_TABS).toEqual(['changes', 'suggestions', 'spec', 'discussion']);
   });
 
   it('opens the asked-for tab and Changes for anything else', () => {

@@ -10,6 +10,8 @@
  *   it, the round, and the round's tally.
  * - **Changes** — the classified diff against the newest published version, with a plain diff
  *   beside it (`ReviewChangesPanel`).
+ * - **Suggestions** — reviewers' concrete edits to classes and properties, each shown as a diff
+ *   the author applies or rejects in one click (`ReviewSuggestionsPanel`, COL-4.2).
  * - **Spec** — the version's OpenAPI document, read-only (`ReviewSpecPanel`).
  * - **Discussion** — the version's comment threads, open ones first (`ProjectDiscussionPanel`
  *   narrowed to the version).
@@ -25,7 +27,7 @@
 
 import * as React from 'react';
 import { toast } from '../../ui/toast';
-import { FileJson2, GitCompareArrows, MessagesSquare, type LucideIcon } from 'lucide-react';
+import { FileJson2, GitCompareArrows, Lightbulb, MessagesSquare, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -55,10 +57,12 @@ import { ReviewChangesPanel } from './ReviewChangesPanel';
 import { ReviewDecisionBar } from './ReviewDecisionBar';
 import { ReviewReviewers } from './ReviewReviewers';
 import { ReviewSpecPanel } from './ReviewSpecPanel';
+import { ReviewSuggestionsPanel } from './ReviewSuggestionsPanel';
 
 /** Each tab's glyph. */
 const TAB_GLYPH: Readonly<Record<ReviewTabId, LucideIcon>> = {
   changes: GitCompareArrows,
+  suggestions: Lightbulb,
   spec: FileJson2,
   discussion: MessagesSquare,
 };
@@ -265,6 +269,13 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
 
   const panes: Record<ReviewTabId, React.ReactNode> = {
     changes: <ReviewChangesPanel reviewId={reviewId} />,
+    suggestions: (
+      <ReviewSuggestionsPanel
+        reviewId={reviewId}
+        viewerId={viewerId}
+        writable={!review.closed_at}
+      />
+    ),
     spec: <ReviewSpecPanel reviewId={reviewId} projectSlug={project.slug} versionLabel={review.version_label} />,
     discussion: (
       <ProjectDiscussionPanel

@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.708.0] - 2026-11-14
+
+### Added
+- **Suggested changes on reviews (COL-4.2, #4526)** — OpenAPI 1.568.0:
+  - `GET|POST …/projects/{project}/reviews/{review_id}/suggestions` lists and proposes suggestions: an RFC 6902
+    patch (`add`, `remove`, `replace`, `test`; at most 50 operations) over one element's canonical JSON —
+    `{description, schema}` for a `class`, `{description, data}` for a `property` of the reviewed version. The
+    stored suggestion keeps `base`, `patch` and `proposed`; an open one carries a live `stale` flag. Proposing is
+    open to the round's reviewers, the requester and project editors.
+  - `POST …/suggestions/{suggestion_id}/apply` merges the suggestion onto the element as it is now with the
+    merge-session three-way engine (`schema_merge.merge_json_three_way`) and writes it; edits elsewhere in the
+    element are kept (`merged_around`). An overlapping edit, or a deleted element, answers `409 suggestion-stale`
+    with `conflict_paths`, records the suggestion `stale` and writes nothing else. `…/reject` records a rejection
+    with an optional `reason`. Deciding is the requester's or a project editor's; an author can't apply their
+    own suggestion but may reject (withdraw) it.
+  - apiome-db V376 adds `review_suggestions`.
+
 ## [1.707.0] - 2026-11-14
 
 ### Added

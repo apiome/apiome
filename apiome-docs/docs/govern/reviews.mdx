@@ -54,6 +54,7 @@ with its state and a tally — *Requested by Priya Raman · Round 2 · 1 of 2 ap
 
 - **Changes** — what changed since the newest published version, grouped as **Breaking**,
   **Non-breaking** and **Docs-only**. **Plain diff** switches to a line diff.
+- **Suggestions** — concrete edits reviewers propose; see [Suggested changes](#suggested-changes).
 - **Spec** — the whole document, as JSON or YAML.
 - **Discussion** — the version's comment threads.
 - **Reviewers** — each reviewer's decision and note, this round and earlier ones.
@@ -84,6 +85,39 @@ POST /v1/tenants/{tenant}/projects/{project}/reviews/{review_id}/re-request
 ```
 
 Approvals from earlier rounds do not carry over. `…/withdraw` withdraws the review.
+
+## Suggested changes
+
+A prose note makes the author work out what you meant and type it in again. When you know exactly
+what should change, suggest it. The author applies it in one click.
+
+**Suggest a change** (you are a reviewer, the requester, or an editor of the project):
+
+1. **Open the review** and **click the “Suggestions” tab**.
+2. Under **Suggest a change**, choose the **Element**, a class such as `Pet` or a property such as
+   `Pet.name`.
+3. Choose the **Field**, for example `maxLength`, `format`, `enum` or `description`. **New value**
+   shows its current value.
+4. Type the new value, for example `100`. Numbers, `true`/`false`, lists such as `["cat", "dog"]`
+   and objects are read as JSON, and anything else as text. Leave it empty to remove the field.
+5. Optionally say **Why**, then **click “Suggest”**.
+
+**Apply or reject** (you requested the review, or you can edit the project). Each suggestion shows
+the element before and after as a diff:
+
+- **Click “Apply”** to write the change to the version. Edits other people have made elsewhere in
+  the element since are kept.
+- **Click “Reject”** to decline it. The rejection is recorded with your name.
+- The reviewer who made a suggestion can't apply it, but can **click “Withdraw”**.
+
+| State | Means |
+| --- | --- |
+| **Open** | Waiting for the author. |
+| **Applied** | The change was written to the version. |
+| **Rejected** | The author declined it, or its reviewer withdrew it. |
+| **Stale** | The same field changed after the suggestion was made, or the element was deleted. **Apply** is off and the suggestion names what changed. Suggest it again against the current version. |
+
+Suggestions cover classes and properties. Paths and operations are not supported yet.
 
 ## Publish through the gate
 
@@ -135,7 +169,10 @@ the [Apiome Suite documentation](https://docs.suite.apiome.dev/design/contract-i
 
 `GET` / `POST /v1/tenants/{tenant}/projects/{project}/reviews`, `GET …/reviews/{id}`,
 `POST …/reviews/{id}/decision` (`approve` or `request_changes`, with an optional `note`),
-`…/re-request`, `…/withdraw`, and `GET …/versions/{version}/review`. Review events are in the workflow
+`…/re-request`, `…/withdraw`, and `GET …/versions/{version}/review`. Suggested changes are
+`GET` / `POST …/reviews/{id}/suggestions` (a JSON patch over the element) and
+`POST …/suggestions/{suggestion_id}/apply` / `…/reject`; a stale apply answers `409 suggestion-stale`
+with `conflict_paths`. Review events are in the workflow
 audit, `GET /v1/tenants/{tenant}/workflow-audit?version_id=…`. See the
 [API reference](../reference/api-reference.md). There is no CLI command for reviews.
 

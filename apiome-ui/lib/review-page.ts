@@ -127,7 +127,7 @@ export interface ReviewPagePayload {
 /* -------------------------------------------------------------------------- */
 
 /** The page's tabs, in order. */
-export const REVIEW_TABS = ['changes', 'spec', 'discussion'] as const;
+export const REVIEW_TABS = ['changes', 'suggestions', 'spec', 'discussion'] as const;
 
 /** One tab. */
 export type ReviewTabId = (typeof REVIEW_TABS)[number];
@@ -135,6 +135,7 @@ export type ReviewTabId = (typeof REVIEW_TABS)[number];
 /** Each tab's label. */
 export const REVIEW_TAB_LABELS: Readonly<Record<ReviewTabId, string>> = {
   changes: 'Changes',
+  suggestions: 'Suggestions',
   spec: 'Spec',
   discussion: 'Discussion',
 };

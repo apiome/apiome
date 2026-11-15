@@ -49,6 +49,7 @@ from .classes_routes import router as classes_router
 from .classified_diff_routes import router as classified_diff_router
 from .comment_routes import router as comment_router
 from .presence_routes import router as presence_router
+from .review_suggestion_routes import router as review_suggestion_router
 from .compatibility_routes import router as compatibility_router
 from .config import settings
 from .consumer_contract_routes import router as consumer_contract_router
@@ -225,7 +226,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.567.0",
+    version="1.568.0",
 )
 
 
@@ -477,6 +478,7 @@ app.include_router(graph_router)
 app.include_router(usage_ingest_router)
 app.include_router(comment_router)
 app.include_router(presence_router)
+app.include_router(review_suggestion_router)
 app.include_router(review_router)
 app.include_router(draft_binding_router)
 app.include_router(project_repository_sources_router)
