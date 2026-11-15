@@ -1,0 +1,92 @@
+---
+title: Team workflows
+description: "Edit together safely, suggest edits, merge branches and hear from consumers."
+sidebar_position: 1.5
+tags: [collaboration, versions, overview]
+---
+
+A spec is rarely written by one person, and it is read by people who did not write it. **Team
+workflows** are four tools that let several people change an API safely, and let the people who use
+it talk back:
+
+- **Presence and soft locks** show who else has a project open and who is editing which element.
+- **Suggested changes** let a reviewer propose an exact edit that the author applies in one click.
+- **Draft branches and merge requests** let you change an API on a branch of its own, get it
+  reviewed and merge it into the version line.
+- **Consumer feedback** lets readers of a published API in Browse report problems straight to the
+  team that owns it.
+
+They build on what you already use: [reviews](../govern/reviews.mdx), the project's
+**Discussion** tab and Apiome's merge sessions. None of them needs a Git repository.
+
+## When to use it
+
+| You want to… | Use | Where |
+| --- | --- | --- |
+| Avoid overwriting a colleague who is editing the same class | [Presence and soft locks](./presence-and-soft-locks.mdx) | Avatars on **Versions**; **“… is editing this”** beside an element |
+| Fix a reviewer's point without retyping it | [Suggested changes](../govern/reviews.mdx#suggested-changes) | The review's **Suggestions** tab |
+| Make a larger change without touching the published line until it is approved | [Draft branches and merge requests](./merge-requests.mdx) | **Versions → Merge requests**, then the merge request page |
+| Hear from the people who use your API | [Consumer feedback](./versions.mdx#consumer-feedback) | The **Feedback** tab in Browse; **Consumer** threads in **Discussion** |
+
+## Presence and soft locks
+
+Open a project on [Versions](./versions.mdx) and the other people who have it open appear as
+**avatars** at the top of the page. When someone starts editing an element, everyone else sees
+**“Bob Brown is editing this”** beside it and can **click “Ask to take over”**. The holder can
+**hand over**, and after 15 seconds the asker can **click “Take over”**. Locks are advisory: they
+inform and ask, and never stop you typing. A lock ends when its tab closes, or about a minute after
+the tab crashes. See [Presence and soft locks](./presence-and-soft-locks.mdx).
+
+## Suggested changes
+
+On a review's **Suggestions** tab, a reviewer picks an element (`Pet`, or `Pet.name`), a field (for
+example `maxLength`) and a new value, then **clicks “Suggest”**. The author sees a before/after
+diff and **clicks “Apply”** or **“Reject”**. A suggestion whose field has changed since it was made
+is marked **Stale** instead of being applied over someone else's edit. Suggestions cover classes and
+properties. See [Suggested changes](../govern/reviews.mdx#suggested-changes).
+
+## Draft branches and merge requests
+
+<Flag name="FEATURE_GITLIKE" />
+
+**Click “New draft branch”** on **Versions → Merge requests** to copy the tip of a version line into
+a draft of its own. Edit the draft, **click “Open merge request”** and choose reviewers. The merge
+request page shows the branch's **Changes** (classified as breaking, non-breaking and docs-only),
+any **Conflicts** with the line, and the **Review**. When the reviewers approve and nothing else is
+outstanding, **click “Merge into main”**. The **Merge requests** tab is one of the Git-like controls,
+which are off in shipped builds. See [Draft branches and merge requests](./merge-requests.mdx).
+
+<Screenshot id="versions-merge-requests" alt="The Merge requests tab on Versions: open merge requests with their branches, reviewers and status" />
+
+## Consumer feedback
+
+A reader who has [signed in to your portal](../ship/portal-readers.mdx) in Browse can open a
+published version, **click the “Feedback” tab**, and send feedback on the whole API or on one
+operation. The thread appears in the project's **Discussion** tab with a **Consumer** tag, and
+**Consumer feedback** in the **Origin** chips lists only those threads. Reply and resolve as on any
+thread. The reader sees every reply, marked **Team**, so discuss anything internal in a separate
+thread. See [Consumer feedback](./versions.mdx#consumer-feedback) and
+[Send feedback on an API](../ship/send-feedback-on-an-api.mdx).
+
+<Screenshot id="versions-discussion" alt="The Discussion tab: open comment threads, one of them tagged Consumer, with the Origin chips" />
+
+## How the pieces fit
+
+- **One review, everywhere.** A merge request reuses the branch's [review](../govern/reviews.mdx), so
+  approvals, the approval gate and suggested changes all work the same on a branch.
+- **One discussion.** Consumer feedback threads and your team's comment threads live in the same
+  **Discussion** tab; the **Origin** chips tell them apart.
+- **One merge.** A merge request merges through the same merge session as **Merge branches…**, with
+  the same conflict list and the same compatibility gate.
+- **Locks protect edits in progress; branches protect the line.** Use a soft lock for a quick edit
+  on a draft, and a branch for a change that must not reach the published line until it is reviewed.
+
+## With the REST API
+
+| Capability | REST reference |
+| --- | --- |
+| Presence and soft locks | [Presence](../reference/rest/presence.md) |
+| Suggested changes | [Review suggestions](../reference/rest/review-suggestions.md) |
+| Draft branches and merge requests | [Merge requests](../reference/rest/merge-requests.md) |
+| Consumer feedback (readers) | [Portal feedback](../reference/rest/portal-feedback.md) |
+| Consumer feedback (team) | [Comments](../reference/rest/comments.md), `?origin=consumer` |
