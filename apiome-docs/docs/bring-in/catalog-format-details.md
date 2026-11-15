@@ -529,6 +529,26 @@ The ledger marks a CEL rule **partially mapped**, because the rule itself is kep
 predefined rule **not parsed by the adapter**. How each rule fares on export is on
 [Understand export fidelity](../ship/export-fidelity.md#protovalidate-rules).
 
+## JSON Schema: compatibility
+
+A JSON Schema catalog item keeps the document you imported. Each `$defs` (or `definitions`) entry
+becomes a type, and so does the root schema when it declares one. When two versions are compared,
+Apiome reads each type's schema from that document, not from the types alone. So it sees what the
+types do not record:
+
+| In the document | What the comparison uses it for |
+| --- | --- |
+| `additionalProperties`, `unevaluatedProperties` | The content model: **open**, **closed** or **partially open**. It decides whether adding or removing a property breaks old readers or new ones |
+| `required` | Which properties old data may omit |
+| `type`, `enum`, `const` | Which values are accepted (`integer` → `number` is a widening) |
+| `oneOf`, `anyOf`, `allOf` | Which branches a value may match |
+| `maximum`, `minLength`, `pattern`, `format`, `uniqueItems`, … | Whether a constraint was tightened or loosened |
+| `$ref` | Resolved inside each version before comparing |
+
+The grades, the rule ids and the modes they break are on
+[Compatibility modes](../govern/compatibility-modes.md#json-schema). If either version has no
+stored document, both are compared on their types instead, without content models.
+
 ## What absence means: the capability panel
 
 At the bottom of the tab, the **"_Format_ — what apiome records"** panel is the honest

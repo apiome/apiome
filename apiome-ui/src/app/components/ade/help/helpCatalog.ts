@@ -1777,6 +1777,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['approve', 'request changes', 'reviewer', 'round', 'force publish'],
   },
   {
+    id: 'compatibility-modes',
+    title: 'Compatibility modes',
+    summary:
+      'How BACKWARD, FORWARD and FULL grade schema changes, and the JSON Schema open/closed content-model rules.',
+    page: 'apiome-docs/docs/govern/compatibility-modes.md',
+    section: 'reference',
+    keywords: ['backward', 'forward', 'full', 'breaking', 'json schema', 'additionalProperties', 'confluent', 'registry'],
+  },
+  {
     id: 'members',
     title: 'Members & seats',
     summary: 'Invite people, change their roles, suspend or offboard them, and watch seat usage.',

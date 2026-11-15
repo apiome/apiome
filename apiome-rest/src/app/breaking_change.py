@@ -424,6 +424,9 @@ def load_format_breaking_change_classifiers() -> None:
     # EDI X12 / UN/EDIFACT breaking-change classifiers (MFI-20.5): register under ``edix12`` and
     # ``edifact`` and grade segments and element references — sample values and ordinals are safe.
     from . import edi_breaking as _edi_breaking  # noqa: F401
+    # JSON Schema breaking-change classifier (XPC-4.2): registers under ``json-schema`` /
+    # ``jsonschema`` / ``json-schema-2020-12`` and grades by the open/closed content model per mode.
+    from . import jsonschema_breaking as _jsonschema_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(
