@@ -1,0 +1,24 @@
+---
+slug: design-gates
+title: Design gates — the quiet pass cannot quietly come undone
+description: "Honey, header, banner, dead-control and first-row gates, mapped on one page."
+authors: [apiome]
+---
+
+The quiet pass made `apiome-ui` calmer. Five tests now keep it that way, and one page maps them:
+[Design gates](/reference/design-gates). (#5596)
+
+{/* truncate */}
+
+- **Honey only in brand moments.** A honey token or utility outside the DESIGN.md §2 brand roles
+  fails `tests/hive-design-tokens.test.ts`. Saved searches on **MCP servers** are a neutral chip,
+  and feature-flag markers are outline badges. (#5614)
+- **Header action cap, one banner, no dead controls.** A `PageHeader` holds one primary, two
+  secondaries and a ⋯ menu; a page shows one banner under its header; "Coming soon" is never a
+  button. `tests/page-header-gate.test.tsx` checks every rendered page.
+  [More](/reference/content-voice#what-enforces-it) (#5615)
+- **First-row budget.** The visual-parity harness measures where the first row of data starts at
+  1440 × 900 and fails a page that is over its budget.
+  [More](/reference/visual-parity#the-first-row-budget) (#5616)
+- **Design docs as shipped.** DESIGN.md and the page mockups now describe the quiet pass as adopted.
+  [More](/release-notes/quiet-pass-design-docs) (#5617)

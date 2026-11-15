@@ -603,6 +603,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['z-index', 'stacking', 'layers', 'modal', 'popover', 'design system', 'control sizes', 'field height'],
   },
   {
+    id: 'design-gates',
+    title: 'Design gates',
+    summary: 'The tests that keep honey, headers, banners and the first row in line.',
+    page: 'apiome-docs/docs/reference/design-gates.md',
+    section: 'reference',
+    keywords: ['honey', 'brand colour', 'page header', 'banner', 'status strip', 'coming soon', 'first row', 'quiet pass'],
+  },
+  {
     id: 'catalog-journey',
     title: 'Catalog to project journey test',
     summary: 'The end-to-end test that walks Catalog import through export on every pull request.',
