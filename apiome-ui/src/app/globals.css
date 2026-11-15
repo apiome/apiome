@@ -42287,3 +42287,175 @@ tr[data-selected="true"] > td:first-child {
   font-size: var(--fs-xs);
   color: var(--fg-muted);
 }
+
+/*
+ * Export studio — SDK compatibility tab (SGD-2.1, #4735): project / version pickers, the findings
+ * list (each with its action), the artifacts table and the semver / provenance card. Tokens only.
+ */
+.sdkc-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-block-end: var(--space-4);
+}
+
+.sdkc-picker {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 14rem;
+}
+
+.sdkc-picker__select {
+  inline-size: 100%;
+}
+
+.sdkc-loading {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sdkc-skeleton {
+  block-size: 6rem;
+}
+
+.sdkc-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sdkc-summary {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.sdkc-card__header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: start;
+}
+
+.sdkc-card__title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.sdkc-counts {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.sdkc-clean {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.sdkc-findings {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sdkc-finding {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.sdkc-finding:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.sdkc-finding__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sdkc-finding__artifact {
+  font-weight: 600;
+}
+
+.sdkc-finding__subject,
+.sdkc-finding__code {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.sdkc-finding__reason,
+.sdkc-finding__action {
+  margin: 0;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.sdkc-finding__action {
+  color: var(--fg-muted);
+}
+
+.sdkc-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.sdkc-table th,
+.sdkc-table td {
+  padding: var(--space-2);
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.sdkc-table thead th {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.sdkc-table__name {
+  display: block;
+  font-weight: 600;
+}
+
+.sdkc-table__sub {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.sdkc-table__deps {
+  font-size: var(--fs-xs);
+}
+
+.sdkc-provenance {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sdkc-digests {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--fs-xs);
+}
+
+.sdkc-digests dt {
+  color: var(--fg-muted);
+}
+
+.sdkc-digests dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

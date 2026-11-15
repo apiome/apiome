@@ -1043,3 +1043,11 @@ def cli_login_token() -> str:
 def cli_login_key() -> str:
     """``DELETE`` revokes the presenting CLI login key (``apiome logout``)."""
     return f"{V1}/cli/login/key"
+
+
+def sdk_compatibility(tenant_slug: str, project: str) -> str:
+    """``GET`` the SGD-2.1 (#4735) generator compatibility manifest for a project's revision.
+
+    Pass ``?version=`` (a revision id or label) for a revision other than the latest.
+    """
+    return f"{V1}/tenants/{quote(tenant_slug, safe='')}/projects/{quote(project, safe='')}/sdk-compatibility"

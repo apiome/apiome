@@ -2223,6 +2223,15 @@
         "apiome-browse/src/app/tenant/[tenantSlug]/[projectSlug]/[versionSlug]/FeedbackPanel.tsx",
         "apiome-browse/src/app/globals.css"
       ]
+    },
+    {
+      "id": "export-studio-sdk-compat",
+      "route": "/ade/dashboard/export/studio?tab=sdk-compat",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/sdk-compat.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/compat"
+      ]
     }
   ]
 }

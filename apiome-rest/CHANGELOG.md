@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.713.0] - 2026-11-15
+
+### Added
+- **Generator compatibility manifest (SGD-2.1, #4735)** — OpenAPI 1.573.0:
+  - `GET /v1/tenants/{tenant}/projects/{project}/sdk-compatibility?version=` returns `apiome.sdk.compat-manifest/v1`
+    for the SDK kit built from a revision (latest by default; drafts and private revisions included):
+    - the canonical constructs: operations and HTTP operations, types by kind, security schemes, servers, streaming
+      operations, pagination parameters
+    - for each artifact (TypeScript/Python/curl snippets, Go client, FastAPI and Express stubs, Terraform provider,
+      MCP server): coverage, runtime and dependencies (read from the generated `go.mod` / `pyproject.toml` /
+      `package.json`), supported and unsupported auth, pagination mode, and generator and artifact digests
+    - **findings** — every construct an artifact leaves out or cannot represent, with a stable `code`
+      (`operation-no-http-binding`, `operation-over-limit`, `operations-truncated`, `auth-scheme-unsupported`,
+      `artifact-not-generated`, `terraform-readiness`, `operation-skipped`), the generator's reason, and the `action`
+      to take
+    - the source and options digests
+    - semver: the classified changelog's required bump against the bump the version labels declare
+  - Needs `projects:view`. Strong `ETag`; `304` on `If-None-Match`. `404 sdk-compat-project-not-found` /
+    `sdk-compat-version-not-found`, `422 sdk-compat-no-source`.
+  - The manifest is built from the same kit the browse **Get SDK** surface serves (`app/sdk_compat_manifest.py`), is
+    deterministic, and is pinned by a golden fixture shared with apiome-cli and apiome-ui tests. The JSON Schema is
+    committed at `schemas/sdk-compat-manifest.v1.json` (`scripts/generate_sdk_compat_schema.py`).
+  - The kit's `manifest.json` gains `go_client.unsupported_auth`.
+
 ## [1.712.0] - 2026-11-15
 
 ### Added

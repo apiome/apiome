@@ -1208,6 +1208,8 @@ def _go_client_manifest(plan: GoClientPlan) -> Dict[str, Any]:
             "method_count": len(package.methods),
             "type_count": len(package.types),
             "auth_options": list(package.auth_options),
+            # SGD-2.1 (#4735): declared schemes the client has no option for.
+            "unsupported_auth": list(package.unsupported_auth),
             "example_groups": list(package.example_groups),
             # RDG-1.7 (#4736): the opt-in compatibility beacon. Off unless the consumer passes
             # WithTelemetry; its reports carry this manifest's operation ids and the kit's

@@ -1,0 +1,546 @@
+{
+  "schema_version": "apiome.sdk.compat-manifest/v1",
+  "api": {
+    "title": "Widgets API",
+    "version": "1.0.0",
+    "paradigm": "rest",
+    "format": "openapi-3.1"
+  },
+  "source": {
+    "version_record_id": "rev-uuid-1",
+    "version_label": "1.0.0",
+    "source_format": "openapi-3.1",
+    "digest": "sha256:82caf8d8777f8bd8fd0ba60b8c1e449173c1195c11bfc885ac96b681df8c7731"
+  },
+  "options": {
+    "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "package_names": {},
+    "user_agent_set": false,
+    "license_header_set": false
+  },
+  "constructs": {
+    "operations": 3,
+    "http_operations": 2,
+    "streaming_operations": 0,
+    "types": {},
+    "security_schemes": [
+      "bearerAuth",
+      "oauth2"
+    ],
+    "servers": 1,
+    "pagination_parameters": [
+      "cursor",
+      "limit"
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "snippets-ts",
+      "kind": "snippets",
+      "language": "ts",
+      "directory": "snippets/ts",
+      "included": true,
+      "generator": {
+        "name": "app.snippet_render",
+        "schema_version": "sdk.client-kit.v1",
+        "digest": "sha256:a3eb6c6926a985534810d50f8ad784c4e0b10ef4c79a08f5cdf591f889d45f54"
+      },
+      "digest": "sha256:8b7f8f0b9f58b302ee8139f608b641719a72b4cac6e90e4baaa4921db30de54f",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": null,
+        "dependencies": []
+      },
+      "auth": {
+        "supported": [],
+        "unsupported": [
+          "bearerAuth",
+          "oauth2"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "snippets-ts",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; snippets are only available for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-ts",
+          "element": "auth-scheme",
+          "subject": "bearerAuth",
+          "key": null,
+          "reason": "The contract declares the 'bearerAuth' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-ts",
+          "element": "auth-scheme",
+          "subject": "oauth2",
+          "key": null,
+          "reason": "The contract declares the 'oauth2' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        }
+      ]
+    },
+    {
+      "id": "snippets-python",
+      "kind": "snippets",
+      "language": "python",
+      "directory": "snippets/python",
+      "included": true,
+      "generator": {
+        "name": "app.snippet_render",
+        "schema_version": "sdk.client-kit.v1",
+        "digest": "sha256:a3eb6c6926a985534810d50f8ad784c4e0b10ef4c79a08f5cdf591f889d45f54"
+      },
+      "digest": "sha256:55d9dd2e9861c6ebf0c33b4def7f87f5e7a847cdc994dd6b97c10195e0587009",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": null,
+        "dependencies": [
+          "httpx"
+        ]
+      },
+      "auth": {
+        "supported": [],
+        "unsupported": [
+          "bearerAuth",
+          "oauth2"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "snippets-python",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; snippets are only available for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-python",
+          "element": "auth-scheme",
+          "subject": "bearerAuth",
+          "key": null,
+          "reason": "The contract declares the 'bearerAuth' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-python",
+          "element": "auth-scheme",
+          "subject": "oauth2",
+          "key": null,
+          "reason": "The contract declares the 'oauth2' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        }
+      ]
+    },
+    {
+      "id": "snippets-curl",
+      "kind": "snippets",
+      "language": "curl",
+      "directory": "snippets/curl",
+      "included": true,
+      "generator": {
+        "name": "app.snippet_render",
+        "schema_version": "sdk.client-kit.v1",
+        "digest": "sha256:a3eb6c6926a985534810d50f8ad784c4e0b10ef4c79a08f5cdf591f889d45f54"
+      },
+      "digest": "sha256:e59f9de8187a2a2e4cbc330ce3ef07d775488ffb0670acbad4f67cdfb67f7a84",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": null,
+        "dependencies": []
+      },
+      "auth": {
+        "supported": [],
+        "unsupported": [
+          "bearerAuth",
+          "oauth2"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "snippets-curl",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; snippets are only available for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-curl",
+          "element": "auth-scheme",
+          "subject": "bearerAuth",
+          "key": null,
+          "reason": "The contract declares the 'bearerAuth' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "snippets-curl",
+          "element": "auth-scheme",
+          "subject": "oauth2",
+          "key": null,
+          "reason": "The contract declares the 'oauth2' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        }
+      ]
+    },
+    {
+      "id": "go-client",
+      "kind": "client",
+      "language": "go",
+      "directory": "go",
+      "included": true,
+      "generator": {
+        "name": "app.go_client_generator",
+        "schema_version": "sdk.go-client.v1",
+        "digest": "sha256:f91f8a9a93a658c0e25601971c1da6cd4b7f0b76f56a92168581a0f527e14794"
+      },
+      "digest": "sha256:8840bb6720c1c6cb1db2a2085484472a7ceda82e3dbebca691448adeebf64c83",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": "go 1.21",
+        "dependencies": []
+      },
+      "auth": {
+        "supported": [
+          "oauth2"
+        ],
+        "unsupported": [
+          "bearerAuth"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "go-client",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; a Go client method is only generated for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "go-client",
+          "element": "auth-scheme",
+          "subject": "bearerAuth",
+          "key": null,
+          "reason": "The contract declares the 'bearerAuth' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        }
+      ]
+    },
+    {
+      "id": "server-fastapi",
+      "kind": "server-stub",
+      "language": "python",
+      "directory": "server/fastapi",
+      "included": true,
+      "generator": {
+        "name": "app.server_stub_generator",
+        "schema_version": "sdk.fastapi-stub.v1",
+        "digest": "sha256:a8d927bd3e598fcc66f693b8e6aea820d464a379f7190ee8aef0d902681b4a54"
+      },
+      "digest": "sha256:cb163ae100ab70d6db9beaea62c5168f8056608651a494909233b04022ae9479",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": "python >=3.9",
+        "dependencies": [
+          "fastapi>=0.110",
+          "pydantic>=2.6",
+          "uvicorn[standard]>=0.27"
+        ]
+      },
+      "auth": null,
+      "pagination": null,
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "server-fastapi",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; a server stub route is only generated for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        }
+      ]
+    },
+    {
+      "id": "server-express",
+      "kind": "server-stub",
+      "language": "node",
+      "directory": "server/express",
+      "included": true,
+      "generator": {
+        "name": "app.server_stub_generator",
+        "schema_version": "sdk.express-stub.v1",
+        "digest": "sha256:2e9eced1f4046c5dba3731abf60fd0cc6908f2a39284c661e4d0cc4e293581f3"
+      },
+      "digest": "sha256:b5eb4c7ec2421daea429147d526eac9bec271df1f2243f8294effa96eea9d888",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": null,
+        "dependencies": [
+          "express ^5.0.0"
+        ]
+      },
+      "auth": null,
+      "pagination": null,
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "server-express",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "Operation 'widgetsQuery' has no HTTP binding; a server stub route is only generated for HTTP operations",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        }
+      ]
+    },
+    {
+      "id": "terraform-provider",
+      "kind": "terraform-provider",
+      "language": "go",
+      "directory": "terraform",
+      "included": true,
+      "generator": {
+        "name": "app.terraform_provider_generator",
+        "schema_version": "sdk.terraform-provider.v1",
+        "digest": "sha256:a433873a4e7616f5d1f6c8df30dca4438ff5ef70a4437c1461c141f4103cf197"
+      },
+      "digest": "sha256:98e6925f1fe5b7c8e5c0bfe61cf334210eeb3b937dce48c5291d66b720f7161f",
+      "coverage": {
+        "operations": 0,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": "go 1.24.0",
+        "dependencies": [
+          "github.com/fatih/color v1.18.0",
+          "github.com/golang/protobuf v1.5.4",
+          "github.com/hashicorp/go-hclog v1.6.3",
+          "github.com/hashicorp/go-plugin v1.7.0",
+          "github.com/hashicorp/go-uuid v1.0.3",
+          "github.com/hashicorp/terraform-plugin-framework v1.18.0",
+          "github.com/hashicorp/terraform-plugin-go v0.30.0",
+          "github.com/hashicorp/terraform-plugin-log v0.10.0",
+          "github.com/hashicorp/terraform-registry-address v0.4.0",
+          "github.com/hashicorp/terraform-svchost v0.1.1",
+          "github.com/hashicorp/yamux v0.1.2",
+          "github.com/mattn/go-colorable v0.1.14",
+          "github.com/mattn/go-isatty v0.0.20",
+          "github.com/mitchellh/go-testing-interface v1.14.1",
+          "github.com/oklog/run v1.1.0",
+          "github.com/vmihailenco/msgpack/v5 v5.4.1",
+          "github.com/vmihailenco/tagparser/v2 v2.0.0",
+          "golang.org/x/net v0.48.0",
+          "golang.org/x/sys v0.39.0",
+          "golang.org/x/text v0.32.0",
+          "google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217",
+          "google.golang.org/grpc v1.79.1",
+          "google.golang.org/protobuf v1.36.11"
+        ]
+      },
+      "auth": {
+        "supported": [
+          "oauth2"
+        ],
+        "unsupported": [
+          "bearerAuth"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "terraform-provider",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "widgetsQuery (Query.widgets) has no HTTP method and path, so no resource or data source can call it.",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "terraform-readiness",
+          "severity": "warning",
+          "artifact": "terraform-provider",
+          "element": "operation",
+          "subject": "getWidget",
+          "key": "GET /widgets/{id}",
+          "reason": "GET /widgets/{id} does not answer with a record schema, so no resource or data source reads it.",
+          "action": "Follow the message: change the operations so they map onto Terraform resources."
+        },
+        {
+          "code": "terraform-readiness",
+          "severity": "warning",
+          "artifact": "terraform-provider",
+          "element": "operation",
+          "subject": "listWidgets",
+          "key": "GET /widgets",
+          "reason": "GET /widgets does not answer with a list of records, so it is not a list data source.",
+          "action": "Follow the message: change the operations so they map onto Terraform resources."
+        },
+        {
+          "code": "terraform-readiness",
+          "severity": "warning",
+          "artifact": "terraform-provider",
+          "element": "artifact",
+          "subject": "terraform-provider",
+          "key": null,
+          "reason": "Security scheme `bearerAuth` has no provider setting; send its credential with the provider's `headers` instead.",
+          "action": "Follow the message: change the operations so they map onto Terraform resources."
+        }
+      ]
+    },
+    {
+      "id": "mcp-server",
+      "kind": "mcp-server",
+      "language": "node",
+      "directory": "mcp",
+      "included": true,
+      "generator": {
+        "name": "app.mcp_server_generator",
+        "schema_version": "sdk.mcp-server.v1",
+        "digest": "sha256:623445dbbf3ee4260a115b0205d98b316ddde5bb923649f2d1d4eaccfa064e59"
+      },
+      "digest": "sha256:3cfde1fed70d546974328b00c90a072943c4bc5acf4e194e3b4230fff764140c",
+      "coverage": {
+        "operations": 2,
+        "of": 3
+      },
+      "runtime": {
+        "language_version": "node >=20",
+        "dependencies": [
+          "@modelcontextprotocol/sdk ^1.32.2",
+          "zod ^3.25.76"
+        ]
+      },
+      "auth": {
+        "supported": [
+          "oauth2"
+        ],
+        "unsupported": [
+          "bearerAuth"
+        ]
+      },
+      "pagination": {
+        "mode": "manual",
+        "parameters": [
+          "cursor",
+          "limit"
+        ]
+      },
+      "findings": [
+        {
+          "code": "operation-no-http-binding",
+          "severity": "warning",
+          "artifact": "mcp-server",
+          "element": "operation",
+          "subject": "widgetsQuery",
+          "key": "Query.widgets",
+          "reason": "it has no HTTP method and path to call",
+          "action": "Give the operation an HTTP method and path in the source (an OpenAPI path item), or call it through its own protocol \u2014 this artifact only generates HTTP calls."
+        },
+        {
+          "code": "auth-scheme-unsupported",
+          "severity": "warning",
+          "artifact": "mcp-server",
+          "element": "auth-scheme",
+          "subject": "bearerAuth",
+          "key": null,
+          "reason": "The contract declares the 'bearerAuth' security scheme and this artifact has no option for it.",
+          "action": "Send this credential yourself \u2014 add the header to a snippet, or use the client's generic hook (Go: WithHeader or WithRequestEditor) \u2014 or declare an apiKey or HTTP bearer/basic scheme the generator supports."
+        }
+      ]
+    }
+  ],
+  "findings_count": 19,
+  "semver": {
+    "classification": "non-breaking",
+    "baseline_version": "0.9.0",
+    "required_bump": "minor",
+    "declared_bump": "major",
+    "consistent": true
+  }
+}

@@ -1,0 +1,607 @@
+{
+  "$defs": {
+    "SdkCompatApi": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "title": "Format",
+          "type": "string"
+        },
+        "paradigm": {
+          "title": "Paradigm",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        }
+      },
+      "required": [
+        "paradigm",
+        "format"
+      ],
+      "title": "SdkCompatApi",
+      "type": "object"
+    },
+    "SdkCompatArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "auth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SdkCompatAuth"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Null where auth does not apply (server stubs)."
+        },
+        "coverage": {
+          "$ref": "#/$defs/SdkCompatCoverage"
+        },
+        "digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "sha256 over the artifact's files; null when not generated.",
+          "title": "Digest"
+        },
+        "directory": {
+          "title": "Directory",
+          "type": "string"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/SdkCompatFinding"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "generator": {
+          "$ref": "#/$defs/SdkCompatGenerator"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "included": {
+          "title": "Included",
+          "type": "boolean"
+        },
+        "kind": {
+          "enum": [
+            "snippets",
+            "client",
+            "server-stub",
+            "terraform-provider",
+            "mcp-server"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "language": {
+          "title": "Language",
+          "type": "string"
+        },
+        "pagination": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SdkCompatPagination"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Null where the artifact makes no calls."
+        },
+        "runtime": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SdkCompatRuntime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "language",
+        "directory",
+        "included",
+        "generator",
+        "coverage"
+      ],
+      "title": "SdkCompatArtifact",
+      "type": "object"
+    },
+    "SdkCompatAuth": {
+      "additionalProperties": false,
+      "properties": {
+        "supported": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported",
+          "type": "array"
+        },
+        "unsupported": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unsupported",
+          "type": "array"
+        }
+      },
+      "title": "SdkCompatAuth",
+      "type": "object"
+    },
+    "SdkCompatConstructs": {
+      "additionalProperties": false,
+      "properties": {
+        "http_operations": {
+          "title": "Http Operations",
+          "type": "integer"
+        },
+        "operations": {
+          "title": "Operations",
+          "type": "integer"
+        },
+        "pagination_parameters": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Pagination Parameters",
+          "type": "array"
+        },
+        "security_schemes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Security Schemes",
+          "type": "array"
+        },
+        "servers": {
+          "title": "Servers",
+          "type": "integer"
+        },
+        "streaming_operations": {
+          "title": "Streaming Operations",
+          "type": "integer"
+        },
+        "types": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Named types by kind.",
+          "title": "Types",
+          "type": "object"
+        }
+      },
+      "required": [
+        "operations",
+        "http_operations",
+        "streaming_operations",
+        "servers"
+      ],
+      "title": "SdkCompatConstructs",
+      "type": "object"
+    },
+    "SdkCompatCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "of": {
+          "description": "Operations the version declares.",
+          "minimum": 0,
+          "title": "Of",
+          "type": "integer"
+        },
+        "operations": {
+          "description": "Operations the artifact carries.",
+          "minimum": 0,
+          "title": "Operations",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "operations",
+        "of"
+      ],
+      "title": "SdkCompatCoverage",
+      "type": "object"
+    },
+    "SdkCompatFinding": {
+      "additionalProperties": false,
+      "description": "One construct an artifact leaves out or cannot represent.",
+      "properties": {
+        "action": {
+          "description": "What to change so the construct is represented.",
+          "title": "Action",
+          "type": "string"
+        },
+        "artifact": {
+          "description": "The artifact id the finding is about.",
+          "title": "Artifact",
+          "type": "string"
+        },
+        "code": {
+          "description": "Stable code: `operation-no-http-binding`, `operation-over-limit`, `operation-skipped`, `operations-truncated`, `auth-scheme-unsupported`, `artifact-not-generated`, `terraform-readiness`.",
+          "title": "Code",
+          "type": "string"
+        },
+        "element": {
+          "description": "What kind of thing is left out.",
+          "enum": [
+            "operation",
+            "auth-scheme",
+            "artifact"
+          ],
+          "title": "Element",
+          "type": "string"
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The operation's canonical key, for an operation.",
+          "title": "Key"
+        },
+        "reason": {
+          "description": "Why, as the generator reported it.",
+          "title": "Reason",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "subject": {
+          "description": "The operation id, the scheme name, or the artifact id.",
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "artifact",
+        "element",
+        "subject",
+        "reason",
+        "action"
+      ],
+      "title": "SdkCompatFinding",
+      "type": "object"
+    },
+    "SdkCompatGenerator": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "description": "sha256 of name, schema version and Apiome version.",
+          "title": "Digest",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "schema_version",
+        "digest"
+      ],
+      "title": "SdkCompatGenerator",
+      "type": "object"
+    },
+    "SdkCompatOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "description": "The SDK settings fingerprint the artifacts were generated with.",
+          "title": "Digest",
+          "type": "string"
+        },
+        "license_header_set": {
+          "title": "License Header Set",
+          "type": "boolean"
+        },
+        "package_names": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Package Names",
+          "type": "object"
+        },
+        "user_agent_set": {
+          "title": "User Agent Set",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "digest",
+        "user_agent_set",
+        "license_header_set"
+      ],
+      "title": "SdkCompatOptions",
+      "type": "object"
+    },
+    "SdkCompatPagination": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "description": "`manual`: page parameters are passed through and you request each page; `none`: no pagination parameters in the version.",
+          "enum": [
+            "manual",
+            "none"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Parameters",
+          "type": "array"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "SdkCompatPagination",
+      "type": "object"
+    },
+    "SdkCompatRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "dependencies": {
+          "description": "Third-party dependencies, `name version`.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`go 1.21`, `python >=3.10`, `node >=18`.",
+          "title": "Language Version"
+        }
+      },
+      "title": "SdkCompatRuntime",
+      "type": "object"
+    },
+    "SdkCompatSemver": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline Version"
+        },
+        "classification": {
+          "description": "The classified changelog against the baseline; `unknown` for a draft or an unclassified revision.",
+          "enum": [
+            "breaking",
+            "non-breaking",
+            "docs-only",
+            "unknown"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "consistent": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether the declared bump covers the required one.",
+          "title": "Consistent"
+        },
+        "declared_bump": {
+          "anyOf": [
+            {
+              "enum": [
+                "major",
+                "minor",
+                "patch",
+                "none",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the version labels declare.",
+          "title": "Declared Bump"
+        },
+        "required_bump": {
+          "anyOf": [
+            {
+              "enum": [
+                "major",
+                "minor",
+                "patch"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the classification requires.",
+          "title": "Required Bump"
+        }
+      },
+      "required": [
+        "classification"
+      ],
+      "title": "SdkCompatSemver",
+      "type": "object"
+    },
+    "SdkCompatSource": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "description": "sha256 of the captured contract (or of the canonical model when none).",
+          "title": "Digest",
+          "type": "string"
+        },
+        "source_format": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Format"
+        },
+        "version_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version Label"
+        },
+        "version_record_id": {
+          "title": "Version Record Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version_record_id",
+        "digest"
+      ],
+      "title": "SdkCompatSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The generator compatibility manifest for one revision.",
+  "properties": {
+    "api": {
+      "$ref": "#/$defs/SdkCompatApi"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/SdkCompatArtifact"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "constructs": {
+      "$ref": "#/$defs/SdkCompatConstructs"
+    },
+    "findings_count": {
+      "minimum": 0,
+      "title": "Findings Count",
+      "type": "integer"
+    },
+    "options": {
+      "$ref": "#/$defs/SdkCompatOptions"
+    },
+    "schema_version": {
+      "const": "apiome.sdk.compat-manifest/v1",
+      "default": "apiome.sdk.compat-manifest/v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "semver": {
+      "$ref": "#/$defs/SdkCompatSemver"
+    },
+    "source": {
+      "$ref": "#/$defs/SdkCompatSource"
+    }
+  },
+  "required": [
+    "api",
+    "source",
+    "options",
+    "constructs",
+    "artifacts",
+    "findings_count",
+    "semver"
+  ],
+  "title": "SdkCompatManifest",
+  "type": "object"
+}
