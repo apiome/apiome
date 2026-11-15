@@ -1,6 +1,6 @@
 ---
 title: "Event mock brokers"
-description: "Bind an AsyncAPI mock to Kafka: dev broker, bindings, keys, security."
+description: "Bind an AsyncAPI mock to Kafka and publish its events there."
 sidebar_position: 12
 tags: [mocks, asyncapi, kafka]
 ---
@@ -23,11 +23,9 @@ WebSocket/SSE*.
 
 <Screenshot id="mock-broker-binding" alt="Two AsyncAPI versions on Published: 1.1.0's Mock cell says a Kafka broker is bound, 1.0.0's says WebSocket/SSE only, no broker bound." />
 
-:::note What ships now
-This release stores, checks and tests the binding. The producer that publishes example messages to
-bound topics is the next step on the roadmap. Until it ships, a binding is configuration that you
-can test, and events still arrive over WebSocket/SSE.
-:::
+Once a version is bound, the hosted mock **publishes** to Kafka: one message per channel every
+interval, and one more whenever you ask (see [What the mock publishes](#what-the-mock-publishes)).
+WebSocket/SSE keep working beside it.
 
 ## The dev broker
 
@@ -134,6 +132,113 @@ reused for 60 seconds (`"cached": true`). Rotating the credential runs a fresh t
 
 The full request and response schemas are on the [Mock server REST reference](../rest/mock-server.md).
 
+## What the mock publishes
+
+### Which channels
+
+A channel is published to Kafka when it rides Kafka. That means its `protocol` (or the document's
+server protocol) is `kafka`, or the channel or one of its messages declares a `kafka` binding. The
+mock sends the messages of the channel's **receive** operations: what a consumer under test
+receives.
+
+**The topic** is the channel's Kafka binding `topic` when it declares one. Otherwise it is the
+address with its parameters filled in and `/` turned into `.`: `user/signedup` publishes to
+`user.signedup`. An address parameter is filled from its first `enum` value, then its first
+`examples` value, then its `default`.
+
+Some channels are never published, and the mock says why:
+
+| Status | Meaning |
+| --- | --- |
+| `supported` | Published to the topic shown. |
+| `unsupported: unresolved-address-parameter` | A parameter in the address has no `enum`, `examples` or `default`, so there is no concrete topic. The mock doesn't guess: a guessed topic is one no consumer listens on. |
+| `unsupported: invalid-topic` | The resolved topic isn't a legal Kafka topic name (letters, digits, `.`, `_`, `-`; up to 249 characters). |
+| `not-kafka` | The channel doesn't use Kafka; it is served over WebSocket/SSE only. |
+
+To see every channel's status, topic and encoding, list them:
+
+```bash
+curl -s https://mock.apiome.dev/acme-corp/user-events/1.1.0/__channels__ -H "X-Api-Key: $KEY"
+# {"brokerBound": true, "channels": [{"key": "user/signedup", "address": "user/signedup",
+#   "kafka": {"support": "supported", "topic": "user.signedup", "unresolvedParameters": []},
+#   "messages": [{"name": "UserSignedUp", "encoding": "json"}], "intervalSeconds": 2.0, …}]}
+```
+
+### When
+
+- **Every interval.** While the version is published, its mock is on and it has a binding, the mock
+  publishes one message per outbound message of every publishable channel every
+  `intervalSeconds` (2 seconds). Turn the mock off and publishing stops within one interval.
+  Delete the binding and it stops at the next refresh (`APIOME_MOCK_BROKER_REFRESH_SECONDS`,
+  30 seconds by default). A private draft mock isn't published on a timer, because there is no
+  caller's key to serve it with. Publish it on demand instead.
+- **On demand.** Send one message now:
+
+  ```bash
+  curl -X POST https://mock.apiome.dev/acme-corp/user-events/1.1.0/__channels__/user/signedup/publish \
+    -H "X-Api-Key: $KEY"
+  # {"status": "published", "channel": "user/signedup", "topic": "user.signedup", "partition": 1,
+  #  "offset": 42, "encoding": "json", "source": "example", "message": "…UserSignedUp"}
+  ```
+
+  The JSON body is optional. When you send one, it is the payload. `?message=<name>` picks one of
+  several messages, `?__seed=` makes a generated payload repeatable, and `X-Mock-Scenario` picks
+  the scenario.
+
+| Answer | When |
+| --- | --- |
+| `200 published` | The broker acknowledged the record. |
+| `404` | No such channel (or the mock is off). |
+| `409 no-broker-bound` | The version has no broker binding. |
+| `422 unpublishable` | The channel can't be published. `reason` gives its status, such as `unresolved-address-parameter`. |
+| `422 rejected` | The payload fails its schema. **Nothing is sent.** `detail` says which field. |
+| `429 rate-limited` | The workspace's mock rate or monthly quota is used up. |
+| `502 unreachable` | The broker couldn't be reached. `reason` is `auth`, `tls`, `timeout`, `connect`, `address-disallowed` or `credential-unavailable`. |
+
+### The payload
+
+The first of these that exists is used. This is the same order as REST and GraphQL mocks:
+
+1. The body of an on-demand publish.
+2. The scenario's override for the channel. Key it `PUBLISH /user/signedup` (or `*` for every
+   channel) in the version's scenarios. Its canned body becomes the payload.
+3. The message's first declared `examples[].payload`.
+4. A fixture-pack `data` value keyed by the channel key (`user/signedup`) or the message name.
+5. Data generated from the message schema.
+
+Whatever its source, the payload is checked against the message schema first. **A payload that
+fails is never sent.** The publish is answered `422 rejected`, and the periodic producer logs it and
+moves on.
+
+### Key, headers and encoding
+
+- **Key.** Taken from the message's Kafka binding `key` schema: its `const`, first `enum`,
+  `examples`, `example` or `default`, or a generated value. With no `key` binding the record has
+  no key, and the broker picks the partition.
+- **Headers.** The first example's `headers`, or values generated from the message's header schema,
+  plus `content-type` and `x-apiome-encoding`.
+- **Encoding.** Set by the message's `schemaFormat`:
+
+| `schemaFormat` | Record value | `content-type` header |
+| --- | --- | --- |
+| absent, or a JSON Schema format | UTF-8 JSON, checked against the JSON Schema | `application/json` |
+| `application/vnd.apache.avro…` | Schemaless **Avro binary**, written with the message's own Avro schema. Decode it with that same published schema. | `application/vnd.apache.avro+binary` |
+| `application/vnd.google.protobuf…` | **Protobuf binary**, from the modelled record type the payload references. A raw `.proto` text payload isn't compiled by the mock and is refused as `unsupported-schema`. | `application/x-protobuf` |
+
+### Usage and limits
+
+Each record sent counts as one mock request toward the workspace's monthly quota and the
+**Mock** sparkline. Publishing has its own rate bucket at the workspace's mock requests-per-second
+limit. The mock also keeps a daily count per channel, encoding and trigger (`periodic` or
+`on-demand`) of records sent and of records refused for failing their schema.
+
+### Brokers stay public
+
+The mock connects only to addresses that pass the [address check](#security-model): the bootstrap
+hosts again at connect time, and then **every broker the cluster advertises**. A Kafka client talks
+to whatever brokers the cluster metadata lists, so a cluster that advertises a private address is
+refused (`address-disallowed`) and nothing is sent.
+
 ## Who can do it
 
 The binding is part of the version's mock configuration, so it uses the existing **versions**
@@ -152,11 +257,13 @@ It never records the credential.
 
 | Variable | Service | Default | Purpose |
 | --- | --- | --- | --- |
-| `APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS` | rest | unset | Master-key map (`{"1": "<base64 32-byte key>"}`) that seals SASL credentials. Unset: bindings without SASL still work, and storing a credential gets `503 broker-credential-encryption-unconfigured`. |
+| `APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS` | rest, mock (identical) | unset | Master-key map (`{"1": "<base64 32-byte key>"}`) that seals SASL credentials. Unset: bindings without SASL still work, and storing a credential gets `503 broker-credential-encryption-unconfigured`. |
 | `APIOME_BROKER_CREDENTIAL_ACTIVE_KEY_VERSION` | rest | highest in the map | Which key version seals new credentials. |
 | `APIOME_MOCK_DEV_BROKER_BOOTSTRAP` | rest, mock | `redpanda:9092` in compose; unset elsewhere | The dev broker's `host:port` list. REST exempts exactly these entries from the address check, and the mock reports them on `/health`. |
-| `APIOME_MOCK_BROKER_ALLOW_PRIVATE` | rest | `false` | Lifts the private-address check for broker bindings only. Use it for local development against a broker on your own network, never on a shared deployment. |
+| `APIOME_MOCK_BROKER_ALLOW_PRIVATE` | rest, mock | `false` | Lifts the private-address check for broker bindings only. Use it for local development against a broker on your own network, never on a shared deployment. |
 | `APIOME_DEV_BROKER_HOST_PORT` | compose | `19092` | The host port the dev broker's Kafka API is published on. |
+| `APIOME_MOCK_BROKER_PRODUCER_ENABLED` | mock | `true` | Runs the periodic producer. On a deployment with several mock replicas, leave it on for one replica only, or every replica publishes each interval. On-demand publishing works either way. |
+| `APIOME_MOCK_BROKER_REFRESH_SECONDS` | mock | `30` | How often the producer re-reads which versions have a binding. |
 
 Generate a master key with:
 

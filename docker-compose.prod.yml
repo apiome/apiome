@@ -133,6 +133,8 @@ services:
       APIOME_MOCK_INTERNAL_TOKEN: ${APIOME_MOCK_INTERNAL_TOKEN:-}
       # No dev broker in production (XPC-2.1, #5735): /health never reports one.
       APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ""
+      # The Kafka producer (XPC-2.2, #5736) refuses brokers on private addresses in production.
+      APIOME_MOCK_BROKER_ALLOW_PRIVATE: "false"
     depends_on: !override
       postgres:
         condition: service_healthy

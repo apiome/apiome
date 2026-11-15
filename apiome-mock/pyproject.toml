@@ -1,6 +1,6 @@
 [project]
 name = "apiome-mock"
-version = "0.18.0"
+version = "0.19.0"
 description = "Objectified mock server runtime for Apiome (FastAPI)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,7 @@ dependencies = [
     "pydantic-settings>=2.5.2",
     "structlog>=24.4.0",
     "uvicorn[standard]>=0.32.0",
+    "aiokafka>=0.12.0",
 ]
 
 [project.scripts]

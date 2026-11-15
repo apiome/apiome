@@ -27,6 +27,7 @@ from apiome_mock.chaos import EMPTY_CHAOS, ChaosConfig, parse_chaos
 from apiome_mock.fixture_packs import merged_template_data, parse_fixture_packs
 from apiome_mock.graphql_resolver import DeclaredExamples, collect_declared_examples
 from apiome_mock.graphql_schema import GraphQlMockSettings, build_executable_schema, parse_graphql_settings
+from apiome_mock.kafka_channels import SUPPORT_NOT_KAFKA, KafkaChannel, compile_kafka_channel
 from apiome_mock.scenarios import Scenario, parse_active_scenario, parse_scenarios
 
 _WS_PROTOCOLS = frozenset({"ws", "websocket", "wss"})
@@ -35,7 +36,11 @@ _SSE_PROTOCOLS = frozenset({"sse", "http", "https"})
 
 @dataclass(frozen=True)
 class EventChannelRoute:
-    """One event channel exposed over WebSocket and/or SSE."""
+    """One event channel exposed over WebSocket and/or SSE, and to Kafka when it rides Kafka.
+
+    ``kafka`` (#5736, XPC-2.2) carries the channel's resolved topic and its support status for the
+    broker producer; ``not-kafka`` for a channel served over WebSocket/SSE only.
+    """
 
     key: str
     address: str
@@ -44,6 +49,16 @@ class EventChannelRoute:
     supports_websocket: bool
     supports_sse: bool
     periodic_interval_seconds: float
+    kafka: KafkaChannel = KafkaChannel(support=SUPPORT_NOT_KAFKA)
+
+    def outbound_messages(self) -> tuple[Message, ...]:
+        """The event messages the mock sends on this channel (its subscribe operations')."""
+        return tuple(
+            message
+            for operation in self.subscribe_operations
+            for message in operation.messages
+            if message.role is MessageRole.EVENT
+        )
 
 
 @dataclass(frozen=True)
@@ -149,15 +164,18 @@ def _compile_event_channels(api: CanonicalApi) -> tuple[EventChannelRoute, ...]:
     routes: list[EventChannelRoute] = []
     for channel in api.channels:
         ws, sse = _channel_transport_flags(channel, api)
+        subscribe = tuple(subscribe_by_channel.get(channel.key, ()))
+        outbound = tuple(message for operation in subscribe for message in _event_messages(operation))
         routes.append(
             EventChannelRoute(
                 key=channel.key,
                 address=channel.address,
-                subscribe_operations=tuple(subscribe_by_channel.get(channel.key, ())),
+                subscribe_operations=subscribe,
                 publish_operations=tuple(publish_by_channel.get(channel.key, ())),
                 supports_websocket=ws,
                 supports_sse=sse,
                 periodic_interval_seconds=2.0,
+                kafka=compile_kafka_channel(channel, api, outbound),
             )
         )
 

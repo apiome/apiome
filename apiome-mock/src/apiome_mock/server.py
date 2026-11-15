@@ -13,9 +13,11 @@ from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import validate_api_key_for_tenant
 from apiome_mock.broker_health import DevBrokerHealth
+from apiome_mock.broker_producer import BrokerPublisher, PeriodicBrokerProducer
 from apiome_mock.callback_dispatch import build_dispatcher
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.capture import build_capture_proxy
+from apiome_mock.channel_routes import CHANNELS_SEGMENT, handle_channel_publish, handle_list_channels
 from apiome_mock.database_pool import create_async_pool, ping_pool
 from apiome_mock.event_transport import handle_event_sse, handle_event_websocket
 from apiome_mock.graphql_transport import handle_graphql_request
@@ -97,8 +99,27 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
         retention_hours=settings.capture_retention_hours,
     )
 
+    # Kafka broker producer (#5736, XPC-2.2): on-demand publishes always go through the publisher;
+    # the periodic producer runs only when enabled (turn it off on all but one replica).
+    broker_publisher = BrokerPublisher(pool=pool, settings=settings)
+    periodic_producer: PeriodicBrokerProducer | None = None
+    producer_task: asyncio.Task[None] | None = None
+    if settings.broker_producer_enabled:
+
+        async def _load_spec(tenant: str, project: str, version: str) -> object:
+            from apiome_mock.event_transport import _resolve_canonical_spec
+
+            resolved = await _resolve_canonical_spec(
+                pool=pool, cache=canonical_cache, tenant=tenant, project=project, version=version, api_key=None
+            )
+            return None if isinstance(resolved, Response) else resolved
+
+        periodic_producer = PeriodicBrokerProducer(publisher=broker_publisher, load_spec=_load_spec, settings=settings)
+        producer_task = asyncio.create_task(periodic_producer.run())
+
     app.state.db_pool = pool
     app.state.spec_cache = cache
+    app.state.broker_publisher = broker_publisher
     app.state.canonical_spec_cache = canonical_cache
     app.state.session_store = session_store
     app.state.callback_dispatcher = callback_dispatcher
@@ -114,6 +135,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     }
 
     stop_event.set()
+    if periodic_producer is not None:
+        await periodic_producer.stop()
+    if producer_task is not None:
+        producer_task.cancel()
+        try:
+            await producer_task
+        except asyncio.CancelledError:
+            pass
+    await broker_publisher.close()
     await grpc_runtime.stop()
     if callback_dispatcher is not None:
         await callback_dispatcher.aclose()
@@ -266,6 +296,31 @@ def create_app() -> FastAPI:
                 settings=settings,
             )
         return response
+
+    # Event channel control routes (#5736, XPC-2.2): the channel listing and on-demand Kafka
+    # publish. Declared before the REST catch-all; `__channels__` is a reserved segment.
+    @app.get(f"/{{tenant}}/{{project}}/{{version}}/{CHANNELS_SEGMENT}")
+    async def list_channels_route(request: Request, tenant: str, project: str, version: str) -> Response:
+        pool: AsyncConnectionPool = app.state.db_pool
+        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(pool, api_key=raw_api_key, tenant_slug=tenant)
+        return await handle_list_channels(
+            tenant=tenant, project=project, version=version, pool=pool,
+            cache=app.state.canonical_spec_cache, api_key=validated_key,
+        )
+
+    @app.post(f"/{{tenant}}/{{project}}/{{version}}/{CHANNELS_SEGMENT}/{{channel_key:path}}/publish")
+    async def publish_channel_route(
+        request: Request, tenant: str, project: str, version: str, channel_key: str
+    ) -> Response:
+        pool: AsyncConnectionPool = app.state.db_pool
+        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(pool, api_key=raw_api_key, tenant_slug=tenant)
+        return await handle_channel_publish(
+            request, tenant=tenant, project=project, version=version, channel_key=channel_key,
+            pool=pool, cache=app.state.canonical_spec_cache, publisher=app.state.broker_publisher,
+            api_key=validated_key,
+        )
 
     # GraphQL mock route (#5729, XPC-1.1). Declared before the REST catch-all so it wins for
     # GraphQL versions; any other version falls through to the REST path, so a REST API with its
