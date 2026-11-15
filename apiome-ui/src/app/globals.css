@@ -37329,7 +37329,9 @@ tr:focus-within .pub-url__glyph {
 
 /* ---- the rail row ------------------------------------------------------ */
 
-/* The bell, with the dot that survives the rail collapsing onto its glyph. */
+/* The bell, with the dot that stands in for the count on the collapsed rail
+   (HIVE-12.3): 6 px, the accent of the pill it replaces — a count is not a
+   brand moment, so neither carries honey (DESIGN.md §2). */
 .ntf-bell {
   position: relative;
   display: inline-flex;
@@ -37340,16 +37342,16 @@ tr:focus-within .pub-url__glyph {
 
 .ntf-bell__dot {
   position: absolute;
-  inset-block-start: -0.125rem;
-  inset-inline-end: -0.125rem;
-  inline-size: var(--space-2);
-  block-size: var(--space-2);
+  inset-block-start: calc(var(--space-1) * -0.5);
+  inset-inline-end: calc(var(--space-1) * -0.5);
+  inline-size: calc(var(--space-1) * 1.5);
+  block-size: calc(var(--space-1) * 1.5);
   border-radius: var(--r-full);
-  background: var(--honey);
+  background: var(--accent);
 }
 
-/* The count itself, beside the label — honey with the ink that belongs on it,
-   never the bare `--honey` with body text over the top. */
+/* The count itself, beside the label — the solid accent pill of the mockup's
+   `.nav-count`, with `--fg-on-accent`, the ink every theme pairs with it. */
 .ntf-badge {
   display: inline-flex;
   flex-shrink: 0;
@@ -37358,8 +37360,8 @@ tr:focus-within .pub-url__glyph {
   min-inline-size: 1.125rem;
   padding-inline: var(--space-1);
   border-radius: var(--r-full);
-  background: var(--honey);
-  color: var(--honey-ink);
+  background: var(--accent);
+  color: var(--fg-on-accent);
   font-size: var(--fs-2xs);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -37393,8 +37395,8 @@ tr:focus-within .pub-url__glyph {
   align-items: center;
   padding-inline: var(--space-1);
   border-radius: var(--r-full);
-  background: var(--honey);
-  color: var(--honey-ink);
+  background: var(--accent);
+  color: var(--fg-on-accent);
   font-size: var(--fs-2xs);
   font-variant-numeric: tabular-nums;
   letter-spacing: normal;

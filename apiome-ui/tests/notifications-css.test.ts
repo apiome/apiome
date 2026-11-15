@@ -214,11 +214,18 @@ describe('legibility', () => {
   });
 
   it('puts the badge’s own ink on the badge’s own fill', () => {
-    // `--honey` with body ink over it is the contrast failure this pairing exists to avoid.
+    // HIVE-12.3: the count is the accent pill of the mockup's `.nav-count`, never honey
+    // (DESIGN.md §2), and its ink is the one every theme pairs with a solid accent fill.
     for (const prelude of ['.ntf-badge', '.ntf-menu__count']) {
-      expect(declaration(prelude, 'background')).toBe('var(--honey)');
-      expect(declaration(prelude, 'color')).toBe('var(--honey-ink)');
+      expect(declaration(prelude, 'background')).toBe('var(--accent)');
+      expect(declaration(prelude, 'color')).toBe('var(--fg-on-accent)');
     }
+  });
+
+  it('draws the collapsed rail’s dot at 6 px, in the pill’s accent', () => {
+    expect(declaration('.ntf-bell__dot', 'inline-size')).toBe('calc(var(--space-1) * 1.5)');
+    expect(declaration('.ntf-bell__dot', 'block-size')).toBe('calc(var(--space-1) * 1.5)');
+    expect(declaration('.ntf-bell__dot', 'background')).toBe('var(--accent)');
   });
 
   it('gives every interactive rule a visible focus ring', () => {

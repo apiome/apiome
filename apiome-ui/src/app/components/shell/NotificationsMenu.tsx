@@ -225,24 +225,36 @@ export default function NotificationsMenu({
               aria-hidden
               className="shrink-0 text-fg-subtle group-hover/item:text-fg"
             />
-            {/* The badge rides the glyph as well as the label, because a collapsed rail
-                takes the label away — and an unread count nobody can see is not one. */}
-            {unreadTotal > 0 && (
+            {/* The collapsed rail takes the label — and the pill with it — away, so the
+                count shrinks to a dot on the glyph and its number moves to the tooltip.
+                Only there: an expanded row already says the number beside the label. */}
+            {iconRail && unreadTotal > 0 && (
               <span className="ntf-bell__dot" data-testid="rail-notifications-dot" aria-hidden />
             )}
           </span>
           <span className="rail-label min-w-0 flex-1 items-center justify-between gap-2">
             <span className="truncate">{MENU_LABEL}</span>
+            {/* `role="img"` is what makes the `aria-label` legal on a span (axe
+                `aria-prohibited-attr`): the button is then named "Notifications 3 unread",
+                with the exact count even when the pill has stopped at "99+". */}
             {unreadTotal > 0 && (
-              <span className="ntf-badge" data-testid="rail-notifications-badge" aria-hidden>
+              <span
+                className="ntf-badge"
+                data-testid="rail-notifications-badge"
+                role="img"
+                aria-label={`${unreadTotal} unread`}
+              >
                 {badge}
               </span>
             )}
           </span>
-          {/* The count in words, for a reader who has neither the badge nor the dot. */}
-          <span className="sr-only">
-            {MENU_LABEL} — {unreadPhrase}
-          </span>
+          {/* The collapsed rail hides the label and the pill, so the count goes in words
+              for a reader who has neither — and only there, or it would be read twice. */}
+          {iconRail && (
+            <span className="sr-only">
+              {MENU_LABEL} — {unreadPhrase}
+            </span>
+          )}
         </button>
       </RailTooltip>
 

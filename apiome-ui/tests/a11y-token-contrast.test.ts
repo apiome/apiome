@@ -110,9 +110,10 @@ export function contrastPairs(): ContrastPair[] {
   pairs.push({ fg: 'danger-fg', bg: 'danger-soft', role: 'text', over: 'warn-soft' });
   text('ink-fg', ['ink']);
   text('honey-ink', ['honey']);
-  // The danger button's label; on accent / ok fills the same ink only ever paints icons.
-  text('fg-on-accent', ['danger']);
-  mark('fg-on-accent', ['accent', 'ok']);
+  // The danger button's label, and the rail's notification count pill (HIVE-12.3) on the
+  // solid accent fill; on ok fills the same ink only ever paints icons.
+  text('fg-on-accent', ['danger', 'accent']);
+  mark('fg-on-accent', ['ok']);
   for (const hue of MARKS) mark(hue, ['canvas', 'surface']);
   return pairs;
 }
