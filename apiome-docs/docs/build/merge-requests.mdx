@@ -1,0 +1,144 @@
+---
+title: Draft branches and merge requests
+description: Draft changes on a branch, get them reviewed, and merge into a version line.
+sidebar_position: 1.27
+tags: [versions, branches, merge, reviews]
+---
+
+<Route path="/ade/merge-requests/[id]" />
+
+Draft a change on a **branch** of its own, open a **merge request**, let reviewers approve it, and
+merge it into the version line — all inside Apiome, with no Git repository to wire up.
+
+A merge request does not add a second review or merge process. It brings together three things
+Apiome already has:
+
+- the **review** of the branch — reviewers decide on the [review page](../govern/reviews.mdx);
+- a **merge session** — the same three-way merge as **Merge branches…**, with the same conflict list;
+- the **classified diff** — what the branch changes, grouped as breaking, non-breaking and docs-only.
+
+<Screenshot id="merge-request" alt="Merge request Add refund reason codes: feature/refund-reasons into main, the classified changes since the merge base, and the Status card ready to merge" />
+
+<Flag name="FEATURE_GITLIKE" />
+
+The **Merge requests** tab on Versions is one of the Git-like controls, which are switched off in
+shipped builds — see [Turning on the Git-like controls](./version-control.mdx#turning-on-the-git-like-controls).
+The REST API works without the switch; see [API](#api).
+
+## Draft a change on a branch
+
+A **version line** is the branch a version lives on — usually `main`. A **draft branch** starts from
+the line's current tip:
+
+1. **Open Versions** for the project and **choose the “Merge requests” tab**.
+2. **Click “New draft branch”**.
+3. Type a **Branch name**, for example `feature/refund-reasons`.
+4. Choose the **Version line** to start from. The default branch is picked for you.
+5. Optionally type a **Version label** for the branch's first version, for example `2.4.1`. Leave it
+   empty to take the next patch version.
+6. **Click “Create branch”**.
+
+The branch gets a version of its own, a copy of the line's tip with its classes and paths. Edit that
+version as you would any draft — in the Studio, on the canvas, or through the API. **The version line
+does not change** until the branch is merged.
+
+<Screenshot id="versions-merge-requests" alt="The Merge requests tab: one open merge request and two draft branches, each drafted off main" />
+
+The tab lists merge requests by state — **Open**, **Merged** or **Closed** — and every draft branch
+with the line it was drafted off and its tip.
+
+## Open a merge request
+
+1. **Click “Open merge request”** — on the tab, or beside a draft branch under **Draft branches**.
+2. Choose the **Draft branch** and the line to **Merge into**. The line the branch was drafted off is
+   picked for you.
+3. Type a **Title**, for example `Add refund reason codes`, and an optional **Description**.
+4. Tick one or more **Reviewers**. You cannot review your own merge request.
+5. **Click “Open merge request”**.
+
+Apiome requests a review of the branch's tip from the reviewers you chose, and they are notified as
+for any review. If the tip already has an open review, that review is attached instead. A branch can
+have one open merge request at a time.
+
+## Review and merge
+
+The merge request page has three tabs and a **Status** card:
+
+- **Changes** — what the branch changes, compared with the **merge base** (the version the branch
+  and the line last had in common). Comparing with the merge base shows only the branch's own changes,
+  not everything the line gained since. **Plain diff** switches to a line diff.
+- **Conflicts** — what the last merge session found; see [Resolve conflicts](#resolve-conflicts).
+- **Review** — where the branch's review stands, with each reviewer's decision. **Click “Open the
+  review”** to approve, request changes, suggest edits or discuss on the review page.
+
+The **Status** card says **Ready to merge into main** or lists what is left. **Merge into main** is
+enabled only when nothing is:
+
+| Shown | Means | What to do |
+| --- | --- | --- |
+| **Request a review of the branch before merging.** | No review is attached, or it was withdrawn. | **Click “Request review of the current tip”**. |
+| **The branch moved on after the review was requested.** | Someone added a version to the branch, so the review judged an older tip. | **Click “Request review of the current tip”**; the old review is withdrawn. |
+| **N reviewer(s) have not decided yet.** | The review is in progress. | Wait for the reviewers. |
+| **A reviewer requested changes.** | The review round is decided against. | Change the branch, then re-request the review on the review page. |
+| **The branch changed after this review round was requested.** | The approvals were given to different content. | Re-request the review on the review page. |
+| The approval policy's message | The project's [approval gate](../govern/reviews.mdx#turn-on-the-approval-gate) needs more approvals, or one from a given role. | Ask another reviewer. |
+| **N conflicting path(s) with main.** | The last merge session found overlapping changes. | See [Resolve conflicts](#resolve-conflicts). |
+| **The tip of main is published and immutable.** | The line's tip is a published version. | A tenant administrator ticks **Override published immutability** and types a **Reason**, which is recorded in the audit log. |
+
+Then **click “Merge into main”**. Apiome runs a fresh merge session against the current tips and, when
+it finds no conflicts, merges through the same path as **Merge branches…**: the line gets a new
+version with both tips as parents, the project's compatibility gate applies, and the merge is recorded
+on the [project activity timeline](./project-timeline.md). The merge request then reads **Merged**.
+
+To give up instead, **click “Close merge request”**. The branch and its versions stay; the review is
+withdrawn if you requested it or are an administrator.
+
+## Resolve conflicts
+
+**Click “Check for conflicts”** at any time to run a merge session against the current tips. A merge
+that finds conflicts stops before changing anything and opens the **Conflicts** tab.
+
+<Screenshot id="merge-request-conflicts" alt="The Conflicts tab: two schema paths changed on both feature/refund-reasons and main, in the merge conflict list" />
+
+The list is the same one **Merge branches…** shows: each path changed on both the branch and the line.
+A merge only ever applies a clean three-way result, so resolve a conflict by **editing the draft
+branch** until the path no longer overlaps — for example, take over the line's definition of the
+class and re-apply your change. The **Mine** / **Theirs** marks help you track which side each path
+should keep. Then **click “Check for conflicts”** again.
+
+A merge carries **class and property changes** — the schema components the merge session merges. Path
+edits on the branch are not merged.
+
+## API
+
+Every step is available over REST, with or without the Git-like switch. The full reference is
+[Merge requests](../reference/rest/merge-requests.md).
+
+```http
+POST /v1/tenants/{tenant}/projects/{project}/draft-branches
+X-API-Key: <your-api-key>
+
+{ "name": "feature/refund-reasons", "base_branch": "main" }
+```
+
+```http
+POST /v1/tenants/{tenant}/projects/{project}/merge-requests
+X-API-Key: <your-api-key>
+
+{ "source_branch": "feature/refund-reasons", "title": "Add refund reason codes", "reviewers": ["<user-id>"] }
+```
+
+- `GET …/merge-requests/{id}` returns the branches' tips, the merge base, the review, the latest merge
+  session with its conflicts, and `readiness` — `can_merge` and every blocker.
+- `POST …/merge-requests/{id}/check` runs a merge session; `…/merge` merges (`409 mr-not-ready` with
+  `blockers`, `409 mr-conflicts` with `conflicts`); `…/review` reviews the current tip; `…/close`
+  closes.
+- Creating a draft branch needs `versions:create`; opening, merging and closing need `versions:edit`;
+  reading and checking need `versions:view`.
+
+## Related
+
+- [Git-like version control](./version-control.mdx)
+- [Reviews and the approval gate](../govern/reviews.mdx)
+- [Version dialogs](./version-dialogs.mdx): **Merge branches…** and its conflict list
+- [Revision history and merge base](./revision-history.md)

@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.709.0] - 2026-11-14
+
+### Added
+- **Branch / merge-request spec workflow (COL-4.3, #4527)** — OpenAPI 1.569.0:
+  - `GET|POST …/projects/{project}/draft-branches` lists and creates **draft branches**. Creating one copies the
+    tip of a version line (a branch — `base_branch`, the default branch when omitted) into a new draft revision
+    (`version_label`, the next patch version by default) that becomes the branch's tip, in one transaction, so
+    edits on the branch never touch the line. Needs `versions:create`.
+  - `GET|POST …/projects/{project}/merge-requests` lists and opens merge requests from a draft branch into a line
+    (the line it was drafted off by default). Opening requests the COL-2.1 review of the branch tip from
+    `reviewers`, or attaches the tip's open review. One open merge request per branch (`409 mr-already-open`).
+  - `GET …/merge-requests/{id}` returns the branches' tips, the merge base, the review, the latest merge session
+    with its conflicts, and `readiness` — `can_merge` plus every blocker (`no-review`, `review-outdated`,
+    `review-pending`, `changes-requested`, `review-stale`, `approval-policy`, `conflicts`, `target-immutable`).
+  - `POST …/check` runs the existing merge preview with a persisted merge session and attaches it; conflicts
+    leave the session `resolving`. `POST …/merge` requires an approved, current review (and the COL-2.3 approval
+    policy, when one applies), runs a fresh merge session and then the existing `version-branches/merge` path:
+    `409 mr-not-ready` with `blockers`, `409 mr-conflicts` with `conflicts`, and the merge path's own refusals
+    (`STALE_HEAD`, `PUBLISHED_IMMUTABLE`, `MERGE_BLOCKED_BY_COMPAT_GATE`) unchanged. The session ends `applied`
+    (or `aborted` on a refusal). `POST …/review` reviews the branch's current tip after it moved on;
+    `POST …/close` closes without merging and withdraws the review when the closer may.
+  - apiome-db V377 adds `merge_requests` and `version_branches.draft_of_branch_id`.
+
 ## [1.708.0] - 2026-11-14
 
 ### Added

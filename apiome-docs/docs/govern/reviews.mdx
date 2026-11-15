@@ -33,9 +33,9 @@ X-API-Key: <your-api-key>
 
 ## Request a review
 
-A review is requested over the REST API — there is no button for it in the app yet. Only a draft
-version can be reviewed, it can have one open review at a time, and you cannot review your own
-version:
+A review is requested over the REST API, or by opening a [merge request](../build/merge-requests.mdx)
+for a draft branch, which asks its reviewers to review the branch. Only a draft version can be
+reviewed, it can have one open review at a time, and you cannot review your own version:
 
 ```http
 POST /v1/tenants/{tenant}/projects/{project}/reviews
