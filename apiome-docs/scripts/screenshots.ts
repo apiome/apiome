@@ -28,6 +28,8 @@
  * Environment:
  *
  *   DOCS_UI_URL           apiome-ui to capture from (default http://localhost:3300; --ui-url wins)
+ *   DOCS_BROWSE_URL       apiome-browse to capture `"app": "browse"` entries from (default
+ *                         http://localhost:3001 — `yarn workspace apiome-browse dev`)
  *   APIOME_REST_URL       REST API probed for the stack (default http://localhost:8000)
  *   DOCS_USER_EMAIL       seeded user (default ada@example.com)
  *   DOCS_USER_PASSWORD    seeded password (default apiome-dev)
@@ -71,6 +73,9 @@ const MASK_COLOR = '#9aa3ad';
  */
 const HIDE_DEV_TOOLING = 'nextjs-portal{display:none!important}';
 
+/** Port `yarn workspace apiome-browse dev` serves on. */
+const BROWSE_PORT = 3001;
+
 /** How long a page may take to show its `waitFor` selector. */
 const READY_TIMEOUT_MS = 60_000;
 
@@ -87,6 +92,7 @@ interface CaptureJob {
     density: 'comfortable' | 'compact';
     fontScale: string;
     appTheme?: string;
+    app: 'ui' | 'browse';
   };
   theme: 'light' | 'dark';
   source: {kind: 'golden-path'} | {kind: 'signed-out'} | {kind: 'fixture'; dir: string; file: string};
@@ -224,7 +230,7 @@ async function loadContent(page: Page, job: CaptureJob): Promise<void> {
  * Capture one job to its PNG.
  *
  * @param browser The browser.
- * @param baseURL The apiome-ui origin.
+ * @param baseURL The origin of the app the entry names (apiome-ui or apiome-browse).
  * @param job The capture.
  * @param session Signed-in storage state, for golden-path content.
  */
@@ -249,10 +255,13 @@ async function capture(
     await page.clock.setFixedTime(FIXED_TIME);
     await loadContent(page, job);
     // An entry with `appTheme` shows that palette in both images; otherwise the site theme picks.
-    await pinAppearance(page, job.screen.appTheme ?? (job.theme === 'dark' ? 'dark' : null), {
-      density: job.screen.density,
-      fontScale: job.screen.fontScale,
-    });
+    // apiome-browse has no density / font-scale pins: it follows the context's colour scheme.
+    if (job.screen.app === 'ui') {
+      await pinAppearance(page, job.screen.appTheme ?? (job.theme === 'dark' ? 'dark' : null), {
+        density: job.screen.density,
+        fontScale: job.screen.fontScale,
+      });
+    }
     await page.addStyleTag({content: HIDE_DEV_TOOLING});
     await page.locator(job.screen.waitFor).first().waitFor({state: 'visible', timeout: READY_TIMEOUT_MS});
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -319,8 +328,15 @@ async function main(): Promise<number> {
   try {
     if (args.startUi) ui = await startUi(stackAvailable);
     const baseURL = ui?.url ?? args.uiUrl ?? (process.env.DOCS_UI_URL ?? `http://localhost:${UI_PORT}`).replace(/\/+$/, '');
-    if (!(await waitForUrl(`${baseURL}/login`, 0))) {
+    const needsUi = jobs.some((job) => job.screen.app === 'ui');
+    if (needsUi && !(await waitForUrl(`${baseURL}/login`, 0))) {
       console.error(`apiome-ui is not answering on ${baseURL}/login — start it, or pass --start-ui.`);
+      return 1;
+    }
+
+    const browseURL = (process.env.DOCS_BROWSE_URL ?? `http://localhost:${BROWSE_PORT}`).replace(/\/+$/, '');
+    if (jobs.some((job) => job.screen.app === 'browse') && !(await waitForUrl(browseURL, 0))) {
+      console.error(`apiome-browse is not answering on ${browseURL} — start it (yarn workspace apiome-browse dev).`);
       return 1;
     }
 
@@ -330,7 +346,7 @@ async function main(): Promise<number> {
     console.log(`==> Capturing ${jobs.length} image(s) from ${baseURL}`);
     for (const job of jobs) {
       try {
-        await capture(browser, baseURL, job, session);
+        await capture(browser, job.screen.app === 'browse' ? browseURL : baseURL, job, session);
       } catch (error) {
         failed.push(`${job.output}: ${(error as Error).message.split('\n')[0]}`);
         console.error(`  ✗ ${job.output}`);

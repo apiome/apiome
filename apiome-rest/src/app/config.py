@@ -903,6 +903,34 @@ class Settings(BaseSettings):
         ),
     )
 
+    # PCX-1.1 (#5889): Browse reader sign-in. Magic-link requests are budgeted per address and per
+    # client address on top of the global middleware (the SGN-1.5 abuse pattern), sharing
+    # ``rate_limit_window_seconds`` and the global ``rate_limit_enabled`` kill switch. A reader
+    # session lives ``portal_reader_session_ttl_hours`` (default 7 days) from sign-in.
+    portal_magic_link_rate_limit_email_per_minute: int = Field(
+        default=3,
+        validation_alias=AliasChoices(
+            "APIOME_PORTAL_MAGIC_LINK_RATE_LIMIT_EMAIL_PER_MINUTE",
+            "portal_magic_link_rate_limit_email_per_minute",
+        ),
+    )
+    portal_magic_link_rate_limit_ip_per_minute: int = Field(
+        default=10,
+        validation_alias=AliasChoices(
+            "APIOME_PORTAL_MAGIC_LINK_RATE_LIMIT_IP_PER_MINUTE",
+            "portal_magic_link_rate_limit_ip_per_minute",
+        ),
+    )
+    portal_reader_session_ttl_hours: int = Field(
+        default=168,
+        ge=1,
+        le=24 * 90,
+        validation_alias=AliasChoices(
+            "APIOME_PORTAL_READER_SESSION_TTL_HOURS",
+            "portal_reader_session_ttl_hours",
+        ),
+    )
+
     # Export toolchain checks (MFX-44.6, #4372). Each run of a target's toolchain check (``buf lint``…) from
     # Export Studio's Test drive spawns a sandboxed tool process, so one user gets a per-tenant budget of runs
     # on top of the global middleware. Shares ``rate_limit_window_seconds`` and honours the global

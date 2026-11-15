@@ -1,0 +1,26 @@
+---
+slug: readers-can-sign-in
+title: Readers can sign in to Browse
+description: "API consumers sign in to an organization's Browse portal with an email link."
+authors: [apiome]
+---
+
+The people who read your APIs can now sign in to your Browse portal without becoming members of
+your workspace or getting an API key.
+
+{/* truncate */}
+
+- **Sign in with an email link.** On an organization's Browse page, **click “Sign in”**, enter an
+  email address and open the link that arrives. It works once and expires in 15 minutes.
+- **Nothing to manage.** A reader is a person with no workspace access. Their first sign-in records
+  them as a reader of that organization, and a later sign-in reuses the same account.
+- **Safe by default.** Opening the link only asks you to **click “Continue”**, so a mail scanner that
+  pre-opens links cannot use it up. An expired or used link says so and offers a new one. Requests
+  are rate limited, and the page never reveals whether an address has an account.
+- **Audited.** Enrolment, sign-in and sign-out are recorded in the [access audit](/govern/access-audit).
+- **For integrators.** The new `portal-auth` endpoints are in the
+  [REST reference](/reference/rest/portal-auth). A reader session is accepted only by the portal and
+  Browse endpoints.
+
+Signed-in readers still see public versions only. Private versions for readers come next (PCX-1.3).
+See [Portal readers](/ship/portal-readers).

@@ -1,0 +1,46 @@
+---
+title: Access audit
+description: "The tamper-evident ledger of who was given, used or lost access."
+sidebar_position: 1.8
+tags: [governance, auth, audit]
+---
+
+The **access audit** is a workspace's append-only record of access events: role and permission
+changes, member invitations and offboarding, administrator overrides, style-guide governance, and
+Browse reader sign-ins. Each row is hash-chained to the one before it, so a removed or altered row
+breaks the chain.
+
+The Control Panel does not have an Access audit screen yet. Read the audit through the REST API (next
+section).
+
+---
+
+## Read it with the REST API
+
+Anyone with **Members: view** can read their workspace's audit:
+
+- `GET /v1/access/{tenant}/audit` lists rows, newest first. `filter` keeps one category: `role`,
+  `permission`, `member`, `admin`, `styleGuide` or `portal`. `since` takes an ISO 8601 start time, and
+  `limit` caps the count (at most 1000).
+- `GET /v1/access/{tenant}/audit/export` returns the same rows as CSV, for access-review evidence.
+
+Each row has **when**, **actor**, **event** (`action`), **target**, **source** and a structured
+**detail**, plus `prev_hash` and `entry_hash`, its link in the chain. Both endpoints are in the
+[REST reference](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get).
+
+## Browse reader events
+
+[Portal readers](../ship/portal-readers.mdx) sign in to Browse with an email link. Their events have
+source `portal`, and `filter=portal` lists only them:
+
+| Event | Recorded when | Detail |
+|---|---|---|
+| `portal.reader.enrolled` | A person signs in to the portal for the first time and becomes a reader. | `source` (`magic_link`), `membership_id` |
+| `portal.reader.signed_in` | A sign-in link is exchanged for a session. | `session_id`, `method`, `user_agent_family` (for example `Firefox`) |
+| `portal.reader.session_revoked` | A reader signs out. | `session_id`, `reason` |
+
+The actor and target of each row are the reader's email address. Rows never contain a sign-in link,
+a session token, an IP address or a full browser string.
+
+A request for a sign-in link is not recorded. A link that was never used leaves no trace in the
+audit.

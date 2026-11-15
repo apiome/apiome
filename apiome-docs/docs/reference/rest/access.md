@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.569.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.570.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `access` · 19 operations
 
@@ -19,9 +19,9 @@ Tag: `access` · 19 operations
 
 List access-audit entries for the tenant, newest first, with an optional category filter.
 
-Categories are `all`, `role`, `permission`, `member`, `admin` and `styleGuide`
-(style-guide governance: create / edit / assign, GOV-1.6). An unknown value is treated
-as `all`.
+Categories are `all`, `role`, `permission`, `member`, `admin`, `styleGuide`
+(style-guide governance: create / edit / assign, GOV-1.6) and `portal` (Browse reader
+enrolment, sign-in and sign-out, PCX-1.1). An unknown value is treated as `all`.
 
 `since` is an optional ISO 8601 lower bound on `created_at` — what the UI's date range
 sends, and what its CSV export sends back so the two agree (HIVE-5.5, #5308).

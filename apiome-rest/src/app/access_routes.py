@@ -649,6 +649,8 @@ _AUDIT_FILTERS = {
     "admin": "admin.",
     # Style-guide governance: create / edit / assign of style guides (GOV-1.6, #4432).
     "styleGuide": "style_guide.",
+    # Browse readers: enrolment, sign-in and sign-out (PCX-1.1, #5889).
+    "portal": "portal.",
 }
 
 
@@ -692,9 +694,9 @@ async def list_audit(
 ) -> List[Dict[str, Any]]:
     """List access-audit entries for the tenant, newest first, with an optional category filter.
 
-    Categories are `all`, `role`, `permission`, `member`, `admin` and `styleGuide`
-    (style-guide governance: create / edit / assign, GOV-1.6). An unknown value is treated
-    as `all`.
+    Categories are `all`, `role`, `permission`, `member`, `admin`, `styleGuide`
+    (style-guide governance: create / edit / assign, GOV-1.6) and `portal` (Browse reader
+    enrolment, sign-in and sign-out, PCX-1.1). An unknown value is treated as `all`.
 
     `since` is an optional ISO 8601 lower bound on `created_at` — what the UI's date range
     sends, and what its CSV export sends back so the two agree (HIVE-5.5, #5308).

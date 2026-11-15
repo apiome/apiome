@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.569.0
+  version: 1.570.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -77436,12 +77436,13 @@ paths:
         optional category filter.
 
 
-        Categories are `all`, `role`, `permission`, `member`, `admin` and `styleGuide`
+        Categories are `all`, `role`, `permission`, `member`, `admin`, `styleGuide`
 
-        (style-guide governance: create / edit / assign, GOV-1.6). An unknown value
-        is treated
+        (style-guide governance: create / edit / assign, GOV-1.6) and `portal` (Browse
+        reader
 
-        as `all`.
+        enrolment, sign-in and sign-out, PCX-1.1). An unknown value is treated as
+        `all`.
 
 
         `since` is an optional ISO 8601 lower bound on `created_at` — what the UI''s
@@ -89636,6 +89637,213 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list blocked signup attemptsresponse422.
+  /v1/portal/{tenant_slug}/auth/magic-link:
+    post:
+      tags:
+      - portal-auth
+      summary: Send a reader sign-in link
+      description: 'Mail a one-time sign-in link for the tenant''s Browse portal.
+        The link expires in 15 minutes and works once.
+
+
+        An address with no account gets one (a password-less user) and an `invited`
+        reader membership, when the installation sign-up policy allows new accounts;
+        a second request for the same address reuses both.
+
+
+        **Always `202`** for a well-formed request: the response never says whether
+        a link was sent, so it cannot be used to discover accounts. `422` for a malformed
+        address or a `return_to` that is not a path inside Browse. Budgeted per client
+        address and per email address (`429 portal-rate-limited` with `Retry-After`).
+
+
+        No authentication.'
+      operationId: request_magic_link_v1_portal__tenant_slug__auth_magic_link_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MagicLinkRequest'
+              description: Request body for sendareadersigninlinkrequest.
+        description: Request body for send a reader sign-in link.
+      responses:
+        '202':
+          description: Successful response for send a reader sign-in link.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagicLinkAccepted'
+                description: Response payload for sendareadersigninlinkresponse202.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for sendareadersigninlinkresponse422.
+  /v1/portal/{tenant_slug}/auth/exchange:
+    post:
+      tags:
+      - portal-auth
+      summary: Exchange a sign-in link for a reader session
+      description: 'Trade a magic-link token for a reader session. The token is burned:
+        a second exchange is `410 portal-token-used`, an exchange after 15 minutes
+        `410 portal-token-expired`, and an unknown or malformed token `400 portal-token-invalid`.
+
+
+        The session token is returned **once**. It is bound to this tenant and is
+        sent back as `Authorization: Reader <token>`; it is accepted only by the `portal-auth`
+        and `browse` routes. The request''s `User-Agent` is reduced to a browser family
+        before it is stored.
+
+
+        No authentication — the token is the credential.'
+      operationId: exchange_magic_link_v1_portal__tenant_slug__auth_exchange_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: user-agent
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Exchangeasigninlinkforareadersessionuseragent schema.
+          - type: 'null'
+            description: Exchangeasigninlinkforareadersessionuseragent schema.
+          title: User-Agent
+          description: User-Agent schema.
+        description: 'Header parameter: User Agent.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenExchange'
+              description: Request body for exchangeasigninlinkforareadersessionrequest.
+        description: Request body for exchange a sign-in link for a reader session.
+      responses:
+        '200':
+          description: Successful response for exchange a sign-in link for a reader
+            session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReaderSessionGrant'
+                description: Response payload for exchangeasigninlinkforareadersessionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for exchangeasigninlinkforareadersessionresponse422.
+  /v1/portal/{tenant_slug}/auth/sign-out:
+    post:
+      tags:
+      - portal-auth
+      summary: Sign a reader out
+      description: 'Revoke the reader session in `Authorization: Reader <token>`.
+        The session is refused from the next request on. Idempotent: an unknown or
+        already revoked session is also `204`.'
+      operationId: sign_out_v1_portal__tenant_slug__auth_sign_out_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Signareaderoutauthorization schema.
+          - type: 'null'
+            description: Signareaderoutauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      responses:
+        '204':
+          description: Successful response for sign a reader out.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for signareaderoutresponse422.
+  /v1/portal/{tenant_slug}/auth/me:
+    get:
+      tags:
+      - portal-auth
+      summary: The signed-in reader
+      description: 'The reader behind `Authorization: Reader <token>`: their address,
+        the tenant the session is bound to, and when the session ends.
+
+
+        `401 portal-session-invalid` for a missing, expired or revoked session, a
+        session for another tenant, or a reader whose membership was revoked.'
+      operationId: read_me_v1_portal__tenant_slug__auth_me_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thesignedinreaderauthorization schema.
+          - type: 'null'
+            description: Thesignedinreaderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      responses:
+        '200':
+          description: Successful response for the signed-in reader.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReaderProfile'
+                description: Response payload for thesignedinreaderresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thesignedinreaderresponse422.
   /v1/admin/users/{user_id}/two-factor/reset:
     post:
       tags:
@@ -126986,6 +127194,52 @@ components:
         CLI flag the export: a ``critical`` item warrants a dismiss-to-proceed
 
         acknowledgement, an ``info`` item a quiet footnote.'
+    MagicLinkAccepted:
+      properties:
+        accepted:
+          type: boolean
+          const: true
+          title: Accepted
+          description: Always true. Whether a link was actually sent is never revealed,
+            so the answer cannot be used to learn who has an account.
+          default: true
+          example: true
+        expires_in_minutes:
+          type: integer
+          title: Expires In Minutes
+          description: How long a link is valid once it arrives.
+          default: 15
+          example: 1
+      additionalProperties: false
+      type: object
+      title: MagicLinkAccepted
+      description: The answer to every well-formed magic-link request.
+    MagicLinkRequest:
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          minLength: 3
+          title: Email
+          description: The reader's email address.
+          example: user@example.com
+        return_to:
+          anyOf:
+          - type: string
+            maxLength: 1024
+            description: Request body for magic link.
+          - type: 'null'
+            description: Request body for magic link.
+          title: Return To
+          description: A path inside Browse to return to after signing in (for example
+            `/tenant/acme`).
+      additionalProperties: false
+      type: object
+      required:
+      - email
+      title: MagicLinkRequest
+      description: "Ask for a sign-in link.\n\nAttributes:\n    email: The reader's\
+        \ address.\n    return_to: A Browse path to land on after signing in."
     ManagedGroupBody:
       properties:
         id:
@@ -149077,6 +149331,102 @@ components:
       title: RatePresetBody
       description: A rate preset as data, with the budget as a number rather than
         an adjective.
+    ReaderProfile:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+          description: User ID.
+          example: user_01h2xcejqtf3fz5y5j0v8k9m2p
+        email:
+          type: string
+          title: Email
+          description: Email.
+          example: user@example.com
+        name:
+          anyOf:
+          - type: string
+            description: Reader Profile schema.
+          - type: 'null'
+            description: Reader Profile schema.
+          title: Name
+          description: Human-readable name.
+        tenant_slug:
+          type: string
+          title: Tenant Slug
+          description: URL-safe tenant slug used in path parameters.
+          example: acme
+        tenant_name:
+          anyOf:
+          - type: string
+            description: Reader Profile schema.
+          - type: 'null'
+            description: Reader Profile schema.
+          title: Tenant Name
+          description: Tenant Name.
+        membership_status:
+          type: string
+          enum:
+          - invited
+          - active
+          - revoked
+          title: Membership Status
+          description: Membership Status.
+          example: invited
+        session_expires_at:
+          type: string
+          format: date-time
+          title: Session Expires At
+          description: When the current session ends.
+          example: '2026-11-15T04:18:07Z'
+      additionalProperties: false
+      type: object
+      required:
+      - user_id
+      - email
+      - tenant_slug
+      - membership_status
+      - session_expires_at
+      title: ReaderProfile
+      description: The signed-in reader.
+    ReaderSessionGrant:
+      properties:
+        session_token:
+          type: string
+          title: Session Token
+          description: The opaque session token. Returned once; store it securely.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+          description: Expires At timestamp (ISO 8601).
+          example: '2026-11-15T04:18:07Z'
+        return_to:
+          anyOf:
+          - type: string
+            description: Reader Session Grant schema.
+          - type: 'null'
+            description: Reader Session Grant schema.
+          title: Return To
+          description: Where the magic link asked to land.
+        reader:
+          $ref: '#/components/schemas/ReaderProfile'
+          description: Reader.
+      additionalProperties: false
+      type: object
+      required:
+      - session_token
+      - expires_at
+      - reader
+      title: ReaderSessionGrant
+      description: 'A new reader session.
+
+
+        The token is returned **once**. Browse stores it in an ``HttpOnly`` cookie
+        and forwards it as
+
+        ``Authorization: Reader <token>``; it is never shown to the reader.'
     ReasonExplanation:
       properties:
         reason:
@@ -169430,6 +169780,21 @@ components:
         rather than
 
         hidden behind the configured value.'
+    TokenExchange:
+      properties:
+        token:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Token
+          description: The token from the magic link.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+      additionalProperties: false
+      type: object
+      required:
+      - token
+      title: TokenExchange
+      description: Exchange a magic-link token for a reader session.
     TraceBody:
       properties:
         id:
