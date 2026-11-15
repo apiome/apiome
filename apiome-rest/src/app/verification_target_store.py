@@ -33,6 +33,7 @@ from .verification_target import (
     CODE_NOT_FOUND,
     CODE_POLICY_TLS_REQUIRED,
     CODE_PRIVATE_NOT_APPROVED,
+    CODE_PROTOCOL_MISMATCH,
     CODE_SLUG_TAKEN,
     NETWORK_CLASS_PRIVATE,
     ResolvedTarget,
@@ -297,6 +298,7 @@ def create_target(
         description=definition.description,
         environment=definition.environment,
         base_url=base_url,
+        protocol=definition.protocol,
         network_class=definition.network_class,
         approved_by=actor.user_id if is_private else None,
         approval_reason=definition.approval_reason if is_private else None,
@@ -324,6 +326,7 @@ def create_target(
         detail={
             "environment": record.environment,
             "network_class": record.network_class,
+            "protocol": record.protocol,
             "auth_kind": record.auth.kind,
             "enabled": record.enabled,
         },
@@ -373,7 +376,7 @@ def update_target(
         _assert_policy_coherent(network_class, record)
 
     fields: Dict[str, Any] = {}
-    for column in ("name", "description", "environment", "enabled"):
+    for column in ("name", "description", "environment", "protocol", "enabled"):
         if column in changes:
             fields[column] = changes[column]
 
@@ -465,6 +468,7 @@ def resolve_target(
     *,
     actor: TargetActor,
     suite_digest: Optional[str] = None,
+    protocol: Optional[str] = None,
 ) -> ResolvedTarget:
     """Select a target for a run — the audited moment a definition becomes traffic.
 
@@ -479,13 +483,16 @@ def resolve_target(
         actor: Who is selecting it — a user or a CI runner.
         suite_digest: The ECA-1.1 suite digest this run will execute, recorded on the audit entry
             so a target selection can be tied to the exact contract it was selected for.
+        protocol: The protocol the suite speaks (XPC-1.2). A target declaring another one is
+            refused with ``target-protocol-mismatch``, recorded as a denied resolve.
 
     Returns:
         The :class:`~app.verification_target.ResolvedTarget` the runner executes against.
 
     Raises:
-        TargetValidationError: ``target-not-found``, ``target-disabled``, or a URL code, each
-            already written to the ledger before it is raised.
+        TargetValidationError: ``target-not-found``, ``target-disabled``,
+            ``target-protocol-mismatch``, or a URL code, each already written to the ledger
+            before it is raised.
     """
     detail: Dict[str, Any] = {}
     if suite_digest:
@@ -506,12 +513,16 @@ def resolve_target(
         raise
 
     try:
-        resolved = resolve_target_record(record)
+        resolved = resolve_target_record(record, protocol=protocol)
     except TargetValidationError as exc:
         _audit(
             tenant_id=tenant_id,
             action=ACTION_RESOLVE,
-            outcome=OUTCOME_DENIED if exc.code == CODE_DISABLED else OUTCOME_FAILURE,
+            outcome=(
+                OUTCOME_DENIED
+                if exc.code in (CODE_DISABLED, CODE_PROTOCOL_MISMATCH)
+                else OUTCOME_FAILURE
+            ),
             actor=actor,
             target_id=record.id,
             target_slug=record.slug,

@@ -634,17 +634,21 @@ def test_a_streaming_operation_is_reported_and_not_compiled() -> None:
 
 
 def test_an_operation_with_no_http_binding_is_reported() -> None:
-    """A GraphQL field or an event subscription has no request to send."""
+    """An event operation has no request to send; the HTTP adapter it falls through to says so.
+
+    (A GraphQL version no longer takes this path: it has its own adapter — see
+    ``tests/test_contract_suite_graphql.py``.)
+    """
     api = CanonicalApi(
-        paradigm=ApiParadigm.GRAPH,
-        format="graphql",
-        identity=ApiIdentity(name="graph"),
+        paradigm=ApiParadigm.EVENT,
+        format="asyncapi-3.0",
+        identity=ApiIdentity(name="events"),
         services=[
             Service(
-                key="Query",
-                name="Query",
+                key="orders",
+                name="orders",
                 operations=[
-                    Operation(key="Query.user", name="user", kind=OperationKind.QUERY)
+                    Operation(key="orders.created", name="created", kind=OperationKind.QUERY)
                 ],
             )
         ],

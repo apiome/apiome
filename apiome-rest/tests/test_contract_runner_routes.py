@@ -155,3 +155,17 @@ def test_permission_denied_is_403() -> None:
     ):
         response = client.post(_BASE, json={"target_ref": "mock"})
     assert response.status_code == 403
+
+
+def test_a_target_of_another_protocol_is_422() -> None:
+    """XPC-1.2: an `http` target given a GraphQL version is refused `422 target-protocol-mismatch`."""
+    from app.verification_target import CODE_PROTOCOL_MISMATCH
+
+    with patch(
+        "app.contract_runner_routes.run_version_contract_suite",
+        side_effect=TargetValidationError(CODE_PROTOCOL_MISMATCH, "wrong protocol"),
+    ):
+        response = client.post(_BASE, json={"target_ref": "staging"})
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "target-protocol-mismatch"

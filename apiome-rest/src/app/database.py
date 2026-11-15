@@ -32123,7 +32123,7 @@ class Database:
     #: :func:`app.verification_target.record_from_row`.
     _VERIFICATION_TARGET_COLUMNS = """
         id::text AS id, tenant_id::text AS tenant_id, slug, name, description,
-        environment, base_url, network_class,
+        environment, base_url, protocol, network_class,
         approved_by::text AS approved_by, approved_at, approval_reason,
         auth_kind, auth_scheme, auth_ref, auth_header_name,
         policy, enabled,
@@ -32227,6 +32227,7 @@ class Database:
         environment: str,
         base_url: str,
         description: Optional[str] = None,
+        protocol: str = "http",
         network_class: str = "public",
         approved_by: Optional[str] = None,
         approval_reason: Optional[str] = None,
@@ -32255,6 +32256,7 @@ class Database:
             environment: ``mock`` | ``development`` | ``test`` | ``staging`` | ``production``.
             base_url: Normalized base URL.
             description: Optional operator note.
+            protocol: ``http`` or ``graphql`` (V371) — what the target speaks.
             network_class: ``public`` or ``private``.
             approved_by: Approving user, required for a private-network target.
             approval_reason: Why the private-network exception is justified.
@@ -32273,13 +32275,13 @@ class Database:
             return None
         query = f"""
             INSERT INTO apiome.verification_target (
-                tenant_id, slug, name, description, environment, base_url,
+                tenant_id, slug, name, description, environment, base_url, protocol,
                 network_class, approved_by, approved_at, approval_reason,
                 auth_kind, auth_scheme, auth_ref, auth_header_name,
                 policy, enabled, created_by, updated_by
             )
             VALUES (
-                %s::uuid, %s, %s, %s, %s, %s,
+                %s::uuid, %s, %s, %s, %s, %s, %s,
                 %s, %s::uuid,
                 CASE WHEN %s::uuid IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END,
                 %s,
@@ -32295,6 +32297,7 @@ class Database:
             description,
             environment,
             base_url,
+            protocol,
             network_class,
             approved_by,
             approved_by,
@@ -32327,6 +32330,7 @@ class Database:
         "description": "%s",
         "environment": "%s",
         "base_url": "%s",
+        "protocol": "%s",
         "network_class": "%s",
         "approval_reason": "%s",
         "approved_by": "%s::uuid",
@@ -32585,7 +32589,7 @@ class Database:
         id::text AS id, tenant_id::text AS tenant_id,
         suite_digest, suite_schema_version, suite_compiler_version, suite_case_count,
         target_id::text AS target_id, target_slug, target_environment, target_network_class,
-        target_base_url,
+        target_base_url, protocol,
         runner_name, runner_version,
         recorded_by::text AS recorded_by, actor_label, actor_kind,
         started_at, finished_at, duration_ms, outcome,
@@ -32665,6 +32669,7 @@ class Database:
             run.get("target_environment"),
             run.get("target_network_class") or "public",
             run.get("target_base_url"),
+            run.get("protocol") or "http",
             run.get("runner_name"),
             run.get("runner_version"),
             (
@@ -32691,13 +32696,13 @@ class Database:
             INSERT INTO apiome.verification_run (
                 tenant_id, suite_digest, suite_schema_version, suite_compiler_version,
                 suite_case_count, target_id, target_slug, target_environment,
-                target_network_class, target_base_url, runner_name, runner_version,
+                target_network_class, target_base_url, protocol, runner_name, runner_version,
                 recorded_by, actor_label, actor_kind, started_at, finished_at, duration_ms,
                 outcome, total_cases, passed_cases, failed_cases, errored_cases, skipped_cases,
                 source, context, idempotency_key
             )
             VALUES (
-                %s::uuid, %s, %s, %s, %s, %s::uuid, %s, %s, %s, %s, %s, %s,
+                %s::uuid, %s, %s, %s, %s, %s::uuid, %s, %s, %s, %s, %s, %s, %s,
                 %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s::jsonb, %s::jsonb, %s
             )

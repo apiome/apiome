@@ -44,8 +44,8 @@ from .contract_runner import (
     FAILURE_RESPONSE_SCHEMA_MISMATCH,
     FAILURE_STATUS_MISMATCH,
     MUTATING_METHODS,
-    SAFE_METHODS,
     CaseDecision,
+    is_mutating_case,
 )
 from .contract_suite import (
     CASE_SOURCE_NEGATIVE_MISSING_PARAMETER,
@@ -552,7 +552,8 @@ def plan_provider_run(
 
     for case in manifest.cases:
         method = case.request.method.upper()
-        if method in SAFE_METHODS or method not in MUTATING_METHODS:
+        # The shared rule, so a GraphQL query (sent as POST) is not mistaken for a write.
+        if not is_mutating_case(case):
             continue
 
         fixture = by_case.get((case.operation_key, case.case_id)) or by_operation.get(

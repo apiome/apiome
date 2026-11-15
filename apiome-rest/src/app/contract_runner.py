@@ -17,6 +17,11 @@ Guarantees
   :class:`~app.schema_instance_validation.InstanceFinding`, carrying the JSON Pointer into the
   response body, so a drift report can say *where* the deployment disagreed with the contract
   rather than only that it did (CTG-4.3, #4489).
+* **GraphQL is judged by its envelope (XPC-1.2, #5730).** A ``graphql`` case is posted to the
+  target URL itself, not joined onto it. A success case passes only with ``errors`` absent and
+  ``data`` satisfying the selection's schema (pointers are into ``data``); a negative case passes
+  only with a non-empty ``errors`` array. A mutation is held back by the mutating-method gate
+  exactly as a ``POST`` is; a query, although also sent as ``POST``, is not.
 
 This module is pure relative to the platform store: it takes a manifest, a resolved target, an
 httpx client (or builds one), and optional auth headers. Compiling, resolving, and recording
@@ -42,6 +47,7 @@ from urllib.parse import urljoin
 
 import httpx
 
+from .contract_protocols import PROTOCOL_GRAPHQL
 from .contract_suite import (
     OUTCOME_CLIENT_ERROR,
     OUTCOME_SUCCESS,
@@ -51,6 +57,7 @@ from .contract_suite import (
 from .schema_instance_validation import validate_json_instance
 from .ssrf_guard import build_guarded_client
 from .verification_evidence import (
+    ASSERTION_KIND_CUSTOM,
     ASSERTION_KIND_RESPONSE_SCHEMA,
     ASSERTION_KIND_STATUS_CODE,
     ASSERTION_OUTCOME_FAILED,
@@ -78,6 +85,9 @@ from .verification_target import (
 
 __all__ = [
     "FAILURE_AUTH_UNAVAILABLE",
+    "FAILURE_GRAPHQL_ENVELOPE_INVALID",
+    "FAILURE_GRAPHQL_ERRORS_MISSING",
+    "FAILURE_GRAPHQL_ERRORS_PRESENT",
     "FAILURE_MUTATING_METHOD_BLOCKED",
     "FAILURE_RESPONSE_SCHEMA_MISMATCH",
     "FAILURE_STATUS_MISMATCH",
@@ -91,6 +101,7 @@ __all__ = [
     "AuthResolutionError",
     "CaseDecision",
     "SuiteRunResult",
+    "is_mutating_case",
     "materialize_auth_headers",
     "run_suite",
     "skipped_operation",
@@ -106,6 +117,15 @@ FAILURE_TRANSPORT_ERROR = "transport-error"
 FAILURE_TIMEOUT = "timeout"
 FAILURE_AUTH_UNAVAILABLE = "auth-unavailable"
 FAILURE_MUTATING_METHOD_BLOCKED = "mutating-method-blocked"
+#: A GraphQL success case was answered with an ``errors`` array.
+FAILURE_GRAPHQL_ERRORS_PRESENT = "graphql-errors-present"
+#: A GraphQL negative case was answered without the ``errors`` it must carry.
+FAILURE_GRAPHQL_ERRORS_MISSING = "graphql-errors-missing"
+#: A GraphQL case was answered with something that is not a JSON object.
+FAILURE_GRAPHQL_ENVELOPE_INVALID = "graphql-envelope-invalid"
+
+#: ``Accept`` sent with every GraphQL case: the GraphQL-over-HTTP media type, then plain JSON.
+GRAPHQL_ACCEPT = "application/graphql-response+json, application/json"
 
 #: Methods that a contract run may exercise against a live deployment without changing it. A
 #: verification that only sends these is safe to point at production.
@@ -328,6 +348,24 @@ def materialize_auth_headers(
     raise AuthResolutionError(f"unsupported auth.scheme {scheme!r}")
 
 
+def is_mutating_case(case: ContractCase) -> bool:
+    """Return whether executing a case can change the target's state.
+
+    An HTTP case is mutating when its method is. A GraphQL case is always sent as ``POST``, so
+    the verb says nothing; its operation type does — a ``mutation`` is mutating, a ``query`` is
+    not.
+
+    Args:
+        case: The compiled case.
+
+    Returns:
+        ``True`` when the mutating-method gate applies to the case.
+    """
+    if case.protocol == PROTOCOL_GRAPHQL and case.graphql is not None:
+        return case.graphql.operation_type == "mutation"
+    return case.request.method.upper() in MUTATING_METHODS
+
+
 def _join_url(base_url: str, path: str) -> str:
     """Join a target base URL with a case's resolved path."""
     base = base_url if base_url.endswith("/") else base_url + "/"
@@ -364,10 +402,17 @@ def _build_request(
     base_url: str,
     auth_headers: Mapping[str, str],
 ) -> httpx.Request:
-    """Build the outbound httpx request for one case."""
-    url = _join_url(base_url, case.request.path)
+    """Build the outbound httpx request for one case.
+
+    A GraphQL case is posted to the target URL as declared — the endpoint *is* the target — so
+    its recorded ``/`` path is never joined onto it.
+    """
+    graphql = case.protocol == PROTOCOL_GRAPHQL
+    url = base_url if graphql else _join_url(base_url, case.request.path)
     query, headers = _query_and_headers(case)
     headers = {**headers, **auth_headers}
+    if graphql:
+        headers.setdefault("Accept", GRAPHQL_ACCEPT)
     content: Optional[bytes] = None
     if case.request.has_body:
         media = case.request.media_type or "application/json"
@@ -536,6 +581,92 @@ def _response_schema_assertions(
     return [headline, *_violation_assertions(result.findings)]
 
 
+def _graphql_assertions(
+    case: ContractCase,
+    *,
+    schemas: Mapping[str, Dict[str, Any]],
+    body: Any,
+) -> List[AssertionInput]:
+    """Judge a GraphQL response envelope.
+
+    A negative case passes on a non-empty ``errors`` array and nothing else is checked: a server
+    that refused the operation owes no ``data``. A success case fails on any ``errors`` entry,
+    then has its ``data`` validated against the selection's schema — so a violation's pointer is
+    into ``data`` (``/user/email``).
+
+    Args:
+        case: The GraphQL case whose response is being judged.
+        schemas: The manifest's schema map.
+        body: The parsed response body.
+
+    Returns:
+        The assertions to record, in order — the first failed one decides the case.
+    """
+    if not isinstance(body, dict):
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_CUSTOM,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject="envelope",
+                expected="a GraphQL response object",
+                actual=_bounded(_render(type(body).__name__), _FIELD_LIMIT),
+                code=FAILURE_GRAPHQL_ENVELOPE_INVALID,
+                message="the response body is not a JSON object, so it is not a GraphQL response",
+            )
+        ]
+
+    errors = body.get("errors")
+    has_errors = isinstance(errors, list) and len(errors) > 0
+    if case.expect.outcome == OUTCOME_CLIENT_ERROR:
+        if has_errors:
+            return [
+                AssertionInput(
+                    kind=ASSERTION_KIND_CUSTOM,
+                    outcome=ASSERTION_OUTCOME_PASSED,
+                    subject="errors",
+                    expected="non-empty errors[]",
+                    actual=f"{len(errors)} error(s)",
+                )
+            ]
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_CUSTOM,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject="errors",
+                expected="non-empty errors[]",
+                actual="no errors",
+                code=FAILURE_GRAPHQL_ERRORS_MISSING,
+                message=(
+                    "the server accepted an operation the schema forbids; a conforming server "
+                    "answers it with a non-empty errors array"
+                ),
+            )
+        ]
+
+    if errors is not None:
+        first = errors[0] if has_errors else errors
+        detail = first.get("message") if isinstance(first, dict) else _render(first)
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_CUSTOM,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject="errors",
+                expected="errors absent",
+                actual=_bounded(_render(detail), _FIELD_LIMIT),
+                code=FAILURE_GRAPHQL_ERRORS_PRESENT,
+                message=_bounded(f"the server answered with errors: {detail}", _MESSAGE_LIMIT),
+            )
+        ]
+    passed = AssertionInput(
+        kind=ASSERTION_KIND_CUSTOM,
+        outcome=ASSERTION_OUTCOME_PASSED,
+        subject="errors",
+        expected="errors absent",
+        actual="errors absent",
+    )
+    return [passed, *_response_schema_assertions(case, schemas=schemas, body=body.get("data"))]
+
+
 def _parse_json_body(response: httpx.Response) -> Any:
     """Best-effort JSON parse; returns raw text when the body is not JSON."""
     if not response.content:
@@ -574,14 +705,16 @@ def _execute_case(
     started = datetime.now(timezone.utc)
     t0 = time.perf_counter()
 
-    if method in MUTATING_METHODS and not target.policy.allow_mutating_methods:
+    if is_mutating_case(case) and not target.policy.allow_mutating_methods:
+        what = (
+            "this case is a GraphQL mutation"
+            if case.protocol == PROTOCOL_GRAPHQL
+            else f"{method} is a mutating method"
+        )
         return skipped_operation(
             case,
             code=FAILURE_MUTATING_METHOD_BLOCKED,
-            message=(
-                f"{method} is a mutating method and the target policy has "
-                "allow_mutating_methods=false"
-            ),
+            message=f"{what} and the target policy has allow_mutating_methods=false",
             started_at=started,
         )
 
@@ -653,11 +786,18 @@ def _execute_case(
         )
 
     body = _parse_json_body(response)
-    schema_assertions = _response_schema_assertions(case, schemas=schemas, body=body)
-    if schema_assertions:
-        assertions.extend(schema_assertions)
-        headline = schema_assertions[0]
-        if headline.outcome == ASSERTION_OUTCOME_FAILED:
+    if case.protocol == PROTOCOL_GRAPHQL:
+        judged = _graphql_assertions(case, schemas=schemas, body=body)
+    else:
+        judged = _response_schema_assertions(case, schemas=schemas, body=body)
+    if judged:
+        assertions.extend(judged)
+        # The first failed assertion decides: a schema headline precedes its located
+        # violations, and a GraphQL ``errors`` verdict precedes the ``data`` check.
+        headline = next(
+            (item for item in judged if item.outcome == ASSERTION_OUTCOME_FAILED), None
+        )
+        if headline is not None:
             finished = datetime.now(timezone.utc)
             return OperationResultInput(
                 case_id=case.case_id,
@@ -667,7 +807,7 @@ def _execute_case(
                 http_method=method,
                 http_path=case.request.path,
                 outcome=OPERATION_OUTCOME_FAILED,
-                failure_code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
+                failure_code=headline.code or FAILURE_RESPONSE_SCHEMA_MISMATCH,
                 failure_message=headline.message,
                 expected_status=_expected_status_label(case.expect.status_codes),
                 actual_status=response.status_code,

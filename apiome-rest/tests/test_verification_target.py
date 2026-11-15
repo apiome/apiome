@@ -35,6 +35,7 @@ from app.verification_target import (
     CODE_DISABLED,
     CODE_NOT_FOUND,
     CODE_PRIVATE_NOT_APPROVED,
+    CODE_PROTOCOL_MISMATCH,
     CODE_SLUG_INVALID,
     CODE_URL_CREDENTIALS,
     CODE_URL_MALFORMED,
@@ -494,7 +495,49 @@ def test_a_run_identity_names_the_target_and_nothing_that_points_at_a_secret() -
         "environment": ENVIRONMENT_PRODUCTION,
         "network_class": NETWORK_CLASS_PUBLIC,
         "base_url": "https://staging.example.com/api",
+        "protocol": "http",
     }
     serialized = str(identity)
     assert "APIOME_STAGING_TOKEN" not in serialized
     assert "auth" not in identity
+
+
+# ---------------------------------------------------------------------------------------------
+# Protocol (XPC-1.2, #5730)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_a_target_is_http_unless_it_says_otherwise() -> None:
+    assert VerificationTargetInput(
+        slug="staging", name="Staging", base_url="https://93.184.216.34"
+    ).protocol == "http"
+    # A row written before V371 has no protocol column value to read; it is an HTTP target.
+    row = _row()
+    row.pop("protocol", None)
+    assert record_from_row(row).protocol == "http"
+    assert record_from_row(_row(protocol="graphql")).protocol == "graphql"
+
+
+def test_a_protocol_no_adapter_speaks_is_refused() -> None:
+    with pytest.raises(ValidationError):
+        VerificationTargetInput(
+            slug="staging", name="Staging", base_url="https://93.184.216.34", protocol="grpc"
+        )
+    with pytest.raises(ValidationError):
+        VerificationTargetPatch(protocol="soap")
+
+
+def test_resolution_refuses_a_target_of_another_protocol() -> None:
+    record = record_from_row(_row())
+    with pytest.raises(TargetValidationError) as exc:
+        resolve_target_record(record, revalidate_url=False, protocol="graphql")
+    assert exc.value.code == CODE_PROTOCOL_MISMATCH
+    assert "graphql" in str(exc.value)
+
+
+def test_resolution_carries_the_protocol_to_the_runner() -> None:
+    record = record_from_row(_row(protocol="graphql"))
+    resolved = resolve_target_record(record, revalidate_url=False, protocol="graphql")
+    assert resolved.protocol == "graphql"
+    # No protocol asked for — the pre-XPC-1.2 call — never refuses.
+    assert resolve_target_record(record, revalidate_url=False).protocol == "graphql"

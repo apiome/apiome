@@ -164,3 +164,41 @@ def test_compiling_writes_nothing() -> None:
         )
     assert [call[0] for call in database.mock_calls] == ["get_version_by_id"]
     database.get_version_by_id.assert_called_once_with(_REVISION, _TENANT)
+
+
+def _graphql_revision(sdl: str) -> ResolvedRevisionModel:
+    """A resolved revision carrying a GraphQL version's canonical model."""
+    from app.graphql_normalizer import GraphQlNormalizer
+    from app.graphql_parser import build_graphql_schema
+
+    return _revision(GraphQlNormalizer().normalize(build_graphql_schema(sdl)))
+
+
+def test_a_graphql_version_compiles_through_the_graphql_adapter() -> None:
+    """XPC-1.2: a GraphQL version is no longer only reported — it is compiled."""
+    response = _compile(revision=_graphql_revision("type Query { hello: String! }"))
+    assert response.ok is True
+    manifest = response.manifest
+    assert manifest is not None
+    assert manifest.protocol == "graphql"
+    assert [operation.key for operation in manifest.operations] == ["Query.hello"]
+
+
+def test_a_graphql_version_with_no_root_fields_is_a_200_with_ok_false() -> None:
+    """Subscriptions alone give a request/response case nothing to send — a stable code says so."""
+    sdl = """
+    schema { query: Query subscription: Subscription }
+    type Query { _unused: String }
+    type Subscription { ticks: Int }
+    """
+    revision = _graphql_revision(sdl)
+    # Keep only the subscription root, as a subscription-only schema normalizes.
+    revision.api.services = [
+        service for service in revision.api.services if service.key == "Subscription"
+    ]
+    response = _compile(revision=revision)
+    assert response.ok is False
+    assert response.manifest is None
+    assert response.error is not None
+    assert response.error.code == "FORMAT_MISMATCH"
+    assert "query or mutation" in (response.error.message or "")

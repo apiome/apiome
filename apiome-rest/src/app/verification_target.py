@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .contract_protocols import CONTRACT_PROTOCOLS, PROTOCOL_HTTP
 from .ssrf_guard import SSRFError, validate_host, validate_url_policy
 
 __all__ = [
@@ -51,6 +52,7 @@ __all__ = [
     "CODE_NOT_FOUND",
     "CODE_POLICY_TLS_REQUIRED",
     "CODE_PRIVATE_NOT_APPROVED",
+    "CODE_PROTOCOL_MISMATCH",
     "CODE_SLUG_INVALID",
     "CODE_SLUG_TAKEN",
     "CODE_URL_CREDENTIALS",
@@ -164,6 +166,9 @@ CODE_NOT_FOUND = "target-not-found"
 CODE_DISABLED = "target-disabled"
 #: A slug already belongs to a live target in this tenant.
 CODE_SLUG_TAKEN = "target-slug-taken"
+#: A run selected a target whose ``protocol`` is not the suite's (an ``http`` target for a
+#: GraphQL version). Answered 422: the request is well formed, the pairing is not executable.
+CODE_PROTOCOL_MISMATCH = "target-protocol-mismatch"
 
 # Lowercase kebab, 1..128 chars: survives a shell argument, a YAML key, and a URL path segment.
 _SLUG_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,126}[a-z0-9])?$")
@@ -565,6 +570,14 @@ class VerificationTargetInput(BaseModel):
         description="`mock`, `development`, `test`, `staging`, or `production`.",
     )
     base_url: str = Field(description="Base URL the suite's relative paths are joined onto.")
+    protocol: str = Field(
+        default=PROTOCOL_HTTP,
+        description=(
+            "`http` (relative paths are joined onto `base_url`) or `graphql` (`base_url` is the "
+            "GraphQL endpoint every case is posted to). A run refuses a target whose protocol "
+            "is not the suite's."
+        ),
+    )
     network_class: str = Field(
         default=NETWORK_CLASS_PUBLIC,
         description=(
@@ -605,6 +618,14 @@ class VerificationTargetInput(BaseModel):
             raise ValueError(f"network_class must be one of {', '.join(NETWORK_CLASSES)}")
         return value
 
+    @field_validator("protocol")
+    @classmethod
+    def _known_protocol(cls, value: str) -> str:
+        """Reject a protocol no contract-suite adapter speaks."""
+        if value not in CONTRACT_PROTOCOLS:
+            raise ValueError(f"protocol must be one of {', '.join(CONTRACT_PROTOCOLS)}")
+        return value
+
 
 class VerificationTargetPatch(BaseModel):
     """A partial update. Every field is optional; omitted fields are left as they are.
@@ -620,6 +641,7 @@ class VerificationTargetPatch(BaseModel):
     description: Optional[str] = Field(default=None, max_length=2000)
     environment: Optional[str] = None
     base_url: Optional[str] = None
+    protocol: Optional[str] = None
     network_class: Optional[str] = None
     approval_reason: Optional[str] = Field(default=None, max_length=2000)
     auth: Optional[TargetAuthReference] = None
@@ -640,6 +662,14 @@ class VerificationTargetPatch(BaseModel):
         """Reject a network class outside the closed vocabulary."""
         if value is not None and value not in NETWORK_CLASSES:
             raise ValueError(f"network_class must be one of {', '.join(NETWORK_CLASSES)}")
+        return value
+
+    @field_validator("protocol")
+    @classmethod
+    def _known_protocol(cls, value: Optional[str]) -> Optional[str]:
+        """Reject a protocol no contract-suite adapter speaks."""
+        if value is not None and value not in CONTRACT_PROTOCOLS:
+            raise ValueError(f"protocol must be one of {', '.join(CONTRACT_PROTOCOLS)}")
         return value
 
     def has_changes(self) -> bool:
@@ -663,6 +693,9 @@ class VerificationTargetRecord(BaseModel):
     description: Optional[str] = Field(default=None, description="Operator note.")
     environment: str = Field(description="Environment class.")
     base_url: str = Field(description="Base URL, normalized (no trailing slash).")
+    protocol: str = Field(
+        default=PROTOCOL_HTTP, description="`http` or `graphql` — what the target speaks."
+    )
     network_class: str = Field(description="`public` or `private`.")
     approved_by: Optional[str] = Field(
         default=None, description="User who approved a private-network target."
@@ -703,6 +736,7 @@ def record_from_row(row: Mapping[str, Any]) -> VerificationTargetRecord:
         description=row.get("description"),
         environment=str(row.get("environment") or ENVIRONMENT_STAGING),
         base_url=str(row.get("base_url") or ""),
+        protocol=str(row.get("protocol") or PROTOCOL_HTTP),
         network_class=str(row.get("network_class") or NETWORK_CLASS_PUBLIC),
         approved_by=_text(row.get("approved_by")),
         approved_at=row.get("approved_at"),
@@ -745,6 +779,10 @@ class ResolvedTarget(BaseModel):
     environment: str = Field(description="Environment class.")
     network_class: str = Field(description="`public` or `private`.")
     base_url: str = Field(description="Normalized base URL to join relative paths onto.")
+    protocol: str = Field(
+        default=PROTOCOL_HTTP,
+        description="`http` or `graphql`; for `graphql`, `base_url` is the endpoint itself.",
+    )
     policy: VerificationPolicy = Field(description="The policy the runner must honour.")
     auth: TargetAuthReference = Field(
         description=(
@@ -757,7 +795,10 @@ class ResolvedTarget(BaseModel):
 
 
 def resolve_target_record(
-    record: VerificationTargetRecord, *, revalidate_url: bool = True
+    record: VerificationTargetRecord,
+    *,
+    revalidate_url: bool = True,
+    protocol: Optional[str] = None,
 ) -> ResolvedTarget:
     """Turn a stored record into a :class:`ResolvedTarget`, re-checking it is still usable.
 
@@ -771,13 +812,16 @@ def resolve_target_record(
         record: The stored target.
         revalidate_url: Set ``False`` only where a resolution must not depend on DNS (an offline
             or air-gapped path); the shape checks still run.
+        protocol: The protocol the run's suite speaks. When given, a target that declares a
+            different one is refused rather than handed a request it cannot answer.
 
     Returns:
         The resolved target.
 
     Raises:
         TargetValidationError: ``target-not-found`` for a retired target, ``target-disabled`` for
-            a disabled one, or a URL code when the endpoint no longer satisfies its network class.
+            a disabled one, ``target-protocol-mismatch`` for one that speaks another protocol,
+            or a URL code when the endpoint no longer satisfies its network class.
     """
     if record.deleted_at is not None:
         raise TargetValidationError(
@@ -788,6 +832,13 @@ def resolve_target_record(
             CODE_DISABLED,
             f"target '{record.slug}' is disabled; enable it before running verification "
             "against it",
+        )
+    if protocol is not None and record.protocol != protocol:
+        raise TargetValidationError(
+            CODE_PROTOCOL_MISMATCH,
+            f"target '{record.slug}' declares protocol '{record.protocol}', but this suite is "
+            f"compiled for '{protocol}'; select a '{protocol}' target or change the target's "
+            "protocol",
         )
 
     base_url = validate_base_url(
@@ -806,6 +857,7 @@ def resolve_target_record(
         environment=record.environment,
         network_class=record.network_class,
         base_url=base_url,
+        protocol=record.protocol,
         policy=record.policy,
         auth=record.auth,
         resolved_at=datetime.now(timezone.utc),
@@ -816,7 +868,7 @@ def target_identity(record: VerificationTargetRecord) -> Dict[str, Any]:
     """The secret-free identity block a run record embeds (the ECA-1.3 seam).
 
     A run says *which* target it used, not *how to authenticate* to it: id, slug, environment,
-    network class, and base URL. The credential reference is deliberately absent — an evidence row
+    network class, base URL, and protocol. The credential reference is deliberately absent — an evidence row
     that named the vault entry would tell a reader where to go looking.
 
     Args:
@@ -831,6 +883,7 @@ def target_identity(record: VerificationTargetRecord) -> Dict[str, Any]:
         "environment": record.environment,
         "network_class": record.network_class,
         "base_url": record.base_url,
+        "protocol": record.protocol,
     }
 
 

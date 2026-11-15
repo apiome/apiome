@@ -50,6 +50,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .contract_protocols import CONTRACT_PROTOCOLS, PROTOCOL_HTTP
 from .intake_secret_scrub import scrub_message
 from .mock_attestation import (
     MockAttestationError,
@@ -645,6 +646,13 @@ class VerificationRunInput(BaseModel):
         default=None, description="Runner version, so a behaviour change is attributable.",
         max_length=100,
     )
+    protocol: str = Field(
+        default=PROTOCOL_HTTP,
+        description=(
+            "Protocol the suite was executed over: `http`, or `graphql` for a GraphQL "
+            "version's suite (the manifest's own `protocol`)."
+        ),
+    )
     started_at: datetime = Field(description="When the run began.")
     finished_at: datetime = Field(description="When the run ended.")
     outcome: Optional[str] = Field(
@@ -696,6 +704,14 @@ class VerificationRunInput(BaseModel):
         """Reject a run outcome outside the closed vocabulary."""
         if value is not None and value not in RUN_OUTCOMES:
             raise ValueError(f"outcome must be one of {', '.join(RUN_OUTCOMES)}")
+        return value
+
+    @field_validator("protocol")
+    @classmethod
+    def _known_protocol(cls, value: str) -> str:
+        """Reject a protocol no contract-suite adapter speaks."""
+        if value not in CONTRACT_PROTOCOLS:
+            raise ValueError(f"protocol must be one of {', '.join(CONTRACT_PROTOCOLS)}")
         return value
 
 
@@ -1035,6 +1051,9 @@ class VerificationRunSummary(BaseModel):
     target_environment: str = Field(description="Environment class at run time.")
     target_network_class: str = Field(description="`public` or `private`, at run time.")
     target_base_url: str = Field(description="Base URL at run time.")
+    protocol: str = Field(
+        default=PROTOCOL_HTTP, description="`http` or `graphql` — what the suite was run over."
+    )
     runner_name: str = Field(description="Which runner produced the evidence.")
     runner_version: Optional[str] = Field(default=None, description="Runner version.")
     recorded_by: Optional[str] = Field(default=None, description="User who recorded the evidence.")
@@ -1120,6 +1139,7 @@ def _summary_fields(row: Mapping[str, Any]) -> Dict[str, Any]:
         "target_environment": str(row.get("target_environment") or ""),
         "target_network_class": str(row.get("target_network_class") or "public"),
         "target_base_url": str(row.get("target_base_url") or ""),
+        "protocol": str(row.get("protocol") or PROTOCOL_HTTP),
         "runner_name": str(row.get("runner_name") or ""),
         "runner_version": row.get("runner_version"),
         "recorded_by": _text(row.get("recorded_by")),

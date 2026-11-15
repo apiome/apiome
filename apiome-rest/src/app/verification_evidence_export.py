@@ -235,6 +235,7 @@ def _properties_element(record: VerificationRunRecord) -> ElementTree.Element:
         "apiome.target_environment": record.target_environment,
         "apiome.target_network_class": record.target_network_class,
         "apiome.target_base_url": record.target_base_url,
+        "apiome.protocol": record.protocol,
         "apiome.runner": record.runner_name,
         "apiome.runner_version": record.runner_version,
         "apiome.started_at": _iso(record.started_at),

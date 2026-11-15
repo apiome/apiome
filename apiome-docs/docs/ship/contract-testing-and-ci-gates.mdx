@@ -104,6 +104,45 @@ recently the deployment was verified. It always answers `200` with the verdict i
 pipeline can tell a failing gate from a network error. A signal that nothing has produced yet is
 reported as `not_configured` and left out of the verdict.
 
+## Contract test a GraphQL API
+
+A contract run works on a GraphQL version too. Apiome turns every root `query` and `mutation`
+field into test cases and calls a GraphQL endpoint with them. Each case passes or fails on what
+the endpoint answers. It is available over the REST API.
+
+1. **Define a GraphQL target.** Create a verification target whose `base_url` is the GraphQL
+   endpoint itself and whose `protocol` is `graphql`. For the hosted mock, that is the mock's
+   `/graphql` URL:
+
+   ```bash
+   curl -X POST "$APIOME/v1/tenants/acme/verification-targets" \
+     -H "X-API-Key: $APIOME_API_KEY" -H "Content-Type: application/json" \
+     -d '{"slug": "pets-graphql-mock", "name": "Pets GraphQL mock",
+          "environment": "mock", "protocol": "graphql",
+          "base_url": "https://mock.apiome.dev/acme/pets-graph/1.0.0/graphql"}'
+   ```
+
+2. **Look at the suite** (optional). `POST …/contracts/project/pets-graph/1.0.0/suite` returns the
+   cases. Each one has `protocol: graphql` and a `graphql` block holding the `query`, its
+   `variables` and its `operationName`.
+3. **Run it.** `POST …/contracts/project/pets-graph/1.0.0/run` with
+   `{"target_ref": "pets-graphql-mock"}`. The evidence records `protocol: graphql`, one result per
+   case, and the exact field that disagreed (for example `/pet/name`).
+
+| Each root field gets… | It passes when the endpoint answers… |
+| --- | --- |
+| A call with the arguments the schema declares through `@example`, then with generated ones | No `errors`, and `data` matching the field's type — every selected field present, `null` only where the schema allows it |
+| A call with a required argument left out, one with an argument of the wrong type, and one that selects a field the type does not have | A non-empty `errors` array |
+
+- **Mutations are held back** unless the target allows changes (`allow_mutating_methods`).
+  Queries always run.
+- **Subscriptions are not run.** They are listed under `unsupported` in the suite, with the
+  reason.
+- **The protocols must match.** A run that names an `http` target for a GraphQL version is refused
+  with `422 target-protocol-mismatch`, and the reverse is refused too.
+- The selection goes three levels of objects deep by default. Change it with
+  `options.max_selection_depth` (1–8).
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

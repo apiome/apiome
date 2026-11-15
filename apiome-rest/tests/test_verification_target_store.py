@@ -29,6 +29,7 @@ from app.verification_target import (
     CODE_NOT_FOUND,
     CODE_POLICY_TLS_REQUIRED,
     CODE_PRIVATE_NOT_APPROVED,
+    CODE_PROTOCOL_MISMATCH,
     CODE_SLUG_TAKEN,
     CODE_URL_PRIVATE_NETWORK,
     NETWORK_CLASS_PRIVATE,
@@ -84,6 +85,7 @@ def _row(**overrides: Any) -> Dict[str, Any]:
         "description": None,
         "environment": "staging",
         "base_url": "https://93.184.216.34/api",
+        "protocol": "http",
         "network_class": NETWORK_CLASS_PUBLIC,
         "approved_by": None,
         "approved_at": None,
@@ -571,3 +573,50 @@ def test_a_target_that_moved_inward_is_refused_at_resolve_time_and_audited() -> 
             resolve_target(_TENANT, "staging", actor=_RUNNER)
     assert exc.value.code == CODE_URL_PRIVATE_NETWORK
     assert stub.audits[0]["reason"] == CODE_URL_PRIVATE_NETWORK
+
+
+# ===========================================================================
+# Protocol (XPC-1.2, #5730)
+# ===========================================================================
+
+
+def test_a_target_stores_the_protocol_it_declares() -> None:
+    stub = _StubDb()
+    with patch("app.verification_target_store.db", stub):
+        record = create_target(_TENANT, _definition(protocol="graphql"), actor=_ACTOR)
+    assert stub.inserts[0]["protocol"] == "graphql"
+    assert record.protocol == "graphql"
+    assert stub.audits[0]["detail"]["protocol"] == "graphql"
+
+
+def test_a_patch_can_change_the_protocol() -> None:
+    stub = _StubDb(row=_row())
+    with patch("app.verification_target_store.db", stub):
+        record = record_from_row(stub.row)
+        updated = update_target(
+            _TENANT, record, VerificationTargetPatch(protocol="graphql"), actor=_ACTOR
+        )
+    assert stub.updates[0]["fields"] == {"protocol": "graphql"}
+    assert updated.protocol == "graphql"
+
+
+def test_a_target_of_another_protocol_is_refused_and_the_refusal_is_audited() -> None:
+    stub = _StubDb(row=_row())
+    with patch("app.verification_target_store.db", stub):
+        with pytest.raises(TargetValidationError) as exc:
+            resolve_target(_TENANT, "staging", actor=_ACTOR, protocol="graphql")
+    assert exc.value.code == CODE_PROTOCOL_MISMATCH
+    entry = stub.audits[0]
+    assert (entry["action"], entry["outcome"], entry["reason"]) == (
+        ACTION_RESOLVE,
+        OUTCOME_DENIED,
+        CODE_PROTOCOL_MISMATCH,
+    )
+
+
+def test_a_target_of_the_suites_protocol_resolves_and_says_so() -> None:
+    stub = _StubDb(row=_row(protocol="graphql"))
+    with patch("app.verification_target_store.db", stub):
+        resolved = resolve_target(_TENANT, "staging", actor=_ACTOR, protocol="graphql")
+    assert resolved.protocol == "graphql"
+    assert stub.audits[0]["detail"]["protocol"] == "graphql"

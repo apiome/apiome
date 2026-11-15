@@ -505,3 +505,11 @@ def test_listing_passes_the_gate_filters_through_and_clamps_the_limit() -> None:
     assert call["suite_digest"] == _DIGEST
     assert call["outcome"] == "failed"
     assert call["limit"] == 200
+
+
+def test_a_run_records_the_protocol_it_was_executed_over() -> None:
+    """XPC-1.2: the protocol reaches the ``verification_run`` row."""
+    fake = _FakeDb()
+    with _with(fake):
+        record_run(_TENANT, _run(protocol="graphql"), actor=_ACTOR)
+    assert fake.inserts[0]["run"]["protocol"] == "graphql"
