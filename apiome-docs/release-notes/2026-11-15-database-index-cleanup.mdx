@@ -1,0 +1,30 @@
+---
+slug: database-index-cleanup
+title: Faster under load, and faster on large databases
+description: "Concurrent requests no longer queue on one database connection; redundant indexes removed and deletes indexed."
+authors: [apiome]
+---
+
+This release tunes how Apiome uses its database. Nothing changes in the API or the UI.
+
+{/* truncate */}
+
+- **Concurrent requests run side by side.** The REST API used one database connection for
+  everything, so requests waited on each other's queries. Each worker thread now has its own
+  pooled connection: in our benchmark, 16 concurrent requests got through about four times faster.
+- **Less work per write.** 85 indexes that another index already covered are gone, so inserts and
+  updates on the busiest tables (versions, paths, class properties, tenant members) touch fewer indexes.
+- **Cheaper API-key requests.** A key's "last used" time is now stamped at most once a minute
+  instead of on every request, and the stamp no longer rewrites the key's index entries.
+- **Faster project and version deletes.** 96 foreign keys on the tables a delete reaches now have
+  an index on the referencing column, so the delete no longer scans each of those tables in full.
+- **Faster lists.** New indexes back the "latest revision" lookup in the project and catalog lists
+  and the export webhook retry sweep.
+- **A stability fix.** Reading a single data record no longer closes the API's database connection.
+
+Operators: an API instance now holds up to about 41 database connections instead of one — see
+[Database connections](/admin/operating-apiome#database-connections).
+
+Operators of large databases: the migration builds 98 indexes, and each build blocks writes to its
+table. To avoid that, build them concurrently before you deploy — see
+[Upgrade a large database without blocking writes](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes).

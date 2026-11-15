@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.713.1] - 2026-11-15
+
+### Changed
+- **Per-thread pooled database connections** — `Database` no longer shares one psycopg2 connection across every
+  request thread:
+  - Each thread works on its own connection, so concurrent requests no longer queue on one connection, and one
+    request's `commit` / `rollback` can no longer land in the middle of another's transaction.
+  - A thread borrows a connection on first use; when the thread ends the connection returns to an idle pool bounded by
+    `DB_POOL_MAX_IDLE` (default 10). An instance holds at most one connection per worker thread (~41).
+  - Assigning `db.connection = conn` still pins one connection for every thread (the `requires_db` test harnesses).
+- **Database index cleanup (apiome-db V381)** — OpenAPI 1.573.1 (no schema change):
+  - API-key authentication stamps `api_keys.last_used_at` at most once a minute per key instead of on every request;
+    V381 also drops the index on that column, so the stamp no longer rewrites every index on the row.
+  - V381 drops 85 redundant indexes, adds referencing-column indexes for the 96 foreign keys a project or version
+    delete checks that had none, and adds indexes for the latest-revision lookup in the project and catalog lists and the
+    export webhook stale-attempt claim.
+
+### Fixed
+- `Database.get_data_snapshot` closed the process-wide database connection after every read (`GET` of a single data
+  record), forcing a reconnect for the next request. It now goes through `execute_query` like every other read.
+
+
 ## [1.713.0] - 2026-11-15
 
 ### Added
