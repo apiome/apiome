@@ -1,0 +1,1179 @@
+{
+  "description": "JSON Schema compatibility fixture pairs (XPC-4.2, #5746): one per rule, with the expected verdict under each Confluent mode.",
+  "cases": [
+    {
+      "id": "closed-property-added",
+      "note": "old readers of a closed model reject the new property",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "closed-property-removed",
+      "note": "new readers of a closed model reject old data carrying it",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "rule_ids": [
+        "jsonschema.backward.closed-property-removed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "open-property-added",
+      "note": "old data may already carry the name with another type",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.open-property-added"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "open-property-removed",
+      "note": "new data may carry the name with a value old readers reject",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.open-property-removed"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "partially-open-property-added-covered",
+      "note": "the old additionalProperties schema already allowed a string `nick`",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "rule_ids": [],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": true,
+        "FULL": true
+      }
+    },
+    {
+      "id": "partially-open-property-added-narrower",
+      "note": "old data may carry `nick` as an integer",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "additional-properties-closed",
+      "note": "open -> closed",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "additional-properties-opened",
+      "note": "closed -> open",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.additional-properties-opened"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "required-added",
+      "note": "old data may omit it",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nick"
+        ]
+      },
+      "rule_ids": [
+        "jsonschema.backward.required-added"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "required-removed",
+      "note": "old readers expect it",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nick"
+        ]
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nick": {
+            "type": "string"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.required-removed"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "enum-narrowed",
+      "note": "silver dropped",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "gold",
+              "silver"
+            ]
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "gold"
+            ]
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.enum-narrowed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "enum-widened",
+      "note": "silver added",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "gold"
+            ]
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "gold",
+              "silver"
+            ]
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.enum-widened"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "type-widened-integer-to-number",
+      "note": "every integer is a number: the reader direction only",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "type-narrowed-number-to-integer",
+      "note": "1.5 no longer valid",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "type-changed",
+      "note": "integer -> string",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.type-changed",
+        "jsonschema.forward.type-changed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "nullable-widened",
+      "note": "null now allowed",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "nick": {
+            "type": "string"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "nick": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "one-of-branch-removed",
+      "note": "integer branch dropped",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "v": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "v": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.one-of-branch-removed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "any-of-branch-added",
+      "note": "integer branch added",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "v": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "v": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.any-of-branch-added"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "maximum-tightened",
+      "note": "10 -> 5",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "maximum": 10
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "maximum": 5
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.maximum-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "maximum-loosened",
+      "note": "bound removed",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "maximum": 5
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.maximum-loosened"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "min-length-tightened",
+      "note": "1 -> 3",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.min-length-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "max-length-tightened",
+      "note": "bound added",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "maxLength": 8
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "pattern-tightened",
+      "note": "pattern added",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "pattern": "^[a-z]+$"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.pattern-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "pattern-changed",
+      "note": "patterns cannot be ordered",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "pattern": "^[a-z]+$"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "s": {
+            "type": "string",
+            "pattern": "^[0-9]+$"
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.pattern-changed",
+        "jsonschema.forward.pattern-changed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "unique-items-tightened",
+      "note": "duplicates now rejected",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.unique-items-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "array-items-narrowed",
+      "note": "item type narrowed",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "integer"
+              ]
+            }
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "annotations-only",
+      "note": "annotations never change validity",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "old"
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "new",
+            "examples": [
+              1
+            ],
+            "deprecated": true
+          }
+        }
+      },
+      "rule_ids": [],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": true,
+        "FULL": true
+      }
+    },
+    {
+      "id": "ref-shared-definition",
+      "note": "the change is reported once, on Address",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Order": {
+            "type": "object",
+            "properties": {
+              "ship_to": {
+                "$ref": "#/$defs/Address"
+              }
+            }
+          },
+          "Address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Order": {
+            "type": "object",
+            "properties": {
+              "ship_to": {
+                "$ref": "#/$defs/Address"
+              }
+            }
+          },
+          "Address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "zip": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "compatible": {
+        "BACKWARD": true,
+        "FORWARD": false,
+        "FULL": false
+      }
+    },
+    {
+      "id": "ref-target-moved",
+      "note": "the ref now resolves to a closed schema",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Order": {
+            "type": "object",
+            "properties": {
+              "ship_to": {
+                "$ref": "#/$defs/Address"
+              }
+            }
+          },
+          "Address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            }
+          },
+          "Location": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Order": {
+            "type": "object",
+            "properties": {
+              "ship_to": {
+                "$ref": "#/$defs/Location"
+              }
+            }
+          },
+          "Address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            }
+          },
+          "Location": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    },
+    {
+      "id": "ref-cycle",
+      "note": "a self-referential definition terminates",
+      "old": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Node": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Node"
+                }
+              }
+            }
+          }
+        }
+      },
+      "new": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Node": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Node"
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "compatible": {
+        "BACKWARD": false,
+        "FORWARD": true,
+        "FULL": false
+      }
+    }
+  ]
+}

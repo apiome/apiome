@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.715.0] - 2026-11-15
+
+### Added
+- **JSON Schema open/closed compatibility classifier (XPC-4.2, #5746)** — OpenAPI 1.575.0 (no schema change):
+  - New breaking-change classifier `jsonschema-compatibility`, registered under `json-schema` (the key the JSON Schema
+    import source emits), `jsonschema` and `json-schema-2020-12`. It compares each type's schema from the imported
+    document (`raw["source"]`) — falling back to `canonical_json_schema.build_bundle_schemas` when either version has
+    none — and grades every canonical change by Confluent compatibility mode (`BACKWARD` default; `FORWARD`, `FULL`,
+    `*_TRANSITIVE` via `JsonSchemaBreakingChangeClassifier(mode=…)`): a finding that breaks a direction the mode checks is
+    breaking, one that breaks only the other direction is dangerous.
+  - The open/closed content model follows Confluent and Apicurio: a property added to a closed model
+    (`additionalProperties: false` / `unevaluatedProperties: false`) breaks FORWARD, removed breaks BACKWARD; in an open
+    model the reverse; a partially open model checks the property against its `additionalProperties` schema. Also graded:
+    `additionalProperties` open↔closed, `required` added/removed, `enum`/`const` narrowed/widened, `type` widened
+    (`integer` → `number`, FORWARD only) / narrowed / changed, `oneOf`/`anyOf` branches removed/added, bounds
+    (`maximum`, `maxLength`, `minItems`, …) tightened/loosened, `pattern`/`format`/`multipleOf`, `uniqueItems`, and
+    `allOf` part by part. Local `$ref`s resolve per version; a shared definition is compared once, on itself.
+  - Stable rule ids `jsonschema.<backward|forward>.<rule>` (e.g. `jsonschema.forward.closed-property-added`); unmodeled
+    keywords (`not`, `if`/`then`/`else`, `patternProperties`, …) and external `$ref` changes are
+    `jsonschema.review.*` (dangerous, never fail a mode). Rationales name the mode and the content model.
+  - Findings with no canonical change (an `additionalProperties` flip, a nested-object property) are kept in
+    `unattributed` and count toward the overall severity. New modules `app.jsonschema_compatibility` (pure comparator,
+    `compare_schemas`, `is_compatible(findings, mode)`) and `app.jsonschema_breaking`.
+
+### Changed
+- Catalog drift and the re-import delta now grade JSON Schema items with `jsonschema-compatibility` instead of the
+  builtin ruleset. A property added to an open schema is now breaking, and one added to a closed schema dangerous.
+
+
 ## [1.714.0] - 2026-11-15
 
 ### Added

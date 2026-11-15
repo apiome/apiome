@@ -1,0 +1,30 @@
+---
+slug: jsonschema-compatibility
+title: JSON Schema changes graded by open and closed content models
+description: "JSON Schema changes are graded by compatibility mode, the way Confluent and Apicurio do."
+authors: [apiome]
+---
+
+Comparing two versions of a JSON Schema catalog item now takes the schema's **content model** into
+account. Before, a property added to a closed schema (`additionalProperties: false`) was graded
+**Safe**, though old readers reject data that carries it. Now it is **Dangerous**: it breaks the
+`FORWARD` mode. The same addition to an open schema is **Breaking**, because old data may already
+carry that name with another value.
+
+{/* truncate */}
+
+- **Graded by mode.** Each change is checked both ways. A change the new schema can't read old
+  data through fails `BACKWARD` and is **Breaking**. One only the old schema rejects fails `FORWARD`
+  and is **Dangerous**. The explanation names the modes it breaks and the content model it used.
+- **The rules.** Properties added or removed under open, closed and partially open models,
+  `additionalProperties` flips, `required`, `enum` and `const`, `type` widening (`integer` →
+  `number` is safe for new readers only), `oneOf` and `anyOf` branches, and constraints such as
+  `maximum`, `maxLength` and `pattern`. The full table and rule ids are on
+  [Compatibility modes](/govern/compatibility-modes#json-schema).
+- **`$ref` is resolved.** References to `$defs` are followed inside each version, and a change to a
+  shared definition is reported once, on that definition.
+- **Nothing is missed.** A change with no row of its own, such as an `additionalProperties` flip,
+  still counts toward the overall grade.
+
+You see the new grades in drift (**What changed** on a catalog item's **Versions** tab) and when you
+re-import a file over an existing item. Choosing the mode in the API and CLI comes later.
