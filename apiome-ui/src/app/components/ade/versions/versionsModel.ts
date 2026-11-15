@@ -964,7 +964,8 @@ export function freezeSchemaConfirm(
  * The first two rows are the acceptance criterion *"`FEATURE_GITLIKE` behaviour is unchanged
  * in production builds"*, verbatim. The last two are the *"render with a visible flag marker
  * in non-production builds rather than vanishing"* rule: an affordance the flag hides is
- * still drawn, carries the honey `gitlike` flag, and is inert — it can be seen but not used,
+ * still drawn and is inert (its `title` says why; the outline `gitlike` flag is drawn only
+ * once the flag is on, HIVE-13.1) — it can be seen but not used,
  * so no code path the flag guards is reachable in any build.
  */
 export interface GitlikeAffordance {
@@ -972,7 +973,7 @@ export interface GitlikeAffordance {
   flagOn: boolean;
   /** Draw the affordance at all. */
   visible: boolean;
-  /** Draw the honey `gitlike` flag beside it. */
+  /** Draw the `gitlike` flag beside it — `GitlikeFlag` still draws nothing until `enabled`. */
   marked: boolean;
   /** Let it be used. */
   enabled: boolean;
@@ -1034,7 +1035,7 @@ export interface VersionRowMenuItem {
   id: VersionRowMenuAction;
   /** The label. */
   label: string;
-  /** Whether the item is one the flag gates — drawn with the honey flag when marked. */
+  /** Whether the item is one the flag gates — drawn with the `gitlike` flag when marked. */
   gitlike: boolean;
   /** Whether it can be used. */
   disabled: boolean;

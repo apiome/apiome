@@ -136,8 +136,9 @@ many others depend on. A version with no classes shows an empty state; add class
 
 Apiome has branch, merge, fork and tag tooling for versions, but it is switched off: `FEATURE_GITLIKE`
 is a constant in `apiome-ui/lib/feature-flags.ts`, `false` in every shipped build. Production builds
-hide these controls; development builds draw them disabled with a **gitlike** marker. Turning them on
-takes a code change and a rebuild.
+hide these controls; development builds draw them disabled, and hovering one says *Compiled but
+hidden today (FEATURE_GITLIKE=false)*. With the flag on, each control carries a small outline
+**gitlike** badge. Turning them on takes a code change and a rebuild.
 
 | Control | What it would do |
 | --- | --- |

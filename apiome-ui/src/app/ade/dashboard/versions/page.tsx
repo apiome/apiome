@@ -3576,7 +3576,7 @@ const Versions = () => {
           {GITLIKE.marked ? <GitlikeFlag enabled /> : null}
         </button>
       ) : GITLIKE.visible && !GITLIKE.flagOn && CHANGE_REPORT_ENV_ALLOWED ? (
-        /* Compiled but hidden: the tab is drawn inert with its flag, so the gap is legible. */
+        /* Compiled but hidden: the tab is drawn inert, and its title says why (HIVE-13.1). */
         <button
           type="button"
           role="tab"
@@ -3588,7 +3588,6 @@ const Versions = () => {
         >
           <FileText className="ver-tab-glyph" aria-hidden />
           Change report
-          <GitlikeFlag />
         </button>
       ) : null}
       {showTestBenchTab ? (
@@ -3661,7 +3660,7 @@ const Versions = () => {
           {GITLIKE.marked ? <GitlikeFlag enabled /> : null}
         </button>
       ) : selectedProjectId && GITLIKE.visible && !GITLIKE.flagOn ? (
-        /* Compiled but hidden: the tab is drawn inert with its flag, so the gap is legible. */
+        /* Compiled but hidden: the tab is drawn inert, and its title says why (HIVE-13.1). */
         <button
           type="button"
           role="tab"
@@ -3673,7 +3672,6 @@ const Versions = () => {
         >
           <GitPullRequestArrow className="ver-tab-glyph" aria-hidden />
           Merge requests
-          <GitlikeFlag />
         </button>
       ) : null}
       {showRepositoryTab ? (

@@ -133,7 +133,7 @@ graph TD
 | --- | --- | --- | --- | --- | --- | --- |
 | 11 | List-page density — the “quiet pass” ✅ | #5594 | 11 | 5 | — | Density & attention on pages |
 | 12 | Shell & launcher fit ✅ | #5595 | 6 | 2 | — | Density & attention in the chrome |
-| 13 | Brand discipline, gates & design docs | #5596 | 4 | 1 | 11, 12 | Release gate |
+| 13 | Brand discipline, gates & design docs ✅ | #5596 | 4 | 1 | 11, 12 | Release gate |
 | — | **Total** | 3 epics | **21** | **8** | | |
 
 Milestone: **RC6** (all epics and issues).
@@ -510,18 +510,18 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-## Epic 13 — Brand discipline, gates & design docs — [#5596](https://github.com/apiome/apiome/issues/5596)
+## Epic 13 — Brand discipline, gates & design docs — [#5596](https://github.com/apiome/apiome/issues/5596) ✅
 
 **Goal:** Turn the review’s rules into tests so the quiet pass cannot regress: honey only in brand moments, a header action cap, no stacked banners, a measured first-row-of-data budget — and fold the proposals back into DESIGN.md and the mockup set.
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 13.1 | #5614 | Honey audit — saved-search chip, gitlike flags, token gate | MCP saved searches use `.chip`; feature-flag markers are outline badges; `hive-design-tokens.test.ts` fails on honey outside the allow-list | `ui`, `design-system`, `testing`, `mcp` | Y | N | S | `src/app/ade/dashboard/mcp/*`, `src/app/components/ade/versions/GitlikeFlag.tsx`, `tests/hive-design-tokens.test.ts` |
+| 13.1 | #5614 | Honey audit — saved-search chip, gitlike flags, token gate ✅ | MCP saved searches use `.chip`; feature-flag markers are outline badges; `hive-design-tokens.test.ts` fails on honey outside the allow-list | `ui`, `design-system`, `testing`, `mcp` | Y | N | S | `src/app/ade/dashboard/mcp/*`, `src/app/components/ade/versions/GitlikeFlag.tsx`, `tests/hive-design-tokens.test.ts` |
 | 13.2 | #5615 | Gates — header action cap, single banner, no dead controls ✅ | Jest/Playwright rules: ≤ 1 primary + 2 secondaries + ⋯ per `PageHeader`; at most one `Alert` between header and body; no disabled buttons that lead nowhere | `testing`, `ui`, `design-system` | N | N | M | `tests/page-header-gate.test.tsx (new)`, `tests/copy-voice-gate.test.ts`, `e2e/hive-page-header.spec.ts`, `docs/guide/content-voice.md` |
 | 13.3 | #5616 | Parity harness — first-row-of-data budget per list page ✅ | The visual-parity harness measures the y-offset of the first data row at 1440 × 900 and fails above a per-page budget | `testing`, `ui` | N | N | M | `e2e/visual/landmarks.ts`, `e2e/visual/score.ts`, `e2e/visual/routes.ts`, `e2e/visual/README.md` |
 | 13.4 | #5617 | DESIGN.md amendments, mockup promotion and fixture re-dump ✅ | Fold PROPOSALS.md into DESIGN.md §2 · §5 · §8 · §10 · §12; replace the superseded parts of the original mockups; move the four proposals into `PARITY_ROUTES` | `documentation`, `design-system`, `mvp` | N | Y | S | `docs/mockups/DESIGN.md`, `docs/mockups/PROPOSALS.md`, `docs/mockups/build/versions.html`, `docs/mockups/sources/catalog.html`, `docs/mockups/home/launcher.html`, `docs/mockups/foundations/shell.html`, `apiome-ui/e2e/visual/routes.ts` |
 
-### `apiome: [HIVE-13.1] Honey audit — saved-search chip, gitlike flags, token gate` — [#5614](https://github.com/apiome/apiome/issues/5614)
+### `apiome: [HIVE-13.1] Honey audit — saved-search chip, gitlike flags, token gate` ✅ — [#5614](https://github.com/apiome/apiome/issues/5614)
 **Problem statement.** Honey has leaked into non-brand roles: a honey-filled “Public A/B servers” saved-search chip on MCP servers, the always-on `gitlike` honey flag in the Versions header and tabs. DESIGN.md §2 limits honey to the mark, new/starred/preview markers, the first-run checklist, empty-state art and the theme grid.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/rail-compact.html` (callouts 6); rationale: `docs/mockups/PROPOSALS.md`.
@@ -530,9 +530,9 @@ Milestone: **RC6** (all epics and issues).
 - `tests/hive-design-tokens.test.ts` gains a rule: `--honey*` / `bg-honey*` / `text-honey*` may appear only in an allow-list of files (BrandMark, EmptyState art, Preferences theme grid, `Badge[data-status=new|starred|pinned|preview]`, the first-run checklist).
 
 **Acceptance criteria.**
-- [ ] Token test fails on a new honey usage outside the allow-list (negative test included)
-- [ ] No honey chip on MCP servers; no honey flag in Versions
-- [ ] Contrast gate green
+- [x] Token test fails on a new honey usage outside the allow-list (negative test included)
+- [x] No honey chip on MCP servers; no honey flag in Versions
+- [x] Contrast gate green
 
 **Parallelism / dependencies.** Independent; coordinate with HIVE-11.3 on the Versions header.
 

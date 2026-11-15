@@ -5,6 +5,8 @@ import {
   mcpSavedSearchFiltersFromPayload,
   mcpSavedSearchFromPayload,
   mcpSavedSearchesFromPayload,
+  mcpSavedSearchIsCurrent,
+  type McpSavedSearch,
 } from '../src/app/components/ade/dashboard/mcp/mcpSavedSearchUi';
 import { MCP_CATALOG_EMPTY_FILTERS } from '../src/app/components/ade/dashboard/mcp/mcpCatalogUi';
 
@@ -108,5 +110,38 @@ describe('mcpPinnedSavedSearches', () => {
     ]);
     expect(pinned).toHaveLength(1);
     expect(pinned[0]?.name).toBe('A');
+  });
+});
+
+describe('mcpSavedSearchIsCurrent', () => {
+  const search: McpSavedSearch = {
+    id: '1',
+    name: 'Public A/B',
+    filters: { ...MCP_CATALOG_EMPTY_FILTERS, visibilities: ['public'], grades: ['A', 'B'] },
+    query: 'acme',
+    sort: 'grade',
+    isPinned: true,
+    createdAt: '',
+    updatedAt: '',
+  };
+  const filters = { ...MCP_CATALOG_EMPTY_FILTERS, visibilities: ['public'], grades: ['A', 'B'] };
+
+  it('is true when query, facets and sort all match', () => {
+    expect(mcpSavedSearchIsCurrent(search, filters, 'acme', 'grade')).toBe(true);
+  });
+
+  it('ignores facet order and surrounding query whitespace', () => {
+    expect(mcpSavedSearchIsCurrent(search, { ...filters, grades: ['B', 'A'] }, '  acme ', 'grade')).toBe(true);
+  });
+
+  it('is false once any facet, the query or the sort differs', () => {
+    expect(mcpSavedSearchIsCurrent(search, { ...filters, grades: ['A'] }, 'acme', 'grade')).toBe(false);
+    expect(mcpSavedSearchIsCurrent(search, { ...filters, hosts: ['h1'] }, 'acme', 'grade')).toBe(false);
+    expect(mcpSavedSearchIsCurrent(search, filters, 'acme2', 'grade')).toBe(false);
+    expect(mcpSavedSearchIsCurrent(search, filters, 'acme', 'recency')).toBe(false);
+  });
+
+  it('does not treat a duplicated value as a different selection of the same size', () => {
+    expect(mcpSavedSearchIsCurrent(search, { ...filters, grades: ['A', 'A'] }, 'acme', 'grade')).toBe(false);
   });
 });

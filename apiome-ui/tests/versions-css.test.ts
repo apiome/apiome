@@ -103,8 +103,6 @@ const VERSION_PRELUDES = [
   '.vt__published',
   '.vt__published > svg',
   '.vt__actions',
-  '.ver-flag',
-  '.ver-flag > svg',
   '.ver-link',
   '.ver-header .page-header__title',
   '.ver-header__badges',
@@ -392,7 +390,7 @@ describe('the versions section of globals.css', () => {
     // The reverse: every rule in the block is one the list names, so a rule added without a
     // test — or renamed on one side only — fails here rather than going unmeasured.
     const declared = rules
-      .filter((rule) => rule.line >= versionRule('.ver-flag').line && !rule.prelude.startsWith('@media'))
+      .filter((rule) => rule.line >= versionRule('.ver-link').line && !rule.prelude.startsWith('@media'))
       .filter((rule) => SECTION.includes(`${rule.prelude} {`))
       .map((rule) => rule.prelude);
     const unknown = declared.filter((prelude) => !VERSION_PRELUDES.includes(prelude as never));
@@ -503,7 +501,6 @@ describe('density and font-scale independence', () => {
     expect(declaration('.ver-mock__url', 'max-inline-size')).toBe('10.3125rem');
     expect(declaration('.ver-mock__spark', 'inline-size')).toBe('5rem');
     expect(declaration('.ver-mock__copy', 'inline-size')).toBe('1.375rem');
-    expect(declaration('.ver-flag', 'block-size')).toBe('1rem');
     expect(declaration('.ver-menu', 'min-inline-size')).toBe('18rem');
     expect(declaration('.ver-spec__editor', 'block-size')).toBe('min(50vh, 32rem)');
     expect(declaration('.ver-cr__preview', 'max-block-size')).toBe('min(20rem, 40vh)');
@@ -514,7 +511,7 @@ describe('density and font-scale independence', () => {
     expect(declaration('.ver-graph-card__head > svg', 'inline-size')).toBe('var(--icon-dense)');
     expect(declaration('.ver-gate__toggle > svg', 'inline-size')).toBe('var(--icon-dense)');
     expect(declaration('.rart__title > svg', 'inline-size')).toBe('var(--icon-button)');
-    for (const prelude of ['.ver-flag > svg', '.ver-fork > svg', '.ver-chip > svg', '.ver-mock__scenarios > svg', '.ver-gate__title > svg']) {
+    for (const prelude of ['.ver-fork > svg', '.ver-chip > svg', '.ver-mock__scenarios > svg', '.ver-gate__title > svg']) {
       expect(declaration(prelude, 'inline-size')).toMatch(/rem$/);
     }
   });
@@ -558,10 +555,8 @@ describe('density and font-scale independence', () => {
     }
   });
 
-  it('sizes the flag from the smallest type step, not the mockup’s frozen 10px', () => {
-    expect(declaration('.ver-flag', 'font-size')).toBe('var(--fs-2xs)');
-    expect(declaration('.ver-flag', 'background')).toBe('var(--honey-soft)');
-    expect(declaration('.ver-flag', 'color')).toBe('var(--honey-fg)');
+  it('draws no honey flag rule: the gitlike flag is an outline Badge (HIVE-13.1)', () => {
+    expect(rules.some((rule) => rule.prelude.startsWith('.ver-flag'))).toBe(false);
   });
 
   it('states every breakpoint in rem, so it follows the font scale', () => {
@@ -707,12 +702,16 @@ describe('contrast', () => {
     }
   });
 
-  it.each(APPEARANCES)('clears AA for the honey flag and the amber tag in the %s appearance', (_id, block) => {
-    // Both are `--honey-fg` on `--honey-soft` — the pair the token layer calibrated.
-    for (const prelude of ['.ver-flag', '.ver-tag']) {
-      expect(declaration(prelude, 'color')).toBe('var(--honey-fg)');
-      expect(declaration(prelude, 'background')).toBe('var(--honey-soft)');
-    }
+  it.each(APPEARANCES)('clears AA for the outline gitlike flag in the %s appearance', (_id, block) => {
+    // HIVE-13.1: the flag is `Badge variant="outline"` — `--fg-muted` on the surface, no fill.
+    const ratio = contrastRatio(paint('--fg-muted', block, PAPER), paint('--bg-surface', block, PAPER));
+    expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
+  });
+
+  it.each(APPEARANCES)('clears AA for the amber tag in the %s appearance', (_id, block) => {
+    // `--honey-fg` on `--honey-soft` — the pair the token layer calibrated.
+    expect(declaration('.ver-tag', 'color')).toBe('var(--honey-fg)');
+    expect(declaration('.ver-tag', 'background')).toBe('var(--honey-soft)');
     const ratio = contrastRatio(
       paint('--honey-fg', block, PAPER),
       paint('--honey-soft', block, paint('--bg-surface', block, PAPER))

@@ -113,3 +113,43 @@ export function mcpApplySavedSearch(search: McpSavedSearch): {
 export function mcpPinnedSavedSearches(searches: McpSavedSearch[]): McpSavedSearch[] {
   return searches.filter((s) => s.isPinned);
 }
+
+/**
+ * Whether two facet selections pick the same values, in any order.
+ *
+ * @param a One facet's selected values.
+ * @param b The other's.
+ * @returns `true` when both hold the same set of values.
+ */
+function sameFacetValues(a: readonly string[], b: readonly string[]): boolean {
+  const left = new Set(a);
+  const right = new Set(b);
+  if (left.size !== right.size) return false;
+  return [...right].every((value) => left.has(value));
+}
+
+/**
+ * Whether the catalog is showing exactly the view a saved search restores (HIVE-13.1, #5614).
+ *
+ * This is what the pinned chip's on state (`aria-pressed`, filled with ink) answers: run a
+ * pinned view and its chip turns on; flip one facet afterwards and it turns off, so a reader
+ * can see they have left it. Facet order and surrounding query whitespace do not matter;
+ * every facet, the query and the sort must otherwise agree.
+ *
+ * @param search The saved search.
+ * @param filters The catalog's current facets.
+ * @param query The catalog's current search text.
+ * @param sort The catalog's current sort.
+ * @returns `true` when the current controls equal what `search` would restore.
+ */
+export function mcpSavedSearchIsCurrent(
+  search: McpSavedSearch,
+  filters: McpCatalogFilters,
+  query: string,
+  sort: McpCatalogSortKey,
+): boolean {
+  if (search.query.trim() !== query.trim()) return false;
+  if (search.sort !== mcpNormalizeSortKey(sort)) return false;
+  const facets = Object.keys(MCP_CATALOG_EMPTY_FILTERS) as (keyof McpCatalogFilters)[];
+  return facets.every((facet) => sameFacetValues(search.filters[facet] ?? [], filters[facet] ?? []));
+}

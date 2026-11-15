@@ -57,7 +57,7 @@ export interface ServerAheadStatus {
   onPull: () => void;
   /** Open the merge dialog. */
   onOpenMerge: () => void;
-  /** Draw the honey `gitlike` flag beside the actions (non-production builds). */
+  /** Draw the outline `gitlike` flag beside the actions (non-production builds). */
   flagged?: boolean;
 }
 

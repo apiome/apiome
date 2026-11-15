@@ -564,6 +564,24 @@ describe('saved searches', () => {
     );
   });
 
+  test('a pinned view is a neutral chip that is on only while its view is showing (HIVE-13.1)', async () => {
+    const user = userEvent.setup();
+    await renderCatalog();
+
+    const chip = within(screen.getByTestId('mcp-saved-searches')).getByTestId('mcp-saved-search-chip');
+    // DESIGN.md §2: a saved search is a neutral `.chip`; honey is not a selection colour.
+    expect(chip).toHaveClass('chip');
+    expect(chip.className).not.toMatch(/honey/);
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(chip);
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+
+    // Leave the view — one more character of search text — and the chip goes off.
+    await user.type(screen.getByLabelText('Search the catalog'), 'x');
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('the manage list prints the view each saved search restores', async () => {
     const user = userEvent.setup();
     await renderCatalog();

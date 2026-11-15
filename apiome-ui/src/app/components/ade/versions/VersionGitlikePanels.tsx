@@ -4,7 +4,7 @@
  * The version-tags and named-branches chip panels (HIVE-6.2, #5313).
  *
  * Authority: `docs/mockups/build/versions.html` §Version tags + Named branches — two chip
- * groups on one card, each with its caps label, a honey `gitlike` flag, and Protect /
+ * groups on one card, each with its caps label, the outline `gitlike` flag (flag on), and Protect /
  * Unprotect / Remove beside the chips the viewer may act on.
  *
  * Both are `FEATURE_GITLIKE` surfaces and both are data-driven: the screen mounts this only

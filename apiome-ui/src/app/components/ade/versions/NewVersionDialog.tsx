@@ -13,8 +13,8 @@
  * branch-tip resolution) is untouched by this ticket. What this owns is the shape.
  *
  * With two or more named branches the copy-source select becomes *Base copy on branch tip*,
- * exactly as before; with fewer, the hint says so and carries the honey flag in a
- * non-production build, since that mode is `FEATURE_GITLIKE` data.
+ * exactly as before; with fewer, the hint says so and carries the outline `gitlike` flag in a
+ * non-production build with the flag on, since that mode is `FEATURE_GITLIKE` data.
  *
  * Once a copy source is chosen, **Copy paths** (#771) decides whether the source's paths come
  * along. Classes always do — paths reference them, so they are never optional.

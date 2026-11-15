@@ -4,7 +4,7 @@
  * Saved catalog searches (V2-MCP-35.3 / MCAT-21.3; redesigned HIVE-7.7, #5324).
  *
  * Authority: `docs/mockups/sources/mcp-servers.html` — the left half of the strips row, whose
- * **Notes → Keeps (1:1)** list fixes the contract: pinned honey pills, a *Save search* button, a
+ * **Notes → Keeps (1:1)** list fixes the contract: pinned view chips, a *Save search* button, a
  * `Saved (n)` disclosure, a manage list with Run / Pin-Unpin / Delete per row, and a
  * *Save catalog search* dialog with a required name and *Pin as catalog view*. Server-persisted.
  *
@@ -22,9 +22,12 @@
  * 1. **The strip had no panel of its own.** It was a bare row the page wrapped in a
  *    `border-b border-gray-200 bg-white` band. It is a `ui/Card` with a titled header row, as the
  *    mockup draws it, so the saved views and the collections beside them are two matching panels.
- * 2. **The pinned pills were six amber palette classes.** They are `Button variant="honey"`
- *    pills — honey is DESIGN.md §2's "marked by a person" ornament, which is what a pin is, and
- *    `ui/statusVocabulary` already answers `pinned` with it.
+ * 2. **The pinned pills were six amber palette classes.** HIVE-7.7 made them `Button
+ *    variant="honey"` pills; the quiet pass (HIVE-13.1, #5614) made them neutral `.chip`s,
+ *    because DESIGN.md §2 says honey is never a filter or selection colour. A chip is a toggle
+ *    button: `aria-pressed` is on — and the chip fills with ink — while the catalog shows
+ *    exactly the view it restores ({@link mcpSavedSearchIsCurrent}), and goes off as soon as a
+ *    facet is flipped. The `pinned` badge in the manage list keeps its vocabulary tone.
  * 3. **A row said only its name and its raw query.** It now prints the whole view, filters
  *    included, so a list of five saved searches is readable without running any of them.
  * 4. **The dialog was hand-built** out of a bare `<label>`, an `<input type="checkbox">` with a
@@ -56,6 +59,7 @@ import {
   mcpPinnedSavedSearches,
   mcpSavedSearchCreateBody,
   mcpSavedSearchesFromPayload,
+  mcpSavedSearchIsCurrent,
   type McpSavedSearch,
 } from './mcpSavedSearchUi';
 import {
@@ -196,18 +200,18 @@ export function McpSavedSearchesPanel({
         <div className="mcp-strip__lead">
           <p className="mcp-strip__label">Saved searches</p>
           {pinned.map((search) => (
-            <Button
+            <button
               key={search.id}
               type="button"
-              variant="honey"
-              size="sm"
-              pill
+              className="chip"
+              aria-pressed={mcpSavedSearchIsCurrent(search, filters, query, sort)}
               onClick={() => handleRun(search)}
               title={`Run saved view: ${search.name}`}
+              data-testid="mcp-saved-search-chip"
             >
               <Pin aria-hidden />
-              {search.name}
-            </Button>
+              <span className="chip__label">{search.name}</span>
+            </button>
           ))}
         </div>
         <div className="mcp-strip__actions">
