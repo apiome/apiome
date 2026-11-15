@@ -1,0 +1,46 @@
+---
+title: Presence and soft locks
+description: See who else has a project open and who is editing an element.
+sidebar_position: 1.6
+tags: [collaboration, presence, locks]
+---
+
+Two people editing the same project could silently overwrite each other. **Presence** shows who
+else has the project open, and a **soft lock** shows who is editing an element right now. Locks are
+advisory: they inform and ask, they never stop you from typing. Real-time co-editing is a later
+step; this is the safeguard until then.
+
+## Who is viewing
+
+Open a project on [Versions](./versions.mdx). The other people who have the project open appear as
+a row of round **avatars** with their initials at the top of the page. **Hover an avatar** to see
+the person's name and the view they are on. More than four people show as **+N**. You are not shown
+to yourself, and a person with two tabs open is one avatar.
+
+An avatar appears within a few seconds of someone opening the project and disappears when they
+close it. A tab that crashes or loses its connection disappears after about 45 seconds.
+
+## Soft locks
+
+When you start editing an element, it is marked as yours. Everyone else who has the project open
+sees **“Bob Brown is editing this”** beside that element and an **“Ask to take over”** button.
+
+| You are | You see | You can |
+| --- | --- | --- |
+| Not the holder | **“Bob Brown is editing this”** | **Ask to take over** |
+| Asked, waiting | The same line, **Take over** greyed out | Wait up to 15 seconds for the holder to hand over |
+| Asked, 15 seconds passed | **Take over** enabled | **Click Take over** to take the element |
+| The holder, someone asked | **“Alice asked to take over this element.”** | **Hand over**, or keep editing |
+| The previous holder, after a takeover | **“Alice took over this element.”** with a **Dismiss** button | Copy your unsaved changes before you continue |
+
+A lock lasts as long as your tab is open. Closing the tab releases it at once; if the tab
+crashes, the lock lapses on its own after about a minute, so a lock never stays stuck.
+
+## For integrators
+
+Presence and locks are served by the REST API under
+`/v1/tenants/{tenant}/projects/{project}/presence` — see **Presence** in the
+[REST reference](../reference/rest/index.mdx) — and as a WebSocket at `…/presence/ws` that pushes a
+fresh snapshot every five seconds. Having a project open needs the **projects: view** permission,
+so a Viewer shows up in the avatars. The per-user budget is
+`APIOME_PRESENCE_RATE_LIMIT_PER_MINUTE` (240).

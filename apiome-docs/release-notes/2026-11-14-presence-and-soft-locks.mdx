@@ -1,0 +1,20 @@
+---
+slug: presence-and-soft-locks
+title: See who else is in the project — presence and soft locks
+description: "Avatars show who has a project open, and an element someone is editing says so."
+authors: [apiome]
+---
+
+Two designers can no longer edit the same thing without knowing it. Open a project on **Versions**
+and the other people who have it open appear as avatars; an element someone is editing reads
+**“Bob Brown is editing this”**.
+
+{/* truncate */}
+
+- **Who’s viewing.** Avatars appear and disappear as members open and close the project.
+- **Soft locks.** Editing an element marks it for everyone else. Locks never block you; they ask.
+- **Takeover.** **Ask to take over** tells the holder, who can **Hand over**. After 15 seconds
+  **Take over** is yours, and the previous holder is told.
+- **No stuck locks.** A closed or crashed tab releases its locks on its own.
+- **For integrators.** New REST routes and a WebSocket under `…/projects/{project}/presence`; see
+  [Presence and soft locks](/build/presence-and-soft-locks).

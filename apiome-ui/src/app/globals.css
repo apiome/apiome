@@ -41858,3 +41858,79 @@ tr[data-selected="true"] > td:first-child {
 .rail .rail-nav[data-pill="true"] .rail-item:hover {
   background: transparent;
 }
+
+/* ==========================================================================
+   Presence and element soft locks (COL-4.1, #4525)
+
+   `PresenceAvatars` (who else has the project open) and `ElementLockNotice` (who is
+   editing an element, with the takeover flow). Tokens only; names break so a long
+   one never scrolls the row sideways.
+   ========================================================================== */
+
+.presence-avatars {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
+
+.presence-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--control-h-sm, var(--space-6));
+  block-size: var(--control-h-sm, var(--space-6));
+  margin-inline-start: calc(var(--space-1) * -1);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+
+.presence-avatar:first-child {
+  margin-inline-start: 0;
+}
+
+.presence-avatar--more {
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+}
+
+.presence-lock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+  font-size: var(--fs-sm);
+}
+
+.presence-lock--ask {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+.presence-lock--lost {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.presence-lock__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.presence-lock__text {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}

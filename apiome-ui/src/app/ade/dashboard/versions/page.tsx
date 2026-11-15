@@ -75,6 +75,8 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
+import { PresenceAvatars } from '../../../components/ade/presence/PresenceAvatars';
+import { usePresence } from '../../../components/ade/presence/usePresence';
 import { VersionBindingPanel } from '../../../components/ade/bindings';
 import { RepositorySourcesPanel } from '../../../components/ade/versions/RepositorySourcesPanel';
 import { isUuid } from '@lib/comment-discussion';
@@ -833,6 +835,8 @@ const Versions = () => {
     | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
   const currentUserId = sessionUser?.user_id;
+  /** Who else has this project open (COL-4.1, #4525). */
+  const { snapshot: presence } = usePresence(selectedProjectId || null, 'project');
   /* The viewer's role grants (RC6-H5): a write the API would refuse is not offered. REST's
      `is_admin` is the tenant-administrator answer the publish and edit routes use. */
   const permissions = useMyPermissions(Boolean(currentTenantId));
@@ -3893,6 +3897,7 @@ const Versions = () => {
       />
 
       <PageBody>
+        <PresenceAvatars snapshot={presence} selfUserId={currentUserId ?? null} />
         {/* The status strip (HIVE-11.2, #5598): the timeline's three statuses and the git-like
             "server is ahead" chip in one row. The server-ahead chip stays on every tab, as its
             banner did; the other three belong to the timeline. */}
