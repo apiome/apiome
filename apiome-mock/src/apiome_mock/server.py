@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import validate_api_key_for_tenant
+from apiome_mock.broker_health import DevBrokerHealth
 from apiome_mock.callback_dispatch import build_dispatcher
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.capture import build_capture_proxy
@@ -131,9 +132,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
 def create_app() -> FastAPI:
     app = FastAPI(title="Apiome Mock", lifespan=lifespan)
 
+    # The opt-in dev broker (#5735, XPC-2.1): reported only while its host resolves, so a stack
+    # started without `--profile broker` answers exactly as before.
+    dev_broker = DevBrokerHealth(get_settings().dev_broker_bootstrap)
+
     @app.get("/health")
     async def health() -> JSONResponse:
-        return JSONResponse({"status": "ok"})
+        body = {"status": "ok"}
+        broker = await dev_broker.state()
+        if broker is not None:
+            body["broker"] = broker
+        return JSONResponse(body)
 
     # Internal dry-run preview (#5528, MSC-1.2). Registered before the data-plane catch-alls: its
     # path is a single reserved segment, so it could not be shadowed by the three-segment mock

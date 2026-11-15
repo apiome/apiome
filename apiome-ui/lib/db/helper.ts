@@ -1333,6 +1333,12 @@ export async function getPublishedVersionsForTenant(tenantId: string, team: stri
         -- The imported format (#5729, XPC-1.1): a GraphQL version's Mock cell points at its
         -- /graphql endpoint instead of the REST base URL.
         v.source_format,
+        -- Whether the version's hosted mock is bound to a Kafka broker (#5735, XPC-2.1): an AsyncAPI
+        -- version's Mock cell says "no broker bound" when it is served over WebSocket/SSE only.
+        EXISTS (
+          SELECT 1 FROM apiome.mock_broker_bindings bb
+          WHERE bb.version_id = v.id AND bb.protocol = 'kafka'
+        ) AS mock_broker_bound,
         -- Revision JSON (#507, #748, V076): the Published surface reads lifecycle,
         -- deprecated and sunsetAt out of it to draw the Deprecated pill (HIVE-8.1, #5327).
         v.metadata,

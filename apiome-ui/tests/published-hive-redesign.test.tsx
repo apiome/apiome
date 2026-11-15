@@ -181,6 +181,30 @@ const PEOPLE_GRAPH_100 = {
   source_format: 'graphql',
 };
 
+/** A published AsyncAPI version with its mock on and no broker bound (#5735, XPC-2.1). */
+const SIGNUPS_EVENTS_100 = {
+  ...PAYMENTS_231,
+  id: '0f1a2b30-0000-4000-8000-000000000006',
+  version_id: '1.0.0',
+  description: 'User lifecycle events: user/signedup, user/deleted.',
+  project_id: 'prj-user-events',
+  project_name: 'User Events',
+  project_slug: 'user-events',
+  published_at: '2026-11-10T09:00:00.000Z',
+  mock_enabled: true,
+  source_format: 'asyncapi-3',
+  mock_broker_bound: false,
+};
+
+/** The same events API bound to a Kafka broker. */
+const SIGNUPS_EVENTS_110 = {
+  ...SIGNUPS_EVENTS_100,
+  id: '0f1a2b30-0000-4000-8000-000000000007',
+  version_id: '1.1.0',
+  published_at: '2026-11-12T09:00:00.000Z',
+  mock_broker_bound: true,
+};
+
 /** One live key, so the View fly-out is open by default. */
 const LIVE_KEY = [{ id: 'key-1', enabled: true, expires_at: null }];
 
@@ -924,6 +948,21 @@ describe('the browser fixtures', () => {
     expect(screen.getByText(`${MOCK_HOST}/acme/payments-api/2.3.1`)).toBeInTheDocument();
     expect(screen.queryByTestId(`version-mock-graphql-note-${PAYMENTS_231.id}`)).toBeNull();
     write('graphql-mock-cell', page().outerHTML);
+  });
+
+  /* The docs site's event mock brokers page (#5735) captures AsyncAPI rows' Mock cells: one bound to
+     a Kafka broker, one served over WebSocket/SSE only ("no broker bound"). */
+  it('renders AsyncAPI rows with their broker state (and writes its fixture on request)', async () => {
+    await renderPublished({ rows: [SIGNUPS_EVENTS_110, SIGNUPS_EVENTS_100, PAYMENTS_231] });
+    expect(await screen.findByTestId(`version-mock-broker-note-${SIGNUPS_EVENTS_100.id}`)).toHaveTextContent(
+      'no broker bound'
+    );
+    expect(screen.getByTestId(`version-mock-broker-note-${SIGNUPS_EVENTS_110.id}`)).toHaveTextContent(
+      'Kafka broker bound'
+    );
+    // The REST row beside them has no broker note.
+    expect(screen.queryByTestId(`version-mock-broker-note-${PAYMENTS_231.id}`)).toBeNull();
+    write('mock-broker-binding', page().outerHTML);
   });
 
   /* The docs site's Published page (DOCS-1.7) captures the dialog a private row's key button

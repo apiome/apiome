@@ -35621,6 +35621,223 @@ class Database:
         )
 
     # ------------------------------------------------------------------------------------------
+    # Mock broker bindings — XPC-2.1 (#5735). apiome.mock_broker_bindings (V372).
+    # ------------------------------------------------------------------------------------------
+
+    #: A broker binding's metadata, aliased ``b``. The ciphertext is added only by the accessors
+    #: that need it (``with_credential``); no accessor returns the plaintext, which is never stored.
+    _MOCK_BROKER_BINDING_COLUMNS = """
+        b.id::text AS id,
+        b.tenant_id::text AS tenant_id,
+        b.version_id::text AS version_id,
+        b.protocol,
+        b.bootstrap,
+        b.tls_enabled,
+        b.tls_verify,
+        b.sasl_mechanism,
+        b.key_version,
+        b.client_id_prefix,
+        b.created_by::text AS created_by,
+        b.rotated_by::text AS rotated_by,
+        b.created_at,
+        b.rotated_at
+    """
+
+    def list_mock_broker_bindings(self, tenant_id: str, version_id: str) -> List[Dict[str, Any]]:
+        """Return a version's broker bindings, with their ciphertext (XPC-2.1).
+
+        The ciphertext comes back only so the caller can report whether each credential still
+        opens; it must never be projected into a response.
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_id: The version.
+
+        Returns:
+            The rows, ordered by protocol. Empty when either id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MOCK_BROKER_BINDING_COLUMNS}, b.credential_ciphertext
+            FROM apiome.mock_broker_bindings b
+            WHERE b.tenant_id = %s::uuid AND b.version_id = %s::uuid
+            ORDER BY b.protocol
+            """,
+            (tenant_id, version_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_mock_broker_binding(
+        self, tenant_id: str, version_id: str, binding_id: str, *, with_credential: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Return one broker binding (XPC-2.1).
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_id: The version the binding must belong to.
+            binding_id: The binding.
+            with_credential: Also select ``credential_ciphertext`` (the probe opens it).
+
+        Returns:
+            The row, or ``None`` when it does not exist in that tenant and version.
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id, binding_id):
+            return None
+        secret = ", b.credential_ciphertext" if with_credential else ""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MOCK_BROKER_BINDING_COLUMNS}{secret}
+            FROM apiome.mock_broker_bindings b
+            WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid AND b.version_id = %s::uuid
+            """,
+            (binding_id, tenant_id, version_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_mock_broker_binding(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        protocol: str,
+        bootstrap: List[str],
+        tls_enabled: bool,
+        tls_verify: bool,
+        sasl_mechanism: Optional[str],
+        credential_ciphertext: Optional[bytes],
+        key_version: Optional[int],
+        client_id_prefix: str,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store a new broker binding (XPC-2.1).
+
+        ``ON CONFLICT DO NOTHING`` on the (version, protocol) index: an existing binding is never
+        overwritten by a create.
+
+        Args:
+            tenant_id: Owning tenant.
+            version_id: The version.
+            protocol: ``kafka``.
+            bootstrap: Normalized ``host:port`` entries.
+            tls_enabled: Connect over TLS.
+            tls_verify: Verify the broker certificate.
+            sasl_mechanism: The SASL mechanism, or ``None``.
+            credential_ciphertext: The sealed credential, or ``None`` without SASL. Never plaintext.
+            key_version: The master-key version that sealed it, or ``None``.
+            client_id_prefix: The Kafka ``client.id`` prefix.
+            actor_id: The user storing it.
+
+        Returns:
+            The stored row's metadata, or ``None`` when the version already has a binding for
+            that protocol (or an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.mock_broker_bindings AS b (
+                tenant_id, version_id, protocol, bootstrap, tls_enabled, tls_verify,
+                sasl_mechanism, credential_ciphertext, key_version, client_id_prefix, created_by
+            ) VALUES (%s::uuid, %s::uuid, %s, %s::text[], %s, %s, %s, %s, %s, %s, %s::uuid)
+            ON CONFLICT (version_id, protocol) DO NOTHING
+            RETURNING {self._MOCK_BROKER_BINDING_COLUMNS}
+            """,
+            (
+                tenant_id,
+                version_id,
+                protocol,
+                list(bootstrap),
+                tls_enabled,
+                tls_verify,
+                sasl_mechanism,
+                psycopg2.Binary(credential_ciphertext) if credential_ciphertext is not None else None,
+                key_version,
+                client_id_prefix,
+                actor,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def rotate_mock_broker_binding(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        binding_id: str,
+        credential_ciphertext: bytes,
+        key_version: int,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a binding's sealed credential in one statement (XPC-2.1).
+
+        Only a binding with a SASL mechanism has a credential to replace; the V372 CHECK keeps the
+        mechanism and the ciphertext together.
+
+        Args:
+            tenant_id: Owning tenant.
+            version_id: The version the binding must belong to.
+            binding_id: The binding.
+            credential_ciphertext: The new sealed credential.
+            key_version: The master-key version that sealed it.
+            actor_id: The user rotating it.
+
+        Returns:
+            The row's metadata after the swap, or ``None`` when no such binding exists.
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id, binding_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.mock_broker_bindings AS b
+            SET credential_ciphertext = %s,
+                key_version = %s,
+                rotated_by = %s::uuid,
+                rotated_at = CURRENT_TIMESTAMP
+            WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid AND b.version_id = %s::uuid
+              AND b.sasl_mechanism IS NOT NULL
+            RETURNING {self._MOCK_BROKER_BINDING_COLUMNS}
+            """,
+            (
+                psycopg2.Binary(credential_ciphertext),
+                key_version,
+                actor,
+                binding_id,
+                tenant_id,
+                version_id,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def delete_mock_broker_binding(
+        self, tenant_id: str, version_id: str, binding_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Remove one broker binding (XPC-2.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            version_id: The version the binding must belong to.
+            binding_id: The binding.
+
+        Returns:
+            The removed row's metadata, or ``None`` when nothing matched.
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id, binding_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            DELETE FROM apiome.mock_broker_bindings AS b
+            WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid AND b.version_id = %s::uuid
+            RETURNING {self._MOCK_BROKER_BINDING_COLUMNS}
+            """,
+            (binding_id, tenant_id, version_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    # ------------------------------------------------------------------------------------------
     # Agent keys — AGX-3.1 (#4537). `api_keys` rows with kind = 'agent' (V269).
     # ------------------------------------------------------------------------------------------
 

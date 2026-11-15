@@ -11,6 +11,9 @@
 #   rest      apiome-rest FastAPI service on :8000 (depends on migrate + seed).
 #   mcp       apiome-mcp HTTP service on :8765 (depends on migrate + seed).
 #   mock      apiome-mock HTTP service on :8775 (depends on migrate + seed).
+#   redpanda  Opt-in single-node Redpanda (Kafka API) for AsyncAPI mocks, profile `broker` only:
+#               docker compose --profile broker up --build --wait
+#             Off by default; no service depends on it (XPC-2.1, #5735).
 #
 # Override secrets via environment or a `.env` file (see docker-compose.env.example).
 
@@ -144,6 +147,17 @@ services:
       # master key is "add a higher version". The ACTIVE_KEY_VERSION override is deliberately not
       # passed through: an empty value would fail integer parsing at startup.
       APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
+      # ── Mock broker bindings (XPC-2.1, #5735) ───────────────────────────────────────────────
+      # Seals the SASL credentials of tenants' own Kafka clusters (POST …/mock/broker-bindings).
+      # Optional pass-through (empty ⇒ unset): a binding without SASL still works; storing one with a
+      # credential is a 503 naming this variable.
+      APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_BROKER_CREDENTIAL_ENCRYPTION_KEYS:-}
+      # The opt-in dev broker (`--profile broker`). Its exact host:port is exempt from the broker
+      # address check; every other private address is refused unless ALLOW_PRIVATE is true. The
+      # `redpanda` host only exists while the profile is active, so without it nothing is reachable
+      # there and nothing waits on it.
+      APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ${APIOME_MOCK_DEV_BROKER_BOOTSTRAP:-redpanda:9092}
+      APIOME_MOCK_BROKER_ALLOW_PRIVATE: ${APIOME_MOCK_BROKER_ALLOW_PRIVATE:-false}
       # Slate 10.2 (private-suite#120): seals CDN purge credentials. Empty ⇒ attaching a CDN is a
       # 409 naming this variable.
       APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS:-}
@@ -231,6 +245,10 @@ services:
       # Gates the internal /__preview__ endpoint apiome-rest calls for dry-run renders (#5528,
       # MSC-1.2). Must match the value given to `rest`; unset disables the endpoint entirely.
       APIOME_MOCK_INTERNAL_TOKEN: ${APIOME_MOCK_INTERNAL_TOKEN:-apiome-local-dev-preview-token}
+      # The opt-in dev broker (XPC-2.1, #5735). /health adds `"broker": "reachable"` while the
+      # `broker` profile's Redpanda is up; without the profile the host does not resolve and /health
+      # is unchanged. The mock never waits on it.
+      APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ${APIOME_MOCK_DEV_BROKER_BOOTSTRAP:-redpanda:9092}
     depends_on:
       postgres:
         condition: service_healthy
@@ -246,6 +264,34 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+    networks:
+      - apiome-mcp
+
+  # Opt-in dev broker for AsyncAPI mocks (XPC-2.1, #5735): `docker compose --profile broker up`.
+  # A single-node Redpanda speaking the Kafka API, unauthenticated, in dev-container mode (one core,
+  # 512 MiB). Inside the stack it is `redpanda:9092` (what rest and mock are pre-wired with); from
+  # the host it is `localhost:19092`. Nothing depends on it, so the default stack never starts or
+  # waits for it. Data is not persisted.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    profiles:
+      - broker
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --memory=512M
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:${APIOME_DEV_BROKER_HOST_PORT:-19092}
+    ports:
+      - "${APIOME_DEV_BROKER_HOST_PORT:-19092}:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
     networks:
       - apiome-mcp
 

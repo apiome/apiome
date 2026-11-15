@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.703.0"
+version = "1.704.0"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -73,6 +73,8 @@ dependencies = [
     "pyiceberg>=0.12.0",
     "fpdf2>=2.8.1",
     "markdown-it-py>=3.0.0",
+    # Mock broker binding test (XPC-2.1, #5735): connect + SASL + metadata against a Kafka broker.
+    "aiokafka>=0.12.0",
 ]
 
 [project.optional-dependencies]

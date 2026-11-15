@@ -2,6 +2,7 @@ import {
   applyUiMockBaseUrl,
   buildGraphqlMockUrl,
   buildMockBaseUrl,
+  isAsyncapiSourceFormat,
   isGraphqlSourceFormat,
   getMockPublicBaseUrl,
   rewriteMockUrlHost,
@@ -118,5 +119,16 @@ describe('GraphQL mock URLs (#5729)', () => {
     expect(buildGraphqlMockUrl('https://mock.example/a/b/1.0.0')).toBe('https://mock.example/a/b/1.0.0/graphql');
     expect(buildGraphqlMockUrl('https://mock.example/a/b/1.0.0/')).toBe('https://mock.example/a/b/1.0.0/graphql');
     expect(buildGraphqlMockUrl(null)).toBeNull();
+  });
+});
+
+describe('AsyncAPI source formats (#5735)', () => {
+  it('recognises every asyncapi version and nothing else', () => {
+    expect(isAsyncapiSourceFormat('asyncapi-3')).toBe(true);
+    expect(isAsyncapiSourceFormat(' AsyncAPI-2.6 ')).toBe(true);
+    expect(isAsyncapiSourceFormat('openapi-3.1')).toBe(false);
+    expect(isAsyncapiSourceFormat('graphql')).toBe(false);
+    expect(isAsyncapiSourceFormat(null)).toBe(false);
+    expect(isAsyncapiSourceFormat(undefined)).toBe(false);
   });
 });

@@ -68,6 +68,11 @@ services:
       APIOME_CORS_ALLOWED_ORIGINS: ${APIOME_CORS_ALLOWED_ORIGINS:?set APIOME_CORS_ALLOWED_ORIGINS to your UI origin(s), e.g. https://app.example.com}
       # Surface backup freshness on the ops dashboard (RC1-3.2 reads RC1-1.3 manifests).
       APIOME_BACKUP_DIR: /var/backups/apiome
+      # Mock broker bindings (XPC-2.1, #5735): production has no dev broker, so clear the base
+      # file's `redpanda:9092` exemption — every broker host must pass the public-address check —
+      # and pin the private-address escape hatch off.
+      APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ""
+      APIOME_MOCK_BROKER_ALLOW_PRIVATE: "false"
       APIOME_MOCK_PUBLIC_BASE_URL: https://${DEPLOY_MOCK_DOMAIN:?set DEPLOY_MOCK_DOMAIN in your .env}
       # `apiome login` (#5501) sends people to <this>/cli/login to approve a CLI sign-in.
       APIOME_UI_PUBLIC_URL: https://${DEPLOY_APP_DOMAIN:-app.apiome.dev}
@@ -126,6 +131,8 @@ services:
       APIOME_MOCK_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}@postgres:5432/${POSTGRES_DB:-apiome}
       # Must match the value given to `rest` above; empty leaves /__preview__ disabled (#5528).
       APIOME_MOCK_INTERNAL_TOKEN: ${APIOME_MOCK_INTERNAL_TOKEN:-}
+      # No dev broker in production (XPC-2.1, #5735): /health never reports one.
+      APIOME_MOCK_DEV_BROKER_BOOTSTRAP: ""
     depends_on: !override
       postgres:
         condition: service_healthy
