@@ -158,7 +158,11 @@ export interface PlatformNavItem {
   href: string;
   /** Lucide icon name; resolve with `resolvePlatformNavIcon()`. */
   icon: string;
-  /** Maturity chip beside the label, e.g. `Preview`. */
+  /**
+   * Maturity marker, e.g. `Preview`. The rail draws it as a honey dot after the label, with
+   * the word in the dot's `title` and the row's accessible name ("Lint posture, preview" —
+   * HIVE-12.4); the command palette may still draw it as a pill.
+   */
   pill?: string;
   /** True when the destination is meaningless without a selected workspace. */
   requiresTenant?: boolean;

@@ -185,3 +185,18 @@ describe('the rows that read the vocabulary', () => {
     expect(parseDeclarations(revealed.body).get('opacity')).toBe('1');
   });
 });
+
+describe('the preview dot (HIVE-12.4)', () => {
+  it('is a 6 px honey circle, the one ornament DESIGN.md §2 lends honey to', () => {
+    const dot = parseDeclarations(ruleFor('.rail-dot').body);
+
+    expect(dot.get('inline-size')).toBe('calc(var(--space-1) * 1.5)');
+    expect(dot.get('block-size')).toBe('calc(var(--space-1) * 1.5)');
+    expect(dot.get('border-radius')).toBe('var(--r-full)');
+    expect(dot.get('background')).toBe('var(--honey)');
+  });
+
+  it('never shrinks beside a long label', () => {
+    expect(parseDeclarations(ruleFor('.rail-dot').body).get('flex-shrink')).toBe('0');
+  });
+});
