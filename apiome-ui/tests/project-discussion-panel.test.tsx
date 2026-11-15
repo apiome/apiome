@@ -88,6 +88,7 @@ const OPERATION_THREAD = thread({
   comment_count: 1,
   root_comment: null,
   created_by_name: 'Bob Brown',
+  origin: 'consumer',
   anchor_context: { label: 'GET /customers/{id}', pathname: '/customers/{id}', method: 'GET' },
 });
 const ORPHANED_THREAD = thread({
@@ -204,6 +205,14 @@ describe('the list', () => {
     const orphaned = screen.getByTestId('discussion-thread-thread-orphaned');
     expect(within(orphaned).getByText('Customer.nickname')).toBeInTheDocument();
     expect(within(orphaned).getByText('Orphaned')).toBeInTheDocument();
+  });
+
+  it('tags consumer feedback, and only consumer feedback (COL-4.4)', async () => {
+    await renderPanel();
+    const operation = screen.getByTestId('discussion-thread-thread-operation');
+    expect(within(operation).getByTestId('discussion-consumer-tag')).toHaveTextContent('Consumer');
+    const internal = screen.getByTestId('discussion-thread-thread-class');
+    expect(within(internal).queryByTestId('discussion-consumer-tag')).toBeNull();
   });
 
   it('names a version it does not know by revision id', async () => {
@@ -374,10 +383,26 @@ describe('filters', () => {
     expect(screen.getByTestId('discussion-element-all')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('narrows to consumer feedback, list and counts alike (COL-4.4)', async () => {
+    await renderPanel();
+    fireEvent.click(screen.getByTestId('discussion-origin-consumer'));
+    await waitFor(() =>
+      expect(listCalls()).toContain(
+        `/api/projects/${PROJECT_ID}/comment-threads?status=open&origin=consumer&limit=50&offset=0`
+      )
+    );
+    await waitFor(() =>
+      expect(summaryCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads/summary?origin=consumer`)
+    );
+    expect(screen.getByTestId('discussion-origin-consumer')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('discussion-origin-all')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('groups the chips for assistive technology', async () => {
     await renderPanel();
     expect(screen.getByRole('group', { name: 'Thread status' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Element type' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Origin' })).toBeInTheDocument();
   });
 });
 

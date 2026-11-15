@@ -35,6 +35,9 @@ import {
   DEFAULT_DISCUSSION_FILTERS,
   DISCUSSION_ELEMENT_FILTERS,
   DISCUSSION_ELEMENT_LABELS,
+  DISCUSSION_ORIGIN_FILTERS,
+  DISCUSSION_ORIGIN_LABELS,
+  isConsumerThread,
   DISCUSSION_PAGE_SIZE,
   DISCUSSION_STATUS_FILTERS,
   DISCUSSION_STATUS_LABELS,
@@ -130,7 +133,10 @@ async function getEnvelope<T>(url: string): Promise<Envelope<T>> {
  */
 function emptyDescription(filters: Readonly<DiscussionFilters>): string {
   if (filters.mentionsMe) return 'No thread matching these filters mentions you.';
-  if (filters.status === 'open' && filters.elementType === 'all') {
+  if (filters.origin === 'consumer') {
+    return 'No consumer feedback yet. Readers send it from the Feedback tab of a published version in Browse.';
+  }
+  if (filters.status === 'open' && filters.elementType === 'all' && filters.origin === 'all') {
     return 'Nothing to resolve. Start a thread on an element in Studio.';
   }
   return 'No threads match these filters.';
@@ -198,6 +204,15 @@ function DiscussionThreadRow({
         <Badge variant="secondary" square>
           {ANCHOR_TYPE_LABELS[thread.anchor_type]}
         </Badge>
+        {isConsumerThread(thread) ? (
+          <Badge
+            variant="accent"
+            title="Feedback a reader sent from Browse"
+            data-testid="discussion-consumer-tag"
+          >
+            Consumer
+          </Badge>
+        ) : null}
         <Badge variant={STATUS_BADGE_VARIANT[thread.status]}>{DISCUSSION_STATUS_LABELS[thread.status]}</Badge>
         <span className="disc-thread__version">{versionLabel}</span>
       </div>
@@ -503,6 +518,18 @@ export function ProjectDiscussionPanel({
               data-testid={`discussion-element-${elementType}`}
             >
               {DISCUSSION_ELEMENT_LABELS[elementType]}
+            </DataTableFilterChip>
+          ))}
+        </div>
+        <div role="group" aria-label="Origin" className="disc-facets">
+          {DISCUSSION_ORIGIN_FILTERS.map((origin) => (
+            <DataTableFilterChip
+              key={origin}
+              active={filters.origin === origin}
+              onClick={() => updateFilters({ origin })}
+              data-testid={`discussion-origin-${origin}`}
+            >
+              {DISCUSSION_ORIGIN_LABELS[origin]}
             </DataTableFilterChip>
           ))}
         </div>

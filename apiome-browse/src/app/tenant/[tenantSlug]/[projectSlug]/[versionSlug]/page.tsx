@@ -6,17 +6,23 @@ import {
 } from '../../../../../../lib/db/helper';
 import { buildMockBaseUrl } from '../../../../../../lib/mock/mockUrl';
 import { VersionClient } from './VersionClient';
+import { getReaderSession } from '../../../../portal/readerSession';
 
 export default async function VersionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantSlug: string; projectSlug: string; versionSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { tenantSlug, projectSlug, versionSlug } = await params;
-  const [version, versions, changelog] = await Promise.all([
+  const { tab } = await searchParams;
+  const [version, versions, changelog, readerSession] = await Promise.all([
     getPublicVersionDetails(tenantSlug, projectSlug, versionSlug),
     getPublicVersionsForProject(tenantSlug, projectSlug),
     getPublicVersionChangelog(tenantSlug, projectSlug, versionSlug),
+    // COL-4.4: the Feedback tab needs to know whether a reader of this portal is signed in.
+    getReaderSession(tenantSlug),
   ]);
 
   if (!version) {
@@ -44,6 +50,8 @@ export default async function VersionPage({
       versionSlug={versionSlug}
       restApiBaseUrl={restApiBaseUrl}
       mockBaseUrl={mockBaseUrl}
+      readerEmail={readerSession?.reader.email ?? null}
+      initialTab={tab === 'feedback' ? 'feedback' : tab === 'changes' ? 'changes' : 'specification'}
     />
   );
 }

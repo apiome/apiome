@@ -40141,7 +40141,7 @@ class Database:
     _COMMENT_THREAD_COLUMNS = """
         t.id::text AS id, t.tenant_id::text AS tenant_id, t.project_id::text AS project_id,
         t.version_id::text AS version_id, t.anchor_type, t.anchor_id::text AS anchor_id,
-        t.status, t.anchor_label, t.orphaned_at, t.created_by::text AS created_by,
+        t.status, t.anchor_label, t.orphaned_at, t.origin, t.created_by::text AS created_by,
         (SELECT cu.name FROM apiome.users cu WHERE cu.id = t.created_by) AS created_by_name,
         t.resolved_by::text AS resolved_by, t.resolved_at,
         t.created_at, t.updated_at, t.last_activity_at,
@@ -40212,6 +40212,89 @@ class Database:
         )
         return bool(rows and rows[0].get("present"))
 
+    def get_published_public_version(
+        self, *, tenant_id: str, project_slug: str, version_label: str
+    ) -> Optional[Dict[str, Any]]:
+        """A tenant's version as a Browse reader can see it: published and public (COL-4.4, #4528).
+
+        The same rule apiome-browse's ``getPublicVersionDetails`` applies, so a reader can only give
+        feedback on a version Browse would show them.
+
+        Args:
+            tenant_id: The reader's tenant.
+            project_slug: The project's slug.
+            version_label: The version label (``1.0.0``).
+
+        Returns:
+            ``{id, project_id, version_id, project_slug, project_name}``, or ``None``.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT v.id::text AS id, v.project_id::text AS project_id, v.version_id,
+                   p.slug AS project_slug, p.name AS project_name
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE p.tenant_id = %s::uuid AND p.slug = %s AND v.version_id = %s
+              AND v.published = true AND v.visibility = 'public'
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            LIMIT 1
+            """,
+            (tenant_id, project_slug, version_label),
+        )
+        return dict(rows[0]) if rows else None
+
+    def find_version_operation(self, *, version_id: str, method: str, path: str) -> Optional[str]:
+        """The id of one operation of a version, by HTTP method and path (COL-4.4, #4528).
+
+        Browse names an operation the way the spec does; the thread anchors to its stable id.
+
+        Args:
+            version_id: The version (revision) id.
+            method: The HTTP method, any case.
+            path: The path template exactly as published (``/pets/{petId}``).
+
+        Returns:
+            The ``path_operation`` id, or ``None`` when the version has no such operation.
+        """
+        if not is_uuid_string(str(version_id or "")):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT po.id::text AS id
+            FROM apiome.path_operation po
+            JOIN apiome.version_path vp ON vp.id = po.version_path_id
+            WHERE vp.version_id = %s::uuid AND vp.pathname = %s AND upper(po.operation) = upper(%s)
+            LIMIT 1
+            """,
+            (version_id, path, method),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    def get_operation_coordinates(self, operation_ids: List[str]) -> Dict[str, Dict[str, str]]:
+        """Method and path of each operation, for labelling feedback threads (COL-4.4, #4528).
+
+        Args:
+            operation_ids: ``path_operation`` ids.
+
+        Returns:
+            ``{id: {"method", "path"}}`` for the ids that still exist (upper-case method).
+        """
+        ids = [value for value in operation_ids if is_uuid_string(str(value or ""))]
+        if not ids:
+            return {}
+        rows = self.execute_query(
+            """
+            SELECT po.id::text AS id, upper(po.operation) AS method, vp.pathname AS path
+            FROM apiome.path_operation po
+            JOIN apiome.version_path vp ON vp.id = po.version_path_id
+            WHERE po.id = ANY(%s::uuid[])
+            """,
+            (ids,),
+        )
+        return {str(row["id"]): {"method": row["method"], "path": row["path"]} for row in rows}
+
     def insert_comment_thread(
         self,
         *,
@@ -40224,6 +40307,7 @@ class Database:
         body: str,
         mentions: List[str],
         notify: Optional[Any] = None,
+        origin: str = "internal",
     ) -> Optional[Dict[str, Any]]:
         """Open a thread together with its first comment (COL-1.1, #4513).
 
@@ -40238,6 +40322,8 @@ class Database:
             mentions: User ids the body mentions.
             notify: Mention fan-out (COL-3.1, #4521), called with ``{"thread_id", "comment_id"}``
                 and written in the same transaction as the thread.
+            origin: ``internal`` (a workspace member) or ``consumer`` (a Browse reader's feedback,
+                COL-4.4 #4528).
 
         Returns:
             ``{"thread_id", "comment_id"}``, or ``None`` when any id is not a UUID.
@@ -40251,9 +40337,9 @@ class Database:
                 """
                 WITH thread AS (
                     INSERT INTO apiome.comment_threads (
-                        tenant_id, project_id, version_id, anchor_type, anchor_id, created_by
+                        tenant_id, project_id, version_id, anchor_type, anchor_id, created_by, origin
                     )
-                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid)
+                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid, %s)
                     RETURNING id
                 ), reply AS (
                     INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
@@ -40269,6 +40355,7 @@ class Database:
                     anchor_type,
                     anchor_id,
                     created_by,
+                    origin,
                     created_by,
                     body,
                     list(mentions),
@@ -40320,6 +40407,8 @@ class Database:
         anchor_type: Optional[str],
         anchor_id: Optional[str],
         mentioned_user_id: Optional[str],
+        origin: Optional[str] = None,
+        created_by: Optional[str] = None,
     ) -> Optional[Tuple[str, List[Any]]]:
         """Build the WHERE clause shared by the thread list and count reads.
 
@@ -40331,12 +40420,14 @@ class Database:
             anchor_type: Only threads on this element kind, when given.
             anchor_id: Only threads on this element, when given.
             mentioned_user_id: Only threads with a comment mentioning this user, when given.
+            origin: Only ``internal`` or only ``consumer`` threads, when given (COL-4.4, #4528).
+            created_by: Only threads this user opened, when given (a reader's own feedback).
 
         Returns:
             ``(sql, params)``, or ``None`` when any supplied id is not a UUID (nothing can match).
         """
         ids = [tenant_id, project_id]
-        ids.extend(value for value in (version_id, anchor_id, mentioned_user_id) if value)
+        ids.extend(value for value in (version_id, anchor_id, mentioned_user_id, created_by) if value)
         if not all(is_uuid_string(str(value)) for value in ids):
             return None
         clauses = ["t.tenant_id = %s::uuid", "t.project_id = %s::uuid"]
@@ -40359,6 +40450,12 @@ class Database:
                 " WHERE mc.thread_id = t.id AND mc.mentions @> ARRAY[%s::uuid])"
             )
             params.append(mentioned_user_id)
+        if origin:
+            clauses.append("t.origin = %s")
+            params.append(origin)
+        if created_by:
+            clauses.append("t.created_by = %s::uuid")
+            params.append(created_by)
         return " AND ".join(clauses), params
 
     def list_comment_threads(
@@ -40371,6 +40468,8 @@ class Database:
         anchor_type: Optional[str] = None,
         anchor_id: Optional[str] = None,
         mentioned_user_id: Optional[str] = None,
+        origin: Optional[str] = None,
+        created_by: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -40387,6 +40486,8 @@ class Database:
             anchor_type: Only threads on this element kind, when given.
             anchor_id: Only threads on this element, when given.
             mentioned_user_id: Only threads with a comment mentioning this user, when given.
+            origin: Only ``internal`` or only ``consumer`` threads, when given (COL-4.4, #4528).
+            created_by: Only threads this user opened, when given (a reader's own feedback).
             limit: Page size.
             offset: Rows to skip.
 
@@ -40401,6 +40502,8 @@ class Database:
             anchor_type=anchor_type,
             anchor_id=anchor_id,
             mentioned_user_id=mentioned_user_id,
+            origin=origin,
+            created_by=created_by,
         )
         if built is None:
             return []
@@ -40440,6 +40543,8 @@ class Database:
         anchor_type: Optional[str] = None,
         anchor_id: Optional[str] = None,
         mentioned_user_id: Optional[str] = None,
+        origin: Optional[str] = None,
+        created_by: Optional[str] = None,
     ) -> int:
         """How many threads :meth:`list_comment_threads` would page through (COL-1.1, #4513).
 
@@ -40451,6 +40556,8 @@ class Database:
             anchor_type: Only threads on this element kind, when given.
             anchor_id: Only threads on this element, when given.
             mentioned_user_id: Only threads with a comment mentioning this user, when given.
+            origin: Only ``internal`` or only ``consumer`` threads, when given (COL-4.4, #4528).
+            created_by: Only threads this user opened, when given (a reader's own feedback).
 
         Returns:
             The total (0 when an id is not a UUID).
@@ -40463,6 +40570,8 @@ class Database:
             anchor_type=anchor_type,
             anchor_id=anchor_id,
             mentioned_user_id=mentioned_user_id,
+            origin=origin,
+            created_by=created_by,
         )
         if built is None:
             return 0

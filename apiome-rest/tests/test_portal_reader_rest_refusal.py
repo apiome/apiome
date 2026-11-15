@@ -4,7 +4,7 @@
 GET route, as AGX-2.2's secret sweep does)."* This module is that sweep, plus the direct checks
 behind it:
 
-1. **Every GET route the app serves** outside the ``browse`` and ``portal-auth`` tags is called
+1. **Every GET route the app serves** outside the ``browse``, ``portal-auth`` and ``portal-feedback`` (COL-4.4) tags is called
    twice — anonymously, and with a *live* ``Authorization: Reader <token>``. The session must buy
    nothing an anonymous caller does not already have: a route that answers the reader a 2xx must
    answer the anonymous caller a 2xx with the same body. (Refusing the reader where an anonymous
@@ -39,7 +39,7 @@ from app.auth import (
 )
 from app.main import app
 
-_ALLOWED_TAGS = {"browse", "portal-auth"}
+_ALLOWED_TAGS = {"browse", "portal-auth", "portal-feedback"}
 _ID = "33333333-3333-4333-8333-333333333333"
 
 

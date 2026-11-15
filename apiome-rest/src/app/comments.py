@@ -10,7 +10,7 @@ recording the tenant members its ``@name`` tokens resolved to (see :mod:`app.com
 
 This module holds only data: the vocabularies, the stable refusal codes, the refusal exception, and
 the request/response models the routes (:mod:`app.comment_routes`) and the store
-(:mod:`app.comment_store`) share. The storage lives in apiome-db V259 and V260.
+(:mod:`app.comment_store`) share. The storage lives in apiome-db V259, V260 and V379 (``origin``).
 """
 
 from __future__ import annotations
@@ -35,6 +35,9 @@ __all__ = [
     "CODE_THREAD_ORPHANED",
     "CODE_VERSION_NOT_FOUND",
     "MAX_BODY_LENGTH",
+    "ORIGIN_CONSUMER",
+    "ORIGIN_INTERNAL",
+    "THREAD_ORIGINS",
     "STATUS_OPEN",
     "STATUS_ORPHANED",
     "STATUS_RESOLVED",
@@ -48,6 +51,7 @@ __all__ = [
     "CommentThreadRelink",
     "CommentThreadSummary",
     "CommentValidationError",
+    "ThreadOrigin",
     "ThreadStatus",
 ]
 
@@ -65,11 +69,19 @@ STATUS_RESOLVED = "resolved"
 STATUS_ORPHANED = "orphaned"
 THREAD_STATUSES = (STATUS_OPEN, STATUS_RESOLVED, STATUS_ORPHANED)
 
+#: Where a thread came from. Mirrors ``comment_threads_origin_check`` (V379, COL-4.4 #4528):
+#: ``internal`` threads are opened by workspace members; ``consumer`` threads are feedback a Browse
+#: reader opened on a published spec (:mod:`app.consumer_feedback`).
+ORIGIN_INTERNAL = "internal"
+ORIGIN_CONSUMER = "consumer"
+THREAD_ORIGINS = (ORIGIN_INTERNAL, ORIGIN_CONSUMER)
+
 #: The longest comment body, in characters. Mirrors ``comments_body_check``.
 MAX_BODY_LENGTH = 20_000
 
 AnchorType = Literal["class", "property", "path", "operation", "version"]
 ThreadStatus = Literal["open", "resolved", "orphaned"]
+ThreadOrigin = Literal["internal", "consumer"]
 
 # Stable refusal codes. A client branches on the code, never on the message.
 CODE_PROJECT_NOT_FOUND = "comment-project-not-found"
@@ -161,6 +173,13 @@ class CommentThreadRecord(BaseModel):
     )
     orphaned_at: Optional[datetime] = Field(
         default=None, description="When the anchored element was deleted. Set exactly while `orphaned`."
+    )
+    origin: ThreadOrigin = Field(
+        default="internal",
+        description=(
+            "`internal` — opened by a workspace member; `consumer` — feedback a Browse reader opened "
+            "on the published spec (COL-4.4)."
+        ),
     )
     created_by: Optional[str] = Field(default=None, description="Who opened the thread.")
     created_by_name: Optional[str] = Field(default=None, description="Their display name.")

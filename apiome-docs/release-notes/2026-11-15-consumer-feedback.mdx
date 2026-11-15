@@ -1,0 +1,26 @@
+---
+slug: consumer-feedback
+title: Consumer feedback — readers tell you what's wrong, right in Browse
+description: "Signed-in readers send feedback on a published API; it lands in Discussion."
+authors: [apiome]
+---
+
+The people who use your APIs can now tell you when a response shape is wrong or a description is
+unclear, without an email to support.
+
+{/* truncate */}
+
+- **Send feedback from Browse.** A signed-in reader opens a published version, **clicks the
+  "Feedback" tab**, picks **Whole API** or one operation, and **clicks "Send feedback"**.
+- **Answer it where you already discuss.** The thread appears in the project's **Discussion** tab with
+  a **Consumer** tag. **Consumer feedback** in the new **Origin** chips lists only those threads.
+  Reply and resolve as you do with any thread.
+- **The reader sees your answer.** Replies show on the reader's **Feedback** tab marked **Team**, and
+  either side can **Resolve** or **Reopen**.
+- **Private by design.** A reader sees only their own threads, never your internal discussion, and
+  their `@name` text pings nobody. Signed-out visitors can't send feedback.
+- **For integrators.** The new `portal-feedback` endpoints are in the
+  [REST reference](/reference/rest/portal-feedback), and `?origin=consumer` filters the thread list.
+
+See [Send feedback on an API](/ship/send-feedback-on-an-api) and
+[Consumer feedback](/build/versions#consumer-feedback).

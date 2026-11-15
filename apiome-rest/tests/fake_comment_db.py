@@ -170,6 +170,47 @@ class FakeCommentDb(NotificationDbMixin):
     # Comment accessors
     # -----------------------------------------------------------------------------------------
 
+    # -- COL-4.4 (#4528): what a Browse reader can give feedback on ---------------------------
+
+    def publish_version(self, version_id: str, *, public: bool = True) -> None:
+        """Mark a version published (and public unless told otherwise)."""
+        self.versions[version_id]["published"] = True
+        self.versions[version_id]["visibility"] = "public" if public else "private"
+
+    def add_operation(self, version_id: str, operation_id: str, method: str, path: str) -> None:
+        """Register an operation of a version, by method and path, as a valid anchor."""
+        self.operations = getattr(self, "operations", {})
+        self.operations[operation_id] = {"version_id": version_id, "method": method.upper(), "path": path}
+        self.add_anchor(version_id, "operation", operation_id)
+
+    def get_published_public_version(
+        self, *, tenant_id: str, project_slug: str, version_label: str
+    ) -> Optional[Dict[str, Any]]:
+        """The published, public version a reader may see."""
+        for version in self.versions.values():
+            project = self.projects.get(version["project_id"], {})
+            if (
+                project.get("tenant_id") == tenant_id
+                and project.get("slug") == project_slug
+                and version["version_id"] == version_label
+                and version.get("published")
+                and version.get("visibility") == "public"
+            ):
+                return {**version, "project_slug": project_slug}
+        return None
+
+    def find_version_operation(self, *, version_id: str, method: str, path: str) -> Optional[str]:
+        """An operation of a version by method (any case) and exact path."""
+        for operation_id, op in getattr(self, "operations", {}).items():
+            if op["version_id"] == version_id and op["method"] == method.upper() and op["path"] == path:
+                return operation_id
+        return None
+
+    def get_operation_coordinates(self, operation_ids: List[str]) -> Dict[str, Dict[str, str]]:
+        """Method and path of each existing operation."""
+        ops = getattr(self, "operations", {})
+        return {i: {"method": ops[i]["method"], "path": ops[i]["path"]} for i in operation_ids if i in ops}
+
     def comment_anchor_exists(self, *, version_id: str, anchor_type: str, anchor_id: str) -> bool:
         """Whether the element exists in the version."""
         if anchor_type == "version":
@@ -214,6 +255,7 @@ class FakeCommentDb(NotificationDbMixin):
         body: str,
         mentions: List[str],
         notify: Optional[Any] = None,
+        origin: str = "internal",
     ) -> Optional[Dict[str, Any]]:
         """Open a thread with its first comment, and fan its mentions out with it."""
         now = self._tick()
@@ -229,6 +271,7 @@ class FakeCommentDb(NotificationDbMixin):
             "status": "open",
             "anchor_label": None,
             "orphaned_at": None,
+            "origin": origin,
             "created_by": created_by,
             "resolved_by": None,
             "resolved_at": None,
@@ -266,6 +309,8 @@ class FakeCommentDb(NotificationDbMixin):
         anchor_type: Optional[str] = None,
         anchor_id: Optional[str] = None,
         mentioned_user_id: Optional[str] = None,
+        origin: Optional[str] = None,
+        created_by: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Threads matching the list filters, in list order."""
         rows = []
@@ -279,6 +324,10 @@ class FakeCommentDb(NotificationDbMixin):
             if anchor_type and row["anchor_type"] != anchor_type:
                 continue
             if anchor_id and row["anchor_id"] != anchor_id:
+                continue
+            if origin and row.get("origin", "internal") != origin:
+                continue
+            if created_by and row["created_by"] != created_by:
                 continue
             if mentioned_user_id and not any(
                 mentioned_user_id in c["mentions"] for c in self._thread_comments(row["id"])

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.570.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.571.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `comments` · 10 operations
 
@@ -19,7 +19,7 @@ Tag: `comments` · 10 operations
 
 A page of the project's threads, most recently active first, each with its opening comment and its comment count.
 
-Filters combine: `version` (revision id or version label) lists one version's threads — on its classes, properties, paths, and operations as well as on the version itself; `status` keeps `open`, `resolved`, or `orphaned` (threads whose element was deleted, each carrying the element's last-known `anchor_label`); `anchor_type` and `anchor_id` narrow to one kind of element or one element; `mentions_me=true` keeps threads with a comment mentioning the caller.
+Filters combine: `version` (revision id or version label) lists one version's threads — on its classes, properties, paths, and operations as well as on the version itself; `status` keeps `open`, `resolved`, or `orphaned` (threads whose element was deleted, each carrying the element's last-known `anchor_label`); `anchor_type` and `anchor_id` narrow to one kind of element or one element; `mentions_me=true` keeps threads with a comment mentioning the caller; `origin` keeps `internal` threads or the `consumer` feedback Browse readers opened (every thread carries its `origin`).
 
 Requires `projects:view`.
 
@@ -36,6 +36,7 @@ Operation id: `list_comment_threads_v1_tenants__tenant_slug__projects__project_r
 | `anchor_type` | query | enum `"class"`, `"property"`, `"path"`, `"operation"`, `"version"` or null | no | Element kind. |
 | `anchor_id` | query | string or null | no | Element id. |
 | `mentions_me` | query | boolean | no | Only threads with a comment mentioning the caller. |
+| `origin` | query | enum `"internal"`, `"consumer"` or null | no | `internal` (workspace members) or `consumer` (Browse reader feedback, COL-4.4). |
 | `limit` | query | integer | no | Page size. |
 | `offset` | query | integer | no | Threads to skip. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
@@ -412,6 +413,7 @@ One stored thread, without its comments.
 | `status` | enum `"open"`, `"resolved"`, `"orphaned"` | yes | `open`, `resolved`, or `orphaned` — the anchored element was deleted; relink the thread to re-attach it. |
 | `anchor_label` | string or null | no | The deleted element's last-known label (`Customer`, `Customer.email`, `/customers`, `GET /customers`), captured when it was deleted. Set exactly while `orphaned`. |
 | `orphaned_at` | string (date-time) or null | no | When the anchored element was deleted. Set exactly while `orphaned`. |
+| `origin` | enum `"internal"`, `"consumer"` | no | `internal` — opened by a workspace member; `consumer` — feedback a Browse reader opened on the published spec (COL-4.4). |
 | `created_by` | string or null | no | Who opened the thread. |
 | `created_by_name` | string or null | no | Their display name. |
 | `resolved_by` | string or null | no | Who resolved it, when resolved. |

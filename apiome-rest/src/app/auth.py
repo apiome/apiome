@@ -571,9 +571,9 @@ def is_reader_authorization(authorization: Optional[str]) -> bool:
 def resolve_reader_session_header(authorization: Optional[str]) -> Any:
     """Authenticate ``Authorization: Reader <token>`` for the ``browse`` routes (PCX-1.1, #5889).
 
-    Only browse-tag callers use this. ``validate_authentication`` and
-    ``validate_session_credentials`` deliberately never do, which is what keeps a reader session
-    from being a REST credential anywhere else.
+    Only the browse-tag routes and the portal-feedback routes (COL-4.4) use this.
+    ``validate_authentication`` and ``validate_session_credentials`` deliberately never do, which
+    is what keeps a reader session from being a REST credential anywhere else.
 
     Args:
         authorization: The raw header value.

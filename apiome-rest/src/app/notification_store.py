@@ -253,6 +253,7 @@ def thread_resolved_notifier(
     version: Optional[Mapping[str, Any]],
     thread: Mapping[str, Any],
     actor_id: Optional[str],
+    exclude: Sequence[Any] = (),
 ) -> Optional[Notifier]:
     """"the thread you were in was resolved" for everyone who took part in it.
 
@@ -263,6 +264,7 @@ def thread_resolved_notifier(
         version: The version row.
         thread: The thread row being resolved.
         actor_id: Who is resolving it.
+        exclude: Participants never to notify — a consumer thread's Browse reader (COL-4.4).
 
     Returns:
         The notifier, or ``None`` when nobody but the actor took part.
@@ -271,7 +273,7 @@ def thread_resolved_notifier(
     participants.extend(
         row.get("author_id") for row in db.list_comments(thread_id=str(thread.get("id")))
     )
-    people = fanout.recipients(participants, exclude=[actor_id])
+    people = fanout.recipients(participants, exclude=[actor_id, *exclude])
     if not people:
         return None
 
