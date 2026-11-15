@@ -251,6 +251,8 @@ describe('tabs load lazily', () => {
     await renderPage();
     const changes = screen.getByTestId('review-tab-changes');
     fireEvent.keyDown(changes, { key: 'ArrowRight' });
+    expect(screen.getByTestId('review-tab-suggestions')).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(screen.getByTestId('review-tab-suggestions'), { key: 'ArrowRight' });
     expect(screen.getByTestId('review-tab-spec')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('review-tab-spec')).toHaveFocus();
     expect(window.location.search).toContain('tab=spec');

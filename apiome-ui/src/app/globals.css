@@ -41934,3 +41934,113 @@ tr[data-selected="true"] > td:first-child {
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   Review suggestions (COL-4.2, #4526)
+
+   The review page's Suggestions tab (`ReviewSuggestionsPanel`): the Suggest a change
+   form and the list of suggestions, each a diff with Apply / Reject. Tokens only;
+   element names break so a long one never scrolls the row sideways.
+   ========================================================================== */
+
+.sugg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.sugg-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  min-inline-size: 0;
+}
+
+.sugg-form__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.sugg-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.sugg-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 0 1 14rem;
+  min-inline-size: 0;
+}
+
+.sugg-form__field--grow {
+  flex: 1 1 16rem;
+}
+
+.sugg-form__hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.sugg-form__actions,
+.sugg-item__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.sugg-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugg-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  min-inline-size: 0;
+}
+
+.sugg-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.sugg-item__target {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.sugg-item__meta,
+.sugg-item__note,
+.sugg-item__outcome {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.sugg-item__outcome--stale {
+  color: var(--warn-fg);
+}

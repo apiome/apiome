@@ -1,0 +1,20 @@
+---
+slug: suggested-changes
+title: Suggested changes — propose the exact edit, apply it in one click
+description: "Reviewers suggest concrete class and property edits; authors apply or reject them."
+authors: [apiome]
+---
+
+When a reviewer knows exactly what should change, they can now say so concretely. The author
+applies it in one click.
+
+{/* truncate */}
+
+- **Suggest a change.** On a review's new **Suggestions** tab, pick a class or property, pick a
+  field and type its new value, for example `Pet.name` › `maxLength` › `100`.
+- **Apply or reject.** The author sees each suggestion as a before/after diff and **clicks
+  “Apply”** or **“Reject”**. Rejections are recorded.
+- **Never silently misapplied.** If the same field changed since the suggestion was made, it is
+  marked **Stale** and names what changed. Changes elsewhere in the element are kept.
+- **For integrators.** `…/reviews/{id}/suggestions` takes an RFC 6902 patch; see
+  [Suggested changes](/govern/reviews#suggested-changes).
