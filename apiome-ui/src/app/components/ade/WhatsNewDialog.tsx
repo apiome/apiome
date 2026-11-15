@@ -15,12 +15,14 @@ import {
 import { Button } from '@/app/components/ui/Button';
 import { RELEASE_NOTES_URL } from '@/app/utils/docsLinks';
 import { APP_VERSION_BADGE } from '@lib/app-version';
+import { WHATS_NEW_SOURCE_URL } from './launcher/recentlyShippedModel';
 
 /**
  * The release notes (`public/WHATS_NEW.md`), as a dialog.
  *
  * Opened from the rail user menu's *What's new* row and from the build string beneath it
- * (HIVE-3.4, #5290), and from the launcher's own badge. The markdown is fetched rather
+ * (HIVE-3.4, #5290), and on the launcher from its What's new button, its footer build string
+ * and its "Recently shipped" card (HIVE-12.6, #5613). The markdown is fetched rather
  * than bundled so a release can update the notes without a rebuild.
  *
  * Re-tokened onto the Hive `Dialog` primitive by HIVE-3.4. It used to be a hand-rolled
@@ -63,7 +65,7 @@ const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return;
 
     let cancelled = false;
-    fetch('/WHATS_NEW.md')
+    fetch(WHATS_NEW_SOURCE_URL)
       .then((response) => response.text())
       .then((text) => {
         if (cancelled) return;

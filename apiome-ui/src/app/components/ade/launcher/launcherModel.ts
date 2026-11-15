@@ -19,11 +19,12 @@
  * row.** An unshipped product — a host's disabled card, Community, Marketplace — is named once
  * on the {@link launcherComingNext} line instead of taking a disabled card's space.
  */
-import { Globe, HelpCircle, LayoutDashboard } from 'lucide-react';
+import { Globe, HelpCircle, Keyboard, LayoutDashboard, Youtube } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import { BROWSE_APP_URL } from '@lib/app-urls';
 import { HELP_ROUTE } from '@/app/components/shell/appShellRoutes';
+import { VIDEO_WALKTHROUGHS_URL } from '@/app/components/ade/help/helpModel';
 // A dependency-free formatter: the launcher is the first page a reader loads.
 import { formatRelativeTimestamp } from '@/app/utils/catalog-detail-insights';
 import type { ComingNextItem } from '@/app/components/ui/ComingNext';
@@ -97,7 +98,20 @@ export interface LauncherApp {
   primary?: boolean;
 }
 
-/** One row in the Resources panel. Every row is a destination that exists. */
+/**
+ * What a Resources row does when it is not a link: open an overlay this page hosts.
+ *
+ * `shortcut-sheet` opens the keyboard-shortcuts sheet (`ShortcutsHost`, HIVE-3.7) — the same
+ * sheet `?` opens.
+ */
+export type LauncherResourceAction = 'shortcut-sheet';
+
+/**
+ * One row in the Resources panel. Every row is a destination that exists.
+ *
+ * A row is either a link (`href`) or an action (`action`); a row that names an action is drawn
+ * as a button, because it opens something on this page rather than going anywhere.
+ */
 export interface LauncherResource {
   /** Stable id: the React key and the test handle. */
   id: string;
@@ -105,8 +119,12 @@ export interface LauncherResource {
   name: string;
   /** The row's second line. */
   description: string;
-  /** Where the row goes. */
-  href: string;
+  /** Where the row goes. Ignored when {@link LauncherResource.action} is set. */
+  href?: string;
+  /** The overlay the row opens instead of navigating (HIVE-12.6). */
+  action?: LauncherResourceAction;
+  /** The key that does the same thing, drawn as a chip in place of the row's arrow. */
+  kbd?: string;
   /** True when the destination is another origin, which opens in a new tab. */
   external?: boolean;
   /** The row's glyph. */
@@ -160,7 +178,28 @@ export const LAUNCHER_RESOURCES: readonly LauncherResource[] = [
     href: HELP_ROUTE,
     external: false,
     icon: HelpCircle,
+    tone: 'accent',
+  },
+  {
+    // HIVE-12.6 (#5613, `proposals/launcher-focused.html`): the channel is back as a row of
+    // its own beside Help & docs — which still carries it as one card among the guides — so
+    // the launcher's three rows are the three ways a reader learns: read, watch, practise.
+    id: 'videos',
+    name: 'Video walkthroughs',
+    description: 'Short screencasts on YouTube',
+    href: VIDEO_WALKTHROUGHS_URL,
+    external: true,
+    icon: Youtube,
     tone: 'rose',
+  },
+  {
+    id: 'shortcuts',
+    name: 'Keyboard shortcuts',
+    description: '⌘K palette · G then a letter to jump',
+    action: 'shortcut-sheet',
+    kbd: '?',
+    icon: Keyboard,
+    tone: 'honey',
   },
 ] as const;
 

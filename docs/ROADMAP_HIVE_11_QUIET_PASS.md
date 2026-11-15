@@ -132,7 +132,7 @@ graph TD
 | Epic | Name | GitHub | Issues | MVP issues | Depends on | Theme |
 | --- | --- | --- | --- | --- | --- | --- |
 | 11 | List-page density — the “quiet pass” ✅ | #5594 | 11 | 5 | — | Density & attention on pages |
-| 12 | Shell & launcher fit | #5595 | 6 | 2 | — | Density & attention in the chrome |
+| 12 | Shell & launcher fit ✅ | #5595 | 6 | 2 | — | Density & attention in the chrome |
 | 13 | Brand discipline, gates & design docs | #5596 | 4 | 1 | 11, 12 | Release gate |
 | — | **Total** | 3 epics | **21** | **8** | | |
 
@@ -383,7 +383,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-## Epic 12 — Shell & launcher fit — [#5595](https://github.com/apiome/apiome/issues/5595)
+## Epic 12 — Shell & launcher fit — [#5595](https://github.com/apiome/apiome/issues/5595) ✅
 
 **Goal:** Make the rail fit a 900 px window and the launcher show only what can be opened: default-collapsed groups with counts, three destinations re-homed, a Notifications count, and “coming soon” reduced to one line.
 
@@ -394,7 +394,7 @@ Milestone: **RC6** (all epics and issues).
 | 12.3 | #5610 | Rail footer — Notifications count and order ✅ | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
 | 12.4 | #5611 | “Preview” rail pill → honey dot ✅ | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
 | 12.5 | #5612 | Launcher — only openable tiles; `ComingNext` line ✅ | Applications shows Control Panel (emphasised), Browser and host-injected tiles; three “coming soon” surfaces collapse into one `ComingNext` text line | `ui`, `dashboard`, `redesign` | Y | N | M | `src/app/components/ade/AdeHome.tsx`, `src/app/components/ade/launcher/*`, `src/app/components/ui/ComingNext.tsx (new)`, `e2e/fixtures/hive-a11y/launcher.html` |
-| 12.6 | #5613 | Launcher — “Recently shipped” from What’s new; build string to the footer | The stale “On the roadmap” card becomes the three latest What’s new entries; the version badge leaves the top row | `ui`, `dashboard`, `redesign` | N | N | S | `src/app/components/ade/AdeHome.tsx`, `src/app/components/shell/whatsNewSeen.ts`, `src/app/components/ade/launcher/ResourceRow.tsx` |
+| 12.6 | #5613 | Launcher — “Recently shipped” from What’s new; build string to the footer ✅ | The stale “On the roadmap” card becomes the three latest What’s new entries; the version badge leaves the top row | `ui`, `dashboard`, `redesign` | N | N | S | `src/app/components/ade/AdeHome.tsx`, `src/app/components/shell/whatsNewSeen.ts`, `src/app/components/ade/launcher/ResourceRow.tsx` |
 
 ### `apiome: [HIVE-12.1] Nav model — default-collapsed groups with counts` ✅ — [#5608](https://github.com/apiome/apiome/issues/5608)
 **Problem statement.** The expanded rail carries 17 destinations in 5 groups plus a 4-row footer: ≈ 1 030 px of content measured on the shipped shell. At 900 px tall (a 1440 × 900 laptop, or 1536 × 864 at 125 %) the nav scrolls behind a hidden scrollbar and the Workspace group is below the fold.
@@ -489,7 +489,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-12.6] Launcher — “Recently shipped” from What’s new; build string to the footer` — [#5613](https://github.com/apiome/apiome/issues/5613)
+### `apiome: [HIVE-12.6] Launcher — “Recently shipped” from What’s new; build string to the footer` ✅ — [#5613](https://github.com/apiome/apiome/issues/5613)
 **Problem statement.** “On the roadmap: Audit — Planned” is hand-written and stale (Access audit shipped and sits in the rail). The “v0.346.0 RC” badge beside the brand is the placement DESIGN.md §5.1 retired.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/launcher-focused.html` (callouts 1, 4, 5); rationale: `docs/mockups/PROPOSALS.md`.
@@ -498,9 +498,9 @@ Milestone: **RC6** (all epics and issues).
 - Resources rows: Help & docs, Video walkthroughs, Keyboard shortcuts (opens the sheet).
 
 **Acceptance criteria.**
-- [ ] No hand-written roadmap copy remains in `AdeHome`
-- [ ] Unread dot clears when What’s new is opened (existing `whatsNewSeen`)
-- [ ] Launcher fixture re-dumped; copy-voice and a11y gates green
+- [x] No hand-written roadmap copy remains in `AdeHome`
+- [x] Unread dot clears when What’s new is opened (existing `whatsNewSeen`)
+- [x] Launcher fixture re-dumped; copy-voice and a11y gates green
 
 **Parallelism / dependencies.** Depends on HIVE-12.5.
 

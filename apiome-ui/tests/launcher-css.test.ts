@@ -47,9 +47,9 @@ const LAUNCHER_PRELUDES = [
   '.launch-row',
   '.launch-top',
   '.launch-top__actions',
-  '.launch-ver',
-  '.launch-ver:hover',
-  '.launch-ver__dot',
+  '.launch-whats-new',
+  '.launch-unread-dot',
+  '.launch-whats-new .launch-unread-dot',
   '.launch-account',
   '.launch-account:hover',
   '.launch-account__name',
@@ -91,7 +91,18 @@ const LAUNCHER_PRELUDES = [
   '.launch-res__sub',
   '.launch-res:hover:not(:disabled)',
   '.launch-res:hover:not(:disabled) .launch-res__title',
+  '.launch-ship',
+  '.launch-ship__row',
+  '.launch-ship__row + .launch-ship__row',
+  '.launch-ship__dot',
+  '.launch-ship__body',
+  '.launch-ship__title',
+  '.launch-ship__sub',
+  '.launch-ship__when',
+  '.launch-ship__all',
   '.launch-foot',
+  '.launch-foot__build',
+  '.launch-foot__build:hover',
 ];
 
 /**
@@ -286,6 +297,32 @@ describe('launcher — only openable tiles (HIVE-12.5)', () => {
     // `--fg-muted`, never the mockup-adjacent `--fg-subtle` / `--fg-faint`, which fail AA.
     expect(line.get('color')).toBe('var(--fg-muted)');
     expect(declarationsOf('.coming-next__follow').get('color')).toBe('var(--accent-fg)');
+  });
+});
+
+describe('launcher — Recently shipped and the build in the footer (HIVE-12.6)', () => {
+  it('paints the What’s new unread dot honey, and pins it to the icon button’s corner', () => {
+    expect(declarationsOf('.launch-unread-dot').get('background')).toBe('var(--honey)');
+    expect(declarationsOf('.launch-whats-new').get('position')).toBe('relative');
+    expect(declarationsOf('.launch-whats-new .launch-unread-dot').get('position')).toBe('absolute');
+  });
+
+  it('marks a shipped entry with the ok dot, never honey (DESIGN.md §2)', () => {
+    expect(declarationsOf('.launch-ship__dot').get('background')).toBe('var(--ok)');
+  });
+
+  it('keeps each entry to one line of title and one of summary', () => {
+    for (const prelude of ['.launch-ship__title', '.launch-ship__sub']) {
+      expect(declarationsOf(prelude).get('white-space')).toBe('nowrap');
+      expect(declarationsOf(prelude).get('text-overflow')).toBe('ellipsis');
+    }
+  });
+
+  it('draws the footer build as a quiet button, not a pill', () => {
+    const build = declarationsOf('.launch-foot__build');
+    expect(build.get('background')).toBe('none');
+    expect(build.get('color')).toBe('inherit');
+    expect(build.has('border-radius')).toBe(false);
   });
 });
 

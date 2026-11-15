@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { FolderKanban, Globe, LogOut, Settings2, ShieldCheck } from 'lucide-react';
+import { FolderKanban, Globe, LogOut, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 
 import { BrandMark } from '../brand';
 import { Avatar } from '@/app/components/ui/Avatar';
@@ -14,7 +14,7 @@ import CommandPaletteHost from '@/app/components/shell/CommandPaletteHost';
 import ShortcutsHost from '@/app/components/shell/ShortcutsHost';
 import { LAUNCHER_ROUTE } from '@/app/components/shell/appShellRoutes';
 import { useControlPanelVisit } from '../shell/controlPanelVisit';
-import { markWhatsNewSeen } from '../shell/whatsNewSeen';
+import { useWhatsNewUnread } from '../shell/whatsNewSeen';
 import PreferencesDrawerHost from './preferences/PreferencesDrawerHost';
 import { openPreferences } from './preferences/preferencesDrawerBus';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -31,6 +31,7 @@ import { findPlatformNavItem } from '@lib/platform-nav';
 
 import AppLaunchCard from './launcher/AppLaunchCard';
 import HoneycombOrnament from './launcher/HoneycombOrnament';
+import RecentlyShipped from './launcher/RecentlyShipped';
 import ResourceRow from './launcher/ResourceRow';
 import {
   accountMenuLabel,
@@ -56,7 +57,7 @@ import {
  * carrying one identity hue. It replaced a zinc page with four `rgba()` glows and a Tailwind
  * gradient pair per card, none of which could follow a theme.
  *
- * Every line in the mockup's **Keeps (1:1)** list is still here: the build badge opening
+ * Every line in the mockup's **Keeps (1:1)** list is still here: the build string opening
  * What's new, preferences, the account chip, sign out, the greeting and headline, the ordered
  * application grid, the resource rows, and the footer's version and copyright.
  *
@@ -69,6 +70,16 @@ import {
  * "On the roadmap" panel is gone (its one row was a disabled button); HIVE-12.6 puts
  * "Recently shipped" in its place. The hero lost its eyebrow pill and filler paragraph and
  * gained an "n need attention" chip.
+ *
+ * ### Recently shipped, and the build in the footer (HIVE-12.6, #5613)
+ *
+ * Callouts 1, 4 and 5 of the same mockup. Beside Resources, `RecentlyShipped` lists the three
+ * newest entries of the What's new notes — read from the notes, so no roadmap copy is written
+ * here to go stale — and is omitted when the notes hold none. The build badge left the top row
+ * (DESIGN.md §5.1 retired that placement): the top row is brand · What's new · Preferences ·
+ * account · Sign out, and the build string is the footer's, still a button that opens What's
+ * new. Both What's new controls carry the honey unread dot of the rail's user menu
+ * (`useWhatsNewUnread`), and opening the notes from either clears it everywhere.
  *
  * ### The commercial slot
  *
@@ -128,6 +139,8 @@ export default function AdeHome({
 }: AdeHomeProps) {
   const { data: session } = useAuthSession();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  // The rail's user-menu dot (HIVE-3.4): one stored "seen" build, so either surface clears both.
+  const { unread: whatsNewUnread, markSeen: markWhatsNewSeen } = useWhatsNewUnread();
 
   // When the Control Panel was last open on this device; `null` until after mount.
   const controlPanelOpenedAt = useControlPanelVisit();
@@ -135,7 +148,7 @@ export default function AdeHome({
   const apps = launcherApps(commercialHomeCards);
   const comingNext = launcherComingNext(commercialHomeCards);
 
-  /** Open What's new — from the build badge or the Coming next line. */
+  /** Open What's new — from the top row, the footer's build, Recently shipped or Coming next. */
   const openWhatsNew = () => {
     // The launcher's badge and the rail's user menu (HIVE-3.4, #5290) show the same notes
     // for the same build, so reading them here has to clear the rail's unread dot as well.
@@ -157,20 +170,25 @@ export default function AdeHome({
         >
           <BrandMark variant="lockup" size={28} decorative priority />
         </Link>
-        <button
-          type="button"
-          className="launch-ver"
-          onClick={openWhatsNew}
-          title="View what’s new"
-        >
-          <span className="launch-ver__dot" aria-hidden="true" />
-          {APP_VERSION_BADGE}
-          {/* The same spelling the rail's user menu uses (HIVE-3.4): a build string on its
-              own does not say what pressing it does. */}
-          <span className="sr-only"> — see what&apos;s new</span>
-        </button>
-
         <div className="launch-top__actions">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="launch-whats-new"
+            aria-label={whatsNewUnread ? 'What’s new — 1 unread release note' : 'What’s new'}
+            title="What’s new"
+            onClick={openWhatsNew}
+            data-testid="launch-whats-new"
+          >
+            <Sparkles size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+            {whatsNewUnread ? (
+              <span
+                className="launch-unread-dot"
+                aria-hidden="true"
+                data-testid="launch-whats-new-unread"
+              />
+            ) : null}
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -293,12 +311,31 @@ export default function AdeHome({
               <ResourceRow key={item.id} item={item} />
             ))}
           </Card>
-
+          <RecentlyShipped onOpenNotes={openWhatsNew} />
         </div>
       </main>
 
       <footer className="launch-row launch-foot">
-        <span className="mono">{APP_VERSION_BADGE}</span>
+        {/* The build's one home on this page (HIVE-12.6): DESIGN.md §5.1 moved it out of the
+            top row. Still a button, because pressing it is how a reader reads its notes. */}
+        <button
+          type="button"
+          className="launch-foot__build"
+          onClick={openWhatsNew}
+          title="View what’s new"
+          data-testid="launch-build"
+        >
+          <span className="mono">{APP_VERSION_BADGE}</span>
+          {whatsNewUnread ? (
+            <span className="launch-unread-dot" aria-hidden="true" />
+          ) : null}
+          {/* The same spelling the rail's user menu uses (HIVE-3.4): a build string on its
+              own does not say what pressing it does. */}
+          <span className="sr-only">
+            {' '}
+            — see what&apos;s new{whatsNewUnread ? ', 1 unread release note' : ''}
+          </span>
+        </button>
         <span>{COPYRIGHT}</span>
       </footer>
 
