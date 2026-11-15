@@ -6,8 +6,9 @@
  * Authority: `docs/mockups/build/versions.html` §Row actions menu — *View spec · Export to
  * another format… · Heatmap (#560) · [gitlike] Compare with current · Relationship graph · Branch from here ·
  * Rollback… · Fork… · Tag · Schedule sunset (EOL)… · Edit · Publish/Unpublish · [gitlike]
- * Freeze schema · Lock/Unlock revision · Delete*, with the flag-gated items carrying a honey
- * `gitlike` flag rather than being hidden.
+ * Freeze schema · Lock/Unlock revision · Delete*, with the flag-gated items drawn inert
+ * rather than hidden (their `title` says why), and carrying the outline `gitlike` flag once
+ * the flag is on (HIVE-13.1).
  *
  * ### What this replaces
  *

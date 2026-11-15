@@ -3903,6 +3903,72 @@ p {
 }
 
 /* ==========================================================================
+   FILTER CHIP (HIVE-13.1, #5614)
+   --------------------------------------------------------------------------
+   Authority: `docs/mockups/assets/hive.css` `.chip` / `.chip.is-active`, and
+   DESIGN.md §2 — "a saved search or filter is a neutral `.chip`". Honey is
+   not a selection colour: a chip at rest is a hairline in `--fg-muted`, and
+   the one that is *on* fills with ink.
+
+   Deviations from the mockup, all deliberate:
+
+   1. The on state is `[aria-pressed="true"]` rather than `.is-active`, so the
+      state a screen reader hears and the state the eye sees are one attribute.
+   2. Height is `--control-h-sm` and the glyph `--icon-button`, not 28 / 13 px,
+      so the chip follows density and the font-size preference.
+   3. The fill is `--ink` / `--ink-fg`, not `--fg` / `--bg-surface`: the ink
+      pair is the measured primary-button pair in every theme.
+   ========================================================================== */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-inline-size: 100%;
+  block-size: var(--control-h-sm);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover {
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--ink);
+  box-shadow: none;
+  color: var(--ink-fg);
+}
+
+.chip[aria-pressed="true"]:hover {
+  background: var(--ink-hover);
+  color: var(--ink-fg);
+}
+
+.chip > svg {
+  flex-shrink: 0;
+  inline-size: var(--icon-button);
+  block-size: var(--icon-button);
+}
+
+.chip__label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
    FACTS LINE (HIVE-11.5, #5601)
    --------------------------------------------------------------------------
    Authority: `docs/mockups/proposals/catalog-quiet.html` (annotation 2) —
@@ -14043,33 +14109,6 @@ button.tfa-reset-notice__close > svg {
    should be able to drift apart. `.input-wrap` (HIVE-2.1) frames the timeline
    search.
    ========================================================================== */
-
-/* ---- The honey flag -----------------------------------------------------
-   The one-word marker beside every `FEATURE_GITLIKE` affordance in a
-   non-production build. Honey, per DESIGN.md §2: a marker, never a warning.
-   Its type is the smallest step of the scale rather than the mockup's frozen
-   10px, so it follows the font-size preference with the row it sits in. */
-.ver-flag {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: var(--space-1);
-  block-size: 1rem;
-  padding-inline: calc(var(--space-1) + 0.0625rem);
-  border-radius: var(--r-xs);
-  background: var(--honey-soft);
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  color: var(--honey-fg);
-  white-space: nowrap;
-}
-
-.ver-flag > svg {
-  inline-size: 0.625rem;
-  block-size: 0.625rem;
-}
 
 /* ---- Shared quiet type --------------------------------------------------
    The muted line is `.hive-quiet` (shared type helpers, SUX-1.10). */

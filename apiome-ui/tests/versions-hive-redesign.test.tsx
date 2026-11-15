@@ -744,11 +744,13 @@ describe('the header', () => {
     );
   });
 
-  it('draws the git-like Change report tab inert with the flag, in this build', async () => {
+  it('draws the git-like Change report tab inert, saying why, with no honey flag in this build', async () => {
     await renderVersions();
     const tab = screen.getByTestId('versions-tab-change-report');
     expect(tab).toBeDisabled();
-    expect(within(tab).getByTestId('gitlike-flag')).toHaveTextContent('gitlike');
+    expect(tab).toHaveAttribute('title', 'Compiled but hidden today (FEATURE_GITLIKE=false)');
+    // HIVE-13.1: the flag is drawn only once FEATURE_GITLIKE is on.
+    expect(within(tab).queryByTestId('gitlike-flag')).not.toBeInTheDocument();
   });
 
   it('counts the tabs — Timeline 6, Changes 4 — and switches to the Changes tab', async () => {
@@ -1199,13 +1201,16 @@ describe('the row menu', () => {
     const del = within(menu).getByTestId('versions-row-action-delete');
     expect(del).toHaveAttribute('aria-disabled', 'true');
     expect(del).toHaveAttribute('title', 'Compiled but hidden today (FEATURE_GITLIKE=false)');
-    expect(within(del).getByTestId('gitlike-flag')).toBeInTheDocument();
+    // HIVE-13.1: the inert row says why through its title; the flag waits for FEATURE_GITLIKE.
+    expect(within(del).queryByTestId('gitlike-flag')).not.toBeInTheDocument();
+    expect(del).toHaveAttribute('data-gitlike', 'true');
     // The plain items are not flagged and not disabled.
     const publish = within(menu).getByTestId('versions-row-action-publish');
     expect(publish).not.toHaveAttribute('aria-disabled');
     expect(within(publish).queryByTestId('gitlike-flag')).not.toBeInTheDocument();
-    // Seven git-like verbs plus Lock revision (the session is a tenant admin).
-    expect(within(menu).getAllByTestId('gitlike-flag')).toHaveLength(8);
+    // Seven git-like verbs plus Lock revision (the session is a tenant admin), all inert.
+    expect(menu.querySelectorAll('[data-gitlike="true"][aria-disabled="true"]')).toHaveLength(8);
+    expect(within(menu).queryAllByTestId('gitlike-flag')).toHaveLength(0);
   });
 
   it('opens the spec viewer from the version link, and copies the spec', async () => {

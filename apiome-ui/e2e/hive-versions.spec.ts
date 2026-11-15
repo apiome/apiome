@@ -386,15 +386,14 @@ test.describe('the revisions table', () => {
    ------------------------------------------------------------------------- */
 
 test.describe('the git-like flag and the row menu', () => {
-  test('paints the flag honey, one rem tall, and scales it with the font size', async ({ page }) => {
+  test('draws no honey flag while FEATURE_GITLIKE is off (HIVE-13.1)', async ({ page }) => {
+    // The fixtures are dumped from a build with the flag off: the inert affordances say why
+    // through their titles, and the outline `gitlike` badge waits for the flag.
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
-    await mount(page, 'timeline');
-    const flag = page.locator('[data-testid="gitlike-flag"]').first();
-    expect(await flag.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
-    const before = await flag.evaluate((node) => node.getBoundingClientRect().height);
-    await applyPreferences(page, { fontScale: '2xl' });
-    const after = await flag.evaluate((node) => node.getBoundingClientRect().height);
-    expect(after).toBeGreaterThan(before);
+    for (const name of ['timeline', 'menu'] as const) {
+      await mount(page, name);
+      await expect(page.locator('[data-testid="gitlike-flag"], .ver-flag')).toHaveCount(0);
+    }
   });
 
   test('draws every menu row in the same ink at rest, the inert ones dimmed, and none red', async ({ page }) => {

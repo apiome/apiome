@@ -36,7 +36,7 @@
  *
  * `FEATURE_GITLIKE` (and `NEXT_PUBLIC_CHANGE_REPORT_UI`) data. When the screen says it is
  * enabled the card is drawn in full; in a non-production build with the flag off, only its
- * head is drawn with the honey flag, so the gap is legible; in production with the flag off,
+ * head is drawn, inert, so the gap is legible; in production with the flag off,
  * nothing — the same three rows as every other git-like affordance.
  */
 
@@ -287,7 +287,6 @@ export default function PublishVersionDialog({
                   <div className="ver-cr__head">
                     <span className="ver-cr__title">
                       Publication change report
-                      {gitlike.marked ? <GitlikeFlag enabled={false} /> : null}
                     </span>
                   </div>
                   <p className="ver-cr__note">

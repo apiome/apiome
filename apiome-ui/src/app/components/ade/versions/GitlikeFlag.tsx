@@ -1,55 +1,54 @@
 'use client';
 
 /**
- * The honey `gitlike` flag (HIVE-6.2, #5313).
+ * The `gitlike` feature-flag marker (HIVE-6.2, #5313; quiet pass HIVE-13.1, #5614).
  *
- * Authority: `docs/mockups/build/versions.html` — its page-local `.flag` chip, drawn beside
- * every affordance that `FEATURE_GITLIKE` gates: the Merge button, the Change report tab, the
+ * Authority: `docs/mockups/build/versions.html` — its page-local flag chip, drawn beside the
+ * affordances that `FEATURE_GITLIKE` gates: the Merge button, the Change report tab, the
  * server-ahead banner, the tag and branch panels, the history-graph strip, eight row-menu
  * items and the Delete/Freeze confirms.
  *
- * It is a *marker*, not a badge in the status vocabulary: honey is DESIGN.md §2's brand
- * ornament for "new / preview / marker", never a warning, and the chip says one word. What it
- * marks and when it is drawn is decided by `gitlikeAffordance` in `versionsModel`; this only
- * paints it.
+ * HIVE-13.1 took the honey out of it. DESIGN.md §2 reserves honey for brand ornament and says
+ * outright that it is *never a feature-flag colour*: a feature-flag marker is
+ * `.badge--outline`. So the flag is `Badge variant="outline"` with a flag glyph, in
+ * `--fg-muted` on a hairline, and it is drawn **only when `FEATURE_GITLIKE` is on** — in a
+ * build with the flag off the inert affordance says why through its `title`
+ * ({@link GITLIKE_FLAG_TITLE}) rather than through a chip on every row.
+ *
+ * What it marks is decided by `gitlikeAffordance` in `versionsModel`; this only paints it.
  */
 
 import * as React from 'react';
 import { Flag } from 'lucide-react';
-import { cn } from '@lib/utils';
-import {
-  GITLIKE_FLAG_LABEL,
-  GITLIKE_FLAG_ON_TITLE,
-  GITLIKE_FLAG_TITLE,
-} from './versionsModel';
+import { Badge, type BadgeProps } from '../../ui/Badge';
+import { GITLIKE_FLAG_LABEL, GITLIKE_FLAG_ON_TITLE } from './versionsModel';
 
-export interface GitlikeFlagProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface GitlikeFlagProps extends Omit<BadgeProps, 'variant' | 'status' | 'data-status'> {
   /**
-   * Whether the flag is on in this build.
-   *
-   * Only the `title` changes: off says *compiled but hidden today*, on says *part of the
-   * git-like feature set*. The chip itself is the same either way.
+   * Whether `FEATURE_GITLIKE` is on for the affordance this marks — pass
+   * `gitlikeAffordance().enabled`. Off (the default), nothing is drawn.
    */
   enabled?: boolean;
 }
 
 /**
- * Render the flag chip.
+ * Render the flag badge.
  *
- * @param props See {@link GitlikeFlagProps}; the rest lands on the `<span>`.
- * @returns The chip.
+ * @param props See {@link GitlikeFlagProps}; the rest lands on the `Badge`.
+ * @returns The outline badge, or `null` when the flag is off.
  */
-export function GitlikeFlag({ enabled = false, className, title, ...props }: GitlikeFlagProps) {
+export function GitlikeFlag({ enabled = false, title, ...props }: GitlikeFlagProps) {
+  if (!enabled) return null;
   return (
-    <span
-      className={cn('ver-flag', className)}
-      title={title ?? (enabled ? GITLIKE_FLAG_ON_TITLE : GITLIKE_FLAG_TITLE)}
+    <Badge
+      variant="outline"
+      title={title ?? GITLIKE_FLAG_ON_TITLE}
       data-testid="gitlike-flag"
       {...props}
     >
       <Flag aria-hidden />
       {GITLIKE_FLAG_LABEL}
-    </span>
+    </Badge>
   );
 }
 

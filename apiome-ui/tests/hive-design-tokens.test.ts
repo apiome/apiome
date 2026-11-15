@@ -14,7 +14,10 @@
  *   3. the layering contract holds — `@theme static`, and no name declared in both
  *      `@theme` and the unlayered `:root` block (either mistake silently pins a token and
  *      breaks the per-theme swaps in `hive-theme-blocks.test.ts` without erroring);
- *   4. raw hex appears only inside a documented `hex-allow-start` / `hex-allow-end` fence.
+ *   4. raw hex appears only inside a documented `hex-allow-start` / `hex-allow-end` fence;
+ *   5. honey is spent only where DESIGN.md §2 spends it (HIVE-13.1, #5614): every honey
+ *      token or utility outside `globals.css` sits in an allow-listed file, and every
+ *      `globals.css` rule that spends one is an allow-listed rule.
  *
  * A fifth group used to pin the Radix Themes `<Theme>` props on both layouts; SUX-1.3 (#2877)
  * removed the wrapper, and `tests/radix-themes-removed.test.ts` now guards its absence.
@@ -28,8 +31,19 @@ import {
   readGlobalsCss,
   readTokenLayer,
   resolveToken,
+  topLevelRules,
   type TokenLayer,
 } from './helpers/design-tokens';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  findHoneyUsages,
+  honeyFiles,
+  honeyRules,
+  staleHoneyEntries,
+  unlistedHoney,
+} from './helpers/honey-gate';
 import { WCAG_AA_LARGE_TEXT_MIN, WCAG_AA_NORMAL_TEXT_MIN } from './helpers/tailwind-contrast';
 
 const css = readGlobalsCss();
@@ -283,5 +297,179 @@ describe('light-palette legibility (WCAG 2.2 AA)', () => {
     ['--accent', '--bg-surface'],
   ])('%s on %s clears AA for large text and non-text marks', (ink, surface) => {
     expect(contrastRatio(colorOf(ink), colorOf(surface))).toBeGreaterThanOrEqual(WCAG_AA_LARGE_TEXT_MIN);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// Honey gate (HIVE-13.1, #5614)
+// ---------------------------------------------------------------------------------------
+
+/**
+ * Files outside `globals.css` that may spend honey because they *are* one of DESIGN.md §2's
+ * brand roles. The value is the role, so the reason sits next to the exception.
+ *
+ * The mark (`BrandMark`) and the Preferences theme grid are §2 roles too, but they draw with
+ * fenced brand hex and theme swatches rather than the honey tokens, so they have no entry:
+ * an entry the scan no longer finds fails the stale check below.
+ */
+const HONEY_BRAND_FILES: Record<string, string> = {
+  'src/app/components/ui/statusVocabulary.ts':
+    'the honey tone of Badge[data-status=new|starred|pinned|preview] and the shared tone vocabulary',
+  'src/app/components/ade/launcher/HoneycombOrnament.tsx': 'empty-state / launcher honeycomb art',
+  'src/app/components/ui/Card.tsx': '`Card variant="honey"` — the first-run checklist wash',
+  'src/app/components/ui/Avatar.tsx': 'the brand avatar gradient (the mark’s hexagon)',
+  'src/app/components/shell/UserMenu.tsx': 'the unread “new” dot on the user menu',
+};
+
+/**
+ * Files that spend honey outside a §2 role today. Introduced allow-listed, per the quiet pass
+ * roadmap (step 6): the list may only shrink — fix one, delete its line.
+ */
+const HONEY_PENDING_FILES: Record<string, string> = {
+  'src/app/components/ui/Button.tsx': '`Button variant="honey"` — a filled honey button outside the Dark-theme primary',
+  'src/app/components/ui/Alert.tsx': '`Alert variant="honey"` — a honey callout tone',
+  'src/app/components/ui/metrics/metricTiers.ts': 'the honey metric mark tone',
+};
+
+/** `globals.css` rules that define the honey tokens: the token layer and the theme blocks. */
+const HONEY_TOKEN_RULES: Record<string, string> = {
+  '@theme static': 'declares --color-honey*',
+  ':root': 'aliases --honey* and builds --gradient-honey',
+  'html[data-theme="dark"], html.dark:not([data-theme])': 'theme swap',
+  'html[data-theme="high-contrast"]': 'theme swap',
+  'html[data-theme="blueprint"]': 'theme swap',
+  'html[data-theme="solarized"]': 'theme swap',
+  'html[data-theme="nord"]': 'theme swap',
+  'html[data-theme="darcula"]': 'theme swap',
+};
+
+/** `globals.css` rules that spend honey in one of DESIGN.md §2's brand roles. */
+const HONEY_BRAND_RULES: Record<string, string> = {
+  '.rail-dot': 'the rail’s 6 px “Preview” dot',
+  '.rail .rail-item[aria-current="page"]::before': 'the active rail marker',
+  '.rail .rail-item[aria-current="page"] > svg': 'the active rail marker',
+  '.rail .brand-lockup > :first-child': 'the mark — the bee’s honey hexagon',
+  '.hive-empty-art': 'empty-state art',
+  '.glow-honey::before': 'the auth / launcher brand canvas',
+  '.auth-center::before': 'the auth / launcher brand canvas',
+  '.page-header[data-mood="hero"]': 'the Home hero band',
+  '.launch-unread-dot': 'a “new” marker',
+  '.ntf-row__dot': 'a “new” (unread) marker',
+  '.lw-view-chip__pinned': 'a “pinned” marker',
+  '.prm-default > svg': 'a “starred” marker (the default namespace’s ★)',
+  '.home-checklist__mark': 'the first-run checklist',
+  '.home-hex__cell': 'the first-run checklist',
+  '.home-hex__cell[data-on="true"]': 'the first-run checklist',
+  '.home-step--next': 'the first-run checklist',
+  '.home-step--next .home-step__mark': 'the first-run checklist',
+  '.vt__row--head': 'the HEAD node on the Versions timeline',
+  '.vt__node--head': 'the HEAD node on the Versions timeline',
+};
+
+/**
+ * `globals.css` rules that spend honey outside a §2 role today — allow-listed when the gate
+ * was introduced, and only allowed to shrink.
+ */
+const HONEY_PENDING_RULES: Record<string, string> = {
+  '.auth-eyebrow': 'honey eyebrow type on auth pages',
+  '.auth-icon--honey': 'honey subject glyph on onboarding steps',
+  '.launch-tone[data-tone="honey"]': 'honey launcher tile tone',
+  '.home-tone[data-tone="honey"]': 'honey Home tile tone',
+  '.help-card[data-tone="honey"]': 'honey help-card tone',
+  '.tnt-icon-tile[data-tone="honey"]': 'honey tenant icon tile tone',
+  '.rol-dot': 'honey “unsaved” dot on Roles',
+  ".lw-facet-dot[data-tone='honey']": 'honey facet dot on the lint workspace',
+  '.ver-tag': 'honey version tag chip',
+  '.vdlg-chip[data-tone="honey"]': 'honey version-dialog chip tone',
+  '.vdlg-node__dot[data-tone="honey"]': 'honey version-dialog node tone',
+  '.vdlg-node__tip[data-tone="honey"]': 'honey version-dialog node tone',
+  '.vdlg-node__tag': 'honey version-dialog tag',
+  '.repo-new-proposal': 'honey proposal frame on New repository',
+  '.repo-new-proposal__title > svg': 'honey proposal glyph on New repository',
+  '.disc-thread--focused': 'honey focus wash on a discussion thread',
+};
+
+describe('honey gate — DESIGN.md §2 (HIVE-13.1, #5614)', () => {
+  const files = honeyFiles();
+  const rules = honeyRules(css);
+
+  it('finds honey only in allow-listed files', () => {
+    expect(unlistedHoney(files, HONEY_BRAND_FILES, HONEY_PENDING_FILES)).toEqual([]);
+  });
+
+  it('finds honey only in allow-listed globals.css rules', () => {
+    expect(unlistedHoney(rules, HONEY_TOKEN_RULES, HONEY_BRAND_RULES, HONEY_PENDING_RULES)).toEqual([]);
+  });
+
+  it.each([
+    ['brand files', HONEY_BRAND_FILES, 'files'],
+    ['pending files', HONEY_PENDING_FILES, 'files'],
+    ['token rules', HONEY_TOKEN_RULES, 'rules'],
+    ['brand rules', HONEY_BRAND_RULES, 'rules'],
+    ['pending rules', HONEY_PENDING_RULES, 'rules'],
+  ] as const)('carries no stale %s entry, so the allow-list can only shrink', (_name, list, kind) => {
+    expect(staleHoneyEntries(kind === 'files' ? files : rules, list)).toEqual([]);
+  });
+
+  it('keeps honey off the two surfaces the quiet pass took it from', () => {
+    expect(files.has('src/app/components/ade/dashboard/mcp/McpSavedSearchesPanel.tsx')).toBe(false);
+    expect(files.has('src/app/components/ade/versions/GitlikeFlag.tsx')).toBe(false);
+    expect([...rules.keys()].filter((prelude) => /^\.(ver-flag|chip)\b/.test(prelude))).toEqual([]);
+  });
+
+  describe('negative cases — the gate catches a new honey use', () => {
+    it('reads tokens and utilities, and ignores comments and BEM modifiers', () => {
+      expect(findHoneyUsages('<span className="rounded-full bg-honey text-honey-fg" />')).toEqual([
+        'bg-honey',
+        'text-honey-fg',
+      ]);
+      expect(findHoneyUsages('.x { color: var(--honey-fg); box-shadow: 0 0 0 1px var(--color-honey); }')).toEqual([
+        '--honey-fg',
+        '--color-honey',
+      ]);
+      expect(findHoneyUsages('/* not the honey flag: var(--honey) */\n// bg-honey\n<i className="auth-icon--honey" />')).toEqual(
+        []
+      );
+    });
+
+    it('fails a globals.css rule that starts spending honey', () => {
+      const leaked = `${css}\n.mcp-saved-chip { background: var(--honey-soft); }\n`;
+      expect(unlistedHoney(honeyRules(leaked), HONEY_TOKEN_RULES, HONEY_BRAND_RULES, HONEY_PENDING_RULES)).toEqual([
+        '.mcp-saved-chip: --honey-soft',
+      ]);
+    });
+
+    it('fails a component file that starts spending honey', () => {
+      const root = mkdtempSync(join(tmpdir(), 'honey-gate-'));
+      try {
+        mkdirSync(join(root, 'src', 'app', 'ade'), { recursive: true });
+        mkdirSync(join(root, 'lib'), { recursive: true });
+        writeFileSync(join(root, 'src', 'app', 'ade', 'Leak.tsx'), 'export const Leak = () => <b className="bg-honey" />;\n');
+        writeFileSync(join(root, 'src', 'app', 'ade', 'Quiet.tsx'), 'export const Quiet = () => <b className="chip" />;\n');
+        expect(unlistedHoney(honeyFiles(root), HONEY_BRAND_FILES, HONEY_PENDING_FILES)).toEqual([
+          'src/app/ade/Leak.tsx: bg-honey',
+        ]);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  });
+});
+
+describe('neutral filter chip (HIVE-13.1, #5614)', () => {
+  const chipRules = new Map(topLevelRules(css).map((rule) => [rule.prelude, rule.body]));
+
+  it('rests as a hairline in --fg-muted and fills with ink when pressed', () => {
+    expect(chipRules.get('.chip')).toContain('color: var(--fg-muted)');
+    expect(chipRules.get('.chip')).toContain('box-shadow: inset 0 0 0 1px var(--border-strong)');
+    expect(chipRules.get('.chip[aria-pressed="true"]')).toContain('background: var(--ink)');
+    expect(chipRules.get('.chip[aria-pressed="true"]')).toContain('color: var(--ink-fg)');
+  });
+
+  it('sizes from the control and icon metrics rather than px', () => {
+    expect(chipRules.get('.chip')).toContain('block-size: var(--control-h-sm)');
+    expect(chipRules.get('.chip > svg')).toContain('inline-size: var(--icon-button)');
+    expect(chipRules.get('.chip')).toContain('padding-inline: var(--space-3)');
+    expect(chipRules.get('.chip')).toContain('font-size: var(--fs-xs)');
   });
 });
