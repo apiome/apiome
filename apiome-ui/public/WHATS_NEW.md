@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- **Find your way around** — a new docs page maps the sidebar and the launcher: which group holds each page, why **Workspace** starts folded, the footer's **Notifications** count, and where **Tenants**, **SDK settings**, **Data browser** and **Migrations** live now
 - Readers can sign in to Browse: an organization's portal page has a **Sign in** chip; enter your email, open the link we send (it works once, for 15 minutes) and press **Continue**. You stay signed in for a week, or until you **Sign out** — no workspace seat or API key needed
 - **Consumer feedback** — readers signed in to Browse can send feedback on a published version or one of its operations from its **Feedback** tab. It appears in the project's **Discussion** tab with a **Consumer** tag, the new **Origin** chips (**Team** / **Consumer feedback**) filter it, and your replies and **Resolve** show up for the reader in Browse
 - **Design gates** — a new docs page maps the five tests that keep the quiet pass in place: honey only in brand moments, a short page header, one banner per page, no dead controls, and a first-row-of-data budget on list pages
