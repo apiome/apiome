@@ -992,6 +992,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['deprecation', 'end of life', 'eol', 'successor', 'csv'],
   },
   {
+    id: 'team-workflows',
+    title: 'Team workflows',
+    summary: 'Edit together safely, suggest edits, merge branches and hear from consumers.',
+    page: 'apiome-docs/docs/build/team-workflows.mdx',
+    section: 'reference',
+    keywords: ['presence', 'soft lock', 'suggested change', 'merge request', 'draft branch', 'consumer feedback', 'discussion'],
+  },
+  {
     id: 'contract-testing-and-ci-gates',
     title: 'Contract testing and CI gates',
     summary: 'Catch breaking API changes in CI, at publish and against live deployments.',
