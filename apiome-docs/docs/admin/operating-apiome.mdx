@@ -61,6 +61,17 @@ Every service reads its settings from environment variables. Each workspace ship
 The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
 [The admin console](./admin-console.mdx).
 
+### Database connections
+
+The REST API gives each worker thread its own database connection, so concurrent requests run
+their queries side by side. One API instance holds at most about 41 connections (40 worker threads
+plus one), and background jobs open a few more for the length of each run. Size PostgreSQL's
+`max_connections` for that, multiplied by the number of API instances you run.
+
+When a worker thread ends, its connection goes back to a pool for the next thread.
+`DB_POOL_MAX_IDLE` (default `10`) sets how many idle connections the pool keeps; the rest are
+closed.
+
 ### Domains, sign-in redirects and the session cookie
 
 The web app and Studio share one sign-in. Two things follow from the hostnames you deploy them on:
@@ -235,6 +246,22 @@ token under the newest version. Remove the old version once the command reports
 | Production deployment (`docs/runbooks/PRODUCTION_DEPLOY.md`) | Promote the Compose stack to an HTTPS deployment with gated migrations and a rollback |
 | Backup and disaster recovery (`docs/runbooks/BACKUP_AND_DR.md`) | Take, verify and restore backups, and run DR drills |
 | Private beta triage (`docs/runbooks/BETA_TRIAGE.md`) | Triage feedback and incidents from beta and dogfood users |
+
+## Upgrade a large database without blocking writes
+
+Each `apiome-db` migration runs in one transaction, so an index it creates blocks writes to that
+table while the index builds. On a small database that takes milliseconds. On a large one, build
+the indexes yourself before you deploy:
+
+1. Open the migration script (for example `apiome-db/scripts/V381__index_hygiene_and_cascade_indexes.sql`)
+   and copy its `CREATE INDEX IF NOT EXISTS` statements.
+2. Run each one against the database as `CREATE INDEX CONCURRENTLY IF NOT EXISTS`, keeping the
+   index name. A concurrent build does not block writes and cannot run inside a transaction, so
+   run the statements one at a time.
+3. Deploy as usual. The migration finds the indexes already there and skips them.
+
+If a concurrent build fails it leaves an invalid index behind: drop it and run the statement again
+before you deploy.
 
 ## Repair items with no captured source
 

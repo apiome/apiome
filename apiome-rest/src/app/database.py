@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import secrets
+import threading
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
@@ -423,17 +424,134 @@ def _same_instant(stored: Any, expected: datetime) -> bool:
 #: ``Database.update_version_tag`` default: keep the tag's message unchanged (#3265).
 _UNSET_TAG_MESSAGE: Any = object()
 
+class _ThreadConnection:
+    """One thread's lease on a pooled connection.
+
+    Lives in a ``threading.local``; when the thread ends the lease is collected and hands the
+    connection back to the owning :class:`Database` pool instead of closing it, so the short-lived
+    worker threads the server spins up under load reuse connections rather than reconnecting.
+    """
+
+    __slots__ = ("pool", "conn")
+
+    def __init__(self, pool: "_ConnectionPool", conn: Any):
+        self.pool = pool
+        self.conn = conn
+
+    def __del__(self):
+        try:
+            self.pool.release(self.conn)
+        except Exception:
+            pass
+
+
+class _ConnectionPool:
+    """Idle connections waiting for a thread, newest first.
+
+    Bounded by ``settings.db_pool_max_idle``: a connection released past the bound is closed. The
+    number of connections *in use* is bounded by the number of threads that touch the database
+    (the server's worker threads plus the event loop), since each thread holds at most one.
+    """
+
+    def __init__(self) -> None:
+        self._idle: List[Any] = []
+        self._lock = threading.Lock()
+
+    def acquire(self) -> Any:
+        """An open idle connection, or ``None`` when the caller must open one."""
+        while True:
+            with self._lock:
+                if not self._idle:
+                    return None
+                conn = self._idle.pop()
+            if not conn.closed:
+                return conn
+
+    def release(self, conn: Any) -> None:
+        """Take back a connection its thread no longer needs; close it if it cannot be reused."""
+        if conn is None or conn.closed:
+            return
+        try:
+            if conn.info.transaction_status != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
+                conn.rollback()
+            conn.autocommit = False
+        except Exception:
+            _close_quietly(conn)
+            return
+        with self._lock:
+            if len(self._idle) < max(int(settings.db_pool_max_idle), 0):
+                self._idle.append(conn)
+                return
+        _close_quietly(conn)
+
+    def close_idle(self) -> None:
+        with self._lock:
+            idle, self._idle = self._idle, []
+        for conn in idle:
+            _close_quietly(conn)
+
+
+def _close_quietly(conn: Any) -> None:
+    try:
+        conn.close()
+    except Exception:
+        pass
+
+
 class Database:
-    """Database connection and query manager."""
+    """Database connection and query manager.
+
+    Each thread works on its own connection, so concurrent requests run their queries — and their
+    transactions — independently instead of queueing on (and committing or rolling back) one
+    shared connection. Connections are pooled: a thread borrows one on first use and it returns to
+    the pool when the thread ends.
+
+    Assigning ``db.connection = conn`` pins one connection for every thread (the DB test harnesses
+    do this to run a test inside a single transaction); assigning ``None`` unpins it.
+    """
 
     def __init__(self):
         self.connection = None
 
+    def _conn_state(self) -> Tuple[threading.local, _ConnectionPool]:
+        """The per-thread slot and the idle pool, created on first use.
+
+        Lazy rather than set in ``__init__`` so a subclass or test double that skips
+        ``super().__init__()`` still works.
+        """
+        state = self.__dict__.get("_conn_state_value")
+        if state is None:
+            state = self.__dict__.setdefault("_conn_state_value", (threading.local(), _ConnectionPool()))
+        return state
+
+    @property
+    def connection(self):
+        """The pinned connection if one is set, else the calling thread's connection (or ``None``)."""
+        pinned = self.__dict__.get("_pinned_connection")
+        if pinned is not None:
+            return pinned
+        lease = getattr(self._conn_state()[0], "lease", None)
+        return lease.conn if lease is not None else None
+
+    @connection.setter
+    def connection(self, value) -> None:
+        self.__dict__["_pinned_connection"] = value
+
     def connect(self):
-        """Establish database connection."""
-        if not self.connection or self.connection.closed:
+        """Return the calling thread's database connection, opening or borrowing one if needed."""
+        pinned = self.__dict__.get("_pinned_connection")
+        if pinned is not None:
+            if not pinned.closed:
+                return pinned
+            self.__dict__["_pinned_connection"] = None
+        local, pool = self._conn_state()
+        lease = getattr(local, "lease", None)
+        if lease is not None and not lease.conn.closed:
+            return lease.conn
+        conn = pool.acquire()
+        if conn is None:
             try:
-                self.connection = psycopg2.connect(
+                conn = psycopg2.connect(
                     settings.effective_database_url,
                     cursor_factory=RealDictCursor,
                 )
@@ -450,12 +568,21 @@ class Database:
                         "If you use DATABASE_URL, the database name is the path segment after the last '/'."
                     ) from e
                 raise
-        return self.connection
+        local.lease = _ThreadConnection(pool, conn)
+        return conn
 
     def close(self):
-        """Close database connection."""
-        if self.connection and not self.connection.closed:
-            self.connection.close()
+        """Close the calling thread's connection (or the pinned one) and every idle pooled one."""
+        pinned = self.__dict__.get("_pinned_connection")
+        if pinned is not None:
+            if not pinned.closed:
+                pinned.close()
+            return
+        local, pool = self._conn_state()
+        lease = getattr(local, "lease", None)
+        if lease is not None and not lease.conn.closed:
+            lease.conn.close()
+        pool.close_idle()
 
     def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
         """Execute a SELECT query and return results.
@@ -1356,7 +1483,13 @@ class Database:
                         api_key_data["scopes"] = ["*"]
                     # Update last_used_at
                     try:
-                        update_query = "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s"
+                        # Stamp at most once a minute per key: the stamp is a row write on every
+                        # authenticated request otherwise.
+                        update_query = (
+                            "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s "
+                            "AND (last_used_at IS NULL "
+                            "OR last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute')"
+                        )
                         conn = self.connect()
                         with conn.cursor() as cursor:
                             cursor.execute(update_query, (api_key_data['id'],))
@@ -10180,23 +10313,17 @@ class Database:
         """
         if not self.assert_class_schema_tenant_access(class_schema_id, tenant_id):
             return None
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT data FROM apiome.data_snapshot
-                    WHERE record_id = %s AND class_schema_id = %s AND tenant_id = %s
-                    """,
-                    (record_id, class_schema_id, tenant_id),
-                )
-                row = cursor.fetchone()
-                if not row:
-                    return None
-                data = row["data"]
-                return {"data": data} if data is not None else {"data": {}}
-        finally:
-            conn.close()
+        rows = self.execute_query(
+            """
+            SELECT data FROM apiome.data_snapshot
+            WHERE record_id = %s AND class_schema_id = %s AND tenant_id = %s
+            """,
+            (record_id, class_schema_id, tenant_id),
+        )
+        if not rows:
+            return None
+        data = rows[0]["data"]
+        return {"data": data} if data is not None else {"data": {}}
 
     def update_data_record(
         self,

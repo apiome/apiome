@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "apiome"
+    #: Idle database connections kept for reuse. Each thread that touches the database holds one
+    #: connection while it lives, so connections in use are bounded by the server's worker threads.
+    db_pool_max_idle: int = 10
 
     host: str = "0.0.0.0"
     port: int = 8000
