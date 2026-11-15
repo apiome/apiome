@@ -14,6 +14,9 @@ import path from 'node:path';
 /** The themes a screenshot is captured in, and the only values `theme` may hold. */
 export const SCREEN_THEMES = Object.freeze(['light', 'dark']);
 
+/** The apps a screen can be captured from: the Control Panel, or apiome-browse (PCX-1.1). */
+export const SCREEN_APPS = Object.freeze(['ui', 'browse']);
+
 /** Values filled in for an entry that does not set them. */
 export const SCREEN_DEFAULTS = Object.freeze({
   theme: SCREEN_THEMES,
@@ -81,6 +84,9 @@ export const SCREENS_DIR = 'img/screens';
  * @property {string[]} tags - Labels from {@link SCREEN_TAGS}; empty when the entry sets none.
  * @property {string[]} [sources] - Repository-relative paths whose changes make the image stale
  *   (DOCS-1.13). Without it the route's own folder under `apiome-ui/src/app/` is used.
+ * @property {'ui'|'browse'} app - Which app serves `route`: the Control Panel (`ui`, the default) or
+ *   apiome-browse (`browse`, PCX-1.1). A `browse` entry is captured `signed-out` from
+ *   `DOCS_BROWSE_URL` and must name its `sources`, since its route does not live under `apiome-ui/`.
  * @property {ScreenData} data - Parsed `data` field.
  * @property {ScreenData} [fallback] - Fixture to use when the golden-path stack is not available.
  */
@@ -195,6 +201,14 @@ export function normalizeScreen(raw) {
     fail('`sources` must be a non-empty list of repository-relative paths');
   }
 
+  const app = raw.app ?? 'ui';
+  if (!SCREEN_APPS.includes(app)) {
+    fail(`\`app\` must be one of ${SCREEN_APPS.join(', ')}`);
+  } else if (app === 'browse') {
+    if (data && data.kind !== 'signed-out') fail('a "browse" entry must use `data: "signed-out"`');
+    if (sources === undefined) fail('a "browse" entry must list its `sources`');
+  }
+
   if (raw.scrollTo !== undefined && (typeof raw.scrollTo !== 'string' || raw.scrollTo.trim() === '')) {
     fail('`scrollTo` must be a CSS selector');
   }
@@ -222,6 +236,7 @@ export function normalizeScreen(raw) {
       ...(raw.appTheme ? {appTheme: raw.appTheme} : {}),
       tags: [...tags],
       ...(sources ? {sources: [...sources]} : {}),
+      app,
       data,
       ...(fallback ? {fallback} : {}),
     },

@@ -9,6 +9,11 @@ Browse is the read surface for **published** versions. Public versions are reach
 authentication; private versions require an in-scope API key. A fresh tenant always has at least one
 browsable spec — the seeded, published `petstore-sample` project.
 
+People who read an organization's APIs can **sign in** to its Browse portal with an email link — click
+**Sign in** on the **Reader access** chip of the organization's page. A reader needs no workspace seat
+and no API key; see [Portal readers](./portal-readers.mdx). Signed-in readers see public versions for
+now; private versions for readers are coming next.
+
 ---
 
 ## In the UI

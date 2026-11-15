@@ -164,6 +164,29 @@ describe('normalizeScreen', () => {
   });
 });
 
+describe('normalizeScreen — app (PCX-1.1)', () => {
+  it('defaults to the Control Panel', () => {
+    assert.equal(normalizeScreen(entry()).screen.app, 'ui');
+  });
+  it('accepts a signed-out browse entry that names its sources', () => {
+    const {screen, problems} = normalizeScreen(
+      entry({app: 'browse', data: 'signed-out', sources: ['apiome-browse/src/app/portal/sign-in']}),
+    );
+    assert.deepEqual(problems, []);
+    assert.equal(screen.app, 'browse');
+  });
+  it('refuses a browse entry without sources or with stack data', () => {
+    assert.match(normalizeScreen(entry({app: 'browse', data: 'signed-out'})).problems.join(), /sources/);
+    assert.match(
+      normalizeScreen(entry({app: 'browse', data: 'golden-path', sources: ['apiome-browse/src']})).problems.join(),
+      /signed-out/,
+    );
+  });
+  it('refuses an unknown app', () => {
+    assert.match(normalizeScreen(entry({app: 'mobile'})).problems.join(), /`app` must be one of ui, browse/);
+  });
+});
+
 describe('validateManifest', () => {
   it('needs a screens array', () => {
     assert.deepEqual(validateManifest({}).problems, ['screens.json must be {"screens": [ … ]}']);

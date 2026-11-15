@@ -2185,6 +2185,28 @@
       "sources": [
         "apiome-ui/src/app/components/ade/primitives/detail/DeprecateTypeDialog.tsx"
       ]
+    },
+    {
+      "id": "browse-reader-sign-in",
+      "app": "browse",
+      "route": "/portal/sign-in?tenant=acme-corp",
+      "waitFor": "[data-testid=\"reader-sign-in\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/portal/sign-in",
+        "apiome-browse/src/app/globals.css"
+      ]
+    },
+    {
+      "id": "browse-reader-magic-link-sent",
+      "app": "browse",
+      "route": "/portal/sign-in?tenant=acme-corp&sent=1",
+      "waitFor": "[data-testid=\"reader-magic-link-sent\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/portal/sign-in",
+        "apiome-browse/src/app/globals.css"
+      ]
     }
   ]
 }

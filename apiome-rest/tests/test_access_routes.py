@@ -309,6 +309,14 @@ def test_list_audit_style_guide_filter_maps_to_governance_prefix():
         assert mdb.list_access_audit.call_args.kwargs["action_prefix"] == "style_guide."
 
 
+def test_list_audit_portal_filter_keeps_reader_events():
+    """PCX-1.1 (#5889): Browse reader enrolment, sign-in and sign-out rows (`portal.reader.*`)."""
+    with patch("app.access_routes.db") as mdb:
+        mdb.list_access_audit.return_value = []
+        client.get("/v1/access/acme/audit?filter=portal")
+        assert mdb.list_access_audit.call_args.kwargs["action_prefix"] == "portal."
+
+
 def test_list_audit_since_becomes_an_aware_lower_bound():
     with patch("app.access_routes.db") as mdb:
         mdb.list_access_audit.return_value = []

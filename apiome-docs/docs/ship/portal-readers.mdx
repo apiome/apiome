@@ -1,0 +1,93 @@
+---
+title: Portal readers
+description: "Let API consumers sign in to Browse with an email link."
+sidebar_position: 4.1
+tags: [browse, publish, auth]
+---
+
+A **reader** is someone who reads an organization's published APIs in Browse without being a member
+of its workspace: a customer's developer, a partner, or an integrator. A reader has no seat, no role
+and no API key. They sign in with an emailed link, and their session works in Browse only.
+
+Today a signed-in reader sees the same **public** versions as anyone else. Reading **private**
+published versions as a reader comes next. Until then, a private version still needs an API key
+([Browse published specs](./browse-published-specs.md#with-the-rest-api)).
+
+---
+
+## Sign in as a reader
+
+1. **Open the organization's page in Browse** (`/tenant/<organization>`).
+2. **Click “Sign in”** on the **Reader access** chip at the top right.
+3. **Enter your email address** and **click “Email me a sign-in link”**. The page changes to
+   **Check your email**.
+4. **Open the link in the email.** It works once and expires **15 minutes** after it was sent.
+5. **Click “Continue”** on the **Finish signing in** page. You return to the page you started from,
+   and the chip reads **Signed in as** *your address*.
+
+<Screenshot id="browse-reader-sign-in" alt="Reader sign-in in Browse: the organization's name, the Email address field and the Email me a sign-in link button" />
+
+<Screenshot id="browse-reader-magic-link-sent" alt="Check your email: a sign-in link is on its way, it works once and expires in 15 minutes, with a send another link option" />
+
+The **Continue** step is deliberate. Mail filters and link previews often open links before you do,
+and if opening the link were enough, they would use up your one-time link.
+
+**Check your email** reads the same whether or not a link was sent, so nobody can use the form to
+find out who has an account.
+
+### When a link does not work
+
+| The page says | Why | What to do |
+|---|---|---|
+| **This sign-in link has expired** | More than 15 minutes passed since it was sent. | **Click “Send a new link”** and use it straight away. |
+| **This sign-in link has already been used** | Each link signs in once. | **Click “Send a new link”.** If you did not use it, the old link cannot be used again. |
+| **This sign-in link is not valid** | The link is incomplete or belongs to another organization's portal. | **Click “Send a new link”.** |
+
+## Who can become a reader
+
+- **Someone with an Apiome account** can always sign in. Their first sign-in makes them a reader of
+  that organization.
+- **Someone without an account** gets a password-less account on their first request, if the
+  installation's [sign-up policy](../admin/auth-providers.mdx) allows new accounts. If it does not,
+  no email is sent, and the page still reads **Check your email**.
+- **Disabled accounts** and **revoked readers** get no link.
+
+A reader is recorded once per organization. Asking for a second link reuses the same account and
+the same reader record.
+
+## Sessions and signing out
+
+- You stay signed in for **7 days** (an operator can change this), and only for the organization you
+  signed in to. Another organization's pages treat you as signed out.
+- **Click “Sign out”** on the chip to end the session. It is refused from the next request on.
+- Browse keeps the session in a cookie that page scripts cannot read. A session records only your
+  browser family (for example *Firefox*), never your IP address or the full browser string.
+
+## Limits
+
+To stop abuse, sign-in link requests are limited per email address (3 a minute for each
+organization) and per network address (10 a minute). Over a limit, the form says how many seconds to
+wait.
+
+## For operators
+
+| Setting | Default | What it does |
+|---|---|---|
+| `APIOME_PUBLIC_BROWSE_URL` | — | The Browse address the emailed link points at. Set it, or the link is site-relative. |
+| `SENDGRID_API_KEY`, `EMAIL_FROM` | — | The mail sender. When they are not set, no email is sent. |
+| `APIOME_PORTAL_MAGIC_LINK_RATE_LIMIT_EMAIL_PER_MINUTE` | `3` | Link requests per email address, per organization. |
+| `APIOME_PORTAL_MAGIC_LINK_RATE_LIMIT_IP_PER_MINUTE` | `10` | Link requests per network address. |
+| `APIOME_PORTAL_READER_SESSION_TTL_HOURS` | `168` | How long a reader session lasts. |
+
+Browse calls apiome-rest from the reader's browser to request a link, so `NEXT_PUBLIC_REST_API_BASE_URL`
+must be reachable from browsers and allowed by the REST CORS settings. Browse calls apiome-rest from its
+server to exchange the link, using `APIOME_REST_INTERNAL_BASE_URL` when it is set.
+
+Enrolment, sign-in and sign-out are recorded in the [access audit](../govern/access-audit.mdx).
+
+## With the REST API
+
+The `portal-auth` endpoints are listed in the [REST reference](../reference/rest/portal-auth.md):
+`POST /v1/portal/{tenant}/auth/magic-link`, `…/exchange`, `…/sign-out` and `GET …/me`. A reader session
+is sent as `Authorization: Reader <token>`. It is accepted only by the `portal-auth` and `browse`
+endpoints. Every other endpoint refuses it.

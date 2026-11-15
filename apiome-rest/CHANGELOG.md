@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.710.0] - 2026-11-14
+
+### Added
+- **Reader sign-in for Browse (PCX-1.1, #5889)** — OpenAPI 1.570.0, new tag `portal-auth`:
+  - A **reader** is an ordinary `users` row with a per-tenant `portal_memberships` row (`invited | active |
+    revoked`, source `magic_link`). It grants no workspace access. apiome-db V378 adds `portal_memberships`,
+    `portal_magic_links` and `portal_reader_sessions`.
+  - `POST /v1/portal/{tenant}/auth/magic-link` mails a one-time sign-in link (15-minute expiry, bcrypt-hashed
+    with a lookup prefix). It **always answers `202`** for well-formed input, so it never reveals whether an
+    account exists. A new address gets a password-less user and an `invited` membership when the installation
+    sign-up policy allows new accounts; a second request reuses both. Budgeted per client address and per email
+    (`APIOME_PORTAL_MAGIC_LINK_RATE_LIMIT_IP_PER_MINUTE`, default 10; `…_EMAIL_PER_MINUTE`, default 3):
+    `429 portal-rate-limited` with `Retry-After`. `422 portal-invalid-email` / `portal-invalid-return-to`.
+    Mail goes through SendGrid (`SENDGRID_API_KEY`, `EMAIL_FROM`) behind the `ReaderMailer` adapter that PCX-3.1
+    will replace; links point at `APIOME_PUBLIC_BROWSE_URL`.
+  - `POST …/auth/exchange` trades the token for a reader session and burns it: `410 portal-token-used`,
+    `410 portal-token-expired`, `400 portal-token-invalid`. The session token is returned once, is bound to the
+    tenant, lives `APIOME_PORTAL_READER_SESSION_TTL_HOURS` (default 168), and stores only its SHA-256 hash and the
+    browser family of the `User-Agent`. The exchange marks the account verified only when it has no usable
+    password, so an unconfirmed workspace sign-up at the same address is never unlocked by a reader link.
+  - `POST …/auth/sign-out` revokes the session (idempotent `204`); `GET …/auth/me` returns the reader or
+    `401 portal-session-invalid`. Revoking a session, the membership, or the user takes effect on the next request.
+  - The session travels as `Authorization: Reader <token>` and is **never a REST credential** outside the
+    `portal-auth` and `browse` tags: the JWT / API-key gates refuse it, and a sweep over every `GET` route proves a
+    reader session gets nothing an anonymous caller does not. The browse routes check it (a revoked session is a
+    `401`) and still serve the public slice until PCX-1.3.
+  - Access audit rows `portal.reader.enrolled`, `portal.reader.signed_in` and `portal.reader.session_revoked`
+    (source `portal`, metadata only).
+
 ## [1.709.0] - 2026-11-14
 
 ### Added

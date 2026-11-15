@@ -553,6 +553,53 @@ def validate_session_credentials(
     )
 
 
+def is_reader_authorization(authorization: Optional[str]) -> bool:
+    """Whether an ``Authorization`` header uses the Browse reader scheme (PCX-1.1, #5889).
+
+    Args:
+        authorization: The raw header value.
+
+    Returns:
+        True for ``Reader <anything>``, regardless of whether the token is valid.
+    """
+    from .portal_auth import READER_SCHEME
+
+    scheme = (authorization or "").strip().partition(" ")[0]
+    return scheme.lower() == READER_SCHEME.lower()
+
+
+def resolve_reader_session_header(authorization: Optional[str]) -> Any:
+    """Authenticate ``Authorization: Reader <token>`` for the ``browse`` routes (PCX-1.1, #5889).
+
+    Only browse-tag callers use this. ``validate_authentication`` and
+    ``validate_session_credentials`` deliberately never do, which is what keeps a reader session
+    from being a REST credential anywhere else.
+
+    Args:
+        authorization: The raw header value.
+
+    Returns:
+        The live :class:`app.portal_auth_store.ReaderSession`.
+
+    Raises:
+        HTTPException: 401 ``portal-session-invalid`` for a malformed, unknown, expired or
+            revoked session.
+    """
+    from . import portal_auth_store
+    from .portal_auth import CODE_SESSION_INVALID, READER_SCHEME, PortalAuthError, reader_token_from_header
+
+    try:
+        return portal_auth_store.resolve_session(
+            portal_auth_store.default_repository(), reader_token_from_header(authorization)
+        )
+    except PortalAuthError as exc:
+        raise HTTPException(
+            status_code=401,
+            detail={"code": CODE_SESSION_INVALID, "message": str(exc)},
+            headers={"WWW-Authenticate": READER_SCHEME},
+        ) from exc
+
+
 def resolve_optional_tenant_member_auth(
     tenant_slug: str,
     *,
@@ -570,6 +617,14 @@ def resolve_optional_tenant_member_auth(
     auth_header = (authorization or "").strip()
     key_header = (x_api_key or "").strip()
     if not auth_header and not key_header:
+        return False
+
+    if is_reader_authorization(auth_header):
+        # PCX-1.1 (#5889): a Browse reader session. It is checked — so a revoked or expired session
+        # is refused from the next request — but it never proves *membership*: a reader is not a
+        # workspace member, so the caller gets the public slice. PCX-1.3 widens this to the
+        # private versions a reader's grants cover.
+        resolve_reader_session_header(auth_header)
         return False
 
     if auth_header:
