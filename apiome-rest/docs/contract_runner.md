@@ -20,6 +20,7 @@ The runner closes that gap inside `apiome-rest`.
 | Module | Role |
 |---|---|
 | `app/contract_runner.py` | Pure execution: build requests, honour policy, assert status/schema, transport-only retries. |
+| `app/contract_runner_rpc.py` | gRPC-family cases (XPC-3.2): the Connect and native gRPC transports and the status/message judge. |
 | `app/contract_runner_service.py` | Compile → resolve → run → `record_run`. |
 | `app/contract_runner_routes.py` | `POST /v1/tenants/{tenant}/contracts/{version_ref}/run`. |
 | `app/ssrf_guard.build_guarded_client(allow_private=…)` | Private-network targets (e.g. localhost mock) skip public-IP filtering but keep scheme/credential rules. |
@@ -69,6 +70,27 @@ A mutation is a mutating case and obeys `allow_mutating_methods`. A query is not
 also sent as `POST`. The run's evidence records `protocol: graphql` (V371), and the JUnit export
 carries it as the `apiome.protocol` property.
 
+## gRPC/Connect suites (XPC-3.2)
+
+A Protobuf version compiles into `protocol: grpc` cases (see `contract_suite.md`). The run may name
+a target with `protocol: connect` or `protocol: grpc`; the evidence records which (V374).
+
+| Target | How each case is sent |
+|---|---|
+| `connect` | `POST {base_url}/{package.Service}/{Method}` with the protobuf-JSON message, `Content-Type: application/json`, `Connect-Protocol-Version: 1` and `Connect-Timeout-Ms` from the policy, through the guarded httpx client. A `200` carries the reply; any other status carries a Connect error `{code, message}` (a body without `code` is mapped from its HTTP status by the Connect table). |
+| `grpc` | A `grpcio` channel to `base_url`'s host and port (TLS for `https`), the deadline from `request_timeout_seconds`, auth headers as metadata. The server's descriptors are read once per run through **server reflection**; each message is encoded to binary protobuf with them and each reply decoded back to protobuf JSON. A public target's host is re-checked by the SSRF guard. `json_only` negatives are `skipped` (`rpc-negative-json-only`). |
+
+The verdict: the reply's status must equal the case's `rpc.expect_code` (`ok` or
+`invalid_argument`); a success reply must then decode to a JSON object satisfying
+`rpc:<operation key>`, one assertion per pointer into the message (`/items/0/quantity`).
+`UNAVAILABLE` and `DEADLINE_EXCEEDED` are transport failures (retried); every other status is
+judged. A method without `idempotency_level = NO_SIDE_EFFECTS` obeys `allow_mutating_methods`.
+
+The `…/run` response lists the manifest's `unsupported` operations; non-empty means the evidence
+is partial. Provider-verification reports carry the count as `coverage.operations_unsupported`,
+and the deploy gate's verification signal reports a would-be pass as `warn`
+(`verification-partial`) when it is non-zero.
+
 ## Policy the runner honours
 
 From the ECA-1.2 target `VerificationPolicy`:
@@ -78,7 +100,7 @@ From the ECA-1.2 target `VerificationPolicy`:
 | `request_timeout_seconds` | Per-case httpx timeout |
 | `max_concurrency` | Thread-pool size across cases |
 | `retry_attempts` / `retry_backoff_ms` | **Transport failures only** |
-| `allow_mutating_methods` | When false, POST/PUT/PATCH/DELETE cases — and GraphQL mutations — are `skipped` |
+| `allow_mutating_methods` | When false, POST/PUT/PATCH/DELETE cases, GraphQL mutations, and gRPC methods not marked `NO_SIDE_EFFECTS` are `skipped` |
 | `follow_redirects` / `verify_tls` | Passed to the guarded client |
 
 A status or schema mismatch **never** retries. `attempts > 1` on an evidence case always means
@@ -96,6 +118,11 @@ the transport was retried.
 | `graphql-errors-present` | A GraphQL success case was answered with `errors` |
 | `graphql-errors-missing` | A GraphQL negative case was answered without `errors` |
 | `graphql-envelope-invalid` | A GraphQL case was answered with something that is not a JSON object |
+| `rpc-status-mismatch` | A gRPC-family reply's status was not the case's `expect_code` |
+| `rpc-response-undecodable` | A gRPC-family success reply is not a protobuf-JSON message |
+| `rpc-negative-json-only` | A JSON-only negative skipped over native gRPC |
+| `rpc-reflection-unavailable` | A `grpc` target's reflection could not be read (or its descriptors do not load) |
+| `rpc-descriptor-mismatch` | The server's reflected descriptors lack the case's types or reject its message |
 
 ## Manual golden path (hosted SIM / mock)
 

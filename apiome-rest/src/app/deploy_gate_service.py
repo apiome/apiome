@@ -61,6 +61,8 @@ from .deploy_gate import (
 from .deploy_gate_store import load_policy
 from .provider_verification_store import (
     ConformanceReportSummary,
+    ProviderVerificationStoreError,
+    get_report,
     latest_report_for_project,
     list_reports,
 )
@@ -478,8 +480,39 @@ def _worst_run_status(statuses: Sequence[Optional[str]]) -> Optional[str]:
     return worst
 
 
+def _unsupported_operations(tenant_id: str, report_ids: Sequence[Optional[str]]) -> int:
+    """The most operations any of these reports' suites left out by design (XPC-3.2).
+
+    The count lives in the stored report body (``coverage.operations_unsupported``), so each
+    report is read in full. A report that cannot be read counts as zero: partial-ness is a
+    refinement of a verdict the summary already supports, never a reason to fail the gate.
+
+    Args:
+        tenant_id: The caller's tenant.
+        report_ids: Report ids; ``None`` entries are skipped.
+
+    Returns:
+        The largest ``operations_unsupported`` among them, or ``0``.
+    """
+    most = 0
+    for report_id in report_ids:
+        if not report_id:
+            continue
+        try:
+            record = get_report(tenant_id, report_id)
+        except ProviderVerificationStoreError:
+            continue
+        except Exception:  # noqa: BLE001 - a refinement must never take the signal down
+            logger.warning("could not read report %s for its unsupported count", report_id)
+            continue
+        most = max(most, int(record.report.coverage.operations_unsupported or 0))
+    return most
+
+
 def _verification_from_schedules(
     schedules: Sequence[VerificationScheduleRecord],
+    *,
+    tenant_id: Optional[str] = None,
 ) -> Tuple[Optional[int], Optional[str], Optional[datetime], Dict[str, Any]]:
     """Reduce the schedules watching this revision to one freshness answer.
 
@@ -490,6 +523,8 @@ def _verification_from_schedules(
 
     Args:
         schedules: The matched schedules.
+        tenant_id: The caller's tenant; when given, each schedule's last report is read for
+            ``operationsUnsupported`` (the partial-evidence count, XPC-3.2).
 
     Returns:
         ``(freshness_seconds, last_status, last_success_at, payload)``.
@@ -514,6 +549,10 @@ def _verification_from_schedules(
         ],
         "schedulesTruncated": len(schedules) > _MAX_SCHEDULES_REPORTED,
     }
+    if tenant_id is not None:
+        payload["operationsUnsupported"] = _unsupported_operations(
+            tenant_id, [s.last_report_id for s in schedules[:_MAX_SCHEDULES_REPORTED]]
+        )
     return (
         min(freshness) if freshness else None,
         _worst_run_status([s.last_status for s in schedules]),
@@ -567,6 +606,7 @@ def _verification_from_reports(
         "coveragePercent": newest.coverage_percent,
         "targetSlug": newest.target_slug,
         "driftCount": newest.drift_count,
+        "operationsUnsupported": _unsupported_operations(tenant_id, [newest.id]),
     }
     return freshness, newest.outcome, last_success_at, payload
 
@@ -636,7 +676,7 @@ def _verification_signal(
 
     if matched:
         freshness, last_status, last_success_at, payload = _verification_from_schedules(
-            matched
+            matched, tenant_id=tenant_id
         )
         source = "schedule"
     else:
@@ -662,6 +702,7 @@ def _verification_signal(
         thresholds=thresholds,
         link=link,
         extra=payload,
+        unsupported_operations=int(payload.get("operationsUnsupported") or 0),
     )
 
 

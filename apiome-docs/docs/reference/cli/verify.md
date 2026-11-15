@@ -24,7 +24,7 @@ Subcommands: [`contract`](#verify-contract).
 
 Execute a contract suite against a target (POST …/contracts/{ref}/run).
 
-Prints a summary with the evidence run id and per-case failures. Writes JSON or JUnit via the export endpoint when ``--out`` / ``--format`` ask for an artifact. Exits non-zero when the stored outcome is not ``passed``, or when the suite cannot run (``ok: false``).
+Prints a summary with the evidence run id, the protocol the run was executed over, any operations left out by design (``partial``) and per-case failures. Writes JSON, JUnit or SARIF via the export endpoint when ``--out`` / ``--format`` ask for an artifact. Exits non-zero when the stored outcome is not ``passed``, or when the suite cannot run (``ok: false``).
 
 ```text
 apiome verify contract [OPTIONS]
@@ -38,8 +38,8 @@ apiome verify contract [OPTIONS]
 | `--version` | text |  | yes | Version label, revision UUID, or 'latest'. |
 | `--target` | text |  | yes | Verification target slug or id. Credentials come from the target's env/stored reference on the server — never from this flag. |
 | `--kind` | text | `project` |  | Which surface the artifact lives on: project (default) or catalog. |
-| `--format` | text | `json` |  | CI artifact format: json (default) or junit. |
-| `--out` | path |  |  | Write the export artifact to this file (JSON or JUnit XML). |
+| `--format` | text | `json` |  | CI artifact format: json (default), junit, or sarif (SARIF 2.1.0 for code scanning). |
+| `--out` | path |  |  | Write the export artifact to this file (JSON, JUnit XML, or SARIF). |
 | `--seed` | integer range | `0` |  | Seed for generated values. The same version and seed give the same suite. |
 | `--examples` / `--no-examples` | flag | `--examples` |  | Compile the examples declared in the source document (on by default). |
 | `--generated` / `--no-generated` | flag | `--generated` |  | Compile schema-valid generated bodies (on by default). |

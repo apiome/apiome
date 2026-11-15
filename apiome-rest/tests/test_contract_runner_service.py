@@ -289,3 +289,70 @@ def test_a_graphql_run_resolves_a_graphql_target_and_records_graphql_evidence() 
     failed = [op for op in run_input.operations if op.outcome == "failed"]
     assert failed
     assert any(a.subject == "/pet/name" for op in failed for a in op.assertions)
+
+
+def test_a_protobuf_run_over_connect_records_the_target_protocol_and_unsupported_rows() -> None:
+    """XPC-3.2 acceptance: `…/run` on a gRPC version against a `connect` target stores evidence
+    with `protocol: connect`, per-case outcomes, and the manifest's unsupported streaming row."""
+    from google.protobuf import json_format, message_factory
+
+    from app.contract_suite import compile_contract_suite
+    from tests.rpc_contract_fixtures import PACKAGE, orders_api, orders_pool
+
+    manifest = compile_contract_suite(orders_api())
+    pool = orders_pool()
+    request_class = message_factory.GetMessageClass(
+        pool.FindMessageTypeByName(f"{PACKAGE}.GetOrderRequest")
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        message = request_class()
+        try:
+            json_format.Parse(request.content.decode("utf-8"), message)
+        except json_format.ParseError as exc:
+            return httpx.Response(400, json={"code": "invalid_argument", "message": str(exc)})
+        if not message.IsInitialized():
+            return httpx.Response(400, json={"code": "invalid_argument", "message": "missing"})
+        # A drifted deployment: the required `id` is never sent back.
+        return httpx.Response(200, json={"totalCents": "1200"})
+
+    connect_target = _resolved().model_copy(
+        update={"protocol": "connect", "base_url": "http://mock.test/acme/orders/1.0.0"}
+    )
+    with (
+        patch(
+            "app.contract_runner_service.compile_version_contract_suite",
+            return_value=ContractSuiteResponse(
+                ok=True, version_ref="project/orders/1.0.0", manifest=manifest
+            ),
+        ),
+        patch(
+            "app.contract_runner_service.resolve_target", return_value=connect_target
+        ) as resolve,
+        patch(
+            "app.contract_runner_service.record_run",
+            return_value=RecordedRun(record=_recorded_run(), created=True),
+        ) as recorded,
+        patch(
+            "app.contract_runner.build_guarded_client",
+            return_value=httpx.Client(transport=httpx.MockTransport(handler)),
+        ),
+    ):
+        result = run_version_contract_suite(
+            "project/orders/1.0.0",
+            ContractRunRequest(target_ref="connect-dev"),
+            tenant_id="t1",
+            actor=_ACTOR,
+        )
+
+    assert result.ok is True
+    assert resolve.call_args.kwargs["protocol"] == "grpc"
+    run_input = recorded.call_args.args[1]
+    assert run_input.protocol == "connect"
+    assert [item.operation_key for item in result.unsupported] == [
+        "acme.orders.v1.Orders.WatchOrders"
+    ]
+    outcomes = {(op.case_source, op.outcome) for op in run_input.operations}
+    assert ("negative_missing_parameter", "passed") in outcomes
+    failed = [op for op in run_input.operations if op.outcome == "failed"]
+    assert failed and all(op.failure_code == "response-schema-mismatch" for op in failed)

@@ -148,10 +148,14 @@ URL:
 |---|---|---|
 | `http` (default) | the base every case's relative path is joined onto | REST versions |
 | `graphql` | the GraphQL endpoint itself; every case is `POST`ed to it | GraphQL versions |
+| `connect` | the base `/{package.Service}/{Method}` is joined onto; cases are Connect JSON calls | Protobuf versions (XPC-3.2) |
+| `grpc` | only its scheme, host and port: a native gRPC channel, TLS for `https`, with server reflection | Protobuf versions (XPC-3.2) |
 
-Resolving a target for a run whose suite speaks another protocol is refused with
-`target-protocol-mismatch` (422 on `…/run`) and written to the ledger as a denied resolve. Every
-target defined before V371 is `http`.
+Resolving a target for a run whose suite it cannot execute is refused with
+`target-protocol-mismatch` (422 on `…/run`) and written to the ledger as a denied resolve. A
+Protobuf version's suite (`grpc`) accepts a `grpc` or a `connect` target; every other suite only a
+target of its own protocol. Every target defined before V371 is `http`; V374 widened the check to
+`grpc` and `connect`.
 
 ## Endpoints
 

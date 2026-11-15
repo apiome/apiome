@@ -528,3 +528,55 @@ def test_thresholds_round_trip_through_their_own_wire_shape():
         verification=VerificationThresholds(fail_on_unhealthy_run=False),
     )
     assert thresholds_from_body(canonical_thresholds_body(original)) == original
+
+
+
+# ---------------------------------------------------------------------------------------------
+# Partial evidence (XPC-3.2, #5742)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_partial_evidence_is_never_a_pass():
+    """A suite that left a streaming method out verified only part of the contract."""
+    from app.deploy_gate import REASON_VERIFICATION_PARTIAL
+
+    signal = evaluate_verification(
+        source="report",
+        freshness_seconds=60,
+        last_status="passed",
+        thresholds=VerificationThresholds(),
+        unsupported_operations=2,
+    )
+    assert (signal.status, signal.reason) == (STATUS_WARN, REASON_VERIFICATION_PARTIAL)
+    assert signal.satisfied is False
+    assert signal.data["partial"] is True
+    assert signal.data["unsupportedOperations"] == 2
+    assert "2 operations out by design" in signal.detail
+
+
+def test_partial_does_not_soften_a_worse_verdict():
+    signal = evaluate_verification(
+        source="schedule",
+        freshness_seconds=60,
+        last_status="failed",
+        thresholds=VerificationThresholds(),
+        unsupported_operations=1,
+    )
+    assert (signal.status, signal.reason) == (STATUS_FAIL, REASON_VERIFICATION_UNHEALTHY)
+    assert signal.data["partial"] is True
+
+
+def test_complete_evidence_reports_partial_false():
+    signal = evaluate_verification(
+        source="report",
+        freshness_seconds=60,
+        last_status="passed",
+        thresholds=VerificationThresholds(),
+    )
+    assert signal.status == STATUS_PASS
+    assert signal.data["partial"] is False
+    assert signal.data["unsupportedOperations"] == 0
+    never = evaluate_verification(
+        source=None, freshness_seconds=None, last_status=None, thresholds=VerificationThresholds()
+    )
+    assert "partial" not in never.data

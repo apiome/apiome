@@ -601,7 +601,13 @@ def test_a_run_protocol_no_adapter_speaks_is_refused() -> None:
     import pydantic
 
     with pytest.raises(pydantic.ValidationError):
-        _run(protocol="grpc")
+        _run(protocol="thrift")
+
+
+def test_a_run_records_the_grpc_family_transport_it_ran_over() -> None:
+    """XPC-3.2: a Protobuf version's suite runs over `connect` or `grpc`; both are recorded."""
+    assert _run(protocol="connect").protocol == "connect"
+    assert _run(protocol="grpc").protocol == "grpc"
 
 
 def test_a_stored_run_reads_its_protocol_and_defaults_legacy_rows_to_http() -> None:

@@ -1,6 +1,6 @@
-"""Evidence exports — JSON and JUnit — ECA-1.3 (#4731).
+"""Evidence exports — JSON, JUnit and SARIF — ECA-1.3 (#4731), XPC-3.2 (#5742).
 
-Stored evidence has to leave the platform in two shapes, for two audiences:
+Stored evidence has to leave the platform in three shapes, for three audiences:
 
 * **JSON** — the whole record, for a gate, a diff between two runs, or an auditor's archive. It is
   the stored record verbatim (timestamps in ISO-8601, keys sorted), so "the export" and "the
@@ -10,6 +10,10 @@ Stored evidence has to leave the platform in two shapes, for two audiences:
 * **JUnit XML** — the lingua franca every CI system already renders. GitHub Actions, GitLab,
   Jenkins, and Buildkite all display it natively, which is what lets contract verification appear
   in a build's test tab without anyone writing a reporter.
+* **SARIF 2.1.0** — what code-scanning dashboards ingest (GitHub Code Scanning, Azure DevOps).
+  One result per failed or errored case, rendered by :mod:`app.gate_report_emit` like the lint
+  and compatibility gates, with a ``partialFingerprints`` entry derived from the case id so
+  repeated runs of the same contract de-duplicate rather than pile up.
 
 The acceptance criterion both exporters answer is *reproducibility*: an export must state exactly
 what the stored rows state. So neither exporter recomputes a verdict, filters a case, or shortens a
@@ -30,6 +34,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from xml.etree import ElementTree
 
+from .gate_report_emit import to_sarif
 from .verification_evidence import (
     CODE_EXPORT_FORMAT,
     OPERATION_OUTCOME_ERRORED,
@@ -41,12 +46,17 @@ from .verification_evidence import (
 )
 
 __all__ = [
+    "EXPORT_EXTENSIONS",
     "EXPORT_FORMATS",
     "EXPORT_SCHEMA_VERSION",
     "EXPORT_FORMAT_JSON",
     "EXPORT_FORMAT_JUNIT",
+    "EXPORT_FORMAT_SARIF",
     "EXPORT_MEDIA_TYPES",
+    "SARIF_CASE_FINGERPRINT",
+    "SARIF_RULE_PREFIX",
     "export_junit",
+    "export_sarif",
     "export_json",
     "export_run",
     "run_export_document",
@@ -54,15 +64,30 @@ __all__ = [
 
 EXPORT_FORMAT_JSON = "json"
 EXPORT_FORMAT_JUNIT = "junit"
+EXPORT_FORMAT_SARIF = "sarif"
 
 #: The formats :func:`export_run` understands.
-EXPORT_FORMATS = (EXPORT_FORMAT_JSON, EXPORT_FORMAT_JUNIT)
+EXPORT_FORMATS = (EXPORT_FORMAT_JSON, EXPORT_FORMAT_JUNIT, EXPORT_FORMAT_SARIF)
 
 #: Media type each format is served as.
 EXPORT_MEDIA_TYPES = {
     EXPORT_FORMAT_JSON: "application/json",
     EXPORT_FORMAT_JUNIT: "application/xml",
+    EXPORT_FORMAT_SARIF: "application/sarif+json",
 }
+
+#: File extension each format is saved with.
+EXPORT_EXTENSIONS = {
+    EXPORT_FORMAT_JSON: "json",
+    EXPORT_FORMAT_JUNIT: "xml",
+    EXPORT_FORMAT_SARIF: "sarif",
+}
+
+#: Prefix of every SARIF rule id: the case's stable failure code follows it.
+SARIF_RULE_PREFIX = "apiome-contract/"
+
+#: The ``partialFingerprints`` key a SARIF result carries its case id under.
+SARIF_CASE_FINGERPRINT = "apiomeContractCase/v1"
 
 #: The envelope version of the JSON export. A consumer that pinned a shape can tell when it moved.
 EXPORT_SCHEMA_VERSION = 1
@@ -335,12 +360,91 @@ def export_junit(record: VerificationRunRecord) -> str:
     return f'<?xml version="1.0" encoding="UTF-8"?>\n{body}'
 
 
+def _sarif_location(record: VerificationRunRecord, operation: OperationRecord) -> str:
+    """The artifact URI a SARIF result points at: the contract version, then the operation.
+
+    Evidence is about a contract, not a file in the repository, so the URI names the version
+    reference the suite was compiled from (``project/orders/1.0.0``) when the run recorded one,
+    followed by the operation key.
+    """
+    version_ref = record.source.get("version_ref") if isinstance(record.source, dict) else None
+    base = str(version_ref) if version_ref else f"suite/{record.suite_digest}"
+    return f"{base}/{operation.operation_key}"
+
+
+def export_sarif(record: VerificationRunRecord) -> str:
+    """Render one run as SARIF 2.1.0: one result per failed or errored case.
+
+    A failed case (the deployment disagreed with the contract) is an ``error``; an errored one
+    (the case could not be executed) is a ``warning``. Passed and skipped cases are not results —
+    SARIF lists problems, not tests. Each result's rule id is the case's stable failure code, its
+    message names the operation and the first located violation, and its ``partialFingerprints``
+    carry the case id, so the same failure in the next run is the same alert.
+
+    Args:
+        record: The stored evidence.
+
+    Returns:
+        The SARIF JSON text, keys sorted.
+    """
+    findings: List[Dict[str, Any]] = []
+    for operation in record.operations:
+        if operation.outcome not in (OPERATION_OUTCOME_FAILED, OPERATION_OUTCOME_ERRORED):
+            continue
+        pointer = next(
+            (
+                item.subject
+                for item in operation.assertions
+                if item.outcome == "failed" and (item.subject or "").startswith("/")
+            ),
+            None,
+        )
+        message = f"{operation.operation_key}: {operation.failure_message or operation.outcome}"
+        if pointer:
+            message += f" (at {pointer})"
+        properties: Dict[str, Any] = {
+            "caseId": operation.case_id,
+            "operationKey": operation.operation_key,
+            "outcome": operation.outcome,
+            "protocol": record.protocol,
+            "runId": record.id,
+        }
+        if operation.case_source:
+            properties["caseSource"] = operation.case_source
+        if pointer:
+            properties["pointer"] = pointer
+        findings.append(
+            {
+                "rule_id": operation.failure_code or f"case-{operation.outcome}",
+                "severity": "error" if operation.outcome == OPERATION_OUTCOME_FAILED else "warning",
+                "message": message,
+                "location": {"path": _sarif_location(record, operation)},
+                "partial_fingerprints": {SARIF_CASE_FINGERPRINT: operation.case_id},
+                "properties": properties,
+            }
+        )
+    document = to_sarif(
+        findings,
+        tool_name="apiome-contract-verification",
+        tool_version=str(record.runner_version or "1"),
+        rule_prefix=SARIF_RULE_PREFIX,
+    )
+    document["runs"][0]["properties"] = {
+        "runId": record.id,
+        "suiteDigest": record.suite_digest,
+        "outcome": record.outcome,
+        "protocol": record.protocol,
+        "targetSlug": record.target_slug,
+    }
+    return json.dumps(document, sort_keys=True, indent=2, ensure_ascii=False)
+
+
 def export_run(record: VerificationRunRecord, export_format: str) -> str:
     """Render one run in the requested format.
 
     Args:
         record: The stored evidence.
-        export_format: ``json`` or ``junit``.
+        export_format: ``json``, ``junit``, or ``sarif``.
 
     Returns:
         The rendered text.
@@ -352,6 +456,8 @@ def export_run(record: VerificationRunRecord, export_format: str) -> str:
         return export_json(record)
     if export_format == EXPORT_FORMAT_JUNIT:
         return export_junit(record)
+    if export_format == EXPORT_FORMAT_SARIF:
+        return export_sarif(record)
     raise EvidenceValidationError(
         CODE_EXPORT_FORMAT,
         f"export format must be one of {', '.join(EXPORT_FORMATS)}",

@@ -143,6 +143,77 @@ the endpoint answers. It is available over the REST API.
 - The selection goes three levels of objects deep by default. Change it with
   `options.max_selection_depth` (1–8).
 
+## Contract test a gRPC API
+
+A version imported from **Protobuf** (`.proto` files, a descriptor set or gRPC reflection) gets a
+contract suite too. Apiome turns every unary method into test cases and calls a deployment with
+them, either over the **Connect** protocol (plain JSON over HTTP, no proxy) or over **native
+gRPC**. The cases are the same either way; the target decides how they are sent. It is available
+over the REST API and `apiome verify contract`.
+
+1. **Define a target.** Create a verification target whose `protocol` says how to reach the
+   service:
+
+   - `connect` — each case is a `POST` of JSON to `{base_url}/{package.Service}/{Method}`, with
+     `Connect-Protocol-Version: 1`. Any server built with a Connect library (connect-go,
+     connect-es, connect-kotlin, …) answers it; a `grpc-gateway` REST mapping does not.
+   - `grpc` — a native gRPC channel to the `base_url`'s host and port: `https://` uses TLS,
+     `http://` does not. The server must have **server reflection** turned on, because Apiome reads
+     the server's message types from it to encode each call.
+
+   ```bash
+   curl -X POST "$APIOME/v1/tenants/acme/verification-targets" \
+     -H "X-API-Key: $APIOME_API_KEY" -H "Content-Type: application/json" \
+     -d '{"slug": "grpc-dev", "name": "Orders gRPC (dev)",
+          "environment": "development", "protocol": "grpc",
+          "base_url": "https://orders.dev.example.com:443"}'
+   ```
+
+2. **Look at the suite** (optional). `POST …/contracts/project/orders/1.0.0/suite` returns the
+   cases. Each one has `protocol: grpc` and an `rpc` block holding the `procedure`
+   (`/acme.orders.v1.Orders/GetOrder`), the request `message` in protobuf JSON (`orderId`, not
+   `order_id`) and the status it expects back.
+3. **Run it.** `apiome verify contract --project orders --version 1.0.0 --target grpc-dev`. The
+   evidence records the target's protocol (`grpc` or `connect`), one result per case, and the exact
+   field that disagreed (for example `/items/0/quantity`). Add `--format sarif --out
+   contract.sarif` to upload the failures to code scanning.
+
+| Each unary method gets… | It passes when the service answers… |
+| --- | --- |
+| A call with a declared example message (when the import recorded one), then generated messages: required fields only, then every field | Status `ok`, and a message that matches the method's output type — every field it sends is declared and has the right type, and every `required` field is present |
+| A call with a `required` field left out, one with a field of the wrong JSON type, and one with a field the message does not have | Status `invalid_argument` (HTTP `400` over Connect) |
+
+- **Only methods marked safe run by default.** A method runs against a target that does not allow
+  changes (`allow_mutating_methods: false`) only when the `.proto` declares
+  `option idempotency_level = NO_SIDE_EFFECTS;` on it. Every other method is held back as
+  `mutating-method-blocked`.
+- **Streaming methods are not run.** They are listed under `unsupported` in the suite with the
+  reason `unsupported: streaming`. A deploy gate reading that evidence reports the verification as
+  **partial** (`warn`, reason `verification-partial`), never as a plain pass.
+- **Two negatives need JSON.** A wrong-typed field and an unknown field cannot be written in binary
+  protobuf, so a `grpc` run records them as `skipped` (`rpc-negative-json-only`). Use a `connect`
+  target to run them.
+- **The protocols must match.** A Protobuf version runs on a `grpc` or a `connect` target; an
+  `http` or `graphql` target is refused with `422 target-protocol-mismatch`.
+- A `grpc` server without reflection fails every case with `rpc-reflection-unavailable`; use its
+  Connect endpoint instead.
+
+## Upload verification failures to code scanning
+
+`apiome verify contract --format sarif --out contract.sarif` writes the run as **SARIF 2.1.0**: one
+result per failed case (level `error`) or case that could not run (level `warning`), with the rule
+`apiome-contract/<failure code>` and the field that disagreed in the message. Each result carries the
+case id as its fingerprint, so the same failure in the next run updates one alert instead of adding
+another. The same file is available from `GET …/verification-runs/{run_id}/export?format=sarif`.
+
+```yaml
+- run: apiome verify contract --project orders --version 1.0.0 --target grpc-dev --format sarif --out contract.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: contract.sarif
+```
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

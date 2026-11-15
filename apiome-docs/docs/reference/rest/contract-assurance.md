@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.565.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.566.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `contract-assurance` · 23 operations
 
@@ -26,6 +26,8 @@ Compile the version's deterministic contract suite (ECA-1.1), resolve the named 
 A version that cannot yield executable cases answers **200** with `ok: false` and a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422). Target resolution faults are 400/404, and **422** `target-protocol-mismatch` when the target's `protocol` is not the suite's (an `http` target for a GraphQL version). Evidence submission faults are 400.
 
 **GraphQL versions** (XPC-1.2) run every case as a `POST` of a GraphQL document to the target URL itself; a case passes on the response envelope — no `errors` and `data` matching the selection for a success case, a non-empty `errors` array for a negative one. Mutations obey the mutating-method gate; queries do not.
+
+**Protobuf (gRPC) versions** (XPC-3.2) run on a `connect` target — each case `POST`ed as JSON to `{base_url}/{package.Service}/{Method}` with `Connect-Protocol-Version: 1` — or a `grpc` target — a native gRPC channel (TLS for `https`, deadline from the policy) with descriptors read through server reflection; JSON-only negatives are `skipped` (`rpc-negative-json-only`) over native gRPC. A case passes on its status code, then on its decoded message matching the output type (pointer-located). The run records the target's protocol, and the response lists the suite's `unsupported` operations (non-empty means partial evidence).
 
 Operation id: `run_contract_suite_for_version_v1_tenants__tenant_slug__contracts__version_ref__run_post`
 
@@ -64,6 +66,8 @@ Compile a published version into an executable contract suite (ECA-1.1): one cas
 **Declared examples come first.** A request body the author wrote is compiled ahead of anything generated, and is the only kind of case marked ``synthetic: false``. An example that does not satisfy its own schema is reported and left out rather than compiled into a test a correct implementation would fail.
 
 **GraphQL versions** compile through the GraphQL protocol adapter (XPC-1.2): one set of cases per root `query`/`mutation` field — declared `@example` arguments, generated arguments, then a required argument omitted, a wrong-typed argument, and an unknown field selected — each a GraphQL document carried in the case's `graphql` payload with `protocol: graphql`. Subscriptions are listed under `unsupported`. A GraphQL version with no query or mutation field answers `ok: false` (`FORMAT_MISMATCH`).
+
+**Protobuf (gRPC) versions** compile through the gRPC/Connect protocol adapter (XPC-3.2): one set of cases per unary method — a declared example message, generated messages, then a required field omitted, a wrong-typed field and an unknown field — each a protobuf-JSON message for `/{package.Service}/{Method}` carried in the case's `rpc` payload with `protocol: grpc`, expecting status `ok` and a message matching the output type, or `invalid_argument`. Streaming methods are listed under `unsupported` (`unsupported: streaming`); methods without `idempotency_level = NO_SIDE_EFFECTS` are mutating. A Protobuf version with no unary method answers `ok: false` (`FORMAT_MISMATCH`).
 
 **Nothing is skipped silently.** A streaming operation, a non-HTTP paradigm, an XML-only body, a structured parameter, an undeclared status code — each appears in ``findings`` with a stable code, so partial coverage can never read as full coverage.
 
@@ -290,6 +294,7 @@ Export the stored evidence.
 
 * `json` — the whole record (`application/json`), keys sorted so two exports of the same run are byte-identical and can be diffed without a semantic differ.
 * `junit` — JUnit XML (`application/xml`), which GitHub Actions, GitLab, Jenkins, and Buildkite render natively. One `<testcase>` per stored case in stored order; a contract violation becomes `<failure>` and an unexecutable case becomes `<error>`, because that is the distinction contract verification needs. The suite digest and target identity travel as `<properties>`.
+* `sarif` — SARIF 2.1.0 (`application/sarif+json`) for code-scanning upload: one result per failed (`error`) or errored (`warning`) case, rule id `apiome-contract/<failure code>`, the first located violation's JSON Pointer in the message, and `partialFingerprints.apiomeContractCase/v1` set to the case id so repeated runs de-duplicate.
 
 Neither exporter recomputes a verdict: the counters come from the stored counts, so an export can never disagree with the run it exports.
 
@@ -303,7 +308,7 @@ Operation id: `export_verification_run_v1_tenants__tenant_slug__verification_run
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `run_id` | path | string | yes | Path parameter identifying the run id segment. |
-| `format` | query | string | no | Export format: json, junit. |
+| `format` | query | string | no | Export format: json, junit, sarif. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -311,7 +316,7 @@ Operation id: `export_verification_run_v1_tenants__tenant_slug__verification_run
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | The exported evidence. | `application/json` any; `application/xml` any |
+| 200 | The exported evidence. | `application/json` any; `application/xml` any; `application/sarif+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/verification-runs/{run_id}/mock-attestation` {#read-verification-run-mock-attestation-v1-tenants-tenant-slug-verification-runs-run-id-mock-attestation-get}
@@ -874,6 +879,7 @@ The outcome of one contract run attempt.
 | `suite_digest` | string or null | no | Digest of the suite that was executed, when compiled. |
 | `run` | [`VerificationRunRecord`](#schema-verificationrunrecord) or null | no | Immutable evidence record when `ok` is true. |
 | `created` | boolean or null | no | True when evidence was newly written; False on idempotent replay. |
+| `unsupported` | array of `SuiteUnsupportedOperation` | no | Operations the suite declares but cannot cover by design (a streaming gRPC method, a GraphQL subscription), copied from the manifest. Non-empty means the evidence is partial: those operations were never exercised. |
 | `error` | `SpecImportJobError` or null | no | Populated when `ok` is false: stable taxonomy code plus remediation. |
 
 ### `ContractSuiteCompileRequest` {#schema-contractsuitecompilerequest}
@@ -959,7 +965,7 @@ truths.
 | `environment` | string | yes | Environment class. |
 | `network_class` | string | yes | `public` or `private`. |
 | `base_url` | string | yes | Normalized base URL to join relative paths onto. |
-| `protocol` | string | no | `http` or `graphql`; for `graphql`, `base_url` is the endpoint itself. |
+| `protocol` | string | no | `http`, `graphql`, `connect`, or `grpc`; for `graphql`, `base_url` is the endpoint itself, and for `grpc` only its scheme, host and port are used. |
 | `policy` | `VerificationPolicy` | yes | The policy the runner must honour. |
 | `auth` | `TargetAuthReference` | yes | Where the runner obtains the credential. No credential material is returned by this API — an `env` reference is read from the runner's own environment, and a `stored` one is unsealed only at request time by the runner service. |
 | `resolved_at` | string (date-time) | yes | When the target was resolved. |
@@ -990,7 +996,7 @@ means a half-written run can never be mistaken for a finished one.
 | `suite_case_count` | integer or null | no | How many cases the manifest declared. Recorded so a run that executed fewer is visibly partial rather than silently so. |
 | `runner_name` | string | yes | Which runner produced the evidence. |
 | `runner_version` | string or null | no | Runner version, so a behaviour change is attributable. |
-| `protocol` | string | no | Protocol the suite was executed over: `http`, or `graphql` for a GraphQL version's suite (the manifest's own `protocol`). |
+| `protocol` | string | no | Protocol the suite was executed over — the target's: `http`, `graphql` for a GraphQL version's suite, and `connect` or `grpc` for a Protobuf version's. |
 | `started_at` | string (date-time) | yes | When the run began. |
 | `finished_at` | string (date-time) | yes | When the run ended. |
 | `outcome` | string or null | no | Optional declared verdict. It is *checked* against the outcome derived from the operation records and refused when it disagrees; only `cancelled` — which no record can imply — is taken on the runner's word. |
@@ -1027,7 +1033,7 @@ A run with its full detail — what a read of one run, and both exporters, work 
 | `target_environment` | string | yes | Environment class at run time. |
 | `target_network_class` | string | yes | `public` or `private`, at run time. |
 | `target_base_url` | string | yes | Base URL at run time. |
-| `protocol` | string | no | `http` or `graphql` — what the suite was run over. |
+| `protocol` | string | no | `http`, `graphql`, `connect`, or `grpc` — what the suite was run over. |
 | `runner_name` | string | yes | Which runner produced the evidence. |
 | `runner_version` | string or null | no | Runner version. |
 | `recorded_by` | string or null | no | User who recorded the evidence. |
@@ -1153,7 +1159,7 @@ A complete target definition, as a caller supplies it on create.
 | `description` | string or null | no | Optional note about what this target is. |
 | `environment` | string | no | `mock`, `development`, `test`, `staging`, or `production`. |
 | `base_url` | string | yes | Base URL the suite's relative paths are joined onto. |
-| `protocol` | string | no | `http` (relative paths are joined onto `base_url`) or `graphql` (`base_url` is the GraphQL endpoint every case is posted to). A run refuses a target whose protocol is not the suite's. |
+| `protocol` | string | no | `http` (relative paths are joined onto `base_url`), `graphql` (`base_url` is the GraphQL endpoint every case is posted to), `connect` (gRPC-family cases are posted as JSON to `{base_url}/{package.Service}/{Method}`), or `grpc` (a native gRPC channel to `base_url`'s host and port — TLS for `https` — with descriptors read through server reflection). A run refuses a target that cannot speak the suite's protocol; a Protobuf version's suite runs on `connect` or `grpc`. |
 | `network_class` | string | no | `public` (must resolve to a globally routable address) or `private` (an internal target, which requires `approval_reason`). |
 | `approval_reason` | string or null | no | Why a private-network target is justified. Required when `network_class` is `private`; the approver is the authenticated caller. |
 | `auth` | `TargetAuthReference` | no | The credential reference — never a credential. |
@@ -1206,7 +1212,7 @@ cannot hold credential material, so the full record is always safe to return.
 | `description` | string or null | no | Operator note. |
 | `environment` | string | yes | Environment class. |
 | `base_url` | string | yes | Base URL, normalized (no trailing slash). |
-| `protocol` | string | no | `http` or `graphql` — what the target speaks. |
+| `protocol` | string | no | `http`, `graphql`, `connect`, or `grpc` — what the target speaks. |
 | `network_class` | string | yes | `public` or `private`. |
 | `approved_by` | string or null | no | User who approved a private-network target. |
 | `approved_at` | string (date-time) or null | no | When the private-network exception was approved. |

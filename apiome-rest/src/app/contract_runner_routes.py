@@ -68,7 +68,15 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "**GraphQL versions** (XPC-1.2) run every case as a `POST` of a GraphQL document to the "
         "target URL itself; a case passes on the response envelope — no `errors` and `data` "
         "matching the selection for a success case, a non-empty `errors` array for a negative "
-        "one. Mutations obey the mutating-method gate; queries do not."
+        "one. Mutations obey the mutating-method gate; queries do not.\n\n"
+        "**Protobuf (gRPC) versions** (XPC-3.2) run on a `connect` target — each case `POST`ed "
+        "as JSON to `{base_url}/{package.Service}/{Method}` with `Connect-Protocol-Version: 1` — "
+        "or a `grpc` target — a native gRPC channel (TLS for `https`, deadline from the policy) "
+        "with descriptors read through server reflection; JSON-only negatives are `skipped` "
+        "(`rpc-negative-json-only`) over native gRPC. A case passes on its status code, then on "
+        "its decoded message matching the output type (pointer-located). The run records the "
+        "target's protocol, and the response lists the suite's `unsupported` operations "
+        "(non-empty means partial evidence)."
     ),
 )
 async def run_contract_suite_for_version(

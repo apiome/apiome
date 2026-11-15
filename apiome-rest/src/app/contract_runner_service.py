@@ -14,7 +14,7 @@ without inventing a green run.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,7 +25,7 @@ from .contract_runner import (
     materialize_auth_headers,
     run_suite,
 )
-from .contract_suite import ContractSuiteOptions
+from .contract_suite import ContractSuiteOptions, SuiteUnsupportedOperation
 from .contract_suite_service import (
     ContractSuiteCompileRequest,
     SchemaReferenceError,
@@ -92,6 +92,14 @@ class ContractRunResponse(BaseModel):
     created: Optional[bool] = Field(
         default=None,
         description="True when evidence was newly written; False on idempotent replay.",
+    )
+    unsupported: List[SuiteUnsupportedOperation] = Field(
+        default_factory=list,
+        description=(
+            "Operations the suite declares but cannot cover by design (a streaming gRPC method, "
+            "a GraphQL subscription), copied from the manifest. Non-empty means the evidence is "
+            "partial: those operations were never exercised."
+        ),
     )
     error: Optional[SpecImportJobError] = Field(
         default=None,
@@ -194,7 +202,9 @@ def run_version_contract_suite(
         suite_case_count=len(manifest.cases),
         runner_name=RUNNER_NAME,
         runner_version=RUNNER_VERSION,
-        protocol=manifest.protocol,
+        # What the run was executed *over*: the target's protocol. For a gRPC-family suite that
+        # is ``connect`` or ``grpc``; for every other suite it equals the manifest's.
+        protocol=resolved.protocol,
         started_at=suite_result.started_at,
         finished_at=suite_result.finished_at,
         source=source,
@@ -210,4 +220,5 @@ def run_version_contract_suite(
         suite_digest=manifest.digest,
         run=recorded.record,
         created=recorded.created,
+        unsupported=list(manifest.unsupported),
     )

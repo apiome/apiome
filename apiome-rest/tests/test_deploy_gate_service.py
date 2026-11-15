@@ -467,3 +467,38 @@ def test_a_stale_schedule_warns_before_it_fails():
     )
     assert _signal(report, SIGNAL_VERIFICATION).status == STATUS_WARN
     assert report.status == STATUS_WARN
+
+
+def test_a_report_whose_suite_left_streaming_methods_out_reports_partial():
+    """XPC-3.2 acceptance: unsupported streaming rows make the gate's verification `partial`."""
+    from types import SimpleNamespace
+
+    stored = SimpleNamespace(
+        report=SimpleNamespace(coverage=SimpleNamespace(operations_unsupported=1))
+    )
+    with patch("app.deploy_gate_service.get_report", return_value=stored) as read:
+        report = _gate(
+            changelog=_changelog_row(),
+            schedules=[],
+            reports=[_Report("passed", _NOW - timedelta(minutes=10))],
+            passing_reports=[_Report("passed", _NOW - timedelta(minutes=10))],
+        )
+    verification = _signal(report, SIGNAL_VERIFICATION)
+    assert verification.status == STATUS_WARN
+    assert verification.reason == "verification-partial"
+    assert verification.data["partial"] is True
+    assert verification.data["operationsUnsupported"] == 1
+    assert read.call_args.args[0] == _TENANT
+
+
+def test_an_unreadable_report_never_takes_the_verification_signal_down():
+    with patch("app.deploy_gate_service.get_report", side_effect=RuntimeError("db down")):
+        report = _gate(
+            changelog=_changelog_row(),
+            schedules=[],
+            reports=[_Report("passed", _NOW - timedelta(minutes=10))],
+            passing_reports=[_Report("passed", _NOW - timedelta(minutes=10))],
+        )
+    verification = _signal(report, SIGNAL_VERIFICATION)
+    assert verification.status == STATUS_PASS
+    assert verification.data["partial"] is False

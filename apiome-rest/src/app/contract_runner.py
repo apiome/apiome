@@ -22,6 +22,11 @@ Guarantees
   ``data`` satisfying the selection's schema (pointers are into ``data``); a negative case passes
   only with a non-empty ``errors`` array. A mutation is held back by the mutating-method gate
   exactly as a ``POST`` is; a query, although also sent as ``POST``, is not.
+* **gRPC-family suites run over the target's transport (XPC-3.2, #5742).** A ``grpc`` case is
+  executed by :mod:`app.contract_runner_rpc` — over Connect (JSON through this module's httpx
+  client) for a ``connect`` target, over a native ``grpcio`` channel for a ``grpc`` one — and
+  judged by its status code, then by its decoded message. A method is mutating unless it declares
+  ``idempotency_level = NO_SIDE_EFFECTS``.
 
 This module is pure relative to the platform store: it takes a manifest, a resolved target, an
 httpx client (or builds one), and optional auth headers. Compiling, resolving, and recording
@@ -47,7 +52,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from .contract_protocols import PROTOCOL_GRAPHQL
+from .contract_protocols import PROTOCOL_GRAPHQL, PROTOCOL_GRPC
 from .contract_suite import (
     OUTCOME_CLIENT_ERROR,
     OUTCOME_SUCCESS,
@@ -353,7 +358,9 @@ def is_mutating_case(case: ContractCase) -> bool:
 
     An HTTP case is mutating when its method is. A GraphQL case is always sent as ``POST``, so
     the verb says nothing; its operation type does — a ``mutation`` is mutating, a ``query`` is
-    not.
+    not. A gRPC-family case is mutating unless its method declares ``idempotency_level =
+    NO_SIDE_EFFECTS``: protobuf's default (``IDEMPOTENCY_UNKNOWN``) promises nothing, and an
+    ``IDEMPOTENT`` method may still write.
 
     Args:
         case: The compiled case.
@@ -363,6 +370,8 @@ def is_mutating_case(case: ContractCase) -> bool:
     """
     if case.protocol == PROTOCOL_GRAPHQL and case.graphql is not None:
         return case.graphql.operation_type == "mutation"
+    if case.protocol == PROTOCOL_GRPC and case.rpc is not None:
+        return case.rpc.idempotency_level != "no_side_effects"
     return case.request.method.upper() in MUTATING_METHODS
 
 
@@ -699,23 +708,39 @@ def _execute_case(
     auth_headers: Mapping[str, str],
     client: httpx.Client,
     schemas: Mapping[str, Dict[str, Any]],
+    rpc_transport: Optional[Any] = None,
 ) -> OperationResultInput:
-    """Execute one case under the target policy and return its evidence record."""
+    """Execute one case under the target policy and return its evidence record.
+
+    ``rpc_transport`` is the run's :class:`~app.contract_runner_rpc.RpcTransport`, required for
+    a ``grpc``-protocol case and ignored for every other one.
+    """
     method = case.request.method.upper()
     started = datetime.now(timezone.utc)
     t0 = time.perf_counter()
 
     if is_mutating_case(case) and not target.policy.allow_mutating_methods:
-        what = (
-            "this case is a GraphQL mutation"
-            if case.protocol == PROTOCOL_GRAPHQL
-            else f"{method} is a mutating method"
-        )
+        if case.protocol == PROTOCOL_GRAPHQL:
+            what = "this case is a GraphQL mutation"
+        elif case.protocol == PROTOCOL_GRPC:
+            what = "this method does not declare idempotency_level = NO_SIDE_EFFECTS"
+        else:
+            what = f"{method} is a mutating method"
         return skipped_operation(
             case,
             code=FAILURE_MUTATING_METHOD_BLOCKED,
             message=f"{what} and the target policy has allow_mutating_methods=false",
             started_at=started,
+        )
+
+    if case.protocol == PROTOCOL_GRPC and case.rpc is not None:
+        # Imported here: the RPC runner is built on this module's helpers.
+        from .contract_runner_rpc import execute_rpc_case
+
+        if rpc_transport is None:
+            raise ValueError("a grpc-protocol case needs the run's RPC transport")
+        return execute_rpc_case(
+            case, target=target, transport=rpc_transport, schemas=schemas
         )
 
     policy: VerificationPolicy = target.policy
@@ -899,6 +924,11 @@ def run_suite(
     cases = list(manifest.cases)
     results: List[Optional[OperationResultInput]] = [None] * len(cases)
     concurrency = max(1, min(int(target.policy.max_concurrency), max(1, len(cases) or 1)))
+    rpc_transport: Optional[Any] = None
+    if manifest.protocol == PROTOCOL_GRPC:
+        from .contract_runner_rpc import build_rpc_transport
+
+        rpc_transport = build_rpc_transport(target, client=client, auth_headers=headers)
 
     try:
         if not cases:
@@ -921,6 +951,7 @@ def run_suite(
                 auth_headers=headers,
                 client=client,
                 schemas=manifest.schemas,
+                rpc_transport=rpc_transport,
             )
 
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
@@ -929,6 +960,8 @@ def run_suite(
                 index, result = future.result()
                 results[index] = result
     finally:
+        if rpc_transport is not None:
+            rpc_transport.close()
         if own_client:
             client.close()
 

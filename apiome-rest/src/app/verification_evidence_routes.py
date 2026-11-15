@@ -52,6 +52,7 @@ from .verification_evidence import (
     VerificationRunSummary,
 )
 from .verification_evidence_export import (
+    EXPORT_EXTENSIONS,
     EXPORT_FORMAT_JSON,
     EXPORT_FORMATS,
     EXPORT_MEDIA_TYPES,
@@ -363,7 +364,12 @@ async def read_verification_run_mock_attestation(
         "Buildkite render natively. One `<testcase>` per stored case in stored order; a contract "
         "violation becomes `<failure>` and an unexecutable case becomes `<error>`, because that "
         "is the distinction contract verification needs. The suite digest and target identity "
-        "travel as `<properties>`.\n\n"
+        "travel as `<properties>`.\n"
+        "* `sarif` — SARIF 2.1.0 (`application/sarif+json`) for code-scanning upload: one "
+        "result per failed (`error`) or errored (`warning`) case, rule id "
+        "`apiome-contract/<failure code>`, the first located violation's JSON Pointer in the "
+        "message, and `partialFingerprints.apiomeContractCase/v1` set to the case id so "
+        "repeated runs de-duplicate.\n\n"
         "Neither exporter recomputes a verdict: the counters come from the stored counts, so an "
         "export can never disagree with the run it exports.\n\n"
         "Requires `verification_evidence:view`."
@@ -371,7 +377,11 @@ async def read_verification_run_mock_attestation(
     responses={
         200: {
             "description": "The exported evidence.",
-            "content": {"application/json": {}, "application/xml": {}},
+            "content": {
+                "application/json": {},
+                "application/xml": {},
+                "application/sarif+json": {},
+            },
         }
     },
 )
@@ -390,7 +400,7 @@ async def export_verification_run(
     Args:
         tenant_slug: The tenant in the URL.
         run_id: The run id.
-        export_format: ``json`` or ``junit``.
+        export_format: ``json``, ``junit``, or ``sarif``.
         auth_data: The authenticated principal.
 
     Returns:
@@ -408,7 +418,7 @@ async def export_verification_run(
         body = export_run(record, export_format)
     except EvidenceValidationError as exc:
         raise _http_error(exc) from exc
-    extension = "xml" if export_format != EXPORT_FORMAT_JSON else "json"
+    extension = EXPORT_EXTENSIONS[export_format]
     return Response(
         content=body,
         media_type=EXPORT_MEDIA_TYPES[export_format],

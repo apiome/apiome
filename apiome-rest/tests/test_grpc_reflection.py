@@ -455,6 +455,17 @@ class TestSsrfGuard:
             discover_endpoint("10.0.0.5:50051", transport_factory=factory)
         assert called["factory"] is False
 
+    def test_allow_private_skips_the_address_check(self, monkeypatch) -> None:
+        # XPC-3.2: a contract run against an approved `private` target has already been vetted.
+        def reject(host):
+            raise grpc_reflection_mod.SSRFError("blocked")
+
+        monkeypatch.setattr(grpc_reflection_mod, "validate_host", reject)
+        result = discover_endpoint(
+            "10.0.0.5:50051", transport_factory=_factory({}), allow_private=True
+        )
+        assert isinstance(result, grpc_reflection_mod.GrpcReflectionResult)
+
 
 # ===========================================================================
 # Real in-process gRPC server — end-to-end (no injected transport)

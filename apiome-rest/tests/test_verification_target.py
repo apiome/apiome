@@ -521,7 +521,7 @@ def test_a_target_is_http_unless_it_says_otherwise() -> None:
 def test_a_protocol_no_adapter_speaks_is_refused() -> None:
     with pytest.raises(ValidationError):
         VerificationTargetInput(
-            slug="staging", name="Staging", base_url="https://93.184.216.34", protocol="grpc"
+            slug="staging", name="Staging", base_url="https://93.184.216.34", protocol="thrift"
         )
     with pytest.raises(ValidationError):
         VerificationTargetPatch(protocol="soap")
@@ -541,3 +541,39 @@ def test_resolution_carries_the_protocol_to_the_runner() -> None:
     assert resolved.protocol == "graphql"
     # No protocol asked for — the pre-XPC-1.2 call — never refuses.
     assert resolve_target_record(record, revalidate_url=False).protocol == "graphql"
+
+
+# ---------------------------------------------------------------------------------------------
+# gRPC and Connect (XPC-3.2, #5742)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_connect_and_grpc_are_target_protocols() -> None:
+    for protocol in ("connect", "grpc"):
+        definition = VerificationTargetInput(
+            slug="orders", name="Orders", base_url="https://93.184.216.34", protocol=protocol
+        )
+        assert definition.protocol == protocol
+        assert VerificationTargetPatch(protocol=protocol).protocol == protocol
+
+
+def test_a_grpc_suite_runs_on_a_grpc_or_a_connect_target() -> None:
+    for protocol in ("grpc", "connect"):
+        record = record_from_row(_row(protocol=protocol))
+        resolved = resolve_target_record(record, revalidate_url=False, protocol="grpc")
+        assert resolved.protocol == protocol
+
+
+def test_a_grpc_suite_refuses_an_http_target_naming_both_choices() -> None:
+    record = record_from_row(_row())
+    with pytest.raises(TargetValidationError) as exc:
+        resolve_target_record(record, revalidate_url=False, protocol="grpc")
+    assert exc.value.code == CODE_PROTOCOL_MISMATCH
+    assert "'grpc' or 'connect'" in str(exc.value)
+
+
+def test_a_connect_target_cannot_run_an_http_suite() -> None:
+    record = record_from_row(_row(protocol="connect"))
+    with pytest.raises(TargetValidationError) as exc:
+        resolve_target_record(record, revalidate_url=False, protocol="http")
+    assert exc.value.code == CODE_PROTOCOL_MISMATCH

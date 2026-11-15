@@ -51,9 +51,13 @@ honesty hold for every protocol rather than being re-implemented per protocol.
 * ``graph`` → the **GraphQL** adapter in :mod:`app.contract_suite_graphql`: one set of cases per
   root ``query``/``mutation`` field, each a ``POST`` of a GraphQL document to the target URL.
   Subscriptions are listed under ``unsupported``.
+* ``rpc`` with format ``protobuf`` → the **gRPC/Connect** adapter in :mod:`app.contract_suite_rpc`
+  (XPC-3.2, #5742): one set of cases per unary method, each a protobuf-JSON message for
+  ``/{package.Service}/{Method}``, executed over Connect or native gRPC as the target declares.
+  Streaming methods are listed under ``unsupported``.
 
-Event and RPC-streaming paradigms have no adapter yet. They fall through to the HTTP adapter,
-which reports them as unsupported rather than half-compiling them. Authentication is
+Event paradigms, and RPC formats other than Protobuf, have no adapter yet. They fall through to
+the HTTP adapter, which reports them as unsupported rather than half-compiling them. Authentication is
 deliberately **not** compiled: a suite carries no credentials, so a specification with security
 requirements gets a finding telling the runner it must supply them (targets and their secrets
 are ECA-1.2's job).
@@ -91,7 +95,7 @@ from .canonical_model import (
     StreamingMode,
     TypeRef,
 )
-from .contract_protocols import PROTOCOL_GRAPHQL, PROTOCOL_HTTP
+from .contract_protocols import PROTOCOL_GRAPHQL, PROTOCOL_GRPC, PROTOCOL_HTTP
 from .contract_suite_examples import (
     SITE_PARAMETER,
     SITE_REQUEST_BODY,
@@ -136,6 +140,7 @@ __all__ = [
     "ContractCaseExpectation",
     "ContractCaseRequest",
     "ContractGraphqlRequest",
+    "ContractRpcRequest",
     "ContractRequestParameter",
     "ContractSuiteManifest",
     "ContractSuiteOptions",
@@ -158,14 +163,15 @@ __all__ = [
 #: Envelope version of the manifest shape. Bumped when a field is added, removed, or given a
 #: new meaning, so a stored manifest can be read by the version of the code that wrote it.
 #: Version 2 (XPC-1.2) added ``protocol`` and ``unsupported`` to the manifest and ``protocol`` /
-#: ``graphql`` to every case.
-CONTRACT_SUITE_SCHEMA_VERSION = 2
+#: ``graphql`` to every case. Version 3 (XPC-3.2) added ``rpc`` to every case.
+CONTRACT_SUITE_SCHEMA_VERSION = 3
 
 #: Version of the *compilation rules*. Bumped whenever the compiler would produce different
 #: cases for the same input — which changes the digest, and must, because a gate pinned to an
 #: old digest is no longer pinned to the same suite. Version 2 (XPC-1.2) added the GraphQL adapter
 #: and the ``negative_unknown_field`` source, which every manifest's ``counts`` now carries.
-CONTRACT_SUITE_COMPILER_VERSION = 2
+#: Version 3 (XPC-3.2) compiles Protobuf versions through the gRPC/Connect adapter.
+CONTRACT_SUITE_COMPILER_VERSION = 3
 
 #: Hash the suite digest is computed with.
 SUITE_DIGEST_ALGORITHM = "sha256"
@@ -644,6 +650,50 @@ class ContractGraphqlRequest(BaseModel):
     field: str = Field(description="The root field the case exercises (`user`).")
 
 
+class ContractRpcRequest(BaseModel):
+    """The unary call a ``grpc``-protocol case makes, independent of the transport it runs over.
+
+    ``message`` is the request message in its **protobuf-JSON** form (field JSON names, enums by
+    name, 64-bit integers as strings or numbers). Over Connect it is posted as is; over native gRPC
+    it is parsed into the server's message type with the descriptors reflection returns and sent
+    as binary protobuf. ``idempotency_level`` is what the mutating-method gate reads, because every
+    call is a ``POST`` and the verb says nothing about whether it writes.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    service: str = Field(description="Fully-qualified service name (`acme.orders.v1.Orders`).")
+    method: str = Field(description="Method name (`GetOrder`).")
+    procedure: str = Field(
+        description="The gRPC/Connect procedure path, `/{package.Service}/{Method}`."
+    )
+    input_type: str = Field(description="Fully-qualified request message type.")
+    output_type: str = Field(description="Fully-qualified response message type.")
+    message: Dict[str, Any] = Field(
+        default_factory=dict, description="The request message, in protobuf-JSON form."
+    )
+    idempotency_level: str = Field(
+        description=(
+            "`no_side_effects`, `idempotent`, or `unknown` (the protobuf default). Only a "
+            "`no_side_effects` method runs when the target forbids mutating methods."
+        )
+    )
+    expect_code: str = Field(
+        description=(
+            "The Connect/gRPC status code a conforming server answers with: `ok`, or "
+            "`invalid_argument` for a negative case."
+        )
+    )
+    json_only: bool = Field(
+        default=False,
+        description=(
+            "True for a negative that only the JSON encoding can express (a wrong-typed or an "
+            "unknown field). Binary protobuf cannot carry either, so a native gRPC run records "
+            "the case as skipped."
+        ),
+    )
+
+
 class ContractCase(BaseModel):
     """One executable case: a request, its provenance, and its expected outcome."""
 
@@ -683,8 +733,9 @@ class ContractCase(BaseModel):
     protocol: str = Field(
         default=PROTOCOL_HTTP,
         description=(
-            "Wire protocol the case is executed over: `http`, or `graphql` for a case whose "
-            "request is a GraphQL document posted to the target URL."
+            "Wire protocol the case is executed over: `http`, `graphql` for a case whose "
+            "request is a GraphQL document posted to the target URL, or `grpc` for a unary "
+            "call run over Connect or native gRPC as the target declares."
         ),
     )
     request: ContractCaseRequest = Field(description="The request to send.")
@@ -693,6 +744,13 @@ class ContractCase(BaseModel):
         description=(
             "The GraphQL document, variables and operation name. Present exactly when "
             "`protocol` is `graphql`; `request.body` carries the same document as sent."
+        ),
+    )
+    rpc: Optional[ContractRpcRequest] = Field(
+        default=None,
+        description=(
+            "The unary call: procedure, request message and expected status code. Present "
+            "exactly when `protocol` is `grpc`; `request.body` carries the same message."
         ),
     )
     expect: ContractCaseExpectation = Field(description="What must come back.")
@@ -754,8 +812,9 @@ class ContractSuiteManifest(BaseModel):
     protocol: str = Field(
         default=PROTOCOL_HTTP,
         description=(
-            "Protocol of the adapter that compiled the suite — `http` or `graphql`. A run "
-            "refuses a verification target that declares a different one."
+            "Protocol of the adapter that compiled the suite — `http`, `graphql`, or `grpc`. A "
+            "run refuses a verification target that cannot speak it (a `grpc` suite runs on a "
+            "`grpc` or a `connect` target)."
         ),
     )
     api: SuiteApiInfo = Field(description="Identity of the compiled API.")
@@ -920,7 +979,7 @@ def compile_contract_suite(
         compiled becomes a finding.
     """
     resolved_options = (options or ContractSuiteOptions()).normalized()
-    adapter = protocol_adapter_for(api.paradigm)
+    adapter = protocol_adapter_for(api.paradigm, api.format)
     compilation = _Compilation(api=api, options=resolved_options)
 
     adapter.compile_cases(compilation)
@@ -966,26 +1025,34 @@ class ProtocolAdapter:
     compile_cases: Callable[["_Compilation"], None]
 
 
-def protocol_adapter_for(paradigm: ApiParadigm) -> ProtocolAdapter:
+def protocol_adapter_for(paradigm: ApiParadigm, format: Optional[str] = None) -> ProtocolAdapter:
     """Return the adapter that compiles a paradigm.
 
-    A paradigm with no adapter of its own (``event``, ``rpc``) gets the HTTP adapter, which
-    reports its operations as unsupported one by one — the pre-adapter behaviour.
+    A paradigm with no adapter of its own (``event``, and ``rpc`` in any format but Protobuf)
+    gets the HTTP adapter, which reports its operations as unsupported one by one — the
+    pre-adapter behaviour.
 
     Args:
         paradigm: The version's canonical paradigm.
+        format: The version's canonical format key. Only ``rpc`` reads it: the gRPC/Connect
+            adapter compiles Protobuf, not Smithy, Thrift or JSON-RPC.
 
     Returns:
         The :class:`ProtocolAdapter` to compile with.
     """
-    # Imported here: the GraphQL adapter is built from this module's models and helpers.
+    # Imported here: the GraphQL and RPC adapters are built from this module's models and helpers.
     from .contract_suite_graphql import compile_graphql_cases
+    from .contract_suite_rpc import RPC_FORMATS, compile_rpc_cases
 
     if paradigm is ApiParadigm.GRAPH:
         return ProtocolAdapter(
             paradigm=ApiParadigm.GRAPH,
             protocol=PROTOCOL_GRAPHQL,
             compile_cases=compile_graphql_cases,
+        )
+    if paradigm is ApiParadigm.RPC and format in RPC_FORMATS:
+        return ProtocolAdapter(
+            paradigm=ApiParadigm.RPC, protocol=PROTOCOL_GRPC, compile_cases=compile_rpc_cases
         )
     return ProtocolAdapter(
         paradigm=ApiParadigm.REST, protocol=PROTOCOL_HTTP, compile_cases=_compile_http_cases

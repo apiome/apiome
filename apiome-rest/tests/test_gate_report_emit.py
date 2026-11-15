@@ -92,3 +92,23 @@ def test_serialize_gate_sarif_roundtrip():
     assert media == "application/sarif+json"
     parsed = json.loads(body)
     assert parsed["runs"][0]["tool"]["driver"]["name"] == "oasdiff.breaking"
+
+
+def test_to_sarif_carries_partial_fingerprints_and_properties():
+    """XPC-3.2: contract-verification results de-duplicate across runs by case id."""
+    from app.gate_report_emit import to_sarif
+
+    document = to_sarif(
+        [
+            {
+                "rule_id": "rpc-status-mismatch",
+                "severity": "error",
+                "message": "m",
+                "partial_fingerprints": {"b": 2, "a": "1"},
+                "properties": {"caseId": "case_1"},
+            }
+        ]
+    )
+    result = document["runs"][0]["results"][0]
+    assert result["partialFingerprints"] == {"a": "1", "b": "2"}
+    assert result["properties"] == {"caseId": "case_1"}

@@ -780,6 +780,14 @@ class CoverageSummary(BaseModel):
             "separately from `operations_skipped`: one was not sendable, the other was not sent."
         )
     )
+    operations_unsupported: int = Field(
+        default=0,
+        description=(
+            "Of `operations_uncompiled`, those the suite lists as `unsupported` by design — a "
+            "streaming gRPC method, a GraphQL subscription (XPC-3.2). Non-zero makes the run "
+            "*partial*: the deploy gate never reads it as a plain pass."
+        ),
+    )
     uncovered_named: int = Field(
         description=(
             "How many uncovered operations the report could name. Lower than "
@@ -1091,6 +1099,7 @@ def build_conformance_report(
         ),
         operations_skipped=len(conformances) - len(exercised),
         operations_uncompiled=uncompiled,
+        operations_unsupported=len(manifest.unsupported),
         uncovered_named=uncovered_named,
         coverage_percent=(
             round(len(exercised) * 100.0 / operations_total, 1) if operations_total else 0.0

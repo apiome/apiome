@@ -209,6 +209,14 @@ def to_sarif(
         fp = finding.get("source_fingerprint") or finding.get("sourceFingerprint")
         if fp:
             result["fingerprints"] = {"primaryLocationLineHash": str(fp)}
+        # Stable identities a consumer de-duplicates on across runs (GitHub Code Scanning reads
+        # ``partialFingerprints``), e.g. a contract case id that survives a re-run (XPC-3.2).
+        partial = finding.get("partial_fingerprints") or finding.get("partialFingerprints")
+        if isinstance(partial, Mapping) and partial:
+            result["partialFingerprints"] = {str(k): str(v) for k, v in sorted(partial.items())}
+        extra = finding.get("properties")
+        if isinstance(extra, Mapping) and extra:
+            result["properties"] = {**result.get("properties", {}), **dict(extra)}
         results.append(result)
 
     return {

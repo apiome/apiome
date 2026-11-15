@@ -838,3 +838,30 @@ def test_a_graphql_query_is_safe_and_a_graphql_mutation_is_held_back() -> None:
         case.operation_key for case in manifest.cases if case.case_id in plan.decisions
     }
     assert held == {"Mutation.reset"}
+
+
+
+def test_unsupported_operations_are_counted_apart_from_other_uncompiled_ones() -> None:
+    """XPC-3.2: the deploy gate reads `operations_unsupported` to report partial evidence."""
+    from app.contract_suite import SuiteUnsupportedOperation
+
+    case = _case(case_id="c1", method="GET", path="/pets")
+    manifest = _manifest(
+        [case], counts={"operations_compiled": 1, "operations_skipped": 2}
+    ).model_copy(
+        update={
+            "unsupported": [
+                SuiteUnsupportedOperation(
+                    operation_key="acme.Orders.Watch",
+                    code="UNSUPPORTED_STREAMING",
+                    reason="unsupported: streaming",
+                )
+            ]
+        }
+    )
+    plan = plan_provider_run(
+        manifest, ProviderVerificationOptions(), target_allows_mutating=False
+    )
+    report = _report(manifest, plan, [_result(case, OPERATION_OUTCOME_PASSED, actual_status=200)])
+    assert report.coverage.operations_uncompiled == 2
+    assert report.coverage.operations_unsupported == 1

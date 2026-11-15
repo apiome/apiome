@@ -19,6 +19,7 @@ from apiome_cli.client.contract_verify import (
     exit_code_for_run,
     format_operation_failure,
     format_run_error,
+    format_unsupported,
     non_passing_operations,
     parse_context_pairs,
 )
@@ -41,6 +42,10 @@ _EXPORT_JSON_URL = (
 _EXPORT_JUNIT_URL = (
     f"http://localhost:8000/v1/tenants/acme-corp/verification-runs/{_RUN_ID}/export"
     "?format=junit"
+)
+_EXPORT_SARIF_URL = (
+    f"http://localhost:8000/v1/tenants/acme-corp/verification-runs/{_RUN_ID}/export"
+    "?format=sarif"
 )
 
 
@@ -103,7 +108,7 @@ def _mock_run_and_export(
 ) -> None:
     body = payload if payload is not None else _payload()
     httpx_mock.add_response(url=_RUN_URL, method="POST", json=body, status_code=status_code)
-    export_url = _EXPORT_JUNIT_URL if fmt == "junit" else _EXPORT_JSON_URL
+    export_url = {"junit": _EXPORT_JUNIT_URL, "sarif": _EXPORT_SARIF_URL}.get(fmt, _EXPORT_JSON_URL)
     if artifact is None:
         artifact = (
             '<?xml version="1.0"?><testsuite name="contract"/>'
@@ -442,11 +447,11 @@ def test_unknown_format_and_kind_are_usage_errors() -> None:
             "--target",
             "t",
             "--format",
-            "sarif",
+            "html",
         ],
     )
     assert bad_format.exit_code == EXIT_USAGE
-    assert "json, junit" in bad_format.stderr
+    assert "json, junit, sarif" in bad_format.stderr
 
     bad_kind = runner.invoke(
         app,
@@ -485,3 +490,118 @@ def test_bad_context_is_usage_error() -> None:
     )
     assert result.exit_code == EXIT_USAGE
     assert "KEY=VALUE" in result.stderr
+
+
+# ---------------------------------------------------------------------------------------------
+# XPC-3.2 (#5742): SARIF artifacts, the run protocol and partial (unsupported) operations
+# ---------------------------------------------------------------------------------------------
+
+_GRPC_RUN_URL = "http://localhost:8000/v1/tenants/acme-corp/contracts/project/orders/1.0.0/run"
+
+_SARIF = json.dumps(
+    {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{"tool": {"driver": {"name": "apiome-contract-verification"}}, "results": []}],
+    }
+)
+
+
+def _grpc_payload() -> dict[str, Any]:
+    """A run of a Protobuf version's suite over a native gRPC target, one method unsupported."""
+    return _payload(
+        version_ref="project/orders/1.0.0",
+        run=_run_record(
+            target_slug="grpc-dev",
+            target_base_url="http://localhost:8776",
+            protocol="grpc",
+        ),
+        unsupported=[
+            {
+                "operation_key": "acme.orders.v1.Orders.WatchOrders",
+                "code": "UNSUPPORTED_STREAMING",
+                "reason": "unsupported: streaming",
+            }
+        ],
+    )
+
+
+def test_sarif_out_writes_artifact(httpx_mock: Any, tmp_path: Path) -> None:
+    payload = _grpc_payload()
+    httpx_mock.add_response(url=_GRPC_RUN_URL, method="POST", json=payload, status_code=201)
+    httpx_mock.add_response(url=_EXPORT_SARIF_URL, method="GET", text=_SARIF)
+    out = tmp_path / "contract.sarif"
+
+    result = runner.invoke(
+        app,
+        [
+            "verify",
+            "contract",
+            "--project",
+            "orders",
+            "--version",
+            "1.0.0",
+            "--target",
+            "grpc-dev",
+            "--format",
+            "sarif",
+            "--out",
+            str(out),
+        ],
+    )
+
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    document = json.loads(out.read_text(encoding="utf-8"))
+    assert document["version"] == "2.1.0"
+    assert "wrote sarif artifact" in result.stdout
+    assert "protocol: grpc" in result.stdout
+    assert "partial: 1 operation(s) not covered by design" in result.stdout
+    assert "acme.orders.v1.Orders.WatchOrders: unsupported: streaming" in result.stdout
+
+
+def test_sarif_without_out_emits_document_on_stdout(httpx_mock: Any) -> None:
+    _mock_run_and_export(httpx_mock, fmt="sarif", artifact=_SARIF)
+
+    result = runner.invoke(
+        app,
+        [
+            "verify",
+            "contract",
+            "--project",
+            "petstore",
+            "--version",
+            "1.0.0",
+            "--target",
+            "mock",
+            "--format",
+            "sarif",
+        ],
+    )
+
+    assert result.exit_code == EXIT_SUCCESS
+    assert json.loads(result.stdout)["version"] == "2.1.0"
+
+
+def test_summary_defaults_protocol_to_http(httpx_mock: Any) -> None:
+    _mock_run_and_export(httpx_mock)
+
+    result = runner.invoke(
+        app,
+        ["verify", "contract", "--project", "petstore", "--version", "1.0.0", "--target", "mock"],
+    )
+
+    assert result.exit_code == EXIT_SUCCESS
+    assert "protocol: http" in result.stdout
+    assert "partial:" not in result.stdout
+
+
+def test_format_unsupported_lists_each_operation() -> None:
+    assert format_unsupported({}) == []
+    assert format_unsupported({"unsupported": "nope"}) == []
+    lines = format_unsupported(
+        {"unsupported": [{"operation_key": "Subscription.onEvent", "code": "UNSUPPORTED_STREAMING"}]}
+    )
+    assert lines == [
+        "  partial: 1 operation(s) not covered by design",
+        "    - Subscription.onEvent: UNSUPPORTED_STREAMING",
+    ]
