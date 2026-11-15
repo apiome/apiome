@@ -1,0 +1,21 @@
+---
+slug: sdk-compatibility
+title: SDK compatibility — check a generated SDK before you ship it, and hear how it fares
+description: "The compatibility manifest and the opt-in beacon, mapped on one page."
+authors: [apiome]
+---
+
+Generated SDKs now come with evidence of how faithfully they represent your API, before and after
+you ship them, and one page maps both: [SDK compatibility](/ship/sdk-compatibility).
+
+{/* truncate */}
+
+- **Before you ship: the compatibility manifest.** **Export studio → SDK compatibility** and
+  `apiome sdk compatibility` list, for every artifact in the SDK kit, the operations it covers,
+  what it leaves out and **what to do** about each gap. `--fail-on warning` gates CI on them.
+  [More](/ship/sdk-compatibility-manifest)
+- **After you ship: the compatibility beacon.** The generated Go client can, only if its user
+  opts in with `WithTelemetry`, report counts per operation and outcome — never bodies, headers,
+  credentials or anything that identifies the caller. [More](/ship/sdk-compatibility-beacon)
+- **One set of keys.** Beacon counts are grouped by the same revision and operation ids as the
+  manifest, so a rise in `incompatible` points at the release and operation that broke.

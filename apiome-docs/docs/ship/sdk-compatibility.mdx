@@ -1,0 +1,82 @@
+---
+title: SDK compatibility
+description: "Check a generated SDK before you ship it, and hear how it fares."
+sidebar_position: 4.68
+tags: [sdk, export, compatibility, overview]
+---
+
+A generated SDK is only useful if it faithfully represents your API. **SDK compatibility** answers
+that question twice, with evidence rather than a promise:
+
+- **Before you ship**, the [SDK compatibility manifest](./sdk-compatibility-manifest.mdx) says, for
+  every artifact the SDK kit generates, which operations it covers, which it leaves out and why, the
+  runtime and auth it needs, and what to change where it falls short.
+- **After you ship**, the [SDK compatibility beacon](./sdk-compatibility-beacon.mdx) lets the people
+  using a generated client tell you, only if they opt in, how their calls turn out, so you see which
+  release broke them.
+
+Both describe the SDK kit that **Get SDK** in Browse serves: TypeScript, Python and curl snippets,
+the Go client, the FastAPI and Express server stubs, the Terraform provider and the MCP server. The
+beacon is built into the **Go client** today.
+
+## When to use it
+
+| You want to… | Use | Where |
+| --- | --- | --- |
+| Know what a generated artifact leaves out before you hand it over | [Compatibility manifest](./sdk-compatibility-manifest.mdx) | **Export studio → SDK compatibility** |
+| Fail a CI job when an SDK artifact has a gap | [Compatibility manifest](./sdk-compatibility-manifest.mdx#read-it-from-the-cli) | `apiome sdk compatibility --fail-on warning` |
+| Check that a version's labels bump as much as its change needs | [Compatibility manifest](./sdk-compatibility-manifest.mdx#semver) | The manifest's **Semver and provenance** |
+| Learn which published release your SDK users find incompatible | [Compatibility beacon](./sdk-compatibility-beacon.mdx) | `GET …/usage/sdk-beacons`, grouped by revision and operation |
+| Let SDK users report outcomes without sending their data | [Compatibility beacon](./sdk-compatibility-beacon.mdx#what-a-report-contains) | `WithTelemetry` in the generated Go client, off by default |
+
+## The compatibility manifest
+
+1. **Open Export studio** and **click the "SDK compatibility" tab**.
+2. **Choose the project** and the **version** (**Latest** by default).
+3. Read the **Findings** first: each names the artifact, what it leaves out, the generator's reason
+   and **What to do**. Then read **Artifacts** for coverage, runtime, auth and pagination.
+
+`apiome sdk compatibility --project <project>` prints the same manifest from the same endpoint, and
+`--fail-on warning` exits `4` so a pipeline can stop on a gap. See
+[SDK compatibility manifest](./sdk-compatibility-manifest.mdx).
+
+## The compatibility beacon
+
+1. **Create an `sdk_beacon` usage source** for the project and a reporting key with the **Usage
+   source** preset (`usage:ingest`).
+2. **Give your SDK users** the endpoint, the key and the source id, and ask them to opt in.
+3. They pass `WithTelemetry` to the Go client. It then sends, in the background, counts per
+   operation and outcome (`ok`, `client_error`, `server_error`, `network`, `incompatible`), and
+   nothing else.
+4. **Read the counts** with `GET /v1/tenants/{tenant}/usage/sdk-beacons`.
+
+The beacon never sends a body, header, URL, status code, latency, credential or anything that
+identifies the caller. **To switch it off,** disable the source; counts age out with your plan's
+usage retention. See [SDK compatibility beacon](./sdk-compatibility-beacon.mdx).
+
+## How they fit together
+
+The manifest and the beacon use the same keys: the **revision** (the manifest's
+`provenance.version_record_id`) and the **operation id** (`operations[].operation_id` in the kit
+manifest). So you can line runtime evidence up with what the generator promised:
+
+- A finding in the manifest tells you an operation or auth scheme is missing **before** anyone
+  uses the SDK.
+- A rise in `incompatible` for an operation on one revision tells you a release changed something
+  the client can't read. Compare that revision with the one before it on
+  [Compare published versions](./compare-published-versions.md), and check
+  [Contract testing and CI gates](./contract-testing-and-ci-gates.mdx) to catch the next one in CI.
+
+The beacon is not product analytics: it reports on your API's contract, only for SDK users who
+choose to, and you own where it goes.
+
+## With the REST API
+
+| Endpoint | Does | Needs |
+| --- | --- | --- |
+| `GET /v1/tenants/{tenant}/projects/{project}/sdk-compatibility` | Returns the manifest (`apiome.sdk.compat-manifest/v1`) | **Projects: view** |
+| `POST /v1/tenants/{tenant}/usage/sdk-beacon` | Accepts an opted-in client's report (`apiome.sdk.beacon/v1`) | A `usage:ingest` key |
+| `GET /v1/tenants/{tenant}/usage/sdk-beacons` | Reads the grouped counts | **Consumer contracts: view** |
+
+See **sdk-generation** and **usage** in the REST reference:
+[sdk-generation](../reference/rest/sdk-generation.md), [usage](../reference/rest/usage.md).

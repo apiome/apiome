@@ -1088,6 +1088,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['magic link', 'sign in', 'browse', 'consumer'],
   },
   {
+    id: 'sdk-compatibility',
+    title: 'SDK compatibility',
+    summary: 'Check a generated SDK before you ship it, and hear how it fares.',
+    page: 'apiome-docs/docs/ship/sdk-compatibility.mdx',
+    section: 'reference',
+    keywords: ['manifest', 'beacon', 'generated client', 'overview'],
+  },
+  {
     id: 'sdk-compatibility-beacon',
     title: 'SDK compatibility beacon',
     summary: 'Opt-in counts from generated SDKs showing which releases break their users.',
