@@ -17,7 +17,9 @@ back, and where each case came from.
 
 | Module | Role |
 |---|---|
-| `app/contract_suite.py` | The pure compiler: options, manifest models, case emission, findings, canonical bytes, digest. No I/O. |
+| `app/contract_suite.py` | The pure compiler: options, manifest models, the protocol-adapter seam, the HTTP adapter, findings, canonical bytes, digest. No I/O. |
+| `app/contract_suite_graphql.py` | The GraphQL protocol adapter (XPC-1.2): one set of cases per root `query`/`mutation` field. |
+| `app/contract_protocols.py` | The protocol vocabulary (`http`, `graphql`) shared by the compiler, targets and evidence. |
 | `app/contract_suite_examples.py` | Attributes a source document's declared examples to `(path, method, site)` by walking the IXH-5.4 example table. |
 | `app/contract_suite_service.py` | Resolves a version reference to its canonical model, looks up publication state, and returns the manifest. Writes nothing. |
 | `app/contract_suite_routes.py` | `POST /v1/tenants/{tenant}/contracts/{version_ref}/suite`, gated on `versions:view`. |
@@ -80,7 +82,8 @@ What the compiler cannot express, it reports. Findings carry a stable `code`, a 
 
 | Code | Meaning |
 |---|---|
-| `UNSUPPORTED_STREAMING`, `UNSUPPORTED_OPERATION_KIND`, `MISSING_HTTP_BINDING`, `UNSUPPORTED_PARADIGM` | The operation is not an HTTP request/response exchange, so no case was compiled for it. |
+| `UNSUPPORTED_STREAMING`, `UNSUPPORTED_OPERATION_KIND`, `MISSING_HTTP_BINDING`, `UNSUPPORTED_PARADIGM` | The operation is not a request/response exchange any adapter compiles, so no case was compiled for it. |
+| `SELECTION_DEPTH_LIMITED`, `FIELD_ARGUMENTS_REQUIRED` | GraphQL: part of the return type is not selected — below `max_selection_depth`, or a nested field needs an argument the suite would have to invent. |
 | `UNSUPPORTED_MEDIA_TYPE` | The body is offered only as a non-JSON encoding. |
 | `UNSUPPORTED_PARAMETER_SHAPE`, `UNSUPPORTED_PARAMETER_LOCATION`, `UNDECLARED_PATH_PARAMETER` | A parameter cannot be carried in the request (array/object serialization, cookies, a placeholder the contract never declares). |
 | `EXAMPLE_SCHEMA_MISMATCH`, `EXAMPLE_UNATTRIBUTED`, `EXAMPLES_TRUNCATED`, `EXAMPLES_NOT_READ` | Declared examples that were excluded, belong to no operation, or were never read. |
@@ -98,6 +101,70 @@ Two rules follow from this and are worth stating plainly:
   otherwise-valid body, and every generated mutant is verified to break exactly the constraint it
   targets — a negative that fails for the wrong reason proves nothing.
 
+## Protocol adapters
+
+> apiome#5730 (XPC-1.2) — the seam XPC-2.3 and XPC-3.2 plug into.
+
+How a version's operations become cases depends on its paradigm, so the compiler picks a
+**protocol adapter** for it (`protocol_adapter_for(api.paradigm)`). Every adapter fills the same
+manifest, uses the same findings, seeding and digest, and stamps its protocol on the manifest
+(`protocol`) and on every case (`case.protocol`).
+
+| Paradigm | Adapter | Protocol | What a case is |
+|---|---|---|---|
+| `rest` | HTTP (`contract_suite.py`) | `http` | One request: method, resolved path, parameters, body. |
+| `graph` | GraphQL (`contract_suite_graphql.py`) | `graphql` | One GraphQL document `POST`ed to the target URL. |
+| anything else | HTTP | `http` | Nothing — each operation is reported (`UNSUPPORTED_PARADIGM`, `MISSING_HTTP_BINDING`). |
+
+### The GraphQL adapter
+
+Each root `query` and `mutation` field (`Query.user`) is one operation. Its cases come in the same
+order as REST cases:
+
+1. **Declared example arguments** — an argument's `@example(value: …)` directive (or `example` in
+   its `extras`). This is the only case that can be `synthetic: false`.
+2. **Generated arguments** — the required arguments only, then every argument. Values are seeded
+   through `schema_instance_synthesis` from a JSON Schema built for each argument's GraphQL input
+   type (`Int` is bounded to 32 bits; input objects become `$defs`).
+3. **Negative cases** — each required argument left out of the document, one argument given a
+   value of the wrong type, and an unknown field (`apiomeUnknownField`) added to the selection.
+
+A case carries its document in `graphql`: `query`, `variables`, `operationName`, plus
+`operation_type` (`query` or `mutation`) and the root `field`. `request` holds the same thing as
+the HTTP exchange: `POST /` with the `{query, variables, operationName}` JSON body.
+
+```graphql
+query Query_user($id: ID!) { user(id: $id) { email id name } }
+```
+
+**The selection set** is expanded from the canonical return type down to `max_selection_depth`
+levels of object fields (default 3). A nested field that takes a required argument is left out
+(`FIELD_ARGUMENTS_REQUIRED`), and so is anything below the depth bound (`SELECTION_DEPTH_LIMITED`).
+A union, or an object with nothing selectable, selects `__typename`.
+
+**The expectation** is read from the response envelope, because GraphQL does not put its verdict
+in the status code:
+
+* a success case expects `2XX`, no `errors`, and `data` matching the schema registered under
+  `graphql:<operation key>`. That schema is built from the **selection**: exactly the selected
+  fields, each required, each nullable only where the GraphQL type is. It validates the `data`
+  object, so a violation is located as `/user/email`;
+* a negative case expects `2XX` or `4XX` (GraphQL over HTTP allows either) and a non-empty
+  `errors` array.
+
+`status_declared` is `false` on both, since a GraphQL schema declares no status codes.
+
+**Subscriptions** are listed under the manifest's `unsupported` (with `code` and `reason`) and
+reported as `UNSUPPORTED_STREAMING`. A request/response case cannot express a stream. A GraphQL
+version with no query or mutation field at all is answered `ok: false` with `FORMAT_MISMATCH`.
+
+### Manifest version 2
+
+XPC-1.2 raised `schema_version` and `compiler_version` to **2**. The manifest gained `protocol`
+and `unsupported`, every case gained `protocol` and `graphql`, the options gained
+`max_selection_depth`, and `counts` gained `negative_unknown_field`. A REST version compiled
+before and after therefore has a different digest, even though its cases mean the same thing.
+
 ## What is deliberately not in a suite
 
 * **Targets and credentials.** Paths are relative; the runner supplies the base URL. A version
@@ -105,8 +172,8 @@ Two rules follow from this and are worth stating plainly:
   definitions are ECA-1.2.
 * **Results.** Compilation is a pure read — no job, no revision, no audit row. A run's evidence is
   ECA-1.3, which references a suite by digest.
-* **Non-HTTP paradigms.** Event, RPC-streaming, and GraphQL operations are recognized and
-  reported, never half-compiled.
+* **Paradigms with no adapter.** Event and RPC-streaming operations, and GraphQL subscriptions,
+  are recognized and reported, never half-compiled.
 
 ## Using it
 
@@ -157,7 +224,8 @@ Useful flags: `--seed`, `--no-examples`, `--no-generated`, `--no-negative`, `--o
 | `max_generated_cases_per_operation` | `4` | Cap on generated valid bodies (minimal and full first). |
 | `max_negative_cases_per_operation` | `6` | Cap on negative cases (structural ones first). |
 | `max_operations` | `500` | Cap on compiled operations; truncation is reported. |
-| `operations` | all | Restrict to these operation keys. Normalized to a sorted set, so order does not change the digest. |
+| `operations` | all | Restrict to these operation keys (`GET /pets`, or a GraphQL coordinate `Query.user`). Normalized to a sorted set, so order does not change the digest. |
+| `max_selection_depth` | `3` | GraphQL only: levels of object fields a selection expands below its root field (1–8). |
 
 Every option is echoed on the manifest and hashed into its digest.
 
@@ -166,6 +234,7 @@ Every option is echoed on the manifest and hashed into its digest.
 | File | Covers |
 |---|---|
 | `tests/test_contract_suite.py` | The corpus: determinism and byte-identity, declared examples, generated values validated against their own schemas, invalid requests, unsupported semantics, expectations, caps. |
+| `tests/test_contract_suite_graphql.py` | The GraphQL adapter: one operation per root field, preference order, attributed negatives, subscriptions under `unsupported`, selection depth, the `data` schema — and every compiled document executed with graphql-core. |
 | `tests/test_contract_suite_examples.py` | Pointer attribution across OpenAPI 3.x and Swagger 2, and the non-conforming set. |
 | `tests/test_contract_suite_service.py` | Reference grammar, provenance, publication lookup, `ok: false`. |
 | `tests/test_contract_suite_routes.py` | Auth, permission, addressing faults, option validation, response shape. |

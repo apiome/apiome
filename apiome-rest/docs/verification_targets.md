@@ -139,6 +139,20 @@ The credential reference is absent on purpose. Retired targets are **soft-delete
 row that names a `target_id` keeps resolving (`GET .../{id}?include_deleted=true`) long after the
 target is gone; the slug is freed for reuse.
 
+## Protocol
+
+A target declares the protocol it speaks (XPC-1.2, V371), so the runner never guesses it from a
+URL:
+
+| `protocol` | `base_url` is | Used by |
+|---|---|---|
+| `http` (default) | the base every case's relative path is joined onto | REST versions |
+| `graphql` | the GraphQL endpoint itself; every case is `POST`ed to it | GraphQL versions |
+
+Resolving a target for a run whose suite speaks another protocol is refused with
+`target-protocol-mismatch` (422 on `…/run`) and written to the ledger as a denied resolve. Every
+target defined before V371 is `http`.
+
 ## Endpoints
 
 | Method | Path | Permission |
@@ -173,6 +187,7 @@ Every refusal carries `{"code", "message"}`, so a client branches on the code ra
 | `target-disabled` | 400 | The target exists but may not be resolved. |
 | `target-not-found` | 404 | No such target in this tenant. |
 | `target-slug-taken` | 409 | A live target already uses that slug. |
+| `target-protocol-mismatch` | 422 | A run selected a target whose `protocol` is not the suite's (XPC-1.2). Recorded as a denied resolve. |
 
 ## Example
 

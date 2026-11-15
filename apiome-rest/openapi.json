@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.562.0",
+    "version": "1.563.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -27890,7 +27890,7 @@
           "contract-assurance"
         ],
         "summary": "Compile a deterministic contract suite from a version",
-        "description": "Compile a published version into an executable contract suite (ECA-1.1): one case per declared example, per schema-valid generated body, and per required negative case, with the operation, the source, and the expected outcome on every one of them.\n\n**Addressing** is the schema-reference grammar without a type segment \u2014 ``project/{project_slug}/{version}`` for a Project revision or ``catalog/{item}/{version}`` for a Catalog revision \u2014 so a suite is compiled from the same coordinate a payload is validated against.\n\n**Compilation is deterministic.** The same version and the same options produce a byte-identical manifest and therefore the same ``digest``, which is what lets a CI gate assert that a deployment was verified against a specific contract.\n\n**Declared examples come first.** A request body the author wrote is compiled ahead of anything generated, and is the only kind of case marked ``synthetic: false``. An example that does not satisfy its own schema is reported and left out rather than compiled into a test a correct implementation would fail.\n\n**Nothing is skipped silently.** A streaming operation, a non-HTTP paradigm, an XML-only body, a structured parameter, an undeclared status code \u2014 each appears in ``findings`` with a stable code, so partial coverage can never read as full coverage.\n\n**A suite carries no target and no credentials.** Paths are relative and security requirements are reported for the runner to satisfy; targets are configured separately.\n\nNothing is persisted. A version that yields no suite is **not** an HTTP error: the response is a 200 with ``ok: false`` and a stable intake-taxonomy ``error`` code plus remediation. Only addressing faults are HTTP errors \u2014 400 for a malformed or type-qualified reference, 404 for one that names nothing visible, 422 for one that resolves to material no canonical model can be rebuilt from.",
+        "description": "Compile a published version into an executable contract suite (ECA-1.1): one case per declared example, per schema-valid generated body, and per required negative case, with the operation, the source, and the expected outcome on every one of them.\n\n**Addressing** is the schema-reference grammar without a type segment \u2014 ``project/{project_slug}/{version}`` for a Project revision or ``catalog/{item}/{version}`` for a Catalog revision \u2014 so a suite is compiled from the same coordinate a payload is validated against.\n\n**Compilation is deterministic.** The same version and the same options produce a byte-identical manifest and therefore the same ``digest``, which is what lets a CI gate assert that a deployment was verified against a specific contract.\n\n**Declared examples come first.** A request body the author wrote is compiled ahead of anything generated, and is the only kind of case marked ``synthetic: false``. An example that does not satisfy its own schema is reported and left out rather than compiled into a test a correct implementation would fail.\n\n**GraphQL versions** compile through the GraphQL protocol adapter (XPC-1.2): one set of cases per root `query`/`mutation` field \u2014 declared `@example` arguments, generated arguments, then a required argument omitted, a wrong-typed argument, and an unknown field selected \u2014 each a GraphQL document carried in the case's `graphql` payload with `protocol: graphql`. Subscriptions are listed under `unsupported`. A GraphQL version with no query or mutation field answers `ok: false` (`FORMAT_MISMATCH`).\n\n**Nothing is skipped silently.** A streaming operation, a non-HTTP paradigm, an XML-only body, a structured parameter, an undeclared status code \u2014 each appears in ``findings`` with a stable code, so partial coverage can never read as full coverage.\n\n**A suite carries no target and no credentials.** Paths are relative and security requirements are reported for the runner to satisfy; targets are configured separately.\n\nNothing is persisted. A version that yields no suite is **not** an HTTP error: the response is a 200 with ``ok: false`` and a stable intake-taxonomy ``error`` code plus remediation. Only addressing faults are HTTP errors \u2014 400 for a malformed or type-qualified reference, 404 for one that names nothing visible, 422 for one that resolves to material no canonical model can be rebuilt from.",
         "operationId": "compile_contract_suite_for_version_v1_tenants__tenant_slug__contracts__version_ref__suite_post",
         "parameters": [
           {
@@ -28000,7 +28000,7 @@
           "contract-assurance"
         ],
         "summary": "Execute a contract suite against a verification target",
-        "description": "Compile the version's deterministic contract suite (ECA-1.1), resolve the named verification target (ECA-1.2), execute every case under the target's policy (timeouts, concurrency, transport-only retries, mutating-method gate), validate status codes and response schemas, and **always** persist the result as immutable verification evidence (ECA-1.3).\n\n**Retries never mask a contract failure.** A status or schema mismatch ends the case immediately; only transport failures (connect/timeout/network) honour `policy.retry_attempts`.\n\n**A suite carries no credentials.** Auth comes from the target's secret-free reference (`env` or `stored`); evidence snapshots the target identity only.\n\nA version that cannot yield executable cases answers **200** with `ok: false` and a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422). Target resolution faults are 400/404. Evidence submission faults are 400.",
+        "description": "Compile the version's deterministic contract suite (ECA-1.1), resolve the named verification target (ECA-1.2), execute every case under the target's policy (timeouts, concurrency, transport-only retries, mutating-method gate), validate status codes and response schemas, and **always** persist the result as immutable verification evidence (ECA-1.3).\n\n**Retries never mask a contract failure.** A status or schema mismatch ends the case immediately; only transport failures (connect/timeout/network) honour `policy.retry_attempts`.\n\n**A suite carries no credentials.** Auth comes from the target's secret-free reference (`env` or `stored`); evidence snapshots the target identity only.\n\nA version that cannot yield executable cases answers **200** with `ok: false` and a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422). Target resolution faults are 400/404, and **422** `target-protocol-mismatch` when the target's `protocol` is not the suite's (an `http` target for a GraphQL version). Evidence submission faults are 400.\n\n**GraphQL versions** (XPC-1.2) run every case as a `POST` of a GraphQL document to the target URL itself; a case passes on the response envelope \u2014 no `errors` and `data` matching the selection for a success case, a non-empty `errors` array for a negative one. Mutations obey the mutating-method gate; queries do not.",
         "operationId": "run_contract_suite_for_version_v1_tenants__tenant_slug__contracts__version_ref__run_post",
         "parameters": [
           {
@@ -141315,9 +141315,28 @@
             "description": "False only when the request body is an example the author wrote. True for every generated payload, so the label travels with the case.",
             "example": false
           },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "Wire protocol the case is executed over: `http`, or `graphql` for a case whose request is a GraphQL document posted to the target URL.",
+            "default": "http",
+            "example": "example"
+          },
           "request": {
             "$ref": "#/components/schemas/ContractCaseRequest",
             "description": "The request to send."
+          },
+          "graphql": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractGraphqlRequest"
+              },
+              {
+                "type": "null",
+                "description": "Contract Case schema."
+              }
+            ],
+            "description": "The GraphQL document, variables and operation name. Present exactly when `protocol` is `graphql`; `request.body` carries the same document as sent."
           },
           "expect": {
             "$ref": "#/components/schemas/ContractCaseExpectation",
@@ -141477,6 +141496,50 @@
         ],
         "title": "ContractCaseRequest",
         "description": "The request a case sends, complete enough to execute against a chosen target."
+      },
+      "ContractGraphqlRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "The GraphQL document: one named operation.",
+            "example": "example"
+          },
+          "variables": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Variables",
+            "description": "Variable values, keyed by variable name."
+          },
+          "operationName": {
+            "type": "string",
+            "title": "Operationname",
+            "description": "Name of the operation in `query` to execute.",
+            "example": "GET"
+          },
+          "operation_type": {
+            "type": "string",
+            "title": "Operation Type",
+            "description": "`query` or `mutation`. A mutation obeys the target's mutating-method gate exactly as an HTTP `POST` does.",
+            "example": "GET"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field",
+            "description": "The root field the case exercises (`user`).",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "query",
+          "operationName",
+          "operation_type",
+          "field"
+        ],
+        "title": "ContractGraphqlRequest",
+        "description": "The GraphQL document a ``graphql``-protocol case sends, in GraphQL-over-HTTP terms.\n\n``query``, ``variables`` and ``operationName`` are exactly the members of the JSON body the\nrunner posts; ``operation_type`` is what the runner's mutating-method gate reads, because\nevery GraphQL case is a ``POST`` and the HTTP verb says nothing about whether it writes."
       },
       "ContractRequestParameter": {
         "properties": {
@@ -141716,14 +141779,14 @@
             "type": "integer",
             "title": "Schema Version",
             "description": "Manifest envelope version.",
-            "default": 1,
+            "default": 2,
             "example": 1
           },
           "compiler_version": {
             "type": "integer",
             "title": "Compiler Version",
             "description": "Version of the compilation rules.",
-            "default": 1,
+            "default": 2,
             "example": 1
           },
           "digest": {
@@ -141743,6 +141806,13 @@
           "options": {
             "$ref": "#/components/schemas/ContractSuiteOptions",
             "description": "The options this suite was compiled with, normalized."
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "Protocol of the adapter that compiled the suite \u2014 `http` or `graphql`. A run refuses a verification target that declares a different one.",
+            "default": "http",
+            "example": "example"
           },
           "api": {
             "$ref": "#/components/schemas/SuiteApiInfo",
@@ -141786,6 +141856,15 @@
             "type": "object",
             "title": "Schemas",
             "description": "Response schemas referenced by `expect.response_schema_id`, keyed so identical types are carried once."
+          },
+          "unsupported": {
+            "items": {
+              "$ref": "#/components/schemas/SuiteUnsupportedOperation"
+            },
+            "type": "array",
+            "title": "Unsupported",
+            "description": "Operations the version declares that no case covers by design (a GraphQL subscription), sorted by key \u2014 listed so they are never silently omitted.",
+            "maxItems": 1000
           },
           "findings": {
             "items": {
@@ -141918,7 +141997,16 @@
               }
             ],
             "title": "Operations",
-            "description": "Restrict compilation to these operation keys (`GET /pets/{petId}`). Omit for every operation. A key that matches nothing is reported as a finding."
+            "description": "Restrict compilation to these operation keys (`GET /pets/{petId}`, or a GraphQL coordinate such as `Query.user`). Omit for every operation. A key that matches nothing is reported as a finding."
+          },
+          "max_selection_depth": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Max Selection Depth",
+            "description": "GraphQL only: how many levels of object fields a case's selection set expands below its root field. Deeper object fields are left out and reported.",
+            "default": 3,
+            "example": 1
           }
         },
         "additionalProperties": false,
@@ -200693,6 +200781,13 @@
             "description": "Normalized base URL to join relative paths onto.",
             "example": "https://example.com/resource"
           },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "`http` or `graphql`; for `graphql`, `base_url` is the endpoint itself.",
+            "default": "http",
+            "example": "example"
+          },
           "policy": {
             "$ref": "#/components/schemas/VerificationPolicy",
             "description": "The policy the runner must honour."
@@ -215509,6 +215604,37 @@
         "title": "SuiteSourceInfo",
         "description": "Where the compiled version came from, as the caller resolved it.\n\nThe compiler never looks anything up; whatever a caller knows about the artifact is passed\nin and echoed here so a manifest identifies its own provenance."
       },
+      "SuiteUnsupportedOperation": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "The operation left out (`Subscription.onEvent`).",
+            "example": "GET"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code from `SUITE_FINDING_CODES` saying why.",
+            "example": "example"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "One sentence explaining why it cannot be compiled.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key",
+          "code",
+          "reason"
+        ],
+        "title": "SuiteUnsupportedOperation",
+        "description": "An operation the version declares that the suite deliberately does not cover."
+      },
       "SunsetTimelineEntryOut": {
         "properties": {
           "revisionId": {
@@ -225050,6 +225176,13 @@
             "title": "Runner Version",
             "description": "Runner version, so a behaviour change is attributable."
           },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "Protocol the suite was executed over: `http`, or `graphql` for a GraphQL version's suite (the manifest's own `protocol`).",
+            "default": "http",
+            "example": "example"
+          },
           "started_at": {
             "type": "string",
             "format": "date-time",
@@ -225273,6 +225406,13 @@
             "title": "Target Base Url",
             "description": "Base URL at run time.",
             "example": "https://example.com/resource"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "`http` or `graphql` \u2014 what the suite was run over.",
+            "default": "http",
+            "example": "example"
           },
           "runner_name": {
             "type": "string",
@@ -225567,6 +225707,13 @@
             "title": "Target Base Url",
             "description": "Base URL at run time.",
             "example": "https://example.com/resource"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "`http` or `graphql` \u2014 what the suite was run over.",
+            "default": "http",
+            "example": "example"
           },
           "runner_name": {
             "type": "string",
@@ -226472,6 +226619,13 @@
             "description": "Base URL the suite's relative paths are joined onto.",
             "example": "https://example.com/resource"
           },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "`http` (relative paths are joined onto `base_url`) or `graphql` (`base_url` is the GraphQL endpoint every case is posted to). A run refuses a target whose protocol is not the suite's.",
+            "default": "http",
+            "example": "example"
+          },
           "network_class": {
             "type": "string",
             "title": "Network Class",
@@ -226607,6 +226761,20 @@
             "title": "Base Url",
             "description": "Base URL."
           },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Target Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Target Patch schema."
+              }
+            ],
+            "title": "Protocol",
+            "description": "Protocol."
+          },
           "network_class": {
             "anyOf": [
               {
@@ -226731,6 +226899,13 @@
             "title": "Base Url",
             "description": "Base URL, normalized (no trailing slash).",
             "example": "https://example.com/resource"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "`http` or `graphql` \u2014 what the target speaks.",
+            "default": "http",
+            "example": "example"
           },
           "network_class": {
             "type": "string",

@@ -47,7 +47,27 @@ the existing resolve path.
 * **201** — new evidence was written (`created: true`).
 * **200** — idempotent replay, or `ok: false` with a taxonomy `error` (no executable cases, auth
   unavailable, compile refusal).
-* **400/404/422** — addressing or target faults.
+* **400/404/422** — addressing or target faults. **422 `target-protocol-mismatch`** when the
+  target's `protocol` is not the suite's (an `http` target given a GraphQL version).
+
+## GraphQL suites (XPC-1.2)
+
+A GraphQL version compiles into `protocol: graphql` cases (see `contract_suite.md`), and the run
+must name a target with `protocol: graphql` whose `base_url` **is** the GraphQL endpoint — for the
+hosted mock, `http://localhost:8775/{tenant}/{project}/{version}/graphql`. Each case is a `POST`
+of `{query, variables, operationName}` to that exact URL (nothing is appended), with
+`Accept: application/graphql-response+json, application/json`.
+
+The verdict comes from the envelope:
+
+| Case | Passes when |
+|---|---|
+| success | status `2XX`, no `errors`, and `data` satisfies `graphql:<operation key>`. A violation is recorded per pointer into `data` (`/pet/name`). |
+| negative | status `2XX` or `4XX`, and a non-empty `errors` array. |
+
+A mutation is a mutating case and obeys `allow_mutating_methods`. A query is not, although it is
+also sent as `POST`. The run's evidence records `protocol: graphql` (V371), and the JUnit export
+carries it as the `apiome.protocol` property.
 
 ## Policy the runner honours
 
@@ -58,7 +78,7 @@ From the ECA-1.2 target `VerificationPolicy`:
 | `request_timeout_seconds` | Per-case httpx timeout |
 | `max_concurrency` | Thread-pool size across cases |
 | `retry_attempts` / `retry_backoff_ms` | **Transport failures only** |
-| `allow_mutating_methods` | When false, POST/PUT/PATCH/DELETE cases are `skipped` |
+| `allow_mutating_methods` | When false, POST/PUT/PATCH/DELETE cases — and GraphQL mutations — are `skipped` |
 | `follow_redirects` / `verify_tls` | Passed to the guarded client |
 
 A status or schema mismatch **never** retries. `attempts > 1` on an evidence case always means
@@ -72,7 +92,10 @@ the transport was retried.
 | `response-schema-mismatch` | Body fails IXH-5.1 `validate_json_instance` |
 | `transport-error` / `timeout` | Could not get an answer to judge |
 | `auth-unavailable` | Env/stored credential could not be materialised (run refuses before cases) |
-| `mutating-method-blocked` | Case skipped by policy |
+| `mutating-method-blocked` | Case skipped by policy (a mutating method, or a GraphQL mutation) |
+| `graphql-errors-present` | A GraphQL success case was answered with `errors` |
+| `graphql-errors-missing` | A GraphQL negative case was answered without `errors` |
+| `graphql-envelope-invalid` | A GraphQL case was answered with something that is not a JSON object |
 
 ## Manual golden path (hosted SIM / mock)
 

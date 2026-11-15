@@ -585,3 +585,27 @@ def test_a_legacy_row_with_a_non_object_json_column_degrades_to_an_empty_dict() 
     record = record_from_rows(_run_row(source=None, context="not-an-object"))
     assert record.source == {}
     assert record.context == {}
+
+
+# ---------------------------------------------------------------------------------------------
+# Protocol (XPC-1.2, #5730)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_a_run_is_http_unless_it_says_otherwise() -> None:
+    assert _run().protocol == "http"
+    assert _run(protocol="graphql").protocol == "graphql"
+
+
+def test_a_run_protocol_no_adapter_speaks_is_refused() -> None:
+    import pydantic
+
+    with pytest.raises(pydantic.ValidationError):
+        _run(protocol="grpc")
+
+
+def test_a_stored_run_reads_its_protocol_and_defaults_legacy_rows_to_http() -> None:
+    assert summary_from_row(_run_row(protocol="graphql")).protocol == "graphql"
+    legacy = _run_row()
+    legacy.pop("protocol", None)
+    assert summary_from_row(legacy).protocol == "http"

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.562.0
+  version: 1.563.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -20341,6 +20341,15 @@ paths:
         out rather than compiled into a test a correct implementation would fail.
 
 
+        **GraphQL versions** compile through the GraphQL protocol adapter (XPC-1.2):
+        one set of cases per root `query`/`mutation` field — declared `@example` arguments,
+        generated arguments, then a required argument omitted, a wrong-typed argument,
+        and an unknown field selected — each a GraphQL document carried in the case''s
+        `graphql` payload with `protocol: graphql`. Subscriptions are listed under
+        `unsupported`. A GraphQL version with no query or mutation field answers `ok:
+        false` (`FORMAT_MISMATCH`).
+
+
         **Nothing is skipped silently.** A streaming operation, a non-HTTP paradigm,
         an XML-only body, a structured parameter, an undeclared status code — each
         appears in ``findings`` with a stable code, so partial coverage can never
@@ -20448,7 +20457,16 @@ paths:
 
         A version that cannot yield executable cases answers **200** with `ok: false`
         and a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422).
-        Target resolution faults are 400/404. Evidence submission faults are 400.'
+        Target resolution faults are 400/404, and **422** `target-protocol-mismatch`
+        when the target''s `protocol` is not the suite''s (an `http` target for a
+        GraphQL version). Evidence submission faults are 400.
+
+
+        **GraphQL versions** (XPC-1.2) run every case as a `POST` of a GraphQL document
+        to the target URL itself; a case passes on the response envelope — no `errors`
+        and `data` matching the selection for a success case, a non-empty `errors`
+        array for a negative one. Mutations obey the mutating-method gate; queries
+        do not.'
       operationId: run_contract_suite_for_version_v1_tenants__tenant_slug__contracts__version_ref__run_post
       parameters:
       - name: tenant_slug
@@ -104672,9 +104690,24 @@ components:
           description: False only when the request body is an example the author wrote.
             True for every generated payload, so the label travels with the case.
           example: false
+        protocol:
+          type: string
+          title: Protocol
+          description: 'Wire protocol the case is executed over: `http`, or `graphql`
+            for a case whose request is a GraphQL document posted to the target URL.'
+          default: http
+          example: example
         request:
           $ref: '#/components/schemas/ContractCaseRequest'
           description: The request to send.
+        graphql:
+          anyOf:
+          - $ref: '#/components/schemas/ContractGraphqlRequest'
+          - type: 'null'
+            description: Contract Case schema.
+          description: The GraphQL document, variables and operation name. Present
+            exactly when `protocol` is `graphql`; `request.body` carries the same
+            document as sent.
         expect:
           $ref: '#/components/schemas/ContractCaseExpectation'
           description: What must come back.
@@ -104801,6 +104834,54 @@ components:
       title: ContractCaseRequest
       description: The request a case sends, complete enough to execute against a
         chosen target.
+    ContractGraphqlRequest:
+      properties:
+        query:
+          type: string
+          title: Query
+          description: 'The GraphQL document: one named operation.'
+          example: example
+        variables:
+          additionalProperties: true
+          type: object
+          title: Variables
+          description: Variable values, keyed by variable name.
+        operationName:
+          type: string
+          title: Operationname
+          description: Name of the operation in `query` to execute.
+          example: GET
+        operation_type:
+          type: string
+          title: Operation Type
+          description: '`query` or `mutation`. A mutation obeys the target''s mutating-method
+            gate exactly as an HTTP `POST` does.'
+          example: GET
+        field:
+          type: string
+          title: Field
+          description: The root field the case exercises (`user`).
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - query
+      - operationName
+      - operation_type
+      - field
+      title: ContractGraphqlRequest
+      description: 'The GraphQL document a ``graphql``-protocol case sends, in GraphQL-over-HTTP
+        terms.
+
+
+        ``query``, ``variables`` and ``operationName`` are exactly the members of
+        the JSON body the
+
+        runner posts; ``operation_type`` is what the runner''s mutating-method gate
+        reads, because
+
+        every GraphQL case is a ``POST`` and the HTTP verb says nothing about whether
+        it writes.'
     ContractRequestParameter:
       properties:
         name:
@@ -104996,13 +105077,13 @@ components:
           type: integer
           title: Schema Version
           description: Manifest envelope version.
-          default: 1
+          default: 2
           example: 1
         compiler_version:
           type: integer
           title: Compiler Version
           description: Version of the compilation rules.
-          default: 1
+          default: 2
           example: 1
         digest:
           type: string
@@ -105021,6 +105102,14 @@ components:
         options:
           $ref: '#/components/schemas/ContractSuiteOptions'
           description: The options this suite was compiled with, normalized.
+        protocol:
+          type: string
+          title: Protocol
+          description: Protocol of the adapter that compiled the suite — `http` or
+            `graphql`. A run refuses a verification target that declares a different
+            one.
+          default: http
+          example: example
         api:
           $ref: '#/components/schemas/SuiteApiInfo'
           description: Identity of the compiled API.
@@ -105053,6 +105142,15 @@ components:
           title: Schemas
           description: Response schemas referenced by `expect.response_schema_id`,
             keyed so identical types are carried once.
+        unsupported:
+          items:
+            $ref: '#/components/schemas/SuiteUnsupportedOperation'
+          type: array
+          title: Unsupported
+          description: Operations the version declares that no case covers by design
+            (a GraphQL subscription), sorted by key — listed so they are never silently
+            omitted.
+          maxItems: 1000
         findings:
           items:
             $ref: '#/components/schemas/SuiteFinding'
@@ -105179,9 +105277,19 @@ components:
           - type: 'null'
             description: Contract Suite Options schema.
           title: Operations
-          description: Restrict compilation to these operation keys (`GET /pets/{petId}`).
-            Omit for every operation. A key that matches nothing is reported as a
-            finding.
+          description: Restrict compilation to these operation keys (`GET /pets/{petId}`,
+            or a GraphQL coordinate such as `Query.user`). Omit for every operation.
+            A key that matches nothing is reported as a finding.
+        max_selection_depth:
+          type: integer
+          maximum: 8.0
+          minimum: 1.0
+          title: Max Selection Depth
+          description: 'GraphQL only: how many levels of object fields a case''s selection
+            set expands below its root field. Deeper object fields are left out and
+            reported.'
+          default: 3
+          example: 1
       additionalProperties: false
       type: object
       title: ContractSuiteOptions
@@ -150990,6 +151098,13 @@ components:
           title: Base Url
           description: Normalized base URL to join relative paths onto.
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: '`http` or `graphql`; for `graphql`, `base_url` is the endpoint
+            itself.'
+          default: http
+          example: example
         policy:
           $ref: '#/components/schemas/VerificationPolicy'
           description: The policy the runner must honour.
@@ -162415,6 +162530,32 @@ components:
         is passed
 
         in and echoed here so a manifest identifies its own provenance.'
+    SuiteUnsupportedOperation:
+      properties:
+        operation_key:
+          type: string
+          title: Operation Key
+          description: The operation left out (`Subscription.onEvent`).
+          example: GET
+        code:
+          type: string
+          title: Code
+          description: Stable code from `SUITE_FINDING_CODES` saying why.
+          example: example
+        reason:
+          type: string
+          title: Reason
+          description: One sentence explaining why it cannot be compiled.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - operation_key
+      - code
+      - reason
+      title: SuiteUnsupportedOperation
+      description: An operation the version declares that the suite deliberately does
+        not cover.
     SunsetTimelineEntryOut:
       properties:
         revisionId:
@@ -169691,6 +169832,13 @@ components:
             description: Verification Run Input schema.
           title: Runner Version
           description: Runner version, so a behaviour change is attributable.
+        protocol:
+          type: string
+          title: Protocol
+          description: 'Protocol the suite was executed over: `http`, or `graphql`
+            for a GraphQL version''s suite (the manifest''s own `protocol`).'
+          default: http
+          example: example
         started_at:
           type: string
           format: date-time
@@ -169868,6 +170016,12 @@ components:
           title: Target Base Url
           description: Base URL at run time.
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: '`http` or `graphql` — what the suite was run over.'
+          default: http
+          example: example
         runner_name:
           type: string
           title: Runner Name
@@ -170072,6 +170226,12 @@ components:
           title: Target Base Url
           description: Base URL at run time.
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: '`http` or `graphql` — what the suite was run over.'
+          default: http
+          example: example
         runner_name:
           type: string
           title: Runner Name
@@ -170712,6 +170872,14 @@ components:
           title: Base Url
           description: Base URL the suite's relative paths are joined onto.
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: '`http` (relative paths are joined onto `base_url`) or `graphql`
+            (`base_url` is the GraphQL endpoint every case is posted to). A run refuses
+            a target whose protocol is not the suite''s.'
+          default: http
+          example: example
         network_class:
           type: string
           title: Network Class
@@ -170806,6 +170974,14 @@ components:
             description: Verification Target Patch schema.
           title: Base Url
           description: Base URL.
+        protocol:
+          anyOf:
+          - type: string
+            description: Verification Target Patch schema.
+          - type: 'null'
+            description: Verification Target Patch schema.
+          title: Protocol
+          description: Protocol.
         network_class:
           anyOf:
           - type: string
@@ -170897,6 +171073,12 @@ components:
           title: Base Url
           description: Base URL, normalized (no trailing slash).
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: '`http` or `graphql` — what the target speaks.'
+          default: http
+          example: example
         network_class:
           type: string
           title: Network Class

@@ -32,6 +32,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .canonical_model import ApiParadigm, CanonicalApi, OperationKind
 from .contract_suite import (
     ContractSuiteManifest,
     ContractSuiteOptions,
@@ -140,12 +141,32 @@ def compile_version_contract_suite(
             ),
         )
 
+    if revision.api.paradigm is ApiParadigm.GRAPH and not _has_root_fields(revision.api):
+        return ContractSuiteResponse(
+            ok=False,
+            version_ref=version_ref,
+            error=build_job_error(
+                "FORMAT_MISMATCH",
+                "This GraphQL version declares no query or mutation root fields, so there is "
+                "no request a contract case could send. Subscriptions alone are not compiled: "
+                "a request/response case cannot express a stream. Add a `Query` field.",
+            ),
+        )
+
     manifest = compile_contract_suite(
         revision.api,
         options=request.options,
         source=_source_info(version_ref, revision.coordinates, tenant_id=tenant_id),
     )
     return ContractSuiteResponse(ok=True, version_ref=version_ref, manifest=manifest)
+
+
+def _has_root_fields(api: CanonicalApi) -> bool:
+    """Return whether a GraphQL model declares a ``query`` or ``mutation`` root field."""
+    return any(
+        operation.kind in (OperationKind.QUERY, OperationKind.MUTATION)
+        for operation in api.operations()
+    )
 
 
 def _source_info(

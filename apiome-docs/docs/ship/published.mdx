@@ -89,6 +89,10 @@ cell shows and copies that URL, with the note *GraphQL · queries and mutations.
 served on this deployment yet.* Open it in a browser for GraphiQL, or see
 [Query a GraphQL mock](./mock-try-out.mdx#query-a-graphql-mock).
 
+That same `/graphql` URL can be the target of a contract run. Register it as a verification target
+with `protocol: graphql`, and every root query and mutation field is called and checked against the
+schema — see [Contract test a GraphQL API](./contract-testing-and-ci-gates.mdx#contract-test-a-graphql-api).
+
 ### Scenarios
 
 **Click “Scenarios”** to open **Mock scenarios for v…** — named situations a consumer picks per

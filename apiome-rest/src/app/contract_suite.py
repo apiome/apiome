@@ -34,19 +34,29 @@ Three guarantees, because the rest of Executable Contract Assurance is built on 
   meaningful because of this.
 * **Attributed.** Every case names its operation, its source, and its expected outcome. There is
   no anonymous case, and no case whose expectation was guessed without saying so.
-* **Honest.** What the compiler cannot express, it **reports**. A gRPC stream, a GraphQL field,
+* **Honest.** What the compiler cannot express, it **reports**. A gRPC stream, a GraphQL subscription,
   an operation with no route, a body that is only offered as ``application/xml``, a parameter
   shape the path grammar cannot carry, an example that does not satisfy its own schema, a
   response with no declared status — each becomes a :class:`SuiteFinding`. A suite that silently
   skipped half a specification would be worse than no suite, because it would read as coverage.
 
-Scope
------
-HTTP request/response operations. That is what a contract runner (ECA-2.1) can execute today.
-Event, RPC-streaming, and GraphQL paradigms are recognized and reported as unsupported rather
-than half-compiled. Authentication is deliberately **not** compiled: a suite carries no
-credentials, so a specification with security requirements gets a finding telling the runner it
-must supply them (targets and their secrets are ECA-1.2's job).
+Protocol adapters (XPC-1.2, #5730)
+----------------------------------
+How a paradigm becomes cases is a **protocol adapter**: a ``compile_cases`` function keyed by
+:class:`~app.canonical_model.ApiParadigm` (:func:`protocol_adapter_for`). Every adapter shares this
+module's manifest shape, finding vocabulary, seeding and digest, so determinism, attribution and
+honesty hold for every protocol rather than being re-implemented per protocol.
+
+* ``rest`` → the **HTTP** adapter in this module: one case per request/response operation.
+* ``graph`` → the **GraphQL** adapter in :mod:`app.contract_suite_graphql`: one set of cases per
+  root ``query``/``mutation`` field, each a ``POST`` of a GraphQL document to the target URL.
+  Subscriptions are listed under ``unsupported``.
+
+Event and RPC-streaming paradigms have no adapter yet. They fall through to the HTTP adapter,
+which reports them as unsupported rather than half-compiling them. Authentication is
+deliberately **not** compiled: a suite carries no credentials, so a specification with security
+requirements gets a finding telling the runner it must supply them (targets and their secrets
+are ECA-1.2's job).
 
 This module is pure — a canonical model in, a manifest out. Resolution of a version reference,
 tenant scoping, and persistence live in :mod:`app.contract_suite_service` and above.
@@ -58,7 +68,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import quote
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -81,6 +91,7 @@ from .canonical_model import (
     StreamingMode,
     TypeRef,
 )
+from .contract_protocols import PROTOCOL_GRAPHQL, PROTOCOL_HTTP
 from .contract_suite_examples import (
     SITE_PARAMETER,
     SITE_REQUEST_BODY,
@@ -110,10 +121,12 @@ __all__ = [
     "CASE_SOURCE_NEGATIVE_MISSING_BODY",
     "CASE_SOURCE_NEGATIVE_MISSING_PARAMETER",
     "CASE_SOURCE_NEGATIVE_PARAMETER_TYPE",
+    "CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD",
     "CONTRACT_SUITE_COMPILER_VERSION",
     "CONTRACT_SUITE_SCHEMA_VERSION",
     "FINDING_LEVELS",
     "MAX_OPERATIONS_CEILING",
+    "MAX_SELECTION_DEPTH_CEILING",
     "NEGATIVE_CASE_SOURCES",
     "OUTCOME_CLIENT_ERROR",
     "OUTCOME_SUCCESS",
@@ -122,16 +135,20 @@ __all__ = [
     "ContractCase",
     "ContractCaseExpectation",
     "ContractCaseRequest",
+    "ContractGraphqlRequest",
     "ContractRequestParameter",
     "ContractSuiteManifest",
     "ContractSuiteOptions",
+    "ProtocolAdapter",
     "SuiteApiInfo",
     "SuiteFinding",
     "SuiteOperation",
     "SuiteSourceInfo",
+    "SuiteUnsupportedOperation",
     "canonical_manifest_bytes",
     "compile_contract_suite",
     "manifest_digest",
+    "protocol_adapter_for",
 ]
 
 # ===========================================================================
@@ -140,12 +157,15 @@ __all__ = [
 
 #: Envelope version of the manifest shape. Bumped when a field is added, removed, or given a
 #: new meaning, so a stored manifest can be read by the version of the code that wrote it.
-CONTRACT_SUITE_SCHEMA_VERSION = 1
+#: Version 2 (XPC-1.2) added ``protocol`` and ``unsupported`` to the manifest and ``protocol`` /
+#: ``graphql`` to every case.
+CONTRACT_SUITE_SCHEMA_VERSION = 2
 
 #: Version of the *compilation rules*. Bumped whenever the compiler would produce different
 #: cases for the same input — which changes the digest, and must, because a gate pinned to an
-#: old digest is no longer pinned to the same suite.
-CONTRACT_SUITE_COMPILER_VERSION = 1
+#: old digest is no longer pinned to the same suite. Version 2 (XPC-1.2) added the GraphQL adapter
+#: and the ``negative_unknown_field`` source, which every manifest's ``counts`` now carries.
+CONTRACT_SUITE_COMPILER_VERSION = 2
 
 #: Hash the suite digest is computed with.
 SUITE_DIGEST_ALGORITHM = "sha256"
@@ -166,6 +186,8 @@ CASE_SOURCE_NEGATIVE_MISSING_BODY = "negative_missing_body"
 CASE_SOURCE_NEGATIVE_MISSING_PARAMETER = "negative_missing_parameter"
 #: A request that carries a parameter value of the wrong type.
 CASE_SOURCE_NEGATIVE_PARAMETER_TYPE = "negative_parameter_type"
+#: A GraphQL document that selects a field the returned type does not declare.
+CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD = "negative_unknown_field"
 
 #: Every case source, in the order cases are emitted within one operation.
 CASE_SOURCES: Tuple[str, ...] = (
@@ -177,6 +199,7 @@ CASE_SOURCES: Tuple[str, ...] = (
     CASE_SOURCE_NEGATIVE_MISSING_PARAMETER,
     CASE_SOURCE_NEGATIVE_PARAMETER_TYPE,
     CASE_SOURCE_NEGATIVE_BODY_MUTATION,
+    CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD,
 )
 
 #: The sources whose cases are expected to be rejected by a conforming implementation. Public
@@ -188,6 +211,7 @@ NEGATIVE_CASE_SOURCES = frozenset(
         CASE_SOURCE_NEGATIVE_MISSING_BODY,
         CASE_SOURCE_NEGATIVE_MISSING_PARAMETER,
         CASE_SOURCE_NEGATIVE_PARAMETER_TYPE,
+        CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD,
     }
 )
 
@@ -232,6 +256,11 @@ CODE_AUTHENTICATION_REQUIRED = "AUTHENTICATION_REQUIRED"
 CODE_SERVER_TEMPLATED = "SERVER_TEMPLATED"
 CODE_NO_SERVER = "NO_SERVER"
 CODE_OPERATION_NOT_SELECTED = "OPERATION_NOT_SELECTED"
+#: GraphQL: object fields below ``max_selection_depth`` were left out of the selection set.
+CODE_SELECTION_DEPTH_LIMITED = "SELECTION_DEPTH_LIMITED"
+#: GraphQL: a nested field takes a required argument, so it cannot be selected without inventing
+#: a value for it, and was left out of the selection set.
+CODE_FIELD_ARGUMENTS_REQUIRED = "FIELD_ARGUMENTS_REQUIRED"
 
 #: Every code this module can emit, sorted — the contract a consumer keys off.
 SUITE_FINDING_CODES: Tuple[str, ...] = tuple(
@@ -264,6 +293,8 @@ SUITE_FINDING_CODES: Tuple[str, ...] = tuple(
             CODE_SERVER_TEMPLATED,
             CODE_NO_SERVER,
             CODE_OPERATION_NOT_SELECTED,
+            CODE_SELECTION_DEPTH_LIMITED,
+            CODE_FIELD_ARGUMENTS_REQUIRED,
         }
     )
 )
@@ -276,6 +307,9 @@ MAX_OPERATIONS_CEILING = 2000
 MAX_EXAMPLE_CASES_CEILING = 50
 MAX_GENERATED_CASES_CEILING = 50
 MAX_NEGATIVE_CASES_CEILING = 50
+
+#: Ceiling on how deep a GraphQL selection set is expanded below its root field.
+MAX_SELECTION_DEPTH_CEILING = 8
 
 #: Media type used when a body is declared with no ``content`` at all.
 DEFAULT_MEDIA_TYPE = "application/json"
@@ -397,8 +431,18 @@ class ContractSuiteOptions(BaseModel):
     operations: Optional[List[str]] = Field(
         default=None,
         description=(
-            "Restrict compilation to these operation keys (`GET /pets/{petId}`). Omit for "
-            "every operation. A key that matches nothing is reported as a finding."
+            "Restrict compilation to these operation keys (`GET /pets/{petId}`, or a GraphQL "
+            "coordinate such as `Query.user`). Omit for every operation. A key that matches "
+            "nothing is reported as a finding."
+        ),
+    )
+    max_selection_depth: int = Field(
+        default=3,
+        ge=1,
+        le=MAX_SELECTION_DEPTH_CEILING,
+        description=(
+            "GraphQL only: how many levels of object fields a case's selection set expands "
+            "below its root field. Deeper object fields are left out and reported."
         ),
     )
 
@@ -574,6 +618,32 @@ class ContractCaseExpectation(BaseModel):
     reason: str = Field(description="One sentence explaining why this outcome is expected.")
 
 
+class ContractGraphqlRequest(BaseModel):
+    """The GraphQL document a ``graphql``-protocol case sends, in GraphQL-over-HTTP terms.
+
+    ``query``, ``variables`` and ``operationName`` are exactly the members of the JSON body the
+    runner posts; ``operation_type`` is what the runner's mutating-method gate reads, because
+    every GraphQL case is a ``POST`` and the HTTP verb says nothing about whether it writes.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(description="The GraphQL document: one named operation.")
+    variables: Dict[str, Any] = Field(
+        default_factory=dict, description="Variable values, keyed by variable name."
+    )
+    operationName: str = Field(  # noqa: N815 - the GraphQL-over-HTTP wire name
+        description="Name of the operation in `query` to execute."
+    )
+    operation_type: str = Field(
+        description=(
+            "`query` or `mutation`. A mutation obeys the target's mutating-method gate exactly "
+            "as an HTTP `POST` does."
+        )
+    )
+    field: str = Field(description="The root field the case exercises (`user`).")
+
+
 class ContractCase(BaseModel):
     """One executable case: a request, its provenance, and its expected outcome."""
 
@@ -610,7 +680,21 @@ class ContractCase(BaseModel):
             "generated payload, so the label travels with the case."
         )
     )
+    protocol: str = Field(
+        default=PROTOCOL_HTTP,
+        description=(
+            "Wire protocol the case is executed over: `http`, or `graphql` for a case whose "
+            "request is a GraphQL document posted to the target URL."
+        ),
+    )
     request: ContractCaseRequest = Field(description="The request to send.")
+    graphql: Optional[ContractGraphqlRequest] = Field(
+        default=None,
+        description=(
+            "The GraphQL document, variables and operation name. Present exactly when "
+            "`protocol` is `graphql`; `request.body` carries the same document as sent."
+        ),
+    )
     expect: ContractCaseExpectation = Field(description="What must come back.")
     tags: List[str] = Field(
         default_factory=list, description="The operation's tags, for filtered runs."
@@ -631,6 +715,16 @@ class SuiteFinding(BaseModel):
     pointer: Optional[str] = Field(
         default=None, description="JSON Pointer into the source document, when known."
     )
+
+
+class SuiteUnsupportedOperation(BaseModel):
+    """An operation the version declares that the suite deliberately does not cover."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    operation_key: str = Field(description="The operation left out (`Subscription.onEvent`).")
+    code: str = Field(description="Stable code from `SUITE_FINDING_CODES` saying why.")
+    reason: str = Field(description="One sentence explaining why it cannot be compiled.")
 
 
 class ContractSuiteManifest(BaseModel):
@@ -657,6 +751,13 @@ class ContractSuiteManifest(BaseModel):
     options: ContractSuiteOptions = Field(
         description="The options this suite was compiled with, normalized."
     )
+    protocol: str = Field(
+        default=PROTOCOL_HTTP,
+        description=(
+            "Protocol of the adapter that compiled the suite — `http` or `graphql`. A run "
+            "refuses a verification target that declares a different one."
+        ),
+    )
     api: SuiteApiInfo = Field(description="Identity of the compiled API.")
     source: Optional[SuiteSourceInfo] = Field(
         default=None, description="Where the compiled version came from."
@@ -673,6 +774,13 @@ class ContractSuiteManifest(BaseModel):
         description=(
             "Response schemas referenced by `expect.response_schema_id`, keyed so identical "
             "types are carried once."
+        ),
+    )
+    unsupported: List[SuiteUnsupportedOperation] = Field(
+        default_factory=list,
+        description=(
+            "Operations the version declares that no case covers by design (a GraphQL "
+            "subscription), sorted by key — listed so they are never silently omitted."
         ),
     )
     findings: List[SuiteFinding] = Field(
@@ -723,13 +831,13 @@ class _BodyPlan:
 
 @dataclass
 class _Compilation:
-    """Mutable state shared by one compile run.
+    """Mutable state shared by one compile run, whichever protocol adapter fills it.
 
     Attributes:
         api: The canonical model being compiled.
         options: The normalized options.
         examples: Declared examples, indexed by ``(path, method)`` with ``None`` for
-            path-level parameter examples.
+            path-level parameter examples. Read by the HTTP adapter only.
         harvest: The raw harvest, for the document-level findings it carries.
         document_dialect: Dialect inline source schemas are read under.
         cases: Compiled cases, in emission order.
@@ -738,18 +846,38 @@ class _Compilation:
         schemas: Response schemas, keyed by schema id.
         skipped: Keys of operations that produced no cases, so the count of what was left out
             is a fact rather than a tally of findings.
+        dropped: Operations left out before compilation (the ``operations`` filter or the
+            ``max_operations`` cap), which never reach ``skipped``.
+        unsupported: Operations no case covers by design, listed on the manifest.
     """
 
     api: CanonicalApi
     options: ContractSuiteOptions
-    examples: Dict[Tuple[str, Optional[str]], List[DeclaredExample]]
-    harvest: DeclaredExampleHarvest
+    examples: Dict[Tuple[str, Optional[str]], List[DeclaredExample]] = field(
+        default_factory=dict
+    )
+    harvest: DeclaredExampleHarvest = field(default_factory=DeclaredExampleHarvest)
     document_dialect: str = DRAFT_2020_12
     cases: List[ContractCase] = field(default_factory=list)
     operations: List[SuiteOperation] = field(default_factory=list)
     findings: List[SuiteFinding] = field(default_factory=list)
     schemas: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     skipped: List[str] = field(default_factory=list)
+    dropped: int = 0
+    unsupported: List[SuiteUnsupportedOperation] = field(default_factory=list)
+
+    def mark_unsupported(self, operation_key: str, code: str, reason: str) -> None:
+        """List an operation under the manifest's ``unsupported`` and count it as skipped.
+
+        Args:
+            operation_key: The operation left out.
+            code: Stable finding code saying why.
+            reason: One sentence explaining why.
+        """
+        self.unsupported.append(
+            SuiteUnsupportedOperation(operation_key=operation_key, code=code, reason=reason)
+        )
+        self.skipped.append(operation_key)
 
     def report(
         self,
@@ -792,32 +920,95 @@ def compile_contract_suite(
         compiled becomes a finding.
     """
     resolved_options = (options or ContractSuiteOptions()).normalized()
-    harvest = _harvest(api, resolved_options)
-    compilation = _Compilation(
-        api=api,
-        options=resolved_options,
-        examples=_index_examples(harvest),
-        harvest=harvest,
-        document_dialect=_document_dialect(api),
-    )
+    adapter = protocol_adapter_for(api.paradigm)
+    compilation = _Compilation(api=api, options=resolved_options)
 
-    _report_document_findings(compilation)
-
-    selected, skipped = _select_operations(compilation)
-    for service, operation in selected:
-        _compile_operation(compilation, service, operation)
+    adapter.compile_cases(compilation)
 
     manifest = ContractSuiteManifest(
         options=resolved_options,
+        protocol=adapter.protocol,
         api=_api_info(api),
         source=source,
         operations=compilation.operations,
         cases=compilation.cases,
         schemas={key: compilation.schemas[key] for key in sorted(compilation.schemas)},
+        unsupported=sorted(compilation.unsupported, key=lambda item: item.operation_key),
         findings=_sorted_findings(compilation.findings),
-        counts=_counts(compilation, skipped=skipped),
+        counts=_counts(compilation),
     )
     return manifest.model_copy(update={"digest": manifest_digest(manifest)})
+
+
+# ===========================================================================
+# Protocol adapters
+# ===========================================================================
+
+
+@dataclass(frozen=True)
+class ProtocolAdapter:
+    """How one paradigm's operations become contract cases.
+
+    An adapter's ``compile_cases`` reads ``compilation.api`` and ``compilation.options`` — the
+    ``compile_cases(api, options)`` of the adapter contract — and appends its cases, operation
+    summaries, response schemas and findings to the same run state, so the manifest shape, the
+    finding vocabulary and the digest are shared by every protocol.
+
+    Attributes:
+        paradigm: The canonical paradigm the adapter compiles.
+        protocol: The wire protocol its cases are executed over (:mod:`app.contract_protocols`).
+        compile_cases: Fills a :class:`_Compilation` in place. Never raises for a model it
+            cannot fully express: what it cannot compile becomes a finding.
+    """
+
+    paradigm: ApiParadigm
+    protocol: str
+    compile_cases: Callable[["_Compilation"], None]
+
+
+def protocol_adapter_for(paradigm: ApiParadigm) -> ProtocolAdapter:
+    """Return the adapter that compiles a paradigm.
+
+    A paradigm with no adapter of its own (``event``, ``rpc``) gets the HTTP adapter, which
+    reports its operations as unsupported one by one — the pre-adapter behaviour.
+
+    Args:
+        paradigm: The version's canonical paradigm.
+
+    Returns:
+        The :class:`ProtocolAdapter` to compile with.
+    """
+    # Imported here: the GraphQL adapter is built from this module's models and helpers.
+    from .contract_suite_graphql import compile_graphql_cases
+
+    if paradigm is ApiParadigm.GRAPH:
+        return ProtocolAdapter(
+            paradigm=ApiParadigm.GRAPH,
+            protocol=PROTOCOL_GRAPHQL,
+            compile_cases=compile_graphql_cases,
+        )
+    return ProtocolAdapter(
+        paradigm=ApiParadigm.REST, protocol=PROTOCOL_HTTP, compile_cases=_compile_http_cases
+    )
+
+
+def _compile_http_cases(compilation: _Compilation) -> None:
+    """The HTTP adapter: one case per request/response operation of a REST version.
+
+    Args:
+        compilation: The run state, filled in place.
+    """
+    api = compilation.api
+    compilation.harvest = _harvest(api, compilation.options)
+    compilation.examples = _index_examples(compilation.harvest)
+    compilation.document_dialect = _document_dialect(api)
+
+    _report_document_findings(compilation)
+
+    selected, dropped = _select_operations(compilation)
+    compilation.dropped += dropped
+    for service, operation in selected:
+        _compile_operation(compilation, service, operation)
 
 
 def canonical_manifest_bytes(manifest: ContractSuiteManifest) -> bytes:
@@ -2220,7 +2411,7 @@ def _sorted_findings(findings: Sequence[SuiteFinding]) -> List[SuiteFinding]:
     return unique
 
 
-def _counts(compilation: _Compilation, *, skipped: int) -> Dict[str, int]:
+def _counts(compilation: _Compilation) -> Dict[str, int]:
     """Summarize the suite: one count per case source, plus the totals a reader looks at first."""
     counts: Dict[str, int] = {source: 0 for source in CASE_SOURCES}
     for case in compilation.cases:
@@ -2230,6 +2421,6 @@ def _counts(compilation: _Compilation, *, skipped: int) -> Dict[str, int]:
         count for source, count in counts.items() if source in NEGATIVE_CASE_SOURCES
     )
     counts["operations_compiled"] = len(compilation.operations)
-    counts["operations_skipped"] = skipped + len(set(compilation.skipped))
+    counts["operations_skipped"] = compilation.dropped + len(set(compilation.skipped))
     counts["findings"] = len(compilation.findings)
     return {key: counts[key] for key in sorted(counts)}

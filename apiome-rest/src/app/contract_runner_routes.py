@@ -25,7 +25,7 @@ from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .verification_evidence import EvidenceValidationError
 from .verification_evidence_store import actor_from_auth
-from .verification_target import CODE_NOT_FOUND, TargetValidationError
+from .verification_target import CODE_NOT_FOUND, CODE_PROTOCOL_MISMATCH, TargetValidationError
 
 __all__ = ["router"]
 
@@ -33,6 +33,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["contract-assurance"])
 
 _TARGET_STATUS_BY_CODE = {
     CODE_NOT_FOUND: 404,
+    CODE_PROTOCOL_MISMATCH: 422,
 }
 
 
@@ -61,7 +62,13 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "reference (`env` or `stored`); evidence snapshots the target identity only.\n\n"
         "A version that cannot yield executable cases answers **200** with `ok: false` and "
         "a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422). Target "
-        "resolution faults are 400/404. Evidence submission faults are 400."
+        "resolution faults are 400/404, and **422** `target-protocol-mismatch` when the "
+        "target's `protocol` is not the suite's (an `http` target for a GraphQL version). "
+        "Evidence submission faults are 400.\n\n"
+        "**GraphQL versions** (XPC-1.2) run every case as a `POST` of a GraphQL document to the "
+        "target URL itself; a case passes on the response envelope — no `errors` and `data` "
+        "matching the selection for a success case, a non-empty `errors` array for a negative "
+        "one. Mutations obey the mutating-method gate; queries do not."
     ),
 )
 async def run_contract_suite_for_version(

@@ -216,3 +216,76 @@ def test_compile_failure_propagates_error() -> None:
     assert result.error is not None
     assert result.error.code == "FORMAT_MISMATCH"
     recorded.assert_not_called()
+
+
+def test_a_graphql_run_resolves_a_graphql_target_and_records_graphql_evidence() -> None:
+    """XPC-1.2 acceptance: `…/run` on a GraphQL version records `protocol: graphql` evidence
+    with per-case outcomes and pointer-located schema findings."""
+    import json
+
+    from graphql import graphql_sync
+
+    from app.contract_suite import compile_contract_suite
+    from app.graphql_normalizer import GraphQlNormalizer
+    from app.graphql_parser import build_graphql_schema
+
+    schema = build_graphql_schema("type Query { pet(id: ID!): Pet } type Pet { id: ID! name: String! }")
+    manifest = compile_contract_suite(GraphQlNormalizer().normalize(schema))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        result = graphql_sync(
+            schema,
+            body["query"],
+            # A drifted deployment: `name` comes back as a number.
+            root_value={"pet": {"id": "1", "name": "Rex"}},
+            variable_values=body.get("variables"),
+            operation_name=body.get("operationName"),
+        )
+        document: dict = {"data": result.data}
+        if result.errors:
+            document = {"errors": [{"message": error.message} for error in result.errors]}
+        elif isinstance(document["data"].get("pet"), dict):
+            document["data"]["pet"]["name"] = 7
+        return httpx.Response(200, json=document)
+
+    graphql_target = _resolved().model_copy(
+        update={"protocol": "graphql", "base_url": "http://mock.test/acme/pets/1.0.0/graphql"}
+    )
+    with (
+        patch(
+            "app.contract_runner_service.compile_version_contract_suite",
+            return_value=ContractSuiteResponse(
+                ok=True, version_ref="project/pets/1.0.0", manifest=manifest
+            ),
+        ),
+        patch(
+            "app.contract_runner_service.resolve_target", return_value=graphql_target
+        ) as resolve,
+        patch(
+            "app.contract_runner_service.record_run",
+            return_value=RecordedRun(record=_recorded_run(), created=True),
+        ) as recorded,
+        patch(
+            "app.contract_runner.build_guarded_client",
+            return_value=httpx.Client(transport=httpx.MockTransport(handler)),
+        ),
+    ):
+        result = run_version_contract_suite(
+            "project/pets/1.0.0",
+            ContractRunRequest(target_ref="mock-graphql"),
+            tenant_id="t1",
+            actor=_ACTOR,
+        )
+
+    assert result.ok is True
+    assert resolve.call_args.kwargs["protocol"] == "graphql"
+    run_input = recorded.call_args.args[1]
+    assert run_input.protocol == "graphql"
+    outcomes = {(op.case_source, op.outcome) for op in run_input.operations}
+    # Every negative case was rejected by the server, so it passed …
+    assert ("negative_unknown_field", "passed") in outcomes
+    # … and the drifted success case failed with a pointer into `data`.
+    failed = [op for op in run_input.operations if op.outcome == "failed"]
+    assert failed
+    assert any(a.subject == "/pet/name" for op in failed for a in op.assertions)

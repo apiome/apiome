@@ -298,6 +298,7 @@ def record_run(
         "target_environment": identity.get("environment"),
         "target_network_class": identity.get("network_class"),
         "target_base_url": identity.get("base_url"),
+        "protocol": run.protocol,
         "runner_name": run.runner_name,
         "runner_version": run.runner_version,
         "recorded_by": actor.user_id,

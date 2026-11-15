@@ -117,7 +117,8 @@ def run_version_contract_suite(
     Returns:
         A :class:`ContractRunResponse`. Addressing faults raise
         :class:`~app.schema_reference.SchemaReferenceError`; target faults raise
-        :class:`~app.verification_target.TargetValidationError`; evidence submission faults
+        :class:`~app.verification_target.TargetValidationError` (``target-protocol-mismatch``
+        when the target speaks another protocol than the suite); evidence submission faults
         raise :class:`~app.verification_evidence.EvidenceValidationError`.
     """
     compiled = compile_version_contract_suite(
@@ -150,11 +151,14 @@ def run_version_contract_suite(
             ),
         )
 
+    # The suite's protocol is passed in so a target that speaks another one is refused (422
+    # ``target-protocol-mismatch``) at resolution, and the refusal is in the target ledger.
     resolved = resolve_target(
         tenant_id,
         request.target_ref,
         actor=actor,
         suite_digest=manifest.digest,
+        protocol=manifest.protocol,
     )
 
     stored_headers: Optional[Dict[str, str]] = None
@@ -190,6 +194,7 @@ def run_version_contract_suite(
         suite_case_count=len(manifest.cases),
         runner_name=RUNNER_NAME,
         runner_version=RUNNER_VERSION,
+        protocol=manifest.protocol,
         started_at=suite_result.started_at,
         finished_at=suite_result.finished_at,
         source=source,

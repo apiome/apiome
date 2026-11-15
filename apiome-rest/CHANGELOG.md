@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.703.0] - 2026-11-14
+
+### Added
+- **GraphQL protocol adapter in the contract suite (XPC-1.2, #5730)** — OpenAPI 1.563.0:
+  - `POST /v1/tenants/{t}/contracts/{ref}/suite` compiles a GraphQL version through its own
+    protocol adapter: one operation per root `query`/`mutation` field, with cases in the REST
+    preference order — declared `@example` arguments, generated arguments (required-only, then
+    every argument, seeded through `schema_instance_synthesis`), then a required argument
+    omitted, a wrong-typed argument and an unknown field selected. The selection set expands to
+    `options.max_selection_depth` levels (default 3, 1–8); deeper fields and nested fields with
+    required arguments are left out and reported (`SELECTION_DEPTH_LIMITED`,
+    `FIELD_ARGUMENTS_REQUIRED`). The same seed gives the same digest.
+  - `ContractCase` gains `protocol` (`http` default, `graphql`) and `graphql`
+    (`ContractGraphqlRequest`: `query`, `variables`, `operationName`, `operation_type`, `field`);
+    the manifest gains `protocol` and `unsupported` (`SuiteUnsupportedOperation`), where
+    subscriptions are listed with a reason. `schema_version` and `compiler_version` are now `2`,
+    and `counts` carries `negative_unknown_field`, so REST digests change too.
+  - A GraphQL version with no query or mutation field answers `ok: false` with `FORMAT_MISMATCH`.
+  - `POST …/run` posts each GraphQL case to the target URL itself and judges the envelope: a
+    success case needs no `errors` and `data` matching the selection's schema (violations are
+    located by JSON Pointer into `data`); a negative case needs a non-empty `errors` array. New
+    failure codes `graphql-errors-present`, `graphql-errors-missing`, `graphql-envelope-invalid`.
+    Mutations obey `allow_mutating_methods`; queries do not (provider verification too).
+  - Verification targets and runs carry `protocol` (`VerificationTargetInput`/`Patch`/`Record`,
+    `ResolvedTarget`, `VerificationRunInput`/`Summary`/`Record`, the JUnit `apiome.protocol`
+    property). A run whose target speaks another protocol is refused `422
+    target-protocol-mismatch` and audited as a denied resolve. Migration **V371** adds
+    `verification_target.protocol` and `verification_run.protocol` (`http` default, CHECK
+    `http`/`graphql`).
+
 ## [1.702.0] - 2026-11-14
 
 ### Added

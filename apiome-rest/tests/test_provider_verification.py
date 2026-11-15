@@ -821,3 +821,20 @@ def test_the_uncovered_list_is_capped_but_its_count_is_not() -> None:
     assert report.coverage.uncovered_named == uncompiled
     assert report.coverage.operations_total == uncompiled + 1
     assert report.coverage.operations_uncompiled == uncompiled
+
+
+def test_a_graphql_query_is_safe_and_a_graphql_mutation_is_held_back() -> None:
+    """XPC-1.2: every GraphQL case is a POST; the operation type, not the verb, decides."""
+    from app.contract_suite import compile_contract_suite
+    from app.graphql_normalizer import GraphQlNormalizer
+    from app.graphql_parser import build_graphql_schema
+
+    sdl = "type Query { hello: String! } type Mutation { reset: Boolean }"
+    manifest = compile_contract_suite(GraphQlNormalizer().normalize(build_graphql_schema(sdl)))
+    plan = plan_provider_run(
+        manifest, ProviderVerificationOptions(), target_allows_mutating=True
+    )
+    held = {
+        case.operation_key for case in manifest.cases if case.case_id in plan.decisions
+    }
+    assert held == {"Mutation.reset"}

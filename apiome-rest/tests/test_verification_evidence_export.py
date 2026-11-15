@@ -344,3 +344,13 @@ def test_an_unknown_format_is_refused_with_a_stable_code() -> None:
     with pytest.raises(EvidenceValidationError) as exc:
         export_run(_record(), "tap")
     assert exc.value.code == "evidence-export-format-unsupported"
+
+
+def test_the_protocol_survives_as_a_property() -> None:
+    """XPC-1.2: a GraphQL run says so in the JUnit export, and in the JSON one."""
+    record = _record(protocol="graphql")
+    properties = {
+        prop.get("name"): prop.get("value") for prop in _junit_root(record).iter("property")
+    }
+    assert properties["apiome.protocol"] == "graphql"
+    assert run_export_document(record)["protocol"] == "graphql"
