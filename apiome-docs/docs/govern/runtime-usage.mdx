@@ -70,7 +70,9 @@ window is closed is refused with `422 usage-body-not-accepted`.
 
 ## Send usage events
 
-Every source sends its traffic through one endpoint:
+Every source except the SDK beacon sends its traffic through one endpoint. An `sdk_beacon` source
+takes opt-in outcome counts from generated SDKs at its own endpoint, with no traffic details at all;
+see [SDK compatibility beacon](../ship/sdk-compatibility-beacon.mdx).
 
 ```http
 POST /v1/tenants/{tenant}/usage/ingest
@@ -278,8 +280,8 @@ attributed to it.
 
 ## How long it is kept
 
-Hourly counters are rolled up into daily counters, and unattributed client counts are kept as long
-as the daily counters. The plan's seat limits set how long each is kept (see [Licenses](../admin/licenses.mdx#seat-limits)):
+Hourly counters are rolled up into daily counters, and unattributed client counts and
+[SDK beacon](../ship/sdk-compatibility-beacon.mdx) counts are kept as long as the daily counters. The plan's seat limits set how long each is kept (see [Licenses](../admin/licenses.mdx#seat-limits)):
 
 | Plan | Hourly counters | Daily counters, fields, unmatched paths and ledger | Events per day |
 | --- | --- | --- | --- |

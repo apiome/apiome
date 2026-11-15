@@ -133,6 +133,13 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         re.compile(r"^/v1/tenants/[^/]+/usage/ingest/?$"),
         API_KEY_SCOPE_USAGE_INGEST,
     ),
+    # RDG-1.7 (#4736): the SDK compatibility beacon door, write-only like the ingest door. An
+    # opted-in generated SDK carries a usage:ingest key, so it can report counts and nothing else.
+    (
+        "POST",
+        re.compile(r"^/v1/tenants/[^/]+/usage/sdk-beacon/?$"),
+        API_KEY_SCOPE_USAGE_INGEST,
+    ),
     # CDG-4.3 (#5975): the Confluent-compatible schema registry. Reads (every GET, the subject
     # lookup ``POST /subjects/{s}`` and ``POST /compatibility/…``) take ``registry:read``; writes
     # (register, config, mode, delete) take ``registry:write``.

@@ -224,6 +224,22 @@ EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
         "last_seen_at": "timestamp with time zone",
         "updated_at": "timestamp with time zone",
     },
+    # RDG-1.7 (V380): opt-in SDK beacon counts — the five allowed facts and counters, nothing else.
+    "usage_sdk_beacon_daily": {
+        "tenant_id": "uuid",
+        "project_id": "uuid",
+        "source_id": "uuid",
+        "day": "date",
+        "spec_revision_id": "uuid",
+        "api_version": "character varying",
+        "sdk_name": "character varying",
+        "sdk_version": "character varying",
+        "operation_id": "character varying",
+        "outcome": "character varying",
+        "calls": "bigint",
+        "first_seen_at": "timestamp with time zone",
+        "last_seen_at": "timestamp with time zone",
+    },
     # RDG-1.8 (V292): a bound value is only ever stored as its 64-hex HMAC; `name` is a header or
     # claim *name*, or a user-agent glob — never a value.
     "usage_consumer_binding": {

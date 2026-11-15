@@ -51,6 +51,14 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
+from .go_client_telemetry import (
+    TELEMETRY_IDENTIFIERS,
+    beacon_operation_id,
+    beacon_token,
+    normalise_revision,
+    render_telemetry_body,
+    telemetry_readme_section,
+)
 from .canonical_json_schema import CANONICAL_SCALAR_SCHEMAS
 from .canonical_model import (
     CanonicalApi,
@@ -127,11 +135,13 @@ _RESERVED_IDENTIFIERS = frozenset(
         "WithHTTPClient", "WithHeader", "WithRequestEditor", "WithSessionCookie",
         "WithUserAgent", "escapePath", "formatValue", "newAPIError",
     }
+    # RDG-1.7 (#4736): the opt-in compatibility beacon's names in ``telemetry.go``.
+    | TELEMETRY_IDENTIFIERS
 )
 
 #: Filename stems the fixed files claim. Allocation is on the *stem*, not the whole filename, so a
 #: service called "client" becomes ``client2.go`` rather than the uncompilable ``client.go2``.
-_RESERVED_FILE_STEMS = frozenset({"auth", "client", "errors", "models"})
+_RESERVED_FILE_STEMS = frozenset({"auth", "client", "errors", "models", "telemetry"})
 
 #: Local identifiers a generated method body uses. A parameter-derived argument name that would
 #: shadow one of these is suffixed instead.
@@ -1263,13 +1273,15 @@ def _render_client(
         "// Option configures a Client.",
         "type Option func(*Client)",
         "",
-        "// Client calls the API. The zero value is not usable; build one with NewClient.",
+        "// Client calls the API. The zero value is not usable; build one with NewClient. Its",
+        "// telemetry is nil unless WithTelemetry turned the opt-in beacon on (telemetry.go).",
         "type Client struct {",
         "\tbaseURL    string",
         "\tuserAgent  string",
         "\thttpClient Doer",
         "\theader     http.Header",
         "\teditors    []RequestEditor",
+        "\ttelemetry  *telemetry",
         "}",
         "",
         "// NewClient returns a Client pointed at DefaultBaseURL, sending through http.DefaultClient,",
@@ -1384,26 +1396,34 @@ def _render_client(
         "}",
         "",
         "// do sends a request, decodes a successful JSON body into out, and turns every non-2xx",
-        "// response into an *APIError carrying the body it was refused with.",
-        "func (c *Client) do(req *http.Request, out any) (*http.Response, error) {",
+        "// response into an *APIError carrying the body it was refused with. operationID names the",
+        "// call for the opt-in compatibility beacon, which counts its outcome only when on.",
+        "func (c *Client) do(req *http.Request, out any, operationID string) (*http.Response, error) {",
         "\tresp, err := c.httpClient.Do(req)",
         "\tif err != nil {",
+        '\t\tc.observe(operationID, "network")',
         '\t\treturn nil, fmt.Errorf("%s %s: %w", req.Method, req.URL, err)',
         "\t}",
         "\tdefer resp.Body.Close()",
         "\tpayload, err := io.ReadAll(resp.Body)",
         "\tif err != nil {",
+        '\t\tc.observe(operationID, "network")',
         '\t\treturn resp, fmt.Errorf("read response body for %s %s: %w", req.Method, req.URL, err)',
         "\t}",
         "\tif resp.StatusCode < 200 || resp.StatusCode > 299 {",
+        "\t\tc.observe(operationID, classifyStatus(resp.StatusCode))",
         "\t\treturn resp, newAPIError(req, resp, payload)",
         "\t}",
         "\tif out == nil || len(payload) == 0 {",
+        '\t\tc.observe(operationID, "ok")',
         "\t\treturn resp, nil",
         "\t}",
         "\tif err := json.Unmarshal(payload, out); err != nil {",
+        "\t\t// A success the client cannot read is what an incompatible release looks like.",
+        '\t\tc.observe(operationID, "incompatible")',
         '\t\treturn resp, fmt.Errorf("decode response body for %s %s: %w", req.Method, req.URL, err)',
         "\t}",
+        '\tc.observe(operationID, "ok")',
         "\treturn resp, nil",
         "}",
         "",
@@ -2219,7 +2239,8 @@ def _render_method(planned: _PlannedOperation) -> List[str]:
     lines.append("")
     if planned.result_type is None:
         lines += [
-            "\tif _, err := c.do(req, nil); err != nil {",
+            f"\tif _, err := c.do(req, nil, "
+        f"{_go_string(beacon_operation_id(planned.identifier, planned.op.key))}); err != nil {{",
             f"\t\treturn {promote}",
             "\t}",
             "\treturn nil",
@@ -2228,7 +2249,8 @@ def _render_method(planned: _PlannedOperation) -> List[str]:
         return lines
     lines += [
         f"\tvar out {planned.result_local}",
-        "\tif _, err := c.do(req, &out); err != nil {",
+        f"\tif _, err := c.do(req, &out, "
+        f"{_go_string(beacon_operation_id(planned.identifier, planned.op.key))}); err != nil {{",
         f"\t\treturn nil, {promote}",
         "\t}",
         f"\treturn {'out' if planned.result_is_slice else '&out'}, nil",
@@ -2444,8 +2466,9 @@ def _render_readme(
     typed_errors: Sequence[_TypedError],
     example_groups: Sequence[str],
     license_header: Optional[str],
+    telemetry_section: Sequence[str] = (),
 ) -> GoClientFile:
-    """Render the Go module's ``README.md``."""
+    """Render the Go module's ``README.md``, including the opt-in telemetry section (RDG-1.7)."""
     title = api.title or package_name
     version_phrase = f" version **{api.version}**" if api.version else ""
     lines: List[str] = [
@@ -2544,6 +2567,9 @@ def _render_readme(
         lines += [f"- `{entry.key}` — {entry.reason}" for entry in skipped]
         lines.append("")
 
+    if telemetry_section:
+        lines += [*telemetry_section, ""]
+
     lines += [
         "## Generated code",
         "",
@@ -2592,6 +2618,8 @@ def generate_go_client(
     license_header: Optional[str] = None,
     user_agent: Optional[str] = None,
     max_operations: int = DEFAULT_MAX_OPERATIONS,
+    revision_id: Optional[str] = None,
+    api_version: Optional[str] = None,
 ) -> GoClientPackage:
     """Generate a complete Go client module from a canonical model.
 
@@ -2610,6 +2638,11 @@ def generate_go_client(
         user_agent: A tenant's resolved user-agent (SDK-3.4), baked in as ``DefaultUserAgent``.
         max_operations: How many operations get methods. The rest are reported in
             :attr:`GoClientPackage.skipped` rather than silently dropped.
+        revision_id: The published revision (``versions.id``) the client is built for — baked in
+            as ``ManifestRevisionID`` for the opt-in compatibility beacon (RDG-1.7). ``None``
+            outside an SDK kit, which leaves the beacon unavailable.
+        api_version: The version label to report as ``ManifestAPIVersion``; defaults to the
+            contract's own version.
 
     Returns:
         The :class:`GoClientPackage`.
@@ -2650,6 +2683,24 @@ def generate_go_client(
         ),
         _render_errors(resolved_package, planner.typed_errors, license_header),
     ]
+    revision = normalise_revision(revision_id)
+    telemetry_imports, telemetry_body = render_telemetry_body(
+        revision_literal=_go_string(revision),
+        api_version_literal=_go_string(beacon_token(api_version or api.version, kind="version", fallback="0")),
+        sdk_name_literal=_go_string(beacon_token(f"{resolved_package}-go", kind="name", fallback="apiome-go")),
+    )
+    files.append(
+        GoClientFile(
+            path="telemetry.go",
+            text=_go_file(
+                resolved_package,
+                telemetry_imports,
+                telemetry_body,
+                license_header=license_header,
+                package_doc=["// Code generated by Apiome. DO NOT EDIT.", ""],
+            ),
+        )
+    )
     if auth_file is not None:
         files.append(auth_file)
     if models is not None:
@@ -2695,6 +2746,7 @@ def generate_go_client(
             planner.typed_errors,
             example_groups,
             license_header,
+            telemetry_readme_section(revision),
         )
     )
     files.sort(key=lambda item: item.path)

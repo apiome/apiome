@@ -1,6 +1,6 @@
 ---
 title: "Usage"
-description: "REST endpoints tagged usage: 1 operation."
+description: "REST endpoints tagged usage: 3 operations."
 sidebar_position: 113
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.571.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.572.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `usage` · 1 operation
+Tag: `usage` · 3 operations
 
 ## `POST /v1/tenants/{tenant_slug}/usage/ingest` {#ingest-usage-v1-tenants-tenant-slug-usage-ingest-post}
 
@@ -61,7 +61,117 @@ A batch of at most 5000 `apiome.usage.event/v1` events, at most 2097152 bytes (s
 | 422 | `usage-body-not-accepted`: a sample was sent while the body window is closed. | — |
 | 429 | `usage-quota-exceeded`: over today's cap; `retryAt` says when it resets. | — |
 
+## `POST /v1/tenants/{tenant_slug}/usage/sdk-beacon` {#report-sdk-beacon-v1-tenants-tenant-slug-usage-sdk-beacon-post}
+
+**Report SDK compatibility beacon counts**
+
+The door an **opted-in** generated SDK reports to (`apiome.sdk.beacon/v1`). Each event is an aggregated count of calls of one operation with one outcome — `ok`, `client_error`, `server_error`, `network` or `incompatible` — and names only the SDK and its version, the API version and published revision the SDK was generated from, and the operation id. There is no field for a body, header, status code, latency, URL, host, credential or caller identifier; unknown keys are refused (`422`).
+
+Counts land on the UTC day the server receives the report. Events naming a revision that is not a published revision of the source's project are rejected by index.
+
+Requires a workspace API key with the `usage:ingest` scope (or full access) and an enabled usage source of kind `sdk_beacon`: `403 usage-source-disabled` when the tenant has switched it off, `409 usage-source-kind-mismatch` for another kind of source.
+
+Operation id: `report_sdk_beacon_v1_tenants__tenant_slug__usage_sdk_beacon_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `X-Apiome-Usage-Source` | header | string or null | no | The `sdk_beacon` usage source. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for report sdk compatibility beacon counts.
+
+- `application/json` — [`SdkBeaconBatch`](#schema-sdkbeaconbatch)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for report sdk compatibility beacon counts. | `application/json` [`SdkBeaconResponse`](#schema-sdkbeaconresponse) |
+| 400 | No source named, or the header and body name different sources. | — |
+| 403 | Not a workspace API key, or the source is disabled. | — |
+| 404 | Unknown source. | — |
+| 409 | `usage-source-kind-mismatch`: the source is not an `sdk_beacon` source. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/usage/sdk-beacons` {#read-sdk-beacons-v1-tenants-tenant-slug-usage-sdk-beacons-get}
+
+**Read a project's SDK beacon counts**
+
+Beacon calls over the last `days` UTC days (default 30, at most 400), grouped by `spec_revision_id`, `api_version`, `sdk_name`, `sdk_version`, `operation_id` and `outcome` — the keys of the SDK kit's compatibility manifest (`manifest.json` → `operations[].operation_id`, built for one published revision) — so incompatibilities can be lined up with the manifest they were generated from.
+
+Requires `consumer_contracts:view`.
+
+Operation id: `read_sdk_beacons_v1_tenants__tenant_slug__usage_sdk_beacons_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project` | query | string | yes | Project slug or id. |
+| `days` | query | integer | no | Query parameter: days. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a project's sdk beacon counts. | `application/json` [`SdkBeaconCounts`](#schema-sdkbeaconcounts) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
+
+### `HTTPValidationError` {#schema-httpvalidationerror}
+
+Validation error response emitted when request data fails schema checks.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `detail` | array of `ValidationError` | no | Detail. |
+
+### `SdkBeaconBatch` {#schema-sdkbeaconbatch}
+
+One report from an SDK.
+
+Attributes:
+    schema_id: Always ``apiome.sdk.beacon/v1``.
+    source_id: The ``sdk_beacon`` usage source, unless the ``X-Apiome-Usage-Source`` header names it.
+    events: The aggregated events.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `schema` | `"apiome.sdk.beacon/v1"` | no | Embedded JSON Schema document. |
+| `source_id` | string (uuid) or null | no | Source ID. |
+| `events` | array of `SdkBeaconEvent` | yes | Events. |
+
+### `SdkBeaconCounts` {#schema-sdkbeaconcounts}
+
+A project's beacon counts over a window.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project_id` | string | yes | Project identifier the resource belongs to. |
+| `days` | integer | yes | Days. |
+| `counts` | array of `SdkBeaconCount` | no | Most calls first. |
+
+### `SdkBeaconResponse` {#schema-sdkbeaconresponse}
+
+What happened to a report.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `source_id` | string | yes | Source ID. |
+| `received_at` | string (date-time) | yes | Received At timestamp (ISO 8601). |
+| `accepted` | integer | yes | Events counted. |
+| `calls` | integer | yes | Calls the counted events stood for. |
+| `rejected` | array of `SdkBeaconRejection` | no | Rejected. |
 
 ### `UsageIngestResponse` {#schema-usageingestresponse}
 

@@ -629,7 +629,7 @@ def test_an_untyped_success_body_is_handed_back_as_raw_json() -> None:
 def test_an_operation_with_no_declared_response_returns_only_an_error() -> None:
     text = _file(_generate(api=_api(operations=[_op("DELETE /c", "deleteComment", method="delete")])), "threads.go")
     assert "func (c *Client) DeleteComment(ctx context.Context) error {" in text
-    assert "c.do(req, nil)" in text
+    assert 'c.do(req, nil, "deleteComment")' in text
 
 
 def test_operations_are_grouped_into_one_file_per_service() -> None:

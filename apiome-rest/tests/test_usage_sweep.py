@@ -23,7 +23,7 @@ PURGED = {"hourly": 3, "samples": 1, "daily": 2, "fields": 4, "unmatched": 5, "b
 
 
 class FakeDb:
-    """Answers the sweep's four statements and records every call."""
+    """Answers the sweep's statements and records every call."""
 
     def __init__(self, *, locked: bool = True, purged: Any = None, fail_on: Optional[str] = None) -> None:
         self.locked = locked
@@ -40,6 +40,8 @@ class FakeDb:
             return [{"locked": self.locked}]
         if "rollup_usage_days" in query:
             return [{"days": 2}]
+        if "purge_usage_sdk_beacons" in query:
+            return [{"purged": 2}]
         if "purge_usage_unattributed" in query:
             return [{"purged": 7}]
         if "purge_usage" in query:
@@ -59,6 +61,7 @@ class FakeDb:
             "pg_try_advisory_lock",
             "rollup_usage_days",
             "purge_usage_unattributed",
+            "purge_usage_sdk_beacons",
             "purge_usage",
             "catalog_edges",
             "pg_advisory_unlock",
@@ -74,12 +77,13 @@ def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
         "rollup_usage_days",
         "purge_usage",
         "purge_usage_unattributed",
+        "purge_usage_sdk_beacons",
         "catalog_edges",
         "pg_advisory_unlock",
     ]
     assert db.calls[0][1] == (SWEEP_LOCK_KEY,) and db.calls[-1][1] == (SWEEP_LOCK_KEY,)
     assert db.calls[1][1] == (timedelta(hours=3),)
-    assert db.calls[2][1] == (50,) and db.calls[3][1] == (50,)
+    assert db.calls[2][1] == (50,) and db.calls[3][1] == (50,) and db.calls[4][1] == (50,)
     assert result == UsageSweepResult(
         days_rolled_up=2,
         hourly_purged=3,
@@ -89,6 +93,7 @@ def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
         unmatched_purged=5,
         batches_purged=6,
         unattributed_purged=7,
+        sdk_beacons_purged=2,
         runtime_tenants=0,
     )
 

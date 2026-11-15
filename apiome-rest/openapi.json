@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.571.0",
+    "version": "1.572.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -122671,6 +122671,249 @@
         }
       }
     },
+    "/v1/tenants/{tenant_slug}/usage/sdk-beacon": {
+      "post": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Report SDK compatibility beacon counts",
+        "description": "The door an **opted-in** generated SDK reports to (`apiome.sdk.beacon/v1`). Each event is an aggregated count of calls of one operation with one outcome \u2014 `ok`, `client_error`, `server_error`, `network` or `incompatible` \u2014 and names only the SDK and its version, the API version and published revision the SDK was generated from, and the operation id. There is no field for a body, header, status code, latency, URL, host, credential or caller identifier; unknown keys are refused (`422`).\n\nCounts land on the UTC day the server receives the report. Events naming a revision that is not a published revision of the source's project are rejected by index.\n\nRequires a workspace API key with the `usage:ingest` scope (or full access) and an enabled usage source of kind `sdk_beacon`: `403 usage-source-disabled` when the tenant has switched it off, `409 usage-source-kind-mismatch` for another kind of source.",
+        "operationId": "report_sdk_beacon_v1_tenants__tenant_slug__usage_sdk_beacon_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "X-Apiome-Usage-Source",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Report Sdkcompatibilitybeaconcounts Xapiome Usage Source schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Report Sdkcompatibilitybeaconcounts Xapiome Usage Source schema."
+                }
+              ],
+              "description": "The `sdk_beacon` usage source.",
+              "title": "X-Apiome-Usage-Source"
+            },
+            "description": "The `sdk_beacon` usage source."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Report Sdkcompatibilitybeaconcountsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Report Sdkcompatibilitybeaconcountsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Report Sdkcompatibilitybeaconcounts Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Report Sdkcompatibilitybeaconcounts Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SdkBeaconBatch",
+                "description": "Request body for report sdkcompatibilitybeaconcountsrequest."
+              }
+            }
+          },
+          "description": "Request body for report sdk compatibility beacon counts."
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response for report sdk compatibility beacon counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkBeaconResponse",
+                  "description": "Response payload for report sdkcompatibilitybeaconcountsresponse202."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No source named, or the header and body name different sources."
+          },
+          "403": {
+            "description": "Not a workspace API key, or the source is disabled."
+          },
+          "404": {
+            "description": "Unknown source."
+          },
+          "409": {
+            "description": "`usage-source-kind-mismatch`: the source is not an `sdk_beacon` source."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for report sdkcompatibilitybeaconcountsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/usage/sdk-beacons": {
+      "get": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Read a project's SDK beacon counts",
+        "description": "Beacon calls over the last `days` UTC days (default 30, at most 400), grouped by `spec_revision_id`, `api_version`, `sdk_name`, `sdk_version`, `operation_id` and `outcome` \u2014 the keys of the SDK kit's compatibility manifest (`manifest.json` \u2192 `operations[].operation_id`, built for one published revision) \u2014 so incompatibilities can be lined up with the manifest they were generated from.\n\nRequires `consumer_contracts:view`.",
+        "operationId": "read_sdk_beacons_v1_tenants__tenant_slug__usage_sdk_beacons_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project slug or id.",
+              "title": "Project"
+            },
+            "description": "Project slug or id."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 400,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days",
+              "description": "Days schema."
+            },
+            "description": "Query parameter: days."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprojects Sdkbeaconcountsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprojects Sdkbeaconcountsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprojects Sdkbeaconcounts Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprojects Sdkbeaconcounts Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a project's sdk beacon counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkBeaconCounts",
+                  "description": "Response payload for readaprojects sdkbeaconcountsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaprojects sdkbeaconcountsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/admin/users/{user_id}/two-factor/reset": {
       "post": {
         "tags": [
@@ -209672,6 +209915,303 @@
         ],
         "title": "ScopedCatalogPage",
         "description": "One bounded slice of a version's catalog (DUW-1.2).\n\nShared by the scoped class and path reads, because a client pages both the same way and a\nsecond identically-shaped model would only invite the two to drift apart. ``items`` stays\nloosely typed for the same reason the legacy full-version read does: a class carries JSONB\n``schema``/``canvas_metadata`` and nested property rows, a path carries JSONB ``metadata`` and\noperations, and pinning either here would make an additive column a breaking change.\n\n``total`` is the size of the *whole* selection, not of this page \u2014 the folder's membership for\na domain listing \u2014 so the workspace can compare it against its node budget before hydrating\nanything further."
+      },
+      "SdkBeaconBatch": {
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "apiome.sdk.beacon/v1",
+            "title": "Schema",
+            "default": "apiome.sdk.beacon/v1",
+            "description": "Embedded JSON Schema document.",
+            "example": "apiome.sdk.beacon/v1"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "description": "Sdk Beacon Batch schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Beacon Batch schema."
+              }
+            ],
+            "title": "Source Id",
+            "description": "Source ID."
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SdkBeaconEvent"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Events",
+            "description": "Events."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "SdkBeaconBatch",
+        "description": "One report from an SDK.\n\nAttributes:\n    schema_id: Always ``apiome.sdk.beacon/v1``.\n    source_id: The ``sdk_beacon`` usage source, unless the ``X-Apiome-Usage-Source`` header names it.\n    events: The aggregated events."
+      },
+      "SdkBeaconCount": {
+        "properties": {
+          "spec_revision_id": {
+            "type": "string",
+            "title": "Spec Revision Id",
+            "description": "The published revision the SDK was generated from.",
+            "example": "spec_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "api_version": {
+            "type": "string",
+            "title": "Api Version",
+            "description": "API Version.",
+            "example": "1.0.0"
+          },
+          "sdk_name": {
+            "type": "string",
+            "title": "Sdk Name",
+            "description": "Sdk Name.",
+            "example": "Example"
+          },
+          "sdk_version": {
+            "type": "string",
+            "title": "Sdk Version",
+            "description": "Sdk Version.",
+            "example": "1.0.0"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id",
+            "description": "The SDK kit manifest's operation id.",
+            "example": "getPetById"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "One of `ok`, `client_error`, `server_error`, `network`, `incompatible`.",
+            "example": "example"
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls.",
+            "example": 1
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At",
+            "description": "First Seen At timestamp (ISO 8601).",
+            "example": "2026-11-15T05:22:09Z"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen At",
+            "description": "Last Seen At timestamp (ISO 8601).",
+            "example": "2026-11-15T05:22:09Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "spec_revision_id",
+          "api_version",
+          "sdk_name",
+          "sdk_version",
+          "operation_id",
+          "outcome",
+          "calls",
+          "first_seen_at",
+          "last_seen_at"
+        ],
+        "title": "SdkBeaconCount",
+        "description": "Beacon calls for one revision, SDK version, operation and outcome."
+      },
+      "SdkBeaconCounts": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days",
+            "description": "Days.",
+            "example": 1
+          },
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/SdkBeaconCount"
+            },
+            "type": "array",
+            "title": "Counts",
+            "description": "Most calls first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id",
+          "days"
+        ],
+        "title": "SdkBeaconCounts",
+        "description": "A project's beacon counts over a window."
+      },
+      "SdkBeaconEvent": {
+        "properties": {
+          "sdk_name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._/-]{0,63}$",
+            "title": "Sdk Name",
+            "description": "The SDK's name, lower case (`acme-go`).",
+            "example": "Example"
+          },
+          "sdk_version": {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$",
+            "title": "Sdk Version",
+            "description": "The SDK's own version (`1.4.0`).",
+            "example": "1.0.0"
+          },
+          "api_version": {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$",
+            "title": "Api Version",
+            "description": "The API version it was generated for.",
+            "example": "1.0.0"
+          },
+          "spec_revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Spec Revision Id",
+            "description": "The published revision it was generated from (kit manifest).",
+            "example": "spec_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "operation_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.:/{} -]{0,254}$",
+            "title": "Operation Id",
+            "description": "The kit manifest's operation id.",
+            "example": "getPetById"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "client_error",
+              "server_error",
+              "network",
+              "incompatible"
+            ],
+            "title": "Outcome",
+            "description": "`ok`, `client_error` (4xx), `server_error` (5xx), `network` (no response) or `incompatible` (a 2xx the SDK could not decode against the contract).",
+            "example": "ok"
+          },
+          "count": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "description": "Calls this event stands for.",
+            "default": 1,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sdk_name",
+          "sdk_version",
+          "api_version",
+          "spec_revision_id",
+          "operation_id",
+          "outcome"
+        ],
+        "title": "SdkBeaconEvent",
+        "description": "How many calls of one operation ended with one outcome.\n\nAttributes:\n    sdk_name: The SDK's name (its module or package, lower case).\n    sdk_version: The SDK's own version.\n    api_version: The API version the SDK was generated for.\n    spec_revision_id: The published revision the SDK was generated from.\n    operation_id: The operation, as the kit manifest names it.\n    outcome: The outcome category.\n    count: How many calls this event stands for."
+      },
+      "SdkBeaconRejection": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index",
+            "description": "The event's position in the report (0-based).",
+            "example": 1
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "`revision-unknown`: not a published revision of the source's project.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index",
+          "reason"
+        ],
+        "title": "SdkBeaconRejection",
+        "description": "One rejected event \u2014 its index and why, never its content."
+      },
+      "SdkBeaconResponse": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id",
+            "description": "Source ID.",
+            "example": "source_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At",
+            "description": "Received At timestamp (ISO 8601).",
+            "example": "2026-11-15T05:22:09Z"
+          },
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted",
+            "description": "Events counted.",
+            "example": 1
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls the counted events stood for.",
+            "example": 1
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/SdkBeaconRejection"
+            },
+            "type": "array",
+            "title": "Rejected",
+            "description": "Rejected.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_id",
+          "received_at",
+          "accepted",
+          "calls"
+        ],
+        "title": "SdkBeaconResponse",
+        "description": "What happened to a report."
       },
       "SdkDownloadModel": {
         "properties": {

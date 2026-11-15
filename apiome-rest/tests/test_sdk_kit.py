@@ -169,6 +169,8 @@ def test_the_kit_carries_a_readme_manifest_spec_and_one_snippet_per_language() -
         "go/errors.go",
         "go/examples/widgets/main.go",
         "go/go.mod",
+        # RDG-1.7 (#4736): the opt-in compatibility beacon (off unless WithTelemetry).
+        "go/telemetry.go",
         "go/widgets.go",
         "manifest.json",
         # SDK-4.5 (#4499): the MCP server, under `mcp/` — one tool per operation.

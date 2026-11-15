@@ -170,6 +170,7 @@ from .shadow_api_routes import router as shadow_api_router
 from .signup_policy_routes import router as signup_policy_router
 from .portal_auth_routes import router as portal_auth_router
 from .consumer_feedback_routes import router as consumer_feedback_router
+from .sdk_beacon_routes import router as sdk_beacon_router
 from .slate_agent_outputs_routes import router as slate_agent_outputs_router
 from .slate_cache_routes import router as slate_cache_router
 from .slate_cdn_routes import router as slate_cdn_router
@@ -229,7 +230,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.571.0",
+    version="1.572.0",
 )
 
 
@@ -657,6 +658,7 @@ app.include_router(internal_auth_event_router)
 app.include_router(signup_policy_router)
 app.include_router(portal_auth_router)
 app.include_router(consumer_feedback_router)
+app.include_router(sdk_beacon_router)
 app.include_router(two_factor_reset_admin_router)
 app.include_router(two_factor_reset_member_router)
 
