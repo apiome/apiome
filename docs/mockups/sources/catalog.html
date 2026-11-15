@@ -41,7 +41,20 @@
   .tree-row .kind { min-width: 66px; }
   .fmt { white-space: nowrap; }
   .table .cell-sub, .table td.t-num { white-space: nowrap; }
-  .table-wrap[data-tab-panel="table"] { overflow-x: auto; }
+  .scroll-x[data-tab-panel="table"] { overflow-x: auto; }
+  .cat-cards { padding: var(--space-4); }
+  /* Quiet list page (DESIGN.md §8, HIVE-11.6): header link, facts line, first-visit callout */
+  .about-link { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-fg); font-size: var(--fs-sm); background: none; border: 0; padding: 0; cursor: pointer; }
+  .about-link [data-lucide] { width: 13px; height: 13px; }
+  .about-link:hover { text-decoration: underline; }
+  .facts { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--fg); font-weight: 600; }
+  .facts .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-faint); }
+  .facts .fmt { height: 18px; font-size: var(--fs-2xs); }
+  .facts-toggle { margin-left: auto; }
+  .callout--dismiss { display: flex; align-items: flex-start; gap: 10px; background: var(--accent-soft); color: var(--accent-fg); border-left: 0; }
+  .callout--dismiss [data-lucide] { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
+  .callout--dismiss .callout__actions { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
   .tree-row .loc { margin-left: auto; color: var(--fg-subtle); font-family: var(--font-mono); font-size: var(--fs-2xs); white-space: nowrap; flex-shrink: 0; }
   .tree-row > .mono { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tree-row .badge { flex-shrink: 0; }
@@ -56,7 +69,7 @@
         <div>
           <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Bring in</span><i data-lucide="chevron-right"></i><span>Catalog</span></div>
           <h1 class="page-title">Catalog</h1>
-          <p class="page-desc">Non-OpenAPI specs, stored as-is and converted only when you’re ready.</p>
+          <p class="page-desc">Non-OpenAPI specs, stored as-is and converted only when you’re ready. <button class="about-link" data-action="open" data-target="about-catalog"><i data-lucide="circle-help"></i>How the catalog works</button></p>
         </div>
         <div class="page-actions">
           <label class="row gap-2 t-sm t-muted" style="margin-right:6px"><button class="switch switch--sm is-on" role="switch" aria-checked="true" data-action="switch"></button>Show deleted</label>
@@ -67,77 +80,48 @@
   </header>
 
   <div class="page-body">
-    <!-- Non-publishable note (always visible, role=note) -->
-    <div class="banner" role="note">
+    <!-- First visit only (hive.seen.catalog-explainer): the explainer, once, with a way back.
+         Hidden here — the page is drawn as a returning reader sees it; see Notes → States. -->
+    <div class="callout callout--dismiss" role="note" id="catalog-explainer" hidden>
       <i data-lucide="info"></i>
-      <div><span class="banner-title">Catalog items are non-publishable.</span> <span class="banner-body">They come from formats that don’t map 1:1 to OpenAPI (gRPC, GraphQL, AsyncAPI, OData, WSDL, Avro, RAML, Smithy, TypeSpec, API Blueprint…). They are cataloged, versioned, diffed &amp; linted like Projects — but the only path to a publishable spec is <strong>Convert to OpenAPI</strong> (with a fidelity preview). OpenAPI/Swagger imports still land in <a href="../build/projects.html">Projects</a>.</span></div>
+      <div><span class="t-600">Catalog items are non-publishable.</span> They come from formats that don’t map 1:1 to OpenAPI (gRPC, GraphQL, AsyncAPI, OData, WSDL…). They are cataloged, versioned, diffed &amp; linted like Projects — the path to a publishable spec is <b>Convert to OpenAPI</b>. OpenAPI/Swagger imports land in <a href="../build/projects.html">Projects</a>.</div>
+      <div class="callout__actions"><button class="btn btn--sm btn--ghost" data-action="open" data-target="about-catalog">Learn more</button><button class="btn btn--sm" data-action="toggle" data-target="catalog-explainer">Got it</button></div>
     </div>
 
-    <!-- Supported import formats (collapsible; default collapsed) -->
-    <section class="card">
-      <button class="card__header w-full" style="text-align:left;border-bottom:0" data-action="toggle" data-target="fmt-panel" aria-expanded="false" aria-controls="fmt-panel">
-        <div class="card__title"><i data-lucide="layers"></i>Supported import formats<span class="t-xs t-subtle t-500">44 alternative formats importable now · 0 more recognized</span></div>
-        <div class="row gap-2"><span class="fmt fmt--proto">Protobuf</span><span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--asyncapi">AsyncAPI</span><span class="fmt fmt--x12">EDI X12</span><span class="fmt fmt--copybook">Copybook</span><span class="fmt fmt--generic">+39</span><i data-lucide="chevron-down" class="t-subtle"></i></div>
-      </button>
-      <div id="fmt-panel" hidden style="border-top:1px solid var(--border)">
-        <div class="card__body">
-          <div class="row gap-2 mb-3"><span class="badge badge--ok">Importable now</span><span class="t-xs t-muted">Stored as-is; convert to OpenAPI later</span></div>
-          <div class="grid grid-4" style="gap:8px">
-            <a class="fmt-chip" href="#" target="_blank" rel="noopener" aria-label="gRPC / Protobuf technical documentation (opens in new tab)"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="cable"></i></span><div><div class="fc-title">gRPC / Protobuf</div><div class="fc-desc">Service + message definitions</div></div></a>
-            <a class="fmt-chip" href="#" target="_blank" rel="noopener"><span class="icon-tile icon-tile--sm icon-tile--rose"><i data-lucide="share-2"></i></span><div><div class="fc-title">GraphQL</div><div class="fc-desc">SDL schemas</div></div></a>
-            <a class="fmt-chip" href="#" target="_blank" rel="noopener"><span class="icon-tile icon-tile--sm icon-tile--violet"><i data-lucide="radio"></i></span><div><div class="fc-title">AsyncAPI</div><div class="fc-desc">Event-driven APIs</div></div></a>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--violet"><i data-lucide="cloud"></i></span><div><div class="fc-title">CloudEvents</div><div class="fc-desc">Event envelope schemas</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="plug"></i></span><div><div class="fc-title">Connect · Thrift · Cap’n Proto</div><div class="fc-desc">RPC IDLs</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="box"></i></span><div><div class="fc-title">WIT (WebAssembly) · FlatBuffers</div><div class="fc-desc">Component / buffer IDLs</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="terminal"></i></span><div><div class="fc-title">CORBA IDL · ONC RPC · XML-RPC · OpenRPC</div><div class="fc-desc">Legacy &amp; JSON RPC</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="file-code-2"></i></span><div><div class="fc-title">RAML · WADL · API Blueprint</div><div class="fc-desc">REST description formats</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="send"></i></span><div><div class="fc-title">Postman · HTTP Request File</div><div class="fc-desc">Collections &amp; .http files</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="waypoints"></i></span><div><div class="fc-title">Kong config · Gateway API HTTPRoute</div><div class="fc-desc">Gateway declarations</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="database"></i></span><div><div class="fc-title">OData · WSDL · Google Discovery</div><div class="fc-desc">Service descriptions</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="pen-line"></i></span><div><div class="fc-title">Smithy · TypeSpec</div><div class="fc-desc">Modelling languages</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="workflow"></i></span><div><div class="fc-title">Arazzo</div><div class="fc-desc">Workflows (routes to Projects)</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="bot"></i></span><div><div class="fc-title">LLM Tools</div><div class="fc-desc">Agent tool manifests</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--warn"><i data-lucide="braces"></i></span><div><div class="fc-title">JSON Schema · JTD · XSD · ASN.1</div><div class="fc-desc">Data schemas (JSON Schema asks first)</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--warn"><i data-lucide="table-2"></i></span><div><div class="fc-title">Avro · Kubernetes CRD · COBOL Copybook</div><div class="fc-desc">Data schemas</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--rose"><i data-lucide="heart-pulse"></i></span><div><div class="fc-title">FHIR · HL7 v2</div><div class="fc-desc">Healthcare</div></div></div>
-            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--danger"><i data-lucide="landmark"></i></span><div><div class="fc-title">EDI X12 · ISO 20022 · ISO 8583 · FIX</div><div class="fc-desc">Finance &amp; B2B</div></div></div>
-            <div class="fmt-chip is-unavailable"><span class="icon-tile icon-tile--sm"><i data-lucide="server"></i></span><div><div class="fc-title">z/OS Connect</div><div class="fc-desc t-warn">Unavailable in this runtime</div></div></div>
-          </div>
-          <div class="row gap-2 mt-4 mb-2"><span class="badge badge--outline">Recognized — not yet importable</span><span class="t-xs t-muted">Detected and labelled; import support is on the roadmap</span></div>
-          <div class="empty empty--inline empty--dashed" style="padding:12px 16px"><div class="t-xs t-subtle">Every recognized format is importable in this build — nothing is waiting on the roadmap.</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Stats row (hidden when the catalog is empty) -->
-    <section class="stat-grid stat-grid--4">
+    <!-- Facts line: the stat strip folded into one tabular line (DESIGN.md §8) -->
+    <div class="facts">
+      <span><b>7</b> items</span><span class="sep"></span>
+      <span class="row gap-1"><b>5</b> formats <span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--proto">gRPC</span><span class="fmt fmt--asyncapi">AsyncAPI</span><span class="fmt fmt--x12">EDI X12</span><span class="tag">+1</span></span><span class="sep"></span>
+      <span>avg quality <b>B · 82</b></span><span class="sep"></span>
+      <span><b>2</b> converted to OpenAPI</span><span class="sep"></span>
+      <span class="t-muted">1 deleted · 1 disabled</span>
+      <button class="btn btn--ghost btn--sm facts-toggle" data-action="toggle" data-target="stat-strip" aria-expanded="false" aria-controls="stat-strip"><i data-lucide="chart-no-axes-column"></i>Show stats</button>
+    </div>
+    <!-- The strip, unchanged, one click away; the choice is remembered per device (hive.catalog.stats) -->
+    <section class="stat-grid stat-grid--4" id="stat-strip" hidden>
       <div class="stat"><div class="stat__label"><i data-lucide="library"></i>Cataloged items</div><div class="stat__value">7</div><div class="stat__foot"><span class="row gap-1"><span class="badge badge--ok">6 active</span><span class="badge badge--warn">1 disabled</span></span></div></div>
       <div class="stat"><div class="stat__label"><i data-lucide="gauge"></i>Avg quality</div><div class="stat__value" style="color:var(--accent-fg)">B <small>· 82</small></div><div class="stat__foot"><span>across 7 items</span></div></div>
       <div class="stat"><div class="stat__label"><i data-lucide="layers"></i>Formats represented</div><div class="stat__value">5</div><div class="stat__foot"><span class="badge badge--outline t-truncate" style="max-width:100%">GraphQL · gRPC / Protobuf · AsyncAPI · EDI X12 …</span></div></div>
       <div class="stat"><div class="stat__label"><i data-lucide="git-merge"></i>Converted to OpenAPI</div><div class="stat__value">2</div><div class="stat__foot"><span class="badge badge--info">promotion path</span></div></div>
     </section>
 
-    <!-- Toolbar (sticky in production) -->
-    <div class="col gap-3">
-      <div class="row-between wrap gap-3">
-        <div class="row gap-2 wrap">
+    <!-- One card owns the list: filters, view chips, sort, group, view switch and the views -->
+    <section class="table-wrap" aria-label="Catalog items">
+      <div class="table-toolbar wrap">
           <div class="input-wrap" style="width:230px"><i data-lucide="search"></i><input class="input" placeholder="Search name, slug, format, protocol…  ( / )" aria-label="Filter catalog" /></div>
           <button class="btn" data-action="open" data-target="format-facet" aria-haspopup="menu"><i data-lucide="layers"></i>Format<span class="badge badge--ink" style="margin-left:2px">2</span><i data-lucide="chevron-down"></i></button>
           <select class="select" style="width:136px" aria-label="Protocol"><option>All protocols</option><option>REST</option><option>RPC</option><option>Event</option><option>Graph</option><option>Data Schema</option><option>Agent</option></select>
           <select class="select" style="width:136px" aria-label="Source"><option>All sources</option><option>Uploaded file</option><option>Source URL</option><option>Pasted content</option><option>Live discovery</option></select>
           <select class="select" style="width:116px" aria-label="Grade"><option>Any grade</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option><option>Unscored</option></select>
-        </div>
       </div>
-      <div class="row-between wrap gap-3">
-        <div class="row gap-2 wrap">
+      <div class="table-toolbar wrap" style="padding-top:0">
           <span class="t-caps" style="margin-right:2px">Views</span>
           <span class="chip is-active" data-action="chip">All <span class="t-faint">8</span></span>
           <span class="chip" data-action="chip">Active <span class="t-faint">6</span></span>
           <span class="chip" data-action="chip"><i data-lucide="triangle-alert"></i>Needs attention <span class="t-faint">1</span></span>
           <span class="chip" data-action="chip" data-tip="Turn on Show deleted to use this view">Deleted <span class="t-faint">1</span></span>
           <span class="chip is-active" data-tip="Applied from ?identityGroupId= — remove to show the whole catalog" style="margin-left:6px"><i data-lucide="link-2"></i>Identity group idg_7c21e9…<i data-lucide="x" class="x"></i></span>
-        </div>
-        <div class="row gap-2 wrap">
+        <span class="spacer"></span>
           <button class="btn btn--sm btn--ghost" data-action="open" data-target="sort-menu"><i data-lucide="arrow-up-down"></i>Sorted by name<i data-lucide="chevron-down"></i></button>
           <span class="t-caps">Group</span>
           <div class="segmented segmented--sm"><button class="is-active"><i data-lucide="rows-3"></i>Protocol</button><button>None</button></div>
@@ -146,13 +130,10 @@
             <button data-action="tab" data-target="table" data-tip="Table"><i data-lucide="list"></i>Table</button>
             <button data-action="tab" data-target="empty" data-tip="Mockup only: preview the empty state" style="opacity:.55"><i data-lucide="circle-dashed"></i></button>
           </div>
-        </div>
       </div>
-    </div>
-
     <div id="views">
     <!-- ===== Cards view (grouped by paradigm: Graph → RPC → Event → REST → Data Schema → Other) ===== -->
-    <section class="grid grid-3" data-tab-panel="cards">
+    <div class="grid grid-3 cat-cards" data-tab-panel="cards">
       <div class="group-hd">Graph · 2 items</div>
       <!-- Ledger Graph -->
       <article class="card card--hover cat-card" role="button" tabindex="0" onclick="location.href='catalog-item.html'">
@@ -333,10 +314,10 @@
         </div>
         <div class="card__footer" style="margin-top:auto"><div class="row gap-2"><span class="avatar avatar--xs avatar--e">MH</span><span class="t-xs">imported by Margaret Hamilton</span></div><span class="t-xs t-subtle">updated 12d ago</span></div>
       </article>
-    </section>
+    </div>
 
     <!-- ===== Table view ===== -->
-    <section class="table-wrap" data-tab-panel="table" hidden>
+    <div class="scroll-x" data-tab-panel="table" hidden>
       <table class="table">
         <thead><tr>
           <th class="cell-check"><label class="check"><input type="checkbox" aria-label="Select all"/></label></th>
@@ -452,19 +433,20 @@
         </tbody>
       </table>
       <div class="table-foot"><span>8 items · sorted by Artifact ↑</span><span class="row gap-2"><span>Rows per page</span><select class="select select--sm" style="width:64px"><option>25</option><option>50</option></select></span></div>
-    </section>
+    </div>
 
-    <!-- ===== Empty state (mock preview) ===== -->
-    <section class="card" data-tab-panel="empty" hidden>
+    <!-- ===== Empty state (mock preview) — inside the card ===== -->
+    <div data-tab-panel="empty" hidden>
       <div class="empty" style="padding:56px 24px">
         <div class="empty__art"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="book-open"></i></div>
         <div class="empty__title">Your catalog is empty</div>
         <div class="empty__desc">The catalog holds <strong>OpenAPI-worthy non-OpenAPI imports</strong> — specs in formats other than OpenAPI/Swagger that aren’t publishable Projects yet. Bring in a supported source (gRPC/Protobuf, GraphQL, AsyncAPI, X12…); it is stored in its original format and converted only when you’re ready.</div>
-        <div class="empty__actions"><button class="btn btn--primary" data-action="open" data-target="import-wizard"><i data-lucide="upload"></i>Import to catalog</button><a class="btn" href="#">Supported formats</a></div>
+        <div class="empty__actions"><button class="btn btn--primary" data-action="open" data-target="import-wizard"><i data-lucide="upload"></i>Import to catalog</button><button class="btn" data-action="open" data-target="about-catalog">Supported formats</button></div>
       </div>
-      <div class="card__footer"><span class="t-xs">Filter miss variant: “No catalog items match your filters or search.” with a <em>Clear filters</em> link.</span></div>
-    </section>
+      <div class="table-foot"><span class="t-xs">Filter miss variant: “No catalog items match your filters or search.” with a <em>Clear filters</em> link.</span></div>
     </div>
+    </div>
+    </section>
 
     <!-- Bulk bar (appears with row selection in table view) -->
     <div class="bulk-bar" hidden id="bulk-bar"><span>2 selected</span><button class="btn btn--sm"><i data-lucide="git-merge"></i>Convert…</button><button class="btn btn--sm"><i data-lucide="file-output"></i>Export…</button><button class="btn btn--sm"><i data-lucide="trash-2"></i>Delete</button><button class="btn btn--sm btn--icon" aria-label="Clear selection"><i data-lucide="x"></i></button></div>
@@ -472,6 +454,49 @@
 </main>
 
 <!-- ===== Overlays ===== -->
+
+<!-- How the catalog works (HIVE-11.6): the explainer and the formats list, one click from the header -->
+<div class="overlay" id="about-catalog" data-overlay>
+  <div class="dialog dialog--lg" role="dialog" aria-labelledby="about-title">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="library"></i></span><div><div class="dialog__title" id="about-title">How the catalog works</div><div class="dialog__desc">Stored as-is, converted when you’re ready.</div></div><button class="btn btn--ghost btn--icon dialog__close" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="dialog__body col gap-4">
+      <div class="col gap-2 t-sm">
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="file-input"></i></span><div><div class="t-600">Catalog items are stored as-is</div><div class="t-muted">gRPC, GraphQL, AsyncAPI, OData, WSDL, Avro, RAML, Smithy, TypeSpec, API Blueprint and 30+ more are kept in their original format, versioned, diffed and linted like Projects.</div></div></div>
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="route"></i></span><div><div class="t-600">They are not publishable until converted</div><div class="t-muted">The one path to a publishable spec is <b>Convert to OpenAPI</b>, with a fidelity preview before you commit.</div></div></div>
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="folder-kanban"></i></span><div><div class="t-600">OpenAPI and Swagger go to Projects</div><div class="t-muted">Importing one of those never creates a catalog item — it lands in <a href="../build/projects.html">Projects</a> directly.</div></div></div>
+      </div>
+      <div>
+        <div class="row-between mb-2"><div class="t-caps">Supported import formats</div><span class="t-xs t-subtle">44 alternative formats importable now · 0 more recognized</span></div>
+        <div class="row gap-2 mb-3"><span class="badge badge--ok">Importable now</span><span class="t-xs t-muted">Stored as-is; convert to OpenAPI later</span></div>
+          <div class="grid grid-4" style="gap:8px">
+            <a class="fmt-chip" href="#" target="_blank" rel="noopener" aria-label="gRPC / Protobuf technical documentation (opens in new tab)"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="cable"></i></span><div><div class="fc-title">gRPC / Protobuf</div><div class="fc-desc">Service + message definitions</div></div></a>
+            <a class="fmt-chip" href="#" target="_blank" rel="noopener"><span class="icon-tile icon-tile--sm icon-tile--rose"><i data-lucide="share-2"></i></span><div><div class="fc-title">GraphQL</div><div class="fc-desc">SDL schemas</div></div></a>
+            <a class="fmt-chip" href="#" target="_blank" rel="noopener"><span class="icon-tile icon-tile--sm icon-tile--violet"><i data-lucide="radio"></i></span><div><div class="fc-title">AsyncAPI</div><div class="fc-desc">Event-driven APIs</div></div></a>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--violet"><i data-lucide="cloud"></i></span><div><div class="fc-title">CloudEvents</div><div class="fc-desc">Event envelope schemas</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="plug"></i></span><div><div class="fc-title">Connect · Thrift · Cap’n Proto</div><div class="fc-desc">RPC IDLs</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="box"></i></span><div><div class="fc-title">WIT (WebAssembly) · FlatBuffers</div><div class="fc-desc">Component / buffer IDLs</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="terminal"></i></span><div><div class="fc-title">CORBA IDL · ONC RPC · XML-RPC · OpenRPC</div><div class="fc-desc">Legacy &amp; JSON RPC</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="file-code-2"></i></span><div><div class="fc-title">RAML · WADL · API Blueprint</div><div class="fc-desc">REST description formats</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="send"></i></span><div><div class="fc-title">Postman · HTTP Request File</div><div class="fc-desc">Collections &amp; .http files</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="waypoints"></i></span><div><div class="fc-title">Kong config · Gateway API HTTPRoute</div><div class="fc-desc">Gateway declarations</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="database"></i></span><div><div class="fc-title">OData · WSDL · Google Discovery</div><div class="fc-desc">Service descriptions</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="pen-line"></i></span><div><div class="fc-title">Smithy · TypeSpec</div><div class="fc-desc">Modelling languages</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="workflow"></i></span><div><div class="fc-title">Arazzo</div><div class="fc-desc">Workflows (routes to Projects)</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="bot"></i></span><div><div class="fc-title">LLM Tools</div><div class="fc-desc">Agent tool manifests</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--warn"><i data-lucide="braces"></i></span><div><div class="fc-title">JSON Schema · JTD · XSD · ASN.1</div><div class="fc-desc">Data schemas (JSON Schema asks first)</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--warn"><i data-lucide="table-2"></i></span><div><div class="fc-title">Avro · Kubernetes CRD · COBOL Copybook</div><div class="fc-desc">Data schemas</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--rose"><i data-lucide="heart-pulse"></i></span><div><div class="fc-title">FHIR · HL7 v2</div><div class="fc-desc">Healthcare</div></div></div>
+            <div class="fmt-chip"><span class="icon-tile icon-tile--sm icon-tile--danger"><i data-lucide="landmark"></i></span><div><div class="fc-title">EDI X12 · ISO 20022 · ISO 8583 · FIX</div><div class="fc-desc">Finance &amp; B2B</div></div></div>
+            <div class="fmt-chip is-unavailable"><span class="icon-tile icon-tile--sm"><i data-lucide="server"></i></span><div><div class="fc-title">z/OS Connect</div><div class="fc-desc t-warn">Unavailable in this runtime</div></div></div>
+          </div>
+          <div class="row gap-2 mt-4 mb-2"><span class="badge badge--outline">Recognized — not yet importable</span><span class="t-xs t-muted">Detected and labelled; import support is on the roadmap</span></div>
+          <div class="empty empty--inline empty--dashed" style="padding:12px 16px"><div class="t-xs t-subtle">Every recognized format is importable in this build — nothing is waiting on the roadmap.</div></div>
+      </div>
+    </div>
+    <div class="dialog__footer"><a class="btn btn--ghost" href="../../../apiome-docs/docs/bring-in/supported-formats.md"><i data-lucide="book-open"></i>Supported formats guide</a><button class="btn btn--primary" data-action="close">Got it</button></div>
+  </div>
+</div>
+
 
 <!-- Format facet menu -->
 <div class="overlay" id="format-facet" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:330px 0 0 610px">
@@ -715,7 +740,7 @@
         <div class="grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px">
           <div class="col gap-4">
             <div>
-              <div class="t-caps mb-2">Choose a source</div>
+              <div class="row-between mb-2"><div class="t-caps">Choose a source</div><button class="about-link" data-action="open" data-target="about-catalog"><i data-lucide="circle-help"></i>Which formats can I import?</button></div>
               <div class="grid grid-4" style="gap:8px">
                 <button class="card card--flat card--pad" style="text-align:left"><span class="icon-tile icon-tile--accent"><i data-lucide="file-up"></i></span><div class="t-sm t-600 mt-2">File upload</div><div class="t-xs t-muted">Drop files or click to browse</div></button>
                 <button class="card card--flat card--pad" style="text-align:left"><span class="icon-tile icon-tile--accent"><i data-lucide="link"></i></span><div class="t-sm t-600 mt-2">URL import</div><div class="t-xs t-muted">Fetch from URL or repository</div></button>
@@ -971,8 +996,10 @@
   <ul><li><code>ade/dashboard/catalog/page.tsx</code>, <code>CatalogItemCard</code>, <code>CatalogStatsRow</code>, <code>CatalogFormatFacet</code>, <code>CatalogNonPublishableBanner</code>, <code>CatalogSupportedFormats</code>, <code>CatalogImportDialog</code> (+ QualityStep, PreviewPanel, ReimportDelta, ProjectionGraph, BundlePanel, BulkImportPanel, RecentAsyncJobsPanel), <code>ConversionPreviewDialog</code>, <code>CatalogLintReportDialog</code>, <code>ProjectQualityHistoryDialog</code>.</li></ul>
   <h4>Keeps (1:1)</h4>
   <ul>
-    <li>Header: Import CTA (only with a session user) · Show deleted switch. Non-publishable <code>role=note</code> banner (verbatim copy, not dismissible). Supported-formats collapsible (44 importable · 0 recognized-only; unavailable adapters dimmed with “Unavailable in this runtime”; doc chips open in a new tab).</li>
-    <li>Stats row (hidden when empty): Cataloged items (active/disabled badges) · Avg quality “Grade · score” tier-tinted · Formats represented (≤4 families + …) · Converted to OpenAPI (“promotion path”).</li>
+    <li>Header: Import CTA (only with a session user) · Show deleted switch · <b>How the catalog works</b> ghost link in the description, opening a dialog with the non-publishable explainer (verbatim points) and the supported-formats list (44 importable · 0 recognized-only; unavailable adapters dimmed with “Unavailable in this runtime”; doc chips open in a new tab). The same dialog opens from Import step 1 (“Which formats can I import?”).</li>
+    <li>First visit only: the explainer as a dismissible <code>.callout--dismiss</code> (<code>DismissibleCallout id="catalog-explainer"</code>) with <b>Learn more</b> (opens the dialog) and <b>Got it</b> (persists <code>hive.seen.catalog-explainer</code>). Dismissing never hides information.</li>
+    <li>Facts line (<code>FactsLine</code>, hidden when empty): items · formats (pills) · avg quality “Grade · score” · converted to OpenAPI · deleted/disabled, with <b>Show stats</b> revealing the unchanged stats row in place (remembered per device, <code>hive.catalog.stats</code>): Cataloged items (active/disabled badges) · Avg quality tier-tinted · Formats represented (≤4 families + …) · Converted to OpenAPI (“promotion path”).</li>
+    <li>One card (<code>.table-wrap</code>) owns the toolbar rows, the views and the empty state.</li>
     <li>Toolbar: search (name/slug/description/format/protocol/alias tokens), Format facet (multi-select, “Formats” + Clear, pruned automatically), Cards|Table, Group Protocol|None (cards only), Views chips All/Active/Needs attention/Deleted (Deleted gated: “Turn on Show deleted to use this view”), sort menu Name/Created/Updated/Quality/Grade/Format (click active flips ↑↓); prefs persisted in <code>apiome.catalog.view-preferences.v1</code>.</li>
     <li>Cards grouped Graph → RPC → Event → REST → Data Schema → Other with “LABEL · n items” headers; card = hex initials, name, <code>cat_xxxxx · slug</code>, status pill, 2-line summary or “No description yet.”, FormatPill + ProtocolPill + SourceBadge (or “Format pending”), Quality/Lint/Debt orbs (Debt inert “Technical debt (not yet computed)”), versions count, ConvertedBadge “Converted →/Re-converted →” (struck-through when the target project is deleted), footer “imported by … / updated …”; deleted/disabled cards get the amber treatment + Undelete / Permanently delete.</li>
     <li>Table: Artifact · Format · Protocol · Source · Quality (button “Open quality score” or “—” “No quality score captured yet”) · Grade (GradeChip or “–”) · Status (Enabled/Disabled + red Deleted) · Updated (MM/DD/YY hh:mm) · Actions, all sortable with <code>aria-sort</code>; deleted rows keep the inline green Undelete button.</li>
@@ -987,11 +1014,20 @@
   <h4>States</h4>
   <ul>
     <li>No session: “Loading catalog…”. No tenant: <code>.empty</code> lock “No tenant selected — Please select a tenant before browsing the catalog.” + Go to Tenants. Loading: skeleton cards/rows (<code>aria-busy</code>).</li>
-    <li>Empty (stats hidden, toolbar kept): “Your catalog is empty” + verbatim guidance. Filter miss: “No catalog items match your filters or search.” Format facet disabled when “No formats to filter yet”. Fetch error: inline <code>.banner--danger</code> with Retry (today: silent console error).</li>
+    <li>Empty (facts line reads “0 items” with no Show stats; toolbar kept): “Your catalog is empty” + verbatim guidance, inside the card. Filter miss: “No catalog items match your filters or search.” Format facet disabled when “No formats to filter yet”. Fetch error: inline <code>.banner--danger</code> with Retry (today: silent console error).</li>
+    <li>First visit: the explainer callout sits between the header and the facts line until <b>Got it</b>; a cleared storage shows it again.</li>
     <li>Wizard: Continue disabled on Projects / Not importable yet routing or unavailable adapter; Cancel disabled while storing; auto-advance when skip-quality is on and the verdict is non-blocking; blocked + override → “Import anyway” / “Recording waiver…”.</li>
   </ul>
+  <h4>History</h4>
+  <ul><li>Quiet pass adopted in HIVE-11.6 (#5602): the standing banner, the formats card and the stat strip became the header link + dialog, the first-visit callout and the facts line; the list moved into one card. The proposal and its callouts are kept as <code>proposals/catalog-quiet.html</code>.</li></ul>
 </template>
 <script>
+/* Show stats ⇄ Hide stats: the facts-line toggle keeps its label and aria-expanded in step with the strip. */
+document.addEventListener('hive:mounted', function () {
+  var t = document.querySelector('.facts-toggle'); if (!t) return;
+  // Read the strip after hive.js's document-level toggle has run on this click.
+  t.addEventListener('click', function () { setTimeout(function () { var open = !document.getElementById('stat-strip').hidden; t.setAttribute('aria-expanded', open); t.innerHTML = '<i data-lucide="chart-no-axes-column"></i>' + (open ? 'Hide stats' : 'Show stats'); if (window.Hive) Hive.icons(); }, 0); });
+});
 /* Nested-tab safe tab switcher (same contract as hive.js; only toggles panels that belong to the clicked group's scope). Also keeps .step is-active/is-done in sync. */
 (function () {
   document.addEventListener('click', function (e) {

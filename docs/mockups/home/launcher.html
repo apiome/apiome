@@ -7,23 +7,22 @@
 <link rel="stylesheet" href="../assets/hive.css" />
 <script src="../assets/hive.js" defer></script>
 <style>
-  /* page-local: launcher chrome (no rail) */
+  /* page-local: launcher chrome (no rail) — tokens only */
   .lch { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--page-pad); }
   .lch-top { height: 64px; display: flex; align-items: center; gap: 10px; }
   .lch-top .brand-word { font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.03em; }
-  .ver-badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: var(--r-full); font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 500; color: var(--fg-muted); box-shadow: inset 0 0 0 1px var(--border-strong); background: var(--bg-surface); }
-  .ver-badge:hover { color: var(--fg); background: var(--bg-subtle); }
-  .lch-hero { position: relative; padding-top: 64px; padding-bottom: 44px; }
+  .lch-hero { position: relative; padding-top: 48px; padding-bottom: 36px; }
   .lch-hero h1 { font-size: clamp(2.25rem, 3.6vw, 3rem); font-weight: 600; letter-spacing: -0.025em; line-height: 1.08; }
   .lch-hero .grad { background: linear-gradient(90deg, var(--accent), var(--accent-fg)); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .lch-hero .greet { font-size: var(--fs-lg); color: var(--fg-muted); font-weight: 500; }
-  .lch-hero .comb { position: absolute; right: -10px; top: 20px; width: 300px; height: 260px; pointer-events: none; animation: float 8s ease-in-out infinite; }
+  .lch-hero .comb { position: absolute; right: -10px; top: 10px; width: 300px; height: 260px; pointer-events: none; animation: float 8s ease-in-out infinite; }
   @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+  html[data-motion="reduce"] .lch-hero .comb { animation: none; }
   .lch-eyebrow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
-  .app-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+  .app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
   @media (max-width: 1100px) { .app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lch-hero .comb { display: none; } }
   @media (max-width: 640px) { .app-grid { grid-template-columns: 1fr; } }
-  .app-card { --_c: var(--accent); position: relative; display: flex; flex-direction: column; min-height: 236px; padding: 20px; color: inherit; text-decoration: none; overflow: hidden; text-align: left; width: 100%; }
+  .app-card { --_c: var(--accent); position: relative; display: flex; flex-direction: column; min-height: 212px; padding: 20px; color: inherit; text-decoration: none; overflow: hidden; text-align: left; width: 100%; }
   .app-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--_c), color-mix(in srgb, var(--_c) 20%, transparent)); }
   .app-card:hover { text-decoration: none; }
   .app-card__go { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--border-strong); color: var(--fg-muted); transition: all var(--dur-fast) var(--ease-out); }
@@ -31,34 +30,39 @@
   .app-card:hover .app-card__go { background: var(--fg); color: var(--bg-surface); box-shadow: none; }
   .app-card__tag { font-size: var(--fs-2xs); font-weight: 600; letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--fg-subtle); margin-top: 16px; }
   .app-card__name { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; margin-top: 2px; }
-  .app-card__desc { font-size: var(--fs-sm); color: var(--fg-muted); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .app-card__desc { font-size: var(--fs-sm); color: var(--fg-muted); margin-top: 6px; }
   .app-card__foot { margin-top: auto; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--fs-xs); color: var(--fg-subtle); }
-  .app-card.is-disabled { opacity: .6; cursor: not-allowed; }
-  .app-card.is-disabled:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .app-card--primary { box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .next-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); padding: 12px 2px 0; }
+  .next-line .tag { background: transparent; box-shadow: inset 0 0 0 1px var(--border-strong); }
   .res-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: inherit; text-decoration: none; }
   .res-row + .res-row { border-top: 1px solid var(--border); }
   .res-row:hover { text-decoration: none; }
   .res-row:hover .lr-title { color: var(--accent-fg); }
-  .res-row.is-disabled { opacity: .55; cursor: not-allowed; }
   .res-row .lr-title { font-size: var(--fs-sm); font-weight: 500; }
   .res-row .lr-sub { font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .ship-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; font-size: var(--fs-sm); }
+  .ship-row + .ship-row { border-top: 1px solid var(--border); }
+  .ship-row .when { margin-left: auto; font-size: var(--fs-xs); color: var(--fg-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .lch-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 28px; padding-bottom: 40px; font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .lch-foot button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .lch-foot button:hover { color: var(--fg); }
 </style>
 </head>
 <body data-shell="bare" data-page="home/launcher">
 <main class="page hex-bg glow-honey" style="overflow:hidden">
-  <!-- Minimal top row -->
+  <!-- Top row: brand · What’s new · preferences · account · sign out (the build string is in the footer) -->
   <header class="lch lch-top">
     <a class="row gap-2" href="launcher.html" style="color:inherit" title="Apiome home"><span class="brand-mark"></span><span class="brand-word">apiome</span></a>
-    <button class="ver-badge" data-action="open" data-target="whats-new" title="View What’s new"><span class="dot dot--honey" style="width:6px;height:6px"></span>v0.241.0 RC</button>
     <div class="ml-auto row gap-1">
+      <button class="btn btn--ghost btn--icon" aria-label="What’s new" data-tip="What’s new" data-action="open" data-target="whats-new" style="position:relative"><i data-lucide="sparkles"></i><span class="dot dot--honey" style="position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--honey)"></span></button>
       <button class="btn btn--ghost btn--icon" aria-label="Preferences" data-tip="Preferences (⌘,)" data-action="open" data-target="settings-pane"><i data-lucide="settings-2"></i></button>
       <a class="btn btn--ghost btn--pill" href="../account/profile.html" aria-label="Account menu for Ada Lovelace" style="padding-left:6px"><span class="avatar avatar--sm avatar--a">AL</span>Ada</a>
       <a class="btn btn--ghost btn--icon" href="../auth/login.html" aria-label="Sign out" data-tip="Sign out"><i data-lucide="log-out"></i></a>
     </div>
   </header>
 
-  <!-- Hero -->
+  <!-- Hero: shorter; the one primary CTA lives on the Control Panel card -->
   <section class="lch lch-hero">
     <svg class="comb" viewBox="0 0 300 260" aria-hidden="true">
       <g transform="translate(150 130)">
@@ -72,44 +76,35 @@
         <polygon points="0,-22 19,-11 19,11 0,22 -19,11 -19,-11" fill="var(--brand-navy)" opacity=".85"/>
       </g>
     </svg>
-    <span class="badge badge--honey badge--lg"><i data-lucide="sparkles"></i>Apiome platform</span>
-    <div class="greet mt-4">Good afternoon, Ada</div>
+    <div class="greet">Good afternoon, Ada</div>
     <h1 class="mt-1">Your API<br /><span class="grad">specification workspace</span></h1>
-    <p class="t-muted mt-4" style="font-size:var(--fs-lg);max-width:56ch">Govern projects and versions, publish to the public catalog, and manage your API specification workspace from one place.</p>
     <div class="row gap-2 mt-5 wrap">
       <a class="chip" href="../workspace/tenants.html"><span class="avatar avatar--xs avatar--hex avatar--brand">AC</span>Acme Corp <span class="t-faint">· Owner · Free</span></a>
       <a class="chip" href="../build/projects.html"><i data-lucide="folder-kanban"></i>3 projects</a>
       <a class="chip" href="../ship/published.html"><i data-lucide="globe"></i>5 published</a>
+      <a class="chip" href="../govern/lint-posture.html"><i data-lucide="shield-check"></i>2 need attention</a>
     </div>
   </section>
 
-  <!-- Applications -->
+  <!-- Applications: only things you can open -->
   <section class="lch">
     <div class="lch-eyebrow"><span class="t-caps">Applications</span><span class="t-sm t-muted">Jump into the tool you need right now.</span></div>
     <div class="app-grid">
-      <a class="card card--hover app-card" href="overview.html" style="--_c:var(--accent)">
+      <a class="card card--hover app-card app-card--primary" href="../home/overview.html" style="--_c:var(--accent)">
         <span class="app-card__go" aria-hidden="true"><i data-lucide="arrow-right"></i></span>
         <span class="icon-tile icon-tile--lg icon-tile--accent icon-tile--hex"><i data-lucide="layout-dashboard"></i></span>
         <div class="app-card__tag">Governance</div>
         <div class="app-card__name">Control Panel</div>
-        <p class="app-card__desc">Tenants, projects, versions, repositories, and platform settings in one place.</p>
-        <div class="app-card__foot"><span>Included</span><span class="kbd">G</span></div>
+        <p class="app-card__desc">Projects, versions, catalog, repositories, MCP servers and workspace settings.</p>
+        <div class="app-card__foot"><span>Included · last opened 2 h ago</span><span class="kbd">G</span></div>
       </a>
-        <div class="card app-card" style="--_c:var(--neutral);opacity:.72" aria-label="Commercial suite (not installed)">
-          <span class="app-card__go" aria-hidden="true"><i data-lucide="puzzle"></i></span>
-          <span class="icon-tile icon-tile--lg"><i data-lucide="layers"></i></span>
-          <div class="app-card__tag">Commercial suite</div>
-          <div class="app-card__name">Licensed apps</div>
-          <p class="app-card__desc">Suite apps you are entitled to appear here automatically. They are supplied and designed by their own product repositories.</p>
-          <div class="app-card__foot"><span class="badge badge--outline">Host-injected</span></div>
-        </div>
-      <div class="card app-card is-disabled" role="button" aria-disabled="true" aria-label="Developer Suite (coming soon)" tabindex="0" style="--_c:var(--violet)">
-        <span class="badge badge--outline" style="position:absolute;top:22px;right:18px">Coming soon</span>
-        <span class="icon-tile icon-tile--lg icon-tile--violet icon-tile--hex"><i data-lucide="workflow"></i></span>
-        <div class="app-card__tag">Developer tools</div>
-        <div class="app-card__name">Developer Suite</div>
-        <p class="app-card__desc">SDKs, tooling, and developer workflows for your API specifications — coming soon.</p>
-        <div class="app-card__foot"><span class="badge badge--honey">Commercial</span></div>
+      <div class="card app-card" style="--_c:var(--neutral);opacity:.72" aria-label="Commercial suite (not installed)">
+        <span class="app-card__go" aria-hidden="true"><i data-lucide="puzzle"></i></span>
+        <span class="icon-tile icon-tile--lg"><i data-lucide="layers"></i></span>
+        <div class="app-card__tag">Commercial suite</div>
+        <div class="app-card__name">Licensed apps</div>
+        <p class="app-card__desc">Suite apps you are entitled to appear here automatically. They are supplied and designed by their own product repositories.</p>
+        <div class="app-card__foot"><span class="badge badge--outline">Host-injected</span></div>
       </div>
       <a class="card card--hover app-card" href="https://browse.apiome.dev/" target="_blank" rel="noopener" style="--_c:var(--ok)">
         <span class="app-card__go" aria-hidden="true"><i data-lucide="arrow-up-right"></i></span>
@@ -120,26 +115,29 @@
         <div class="app-card__foot"><span class="row gap-1"><i data-lucide="external-link" style="width:12px;height:12px"></i>Opens in a new tab</span></div>
       </a>
     </div>
+    <!-- Everything “coming soon”, in one quiet line instead of three disabled cards/rows -->
+    <div class="next-line"><i data-lucide="telescope" class="t-subtle" style="width:15px;height:15px"></i><span>Coming next:</span><span class="tag">Developer Suite · SDKs &amp; tooling</span><span class="tag">Community</span><span class="tag">Marketplace</span><button class="btn btn--link btn--sm" data-action="open" data-target="whats-new">Follow in What’s new</button></div>
   </section>
 
-  <!-- Resources + roadmap -->
+  <!-- Resources + recently shipped -->
   <section class="lch mt-6" style="display:grid;grid-template-columns:7fr 5fr;gap:var(--space-4)">
     <div class="card" style="padding:18px 20px">
-      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">Resources</span><span class="t-sm t-muted">Learn, connect, and extend your workflow.</span></div>
-      <a class="res-row" href="https://www.youtube.com/@apiomedev" target="_blank" rel="noopener"><span class="icon-tile icon-tile--rose"><i data-lucide="youtube"></i></span><div class="grow"><div class="lr-title">Help &amp; tutorials</div><div class="lr-sub">Video walkthroughs on YouTube</div></div><i data-lucide="arrow-up-right" class="t-subtle"></i></a>
-      <div class="res-row is-disabled" aria-disabled="true"><span class="icon-tile icon-tile--accent"><i data-lucide="messages-square"></i></span><div class="grow"><div class="lr-title">Community</div><div class="lr-sub">Connect with other builders</div></div><span class="badge badge--outline">Soon</span></div>
-      <div class="res-row is-disabled" aria-disabled="true"><span class="icon-tile icon-tile--violet"><i data-lucide="store"></i></span><div class="grow"><div class="lr-title">Marketplace</div><div class="lr-sub">Templates and extensions</div></div><span class="badge badge--outline">Soon</span></div>
+      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">Resources</span><span class="t-sm t-muted">Learn, then get back to work.</span></div>
+      <a class="res-row" href="../foundations/help.html"><span class="icon-tile icon-tile--accent"><i data-lucide="circle-help"></i></span><div class="grow"><div class="lr-title">Help &amp; docs</div><div class="lr-sub">Guides, shortcuts, videos and support</div></div><i data-lucide="arrow-right" class="t-subtle"></i></a>
+      <a class="res-row" href="https://www.youtube.com/@apiomedev" target="_blank" rel="noopener"><span class="icon-tile icon-tile--rose"><i data-lucide="youtube"></i></span><div class="grow"><div class="lr-title">Video walkthroughs</div><div class="lr-sub">Short screencasts on YouTube</div></div><i data-lucide="arrow-up-right" class="t-subtle"></i></a>
+      <a class="res-row" href="#" data-action="open" data-target="shortcuts"><span class="icon-tile icon-tile--honey"><i data-lucide="keyboard"></i></span><div class="grow"><div class="lr-title">Keyboard shortcuts</div><div class="lr-sub">⌘K palette · G then a letter to jump</div></div><span class="kbd">?</span></a>
     </div>
-    <div class="card card--flat empty--dashed" style="padding:18px 20px;background:transparent;box-shadow:none">
-      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">On the roadmap</span></div>
-      <div class="t-sm t-muted">Governance and compliance tooling is in development.</div>
-      <div class="res-row is-disabled mt-2" aria-disabled="true" style="border-top:1px solid var(--border)"><span class="icon-tile icon-tile--warn"><i data-lucide="scroll-text"></i></span><div class="grow"><div class="lr-title">Audit</div><div class="lr-sub">Activity and compliance review</div></div><span class="badge badge--outline">Planned</span></div>
-      <div class="hex-grid mt-3" aria-hidden="true"><span class="is-on"></span><span class="is-on"></span><span class="is-accent"></span><span></span><span></span><span></span></div>
+    <div class="card" style="padding:18px 20px">
+      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">Recently shipped</span><span class="t-sm t-muted">From What’s new</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Access audit</div><div class="t-xs t-subtle">Append-only ledger of who did what, with drawer detail.</div></div><span class="when">v0.344</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Lint posture</div><div class="t-xs t-subtle">Catalog-wide findings, waivers and remediation trends.</div></div><span class="when">v0.339</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Design system route</div><div class="t-xs t-subtle">Every component, every theme, at <span class="mono">/design-system</span>.</div></div><span class="when">v0.350</span></div>
+      <button class="btn btn--sm btn--ghost mt-2" data-action="open" data-target="whats-new"><i data-lucide="sparkles"></i>All release notes</button>
     </div>
   </section>
 
   <footer class="lch lch-foot">
-    <span class="mono">v0.241.0 RC · build 2026.08.14</span>
+    <button data-action="open" data-target="whats-new" title="View What’s new"><span class="mono">v0.351.0 RC · build 2026.10.07</span><span class="dot" style="width:5px;height:5px;background:var(--honey)"></span></button>
     <span>© 2021 – 2026 NobuData LLC</span>
   </footer>
 </main>
@@ -150,17 +148,20 @@
   <ul><li><code>components/ade/AdeHome.tsx</code>, <code>AppLaunchCard</code>; the sticky launcher header (logo · version badge · theme · account chip · sign out). <code>ConditionalHeader</code> is retired — the platform bar no longer exists.</li></ul>
   <h4>Keeps (1:1)</h4>
   <ul>
-    <li>Top row: logo, version badge (<code>NEXT_PUBLIC_APP_BUILD_LABEL</code> or <code>v{version} RC</code>) → What’s new dialog; theme → Preferences pane; account chip (avatar/initials + first name, fallback “Account”); Sign out → <code>signOutEverywhere('/login')</code>.</li>
-    <li>Hero: “✦ Apiome platform” pill, time-of-day greeting with first name (fallback “there”), H1 “Your API specification workspace”, paragraph.</li>
-    <li>Applications (ordered Control Panel → commercial cards from <code>getCommercialAccessForSession().homeCards</code> → Browser): same taglines/descriptions/hrefs; commercial cards are entitlement-gated and supplied by their own repositories — this mockup only reserves the slot and never designs them; Developer Suite always listed, disabled (60 %, not-allowed, <code>aria-label “… (coming soon)”</code>); Browser → <code>BROWSE_APP_URL</code> in a new tab with “Opens in a new tab”.</li>
-    <li>Card anatomy: gradient tile, top-right circular arrow (→ internal / ↗ external, inverts on hover) or “Coming soon” pill, uppercase tagline, name, 4-line clamp description, footer strip (“Commercial”).</li>
-    <li>Resources: Help &amp; tutorials (YouTube, new tab) · Community (SOON) · Marketplace (SOON); dashed “On the roadmap” with Audit (disabled).</li>
-    <li>Footer: version string left, “© 2021 – 2026 NobuData LLC” right. Internal cards <code>router.push</code>; external <code>window.open(_blank, noopener)</code>.</li>
+    <li>Top row: logo; <b>What’s new</b> icon with the honey unread dot (<code>useWhatsNewUnread</code>, shared with the rail’s user menu); Preferences; account chip (avatar/initials + first name, fallback “Account”); Sign out → <code>signOutEverywhere('/login')</code>.</li>
+    <li>Hero: time-of-day greeting with first name (fallback “there”), H1 “Your API specification workspace”, workspace/summary chips (current tenant · role · plan, project + published counts, and “n need attention” only when n &gt; 0) linking into the app.</li>
+    <li>Applications — only what opens (ordered Control Panel → commercial cards from <code>getCommercialAccessForSession().homeCards</code> → Browser): Control Panel is the one emphasised card and says when it was last opened on this device; commercial cards are entitlement-gated and supplied by their own repositories — this mockup only reserves the slot; Browser → <code>BROWSE_APP_URL</code> in a new tab with “Opens in a new tab”.</li>
+    <li>Coming next: unshipped products (a host’s disabled card, Community, Marketplace) are named once on one text line whose only control is “Follow in What’s new” (DESIGN.md §10). No disabled tiles or rows.</li>
+    <li>Resources: Help &amp; docs · Video walkthroughs (YouTube, new tab) · Keyboard shortcuts (opens the sheet, <code>?</code>).</li>
+    <li>Recently shipped: the three newest What’s new entries (title, one line, release) and “All release notes”; read from <code>public/WHATS_NEW.md</code>, never hand-written.</li>
+    <li>Footer: the build string (<code>NEXT_PUBLIC_APP_BUILD_LABEL</code> or <code>v{version} RC</code>) as a button that opens What’s new, with the unread dot; “© 2021 – 2026 NobuData LLC” right.</li>
   </ul>
   <h4>Adds</h4>
-  <ul><li>Workspace/summary chips under the hero (current tenant · role · plan, project + published counts) linking into the app.</li><li>Honeycomb ornament, per-app accent hairline, <code>G</code> keyboard hint on Control Panel.</li></ul>
+  <ul><li>Honeycomb ornament, per-app accent hairline, <code>G</code> keyboard hint on Control Panel.</li></ul>
   <h4>States</h4>
-  <ul><li>No entitlement: the commercial card is hidden entirely (Developer Suite still listed, disabled). No tenant: launcher still renders — the onboarding guard replaces it when the user has zero memberships.</li></ul>
+  <ul><li>No entitlement: the commercial tile is hidden and the grid is 2-up. No What’s new entries (or the notes fail to load): Recently shipped is omitted and Resources spans the row. Notes already read: no dot on What’s new or the footer build. No tenant: the onboarding guard replaces the launcher when the user has zero memberships.</li></ul>
+  <h4>History</h4>
+  <ul><li>Quiet pass adopted in HIVE-12.5 (#5612) and HIVE-12.6 (#5613); the proposal and its callouts are kept as <code>proposals/launcher-focused.html</code>.</li></ul>
 </template>
 </body>
 </html>

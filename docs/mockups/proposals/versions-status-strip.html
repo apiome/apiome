@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Versions — status strip (proposal) · Apiome mockup</title>
+<title>Versions — status strip (adopted proposal) · Apiome mockup</title>
 <link rel="stylesheet" href="../assets/hive.css" />
 <script src="../assets/hive.js" defer></script>
 <style>
@@ -311,7 +311,7 @@
 </script>
 
 <template id="notes">
-  <p class="route">/ade/dashboard/versions?projectId=… — proposal, supersedes the banner block and header of <code>build/versions.html</code> (everything else there still applies)</p>
+  <p class="route">/ade/dashboard/versions — <b>adopted in HIVE-11.2 / 11.3 / 11.4</b> (#5598, #5599, #5600) and folded into <code>build/versions.html</code>, which is the authority now. Kept as the record of the change.</p>
   <h4>Problem (measured 2026-10-07 on the shipped page)</h4>
   <ul>
     <li>Three full-width banners (Compatible · What’s new · Deprecated) stack above the content on every visit: ≈ 200 px before the first card, and the first revision row lands ≈ 870 px down at 1440 × 900 — below the fold.</li>

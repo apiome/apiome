@@ -155,8 +155,11 @@ export type UncoveredReason =
   | 'other-shell'
   /** The route is redesigned, but its suite mounts markup built in the spec, not a dump. */
   | 'no-page-fixture'
-  /** A round-2 proposal replaced this mockup as the route's authority; the route compares to that. */
-  | 'superseded';
+  /**
+   * A round-2 proposal that was adopted (HIVE-13.4): its page mockup now draws the adopted state
+   * and is the route's authority, so the proposal is kept only as the record of the change.
+   */
+  | 'adopted';
 
 /** What each reason means, for the report and the README. */
 export const UNCOVERED_REASONS: Record<UncoveredReason, string> = {
@@ -168,8 +171,8 @@ export const UNCOVERED_REASONS: Record<UncoveredReason, string> = {
     'the surface uses the auth, launcher or foundations shell rather than the app page shell',
   'no-page-fixture':
     'the route is redesigned, but its browser suite builds its markup inline instead of dumping a fixture, so there is nothing committed to mount',
-  superseded:
-    'a round-2 proposal mockup replaced this one as the route’s authority, so the route is compared against the proposal instead',
+  adopted:
+    'an adopted round-2 proposal, kept as the record of the change: its page mockup now draws the adopted state and the route is compared (or gated) against that',
 };
 
 /** A mockup the harness does not compare, and why. */
@@ -191,28 +194,28 @@ export interface UncoveredMockup {
  */
 export const PARITY_ROUTES: readonly ParityRoute[] = [
   {
-    // HIVE-11.2 (#5598) re-dumped `timeline.html` with the status strip in place of the three
-    // banners. The pairing stays on `build/versions.html` until HIVE-11.3/11.4 land the rest of
-    // `proposals/versions-status-strip.html` and HIVE-13.4 promotes it.
+    // HIVE-13.4 (#5617) folded `proposals/versions-status-strip.html` into `build/versions.html`:
+    // status strip, Compare · Import · ⋯ · New version, the breadcrumb switcher and one table
+    // toolbar — the state `timeline.html` (re-dumped) renders since HIVE-11.2 – 11.4.
     id: 'versions',
     mockup: 'build/versions.html',
     route: '/ade/dashboard/versions',
     subject: { kind: 'fixture', dir: 'hive-versions', file: 'timeline.html' },
-    roadmapRef: 'HIVE-6.2',
+    roadmapRef: 'HIVE-11.2',
     // The facelift (PROPOSALS_FACELIFT.md §8, "timeline") made the timeline the default view, so
     // `timeline.html` draws its revisions as `.vt__row` entries rather than DataTable rows; the
     // table view (the at-size fixture) still uses the DataTable row. Either is the first revision.
     firstRow: firstRowBudget('versions', `${FIRST_DATA_ROW}, .page-body .vt__row[data-row-id]`, {
       ceilingPx: 740,
       reason:
-        'at the build/versions.html page width the first revision row lands at 715 px (timeline) and 738 px (300-revision table): the facts card carries both of the mockup\'s links (Published surface, Export studio) since the latest version is selected by default, and the facelift\'s display title adds 7 px; HIVE-13.4 moves the pairing to proposals/versions-status-strip.html',
+        'at the build/versions.html page width the first revision row lands at 715 px (timeline) and 738 px (300-revision table): the facts card carries both of the mockup\'s links (Published surface, Export studio) since the latest version is selected by default, and the facelift\'s display title adds 7 px',
     }),
   },
   {
     // HIVE-11.8 (#5604) re-dumped `registry.html` with the quiet pass applied: the five-tile
     // strip folded into a facts line (the strip is behind Show stats) and the rail's `$ref`
-    // card moved into a dialog. There is no primitives proposal mockup, so the pairing stays on
-    // `build/primitives.html`; the facts line follows `proposals/catalog-quiet.html`.
+    // card moved into a dialog. The pairing stays on `build/primitives.html`; the facts line is
+    // the quiet list page of DESIGN.md §8 (drawn in `sources/catalog.html`).
     id: 'primitives',
     mockup: 'build/primitives.html',
     route: '/ade/dashboard/primitives',
@@ -231,9 +234,9 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
   },
   {
     id: 'catalog',
-    // The quiet pass (HIVE-11.6) supersedes the top of `sources/catalog.html`: facts line,
-    // header ghost link, one card for the list. The table fixture is a returning reader's page.
-    mockup: 'proposals/catalog-quiet.html',
+    // HIVE-13.4 (#5617) folded `proposals/catalog-quiet.html` into `sources/catalog.html`: facts
+    // line, header ghost link, one card for the list. The table fixture is a returning reader's page.
+    mockup: 'sources/catalog.html',
     route: '/ade/dashboard/catalog',
     subject: { kind: 'fixture', dir: 'hive-catalog', file: 'table.html' },
     roadmapRef: 'HIVE-11.6',
@@ -255,7 +258,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
   {
     // HIVE-11.7 (#5603) re-dumped the fixtures with the quiet pass: the KPI strip folded into
     // a facts line (the strip is behind Show stats) and the Refresh activity panel became a
-    // chip in it that opens a drawer. The facts line follows `proposals/catalog-quiet.html`.
+    // chip in it that opens a drawer. The facts line is the quiet list page of DESIGN.md §8.
     id: 'repositories',
     mockup: 'sources/repositories.html',
     route: '/ade/dashboard/repositories',
@@ -409,14 +412,15 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'govern/style-guides.html', reason: 'no-page-fixture' },
   { mockup: 'home/launcher.html', reason: 'other-shell' },
   { mockup: 'home/overview.html', reason: 'no-page-fixture' },
-  // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07): each supersedes part of a shipped
-  // page and is compared once its ticket lands and the page fixture is re-dumped.
+  // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07) were adopted in the quiet pass and
+  // folded into their page mockups by HIVE-13.4 (#5617); the proposals stay as records.
   // Round-3 facelift proposals (docs/mockups/PROPOSALS_FACELIFT.md): each screen renders both the
   // shipped look (?fx=none) and the proposal (?fx=…); nothing is ticketed yet. The compare page
   // is the viewer that loads them side by side, not a product screen.
   // All of them, the compare viewer and the two overlays included, are `awaiting-redesign` until a
   // ticket lands a route: any other reason marks the mockup redesigned, and the a11y ledger
   // (tests/a11y-routes.test.ts) then requires a route that does not exist yet.
+  { mockup: 'proposals/catalog-quiet.html', reason: 'adopted' },
   { mockup: 'proposals/facelift-admin.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-catalog-item.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-catalog.html', reason: 'awaiting-redesign' },
@@ -427,10 +431,9 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'proposals/facelift-themes.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-versions-changes.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-versions.html', reason: 'awaiting-redesign' },
-  { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },
-  { mockup: 'proposals/rail-compact.html', reason: 'awaiting-redesign' },
-  { mockup: 'proposals/versions-status-strip.html', reason: 'awaiting-redesign' },
-  { mockup: 'sources/catalog.html', reason: 'superseded' },
+  { mockup: 'proposals/launcher-focused.html', reason: 'adopted' },
+  { mockup: 'proposals/rail-compact.html', reason: 'adopted' },
+  { mockup: 'proposals/versions-status-strip.html', reason: 'adopted' },
   { mockup: 'sources/repository-new.html', reason: 'overlay-not-page' },
   { mockup: 'tools/database.html', reason: 'awaiting-redesign' },
   { mockup: 'tools/migration.html', reason: 'awaiting-redesign' },

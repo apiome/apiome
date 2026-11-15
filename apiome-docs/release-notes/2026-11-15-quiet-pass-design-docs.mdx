@@ -1,0 +1,26 @@
+---
+slug: quiet-pass-design-docs
+title: The design docs now describe the quiet pass as shipped
+description: "DESIGN.md, the mockups and the parity ledger match the shipped quiet pass."
+authors: [apiome]
+---
+
+The quiet pass shipped in RC6, and the design authority now says the same thing as the app.
+`docs/mockups/DESIGN.md` folds in the round-2 rules, and the page mockups draw the adopted
+screens. The visual-parity harness compares pages against those mockups. (#5617)
+
+{/* truncate */}
+
+- **DESIGN.md** now carries the rules as adopted, not proposed. Honey is never a feature-flag or
+  filter colour (§2). The rail fits a 900 px window, Workspace starts folded with a count, and
+  Notifications leads the footer (§5.2). A header has at most two secondaries beside its primary,
+  and the record switcher is the last breadcrumb (§5.3). Several statuses become one status
+  strip, and a page never stacks banners (§5.4). The list page is a facts line, one card and
+  explanatory copy shown once (§8). "Coming soon" appears once, as text (§10). The roadmap gains
+  **P8 — Quiet pass** (§12). The "proposed, not yet adopted" section is gone.
+- **The mockups** `build/versions.html`, `sources/catalog.html`, `home/launcher.html` and the
+  shared rail (`foundations/shell.html`) draw the shipped screens. The four round-2 proposals stay
+  under `proposals/` as the record of the change, each naming the tickets that adopted it.
+- **The parity ledger** compares Versions and Catalog against those page mockups, with freshly
+  dumped fixtures. The proposals are ledgered as `adopted` records, so none of them waits on a
+  redesign any more. See [Visual parity and first-row budgets](/reference/visual-parity).

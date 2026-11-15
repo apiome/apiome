@@ -335,6 +335,13 @@ html[data-rail="collapsed"] .shell { grid-template-columns: var(--rail-w-collaps
 .nav-item.is-active [data-lucide], .nav-item.is-active svg { color: var(--accent); }
 .nav-item.is-disabled { opacity: .45; pointer-events: none; }
 .nav-item .nav-pill { margin-left: auto; }
+/* A collapsed group's label shows how many destinations it holds (HIVE-12.1); an open group shows the rows instead. */
+.nav-group__count { display: none; margin-left: 6px; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 500; letter-spacing: 0; color: var(--fg-subtle); }
+.nav-group.is-collapsed .nav-group__count { display: inline; }
+/* "Preview" as a 6 px honey dot after the label; the word is in the tooltip (HIVE-12.4). */
+.nav-item .nav-dot { flex: none; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--honey); }
+/* The unread count on Notifications (HIVE-12.3): accent, never honey (§2). */
+.nav-item .nav-count { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full); background: var(--accent); color: var(--fg-on-accent); font-size: var(--fs-2xs); font-weight: 600; display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
 .nav-item .nav-ext { margin-left: auto; width: 14px; height: 14px; opacity: .6; }
 .rail__bottom { padding: 8px 12px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
 .rail__user { display: flex; align-items: center; gap: 10px; height: 44px; padding: 4px 8px; border-radius: var(--r-md); text-align: left; width: 100%; }
@@ -359,6 +366,10 @@ html[data-rail="collapsed"] .nav-group { margin-top: 8px; padding-top: 8px; bord
 html[data-rail="collapsed"] .nav-group:first-child { border-top: 0; padding-top: 0; }
 html[data-rail="collapsed"] .rail__collapse { opacity: 1; }
 html[data-rail="collapsed"] .nav-item .nav-ext, html[data-rail="collapsed"] .nav-item .nav-pill { display: none !important; }
+html[data-rail="collapsed"] .nav-item .nav-dot { display: none !important; }
+/* Collapsed rail: the Notifications count becomes a 6 px dot on the bell (HIVE-12.3). */
+html[data-rail="collapsed"] .rail__bottom .nav-item:has(.nav-count) { position: relative; }
+html[data-rail="collapsed"] .rail__bottom .nav-item:has(.nav-count)::after { content: ""; position: absolute; top: 7px; right: 14px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 html[data-rail="collapsed"] .rail__collapse i { transform: rotate(180deg); }
 @media (max-width: 900px) { .rail__brand .brand-text, .ws-switch > *:not(.avatar), .search-trigger > *:not([data-lucide]), .nav-group__label, .nav-item > *:not([data-lucide]), .rail__user > *:not(.avatar) { display: none; } .nav-item, .ws-switch, .rail__user, .search-trigger { justify-content: center; padding: 0; } }
 

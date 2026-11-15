@@ -1,6 +1,10 @@
 # Apiome “Hive” — round-2 proposals (look & feel review of the shipped redesign)
 
-> **Status:** proposal. Reviewed 2026-10-07 against `apiome-ui` 0.351.0 (HIVE-10.6 “Legacy
+> **Status:** adopted — shipped as the quiet pass (HIVE-11 / 12 / 13, RC6) and folded into
+> `DESIGN.md` (§2, §5.1–5.4, §6–§8, §10, §12 P8) and the page mockups by HIVE-13.4 (#5617).
+> The proposal mockups under `proposals/` are kept as the record of the change; the page
+> mockups (`build/versions.html`, `sources/catalog.html`, `home/launcher.html`,
+> `foundations/shell.html`) are the authority. Reviewed 2026-10-07 against `apiome-ui` 0.351.0 (HIVE-10.6 “Legacy
 > cleanup” merged). Each proposal has a browser-openable mockup under `proposals/` built on the
 > same `assets/hive.css` / `assets/hive.js` as the rest of this set, with **Notes** (route,
 > problem, callouts, keeps, states) and **Callouts** (numbered annotations) in the mock bar.
@@ -141,6 +145,7 @@ epics with 21 child issues, all on the **RC6** milestone.
 | P6 (existing) | [#5272](https://github.com/apiome/apiome/issues/5272) | HIVE-9.x — admin console; unchanged scope, now the most visible look-and-feel gap left | `admin/*.html`, `tools/*.html` |
 
 Each issue inherits its mockup’s **Notes → Keeps / Callouts / States** as acceptance criteria,
-exactly as the P0–P7 tickets did. The four proposal mockups are registered in
-`apiome-ui/e2e/visual/routes.ts` as `awaiting-redesign`; HIVE-13.4 moves them into
-`PARITY_ROUTES` with the re-dumped page fixtures.
+exactly as the P0–P7 tickets did. HIVE-13.4 folded the four proposals into their page
+mockups: `apiome-ui/e2e/visual/routes.ts` compares Versions and Catalog against
+`build/versions.html` and `sources/catalog.html` (the re-dumped page fixtures), the launcher and
+shell stay `other-shell`, and the four proposal pages are ledgered as `adopted` records.

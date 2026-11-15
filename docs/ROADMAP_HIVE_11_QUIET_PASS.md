@@ -59,7 +59,7 @@ every rail group are visible without scrolling, using `StatusStrip`, `FactsLine`
 - [ ] Catalog: first row ≤ 360 px; explainer reachable from the header after dismissal
 - [ ] Rail: no vertical scroll at 900 px tall with Workspace collapsed; Tenants and SDK settings reachable in ≤ 2 clicks
 - [ ] `StatusStrip`, `FactsLine`, `DismissibleCallout` have `/design-system` specimens and the gallery test passes
-- [ ] DESIGN.md §14 removed; §5.4 / §8 / §5.2 amended; proposals moved into `PARITY_ROUTES`
+- [x] DESIGN.md §14 removed; §5.4 / §8 / §5.2 amended; proposals folded into the page mockups that `PARITY_ROUTES` compares (HIVE-13.4)
 - [ ] Parity, a11y, copy-voice and token gates green
 
 ### 1.5 Non-goals
@@ -519,7 +519,7 @@ Milestone: **RC6** (all epics and issues).
 | 13.1 | #5614 | Honey audit — saved-search chip, gitlike flags, token gate | MCP saved searches use `.chip`; feature-flag markers are outline badges; `hive-design-tokens.test.ts` fails on honey outside the allow-list | `ui`, `design-system`, `testing`, `mcp` | Y | N | S | `src/app/ade/dashboard/mcp/*`, `src/app/components/ade/versions/GitlikeFlag.tsx`, `tests/hive-design-tokens.test.ts` |
 | 13.2 | #5615 | Gates — header action cap, single banner, no dead controls ✅ | Jest/Playwright rules: ≤ 1 primary + 2 secondaries + ⋯ per `PageHeader`; at most one `Alert` between header and body; no disabled buttons that lead nowhere | `testing`, `ui`, `design-system` | N | N | M | `tests/page-header-gate.test.tsx (new)`, `tests/copy-voice-gate.test.ts`, `e2e/hive-page-header.spec.ts`, `docs/guide/content-voice.md` |
 | 13.3 | #5616 | Parity harness — first-row-of-data budget per list page ✅ | The visual-parity harness measures the y-offset of the first data row at 1440 × 900 and fails above a per-page budget | `testing`, `ui` | N | N | M | `e2e/visual/landmarks.ts`, `e2e/visual/score.ts`, `e2e/visual/routes.ts`, `e2e/visual/README.md` |
-| 13.4 | #5617 | DESIGN.md amendments, mockup promotion and fixture re-dump | Fold PROPOSALS.md into DESIGN.md §2 · §5 · §8 · §10 · §12; replace the superseded parts of the original mockups; move the four proposals into `PARITY_ROUTES` | `documentation`, `design-system`, `mvp` | N | Y | S | `docs/mockups/DESIGN.md`, `docs/mockups/PROPOSALS.md`, `docs/mockups/build/versions.html`, `docs/mockups/sources/catalog.html`, `docs/mockups/home/launcher.html`, `docs/mockups/foundations/shell.html`, `apiome-ui/e2e/visual/routes.ts` |
+| 13.4 | #5617 | DESIGN.md amendments, mockup promotion and fixture re-dump ✅ | Fold PROPOSALS.md into DESIGN.md §2 · §5 · §8 · §10 · §12; replace the superseded parts of the original mockups; move the four proposals into `PARITY_ROUTES` | `documentation`, `design-system`, `mvp` | N | Y | S | `docs/mockups/DESIGN.md`, `docs/mockups/PROPOSALS.md`, `docs/mockups/build/versions.html`, `docs/mockups/sources/catalog.html`, `docs/mockups/home/launcher.html`, `docs/mockups/foundations/shell.html`, `apiome-ui/e2e/visual/routes.ts` |
 
 ### `apiome: [HIVE-13.1] Honey audit — saved-search chip, gitlike flags, token gate` — [#5614](https://github.com/apiome/apiome/issues/5614)
 **Problem statement.** Honey has leaked into non-brand roles: a honey-filled “Public A/B servers” saved-search chip on MCP servers, the always-on `gitlike` honey flag in the Versions header and tabs. DESIGN.md §2 limits honey to the mark, new/starred/preview markers, the first-run checklist, empty-state art and the theme grid.
@@ -579,7 +579,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-13.4] DESIGN.md amendments, mockup promotion and fixture re-dump` — [#5617](https://github.com/apiome/apiome/issues/5617)
+### `apiome: [HIVE-13.4] DESIGN.md amendments, mockup promotion and fixture re-dump` ✅ — [#5617](https://github.com/apiome/apiome/issues/5617)
 **Problem statement.** DESIGN.md §14 marks the proposals as “proposed, not yet adopted” and the parity ledger lists them as `awaiting-redesign`. Once the pages ship, the design authority and the mockup set must say the same thing as the code.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/*.html` (callouts —); rationale: `docs/mockups/PROPOSALS.md`.
@@ -589,9 +589,9 @@ Milestone: **RC6** (all epics and issues).
 - README page → route table and index updated.
 
 **Acceptance criteria.**
-- [ ] `tests/visual-parity-routes.test.ts` and `tests/a11y-routes.test.ts` green with no proposal rows under `awaiting-redesign`
-- [ ] DESIGN.md has no “proposed” language left for adopted rules
-- [ ] Mockup sweep (console, overflow, icons, links, notes) green on every touched page
+- [x] `tests/visual-parity-routes.test.ts` and `tests/a11y-routes.test.ts` green with no proposal rows under `awaiting-redesign`
+- [x] DESIGN.md has no “proposed” language left for adopted rules
+- [x] Mockup sweep (console, overflow, icons, links, notes) green on every touched page
 
 **Parallelism / dependencies.** Last. Requires HIVE-11.2, 11.3, 11.6, 12.1, 12.2, 12.5, 12.6.
 
