@@ -824,6 +824,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['dashboard', 'checklist', 'overview', 'quick actions', 'needs attention'],
   },
   {
+    id: 'find-your-way-around',
+    title: 'Find your way around',
+    summary: 'The sidebar, its footer and menus, and where each page lives.',
+    page: 'apiome-docs/docs/getting-started/find-your-way-around.mdx',
+    section: 'spine',
+    keywords: ['sidebar', 'rail', 'navigation', 'menu', 'workspace switcher', 'user menu', 'tenants', 'sdk settings', 'data browser', 'migrations'],
+  },
+  {
     id: 'first-project',
     title: 'Import your first project',
     summary: 'Bring an existing OpenAPI file in with the import wizard, step by step.',
