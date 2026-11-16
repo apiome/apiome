@@ -13,10 +13,11 @@ The index is built as **counters, never as a request log**. It stores numbers pe
 hour, not the requests themselves, so it can never become a store of credentials or customer data.
 
 :::note[What is available today]
-The index, its retention and the **ingest endpoint** that fills it are available. The ready-made
-sources that call the endpoint for you (an OpenTelemetry receiver, a HAR upload, gateway logs) and
-creating a source from the app or the CLI come in later releases. Until then, a script or a log
-shipper can [send usage events](#send-usage-events) directly.
+The index, its retention, the **ingest endpoint** that fills it and the **HAR upload** in the CLI
+are available: [upload a HAR file](#upload-a-har-file) to fill the index from a browser or proxy
+recording. The other ready-made sources (an OpenTelemetry receiver, gateway logs) and managing
+sources from the app come in later releases. Until then, a script or a log shipper can
+[send usage events](#send-usage-events) directly.
 :::
 
 ## What the index stores
@@ -68,6 +69,74 @@ bounded on every side:
 An event carries its exchange in a `sample` field. A batch that sends one while the source's sample
 window is closed is refused with `422 usage-body-not-accepted`.
 
+## Upload a HAR file
+
+The quickest way to fill the index is a recording you already have. Browser devtools and every
+debugging proxy (Charles, mitmproxy, Fiddler, Proxyman) save traffic as a **HAR** file, and
+`apiome usage upload` turns it into usage events.
+
+The file is read **on your machine**. Field presence is worked out from the request and response
+bodies there, then the bodies are thrown away. Header values and query values are never sent: the
+upload says only *whether* a call carried a credential (`Authorization`, `Proxy-Authorization`,
+`X-API-Key` or a cookie), and keeps query parameter **names**.
+
+1. **Record the traffic.** In Chrome or Edge, open **DevTools → Network**, use the app, then
+   right-click the request list and choose **Save all as HAR**. In Firefox it is **Save All As HAR**.
+   From a proxy, export the session as HAR.
+2. **Get a key.** Create a workspace API key with the **Usage source** preset (see
+   [A key for a usage source](../workspace/api-keys.mdx#a-key-for-a-usage-source)), or use a
+   full-access key. Set it as `APIOME_API_KEY`, and set the workspace as `APIOME_TENANT_ID`.
+3. **Upload it.** Name the project the traffic is for and the environment it came from:
+
+   ```bash
+   apiome usage upload checkout-session.har --project payments-api --environment staging
+   ```
+
+   ```text
+   Uploaded checkout-session.har: 1,284 entries in 1 batch(es)
+   Source 6f1c9a52-4a5e-4c1b-9d0e-1f2a3b4c5d6e (har · staging, created)
+   Received 1,262 · accepted 1,180 · unmatched 82 · sampled out 0 · rejected 0
+   Scrub findings: 14 (strings the server rewrote or dropped; never what was found)
+   Skipped on this machine: 22 (no-response 19, unsupported-url 3)
+   ```
+
+4. **Read the counts.** **Accepted** calls matched an operation of a published version of the
+   project. **Unmatched** calls are counted under their inferred path template, so the paths your
+   spec does not declare yet show up in the index. **Scrub findings** counts the strings the server
+   rewrote or dropped — a token in a path, an email in a user agent — never what they were.
+
+The first upload creates the project's **HAR source** for that environment, with field capture on,
+sampling rate 1 and no sample window. Later uploads to the same project and environment reuse it. To
+upload to a particular HAR source instead, pass its id with `--source`. A source that is switched off
+is refused, never replaced.
+
+| Option | What it does |
+| --- | --- |
+| `--project` | Project slug or UUID the traffic is for (required) |
+| `--environment` | Environment the traffic happened in, such as `prod` or `staging` (required). `mock` is reserved |
+| `--source` | A HAR source of the project to use, instead of finding or creating one |
+| `--sample-bodies` | Also send [redacted samples](#opt-in-samples). Refused before anything is sent unless the source's sample window is open |
+
+**What is skipped.** An entry with no response (an aborted or blocked request) is counted as
+`no-response`, an entry whose URL is not `http` or `https` (a `data:` or `blob:` URL, a WebSocket) as
+`unsupported-url`, and an entry that is not a request as `invalid-entry`. Skipped entries are listed
+in the output, never dropped silently.
+
+**Large files.** The file is streamed, never loaded whole, and the events go up in batches of at most
+5,000, so each 5,000 entries make one row in the ingest ledger. The file is checked from start to
+end before anything is sent, so a truncated or damaged file uploads nothing.
+
+**Exit codes.** Like `apiome diff`: `0` uploaded, `2` when the file is not a HAR or the server refused
+the request (a bad key, an unknown project, over the daily cap), `1` when the server could not be
+reached. `--json` prints the totals, the batch ids and the skipped entries as JSON. See
+[`apiome usage`](../reference/cli/usage.md) for every option.
+
+:::note[.http request files]
+A `.http` or `.rest` request file records requests but not their responses, and a usage event needs
+the response status, so `apiome usage upload` refuses one with exit code `2`. Record the same calls
+as a HAR instead.
+:::
+
 ## Send usage events
 
 Every source except the SDK beacon sends its traffic through one endpoint. An `sdk_beacon` source
@@ -81,9 +150,10 @@ POST /v1/tenants/{tenant}/usage/ingest
 ### Before you start
 
 - **A usage source.** Each source belongs to one project and sets its environment (`prod` by
-  default), its sampling rate, whether it reports field presence, and its sample window. Creating
-  sources from the app or the CLI comes in a later release. Until then, an operator creates one in
-  the database and passes its id to whoever runs the source:
+  default), its sampling rate, whether it reports field presence, and its sample window. A
+  [HAR upload](#upload-a-har-file) creates its own source. For any other kind, creating sources from
+  the app comes in a later release; until then, an operator creates one in the database and passes
+  its id to whoever runs the source:
 
   ```sql
   INSERT INTO apiome.usage_source (tenant_id, project_id, kind, environment, sampling_rate)
@@ -94,7 +164,7 @@ POST /v1/tenants/{tenant}/usage/ingest
 
 - **A key with the `usage:ingest` scope.** Create a workspace API key with the **Usage source**
   preset (see [API keys](../workspace/api-keys.mdx#a-key-for-a-usage-source)). That key can post usage
-  batches and call nothing else. A full-access key also works. A signed-in session and agent keys
+  batches, look up or create a project's HAR source, and call nothing else. A full-access key also works. A signed-in session and agent keys
   are refused.
 
 ### The request
@@ -315,6 +385,7 @@ It prints what it did as JSON, or `{"skipped": true}` when another replica is al
 
 ## Where next
 
+- [`apiome usage`](../reference/cli/usage.md) — the HAR upload command
 - [API keys](../workspace/api-keys.mdx) — the `usage:ingest` scope
 - [Graph API](../reference/rest/graph.md)
 - [Consumer contracts API](../reference/rest/consumer-contracts.md)

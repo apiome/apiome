@@ -1,0 +1,106 @@
+[
+  {
+    "auth_present": "true",
+    "environment": "staging",
+    "fields": {
+      "request": [],
+      "response": [
+        "/items",
+        "/items/0/id",
+        "/items/0/name",
+        "/items/0/tag",
+        "/next"
+      ]
+    },
+    "host": "api.example.com",
+    "latency_ms": 43,
+    "method": "GET",
+    "observed_at": "2026-10-18T12:00:00.000000Z",
+    "path": "/v1/pets?limit=&cursor=",
+    "request_bytes": 0,
+    "response_bytes": 91,
+    "scheme": "https",
+    "status": 200,
+    "user_agent": "pets-web/1.2 (Macintosh)"
+  },
+  {
+    "auth_present": "true",
+    "environment": "staging",
+    "fields": {
+      "request": [],
+      "response": [
+        "/id",
+        "/name",
+        "/owner",
+        "/owner/email"
+      ]
+    },
+    "host": "api.example.com",
+    "latency_ms": 12,
+    "method": "GET",
+    "observed_at": "2026-10-18T10:00:01.250000Z",
+    "path": "/v1/pets/42",
+    "request_bytes": 0,
+    "response_bytes": 66,
+    "scheme": "https",
+    "status": 200,
+    "user_agent": "pets-web/1.2 (Macintosh)"
+  },
+  {
+    "auth_present": "true",
+    "environment": "staging",
+    "fields": {
+      "request": [
+        "/name",
+        "/tag"
+      ],
+      "response": [
+        "/id"
+      ]
+    },
+    "host": "api.example.com",
+    "latency_ms": 88,
+    "method": "POST",
+    "observed_at": "2026-10-18T12:00:00.000000Z",
+    "path": "/v1/pets",
+    "request_bytes": 30,
+    "response_bytes": 10,
+    "scheme": "https",
+    "status": 201,
+    "user_agent": "checkout-cli/3.0"
+  },
+  {
+    "auth_present": "false",
+    "environment": "staging",
+    "host": "api.example.com:8080",
+    "latency_ms": 3,
+    "method": "DELETE",
+    "observed_at": "2026-10-18T12:00:00.000000Z",
+    "path": "/v1/pets/7",
+    "request_bytes": 0,
+    "response_bytes": 0,
+    "scheme": "http",
+    "status": 204,
+    "user_agent": "curl/8.1"
+  },
+  {
+    "auth_present": "false",
+    "environment": "staging",
+    "fields": {
+      "request": [],
+      "response": [
+        "/error"
+      ]
+    },
+    "host": "api.example.com",
+    "latency_ms": 5,
+    "method": "GET",
+    "observed_at": "2026-10-18T12:00:00.000000Z",
+    "path": "/v1/unknown/thing",
+    "request_bytes": 0,
+    "response_bytes": 22,
+    "scheme": "https",
+    "status": 404,
+    "user_agent": "curl/8.1"
+  }
+]

@@ -58,7 +58,7 @@ A key carries one of seven presets, chosen when it is created:
 | **CI: classified diff** | `diff:read` | `POST /v1/diff/…/classified` only — recommended for contract gates |
 | **CI: lint** | `lint:read` | `GET …/lint` and `…/lint/gate` only (catalog and MCP) |
 | **CI: diff + lint** | `diff:read` `lint:read` | Both CI read scopes; still no write access |
-| **Usage source** | `usage:ingest` | `POST /v1/tenants/{tenant}/usage/ingest` only — for a traffic source feeding the [usage index](../govern/runtime-usage.mdx) |
+| **Usage source** | `usage:ingest` | `POST /v1/tenants/{tenant}/usage/ingest`, the SDK beacon and the HAR-source lookup only — for a traffic source feeding the [usage index](../govern/runtime-usage.mdx) |
 | **Schema registry: read** | `registry:read` | Reads of the [schema registry](../reference/rest/schema-registry.md) at `/registry/schema/{tenant}` only — for Kafka consumers and deserializers |
 | **Schema registry: read + write** | `registry:read` `registry:write` | Also registers schemas and changes registry settings — for Kafka producers that auto-register |
 
@@ -69,7 +69,9 @@ gate](../reference/ci/ci-diff-gate.md) for the gate that uses `diff:read`.
 ### A key for a usage source
 
 An OpenTelemetry Collector, a log shipper or any other traffic source sends usage events with a
-key that holds only `usage:ingest`. Such a key can post usage batches and nothing else: it cannot
+key that holds only `usage:ingest`; so does [`apiome usage upload`](../govern/runtime-usage.mdx#upload-a-har-file),
+which may also look up or create the project's HAR source with it. Such a key can post usage batches
+and nothing else: it cannot
 read a project, a version or another key, so a key copied out of a Collector's config gives nothing
 away. Choose the **Usage source** preset when you create it.
 

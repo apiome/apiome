@@ -1051,3 +1051,16 @@ def sdk_compatibility(tenant_slug: str, project: str) -> str:
     Pass ``?version=`` (a revision id or label) for a revision other than the latest.
     """
     return f"{V1}/tenants/{quote(tenant_slug, safe='')}/projects/{quote(project, safe='')}/sdk-compatibility"
+
+
+def usage_ingest(tenant_slug: str) -> str:
+    """``POST`` a batch of ``apiome.usage.event/v1`` events — the RDG-1.2 (#5760) ingest door.
+
+    The tenant is the API key's; the slug only names the route.
+    """
+    return f"{V1}/tenants/{quote(tenant_slug, safe='')}/usage/ingest"
+
+
+def usage_har_source(tenant_slug: str) -> str:
+    """``POST`` find, check or create a project's ``har`` usage source — RDG-1.4 (#5762)."""
+    return f"{V1}/tenants/{quote(tenant_slug, safe='')}/usage/sources/har"

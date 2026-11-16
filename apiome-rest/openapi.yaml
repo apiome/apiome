@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.580.0
+  version: 1.581.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5292,6 +5292,220 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list data classesresponse422.
+  /v1/data/{tenant_slug}/records:
+    get:
+      tags:
+      - data
+      summary: List Data Records
+      description: 'List a class schema''s records, a page at a time (#3253).
+
+
+        ``filter`` compares a top-level data field as text (``status=succeeded``,
+
+        ``amount=19.99``); several filters must all match. ``sort`` takes a system
+        field or a
+
+        data field (compared as JSON; records without it sort last). A soft-deleted
+        record is
+
+        left out unless ``include_deleted`` — then it carries the data it had and
+        ``deleted_at``.
+
+
+        Pages are cursor-driven: pass the answer''s ``next_cursor`` to get the next
+        page
+
+        (``null`` on the last page). A cursor only fits the query it came from; changing
+        the
+
+        class, filters, sort or ``include_deleted`` is a 400. Records added while
+        paging can
+
+        shift later pages. Unknown class schema → 404. Requires ``versions:view``.'
+      operationId: list_data_records_v1_data__tenant_slug__records_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: class_schema_id
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          description: Class schema ID (from GET …/classes)
+          title: Class Schema Id
+        description: Class schema ID (from GET …/classes)
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Records per page
+          default: 50
+          title: Limit
+        description: Records per page
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Data Recordscursor schema.
+          - type: 'null'
+            description: List Data Recordscursor schema.
+          description: The next_cursor of the previous page
+          title: Cursor
+        description: The next_cursor of the previous page
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+          description: key=value on a top-level data field; repeat to require several
+          default: []
+          title: Filter
+        description: key=value on a top-level data field; repeat to require several
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          description: created_at, updated_at, deleted_at, record_id or a data field;
+            prefix - for descending
+          default: created_at
+          title: Sort
+        description: created_at, updated_at, deleted_at, record_id or a data field;
+          prefix - for descending
+      - name: include_deleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Include soft-deleted records (they carry deleted_at)
+          default: false
+          title: Include Deleted
+        description: Include soft-deleted records (they carry deleted_at)
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Data Recordsauthorization schema.
+          - type: 'null'
+            description: List Data Recordsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Data Records Xapikey schema.
+          - type: 'null'
+            description: List Data Records Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list data records.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Data Records V1 Data  Tenant Slug  Records Get
+                description: Response List Data Records V1 Data  Tenant Slug  Records
+                  Get schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list data recordsresponse422.
+    post:
+      tags:
+      - data
+      summary: Create Data Record
+      description: 'Create a new data record and data_snapshot row.
+
+        Embedding is computed asynchronously and stored in data_snapshot.'
+      operationId: create_data_record_v1_data__tenant_slug__records_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create Data Recordauthorization schema.
+          - type: 'null'
+            description: Create Data Recordauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create Data Record Xapikey schema.
+          - type: 'null'
+            description: Create Data Record Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRecordCreateBody'
+              description: Request body for create data recordrequest.
+        description: Request body for create data record.
+      responses:
+        '200':
+          description: Successful response for create data record.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Create Data Record V1 Data  Tenant Slug  Records Post
+                description: Response Create Data Record V1 Data  Tenant Slug  Records
+                  Post schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for create data recordresponse422.
   /v1/data/{tenant_slug}/records/{record_id}:
     get:
       tags:
@@ -5523,220 +5737,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for delete data recordresponse422.
-  /v1/data/{tenant_slug}/records:
-    get:
-      tags:
-      - data
-      summary: List Data Records
-      description: 'List a class schema''s records, a page at a time (#3253).
-
-
-        ``filter`` compares a top-level data field as text (``status=succeeded``,
-
-        ``amount=19.99``); several filters must all match. ``sort`` takes a system
-        field or a
-
-        data field (compared as JSON; records without it sort last). A soft-deleted
-        record is
-
-        left out unless ``include_deleted`` — then it carries the data it had and
-        ``deleted_at``.
-
-
-        Pages are cursor-driven: pass the answer''s ``next_cursor`` to get the next
-        page
-
-        (``null`` on the last page). A cursor only fits the query it came from; changing
-        the
-
-        class, filters, sort or ``include_deleted`` is a 400. Records added while
-        paging can
-
-        shift later pages. Unknown class schema → 404. Requires ``versions:view``.'
-      operationId: list_data_records_v1_data__tenant_slug__records_get
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: class_schema_id
-        in: query
-        required: true
-        schema:
-          type: string
-          minLength: 1
-          description: Class schema ID (from GET …/classes)
-          title: Class Schema Id
-        description: Class schema ID (from GET …/classes)
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 500
-          minimum: 1
-          description: Records per page
-          default: 50
-          title: Limit
-        description: Records per page
-      - name: cursor
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Data Recordscursor schema.
-          - type: 'null'
-            description: List Data Recordscursor schema.
-          description: The next_cursor of the previous page
-          title: Cursor
-        description: The next_cursor of the previous page
-      - name: filter
-        in: query
-        required: false
-        schema:
-          type: array
-          items:
-            type: string
-          description: key=value on a top-level data field; repeat to require several
-          default: []
-          title: Filter
-        description: key=value on a top-level data field; repeat to require several
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-          description: created_at, updated_at, deleted_at, record_id or a data field;
-            prefix - for descending
-          default: created_at
-          title: Sort
-        description: created_at, updated_at, deleted_at, record_id or a data field;
-          prefix - for descending
-      - name: include_deleted
-        in: query
-        required: false
-        schema:
-          type: boolean
-          description: Include soft-deleted records (they carry deleted_at)
-          default: false
-          title: Include Deleted
-        description: Include soft-deleted records (they carry deleted_at)
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Data Recordsauthorization schema.
-          - type: 'null'
-            description: List Data Recordsauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Data Records Xapikey schema.
-          - type: 'null'
-            description: List Data Records Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      responses:
-        '200':
-          description: Successful response for list data records.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response List Data Records V1 Data  Tenant Slug  Records Get
-                description: Response List Data Records V1 Data  Tenant Slug  Records
-                  Get schema.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for list data recordsresponse422.
-    post:
-      tags:
-      - data
-      summary: Create Data Record
-      description: 'Create a new data record and data_snapshot row.
-
-        Embedding is computed asynchronously and stored in data_snapshot.'
-      operationId: create_data_record_v1_data__tenant_slug__records_post
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Create Data Recordauthorization schema.
-          - type: 'null'
-            description: Create Data Recordauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Create Data Record Xapikey schema.
-          - type: 'null'
-            description: Create Data Record Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DataRecordCreateBody'
-              description: Request body for create data recordrequest.
-        description: Request body for create data record.
-      responses:
-        '200':
-          description: Successful response for create data record.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: Response Create Data Record V1 Data  Tenant Slug  Records Post
-                description: Response Create Data Record V1 Data  Tenant Slug  Records
-                  Post schema.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for create data recordresponse422.
   /v1/data/{tenant_slug}/records/{record_id}/restore:
     post:
       tags:
@@ -6712,158 +6712,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for delete primitiveresponse422.
-  /v1/primitives/{tenant_slug}/{primitive_id}/deprecate:
-    post:
-      tags:
-      - primitives
-      summary: Deprecate Primitive
-      description: "Deprecate a type, optionally with a sunset date, a message and\
-        \ a replacement type.\n\nDeprecation is advisory: existing and new bindings\
-        \ and ``$ref``s keep working. Calling this\non an already-deprecated type\
-        \ replaces its sunset date, message and replacement (an omitted\nfield is\
-        \ cleared) and keeps the original ``deprecated_at``.\n\nArgs:\n    tenant_slug:\
-        \ The tenant slug.\n    primitive_id: The primitive id.\n    request: The\
-        \ deprecation details (all optional).\n    auth_data: Authentication data\
-        \ (injected by dependency).\n\nReturns:\n    The deprecated primitive, with\
-        \ ``replacement`` resolved.\n\nRaises:\n    HTTPException: 404 when the type\
-        \ is not found; 403 for a system type; 422 when the\n        sunset date is\
-        \ in the past or the replacement is missing, the type itself, or\n       \
-        \ itself deprecated."
-      operationId: deprecate_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_post
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: primitive_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Primitive Id
-          description: Primitive Id schema.
-        description: Primitive type identifier in the registry.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Deprecate Primitiveauthorization schema.
-          - type: 'null'
-            description: Deprecate Primitiveauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Deprecate Primitive Xapikey schema.
-          - type: 'null'
-            description: Deprecate Primitive Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PrimitiveDeprecateRequest'
-              description: Request body for deprecate primitiverequest.
-        description: Request body for deprecate primitive.
-      responses:
-        '200':
-          description: Successful response for deprecate primitive.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrimitiveSchema'
-                description: Response payload for deprecate primitiveresponse200.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for deprecate primitiveresponse422.
-    delete:
-      tags:
-      - primitives
-      summary: Restore Primitive
-      description: "Restore a deprecated type: clear its deprecation, sunset date,\
-        \ message and replacement.\n\nRestoring a type that is not deprecated is a\
-        \ no-op that returns the type unchanged (and\nwrites no audit row), so the\
-        \ call is safe to repeat.\n\nArgs:\n    tenant_slug: The tenant slug.\n  \
-        \  primitive_id: The primitive id.\n    auth_data: Authentication data (injected\
-        \ by dependency).\n\nReturns:\n    The restored primitive.\n\nRaises:\n  \
-        \  HTTPException: 404 when the type is not found; 403 for a system type."
-      operationId: restore_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_delete
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: primitive_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Primitive Id
-          description: Primitive Id schema.
-        description: Primitive type identifier in the registry.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Restore Primitiveauthorization schema.
-          - type: 'null'
-            description: Restore Primitiveauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Restore Primitive Xapikey schema.
-          - type: 'null'
-            description: Restore Primitive Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      responses:
-        '200':
-          description: Successful response for restore primitive.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrimitiveSchema'
-                description: Response payload for restore primitiveresponse200.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for restore primitiveresponse422.
   /v1/primitives/{tenant_slug}/import/review:
     post:
       tags:
@@ -7106,6 +6954,158 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for stage importresponse422.
+  /v1/primitives/{tenant_slug}/{primitive_id}/deprecate:
+    post:
+      tags:
+      - primitives
+      summary: Deprecate Primitive
+      description: "Deprecate a type, optionally with a sunset date, a message and\
+        \ a replacement type.\n\nDeprecation is advisory: existing and new bindings\
+        \ and ``$ref``s keep working. Calling this\non an already-deprecated type\
+        \ replaces its sunset date, message and replacement (an omitted\nfield is\
+        \ cleared) and keeps the original ``deprecated_at``.\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug.\n    primitive_id: The primitive id.\n    request: The\
+        \ deprecation details (all optional).\n    auth_data: Authentication data\
+        \ (injected by dependency).\n\nReturns:\n    The deprecated primitive, with\
+        \ ``replacement`` resolved.\n\nRaises:\n    HTTPException: 404 when the type\
+        \ is not found; 403 for a system type; 422 when the\n        sunset date is\
+        \ in the past or the replacement is missing, the type itself, or\n       \
+        \ itself deprecated."
+      operationId: deprecate_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: primitive_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Primitive Id
+          description: Primitive Id schema.
+        description: Primitive type identifier in the registry.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deprecate Primitiveauthorization schema.
+          - type: 'null'
+            description: Deprecate Primitiveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deprecate Primitive Xapikey schema.
+          - type: 'null'
+            description: Deprecate Primitive Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrimitiveDeprecateRequest'
+              description: Request body for deprecate primitiverequest.
+        description: Request body for deprecate primitive.
+      responses:
+        '200':
+          description: Successful response for deprecate primitive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrimitiveSchema'
+                description: Response payload for deprecate primitiveresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deprecate primitiveresponse422.
+    delete:
+      tags:
+      - primitives
+      summary: Restore Primitive
+      description: "Restore a deprecated type: clear its deprecation, sunset date,\
+        \ message and replacement.\n\nRestoring a type that is not deprecated is a\
+        \ no-op that returns the type unchanged (and\nwrites no audit row), so the\
+        \ call is safe to repeat.\n\nArgs:\n    tenant_slug: The tenant slug.\n  \
+        \  primitive_id: The primitive id.\n    auth_data: Authentication data (injected\
+        \ by dependency).\n\nReturns:\n    The restored primitive.\n\nRaises:\n  \
+        \  HTTPException: 404 when the type is not found; 403 for a system type."
+      operationId: restore_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: primitive_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Primitive Id
+          description: Primitive Id schema.
+        description: Primitive type identifier in the registry.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restore Primitiveauthorization schema.
+          - type: 'null'
+            description: Restore Primitiveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restore Primitive Xapikey schema.
+          - type: 'null'
+            description: Restore Primitive Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for restore primitive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrimitiveSchema'
+                description: Response payload for restore primitiveresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for restore primitiveresponse422.
   /v1/types/{tenant_slug}/stats:
     get:
       tags:
@@ -30458,7 +30458,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-12T03:38:37Z'
+                        example: '2026-11-16T13:38:07Z'
                       method:
                         type: string
                         example: GET
@@ -30556,6 +30556,93 @@ paths:
                           is open.
                   description: Events.
               description: Request body for ingestabatchofusageeventsrequest.
+  /v1/tenants/{tenant_slug}/usage/sources/har:
+    post:
+      tags:
+      - usage
+      summary: Find or create a project's HAR usage source
+      description: 'Answers the `har` usage source that `apiome usage upload` posts
+        a HAR file''s events to (RDG-1.4).
+
+
+        * With `sourceId`, that source is checked: it must belong to the project and
+        be a `har` source (`409` otherwise).
+
+        * Without it, the project''s oldest `har` source in the environment is answered,
+        or one is created with field capture on, sampling rate 1 and no body window.
+        A disabled source is refused with `403`, never replaced.
+
+
+        Takes a workspace API key with the `usage:ingest` scope (or full access),
+        or a session.'
+      operationId: resolve_har_usage_source_v1_tenants__tenant_slug__usage_sources_har_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Findorcreateaprojects Harusagesourceauthorization schema.
+          - type: 'null'
+            description: Findorcreateaprojects Harusagesourceauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Findorcreateaprojects Harusagesource Xapikey schema.
+          - type: 'null'
+            description: Findorcreateaprojects Harusagesource Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarSourceRequest'
+              description: Request body for findorcreateaprojects harusagesourcerequest.
+        description: Request body for find or create a project's har usage source.
+      responses:
+        '200':
+          description: Successful response for find or create a project's har usage
+            source.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarSourceResponse'
+                description: Response payload for findorcreateaprojects harusagesourceresponse200.
+        '400':
+          description: Invalid or reserved environment.
+        '403':
+          description: The source is disabled.
+        '404':
+          description: Unknown project or source.
+        '409':
+          description: The named source belongs to another project, or is not a `har`
+            source.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for findorcreateaprojects harusagesourceresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads:
     get:
       tags:
@@ -35821,7 +35908,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyncErrorDetail'
                 description: Response payload for mergeabounddraftagainstitsrepositoryrefresponse422.
-          description: Unprocessable Content
+          description: Unprocessable Entity
         '502':
           content:
             application/json:
@@ -66549,6 +66636,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for regenerate version change reportresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/publish-preview:
+    post:
+      tags:
+      - version-change-report
+      summary: Preview Change Report For Publish
+      description: 'Preview the publication change report that would be generated
+        after publish, without persisting.
+
+
+        Same baseline options as ``POST …/publish`` (``changeReportBaselineMode``
+        / ``changeReportBaselineRevisionId``).
+
+        Requires JWT; same authorization as publishing (revision creator or tenant
+        admin).'
+      operationId: preview_change_report_for_publish_v1_versions__tenant_slug___project_id___version_record_id__change_report_publish_preview_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Preview Change Report For Publishauthorization schema.
+          - type: 'null'
+            description: Preview Change Report For Publishauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Preview Change Report For Publish Xapikey schema.
+          - type: 'null'
+            description: Preview Change Report For Publish Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionPublishChangeReportPreviewRequest'
+              description: Request body for preview change report for publishrequest.
+        description: Request body for preview change report for publish.
+      responses:
+        '200':
+          description: Successful response for preview change report for publish.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionPublishChangeReportPreviewOut'
+                description: Response payload for preview change report for publishresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for preview change report for publishresponse422.
   /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/submit:
     post:
       tags:
@@ -66901,21 +67075,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for export change report pdfresponse422.
-  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/publish-preview:
-    post:
+  /v1/tenants/{tenant_slug}/change-report-audit:
+    get:
       tags:
-      - version-change-report
-      summary: Preview Change Report For Publish
-      description: 'Preview the publication change report that would be generated
-        after publish, without persisting.
+      - change-report-audit
+      summary: List Change Report Audit
+      description: 'List the tenant''s change-report audit trail, newest first.
 
 
-        Same baseline options as ``POST …/publish`` (``changeReportBaselineMode``
-        / ``changeReportBaselineRevisionId``).
+        One entry per report edit, regeneration, submission, approval, rejection and
+        PDF export,
 
-        Requires JWT; same authorization as publishing (revision creator or tenant
-        admin).'
-      operationId: preview_change_report_for_publish_v1_versions__tenant_slug___project_id___version_record_id__change_report_publish_preview_post
+        and per template creation or default change.
+
+
+        **Authorization:** JWT required; **tenant administrators only**.'
+      operationId: list_change_report_audit_v1_tenants__tenant_slug__change_report_audit_get
       parameters:
       - name: tenant_slug
         in: path
@@ -66925,31 +67100,113 @@ paths:
           title: Tenant Slug
           description: Tenant Slug schema.
         description: URL-safe tenant slug that scopes the request.
-      - name: project_id
-        in: path
-        required: true
+      - name: action
+        in: query
+        required: false
         schema:
-          type: string
-          title: Project Id
-          description: Project Id schema.
-        description: Project identifier that scopes the request.
-      - name: version_record_id
-        in: path
-        required: true
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: List Change Report Auditaction schema.
+          - type: 'null'
+            description: List Change Report Auditaction schema.
+          description: Only these audit verbs (repeat for several, e.g. report.approve).
+          title: Action
+        description: Only these audit verbs (repeat for several, e.g. report.approve).
+      - name: actorId
+        in: query
+        required: false
         schema:
-          type: string
-          title: Version Record Id
-          description: Version Record Id schema.
-        description: Version row identifier (``versions.id`` UUID).
+          anyOf:
+          - type: string
+            description: List Change Report Auditactor ID schema.
+          - type: 'null'
+            description: List Change Report Auditactor ID schema.
+          description: Only events by this user (UUID).
+          title: Actorid
+        description: Only events by this user (UUID).
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditproject ID schema.
+          - type: 'null'
+            description: List Change Report Auditproject ID schema.
+          description: Only events of this project (UUID).
+          title: Projectid
+        description: Only events of this project (UUID).
+      - name: versionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditversion ID schema.
+          - type: 'null'
+            description: List Change Report Auditversion ID schema.
+          description: Only events of this published version's report (UUID).
+          title: Versionid
+        description: Only events of this published version's report (UUID).
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditsince schema.
+          - type: 'null'
+            description: List Change Report Auditsince schema.
+          description: Inclusive lower bound on createdAt (ISO 8601).
+          title: Since
+        description: Inclusive lower bound on createdAt (ISO 8601).
+      - name: until
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Audituntil schema.
+          - type: 'null'
+            description: List Change Report Audituntil schema.
+          description: Inclusive upper bound on createdAt (ISO 8601).
+          title: Until
+        description: Inclusive upper bound on createdAt (ISO 8601).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditcursor schema.
+          - type: 'null'
+            description: List Change Report Auditcursor schema.
+          description: The `nextCursor` of the previous page, for the next (older)
+            one.
+          title: Cursor
+        description: The `nextCursor` of the previous page, for the next (older) one.
       - name: authorization
         in: header
         required: false
         schema:
           anyOf:
           - type: string
-            description: Preview Change Report For Publishauthorization schema.
+            description: List Change Report Auditauthorization schema.
           - type: 'null'
-            description: Preview Change Report For Publishauthorization schema.
+            description: List Change Report Auditauthorization schema.
           title: Authorization
           description: Authorization schema.
         description: 'JWT bearer token for authenticated access (``Authorization:
@@ -66960,34 +67217,27 @@ paths:
         schema:
           anyOf:
           - type: string
-            description: Preview Change Report For Publish Xapikey schema.
+            description: List Change Report Audit Xapikey schema.
           - type: 'null'
-            description: Preview Change Report For Publish Xapikey schema.
+            description: List Change Report Audit Xapikey schema.
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionPublishChangeReportPreviewRequest'
-              description: Request body for preview change report for publishrequest.
-        description: Request body for preview change report for publish.
       responses:
         '200':
-          description: Successful response for preview change report for publish.
+          description: Successful response for list change report audit.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionPublishChangeReportPreviewOut'
-                description: Response payload for preview change report for publishresponse200.
+                $ref: '#/components/schemas/ChangeReportAuditPageOut'
+                description: Response payload for list change report auditresponse200.
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for preview change report for publishresponse422.
+                description: Response payload for list change report auditresponse422.
   /v1/tenants/{tenant_slug}/change-report-template-versions:
     get:
       tags:
@@ -67191,169 +67441,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for put tenant change report template
                   defaultresponse422.
-  /v1/tenants/{tenant_slug}/change-report-audit:
-    get:
-      tags:
-      - change-report-audit
-      summary: List Change Report Audit
-      description: 'List the tenant''s change-report audit trail, newest first.
-
-
-        One entry per report edit, regeneration, submission, approval, rejection and
-        PDF export,
-
-        and per template creation or default change.
-
-
-        **Authorization:** JWT required; **tenant administrators only**.'
-      operationId: list_change_report_audit_v1_tenants__tenant_slug__change_report_audit_get
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: action
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: array
-            items:
-              type: string
-            description: List Change Report Auditaction schema.
-          - type: 'null'
-            description: List Change Report Auditaction schema.
-          description: Only these audit verbs (repeat for several, e.g. report.approve).
-          title: Action
-        description: Only these audit verbs (repeat for several, e.g. report.approve).
-      - name: actorId
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditactor ID schema.
-          - type: 'null'
-            description: List Change Report Auditactor ID schema.
-          description: Only events by this user (UUID).
-          title: Actorid
-        description: Only events by this user (UUID).
-      - name: projectId
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditproject ID schema.
-          - type: 'null'
-            description: List Change Report Auditproject ID schema.
-          description: Only events of this project (UUID).
-          title: Projectid
-        description: Only events of this project (UUID).
-      - name: versionId
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditversion ID schema.
-          - type: 'null'
-            description: List Change Report Auditversion ID schema.
-          description: Only events of this published version's report (UUID).
-          title: Versionid
-        description: Only events of this published version's report (UUID).
-      - name: since
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditsince schema.
-          - type: 'null'
-            description: List Change Report Auditsince schema.
-          description: Inclusive lower bound on createdAt (ISO 8601).
-          title: Since
-        description: Inclusive lower bound on createdAt (ISO 8601).
-      - name: until
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Audituntil schema.
-          - type: 'null'
-            description: List Change Report Audituntil schema.
-          description: Inclusive upper bound on createdAt (ISO 8601).
-          title: Until
-        description: Inclusive upper bound on createdAt (ISO 8601).
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 200
-          minimum: 1
-          default: 50
-          title: Limit
-          description: Limit schema.
-        description: Maximum number of rows to return.
-      - name: cursor
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditcursor schema.
-          - type: 'null'
-            description: List Change Report Auditcursor schema.
-          description: The `nextCursor` of the previous page, for the next (older)
-            one.
-          title: Cursor
-        description: The `nextCursor` of the previous page, for the next (older) one.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Auditauthorization schema.
-          - type: 'null'
-            description: List Change Report Auditauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: List Change Report Audit Xapikey schema.
-          - type: 'null'
-            description: List Change Report Audit Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      responses:
-        '200':
-          description: Successful response for list change report audit.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChangeReportAuditPageOut'
-                description: Response payload for list change report auditresponse200.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for list change report auditresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_id}/change-report-template-default:
     put:
       tags:
@@ -101987,6 +102074,115 @@ components:
         \ JSON Pointer.\n    change_kind: Raw enumerator kind.\n    unclassified:\
         \ True when the classifier fell back to breaking.\n    consumers: Handles\
         \ of the consumers whose declared surface this change touches."
+    ChangeReportAuditEntryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenantId:
+          type: string
+          title: Tenantid
+          description: Tenant ID.
+          example: example
+        projectId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Projectid
+          description: Project ID.
+        changeReportId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Changereportid
+          description: Change Report ID.
+        publishedRevisionId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Publishedrevisionid
+          description: Published Revision ID.
+        templateVersionId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Templateversionid
+          description: Template Version ID.
+        action:
+          type: string
+          title: Action
+          description: 'Audit verb: report.edit, report.regenerate, report.submit,
+            report.approve, report.reject, report.export_pdf, template.create, template.default_tenant
+            or template.default_project.'
+          example: example
+        actorId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Actorid
+          description: Actor ID.
+        detail:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Detail
+          description: Detail.
+        createdAt:
+          type: string
+          title: Createdat
+          description: Created At.
+          example: example
+      type: object
+      required:
+      - id
+      - tenantId
+      - action
+      - createdAt
+      title: ChangeReportAuditEntryOut
+      description: One row of the change-report audit trail (#2705).
+    ChangeReportAuditPageOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ChangeReportAuditEntryOut'
+          type: array
+          title: Items
+          description: Items.
+          maxItems: 100
+        limit:
+          type: integer
+          title: Limit
+          description: The page size that was applied.
+          example: 50
+        nextCursor:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit page.
+          - type: 'null'
+            description: Response payload for change report audit page.
+          title: Nextcursor
+          description: Pass as `cursor` for the next (older) page; null on the last
+            page.
+      type: object
+      required:
+      - limit
+      title: ChangeReportAuditPageOut
+      description: One page of the change-report audit trail, newest first (#2705).
     ChangeReportModel:
       properties:
         schemaVersion:
@@ -102059,6 +102255,22 @@ components:
       description: 'Versioned semantic diff between two resolved OpenAPI documents.
 
         ``schemaVersion`` bumps when this JSON shape changes incompatibly.'
+    ChangeReportReviewRequest:
+      properties:
+        note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: Request body for change report review.
+          - type: 'null'
+            description: Request body for change report review.
+          title: Note
+          description: The reviewer's note, kept with the report and written to the
+            audit trail.
+      type: object
+      title: ChangeReportReviewRequest
+      description: Body of an approve / reject call on a change report (#2705). The
+        note is optional.
     ChangeReportTemplateDefaultPut:
       properties:
         templateVersionId:
@@ -102514,7 +102726,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         completed_at:
           anyOf:
           - type: string
@@ -103816,7 +104028,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
       type: object
       required:
       - api_key
@@ -103859,7 +104071,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -104330,7 +104542,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-15T04:51:49Z'
+          example: '2026-11-16T13:38:07Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -104513,7 +104725,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-15T04:51:49Z'
+          example: '2026-11-16T13:38:07Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -105624,13 +105836,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -108245,7 +108457,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 4c97d776-9b87-4e00-bcab-22a6e3cd3aa4
+          example: 818f2f66-a681-410f-8d7c-3a3541f72452
         method:
           type: string
           title: Method
@@ -110627,7 +110839,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         envelope:
           additionalProperties: true
           type: object
@@ -112345,7 +112557,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         browse_url:
           anyOf:
           - type: string
@@ -118814,7 +119026,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         reports:
           items:
             $ref: '#/components/schemas/ExportRunTargetReport'
@@ -119022,7 +119234,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
       additionalProperties: false
       type: object
       required:
@@ -120449,7 +120661,7 @@ components:
           format: date-time
           title: Last Activity At
           description: Last Activity At timestamp (ISO 8601).
-          example: '2026-11-15T04:51:49Z'
+          example: '2026-11-16T13:38:07Z'
         comments:
           items:
             $ref: '#/components/schemas/FeedbackComment'
@@ -123325,6 +123537,96 @@ components:
       title: HTTPValidationError
       description: Validation error response emitted when request data fails schema
         checks.
+    HarSourceRequest:
+      properties:
+        project:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Project
+          description: Project slug or UUID.
+          example: example
+        environment:
+          type: string
+          maxLength: 32
+          minLength: 1
+          title: Environment
+          description: The environment the recorded traffic happened in (`prod`, `staging`,
+            ...). `mock` is reserved.
+          example: example
+        sourceId:
+          anyOf:
+          - type: string
+            description: Request body for har source.
+          - type: 'null'
+            description: Request body for har source.
+          title: Sourceid
+          description: A `har` source of the project to use. Omit it to find the project's
+            source, or create one.
+      additionalProperties: false
+      type: object
+      required:
+      - project
+      - environment
+      title: HarSourceRequest
+      description: Which project and environment a HAR upload reports, and optionally
+        which source.
+    HarSourceResponse:
+      properties:
+        sourceId:
+          type: string
+          title: Sourceid
+          description: The `usage_source` to name on `…/usage/ingest`.
+          example: example
+        projectId:
+          type: string
+          title: Projectid
+          description: The source's project.
+          example: example
+        kind:
+          type: string
+          title: Kind
+          description: Always `har`.
+          example: example
+        environment:
+          type: string
+          title: Environment
+          description: The source's default environment.
+          example: example
+        samplingRate:
+          type: number
+          title: Samplingrate
+          description: The source's head-sampling rate.
+          example: 1.0
+        fieldCapture:
+          type: boolean
+          title: Fieldcapture
+          description: Whether field presence is counted (on for a source created
+            here).
+          example: false
+        bodySamplesOpen:
+          type: boolean
+          title: Bodysamplesopen
+          description: Whether the source accepts opt-in body samples right now (its
+            body window is open).
+          example: false
+        created:
+          type: boolean
+          title: Created
+          description: Whether this call created the source.
+          example: false
+      type: object
+      required:
+      - sourceId
+      - projectId
+      - kind
+      - environment
+      - samplingRate
+      - fieldCapture
+      - bodySamplesOpen
+      - created
+      title: HarSourceResponse
+      description: The source a HAR upload posts its events to.
     HeartbeatRequest:
       properties:
         session_id:
@@ -128364,12 +128666,12 @@ components:
           type: string
           title: Acquired At
           description: When it was taken (ISO 8601).
-          example: '2026-11-15T02:13:39Z'
+          example: '2026-11-16T13:38:07Z'
         expires_at:
           type: string
           title: Expires At
           description: When it lapses without a heartbeat (ISO 8601).
-          example: '2026-11-15T02:13:39Z'
+          example: '2026-11-16T13:38:07Z'
         takeover:
           anyOf:
           - $ref: '#/components/schemas/TakeoverRecord'
@@ -134758,7 +135060,7 @@ components:
           format: date-time
           title: Checked At
           description: Checked At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         status:
           type: string
           title: Status
@@ -135859,7 +136161,7 @@ components:
           type: string
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         client_id:
           type: string
           title: Client Id
@@ -149804,9 +150106,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Request body for push webhook subscription create.
           - type: 'null'
             description: Request body for push webhook subscription create.
@@ -149847,9 +150149,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Response payload for push webhook subscription.
           - type: 'null'
             description: Response payload for push webhook subscription.
@@ -149913,9 +150215,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - breaking
-            - non-breaking
             - docs-only
+            - non-breaking
+            - breaking
             description: Request body for push webhook subscription update.
           - type: 'null'
             description: Request body for push webhook subscription update.
@@ -150829,7 +151131,7 @@ components:
           format: date-time
           title: Session Expires At
           description: When the current session ends.
-          example: '2026-11-15T04:18:07Z'
+          example: '2026-11-16T13:38:07Z'
       additionalProperties: false
       type: object
       required:
@@ -150852,7 +151154,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-15T04:18:07Z'
+          example: '2026-11-16T13:38:07Z'
         return_to:
           anyOf:
           - type: string
@@ -156311,7 +156613,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-15T01:46:23Z'
+          example: '2026-11-16T13:38:07Z'
       additionalProperties: false
       type: object
       required:
@@ -158737,13 +159039,13 @@ components:
           format: date-time
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-15T05:22:09Z'
+          example: '2026-11-16T13:38:07Z'
         last_seen_at:
           type: string
           format: date-time
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-15T05:22:09Z'
+          example: '2026-11-16T13:38:07Z'
       additionalProperties: false
       type: object
       required:
@@ -158886,7 +159188,7 @@ components:
           format: date-time
           title: Received At
           description: Received At timestamp (ISO 8601).
-          example: '2026-11-15T05:22:09Z'
+          example: '2026-11-16T13:38:07Z'
         accepted:
           type: integer
           title: Accepted
@@ -167669,12 +167971,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
       additionalProperties: false
       type: object
       required:
@@ -169070,7 +169372,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-12T03:38:37Z'
+          example: '2026-11-16T13:38:07Z'
         detected_by:
           anyOf:
           - type: string
@@ -170154,7 +170456,7 @@ components:
           type: string
           title: Requested At
           description: When they asked (ISO 8601).
-          example: '2026-11-15T02:13:39Z'
+          example: '2026-11-16T13:38:07Z'
         can_force_after:
           type: string
           title: Can Force After
@@ -176196,13 +176498,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-15T01:46:23Z'
+          example: '2026-11-16T13:38:07Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-15T01:46:23Z'
+          example: '2026-11-16T13:38:07Z'
         outcome:
           anyOf:
           - type: string
@@ -178399,131 +178701,6 @@ components:
       title: VersionChangeReportOut
       description: Stored change report row plus effective (edited-over-rendered)
         snapshots.
-    ChangeReportReviewRequest:
-      properties:
-        note:
-          anyOf:
-          - type: string
-            maxLength: 1000
-            description: Request body for change report review.
-          - type: 'null'
-            description: Request body for change report review.
-          title: Note
-          description: The reviewer's note, kept with the report and written to the
-            audit trail.
-      type: object
-      title: ChangeReportReviewRequest
-      description: Body of an approve / reject call on a change report (#2705). The
-        note is optional.
-    ChangeReportAuditEntryOut:
-      properties:
-        id:
-          type: string
-          title: Id
-          description: Stable resource identifier.
-          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
-        tenantId:
-          type: string
-          title: Tenantid
-          description: Tenant ID.
-          example: example
-        projectId:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Projectid
-          description: Project ID.
-        changeReportId:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Changereportid
-          description: Change Report ID.
-        publishedRevisionId:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Publishedrevisionid
-          description: Published Revision ID.
-        templateVersionId:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Templateversionid
-          description: Template Version ID.
-        action:
-          type: string
-          title: Action
-          description: 'Audit verb: report.edit, report.regenerate, report.submit,
-            report.approve, report.reject, report.export_pdf, template.create, template.default_tenant
-            or template.default_project.'
-          example: example
-        actorId:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Actorid
-          description: Actor ID.
-        detail:
-          anyOf:
-          - additionalProperties: true
-            type: object
-            description: Response payload for change report audit entry.
-          - type: 'null'
-            description: Response payload for change report audit entry.
-          title: Detail
-          description: Detail.
-        createdAt:
-          type: string
-          title: Createdat
-          description: Created At.
-          example: example
-      type: object
-      required:
-      - id
-      - tenantId
-      - action
-      - createdAt
-      title: ChangeReportAuditEntryOut
-      description: One row of the change-report audit trail (#2705).
-    ChangeReportAuditPageOut:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/ChangeReportAuditEntryOut'
-          type: array
-          title: Items
-          description: Items.
-          maxItems: 100
-        limit:
-          type: integer
-          title: Limit
-          description: The page size that was applied.
-          example: 50
-        nextCursor:
-          anyOf:
-          - type: string
-            description: Response payload for change report audit page.
-          - type: 'null'
-            description: Response payload for change report audit page.
-          title: Nextcursor
-          description: Pass as `cursor` for the next (older) page; null on the last
-            page.
-      type: object
-      required:
-      - limit
-      title: ChangeReportAuditPageOut
-      description: One page of the change-report audit trail, newest first (#2705).
     VersionChangeReportPatch:
       properties:
         editedRenderedBody:
@@ -183199,6 +183376,20 @@ components:
       title: Body_start_spec_import_multipart_v1_tenants__tenant_slug__imports_upload_post
       description: Multipart upload payload for starting a specification import (raw
         file bytes plus JSON metadata).
+    MemberImportUploadBody:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+          description: CSV with an email,role,display_name header.
+          example: "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
+      type: object
+      required:
+      - file
+      title: Body_import_members_v1_access__tenant_slug__members_import_post
+      description: Body_import_members_v1_access__tenant_slug__members_import_post
+        schema.
     MockScenarioSpecInput:
       properties:
         description:
@@ -185690,20 +185881,6 @@ components:
       - policyVersion
       title: WriteRuleResponse
       description: The outcome of a rule write.
-    MemberImportUploadBody:
-      properties:
-        file:
-          type: string
-          format: binary
-          title: File
-          description: CSV with an email,role,display_name header.
-          example: "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
-      type: object
-      required:
-      - file
-      title: Body_import_members_v1_access__tenant_slug__members_import_post
-      description: Body_import_members_v1_access__tenant_slug__members_import_post
-        schema.
   securitySchemes:
     Bearer:
       type: http

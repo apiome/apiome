@@ -1,0 +1,26 @@
+---
+slug: har-usage-upload
+title: Upload a HAR file to the usage index
+description: "apiome usage upload turns a devtools or proxy recording into usage counts."
+authors: [apiome]
+---
+
+You no longer need a Collector to see how your API is used. Record some traffic in browser devtools
+or a proxy, save it as HAR, and upload it from the CLI.
+
+{/* truncate */}
+
+- **One command.** `apiome usage upload session.har --project payments-api --environment staging`
+  posts the recording's calls to the usage index and prints what the server did with them:
+  accepted, unmatched, sampled out, rejected and how many strings it scrubbed.
+- **Bodies stay on your machine.** Field presence is worked out from the bodies locally, then the
+  bodies are discarded. Header values and query values are never sent; only whether a credential
+  header was present.
+- **No source to set up.** The first upload creates the project's HAR source for the environment;
+  `--source` names one instead. A source that is switched off is refused, not replaced.
+- **Built for big recordings.** The file is streamed and checked end to end before anything is
+  sent, and every 5,000 entries make one batch in the ingest ledger. A damaged file exits `2`, like
+  `apiome diff`.
+
+REST API 1.581.0 adds `POST /v1/tenants/{tenant}/usage/sources/har`, which the command calls. See
+[Runtime usage](/govern/runtime-usage#upload-a-har-file).

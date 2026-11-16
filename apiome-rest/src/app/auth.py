@@ -43,8 +43,9 @@ API_KEY_SCOPE_LINT_READ = "lint:read"
 #: allowlist below, so an agent key is refused on every REST route even if it ever reached
 #: :func:`enforce_api_key_scopes` (``db.validate_api_key`` already only accepts workspace keys).
 API_KEY_SCOPE_AGENT_INVOKE = "agent:invoke"
-#: RDG-1.2 (#5760, V291): a usage source's key. It admits the usage ingest door and nothing else,
-#: so a key copied out of a Collector's config cannot read or change anything in the workspace.
+#: RDG-1.2 (#5760, V291): a usage source's key. It admits the usage ingest doors (the ingest batch,
+#: the SDK beacon) and the HAR-source lookup of RDG-1.4 (which can only create a ``har`` source) and
+#: nothing else, so a key copied out of a Collector's config cannot read or change anything else.
 API_KEY_SCOPE_USAGE_INGEST = "usage:ingest"
 #: CDG-4.3 (#5975, V295): the Confluent-compatible schema registry at ``/registry/schema/{tenant}``.
 #: ``registry:read`` admits its GETs and its two read-only POSTs (subject lookup, compatibility
@@ -136,6 +137,13 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     (
         "POST",
         re.compile(r"^/v1/tenants/[^/]+/usage/ingest/?$"),
+        API_KEY_SCOPE_USAGE_INGEST,
+    ),
+    # RDG-1.4 (#5762): the HAR source a `apiome usage upload` posts to — found, checked or created
+    # (kind `har` only), so the key a developer uploads with needs nothing else.
+    (
+        "POST",
+        re.compile(r"^/v1/tenants/[^/]+/usage/sources/har/?$"),
         API_KEY_SCOPE_USAGE_INGEST,
     ),
     # RDG-1.7 (#4736): the SDK compatibility beacon door, write-only like the ingest door. An

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.721.0] - 2026-11-16
+
+### Added
+- **HAR upload source lookup (RDG-1.4, #5762)** — OpenAPI 1.581.0:
+  - `POST /v1/tenants/{tenant_slug}/usage/sources/har` (`{project, environment, sourceId?}`) answers the `har` usage
+    source `apiome usage upload` posts to: a named source is checked (it must belong to the project, `409
+    usage-source-project-mismatch`, and be a `har` source, `409 usage-source-kind-mismatch`); otherwise the project's
+    oldest `har` source in the environment is answered, or one is created with field capture on, sampling rate 1 and no
+    body window. A disabled source is refused with `403 usage-source-disabled`, never replaced; `mock` and invalid
+    environments are `400`. The answer carries `bodySamplesOpen`, so the CLI refuses `--sample-bodies` before
+    sending anything. Only `har` sources are ever created (`app.usage_source_store`).
+  - The `usage:ingest` key scope admits the route, so the key a developer uploads with needs nothing else.
+  - `tests/golden/usage_har_upload/petstore.events.json` — the events the CLI builds from its HAR fixture corpus —
+    runs through `app.usage_ingest.plan_batch`: deterministic counters, query names and body fields counted as field
+    presence, and no credential, query value or body value in any planned row.
+
 ## [1.720.0] - 2026-11-16
 
 ### Added
