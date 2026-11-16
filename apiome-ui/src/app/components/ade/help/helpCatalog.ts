@@ -1777,6 +1777,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['approve', 'request changes', 'reviewer', 'round', 'force publish'],
   },
   {
+    id: 'breaking-changes-across-formats',
+    title: 'Breaking changes across formats',
+    summary: 'How Avro, JSON Schema, Protobuf and AsyncAPI changes are graded, and where the grades show.',
+    page: 'apiome-docs/docs/govern/breaking-changes-across-formats.mdx',
+    section: 'reference',
+    keywords: ['compatibility', 'avro', 'json schema', 'protobuf', 'asyncapi', 'buf', 'confluent', 'schema registry', 'mode'],
+  },
+  {
     id: 'compatibility-modes',
     title: 'Compatibility modes',
     summary:

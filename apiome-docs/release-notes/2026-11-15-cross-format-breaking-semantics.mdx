@@ -1,0 +1,26 @@
+---
+slug: cross-format-breaking-semantics
+title: Cross-format breaking semantics — one grade for Avro, JSON Schema, Protobuf and AsyncAPI
+description: "Registry-style compatibility modes and Buf categories grade data contracts, checked against reference tools."
+authors: [apiome]
+---
+
+Breaking-change grades for data contracts now follow the rules of each format's own tools. One new
+page explains how the parts fit: [Breaking changes across formats](/govern/breaking-changes-across-formats). (#5745)
+
+{/* truncate */}
+
+- **Avro, graded as a Confluent registry would.** Changes are read under `BACKWARD`, `FORWARD` or
+  `FULL`, including field defaults, aliases, union branches and type promotions. (#3785)
+- **JSON Schema, by content model.** An open, closed or partially open object decides whether adding
+  or removing a property is safe. (#5746)
+- **Protobuf, by Buf category.** Reserved numbers and names, `json_name` and package moves are graded
+  under `WIRE`, `WIRE_JSON` (the default), `PACKAGE` or `FILE`. (#5747)
+- **AsyncAPI, for consumers and producers.** Channel, operation and message changes are graded for
+  each side, and payloads by their own format. (#5748)
+- **One mode setting, everywhere.** The project's style-guide policy sets the mode. The classified
+  diff, the compatibility check, `apiome diff`, `apiome compat`, the CI gate and the publish guardrail
+  all read it, and `GET /v1/compatibility/rules` lists every rule. (#5749)
+- **Checked against reference tools.** A golden corpus fails the build when Apiome disagrees with an
+  Apicurio Registry, `buf breaking`, `@asyncapi/diff` or GraphQL-Inspector, unless the difference is
+  listed with its reason. (#5750)

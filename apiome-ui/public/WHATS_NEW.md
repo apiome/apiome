@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- **Breaking changes across formats** — a new docs page explains how Avro, JSON Schema, Protobuf and AsyncAPI changes are graded **Safe**, **Dangerous** or **Breaking** under a registry-style compatibility mode or a Buf category, where the grades show (Versions, `apiome diff`, the CI gate, the publish guardrail), and how the grades are checked against the reference tools
 - **Find your way around** — a new docs page maps the sidebar and the launcher: which group holds each page, why **Workspace** starts folded, the footer's **Notifications** count, and where **Tenants**, **SDK settings**, **Data browser** and **Migrations** live now
 - Readers can sign in to Browse: an organization's portal page has a **Sign in** chip; enter your email, open the link we send (it works once, for 15 minutes) and press **Continue**. You stay signed in for a week, or until you **Sign out** — no workspace seat or API key needed
 - **Consumer feedback** — readers signed in to Browse can send feedback on a published version or one of its operations from its **Feedback** tab. It appears in the project's **Discussion** tab with a **Consumer** tag, the new **Origin** chips (**Team** / **Consumer feedback**) filter it, and your replies and **Resolve** show up for the reader in Browse
