@@ -658,6 +658,14 @@ def render_agent_runtime_page() -> str:
         "",
         f"The full matrix and the SDK decision behind it are in [`PROTOCOL_VERSIONS.md`]({PROTOCOL_VERSIONS_DOC_URL}).",
         "",
+        "## Telemetry",
+        "",
+        "Every `tools/call` can be exported as an OpenTelemetry trace (`apiome.agent.invocation` with "
+        "`vault.resolve` and `upstream.request` children) and two metrics over OTLP. An inbound W3C "
+        "`traceparent` (HTTP header, or `traceparent` / `tracestate` in the request's `_meta`) parents the "
+        "span. It is off until an operator sets an OTLP endpoint — see "
+        "[Agent telemetry](../../admin/agent-telemetry.md).",
+        "",
         "*This page is generated from the agent runtime's protocol-version table; regenerate it with "
         f"`{REGENERATE_COMMAND}`.*\n",
     ]

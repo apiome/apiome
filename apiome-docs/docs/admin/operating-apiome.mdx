@@ -175,6 +175,13 @@ runtime's public address and tells them how to sign in. Set these in `apiome-res
 | `APIOME_AGENT_MCP_PUBLIC_URL` | `http://localhost:8765/agent/mcp` | The public `http(s)` URL of apiome-mcp's agent runtime (`/agent/mcp`). Anything else makes the export answer `503` |
 | `APIOME_AGENT_MCP_PRM_URL` | empty | The runtime's OAuth Protected Resource Metadata URL. When it is set, the export tells hosts to use OAuth. When it is empty, it tells them to use an agent key |
 
+### Agent telemetry
+
+The agent runtime can export every agent tool call as OpenTelemetry traces and metrics. It is off
+until `APIOME_MCP_OTEL_EXPORTER_OTLP_ENDPOINT` is set on the `mcp` service. See
+[Agent telemetry](./agent-telemetry.md) for every setting and for Datadog, Grafana and Honeycomb
+recipes.
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a

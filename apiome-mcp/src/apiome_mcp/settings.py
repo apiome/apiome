@@ -236,6 +236,59 @@ class Settings(BaseSettings):
         le=100_000,
         description="AGX-2.1: compiled agent toolsets kept in memory per process.",
     )
+    otel_exporter_otlp_endpoint: str | None = Field(
+        default=None,
+        description=(
+            "ATQ-4.4: OTLP/HTTP collector root (e.g. http://otel-collector:4318). Unset (the default) "
+            "exports nothing. Spans go to {root}/v1/traces, metrics to {root}/v1/metrics."
+        ),
+    )
+    otel_exporter_otlp_headers: SecretStr | None = Field(
+        default=None,
+        description=(
+            "ATQ-4.4: headers sent with every OTLP export, as comma-separated key=value pairs "
+            "(e.g. a vendor API key). Never logged."
+        ),
+    )
+    otel_service_name: str = Field(
+        default="apiome-mcp",
+        min_length=1,
+        max_length=128,
+        description="ATQ-4.4: the OTel service.name resource attribute.",
+    )
+    otel_traces_sampler_ratio: float = Field(
+        default=0.25,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "ATQ-4.4: share of new traces sampled (0..1; default 0.25 keeps the CPU cost under 2%). "
+            "Metrics count every call whatever the ratio. A call whose caller sent a traceparent "
+            "follows the caller's sampling decision."
+        ),
+    )
+    otel_metric_export_interval_seconds: float = Field(
+        default=60.0,
+        ge=1.0,
+        le=3600.0,
+        description="ATQ-4.4: seconds between metric exports.",
+    )
+    otel_export_timeout_seconds: float = Field(
+        default=10.0,
+        gt=0,
+        le=60.0,
+        description="ATQ-4.4: most seconds one OTLP export may take. Exports run in the background.",
+    )
+
+    @field_validator("otel_exporter_otlp_endpoint")
+    @classmethod
+    def validate_otel_endpoint(cls, value: str | None) -> str | None:
+        """An empty value means "off"; otherwise an http(s) URL without a trailing slash."""
+        if value is None or not value.strip():
+            return None
+        text = value.strip().rstrip("/")
+        if not text.startswith(("http://", "https://")):
+            raise ValueError("otel_exporter_otlp_endpoint must be an http:// or https:// URL")
+        return text
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:

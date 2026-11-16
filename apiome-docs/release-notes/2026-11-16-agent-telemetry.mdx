@@ -1,0 +1,28 @@
+---
+slug: agent-telemetry
+title: Agent tool calls in your observability stack
+description: "The agent runtime exports every tool call as OpenTelemetry traces and metrics."
+authors: [apiome]
+---
+
+Operators can now see agent tool calls in Datadog, Honeycomb, Grafana or any other backend that
+accepts OpenTelemetry. Set one variable on apiome-mcp and every `tools/call` arrives as a trace and
+two metrics.
+
+{/* truncate */}
+
+- **One trace per call.** An `apiome.agent.invocation` span carries the same facts as the call's
+  audit row: workspace, key id, toolset, tool, target, outcome, error code, HTTP status, latency and
+  sizes. It has `vault.resolve` and `upstream.request` child spans, so you can see whether time went to
+  opening the credential or to the API.
+- **Joined to the agent's trace.** A `traceparent` from the caller (HTTP header or `_meta`) makes the
+  span part of the caller's trace, and the caller's sampling decision is honoured.
+- **Exact metrics.** `apiome.agent.invocations` and `apiome.agent.latency_ms` count every call
+  whatever the trace sampling ratio (25% by default). They are labelled without the key id, so
+  they stay cheap in any backend.
+- **Nothing sensitive leaves.** Arguments, bodies, headers, URLs and credentials are never exported,
+  and a broken collector never fails or slows a call.
+
+Set `APIOME_MCP_OTEL_EXPORTER_OTLP_ENDPOINT` to your collector to start. See
+[Agent telemetry](/admin/agent-telemetry) for the settings, the attribute table and recipes for
+Datadog, Grafana and Honeycomb.

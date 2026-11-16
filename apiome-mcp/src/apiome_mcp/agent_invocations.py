@@ -336,6 +336,7 @@ class InvocationAudit:
         classify: OutcomeClassifier | None,
         wall_clock: Callable[[], datetime],
         monotonic: Callable[[], float],
+        on_record: Callable[[InvocationRecord], None] | None = None,
     ) -> None:
         """Hold the call's identity; see :func:`audit_invocation` for the arguments."""
         self._pool = pool
@@ -347,6 +348,7 @@ class InvocationAudit:
         self._classify = classify
         self._wall_clock = wall_clock
         self._monotonic = monotonic
+        self._on_record = on_record
         self._invoked_at: datetime | None = None
         self._started = 0.0
         self._outcome: InvocationOutcome | None = None
@@ -466,6 +468,12 @@ class InvocationAudit:
             response_bytes=self._response_bytes,
             sampled=sample is not None,
         )
+        if self._on_record is not None:
+            # ATQ-4.4: the OTel span mirrors this exact row. A failing observer never fails the call.
+            try:
+                self._on_record(record)
+            except Exception:
+                _log.warning("agent_invocation_observer_failed", tool=record.tool_name, exc_info=True)
         try:
             await insert_invocation(self._pool, record, sample)
         except Exception:
@@ -510,6 +518,7 @@ def audit_invocation(
     wall_clock: Callable[[], datetime] = _utc_now,
     monotonic: Callable[[], float] = time.monotonic,
     draw: Callable[[], float] = random.random,
+    on_record: Callable[[InvocationRecord], None] | None = None,
 ) -> InvocationAudit:
     """Guard one agent ``tools/call``: ``async with audit_invocation(...) as audit: ...``.
 
@@ -524,6 +533,8 @@ def audit_invocation(
         wall_clock: Source of the start time (tests).
         monotonic: Source of elapsed time (tests).
         draw: Uniform ``[0, 1)`` source for the sampling decision (tests).
+        on_record: Called with the finished row just before it is written (ATQ-4.4 telemetry).
+            Its errors are logged and swallowed.
 
     Returns:
         The audit context; it writes one row when the block exits.
@@ -540,4 +551,5 @@ def audit_invocation(
         classify=classify,
         wall_clock=wall_clock,
         monotonic=monotonic,
+        on_record=on_record,
     )

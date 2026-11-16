@@ -34,7 +34,7 @@ import httpx
 import mcp.types as mt
 import structlog
 from fastmcp import Context, FastMCP
-from fastmcp.server.dependencies import get_context
+from fastmcp.server.dependencies import get_context, get_http_headers
 from fastmcp.server.lifespan import lifespan
 from fastmcp.server.providers import Provider
 from fastmcp.tools.base import Tool, ToolResult
@@ -51,6 +51,7 @@ from apiome_mcp.agent_access import (
 from apiome_mcp.agent_invocation_proxy import InvocationConfig, InvocationProxy
 from apiome_mcp.agent_quotas import AgentQuotaGuard, AgentQuotaMiddleware
 from apiome_mcp.agent_safety_rails import build_upstream_client, described_with_idempotency, tool_annotations
+from apiome_mcp.agent_telemetry import telemetry_from_settings, trace_carrier
 from apiome_mcp.agent_toolset_source import (
     ServedTool,
     ServedToolset,
@@ -165,7 +166,18 @@ class AgentTool(Tool):
             toolset=self._toolset,
             tool=self._served,
             arguments=arguments,
+            trace_context=_inbound_trace_context(ctx),
         )
+
+
+def _inbound_trace_context(ctx: Context) -> dict[str, str] | None:
+    """The caller's W3C trace context (ATQ-4.4): the ``traceparent`` header, else ``params._meta``."""
+    try:
+        request_context = ctx.request_context
+        meta = request_context.meta if request_context else None
+    except Exception:  # no MCP request in flight (direct calls in tests)
+        meta = None
+    return trace_carrier(get_http_headers(), meta)
 
 
 class AgentToolsetProvider(Provider):
@@ -251,7 +263,10 @@ def build_agent_server(
     """
     if proxy is None or quota is None:
         settings = settings or get_settings()
-    proxy = proxy or InvocationProxy(InvocationConfig.from_settings(cast(Settings, settings)))
+    proxy = proxy or InvocationProxy(
+        InvocationConfig.from_settings(cast(Settings, settings)),
+        telemetry=telemetry_from_settings(cast(Settings, settings)),
+    )
     cache_size = settings.agent_toolset_cache_size if settings is not None else None
     provider = AgentToolsetProvider(proxy, cache=ServedToolsetCache(cache_size) if cache_size else None)
     app = FastMCP(
