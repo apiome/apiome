@@ -1,0 +1,27 @@
+---
+slug: sunset-readiness
+title: See who still uses a version before it sunsets
+description: "The sunset timeline and Published page count who still calls a deprecated version."
+authors: [apiome]
+---
+
+A sunset date says when a version goes away. It never said whether anybody was still on it. Now
+the **Sunset timeline** and the **Published** page tell you, from the usage index.
+
+{/* truncate */}
+
+- **Still used by N consumers.** A deprecated version reads *Still used by 2 consumers (1,240 calls,
+  7-day)*, counted over the last 7 days of `prod` traffic. The consumer handles follow, and a
+  **Consumers** link opens the project's Consumers page. You need `consumer_contracts:view` to see
+  the handles; without it you see the count alone.
+- **Anonymous traffic is called out.** A version called only by traffic no binding recognises reads
+  *Anonymous traffic only — bind consumers to attribute it*, with a **Bind consumers** link. A
+  version nobody calls reads *No traffic in the last 7 days*.
+- **A weekly warning before the sunset.** When a sunset is 30 days away or less and bound consumers
+  still call the version, its collaborators get a **Sunsets still in use** notification. Push
+  webhooks receive a `sunset.still_used` event that names the consumers. Apiome stores when it last
+  warned, so each version is warned about at most once a week.
+
+REST API 1.582.0 adds `stillUsed` to every `GET /v1/versions/{tenant}/sunset-timeline` entry. See
+[Sunset timeline](/ship/sunset-timeline#who-still-uses-a-version) and
+[Notifications](/workspace/notifications#sunsets-still-in-use).

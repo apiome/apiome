@@ -975,3 +975,92 @@ describe('the browser fixtures', () => {
     write('api-key-dialog', (await screen.findByTestId('published-api-key-dialog')).outerHTML);
   });
 });
+
+// ---------------------------------------------------------------------------------------
+// Sunset readiness (RDG-5.3, #5788)
+// ---------------------------------------------------------------------------------------
+
+describe('sunset readiness on a deprecated row', () => {
+  const realFetch = global.fetch;
+  const timelineCalls: string[] = [];
+
+  /** Answer the sunset-timeline read with `stillUsed` for the deprecated Orders 1.4.0. */
+  function installTimeline(ok = true): void {
+    timelineCalls.length = 0;
+    global.fetch = jest.fn(async (input: unknown) => {
+      timelineCalls.push(String(input));
+      return {
+        ok,
+        json: async () =>
+          ok
+            ? {
+                success: true,
+                entries: [
+                  {
+                    revisionId: ORDERS_140.id,
+                    projectId: 'prj-orders',
+                    versionLine: '1.4.0',
+                    timelineStatus: 'imminent',
+                    lifecyclePhase: 'deprecated',
+                    published: true,
+                    deprecationWarnings: [],
+                    stillUsed: {
+                      windowDays: 7,
+                      environment: 'prod',
+                      state: 'bound',
+                      summary: 'Still used by 2 consumers (1,240 calls, 7-day)',
+                      calls: 1240,
+                      boundCalls: 1240,
+                      anonymousCalls: 0,
+                      consumerCount: 2,
+                      consumers: null,
+                      consumersVisible: false,
+                      consumersHref: '/ade/dashboard/projects/prj-orders/consumers',
+                    },
+                  },
+                ],
+              }
+            : { success: false, error: 'down' },
+      } as Response;
+    }) as unknown as typeof fetch;
+  }
+
+  afterEach(() => {
+    global.fetch = realFetch;
+  });
+
+  it('says who still calls it, from the sunset timeline’s read', async () => {
+    installTimeline();
+    await renderPublished();
+    const line = await screen.findByTestId(`published-still-used-${ORDERS_140.id}`);
+    expect(line).toHaveTextContent('Still used by 2 consumers (1,240 calls, 7-day)');
+    // Names hidden from this reader: the count, no handles, still the link.
+    expect(line.querySelector('.stl-usage__handles')).toBeNull();
+    expect(within(line).getByRole('link', { name: 'Consumers' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects/prj-orders/consumers'
+    );
+    expect(timelineCalls).toEqual(['/api/versions/sunset-timeline']);
+  });
+
+  it('draws the line on deprecated rows only', async () => {
+    installTimeline();
+    await renderPublished();
+    await screen.findByTestId(`published-still-used-${ORDERS_140.id}`);
+    expect(screen.queryByTestId(`published-still-used-${ORDERS_192.id}`)).not.toBeInTheDocument();
+  });
+
+  it('skips the read when no row is deprecated', async () => {
+    installTimeline();
+    await renderPublished({ rows: [ORDERS_192, PAYMENTS_231] });
+    expect(timelineCalls).toEqual([]);
+  });
+
+  it('leaves the rows as they were when the read fails', async () => {
+    installTimeline(false);
+    await renderPublished();
+    await waitFor(() => expect(timelineCalls).toHaveLength(1));
+    expect(screen.queryByTestId(`published-still-used-${ORDERS_140.id}`)).not.toBeInTheDocument();
+    expect(row(ORDERS_140.id)).toHaveTextContent('1.4.0');
+  });
+});

@@ -92,7 +92,13 @@ OWNER_NOTIFICATION_TYPES = (
 #: the subscription's owner. Its payload carries its own ``summary`` and ``link``.
 TYPE_EXPORT_AUTO_HALTED = "export_auto_halted"
 
-#: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286, V359).
+#: A deprecated revision whose sunset is at most 30 days away still carries traffic from bound
+#: consumers (RDG-5.3) — told to the version's collaborators by the usage sweep, at most once per
+#: revision per week. Its payload carries its own ``summary`` and ``link``.
+TYPE_SUNSET_STILL_USED = "sunset_still_used"
+
+#: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286, V359,
+#: V383).
 NOTIFICATION_TYPES = (
     TYPE_MENTION,
     TYPE_REVIEW_REQUESTED,
@@ -100,13 +106,14 @@ NOTIFICATION_TYPES = (
     TYPE_THREAD_RESOLVED,
     TYPE_VERSION_PUBLISHED,
     TYPE_EXPORT_AUTO_HALTED,
+    TYPE_SUNSET_STILL_USED,
     *OWNER_NOTIFICATION_TYPES,
 )
 
 NotificationType = Literal[
     "mention", "review_requested", "review_decision", "thread_resolved", "version_published",
-    "export_auto_halted", "owner_finding", "owner_breaking_change", "owner_verification_drift", "owner_gate_blocked",
-    "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
+    "export_auto_halted", "sunset_still_used", "owner_finding", "owner_breaking_change", "owner_verification_drift",
+    "owner_gate_blocked", "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
 ]
 
 #: Newest rows kept per user. Mirrors ``retention_cap`` in V263's pruning trigger, which is what

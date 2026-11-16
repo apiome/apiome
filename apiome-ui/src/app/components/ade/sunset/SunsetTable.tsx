@@ -24,6 +24,13 @@
  * row is marked current and scrolled into view, which is how a reader checks that the
  * timeline and the table agree about a revision.
  *
+ * ### Sunset readiness (RDG-5.3, #5788)
+ *
+ * The Notes cell opens with {@link SunsetStillUsed} — *Still used by 2 consumers (1,240
+ * calls, 7-day)* with the handles and a Consumers link — when the row carries `stillUsed`.
+ * It lives inside the Notes column rather than in an eighth one, so the mockup's seven
+ * columns (and the CSV's seven fields) stay exactly as they were.
+ *
  * @see `./sunsetModel.ts` — the rules these cells draw.
  */
 
@@ -49,6 +56,7 @@ import {
   type SunsetEntry,
 } from './sunsetModel';
 import { prefersReducedMotion } from '@lib/motion';
+import { SunsetStillUsed } from './SunsetStillUsed';
 
 /** The dash a cell prints when the API has nothing for it. */
 const ABSENT = '—';
@@ -180,6 +188,10 @@ export function SunsetTable({
           const note = sunsetNote(entry);
           return (
             <div className="stl-note">
+              <SunsetStillUsed
+                usage={entry.stillUsed}
+                testId={`sunset-still-used-${entry.revisionId}`}
+              />
               {note ? <p className="stl-note__text">{note}</p> : <span className="stl-absent">{ABSENT}</span>}
               {/* "Opens in a new tab" is on the `aria-label`, not in an `sr-only` span.
                   `.sr-only` is `position: absolute`, and an absolutely positioned box inside

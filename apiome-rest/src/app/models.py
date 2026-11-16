@@ -28,6 +28,7 @@ from .mcp_facets import (
 from .mcp_lifecycle_signals import STAGE_UNSPECIFIED, assess_capability_lifecycle
 from .payload_analysis import PayloadAnalysisSummary
 from .repository_refresh_status import RefreshStatus, compute_refresh_status
+from .sunset_readiness import SunsetUsage
 
 
 class TagSchema(BaseModel):
@@ -6270,6 +6271,14 @@ class SunsetTimelineEntryOut(BaseModel):
     deprecation_warnings: List[RevisionDeprecationWarningOut] = Field(
         default_factory=list,
         serialization_alias="deprecationWarnings",
+    )
+    still_used: Optional[SunsetUsage] = Field(
+        default=None,
+        serialization_alias="stillUsed",
+        description=(
+            "Who still calls this revision (RDG-5.3): 7-day prod calls from bound consumers and anonymous "
+            "traffic. Null when the project has no usage source, or the usage index could not be read."
+        ),
     )
 
 

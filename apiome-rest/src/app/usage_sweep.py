@@ -14,7 +14,10 @@ work and the rest skip):
    ``purge_usage_sdk_beacons`` the SDK beacon counts (V380, RDG-1.7) on the same rollup retention;
 4. :func:`app.runtime_graph.refresh_runtime_edges` re-derives the dependency graph's ``runtime_calls``
    edges from the freshly rolled-up ``usage_daily`` (CDG-3.5). A failure there is logged and never
-   fails the tick.
+   fails the tick;
+5. :func:`app.sunset_readiness_sweep.check_sunset_still_used` warns the collaborators of every
+   revision whose sunset is at most 30 days away while bound consumers still call it — at most once
+   per revision per week, by stored state (RDG-5.3). A failure there is logged, too.
 
 The SQL lives in migration V290, so the rules are the same whoever runs them. The REST lifespan runs
 a tick every ``APIOME_USAGE_SWEEP_INTERVAL_SECONDS`` (0 disables it); operators run one from cron
@@ -68,6 +71,7 @@ class UsageSweepResult:
         unattributed_purged: ``usage_unattributed_client_daily`` rows deleted (CDG-3.5).
         sdk_beacons_purged: ``usage_sdk_beacon_daily`` rows deleted (RDG-1.7).
         runtime_tenants: Tenants whose runtime graph edges were re-derived (CDG-3.5).
+        sunset_alerts: Revisions a ``sunset_still_used`` alert was sent for (RDG-5.3).
     """
 
     days_rolled_up: int
@@ -80,6 +84,7 @@ class UsageSweepResult:
     unattributed_purged: int = 0
     sdk_beacons_purged: int = 0
     runtime_tenants: int = 0
+    sunset_alerts: int = 0
 
 
 def run_usage_sweep(
@@ -127,6 +132,7 @@ def run_usage_sweep(
             (max(1, int(batch_size)),),
         )
         runtime = _refresh_runtime_edges(db)
+        sunset_alerts = _check_sunset_readiness(db)
     finally:
         db.execute_query("SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked", (SWEEP_LOCK_KEY,))
     purged = _as_dict(purged_rows[0].get("purged") if purged_rows else None)
@@ -136,6 +142,7 @@ def run_usage_sweep(
         unattributed_purged=int((unattributed_rows[0].get("purged") if unattributed_rows else 0) or 0),
         sdk_beacons_purged=int((beacon_rows[0].get("purged") if beacon_rows else 0) or 0),
         runtime_tenants=runtime,
+        sunset_alerts=sunset_alerts,
     )
     _logger.info("usage sweep finished %s", asdict(result))
     return result
@@ -153,6 +160,21 @@ def _refresh_runtime_edges(db: Any) -> int:
         return int(refresh_runtime_edges(db).get("tenants") or 0)
     except Exception:
         _logger.warning("usage sweep: runtime graph edges were not refreshed", exc_info=True)
+        return 0
+
+
+def _check_sunset_readiness(db: Any) -> int:
+    """Send the "still used before its sunset" alerts; a failure is logged, never raised (RDG-5.3).
+
+    Returns:
+        How many revisions were alerted about.
+    """
+    from .sunset_readiness_sweep import check_sunset_still_used
+
+    try:
+        return int(check_sunset_still_used(db) or 0)
+    except Exception:
+        _logger.warning("usage sweep: the sunset still-used check did not run", exc_info=True)
         return 0
 
 

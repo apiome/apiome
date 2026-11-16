@@ -9,8 +9,9 @@ tags: [notifications, collaboration, reviews]
 
 Apiome tells you when something concerns you: somebody **mentions** you in a comment, asks for your
 **review**, answers a review you requested, **resolves** a thread you took part in, or **publishes**
-a version you collaborated on. It also tells you about **findings on what your team owns** (see
-[Owner findings](#owner-findings)). Notifications belong to you and to the current workspace —
+a version you collaborated on. It also tells you when a version you worked on is close to its
+sunset and still in use (see [Sunsets still in use](#sunsets-still-in-use)), and about **findings
+on what your team owns** (see [Owner findings](#owner-findings)). Notifications belong to you and to the current workspace —
 switching workspace shows that workspace's inbox.
 
 | Type | You get one when… | Reads like |
@@ -53,8 +54,8 @@ next fifty.
 
 - **Unread only** shows only what you have not read; its count is your unread total.
 - **All types** or one type — **Mentions**, **Review requests**, **Review decisions**, **Resolved
-  threads**, **Publishes**, and the seven [owner finding](#owner-findings) types — each with its
-  unread count. Click a selected type again to clear it.
+  threads**, **Publishes**, **Halted auto-exports**, **Sunsets still in use**, and the seven
+  [owner finding](#owner-findings) types — each with its unread count. Click a selected type again to clear it.
 
 The two combine: *Unread only* with *Mentions* lists the mentions you still have to read.
 
@@ -68,6 +69,22 @@ The two combine: *Unread only* with *Mentions* lists the mentions you still have
 
 **Refresh** reads the inbox again. A notification whose project or version was deleted keeps its
 sentence but is no longer a link.
+
+## Sunsets still in use
+
+When a deprecated version's sunset is **30 days away or less** and consumers bound to its traffic
+still called it in the last 7 days, everyone who collaborated on that version gets a **Sunsets still
+in use** notification. Collaborators are the people who requested or reviewed it, or opened or
+replied to a thread on it. It reads *1.2.0 sunsets in 20 days and is still used by 2 consumers
+(1,240 calls, 7-day)*. The second line names the project and version. **Click it** to open the
+[Sunset timeline](../ship/sunset-timeline.mdx#who-still-uses-a-version), which lists the
+consumers.
+
+- **Once a week at most.** Apiome records when it last warned about a version, so you hear about it
+  again only a week later, while the sunset is still coming and the traffic has not stopped.
+- **Bound consumers only.** Anonymous traffic does not send it: nobody could be told to move.
+  [Bind the consumers](../govern/runtime-usage.mdx#attribute-traffic-to-consumers) first.
+- The same warning reaches your push webhooks as a `sunset.still_used` event.
 
 ## Owner findings
 

@@ -137,6 +137,13 @@ const SUNSET_PRELUDES = [
   '.stl-note__text',
   '.stl-note__link',
   '.stl-note__link > svg',
+  // RDG-5.3 (#5788): the "still used by" line, shared with the Published page.
+  '.stl-usage',
+  '.stl-usage__line',
+  ".stl-usage[data-state='anonymous'] .stl-usage__line, .stl-usage[data-state='unused'] .stl-usage__line",
+  '.stl-usage__line > svg, .stl-usage__link > svg',
+  '.stl-usage__handles',
+  '.stl-usage__link',
   '.stl-row--current > td',
   '.stl-row--current > td:first-child',
   '.stl-foot__hint',
@@ -492,6 +499,7 @@ describe('quiet text clears AA in every appearance', () => {
     ['.stl-successor', 'color'],
     ['.stl-absent', 'color'],
     ['.stl-note__text', 'color'],
+    ['.stl-usage__handles', 'color'],
     ['.stl-foot__hint', 'color'],
     // The SVG's own quiet runs. The mockup inks all three `--fg-subtle`.
     ['.stl-months text', 'fill'],
@@ -550,6 +558,8 @@ describe('the tone inks', () => {
     ".stl-chip__label[data-status='scheduled']",
     '.stl-today text',
     '.stl-note__link',
+    // RDG-5.3: the Consumers link, the same --accent-fg ink measured on the surface below.
+    '.stl-usage__link',
   ]);
 
   it('never paints a -fg tone ink except on a ground it was calibrated for', () => {
@@ -571,6 +581,10 @@ describe('the tone inks', () => {
 
   it('inks the migration-guide link with --accent-fg, not --accent', () => {
     expect(declaration('.stl-note__link', 'color')).toBe('var(--accent-fg)');
+  });
+
+  it('inks the Consumers link with --accent-fg too (RDG-5.3)', () => {
+    expect(declaration('.stl-usage__link', 'color')).toBe('var(--accent-fg)');
   });
 
   it.each(APPEARANCES)(

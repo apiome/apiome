@@ -152,6 +152,66 @@ const ROWS: SunsetEntry[] = [
   INVENTORY_SCHEDULED,
 ];
 
+/**
+ * The same four rows with RDG-5.3's `stillUsed` (#5788): two bound consumers still on the
+ * imminent line, only anonymous traffic on one scheduled line, nobody on the other, and a
+ * project with no usage source (`null`) on the past one.
+ */
+const ROWS_WITH_USAGE: SunsetEntry[] = [
+  { ...ORDERS_PAST, stillUsed: null },
+  {
+    ...ORDERS_IMMINENT,
+    stillUsed: {
+      windowDays: 7,
+      environment: 'prod',
+      state: 'bound',
+      summary: 'Still used by 2 consumers (1,240 calls, 7-day)',
+      calls: 1300,
+      boundCalls: 1240,
+      anonymousCalls: 60,
+      consumerCount: 2,
+      consumers: [
+        { id: 'c-billing', slug: 'billing-service', name: 'Billing', calls: 1000 },
+        { id: 'c-web', slug: 'orders-web', name: 'Orders web', calls: 240 },
+      ],
+      consumersVisible: true,
+      consumersHref: '/ade/dashboard/projects/prj-orders/consumers',
+    },
+  },
+  {
+    ...PAYMENTS_SCHEDULED,
+    stillUsed: {
+      windowDays: 7,
+      environment: 'prod',
+      state: 'anonymous',
+      summary: 'Anonymous traffic only — bind consumers to attribute it',
+      calls: 420,
+      boundCalls: 0,
+      anonymousCalls: 420,
+      consumerCount: 0,
+      consumers: [],
+      consumersVisible: true,
+      consumersHref: '/ade/dashboard/projects/prj-payments/consumers',
+    },
+  },
+  {
+    ...INVENTORY_SCHEDULED,
+    stillUsed: {
+      windowDays: 7,
+      environment: 'prod',
+      state: 'unused',
+      summary: 'No traffic in the last 7 days',
+      calls: 0,
+      boundCalls: 0,
+      anonymousCalls: 0,
+      consumerCount: 0,
+      consumers: [],
+      consumersVisible: true,
+      consumersHref: '/ade/dashboard/projects/prj-inventory/consumers',
+    },
+  },
+];
+
 /** The projects the filter offers. */
 const PROJECTS = [
   { id: 'prj-orders', name: 'Orders Service', slug: 'orders-service' },
@@ -753,6 +813,56 @@ describe('the states', () => {
 });
 
 // ---------------------------------------------------------------------------------------
+// Sunset readiness (RDG-5.3, #5788)
+// ---------------------------------------------------------------------------------------
+
+describe('sunset readiness', () => {
+  beforeEach(() => {
+    timelineResponse = { ok: true, body: { success: true, entries: ROWS_WITH_USAGE } };
+  });
+
+  it('says who still calls a line, with their handles and a Consumers link', async () => {
+    await renderScreen();
+    const line = screen.getByTestId('sunset-still-used-rev-orders-14');
+    expect(line).toHaveAttribute('data-state', 'bound');
+    expect(line).toHaveTextContent('Still used by 2 consumers (1,240 calls, 7-day)');
+    expect(line).toHaveTextContent('billing-service, orders-web');
+    expect(within(line).getByRole('link', { name: 'Consumers' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects/prj-orders/consumers'
+    );
+  });
+
+  it('asks for a binding when only anonymous traffic is on a line', async () => {
+    await renderScreen();
+    const line = screen.getByTestId('sunset-still-used-rev-payments-22');
+    expect(line).toHaveTextContent('Anonymous traffic only — bind consumers to attribute it');
+    expect(within(line).getByRole('link', { name: 'Bind consumers' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects/prj-payments/consumers'
+    );
+  });
+
+  it('says nobody calls an idle line, without a link', async () => {
+    await renderScreen();
+    const line = screen.getByTestId('sunset-still-used-rev-inventory-05');
+    expect(line).toHaveTextContent('No traffic in the last 7 days');
+    expect(within(line).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('draws nothing for a project with no usage source', async () => {
+    await renderScreen();
+    expect(screen.queryByTestId('sunset-still-used-rev-orders-12')).not.toBeInTheDocument();
+  });
+
+  it('keeps the seven columns and the CSV’s seven fields', async () => {
+    await renderScreen();
+    expect(screen.getAllByRole('columnheader')).toHaveLength(7);
+    expect(sunsetCsv(ROWS_WITH_USAGE)).toBe(sunsetCsv(ROWS));
+  });
+});
+
+// ---------------------------------------------------------------------------------------
 // The browser fixtures
 // ---------------------------------------------------------------------------------------
 
@@ -789,6 +899,13 @@ describe('the browser fixtures', () => {
     await renderScreen();
     await screen.findByTestId('sunset-timeline-card');
     write('timeline', page().outerHTML);
+  });
+
+  it('renders the still-used lines (and writes its fixture on request)', async () => {
+    timelineResponse = { ok: true, body: { success: true, entries: ROWS_WITH_USAGE } };
+    await renderScreen();
+    await screen.findByTestId('sunset-still-used-rev-orders-14');
+    write('still-used', page().outerHTML);
   });
 
   it('renders the warnings dialog (and writes its fixture on request)', async () => {
