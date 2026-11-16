@@ -1,0 +1,27 @@
+---
+slug: browse-find-in-version
+title: Find inside a published version
+description: "A find box on every Browse version page narrows the outline and overview as you type."
+authors: [apiome]
+---
+
+Landing on a 400-operation spec from a search result used to leave you with the browser's own find.
+Every version page in Browse now has a **Find in this version** box above the specification.
+
+{/* truncate */}
+
+- **The catalog's query language, on one page.** Type words, `"phrases"`, `-exclusions`,
+  `method:DELETE`, `path:{petId}` or `type:schema`. Operations match on their path, summary,
+  description, operationId, tags, parameter names and response codes; schemas on their name, title,
+  description and property names.
+- **The page narrows as you type.** The sidebar's **Contents** and the **Overview** show only the
+  matches, with the words highlighted and a count such as **Contents (3 of 42)**. It all runs in
+  your browser, over the spec already loaded.
+- **Keyboard first.** <kbd>/</kbd> focuses the box (<kbd>⌘</kbd><kbd>K</kbd> still opens the
+  catalog search), <kbd>↵</kbd> jumps to the next match, <kbd>⇧</kbd><kbd>↵</kbd> to the previous
+  one and <kbd>Esc</kbd> clears it.
+- **Shareable.** The query is kept in the URL as `?find=`, so a link can open the page already
+  narrowed, at an operation (`?find=method%3ADELETE%20pets#op-delete-pets-petid`).
+- **Nothing matches?** The page says so and offers **Clear search**.
+
+See [Find inside a version](/ship/browse-published-specs#find-inside-a-version).

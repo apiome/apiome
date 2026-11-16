@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { HTTP_METHOD_TONE } from './search/httpMethodTone';
+import { Highlight } from './search/Highlight';
+import type { FindResult } from '../../../lib/search/findInVersion';
 import { useMemo, useState } from 'react';
 
 interface SidebarVersion {
@@ -35,6 +37,11 @@ interface SpecSidebarProps {
   /** Currently active anchor (for highlighting). */
   activeAnchorId?: string;
   onSelectAnchor?: (anchorId: string) => void;
+  /**
+   * The page's "find in this version" result (BDX-1.3). When active, the outline shows only the
+   * matching entries, highlights the words, and the header reads "Contents (3 of 42)".
+   */
+  find?: FindResult | null;
 }
 
 
@@ -190,6 +197,7 @@ export function SpecSidebar({
   format,
   activeAnchorId,
   onSelectAnchor,
+  find,
 }: SpecSidebarProps) {
   const [versionsOpen, setVersionsOpen] = useState(true);
   const [tocOpen, setTocOpen] = useState(true);
@@ -208,10 +216,18 @@ export function SpecSidebar({
     return [];
   }, [spec, format]);
 
+  // The page-level find narrows first; the outline's own filter box narrows what is left.
+  const foundGroups = useMemo(() => {
+    if (!find?.active) return groups;
+    return groups
+      .map((g) => ({ ...g, operations: g.operations.filter((op) => find.matched.has(op.anchorId)) }))
+      .filter((g) => g.operations.length > 0);
+  }, [groups, find]);
+
   const filteredGroups = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return groups;
-    return groups
+    if (!q) return foundGroups;
+    return foundGroups
       .map((g) => ({
         ...g,
         operations: g.operations.filter(
@@ -223,7 +239,7 @@ export function SpecSidebar({
         ),
       }))
       .filter((g) => g.operations.length > 0);
-  }, [groups, filter]);
+  }, [foundGroups, filter]);
 
   const toggleTag = (tag: string) => {
     setCollapsedTags((prev) => {
@@ -249,6 +265,10 @@ export function SpecSidebar({
   };
 
   const totalOps = groups.reduce((sum, g) => sum + g.operations.length, 0);
+  const foundOps = foundGroups.reduce((sum, g) => sum + g.operations.length, 0);
+  const needles = find?.active ? find.needles : [];
+  const contentsCount =
+    totalOps === 0 ? '' : find?.active ? ` (${foundOps} of ${totalOps})` : ` (${totalOps})`;
 
   return (
     <nav className="space-y-5 text-[13px]" aria-label="Specification navigation">
@@ -311,7 +331,7 @@ export function SpecSidebar({
           className="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           aria-expanded={tocOpen}
         >
-          <span>Contents{totalOps > 0 ? ` (${totalOps})` : ''}</span>
+          <span data-testid="sidebar-contents-count">Contents{contentsCount}</span>
           <Chevron open={tocOpen} />
         </button>
 
@@ -342,7 +362,7 @@ export function SpecSidebar({
                 <ul className="max-h-[60vh] overflow-y-auto py-1">
                   {filteredGroups.length === 0 ? (
                     <li className="px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
-                      No matches.
+                      {find?.active && foundOps === 0 ? 'Nothing in this version matches.' : 'No matches.'}
                     </li>
                   ) : (
                     filteredGroups.map((group) => {
@@ -387,7 +407,7 @@ export function SpecSidebar({
                                         className="truncate font-mono"
                                         title={op.summary ? `${op.path} — ${op.summary}` : op.path}
                                       >
-                                        {op.path}
+                                        <Highlight text={op.path} needles={needles} />
                                       </span>
                                     </a>
                                   </li>

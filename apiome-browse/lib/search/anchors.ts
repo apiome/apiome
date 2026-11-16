@@ -23,13 +23,21 @@ export function schemaAnchorId(schemaName: string): string {
   return `schema-${slug || 'unnamed'}`;
 }
 
-/** The public URL of a version page, optionally at an anchor. */
+/**
+ * The public URL of a version page, optionally at an anchor and with the find box pre-filled.
+ *
+ * @param anchor An element id to jump to (`op-…`, `schema-…`).
+ * @param find A find-in-version query (BDX-1.3); the page opens already narrowed to it.
+ * @returns `/tenant/<t>/<p>/<v>[?find=…][#anchor]`.
+ */
 export function versionHref(
   tenantSlug: string,
   projectSlug: string,
   versionSlug: string,
-  anchor?: string | null
+  anchor?: string | null,
+  find?: string | null
 ): string {
   const base = `/tenant/${encodeURIComponent(tenantSlug)}/${encodeURIComponent(projectSlug)}/${encodeURIComponent(versionSlug)}`;
-  return anchor ? `${base}#${anchor}` : base;
+  const query = find?.trim() ? `?find=${encodeURIComponent(find.trim())}` : '';
+  return `${base}${query}${anchor ? `#${anchor}` : ''}`;
 }

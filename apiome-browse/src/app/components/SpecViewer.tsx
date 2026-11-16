@@ -6,6 +6,8 @@ import YAML from 'yaml';
 import { useTheme, specThemes, SpecTheme } from './ThemeProvider';
 import { operationAnchorId, schemaAnchorId } from '../../../lib/search/anchors';
 import { HTTP_METHOD_TONE } from './search/httpMethodTone';
+import { Highlight } from './search/Highlight';
+import type { FindResult } from '../../../lib/search/findInVersion';
 import { TryItPanel } from './tryit/TryItPanel';
 import { OperationSnippetTabs } from './sdk/OperationSnippetTabs';
 
@@ -52,6 +54,12 @@ interface SpecViewerProps {
   sdkEnabled?: boolean;
   /** Notify parent (e.g. sidebar) of spec + format changes. */
   onSpecChange?: (spec: unknown, format: SpecFormat) => void;
+  /**
+   * The page's "find in this version" result (BDX-1.3). When active, the Overview shows only the
+   * matching operations, schemas, workflows and definitions, with the words highlighted. The
+   * Code and Visual views are not filtered.
+   */
+  find?: FindResult | null;
 }
 
 export type SpecFormat = 'openapi' | 'arazzo' | 'jsonschema';
@@ -104,6 +112,7 @@ export function SpecViewer({
   mockBaseUrl,
   sdkEnabled = false,
   onSpecChange,
+  find = null,
 }: SpecViewerProps) {
   const { specTheme, setSpecTheme, resolvedTheme } = useTheme();
   const [format, setFormat] = useState<SpecFormat>('openapi');
@@ -397,6 +406,7 @@ export function SpecViewer({
           versionSlug={versionSlug}
           restApiBaseUrl={restApiBaseUrl}
           sdkEnabled={sdkEnabled}
+          find={find}
         />
       )}
 
@@ -471,6 +481,7 @@ function SpecOverview({
   versionSlug,
   restApiBaseUrl,
   sdkEnabled,
+  find,
 }: {
   spec: unknown;
   format: SpecFormat;
@@ -481,8 +492,15 @@ function SpecOverview({
   restApiBaseUrl: string;
   /** Whether this project publishes an SDK, gating the per-operation snippet tabs (SDK-3.3). */
   sdkEnabled: boolean;
+  /** The page's find result (BDX-1.3); null or inactive shows everything. */
+  find: FindResult | null;
 }) {
   if (!isObject(spec)) return null;
+
+  /** Whether the item rendered under `anchor` survives the page's find. */
+  const shows = (anchor: string) => !find?.active || find.matched.has(anchor);
+  const needles = find?.active ? find.needles : [];
+  const nothingFound = find?.active === true && find.anchors.length === 0;
 
   if (format === 'openapi') {
     const info = isObject(spec.info) ? spec.info : null;
@@ -537,6 +555,11 @@ function SpecOverview({
     }
 
     const orderedGroups = Array.from(groups.values());
+    // BDX-1.3: only the operations and schemas the find matched; a tag left empty is hidden.
+    const visibleGroups = orderedGroups
+      .map((g) => ({ ...g, ops: g.ops.filter((op) => shows(operationAnchorId(op.method, op.path))) }))
+      .filter((g) => g.ops.length > 0);
+    const visibleSchemaNames = schemaNames.filter((name) => shows(schemaAnchorId(name)));
 
     return (
       <div className="space-y-5">
@@ -621,13 +644,15 @@ function SpecOverview({
           </section>
         )}
 
+        {nothingFound && <FindEmptyNote />}
+
         {/* Operations grouped by tag */}
-        {orderedGroups.length > 0 && (
+        {visibleGroups.length > 0 && (
           <section className="space-y-3">
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Operations
             </h4>
-            {orderedGroups.map((group) => (
+            {visibleGroups.map((group) => (
               <div
                 key={group.tag}
                 className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950"
@@ -657,6 +682,7 @@ function SpecOverview({
                       versionSlug={versionSlug}
                       restApiBaseUrl={restApiBaseUrl}
                       sdkEnabled={sdkEnabled}
+                      needles={needles}
                     />
                   ))}
                 </ul>
@@ -665,13 +691,13 @@ function SpecOverview({
           </section>
         )}
 
-        {schemaNames.length > 0 && (
+        {visibleSchemaNames.length > 0 && (
           <section className="space-y-3">
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Schemas
             </h4>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {schemaNames.map((schemaName) => {
+              {visibleSchemaNames.map((schemaName) => {
                 const schemaObj =
                   (isObject(componentSchemas[schemaName]) ? componentSchemas[schemaName] : null) ??
                   (isObject(legacyDefinitions[schemaName]) ? legacyDefinitions[schemaName] : null);
@@ -694,14 +720,16 @@ function SpecOverview({
                       </span>
                       <div className="min-w-0 flex-1">
                         <code className="break-all font-mono text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
-                          {schemaName}
+                          <Highlight text={schemaName} needles={needles} />
                         </code>
                         {title && (
-                          <p className="mt-1 text-[12px] font-medium text-zinc-700 dark:text-zinc-300">{title}</p>
+                          <p className="mt-1 text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
+                            <Highlight text={title} needles={needles} />
+                          </p>
                         )}
                         {description && (
                           <p className="mt-1 line-clamp-4 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            {description}
+                            <Highlight text={description} needles={needles} />
                           </p>
                         )}
                       </div>
@@ -718,16 +746,25 @@ function SpecOverview({
 
   if (format === 'arazzo') {
     const workflows = Array.isArray(spec.workflows) ? spec.workflows : [];
+    const visibleWorkflows = workflows.filter(
+      (w, i) => isObject(w) && shows(`wf-${typeof w.workflowId === 'string' ? w.workflowId : `workflow-${i}`}`)
+    );
     return (
       <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Arazzo workflows</h3>
         <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
           {workflows.length} workflow{workflows.length === 1 ? '' : 's'} declared.
         </p>
-        {workflows.length > 0 && (
+        {nothingFound && (
+          <div className="mt-4">
+            <FindEmptyNote />
+          </div>
+        )}
+        {visibleWorkflows.length > 0 && (
           <ul className="mt-4 space-y-2">
-            {workflows.map((w, i) => {
+            {visibleWorkflows.map((w) => {
               if (!isObject(w)) return null;
+              const i = workflows.indexOf(w);
               const id = typeof w.workflowId === 'string' ? w.workflowId : `workflow-${i}`;
               const summary = typeof w.summary === 'string' ? w.summary : undefined;
               return (
@@ -740,9 +777,15 @@ function SpecOverview({
                     <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
                       WF
                     </span>
-                    <code className="font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">{id}</code>
+                    <code className="font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">
+                      <Highlight text={id} needles={needles} />
+                    </code>
                   </div>
-                  {summary && <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">{summary}</p>}
+                  {summary && (
+                    <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+                      <Highlight text={summary} needles={needles} />
+                    </p>
+                  )}
                 </li>
               );
             })}
@@ -758,21 +801,28 @@ function SpecOverview({
     (isObject(spec.definitions) && (spec.definitions as Record<string, unknown>)) ||
     null;
   const defNames = defs ? Object.keys(defs) : [];
+  const defAnchor = (name: string) => `def-${name.replace(/[^a-z0-9]+/gi, '-')}`;
+  const visibleDefNames = defNames.filter((name) => shows(defAnchor(name)));
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">JSON Schema</h3>
       <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
         {defNames.length} top-level definition{defNames.length === 1 ? '' : 's'}.
       </p>
-      {defNames.length > 0 && (
+      {nothingFound && (
+        <div className="mt-4">
+          <FindEmptyNote />
+        </div>
+      )}
+      {visibleDefNames.length > 0 && (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {defNames.map((name) => (
+          {visibleDefNames.map((name) => (
             <li
               key={name}
-              id={`def-${name.replace(/[^a-z0-9]+/gi, '-')}`}
+              id={defAnchor(name)}
               className="scroll-mt-24 rounded border border-zinc-100 px-3 py-2 font-mono text-[12px] text-zinc-800 dark:border-zinc-800 dark:text-zinc-200"
             >
-              {name}
+              <Highlight text={name} needles={needles} />
             </li>
           ))}
         </ul>
@@ -798,6 +848,7 @@ function OperationRow({
   versionSlug,
   restApiBaseUrl,
   sdkEnabled,
+  needles,
 }: {
   op: SpecOperation;
   spec: unknown;
@@ -807,6 +858,8 @@ function OperationRow({
   versionSlug: string;
   restApiBaseUrl: string;
   sdkEnabled: boolean;
+  /** Find-in-version words to highlight in the path and summary (BDX-1.3); empty for none. */
+  needles: readonly string[];
 }) {
   const [openPanel, setOpenPanel] = useState<'tryit' | 'code' | null>(null);
   const anchor = operationAnchorId(op.method, op.path);
@@ -830,7 +883,7 @@ function OperationRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <code className="break-all font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">
-              {op.path}
+              <Highlight text={op.path} needles={needles} />
             </code>
             {op.deprecated && (
               <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
@@ -839,7 +892,9 @@ function OperationRow({
             )}
           </div>
           {op.summary && (
-            <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">{op.summary}</p>
+            <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">
+              <Highlight text={op.summary} needles={needles} />
+            </p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -884,6 +939,23 @@ function OperationRow({
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * The Overview's note when the page's find matches nothing (BDX-1.3). The find box above the page
+ * carries the "Clear search" button; this note explains why the Overview is empty.
+ */
+function FindEmptyNote() {
+  return (
+    <div
+      data-testid="overview-find-empty"
+      className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/40"
+    >
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        No operations or schemas in this version match the search.
+      </p>
+    </div>
   );
 }
 

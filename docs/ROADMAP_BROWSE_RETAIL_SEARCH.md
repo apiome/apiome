@@ -25,7 +25,7 @@ Modify the look and feel of the browse application to make it more user-friendly
 The Browse release candidate is the baseline above plus the **MVP (Y)** issues below. Together they make Browse a retail front that a stranger can search, trust and share, that an operator can gate, and that the docs can show:
 
 - **BDX-1.1** Full-text index and ranking over the normalized public model (#6285) — tsvector + GIN over operations/schemas/properties/notes; `websearch_to_tsquery`; `ts_rank` replaces the ILIKE tiers
-- **BDX-1.3** Search within a version (#6287) — An in-page find over one version's operations, schemas and properties, with the same query language and highlighting in the viewer
+- ✅ **BDX-1.3** Search within a version (#6287) — **Complete** — An in-page find over one version's operations, schemas and properties, with the same query language and highlighting in the viewer
 - **BDX-1.6** Public search API, CLI command and shared contract (#6290) — `GET /v1/browse/search` in REST with the Browse engine's contract; `apiome browse search`; Browse calls REST or shares the builder
 - **BDX-2.2** Project and version cards that answer the retail questions (#6294) — Operation/schema counts, quality grade, mock and SDK availability, formats and last-published on every card and project hit
 - **BDX-2.6** Compare from search and version quick-switch on hits (#6298) — Select two version hits to open `/compare`; a hit's version chip opens a switcher to other published versions
@@ -71,7 +71,6 @@ flowchart TB
 |---|---|---|---|---|---|---|---|
 | #6285 | **BDX-1.1** Full-text index and ranking over the normalized public model | tsvector + GIN over operations/schemas/properties/notes; `websearch_to_tsquery`; `ts_rank` replaces the ILIKE tiers | `enhancement`, `browser`, `database`, `rest`, `mvp`, `roadmap-browse-discovery` | N | Y | L | apiome-db (migration), apiome-browse/lib/search/sql.ts, apiome-rest (MFI-6.2) |
 | #6286 | **BDX-1.2** Typo tolerance and “Did you mean” suggestions | pg_trgm similarity over names and paths; a suggestion row when a search finds nothing | `enhancement`, `browser`, `database`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (pg_trgm), apiome-browse/lib/search, src/app/search/SearchClient.tsx |
-| #6287 | **BDX-1.3** Search within a version | An in-page find over one version's operations, schemas and properties, with the same query language and highlighting in the viewer | `enhancement`, `browser`, `ui`, `mvp`, `roadmap-browse-discovery` | Y | Y | M | apiome-browse/src/app/tenant/[tenantSlug]/[projectSlug]/[versionSlug], components/SpecSidebar.tsx, SpecViewer.tsx, lib/search |
 | #6288 | **BDX-1.4** Changelog and release-notes search | Search classified changelog entries (`type:change`, `severity:breaking`) and version notes across the catalog | `enhancement`, `browser`, `diff`, `versions`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/lib/search/sql.ts, kinds.ts, src/app/components/search/HitRow.tsx |
 | #6289 | **BDX-1.5** Semantic search and “Ask the catalog” | Embeddings over operations and schemas; hybrid lexical + vector ranking; a natural-language mode in the palette | `enhancement`, `browser`, `ai`, `database`, `v2`, `roadmap-browse-discovery` | N | N | L | apiome-db (pgvector columns), apiome-rest (embedding job), apiome-browse/lib/search, SearchPalette.tsx |
 | #6290 | **BDX-1.6** Public search API, CLI command and shared contract | `GET /v1/browse/search` in REST with the Browse engine's contract; `apiome browse search`; Browse calls REST or shares the builder | `enhancement`, `browser`, `rest`, `cli`, `mvp`, `roadmap-browse-discovery` | N | Y | L | apiome-rest/src/app/browse_public_routes.py, apiome-cli, apiome-browse/lib/search, apiome-docs reference |
@@ -195,7 +194,7 @@ flowchart LR
 "paymnt"  ──▶ 0 results ──▶ similarity("paymnt", vocabulary) ──▶ [payment 0.71, payments 0.64] ──▶ "Did you mean payment?"
 ```
 
-#### BDX-1.3 — Search within a version (#6287)
+#### ✅ BDX-1.3 — Search within a version (#6287) — **Complete**
 
 **Problem statement.** A visitor who lands on a 400-operation spec from a search result has only the browser's find. The sidebar filters by tag; nothing searches a path, a summary, a schema property or a response code inside the page.
 
