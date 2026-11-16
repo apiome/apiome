@@ -105,10 +105,71 @@ own, so it cannot be imported.
 Your tenant's [MCP registry endpoint](../ship/mcp-registry.mdx) also lists the tenant-wide entry,
 but only to callers who sign in with one of the tenant's credentials.
 
+## Export the invocation audit
+
+Every `tools/call` an agent key makes leaves one **invocation audit** row: which key called which
+tool, when, how fast, the outcome, the upstream HTTP status, a reason code and the request and
+response sizes. It never holds a body, a header or an argument value. To load these rows into a
+SIEM (Splunk, Elastic, Datadog, Sentinel…), export them **one UTC day at a time**, as **JSON
+Lines** (one object per line) or **CSV** (a header line first).
+
+From the CLI (it uses your workspace API key):
+
+```bash
+apiome mcp agent-invocations export --day 2026-11-14                        # JSON Lines, to stdout
+apiome mcp agent-invocations export --day 2026-11-14 --format csv --out day.csv
+apiome mcp agent-invocations export --day 2026-11-14 | jq -c 'select(.outcome != "success")'
+```
+
+With the API: `GET /v1/tenants/{tenant}/agent-invocations/export?day=2026-11-14&format=jsonl`
+(or `format=csv`). You need permission to view API keys.
+
+**Which days you can export**
+
+- **Finalized days only.** About six hours after a UTC day ends, the usage sweep closes it, and the
+  **Usage** charts count exactly the rows the export holds. Before that, including today, the export
+  is refused with `409 agent-invocations-day-not-final`, and the response's `finalizesAfter` says
+  when it can be exported.
+- **Days inside your plan's retention.** Raw invocation rows are kept for 7 days on Free, 30 on Paid
+  and 90 on Sponsor. An older day may already be partly deleted, so it is refused with
+  `410 agent-invocations-day-past-retention`. The response gives `retentionDays` and
+  `oldestExportableDay`. Run the export daily to keep a full history.
+
+**What each row holds**
+
+Each row has every stored column, as stored and in table order, followed by two more:
+
+| Column | What it is |
+| --- | --- |
+| `id`, `tenant_id`, `key_id`, `toolset_id` | The row, workspace, agent key and toolset ids |
+| `tool_name`, `target` | The tool called, and whether calls went to `prod` or `mock` |
+| `invoked_at`, `invoked_day` | When the call started (UTC), and the UTC day it counts on |
+| `latency_ms`, `outcome`, `error_code`, `http_status` | How long it took, `success` / `upstream_error` / `validation_failure` / `quota_rejected` / `internal_error`, the reason code of a failure, and the upstream status when it answered |
+| `request_bytes`, `response_bytes`, `sampled` | Sizes, and whether a [body sample](#body-samples) was kept (the sample itself is never exported) |
+| `key_name` | The agent key's name, or empty once the key is deleted |
+| `key_fingerprint` | `sha256:` and 32 hex digits computed from the key's **id**. It is the same in every export, so your SIEM can group one key's calls. It is never derived from the key secret |
+
+The key secret and its stored hash never appear in an export. Rows are ordered by `invoked_at`.
+In CSV, a text cell that a spreadsheet would run as a formula (one starting with `=`, `+`, `-` or
+`@`) starts with `'`; JSON Lines hold the values unchanged.
+Columns added to the audit later appear in the export automatically, so read the CSV header or
+JSON keys rather than relying on positions.
+
+Every export is recorded in the [access audit](../govern/access-audit.mdx) as
+`agent.invocations.export`, with the day and format.
+
+:::note Streaming to a SIEM
+
+Sending invocation rows to a SIEM as they happen, over Apiome's signed audit stream, will come with
+audit streaming (EID-3.4). Until then, schedule the daily export.
+
+:::
+
 ## With the API
 
 `GET` / `POST /v1/tenants/{tenant}/agent-toolsets`, `GET …/agent-toolsets/{toolset}/tools`,
 `GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET /v1/tenants/{tenant}/agent-usage`,
-`GET …/agent-toolsets/{toolset}/server.json` and `GET /v1/tenants/{tenant}/agent-access/server.json`
-(these two need permission to view API keys) and
+`GET …/agent-toolsets/{toolset}/server.json`, `GET /v1/tenants/{tenant}/agent-access/server.json`
+and `GET /v1/tenants/{tenant}/agent-invocations/export` (these three need permission to view API
+keys) and
 `PATCH …/agent-toolsets/{toolset}/body-samples` (permission to edit API keys) — see the [API reference](../reference/api-reference.md).

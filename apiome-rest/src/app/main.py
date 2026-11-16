@@ -16,6 +16,7 @@ from .access_routes import router as access_router
 from .agent_key_routes import router as agent_key_router
 from .cli_login_routes import router as cli_login_router
 from .agent_toolset_routes import router as agent_toolset_router
+from .agent_invocation_export_routes import router as agent_invocation_export_router
 from .agent_usage_routes import router as agent_usage_router
 from .api_check_suite_routes import router as api_check_suite_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
@@ -468,6 +469,7 @@ app.include_router(agent_toolset_router)
 # agent_usage_router: AGX-3.4 usage rollups for the Control Panel charts under
 # /v1/tenants/{t}/agent-usage (#4540).
 app.include_router(agent_usage_router)
+app.include_router(agent_invocation_export_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)

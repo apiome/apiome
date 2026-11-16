@@ -1,6 +1,6 @@
 ---
 title: "Agent access"
-description: "REST endpoints tagged agent-access: 24 operations."
+description: "REST endpoints tagged agent-access: 25 operations."
 sidebar_position: 6
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.583.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.584.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `agent-access` · 24 operations
+Tag: `agent-access` · 25 operations
 
 ## `GET /v1/tenants/{tenant_slug}/agent-access/server.json` {#export-agent-access-server-json-route-v1-tenants-tenant-slug-agent-access-server-json-get}
 
@@ -38,6 +38,37 @@ Operation id: `export_agent_access_server_json_route_v1_tenants__tenant_slug__ag
 | 200 | The `server.json` document. | `application/json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 | 503 | The agent runtime's public URL is not configured as an http(s) URL. | — |
+
+## `GET /v1/tenants/{tenant_slug}/agent-invocations/export` {#export-agent-invocations-v1-tenants-tenant-slug-agent-invocations-export-get}
+
+**Export one day of the agent invocation audit**
+
+Stream one **finalized** UTC day of the tenant's agent `tools/call` audit rows, for a SIEM: `jsonl` (one JSON object per line) or `csv` (header line first). Every stored column is exported as stored, in table order, followed by `key_name` and `key_fingerprint` (`sha256:` + 32 hex digits over the key id, stable across exports). The key secret and its stored hash are never exported, and neither are body samples.
+
+A day the usage sweep has not finalized yet is `409 agent-invocations-day-not-final` with `finalizesAfter`. A day older than the plan's raw-row retention is `410 agent-invocations-day-past-retention` with `retentionDays` and `oldestExportableDay`.
+
+Requires `api_keys:view`. Audited as `agent.invocations.export`.
+
+Operation id: `export_agent_invocations_v1_tenants__tenant_slug__agent_invocations_export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `day` | query | string (date) | yes | The UTC day to export, `YYYY-MM-DD`. |
+| `format` | query | enum `"jsonl"`, `"csv"` | no | `jsonl` or `csv`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The day's rows, streamed as an attachment. | `application/x-ndjson` any; `text/csv` any |
+| 409 | `agent-invocations-day-not-final`: the day is not finalized yet. | — |
+| 410 | `agent-invocations-day-past-retention`: the day is past the plan's retention. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/agent-keys` {#list-agent-keys-route-v1-tenants-tenant-slug-agent-keys-get}
 

@@ -18,7 +18,37 @@ MCP catalog endpoints and tenant governance (policy / key capabilities).
 apiome mcp [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`server-json`](#mcp-server-json), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`test`](#mcp-test), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
+Subcommands: [`agent-invocations`](#mcp-agent-invocations), [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`server-json`](#mcp-server-json), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`test`](#mcp-test), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
+
+## apiome mcp agent-invocations {#mcp-agent-invocations}
+
+Export the agent invocation audit (finalized UTC days) for a SIEM (ATQ-4.5).
+
+```text
+apiome mcp agent-invocations [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`export`](#mcp-agent-invocations-export).
+
+## apiome mcp agent-invocations export {#mcp-agent-invocations-export}
+
+Export one finalized day of agent invocations (GET .../agent-invocations/export).
+
+Every stored audit column is written as stored, plus key_name and a hashed key_fingerprint; the key secret never appears. Today, and a day the usage sweep has not finalized yet (about six hours after it ends), are refused with when it can be exported; a day older than the plan's retention is refused with the retention.
+
+Example: apiome mcp agent-invocations export --day 2026-11-14 | jq -c 'select(.outcome != "success")'
+
+```text
+apiome mcp agent-invocations export [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--day` | text |  | yes | The UTC day to export, YYYY-MM-DD (must be finalized). |
+| `--format` | text | `jsonl` |  | jsonl (one JSON object per line) or csv (header line first). |
+| `--out` | path |  |  | Write the export to this file instead of stdout. |
 
 ## apiome mcp conformance {#mcp-conformance}
 
