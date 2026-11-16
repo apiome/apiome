@@ -28,6 +28,16 @@ Each row has **when**, **actor**, **event** (`action`), **target**, **source** a
 **detail**, plus `prev_hash` and `entry_hash`, its link in the chain. Both endpoints are in the
 [REST reference](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get).
 
+## What is in which audit
+
+The access audit records **who changed access**. Other activity has its own record:
+
+| Record | What it holds | Where to read it |
+|---|---|---|
+| Access audit | Role, permission, member, admin, style-guide and portal-reader events, plus governance changes such as `agent.toolset.body_samples.update` and each `agent.invocations.export` | This page |
+| Agent invocation audit | One row per `tools/call` an agent key makes: key, tool, time, latency, outcome and sizes, never a body | [Agent access → Export the invocation audit](../bring-in/agent-access.mdx#export-the-invocation-audit), one finalized UTC day at a time as JSON Lines or CSV |
+| Usage export | Daily usage rollups of a project's API traffic | [Runtime usage → Export usage](./runtime-usage.mdx#export-usage) |
+
 ## Browse reader events
 
 [Portal readers](../ship/portal-readers.mdx) sign in to Browse with an email link. Their events have

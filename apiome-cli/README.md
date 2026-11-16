@@ -1332,6 +1332,23 @@ apiome mcp key capabilities set <key-uuid> --mode explicit --tool ping --tool sp
 apiome mcp key capabilities set <key-uuid> --file caps.json
 ```
 
+### Export the agent invocation audit
+
+Write one **finalized** UTC day of the agent invocation audit to stdout or `--out` for a SIEM
+(`GET /v1/tenants/{tenant}/agent-invocations/export`, API key, ATQ-4.5). `--format` is `jsonl`
+(default, one JSON object per line) or `csv`. Each row has every stored audit column, plus
+`key_name` and a hashed `key_fingerprint`; the key secret never appears.
+
+```bash
+apiome mcp agent-invocations export --day 2026-11-14
+apiome mcp agent-invocations export --day 2026-11-14 --format csv --out day.csv
+apiome mcp agent-invocations export --day 2026-11-14 | jq -c 'select(.outcome != "success")'
+```
+
+A day that is not finalized yet (today, or less than about six hours after it ended) prints
+`HTTP 409 agent-invocations-day-not-final: …` with the time it can be exported. A day past the
+plan's retention prints `HTTP 410 agent-invocations-day-past-retention: …`. Both exit with code 2.
+
 ### Import JSON Schema types
 
 Import system-wide JSON Schema type definitions (typically a `$defs` library) into the platform type table:

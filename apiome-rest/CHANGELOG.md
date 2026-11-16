@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.724.0] - 2026-11-16
+
+### Added
+- **SIEM export of the agent invocation audit (ATQ-4.5, #5847)** — OpenAPI 1.584.0:
+  - `GET /v1/tenants/{t}/agent-invocations/export?day=YYYY-MM-DD&format=jsonl|csv` (`api_keys:view`) streams one UTC
+    day of the tenant's AGX-3.3 `agent_invocations` rows as an attachment: every stored column as stored, in table
+    order (read from the catalog, so later columns flow through), then `key_name` and `key_fingerprint`
+    (`sha256:` + 32 hex of SHA-256 over the key **id**; never the AGX-3.1 secret or its hash). Rows are read in keyset
+    pages of 1000 on `(invoked_at, id)`. Body samples are never exported. CSV text cells that would start a spreadsheet formula are prefixed
+    with `'`; JSON Lines are unaltered. Audited as `agent.invocations.export` (day, format).
+  - Finalized days only: a day not yet finalized by the usage sweep is `409 agent-invocations-day-not-final` with
+    `finalizesAfter` (day end + the 6-hour sweep grace). A day whose start is older than the tier's raw retention
+    (`agent_usage_retention`) is `410 agent-invocations-day-past-retention` with `retentionDays` and
+    `oldestExportableDay`. (`app.agent_invocation_export`, `app.agent_invocation_export_routes`.)
+  - The streaming half (the invocation ledger as an event source of the EID-3.4 signed audit stream) waits for
+    EID-3.4.
+
 ## [1.723.0] - 2026-11-16
 
 ### Added

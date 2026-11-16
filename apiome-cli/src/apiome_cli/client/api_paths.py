@@ -1064,3 +1064,8 @@ def usage_ingest(tenant_slug: str) -> str:
 def usage_har_source(tenant_slug: str) -> str:
     """``POST`` find, check or create a project's ``har`` usage source — RDG-1.4 (#5762)."""
     return f"{V1}/tenants/{quote(tenant_slug, safe='')}/usage/sources/har"
+
+
+def agent_invocations_export(tenant_slug: str) -> str:
+    """One finalized UTC day of the agent invocation audit, JSON Lines or CSV (ATQ-4.5, #5847)."""
+    return f"{V1}/tenants/{quote(tenant_slug, safe='')}/agent-invocations/export"

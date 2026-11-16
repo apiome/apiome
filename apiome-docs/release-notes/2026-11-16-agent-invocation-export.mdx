@@ -1,0 +1,25 @@
+---
+slug: agent-invocation-export
+title: Agent invocation audit, exported for your SIEM
+description: "Export a finalized day of agent tool calls as JSON Lines or CSV."
+authors: [apiome]
+---
+
+Security teams can now load the agent invocation audit into their SIEM. Export one finalized UTC
+day of `tools/call` rows as JSON Lines or CSV from the CLI or the REST API.
+
+{/* truncate */}
+
+- **Rows exactly as stored.** Every audit column (key, tool, time, latency, outcome, reason code,
+  upstream status, sizes) plus the key's name and a hashed `key_fingerprint`, so a SIEM can group a
+  key's calls. The key secret, its hash and body samples are never exported.
+- **Matches the Usage charts.** Only days the usage sweep has finalized can be exported (about six
+  hours after the day ends). A day that is not final yet is refused with when it will be. A day past
+  your plan's retention (7, 30 or 90 days) is refused with the retention.
+- **One command.** `apiome mcp agent-invocations export --day 2026-11-14` writes JSON Lines to stdout,
+  ready for `jq`; add `--format csv --out day.csv` for a spreadsheet. With the API:
+  `GET /v1/tenants/{tenant}/agent-invocations/export?day=…&format=jsonl|csv`.
+- **Audited.** Every export is recorded in the access audit as `agent.invocations.export`.
+
+Streaming the rows as they happen arrives with audit streaming. See
+[Agent access → Export the invocation audit](/bring-in/agent-access#export-the-invocation-audit).

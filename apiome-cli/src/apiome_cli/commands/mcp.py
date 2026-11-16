@@ -43,6 +43,7 @@ from apiome_cli.client.mcp_test import (
     classify_test_outcome,
 )
 from apiome_cli.client.tenant_scope import require_tenant_slug
+from apiome_cli.commands.mcp_agent_invocations import agent_invocations_app
 from apiome_cli.commands.mcp_governance import key_app, policy_app
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
@@ -124,6 +125,7 @@ server_json_app = typer.Typer(
 app.add_typer(server_json_app, name="server-json")
 app.add_typer(policy_app, name="policy")
 app.add_typer(key_app, name="key")
+app.add_typer(agent_invocations_app, name="agent-invocations")
 
 # Mirrors ``MCP_ENDPOINT_TRANSPORTS`` / ``MCP_ENDPOINT_VISIBILITIES`` in the REST
 # models; the server re-validates, but rejecting locally yields a usage exit code

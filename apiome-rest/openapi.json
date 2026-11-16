@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.583.0",
+    "version": "1.584.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -34244,6 +34244,123 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for agentusagerollupsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-invocations/export": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Export one day of the agent invocation audit",
+        "description": "Stream one **finalized** UTC day of the tenant's agent `tools/call` audit rows, for a SIEM: `jsonl` (one JSON object per line) or `csv` (header line first). Every stored column is exported as stored, in table order, followed by `key_name` and `key_fingerprint` (`sha256:` + 32 hex digits over the key id, stable across exports). The key secret and its stored hash are never exported, and neither are body samples.\n\nA day the usage sweep has not finalized yet is `409 agent-invocations-day-not-final` with `finalizesAfter`. A day older than the plan's raw-row retention is `410 agent-invocations-day-past-retention` with `retentionDays` and `oldestExportableDay`.\n\nRequires `api_keys:view`. Audited as `agent.invocations.export`.",
+        "operationId": "export_agent_invocations_v1_tenants__tenant_slug__agent_invocations_export_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The UTC day to export, `YYYY-MM-DD`.",
+              "title": "Day"
+            },
+            "description": "The UTC day to export, `YYYY-MM-DD`."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "jsonl",
+                "csv"
+              ],
+              "type": "string",
+              "description": "`jsonl` or `csv`.",
+              "default": "jsonl",
+              "title": "Format"
+            },
+            "description": "`jsonl` or `csv`."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportonedayoftheagentinvocationauditauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportonedayoftheagentinvocationauditauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportonedayoftheagentinvocationaudit Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportonedayoftheagentinvocationaudit Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The day's rows, streamed as an attachment.",
+            "content": {
+              "application/x-ndjson": {},
+              "text/csv": {}
+            }
+          },
+          "409": {
+            "description": "`agent-invocations-day-not-final`: the day is not finalized yet."
+          },
+          "410": {
+            "description": "`agent-invocations-day-past-retention`: the day is past the plan's retention."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for exportonedayoftheagentinvocationauditresponse422."
                 }
               }
             }
