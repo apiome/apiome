@@ -2349,6 +2349,43 @@ class Settings(BaseSettings):
         ),
     )
 
+    # REST security probes against verification targets (ASP-4.1, #5939). The same safety model as
+    # the MCP probes above (shared in app.probe_consent), keyed to ECA-1.2 verification targets.
+    #
+    # security_probe_enabled  THE GLOBAL KILL SWITCH. When False (the default) every probe run against
+    #                         a target other than the Apiome-hosted mock is refused, for every tenant,
+    #                         whatever consent exists. Runs against the hosted mock still proceed
+    #                         (capped at `observed`, and still rate-limited by the caps below).
+    security_probe_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("APIOME_SECURITY_PROBE_ENABLED", "security_probe_enabled"),
+    )
+    # The most security probe runs one tenant may have in flight at once.
+    security_probe_max_concurrent_per_tenant: int = Field(
+        default=2,
+        validation_alias=AliasChoices(
+            "APIOME_SECURITY_PROBE_MAX_CONCURRENT_PER_TENANT",
+            "security_probe_max_concurrent_per_tenant",
+        ),
+    )
+    # The most security probe runs one tenant may start per rolling hour (counted from
+    # security_probe_reports, so the cap holds across replicas and restarts).
+    security_probe_max_runs_per_hour_per_tenant: int = Field(
+        default=20,
+        validation_alias=AliasChoices(
+            "APIOME_SECURITY_PROBE_MAX_RUNS_PER_HOUR_PER_TENANT",
+            "security_probe_max_runs_per_hour_per_tenant",
+        ),
+    )
+    # The most HTTP requests a single security probe run may send (enforced by CountingTransport).
+    security_probe_max_requests_per_run: int = Field(
+        default=50,
+        validation_alias=AliasChoices(
+            "APIOME_SECURITY_PROBE_MAX_REQUESTS_PER_RUN",
+            "security_probe_max_requests_per_run",
+        ),
+    )
+
     # MCP trust-baseline drift detection (CLX-3.4, #4858). A trust manifest (identity, transport, the
     # reused surface fingerprint, policy-relevant tool authority annotations, and source/SBOM digests)
     # is diffed against an operator-approved baseline, and each material change is classified as a

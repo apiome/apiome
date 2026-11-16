@@ -1,0 +1,29 @@
+---
+slug: security-probe-consent
+title: Consent before security probes hit a deployment
+description: "Grant, check and revoke consent for probing a verification target."
+authors: [apiome]
+---
+
+Security probes will check that a deployment enforces what its contract says about
+authentication, by sending requests a normal client would not. Before any of them can run, a
+verification target now carries your
+[written consent](/ship/contract-testing-and-ci-gates#grant-consent-before-security-probes).
+
+{/* truncate */}
+
+- **Consent per target.** Grant it with `POST …/verification-targets/{target}/probe-consent`:
+  declare you own the target, set when it expires and which profiles it allows (`passive`,
+  `safe-active`, `payload`), and optionally name two test accounts by credential reference. A
+  pasted token is rejected. `GET` shows its status and `DELETE` revokes it.
+- **The hosted mock needs none.** A `mock` target on the Apiome-hosted mock's address can be
+  probed without consent, but a probe there can only report **Observed** — the mock cannot prove
+  the real deployment enforces anything.
+- **Off until you turn it on.** `APIOME_SECURITY_PROBE_ENABLED` defaults to `false` and, while
+  off, refuses every probe except against the hosted mock. Per-workspace caps limit concurrent and
+  hourly runs.
+- **On the record.** Every grant, revocation and refused run is in the
+  [access audit](/govern/access-audit#security-probe-consent-events), and each run leaves a report
+  nobody can edit (`GET /v1/tenants/{tenant}/security-probe-reports`).
+
+The probe run itself, `apiome verify probe`, is still to come.

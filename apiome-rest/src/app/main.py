@@ -213,6 +213,7 @@ from .verification_evidence_routes import router as verification_evidence_router
 from .verification_policy_routes import router as verification_policy_router
 from .verification_schedule_routes import router as verification_schedule_router
 from .verification_target_routes import router as verification_target_router
+from .probe_consent_routes import router as probe_consent_router
 from .version_change_report_routes import router as version_change_report_router
 from .version_changelog_routes import router as version_changelog_router
 from .version_merge_routes import router as version_merge_router
@@ -449,6 +450,7 @@ app.include_router(contract_suite_router)
 app.include_router(contract_runner_router)
 app.include_router(provider_verification_router)
 app.include_router(verification_target_router)
+app.include_router(probe_consent_router)
 app.include_router(verification_schedule_router)
 app.include_router(deploy_gate_tenant_router)
 app.include_router(sdk_generation_settings_tenant_router)

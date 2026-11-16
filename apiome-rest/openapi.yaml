@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.586.0
+  version: 1.587.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -21589,6 +21589,363 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readtheverificationtargetauditledgerresponse422.
+  /v1/tenants/{tenant_slug}/verification-targets/{target_ref}/probe-consent:
+    post:
+      tags:
+      - contract-assurance
+      summary: Grant security probe consent for a target
+      description: 'Authorize security probes against this verification target until `expires_at`, for the listed `profiles_allowed` (`passive`, `safe-active`, `payload`).
+
+
+        You must declare `ownership_declared: true` — that you own the target or are authorized to test it. Test identities are credential **references** (an environment-variable name or a credential-vault id), never a credential; a pasted token is rejected.
+
+
+        A target has one live consent: granting replaces (revokes) the previous one. A target whose environment is `mock` and whose base URL is the Apiome-hosted mock needs no consent.
+
+
+        Requires `verification_evidence:create`; a `production` target also needs a signed-in tenant administrator. Every grant is written to the access audit.'
+      operationId: grant_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: target_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Ref
+          description: Target Ref schema.
+        description: Path parameter identifying the target ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Grantsecurityprobeconsentforatargetauthorization schema.
+          - type: 'null'
+            description: Grantsecurityprobeconsentforatargetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Grantsecurityprobeconsentforatarget Xapikey schema.
+          - type: 'null'
+            description: Grantsecurityprobeconsentforatarget Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProbeConsentGrant'
+              description: Request body for grantsecurityprobeconsentforatargetrequest.
+        description: Request body for grant security probe consent for a target.
+      responses:
+        '201':
+          description: Successful response for grant security probe consent for a target.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeConsentRecord'
+                description: Response payload for grantsecurityprobeconsentforatargetresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for grantsecurityprobeconsentforatargetresponse422.
+    get:
+      tags:
+      - contract-assurance
+      summary: Read a target's security probe consent
+      description: 'The target''s live (unrevoked) consent, with `status` `active` or `expired` at read time. 404 when the target has none.
+
+
+        Requires `verification_evidence:view`.'
+      operationId: get_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: target_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Ref
+          description: Target Ref schema.
+        description: Path parameter identifying the target ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readatargetssecurityprobeconsentauthorization schema.
+          - type: 'null'
+            description: Readatargetssecurityprobeconsentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readatargetssecurityprobeconsent Xapikey schema.
+          - type: 'null'
+            description: Readatargetssecurityprobeconsent Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a target's security probe consent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeConsentRecord'
+                description: Response payload for readatargetssecurityprobeconsentresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readatargetssecurityprobeconsentresponse422.
+    delete:
+      tags:
+      - contract-assurance
+      summary: Revoke a target's security probe consent
+      description: 'Revoke the target''s live consent. Probe runs against the target are refused from then on. The row is kept, revoked, for the audit trail.
+
+
+        Requires `verification_evidence:create`. Every revocation is written to the access audit.'
+      operationId: revoke_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: target_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Target Ref
+          description: Target Ref schema.
+        description: Path parameter identifying the target ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Revokeatargetssecurityprobeconsentauthorization schema.
+          - type: 'null'
+            description: Revokeatargetssecurityprobeconsentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Revokeatargetssecurityprobeconsent Xapikey schema.
+          - type: 'null'
+            description: Revokeatargetssecurityprobeconsent Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for revoke a target's security probe consent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeConsentRecord'
+                description: Response payload for revokeatargetssecurityprobeconsentresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for revokeatargetssecurityprobeconsentresponse422.
+  /v1/tenants/{tenant_slug}/security-probe-reports:
+    get:
+      tags:
+      - contract-assurance
+      summary: List security probe reports
+      description: 'The tenant''s write-once security probe reports, newest first: target snapshot, profile, consent, limits, proof ceiling and counts by tier.
+
+
+        Requires `verification_evidence:view`.'
+      operationId: list_security_probe_reports_v1_tenants__tenant_slug__security_probe_reports_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: target_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listsecurityprobereportstargetid schema.
+          - type: 'null'
+            description: Listsecurityprobereportstargetid schema.
+          description: Restrict to one target id.
+          title: Target Id
+        description: Restrict to one target id.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Maximum reports.
+          default: 50
+          title: Limit
+        description: Maximum reports.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listsecurityprobereportsauthorization schema.
+          - type: 'null'
+            description: Listsecurityprobereportsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listsecurityprobereports Xapikey schema.
+          - type: 'null'
+            description: Listsecurityprobereports Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list security probe reports.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityProbeReportListResponse'
+                description: Response payload for listsecurityprobereportsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listsecurityprobereportsresponse422.
+  /v1/tenants/{tenant_slug}/security-probe-reports/{report_id}:
+    get:
+      tags:
+      - contract-assurance
+      summary: Read one security probe report
+      description: 'One report with its body.
+
+
+        Requires `verification_evidence:view`.'
+      operationId: get_security_probe_report_v1_tenants__tenant_slug__security_probe_reports__report_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Report Id
+          description: Report Id schema.
+        description: Path parameter identifying the report id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readonesecurityprobereportauthorization schema.
+          - type: 'null'
+            description: Readonesecurityprobereportauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readonesecurityprobereport Xapikey schema.
+          - type: 'null'
+            description: Readonesecurityprobereport Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one security probe report.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityProbeReportRecord'
+                description: Response payload for readonesecurityprobereportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readonesecurityprobereportresponse422.
   /v1/tenants/{tenant_slug}/verification-schedules:
     get:
       tags:
@@ -148409,6 +148766,152 @@ components:
       type: object
       title: PrimitiveUpdateRequest
       description: Partial update payload for an existing primitive type definition.
+    ProbeConsentGrant:
+      properties:
+        ownership_declared:
+          type: boolean
+          title: Ownership Declared
+          description: You declare that you own this target or are authorized to test it. Must be `true`; probing a system you do not control is an attack.
+          example: false
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+          description: When the consent stops authorizing runs. Required, timezone-aware, in the future.
+          example: '2026-11-16T21:33:17Z'
+        profiles_allowed:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Profiles Allowed
+          description: 'Probe profiles the consent authorizes: passive, safe-active, payload.'
+          maxItems: 1000
+        identity_a:
+          anyOf:
+          - $ref: '#/components/schemas/TargetAuthReference'
+          - type: 'null'
+            description: Probe Consent Grant schema.
+          description: Test identity A — a credential reference (`env` variable name or `stored` vault id), never a credential.
+        identity_b:
+          anyOf:
+          - $ref: '#/components/schemas/TargetAuthReference'
+          - type: 'null'
+            description: Probe Consent Grant schema.
+          description: Test identity B, for probes that need two identities. Same shape as A.
+      additionalProperties: false
+      type: object
+      required:
+      - ownership_declared
+      - expires_at
+      - profiles_allowed
+      title: ProbeConsentGrant
+      description: The body of a consent grant.
+    ProbeConsentRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Consent id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns it.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        target_id:
+          type: string
+          title: Target Id
+          description: Verification target it authorizes probing.
+          example: target_01h2xcejqtf3fz5y5j0v8k9m2p
+        ownership_declared:
+          type: boolean
+          title: Ownership Declared
+          description: The grantor's ownership declaration.
+          example: false
+        approved_by:
+          anyOf:
+          - type: string
+            description: Probe Consent schema.
+          - type: 'null'
+            description: Probe Consent schema.
+          title: Approved By
+          description: User who granted it.
+        approved_at:
+          type: string
+          format: date-time
+          title: Approved At
+          description: When it was granted.
+          example: '2026-11-16T21:33:17Z'
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+          description: When it stops authorizing runs.
+          example: '2026-11-16T21:33:17Z'
+        profiles_allowed:
+          items:
+            type: string
+          type: array
+          title: Profiles Allowed
+          description: Profiles it authorizes.
+          maxItems: 1000
+        identity_a:
+          anyOf:
+          - $ref: '#/components/schemas/TargetAuthReference'
+          - type: 'null'
+            description: Probe Consent schema.
+          description: Test identity A.
+        identity_b:
+          anyOf:
+          - $ref: '#/components/schemas/TargetAuthReference'
+          - type: 'null'
+            description: Probe Consent schema.
+          description: Test identity B.
+        revoked_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Probe Consent schema.
+          - type: 'null'
+            description: Probe Consent schema.
+          title: Revoked At
+          description: When it was revoked.
+        revoked_by:
+          anyOf:
+          - type: string
+            description: Probe Consent schema.
+          - type: 'null'
+            description: Probe Consent schema.
+          title: Revoked By
+          description: User who revoked it.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Probe Consent schema.
+          - type: 'null'
+            description: Probe Consent schema.
+          title: Created At
+          description: When the row was written.
+        status:
+          type: string
+          title: Status
+          description: '`active`, `expired` or `revoked`, at read time.'
+          example: active
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - tenant_id
+      - target_id
+      - ownership_declared
+      - approved_at
+      - expires_at
+      - profiles_allowed
+      - status
+      title: ProbeConsentRecord
+      description: A stored consent, as the API returns it.
     ProfileDeliveryRequest:
       properties:
         profileId:
@@ -162482,6 +162985,321 @@ components:
       - ratePresets
       title: SecurityPresetsResponse
       description: Every managed tier and safe preset this control plane offers.
+    SecurityProbeReportListResponse:
+      properties:
+        reports:
+          items:
+            $ref: '#/components/schemas/SecurityProbeReportSummary'
+          type: array
+          title: Reports
+          description: Reports, newest first.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many reports were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: SecurityProbeReportListResponse
+      description: A tenant's security probe reports.
+    SecurityProbeReportRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Report id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns it.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        target_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Target Id
+          description: Target id at run time.
+        target_slug:
+          type: string
+          title: Target Slug
+          description: Target handle at run time.
+          example: example-resource
+        target_environment:
+          type: string
+          title: Target Environment
+          description: Environment class at run time.
+          example: example
+        target_network_class:
+          type: string
+          title: Target Network Class
+          description: '`public` or `private`.'
+          default: public
+          example: example
+        target_base_url:
+          type: string
+          title: Target Base Url
+          description: Base URL at run time.
+          example: https://example.com/resource
+        profile:
+          type: string
+          title: Profile
+          description: Profile that ran.
+          example: example
+        consent_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Consent Id
+          description: Consent that authorized it.
+        hosted_mock:
+          type: boolean
+          title: Hosted Mock
+          description: Whether the target was the Apiome-hosted mock.
+          example: false
+        explicit_approval:
+          type: boolean
+          title: Explicit Approval
+          description: The per-run approval flag.
+          example: false
+        proof_ceiling:
+          type: string
+          title: Proof Ceiling
+          description: Strongest tier the run could report.
+          example: example
+        limits:
+          additionalProperties: true
+          type: object
+          title: Limits
+          description: Per-run limits.
+        count_suspected:
+          type: integer
+          title: Count Suspected
+          description: Findings at `suspected`.
+          example: 1
+        count_observed:
+          type: integer
+          title: Count Observed
+          description: Findings at `observed`.
+          example: 1
+        count_exploited_in_test:
+          type: integer
+          title: Count Exploited In Test
+          description: Findings at `exploited-in-test`.
+          example: 1
+        evidence_run_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Evidence Run Id
+          description: ECA-1.3 evidence run.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Created At
+          description: When it was written.
+        created_by:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Created By
+          description: User who ran it.
+        actor_label:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Actor Label
+          description: Actor label at the time.
+        actor_kind:
+          type: string
+          title: Actor Kind
+          description: '`user`, `api_key` or `system`.'
+          default: user
+          example: example
+        report:
+          additionalProperties: true
+          type: object
+          title: Report
+          description: The stored report body.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - tenant_id
+      - target_slug
+      - target_environment
+      - target_base_url
+      - profile
+      - hosted_mock
+      - explicit_approval
+      - proof_ceiling
+      - count_suspected
+      - count_observed
+      - count_exploited_in_test
+      title: SecurityProbeReportRecord
+      description: A probe report with its body.
+    SecurityProbeReportSummary:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Report id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns it.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        target_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Target Id
+          description: Target id at run time.
+        target_slug:
+          type: string
+          title: Target Slug
+          description: Target handle at run time.
+          example: example-resource
+        target_environment:
+          type: string
+          title: Target Environment
+          description: Environment class at run time.
+          example: example
+        target_network_class:
+          type: string
+          title: Target Network Class
+          description: '`public` or `private`.'
+          default: public
+          example: example
+        target_base_url:
+          type: string
+          title: Target Base Url
+          description: Base URL at run time.
+          example: https://example.com/resource
+        profile:
+          type: string
+          title: Profile
+          description: Profile that ran.
+          example: example
+        consent_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Consent Id
+          description: Consent that authorized it.
+        hosted_mock:
+          type: boolean
+          title: Hosted Mock
+          description: Whether the target was the Apiome-hosted mock.
+          example: false
+        explicit_approval:
+          type: boolean
+          title: Explicit Approval
+          description: The per-run approval flag.
+          example: false
+        proof_ceiling:
+          type: string
+          title: Proof Ceiling
+          description: Strongest tier the run could report.
+          example: example
+        limits:
+          additionalProperties: true
+          type: object
+          title: Limits
+          description: Per-run limits.
+        count_suspected:
+          type: integer
+          title: Count Suspected
+          description: Findings at `suspected`.
+          example: 1
+        count_observed:
+          type: integer
+          title: Count Observed
+          description: Findings at `observed`.
+          example: 1
+        count_exploited_in_test:
+          type: integer
+          title: Count Exploited In Test
+          description: Findings at `exploited-in-test`.
+          example: 1
+        evidence_run_id:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Evidence Run Id
+          description: ECA-1.3 evidence run.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Created At
+          description: When it was written.
+        created_by:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Created By
+          description: User who ran it.
+        actor_label:
+          anyOf:
+          - type: string
+            description: Security Probe Report schema.
+          - type: 'null'
+            description: Security Probe Report schema.
+          title: Actor Label
+          description: Actor label at the time.
+        actor_kind:
+          type: string
+          title: Actor Kind
+          description: '`user`, `api_key` or `system`.'
+          default: user
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - tenant_id
+      - target_slug
+      - target_environment
+      - target_base_url
+      - profile
+      - hosted_mock
+      - explicit_approval
+      - proof_ceiling
+      - count_suspected
+      - count_observed
+      - count_exploited_in_test
+      title: SecurityProbeReportSummary
+      description: A probe report without its body — what a list read returns.
     SecurityRuleBody:
       properties:
         id:

@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.727.0] - 2026-11-16
+
+### Added
+- **Shared probe consent and limits bound to verification targets (ASP-4.1, #5939)** — OpenAPI 1.587.0:
+  - `app.probe_consent` now holds the probe safety model CLX-3.3 built for MCP endpoints — the three proof tiers,
+    `ProbeLimits`, `ConsentRecord`, `CountingTransport`, the kill switch and tenant caps — with a `subject_kind`
+    (`mcp_endpoint | verification_target`). `app.mcp_probe` re-exports every name; its tests are unchanged.
+    `CountingTransport` forwards any `send` signature, so REST probes share it.
+  - apiome-db **V386** (the roadmap's V274 shipped as signup policy): `verification_target_probe_consents`
+    (`ownership_declared` must be true; `approved_by`, `approved_at`, `expires_at` required; `profiles_allowed` ⊆
+    `passive|safe-active|payload`; `identity_a`/`identity_b` as credential references with V211's CHECKs, so a
+    pasted token cannot be stored; one live consent per target; rows are revoked, never edited) and the write-once
+    `security_probe_reports` (target snapshot, profile, consent, limits, proof ceiling, counts by tier, report,
+    evidence run). Adds `verification_target (id, tenant_id)` as a composite key.
+  - `POST | GET | DELETE /v1/tenants/{t}/verification-targets/{ref}/probe-consent` (`verification_evidence:create`
+    to grant or revoke, `:view` to read; a `production` target's grant needs a signed-in tenant administrator) and
+    `GET /v1/tenants/{t}/security-probe-reports[/{id}]` (`verification_evidence:view`).
+  - Run gate `probe_consent_store.authorize_probe_run` (used by ASP-4.2's runner): a `mock` target on the hosted
+    mock origin (`mock_public_base_url`) needs no consent and is capped at `observed`; any other target needs a
+    live consent listing the profile; `payload` needs the per-run approval flag; the new kill switch
+    `APIOME_SECURITY_PROBE_ENABLED` (default **false**) refuses every non-mock run. Caps:
+    `APIOME_SECURITY_PROBE_MAX_CONCURRENT_PER_TENANT` (2), `…_MAX_RUNS_PER_HOUR_PER_TENANT` (20),
+    `…_MAX_REQUESTS_PER_RUN` (50). Refusals carry stable codes (`probe-consent-missing`, `probe-consent-expired`,
+    `probe-consent-revoked`, `probe-kill-switch-off`, `probe-profile-not-consented`, `probe-approval-required`,
+    `probe-rate-limited`, …).
+  - Every grant, revocation and refused run writes an `access_audit` row (`security_probe.consent.grant`,
+    `security_probe.consent.revoke`, `security_probe.run.refused`).
+
 ## [1.726.0] - 2026-11-16
 
 ### Added
