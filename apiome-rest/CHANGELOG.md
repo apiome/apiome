@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.720.0] - 2026-11-16
+
+### Added
+- **`mock-action` and the serverless adapter expose the new protocols (XPC-5.4, #5755)** — OpenAPI 1.580.0 (version only; no API change):
+  - `mock-action` 0.3.0 gains a `protocols` input (`http` default; `graphql`, `connect`, `grpc`, `events`), `grpc-port`,
+    `broker-bootstrap`, `broker-password-env` (forwarded by name as `APIOME_MOCK_BROKER_PASSWORD`, never on argv) and
+    `network`, and the outputs `graphql-url`, `connect-url`, `grpc-url` and `protocols-served`. Asking for `events`
+    without `broker-bootstrap` fails the step before anything is pulled; a protocol the pinned runtime does not serve
+    fails the step after readiness with the runtime's reason, before the job's tests run. The Action stays
+    single-container: the README documents a Redpanda broker recipe on a named network.
+  - The portable runtime's `GET /ready` carries a `protocols` object (`apiome_mock.protocol_support`): one
+    `{served, path?, port?, reason?}` entry per protocol, always present. It serves HTTP only today and says why for
+    the rest; XPC-5.2 flips the entries it implements.
+  - `apiome-mock serverless` preflight reports the same `protocols` object per provider and a
+    `protocol-unsupported-<id>` note for each protocol not served: native gRPC and events (WebSocket/SSE and broker
+    channels) are unsupported on AWS Lambda, Google Cloud Run functions and Azure Functions with a one-line reason
+    each (`ProviderLimits.unsupported_protocols`); GraphQL and Connect follow the portable runtime.
+
 ## [1.719.0] - 2026-11-15
 
 ### Added

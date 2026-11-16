@@ -18,6 +18,24 @@ const CONTAINER_BUNDLE_PATH = '/bundle/mock-bundle.json';
 /** Environment variable carrying the bundle signing secret into the container. */
 const SECRET_ENV = 'APIOME_MOCK_BUNDLE_SECRET';
 
+/** Port the runtime's opt-in native gRPC listener binds inside the container (XPC-5.2). */
+const CONTAINER_GRPC_PORT = 8776;
+
+/** Environment variable that turns the runtime's native gRPC listener on, at a container port. */
+const GRPC_PORT_ENV = 'APIOME_MOCK_GRPC_PORT';
+
+/** Environment variable naming the broker the runtime publishes event channels through. */
+const BROKER_BOOTSTRAP_ENV = 'APIOME_MOCK_BROKER_BOOTSTRAP';
+
+/** Environment variable carrying the broker password into the container — env only, never a flag. */
+const BROKER_PASSWORD_ENV = 'APIOME_MOCK_BROKER_PASSWORD';
+
+/**
+ * Protocol ids the `protocols` input accepts, in the order the runtime reports them on `/ready`
+ * (`apiome_mock.protocol_support.PROTOCOL_IDS`). `events` covers WebSocket/SSE and broker channels.
+ */
+const PROTOCOLS = ['http', 'graphql', 'connect', 'grpc', 'events'];
+
 /**
  * Interpret a GitHub Action boolean input.
  *
@@ -73,20 +91,122 @@ function resolveHost(value) {
 /**
  * Validate a requested host port.
  *
- * @param {string|number} value Raw `port` input; 0 means "pick a free port".
+ * @param {string|number} value Raw port input; 0 means "pick a free port".
+ * @param {string} [name] Input name used in error messages (`port` or `grpc-port`).
  * @returns {number} The requested port.
  * @throws {Error} When the value is not an integer in range.
  */
-function resolvePort(value) {
+function resolvePort(value, name = 'port') {
   const raw = String(value ?? '').trim() || '0';
   if (!/^\d+$/.test(raw)) {
-    throw new Error(`Input "port" (${raw}) must be a non-negative integer.`);
+    throw new Error(`Input "${name}" (${raw}) must be a non-negative integer.`);
   }
   const port = Number(raw);
   if (port > 65535) {
-    throw new Error(`Input "port" (${raw}) must be between 0 and 65535.`);
+    throw new Error(`Input "${name}" (${raw}) must be between 0 and 65535.`);
   }
   return port;
+}
+
+/**
+ * Parse the `protocols` input into a de-duplicated list of protocol ids.
+ *
+ * `http` is always served (it is the listener everything else rides on), so it is always in the
+ * result whether or not it was named.
+ *
+ * @param {string|undefined} value Raw `protocols` input: comma- or whitespace-separated ids.
+ * @returns {string[]} Requested protocol ids, in {@link PROTOCOLS} order.
+ * @throws {Error} When an id is not one of {@link PROTOCOLS}.
+ */
+function parseProtocols(value) {
+  const requested = String(value ?? '')
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+  const unknown = requested.filter((entry) => !PROTOCOLS.includes(entry));
+  if (unknown.length) {
+    throw new Error(`Input "protocols" names ${unknown.join(', ')}; accepted values are ${PROTOCOLS.join(', ')}.`);
+  }
+  return PROTOCOLS.filter((protocol) => protocol === 'http' || requested.includes(protocol));
+}
+
+/**
+ * Validate the `broker-bootstrap` input: a comma-separated list of `host:port` entries.
+ *
+ * @param {string|undefined} value Raw input.
+ * @returns {string} The normalized bootstrap list, or "" when none was given.
+ * @throws {Error} When an entry is not host:port shaped.
+ */
+function resolveBrokerBootstrap(value) {
+  const entries = String(value ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  for (const entry of entries) {
+    if (!/^[A-Za-z0-9._-]+:\d{1,5}$/.test(entry) || Number(entry.split(':').pop()) > 65535) {
+      throw new Error(`Input "broker-bootstrap" entry (${entry}) must be host:port.`);
+    }
+  }
+  return entries.join(',');
+}
+
+/**
+ * Validate an input that names an environment variable (never its value).
+ *
+ * @param {string|undefined} value Raw input.
+ * @param {string} name Input name used in error messages.
+ * @returns {string} The variable name, or "" when none was given.
+ * @throws {Error} When the value is not a valid environment variable name.
+ */
+function resolveEnvName(value, name) {
+  const raw = String(value ?? '').trim();
+  if (raw && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(raw)) {
+    throw new Error(`Input "${name}" (${raw}) must be the name of an environment variable, not its value.`);
+  }
+  return raw;
+}
+
+/**
+ * Validate a Docker network name for the `network` input.
+ *
+ * @param {string|undefined} value Raw input.
+ * @returns {string} The network name, or "" to use Docker's default bridge.
+ * @throws {Error} When the value contains characters Docker does not allow in a network name.
+ */
+function resolveNetwork(value) {
+  const raw = String(value ?? '').trim();
+  if (raw && !/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(raw)) {
+    throw new Error(`Input "network" (${raw}) is not a valid Docker network name.`);
+  }
+  return raw;
+}
+
+/**
+ * Check the broker inputs against the requested protocols, before anything is started.
+ *
+ * Event channels publish through a broker the job provides (the Action stays single-container);
+ * asking for `events` without one is a configuration mistake the step reports immediately rather
+ * than a runtime that silently serves nothing.
+ *
+ * @param {string[]} protocols Requested protocol ids (from {@link parseProtocols}).
+ * @param {string} bootstrap Normalized `broker-bootstrap` value.
+ * @param {string} passwordEnv Name of the variable holding the broker password, or "".
+ * @param {Record<string, string|undefined>} env Step environment the password is read from.
+ * @throws {Error} When `events` is requested without a broker, or a named password is unset.
+ */
+function checkBrokerInputs(protocols, bootstrap, passwordEnv, env) {
+  if (protocols.includes('events') && !bootstrap) {
+    throw new Error(
+      'Input "protocols" includes events, which needs a broker: set "broker-bootstrap" to the ' +
+        'broker started for this job (see the README broker recipe), or drop events.',
+    );
+  }
+  if (passwordEnv && !bootstrap) {
+    throw new Error('Input "broker-password-env" is set without "broker-bootstrap"; set both or neither.');
+  }
+  if (passwordEnv && !String(env[passwordEnv] ?? '')) {
+    throw new Error(`Input "broker-password-env" names ${passwordEnv}, which is not set in this step's env.`);
+  }
 }
 
 /**
@@ -132,9 +252,25 @@ function containerName(env, suffix) {
  * @param {number} options.port Host port to publish.
  * @param {boolean} [options.requireSignature] Refuse an unsigned bundle.
  * @param {boolean} [options.hasSecret] Whether a signing secret is configured.
+ * @param {number|null} [options.grpcPort] Host port for the native gRPC listener; null leaves it off.
+ * @param {string} [options.brokerBootstrap] Broker bootstrap list for event channels, or "".
+ * @param {boolean} [options.hasBrokerPassword] Whether a broker password is forwarded (by name).
+ * @param {string} [options.network] Docker network to attach to (where the job's broker runs), or "".
  * @returns {string[]} Arguments for `docker`.
  */
-function dockerRunArgs({ name, image, bundlePath, host, port, requireSignature = false, hasSecret = false }) {
+function dockerRunArgs({
+  name,
+  image,
+  bundlePath,
+  host,
+  port,
+  requireSignature = false,
+  hasSecret = false,
+  grpcPort = null,
+  brokerBootstrap = '',
+  hasBrokerPassword = false,
+  network = '',
+}) {
   const args = [
     'run',
     '--detach',
@@ -145,8 +281,21 @@ function dockerRunArgs({ name, image, bundlePath, host, port, requireSignature =
     '--volume',
     `${bundlePath}:${CONTAINER_BUNDLE_PATH}:ro`,
   ];
+  if (grpcPort !== null) {
+    args.push('--publish', `${host}:${grpcPort}:${CONTAINER_GRPC_PORT}`, '--env', `${GRPC_PORT_ENV}=${CONTAINER_GRPC_PORT}`);
+  }
+  if (network) {
+    args.push('--network', network);
+  }
   if (hasSecret) {
     args.push('--env', SECRET_ENV);
+  }
+  if (brokerBootstrap) {
+    args.push('--env', `${BROKER_BOOTSTRAP_ENV}=${brokerBootstrap}`);
+  }
+  if (hasBrokerPassword) {
+    // By name, like the signing secret: a value on argv is readable through the process table.
+    args.push('--env', BROKER_PASSWORD_ENV);
   }
   if (requireSignature) {
     args.push('--env', 'APIOME_MOCK_REQUIRE_SIGNATURE=true');
@@ -202,6 +351,57 @@ function serviceUrl(baseUrl, mount) {
 }
 
 /**
+ * Work out the per-protocol endpoints from the runtime's `/ready` report, or refuse.
+ *
+ * The runtime is the authority on what it serves: `/ready` carries a `protocols` object (one
+ * `{served, path?, port?, reason?}` entry per protocol id). A requested protocol it does not
+ * serve fails the step with the runtime's own reason, so a job never gets a URL that 404s. An
+ * image whose `/ready` has no `protocols` object predates multi-protocol serving and is treated
+ * as HTTP-only.
+ *
+ * @param {any} document Parsed `/ready` response.
+ * @param {string[]} protocols Requested protocol ids (from {@link parseProtocols}).
+ * @param {object} context Where the runtime was published.
+ * @param {string} context.serviceUrl Service URL (base URL plus mount).
+ * @param {string} context.host Host the gRPC listener is reachable on from the job.
+ * @param {number|null} context.grpcPort Host port the gRPC listener was published on, or null.
+ * @param {string} context.image Image reference, for the error message.
+ * @returns {{served: string[], graphqlUrl: string, connectUrl: string, grpcUrl: string}}
+ *   Every protocol the runtime reports served, and the endpoint of each requested one ("" when
+ *   not requested).
+ * @throws {Error} When a requested protocol is not served, naming each one and why.
+ */
+function protocolEndpoints(document, protocols, { serviceUrl: url, host, grpcPort, image }) {
+  const report = document && typeof document.protocols === 'object' && document.protocols ? document.protocols : null;
+  const entry = (protocol) => {
+    if (report) {
+      return report[protocol] && typeof report[protocol] === 'object' ? report[protocol] : { served: false };
+    }
+    return protocol === 'http'
+      ? { served: true, path: '' }
+      : { served: false, reason: `${image} does not report protocol support on /ready; it serves HTTP only.` };
+  };
+
+  const refused = protocols
+    .filter((protocol) => entry(protocol).served !== true)
+    .map((protocol) => `${protocol}: ${entry(protocol).reason || 'not served by this runtime.'}`);
+  if (refused.length) {
+    throw new Error(
+      `The pinned runtime cannot serve every requested protocol — pin an image that does, or drop ` +
+        `them from "protocols".\n  ${refused.join('\n  ')}`,
+    );
+  }
+
+  const at = (protocol) => (protocols.includes(protocol) ? `${url}${String(entry(protocol).path ?? '')}` : '');
+  return {
+    served: PROTOCOLS.filter((protocol) => entry(protocol).served === true),
+    graphqlUrl: at('graphql'),
+    connectUrl: at('connect'),
+    grpcUrl: protocols.includes('grpc') && grpcPort !== null ? `${host}:${grpcPort}` : '',
+  };
+}
+
+/**
  * Render the job-summary block reporting what the job is testing against.
  *
  * The digests are the point: a green suite means nothing if nobody can tell which artifact
@@ -219,6 +419,18 @@ function summaryMarkdown(identity) {
     ['Bundle signed', identity.signed ? 'yes' : 'no'],
     ['API', [identity.tenant, identity.project, identity.version].filter(Boolean).join(' / ') || '(not reported)'],
   ];
+  if (identity.protocolsServed) {
+    rows.push(['Protocols served', identity.protocolsServed.join(', ')]);
+  }
+  for (const [label, value] of [
+    ['GraphQL URL', identity.graphqlUrl],
+    ['Connect URL', identity.connectUrl],
+    ['gRPC target', identity.grpcUrl],
+  ]) {
+    if (value) {
+      rows.push([label, value]);
+    }
+  }
   const body = rows.map(([label, value]) => `| ${label} | ${value} |`).join('\n');
   return ['### Apiome mock runtime', '', '| | |', '|---|---|', body, ''].join('\n');
 }
@@ -239,17 +451,28 @@ function outputLine(name, value, delimiter) {
 }
 
 module.exports = {
+  BROKER_BOOTSTRAP_ENV,
+  BROKER_PASSWORD_ENV,
   CONTAINER_BUNDLE_PATH,
+  CONTAINER_GRPC_PORT,
   CONTAINER_PORT,
+  GRPC_PORT_ENV,
+  PROTOCOLS,
   SECRET_ENV,
+  checkBrokerInputs,
   conformanceArgs,
   containerName,
   dockerRunArgs,
   outputLine,
   parseBool,
+  parseProtocols,
   parseReady,
+  protocolEndpoints,
+  resolveBrokerBootstrap,
   resolveBundlePath,
+  resolveEnvName,
   resolveHost,
+  resolveNetwork,
   resolvePort,
   resolveWait,
   serviceUrl,

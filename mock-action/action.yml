@@ -50,6 +50,36 @@ inputs:
     description: When true (default), pull the image before starting it.
     required: false
     default: "true"
+  protocols:
+    description: >
+      Comma-separated protocols the job needs: http (always served), graphql, connect, grpc,
+      events. The step fails with the runtime's reason when the pinned image cannot serve one.
+    required: false
+    default: http
+  grpc-port:
+    description: >
+      Host port for the native gRPC listener when protocols includes grpc. "0" (default) picks
+      a free one.
+    required: false
+    default: "0"
+  broker-bootstrap:
+    description: >
+      host:port list of the broker event channels publish through — required when protocols
+      includes events. The Action never starts a broker; see the README recipe.
+    required: false
+    default: ""
+  broker-password-env:
+    description: >
+      Name (not value) of an environment variable on this step holding the broker password. It
+      is forwarded to the container as APIOME_MOCK_BROKER_PASSWORD, never on a command line.
+    required: false
+    default: ""
+  network:
+    description: >
+      Docker network to attach the runtime to, so it can reach a broker started on that network
+      by name. Empty (default) uses Docker's default bridge.
+    required: false
+    default: ""
 
 outputs:
   service-url:
@@ -67,6 +97,14 @@ outputs:
     description: Name of the started container (removed automatically in the post step).
   port:
     description: Host port the runtime was published on.
+  graphql-url:
+    description: GraphQL endpoint (POST queries here) when protocols includes graphql; empty otherwise.
+  connect-url:
+    description: Connect base URL (methods at /pkg.Service/Method) when protocols includes connect; empty otherwise.
+  grpc-url:
+    description: Native gRPC target as host:port (what grpcurl and grpc-js take) when protocols includes grpc; empty otherwise.
+  protocols-served:
+    description: Comma-separated protocols the runtime reports served on /ready, whether requested or not.
 
 runs:
   using: node24

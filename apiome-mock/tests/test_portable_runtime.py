@@ -142,6 +142,17 @@ def test_ready_identifies_the_served_bundle(client: TestClient, bundle: LoadedBu
     assert payload["bundle"]["scenarios"] == sorted(bundle.scenarios)
 
 
+def test_ready_reports_which_protocols_are_served(client: TestClient) -> None:
+    """mock-action reads this to hand out per-protocol URLs or fail with the reason (#5755)."""
+    protocols = client.get(READY_PATH).json()["protocols"]
+
+    assert list(protocols) == ["http", "graphql", "connect", "grpc", "events"]
+    assert protocols["http"] == {"served": True, "path": ""}
+    for protocol in ("graphql", "connect", "grpc", "events"):
+        assert protocols[protocol]["served"] is False
+        assert protocols[protocol]["reason"]
+
+
 def test_ready_reports_not_ready_after_shutdown(bundle: LoadedBundle) -> None:
     app = create_portable_app(bundle, PortableSettings(bundle=str(DEFAULT_BUNDLE_PATH)))
 

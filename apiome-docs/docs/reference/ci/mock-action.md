@@ -41,6 +41,11 @@ Export the bundle in an earlier step (or commit it) with
 | `require-signature` | `false` | Refuse to serve an unsigned bundle. |
 | `bundle-secret` | `""` | Shared HMAC secret for signature verification. Pass a repository secret. |
 | `pull` | `true` | Pull the image before starting it. |
+| `protocols` | `http` | Protocols the job needs, comma-separated: `http` (always served), `graphql`, `connect`, `grpc`, `events`. See [Protocols](#protocols). |
+| `grpc-port` | `0` | Host port for the native gRPC listener when `protocols` includes `grpc`. `0` picks a free one. |
+| `broker-bootstrap` | `""` | `host:port` list of the broker event channels publish through. **Required** with `events`. |
+| `broker-password-env` | `""` | **Name** of an environment variable on this step holding the broker password. Forwarded by name, never on a command line. |
+| `network` | `""` | Docker network to attach the runtime to, so it can reach a broker on that network by name. |
 
 ## Outputs
 
@@ -53,10 +58,87 @@ Export the bundle in an earlier step (or commit it) with
 | `runtime-version` | Version of the runtime serving it. |
 | `container` | Container name (removed automatically). |
 | `port` | Host port that was published. |
+| `graphql-url` | GraphQL endpoint (POST queries here) when `protocols` includes `graphql`; empty otherwise. |
+| `connect-url` | Connect base URL — methods answer at `/pkg.Service/Method` under it — when `protocols` includes `connect`; empty otherwise. |
+| `grpc-url` | Native gRPC target as `host:port` (what `grpcurl` and `@grpc/grpc-js` take) when `protocols` includes `grpc`; empty otherwise. |
+| `protocols-served` | Every protocol the runtime reports served on `/ready`, comma-separated, whether you asked for it or not. |
 
 `bundle-digest` and `runtime-version` are two of the four identities a release-proof mock
 attestation records. To turn a job's run into that evidence, follow it with `apiome-mock attest` —
 see [mock-release-attestation.md](../mock-runtime/mock-release-attestation.md).
+
+## Protocols
+
+By default the action starts an HTTP mock and gives you `service-url`. Name more protocols to get
+an endpoint for each:
+
+```yaml
+- uses: apiome/apiome/mock-action@v1
+  id: mock
+  with:
+    bundle: shop-2.0.0-mock-bundle.json
+    image: ghcr.io/apiome/apiome-mock:<multi-protocol release>   # see below
+    protocols: graphql,connect
+
+- run: npm test
+  env:
+    API_BASE_URL: ${{ steps.mock.outputs.service-url }}
+    GRAPHQL_URL: ${{ steps.mock.outputs.graphql-url }}
+    CONNECT_URL: ${{ steps.mock.outputs.connect-url }}
+```
+
+GraphQL and Connect ride on the same listener as HTTP. `grpc` also publishes the runtime's native
+gRPC listener on `grpc-port` and returns it as `grpc-url`.
+
+**The runtime decides, not the action.** After the runtime is ready, the action reads the
+`protocols` object on its [`/ready`](../mock-runtime/portable-mock-runtime.md)
+response. If the pinned image cannot serve a protocol you asked for, the step fails before your
+tests run, with the runtime's reason for each protocol:
+
+```text
+The pinned runtime cannot serve every requested protocol — pin an image that does, or drop them from "protocols".
+  graphql: this runtime serves HTTP only: GraphQL routes are not in mock bundle format v1, …
+```
+
+An older image whose `/ready` has no `protocols` object is treated as HTTP-only. Current images
+serve HTTP only. GraphQL, Connect, native gRPC and events arrive with the portable runtime's
+multi-protocol release (XPC-5.2). Until then, asking for them fails the step with this message.
+
+### Broker channels: bring your own broker
+
+Event channels publish through a broker. **The action never starts one.** It stays a single
+container, and the job owns the broker. Asking for `events` without `broker-bootstrap` fails the
+step immediately, before anything is pulled.
+
+The recipe below starts [Redpanda](../mock-runtime/event-mock-brokers.md)
+on a named network, then attaches the mock to that network. Redpanda is started in a step rather
+than under `services:` because a service container cannot be given the `redpanda start` flags that
+set its advertised address.
+
+```yaml
+- name: Start a broker for the mock
+  run: |
+    docker network create apiome-ci
+    docker run --detach --name redpanda --network apiome-ci \
+      docker.redpanda.com/redpandadata/redpanda:v24.2.7 \
+      redpanda start --mode=dev-container --smp=1 --memory=512M \
+        --kafka-addr=0.0.0.0:9092 --advertise-kafka-addr=redpanda:9092
+    timeout 60 sh -c 'until docker exec redpanda rpk cluster health | grep -qE "Healthy:.+true"; do sleep 2; done'
+
+- uses: apiome/apiome/mock-action@v1
+  id: mock
+  with:
+    bundle: orders-1.0.0-mock-bundle.json
+    image: ghcr.io/apiome/apiome-mock:<multi-protocol release>
+    protocols: events
+    network: apiome-ci
+    broker-bootstrap: redpanda:9092
+    # broker-password-env: BROKER_PASSWORD   # for a SASL broker; set BROKER_PASSWORD in env
+```
+
+For a broker that needs a password, put the secret in the step's `env` and give its **name** in
+`broker-password-env`. The action forwards it to the container as `APIOME_MOCK_BROKER_PASSWORD`,
+by name. The value never appears on a command line or in the run log.
 
 ## What it guarantees
 

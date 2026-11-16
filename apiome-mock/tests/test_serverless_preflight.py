@@ -18,6 +18,7 @@ from app.mock_bundle import BundleIdentity, build_bundle, bundle_bytes
 from apiome_mock.cli import main
 from apiome_mock.cli_run import EXIT_CONFIG_ERROR, EXIT_OK, EXIT_SERVERLESS_FAILED
 from apiome_mock.conformance import DEFAULT_BUNDLE_PATH
+from apiome_mock.protocol_support import PROTOCOL_IDS, portable_protocols
 from apiome_mock.serverless import ColdStart
 from apiome_mock.serverless_preflight import (
     ERROR,
@@ -25,6 +26,7 @@ from apiome_mock.serverless_preflight import (
     WARNING,
     _cold_start_findings,
     preflight,
+    provider_protocols,
 )
 from apiome_mock.serverless_providers import PROVIDER_NAMES, Provider, ProviderLimits, provider_for
 
@@ -333,3 +335,57 @@ def test_serverless_help_lists_every_supported_provider(capsys: pytest.CaptureFi
     printed = capsys.readouterr().out
     for name in PROVIDER_NAMES:
         assert name in printed
+
+
+# ---------------------------------------------------------------------------
+# Protocol support (#5755, XPC-5.4)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("provider_name", PROVIDER_NAMES)
+def test_every_provider_states_its_unsupported_protocols(tmp_path: Path, provider_name: str) -> None:
+    """gRPC-native and event channels are reported unsupported with that provider's reason."""
+    provider = provider_for(provider_name)
+    report = preflight(_write_bundle(tmp_path), provider=provider)
+    document = json.loads(json.dumps(report.as_dict()))
+    reasons = dict(provider.limits.unsupported_protocols)
+
+    assert set(document["protocols"]) == set(PROTOCOL_IDS)
+    assert document["protocols"]["http"] == {"served": True, "path": ""}
+    for protocol in ("grpc", "events"):
+        entry = document["protocols"][protocol]
+        assert entry["served"] is False
+        assert entry["reason"] == f"{provider.title}: {reasons[protocol]}"
+        assert f"protocol-unsupported-{protocol}" in _codes(report, NOTE)
+    assert "protocol-unsupported-http" not in _codes(report, NOTE)
+
+
+def test_unsupported_protocols_never_make_a_bundle_undeployable(tmp_path: Path) -> None:
+    """An HTTP mock deploys whatever else the provider cannot carry; the protocols are notes."""
+    report = preflight(_write_bundle(tmp_path, secret=SECRET), provider=provider_for("aws-lambda"), secret=SECRET)
+
+    assert report.ok is True
+    assert not any(finding.code.startswith("protocol-") for finding in report.errors + report.warnings)
+
+
+def test_http_carried_protocols_follow_the_portable_runtime() -> None:
+    """GraphQL and Connect are served on a provider exactly when the app the adapter mounts serves them."""
+    portable = portable_protocols()
+    for provider_name in PROVIDER_NAMES:
+        protocols = provider_protocols(provider_for(provider_name))
+        for protocol in ("http", "graphql", "connect"):
+            assert protocols[protocol] == portable[protocol]
+
+
+def test_a_report_for_an_unloadable_bundle_still_lists_protocols(tmp_path: Path) -> None:
+    report = preflight(tmp_path / "missing.json", provider=provider_for("gcp-functions"))
+
+    assert report.as_dict()["protocols"]["grpc"]["served"] is False
+
+
+def test_serverless_command_prints_the_protocol_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    main(["serverless", "--bundle", str(_write_bundle(tmp_path)), "--provider", "azure-functions"])
+    printed = capsys.readouterr().out
+
+    assert "protocols  served: http; unsupported: graphql, connect, grpc, events" in printed
+    assert "protocol-unsupported-grpc" in printed

@@ -19,15 +19,22 @@ const net = require('net');
 const { spawnSync } = require('child_process');
 
 const {
+  BROKER_PASSWORD_ENV,
   SECRET_ENV,
+  checkBrokerInputs,
   conformanceArgs,
   containerName,
   dockerRunArgs,
   outputLine,
   parseBool,
+  parseProtocols,
   parseReady,
+  protocolEndpoints,
+  resolveBrokerBootstrap,
   resolveBundlePath,
+  resolveEnvName,
   resolveHost,
+  resolveNetwork,
   resolvePort,
   resolveWait,
   serviceUrl,
@@ -185,6 +192,20 @@ async function main() {
   const port = requested === 0 ? await freePort() : requested;
   const waitSeconds = resolveWait(input('wait'));
   const secret = String(input('bundle-secret'));
+
+  // Every protocol and broker input is checked before anything is pulled or started, so a
+  // misconfigured step fails in seconds with the reason instead of after a pull and a readiness wait.
+  const protocols = parseProtocols(input('protocols'));
+  const grpcRequested = protocols.includes('grpc');
+  const requestedGrpcPort = resolvePort(input('grpc-port'), 'grpc-port');
+  const brokerBootstrap = resolveBrokerBootstrap(input('broker-bootstrap'));
+  const brokerPasswordEnv = resolveEnvName(input('broker-password-env'), 'broker-password-env');
+  const network = resolveNetwork(input('network'));
+  checkBrokerInputs(protocols, brokerBootstrap, brokerPasswordEnv, process.env);
+  let grpcPort = null;
+  if (grpcRequested) {
+    grpcPort = requestedGrpcPort === 0 ? await freePort() : requestedGrpcPort;
+  }
   const name = containerName(process.env, crypto.randomBytes(4).toString('hex'));
 
   if (parseBool(input('pull'))) {
@@ -206,9 +227,17 @@ async function main() {
     port,
     requireSignature: parseBool(input('require-signature')),
     hasSecret: Boolean(secret),
+    grpcPort,
+    brokerBootstrap,
+    hasBrokerPassword: Boolean(brokerPasswordEnv),
+    network,
   });
-  // The secret reaches the container through the environment, never through argv.
-  const started = run('docker', args, { env: { ...process.env, [SECRET_ENV]: secret } });
+  // Secrets reach the container through the environment, never through argv.
+  const childEnv = { ...process.env, [SECRET_ENV]: secret };
+  if (brokerPasswordEnv) {
+    childEnv[BROKER_PASSWORD_ENV] = String(process.env[brokerPasswordEnv]);
+  }
+  const started = run('docker', args, { env: childEnv });
   if (started.status !== 0) {
     throw new Error(`Could not start ${image}: ${started.stderr.trim()}`);
   }
@@ -225,6 +254,9 @@ async function main() {
 
   const identity = parseReady(ready);
   const url = serviceUrl(baseUrl, identity.mount);
+  const reachableHost = host === '0.0.0.0' ? '127.0.0.1' : host;
+  // Throws — failing the step before the job's tests run — when a requested protocol is not served.
+  const endpoints = protocolEndpoints(ready, protocols, { serviceUrl: url, host: reachableHost, grpcPort, image });
 
   setOutput('service-url', url);
   setOutput('base-url', baseUrl);
@@ -233,13 +265,21 @@ async function main() {
   setOutput('runtime-version', identity.runtimeVersion);
   setOutput('container', name);
   setOutput('port', String(port));
+  setOutput('graphql-url', endpoints.graphqlUrl);
+  setOutput('connect-url', endpoints.connectUrl);
+  setOutput('grpc-url', endpoints.grpcUrl);
+  setOutput('protocols-served', endpoints.served.join(','));
 
-  appendFile('GITHUB_STEP_SUMMARY', summaryMarkdown({ ...identity, serviceUrl: url, image }));
+  appendFile(
+    'GITHUB_STEP_SUMMARY',
+    summaryMarkdown({ ...identity, ...endpoints, protocolsServed: endpoints.served, serviceUrl: url, image }),
+  );
   process.stdout.write(
     `Apiome mock ready at ${url}\n` +
       `  image    ${image}\n` +
       `  runtime  ${identity.runtimeVersion || '(not reported)'}\n` +
-      `  bundle   ${identity.digest || '(not reported)'}\n`,
+      `  bundle   ${identity.digest || '(not reported)'}\n` +
+      `  serves   ${endpoints.served.join(', ')}\n`,
   );
 
   if (parseBool(input('conformance'))) {

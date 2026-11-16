@@ -22,6 +22,13 @@ runs as part of loading, so a bundle carrying one cannot even be compiled; prefl
 finding instead of raising, so a CI job gets the whole picture in one run rather than one problem
 at a time.
 
+**Which protocols does the deployment serve?**  The report carries a ``protocols`` object in the
+same shape as the portable runtime's ``/ready`` (:mod:`apiome_mock.protocol_support`): a protocol
+the provider's front door cannot carry (native gRPC, WebSocket/SSE and broker channels) is
+``unsupported`` with that provider's one-line reason, and a ``protocol-unsupported-<id>`` note says
+so, because "unsupported" is always stated, never inferred (#5755, XPC-5.4). HTTP-carried
+protocols (GraphQL, Connect) are served exactly when the adapter's app serves them.
+
 Findings have three levels: ``error`` (this will not work — the report is not ``ok``), ``warning``
 (this works today and is close to an edge), and ``note`` (a constraint worth knowing that nothing
 is wrong with).
@@ -30,12 +37,13 @@ is wrong with).
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from apiome_mock.bundle import MockBundleError, MockBundleIncompatibleError
 from apiome_mock.portable_config import PortableSettings
+from apiome_mock.protocol_support import PROTOCOL_IDS, ProtocolSupport, portable_protocols, protocols_as_dict
 from apiome_mock.serverless import (
     ColdStart,
     ProviderSecretError,
@@ -53,6 +61,7 @@ __all__ = [
     "PreflightFinding",
     "PreflightReport",
     "preflight",
+    "provider_protocols",
 ]
 
 #: Finding levels, in decreasing severity.
@@ -105,6 +114,8 @@ class PreflightReport:
         cold_start: Measured initialization cost, or ``None`` when it was not measured.
         warm_ms: Measured cost of one warm invocation, or ``None`` when it was not measured.
         findings: Everything worth saying, most severe first.
+        protocols: Protocol id → whether this deployment serves it (see
+            :func:`provider_protocols`).
     """
 
     provider: Provider
@@ -115,6 +126,7 @@ class PreflightReport:
     cold_start: ColdStart | None
     warm_ms: float | None
     findings: tuple[PreflightFinding, ...]
+    protocols: dict[str, ProtocolSupport] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
@@ -149,6 +161,7 @@ class PreflightReport:
             },
             "coldStart": self.cold_start.as_dict() if self.cold_start is not None else None,
             "warmMs": round(self.warm_ms, 3) if self.warm_ms is not None else None,
+            "protocols": protocols_as_dict(self.protocols),
             "findings": [finding.as_dict() for finding in self.findings],
         }
 
@@ -336,6 +349,44 @@ def _measure_warm(adapter: ServerlessAdapter) -> float:
     return (time.perf_counter() - started) * 1000.0
 
 
+def provider_protocols(provider: Provider) -> dict[str, ProtocolSupport]:
+    """Report which protocols a deployment of the adapter to ``provider`` serves.
+
+    The adapter mounts the portable app, so it serves what that app serves — except where the
+    provider's front door cannot carry a protocol at all, which the provider's
+    ``unsupported_protocols`` table states with its reason.
+
+    Args:
+        provider: The target provider.
+
+    Returns:
+        One entry per id in :data:`~apiome_mock.protocol_support.PROTOCOL_IDS`.
+    """
+    report = portable_protocols()
+    for protocol, reason in provider.limits.unsupported_protocols:
+        report[protocol] = ProtocolSupport(served=False, reason=f"{provider.title}: {reason}")
+    return report
+
+
+def _protocol_findings(protocols: dict[str, ProtocolSupport]) -> list[PreflightFinding]:
+    """One note per protocol the deployment does not serve, with its reason.
+
+    These are notes, not errors: an HTTP mock is deployable whatever else it cannot carry; what
+    matters is that a reader is told rather than left to find out from a 404.
+
+    Args:
+        protocols: The deployment's protocol report.
+
+    Returns:
+        ``protocol-unsupported-<id>`` notes in protocol order.
+    """
+    return [
+        PreflightFinding(level=NOTE, code=f"protocol-unsupported-{protocol}", detail=str(protocols[protocol].reason))
+        for protocol in PROTOCOL_IDS
+        if protocol in protocols and not protocols[protocol].served
+    ]
+
+
 _LEVEL_ORDER = {ERROR: 0, WARNING: 1, NOTE: 2}
 
 
@@ -363,6 +414,7 @@ def preflight(
         caller everything that is wrong.
     """
     path = Path(bundle_path)
+    protocols = provider_protocols(provider)
     settings = PortableSettings.isolated(bundle=str(path))
     settings = settings.model_copy(update={"bundle_secret": secret, "require_signature": require_signature})
 
@@ -378,6 +430,7 @@ def preflight(
             cold_start=None,
             warm_ms=None,
             findings=tuple(_load_findings(exc)),
+            protocols=protocols,
         )
 
     try:
@@ -385,6 +438,7 @@ def preflight(
         findings.extend(_size_findings(adapter.document_bytes, provider))
         findings.extend(_cold_start_findings(adapter.cold_start, provider))
         findings.extend(_constraint_notes(provider, adapter.bundle.signed))
+        findings.extend(_protocol_findings(protocols))
         warm_ms = _measure_warm(adapter)
         return PreflightReport(
             provider=provider,
@@ -395,6 +449,7 @@ def preflight(
             cold_start=adapter.cold_start,
             warm_ms=warm_ms,
             findings=tuple(sorted(findings, key=lambda finding: _LEVEL_ORDER[finding.level])),
+            protocols=protocols,
         )
     finally:
         adapter.close()

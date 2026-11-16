@@ -119,12 +119,26 @@ exits instead), and `/health` cannot tell you *which* bundle answered.
     "operations": 5,
     "scenarios": ["quota-exceeded"],
     "fixtures": []
+  },
+  "protocols": {
+    "http":    { "served": true, "path": "" },
+    "graphql": { "served": false, "reason": "this runtime serves HTTP only: GraphQL routes are not in mock bundle format v1, …" },
+    "connect": { "served": false, "reason": "…" },
+    "grpc":    { "served": false, "reason": "…" },
+    "events":  { "served": false, "reason": "…" }
   }
 }
 ```
 
 `bundle.digest` is the bundle's stable identity — assert it in CI to prove the job ran against the
 artifact it thinks it did.
+
+`protocols` has one entry per protocol — `http`, `graphql`, `connect`, `grpc`, `events` — and
+every entry is always present. Branch on `served` only. A served HTTP-carried protocol carries
+`path`, relative to the mount (`""` is the mount itself). A served native listener carries `port`.
+An unserved one carries `reason`, one sentence you can act on. Today the portable runtime serves
+HTTP only. The [mock-action](../ci/mock-action.md) reads this object to hand a job its
+per-protocol URLs, or to fail the step with the reason.
 
 The container image's `HEALTHCHECK` polls `/health`. In a Compose or Kubernetes deployment, wire
 `/health` to the liveness probe and `/ready` to the readiness probe.
