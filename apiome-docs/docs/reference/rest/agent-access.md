@@ -1,6 +1,6 @@
 ---
 title: "Agent access"
-description: "REST endpoints tagged agent-access: 25 operations."
+description: "REST endpoints tagged agent-access: 26 operations."
 sidebar_position: 6
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.585.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.586.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `agent-access` · 25 operations
+Tag: `agent-access` · 26 operations
 
 ## `GET /v1/tenants/{tenant_slug}/agent-access/server.json` {#export-agent-access-server-json-route-v1-tenants-tenant-slug-agent-access-server-json-get}
 
@@ -493,6 +493,33 @@ Request body for run the enrichment pass.
 | 200 | Successful response for run the enrichment pass. | `application/json` [`EnrichmentRunResult`](#schema-enrichmentrunresult) |
 | 404 | No such agent toolset in this tenant. | — |
 | 422 | The version's operations could not be read, or `operations` names an operation the toolset does not have. | — |
+
+## `GET /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/enrichment/overlay` {#get-agent-toolset-enrichment-overlay-route-v1-tenants-tenant-slug-agent-toolsets-toolset-id-enrichment-overlay-get}
+
+**Export an agent toolset's accepted enrichment as an Overlay**
+
+GVM-4.3: the toolset's **accepted** description proposals as an Overlay 1.0 document — one `update` action per accepted tool or parameter description, targeted by path, method and parameter `name`/`in`. Read-only: the stored proposals are not changed. Save it into a draft revision's overlay chain (`POST /v1/versions/{t}/{p}/{v}/overlays` with `source: enrichment-export`) so the descriptions reach that revision's exports.
+
+Requires `api_keys:view`.
+
+Operation id: `get_agent_toolset_enrichment_overlay_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__enrichment_overlay_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `toolset_id` | path | string (uuid) | yes | Path parameter identifying the toolset id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export an agent toolset's accepted enrichment as an overlay. | `application/json` [`EnrichmentOverlayOut`](#schema-enrichmentoverlayout) |
+| 404 | No such agent toolset in this tenant. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `PATCH /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/enrichment/{proposal_id}` {#review-agent-toolset-enrichment-route-v1-tenants-tenant-slug-agent-toolsets-toolset-id-enrichment-proposal-id-patch}
 
@@ -1122,6 +1149,20 @@ Attributes:
 | `enrichedTargets` | array of string | yes | Enriched Targets. |
 | `fingerprint` | string | yes | Fingerprint. |
 | `tools` | array of object | yes | Tools. |
+
+### `EnrichmentOverlayOut` {#schema-enrichmentoverlayout}
+
+``GET …/enrichment/overlay``: the accepted enrichment as an Overlay document (GVM-4.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `toolset_id` | string | yes | Toolset ID. |
+| `project_id` | string | yes | The toolset version's project: save the overlay into one of its draft revisions. |
+| `version_id` | string | yes | The toolset's (published) revision. |
+| `version_label` | string or null | no | Version Label. |
+| `action_count` | integer | yes | Actions in `document`: one per accepted description. |
+| `skipped` | array of string | no | Accepted targets an OpenAPI overlay cannot address (non-HTTP operations). |
+| `document` | object | yes | The Overlay 1.0 document. |
 
 ### `EnrichmentProposalOut` {#schema-enrichmentproposalout}
 

@@ -7,6 +7,7 @@
  */
 
 import { getPublishedVersionsForTenant } from '@lib/db/helper-actions';
+import type { VersionOverlaysRevisionRow } from '@/app/components/ade/versionOverlays/versionOverlaysApi';
 
 import {
   parseAgentKey,
@@ -253,4 +254,52 @@ export async function fetchPublishedVersions(tenantId: string): Promise<Publishe
     throw new AgentAccessError(payload.error || 'Failed to load published versions', 500);
   }
   return parsePublishedVersionOptions(payload);
+}
+
+/** A toolset's accepted enrichment as an Overlay document (GVM-4.3, REST `EnrichmentOverlayOut`). */
+export interface EnrichmentOverlay {
+  toolset_id: string;
+  project_id: string;
+  version_id: string;
+  version_label: string | null;
+  action_count: number;
+  skipped: string[];
+  document: Record<string, unknown>;
+}
+
+/**
+ * The toolset's accepted description enrichment, projected into an Overlay document (read-only).
+ *
+ * @param toolsetId - The toolset.
+ * @returns The overlay and the coordinates of the toolset's revision.
+ * @throws AgentAccessError when it could not be read.
+ */
+export async function fetchEnrichmentOverlay(toolsetId: string): Promise<EnrichmentOverlay> {
+  return (await call(`/toolsets/${encodeURIComponent(toolsetId)}/enrichment-overlay`)) as EnrichmentOverlay;
+}
+
+/**
+ * A project's revisions, for choosing the draft that **Save as overlay** writes to.
+ *
+ * @param projectId - The project.
+ * @returns The revisions (published and draft).
+ * @throws AgentAccessError when they could not be read.
+ */
+export async function fetchProjectRevisions(projectId: string): Promise<VersionOverlaysRevisionRow[]> {
+  const response = await fetch(`/api/versions?projectId=${encodeURIComponent(projectId)}`, {
+    credentials: 'include',
+  });
+  let payload: { success?: boolean; versions?: unknown; error?: unknown } = {};
+  try {
+    payload = (await response.json()) as typeof payload;
+  } catch {
+    payload = {};
+  }
+  if (payload.success !== true || !Array.isArray(payload.versions)) {
+    throw new AgentAccessError(
+      typeof payload.error === 'string' && payload.error ? payload.error : 'Failed to load revisions',
+      response.status
+    );
+  }
+  return payload.versions as VersionOverlaysRevisionRow[];
 }

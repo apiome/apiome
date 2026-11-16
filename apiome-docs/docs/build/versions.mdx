@@ -1,6 +1,6 @@
 ---
 title: Versions
-description: A project's timeline of versions, and the tabs for changes, testing, discussion and sources.
+description: A project's version timeline, and tabs for changes, overlays, testing, discussion and sources.
 sidebar_position: 1.2
 tags: [versions]
 ---
@@ -133,6 +133,26 @@ version before it, or **Latest** for the newest version when it has no changes. 
 the changelog is still being written, and **Failed** that it could not be.
 
 <Screenshot id="versions-changes" alt="The Changes tab: published versions on the left, the selected version's classified changelog on the right" />
+
+## Overlays
+
+The **Overlays** tab keeps the version's stored chain of [OpenAPI Overlays](../bring-in/overlays.md#stored-overlay-chains):
+changes that apply when the version is **exported or published**, without changing the version
+itself — public descriptions, a partner's servers, accepted agent descriptions.
+
+1. Pick the **Revision**. Each overlay is listed in the order it applies, with its number of actions,
+   its fingerprint and where it came from (**Uploaded**, **Export Studio**, **Agent enrichment** or
+   **Lint fix**).
+2. On a draft, **click “Add overlay”** and choose one or more overlay files (`.yaml`, `.yml` or
+   `.json`, up to 1 MB). **×** removes one. A revision holds at most 10.
+3. **Click “Preview”** to render the chain the way an export does: the source and resolved
+   fingerprints, every value an overlay changed, and any action that no longer matches anything
+   (`overlay.unmatched-target`).
+
+A published revision's overlays are read-only. Under **Published render** it shows what publishing
+recorded: the source fingerprint, the resolved fingerprint and the number of changes.
+
+<Screenshot id="version-overlays" alt="The Overlays tab: two stored overlays in order, with Add overlay and Preview, and the preview's ledger with one unmatched-target finding" />
 
 ## Test bench
 

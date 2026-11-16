@@ -83,8 +83,8 @@ from .export_overlay import (
     ExportOverlay,
     ExportOverlayError,
     ExportOverlayReport,
-    apply_export_overlays,
 )
+from . import version_overlay_store
 from .export_preflight import (
     ExportPreflightReport,
     ExportPreflightRequest,
@@ -475,6 +475,11 @@ class ExportVerifyRequest(BaseModel):
         description="Overlay documents applied, in order, to the source's OpenAPI document before "
         "the verify runs (GVM-4.2) — the same chain an export job's ``overlays`` applies, so a "
         "verify and the job it gates compute the same snapshot.",
+    )
+    apply_stored_overlays: bool = Field(
+        default=True,
+        description="Apply the revision's stored overlay chain (GVM-4.3) before any inline "
+        "``overlays``, exactly as the export job does. Set false to verify without it.",
     )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
@@ -1742,7 +1747,11 @@ async def verify_export(
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
     try:
-        source, overlay_report = apply_export_overlays(source, request.overlays)
+        # GVM-4.3: the revision's stored chain first, then the request's inline overlays — the
+        # same call the export job makes, so a verify and the job it gates render the same chain.
+        source, overlay_report = version_overlay_store.resolve_for_export(
+            tenant_id, source, request.overlays, apply_stored=request.apply_stored_overlays
+        )
     except ExportOverlayError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 

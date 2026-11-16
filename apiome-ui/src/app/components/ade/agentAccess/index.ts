@@ -28,6 +28,9 @@ export type { EnableToolsetDialogProps } from './EnableToolsetDialog';
 export { default as ToolChecklist } from './ToolChecklist';
 export type { ToolChecklistProps } from './ToolChecklist';
 
+export { default as SaveEnrichmentOverlayDialog } from './SaveEnrichmentOverlayDialog';
+export type { SaveEnrichmentOverlayDialogProps } from './SaveEnrichmentOverlayDialog';
+
 export { default as ToolsetsPanel } from './ToolsetsPanel';
 export type { ToolsetsPanelProps } from './ToolsetsPanel';
 

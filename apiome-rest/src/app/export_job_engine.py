@@ -102,9 +102,9 @@ from .export_overlay import (
     ExportOverlay,
     ExportOverlayError,
     ExportOverlayReport,
-    apply_export_overlays,
     overlay_events,
 )
+from . import version_overlay_store
 from .export_run_ledger import actor_from_auth, build_ledger_row, record_export_run
 from .export_service import (
     ExportError,
@@ -372,6 +372,12 @@ class ExportJobStartRequest(BaseModel):
         f"1–{MAX_EXPORT_OVERLAYS} entries; the result's ``overlay`` lists every changed leaf and "
         "every action that could not be applied. A source not built from OpenAPI fails with "
         "`OVERLAY_SOURCE_UNSUPPORTED`. Not combinable with a batch export.",
+    )
+    apply_stored_overlays: bool = Field(
+        default=True,
+        description="Apply the revision's stored overlay chain (GVM-4.3, "
+        "`/v1/versions/{t}/{p}/{v}/overlays`) before any inline ``overlays``. Set false to export "
+        "the source without its stored chain. A batch export never applies stored chains.",
     )
     all_versions: bool = Field(
         default=False,
@@ -2376,7 +2382,14 @@ async def _load_job_source(
         if rec is not None:
             rec.source_name = source.api.title or source.api.identity.name or None
     try:
-        return await asyncio.to_thread(apply_export_overlays, source, request.overlays)
+        # GVM-4.3: the revision's stored chain first, then the request's inline overlays.
+        return await asyncio.to_thread(
+            version_overlay_store.resolve_for_export,
+            tenant_id,
+            source,
+            request.overlays,
+            apply_stored=request.apply_stored_overlays,
+        )
     except ExportOverlayError as exc:
         await _fail(job_id, exc.code, str(exc), {"status_code": exc.status_code})
         return None

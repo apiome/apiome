@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.585.0",
+    "version": "1.586.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -33878,6 +33878,108 @@
           },
           "422": {
             "description": "The version's operations could not be read, or `operations` names an operation the toolset does not have."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/enrichment/overlay": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Export an agent toolset's accepted enrichment as an Overlay",
+        "description": "GVM-4.3: the toolset's **accepted** description proposals as an Overlay 1.0 document \u2014 one `update` action per accepted tool or parameter description, targeted by path, method and parameter `name`/`in`. Read-only: the stored proposals are not changed. Save it into a draft revision's overlay chain (`POST /v1/versions/{t}/{p}/{v}/overlays` with `source: enrichment-export`) so the descriptions reach that revision's exports.\n\nRequires `api_keys:view`.",
+        "operationId": "get_agent_toolset_enrichment_overlay_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__enrichment_overlay_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportanagenttoolsetsacceptedenrichmentaauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportanagenttoolsetsacceptedenrichmentaauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportanagenttoolsetsacceptedenrichmenta Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportanagenttoolsetsacceptedenrichmenta Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for export an agent toolset's accepted enrichment as an overlay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichmentOverlayOut",
+                  "description": "Response payload for exportanagenttoolsetsacceptedenrichmentaresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such agent toolset in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for exportanagenttoolsetsacceptedenrichmentaresponse422."
+                }
+              }
+            }
           }
         }
       }
@@ -73756,6 +73858,585 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for force release draft lockresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "List Version Overlays",
+        "description": "List a revision's stored overlay chain, in the order it is applied.\n\nArgs:\n    tenant_slug: The tenant slug (the tenant comes from the credential).\n    project_id: The project id.\n    version_record_id: The revision id.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The chain, whether it is read-only, and the publish render record when there is one.",
+        "operationId": "list_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Overlaysauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Overlaysauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Overlays Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Overlays Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list version overlays.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayChainOut",
+                  "description": "Response payload for list version overlaysresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list version overlaysresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Add Version Overlay",
+        "description": "Add an overlay to a draft revision's chain.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    body: The overlay, its label, source and optional position.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The stored overlay.\n\nRaises:\n    HTTPException: 404 unknown revision; 409 ``overlay-version-published``,\n        ``overlay-chain-full`` or ``overlay-chain-conflict`` (a concurrent write; retry); 422 when\n        the source is not OpenAPI or the body is invalid.",
+        "operationId": "add_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Add Version Overlayauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Add Version Overlayauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Add Version Overlay Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Add Version Overlay Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionOverlayWrite",
+                "description": "Request body for add version overlayrequest."
+              }
+            }
+          },
+          "description": "Request body for add version overlay."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for add version overlay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayOut",
+                  "description": "Response payload for add version overlayresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for add version overlayresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/preview": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Preview Version Overlays",
+        "description": "Render the revision's source with its stored chain, as an export would.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The resolved document, the source and resolved fingerprints, and the ledger/findings.\n\nRaises:\n    HTTPException: 404 for an unknown revision; 422 (``{code, message}``) when the source is not\n        OpenAPI or the chain cannot be applied.",
+        "operationId": "preview_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_preview_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Version Overlaysauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Version Overlaysauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Version Overlays Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Version Overlays Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for preview version overlays.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayPreviewOut",
+                  "description": "Response payload for preview version overlaysresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for preview version overlaysresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/{overlay_id}": {
+      "put": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Replace Version Overlay",
+        "description": "Replace one overlay of a draft revision's chain, keeping its position.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    overlay_id: The overlay to replace.\n    body: The new overlay (``position`` is ignored).\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The new stored overlay. It has a new id, because stored overlays are write-once.\n\nRaises:\n    HTTPException: 404 unknown revision or overlay; 409 ``overlay-version-published``.",
+        "operationId": "replace_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays__overlay_id__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "overlay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Overlay Id",
+              "description": "Overlay Id schema."
+            },
+            "description": "Path parameter identifying the overlay id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replace Version Overlayauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replace Version Overlayauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replace Version Overlay Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replace Version Overlay Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionOverlayWrite",
+                "description": "Request body for replace version overlayrequest."
+              }
+            }
+          },
+          "description": "Request body for replace version overlay."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for replace version overlay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayOut",
+                  "description": "Response payload for replace version overlayresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for replace version overlayresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Delete Version Overlay",
+        "description": "Remove one overlay from a draft revision's chain.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    overlay_id: The overlay to remove.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    204 No Content.\n\nRaises:\n    HTTPException: 404 unknown revision or overlay; 409 ``overlay-version-published``.",
+        "operationId": "delete_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays__overlay_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "overlay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Overlay Id",
+              "description": "Overlay Id schema."
+            },
+            "description": "Path parameter identifying the overlay id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Version Overlayauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Version Overlayauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Version Overlay Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Version Overlay Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete version overlay."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete version overlayresponse422."
                 }
               }
             }
@@ -153727,6 +154408,73 @@
         "title": "EnrichmentFlagOut",
         "description": "The agent-hostile reasons for one tool of the toolset.\n\nAttributes:\n    operation: The canonical operation key.\n    tool_name: The MCP tool name.\n    reasons: ``{code, message, parameter?}`` per reason; ``code`` is one of\n        :data:`app.agent_tool_enrichment.REASON_CODES`."
       },
+      "EnrichmentOverlayOut": {
+        "properties": {
+          "toolset_id": {
+            "type": "string",
+            "title": "Toolset Id",
+            "description": "Toolset ID.",
+            "example": "toolset_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "The toolset version's project: save the overlay into one of its draft revisions.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The toolset's (published) revision.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment overlay."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment overlay."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Version Label."
+          },
+          "action_count": {
+            "type": "integer",
+            "title": "Action Count",
+            "description": "Actions in `document`: one per accepted description.",
+            "example": 1
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skipped",
+            "description": "Accepted targets an OpenAPI overlay cannot address (non-HTTP operations).",
+            "maxItems": 1000
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The Overlay 1.0 document."
+          }
+        },
+        "type": "object",
+        "required": [
+          "toolset_id",
+          "project_id",
+          "version_id",
+          "action_count",
+          "document"
+        ],
+        "title": "EnrichmentOverlayOut",
+        "description": "``GET \u2026/enrichment/overlay``: the accepted enrichment as an Overlay document (GVM-4.3)."
+      },
       "EnrichmentProposalOut": {
         "properties": {
           "id": {
@@ -157258,6 +158006,13 @@
             ],
             "title": "Overlays",
             "description": "Overlay 1.0 / 1.1 / 1.2 documents applied, in this order, to the source's OpenAPI document before anything else runs (GVM-4.2): fidelity, the emitter, validation and the export quality policy all judge the post-overlay document. 1\u201310 entries; the result's ``overlay`` lists every changed leaf and every action that could not be applied. A source not built from OpenAPI fails with `OVERLAY_SOURCE_UNSUPPORTED`. Not combinable with a batch export."
+          },
+          "apply_stored_overlays": {
+            "type": "boolean",
+            "title": "Apply Stored Overlays",
+            "description": "Apply the revision's stored overlay chain (GVM-4.3, `/v1/versions/{t}/{p}/{v}/overlays`) before any inline ``overlays``. Set false to export the source without its stored chain. A batch export never applies stored chains.",
+            "default": true,
+            "example": false
           },
           "all_versions": {
             "type": "boolean",
@@ -161385,6 +162140,13 @@
             ],
             "title": "Overlays",
             "description": "Overlay documents applied, in order, to the source's OpenAPI document before the verify runs (GVM-4.2) \u2014 the same chain an export job's ``overlays`` applies, so a verify and the job it gates compute the same snapshot."
+          },
+          "apply_stored_overlays": {
+            "type": "boolean",
+            "title": "Apply Stored Overlays",
+            "description": "Apply the revision's stored overlay chain (GVM-4.3) before any inline ``overlays``, exactly as the export job does. Set false to verify without it.",
+            "default": true,
+            "example": false
           },
           "min_severity": {
             "$ref": "#/components/schemas/LossinessSeverity",
@@ -239859,6 +240621,332 @@
         ],
         "title": "VersionMockToggleRequest",
         "description": "Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."
+      },
+      "VersionOverlayChainOut": {
+        "properties": {
+          "version_record_id": {
+            "type": "string",
+            "title": "Version Record Id",
+            "description": "Version Record ID.",
+            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "description": "True when the revision is published: the chain is read-only.",
+            "example": false
+          },
+          "max_overlays": {
+            "type": "integer",
+            "title": "Max Overlays",
+            "description": "Longest chain a revision may hold.",
+            "default": 10,
+            "example": 1
+          },
+          "overlays": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOverlayOut"
+            },
+            "type": "array",
+            "title": "Overlays",
+            "description": "Overlays.",
+            "maxItems": 1000
+          },
+          "render": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOverlayRenderOut"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay chain."
+              }
+            ],
+            "description": "What the publish render recorded; null before publish or without a chain."
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_record_id",
+          "published",
+          "overlays"
+        ],
+        "title": "VersionOverlayChainOut",
+        "description": "``GET \u2026/overlays``: the chain in application order."
+      },
+      "VersionOverlayOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The overlay id. A replace gives the overlay a new id (rows are write-once).",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position",
+            "description": "Order in the chain; 0 applies first.",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "lint-fix",
+              "export-studio",
+              "enrichment-export"
+            ],
+            "title": "Source",
+            "description": "Provenance source for the record (for example human or imported).",
+            "example": "manual"
+          },
+          "content_fingerprint": {
+            "type": "string",
+            "title": "Content Fingerprint",
+            "description": "`sha256:` of the document's canonical JSON.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "action_count": {
+            "type": "integer",
+            "title": "Action Count",
+            "description": "How many actions the overlay declares.",
+            "example": 1
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for version overlay."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay."
+              }
+            ],
+            "title": "Created By",
+            "description": "Created By."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for version overlay."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The Overlay document."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "name",
+          "source",
+          "content_fingerprint",
+          "action_count",
+          "document"
+        ],
+        "title": "VersionOverlayOut",
+        "description": "One stored overlay of a revision's chain."
+      },
+      "VersionOverlayPreviewOut": {
+        "properties": {
+          "version_record_id": {
+            "type": "string",
+            "title": "Version Record Id",
+            "description": "Version Record ID.",
+            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "source_fingerprint": {
+            "type": "string",
+            "title": "Source Fingerprint",
+            "description": "Fingerprint of the source OpenAPI document.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "resolved_fingerprint": {
+            "type": "string",
+            "title": "Resolved Fingerprint",
+            "description": "Fingerprint of the resolved document.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The resolved OpenAPI document (source + chain)."
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportOverlayReport"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay preview."
+              }
+            ],
+            "description": "Ledger rows and `overlay.*` findings; null when the chain is empty."
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_record_id",
+          "source_fingerprint",
+          "resolved_fingerprint",
+          "document"
+        ],
+        "title": "VersionOverlayPreviewOut",
+        "description": "``GET \u2026/overlays/preview``: the resolved document and the provenance of every change."
+      },
+      "VersionOverlayRenderOut": {
+        "properties": {
+          "source_fingerprint": {
+            "type": "string",
+            "title": "Source Fingerprint",
+            "description": "Fingerprint of the source OpenAPI document.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "resolved_fingerprint": {
+            "type": "string",
+            "title": "Resolved Fingerprint",
+            "description": "Fingerprint of the document after the chain.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "overlays": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Overlays",
+            "description": "The chain that was rendered: `{id, name, position, contentFingerprint}`.",
+            "maxItems": 1000
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ExportOverlayFinding"
+            },
+            "type": "array",
+            "title": "Findings",
+            "description": "Findings.",
+            "maxItems": 1000
+          },
+          "changes": {
+            "type": "integer",
+            "title": "Changes",
+            "default": 0,
+            "description": "Changes.",
+            "example": 1
+          },
+          "rendered_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for version overlay render."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay render."
+              }
+            ],
+            "title": "Rendered By",
+            "description": "Rendered By."
+          },
+          "rendered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for version overlay render."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay render."
+              }
+            ],
+            "title": "Rendered At",
+            "description": "Rendered At timestamp (ISO 8601)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_fingerprint",
+          "resolved_fingerprint"
+        ],
+        "title": "VersionOverlayRenderOut",
+        "description": "The publish render of the chain: source and resolved fingerprints, side by side."
+      },
+      "VersionOverlayWrite": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The overlay's label, shown in ledger rows.",
+            "example": "Pet"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "lint-fix",
+              "export-studio",
+              "enrichment-export"
+            ],
+            "title": "Source",
+            "description": "Where the overlay came from: `manual` (uploaded), `lint-fix` (a saved fix plan), `export-studio` (saved from Export Studio) or `enrichment-export` (accepted agent-toolset enrichment).",
+            "default": "manual",
+            "example": "manual"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The parsed Overlay 1.0 / 1.1 / 1.2 document, at most 1 MiB serialized."
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Version Overlay Write schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Overlay Write schema."
+              }
+            ],
+            "title": "Position",
+            "description": "POST only: where to insert it (0 applies first). Omitted or past the end appends. Ignored by PUT, which keeps the replaced overlay's position."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "document"
+        ],
+        "title": "VersionOverlayWrite",
+        "description": "Body of ``POST`` / ``PUT \u2026/overlays``: one Overlay document and its label and origin."
       },
       "VersionPublishChangeReportPreviewOut": {
         "properties": {

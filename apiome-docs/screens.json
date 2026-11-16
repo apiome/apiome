@@ -206,6 +206,17 @@
       "data": "fixture:hive-versions/tab-changes.html"
     },
     {
+      "id": "version-overlays",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:version-overlays/panel.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versionOverlays/VersionOverlaysPanel.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/OverlayReportPanel.tsx",
+        "apiome-ui/e2e/fixtures/version-overlays/panel.html"
+      ]
+    },
+    {
       "id": "change-report-approval",
       "route": "/ade/dashboard/versions",
       "waitFor": "[data-testid=\"change-report-approval-bar\"]",

@@ -54,6 +54,7 @@ from .agent_toolsets import (
 from .canonical_model import CanonicalApi, Operation
 from .config import settings
 from .database import db
+from .enrichment_overlay import enrichment_overlay_document
 from .export_source import ExportSourceError
 from .mcp_tool_mapping import McpToolMappingError, compile_mcp_tools
 from .normalizer import normalize_ordering
@@ -70,6 +71,7 @@ __all__ = [
     "CompiledToolsetOut",
     "DescriptionGenerator",
     "EnrichmentFlagOut",
+    "EnrichmentOverlayOut",
     "EnrichmentProposalOut",
     "EnrichmentReport",
     "EnrichmentReview",
@@ -78,6 +80,7 @@ __all__ = [
     "compile_agent_toolset",
     "configured_model",
     "get_toolset_enrichment",
+    "get_toolset_enrichment_overlay",
     "review_toolset_enrichment",
     "run_toolset_enrichment",
 ]
@@ -239,6 +242,21 @@ class EnrichmentReview(BaseModel):
 
     decision: Literal["accept", "reject"]
     description: Optional[str] = Field(default=None, max_length=MAX_TOOL_DESCRIPTION_CHARS)
+
+
+class EnrichmentOverlayOut(BaseModel):
+    """``GET …/enrichment/overlay``: the accepted enrichment as an Overlay document (GVM-4.3)."""
+
+    toolset_id: str
+    project_id: str = Field(description="The toolset version's project: save the overlay into one of its draft revisions.")
+    version_id: str = Field(description="The toolset's (published) revision.")
+    version_label: Optional[str] = None
+    action_count: int = Field(description="Actions in `document`: one per accepted description.")
+    skipped: List[str] = Field(
+        default_factory=list,
+        description="Accepted targets an OpenAPI overlay cannot address (non-HTTP operations).",
+    )
+    document: Dict[str, Any] = Field(description="The Overlay 1.0 document.")
 
 
 class CompiledToolsetOut(BaseModel):
@@ -590,4 +608,37 @@ def compile_agent_toolset(tenant_id: str, toolset_id: str) -> CompiledToolsetOut
         enriched_targets=sorted(overrides),
         fingerprint=compiled.fingerprint(),
         tools=compiled.mcp_tools(),
+    )
+
+
+def get_toolset_enrichment_overlay(tenant_id: str, toolset_id: str) -> EnrichmentOverlayOut:
+    """Project a toolset's accepted enrichment into an Overlay document (GVM-4.3, read-only).
+
+    The V273 rows are read, never changed. The overlay is what *Save as overlay* stores in a
+    revision's chain with ``source: enrichment-export``.
+
+    Args:
+        tenant_id: The caller's tenant.
+        toolset_id: The toolset.
+
+    Returns:
+        The overlay and the coordinates of the toolset's version.
+
+    Raises:
+        AgentToolsetError: ``agent-toolset-not-found``.
+    """
+    row = _toolset_row(tenant_id, toolset_id)
+    label = row.get("version_label") or str(row["version_id"])
+    projection = enrichment_overlay_document(
+        db.list_agent_toolset_enrichments(tenant_id, toolset_id, status="accepted"),
+        title=f"Accepted agent enrichment ({label})",
+    )
+    return EnrichmentOverlayOut(
+        toolset_id=toolset_id,
+        project_id=str(row["project_id"]),
+        version_id=str(row["version_id"]),
+        version_label=row.get("version_label"),
+        action_count=projection.action_count,
+        skipped=projection.skipped,
+        document=projection.document,
     )

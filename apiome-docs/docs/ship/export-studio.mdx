@@ -144,6 +144,11 @@ replaces it and keeps its place.
 Overlays apply only to versions imported from OpenAPI. For any other version, Verify reports
 `OVERLAY_SOURCE_UNSUPPORTED`; remove the overlays to continue.
 
+When you export a specific revision that has [stored overlays](../bring-in/overlays.md#stored-overlay-chains),
+the step lists them above your files. They apply first, then the files you add. Switch **Apply
+stored overlays** off to export without them. On a draft revision, the save button next to an
+uploaded file adds it to the revision's stored overlays, so later exports and the publish use it too.
+
 ## 5. Verify
 
 **Click “Run verification”** (or turn on **Verify automatically**). Fidelity, validation and lint run

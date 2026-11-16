@@ -187,6 +187,7 @@ from .version_quality_capture import capture_version_quality_score
 
 from .mock_settings_util import is_private_mock_mode
 from . import notification_store
+from . import version_overlay_store
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
@@ -2298,6 +2299,15 @@ async def publish_version(
         actor_id=user_id,
     )
 
+    # GVM-4.3 (#5878): render the revision's stored overlay chain and record the resolved
+    # document's fingerprint beside the source fingerprint. Best-effort; never fails the publish.
+    background_tasks.add_task(
+        version_overlay_store.render_chain_on_publish,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version_record_id=version_record_id,
+        actor_id=user_id,
+    )
     background_tasks.add_task(
         generate_change_report_on_publish,
         tenant_slug=tenant_slug,

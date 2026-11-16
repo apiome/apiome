@@ -33,6 +33,8 @@ export interface VerifyConfig {
    * the key — the same overlays applied in another order can produce another document.
    */
   overlays?: readonly { name: string; document: Record<string, unknown> }[] | null;
+  /** False when the verify skips the revision's stored overlay chain (GVM-4.3). */
+  applyStoredOverlays?: boolean;
 }
 
 /**
@@ -72,6 +74,8 @@ export function verifyConfigKey(config: VerifyConfig): string | null {
   };
   // Only a non-empty chain joins the key, so every key minted before overlays existed is unchanged.
   if (config.overlays && config.overlays.length > 0) key.overlays = config.overlays;
+  // Only an opt-out joins the key, so keys minted before stored chains existed are unchanged.
+  if (config.applyStoredOverlays === false) key.applyStoredOverlays = false;
   return stableStringify(key);
 }
 

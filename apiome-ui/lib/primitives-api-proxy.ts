@@ -134,7 +134,7 @@ export async function proxyRestPatch(
 export async function proxyRestDelete(
   user: SessionUser,
   path: string
-): Promise<{ data: unknown; error: string | null; status: number }> {
+): Promise<{ data: unknown; error: string | null; status: number; detail?: unknown }> {
   const response = await fetch(`${REST_API_BASE_URL}${path}`, {
     method: 'DELETE',
     headers: createRestAuthHeaders(user),
@@ -153,7 +153,9 @@ export async function proxyRestDelete(
   const data = await response.json();
   if (!response.ok) {
     const detail = typeof data?.detail === 'string' ? data.detail : 'Request failed';
-    return { data: null, error: detail, status: response.status };
+    // The whole `detail` rides along (as the other verbs do), so a route can pass a typed
+    // refusal's `code` on — e.g. `overlay-version-published` (GVM-4.3).
+    return { data: null, error: detail, status: response.status, detail: data?.detail };
   }
 
   return { data, error: null, status: response.status };

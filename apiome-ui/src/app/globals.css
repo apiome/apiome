@@ -42739,3 +42739,26 @@ tr[data-selected="true"] > td:first-child {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* ---- Stored overlay chains (GVM-4.3, #5878) ------------------------------
+   The Versions page's Overlays tab and Agent access's "Save as overlay" dialog. The chain rows
+   reuse Export Studio's `.xstd-overlay__*`; these rules add the revision picker and the
+   action row. */
+.vovl-select {
+  inline-size: auto;
+  min-inline-size: 12rem;
+  max-inline-size: 24rem;
+  block-size: var(--control-h);
+  padding-inline: var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.vovl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}

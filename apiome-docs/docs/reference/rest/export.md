@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.585.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.586.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export` · 18 operations
 
@@ -909,6 +909,7 @@ A one-call verify request: source revision + chosen target + options (MFX-42.5).
 | `options` | object or null | no | Per-target emit options (MFX-1.4); null or empty applies the target defaults. |
 | `include_content` | boolean | no | When true, return the emitted artifact inline (under the size cap) so the Monaco viewer (MFX-43.x) can render the preview from this same call; the bytes are still discarded server-side. |
 | `overlays` | array of `ExportOverlay` or null | no | Overlay documents applied, in order, to the source's OpenAPI document before the verify runs (GVM-4.2) — the same chain an export job's ``overlays`` applies, so a verify and the job it gates compute the same snapshot. |
+| `apply_stored_overlays` | boolean | no | Apply the revision's stored overlay chain (GVM-4.3) before any inline ``overlays``, exactly as the export job does. Set false to verify without it. |
 | `min_severity` | `LossinessSeverity` | no | Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts. |
 
 ### `ExportVerifyResponse` {#schema-exportverifyresponse}
