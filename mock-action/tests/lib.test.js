@@ -6,17 +6,28 @@ const path = require('node:path');
 const { test } = require('node:test');
 
 const {
+  BROKER_BOOTSTRAP_ENV,
+  BROKER_PASSWORD_ENV,
   CONTAINER_BUNDLE_PATH,
+  CONTAINER_GRPC_PORT,
   CONTAINER_PORT,
+  GRPC_PORT_ENV,
+  PROTOCOLS,
   SECRET_ENV,
+  checkBrokerInputs,
   conformanceArgs,
   containerName,
   dockerRunArgs,
   outputLine,
   parseBool,
+  parseProtocols,
   parseReady,
+  protocolEndpoints,
+  resolveBrokerBootstrap,
   resolveBundlePath,
+  resolveEnvName,
   resolveHost,
+  resolveNetwork,
   resolvePort,
   resolveWait,
   serviceUrl,
@@ -191,4 +202,176 @@ test('outputLine uses the heredoc form so a value cannot inject another output',
   assert.equal(outputLine('service-url', 'http://x', 'DELIM'), 'service-url<<DELIM\nhttp://x\nDELIM\n');
   const injected = outputLine('a', 'x\nb=evil', 'DELIM');
   assert.equal(injected, 'a<<DELIM\nx\nb=evil\nDELIM\n');
+});
+
+// ---------------------------------------------------------------------------------------------
+// Protocols (#5755, XPC-5.4)
+// ---------------------------------------------------------------------------------------------
+
+/** A /ready document from a runtime that serves every protocol (the XPC-5.2 shape). */
+const ALL_SERVED = {
+  status: 'ready',
+  runtime: { mount: '/acme/shop/1.0.0' },
+  protocols: {
+    http: { served: true, path: '' },
+    graphql: { served: true, path: '/graphql' },
+    connect: { served: true, path: '' },
+    grpc: { served: true, port: 8776 },
+    events: { served: true },
+  },
+};
+
+const CONTEXT = { serviceUrl: 'http://127.0.0.1:5000/acme/shop/1.0.0', host: '127.0.0.1', grpcPort: null, image: 'img:1' };
+
+test('parseProtocols defaults to http and always includes it', () => {
+  assert.deepEqual(parseProtocols(''), ['http']);
+  assert.deepEqual(parseProtocols(undefined), ['http']);
+  assert.deepEqual(parseProtocols('graphql,connect'), ['http', 'graphql', 'connect']);
+});
+
+test('parseProtocols accepts commas or spaces, any case, and de-duplicates in report order', () => {
+  assert.deepEqual(parseProtocols(' Events  GRPC,graphql, graphql '), ['http', 'graphql', 'grpc', 'events']);
+  assert.deepEqual(parseProtocols(PROTOCOLS.join(',')), PROTOCOLS);
+});
+
+test('parseProtocols names unknown protocols and the accepted values', () => {
+  assert.throws(() => parseProtocols('graphql,soap,ws'), /names soap, ws; accepted values are http, graphql, connect, grpc, events/);
+});
+
+test('resolvePort names the input it validates', () => {
+  assert.throws(() => resolvePort('x', 'grpc-port'), /Input "grpc-port" \(x\)/);
+  assert.equal(resolvePort('', 'grpc-port'), 0);
+});
+
+test('resolveBrokerBootstrap accepts a host:port list and rejects anything else', () => {
+  assert.equal(resolveBrokerBootstrap(''), '');
+  assert.equal(resolveBrokerBootstrap(' redpanda:9092 , b-2.kafka:9093 '), 'redpanda:9092,b-2.kafka:9093');
+  assert.throws(() => resolveBrokerBootstrap('redpanda'), /must be host:port/);
+  assert.throws(() => resolveBrokerBootstrap('redpanda:99999'), /must be host:port/);
+  assert.throws(() => resolveBrokerBootstrap('a:1;rm -rf /'), /must be host:port/);
+});
+
+test('resolveEnvName refuses what looks like a value instead of a name', () => {
+  assert.equal(resolveEnvName(' BROKER_PASSWORD ', 'broker-password-env'), 'BROKER_PASSWORD');
+  assert.equal(resolveEnvName('', 'broker-password-env'), '');
+  assert.throws(() => resolveEnvName('hunter2!', 'broker-password-env'), /must be the name of an environment variable/);
+  assert.throws(() => resolveEnvName('1ABC', 'broker-password-env'), /must be the name/);
+});
+
+test('resolveNetwork accepts Docker network names only', () => {
+  assert.equal(resolveNetwork(''), '');
+  assert.equal(resolveNetwork('apiome-ci'), 'apiome-ci');
+  assert.throws(() => resolveNetwork('net --privileged'), /not a valid Docker network name/);
+});
+
+test('checkBrokerInputs fails events without a broker, with the fix in the message', () => {
+  assert.throws(
+    () => checkBrokerInputs(['http', 'events'], '', '', {}),
+    /includes events, which needs a broker: set "broker-bootstrap"/,
+  );
+  assert.doesNotThrow(() => checkBrokerInputs(['http', 'events'], 'redpanda:9092', '', {}));
+  assert.doesNotThrow(() => checkBrokerInputs(['http', 'graphql'], '', '', {}));
+});
+
+test('checkBrokerInputs requires a named password variable to be set, and a broker to go with it', () => {
+  assert.throws(() => checkBrokerInputs(['http'], '', 'PW', { PW: 'x' }), /without "broker-bootstrap"/);
+  assert.throws(() => checkBrokerInputs(['http', 'events'], 'redpanda:9092', 'PW', {}), /names PW, which is not set/);
+  assert.doesNotThrow(() => checkBrokerInputs(['http', 'events'], 'redpanda:9092', 'PW', { PW: 'x' }));
+});
+
+test('dockerRunArgs adds nothing for an HTTP-only run', () => {
+  const args = dockerRunArgs({ name: 'n', image: 'img:1', bundlePath: '/w/b.json', host: '127.0.0.1', port: 5000 });
+
+  assert.equal(args.filter((arg) => arg === '--publish').length, 1);
+  assert.ok(!args.includes('--network'));
+  assert.ok(!args.some((arg) => arg.startsWith('APIOME_MOCK_BROKER') || arg.startsWith(GRPC_PORT_ENV)));
+});
+
+test('dockerRunArgs publishes the gRPC listener on the same interface and turns it on', () => {
+  const args = dockerRunArgs({ name: 'n', image: 'img:1', bundlePath: '/w/b.json', host: '127.0.0.1', port: 5000, grpcPort: 5001 });
+
+  assert.ok(args.includes(`127.0.0.1:5001:${CONTAINER_GRPC_PORT}`));
+  assert.ok(args.includes(`${GRPC_PORT_ENV}=${CONTAINER_GRPC_PORT}`));
+  assert.ok(args.indexOf('img:1') > args.indexOf(`${GRPC_PORT_ENV}=${CONTAINER_GRPC_PORT}`), 'options precede the image');
+});
+
+test('dockerRunArgs wires the broker and forwards its password by name only', () => {
+  const args = dockerRunArgs({
+    name: 'n',
+    image: 'img:1',
+    bundlePath: '/w/b.json',
+    host: '127.0.0.1',
+    port: 5000,
+    brokerBootstrap: 'redpanda:9092',
+    hasBrokerPassword: true,
+    network: 'apiome-ci',
+  });
+
+  assert.ok(args.includes(`${BROKER_BOOTSTRAP_ENV}=redpanda:9092`));
+  assert.ok(args.includes(BROKER_PASSWORD_ENV));
+  assert.ok(!args.some((arg) => arg.startsWith(`${BROKER_PASSWORD_ENV}=`)), 'the password value never reaches argv');
+  assert.equal(args[args.indexOf('--network') + 1], 'apiome-ci');
+  assert.ok(args.indexOf('img:1') > args.indexOf('--network'));
+});
+
+test('protocolEndpoints hands out GraphQL and Connect URLs under the mount', () => {
+  const endpoints = protocolEndpoints(ALL_SERVED, ['http', 'graphql', 'connect'], CONTEXT);
+
+  assert.equal(endpoints.graphqlUrl, 'http://127.0.0.1:5000/acme/shop/1.0.0/graphql');
+  assert.equal(endpoints.connectUrl, 'http://127.0.0.1:5000/acme/shop/1.0.0');
+  assert.equal(endpoints.grpcUrl, '');
+  assert.deepEqual(endpoints.served, PROTOCOLS);
+});
+
+test('protocolEndpoints leaves unrequested URLs empty and reports a gRPC host:port target', () => {
+  const endpoints = protocolEndpoints(ALL_SERVED, ['http', 'grpc'], { ...CONTEXT, grpcPort: 5001 });
+
+  assert.equal(endpoints.graphqlUrl, '');
+  assert.equal(endpoints.connectUrl, '');
+  assert.equal(endpoints.grpcUrl, '127.0.0.1:5001');
+});
+
+test('protocolEndpoints fails with the runtime reason for every protocol it does not serve', () => {
+  const ready = {
+    protocols: {
+      http: { served: true, path: '' },
+      graphql: { served: false, reason: 'graphql is hosted-only.' },
+      connect: { served: false, reason: 'connect is hosted-only.' },
+    },
+  };
+
+  assert.throws(
+    () => protocolEndpoints(ready, ['http', 'graphql', 'connect', 'grpc'], CONTEXT),
+    (error) =>
+      /cannot serve every requested protocol/.test(error.message) &&
+      error.message.includes('graphql: graphql is hosted-only.') &&
+      error.message.includes('connect: connect is hosted-only.') &&
+      error.message.includes('grpc: not served by this runtime.'),
+  );
+});
+
+test('protocolEndpoints treats an image without a protocol report as HTTP-only', () => {
+  const legacy = { status: 'ready', runtime: {} };
+
+  assert.deepEqual(protocolEndpoints(legacy, ['http'], CONTEXT).served, ['http']);
+  assert.throws(() => protocolEndpoints(legacy, ['http', 'graphql'], CONTEXT), /img:1 does not report protocol support/);
+});
+
+test('protocolEndpoints reports served protocols even when they were not requested', () => {
+  assert.deepEqual(protocolEndpoints(ALL_SERVED, ['http'], CONTEXT).served, PROTOCOLS);
+});
+
+test('summaryMarkdown lists served protocols and the endpoints the job asked for', () => {
+  const markdown = summaryMarkdown({
+    serviceUrl: 'http://127.0.0.1:5000',
+    image: 'img:1',
+    protocolsServed: ['http', 'graphql'],
+    graphqlUrl: 'http://127.0.0.1:5000/graphql',
+    connectUrl: '',
+    grpcUrl: '',
+  });
+
+  assert.match(markdown, /\| Protocols served \| http, graphql \|/);
+  assert.match(markdown, /\| GraphQL URL \| http:\/\/127\.0\.0\.1:5000\/graphql \|/);
+  assert.doesNotMatch(markdown, /Connect URL|gRPC target/);
 });

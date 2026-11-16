@@ -705,6 +705,10 @@ def _print_preflight_report(report: "PreflightReport") -> None:
     if report.warm_ms is not None:
         print(f"  warm call  {report.warm_ms:.1f} ms")
     print(f"  limits     {provider.limits.docs_url} (read {provider.limits.verified_on})")
+    if report.protocols:
+        served = [protocol for protocol, entry in report.protocols.items() if entry.served]
+        unsupported = [protocol for protocol, entry in report.protocols.items() if not entry.served]
+        print(f"  protocols  served: {', '.join(served) or 'none'}; unsupported: {', '.join(unsupported) or 'none'}")
     for finding in report.findings:
         print(f"[{finding.level.upper():7}] {finding.code}: {finding.detail}")
     print(report.summary())

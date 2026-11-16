@@ -194,6 +194,34 @@ that looks like a mock bug:
 
 ---
 
+## Protocols
+
+The adapter mounts the same app as the portable runtime, so it serves what that runtime serves. The
+exception is a protocol the provider's front door cannot carry at all. Preflight reports both in a
+`protocols` object (same shape as the portable runtime's [`/ready`](./portable-mock-runtime.md)),
+plus one `protocol-unsupported-<id>` note for each protocol that is not served. These are notes,
+not errors: an HTTP mock deploys whatever else the provider cannot carry.
+
+| Protocol | AWS Lambda | Google Cloud Run functions | Azure Functions |
+|---|---|---|---|
+| HTTP (REST) | served | served | served |
+| GraphQL (HTTP-carried) | as the portable runtime | as the portable runtime | as the portable runtime |
+| Connect (HTTP-carried) | as the portable runtime | as the portable runtime | as the portable runtime |
+| gRPC (native) | **unsupported**: API Gateway and Function URLs proxy one HTTP/1.1 request to one response, with no HTTP/2 trailers | **unsupported**: the Functions Framework hands over one HTTP request at a time | **unsupported**: the HTTP trigger does not forward HTTP/2 gRPC framing |
+| Events (WebSocket/SSE, broker channels) | **unsupported**: an invocation returns one buffered response and keeps no connection | **unsupported**: an idle instance can scale to zero, so no connection outlives its request | **unsupported**: one response per invocation, and idle workers are recycled |
+
+"As the portable runtime" means GraphQL and Connect are served on every provider as soon as the
+portable runtime serves them. Today it serves HTTP only, so preflight reports both as unsupported
+and gives the portable runtime's reason. The reasons live in
+`apiome_mock/serverless_providers.py` (`unsupported_protocols`), next to the limits above.
+
+```text
+  protocols  served: http; unsupported: graphql, connect, grpc, events
+[NOTE   ] protocol-unsupported-grpc: AWS Lambda: API Gateway and Function URLs proxy one HTTP/1.1 …
+```
+
+---
+
 ## Session state
 
 `X-Mock-Session` state lives in the **execution environment's memory**. It survives warm
@@ -292,6 +320,7 @@ applies here too — plus:
 
 * **Durable sessions.** See [session state](#session-state).
 * **Streaming responses.** An invocation returns one buffered payload.
-* **gRPC, SSE, and WebSocket.** HTTP only, as in the portable runtime.
+* **Native gRPC, SSE, WebSocket and broker channels.** No provider's front door carries them; see
+  [Protocols](#protocols).
 * **Fetching a bundle at initialization.** The bundle ships inside the package. A network read at
   cold start is what turns a fast mock into a flaky one.

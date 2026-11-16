@@ -287,6 +287,10 @@ class ProviderLimits:
         docs_url: The provider's own limits page.
         verified_on: ISO date these values were last read from that page.
         notes: Environment-specific caveats worth surfacing next to the numbers.
+        unsupported_protocols: Protocol id → one-line reason this provider's front door cannot
+            carry it (#5755, XPC-5.4). Ids are :data:`apiome_mock.protocol_support.PROTOCOL_IDS`;
+            a protocol absent here is served whenever the portable runtime serves it, because the
+            adapter mounts the same app.
     """
 
     max_package_bytes: int
@@ -298,6 +302,7 @@ class ProviderLimits:
     docs_url: str
     verified_on: str
     notes: tuple[str, ...] = ()
+    unsupported_protocols: tuple[tuple[str, str], ...] = ()
 
     @property
     def cold_start_budget_seconds(self) -> float:
@@ -325,6 +330,7 @@ class ProviderLimits:
             "docsUrl": self.docs_url,
             "verifiedOn": self.verified_on,
             "notes": list(self.notes),
+            "unsupportedProtocols": dict(self.unsupported_protocols),
         }
 
 
@@ -435,6 +441,18 @@ AWS_LIMITS = ProviderLimits(
         "API Gateway's 29s integration timeout, not the function's 900s, is the deadline an HTTP mock actually has.",
         "Deploy the bundle inside the package or a layer, never from S3 at init time: a network "
         "read at cold start is what turns a fast mock into a flaky one.",
+    ),
+    unsupported_protocols=(
+        (
+            "grpc",
+            "API Gateway and Function URLs proxy one HTTP/1.1 request to one response, with no HTTP/2 "
+            "trailers, so a native gRPC call cannot reach the function.",
+        ),
+        (
+            "events",
+            "A Lambda invocation returns one buffered response and keeps no connection between "
+            "invocations, so WebSocket/SSE frames and broker producers have nowhere to run.",
+        ),
     ),
 )
 
@@ -590,6 +608,18 @@ GCP_LIMITS = ProviderLimits(
         "Concurrency above 1 sends parallel requests into one instance; the adapter serializes "
         "them, so raise instances rather than concurrency for a mock under load.",
     ),
+    unsupported_protocols=(
+        (
+            "grpc",
+            "The Functions Framework hands the function one HTTP request at a time through a "
+            "request/response handler, so a native gRPC stream cannot reach it.",
+        ),
+        (
+            "events",
+            "An instance may be idle-scaled to zero between requests, so a held WebSocket/SSE "
+            "connection or a broker producer cannot outlive the request that opened it.",
+        ),
+    ),
 )
 
 
@@ -689,6 +719,18 @@ AZURE_LIMITS = ProviderLimits(
         "The Consumption plan's 600s function timeout is its maximum, not its default (5 minutes).",
         "Run the package from a mounted archive so the bundle is present at initialization instead "
         "of being fetched during it.",
+    ),
+    unsupported_protocols=(
+        (
+            "grpc",
+            "The Functions HTTP trigger is request/response over the front door, which does not "
+            "forward HTTP/2 gRPC framing to the worker.",
+        ),
+        (
+            "events",
+            "An HTTP-triggered invocation returns one response and the Consumption plan recycles idle "
+            "workers, so WebSocket/SSE frames and broker producers have no long-lived host.",
+        ),
     ),
 )
 

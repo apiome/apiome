@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -101,7 +101,7 @@ wheels = [
 
 [[package]]
 name = "apiome-mcp"
-version = "0.14.0"
+version = "0.14.1"
 source = { editable = "../apiome-mcp" }
 dependencies = [
     { name = "apiome-rest" },
@@ -143,7 +143,7 @@ dev = [
 
 [[package]]
 name = "apiome-mock"
-version = "0.19.1"
+version = "0.20.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiokafka" },
@@ -206,7 +206,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.705.0"
+version = "1.720.0"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "aiokafka" },

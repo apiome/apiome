@@ -19,7 +19,9 @@ Two operational endpoints are always reserved, ahead of any spec path:
     Liveness. 200 as soon as the process is serving HTTP.
 ``GET /ready``
     Readiness. 503 until the bundle is compiled and the app has started, then 200 with the
-    bundle's identity and digest — the value a CI job should assert before sending traffic.
+    bundle's identity and digest — the value a CI job should assert before sending traffic — and
+    a ``protocols`` object saying which protocols this runtime serves and, for the rest, why not
+    (:mod:`apiome_mock.protocol_support`; read by ``mock-action``, #5755).
 """
 
 from __future__ import annotations
@@ -40,6 +42,7 @@ from apiome_mock.handler import serve_compiled_request
 from apiome_mock.memory_session_store import InMemorySessionStore
 from apiome_mock.portable_config import PortableSettings
 from apiome_mock.problems import not_found
+from apiome_mock.protocol_support import portable_protocols, protocols_as_dict
 from apiome_mock.session_store import SessionCaps
 
 __all__ = [
@@ -144,6 +147,7 @@ def create_portable_app(bundle: LoadedBundle, settings: PortableSettings) -> Fas
     compiled = bundle.to_compiled_spec()
     prefix = version_prefix(bundle)
     summary = _bundle_summary(bundle)
+    protocols = protocols_as_dict(portable_protocols())
     session_store = InMemorySessionStore(_session_caps(settings))
     dispatcher = build_dispatcher(
         enabled=settings.callbacks_enabled,
@@ -214,6 +218,7 @@ def create_portable_app(bundle: LoadedBundle, settings: PortableSettings) -> Fas
                     "mount": prefix if settings.base_path == "version" else "/",
                 },
                 "bundle": summary,
+                "protocols": protocols,
             }
         )
 
