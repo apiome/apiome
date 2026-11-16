@@ -1,0 +1,106 @@
+---
+title: Breaking changes across formats
+description: "One Safe, Dangerous or Breaking grade for Avro, JSON Schema, Protobuf and AsyncAPI."
+sidebar_position: 1.9
+tags: [governance, compatibility, breaking-changes, avro, json-schema, protobuf, asyncapi, overview]
+---
+
+When you compare two versions, Apiome grades every change **Safe**, **Dangerous** or **Breaking**,
+whatever the format. Only the rules behind the grade differ. An OpenAPI change breaks a client
+calling the API. For an event schema or a Protobuf message, it depends on who reads and who writes,
+so Apiome grades those changes the way each format's own tools do. It reads them under a
+**compatibility mode** (`BACKWARD`, `FORWARD`, `FULL` or `NONE`), and reads Protobuf under a Buf
+**category**.
+
+The rules themselves, the mode settings and the full rule catalogue are on
+[Compatibility modes](./compatibility-modes.md). This page shows how the parts fit together.
+
+## When to use it
+
+- **Your Kafka topics have a schema registry.** Grade Avro and JSON Schema changes under the
+  same mode as the registry's subject, so the diff and the registry agree on what is safe.
+- **Your gRPC services are checked with `buf breaking`.** Grade Protobuf changes under the same
+  category your Buf config uses, such as `WIRE_JSON` or `FILE`.
+- **Your events have producers and consumers that upgrade at different times.** Grade AsyncAPI
+  channels for the side that upgrades first.
+- **A pull request must not break a data contract.** Gate it in CI with `apiome diff --mode`, the
+  same way you gate an OpenAPI change.
+
+## How each format is graded
+
+| Format | Graded by | Default | Checked against | Details |
+| --- | --- | --- | --- | --- |
+| Avro | Avro schema resolution, as a Confluent registry applies it | `BACKWARD` | Apicurio Registry and recorded Confluent answers | [Avro import](../bring-in/avro-import.md#compatibility-between-versions) |
+| JSON Schema | The open, closed and partially open content models | `BACKWARD` | Apicurio Registry and recorded Confluent answers | [JSON Schema](./compatibility-modes.md#json-schema) |
+| Protobuf | Buf's four categories: `WIRE`, `WIRE_JSON`, `PACKAGE`, `FILE` | `WIRE_JSON` | `buf breaking` | [Protobuf](./compatibility-modes.md#protobuf) |
+| AsyncAPI 2 and 3 | Channel and operation rules for **consumers** and **producers**; payloads by their own format | `BACKWARD` | `@asyncapi/diff` | [AsyncAPI](./compatibility-modes.md#asyncapi) |
+| GraphQL | GraphQL-Inspector where the server runs it, otherwise the structural rules | No modes | GraphQL-Inspector | [Known differences](./compatibility-modes.md#known-differences-from-reference-tools) |
+| OpenAPI and others | The OpenAPI change taxonomy, or the format's own rules | No modes | — | [Contract testing and CI gates](../ship/contract-testing-and-ci-gates.mdx#what-counts-as-breaking) |
+
+Under the default `BACKWARD`, a change that fails `BACKWARD` is **Breaking**. A change that passes
+`BACKWARD` but fails `FORWARD` is **Dangerous**. A change that passes both is **Safe**. Each
+grade's explanation starts with the mode or category it was graded under, such as `[FORWARD]` or
+`[WIRE_JSON]`.
+
+## Choose the mode
+
+1. **Set the project's default.** A style guide's policy holds `compatibilityMode`,
+   `compatibilityTransitive` and `protobufBreakingCategory`. The project gets them from the guide it
+   is assigned, the way it gets every other guide setting. The Style guides screen is not yet
+   available, so set them over the REST API. See
+   [Choose a project's mode](./compatibility-modes.md#choose-a-projects-mode).
+2. **Override it for one check.** Pass `mode`, `transitive` or `category` in the request, or
+   `--mode`, `--transitive` or `--category` on the CLI. See
+   [Ask for a mode in one request](./compatibility-modes.md#ask-for-a-mode-in-one-request).
+3. **Check every earlier version, not only the last one.** Turn on `transitive`, or use a
+   `_TRANSITIVE` mode such as `FULL_TRANSITIVE`. A change that breaks an earlier version names that
+   version. See [Transitive checks](./compatibility-modes.md#transitive-checks).
+
+```bash
+apiome diff ./orders.avsc --against orders-events@latest --mode full --transitive --fail-on breaking
+```
+
+## Where the grades show
+
+| Where | What you see | Details |
+| --- | --- | --- |
+| **What changed** on a catalog item's **Versions** tab, and the change list when a file is re-imported | Each change's grade, with the mode or category in brackets in **Why** | [Catalog refresh](../bring-in/catalog-refresh.mdx#see-what-changed) |
+| The classified diff and `apiome diff` | Every change with its `ruleId`, `grade` and `rationale` | [`POST /v1/diff/{tenant}/classified`](../reference/rest/classified-diff.md), [`apiome diff`](../reference/cli/diff.md) |
+| The compatibility check and `apiome compat --mode` | A verdict for two versions of a project | [`POST …/compatibility`](../reference/rest/compatibility.md), [`apiome compat`](../reference/cli/compat.md) |
+| CI | The diff gate uses the project's mode unless the workflow sets `mode` | [CI diff gate](../reference/ci/ci-diff-gate.md), [diff-action](../reference/ci/diff-action.md) |
+| Publishing | The breaking-publish guardrail grades the new version by the project's mode | [Stop a breaking publish](../ship/contract-testing-and-ci-gates.mdx#stop-a-breaking-publish-without-a-major-version) |
+| The rule catalogue | Every rule id, with its grade under each mode or category | [`GET /v1/compatibility/rules`](./compatibility-modes.md#rule-catalogue) |
+
+Every response says what it evaluated in `evaluatedUnder`, including the mode, category and
+ruleset, and whether each one came from the request or from the policy. When a format has no
+modes, such as OpenAPI, `modeApplied` is `false` and `ruleset` names what graded the changes
+instead.
+
+## Why you can trust the grades
+
+A test corpus of version pairs for each format records Apiome's verdict under every mode. Every
+pull request that changes a classifier runs that corpus against the live reference tools: an
+Apicurio Registry, `buf breaking`, `@asyncapi/diff` and GraphQL-Inspector. When Apiome and a tool
+disagree, the build fails. The only exception is a listed difference, which comes with the reason
+Apiome grades the change its own way. Removing a Protobuf reservation is one example: Apiome
+grades it **Dangerous**, and Buf grades it breaking. Every listed difference is in
+[Known differences from reference tools](./compatibility-modes.md#known-differences-from-reference-tools).
+
+## How the pieces fit
+
+- **One grade, every format.** Each classifier answers **Safe**, **Dangerous** or **Breaking**, so
+  `--fail-on breaking` and the publish guardrail work the same way for an Avro schema as for an
+  OpenAPI file.
+- **One setting, every surface.** The diff, the compatibility check, the CLI, the CI gate and the
+  publish guardrail all read the same policy. A change graded breaking in CI is also graded
+  breaking at publish.
+- **Every change names its rule.** Each change carries a `ruleId`, and the rule catalogue lists
+  every one with its grade under each mode, so a CI failure can be looked up in one step.
+- **The schema registry is separate.** A registry subject's compatibility level checks Avro
+  schemas when they are registered. See [The schema registry](../bring-in/avro-import.md#the-schema-registry).
+
+## Related
+
+- [Compatibility modes](./compatibility-modes.md): the rules, settings and rule catalogue
+- [Contract testing and CI gates](../ship/contract-testing-and-ci-gates.mdx): gate a pull request and a publish
+- [Reviews](./reviews.mdx): require approval for breaking changes

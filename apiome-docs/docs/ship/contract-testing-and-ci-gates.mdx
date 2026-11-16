@@ -30,6 +30,9 @@ removed enum value, or tighter authentication. Adding an optional field or a new
 **non-breaking**. A changed description, summary or example is **docs-only**, and never fails a
 gate.
 
+Avro, JSON Schema, Protobuf and AsyncAPI changes are graded by their own formats' rules, under a
+compatibility mode. See [Breaking changes across formats](../govern/breaking-changes-across-formats.mdx).
+
 ## Gate a pull request
 
 Compare the OpenAPI file in a branch with a published version, and fail the build when it breaks
