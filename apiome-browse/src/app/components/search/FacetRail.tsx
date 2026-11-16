@@ -5,6 +5,8 @@ import { formatLabel, paradigmLabel } from '../../../../lib/browseFacets';
 import type { CatalogSearchResponse } from '../../../../lib/search/hits';
 import { HIT_KIND_LABELS, SCOPE_KINDS, type HitKind } from '../../../../lib/search/kinds';
 import type { SearchRequest } from '../../../../lib/search/params';
+import { CHANGE_SEVERITIES } from '../../../../lib/search/severity';
+import { SeverityPill } from './HitRow';
 import { methodTone } from './httpMethodTone';
 
 /** The actions the rail can take; the page turns each into a navigation. */
@@ -14,6 +16,7 @@ export interface FacetRailActions {
   toggleType: (kind: HitKind) => void;
   toggleFormat: (format: string) => void;
   toggleParadigm: (paradigm: string) => void;
+  toggleSeverity: (severity: string) => void;
   setDates: (after: string | null, before: string | null) => void;
   setAllVersions: (all: boolean) => void;
   clearAll: () => void;
@@ -112,6 +115,12 @@ export function FacetRail({
   const scopeKinds = SCOPE_KINDS[request.scope];
   const kindOptions = facets.kinds.filter((k) => scopeKinds.includes(k.value as HitKind));
 
+  // Severity buckets in worst-first order, plus any selected severity the current hits lack.
+  const severityOptions = CHANGE_SEVERITIES.map((severity) => ({
+    value: severity,
+    count: facets.severities.find((b) => b.value === severity)?.count ?? 0,
+  })).filter((b) => b.count > 0 || request.severities.includes(b.value));
+
   const dateDirty = (after || '') !== (request.after ?? '') || (before || '') !== (request.before ?? '');
 
   return (
@@ -196,6 +205,26 @@ export function FacetRail({
                 );
               })}
             </div>
+          </Section>
+        )}
+
+        {severityOptions.length > 0 && (
+          <Section title="Severity" count={request.severities.length}>
+            <ul className="space-y-1.5" aria-label="Change severity">
+              {severityOptions.map((s) => (
+                <CheckRow
+                  key={s.value}
+                  id={`severity-${s.value}`}
+                  checked={request.severities.includes(s.value)}
+                  onChange={() => actions.toggleSeverity(s.value)}
+                  label={<SeverityPill severity={s.value} />}
+                  count={s.count}
+                />
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              Narrows the results to changelog entries.
+            </p>
           </Section>
         )}
 

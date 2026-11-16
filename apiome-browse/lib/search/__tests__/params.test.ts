@@ -136,3 +136,22 @@ describe('URL round-trip', () => {
     expect(toggleUrlValue(request, 'org', 'Acme')).toEqual({ q: 'orders', method: 'GET', org: 'acme' });
   });
 });
+
+describe('severity (BDX-1.4)', () => {
+  it('merges URL and inline severities, resolving aliases and dropping unknown values', () => {
+    const request = resolveSearchRequest({ q: 'status severity:breaking', severity: 'warning,bogus,breaking' });
+    expect(request.severities).toEqual(['non-breaking', 'breaking']);
+    expect(isEmptyRequest(resolveSearchRequest({ severity: 'info' }))).toBe(false);
+  });
+
+  it('writes only rail severities to the URL and toggles them', () => {
+    const request = resolveSearchRequest({ q: 'status severity:breaking', severity: 'docs-only' });
+    expect(toUrlState(request)).toEqual({ q: 'status severity:breaking', severity: 'docs-only' });
+    expect(toSearchParams(toUrlState(request))).toBe('q=status+severity%3Abreaking&severity=docs-only');
+    expect(toggleUrlValue(request, 'severity', 'docs-only')).toEqual({ q: 'status severity:breaking' });
+    expect(toggleUrlValue(request, 'severity', 'non-breaking')).toEqual({
+      q: 'status severity:breaking',
+      severity: 'docs-only,non-breaking',
+    });
+  });
+});

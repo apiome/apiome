@@ -14,7 +14,9 @@
  */
 
 import { HIT_KINDS, SCOPE_KINDS, resolveHitKind, resolveScope, type HitKind, type SearchScope } from './kinds';
+import type { Severity } from '../changelog/types';
 import { EMPTY_QUERY, parseQuery, type ParsedQuery } from './query';
+import { resolveChangeSeverity } from './severity';
 
 export const SEARCH_SORTS = ['relevance', 'newest', 'oldest', 'name'] as const;
 export type SearchSort = (typeof SEARCH_SORTS)[number];
@@ -60,6 +62,8 @@ export interface SearchRequest {
   paradigms: string[];
   /** Tag names a version must carry; empty = any. */
   tags: string[];
+  /** Changelog severities a `change` hit must carry; empty = any. Non-empty limits hits to changes. */
+  severities: Severity[];
   /** ISO date (YYYY-MM-DD) lower bound on `published_at`, inclusive. */
   after: string | null;
   /** ISO date (YYYY-MM-DD) upper bound on `published_at`, exclusive. */
@@ -83,6 +87,7 @@ export interface SearchUrlState {
   method?: string | string[];
   format?: string | string[];
   paradigm?: string | string[];
+  severity?: string | string[];
   after?: string;
   before?: string;
   sort?: string;
@@ -186,6 +191,12 @@ export function resolveSearchRequest(state: SearchUrlState): SearchRequest {
     formats: union(splitParam(state.format).map((s) => s.toLowerCase()), f.format ?? []),
     paradigms: union(splitParam(state.paradigm).map((s) => s.toLowerCase()), f.paradigm ?? []),
     tags: [...(f.tag ?? [])],
+    severities: union(
+      splitParam(state.severity)
+        .map(resolveChangeSeverity)
+        .filter((v): v is Severity => v != null),
+      f.severity ?? []
+    ) as Severity[],
     after: normalizeDate(state.after ?? f.after?.[f.after.length - 1]),
     before: normalizeDate(state.before ?? f.before?.[f.before.length - 1]),
     sort: resolveSort(state.sort, hasText),
@@ -213,6 +224,7 @@ export function isEmptyRequest(request: SearchRequest): boolean {
     request.formats.length === 0 &&
     request.paradigms.length === 0 &&
     request.tags.length === 0 &&
+    request.severities.length === 0 &&
     request.after == null &&
     request.before == null
   );
@@ -243,6 +255,9 @@ export function toUrlState(request: SearchRequest): SearchUrlState {
   const inlineParadigms = new Set(request.parsed.filters.paradigm ?? []);
   const urlParadigms = request.paradigms.filter((v) => !inlineParadigms.has(v));
   if (urlParadigms.length > 0) state.paradigm = urlParadigms.join(',');
+  const inlineSeverities = new Set(request.parsed.filters.severity ?? []);
+  const urlSeverities = request.severities.filter((v) => !inlineSeverities.has(v));
+  if (urlSeverities.length > 0) state.severity = urlSeverities.join(',');
   if (request.after && !request.parsed.filters.after) state.after = request.after;
   if (request.before && !request.parsed.filters.before) state.before = request.before;
   const hasText = request.parsed.terms.length > 0 || request.parsed.phrases.length > 0;
@@ -264,6 +279,7 @@ export function toSearchParams(state: SearchUrlState): string {
     'method',
     'format',
     'paradigm',
+    'severity',
     'after',
     'before',
     'sort',
@@ -313,12 +329,15 @@ export function patchSearchRequest(request: SearchRequest, patch: SearchPatch): 
   return state;
 }
 
+/** The multi-valued URL dimensions the rail toggles. */
+export type ToggleableUrlKey = 'org' | 'method' | 'type' | 'format' | 'paradigm' | 'severity';
+
 /**
- * Toggle one value in a multi-valued URL dimension (org, method, type, format, paradigm).
+ * Toggle one value in a multi-valued URL dimension (org, method, type, format, paradigm, severity).
  */
 export function toggleUrlValue(
   request: SearchRequest,
-  key: 'org' | 'method' | 'type' | 'format' | 'paradigm',
+  key: ToggleableUrlKey,
   value: string
 ): SearchUrlState {
   const state = toUrlState(request);

@@ -129,3 +129,71 @@ describe('buildCatalogSearchSql', () => {
     expect(text).not.toContain('DROP TABLE');
   });
 });
+
+describe('change member (BDX-1.4)', () => {
+  it('joins the classified changelog through the scope and unnests its entries', () => {
+    const { text } = build({ q: 'status' });
+    expect(text).toContain("'change' AS hit_type");
+    expect(text).toContain('JOIN apiome.version_changelogs vc ON vc.published_revision_id = sv.version_pk');
+    expect(text).toContain('jsonb_array_elements(');
+    expect(text).toContain('WITH ORDINALITY AS e(entry, ord)');
+  });
+
+  it('contributes nothing (and does not fail) for a payload without an entries array', () => {
+    const { text } = build({ q: 'status' });
+    // The inner join drops versions with no row; the typeof guard turns a missing or non-array
+    // `entries` (initial publication, failed run) into an empty set instead of an error.
+    expect(text).toContain("CASE WHEN jsonb_typeof(vc.changelog_json -> 'entries') = 'array'");
+    expect(text).toContain("ELSE '[]'::jsonb END");
+  });
+
+  it('folds unknown severities into docs-only and projects a severity column on every member', () => {
+    const { text } = build({ q: 'x' });
+    expect(text).toContain("IN ('breaking', 'non-breaking')");
+    expect(text).toContain("ELSE 'docs-only' END AS severity");
+    expect(text.match(/NULL::text AS severity/g)?.length).toBe(HIT_KINDS.length - 1);
+    expect(text).toContain('AS severity_facets');
+  });
+
+  it('matches the summary, pointer (escaped and not), path group, rule and change kind', () => {
+    const { text } = build({ q: 'status' });
+    expect(text).toContain(
+      "concat_ws(' ', COALESCE(ch.summary::text, ''), COALESCE(ch.pointer::text, ''), COALESCE(ch.pointer_text::text, ''), COALESCE(ch.path_group_text::text, ''), COALESCE(ch.rule_id::text, ''), COALESCE(ch.change_kind::text, ''))"
+    );
+    expect(text).toContain("replace(replace(COALESCE(e.entry ->> 'pointer', ''), '~1', '/'), '~0', '~') AS pointer_text");
+    // The hit shows the stored pointer, the same string the Changes tab prints.
+    expect(text).toContain("NULLIF(ch.pointer, '') AS subtitle");
+  });
+
+  it('ranks severity first and text second', () => {
+    const { text } = build({ q: 'status' });
+    expect(text).toContain("CASE ch.severity WHEN 'breaking' THEN 60");
+    expect(text).toContain("WHEN 'non-breaking' THEN 30");
+    expect(text).toMatch(/\+ \(GREATEST\(10, [\s\S]*?\)\) \/ 4\) AS rank/);
+    // Without words, the severity bonus plus the kind weight alone orders.
+    expect(build({ q: 'type:change' }).text).toMatch(/ELSE 0 END \+ 1\) AS rank/);
+  });
+
+  it('applies a severity filter and narrows the run to change hits', () => {
+    const query = 'severity:breaking status after:2026';
+    expect(applicableKinds(resolveSearchRequest({ q: query }))).toEqual(['change']);
+    const { text, values } = build({ q: query });
+    expect(values).toContainEqual(['breaking']);
+    expect(values).toContain('2026-01-01');
+    expect(values).toContain('%status%');
+    const slot = `$${values.findIndex((v) => JSON.stringify(v) === '["breaking"]') + 1}`;
+    expect(text).toContain(`ch.severity = ANY(${slot}::text[])`);
+    expect(text).toContain('sc.published_at >= ');
+    expect(text).not.toContain("'operation' AS hit_type");
+  });
+
+  it('does not run when a severity filter meets a kind that carries none', () => {
+    expect(buildCatalogSearchSql(resolveSearchRequest({ q: 'severity:breaking method:GET' }))).toBeNull();
+    expect(buildCatalogSearchSql(resolveSearchRequest({ q: 'severity:breaking', scope: 'schemas' }))).toBeNull();
+  });
+
+  it('selects the kind with type:change and its aliases', () => {
+    expect(resolveSearchRequest({ q: 'type:change' }).kinds).toEqual(['change']);
+    expect(resolveSearchRequest({ q: 'type:changelog' }).kinds).toEqual(['change']);
+  });
+});

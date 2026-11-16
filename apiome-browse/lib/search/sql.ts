@@ -5,7 +5,7 @@
  * project's latest unless the visitor asked for every version, then narrowed by the organization,
  * project, format, paradigm, tag and date filters). One union member per *kind* joins that scope to
  * the normalized model — operations, schemas, properties, parameters, bodies, responses, version
- * notes, tags, projects, organizations — and projects it onto one common row shape with a text
+ * notes, tags, projects, organizations, classified changelog entries — and projects it onto one common row shape with a text
  * match predicate and a relevance rank. The tail of the statement counts, facets and pages those
  * rows in SQL, and returns everything as one row of JSON columns.
  *
@@ -18,6 +18,7 @@
 
 import { HIT_KIND_WEIGHT, type HitKind } from './kinds';
 import type { SearchRequest } from './params';
+import { SEVERITY_RANK_BONUS } from './severity';
 
 /** A parameterized statement for `pg`. */
 export interface SqlStatement {
@@ -44,6 +45,9 @@ const PATH_KINDS: readonly HitKind[] = ['operation', 'parameter', 'request_body'
 
 /** Kinds that carry an HTTP method, and so can honour a `method:` filter. */
 const METHOD_KINDS: readonly HitKind[] = ['operation'];
+
+/** Kinds that carry a changelog severity, and so can honour a `severity:` filter. */
+const SEVERITY_KINDS: readonly HitKind[] = ['change'];
 
 /**
  * A small parameter registry: every value becomes `$n`, and repeated values reuse their slot so
@@ -80,13 +84,14 @@ function textPredicate(haystack: string, request: SearchRequest, params: Params)
 }
 
 /**
- * The relevance rank for a member: the best of an exact / prefix / contains match on each of the
- * given expressions, plus the kind's weight. With no text to rank by, the weight alone orders.
+ * The text score of a row: the best of an exact (100) / prefix (70) / contains (45) match of the
+ * whole query on each of the given expressions, floored at 10.
+ *
+ * @returns The SQL expression, or null when the query has no words or phrases to score by.
  */
-function rankExpr(kind: HitKind, exprs: string[], request: SearchRequest, params: Params): string {
-  const weight = HIT_KIND_WEIGHT[kind];
+function textScoreExpr(exprs: string[], request: SearchRequest, params: Params): string | null {
   const needles = [...request.parsed.phrases, ...request.parsed.terms];
-  if (needles.length === 0) return `${weight}`;
+  if (needles.length === 0) return null;
   const full = needles.join(' ').toLowerCase();
   const exact = params.add(full);
   const prefix = params.add(`${escapeLikePattern(full)}%`);
@@ -100,7 +105,17 @@ function rankExpr(kind: HitKind, exprs: string[], request: SearchRequest, params
   );
   // Several words that each appear but never as one string still matched every word (the text
   // predicate guarantees that), so the floor is 10, not 0.
-  return `(GREATEST(10, ${cases.join(', ')}) + ${weight})`;
+  return `GREATEST(10, ${cases.join(', ')})`;
+}
+
+/**
+ * The relevance rank for a member: its text score (see {@link textScoreExpr}) plus the kind's
+ * weight. With no text to rank by, the weight alone orders.
+ */
+function rankExpr(kind: HitKind, exprs: string[], request: SearchRequest, params: Params): string {
+  const weight = HIT_KIND_WEIGHT[kind];
+  const score = textScoreExpr(exprs, request, params);
+  return score ? `(${score} + ${weight})` : `${weight}`;
 }
 
 /** `concat_ws(' ', a, b, c)` with NULL-safe pieces. */
@@ -128,6 +143,7 @@ const HIT_COLUMNS = [
   'paradigm',
   'rank',
   'name_key',
+  'severity',
 ] as const;
 
 interface MemberArgs {
@@ -151,7 +167,8 @@ const organizationMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, NULL::text AS path, NULL::text AS anchor_key,
              NULL::text AS source_format, NULL::text AS paradigm,
              ${rankExpr('organization', ['sv.tenant_name', 'sv.tenant_slug'], request, params)} AS rank,
-             sv.tenant_name AS name_key
+             sv.tenant_name AS name_key,
+             NULL::text AS severity
       FROM sv
       WHERE ${textPredicate(haystack('sv.tenant_name', 'sv.tenant_slug', 'sv.tenant_description'), request, params)}
       GROUP BY sv.tenant_pk, sv.tenant_slug, sv.tenant_name, sv.tenant_description`;
@@ -170,7 +187,8 @@ const projectMember: MemberBuilder = ({ request, params }) => `
              MAX(NULLIF(sv.source_format, '')) AS source_format,
              MAX(NULLIF(sv.paradigm, '')) AS paradigm,
              ${rankExpr('project', ['sv.project_name', 'sv.project_slug'], request, params)} AS rank,
-             sv.project_name AS name_key
+             sv.project_name AS name_key,
+             NULL::text AS severity
       FROM sv
       WHERE ${textPredicate(haystack('sv.project_name', 'sv.project_slug', 'sv.project_description', 'sv.tenant_name'), request, params)}
       GROUP BY sv.project_id, sv.tenant_slug, sv.tenant_name, sv.project_slug, sv.project_name, sv.project_description`;
@@ -187,7 +205,8 @@ const versionMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, NULL::text AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('version', ['sv.version_slug', 'sv.project_name'], request, params)} AS rank,
-             sv.project_name || ' ' || sv.version_slug AS name_key
+             sv.project_name || ' ' || sv.version_slug AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.versions v ON v.id = sv.version_pk
       WHERE ${textPredicate(haystack('sv.version_slug', 'v.description', 'v.change_log', 'v.commit_message'), request, params)}`;
@@ -203,7 +222,8 @@ const tagMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, NULL::text AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('tag', ['vt.name'], request, params)} AS rank,
-             vt.name AS name_key
+             vt.name AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.version_tags vt ON vt.version_id = sv.version_pk
       WHERE ${textPredicate(haystack('vt.name', 'vt.message'), request, params)}`;
@@ -231,7 +251,8 @@ const operationMember: MemberBuilder = ({ request, params }) => `
              UPPER(po.operation) AS method, vp.pathname AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('operation', ['vp.pathname', 'pod.summary', 'pod.operation_id', "UPPER(po.operation) || ' ' || vp.pathname"], request, params)} AS rank,
-             vp.pathname AS name_key
+             vp.pathname AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.version_path vp ON vp.version_id = sv.version_pk
       JOIN apiome.path_operation po ON po.version_path_id = vp.id
@@ -250,7 +271,8 @@ const parameterMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, vp.pathname AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('parameter', ['spp.name'], request, params)} AS rank,
-             spp.name AS name_key
+             spp.name AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.version_path vp ON vp.version_id = sv.version_pk
       JOIN apiome.shared_path_parameter spp ON spp.version_path_id = vp.id
@@ -268,7 +290,8 @@ const requestBodyMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, vp.pathname AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('request_body', ['sprb.name'], request, params)} AS rank,
-             sprb.name AS name_key
+             sprb.name AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.version_path vp ON vp.version_id = sv.version_pk
       JOIN apiome.shared_path_request_body sprb ON sprb.version_path_id = vp.id
@@ -290,7 +313,8 @@ const responseMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, vp.pathname AS path, NULL::text AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('response', ['spr.status_code::text', 'spr.description'], request, params)} AS rank,
-             vp.pathname || ' ' || spr.status_code AS name_key
+             vp.pathname || ' ' || spr.status_code AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.version_path vp ON vp.version_id = sv.version_pk
       JOIN apiome.shared_path_response spr ON spr.version_path_id = vp.id
@@ -312,7 +336,8 @@ const schemaMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, NULL::text AS path, c.name AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('schema', ['c.name'], request, params)} AS rank,
-             c.name AS name_key
+             c.name AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.classes c ON c.version_id = sv.version_pk AND c.deleted_at IS NULL
       WHERE ${textPredicate(haystack('c.name', 'c.description', 'c.schema'), request, params)}`;
@@ -328,11 +353,72 @@ const propertyMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS method, NULL::text AS path, c.name AS anchor_key,
              NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
              ${rankExpr('property', ['cp.name', "c.name || '.' || cp.name"], request, params)} AS rank,
-             c.name || '.' || cp.name AS name_key
+             c.name || '.' || cp.name AS name_key,
+             NULL::text AS severity
       FROM sv
       JOIN apiome.classes c ON c.version_id = sv.version_pk AND c.deleted_at IS NULL
       JOIN apiome.class_properties cp ON cp.class_id = c.id
       WHERE ${textPredicate(haystack('cp.name', 'cp.description', 'cp.data'), request, params)}`;
+
+/**
+ * A JSON Pointer with its `~1` / `~0` escapes undone, so `path`-style words (`/orders`) match
+ * `/paths/~1orders`. Matching only: hits display the stored pointer, as the *Changes* tab does.
+ */
+function unescapedPointer(expr: string): string {
+  return `replace(replace(COALESCE(${expr}, ''), '~1', '/'), '~0', '~')`;
+}
+
+/**
+ * Classified changelog entries (CTG-3.2): one hit per entry of `version_changelogs.changelog_json`
+ * for every version in scope. A version with no classification row (or a row whose payload has no
+ * `entries` array — initial publications, failed runs) joins to nothing and contributes no hits.
+ *
+ * Unknown stored severities fold into `docs-only`, as the Changes tab does. Words match the summary,
+ * the pointer and path group (escaped and unescaped), the rule id and the change kind. The rank puts severity
+ * first and text second: a tier bonus ({@link SEVERITY_RANK_BONUS}, 30 apart) plus a quarter of the
+ * text score (at most 25), so a weak match on a breaking entry still outranks an exact match on a
+ * non-breaking one.
+ */
+const changeMember: MemberBuilder = ({ request, params }) => {
+  const score = textScoreExpr(['ch.summary', 'ch.pointer_text', 'ch.path_group_text'], request, params);
+  const bonus = `CASE ch.severity WHEN 'breaking' THEN ${SEVERITY_RANK_BONUS.breaking}
+                  WHEN 'non-breaking' THEN ${SEVERITY_RANK_BONUS['non-breaking']}
+                  ELSE ${SEVERITY_RANK_BONUS['docs-only']} END`;
+  const rank = `(${bonus} + ${HIT_KIND_WEIGHT.change}${score ? ` + (${score}) / 4` : ''})`;
+  const severityFilter =
+    request.severities.length > 0 ? `ch.severity = ANY(${params.add(request.severities)}::text[])` : 'TRUE';
+  return `
+      SELECT 'change:' || vc.id::text || ':' || e.ord::text AS hit_id,
+             'change' AS hit_type,
+             sv.tenant_slug, sv.tenant_name, sv.project_slug, sv.project_name, sv.version_slug,
+             sv.published_at,
+             COALESCE(NULLIF(TRIM(ch.summary), ''), NULLIF(ch.change_kind, ''), 'Change') AS title,
+             LEFT(concat_ws(' · ', NULLIF(ch.change_kind, ''), NULLIF(ch.rule_id, '')), 400) AS snippet,
+             NULLIF(ch.pointer, '') AS subtitle,
+             NULL::text AS method, NULLIF(ch.pointer, '') AS path, NULL::text AS anchor_key,
+             NULLIF(sv.source_format, '') AS source_format, NULLIF(sv.paradigm, '') AS paradigm,
+             ${rank} AS rank,
+             COALESCE(NULLIF(TRIM(ch.summary), ''), ch.pointer) AS name_key,
+             ch.severity
+      FROM sv
+      JOIN apiome.version_changelogs vc ON vc.published_revision_id = sv.version_pk
+      CROSS JOIN LATERAL jsonb_array_elements(
+        CASE WHEN jsonb_typeof(vc.changelog_json -> 'entries') = 'array'
+             THEN vc.changelog_json -> 'entries' ELSE '[]'::jsonb END
+      ) WITH ORDINALITY AS e(entry, ord)
+      CROSS JOIN LATERAL (
+        SELECT CASE WHEN e.entry ->> 'severity' IN ('breaking', 'non-breaking')
+                    THEN e.entry ->> 'severity' ELSE 'docs-only' END AS severity,
+               e.entry ->> 'summary' AS summary,
+               e.entry ->> 'pointer' AS pointer,
+               ${unescapedPointer("e.entry ->> 'pointer'")} AS pointer_text,
+               ${unescapedPointer("e.entry ->> 'pathGroup'")} AS path_group_text,
+               e.entry ->> 'ruleId' AS rule_id,
+               e.entry ->> 'changeKind' AS change_kind
+      ) ch
+      WHERE ${severityFilter}
+        AND ${textPredicate(haystack('ch.summary', 'ch.pointer', 'ch.pointer_text', 'ch.path_group_text', 'ch.rule_id', 'ch.change_kind'), request, params)}`;
+};
 
 const MEMBERS: Readonly<Record<HitKind, MemberBuilder>> = {
   organization: organizationMember,
@@ -345,17 +431,20 @@ const MEMBERS: Readonly<Record<HitKind, MemberBuilder>> = {
   response: responseMember,
   schema: schemaMember,
   property: propertyMember,
+  change: changeMember,
 };
 
 /**
  * The kinds a request can produce at all, regardless of the tab: a `method:` filter only means
- * something for operations, a `path:` filter only for path-attached rows. Members outside this
+ * something for operations, a `path:` filter only for path-attached rows, a `severity:` filter only
+ * for changelog entries. Members outside this
  * set are not even run, so their facet counts are an honest zero.
  */
 export function applicableKinds(request: SearchRequest): HitKind[] {
   let kinds: readonly HitKind[] = Object.keys(MEMBERS) as HitKind[];
   if (request.methods.length > 0) kinds = kinds.filter((k) => METHOD_KINDS.includes(k));
   if (request.paths.length > 0) kinds = kinds.filter((k) => PATH_KINDS.includes(k));
+  if (request.severities.length > 0) kinds = kinds.filter((k) => SEVERITY_KINDS.includes(k));
   return [...kinds];
 }
 
@@ -477,6 +566,8 @@ ${members.join('\n      UNION ALL\n')}
                 FROM (SELECT source_format, COUNT(*)::int AS c FROM hits WHERE source_format IS NOT NULL GROUP BY 1) x), '[]'::json) AS format_facets,
       COALESCE((SELECT json_agg(json_build_object('value', x.paradigm, 'count', x.c) ORDER BY x.c DESC, x.paradigm)
                 FROM (SELECT paradigm, COUNT(*)::int AS c FROM hits WHERE paradigm IS NOT NULL GROUP BY 1) x), '[]'::json) AS paradigm_facets,
+      COALESCE((SELECT json_agg(json_build_object('value', x.severity, 'count', x.c) ORDER BY x.c DESC, x.severity)
+                FROM (SELECT severity, COUNT(*)::int AS c FROM hits WHERE severity IS NOT NULL GROUP BY 1) x), '[]'::json) AS severity_facets,
       COALESCE((SELECT json_agg(json_build_object('tenant_slug', x.tenant_slug, 'tenant_name', x.tenant_name,
                                                   'project_slug', x.project_slug, 'project_name', x.project_name, 'count', x.c)
                                 ORDER BY x.c DESC, x.project_name)

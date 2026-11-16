@@ -26,8 +26,8 @@ now; private versions for readers are coming next.
 
 The browse app's **Search** page (`/search`) searches the normalized model of every published public
 version, not only names and descriptions: organizations, projects, version notes, tags, operations,
-parameters, request bodies, responses, schemas and schema properties. Private and unpublished
-versions never appear.
+parameters, request bodies, responses, schemas, schema properties and the entries of each version's
+classified changelog. Private and unpublished versions never appear.
 
 ### Where to start a search
 
@@ -46,7 +46,9 @@ Words, phrases and filters go in one box. Every word must match; filters narrow 
 | `create order` | Items mentioning both words |
 | `"payment intent"` | Items containing that phrase |
 | `orders -deprecated` | Items about orders that do not mention *deprecated* |
-| `type:operation` | Only one kind — `organization`, `project`, `version`, `tag`, `operation`, `parameter`, `request_body`, `response`, `schema`, `property` (aliases such as `endpoint` and `model` work) |
+| `type:operation` | Only one kind — `organization`, `project`, `version`, `tag`, `operation`, `parameter`, `request_body`, `response`, `schema`, `property`, `change` (aliases such as `endpoint`, `model` and `changelog` work) |
+| `type:change` | Only changelog entries — one result per classified change (its summary, JSON Pointer and severity) |
+| `severity:breaking` | Changelog entries of that severity — `breaking`, `non-breaking` (or `warning`) and `docs-only` (or `info`). Narrows the results to changelog entries |
 | `method:POST` | Operations with that HTTP method |
 | `path:/orders` | Operations and their parameters, bodies and responses on paths containing `/orders` |
 | `org:acme` · `project:payments` | Published by that organization, or in that project (slug or name) |
@@ -56,7 +58,7 @@ Words, phrases and filters go in one box. Every word must match; filters narrow 
 | `after:2026-01` · `before:2026-07` | Published on or after, or before, a date (`YYYY`, `YYYY-MM` or `YYYY-MM-DD`) |
 
 Repeating a filter ORs its values (`method:GET method:POST`). An unknown `key:value` is searched as
-plain text.
+plain text; an unknown severity (`severity:catastrophic`) is ignored.
 
 An import records the version's format and paradigm. Versions that existed before Apiome recorded
 them were tagged once, so the `format:` and `paradigm:` filters find them too:
@@ -71,23 +73,44 @@ them were tagged once, so the `format:` and `paradigm:` filters find them too:
 
 - **Scope tabs** — *All*, *Operations*, *Schemas*, *Projects & orgs* and *MCP servers* (the public
   MCP catalog, searched with the same words), each with its count.
-- **Filters rail** — latest versions only or every published version, kind, HTTP method,
-  organization, paradigm, format and published-date range, with counts for the current results.
+- **Filters rail** — latest versions only or every published version, kind, HTTP method, change
+  severity, organization, paradigm, format and published-date range, with counts for the current
+  results.
   Active filters show as removable chips above the tabs, whether they came from the rail or were
   typed as operators.
 - **Results** — grouped by kind or flat; sorted by relevance, newest, oldest or name; 25 a page.
   Operation results show the method and path; operations and schemas open the version page at that
-  item. The matched words are highlighted.
+  item. Change results show the severity pill and the entry's JSON Pointer, and open the version's
+  **Changes** tab. The matched words are highlighted.
 - **Top projects** — where the matches concentrate, with a link to each project.
 - **Keyboard** — <kbd>/</kbd> focuses the box, <kbd>j</kbd>/<kbd>k</kbd> (or the arrows) move
   through the results, <kbd>↵</kbd> opens the selected one.
 - **Share** — the URL carries the whole search (`q`, `scope`, `type`, `org`, `method`, `format`,
-  `paradigm`, `after`, `before`, `sort`, `all`, `page`), so **Copy link** gives a colleague the same
+  `paradigm`, `severity`, `after`, `before`, `sort`, `all`, `page`), so **Copy link** gives a colleague the same
   view.
 
 By default a search covers each project's most recently published version. Choose **All published**
 in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
 per version.
+
+### Search changelogs {#search-changelogs}
+
+Every published version's classified changelog (the list on its **Changes** tab) is searchable, so
+a question such as *which APIs removed a field called `status` this year?* is one query:
+
+```text
+severity:breaking status after:2026
+```
+
+1. Type the query in the search box and press <kbd>↵</kbd>. Each result is one changelog entry,
+   with its severity pill, summary and JSON Pointer.
+2. To cover older versions too, choose **All published** in the **Versions** section of the rail.
+3. Narrow or widen with the **Severity** checkboxes in the rail (or `severity:` in the box).
+4. Click a result to open that version's **Changes** tab.
+
+Breaking entries rank first, then non-breaking, then docs-only; within a severity, the better text
+match comes first. A version that has no classified changelog yet (a first publication, or one still
+being classified) adds no results.
 
 ### Find inside a version {#find-inside-a-version}
 

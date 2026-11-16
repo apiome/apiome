@@ -24,6 +24,7 @@ function hit(partial: Partial<CatalogSearchHit>): CatalogSearchHit {
     paradigm: null,
     rank: 0,
     name_key: 't',
+    severity: null,
     ...partial,
   };
 }
@@ -47,6 +48,11 @@ describe('hitHref / hitCrumbs', () => {
     expect(hitHref(hit({ hit_type: 'schema', anchor_key: 'Order' }))).toBe('/tenant/acme/payments/2.1.0#schema-Order');
     expect(hitHref(hit({ hit_type: 'property', anchor_key: 'Order' }))).toBe('/tenant/acme/payments/2.1.0#schema-Order');
     expect(hitHref(hit({ hit_type: 'response' }))).toBe('/tenant/acme/payments/2.1.0');
+    // BDX-1.4: a changelog entry opens its version's Changes tab.
+    expect(hitHref(hit({ hit_type: 'change', severity: 'breaking', path: '/paths//orders' }))).toBe(
+      '/tenant/acme/payments/2.1.0?tab=changes'
+    );
+    expect(hitHref(hit({ hit_type: 'change', version_slug: null }))).toBe('/tenant/acme/payments');
   });
 
   it('builds crumbs down to the version except for projects', () => {

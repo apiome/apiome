@@ -20,6 +20,7 @@ export const HIT_KINDS = [
   'response',
   'schema',
   'property',
+  'change',
 ] as const;
 
 export type HitKind = (typeof HIT_KINDS)[number];
@@ -36,6 +37,7 @@ export const HIT_KIND_LABELS: Readonly<Record<HitKind, { one: string; many: stri
   response: { one: 'Response', many: 'Responses' },
   schema: { one: 'Schema', many: 'Schemas' },
   property: { one: 'Property', many: 'Properties' },
+  change: { one: 'Change', many: 'Changes' },
 };
 
 /**
@@ -55,6 +57,8 @@ export const HIT_KIND_WEIGHT: Readonly<Record<HitKind, number>> = {
   parameter: 4,
   request_body: 2,
   response: 2,
+  // Changes add a severity bonus on top (see `SEVERITY_RANK_BONUS`), so their base weight is low.
+  change: 1,
 };
 
 export const SEARCH_SCOPES = ['all', 'operations', 'schemas', 'catalog', 'mcp'] as const;
@@ -104,6 +108,9 @@ const KIND_ALIASES: Readonly<Record<string, HitKind>> = {
   field: 'property',
   prop: 'property',
   attribute: 'property',
+  changes: 'change',
+  changelog: 'change',
+  diff: 'change',
 };
 
 /**

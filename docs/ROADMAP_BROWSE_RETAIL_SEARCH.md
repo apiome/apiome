@@ -71,7 +71,6 @@ flowchart TB
 |---|---|---|---|---|---|---|---|
 | #6285 | **BDX-1.1** Full-text index and ranking over the normalized public model | tsvector + GIN over operations/schemas/properties/notes; `websearch_to_tsquery`; `ts_rank` replaces the ILIKE tiers | `enhancement`, `browser`, `database`, `rest`, `mvp`, `roadmap-browse-discovery` | N | Y | L | apiome-db (migration), apiome-browse/lib/search/sql.ts, apiome-rest (MFI-6.2) |
 | #6286 | **BDX-1.2** Typo tolerance and “Did you mean” suggestions | pg_trgm similarity over names and paths; a suggestion row when a search finds nothing | `enhancement`, `browser`, `database`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (pg_trgm), apiome-browse/lib/search, src/app/search/SearchClient.tsx |
-| #6288 | **BDX-1.4** Changelog and release-notes search | Search classified changelog entries (`type:change`, `severity:breaking`) and version notes across the catalog | `enhancement`, `browser`, `diff`, `versions`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/lib/search/sql.ts, kinds.ts, src/app/components/search/HitRow.tsx |
 | #6289 | **BDX-1.5** Semantic search and “Ask the catalog” | Embeddings over operations and schemas; hybrid lexical + vector ranking; a natural-language mode in the palette | `enhancement`, `browser`, `ai`, `database`, `v2`, `roadmap-browse-discovery` | N | N | L | apiome-db (pgvector columns), apiome-rest (embedding job), apiome-browse/lib/search, SearchPalette.tsx |
 | #6290 | **BDX-1.6** Public search API, CLI command and shared contract | `GET /v1/browse/search` in REST with the Browse engine's contract; `apiome browse search`; Browse calls REST or shares the builder | `enhancement`, `browser`, `rest`, `cli`, `mvp`, `roadmap-browse-discovery` | N | Y | L | apiome-rest/src/app/browse_public_routes.py, apiome-cli, apiome-browse/lib/search, apiome-docs reference |
 | #6291 | **BDX-1.7** Saved searches and search alerts | Save a search in the browser; subscribe to it by email/feed once PCX-2.2 subscriptions exist | `enhancement`, `browser`, `portal`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/src/app/search, lib/search, (later) apiome-rest subscriptions |
@@ -223,7 +222,7 @@ flowchart LR
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### BDX-1.4 — Changelog and release-notes search (#6288)
+#### ✅ BDX-1.4 — Changelog and release-notes search (#6288) — **Complete**
 
 **Problem statement.** Version notes are searchable; the classified changelog (CTG-3.2, `version_changelogs.changelog_json`) is not. *Which APIs removed a field called `status` this year?* is unanswerable.
 

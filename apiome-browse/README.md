@@ -174,12 +174,16 @@ Compare two versions side-by-side or in unified diff mode:
 (`lib/search/params.ts`) and the query language (`lib/search/query.ts`):
 
 - Words, quoted phrases and `-exclusions`; filters `type:`, `method:`, `path:`, `org:`, `project:`,
-  `version:`, `format:`, `paradigm:`, `tag:`, `after:`, `before:` (rail filters in the URL merge with
-  operators typed in the box)
+  `version:`, `format:`, `paradigm:`, `tag:`, `severity:`, `after:`, `before:` (rail filters in the
+  URL merge with operators typed in the box)
 - One union member per kind over each project's latest published public version (or every version
   with `all=1`), ranked exact › prefix › contains plus a per-kind weight, with facet counts and a
   page computed in the same round trip
 - Deep links into the version page at the operation (`#op-…`) or schema (`#schema-…`) anchor
+- Changelog search (BDX-1.4): the `change` member unnests `version_changelogs.changelog_json`
+  entries (one hit per entry, ranked severity first, then text); `severity:` (`breaking`,
+  `warning`/`non-breaking`, `info`/`docs-only`, `lib/search/severity.ts`) narrows to it, and a hit
+  opens the version's Changes tab (`?tab=changes`)
 - Find in one version (BDX-1.3): the version page's find box runs `lib/search/findInVersion.ts`
   in the browser over the loaded spec — same query language, `method:` / `path:` / `type:`, `?find=`
   in the URL, `/` to focus and `↵` to jump to the next match

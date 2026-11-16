@@ -3,7 +3,7 @@
  * what it is called, how its kind is shown.
  */
 
-import { operationAnchorId, schemaAnchorId, versionHref } from './anchors';
+import { operationAnchorId, schemaAnchorId, versionChangesHref, versionHref } from './anchors';
 import { HIT_KIND_LABELS, type HitKind } from './kinds';
 
 /** One search hit, as the SQL projects it. */
@@ -26,6 +26,8 @@ export interface CatalogSearchHit {
   paradigm: string | null;
   rank: number;
   name_key: string;
+  /** The changelog severity (`breaking` / `non-breaking` / `docs-only`) on `change` hits; null otherwise. */
+  severity: string | null;
 }
 
 /** One facet bucket. */
@@ -61,6 +63,8 @@ export interface CatalogSearchResponse {
     methods: FacetBucket[];
     formats: FacetBucket[];
     paradigms: FacetBucket[];
+    /** Changelog severities among the hits (only `change` hits carry one). */
+    severities: FacetBucket[];
     projects: ProjectFacet[];
   };
   tookMs: number;
@@ -76,20 +80,21 @@ export function emptySearchResponse(page = 1, perPage = 25): CatalogSearchRespon
     perPage,
     pageCount: 0,
     rows: [],
-    facets: { kinds: [], orgs: [], methods: [], formats: [], paradigms: [], projects: [] },
+    facets: { kinds: [], orgs: [], methods: [], formats: [], paradigms: [], severities: [], projects: [] },
     tookMs: 0,
   };
 }
 
 /**
  * Where a hit links: the organization page, the project page, or the version page — at the
- * operation or schema anchor when the row has one.
+ * operation or schema anchor when the row has one, on the *Changes* tab for a changelog entry.
  */
 export function hitHref(hit: CatalogSearchHit): string {
   const tenant = encodeURIComponent(hit.tenant_slug);
   if (hit.hit_type === 'organization' || !hit.project_slug) return `/tenant/${tenant}`;
   const project = encodeURIComponent(hit.project_slug);
   if (hit.hit_type === 'project' || !hit.version_slug) return `/tenant/${tenant}/${project}`;
+  if (hit.hit_type === 'change') return versionChangesHref(hit.tenant_slug, hit.project_slug, hit.version_slug);
   let anchor: string | null = null;
   if (hit.hit_type === 'operation' && hit.method && hit.path) {
     anchor = operationAnchorId(hit.method, hit.path);
