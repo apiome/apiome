@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/partially-open-property-added-covered",
+  "description": "The old additionalProperties schema already allowed a string `nick`",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "Confluent JSON Schema compatibility, partially open content model: add a property its additionalProperties schema covers",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.compatible"
+      ],
+      "severity": "safe"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.compatible"
+      ],
+      "severity": "safe"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.compatible"
+      ],
+      "severity": "safe"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.compatible"
+      ],
+      "severity": "safe"
+    }
+  }
+}

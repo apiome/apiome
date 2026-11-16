@@ -1,0 +1,81 @@
+{
+  "case": "avro/rename-field-without-alias",
+  "description": "Rename a field with no alias",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `rename-field-without-alias`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

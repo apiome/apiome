@@ -1,0 +1,68 @@
+{
+  "case": "protobuf/field-deleted-name-unreserved",
+  "description": "The number is reserved, the name is not.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_NO_DELETE"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_NO_DELETE"
+          ]
+        },
+        "WIRE": {
+          "compatible": true,
+          "detail": []
+        },
+        "WIRE_JSON": {
+          "compatible": false,
+          "detail": [
+            "FIELD_NO_DELETE_UNLESS_NAME_RESERVED"
+          ]
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `field-deleted-name-unreserved`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.wire_json.field-deleted-unreserved"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.wire_json.field-deleted-unreserved"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.wire_json.field-deleted-unreserved"
+      ],
+      "severity": "safe"
+    },
+    "WIRE_JSON": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.wire_json.field-deleted-unreserved"
+      ],
+      "severity": "breaking"
+    }
+  }
+}

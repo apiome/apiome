@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "Order": {
+      "type": "object",
+      "properties": {
+        "ship_to": {
+          "$ref": "#/$defs/Address"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "city": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

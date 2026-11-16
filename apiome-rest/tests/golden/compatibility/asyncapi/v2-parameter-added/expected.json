@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v2-parameter-added",
+  "description": "A parameter without a default.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": [
+            "non-breaking:add:/channels/orders~1{region}/parameters/tenant"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v2-parameter-added`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.consumer.parameter-added"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.consumer.parameter-added"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.consumer.parameter-added"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.consumer.parameter-added"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

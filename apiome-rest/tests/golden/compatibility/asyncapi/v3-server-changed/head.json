@@ -1,0 +1,67 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Orders",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "prod": {
+      "host": "broker2.example.com:9092",
+      "protocol": "kafka"
+    }
+  },
+  "channels": {
+    "orders": {
+      "address": "orders.{region}",
+      "parameters": {
+        "region": {
+          "description": "Sales region"
+        }
+      },
+      "bindings": {
+        "kafka": {
+          "partitions": 3
+        }
+      },
+      "messages": {
+        "OrderPlaced": {
+          "name": "OrderPlaced",
+          "payload": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "total": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "OrderCancelled": {
+          "name": "OrderCancelled",
+          "payload": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "orderReplies": {
+      "address": "orders.replies",
+      "messages": {}
+    }
+  },
+  "operations": {
+    "onOrder": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/orders"
+      }
+    }
+  }
+}

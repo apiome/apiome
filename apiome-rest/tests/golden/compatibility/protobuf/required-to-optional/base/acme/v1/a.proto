@@ -1,0 +1,6 @@
+syntax = "proto2";
+package acme.v1;
+
+message M {
+  required string a = 1;
+}

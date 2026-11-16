@@ -1,0 +1,50 @@
+{
+  "case": "json-schema/annotations-only",
+  "description": "Annotations never change validity",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `annotations-only`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    }
+  }
+}

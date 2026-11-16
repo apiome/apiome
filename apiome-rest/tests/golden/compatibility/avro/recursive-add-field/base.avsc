@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "Node",
+  "namespace": "com.example",
+  "fields": [
+    {
+      "name": "value",
+      "type": "int"
+    },
+    {
+      "name": "next",
+      "type": [
+        "null",
+        "Node"
+      ],
+      "default": null
+    }
+  ]
+}

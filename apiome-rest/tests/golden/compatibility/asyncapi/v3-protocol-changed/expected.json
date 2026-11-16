@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-protocol-changed",
+  "description": "The server's protocol moves; servers are not a diff category, so the finding is unattributed.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "breaking:edit:/servers/prod/protocol"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-protocol-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.protocol-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.protocol-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.protocol-changed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.protocol-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "case": "avro/recursive-add-field",
+  "description": "Add a field without a default to a recursive record",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `recursive-add-field`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

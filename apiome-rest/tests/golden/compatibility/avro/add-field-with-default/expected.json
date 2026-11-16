@@ -1,0 +1,75 @@
+{
+  "case": "avro/add-field-with-default",
+  "description": "Add a field that has a default",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "Confluent docs, compatibility types table: add optional fields",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible"
+      ],
+      "severity": "safe"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible"
+      ],
+      "severity": "safe"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible"
+      ],
+      "severity": "safe"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible"
+      ],
+      "severity": "safe"
+    }
+  }
+}

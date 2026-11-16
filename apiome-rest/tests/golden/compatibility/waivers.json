@@ -1,0 +1,147 @@
+{
+  "_comment": "Known differences from the reference tools (XPC-4.6, #5750). Each waives a reference_disagreement for the listed modes; the reason is published in apiome-docs/docs/govern/compatibility-modes.md. A waiver that covers no disagreement fails the corpus.",
+  "waivers": [
+    {
+      "case": "protobuf/reserved-removed",
+      "tool": "buf",
+      "modes": [
+        "FILE",
+        "PACKAGE",
+        "WIRE",
+        "WIRE_JSON"
+      ],
+      "reason": "XPC-4.3 decision: removing a reservation is Dangerous, not breaking. Nothing breaks until a later change reuses the number or name, and that reuse is graded Breaking."
+    },
+    {
+      "case": "protobuf/field-deleted-unreserved",
+      "tool": "buf",
+      "modes": [
+        "WIRE"
+      ],
+      "reason": "XPC-4.3 decision: under `WIRE`, deleting a field whose number is not reserved is Dangerous. The bytes old writers send are skipped as an unknown field; from `WIRE_JSON` up it is Breaking, as in Buf."
+    },
+    {
+      "case": "asyncapi/v2-server-changed",
+      "tool": "asyncapi-diff",
+      "modes": [
+        "BACKWARD"
+      ],
+      "reason": "XPC-4.4 decision: a server added, removed or moved is Dangerous on both sides. It changes where clients connect, not the messages they exchange; `@asyncapi/diff` calls a host edit breaking."
+    },
+    {
+      "case": "asyncapi/v3-server-changed",
+      "tool": "asyncapi-diff",
+      "modes": [
+        "BACKWARD"
+      ],
+      "reason": "XPC-4.4 decision: a server added, removed or moved is Dangerous on both sides. It changes where clients connect, not the messages they exchange; `@asyncapi/diff` calls a host edit breaking."
+    },
+    {
+      "case": "asyncapi/v2-security-changed",
+      "tool": "asyncapi-diff",
+      "modes": [
+        "BACKWARD"
+      ],
+      "reason": "XPC-4.4 decision: a server's or an operation's `security` change is Dangerous on both sides. Clients need new credentials, but the contract's messages are unchanged."
+    },
+    {
+      "case": "asyncapi/v3-security-changed",
+      "tool": "asyncapi-diff",
+      "modes": [
+        "BACKWARD"
+      ],
+      "reason": "XPC-4.4 decision: a server's or an operation's `security` change is Dangerous on both sides. Clients need new credentials, but the contract's messages are unchanged."
+    },
+    {
+      "case": "asyncapi/v2-parameter-added",
+      "tool": "asyncapi-diff",
+      "modes": [
+        "BACKWARD"
+      ],
+      "reason": "XPC-4.4 decision: an address parameter added without a `default` is Breaking for consumers, who cannot build the new address; `@asyncapi/diff` calls any parameter addition non-breaking."
+    },
+    {
+      "case": "json-schema/array-items-narrowed",
+      "tool": "apicurio-registry",
+      "modes": [
+        "FORWARD"
+      ],
+      "reason": "Apicurio fails both directions when a `type` list narrows. Every value the new schema accepts the old one accepts too, so old readers still read new data: Apiome fails `BACKWARD` only."
+    },
+    {
+      "case": "json-schema/partially-open-property-added-narrower",
+      "tool": "apicurio-registry",
+      "modes": [
+        "FORWARD"
+      ],
+      "reason": "Apicurio fails both directions when a `type` list narrows. Every value the new schema accepts the old one accepts too, so old readers still read new data: Apiome fails `BACKWARD` only."
+    },
+    {
+      "case": "json-schema/ref-cycle",
+      "tool": "apicurio-registry",
+      "modes": [
+        "BACKWARD",
+        "FULL"
+      ],
+      "reason": "Apiome grades every `$defs` entry as a type of its own; a registry checks only the root schema, so a change to a definition the root never references passes there."
+    },
+    {
+      "case": "json-schema/ref-target-moved",
+      "tool": "apicurio-registry",
+      "modes": [
+        "BACKWARD",
+        "FULL"
+      ],
+      "reason": "Apiome grades every `$defs` entry as a type of its own; a registry checks only the root schema, so a change to a definition the root never references passes there."
+    },
+    {
+      "case": "json-schema/ref-shared-definition",
+      "tool": "apicurio-registry",
+      "modes": [
+        "FORWARD",
+        "FULL"
+      ],
+      "reason": "Apiome grades every `$defs` entry as a type of its own; a registry checks only the root schema, so a change to a definition the root never references passes there."
+    },
+    {
+      "case": "graphql/enum-value-removed",
+      "tool": "graphql-inspector",
+      "modes": [
+        "DEFAULT"
+      ],
+      "reason": "The compatibility API grades GraphQL with the format-agnostic structural rules; GraphQL-Inspector's verdict replaces them only where the server runs it. The structural rules grade a removed enum value as a Dangerous type change."
+    },
+    {
+      "case": "graphql/output-field-made-nullable",
+      "tool": "graphql-inspector",
+      "modes": [
+        "DEFAULT"
+      ],
+      "reason": "The compatibility API grades GraphQL with the format-agnostic structural rules; GraphQL-Inspector's verdict replaces them only where the server runs it. They do not read nullability by direction, so an output field made nullable is graded Safe."
+    },
+    {
+      "case": "graphql/output-field-made-non-null",
+      "tool": "graphql-inspector",
+      "modes": [
+        "DEFAULT"
+      ],
+      "reason": "The compatibility API grades GraphQL with the format-agnostic structural rules; GraphQL-Inspector's verdict replaces them only where the server runs it. They do not read nullability by direction, so an output field made non-null is graded Breaking."
+    },
+    {
+      "case": "graphql/required-argument-added",
+      "tool": "graphql-inspector",
+      "modes": [
+        "DEFAULT"
+      ],
+      "reason": "The compatibility API grades GraphQL with the format-agnostic structural rules; GraphQL-Inspector's verdict replaces them only where the server runs it. They grade a new required argument as a Dangerous field change."
+    },
+    {
+      "case": "graphql/required-input-field-added",
+      "tool": "graphql-inspector",
+      "modes": [
+        "DEFAULT"
+      ],
+      "reason": "The compatibility API grades GraphQL with the format-agnostic structural rules; GraphQL-Inspector's verdict replaces them only where the server runs it. They grade a new required input field as Dangerous (`added-mandatory-field`)."
+    }
+  ]
+}

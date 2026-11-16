@@ -1,0 +1,27 @@
+{
+  "case": "graphql/optional-input-field-added",
+  "description": "Add an optional input field",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "DANGEROUS:INPUT_FIELD_ADDED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "added-entity"
+      ],
+      "severity": "safe"
+    }
+  }
+}

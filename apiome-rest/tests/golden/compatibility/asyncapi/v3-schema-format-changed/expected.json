@@ -1,0 +1,51 @@
+{
+  "case": "asyncapi/v3-schema-format-changed",
+  "description": "The payload moves from the AsyncAPI schema to Avro (multi-format schema object).",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": null,
+          "detail": [
+            "unclassified:add:/channels/orders/messages/OrderCancelled/payload/schema",
+            "unclassified:add:/channels/orders/messages/OrderCancelled/payload/schemaFormat",
+            "unclassified:remove:/channels/orders/messages/OrderCancelled/payload/properties",
+            "unclassified:remove:/channels/orders/messages/OrderCancelled/payload/type"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-schema-format-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

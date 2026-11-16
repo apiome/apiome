@@ -1,0 +1,53 @@
+{
+  "case": "asyncapi/v2-schema-format-changed",
+  "description": "The message's schemaFormat moves to Avro.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": null,
+          "detail": [
+            "unclassified:add:/channels/orders~1{region}/subscribe/message/oneOf/1/payload/fields",
+            "unclassified:add:/channels/orders~1{region}/subscribe/message/oneOf/1/payload/name",
+            "unclassified:add:/channels/orders~1{region}/subscribe/message/oneOf/1/payload/namespace",
+            "unclassified:add:/channels/orders~1{region}/subscribe/message/oneOf/1/schemaFormat",
+            "unclassified:edit:/channels/orders~1{region}/subscribe/message/oneOf/1/payload/type",
+            "unclassified:remove:/channels/orders~1{region}/subscribe/message/oneOf/1/payload/properties"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v2-schema-format-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.schema-format-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

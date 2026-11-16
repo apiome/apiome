@@ -1,0 +1,81 @@
+{
+  "case": "avro/fixed-size-change",
+  "description": "Change a fixed size",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "FIXED_SIZE_MISMATCH"
+          ]
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "FIXED_SIZE_MISMATCH"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "FIXED_SIZE_MISMATCH"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `fixed-size-change`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.fixed-size-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.fixed-size-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.fixed-size-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.fixed-size-mismatch"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "case": "avro/rename-record",
+  "description": "Rename the record",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "NAME_MISMATCH"
+          ]
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "NAME_MISMATCH"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "NAME_MISMATCH"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `rename-record`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

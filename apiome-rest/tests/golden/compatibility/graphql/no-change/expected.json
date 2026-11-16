@@ -1,0 +1,23 @@
+{
+  "case": "graphql/no-change",
+  "description": "The same schema on both sides",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    }
+  }
+}

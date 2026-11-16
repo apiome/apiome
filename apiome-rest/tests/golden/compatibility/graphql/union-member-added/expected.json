@@ -1,0 +1,30 @@
+{
+  "case": "graphql/union-member-added",
+  "description": "Add a member to a union",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "DANGEROUS:UNION_MEMBER_ADDED",
+            "NON_BREAKING:TYPE_ADDED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "added-entity",
+        "added-mandatory-field",
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

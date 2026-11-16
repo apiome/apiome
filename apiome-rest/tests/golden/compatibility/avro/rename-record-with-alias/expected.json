@@ -1,0 +1,83 @@
+{
+  "case": "avro/rename-record-with-alias",
+  "description": "Rename the record, keeping the old name as an alias",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "NAME_MISMATCH"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "NAME_MISMATCH"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `rename-record-with-alias`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.name-mismatch"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

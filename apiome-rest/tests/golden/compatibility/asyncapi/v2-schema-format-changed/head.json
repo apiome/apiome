@@ -1,0 +1,65 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Orders",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "prod": {
+      "url": "broker.example.com:9092",
+      "protocol": "kafka"
+    }
+  },
+  "channels": {
+    "orders/{region}": {
+      "parameters": {
+        "region": {
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "bindings": {
+        "kafka": {
+          "partitions": 3
+        }
+      },
+      "subscribe": {
+        "message": {
+          "oneOf": [
+            {
+              "name": "OrderPlaced",
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            {
+              "name": "OrderCancelled",
+              "payload": {
+                "type": "record",
+                "name": "Order",
+                "namespace": "com.example",
+                "fields": [
+                  {
+                    "name": "id",
+                    "type": "string"
+                  }
+                ]
+              },
+              "schemaFormat": "application/vnd.apache.avro;version=1.9.0"
+            }
+          ]
+        },
+        "operationId": "onOrder"
+      }
+    }
+  }
+}

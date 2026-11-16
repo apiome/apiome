@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.719.0] - 2026-11-15
+
+### Added
+- **Cross-format compatibility golden corpus (XPC-4.6, #5750)** — OpenAPI 1.579.0 (version only; no API change):
+  - `tests/golden/compatibility/<format>/<case>/{base,head,expected.json}` for Avro (27 cases), JSON Schema (30),
+    Protobuf (23), AsyncAPI (31) and GraphQL (17). `expected.json` holds Apiome's verdict under every mode or Buf
+    category, graded through `app.compatibility_modes.classify_under` (the compatibility API's path), and each
+    reference tool's recorded verdict.
+  - Reference tools: Apicurio Registry 3.3.4 through its Confluent-compatible API (`APIOME_COMPAT_APICURIO_URL`) and
+    the MFI-12.4 Confluent Schema Registry 7.7.1 recordings for Avro and JSON Schema; `buf breaking` at all four
+    categories; `@asyncapi/diff`; GraphQL-Inspector. Each runs live when available and must match its recording.
+  - A disagreement between Apiome and a reference tool is a `reference_disagreement` finding (written as JSON to
+    `APIOME_COMPAT_CORPUS_REPORT`) and fails the run unless `tests/golden/compatibility/waivers.json` documents it.
+    The 17 documented differences (the XPC-4.3/4.4 decisions, Apicurio's `type`-list narrowing and root-only
+    `$defs` checks, GraphQL's structural grades) are generated into the README and into "Known differences from
+    reference tools" on `apiome-docs/docs/govern/compatibility-modes.md`.
+  - `--update-golden` (or `UPDATE_COMPATIBILITY_GOLDENS=1`) regrades every case, re-records the tools that are
+    available, prunes case directories missing a side, and regenerates the README and the docs table.
+  - `.github/workflows/compatibility-corpus.yml` runs the corpus on every change to the classifiers, with an
+    Apicurio service container, `buf`, `@asyncapi/diff` and GraphQL-Inspector installed and required
+    (`APIOME_COMPAT_CORPUS_STRICT`).
+
 ## [1.718.0] - 2026-11-15
 
 ### Added

@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-avro-payload",
+  "description": "An Avro payload gains a field without a default: the Avro rule fires (new readers cannot read old data).",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": null,
+          "detail": [
+            "unclassified:add:/channels/orders/messages/OrderCancelled/payload/schema/fields/1"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-avro-payload`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-binding-changed",
+  "description": "The Kafka channel binding moves.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": null,
+          "detail": [
+            "unclassified:edit:/channels/orders/bindings/kafka/partitions"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-binding-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.binding-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.binding-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.both.binding-changed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.binding-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

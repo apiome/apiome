@@ -1,0 +1,66 @@
+{
+  "case": "protobuf/reserved-removed",
+  "description": "Dropping a reservation breaks nothing yet, but lets a later change reuse the number or name.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "RESERVED_MESSAGE_NO_DELETE"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "RESERVED_MESSAGE_NO_DELETE"
+          ]
+        },
+        "WIRE": {
+          "compatible": false,
+          "detail": [
+            "RESERVED_MESSAGE_NO_DELETE"
+          ]
+        },
+        "WIRE_JSON": {
+          "compatible": false,
+          "detail": [
+            "RESERVED_MESSAGE_NO_DELETE"
+          ]
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `reserved-removed`",
+  "verdicts": {
+    "FILE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.wire.reserved-removed"
+      ],
+      "severity": "dangerous"
+    },
+    "PACKAGE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.wire.reserved-removed"
+      ],
+      "severity": "dangerous"
+    },
+    "WIRE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.wire.reserved-removed"
+      ],
+      "severity": "dangerous"
+    },
+    "WIRE_JSON": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.wire.reserved-removed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

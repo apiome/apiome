@@ -1,0 +1,7 @@
+syntax = "proto3";
+package acme.v1;
+
+message M {
+  reserved 5;
+  string a = 1;
+}

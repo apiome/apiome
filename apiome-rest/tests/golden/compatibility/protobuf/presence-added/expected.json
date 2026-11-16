@@ -1,0 +1,62 @@
+{
+  "case": "protobuf/presence-added",
+  "description": "proto3 optional adds presence tracking: same bytes, new generated API.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_SAME_CARDINALITY"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_SAME_CARDINALITY"
+          ]
+        },
+        "WIRE": {
+          "compatible": true,
+          "detail": []
+        },
+        "WIRE_JSON": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `presence-added`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.package.presence-changed"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.package.presence-changed"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.package.presence-changed"
+      ],
+      "severity": "safe"
+    },
+    "WIRE_JSON": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.package.presence-changed"
+      ],
+      "severity": "safe"
+    }
+  }
+}

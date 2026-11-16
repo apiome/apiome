@@ -1,0 +1,29 @@
+{
+  "case": "graphql/field-deprecated",
+  "description": "Deprecate an output field",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "NON_BREAKING:DIRECTIVE_USAGE_FIELD_DEFINITION_ADDED",
+            "NON_BREAKING:FIELD_DEPRECATION_ADDED",
+            "NON_BREAKING:FIELD_DEPRECATION_REASON_ADDED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

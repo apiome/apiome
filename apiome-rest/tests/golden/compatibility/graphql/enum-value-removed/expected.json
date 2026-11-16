@@ -1,0 +1,27 @@
+{
+  "case": "graphql/enum-value-removed",
+  "description": "Remove an enum value",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": false,
+          "detail": [
+            "BREAKING:ENUM_VALUE_REMOVED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

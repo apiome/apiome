@@ -1,0 +1,27 @@
+{
+  "case": "graphql/input-field-made-optional",
+  "description": "Make a required input field optional",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "NON_BREAKING:INPUT_FIELD_TYPE_CHANGED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-safe"
+      ],
+      "severity": "safe"
+    }
+  }
+}
