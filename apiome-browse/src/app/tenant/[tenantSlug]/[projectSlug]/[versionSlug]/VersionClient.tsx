@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
@@ -9,6 +9,14 @@ import { SpecSidebar } from '../../../../components/SpecSidebar';
 import { SpecViewer, type SpecFormat } from '../../../../components/SpecViewer';
 import { PublicExportDialog } from '../../../../components/export/PublicExportDialog';
 import { GetSdkPanel } from '../../../../components/sdk/GetSdkPanel';
+import { VersionFindBox } from '../../../../components/search/VersionFindBox';
+import { parseQuery } from '../../../../../../lib/search/query';
+import {
+  buildFindItems,
+  findInVersion,
+  nextFindAnchor,
+  withFindParam,
+} from '../../../../../../lib/search/findInVersion';
 import {
   publicSdkInfoUrl,
   type PublicSdkInfoResponse,
@@ -61,6 +69,8 @@ interface VersionClientProps {
   readerEmail: string | null;
   /** The tab to open first (`?tab=feedback` after reader sign-in returns here). */
   initialTab?: VersionTab;
+  /** The "find in this version" query to open with (`?find=`, BDX-1.3). */
+  initialFind?: string;
 }
 
 export function VersionClient({
@@ -74,6 +84,7 @@ export function VersionClient({
   mockBaseUrl,
   readerEmail,
   initialTab = 'specification',
+  initialFind = '',
 }: VersionClientProps) {
   const [spec, setSpec] = useState<unknown>(null);
   const [format, setFormat] = useState<SpecFormat>('openapi');
@@ -81,6 +92,25 @@ export function VersionClient({
   const [showExport, setShowExport] = useState(false);
   const [activeTab, setActiveTab] = useState<VersionTab>(initialTab);
   const [sdkInfo, setSdkInfo] = useState<PublicSdkInfoResponse | null>(null);
+  const [find, setFind] = useState(initialFind);
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  // BDX-1.3: find in this version. The matcher runs over the spec already loaded in the browser;
+  // the items are rebuilt only when the spec changes, the match on every keystroke.
+  const findItems = useMemo(() => buildFindItems(spec, format), [spec, format]);
+  const findResult = useMemo(
+    () => (spec ? findInVersion(findItems, parseQuery(find)) : null),
+    [spec, findItems, find]
+  );
+
+  // Mirror the query to `?find=` so the narrowed page can be shared and reloaded. replaceState, not
+  // push: each keystroke is not a history entry.
+  useEffect(() => {
+    const next = withFindParam(window.location.href, find, window.location.origin);
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      history.replaceState(history.state, '', next);
+    }
+  }, [find]);
 
   const coords = useMemo(
     () => ({ tenantSlug, projectSlug, versionSlug }),
@@ -138,6 +168,20 @@ export function VersionClient({
     }
   }, []);
 
+  /** `↵` / `⇧↵` in the find box: scroll to the next or previous match and mark it active. */
+  const onFindJump = useCallback(
+    (direction: 1 | -1) => {
+      const next = nextFindAnchor(findResult?.anchors ?? [], activeAnchor, direction);
+      if (next) onSelectAnchor(next);
+    },
+    [findResult, activeAnchor, onSelectAnchor]
+  );
+
+  const onFindClear = useCallback(() => {
+    setFind('');
+    findInputRef.current?.focus();
+  }, []);
+
   const sidebar = (
     <SpecSidebar
       tenantSlug={tenantSlug}
@@ -148,6 +192,8 @@ export function VersionClient({
       format={format}
       activeAnchorId={activeAnchor}
       onSelectAnchor={onSelectAnchor}
+      // The find box lives on the Specification tab, so it only narrows the outline there.
+      find={activeTab === 'specification' ? findResult : null}
     />
   );
 
@@ -249,6 +295,15 @@ export function VersionClient({
 
         {activeTab === 'specification' && (
           <>
+            <VersionFindBox
+              ref={findInputRef}
+              value={find}
+              onChange={setFind}
+              result={findResult}
+              onJump={onFindJump}
+              onClear={onFindClear}
+            />
+
             {version.change_log && (
               <section className="rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
                 <header className="border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80">
@@ -301,6 +356,7 @@ export function VersionClient({
                 mockBaseUrl={mockBaseUrl}
                 sdkEnabled={sdkInfo !== null}
                 onSpecChange={onSpecChange}
+                find={findResult}
               />
             </section>
           </>

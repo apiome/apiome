@@ -53,6 +53,7 @@ This document outlines the planned features, improvements, and enhancements for 
 - ✅ Search history (recent searches)
 - ✅ Highlight search terms in results
 - ✅ Query operators (`method:`, `path:`, `org:`, `type:`, …), facets, scope tabs, sort, paging, shareable URLs
+- ✅ Find within one version — the version page's *Find in this version* box narrows the outline and overview (`?find=`, BDX-1.3)
 
 ### 1.4 Keyboard Shortcuts
 **Status:** Planned  

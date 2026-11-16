@@ -95,6 +95,14 @@ export function SearchPalette() {
         if (isCmdK) close();
         return;
       }
+      // BDX-1.3: on a version page the "find in this version" box is the primary surface for `/`
+      // (⌘K still reaches the catalog). A modal dialog on top keeps the old behaviour.
+      const find = isSlash ? document.querySelector<HTMLInputElement>('[data-find-primary]') : null;
+      if (find && !document.querySelector('[aria-modal="true"]')) {
+        find.focus();
+        find.select();
+        return;
+      }
       if (primary) {
         primary.focus();
         primary.select();

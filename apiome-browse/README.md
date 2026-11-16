@@ -180,6 +180,9 @@ Compare two versions side-by-side or in unified diff mode:
   with `all=1`), ranked exact › prefix › contains plus a per-kind weight, with facet counts and a
   page computed in the same round trip
 - Deep links into the version page at the operation (`#op-…`) or schema (`#schema-…`) anchor
+- Find in one version (BDX-1.3): the version page's find box runs `lib/search/findInVersion.ts`
+  in the browser over the loaded spec — same query language, `method:` / `path:` / `type:`, `?find=`
+  in the URL, `/` to focus and `↵` to jump to the next match
 - `GET /api/search/suggest?q=` feeds the ⌘K palette with the same engine
 
 The pure modules under `lib/search/` are unit-tested; `lib/db/search.ts` runs the statement.

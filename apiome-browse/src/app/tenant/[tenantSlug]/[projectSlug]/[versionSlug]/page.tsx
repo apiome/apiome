@@ -7,6 +7,7 @@ import {
 import { buildMockBaseUrl } from '../../../../../../lib/mock/mockUrl';
 import { VersionClient } from './VersionClient';
 import { getReaderSession } from '../../../../portal/readerSession';
+import { sanitizeSearchInput } from '../../../../utils/searchValidation';
 
 export default async function VersionPage({
   params,
@@ -16,7 +17,9 @@ export default async function VersionPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { tenantSlug, projectSlug, versionSlug } = await params;
-  const { tab } = await searchParams;
+  const { tab, find } = await searchParams;
+  // BDX-1.3: `?find=` pre-fills the "find in this version" box (a search result deep link).
+  const initialFind = sanitizeSearchInput(Array.isArray(find) ? (find[0] ?? '') : (find ?? ''));
   const [version, versions, changelog, readerSession] = await Promise.all([
     getPublicVersionDetails(tenantSlug, projectSlug, versionSlug),
     getPublicVersionsForProject(tenantSlug, projectSlug),
@@ -51,6 +54,7 @@ export default async function VersionPage({
       restApiBaseUrl={restApiBaseUrl}
       mockBaseUrl={mockBaseUrl}
       readerEmail={readerSession?.reader.email ?? null}
+      initialFind={initialFind}
       initialTab={tab === 'feedback' ? 'feedback' : tab === 'changes' ? 'changes' : 'specification'}
     />
   );

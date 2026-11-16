@@ -89,6 +89,46 @@ By default a search covers each project's most recently published version. Choos
 in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
 per version.
 
+### Find inside a version {#find-inside-a-version}
+
+A version page has its own find box above the specification, for when you have landed on a large
+spec and want one operation or schema in it. It searches the spec already open in your browser, so
+it answers as you type.
+
+1. **Open a version page** (for example `/tenant/acme-corp/petstore-sample/1.0.0`) on its
+   **Specification** tab.
+2. **Press <kbd>/</kbd>** or **click the Find in this version box**, and type a query — for example
+   `method:DELETE pets`.
+3. The **Contents** outline in the sidebar and the **Overview** list only the matching operations
+   and schemas, with your words highlighted. The box shows the count (`1 of 42`) and the outline
+   reads **Contents (1 of 42)**.
+4. **Press <kbd>↵</kbd>** to jump to the next match (<kbd>⇧</kbd><kbd>↵</kbd> for the previous
+   one); the jump wraps around. **Press <kbd>Esc</kbd>** or **click Clear find** (×) to show the whole
+   version again.
+
+The box reads the same query language as the catalog search:
+
+| Write | To find |
+|---|---|
+| `pets` | Operations and schemas that mention the word in their path, summary, description, operationId, tags, parameter names or response codes — or, for a schema, its name, title, description or property names |
+| `"create a pet"` | The words together, in this order |
+| `pet -remove` | Items about pets that do not mention *remove* |
+| `method:DELETE` | Operations with that HTTP method |
+| `path:{petId}` | Operations whose path contains the text |
+| `type:schema` | One kind — `operation` or `schema` (aliases such as `endpoint` and `model` work), or `workflow` on the Arazzo view |
+
+Catalog-only filters (`org:`, `project:`, `version:`, …) are ignored here, because everything on the
+page is already in that organization, project and version.
+
+When nothing matches, the page says *Nothing in this version matches …* with a **Clear search**
+button. The find narrows the **Overview** only; the **Code** and **Visual** views always show the
+whole document.
+
+**Share a narrowed page.** The query is kept in the URL as `?find=`, so copying the address gives a
+colleague the same narrowed page. A link can carry both the query and an item, such as
+`/tenant/acme-corp/petstore-sample/1.0.0?find=method%3ADELETE%20pets#op-delete-pets-petid`, and the
+page opens already narrowed and scrolled to that operation.
+
 ### Search MCP servers, including the MCP Registry {#search-mcp-servers}
 
 **Browse to `/mcp/search`** in the browse app (the **MCP Catalog** link in the navbar, then the
