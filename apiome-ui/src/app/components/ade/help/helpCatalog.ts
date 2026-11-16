@@ -1777,6 +1777,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['approve', 'request changes', 'reviewer', 'round', 'force publish'],
   },
   {
+    id: 'publication-change-reports',
+    title: 'Publication change reports',
+    summary: 'The readable report each publish writes: its baseline, edits, templates and review.',
+    page: 'apiome-docs/docs/ship/publication-change-reports.md',
+    section: 'reference',
+    keywords: ['release notes', 'baseline', 'diff', 'mustache', 'template', 'regenerate', 'publish', 'changelog'],
+  },
+  {
     id: 'breaking-changes-across-formats',
     title: 'Breaking changes across formats',
     summary: 'How Avro, JSON Schema, Protobuf and AsyncAPI changes are graded, and where the grades show.',
