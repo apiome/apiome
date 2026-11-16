@@ -2639,18 +2639,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{segment1}",
-        "removed operation POST /v2/orders/orders",
-        "added operation default.CreateOrder",
-        "added operation default.GetOrder",
-        "added operation default.ListOrders"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -2990,18 +2988,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{segment1}",
-        "removed operation POST /v2/orders/orders",
-        "added operation default.CreateOrder",
-        "added operation default.GetOrder",
-        "added operation default.ListOrders"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -7768,17 +7764,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation GET /orders",
-        "removed operation GET /orders/{orderId}",
-        "added operation default.get_order",
-        "added operation default.list_orders",
-        "changed root"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -8116,17 +8111,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /orders",
-        "removed operation GET /orders/{orderId}",
-        "added operation default.get_order",
-        "added operation default.list_orders",
-        "changed root"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -13062,16 +13056,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "added operation orders.ANY__v2_orders",
-        "changed root",
-        "changed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -13410,16 +13404,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "added operation orders.ANY__v2_orders",
-        "changed root",
-        "changed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -19639,18 +19633,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation storefront.ANY__",
-        "added operation storefront.ANY__health"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -19989,18 +19981,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation storefront.ANY__",
-        "added operation storefront.ANY__health"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -22976,18 +22966,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "added operation identity_users.GET__users",
-        "added operation identity_users.GET__users__userId_",
-        "added operation identity_users.POST__users"
-      ],
       "family": "gateway-api",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -23328,18 +23316,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "added operation identity_users.GET__users",
-        "added operation identity_users.GET__users__userId_",
-        "added operation identity_users.POST__users"
-      ],
       "family": "gateway-api",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -24315,18 +24301,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /metrics",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation frontend_api_public.ANY__"
-      ],
       "family": "haproxy",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -24665,18 +24649,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /metrics",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation frontend_api_public.ANY__"
-      ],
       "family": "haproxy",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -31860,18 +31842,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /v2/products",
-        "removed operation GET /v2/orders",
-        "removed operation POST /v2/orders",
-        "added operation storefront_orders.ANY__"
-      ],
       "family": "istio",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -32210,18 +32190,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /v2/products",
-        "removed operation GET /v2/orders",
-        "removed operation POST /v2/orders",
-        "added operation storefront_orders.ANY__"
-      ],
       "family": "istio",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -35716,18 +35694,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation DELETE /users/{userId}",
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "removed operation PUT /users/{userId}",
-        "added operation users_service.DELETE__users__userId_"
-      ],
       "family": "kong",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -36068,18 +36044,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation DELETE /users/{userId}",
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "removed operation PUT /users/{userId}",
-        "added operation users_service.DELETE__users__userId_"
-      ],
       "family": "kong",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -40994,18 +40968,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /#api.example.com:80@return",
-        "removed operation ANY /healthz",
-        "removed operation ANY /static/",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products"
-      ],
       "family": "nginx",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -41344,18 +41316,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /#api.example.com:80@return",
-        "removed operation ANY /healthz",
-        "removed operation ANY /static/",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products"
-      ],
       "family": "nginx",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -61956,18 +61926,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation catalogue_service.ANY__v2_products",
-        "added operation noop.ANY__",
-        "added operation orders_service.ANY__v2_orders"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -62306,18 +62274,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation catalogue_service.ANY__v2_products",
-        "added operation noop.ANY__",
-        "added operation orders_service.ANY__v2_orders"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -63294,18 +63260,16 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation DELETE /v2/orders/orders/{id}",
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{id}",
-        "added operation Orders_API.DELETE__v2_orders_orders__id_",
-        "added operation Orders_API.GET__v2_orders_orders",
-        "added operation Orders_API.GET__v2_orders_orders__id_"
-      ],
       "family": "tyk",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -63646,18 +63610,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation DELETE /v2/orders/orders/{id}",
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{id}",
-        "added operation Orders_API.DELETE__v2_orders_orders__id_",
-        "added operation Orders_API.GET__v2_orders_orders",
-        "added operation Orders_API.GET__v2_orders_orders__id_"
-      ],
       "family": "tyk",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -71898,10 +71860,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4649,
+    "lossy": 4671,
     "ok": 42,
     "refused": 2267,
-    "silent-loss": 170,
+    "silent-loss": 148,
     "skipped": 0
   },
   "families": [

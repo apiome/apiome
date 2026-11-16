@@ -177,7 +177,7 @@ def _fixture_body(fixtures: Mapping[str, Any], channel_key: str, message: Messag
 # -------------------------------------------------------------------------------------------
 
 
-_AVRO_PRIMITIVES = {
+_AVRO_PRIMITIVES: dict[str, dict[str, Any]] = {
     "null": {"type": "null"},
     "boolean": {"type": "boolean"},
     "int": {"type": "integer", "minimum": -(2**31), "maximum": 2**31 - 1},
@@ -246,9 +246,7 @@ def _is_avro_schema(schema: Any) -> bool:
     """Whether a payload schema looks like Avro rather than JSON Schema."""
     if isinstance(schema, list):
         return True
-    return isinstance(schema, dict) and (
-        schema.get("type") in {"record", "enum", "fixed", "map"} or "fields" in schema
-    )
+    return isinstance(schema, dict) and (schema.get("type") in {"record", "enum", "fixed", "map"} or "fields" in schema)
 
 
 def _protobuf_descriptor(api: CanonicalApi, message: Message) -> Any:
@@ -318,7 +316,8 @@ def _encode_protobuf(value: Any, message_class: Any) -> bytes:
         instance = json_format.ParseDict(dict(value), message_class())
     except json_format.ParseError as exc:
         raise EventRejectedError("invalid-payload", "the payload does not match the Protobuf message") from exc
-    return instance.SerializeToString()
+    serialized: bytes = instance.SerializeToString()
+    return serialized
 
 
 def _example_from_schema(schema: Any) -> Any:

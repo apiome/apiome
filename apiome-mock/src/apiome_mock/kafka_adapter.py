@@ -190,8 +190,12 @@ class KafkaAdapter:
                 )
             except Exception as exc:  # noqa: BLE001 - categorised, never echoed
                 reason = classify_error(exc)
-                _log.info("kafka_publish_failed", binding_id=self.connection.binding_id, reason=reason,
-                          error_type=type(exc).__name__)
+                _log.info(
+                    "kafka_publish_failed",
+                    binding_id=self.connection.binding_id,
+                    reason=reason,
+                    error_type=type(exc).__name__,
+                )
                 if reason in {"auth", "connect", "tls"}:
                     # A broken session is rebuilt on the next publish.
                     await self.close()

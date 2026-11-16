@@ -30,10 +30,10 @@ __all__ = [
 ]
 
 #: The two states ``/health`` reports for a present dev broker.
-BROKER_REACHABLE = "reachable"
-BROKER_UNREACHABLE = "unreachable"
-
 BrokerState = Literal["reachable", "unreachable"]
+
+BROKER_REACHABLE: BrokerState = "reachable"
+BROKER_UNREACHABLE: BrokerState = "unreachable"
 
 #: The Kafka port an entry gets when it names none.
 _DEFAULT_PORT = 9092
@@ -100,9 +100,7 @@ class DevBrokerHealth:
         """Return whether ``host`` resolves at all (the compose profile is active)."""
         loop = asyncio.get_running_loop()
         try:
-            await asyncio.wait_for(
-                loop.getaddrinfo(host, port, proto=socket.IPPROTO_TCP), self.timeout_seconds
-            )
+            await asyncio.wait_for(loop.getaddrinfo(host, port, proto=socket.IPPROTO_TCP), self.timeout_seconds)
         except (OSError, asyncio.TimeoutError, UnicodeError):
             return False
         return True
@@ -110,9 +108,7 @@ class DevBrokerHealth:
     async def _connects(self, host: str, port: int) -> bool:
         """Return whether a TCP connection to ``host:port`` opens within the timeout."""
         try:
-            _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port), self.timeout_seconds
-            )
+            _reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), self.timeout_seconds)
         except (OSError, asyncio.TimeoutError):
             return False
         writer.close()

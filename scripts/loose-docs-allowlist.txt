@@ -60,6 +60,7 @@ apiome-rest/docs/changelog_generator.md
 apiome-rest/docs/comments.md
 apiome-rest/docs/component_library.md
 apiome-rest/docs/consumer_contracts.md
+apiome-rest/docs/consumer_feedback.md
 apiome-rest/docs/consumer_impact.md
 apiome-rest/docs/contract_runner.md
 apiome-rest/docs/contract_suite.md
@@ -103,6 +104,7 @@ apiome-rest/docs/openapi_validation_packs.md
 apiome-rest/docs/overlay.md
 apiome-rest/docs/payload_analysis.md
 apiome-rest/docs/payload_analyzers.md
+apiome-rest/docs/portal_auth.md
 apiome-rest/docs/preservation_envelope.md
 apiome-rest/docs/projection_evidence_guardrails.md
 apiome-rest/docs/projection_strategies.md
@@ -125,6 +127,8 @@ apiome-rest/docs/reviews.md
 apiome-rest/docs/scale_benchmarks.md
 apiome-rest/docs/scanner_evaluation.md
 apiome-rest/docs/schema_test_suites.md
+apiome-rest/docs/sdk_beacon.md
+apiome-rest/docs/sdk_compat_manifest.md
 apiome-rest/docs/sdk_generation_settings.md
 apiome-rest/docs/sdk_git_delivery.md
 apiome-rest/docs/sdk_package_publishing.md

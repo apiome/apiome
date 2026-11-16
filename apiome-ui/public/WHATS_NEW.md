@@ -318,6 +318,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Mocks:
+  - A property that is one of several plain types (for example `oneOf: [string, integer]`) now gets a value of the first type in a mock response, such as a string. Before, the mock filled it with an empty object, which matched none of its types
 - Browse:
   - Versions created before Apiome recorded each version's format now show under the **format** and **paradigm** filters too: OpenAPI versions as `openapi` (or their exact version, such as `openapi-3.1`, when Apiome knows it) and Arazzo versions as `arazzo`, both under **REST**. Before, they matched no format or paradigm filter
 - Sign-in:

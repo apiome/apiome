@@ -1,6 +1,6 @@
 [project]
 name = "apiome-mock"
-version = "0.19.0"
+version = "0.19.1"
 description = "Objectified mock server runtime for Apiome (FastAPI)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -74,6 +74,12 @@ mypy_path = ["src", "../apiome-rest/src", "../apiome-mcp/src"]
 # — installing it would put an Azure package in every mock deployment — so it has no stubs here.
 [[tool.mypy.overrides]]
 module = ["azure.*"]
+ignore_missing_imports = true
+
+# aiokafka (the Kafka producer adapter, #5736, XPC-2.2) ships neither stubs nor a py.typed marker;
+# it is imported lazily inside the adapter and typed as Any there.
+[[tool.mypy.overrides]]
+module = ["aiokafka", "aiokafka.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

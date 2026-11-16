@@ -543,6 +543,10 @@ def generate_example(
         if picked is not None:
             merged = dict(schema)
             merged.pop(combinator, None)
+            if _schema_type(picked) not in (None, "object"):
+                # A scalar or array branch (e.g. ``oneOf: [string, integer]``): generate the branch itself.
+                schema = {**merged, **picked}
+                continue
             merged.setdefault("properties", {})
             merged["properties"] = {**merged.get("properties", {}), **picked.get("properties", {})}
             merged["required"] = sorted(set(merged.get("required", [])) | set(picked.get("required", [])))

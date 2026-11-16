@@ -305,8 +305,12 @@ def create_app() -> FastAPI:
         raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
         validated_key = await validate_api_key_for_tenant(pool, api_key=raw_api_key, tenant_slug=tenant)
         return await handle_list_channels(
-            tenant=tenant, project=project, version=version, pool=pool,
-            cache=app.state.canonical_spec_cache, api_key=validated_key,
+            tenant=tenant,
+            project=project,
+            version=version,
+            pool=pool,
+            cache=app.state.canonical_spec_cache,
+            api_key=validated_key,
         )
 
     @app.post(f"/{{tenant}}/{{project}}/{{version}}/{CHANNELS_SEGMENT}/{{channel_key:path}}/publish")
@@ -317,8 +321,14 @@ def create_app() -> FastAPI:
         raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
         validated_key = await validate_api_key_for_tenant(pool, api_key=raw_api_key, tenant_slug=tenant)
         return await handle_channel_publish(
-            request, tenant=tenant, project=project, version=version, channel_key=channel_key,
-            pool=pool, cache=app.state.canonical_spec_cache, publisher=app.state.broker_publisher,
+            request,
+            tenant=tenant,
+            project=project,
+            version=version,
+            channel_key=channel_key,
+            pool=pool,
+            cache=app.state.canonical_spec_cache,
+            publisher=app.state.broker_publisher,
             api_key=validated_key,
         )
 

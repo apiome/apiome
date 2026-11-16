@@ -159,8 +159,14 @@ class BrokerPublisher:
         if row is None:
             await self.drop(key)
             return None
-        state = (str(row.get("id")), str(row.get("rotated_at") or ""), row.get("key_version"),
-                 tuple(row.get("bootstrap") or ()), bool(row.get("tls_enabled")), bool(row.get("tls_verify", True)))
+        state = (
+            str(row.get("id")),
+            str(row.get("rotated_at") or ""),
+            row.get("key_version"),
+            tuple(row.get("bootstrap") or ()),
+            bool(row.get("tls_enabled")),
+            bool(row.get("tls_verify", True)),
+        )
         entry = self._adapters.get(key)
         if entry is not None and entry.state_key == state:
             return entry.adapter
@@ -180,8 +186,15 @@ class BrokerPublisher:
         for key in list(self._adapters):
             await self.drop(key)
 
-    def _count(self, compiled: CompiledCanonicalSpec, tenant_id: UUID | None, channel: str,
-               encoding: str, trigger: str, published: bool) -> None:
+    def _count(
+        self,
+        compiled: CompiledCanonicalSpec,
+        tenant_id: UUID | None,
+        channel: str,
+        encoding: str,
+        trigger: str,
+        published: bool,
+    ) -> None:
         """Count one outcome in ``mock_event_publish_usage`` (fire-and-forget, best-effort)."""
         if tenant_id is None:
             return
@@ -191,8 +204,15 @@ class BrokerPublisher:
                 async with self.pool.connection() as conn:
                     await conn.execute(
                         "SELECT apiome.record_mock_event_publish(%s::uuid, %s, %s, %s, %s, %s, %s)",
-                        (tenant_id, compiled.loaded.project_slug, compiled.loaded.version_label, channel,
-                         encoding, trigger, published),
+                        (
+                            tenant_id,
+                            compiled.loaded.project_slug,
+                            compiled.loaded.version_label,
+                            channel,
+                            encoding,
+                            trigger,
+                            published,
+                        ),
                     )
                     await conn.commit()
             except Exception:  # noqa: BLE001 - usage never fails a publish
@@ -242,14 +262,20 @@ class BrokerPublisher:
         elif trigger == TRIGGER_ON_DEMAND:
             messages = messages[:1]
         if not messages:
-            return [PublishOutcome(status=STATUS_UNPUBLISHABLE, channel=channel, topic=route.kafka.topic,
-                                   reason="no-outbound-message")]
+            return [
+                PublishOutcome(
+                    status=STATUS_UNPUBLISHABLE, channel=channel, topic=route.kafka.topic, reason="no-outbound-message"
+                )
+            ]
 
         try:
             adapter = await self.adapter_for(compiled.loaded.revision_id)
         except BindingUnavailableError:
-            return [PublishOutcome(status=STATUS_UNREACHABLE, channel=channel, topic=route.kafka.topic,
-                                   reason="credential-unavailable")]
+            return [
+                PublishOutcome(
+                    status=STATUS_UNREACHABLE, channel=channel, topic=route.kafka.topic, reason="credential-unavailable"
+                )
+            ]
         if adapter is None:
             return [PublishOutcome(status=STATUS_NO_BROKER, channel=channel, topic=route.kafka.topic)]
 
@@ -259,43 +285,88 @@ class BrokerPublisher:
         outcomes: list[PublishOutcome] = []
         for message in messages:
             blocked = await enforce_mock_limits_for_context(
-                client_host=_BROKER_CLIENT, tenant=tenant, project=project, version=version,
-                pool=self.pool, settings=self.settings, transport="kafka",
+                client_host=_BROKER_CLIENT,
+                tenant=tenant,
+                project=project,
+                version=version,
+                pool=self.pool,
+                settings=self.settings,
+                transport="kafka",
             )
             if blocked is not None:
-                outcomes.append(PublishOutcome(status=STATUS_RATE_LIMITED, channel=channel,
-                                               topic=route.kafka.topic, message=message.key))
+                outcomes.append(
+                    PublishOutcome(
+                        status=STATUS_RATE_LIMITED, channel=channel, topic=route.kafka.topic, message=message.key
+                    )
+                )
                 break
             try:
                 event: EncodedEvent = build_event(
-                    compiled.api, channel, message, scenario=scenario, fixtures=fixtures,
-                    payload=payload, seed=seed,
+                    compiled.api,
+                    channel,
+                    message,
+                    scenario=scenario,
+                    fixtures=fixtures,
+                    payload=payload,
+                    seed=seed,
                 )
             except EventRejectedError as exc:
                 self._count(compiled, tenant_id, channel, encoding_for(message), trigger, published=False)
                 _log.info("mock_event_rejected", channel=channel, message=message.key, reason=exc.reason)
-                outcomes.append(PublishOutcome(status=STATUS_REJECTED, channel=channel, topic=route.kafka.topic,
-                                               encoding=encoding_for(message), message=message.key,
-                                               reason=exc.reason, detail=exc.detail))
+                outcomes.append(
+                    PublishOutcome(
+                        status=STATUS_REJECTED,
+                        channel=channel,
+                        topic=route.kafka.topic,
+                        encoding=encoding_for(message),
+                        message=message.key,
+                        reason=exc.reason,
+                        detail=exc.detail,
+                    )
+                )
                 continue
             assert route.kafka.topic is not None
             record = PublishRecord(topic=route.kafka.topic, value=event.value, key=event.key, headers=event.headers)
             try:
                 receipt = await adapter.publish(record)
             except BrokerError as exc:
-                outcomes.append(PublishOutcome(status=STATUS_UNREACHABLE, channel=channel, topic=route.kafka.topic,
-                                               encoding=event.encoding, source=event.source, message=message.key,
-                                               reason=exc.reason))
+                outcomes.append(
+                    PublishOutcome(
+                        status=STATUS_UNREACHABLE,
+                        channel=channel,
+                        topic=route.kafka.topic,
+                        encoding=event.encoding,
+                        source=event.source,
+                        message=message.key,
+                        reason=exc.reason,
+                    )
+                )
                 break
             self._count(compiled, tenant_id, channel, event.encoding, trigger, published=True)
             record_mock_transport_event(
-                pool=self.pool, tenant=tenant, project=project, version=version, transport="kafka",
-                channel=channel, direction="outbound", tenant_id=tenant_id, api_key_id=api_key_id,
+                pool=self.pool,
+                tenant=tenant,
+                project=project,
+                version=version,
+                transport="kafka",
+                channel=channel,
+                direction="outbound",
+                tenant_id=tenant_id,
+                api_key_id=api_key_id,
                 settings=self.settings,
             )
-            outcomes.append(PublishOutcome(status=STATUS_PUBLISHED, channel=channel, topic=receipt.topic,
-                                           partition=receipt.partition, offset=receipt.offset,
-                                           encoding=event.encoding, source=event.source, message=message.key))
+            outcomes.append(
+                PublishOutcome(
+                    status=STATUS_PUBLISHED,
+                    channel=channel,
+                    topic=receipt.topic,
+                    partition=receipt.partition,
+                    offset=receipt.offset,
+                    encoding=event.encoding,
+                    source=event.source,
+                    message=message.key,
+                )
+            )
         return outcomes
 
 
@@ -334,8 +405,9 @@ class PeriodicBrokerProducer:
                 return
             scenario = scenario_for(compiled, None)
             for route in routes:
-                outcomes = await self.publisher.publish_channel(compiled, route, trigger=TRIGGER_PERIODIC,
-                                                                scenario=scenario)
+                outcomes = await self.publisher.publish_channel(
+                    compiled, route, trigger=TRIGGER_PERIODIC, scenario=scenario
+                )
                 for outcome in outcomes:
                     if outcome.status != STATUS_PUBLISHED:
                         _log.info("broker_periodic_publish", version_id=version_id, **outcome.as_json())

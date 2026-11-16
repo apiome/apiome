@@ -65,6 +65,9 @@ def test_parameter_values_prefer_enum_then_examples_then_default():
 
 
 def test_resolve_address_reports_undeclared_parameters():
-    channel = Channel(key="k", address="a/{known}/{unknown}",
-                      parameters=[CanonicalField(key="k", name="known", type=TypeRef(name="string"), default="v")])
+    channel = Channel(
+        key="k",
+        address="a/{known}/{unknown}",
+        parameters=[CanonicalField(key="k", name="known", type=TypeRef(name="string"), default="v")],
+    )
     assert resolve_address(channel) == ("a/v/{unknown}", ("unknown",))

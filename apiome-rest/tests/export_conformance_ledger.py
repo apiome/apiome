@@ -89,37 +89,15 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 1c96684d-b631-4bf4-838e-9b',
     ('typescript-types', 'cloudevents'):
         'added channel com.example.orderline; added operation 6339f454-091a-492f-b9c8-a34dafebd3dd; changed r',
-    # --- connectrpc (15) ---
+    # --- connectrpc (4) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
     ('acp', 'connectrpc'):
         'removed agent research-assistant; removed operation research-assistant.Cite sources; removed operati',
     ('agents-manifest', 'connectrpc'):
         'added operation A2A_agents.https___returns_northwind_example__well_known_agent_card_json; added oper',
-    ('apigee', 'connectrpc'):
-        'removed operation GET /v2/orders/orders; removed operation GET /v2/orders/orders/{segment1}; removed',
     ('arazzo', 'connectrpc'):
         'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
-    ('azure-apim', 'connectrpc'):
-        'removed operation GET /orders; removed operation GET /orders/{orderId}; added operation default.get_',
-    ('consul', 'connectrpc'):
-        'removed operation ANY /v2/orders; added operation orders.ANY__v2_orders; changed root; changed servi',
-    ('envoy-xds', 'connectrpc'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
-    ('gateway-api', 'connectrpc'):
-        'removed operation GET /users; removed operation GET /users/{userId}; removed operation POST /users; ',
-    ('haproxy', 'connectrpc'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /metrics; removed ope',
-    ('istio', 'connectrpc'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; removed',
-    ('kong', 'connectrpc'):
-        'removed operation DELETE /users/{userId}; removed operation GET /users; removed operation GET /users',
-    ('nginx', 'connectrpc'):
-        'removed operation ANY /; removed operation ANY /#api.example.com:80@return; removed operation ANY /h',
-    ('traefik', 'connectrpc'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
-    ('tyk', 'connectrpc'):
-        'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
     # --- graphql (11) ---
     ('agents-manifest', 'graphql'):
         'added operation Mutation.https___returns_northwind_example__well_known_agent_card_json; added operat',
@@ -279,37 +257,15 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation POST /examples:calculator.calculate/describe; added operation POST /examples:calcula',
     ('zod', 'openapi'):
         'changed root; changed type NewOrder; changed type Order; changed type OrderLine; changed type OrderS',
-    # --- protobuf (15) ---
+    # --- protobuf (4) ---
     ('a2a', 'protobuf'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
     ('acp', 'protobuf'):
         'removed agent research-assistant; removed operation research-assistant.Cite sources; removed operati',
     ('agents-manifest', 'protobuf'):
         'added operation A2A_agents.https___returns_northwind_example__well_known_agent_card_json; added oper',
-    ('apigee', 'protobuf'):
-        'removed operation GET /v2/orders/orders; removed operation GET /v2/orders/orders/{segment1}; removed',
     ('arazzo', 'protobuf'):
         'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
-    ('azure-apim', 'protobuf'):
-        'removed operation GET /orders; removed operation GET /orders/{orderId}; added operation default.get_',
-    ('consul', 'protobuf'):
-        'removed operation ANY /v2/orders; added operation orders.ANY__v2_orders; changed root; changed servi',
-    ('envoy-xds', 'protobuf'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
-    ('gateway-api', 'protobuf'):
-        'removed operation GET /users; removed operation GET /users/{userId}; removed operation POST /users; ',
-    ('haproxy', 'protobuf'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /metrics; removed ope',
-    ('istio', 'protobuf'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; removed',
-    ('kong', 'protobuf'):
-        'removed operation DELETE /users/{userId}; removed operation GET /users; removed operation GET /users',
-    ('nginx', 'protobuf'):
-        'removed operation ANY /; removed operation ANY /#api.example.com:80@return; removed operation ANY /h',
-    ('traefik', 'protobuf'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
-    ('tyk', 'protobuf'):
-        'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
     # --- wit (12) ---
     ('acp', 'wit'):
         'removed agent research-assistant; added operation apiome:research-assistant.research-assistant.cite-',

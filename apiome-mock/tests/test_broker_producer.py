@@ -38,9 +38,18 @@ from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from kafka_fixtures import compiled_kafka_spec, route
 
 _TENANT_ID = uuid4()
-_BINDING_ROW = {"id": "b-1", "protocol": "kafka", "bootstrap": ["broker.example.com:9092"], "tls_enabled": False,
-                "tls_verify": True, "sasl_mechanism": None, "credential_ciphertext": None, "key_version": None,
-                "client_id_prefix": "acme", "rotated_at": None}
+_BINDING_ROW = {
+    "id": "b-1",
+    "protocol": "kafka",
+    "bootstrap": ["broker.example.com:9092"],
+    "tls_enabled": False,
+    "tls_verify": True,
+    "sasl_mechanism": None,
+    "credential_ciphertext": None,
+    "key_version": None,
+    "client_id_prefix": "acme",
+    "rotated_at": None,
+}
 
 
 class FakeAdapter:
@@ -78,8 +87,13 @@ def env(monkeypatch, mock_pool):
     from apiome_mock.settings import Settings
 
     FakeAdapter.instances = []
-    state: dict[str, Any] = {"binding": dict(_BINDING_ROW), "blocked": False, "counts": [], "events": [],
-                             "enabled": True}
+    state: dict[str, Any] = {
+        "binding": dict(_BINDING_ROW),
+        "blocked": False,
+        "counts": [],
+        "events": [],
+        "enabled": True,
+    }
 
     async def load_binding(pool, version_id):
         return state["binding"]
@@ -100,9 +114,13 @@ def env(monkeypatch, mock_pool):
     monkeypatch.setattr(producer_module, "enforce_mock_limits_for_context", enforce)
     monkeypatch.setattr(producer_module, "record_mock_transport_event", lambda **kw: state["events"].append(kw))
     monkeypatch.setattr(producer_module, "version_mock_enabled", enabled)
-    monkeypatch.setattr(BrokerPublisher, "_count",
-                        lambda self, compiled, tenant_id, channel, encoding, trigger, published:
-                        state["counts"].append((channel, encoding, trigger, published)))
+    monkeypatch.setattr(
+        BrokerPublisher,
+        "_count",
+        lambda self, compiled, tenant_id, channel, encoding, trigger, published: state["counts"].append(
+            (channel, encoding, trigger, published)
+        ),
+    )
     publisher = BrokerPublisher(pool=mock_pool, settings=Settings(), adapter_factory=FakeAdapter)
     state["publisher"] = publisher
     return state
@@ -200,8 +218,15 @@ def test_the_periodic_producer_publishes_every_interval_and_stops_when_the_mock_
         return compiled
 
     producer = PeriodicBrokerProducer(publisher=env["publisher"], load_spec=load_spec)
-    bound = BoundVersion(version_id=compiled.loaded.revision_id, tenant_slug="demo", project_slug="events",
-                         version_label="1.0.0", binding_id="b-1", rotated_at=None, key_version=None)
+    bound = BoundVersion(
+        version_id=compiled.loaded.revision_id,
+        tenant_slug="demo",
+        project_slug="events",
+        version_label="1.0.0",
+        binding_id="b-1",
+        rotated_at=None,
+        key_version=None,
+    )
 
     async def scenario():
         task = asyncio.create_task(producer._version_loop(bound))
@@ -220,8 +245,17 @@ def test_the_periodic_producer_publishes_every_interval_and_stops_when_the_mock_
 
 
 def test_refresh_starts_and_stops_version_loops(env, monkeypatch):
-    rows = [BoundVersion(version_id=uuid4(), tenant_slug="demo", project_slug="events", version_label="1.0.0",
-                         binding_id="b-1", rotated_at=None, key_version=None)]
+    rows = [
+        BoundVersion(
+            version_id=uuid4(),
+            tenant_slug="demo",
+            project_slug="events",
+            version_label="1.0.0",
+            binding_id="b-1",
+            rotated_at=None,
+            key_version=None,
+        )
+    ]
 
     async def bound(pool):
         return list(rows)
@@ -265,8 +299,11 @@ def _cache(compiled):
 
 def test_the_channel_listing_reports_each_channels_support(env, mock_pool):
     compiled = compiled_kafka_spec()
-    response = asyncio.run(channel_routes.handle_list_channels(
-        tenant="demo", project="events", version="1.0.0", pool=mock_pool, cache=_cache(compiled), api_key=None))
+    response = asyncio.run(
+        channel_routes.handle_list_channels(
+            tenant="demo", project="events", version="1.0.0", pool=mock_pool, cache=_cache(compiled), api_key=None
+        )
+    )
     body = json.loads(response.body)
     assert body["brokerBound"] is True
     support = {c["address"]: (c["kafka"]["support"], c["kafka"]["topic"]) for c in body["channels"]}
@@ -290,31 +327,67 @@ def test_the_channel_listing_reports_each_channels_support(env, mock_pool):
 )
 def test_on_demand_publish_maps_outcomes_to_status_codes(env, mock_pool, channel, body, status):
     compiled = compiled_kafka_spec()
-    response = asyncio.run(channel_routes.handle_channel_publish(
-        _request(f"/demo/events/1.0.0/__channels__/{channel}/publish", body),
-        tenant="demo", project="events", version="1.0.0", channel_key=channel, pool=mock_pool,
-        cache=_cache(compiled), publisher=env["publisher"], api_key=None))
+    response = asyncio.run(
+        channel_routes.handle_channel_publish(
+            _request(f"/demo/events/1.0.0/__channels__/{channel}/publish", body),
+            tenant="demo",
+            project="events",
+            version="1.0.0",
+            channel_key=channel,
+            pool=mock_pool,
+            cache=_cache(compiled),
+            publisher=env["publisher"],
+            api_key=None,
+        )
+    )
     assert response.status_code == status, response.body
 
 
 def test_on_demand_publish_without_a_broker_is_409(env, mock_pool):
     env["binding"] = None
     compiled = compiled_kafka_spec()
-    response = asyncio.run(channel_routes.handle_channel_publish(
-        _request("/demo/events/1.0.0/__channels__/user/signedup/publish"),
-        tenant="demo", project="events", version="1.0.0", channel_key="user/signedup", pool=mock_pool,
-        cache=_cache(compiled), publisher=env["publisher"], api_key=None))
+    response = asyncio.run(
+        channel_routes.handle_channel_publish(
+            _request("/demo/events/1.0.0/__channels__/user/signedup/publish"),
+            tenant="demo",
+            project="events",
+            version="1.0.0",
+            channel_key="user/signedup",
+            pool=mock_pool,
+            cache=_cache(compiled),
+            publisher=env["publisher"],
+            api_key=None,
+        )
+    )
     assert response.status_code == 409
     assert json.loads(response.body)["status"] == "no-broker-bound"
 
 
 def test_the_scenario_header_shapes_an_on_demand_publish(env, mock_pool):
-    settings = {"scenarios": {"vip": {"operations": {"PUBLISH /user/signedup": {"responses": [
-        {"status": 200, "body": {"userId": "vip", "email": "vip@example.com"}}]}}}}}
+    settings = {
+        "scenarios": {
+            "vip": {
+                "operations": {
+                    "PUBLISH /user/signedup": {
+                        "responses": [{"status": 200, "body": {"userId": "vip", "email": "vip@example.com"}}]
+                    }
+                }
+            }
+        }
+    }
     compiled = compiled_kafka_spec(mock_settings=settings)
-    response = asyncio.run(channel_routes.handle_channel_publish(
-        _request("/demo/events/1.0.0/__channels__/user/signedup/publish", headers=[(b"x-mock-scenario", b"vip")]),
-        tenant="demo", project="events", version="1.0.0", channel_key="user/signedup", pool=mock_pool,
-        cache=_cache(compiled), publisher=env["publisher"], api_key=None))
+    response = asyncio.run(
+        channel_routes.handle_channel_publish(
+            _request("/demo/events/1.0.0/__channels__/user/signedup/publish", headers=[(b"x-mock-scenario", b"vip")]),
+            tenant="demo",
+            project="events",
+            version="1.0.0",
+            channel_key="user/signedup",
+            pool=mock_pool,
+            cache=_cache(compiled),
+            publisher=env["publisher"],
+            api_key=None,
+        )
+    )
     assert json.loads(response.body)["source"] == "scenario"
     assert json.loads(FakeAdapter.instances[0].records[0].value)["userId"] == "vip"

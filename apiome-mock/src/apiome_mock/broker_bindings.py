@@ -65,7 +65,7 @@ class BindingUnavailableError(RuntimeError):
     """The version has a SASL binding whose credential cannot be opened on this deployment."""
 
 
-class BoundVersion(dict):
+class BoundVersion(dict[str, Any]):
     """One row of :func:`list_bound_versions` (``version_id``, slugs, ``binding_id``, ...)."""
 
     @property

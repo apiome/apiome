@@ -95,6 +95,13 @@ def test_object_includes_required_properties() -> None:
     _valid(value, schema)
 
 
+def test_scalar_one_of_generates_a_branch_value_not_an_object() -> None:
+    schema = {"oneOf": [{"type": "string"}, {"type": "integer"}]}
+    value = generate_example(schema, seed=1)
+    assert isinstance(value, str)
+    _valid(value, schema)
+
+
 def test_recursive_schema_terminates_under_100ms() -> None:
     root = {
         "components": {

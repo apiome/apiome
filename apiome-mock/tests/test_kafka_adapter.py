@@ -47,9 +47,15 @@ class FakeProducer:
 
 
 def _connection(**overrides):
-    data = dict(binding_id="b-1", protocol="kafka", bootstrap=("broker.example.com:9092",),
-                sasl_mechanism="SCRAM-SHA-512", credential=BrokerCredential("svc", _PASSWORD),
-                tls_enabled=True, client_id="acme-producer")
+    data = dict(
+        binding_id="b-1",
+        protocol="kafka",
+        bootstrap=("broker.example.com:9092",),
+        sasl_mechanism="SCRAM-SHA-512",
+        credential=BrokerCredential("svc", _PASSWORD),
+        tls_enabled=True,
+        client_id="acme-producer",
+    )
     data.update(overrides)
     return BrokerConnection(**data)
 

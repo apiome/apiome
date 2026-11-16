@@ -37,9 +37,7 @@ def _scenario(body):
     settings = {
         "scenarios": {
             "vip": {
-                "operations": {
-                    channel_scenario_key("user/signedup"): {"responses": [{"status": 200, "body": body}]}
-                }
+                "operations": {channel_scenario_key("user/signedup"): {"responses": [{"status": 200, "body": body}]}}
             }
         }
     }
@@ -67,15 +65,21 @@ def test_a_scenario_override_beats_the_example():
 def test_an_explicit_payload_beats_everything():
     compiled, channel, message = _signedup()
     body = {"userId": "req-1", "email": "req@example.com"}
-    event = build_event(compiled.api, channel.key, message, scenario=_scenario({"userId": "x", "email": "x@x.io"}),
-                        payload=body)
+    event = build_event(
+        compiled.api, channel.key, message, scenario=_scenario({"userId": "x", "email": "x@x.io"}), payload=body
+    )
     assert (event.source, json.loads(event.value)) == (SOURCE_REQUEST, body)
 
 
 def test_a_wildcard_scenario_override_applies_to_every_channel():
     compiled, channel, message = _signedup()
-    settings = {"scenarios": {"all": {"operations": {"*": {"responses": [
-        {"status": 200, "body": {"userId": "w", "email": "w@example.com"}}]}}}}}
+    settings = {
+        "scenarios": {
+            "all": {
+                "operations": {"*": {"responses": [{"status": 200, "body": {"userId": "w", "email": "w@example.com"}}]}}
+            }
+        }
+    }
     event = build_event(compiled.api, channel.key, message, scenario=parse_scenarios(settings)["all"])
     assert event.source == SOURCE_SCENARIO
 
@@ -170,8 +174,12 @@ def test_an_avro_payload_that_does_not_match_is_rejected():
     compiled = compiled_kafka_spec()
     channel = route(compiled, "user/{region}")
     with pytest.raises(EventRejectedError) as caught:
-        build_event(compiled.api, channel.key, channel.outbound_messages()[0],
-                    payload={"userId": "u", "plan": "GOLD", "seats": 1, "nickname": None})
+        build_event(
+            compiled.api,
+            channel.key,
+            channel.outbound_messages()[0],
+            payload={"userId": "u", "plan": "GOLD", "seats": 1, "nickname": None},
+        )
     assert caught.value.reason == "invalid-payload"
 
 
@@ -230,8 +238,9 @@ def test_a_protobuf_payload_with_unknown_fields_is_rejected():
 
 def test_a_raw_proto_payload_is_unsupported():
     compiled = compiled_kafka_spec()
-    message = Message(key="m", role=MessageRole.EVENT, name="m",
-                      extras={"schemaFormat": "application/vnd.google.protobuf;version=3"})
+    message = Message(
+        key="m", role=MessageRole.EVENT, name="m", extras={"schemaFormat": "application/vnd.google.protobuf;version=3"}
+    )
     with pytest.raises(EventRejectedError) as caught:
         build_event(compiled.api, "user/signedup", message)
     assert caught.value.reason == "unsupported-schema"

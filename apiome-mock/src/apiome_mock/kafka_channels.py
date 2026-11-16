@@ -134,9 +134,7 @@ def resolve_address(channel: Channel) -> tuple[str, tuple[str, ...]]:
     return _PARAMETER.sub(fill, channel.address or channel.key), tuple(unresolved)
 
 
-def compile_kafka_channel(
-    channel: Channel | None, api: CanonicalApi, messages: Iterable[Message] = ()
-) -> KafkaChannel:
+def compile_kafka_channel(channel: Channel | None, api: CanonicalApi, messages: Iterable[Message] = ()) -> KafkaChannel:
     """Compile one channel's Kafka facts.
 
     Args:
@@ -152,6 +150,7 @@ def compile_kafka_channel(
         return KafkaChannel(support=SUPPORT_NOT_KAFKA)
     binding = _kafka_binding(channel.bindings) or {}
     declared_topic = binding.get("topic")
+    unresolved: tuple[str, ...]
     if isinstance(declared_topic, str) and declared_topic.strip():
         topic, unresolved = declared_topic.strip(), ()
     else:
