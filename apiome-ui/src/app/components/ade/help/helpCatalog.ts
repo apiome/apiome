@@ -1900,6 +1900,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['docker compose', 'deploy', 'backup', 'disaster recovery', '.env', 'operator'],
   },
   {
+    id: 'agent-telemetry',
+    title: 'Agent telemetry',
+    summary: 'Export agent tool calls as OpenTelemetry traces and metrics over OTLP.',
+    page: 'apiome-docs/docs/admin/agent-telemetry.md',
+    section: 'reference',
+    keywords: ['opentelemetry', 'otlp', 'tracing', 'datadog', 'grafana', 'honeycomb', 'traceparent'],
+  },
+  {
     id: 'admin-console',
     title: 'The admin console',
     summary: 'Sign in to the installation-wide admin console and find your way around it.',

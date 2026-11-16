@@ -32,6 +32,11 @@ declared method and fit the request-body cap (:mod:`apiome_mcp.agent_safety_rail
 client's SSRF guard then refuses a ``prod`` host that resolves to a non-public address. Each refusal is
 its own result (``method_not_allowed``, ``request_too_large``, ``upstream_blocked``) and nothing is
 sent. Quotas (AGX-3.2) run before the tool, in ``AgentQuotaMiddleware``.
+
+**Telemetry (ATQ-4.4, #5846).** With an OTLP endpoint configured, each call is one
+``apiome.agent.invocation`` span (parented by the caller's ``traceparent``) carrying the audit row,
+with ``vault.resolve`` and ``upstream.request`` children (:mod:`apiome_mcp.agent_telemetry`). Off by
+default; it never changes a call's result.
 """
 
 from __future__ import annotations
@@ -47,6 +52,7 @@ import httpx
 import structlog
 from app.upstream_credential_binding import CredentialInjection
 from fastmcp.tools.base import ToolResult
+from opentelemetry.trace import SpanKind
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp import __version__
@@ -75,6 +81,7 @@ from apiome_mcp.agent_safety_rails import (
     enforce_declared_method,
     enforce_request_size,
 )
+from apiome_mcp.agent_telemetry import NOOP_TELEMETRY, SPAN_UPSTREAM, SPAN_VAULT, AgentTelemetry
 from apiome_mcp.agent_toolset_source import ServedTool, ServedToolset
 from apiome_mcp.agent_upstream_auth import UpstreamCredentialUnavailableError, resolve_upstream_injection
 from apiome_mcp.agent_upstream_client import (
@@ -210,6 +217,7 @@ class InvocationProxy:
         credentials: CredentialSource = resolve_upstream_injection,
         send: SendUpstream = send_upstream,
         monotonic: Callable[[], float] = time.monotonic,
+        telemetry: AgentTelemetry = NOOP_TELEMETRY,
     ) -> None:
         """Configure the proxy.
 
@@ -218,11 +226,13 @@ class InvocationProxy:
             credentials: Opens the vault (default: :func:`resolve_upstream_injection`).
             send: Sends the request (default: :func:`send_upstream`).
             monotonic: Clock for the overhead log line (tests).
+            telemetry: OTel export (ATQ-4.4; default: off).
         """
         self._config = config
         self._credentials = credentials
         self._send = send
         self._monotonic = monotonic
+        self._telemetry = telemetry
 
     async def invoke(
         self,
@@ -233,6 +243,7 @@ class InvocationProxy:
         toolset: ServedToolset,
         tool: ServedTool,
         arguments: Mapping[str, Any] | None,
+        trace_context: Mapping[str, str] | None = None,
     ) -> ToolResult:
         """Run one call and record it.
 
@@ -243,6 +254,8 @@ class InvocationProxy:
             toolset: The key's served toolset.
             tool: The tool called (already checked as permitted by the access middleware).
             arguments: The call's arguments.
+            trace_context: The inbound W3C trace context
+                (:func:`~apiome_mcp.agent_telemetry.trace_carrier`), parenting the call's span.
 
         Returns:
             The tool result: the upstream body on success, an ``isError`` result otherwise.
@@ -250,20 +263,22 @@ class InvocationProxy:
         args: dict[str, Any] = dict(arguments or {})
         raw_args = json.dumps(args, separators=(",", ":"), ensure_ascii=False, default=str)
         started = self._monotonic()
-        async with audit_invocation(
-            pool,
-            key,
-            tool_name=tool.name,
-            target=_audit_target(toolset.manifest.target),
-            request_bytes=len(raw_args.encode("utf-8")),
-            capture=toolset.manifest.body_capture,
-        ) as audit:
-            try:
-                ended, upstream_ms = await self._run(pool, client, key, toolset, tool, args)
-            except Exception:
-                _log.warning("agent_invocation_failed", tool=tool.name, key_id=key.key_id, exc_info=True)
-                ended, upstream_ms = _failed(fixed_failure(InvocationReason.INVOCATION_FAILED)), 0
-            self._record(audit, ended, raw_args)
+        with self._telemetry.invocation(trace_context) as span:
+            async with audit_invocation(
+                pool,
+                key,
+                tool_name=tool.name,
+                target=_audit_target(toolset.manifest.target),
+                request_bytes=len(raw_args.encode("utf-8")),
+                capture=toolset.manifest.body_capture,
+                on_record=span.record,
+            ) as audit:
+                try:
+                    ended, upstream_ms = await self._run(pool, client, key, toolset, tool, args)
+                except Exception:
+                    _log.warning("agent_invocation_failed", tool=tool.name, key_id=key.key_id, exc_info=True)
+                    ended, upstream_ms = _failed(fixed_failure(InvocationReason.INVOCATION_FAILED)), 0
+                self._record(audit, ended, raw_args)
         total_ms = int(round((self._monotonic() - started) * 1000))
         _log.info(
             "agent_invocation",
@@ -351,25 +366,39 @@ class InvocationProxy:
         headers = {**request.headers, "User-Agent": self._config.user_agent, **route.extra_headers}
         secrets: list[str] = []
         if route.inject_upstream_credentials:
-            try:
-                injection = await self._credentials(pool, key.tenant_id, key.toolset_id, url)
-            except UpstreamCredentialUnavailableError:
-                return _failed(fixed_failure(InvocationReason.UPSTREAM_CREDENTIAL_UNAVAILABLE)), 0
+            with self._telemetry.child(SPAN_VAULT) as vault:
+                try:
+                    injection = await self._credentials(pool, key.tenant_id, key.toolset_id, url)
+                except UpstreamCredentialUnavailableError:
+                    vault.fail("credential_unavailable")
+                    return _failed(fixed_failure(InvocationReason.UPSTREAM_CREDENTIAL_UNAVAILABLE)), 0
+                vault.set("apiome.agent.credential_injected", injection is not None)
             if injection is not None:
                 url, headers = injection.apply(url, headers)
                 secrets = _secret_values(injection)
 
         policy = self._config.policy
-        try:
-            response = await self._send(
-                client, request.method, url, headers=headers, content=request.content, policy=policy
-            )
-        except UpstreamBlockedError as exc:
-            return _failed(upstream_blocked(exc.host)), 0
-        except UpstreamTimeoutError as exc:
-            return _failed(timeout_failure(binding, policy.budget_seconds, exc.attempts)), exc.elapsed_ms
-        except UpstreamUnreachableError as exc:
-            return _failed(unreachable_failure(binding, exc.attempts)), exc.elapsed_ms
+        # Only the method and the status are recorded on this span: never the URL, which can carry
+        # an injected query credential, nor any header.
+        with self._telemetry.child(
+            SPAN_UPSTREAM, kind=SpanKind.CLIENT, attributes={"http.request.method": request.method}
+        ) as upstream:
+            try:
+                response = await self._send(
+                    client, request.method, url, headers=headers, content=request.content, policy=policy
+                )
+            except UpstreamBlockedError as exc:
+                upstream.fail("blocked")
+                return _failed(upstream_blocked(exc.host)), 0
+            except UpstreamTimeoutError as exc:
+                upstream.fail("timeout")
+                return _failed(timeout_failure(binding, policy.budget_seconds, exc.attempts)), exc.elapsed_ms
+            except UpstreamUnreachableError as exc:
+                upstream.fail("unreachable")
+                return _failed(unreachable_failure(binding, exc.attempts)), exc.elapsed_ms
+            upstream.set("http.response.status_code", response.status)
+            if response.status >= 500:
+                upstream.fail(str(response.status))
 
         response = _redact(response, secrets)
         if 200 <= response.status < 300:
