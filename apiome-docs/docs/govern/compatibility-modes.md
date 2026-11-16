@@ -1,8 +1,8 @@
 ---
 title: Compatibility modes
-description: "How compatibility modes and Buf categories grade schema changes, per format."
+description: "How compatibility modes, Buf categories and AsyncAPI sides grade changes, per format."
 sidebar_position: 2
-tags: [governance, compatibility, breaking-changes, json-schema, avro, protobuf, schema-registry]
+tags: [governance, compatibility, breaking-changes, json-schema, avro, protobuf, asyncapi, schema-registry]
 ---
 
 When you compare two versions of a catalog item, Apiome grades every change **Safe**,
@@ -38,6 +38,7 @@ names the modes the change breaks.
 | Avro | Avro schema resolution, the way a Confluent registry applies it | [Compatibility between versions](../bring-in/avro-import.md#compatibility-between-versions) |
 | JSON Schema | The open and closed content models, the way Confluent and Apicurio apply them | [JSON Schema](#json-schema) on this page |
 | Protobuf | Buf's four breaking-change **categories** instead of modes | [Protobuf](#protobuf) on this page |
+| AsyncAPI 2 and 3 | Channel and operation rules graded for **consumers** and **producers**, read by mode; payloads by their own format | [AsyncAPI](#asyncapi) on this page |
 
 Other formats keep their own rules, such as GraphQL-Inspector for GraphQL, and the built-in
 ruleset where a format has none.
@@ -216,13 +217,118 @@ A message or enum moved to another file has no row of its own, because the file 
 in is not part of the version comparison. It is still graded under `FILE`, and it counts toward the
 overall grade.
 
+## AsyncAPI
+
+An event channel has two sides, and a change can break one and not the other. Apiome grades every
+AsyncAPI channel, operation and message change for each side:
+
+| Side | Who upgrades first | The mode that checks it |
+| --- | --- | --- |
+| **Consumers** | New consumers, while old producers keep sending | `BACKWARD` |
+| **Producers** | New producers, while old consumers keep reading | `FORWARD` |
+
+`FULL` checks both sides. Changes are graded under `BACKWARD` by default. A side the mode checks
+keeps its grade. A side it does not check drops one step: a break there is **Dangerous**, and a
+**Dangerous** grade there is **Safe**. So adding a message is **Safe** under `BACKWARD`, because new
+consumers already handle it, but **Dangerous** under `FORWARD`, because old consumers must handle it
+once producers send it.
+
+Each grade's explanation starts with the mode and what it checks, and ends with both sides' grades:
+
+```text
+[BACKWARD: new consumers against old producers] message 'onOrder#event.OrderCancelled' removed
+from the operation's messages; new consumers break on it while old producers still send it
+(consumers: breaking, producers: safe)
+```
+
+### The AsyncAPI rules
+
+| Change | Consumers | Producers | `BACKWARD` | `FORWARD` | `FULL` | Rule id |
+| --- | --- | --- | --- | --- | --- | --- |
+| A channel's address or address template changed | Breaking | Dangerous | Breaking | Dangerous | Breaking | `asyncapi.consumer.address-changed` |
+| An address parameter added without a `default` | Breaking | Dangerous | Breaking | Dangerous | Breaking | `asyncapi.consumer.parameter-added` |
+| An address parameter added with a `default` | Safe | Safe | Safe | Safe | Safe | `asyncapi.both.parameter-added-with-default` |
+| A server's `protocol` changed | Breaking | Breaking | Breaking | Breaking | Breaking | `asyncapi.both.protocol-changed` |
+| A channel, operation, message or server binding changed | Breaking | Breaking | Breaking | Breaking | Breaking | `asyncapi.both.binding-changed` |
+| An operation's `action` flipped between `send` and `receive` (`publish` and `subscribe` in 2.x) | Breaking | Breaking | Breaking | Breaking | Breaking | `asyncapi.both.action-flipped` |
+| An operation's `reply` removed (3.x) | Breaking | Dangerous | Breaking | Dangerous | Breaking | `asyncapi.consumer.reply-removed` |
+| A message removed from a channel's messages (`oneOf` in 2.x) | Breaking | Safe | Breaking | Dangerous | Breaking | `asyncapi.consumer.message-removed` |
+| A message added to a channel's messages | Safe | Dangerous | Safe | Dangerous | Dangerous | `asyncapi.producer.message-added` |
+| A payload's `schemaFormat` changed to another schema language | Breaking | Breaking | Breaking | Breaking | Breaking | `asyncapi.both.schema-format-changed` |
+| A payload changed in a way its own format accepts both ways | Safe | Safe | Safe | Safe | Safe | `asyncapi.both.payload-compatible` |
+| A server added, removed or moved | Dangerous | Dangerous | Dangerous | Dangerous | Dangerous | `asyncapi.both.server-changed` |
+| A server's or an operation's `security` changed | Dangerous | Dangerous | Dangerous | Dangerous | Dangerous | `asyncapi.both.security-changed` |
+
+Rule ids follow `asyncapi.<side>.<rule>`. The side is the one the change is worst for: `consumer`,
+`producer`, or `both` when the two sides grade alike. Requesters consume the reply, so a removed
+`reply` is graded on the consumer side. AsyncAPI 2 has no `reply`, so that rule applies to 3.x only.
+
+A message counts as removed or added only when its operation exists in both versions. When a whole
+operation is removed or added, its messages keep the built-in grade, and so does any other change
+these rules do not cover, such as removing a whole channel (**Breaking**) or changing a message's
+headers (**Dangerous**).
+
+### When an address or action changes
+
+A channel is identified by its address, so a new address first looks like one channel removed and
+another added. Apiome treats them as one channel with a new address when the channel keeps its
+name (AsyncAPI 3), or when an operation in both versions moved from one to the other. Both rows,
+and the operation's row, are then graded `address-changed`.
+
+In AsyncAPI 2 an operation without an `operationId` is identified by its action and address, so
+flipping `subscribe` to `publish` looks like one operation removed and another added. When both are
+on the same channel, both rows are graded `action-flipped`.
+
+### Payloads
+
+A payload is graded by the check of its own schema language, named by `schemaFormat`. In AsyncAPI
+3 that is the payload's `schemaFormat` and `schema`; in AsyncAPI 2 it is the message's
+`schemaFormat` and `payload`:
+
+| `schemaFormat` | Checked by | Rule ids |
+| --- | --- | --- |
+| None, `application/vnd.aai.asyncapi`, `application/schema+json` or `+yaml` | The [JSON Schema](#json-schema) rules | `jsonschema.*` |
+| `application/vnd.apache.avro` (`+json`, `+yaml`) | Avro schema resolution, both ways | `avro-compatibility.*` |
+| `application/vnd.google.protobuf`, `application/x-protobuf` | The [Protobuf](#protobuf) rules under `WIRE_JSON` | `protobuf.*` |
+| Anything else, such as RAML or the OpenAPI Schema Object | Not checked: the built-in grade stands | — |
+
+So an Avro payload that gains a field without a default reports
+`avro-compatibility.reader-field-missing-default-value`: **Breaking** for consumers, because new
+consumers cannot read what old producers wrote, and **Safe** for producers. A problem the new
+schema finds in old data is a consumer-side break; a problem the old schema finds in new data is a
+producer-side break. Protobuf's rules grade both sides alike.
+
+Only the media type counts as the schema language. `application/vnd.apache.avro;version=1.9.0` and
+`…;version=1.11.0` are the same language. A Protobuf payload is checked only when the server has
+`buf` to compile it; otherwise the built-in grade stands.
+
+### With `@asyncapi/diff` installed
+
+When the server has the `asyncapi-diff` tool, it also runs `@asyncapi/diff` over the two documents.
+Its verdict replaces the grade of each whole channel or operation it classifies, with rule id
+`asyncapi-diff.breaking` or `asyncapi-diff.non-breaking`. Every other change keeps the grades above.
+
+### Where the AsyncAPI results show
+
+The grades appear wherever Apiome grades an AsyncAPI catalog item's changes. That includes drift,
+under **What changed** on the item's **Versions** tab (see
+[Catalog refresh](../bring-in/catalog-refresh.mdx#see-what-changed)), and the change list when you
+re-import a file over an existing item. The rule id names the side and the **Why** column starts
+with the mode in brackets. The classifier is named `asyncapi-diff`.
+
+Servers have no row of their own in the version comparison, and neither does a `.proto` text
+payload in AsyncAPI 2. Their findings are still graded, and they count toward the overall grade.
+
 ## Related
 
 - [Avro import](../bring-in/avro-import.md): the Avro compatibility check and the schema registry's levels
 - [Read a catalog item's format details](../bring-in/catalog-format-details.md#json-schema-compatibility)
 - [What a Protobuf item records for comparison](../bring-in/catalog-format-details.md#protobuf-what-a-comparison-reads)
+- [What an AsyncAPI item records for comparison](../bring-in/catalog-format-details.md#asyncapi-what-a-comparison-reads)
 - [Reviews](./reviews.mdx): require approval for breaking changes
 - [Apicurio Registry rules](https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/getting-started/assembly-rule-reference.html):
   the compatibility rules this check follows
 - [Buf breaking rules and categories](https://buf.build/docs/breaking/rules): the categories the
   Protobuf grades follow
+- [AsyncAPI 3.0 specification](https://www.asyncapi.com/docs/reference/specification/v3.0.0): channels,
+  operations, `reply` and the Multi Format Schema Object

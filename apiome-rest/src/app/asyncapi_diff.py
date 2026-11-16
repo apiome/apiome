@@ -7,13 +7,16 @@ The breaking-change classifier SPI (MFI-3.3, :mod:`app.breaking_change`) grades 
 
 It has two layers, mirroring how MFI-8.3 layered native rules under Spectral:
 
-* **A structural baseline** — :class:`AsyncApiBreakingChangeClassifier` subclasses the
-  format-agnostic :class:`~app.breaking_change.BuiltinBreakingChangeClassifier`, so its
-  *synchronous, pure* :meth:`~app.breaking_change.BreakingChangeClassifier.classify` already
-  grades an AsyncAPI diff from structure alone (a removed channel/operation is breaking, an
-  added one safe). Registered under both ``asyncapi-2`` and ``asyncapi-3``, it is what the
-  sync SPI dispatch (:func:`app.breaking_change.classify`) resolves for an AsyncAPI artifact
-  even when no Node toolchain is present.
+* **A sharpened structural baseline** — :class:`AsyncApiBreakingChangeClassifier` subclasses
+  the format-agnostic :class:`~app.breaking_change.BuiltinBreakingChangeClassifier` and, since
+  XPC-4.4 (#5748), grades channels, operations, messages, payloads and servers per **side**
+  (consumers vs producers) and compatibility **mode** (:mod:`app.asyncapi_compatibility_rules`):
+  an address change, an action flipped send↔receive, a message removed from the union, a
+  ``schemaFormat`` change, and a payload change graded by the payload's own Avro / JSON Schema /
+  Protobuf check (:mod:`app.asyncapi_payload_compatibility`). Its *synchronous, pure*
+  :meth:`classify` is what the sync SPI dispatch (:func:`app.breaking_change.classify`) resolves
+  for an AsyncAPI artifact under both ``asyncapi-2`` and ``asyncapi-3``, even when no Node
+  toolchain is present.
 
 * **The ``@asyncapi/diff`` overlay** — :meth:`AsyncApiBreakingChangeClassifier.classify_async`
   (and the module convenience :func:`classify_asyncapi`) runs ``@asyncapi/diff`` over the two
@@ -37,15 +40,26 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .asyncapi_compatibility_rules import (
+    ChangeFindings,
+    attribute_severity,
+    coerce_mode,
+    evaluate,
+    rationale,
+    severity_under,
+)
 from .breaking_change import (
     BuiltinBreakingChangeClassifier,
     ChangeClassification,
     ClassificationResult,
     Severity,
+    UnattributedFinding,
+    _assemble_result,
+    _worst,
 )
 from .canonical_model import CanonicalApi
 from .diff import EntityCategory, ModelDiff, diff
@@ -389,21 +403,94 @@ class AsyncApiBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
 
     Registered under ``asyncapi-3`` (this class) and ``asyncapi-2`` (the
     :class:`_AsyncApi2BreakingChangeClassifier` alias below). It **subclasses** the
-    format-agnostic :class:`~app.breaking_change.BuiltinBreakingChangeClassifier`, so the
-    synchronous SPI methods it inherits
-    (:meth:`~app.breaking_change.BreakingChangeClassifier.classify_change` /
-    :meth:`~app.breaking_change.BreakingChangeClassifier.classify`) grade an AsyncAPI diff from
-    structure alone — the always-available, pure baseline the sync
-    :func:`app.breaking_change.classify` dispatch resolves for an AsyncAPI artifact.
+    format-agnostic :class:`~app.breaking_change.BuiltinBreakingChangeClassifier` and sharpens
+    its synchronous :meth:`classify` with the per-side channel, operation, message, payload and
+    server rules of :mod:`app.asyncapi_compatibility_rules`, read by :attr:`mode` — the
+    always-available, pure grading the sync :func:`app.breaking_change.classify` dispatch
+    resolves for an AsyncAPI artifact. A change no rule covers keeps the baseline grade.
 
     The authoritative ``@asyncapi/diff`` grading is the async :meth:`classify_async`, which
-    overlays the tool's verdict onto that baseline. It is separate because the tool shells out
-    asynchronously (the SPI is sync), and it degrades gracefully back to the baseline when the
-    documents or the tool are unavailable.
+    overlays the tool's verdict onto that sharpened baseline where it joins. It is separate
+    because the tool shells out asynchronously (the SPI is sync), and it degrades gracefully
+    back to the baseline when the documents or the tool are unavailable.
     """
 
     format = "asyncapi-3"
     classifier_id = "asyncapi-diff"
+
+    #: The compatibility mode grades are read by when none is passed to the constructor.
+    default_mode: ClassVar[str] = "BACKWARD"
+
+    def __init__(self, mode: Optional[str] = None) -> None:
+        """Create a classifier that reads per-side grades by ``mode``.
+
+        Args:
+            mode: ``BACKWARD`` (default: new consumers against old producers), ``FORWARD`` (old
+                consumers against new producers) or ``FULL`` (both), optionally ``_TRANSITIVE``;
+                any case.
+
+        Raises:
+            ValueError: If ``mode`` is not a known compatibility mode.
+        """
+        self.mode = coerce_mode(mode or self.default_mode)
+
+    def classify(
+        self, model_diff: ModelDiff, base: CanonicalApi, target: CanonicalApi
+    ) -> ClassificationResult:
+        """Grade every change with the baseline, sharpened by the AsyncAPI side rules.
+
+        Args:
+            model_diff: The diff to grade.
+            base: The old version.
+            target: The new version.
+
+        Returns:
+            The result, 1:1 with ``model_diff.changes``; server findings and payload findings on
+            messages the diff does not list are in ``unattributed``.
+        """
+        baseline = [self.classify_change(change, base, target) for change in model_diff.changes]
+        report = evaluate(model_diff, base, target)
+        graded = [
+            self._sharpened(classification, report.by_position[position])
+            if position in report.by_position
+            else classification
+            for position, classification in enumerate(baseline)
+        ]
+        unattributed = [
+            UnattributedFinding(
+                severity=severity_under(finding, self.mode),
+                rule_id=finding.rule_id,
+                rationale=rationale(finding, self.mode),
+                shape=shape,
+            )
+            for shape, finding in report.unattributed
+        ]
+        return _assemble_result(self, target, graded, unattributed)
+
+    def _sharpened(
+        self, baseline: ChangeClassification, found: ChangeFindings
+    ) -> ChangeClassification:
+        """Grade a change by its rule findings and the baseline grade of its unhandled moves.
+
+        The severity is the worst over the findings (read by :attr:`mode`) and the attribute
+        moves no rule handles; the rule id is the worst finding's (the baseline's when an
+        unhandled move is worse), and the rationale lists every finding.
+        """
+        severities = [severity_under(f, self.mode) for f in found.findings]
+        worst_finding = _worst(severities)
+        first = next(f for f, s in zip(found.findings, severities) if s is worst_finding)
+        reasons = list(dict.fromkeys(rationale(f, self.mode) for f in found.findings))
+        rule_id = first.rule_id
+        severity = worst_finding
+        if found.unhandled:
+            leftover = _worst([attribute_severity(moved) for moved in found.unhandled])
+            names = ", ".join(sorted({moved.field for moved in found.unhandled}))
+            reasons.append(f"also changed {names} (graded {leftover.value} by the baseline)")
+            if _SEVERITY_RANK[leftover] > _SEVERITY_RANK[worst_finding]:
+                severity, rule_id = leftover, f"modified-{leftover.value}"
+        return baseline.model_copy(
+            update={"severity": severity, "rule_id": rule_id, "rationale": "; ".join(reasons)}
+        )
 
     async def classify_async(
         self,
@@ -414,9 +501,9 @@ class AsyncApiBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
         runner: Optional[ToolchainRunner] = None,
         timeout: Optional[float] = None,
     ) -> ClassificationResult:
-        """Grade ``model_diff`` with the structural baseline, overlaid with ``@asyncapi/diff``.
+        """Grade ``model_diff`` with the sharpened baseline, overlaid with ``@asyncapi/diff``.
 
-        Starts from the inherited structural grades, then runs ``@asyncapi/diff`` over the two
+        Starts from the sharpened structural grades (:meth:`classify`), then runs ``@asyncapi/diff`` over the two
         dereferenced documents on :attr:`app.canonical_model.CanonicalApi.raw` and replaces a
         change's grade with the tool's authoritative verdict wherever the tool *classified* the
         change (``breaking`` / ``non-breaking``) **and** it joins onto a canonical entity. Every
@@ -461,7 +548,8 @@ class AsyncApiBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             self._overlay(classification, index)
             for classification in baseline.classifications
         ]
-        return self._assemble(target, classifications)
+        # Findings the tool cannot join (servers, unlisted payloads) stay as the baseline found them.
+        return _assemble_result(self, target, classifications, baseline.unattributed)
 
     def _overlay(
         self,
@@ -485,25 +573,6 @@ class AsyncApiBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             ),
         )
 
-    def _assemble(
-        self, target: CanonicalApi, classifications: List[ChangeClassification]
-    ) -> ClassificationResult:
-        """Assemble the result from overlaid grades: worst-of overall + per-severity tally."""
-        counts: Dict[str, int] = {}
-        worst = Severity.SAFE
-        for classification in classifications:
-            counts[classification.severity.value] = (
-                counts.get(classification.severity.value, 0) + 1
-            )
-            if _SEVERITY_RANK[classification.severity] > _SEVERITY_RANK[worst]:
-                worst = classification.severity
-        return ClassificationResult(
-            format=target.format,
-            classifier=self.classifier_id or type(self).__name__,
-            overall_severity=worst,
-            classifications=classifications,
-            counts_by_severity=counts,
-        )
 
 
 class _AsyncApi2BreakingChangeClassifier(
@@ -530,6 +599,7 @@ async def classify_asyncapi(
     *,
     runner: Optional[ToolchainRunner] = None,
     timeout: Optional[float] = None,
+    mode: Optional[str] = None,
 ) -> ClassificationResult:
     """Diff ``base`` → ``target`` and grade it with ``@asyncapi/diff`` in one call.
 
@@ -543,12 +613,13 @@ async def classify_asyncapi(
         target: The later / "to" model.
         runner: Optional toolchain runner override (injectable for tests).
         timeout: Optional per-call diff timeout in seconds.
+        mode: The compatibility mode the side rules are read by (``BACKWARD`` by default).
 
     Returns:
         The :class:`~app.breaking_change.ClassificationResult` for the diff of the two models.
     """
     model_diff = diff(base, target)
-    classifier = AsyncApiBreakingChangeClassifier()
+    classifier = AsyncApiBreakingChangeClassifier(mode)
     return await classifier.classify_async(
         model_diff, base, target, runner=runner, timeout=timeout
     )

@@ -1,0 +1,34 @@
+---
+slug: asyncapi-channel-compatibility
+title: AsyncAPI changes graded for consumers and producers
+description: "AsyncAPI channel, operation and payload changes are graded per side and compatibility mode."
+authors: [apiome]
+---
+
+Comparing two versions of an AsyncAPI catalog item (2.x or 3.x) now grades each channel, operation
+and message change for both sides of the channel: **consumers** and **producers**. `BACKWARD` (the
+default) checks new consumers against old producers, `FORWARD` checks old consumers against new
+producers, and `FULL` checks both. Each explanation starts with the mode, such as `[BACKWARD: new
+consumers against old producers]`, and ends with both sides' grades.
+
+{/* truncate */}
+
+- **Channel and operation rules.** A changed address or address template, a new address parameter
+  without a default, a changed protocol or binding, an `action` flipped between send and receive,
+  and a removed `reply` each have their own rule. A new address or a flipped AsyncAPI 2 action is
+  recognized even when it shows up as one channel or operation removed and another added.
+- **Message unions.** Removing a message from a channel is **Breaking** for consumers and **Safe**
+  for producers (`asyncapi.consumer.message-removed`). Adding one is **Safe** under `BACKWARD` and
+  **Dangerous** under `FORWARD` (`asyncapi.producer.message-added`).
+- **Payloads by their own format.** A payload is graded by the check of its `schemaFormat`, so an
+  Avro payload reports Avro's rule ids, such as
+  `avro-compatibility.reader-field-missing-default-value`. JSON Schema and Protobuf payloads get
+  their own rules too. Changing `schemaFormat` to another schema language is **Breaking**.
+- **Servers and security.** A server added, removed or moved, or a changed `security`, is
+  **Dangerous**.
+
+`@asyncapi/diff` still decides a whole channel or operation when the server has it. You see the new
+grades in drift (**What changed** on a catalog item's **Versions** tab) and when you re-import a file
+over an existing item. The full table is on
+[Compatibility modes](/govern/compatibility-modes#asyncapi). Choosing the mode in the API and CLI
+comes later.

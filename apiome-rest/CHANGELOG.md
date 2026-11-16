@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.717.0] - 2026-11-15
+
+### Added
+- **AsyncAPI channel and operation compatibility (XPC-4.4, #5748)** — OpenAPI 1.577.0 (no schema change):
+  - `AsyncApiBreakingChangeClassifier(mode=…)` (2.x and 3.x) grades channels, operations, messages, payloads and servers
+    for **consumers** and **producers** and reads the two grades by compatibility mode: `BACKWARD` (default; new
+    consumers against old producers), `FORWARD` (old consumers against new producers) or `FULL`, `_TRANSITIVE`
+    accepted. A side the mode does not check drops one tier. `classify_asyncapi(..., mode=…)` takes the same values.
+  - New module `app.asyncapi_compatibility_rules` (`evaluate`, `severity_under`, `mode_sides`): `address-changed`,
+    `parameter-added` / `parameter-added-with-default`, `protocol-changed`, `binding-changed`, `action-flipped`,
+    `reply-removed`, `message-removed`, `message-added`, `server-changed` and `security-changed`. Rule ids are
+    `asyncapi.<side>.<rule>`, naming the side the change is worst for (`asyncapi.consumer.message-removed`); every
+    rationale starts with the mode (`[BACKWARD: new consumers against old producers] …`) and ends with both sides'
+    grades. A channel whose address moved, and an AsyncAPI 2 operation without an `operationId` whose action flipped,
+    are paired across their removed and added rows. Server findings are `unattributed`.
+  - New module `app.asyncapi_payload_compatibility` (`compare_payloads`): a payload is graded by its `schemaFormat` — the
+    JSON Schema comparator (XPC-4.2), Avro schema resolution both ways (XPC-4.1) or the Protobuf classifier (XPC-4.3,
+    when `buf` can compile the `.proto` text) — keeping that format's rule ids; a change of schema language is
+    `asyncapi.both.schema-format-changed`, and a payload the check accepts both ways `asyncapi.both.payload-compatible`.
+  - Fixture pairs for every rule in both majors, with per-side grades and the verdict under each mode, in
+    `tests/fixtures/asyncapi_compatibility/cases.json`.
+
+### Changed
+- The sync AsyncAPI grading (catalog drift, the re-import delta) now uses these rules; the `@asyncapi/diff` overlay still
+  wins where it joins a whole channel or operation, and now keeps the baseline's unattributed findings.
+
+
 ## [1.716.0] - 2026-11-15
 
 ### Added
