@@ -41,3 +41,12 @@ export function versionHref(
   const query = find?.trim() ? `?find=${encodeURIComponent(find.trim())}` : '';
   return `${base}${query}${anchor ? `#${anchor}` : ''}`;
 }
+
+/**
+ * The public URL of a version page opened on its *Changes* tab (the classified changelog).
+ *
+ * @returns `/tenant/<t>/<p>/<v>?tab=changes`.
+ */
+export function versionChangesHref(tenantSlug: string, projectSlug: string, versionSlug: string): string {
+  return `${versionHref(tenantSlug, projectSlug, versionSlug)}?tab=changes`;
+}

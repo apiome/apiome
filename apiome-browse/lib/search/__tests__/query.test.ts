@@ -114,3 +114,25 @@ describe('stringifyQuery / withFilter', () => {
     expect(withFilter(added, 'method', 'GET', 'add').filters.method).toEqual(['GET']);
   });
 });
+
+describe('severity filter (BDX-1.4)', () => {
+  it('resolves severity words to the stored names', () => {
+    expect(parseQuery('severity:breaking').filters.severity).toEqual(['breaking']);
+    expect(parseQuery('severity:warning').filters.severity).toEqual(['non-breaking']);
+    expect(parseQuery('severity:info').filters.severity).toEqual(['docs-only']);
+    expect(parseQuery('sev:Docs-Only severity:non_breaking').filters.severity).toEqual(['docs-only', 'non-breaking']);
+    expect(resolveFilterKey('sev')).toBe('severity');
+  });
+
+  it('drops an unknown severity instead of guessing', () => {
+    const parsed = parseQuery('severity:catastrophic orders');
+    expect(parsed.filters.severity).toBeUndefined();
+    expect(parsed.terms).toEqual(['orders']);
+  });
+
+  it('round-trips and toggles', () => {
+    expect(stringifyQuery(parseQuery('status severity:warning'))).toBe('status severity:non-breaking');
+    expect(withFilter(parseQuery('severity:breaking'), 'severity', 'breaking').filters.severity).toBeUndefined();
+    expect(withFilter(parseQuery('x'), 'severity', 'info').filters.severity).toEqual(['docs-only']);
+  });
+});

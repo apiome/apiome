@@ -21,6 +21,7 @@ interface SearchRow {
   method_facets: FacetBucket[];
   format_facets: FacetBucket[];
   paradigm_facets: FacetBucket[];
+  severity_facets: FacetBucket[];
   project_facets: ProjectFacet[];
   rows: CatalogSearchHit[];
 }
@@ -59,6 +60,7 @@ export async function runCatalogSearch(request: SearchRequest): Promise<CatalogS
         methods: row.method_facets ?? [],
         formats: row.format_facets ?? [],
         paradigms: row.paradigm_facets ?? [],
+        severities: row.severity_facets ?? [],
         projects: row.project_facets ?? [],
       },
       tookMs: Math.round(performance.now() - started),

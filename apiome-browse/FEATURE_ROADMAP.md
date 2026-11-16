@@ -54,6 +54,7 @@ This document outlines the planned features, improvements, and enhancements for 
 - ✅ Highlight search terms in results
 - ✅ Query operators (`method:`, `path:`, `org:`, `type:`, …), facets, scope tabs, sort, paging, shareable URLs
 - ✅ Find within one version — the version page's *Find in this version* box narrows the outline and overview (`?find=`, BDX-1.3)
+- ✅ Changelog search — `type:change` results per classified changelog entry, `severity:` filter and rail, open on the Changes tab (BDX-1.4)
 
 ### 1.4 Keyboard Shortcuts
 **Status:** Planned  

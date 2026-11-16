@@ -25,6 +25,8 @@
  * Pure: no React, no pg. Unit-tested in `lib/search/__tests__/query.test.ts`.
  */
 
+import { resolveChangeSeverity } from './severity';
+
 /** The filter keys the query language understands, in the order the syntax help lists them. */
 export const FILTER_KEYS = [
   'type',
@@ -36,6 +38,7 @@ export const FILTER_KEYS = [
   'format',
   'paradigm',
   'tag',
+  'severity',
   'after',
   'before',
 ] as const;
@@ -57,6 +60,7 @@ const FILTER_ALIASES: Readonly<Record<string, FilterKey>> = {
   v: 'version',
   fmt: 'format',
   protocol: 'paradigm',
+  sev: 'severity',
   since: 'after',
   until: 'before',
 };
@@ -174,13 +178,15 @@ function tokenize(input: string): RawToken[] {
 
 /**
  * Normalize one filter value for a key: lower-cased, trimmed, and for `method` upper-cased so the
- * SQL side compares against the stored verb; a leading slash is kept on `path`.
+ * SQL side compares against the stored verb; a leading slash is kept on `path`; a `severity`
+ * resolves to the stored name (`warning` → `non-breaking`), and an unknown one to `''` (dropped).
  */
 function normalizeFilterValue(key: FilterKey, raw: string): string {
   const value = raw.trim();
   if (!value) return '';
   if (key === 'method') return value.toUpperCase();
   if (key === 'path') return value;
+  if (key === 'severity') return resolveChangeSeverity(value) ?? '';
   return value.toLowerCase();
 }
 
@@ -314,6 +320,7 @@ export const FILTER_KEY_LABELS: Readonly<Record<FilterKey, string>> = {
   format: 'Format',
   paradigm: 'Paradigm',
   tag: 'Tag',
+  severity: 'Severity',
   after: 'Published after',
   before: 'Published before',
 };
@@ -339,6 +346,7 @@ export const SYNTAX_HELP: readonly SyntaxHelpRow[] = [
   { operator: 'format:', meaning: 'Imported from this format.', example: 'format:openapi' },
   { operator: 'paradigm:', meaning: 'REST, RPC, event-driven, graph, data schema or agent.', example: 'paradigm:rest' },
   { operator: 'tag:', meaning: 'Versions carrying this tag.', example: 'tag:stable' },
+  { operator: 'severity:', meaning: 'Changelog entries of this severity: breaking, warning or info.', example: 'severity:breaking' },
   { operator: 'after:', meaning: 'Published on or after a date.', example: 'after:2026-01-01' },
   { operator: 'before:', meaning: 'Published before a date.', example: 'before:2026-06' },
 ];

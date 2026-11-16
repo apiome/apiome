@@ -1,0 +1,25 @@
+---
+slug: browse-changelog-search
+title: Search the classified changelog
+description: "Browse search now finds changelog entries, filtered by severity and opened on the Changes tab."
+authors: [apiome]
+---
+
+Version notes were searchable; the classified changelog behind each version's **Changes** tab was
+not. *Which APIs removed a field called `status` this year?* is now one query in Browse:
+`severity:breaking status after:2026`.
+
+{/* truncate */}
+
+- **A new kind of result.** Every entry of a published version's classified changelog is a search
+  result of kind **Change**, with its severity pill, summary and JSON Pointer. `type:change` (or
+  `type:changelog`) shows only those.
+- **A `severity:` filter.** `severity:breaking`, `severity:non-breaking` (or `warning`) and
+  `severity:docs-only` (or `info`), in the box or as the **Severity** checkboxes in the filters
+  rail. It also travels in the URL as `severity=`.
+- **Worst first.** Breaking entries rank above non-breaking ones, and those above docs-only ones;
+  within a severity, the better text match comes first.
+- **One click to the context.** A change result opens the version page on its **Changes** tab.
+- **No changelog, no noise.** A version without a classified changelog yet contributes nothing.
+
+See [Search changelogs](/ship/browse-published-specs#search-changelogs).

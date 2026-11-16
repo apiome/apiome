@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { formatLabel, paradigmLabel } from '../../../lib/browseFacets';
+import { severityLabel } from '../../../lib/changelog/group';
 import { groupHitsByKind, hitHref, type CatalogSearchResponse } from '../../../lib/search/hits';
 import {
   HIT_KIND_LABELS,
@@ -20,6 +21,7 @@ import {
   toSearchParams,
   toUrlState,
   toggleUrlValue,
+  type ToggleableUrlKey,
   type SearchRequest,
   type SearchSort,
   type SearchUrlState,
@@ -170,6 +172,7 @@ export function SearchClient({
     toggleType: (kind) => go(inlineHas(request, 'type', kind) ? removeInline('type', kind) : toggleUrlValue(request, 'type', kind)),
     toggleFormat: (f) => go(inlineHas(request, 'format', f) ? removeInline('format', f) : toggleUrlValue(request, 'format', f)),
     toggleParadigm: (p) => go(inlineHas(request, 'paradigm', p) ? removeInline('paradigm', p) : toggleUrlValue(request, 'paradigm', p)),
+    toggleSeverity: (s) => go(inlineHas(request, 'severity', s) ? removeInline('severity', s) : toggleUrlValue(request, 'severity', s)),
     setDates: (after, before) => {
       let parsed = request.parsed;
       if (parsed.filters.after) parsed = { ...parsed, filters: { ...parsed.filters, after: undefined } };
@@ -565,6 +568,7 @@ function activeFilterCount(request: SearchRequest): number {
     request.formats.length +
     request.paradigms.length +
     request.tags.length +
+    request.severities.length +
     (request.after ? 1 : 0) +
     (request.before ? 1 : 0)
   );
@@ -573,7 +577,7 @@ function activeFilterCount(request: SearchRequest): number {
 /** The removable chips for every active filter, inline or rail. */
 function activeChips(request: SearchRequest, removeInline: (key: FilterKey, value: string) => SearchUrlState): ActiveChip[] {
   const chips: ActiveChip[] = [];
-  const add = (key: FilterKey, value: string, label: string, display: string, urlKey?: 'org' | 'method' | 'type' | 'format' | 'paradigm') => {
+  const add = (key: FilterKey, value: string, label: string, display: string, urlKey?: ToggleableUrlKey) => {
     chips.push({
       key,
       label,
@@ -590,6 +594,7 @@ function activeChips(request: SearchRequest, removeInline: (key: FilterKey, valu
   for (const f of request.formats) add('format', f, FILTER_KEY_LABELS.format, formatLabel(f), 'format');
   for (const p of request.paradigms) add('paradigm', p, FILTER_KEY_LABELS.paradigm, paradigmLabel(p), 'paradigm');
   for (const t of request.tags) add('tag', t, FILTER_KEY_LABELS.tag, t);
+  for (const s of request.severities) add('severity', s, FILTER_KEY_LABELS.severity, severityLabel(s), 'severity');
   if (request.after) {
     chips.push({
       key: 'after',

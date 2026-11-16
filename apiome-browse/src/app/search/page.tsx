@@ -37,6 +37,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     method: sp.method,
     format: sp.format,
     paradigm: sp.paradigm,
+    severity: sp.severity,
     after: first(sp.after),
     before: first(sp.before),
     sort: first(sp.sort),

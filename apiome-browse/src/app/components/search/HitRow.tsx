@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { formatLabel, paradigmLabel } from '../../../../lib/browseFacets';
+import { severityBadgeClasses, severityDotClasses, severityLabel } from '../../../../lib/changelog/group';
 import { excerptAround } from '../../../../lib/search/highlight';
 import { hitCrumbs, hitHref, hitKindLabel, type CatalogSearchHit } from '../../../../lib/search/hits';
 import type { HitKind } from '../../../../lib/search/kinds';
@@ -21,7 +22,24 @@ const KIND_TONE: Record<HitKind, string> = {
   response: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300',
   schema: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
   property: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  change: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
 };
+
+/**
+ * The severity pill of a changelog hit — the same pill (classes from `lib/changelog/group.ts`)
+ * the version page's *Changes* tab shows, so a visitor recognizes it on arrival.
+ */
+export function SeverityPill({ severity }: { severity: string }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(severity)}`}
+      data-testid="hit-severity"
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(severity)}`} aria-hidden="true" />
+      {severityLabel(severity)}
+    </span>
+  );
+}
 
 function KindIcon({ kind }: { kind: HitKind }) {
   const common = 'h-4.5 w-4.5';
@@ -55,6 +73,12 @@ function KindIcon({ kind }: { kind: HitKind }) {
       return (
         <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      );
+    case 'change':
+      return (
+        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
         </svg>
       );
     case 'request_body':
@@ -147,6 +171,7 @@ export function HitRow({
 
             <div className={`mt-1 flex items-center gap-2 ${compact ? '' : 'flex-wrap'}`}>
               {isOperation && <MethodBadge method={hit.method as string} size={compact ? 'sm' : 'md'} />}
+              {hit.hit_type === 'change' && hit.severity && <SeverityPill severity={hit.severity} />}
               {isOperation ? (
                 <code className={`min-w-0 truncate font-mono font-medium text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50 ${compact ? 'text-[13px]' : 'text-[14px]'}`}>
                   <Highlight text={hit.path as string} needles={needles} />
@@ -172,7 +197,11 @@ export function HitRow({
 
             {!compact && (
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                {hit.subtitle && !isOperation && <span className="truncate">{hit.subtitle}</span>}
+                {hit.subtitle && !isOperation && (
+                  <span className={`truncate ${hit.hit_type === 'change' ? 'font-mono' : ''}`}>
+                    <Highlight text={hit.subtitle} needles={hit.hit_type === 'change' ? needles : []} />
+                  </span>
+                )}
                 {facetChips.map((chip) => (
                   <span key={chip} className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10.5px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                     {chip}
@@ -188,6 +217,9 @@ export function HitRow({
                 )}
                 {(hit.hit_type === 'operation' || hit.hit_type === 'schema' || hit.hit_type === 'property') && (
                   <span className="ml-auto hidden text-[var(--brand-soft-text)] group-hover:inline">Open in spec →</span>
+                )}
+                {hit.hit_type === 'change' && (
+                  <span className="ml-auto hidden text-[var(--brand-soft-text)] group-hover:inline">Open changes →</span>
                 )}
               </div>
             )}
