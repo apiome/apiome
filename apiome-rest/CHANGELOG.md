@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.725.0] - 2026-11-16
+
+### Added
+- **Public per-API changelog as Markdown (PCX-2.1, #5896)** — OpenAPI 1.585.0:
+  - `GET /v1/browse/tenants/{t}/projects/{p}/changelog.md` (anonymous, `text/markdown`) returns every published
+    **public** version's stored `version_changelogs` payload, newest first, one block per version separated by `---`.
+    A classified version's block is exactly `render_changelog_markdown` of its stored `ctg.changelog.v1` payload;
+    initial, failed (*Classification failed for 1.5.0 — plain diff only.*) and pending versions get an explicit note,
+    never an empty block. Optional filters match the Browse changelog page: `severity` (`breaking` / `non-breaking` /
+    `docs-only`), `pathGroup`, and `since=<version>` (versions after it; an unknown label keeps them all). Strong
+    content ETag with `If-None-Match` → `304`, `Cache-Control: public, max-age=300`; unknown tenant or a project with
+    no public published version is `404`. (`app.browse_changelog_markdown`,
+    `Database.list_public_version_changelogs_for_project`.)
+
 ## [1.724.0] - 2026-11-16
 
 ### Added

@@ -7,14 +7,16 @@ Mirrors the data surfaced by ``apiome-browse`` ``getPublicTenants`` and
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 from functools import cmp_to_key
 from typing import Any, Dict, List, Literal
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 
 from .auth import resolve_optional_tenant_member_auth
 from .browse_change_summary import browse_version_changes_summary
+from .browse_changelog_markdown import render_project_changelog_markdown
 from .browse_facets import (
     normalize_format_filter,
     normalize_protocol_filter,
@@ -403,3 +405,82 @@ async def list_public_browse_versions(
         versions=versions_out,
         filtered_count=len(versions_out),
     )
+
+
+#: Versions read for the project changelog document (matches the Browse page's cap).
+_CHANGELOG_MD_VERSION_LIMIT = 500
+
+
+def _if_none_match_matches(header: str | None, etag: str) -> bool:
+    """Whether an ``If-None-Match`` header carries ``etag`` (comma lists, ``W/`` prefixes, ``*``)."""
+    if not header:
+        return False
+    for candidate in header.split(","):
+        token = candidate.strip()
+        if token.startswith("W/"):
+            token = token[2:].strip()
+        if token in (etag, "*"):
+            return True
+    return False
+
+
+@router.get(
+    "/tenants/{tenant_slug}/projects/{project_slug}/changelog.md",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "The project changelog as Markdown, one block per published version, newest first.",
+            "content": {"text/markdown": {"schema": {"type": "string"}}},
+        },
+        304: {"description": "Not modified (``If-None-Match`` matched the ETag)."},
+        404: {"description": "Tenant or project not found, or the project has no public published version."},
+    },
+)
+async def get_public_browse_project_changelog_markdown(
+    request: Request,
+    tenant_slug: str,
+    project_slug: str,
+    severity: Literal["breaking", "non-breaking", "docs-only"] | None = Query(
+        None,
+        description="Only changes of this severity.",
+    ),
+    path_group: str | None = Query(
+        None,
+        alias="pathGroup",
+        description="Only changes in this path group (for example `/paths/~1pets`).",
+    ),
+    since: str | None = Query(
+        None,
+        description="Only versions published after this version label (exclusive). Unknown labels keep every version.",
+    ),
+) -> Response:
+    """
+    The public changelog of one API as Markdown (PCX-2.1, #5896).
+
+    Anonymous and cacheable. Every published **public** version from ``version_changelogs``,
+    newest first. A classified version's block is exactly ``render_changelog_markdown`` of its
+    stored payload (after the optional filters); initial, failed and pending versions render an
+    explicit note. Blocks are separated by a horizontal rule. Same content as the Browse
+    ``/tenant/{t}/{p}/changelog`` page; ``severity``, ``pathGroup`` and ``since`` match its filters.
+    """
+    tenant = db.get_tenant_row_by_slug(tenant_slug)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant_slug}")
+    tenant_id = tenant["id"]
+    if not db.project_has_public_published_version(tenant_id, project_slug):
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_slug}")
+
+    rows = db.list_public_version_changelogs_for_project(
+        tenant_id, project_slug, limit=_CHANGELOG_MD_VERSION_LIMIT
+    )
+    body = render_project_changelog_markdown(
+        rows,
+        severity=severity,
+        path_group=(path_group or "").strip() or None,
+        since=(since or "").strip() or None,
+    )
+    etag = '"' + hashlib.sha256(body.encode("utf-8")).hexdigest() + '"'
+    headers = {"ETag": etag, "Cache-Control": "public, max-age=300"}
+    if _if_none_match_matches(request.headers.get("if-none-match"), etag):
+        return Response(status_code=304, headers=headers)
+    return Response(content=body, media_type="text/markdown; charset=utf-8", headers=headers)

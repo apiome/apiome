@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- **A changelog page for every published API** — Browse's new **Changelog** page (next to a project's **Version history**) lists every published version's classified changes, breaking first, with **Severity**, **Path group** and **Since version** filters kept in the URL, a permalink and **View in compare** link on each change, and a Markdown copy at `changelog.md`
 - **Search changelogs in Browse** — the catalog search now returns each classified changelog entry as a **Change** result with its severity pill; filter with `severity:breaking` (or `warning`, `info`) or the rail's **Severity** checkboxes, and click a result to open the version's **Changes** tab — e.g. `severity:breaking status after:2026`
 - **Publication change reports** — a new docs page explains the report each publish writes: what it covers (schemas, properties, references, relationships, documentation), how the baseline is chosen (`auto`, `initial`, `manual`), editing and regenerating it, the Mustache templates and their order (regenerate, project, tenant, system), and the review and PDF export
 - **Breaking changes across formats** — a new docs page explains how Avro, JSON Schema, Protobuf and AsyncAPI changes are graded **Safe**, **Dangerous** or **Breaking** under a registry-style compatibility mode or a Buf category, where the grades show (Versions, `apiome diff`, the CI gate, the publish guardrail), and how the grades are checked against the reference tools

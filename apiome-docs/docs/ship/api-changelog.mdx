@@ -1,0 +1,123 @@
+---
+title: API changelog
+description: "One page per API listing every published version's changes, breaking first."
+sidebar_position: 4.15
+tags: [browse, publish, changelog]
+---
+
+Every published API in Browse has a **changelog** page at `/tenant/<org>/<project>/changelog`. It
+lists the classified changes of every published public version on one page, newest version first, so
+"what changed since 1.4?" is one page rather than one version at a time.
+
+The changes come from the classified changelog Apiome stores when a version is published. It is the
+same list as each version's **Changes** tab. Private and unpublished versions never appear.
+
+---
+
+## Open the changelog
+
+- **On the project page**, **click "Changelog"** next to **Version history**.
+- **On a version page**, open the **Changes** tab and **click "See the whole changelog →"**. The page
+  opens scrolled to that version.
+- Or **browse to** `/tenant/<org>/<project>/changelog` (for example
+  `/tenant/acme-corp/petstore-sample/changelog`).
+
+<Screenshot id="browse-changelog" alt="The changelog page of a published API: filters for severity, path group and version, then one section per version with severity pills and changes grouped by path" />
+
+## Read a version's section
+
+Each published version has its own section, newest first:
+
+- **The heading** is the version (click it to open the version page), followed by the version it is
+  compared with (**since v1.1.0**), the publish date, a count pill per severity and the total.
+- **Changes** are grouped by severity, **Breaking** first, then **Non-breaking** and **Docs-only**.
+  Inside each severity they are grouped by path or schema (`/paths/~1pets`,
+  `/components/schemas/Pet`), in the order the classifier wrote them.
+- **Each change** shows its summary and JSON Pointer. **Click "View in compare"** to open the two
+  versions side by side, scrolled to that change (`compare?v1=…&v2=…&focus=…`); see
+  [Compare published versions](./compare-published-versions.md).
+
+A version that has no list of changes says why, rather than showing an empty section:
+
+| The section says | Why |
+|---|---|
+| *Initial publication — no prior baseline to compare against.* | It is the first published version |
+| *Classification failed for 1.5.0 — plain diff only.* | The changes could not be classified. **Click "Open the plain diff"** to see the raw diff in compare |
+| *Changes for 1.4.0 are pending classification.* | It was just published and is still being classified |
+| *No changes detected.* | It was classified and nothing in the spec changed |
+
+## Filter the changelog
+
+The filter bar above the versions has three menus. Pick values and **click "Apply"**; **click
+"Clear"** to show everything again.
+
+| Menu | Shows | URL parameter |
+|---|---|---|
+| **Severity** | Only **Breaking**, **Non-breaking** or **Docs-only** changes | `severity=breaking` |
+| **Path group** | Only changes to one path or schema | `pathGroup=/paths/~1pets` |
+| **Since version** | Only versions published after the one you pick, so you see what changed since you last upgraded | `since=1.1.0` |
+
+<Screenshot id="browse-changelog-filtered" alt="The changelog filtered to breaking changes: Severity reads Breaking, a Clear link appears, and version 1.2.0 reads 3 of 5 changes" />
+
+Filters are applied on the server and kept in the URL, so a filtered view is a link you can share,
+for example `/tenant/acme-corp/petstore-sample/changelog?severity=breaking&since=1.1.0`. While a
+filter is on, a section's total reads *3 of 5 changes*. A version with no matching change says
+*No changes in this version match the filters.* A **Since version** that is not published on this
+API is ignored, and the page says so.
+
+## Link to one change
+
+Every version and every change has a permalink. **Click the "#"** next to it and copy the address
+from the browser, for example `/tenant/acme-corp/petstore-sample/changelog#v-1-2-0`. The anchor of a
+change stays the same when filters change, so a shared link keeps pointing at the same change.
+
+## Markdown and feeds
+
+The buttons at the top of the page give the same changelog in other formats:
+
+| Button | URL | What it is |
+|---|---|---|
+| **Markdown** | `/tenant/<org>/<project>/changelog.md` | The page as Markdown text, with the page's current filters |
+| **RSS** | `/tenant/<org>/<project>/changelog.xml` | An RSS 2.0 feed with one item per version |
+| **JSON Feed** | `/tenant/<org>/<project>/changelog.json` | The same feed as JSON Feed 1.1 |
+
+The Markdown has one block per version, newest first, separated by `---`. A classified version's
+block is the standard changelog Markdown, the same text the classified diff returns (see
+[Compare published versions](./compare-published-versions.md)): a `# Changelog` title, a **Since** line, the
+counts, then `## Breaking changes` and the other severities with one `###` heading per path. Initial,
+failed and pending versions get the one-line notes from the table above.
+
+```markdown
+# Changelog
+
+**Since** `1.1.0` → `1.2.0`
+
+_5 change(s): 3 breaking, 0 non-breaking, 2 docs-only._
+
+## Breaking changes
+
+### `/pets`
+
+- **HTTP operation removed from a path** (`ctg.operation_removed`) — `/paths/~1pets/post` _1.1.0 → 1.2.0_
+```
+
+Clients may reuse the Markdown and the feeds for five minutes, and they answer `304 Not Modified`
+until the changelog changes.
+
+## With the REST API
+
+The Markdown comes from a public REST endpoint (no authentication), which takes the same filters:
+
+```http
+GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md
+GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md?severity=breaking&since=1.1.0
+```
+
+An unknown `severity` is `422`. An unknown organization, or a project with no public published
+version, is `404`. See [`browse` in the REST reference](../reference/rest/browse.md).
+
+## Related
+
+- [Browse published specs](./browse-published-specs.md) — the Browse app and its search
+- [Compare published versions](./compare-published-versions.md) — two versions side by side
+- [Publication change reports](./publication-change-reports.md) — the report each publish writes

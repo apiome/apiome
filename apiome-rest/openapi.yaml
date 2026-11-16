@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.584.0
+  version: 1.585.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -304,6 +304,110 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list public browse versionsresponse422.
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md:
+    get:
+      tags:
+      - browse
+      summary: Get Public Browse Project Changelog Markdown
+      description: 'The public changelog of one API as Markdown (PCX-2.1, #5896).
+  
+  
+        Anonymous and cacheable. Every published **public** version from ``version_changelogs``,
+  
+        newest first. A classified version''s block is exactly ``render_changelog_markdown``
+        of its
+  
+        stored payload (after the optional filters); initial, failed and pending versions
+        render an
+  
+        explicit note. Blocks are separated by a horizontal rule. Same content as the
+        Browse
+  
+        ``/tenant/{t}/{p}/changelog`` page; ``severity``, ``pathGroup`` and ``since``
+        match its filters.'
+      operationId: get_public_browse_project_changelog_markdown_v1_browse_tenants__tenant_slug__projects__project_slug__changelog_md_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: severity
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - breaking
+            - non-breaking
+            - docs-only
+            type: string
+            description: Get Public Browse Project Changelog Markdownseverity schema.
+          - type: 'null'
+            description: Get Public Browse Project Changelog Markdownseverity schema.
+          description: Only changes of this severity.
+          title: Severity
+        description: Only changes of this severity.
+      - name: pathGroup
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Public Browse Project Changelog Markdownpath Group schema.
+          - type: 'null'
+            description: Get Public Browse Project Changelog Markdownpath Group schema.
+          description: Only changes in this path group (for example `/paths/~1pets`).
+          title: Pathgroup
+        description: Only changes in this path group (for example `/paths/~1pets`).
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Public Browse Project Changelog Markdownsince schema.
+          - type: 'null'
+            description: Get Public Browse Project Changelog Markdownsince schema.
+          description: Only versions published after this version label (exclusive).
+            Unknown labels keep every version.
+          title: Since
+        description: Only versions published after this version label (exclusive). Unknown
+          labels keep every version.
+      responses:
+        '200':
+          description: The project changelog as Markdown, one block per published version,
+            newest first.
+          content:
+            text/markdown:
+              schema:
+                type: string
+                description: Response payload for get public browse project changelog
+                  markdownresponse200.
+        '304':
+          description: Not modified (``If-None-Match`` matched the ETag).
+        '404':
+          description: Tenant or project not found, or the project has no public published
+            version.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get public browse project changelog
+                  markdownresponse422.
   /v1/browse/tenants/{tenant_slug}/agents.json:
     get:
       tags:

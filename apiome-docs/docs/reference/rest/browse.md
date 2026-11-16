@@ -1,6 +1,6 @@
 ---
 title: "Browse"
-description: "REST endpoints tagged browse: 11 operations."
+description: "REST endpoints tagged browse: 12 operations."
 sidebar_position: 10
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.584.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.585.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `browse` · 11 operations
+Tag: `browse` · 12 operations
 
 ## `GET /v1/browse/tenants` {#list-public-browse-tenants-v1-browse-tenants-get}
 
@@ -110,6 +110,39 @@ Operation id: `list_public_browse_projects_v1_browse_tenants__tenant_slug__proje
 | 401 | Credentials provided but could not be validated. | — |
 | 403 | Credentials provided but not authorized for this tenant. | — |
 | 404 | Tenant not found. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md` {#get-public-browse-project-changelog-markdown-v1-browse-tenants-tenant-slug-projects-project-slug-changelog-md-get}
+
+**Get Public Browse Project Changelog Markdown**
+
+The public changelog of one API as Markdown (PCX-2.1, #5896).
+
+Anonymous and cacheable. Every published **public** version from ``version_changelogs``,
+newest first. A classified version's block is exactly ``render_changelog_markdown`` of its
+stored payload (after the optional filters); initial, failed and pending versions render an
+explicit note. Blocks are separated by a horizontal rule. Same content as the Browse
+``/tenant/{t}/{p}/changelog`` page; ``severity``, ``pathGroup`` and ``since`` match its filters.
+
+Operation id: `get_public_browse_project_changelog_markdown_v1_browse_tenants__tenant_slug__projects__project_slug__changelog_md_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+| `severity` | query | enum `"breaking"`, `"non-breaking"`, `"docs-only"` or null | no | Only changes of this severity. |
+| `pathGroup` | query | string or null | no | Only changes in this path group (for example `/paths/~1pets`). |
+| `since` | query | string or null | no | Only versions published after this version label (exclusive). Unknown labels keep every version. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The project changelog as Markdown, one block per published version, newest first. | `text/markdown` string |
+| 304 | Not modified (``If-None-Match`` matched the ETag). | — |
+| 404 | Tenant or project not found, or the project has no public published version. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions` {#list-public-browse-versions-v1-browse-tenants-tenant-slug-projects-project-slug-versions-get}

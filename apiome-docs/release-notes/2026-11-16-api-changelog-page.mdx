@@ -1,0 +1,27 @@
+---
+slug: api-changelog-page
+title: Every published API has a changelog page
+description: "One Browse page lists every version's classified changes, breaking first, with filters."
+authors: [apiome]
+---
+
+Answering *what changed since 1.4?* used to mean opening each version's **Changes** tab in turn.
+Every published API in Browse now has a **Changelog** page, `/tenant/<org>/<project>/changelog`,
+that lists every published version's classified changes on one page, newest first.
+
+{/* truncate */}
+
+- **One section per version.** Changes are grouped **Breaking** first, then **Non-breaking** and
+  **Docs-only**, then by path or schema, with a count per severity.
+- **Nothing left blank.** A first publication, a version still being classified, and one whose
+  classification failed each say so. A failed version links to its plain diff.
+- **Filters you can share.** **Severity**, **Path group** and **Since version** are URL parameters
+  (`?severity=breaking&since=1.1.0`), so a filtered view is a link.
+- **Permalinks and compare.** Every change has a `#` permalink and a **View in compare** link that
+  opens the two versions scrolled to it.
+- **Markdown.** `changelog.md` gives the same content as Markdown, built by the same renderer as the
+  classified diff, and REST serves it at
+  `GET /v1/browse/tenants/{t}/projects/{p}/changelog.md`. The RSS and JSON feeds are linked beside it.
+
+Open it from **Changelog** next to the project's **Version history**, or **See the whole changelog →**
+on a version's **Changes** tab. See [API changelog](/ship/api-changelog).

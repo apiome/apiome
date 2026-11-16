@@ -192,6 +192,18 @@ export function ProjectClient({
                   : `${versions.length} published ${versions.length === 1 ? 'version' : 'versions'}, newest first.`}
               </p>
             </div>
+            {versions.length > 0 && (
+              // PCX-2.1 (#5896): every version's classified changes on one page.
+              <Link
+                href={`/tenant/${tenantSlug}/${projectSlug}/changelog`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Changelog
+              </Link>
+            )}
           </header>
 
           <VersionTimeline
