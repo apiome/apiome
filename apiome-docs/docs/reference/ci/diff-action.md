@@ -16,6 +16,8 @@ gate (CTG-2.2 / #4472).
 - Surfaces operational errors (`2`) with `::error::`
 - Upserts **one sticky PR comment** with the markdown changelog (`--format md`)
 - Says what each breaking change affects in the dependency graph (`--blast-radius`, on by default)
+- Grades by the baseline project's compatibility policy, or by the `mode`, `transitive` and
+  `category` inputs (XPC-4.5)
 
 ## Usage
 
@@ -46,7 +48,7 @@ Full guide: [`apiome-docs/docs/reference/ci/ci-diff-gate.md`](ci-diff-gate.md).
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `spec` | yes | — | Candidate OpenAPI file path |
+| `spec` | yes | — | Candidate file path: OpenAPI, or the baseline's own format (Avro, JSON Schema, AsyncAPI, Protobuf) |
 | `project` | yes | — | `--against` value (`project@version\|latest`) |
 | `fail-on` | no | `breaking` | `breaking` or `warn` |
 | `api-key` | yes | — | Apiome API key |
@@ -55,6 +57,36 @@ Full guide: [`apiome-docs/docs/reference/ci/ci-diff-gate.md`](ci-diff-gate.md).
 | `github-token` | no | `${{ github.token }}` | Token for sticky PR comments |
 | `comment` | no | `true` | Set `false` to skip the PR comment |
 | `blast-radius` | no | `true` | Add the blast-radius line under each breaking change; set `false` to leave it out. Needs `projects:view` |
+| `mode` | no | — | Compatibility mode: `backward`, `forward`, `full` or `none`, optionally with `_transitive`. Empty uses the project's policy |
+| `transitive` | no | — | `true` also compares against every earlier version of the baseline; `false` only against the baseline. Empty uses the project's policy |
+| `category` | no | — | Protobuf breaking category: `wire`, `wire_json`, `package` or `file`. Empty uses the project's policy |
+
+## Compatibility mode
+
+Left empty, `mode`, `transitive` and `category` come from the baseline project's style-guide
+policy, so the gate and the API always agree. Set them to override the policy for one workflow:
+
+```yaml
+      - uses: apiome/apiome/diff-action@main
+        with:
+          spec: schemas/order-created.avsc
+          project: orders-events@latest
+          mode: full
+          transitive: "true"
+          api-key: ${{ secrets.APIOME_API_KEY }}
+          tenant: ${{ secrets.APIOME_TENANT_ID }}
+```
+
+The mode applies to Avro, JSON Schema and AsyncAPI baselines, and `category` to Protobuf ones. For
+those, `spec` is read as the baseline's format. When a mode, category or transitive check was
+applied, the comment ends with what the changes were graded under:
+
+```markdown
+_Graded under `FULL_TRANSITIVE` by avro-compatibility, against 2.0.0, 1.0.0._
+```
+
+An unknown `mode` or `category` fails the step with exit `2`, as does a `transitive` other than
+`true`, `false` or empty.
 
 ## The PR comment
 

@@ -37,6 +37,7 @@ __all__ = [
     "ClassifiedDiff",
     "classify_openapi_changes",
     "classify_raw_changes",
+    "summarize_changes",
     "RawChange",
     "enumerate_openapi_changes",
     "TaxonomyRule",
@@ -69,6 +70,8 @@ class ClassifiedChange(BaseModel):
         after: Value in the head document (``None`` if removed).
         unclassified: ``True`` when no registry rule matched (fail-safe).
         change_kind: Raw enumerator kind that produced this change.
+        rationale: Why the change got its severity, when a canonical classifier (XPC-4.5) graded
+            it rather than the taxonomy; omitted from serialized output when ``None``.
     """
 
     rule_id: str = Field(description="Stable taxonomy rule id (e.g. ctg.path_removed).")
@@ -81,6 +84,11 @@ class ClassifiedChange(BaseModel):
         description="True when no rule matched; severity is fail-safe breaking.",
     )
     change_kind: str = Field(default="", description="Raw enumerator change kind.")
+    rationale: Optional[str] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Why a canonical classifier graded it so (XPC-4.5); absent for taxonomy rules.",
+    )
 
 
 class ClassifiedDiff(BaseModel):
@@ -178,6 +186,23 @@ def classify_raw_changes(
         changes=classified,
         counts=_tally(classified),
         max_severity=_worst([c.severity for c in classified]),
+    )
+
+
+def summarize_changes(changes: Sequence[ClassifiedChange]) -> ClassifiedDiff:
+    """Wrap already-classified changes in a :class:`ClassifiedDiff` with counts and max severity.
+
+    Args:
+        changes: Classified changes, in the order they should be reported.
+
+    Returns:
+        The :class:`ClassifiedDiff`.
+    """
+    listed = list(changes)
+    return ClassifiedDiff(
+        changes=listed,
+        counts=_tally(listed),
+        max_severity=_worst([c.severity for c in listed]),
     )
 
 

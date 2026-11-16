@@ -5,6 +5,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .compatibility_report_models import EvaluatedUnderOut
 from .config import settings
 from .entity_owners import EntityOwnerRef, owner_ref_from_value
 from .lint_evidence import coverage_entries, expected_scanners_for_subject
@@ -6164,6 +6165,37 @@ class CompatibilityCheckRequest(BaseModel):
     )
     rules: Optional[CompatibilityRulesPayload] = None
     policy: Optional[CompatibilityPolicyPayload] = None
+    mode: Optional[str] = Field(
+        default=None,
+        description=(
+            "Compatibility mode (XPC-4.5): BACKWARD, FORWARD, FULL or NONE, any case. A "
+            "``_TRANSITIVE`` name (``FULL_TRANSITIVE``) also sets ``transitive``. Omit to use the "
+            "project's style-guide policy."
+        ),
+    )
+    transitive: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Also check the head against every earlier revision of the base, not only the base "
+            "(XPC-4.5). Omit to use the project's policy."
+        ),
+    )
+    category: Optional[str] = Field(
+        default=None,
+        description=(
+            "buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON, "
+            "PACKAGE or FILE. Omit to use the project's policy."
+        ),
+    )
+
+
+class CompatibilityAgainstOut(BaseModel):
+    """The stored revision a finding was found against (transitive checks, XPC-4.5)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    revision_id: str = Field(serialization_alias="revisionId")
+    version_label: str = Field(serialization_alias="versionLabel")
 
 
 class CompatibilityFindingOut(BaseModel):
@@ -6174,6 +6206,24 @@ class CompatibilityFindingOut(BaseModel):
     category: str
     rule: str
     message: str
+    rule_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="ruleId",
+        description="The rule that produced the finding (the same value as ``rule``; XPC-4.5).",
+    )
+    severity: Optional[str] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description=(
+            "safe / dangerous / breaking, when a mode-aware or category-aware classifier graded the "
+            "finding; ``category`` then maps dangerous to ``unknown``."
+        ),
+    )
+    against: Optional[CompatibilityAgainstOut] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="On a transitive check: the revision the finding was found against.",
+    )
 
 
 class RevisionDeprecationWarningOut(BaseModel):
@@ -6435,6 +6485,14 @@ class CompatibilityCheckResponse(BaseModel):
         default=False,
         serialization_alias="deprecatedRevisionBlocked",
         description="True when project metadata requests strict deprecation handling and a revision is deprecated.",
+    )
+    evaluated_under: Optional[EvaluatedUnderOut] = Field(
+        default=None,
+        serialization_alias="evaluatedUnder",
+        description=(
+            "What the verdict was graded under: mode, transitivity, Protobuf category, the formats "
+            "compared, whether the mode was applied, the ruleset and the revisions compared (XPC-4.5)."
+        ),
     )
 
 
@@ -7299,6 +7357,31 @@ class StyleGuidePolicySettingsOut(BaseModel):
             "sunset (DCW-3.4)."
         ),
     )
+    compatibility_mode: Literal["BACKWARD", "FORWARD", "FULL", "NONE"] = Field(
+        default="BACKWARD",
+        serialization_alias="compatibilityMode",
+        description=(
+            "Compatibility mode classified diffs, compatibility checks, the CI diff gate and the "
+            "publish guardrail grade by when a request names none (XPC-4.5): BACKWARD (default), "
+            "FORWARD, FULL or NONE."
+        ),
+    )
+    compatibility_transitive: bool = Field(
+        default=False,
+        serialization_alias="compatibilityTransitive",
+        description=(
+            "When true, a change is checked against every earlier revision, not only the base "
+            "(BACKWARD_TRANSITIVE and friends; XPC-4.5)."
+        ),
+    )
+    protobuf_breaking_category: Literal["WIRE", "WIRE_JSON", "PACKAGE", "FILE"] = Field(
+        default="WIRE_JSON",
+        serialization_alias="protobufBreakingCategory",
+        description=(
+            "buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON "
+            "(default), PACKAGE or FILE."
+        ),
+    )
 
 
 class StyleGuidePolicySettingsPutRequest(BaseModel):
@@ -7366,6 +7449,24 @@ class StyleGuidePolicySettingsPutRequest(BaseModel):
         ),
         serialization_alias="componentDeprecationNoticeDays",
         description="Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged.",
+    )
+    compatibility_mode: Optional[Literal["BACKWARD", "FORWARD", "FULL", "NONE"]] = Field(
+        default=None,
+        validation_alias=AliasChoices("compatibilityMode", "compatibility_mode"),
+        serialization_alias="compatibilityMode",
+        description="Compatibility mode (XPC-4.5); omit to leave unchanged.",
+    )
+    compatibility_transitive: Optional[bool] = Field(
+        default=None,
+        validation_alias=AliasChoices("compatibilityTransitive", "compatibility_transitive"),
+        serialization_alias="compatibilityTransitive",
+        description="Check every earlier revision, not only the base (XPC-4.5); omit to leave unchanged.",
+    )
+    protobuf_breaking_category: Optional[Literal["WIRE", "WIRE_JSON", "PACKAGE", "FILE"]] = Field(
+        default=None,
+        validation_alias=AliasChoices("protobufBreakingCategory", "protobuf_breaking_category"),
+        serialization_alias="protobufBreakingCategory",
+        description="buf breaking category for Protobuf changes (XPC-4.5); omit to leave unchanged.",
     )
     snapshot: bool = Field(
         default=True,
@@ -7896,6 +7997,20 @@ class BreakingPublishChangeOut(BaseModel):
         ..., validation_alias=AliasChoices("pathGroup", "path_group"), serialization_alias="pathGroup"
     )
     summary: str
+    against_revision_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("againstRevisionId", "against_revision_id"),
+        serialization_alias="againstRevisionId",
+        exclude_if=lambda value: value is None,
+        description="Under a transitive policy: the published revision this change breaks against (XPC-4.5).",
+    )
+    against_version: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("againstVersion", "against_version"),
+        serialization_alias="againstVersion",
+        exclude_if=lambda value: value is None,
+        description="That revision's version label.",
+    )
 
 
 class BreakingPublishGuardrailOut(BaseModel):
@@ -7954,6 +8069,15 @@ class BreakingPublishGuardrailOut(BaseModel):
         serialization_alias="recommendedVersion",
     )
     detail: Optional[str] = None
+    evaluated_under: Optional[EvaluatedUnderOut] = Field(
+        None,
+        validation_alias=AliasChoices("evaluatedUnder", "evaluated_under"),
+        serialization_alias="evaluatedUnder",
+        description=(
+            "What the comparison was graded under: the project's compatibility mode, transitivity "
+            "and Protobuf category, and the published revisions compared (XPC-4.5)."
+        ),
+    )
     message: str
 
 

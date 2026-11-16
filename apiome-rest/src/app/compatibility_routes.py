@@ -1,20 +1,47 @@
 """
 Backward compatibility API: compare two schema revisions (versions.id) using generated OpenAPI.
 
+Since XPC-4.5 (#5749) the check takes a compatibility ``mode``, ``transitive`` and a Protobuf
+``category``, each defaulting to the project's style-guide policy. Revisions whose source format has
+a mode-aware classifier (Avro, JSON Schema, AsyncAPI) or a category-aware one (Protobuf) are graded
+by it from their canonical models; every other revision keeps the OpenAPI engine, and the response's
+``evaluatedUnder.modeApplied`` says which happened.
+
 Also exposes independent oasdiff compatibility evidence (CLX-2.3 / #4853) with
 normalized JSON / SARIF / JUnit gate outputs.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 
 from .auth import validate_authentication
 from .compatibility_engine import CompatibilityCheckEngine, compat_report_fingerprint, openapi_for_revision
+from .compatibility_modes import (
+    NATIVE_COMPAT_RULESET,
+    Baseline,
+    FormatEvaluation,
+    GradedChange,
+    canonical_model_for_revision,
+    classify_under,
+    evaluated_under,
+    graded_changes,
+    merge_transitive,
+    revision_format,
+    transitive_baselines,
+)
+from .compatibility_policy import (
+    CompatibilityPolicy,
+    PolicyValueError,
+    effective_policy,
+    requested_settings,
+    resolve_policy,
+)
 from .database import db
 from .gate_report_emit import (
     GATE_FORMAT_JSON,
@@ -29,6 +56,7 @@ from .openapi_compatibility_evidence import (
 )
 from .permissions import enforce_permission, Resource, Action
 from .models import (
+    CompatibilityAgainstOut,
     CompatibilityCheckRequest,
     CompatibilityCheckResponse,
     CompatibilityEvidenceFindingOut,
@@ -84,6 +112,132 @@ def _rules_from_payload(req: CompatibilityCheckRequest) -> CompatibilityRules:
     )
 
 
+#: Canonical severity → the compatibility response's finding category.
+_CATEGORY_OF_SEVERITY = {"breaking": "breaking", "dangerous": "unknown", "safe": "safe"}
+
+#: The finding keys the report fingerprint has always covered; ``against`` joins them on a
+#: transitive check. ``ruleId`` and ``severity`` restate ``rule`` / ``category`` and stay out, so
+#: an OpenAPI report's fingerprint is what it was before XPC-4.5.
+_FINGERPRINT_KEYS = ("id", "path", "category", "rule", "message")
+
+
+def _canonical_finding(change: GradedChange) -> CompatibilityFindingOut:
+    """Map one canonical grade onto a compatibility finding."""
+    category = _CATEGORY_OF_SEVERITY.get(change.severity, "unknown")
+    digest = hashlib.sha256(
+        f"{change.pointer}|{change.rule_id}|{change.rationale}".encode("utf-8")
+    ).hexdigest()[:16]
+    return CompatibilityFindingOut(
+        id=f"cmp-{digest}",
+        path=change.pointer,
+        category=category,
+        rule=change.rule_id,
+        message=change.rationale,
+        rule_id=change.rule_id,
+        severity=change.severity,
+    )
+
+
+def _overall_of(findings: Sequence[CompatibilityFindingOut]) -> str:
+    """Worst finding category: ``breaking`` over ``unknown`` over ``safe``."""
+    categories = {f.category for f in findings}
+    if "breaking" in categories:
+        return "breaking"
+    if "unknown" in categories:
+        return "unknown"
+    return "safe"
+
+
+def _fingerprint_dict(finding: CompatibilityFindingOut) -> Dict[str, Any]:
+    """The part of a finding the report fingerprint covers."""
+    out: Dict[str, Any] = {key: getattr(finding, key) for key in _FINGERPRINT_KEYS}
+    if finding.against is not None:
+        out["against"] = finding.against.model_dump(by_alias=True)
+    return out
+
+
+def _compare_baselines(
+    *,
+    tenant_slug: str,
+    tenant_id: str,
+    base_ver: Dict[str, Any],
+    head_ver: Dict[str, Any],
+    baselines: Sequence[Baseline],
+    compat_policy: CompatibilityPolicy,
+    rules: CompatibilityRules,
+) -> Tuple[
+    List[Tuple[Baseline, List[CompatibilityFindingOut]]],
+    List[FormatEvaluation],
+    Optional[Tuple[Dict[str, Any], Dict[str, Any]]],
+]:
+    """Compare the head against each baseline, with the mode-aware classifier when there is one.
+
+    Args:
+        tenant_slug: Tenant slug (to materialize OpenAPI).
+        tenant_id: Tenant id.
+        base_ver: The base revision row.
+        head_ver: The head revision row.
+        baselines: The base, then any earlier revisions a transitive check adds.
+        compat_policy: The effective mode / category.
+        rules: The OpenAPI engine's toggles (unused on the canonical path).
+
+    Returns:
+        ``(pairs, evaluations, specs)``: findings per baseline; how each canonical pair was graded
+        (empty on the OpenAPI path); and the base and head OpenAPI documents on the OpenAPI path
+        (``None`` on the canonical one). An earlier revision whose source cannot be rebuilt is
+        skipped.
+    """
+    head_id, base_id = str(head_ver["id"]), str(base_ver["id"])
+    head_model = canonical_model_for_revision(db, tenant_id, head_id)
+    base_model = canonical_model_for_revision(db, tenant_id, base_id) if head_model is not None else None
+    pairs: List[Tuple[Baseline, List[CompatibilityFindingOut]]] = []
+
+    if head_model is not None and base_model is not None:
+        evaluations: List[FormatEvaluation] = []
+        for baseline in baselines:
+            model = (
+                base_model
+                if baseline.role == "base"
+                else canonical_model_for_revision(db, tenant_id, baseline.revision_id)
+            )
+            if model is None:
+                continue
+            result, evaluation = classify_under(model, head_model, compat_policy)
+            evaluations.append(evaluation)
+            pairs.append((baseline, [_canonical_finding(c) for c in graded_changes(result)]))
+        return pairs, evaluations, None
+
+    base_spec = openapi_for_revision(base_ver, tenant_slug, tenant_id)
+    head_spec = openapi_for_revision(head_ver, tenant_slug, tenant_id)
+    for baseline in baselines:
+        if baseline.role == "base":
+            spec = base_spec
+        else:
+            row = db.get_version_by_id(baseline.revision_id, tenant_id)
+            if not row:
+                continue
+            spec = openapi_for_revision(row, tenant_slug, tenant_id)
+        result = CompatibilityCheckEngine.run(spec, head_spec, rules)
+        pairs.append(
+            (
+                baseline,
+                [
+                    CompatibilityFindingOut(
+                        id=f.id,
+                        path=f.path,
+                        category=f.category,
+                        rule=f.rule,
+                        message=f.message,
+                        rule_id=f.rule,
+                    )
+                    for f in result.findings
+                ],
+            )
+        )
+    head_format = revision_format(db, tenant_id, head_id)
+    return pairs, [FormatEvaluation(format=head_format, ruleset=NATIVE_COMPAT_RULESET)], (base_spec, head_spec)
+
+
 @router.post("/{tenant_slug}/{project_id}/compatibility", response_model=CompatibilityCheckResponse)
 async def check_revision_compatibility(
     tenant_slug: str,
@@ -94,6 +248,12 @@ async def check_revision_compatibility(
     """
     Compare **baseRevisionId** (older / consumer expectation) to **headRevisionId** (newer).
     Returns structured safe / breaking / unknown findings for CI-style merge gates.
+
+    ``mode`` (BACKWARD / FORWARD / FULL / NONE), ``transitive`` and ``category`` (Protobuf) default
+    to the project's style-guide policy. Avro, JSON Schema and AsyncAPI revisions are graded by
+    mode, Protobuf revisions at the category; other formats keep the OpenAPI engine and report
+    ``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also compared against
+    every earlier revision of the base, and each finding names the revision it was found against.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
@@ -127,24 +287,68 @@ async def check_revision_compatibility(
             detail="Both revisions must belong to the specified project",
         )
 
-    rules = _rules_from_payload(body)
-    base_spec = openapi_for_revision(base_ver, tenant_slug, tenant_id)
-    head_spec = openapi_for_revision(head_ver, tenant_slug, tenant_id)
-
-    result = CompatibilityCheckEngine.run(base_spec, head_spec, rules)
-    overall = result.overall
-    finding_out = [
-        CompatibilityFindingOut(
-            id=f.id,
-            path=f.path,
-            category=f.category,
-            rule=f.rule,
-            message=f.message,
+    try:
+        compat_policy = effective_policy(
+            resolve_policy(db, tenant_id, project_id),
+            mode=body.mode,
+            transitive=body.transitive,
+            category=body.category,
         )
-        for f in result.findings
+    except PolicyValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    baselines, truncated = transitive_baselines(
+        db,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        base_revision_id=base_id,
+        base_label=str(base_ver["version_id"]),
+        transitive=compat_policy.transitive,
+    )
+    pairs, evaluations, specs = _compare_baselines(
+        tenant_slug=tenant_slug,
+        tenant_id=tenant_id,
+        base_ver=base_ver,
+        head_ver=head_ver,
+        baselines=baselines,
+        compat_policy=compat_policy,
+        rules=_rules_from_payload(body),
+    )
+    merged = merge_transitive(
+        pairs,
+        key=lambda f: (f.rule, f.path),
+        is_breaking=lambda f: f.category == "breaking",
+    )
+    finding_out = [
+        (
+            f.model_copy(
+                update={
+                    "against": CompatibilityAgainstOut(
+                        revision_id=b.revision_id, version_label=b.version_label
+                    )
+                }
+            )
+            if compat_policy.transitive
+            else f
+        )
+        for b, f in merged
     ]
-    finding_dicts = [f.model_dump(by_alias=True) for f in finding_out]
-    rule_hits_sorted = dict(sorted(result.rule_hits.items()))
+    overall = _overall_of(finding_out)
+    finding_dicts = [_fingerprint_dict(f) for f in finding_out]
+    rule_hits: Dict[str, int] = {}
+    for f in finding_out:
+        rule_hits[f.rule] = rule_hits.get(f.rule, 0) + 1
+    rule_hits_sorted = dict(sorted(rule_hits.items()))
+    under = evaluated_under(
+        compat_policy,
+        evaluations,
+        requested=requested_settings(
+            mode=body.mode, transitive=body.transitive, category=body.category
+        ),
+        compared=baselines,
+        truncated=truncated,
+        default_ruleset=NATIVE_COMPAT_RULESET,
+    )
 
     dep_out: List[RevisionDeprecationWarningOut] = []
     dep_out.extend(
@@ -186,6 +390,7 @@ async def check_revision_compatibility(
         merge_blocked_by_compat_gate=merge_blocked,
         deprecation_warnings=dep_out,
         deprecated_revision_blocked=deprecated_revision_blocked,
+        evaluated_under=under,
     )
 
     policy = body.policy
@@ -209,8 +414,12 @@ async def check_revision_compatibility(
             },
         )
 
-    # CLX-2.3: best-effort independent oasdiff evidence (does not affect native gate).
+    # CLX-2.3: best-effort independent oasdiff evidence (does not affect native gate). Only the
+    # OpenAPI path has documents to give it.
     try:
+        if specs is None:
+            return response
+        base_spec, head_spec = specs
         await capture_oasdiff_compatibility_evidence(
             base_document=base_spec,
             head_document=head_spec,

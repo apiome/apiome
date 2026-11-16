@@ -1,0 +1,31 @@
+---
+slug: compatibility-modes-api
+title: Choose a compatibility mode per project or per request
+description: "Diffs, compatibility checks, the CI gate and publishing grade by a chosen compatibility mode."
+authors: [apiome]
+---
+
+You can now choose the compatibility mode changes are graded under. A project's style-guide policy
+holds a **mode** (`BACKWARD`, `FORWARD`, `FULL` or `NONE`), whether it is **transitive**, and a
+Protobuf **category**. The classified diff, the compatibility check, the CI diff gate and the
+breaking-change publish check all use it, and any request can override it.
+
+{/* truncate */}
+
+- **Per project.** Set `compatibilityMode`, `compatibilityTransitive` and `protobufBreakingCategory`
+  with `PUT /v1/style-guides/{tenant}/{guide}/policy`. Each guide edit records them in the guide's
+  history.
+- **Per request.** `POST /v1/diff/{tenant}/classified` and
+  `POST /v1/versions/{tenant}/{project}/compatibility` accept `mode`, `transitive` and `category`.
+  On the command line, use `apiome diff --mode forward`, `--transitive` or `--category wire`, and
+  `apiome compat --mode full`. The diff-action takes `mode`, `transitive` and `category` inputs.
+- **Says what it evaluated.** Every response carries `evaluatedUnder`: the mode, transitivity and
+  category, the formats compared, and `modeApplied`. For a format without mode rules, such as
+  OpenAPI, `modeApplied` is `false` and the response names the ruleset that graded it instead.
+- **Transitive checks.** With `transitive` on, a change is also checked against every earlier
+  version. A change compatible with the last version but not an older one fails, and names that
+  older version. Under a **block** policy, publishing it is refused.
+- **Avro by mode.** The same Avro pair now grades differently under `BACKWARD` and `FORWARD`.
+- **Rule catalogue.** `GET /v1/compatibility/rules` lists every Avro, JSON Schema, Protobuf and
+  AsyncAPI rule id with its severity under each mode or category. The table on
+  [Compatibility modes](/govern/compatibility-modes#rule-catalogue) is generated from it.

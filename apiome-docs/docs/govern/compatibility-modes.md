@@ -20,7 +20,10 @@ The `_TRANSITIVE` forms (`BACKWARD_TRANSITIVE`, `FORWARD_TRANSITIVE`, `FULL_TRAN
 the same check against every earlier version, not only the latest. For one pair of versions,
 they check the same thing as the plain form.
 
-Changes are graded against `BACKWARD`, a Confluent registry's default:
+`NONE` turns compatibility checking off: changes are still listed with their rule ids, but none
+of them fails. Changes are graded against `BACKWARD`, a Confluent registry's default, unless the
+project's policy or the request names another mode (see
+[Choose a project's mode](#choose-a-projects-mode)):
 
 | A change… | Severity |
 | --- | --- |
@@ -28,8 +31,9 @@ Changes are graded against `BACKWARD`, a Confluent registry's default:
 | passes `BACKWARD` but fails `FORWARD` | **Dangerous** |
 | passes `FULL` | **Safe** |
 
-Each grade's explanation starts with the mode it was graded under, such as `[BACKWARD]`, then
-names the modes the change breaks.
+Each grade's explanation starts with the mode it was graded under, such as `[FORWARD]`, then
+names the modes the change breaks. Avro grades under the default `BACKWARD` keep their
+explanation without the bracket.
 
 ## Formats graded by mode
 
@@ -318,6 +322,254 @@ with the mode in brackets. The classifier is named `asyncapi-diff`.
 
 Servers have no row of their own in the version comparison, and neither does a `.proto` text
 payload in AsyncAPI 2. Their findings are still graded, and they count toward the overall grade.
+
+## Choose a project's mode
+
+A project's mode is part of its style guide's policy. The Style guides screen is not yet available,
+so set the three settings over the REST API with
+[`PUT /v1/style-guides/{tenant}/{guide}/policy`](../reference/rest/style-guides.md#put-style-guide-policy-settings-v1-style-guides-tenant-slug-guide-id-policy-put):
+
+```http
+PUT /v1/style-guides/{tenant}/{guide}/policy
+X-API-Key: <your-api-key>
+
+{ "compatibilityMode": "FULL", "compatibilityTransitive": true, "protobufBreakingCategory": "WIRE_JSON" }
+```
+
+A field you leave out keeps its value:
+
+| Field | Values | Default |
+| --- | --- | --- |
+| `compatibilityMode` | `BACKWARD`, `FORWARD`, `FULL`, `NONE` | `BACKWARD` |
+| `compatibilityTransitive` | `true` checks every earlier version too | `false` |
+| `protobufBreakingCategory` | `WIRE`, `WIRE_JSON`, `PACKAGE`, `FILE` | `WIRE_JSON` |
+
+`GET` on the same path reads them back.
+
+The policy resolves the way every guide setting does: a guide assigned to the project wins over
+one assigned to the workspace, which wins over the workspace's default guide. It applies to:
+
+- the classified diff, [`POST /v1/diff/{tenant}/classified`](../reference/rest/classified-diff.md),
+  and so to [`apiome diff`](../reference/cli/diff.md) and the [CI diff gate](../reference/ci/ci-diff-gate.md);
+- the compatibility check,
+  [`POST /v1/versions/{tenant}/{project}/compatibility`](../reference/rest/compatibility.md), and so
+  to `apiome compat --mode`;
+- the breaking-change publish guardrail, when a version is published.
+
+Every guide edit records the three settings in the guide's history, so a past verdict can be
+explained by the policy it ran under.
+
+### Ask for a mode in one request
+
+The classified diff and the compatibility check both accept `mode`, `transitive` and `category` in
+the request body. Anything you leave out comes from the project's policy:
+
+```json
+{
+  "base": { "project": "orders-events", "version": "3.0.0" },
+  "head": { "project": "orders-events", "version": "3.1.0" },
+  "mode": "FULL_TRANSITIVE"
+}
+```
+
+A `_TRANSITIVE` mode name also turns on `transitive`. From the CLI:
+
+```bash
+apiome diff ./orders.avsc --against orders-events@latest --mode forward
+apiome diff ./orders.avsc --against orders-events@latest --mode full --transitive
+apiome compat --project orders-events --base-version 3.0.0 --version 3.1.0 --mode full
+```
+
+### What a response says it evaluated
+
+Every response carries `evaluatedUnder`:
+
+```json
+"evaluatedUnder": {
+  "mode": "FORWARD",
+  "transitive": false,
+  "category": null,
+  "formats": ["avro"],
+  "modeApplied": true,
+  "categoryApplied": false,
+  "ruleset": "avro-compatibility",
+  "source": { "mode": "request", "transitive": "policy", "category": "policy" },
+  "comparedRevisions": [{ "revisionId": "…", "versionLabel": "3.0.0", "role": "base" }],
+  "comparedRevisionsTruncated": false
+}
+```
+
+- `modeApplied` is `true` only when an Avro, JSON Schema or AsyncAPI classifier graded the changes
+  by `mode`. For a format without one, such as OpenAPI, RAML, API Blueprint or WSDL, it is
+  `false` and `ruleset` names what graded the changes instead: `ctg` for the OpenAPI change
+  taxonomy, `openapi-compatibility` for the compatibility check's OpenAPI engine, or the format's
+  own classifier. The response never implies a mode it did not apply.
+- `category` is set, and `categoryApplied` is `true`, only when Protobuf was compared.
+- `source` says whether each setting came from the request or from the project's policy.
+
+Each change also carries its `ruleId`. In the classified diff, a change graded by one of these
+classifiers also carries `grade` (`safe`, `dangerous` or `breaking`) and `rationale`. Its
+`severity` is `breaking` for a break and `non-breaking` otherwise, so `--fail-on warn` fails on
+both dangerous and safe changes, as it does for OpenAPI.
+
+### Transitive checks
+
+With `transitive` on, the head is compared with the base and then with every earlier revision
+of the base, newest first, up to 50. The earlier revisions are the base's published ancestors.
+For a catalog item, which is never published, they are the item's earlier revisions.
+
+Every change against the base is listed. From an earlier revision, only breaking changes are
+added, and only ones no newer revision already reported. Each change then names the revision it
+was found against:
+
+```json
+{
+  "ruleId": "avro-compatibility.reader-field-missing-default-value",
+  "severity": "breaking",
+  "against": { "revisionId": "…", "versionLabel": "1.0.0" }
+}
+```
+
+A change can therefore be compatible with the base and still fail. When the publish guardrail
+finds one, its message names the earlier version, for example
+`1 breaking change(s) versus 2.0.0 published as 2.1.0 (breaking against earlier revision(s) 1.0.0)`.
+Under a **block** policy that publish is refused.
+
+## Rule catalogue
+
+[`GET /v1/compatibility/rules`](../reference/rest/compatibility.md) lists every rule id these
+classifiers report, with its severity under each mode or Protobuf category. Add `?format=avro`
+(or `json-schema`, `protobuf`, `asyncapi`, or a format key such as `asyncapi-3`) to list one
+format's rules. API keys with `diff:read` or `registry:read` can read it. The tables below are
+generated from the same data.
+
+**Breaks** is the side a rule protects: `backward` (the new schema rejects old data), `forward`
+(the old schema rejects new data), `review` (a change the check cannot prove either way), or
+`either` for an Avro rule, which is breaking under the modes that check the direction it was
+found in. AsyncAPI rules name `consumer`, `producer` or `both`. A rule id ending in `*` is a
+family: the rest of the id is the tool's own rule name.
+
+<!-- compatibility-rule-catalogue:start (generated by apiome-rest/scripts/generate_compatibility_rule_catalogue.py) -->
+
+### Avro rules
+
+| Rule id | Breaks | `BACKWARD` | `FORWARD` | `FULL` | `NONE` | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| `avro-compatibility.compatible` | — | Safe | Safe | Safe | Safe | Avro schema resolution reads the change both ways (FULL compatible). |
+| `avro-compatibility.fixed-size-mismatch` | either | Breaking | Breaking | Breaking | Dangerous | A fixed of another size. |
+| `avro-compatibility.missing-enum-symbols` | either | Breaking | Breaking | Breaking | Dangerous | Writer enum symbols the reader lacks, and the reader's enum has no default. |
+| `avro-compatibility.missing-union-branch` | either | Breaking | Breaking | Breaking | Dangerous | A writer union branch no reader branch can read. |
+| `avro-compatibility.name-mismatch` | either | Breaking | Breaking | Breaking | Dangerous | A record, enum or fixed renamed without an alias for the old name. |
+| `avro-compatibility.reader-field-missing-default-value` | either | Breaking | Breaking | Breaking | Dangerous | A reader field the writer lacks has no default. |
+| `avro-compatibility.type-mismatch` | either | Breaking | Breaking | Breaking | Dangerous | Two types that do not resolve; Avro's promotions such as int to long do. |
+
+### JSON Schema rules
+
+| Rule id | Breaks | `BACKWARD` | `FORWARD` | `FULL` | `NONE` | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| `jsonschema.backward.additional-properties-closed` | backward | Breaking | Dangerous | Breaking | Dangerous | additionalProperties turned from open to closed. |
+| `jsonschema.backward.any-of-branch-removed` | backward | Breaking | Dangerous | Breaking | Dangerous | An anyOf branch removed. |
+| `jsonschema.backward.closed-property-removed` | backward | Breaking | Dangerous | Breaking | Dangerous | A property removed from a closed content model. |
+| `jsonschema.backward.enum-narrowed` | backward | Breaking | Dangerous | Breaking | Dangerous | An enum or const value removed, or an enum added. |
+| `jsonschema.backward.exclusive-maximum-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The exclusiveMaximum bound tightened or added. |
+| `jsonschema.backward.exclusive-minimum-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The exclusiveMinimum bound tightened or added. |
+| `jsonschema.backward.format-changed` | backward | Breaking | Dangerous | Breaking | Dangerous | A format replaced by another. |
+| `jsonschema.backward.format-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | A format added. |
+| `jsonschema.backward.max-items-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The maxItems bound tightened or added. |
+| `jsonschema.backward.max-length-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The maxLength bound tightened or added. |
+| `jsonschema.backward.max-properties-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The maxProperties bound tightened or added. |
+| `jsonschema.backward.maximum-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The maximum bound tightened or added. |
+| `jsonschema.backward.min-items-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The minItems bound tightened or added. |
+| `jsonschema.backward.min-length-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The minLength bound tightened or added. |
+| `jsonschema.backward.min-properties-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The minProperties bound tightened or added. |
+| `jsonschema.backward.minimum-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | The minimum bound tightened or added. |
+| `jsonschema.backward.multiple-of-changed` | backward | Breaking | Dangerous | Breaking | Dangerous | A multipleOf replaced by another. |
+| `jsonschema.backward.multiple-of-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | A multipleOf added. |
+| `jsonschema.backward.one-of-branch-removed` | backward | Breaking | Dangerous | Breaking | Dangerous | A oneOf branch removed. |
+| `jsonschema.backward.open-property-added` | backward | Breaking | Dangerous | Breaking | Dangerous | A property added to an open content model. |
+| `jsonschema.backward.pattern-changed` | backward | Breaking | Dangerous | Breaking | Dangerous | A pattern replaced by another. |
+| `jsonschema.backward.pattern-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | A pattern added. |
+| `jsonschema.backward.required-added` | backward | Breaking | Dangerous | Breaking | Dangerous | A property became required. |
+| `jsonschema.backward.schema-rejects-all` | backward | Breaking | Dangerous | Breaking | Dangerous | The schema became false and now rejects every value. |
+| `jsonschema.backward.type-changed` | backward | Breaking | Dangerous | Breaking | Dangerous | A type replaced by an unrelated one, such as integer to string. |
+| `jsonschema.backward.type-narrowed` | backward | Breaking | Dangerous | Breaking | Dangerous | A type narrowed, such as number to integer. |
+| `jsonschema.backward.unique-items-tightened` | backward | Breaking | Dangerous | Breaking | Dangerous | uniqueItems turned on. |
+| `jsonschema.compatible` | — | Safe | Safe | Safe | Safe | The JSON Schema check accepts the change both ways (FULL compatible). |
+| `jsonschema.forward.additional-properties-opened` | forward | Dangerous | Breaking | Breaking | Dangerous | additionalProperties turned from closed to open. |
+| `jsonschema.forward.any-of-branch-added` | forward | Dangerous | Breaking | Breaking | Dangerous | An anyOf branch added. |
+| `jsonschema.forward.closed-property-added` | forward | Dangerous | Breaking | Breaking | Dangerous | A property added to a closed content model. |
+| `jsonschema.forward.enum-widened` | forward | Dangerous | Breaking | Breaking | Dangerous | An enum value added, or the enum removed. |
+| `jsonschema.forward.exclusive-maximum-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The exclusiveMaximum bound loosened or removed. |
+| `jsonschema.forward.exclusive-minimum-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The exclusiveMinimum bound loosened or removed. |
+| `jsonschema.forward.format-changed` | forward | Dangerous | Breaking | Breaking | Dangerous | A format replaced by another. |
+| `jsonschema.forward.format-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | A format removed. |
+| `jsonschema.forward.max-items-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The maxItems bound loosened or removed. |
+| `jsonschema.forward.max-length-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The maxLength bound loosened or removed. |
+| `jsonschema.forward.max-properties-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The maxProperties bound loosened or removed. |
+| `jsonschema.forward.maximum-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The maximum bound loosened or removed. |
+| `jsonschema.forward.min-items-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The minItems bound loosened or removed. |
+| `jsonschema.forward.min-length-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The minLength bound loosened or removed. |
+| `jsonschema.forward.min-properties-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The minProperties bound loosened or removed. |
+| `jsonschema.forward.minimum-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | The minimum bound loosened or removed. |
+| `jsonschema.forward.multiple-of-changed` | forward | Dangerous | Breaking | Breaking | Dangerous | A multipleOf replaced by another. |
+| `jsonschema.forward.multiple-of-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | A multipleOf removed. |
+| `jsonschema.forward.one-of-branch-added` | forward | Dangerous | Breaking | Breaking | Dangerous | A oneOf branch added. |
+| `jsonschema.forward.open-property-removed` | forward | Dangerous | Breaking | Breaking | Dangerous | A property removed from an open content model. |
+| `jsonschema.forward.pattern-changed` | forward | Dangerous | Breaking | Breaking | Dangerous | A pattern replaced by another. |
+| `jsonschema.forward.pattern-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | A pattern removed. |
+| `jsonschema.forward.required-removed` | forward | Dangerous | Breaking | Breaking | Dangerous | A property is no longer required. |
+| `jsonschema.forward.schema-accepts-values` | forward | Dangerous | Breaking | Breaking | Dangerous | The schema stopped being false and now accepts values. |
+| `jsonschema.forward.type-changed` | forward | Dangerous | Breaking | Breaking | Dangerous | A type replaced by an unrelated one, such as integer to string. |
+| `jsonschema.forward.type-widened` | forward | Dangerous | Breaking | Breaking | Dangerous | A type widened, such as integer to number or null allowed. |
+| `jsonschema.forward.unique-items-loosened` | forward | Dangerous | Breaking | Breaking | Dangerous | uniqueItems turned off. |
+| `jsonschema.review.ref-changed` | review | Dangerous | Dangerous | Dangerous | Dangerous | A $ref that points outside the document changed. |
+| `jsonschema.review.unmodeled-keyword-changed` | review | Dangerous | Dangerous | Dangerous | Dangerous | A keyword the check does not model changed, such as not or if. |
+
+### AsyncAPI rules
+
+| Rule id | Breaks | `BACKWARD` | `FORWARD` | `FULL` | `NONE` | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| `asyncapi-diff.breaking` | — | Breaking | Breaking | Breaking | Dangerous | @asyncapi/diff classified the whole channel or operation as breaking. |
+| `asyncapi-diff.non-breaking` | — | Safe | Safe | Safe | Safe | @asyncapi/diff classified the whole channel or operation as non-breaking. |
+| `asyncapi.both.action-flipped` | both | Breaking | Breaking | Breaking | Dangerous | An operation's action flipped between send and receive. Consumers: breaking; producers: breaking. |
+| `asyncapi.both.binding-changed` | both | Breaking | Breaking | Breaking | Dangerous | A channel, operation, message or server binding changed. Consumers: breaking; producers: breaking. |
+| `asyncapi.both.parameter-added-with-default` | both | Safe | Safe | Safe | Safe | An address parameter added with a default. Consumers: safe; producers: safe. |
+| `asyncapi.both.payload-compatible` | both | Safe | Safe | Safe | Safe | A payload changed in a way its own format accepts both ways. Consumers: safe; producers: safe. |
+| `asyncapi.both.protocol-changed` | both | Breaking | Breaking | Breaking | Dangerous | A server's protocol changed. Consumers: breaking; producers: breaking. |
+| `asyncapi.both.schema-format-changed` | both | Breaking | Breaking | Breaking | Dangerous | A payload's schemaFormat changed to another schema language. Consumers: breaking; producers: breaking. |
+| `asyncapi.both.security-changed` | both | Dangerous | Dangerous | Dangerous | Dangerous | A server's or an operation's security changed. Consumers: dangerous; producers: dangerous. |
+| `asyncapi.both.server-changed` | both | Dangerous | Dangerous | Dangerous | Dangerous | A server added, removed or moved. Consumers: dangerous; producers: dangerous. |
+| `asyncapi.consumer.address-changed` | consumer | Breaking | Dangerous | Breaking | Dangerous | A channel's address or address template changed. Consumers: breaking; producers: dangerous. |
+| `asyncapi.consumer.message-removed` | consumer | Breaking | Dangerous | Breaking | Dangerous | A message removed from a channel's messages. Consumers: breaking; producers: safe. |
+| `asyncapi.consumer.parameter-added` | consumer | Breaking | Dangerous | Breaking | Dangerous | An address parameter added without a default. Consumers: breaking; producers: dangerous. |
+| `asyncapi.consumer.reply-removed` | consumer | Breaking | Dangerous | Breaking | Dangerous | An operation's reply removed (AsyncAPI 3). Consumers: breaking; producers: dangerous. |
+| `asyncapi.producer.message-added` | producer | Safe | Dangerous | Dangerous | Safe | A message added to a channel's messages. Consumers: safe; producers: dangerous. |
+
+### Protobuf rules
+
+| Rule id | Category | `WIRE` | `WIRE_JSON` | `PACKAGE` | `FILE` | Description |
+| --- | --- | --- | --- | --- | --- | --- |
+| `buf-breaking.wire-compatible` | — | Dangerous | Dangerous | Dangerous | Dangerous | buf breaking found no break, so a rule's breaking grade was lowered to dangerous. |
+| `protobuf.buf-breaking.*` | — | Breaking | Breaking | Breaking | Breaking | A break buf breaking reported, named after buf's own rule (protobuf.buf-breaking.field_same_json_name), at the category the diff was graded at. |
+| `protobuf.compatible` | — | Safe | Safe | Safe | Safe | A change the rules explain without a break, such as a number or name reserved. |
+| `protobuf.file.type-moved-file` | `FILE` | Safe | Safe | Safe | Breaking | A message or enum moved to another file in the same package. |
+| `protobuf.package.field-deleted` | `PACKAGE` | Safe | Safe | Breaking | Breaking | A field deleted with its number and name reserved. |
+| `protobuf.package.presence-changed` | `PACKAGE` | Safe | Safe | Breaking | Breaking | optional added to or removed from a proto3 field. |
+| `protobuf.wire.cardinality-changed` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A field made repeated, or no longer repeated. |
+| `protobuf.wire.enum-value-number-changed` | `WIRE` | Breaking | Breaking | Breaking | Breaking | An enum value moved to another number. |
+| `protobuf.wire.field-number-reused` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A field number now carrying another type. |
+| `protobuf.wire.oneof-membership-changed` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A field moved into, out of or between oneofs. |
+| `protobuf.wire.package-changed` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A message or enum moved to another package. |
+| `protobuf.wire.required-changed` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A field made required, or no longer required. |
+| `protobuf.wire.reserved-name-reused` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A reserved name used again. |
+| `protobuf.wire.reserved-number-reused` | `WIRE` | Breaking | Breaking | Breaking | Breaking | A reserved number used again. |
+| `protobuf.wire.reserved-removed` | `WIRE` | Dangerous | Dangerous | Dangerous | Dangerous | A reserved number or name removed. |
+| `protobuf.wire_json.enum-value-number-reused` | `WIRE_JSON` | Safe | Breaking | Breaking | Breaking | An enum value renamed: its number taken by a new name. |
+| `protobuf.wire_json.field-deleted-unreserved` | `WIRE_JSON` | Dangerous | Breaking | Breaking | Breaking | A field deleted without reserving its number or name. |
+| `protobuf.wire_json.field-renamed` | `WIRE_JSON` | Safe | Breaking | Breaking | Breaking | A field renamed, same number and type. |
+| `protobuf.wire_json.json-name-changed` | `WIRE_JSON` | Safe | Breaking | Breaking | Breaking | A field's json_name changed. |
+
+<!-- compatibility-rule-catalogue:end -->
 
 ## Related
 

@@ -124,6 +124,9 @@ function mockFetch() {
         breakingPublishPolicy: typeof POLICY.breakingPublishPolicy;
         requiredApprovals: number;
         requiredReviewerRole: string | null;
+        compatibilityMode?: string;
+        compatibilityTransitive?: boolean;
+        protobufBreakingCategory?: string;
         snapshot: boolean;
       };
       return jsonResponse({
@@ -136,6 +139,9 @@ function mockFetch() {
           breakingPublishPolicy: put.breakingPublishPolicy,
           requiredApprovals: put.requiredApprovals,
           requiredReviewerRole: put.requiredReviewerRole,
+          compatibilityMode: put.compatibilityMode,
+          compatibilityTransitive: put.compatibilityTransitive,
+          protobufBreakingCategory: put.protobufBreakingCategory,
         },
       });
     }
@@ -220,6 +226,9 @@ describe('PolicyTab', () => {
       requiredReviewerRole: null,
       componentApprovalStages: [],
       componentDeprecationNoticeDays: 0,
+      compatibilityMode: 'BACKWARD',
+      compatibilityTransitive: false,
+      protobufBreakingCategory: 'WIRE_JSON',
       snapshot: true,
     });
   });
@@ -379,6 +388,84 @@ describe('PolicyTab', () => {
 });
 
 /** DCW-3.4 (private-suite#2364): the component-library policy on the same tab. */
+describe('PolicyTab — compatibility (XPC-4.5)', () => {
+  it('defaults to backward, not transitive, wire and JSON, for a guide that predates it', async () => {
+    await renderPolicyTab();
+
+    const section = screen.getByTestId('guide-policy-compatibility');
+    expect(section).toHaveTextContent('Compatibility');
+    expect(screen.getByLabelText('Compatibility mode')).toHaveValue('BACKWARD');
+    expect(screen.getByLabelText('Protobuf breaking category')).toHaveValue('WIRE_JSON');
+    expect(screen.getByLabelText('Check every earlier version')).not.toBeChecked();
+    expect(
+      screen.getByText('The new version must read data written with the old one. Upgrade readers first.')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('compatibility-docs-link').getAttribute('href')).toContain(
+      'compatibility-modes'
+    );
+  });
+
+  it('loads a stored policy', async () => {
+    Object.assign(POLICY, {
+      compatibilityMode: 'FULL',
+      compatibilityTransitive: true,
+      protobufBreakingCategory: 'FILE',
+    });
+    try {
+      await renderPolicyTab();
+      expect(screen.getByLabelText('Compatibility mode')).toHaveValue('FULL');
+      expect(screen.getByLabelText('Protobuf breaking category')).toHaveValue('FILE');
+      expect(screen.getByLabelText('Check every earlier version')).toBeChecked();
+    } finally {
+      const policy = POLICY as Record<string, unknown>;
+      delete policy.compatibilityMode;
+      delete policy.compatibilityTransitive;
+      delete policy.protobufBreakingCategory;
+    }
+  });
+
+  it('saves a FULL_TRANSITIVE policy and explains the mode', async () => {
+    await renderPolicyTab();
+
+    const save = screen.getByTestId('guide-policy-save');
+    expect(save).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Compatibility mode'), { target: { value: 'FULL' } });
+    fireEvent.click(screen.getByLabelText('Check every earlier version'));
+    fireEvent.change(screen.getByLabelText('Protobuf breaking category'), {
+      target: { value: 'PACKAGE' },
+    });
+    expect(
+      screen.getByText('Both directions must hold, so readers and writers upgrade in any order.')
+    ).toBeInTheDocument();
+    expect(save).not.toBeDisabled();
+
+    fireEvent.click(save);
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const put = calls.find((c) => c.method === 'PUT')!.body as Record<string, unknown>;
+    expect(put.compatibilityMode).toBe('FULL');
+    expect(put.compatibilityTransitive).toBe(true);
+    expect(put.protobufBreakingCategory).toBe('PACKAGE');
+    await waitFor(() => expect(screen.getByTestId('guide-policy-save')).toBeDisabled());
+  });
+
+  it('says transitive adds nothing when the mode is None', async () => {
+    await renderPolicyTab();
+    fireEvent.change(screen.getByLabelText('Compatibility mode'), { target: { value: 'NONE' } });
+    expect(
+      screen.getByText('With the mode set to None nothing fails, so checking earlier versions adds nothing.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables the compatibility fields when read-only', async () => {
+    isAdmin = false;
+    await renderPolicyTab();
+    expect(screen.getByLabelText('Compatibility mode')).toBeDisabled();
+    expect(screen.getByLabelText('Protobuf breaking category')).toBeDisabled();
+    expect(screen.getByLabelText('Check every earlier version')).toBeDisabled();
+  });
+});
+
 describe('PolicyTab — component library', () => {
   it('shows no stages by default and a zero notice window', async () => {
     await renderPolicyTab();

@@ -104,6 +104,36 @@
                 "minLength": 1
               }
             }
+          },
+          "grade": {
+            "description": "XPC-4.5: the three-tier grade when a mode- or category-aware classifier graded the change.",
+            "type": "string",
+            "enum": [
+              "safe",
+              "dangerous",
+              "breaking"
+            ]
+          },
+          "rationale": {
+            "description": "XPC-4.5: why the classifier graded it so, led by the mode or category.",
+            "type": "string"
+          },
+          "against": {
+            "description": "XPC-4.5: on a transitive comparison, the stored revision the change was found against.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "revisionId",
+              "versionLabel"
+            ],
+            "properties": {
+              "revisionId": {
+                "type": "string"
+              },
+              "versionLabel": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -477,6 +507,101 @@
         "limit": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "evaluatedUnder": {
+      "description": "XPC-4.5: what the changes were graded under.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "transitive",
+        "formats",
+        "modeApplied",
+        "ruleset"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "BACKWARD",
+            "FORWARD",
+            "FULL",
+            "NONE"
+          ]
+        },
+        "transitive": {
+          "type": "boolean"
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "WIRE",
+            "WIRE_JSON",
+            "PACKAGE",
+            "FILE",
+            null
+          ]
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modeApplied": {
+          "type": "boolean"
+        },
+        "categoryApplied": {
+          "type": "boolean"
+        },
+        "ruleset": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "request",
+              "policy"
+            ]
+          }
+        },
+        "comparedRevisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "revisionId",
+              "versionLabel",
+              "role"
+            ],
+            "properties": {
+              "revisionId": {
+                "type": "string"
+              },
+              "versionLabel": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "prior"
+                ]
+              }
+            }
+          }
+        },
+        "comparedRevisionsTruncated": {
+          "type": "boolean"
         }
       }
     }

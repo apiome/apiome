@@ -52,6 +52,7 @@ from .presence_routes import router as presence_router
 from .review_suggestion_routes import router as review_suggestion_router
 from .merge_request_routes import router as merge_request_router
 from .compatibility_routes import router as compatibility_router
+from .compatibility_rules_routes import router as compatibility_rules_router
 from .config import settings
 from .consumer_contract_routes import router as consumer_contract_router
 from .consumer_binding_routes import router as consumer_binding_router
@@ -231,7 +232,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.577.0",
+    version="1.578.0",
 )
 
 
@@ -439,6 +440,7 @@ app.include_router(gateway_config_router)
 app.include_router(catalog_migration_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
+app.include_router(compatibility_rules_router)
 app.include_router(contract_suite_router)
 app.include_router(contract_runner_router)
 app.include_router(provider_verification_router)

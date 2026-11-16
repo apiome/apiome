@@ -1055,6 +1055,99 @@ def test_put_policy_leaves_the_breaking_publish_level_unchanged_when_omitted():
 
 
 # ---------------------------------------------------------------------------
+# Compatibility mode policy (XPC-4.5, #5749)
+# ---------------------------------------------------------------------------
+
+
+def test_get_policy_defaults_the_compatibility_settings():
+    """A guide predating V382 reads as BACKWARD, not transitive, WIRE_JSON."""
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["compatibilityMode"] == "BACKWARD"
+    assert body["compatibilityTransitive"] is False
+    assert body["protobufBreakingCategory"] == "WIRE_JSON"
+
+
+def test_get_policy_returns_the_stored_compatibility_settings():
+    row = _custom_row(
+        compatibility_mode="FULL", compatibility_transitive=True, protobuf_breaking_category="FILE"
+    )
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=row):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+
+    body = r.json()
+    assert (body["compatibilityMode"], body["compatibilityTransitive"], body["protobufBreakingCategory"]) == (
+        "FULL",
+        True,
+        "FILE",
+    )
+
+
+def test_put_policy_persists_the_compatibility_settings(governance):
+    stored = _custom_row(
+        compatibility_mode="FORWARD", compatibility_transitive=True, protobuf_breaking_category="WIRE"
+    )
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings", return_value=stored
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={
+                "compatibilityMode": "FORWARD",
+                "compatibilityTransitive": True,
+                "protobufBreakingCategory": "WIRE",
+                "snapshot": False,
+            },
+        )
+
+    assert r.status_code == 200, r.text
+    assert r.json()["compatibilityMode"] == "FORWARD"
+    kwargs = update.call_args.kwargs
+    assert kwargs["compatibility_mode"] == "FORWARD"
+    assert kwargs["compatibility_transitive"] is True
+    assert kwargs["protobuf_breaking_category"] == "WIRE"
+    assert governance.record.call_args.kwargs["change_kind"] == "policy_changed"
+
+
+def test_put_policy_leaves_the_compatibility_settings_unchanged_when_omitted():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings", return_value=_custom_row()
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredCoverage": ["quality"], "snapshot": False},
+        )
+
+    assert r.status_code == 200
+    kwargs = update.call_args.kwargs
+    assert kwargs["compatibility_mode"] is None
+    assert kwargs["compatibility_transitive"] is None
+    assert kwargs["protobuf_breaking_category"] is None
+
+
+@pytest.mark.parametrize(
+    "field, value", [("compatibilityMode", "SIDEWAYS"), ("protobufBreakingCategory", "BYTES")]
+)
+def test_put_policy_rejects_unknown_compatibility_values(field, value):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={field: value, "snapshot": False},
+        )
+
+    assert r.status_code == 422
+
+
+# ---------------------------------------------------------------------------
 # Approval policy (COL-2.3, #4519)
 # ---------------------------------------------------------------------------
 

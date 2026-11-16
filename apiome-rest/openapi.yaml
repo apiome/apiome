@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.577.0
+  version: 1.578.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -20072,7 +20072,23 @@ paths:
       description: 'Compare **baseRevisionId** (older / consumer expectation) to **headRevisionId**
         (newer).
 
-        Returns structured safe / breaking / unknown findings for CI-style merge gates.'
+        Returns structured safe / breaking / unknown findings for CI-style merge gates.
+
+
+        ``mode`` (BACKWARD / FORWARD / FULL / NONE), ``transitive`` and ``category``
+        (Protobuf) default
+
+        to the project''s style-guide policy. Avro, JSON Schema and AsyncAPI revisions
+        are graded by
+
+        mode, Protobuf revisions at the category; other formats keep the OpenAPI engine
+        and report
+
+        ``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also
+        compared against
+
+        every earlier revision of the base, and each finding names the revision it
+        was found against.'
       operationId: check_revision_compatibility_v1_versions__tenant_slug___project_id__compatibility_post
       parameters:
       - name: tenant_slug
@@ -20314,6 +20330,83 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list compatibility evidenceresponse422.
+  /v1/compatibility/rules:
+    get:
+      tags:
+      - compatibility
+      summary: Get Compatibility Rules
+      description: 'List every compatibility rule id with its severity per mode, category
+        and description.
+
+
+        The same table the Compatibility modes docs page is generated from. Rules
+        are grouped by
+
+        family (Avro, JSON Schema, Protobuf, AsyncAPI) and sorted by id within each.
+        Static reference
+
+        data, identical for every tenant, so no tenant is named; ``diff:read`` and
+        ``registry:read``
+
+        API keys may call it.'
+      operationId: get_compatibility_rules_v1_compatibility_rules_get
+      parameters:
+      - name: format
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Compatibility Rulesformat schema.
+          - type: 'null'
+            description: Get Compatibility Rulesformat schema.
+          description: Narrow to one format family (``avro``, ``json-schema``, ``protobuf``,
+            ``asyncapi``) or format key (``asyncapi-3``, ``jsonschema``). A format
+            with no mode-aware rules returns an empty list.
+          title: Format
+        description: Narrow to one format family (``avro``, ``json-schema``, ``protobuf``,
+          ``asyncapi``) or format key (``asyncapi-3``, ``jsonschema``). A format with
+          no mode-aware rules returns an empty list.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Compatibility Rulesauthorization schema.
+          - type: 'null'
+            description: Get Compatibility Rulesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Compatibility Rules Xapikey schema.
+          - type: 'null'
+            description: Get Compatibility Rules Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get compatibility rules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityRuleCatalogueOut'
+                description: Response payload for get compatibility rulesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get compatibility rulesresponse422.
   /v1/tenants/{tenant_slug}/contracts/{version_ref}/suite:
     post:
       tags:
@@ -95677,6 +95770,23 @@ components:
           title: Summary
           description: Short summary suitable for navigation and reference docs.
           example: List pets
+        againstRevisionId:
+          anyOf:
+          - type: string
+            description: Response payload for breaking publish change.
+          - type: 'null'
+            description: Response payload for breaking publish change.
+          title: Againstrevisionid
+          description: 'Under a transitive policy: the published revision this change
+            breaks against (XPC-4.5).'
+        againstVersion:
+          anyOf:
+          - type: string
+            description: Response payload for breaking publish change.
+          - type: 'null'
+            description: Response payload for breaking publish change.
+          title: Againstversion
+          description: That revision's version label.
       type: object
       required:
       - pointer
@@ -95794,6 +95904,14 @@ components:
             description: Response payload for breaking publish guardrail.
           title: Detail
           description: Detail.
+        evaluatedUnder:
+          anyOf:
+          - $ref: '#/components/schemas/EvaluatedUnderOut'
+          - type: 'null'
+            description: Response payload for breaking publish guardrail.
+          description: 'What the comparison was graded under: the project''s compatibility
+            mode, transitivity and Protobuf category, and the published revisions
+            compared (XPC-4.5).'
         message:
           type: string
           title: Message
@@ -103264,6 +103382,26 @@ components:
       title: ClassUpdateRequest
       description: Partial update payload for a class, including canvas metadata when
         provided.
+    ClassifiedDiffAgainstOut:
+      properties:
+        revisionId:
+          type: string
+          title: Revisionid
+          description: Revision ID.
+          example: example
+        versionLabel:
+          type: string
+          title: Versionlabel
+          description: Version Label.
+          example: 1.0.0
+      additionalProperties: false
+      type: object
+      required:
+      - revisionId
+      - versionLabel
+      title: ClassifiedDiffAgainstOut
+      description: The stored revision a change was found against (transitive comparisons,
+        XPC-4.5).
     ClassifiedDiffChangeOut:
       properties:
         ruleId:
@@ -103318,6 +103456,36 @@ components:
             description: Response payload for classified diff change.
           description: 'With ``blastRadius: true``, on a breaking change: what it
             affects. Absent otherwise.'
+        grade:
+          anyOf:
+          - type: string
+            enum:
+            - safe
+            - dangerous
+            - breaking
+            description: Response payload for classified diff change.
+          - type: 'null'
+            description: Response payload for classified diff change.
+          title: Grade
+          description: The three-tier grade when a mode- or category-aware classifier
+            graded the change (XPC-4.5); ``severity`` then maps dangerous and safe
+            to ``non-breaking``. Absent for the OpenAPI taxonomy.
+        rationale:
+          anyOf:
+          - type: string
+            description: Response payload for classified diff change.
+          - type: 'null'
+            description: Response payload for classified diff change.
+          title: Rationale
+          description: Why the classifier graded it so, led by the mode or category.
+            Absent for the OpenAPI taxonomy.
+        against:
+          anyOf:
+          - $ref: '#/components/schemas/ClassifiedDiffAgainstOut'
+          - type: 'null'
+            description: Response payload for classified diff change.
+          description: 'On a transitive comparison: the stored revision the change
+            was found against.'
       additionalProperties: false
       type: object
       required:
@@ -103414,6 +103582,34 @@ components:
             verification runs invalidated. Requires ``projects:view``.'
           default: false
           example: false
+        mode:
+          anyOf:
+          - type: string
+            description: Request body for classified diff.
+          - type: 'null'
+            description: Request body for classified diff.
+          title: Mode
+          description: 'Compatibility mode (XPC-4.5): BACKWARD, FORWARD, FULL or NONE,
+            any case. A ``_TRANSITIVE`` name (``FULL_TRANSITIVE``) also sets ``transitive``.
+            Omit to use the base project''s style-guide policy.'
+        transitive:
+          anyOf:
+          - type: boolean
+            description: Request body for classified diff.
+          - type: 'null'
+            description: Request body for classified diff.
+          title: Transitive
+          description: Also compare the head against every earlier revision of the
+            base, not only the base (XPC-4.5). Omit to use the base project's policy.
+        category:
+          anyOf:
+          - type: string
+            description: Request body for classified diff.
+          - type: 'null'
+            description: Request body for classified diff.
+          title: Category
+          description: 'buf breaking category Protobuf changes are graded at (XPC-4.5):
+            WIRE, WIRE_JSON, PACKAGE or FILE. Omit to use the base project''s policy.'
       additionalProperties: false
       type: object
       required:
@@ -103496,11 +103692,17 @@ components:
             description: Response payload for classified diff.
           description: 'With ``blastRadius: true``: how many breaking changes were
             annotated. Absent otherwise.'
+        evaluatedUnder:
+          $ref: '#/components/schemas/EvaluatedUnderOut'
+          description: 'What the changes were graded under: mode, transitivity, Protobuf
+            category, the formats compared, whether the mode was applied, the ruleset
+            and the revisions compared (XPC-4.5).'
       additionalProperties: false
       type: object
       required:
       - base
       - head
+      - evaluatedUnder
       title: ClassifiedDiffResponse
       description: Classified change list with summary counts, max severity, and resolved
         sides.
@@ -104341,6 +104543,34 @@ components:
       title: CommentThreadSummary
       description: 'A thread as a list read returns it: the thread plus its opening
         comment.'
+    ComparedRevisionOut:
+      properties:
+        revisionId:
+          type: string
+          title: Revisionid
+          description: The revision (versions.id).
+          example: example
+        versionLabel:
+          type: string
+          title: Versionlabel
+          description: Its version label.
+          example: 1.0.0
+        role:
+          type: string
+          enum:
+          - base
+          - prior
+          title: Role
+          description: '``base`` for the requested base; ``prior`` for an earlier
+            revision a transitive check added.'
+          example: base
+      type: object
+      required:
+      - revisionId
+      - versionLabel
+      - role
+      title: ComparedRevisionOut
+      description: One stored revision the head was compared against.
     CompassUploadInput:
       properties:
         filename:
@@ -104362,6 +104592,25 @@ components:
       - content
       title: CompassUploadInput
       description: An uploaded Compass export.
+    CompatibilityAgainstOut:
+      properties:
+        revisionId:
+          type: string
+          title: Revisionid
+          description: Revision ID.
+          example: example
+        versionLabel:
+          type: string
+          title: Versionlabel
+          description: Version Label.
+          example: 1.0.0
+      type: object
+      required:
+      - revisionId
+      - versionLabel
+      title: CompatibilityAgainstOut
+      description: The stored revision a finding was found against (transitive checks,
+        XPC-4.5).
     CompatibilityCheckRequest:
       properties:
         baseRevisionId:
@@ -104386,6 +104635,34 @@ components:
           - type: 'null'
             description: Request body for compatibility check.
           description: Policy.
+        mode:
+          anyOf:
+          - type: string
+            description: Request body for compatibility check.
+          - type: 'null'
+            description: Request body for compatibility check.
+          title: Mode
+          description: 'Compatibility mode (XPC-4.5): BACKWARD, FORWARD, FULL or NONE,
+            any case. A ``_TRANSITIVE`` name (``FULL_TRANSITIVE``) also sets ``transitive``.
+            Omit to use the project''s style-guide policy.'
+        transitive:
+          anyOf:
+          - type: boolean
+            description: Request body for compatibility check.
+          - type: 'null'
+            description: Request body for compatibility check.
+          title: Transitive
+          description: Also check the head against every earlier revision of the base,
+            not only the base (XPC-4.5). Omit to use the project's policy.
+        category:
+          anyOf:
+          - type: string
+            description: Request body for compatibility check.
+          - type: 'null'
+            description: Request body for compatibility check.
+          title: Category
+          description: 'buf breaking category Protobuf changes are graded at (XPC-4.5):
+            WIRE, WIRE_JSON, PACKAGE or FILE. Omit to use the project''s policy.'
       type: object
       required:
       - baseRevisionId
@@ -104463,6 +104740,14 @@ components:
             and a revision is deprecated.
           default: false
           example: false
+        evaluatedUnder:
+          anyOf:
+          - $ref: '#/components/schemas/EvaluatedUnderOut'
+          - type: 'null'
+            description: Response payload for compatibility check.
+          description: 'What the verdict was graded under: mode, transitivity, Protobuf
+            category, the formats compared, whether the mode was applied, the ruleset
+            and the revisions compared (XPC-4.5).'
       type: object
       required:
       - overall
@@ -104518,6 +104803,31 @@ components:
           title: Message
           description: Message.
           example: Example validation message.
+        ruleId:
+          anyOf:
+          - type: string
+            description: Response payload for compatibility finding.
+          - type: 'null'
+            description: Response payload for compatibility finding.
+          title: Ruleid
+          description: The rule that produced the finding (the same value as ``rule``;
+            XPC-4.5).
+        severity:
+          anyOf:
+          - type: string
+            description: Response payload for compatibility finding.
+          - type: 'null'
+            description: Response payload for compatibility finding.
+          title: Severity
+          description: safe / dangerous / breaking, when a mode-aware or category-aware
+            classifier graded the finding; ``category`` then maps dangerous to ``unknown``.
+        against:
+          anyOf:
+          - $ref: '#/components/schemas/CompatibilityAgainstOut'
+          - type: 'null'
+            description: Response payload for compatibility finding.
+          description: 'On a transitive check: the revision the finding was found
+            against.'
       type: object
       required:
       - id
@@ -104545,6 +104855,150 @@ components:
       type: object
       title: CompatibilityPolicyPayload
       description: Optional HTTP semantics (e.g. CI gate).
+    CompatibilityRuleCatalogueOut:
+      properties:
+        format:
+          anyOf:
+          - type: string
+            description: Response payload for compatibility rule catalogue.
+          - type: 'null'
+            description: Response payload for compatibility rule catalogue.
+          title: Format
+          description: The ``?format=`` filter, when one was sent.
+        modes:
+          items:
+            type: string
+          type: array
+          title: Modes
+          description: The compatibility modes ``severities`` is keyed by.
+          maxItems: 1000
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+          description: The buf breaking categories ``categorySeverities`` is keyed
+            by.
+          maxItems: 1000
+        defaults:
+          additionalProperties: true
+          type: object
+          title: Defaults
+          description: 'What a project gets without a policy: ``mode``, ``transitive``
+            and ``category``.'
+        rules:
+          items:
+            $ref: '#/components/schemas/CompatibilityRuleOut'
+          type: array
+          title: Rules
+          description: Rules.
+          maxItems: 1000
+      type: object
+      required:
+      - modes
+      - categories
+      - defaults
+      - rules
+      title: CompatibilityRuleCatalogueOut
+      description: The rule catalogue, optionally narrowed to one format.
+    CompatibilityRuleOut:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: 'The rule id; for a family (``isFamily: true``) the prefix
+            every id in it starts with.'
+          example: documentation.schema-missing-description
+        isFamily:
+          type: boolean
+          title: Isfamily
+          description: True when ids in this family are built from a tool's own rule
+            names.
+          default: false
+          example: false
+        family:
+          type: string
+          enum:
+          - avro
+          - json-schema
+          - protobuf
+          - asyncapi
+          title: Family
+          description: The format family the rule belongs to.
+          example: avro
+        formats:
+          items:
+            type: string
+          type: array
+          title: Formats
+          description: Every format key whose comparisons can emit the rule.
+          maxItems: 1000
+        direction:
+          anyOf:
+          - type: string
+            description: Response payload for compatibility rule.
+          - type: 'null'
+            description: Response payload for compatibility rule.
+          title: Direction
+          description: 'What the rule breaks: ``backward`` / ``forward`` / ``either``
+            / ``review`` for data schemas, ``consumer`` / ``producer`` / ``both``
+            for AsyncAPI; null for Protobuf.'
+        severities:
+          anyOf:
+          - additionalProperties:
+              type: string
+              enum:
+              - safe
+              - dangerous
+              - breaking
+            type: object
+            description: Response payload for compatibility rule.
+          - type: 'null'
+            description: Response payload for compatibility rule.
+          title: Severities
+          description: Severity under each compatibility mode; null where modes do
+            not apply (Protobuf).
+        category:
+          anyOf:
+          - type: string
+            enum:
+            - WIRE
+            - WIRE_JSON
+            - PACKAGE
+            - FILE
+            description: Response payload for compatibility rule.
+          - type: 'null'
+            description: Response payload for compatibility rule.
+          title: Category
+          description: 'Protobuf only: the least strict buf category where the rule
+            is at its worst.'
+        categorySeverities:
+          anyOf:
+          - additionalProperties:
+              type: string
+              enum:
+              - safe
+              - dangerous
+              - breaking
+            type: object
+            description: Response payload for compatibility rule.
+          - type: 'null'
+            description: Response payload for compatibility rule.
+          title: Categoryseverities
+          description: 'Protobuf only: severity under each buf breaking category.'
+        description:
+          type: string
+          title: Description
+          description: What change the rule reports.
+          example: A pet available for adoption in the store.
+      type: object
+      required:
+      - ruleId
+      - family
+      - formats
+      - description
+      title: CompatibilityRuleOut
+      description: One rule in the catalogue.
     CompatibilityRulesPayload:
       properties:
         checkPaths:
@@ -113456,6 +113910,97 @@ components:
       title: EnvironmentResponse
       description: 'Lane state: what is serving, how far it reached, and against what
         budget.'
+    EvaluatedUnderOut:
+      properties:
+        mode:
+          type: string
+          enum:
+          - BACKWARD
+          - FORWARD
+          - FULL
+          - NONE
+          title: Mode
+          description: The compatibility mode requested, or the project's policy when
+            the request named none.
+          example: BACKWARD
+        transitive:
+          type: boolean
+          title: Transitive
+          description: Whether earlier revisions were checked too, not only the base.
+          example: false
+        category:
+          anyOf:
+          - type: string
+            enum:
+            - WIRE
+            - WIRE_JSON
+            - PACKAGE
+            - FILE
+            description: Response payload for evaluated under.
+          - type: 'null'
+            description: Response payload for evaluated under.
+          title: Category
+          description: The buf breaking category Protobuf changes were graded at;
+            null when no Protobuf was compared.
+        formats:
+          items:
+            type: string
+          type: array
+          title: Formats
+          description: The source formats compared, e.g. ``avro`` or ``openapi``.
+          maxItems: 1000
+        modeApplied:
+          type: boolean
+          title: Modeapplied
+          description: True when a mode-aware classifier (Avro, JSON Schema, AsyncAPI)
+            graded the changes by ``mode``. False means the format has no mode semantics
+            and ``ruleset`` graded it.
+          example: false
+        categoryApplied:
+          type: boolean
+          title: Categoryapplied
+          description: True when Protobuf changes were graded at ``category``.
+          default: false
+          example: false
+        ruleset:
+          type: string
+          title: Ruleset
+          description: 'The ruleset that graded the changes: a classifier id such
+            as ``avro-compatibility`` or ``buf-breaking``, ``builtin`` for the format-agnostic
+            ruleset, or ``ctg`` for the OpenAPI change taxonomy.'
+          example: documentation.schema-missing-description
+        source:
+          additionalProperties:
+            type: string
+            enum:
+            - request
+            - policy
+          type: object
+          title: Source
+          description: Where each of ``mode``, ``transitive`` and ``category`` came
+            from.
+        comparedRevisions:
+          items:
+            $ref: '#/components/schemas/ComparedRevisionOut'
+          type: array
+          title: Comparedrevisions
+          description: The stored revisions the head was compared against, base first.
+          maxItems: 1000
+        comparedRevisionsTruncated:
+          type: boolean
+          title: Comparedrevisionstruncated
+          description: True when a transitive check stopped at its cap of earlier
+            revisions.
+          default: false
+          example: false
+      type: object
+      required:
+      - mode
+      - transitive
+      - modeApplied
+      - ruleset
+      title: EvaluatedUnderOut
+      description: What a compatibility verdict was graded under.
     EventReceiptResponse:
       properties:
         accepted:
@@ -166062,6 +166607,38 @@ components:
             and its sunset (DCW-3.4).
           default: 0
           example: 1
+        compatibilityMode:
+          type: string
+          enum:
+          - BACKWARD
+          - FORWARD
+          - FULL
+          - NONE
+          title: Compatibilitymode
+          description: 'Compatibility mode classified diffs, compatibility checks,
+            the CI diff gate and the publish guardrail grade by when a request names
+            none (XPC-4.5): BACKWARD (default), FORWARD, FULL or NONE.'
+          default: BACKWARD
+          example: BACKWARD
+        compatibilityTransitive:
+          type: boolean
+          title: Compatibilitytransitive
+          description: When true, a change is checked against every earlier revision,
+            not only the base (BACKWARD_TRANSITIVE and friends; XPC-4.5).
+          default: false
+          example: false
+        protobufBreakingCategory:
+          type: string
+          enum:
+          - WIRE
+          - WIRE_JSON
+          - PACKAGE
+          - FILE
+          title: Protobufbreakingcategory
+          description: 'buf breaking category Protobuf changes are graded at (XPC-4.5):
+            WIRE, WIRE_JSON (default), PACKAGE or FILE.'
+          default: WIRE_JSON
+          example: WIRE_JSON
       type: object
       required:
       - guideId
@@ -166149,6 +166726,42 @@ components:
           title: Componentdeprecationnoticedays
           description: Minimum deprecation notice in days (DCW-3.4); omit to leave
             unchanged.
+        compatibilityMode:
+          anyOf:
+          - type: string
+            enum:
+            - BACKWARD
+            - FORWARD
+            - FULL
+            - NONE
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Compatibilitymode
+          description: Compatibility mode (XPC-4.5); omit to leave unchanged.
+        compatibilityTransitive:
+          anyOf:
+          - type: boolean
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Compatibilitytransitive
+          description: Check every earlier revision, not only the base (XPC-4.5);
+            omit to leave unchanged.
+        protobufBreakingCategory:
+          anyOf:
+          - type: string
+            enum:
+            - WIRE
+            - WIRE_JSON
+            - PACKAGE
+            - FILE
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Protobufbreakingcategory
+          description: buf breaking category for Protobuf changes (XPC-4.5); omit
+            to leave unchanged.
         snapshot:
           type: boolean
           title: Snapshot

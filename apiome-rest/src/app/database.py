@@ -4487,6 +4487,9 @@ class Database:
         set_required_reviewer_role: bool = False,
         component_approval_stages: Optional[List[Dict[str, Any]]] = None,
         component_deprecation_notice_days: Optional[int] = None,
+        compatibility_mode: Optional[str] = None,
+        compatibility_transitive: Optional[bool] = None,
+        protobuf_breaking_category: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Update draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 
@@ -4514,6 +4517,12 @@ class Database:
                 unchanged. ``[]`` turns the component approval gate off.
             component_deprecation_notice_days: DCW-3.4 minimum deprecation notice in days, or
                 ``None`` to leave unchanged.
+            compatibility_mode: XPC-4.5 (#5749) compatibility mode — ``BACKWARD`` /
+                ``FORWARD`` / ``FULL`` / ``NONE`` — or ``None`` to leave unchanged. The caller
+                normalizes; the V382 check constraint is the backstop.
+            compatibility_transitive: XPC-4.5 transitivity, or ``None`` to leave unchanged.
+            protobuf_breaking_category: XPC-4.5 buf breaking category — ``WIRE`` /
+                ``WIRE_JSON`` / ``PACKAGE`` / ``FILE`` — or ``None`` to leave unchanged.
 
         Returns:
             The updated guide row (subset of columns), or ``None`` when no custom guide matched.
@@ -4535,13 +4544,18 @@ class Database:
                 component_deprecation_notice_days = COALESCE(
                     %s::integer, component_deprecation_notice_days
                 ),
+                compatibility_mode = COALESCE(%s, compatibility_mode),
+                compatibility_transitive = COALESCE(%s::boolean, compatibility_transitive),
+                protobuf_breaking_category = COALESCE(%s, protobuf_breaking_category),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
             RETURNING id, name, description, source, is_default,
                       axis_gates, required_coverage, ci_outcomes,
                       breaking_publish_policy, required_approvals,
                       required_reviewer_role, component_approval_stages,
-                      component_deprecation_notice_days, created_at, updated_at
+                      component_deprecation_notice_days, compatibility_mode,
+                      compatibility_transitive, protobuf_breaking_category,
+                      created_at, updated_at
         """
         rows = self.execute_query(
             query,
@@ -4555,6 +4569,9 @@ class Database:
                 required_reviewer_role,
                 Json(component_approval_stages) if component_approval_stages is not None else None,
                 component_deprecation_notice_days,
+                compatibility_mode,
+                compatibility_transitive,
+                protobuf_breaking_category,
                 guide_id,
                 tenant_id,
             ),
@@ -7059,7 +7076,8 @@ class Database:
         Returns:
             A dict with ``id`` / ``name`` / ``source`` and the publish-gate policy columns
             (``breaking_publish_policy``, ``required_approvals``,
-            ``required_reviewer_role``) for the winning guide, or ``None`` when the tenant has
+            ``required_reviewer_role``, and the XPC-4.5 ``compatibility_mode`` /
+            ``compatibility_transitive`` / ``protobuf_breaking_category``) for the winning guide, or ``None`` when the tenant has
             no assignment and no default guide (the caller then falls back to the in-code
             defaults).
         """
@@ -7071,7 +7089,9 @@ class Database:
         query = """
             SELECT g.id, g.name, g.source, g.breaking_publish_policy,
                    g.required_approvals, g.required_reviewer_role,
-                   g.component_approval_stages, g.component_deprecation_notice_days
+                   g.component_approval_stages, g.component_deprecation_notice_days,
+                   g.compatibility_mode, g.compatibility_transitive,
+                   g.protobuf_breaking_category
             FROM (
                 SELECT a.guide_id, 0 AS precedence
                 FROM apiome.style_guide_assignments a
@@ -7218,6 +7238,7 @@ class Database:
                    axis_gates, required_coverage, ci_outcomes,
                    breaking_publish_policy, required_approvals, required_reviewer_role,
                    component_approval_stages, component_deprecation_notice_days,
+                   compatibility_mode, compatibility_transitive, protobuf_breaking_category,
                    external_lint_profile,
                    created_at, updated_at
             FROM apiome.style_guides
@@ -14667,6 +14688,100 @@ class Database:
             return None
         rid = rows[0].get("id")
         return str(rid) if rid is not None else None
+
+    def get_revision_source_row(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """A revision's source format and captured source, for rebuilding its canonical model.
+
+        The same shape :func:`app.catalog_conversion.build_conversion_source` reads from a catalog
+        item row, scoped to one revision (XPC-4.5, #5749).
+
+        Args:
+            version_id: The revision (``versions.id``).
+            tenant_id: The owning tenant.
+
+        Returns:
+            ``{"id", "project_id", "version_id", "source_format", "protocol", "format_metadata",
+            "metadata"}`` (``metadata`` is the project's), or ``None`` when the revision is not a
+            live revision of the tenant.
+        """
+        if not version_id or not is_uuid_string(str(version_id)):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT v.id::text AS id, v.project_id::text AS project_id, v.version_id,
+                   v.source_format, v.protocol, v.format_metadata, p.metadata
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE v.id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
+            """,
+            (version_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_prior_revisions_for_transitive_check(
+        self, project_id: str, tenant_id: str, revision_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Earlier revisions a transitive compatibility check compares against (XPC-4.5, #5749).
+
+        The lineage is the one the publication change report and the sunset timeline read: the
+        **published** ancestors of ``revision_id`` through ``parent_version_id`` /
+        ``merge_parent_version_id``, newest first by ``published_at`` then ``created_at``. A
+        catalog item never publishes and its imports record no parent, so when that yields
+        nothing the project's live revisions created before ``revision_id`` are used instead,
+        newest first.
+
+        Args:
+            project_id: The project both sides belong to.
+            tenant_id: The owning tenant.
+            revision_id: The revision whose predecessors are wanted (excluded from the result).
+            limit: Upper bound on rows returned, so a long history cannot make one request
+                classify hundreds of pairs.
+
+        Returns:
+            Rows with ``id`` and ``version_id`` (the label), newest first; ``[]`` when the
+            revision has no predecessors.
+        """
+        if not revision_id or not is_uuid_string(str(revision_id)):
+            return []
+        bound = max(0, int(limit))
+        ancestors = self.collect_revision_ancestors(revision_id, tenant_id)
+        cand_ids = [str(a) for a in ancestors if str(a) != str(revision_id)]
+        if cand_ids:
+            placeholders = ",".join(["%s"] * len(cand_ids))
+            rows = self.execute_query(
+                f"""
+                SELECT v.id::text AS id, v.version_id
+                FROM apiome.versions v
+                INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL
+                WHERE v.project_id = %s
+                  AND p.tenant_id = %s
+                  AND v.deleted_at IS NULL
+                  AND v.published = true
+                  AND v.id IN ({placeholders})
+                ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+                LIMIT %s
+                """,
+                tuple([project_id, tenant_id, *cand_ids, bound]),
+            )
+            if rows:
+                return [dict(r) for r in rows]
+        rows = self.execute_query(
+            """
+            SELECT v.id::text AS id, v.version_id
+            FROM apiome.versions v
+            INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL
+            INNER JOIN apiome.versions anchor ON anchor.id = %s
+            WHERE v.project_id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND v.id <> anchor.id
+              AND (v.created_at, v.id) < (anchor.created_at, anchor.id)
+            ORDER BY v.created_at DESC, v.id DESC
+            LIMIT %s
+            """,
+            (revision_id, project_id, tenant_id, bound),
+        )
+        return [dict(r) for r in rows or []]
 
     def get_version_branch_by_id(
         self, branch_id: str, tenant_id: str

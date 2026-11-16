@@ -13,10 +13,12 @@ import { Label } from '@/app/components/ui/Label';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Spinner } from '@/app/components/ui/Spinner';
 import { Switch } from '@/app/components/ui/Switch';
+import { buildDocsHref } from '@/app/utils/docsLinks';
 import { buildGovernanceDocsHref, POLICY_DOCS_PAGE } from '@/app/utils/lint-axis-ui';
 
 import {
   BREAKING_PUBLISH_POLICY_OPTIONS,
+  COMPATIBILITY_MODE_OPTIONS,
   componentStageProblems,
   MAX_COMPONENT_APPROVAL_STAGES,
   MAX_COMPONENT_DEPRECATION_NOTICE_DAYS,
@@ -24,9 +26,12 @@ import {
   MAX_REQUIRED_APPROVALS,
   POLICY_COVERAGE_AXES,
   POLICY_GRADE_OPTIONS,
+  PROTOBUF_BREAKING_CATEGORY_OPTIONS,
   truncatePolicyFingerprint,
   type BreakingPublishPolicyLevel,
+  type CompatibilityMode,
   type GuideCiOutcomes,
+  type ProtobufBreakingCategory,
 } from '@/app/ade/dashboard/style-guides/api';
 
 import { formatPolicyInstant } from '../styleGuidesModel';
@@ -40,6 +45,7 @@ import type { GuidePolicyState } from './guideEditorState';
  *
  * The gates applied when lint evidence is judged against this guide: the quality floor, the
  * axes that must carry evidence at all, what a breaking publish without a major bump does,
+ * the compatibility mode diffs, checks and publishes grade by (XPC-4.5, #5749),
  * how many review approvals a publish needs (COL-2.3, #4519), and the three outcomes
  * `GET …/lint/gate` reports as failed. Saving snapshots an immutable policy version, which
  * is why the history sits under the form rather than behind a link — a gate whose changes
@@ -54,6 +60,9 @@ import type { GuidePolicyState } from './guideEditorState';
  * labels), the wait is a shaped skeleton rather than a spinner, and the draft survives a
  * tab switch because it lives in `useGuidePolicy` on the page.
  */
+
+/** The docs page the Compatibility section links to (XPC-4.5, #5749). */
+export const COMPATIBILITY_DOCS_PAGE = 'apiome-docs/docs/govern/compatibility-modes.md';
 
 /** The three CI outcome switches, with the sentence each one is really asking. */
 const CI_OUTCOMES: ReadonlyArray<{
@@ -127,6 +136,12 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
   const disabled = readOnly || state.saving;
   const breaking = BREAKING_PUBLISH_POLICY_OPTIONS.find(
     (option) => option.value === draft.breakingPublishPolicy
+  );
+  const compatibilityMode = COMPATIBILITY_MODE_OPTIONS.find(
+    (option) => option.value === draft.compatibilityMode
+  );
+  const protobufCategory = PROTOBUF_BREAKING_CATEGORY_OPTIONS.find(
+    (option) => option.value === draft.protobufBreakingCategory
   );
   // A role on its own gates nothing, so the picker follows the count rather than standing
   // on its own — which is also what the REST gate does with the pair.
@@ -229,6 +244,97 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
               ))}
             </select>
             <p className="sg-field__hint">{breaking?.description}</p>
+          </div>
+
+          <div data-testid="guide-policy-compatibility">
+            <h4 className="sg-section-title">Compatibility</h4>
+            <p className="sg-section-desc">
+              How a change between two versions is graded in classified diffs, compatibility
+              checks, the CI diff gate and the breaking-change publish check. Avro, JSON Schema
+              and AsyncAPI follow the mode, Protobuf follows the category, and other formats
+              keep their own rules.{' '}
+              <a
+                href={buildDocsHref(COMPATIBILITY_DOCS_PAGE)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sg-inline-link"
+                data-testid="compatibility-docs-link"
+              >
+                Compatibility modes
+              </a>
+            </p>
+            <div className="gd-policy-grid">
+              <div className="sg-field">
+                <Label htmlFor="compatibility-mode">Compatibility mode</Label>
+                <select
+                  id="compatibility-mode"
+                  aria-label="Compatibility mode"
+                  aria-describedby="compatibility-mode-hint"
+                  className="hive-control sg-select gd-policy-select"
+                  value={draft.compatibilityMode}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    state.setCompatibilityMode(event.target.value as CompatibilityMode)
+                  }
+                >
+                  {COMPATIBILITY_MODE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="sg-field__hint" id="compatibility-mode-hint">
+                  {compatibilityMode?.description}
+                </p>
+              </div>
+
+              <div className="sg-field">
+                <Label htmlFor="protobuf-breaking-category">Protobuf breaking category</Label>
+                <select
+                  id="protobuf-breaking-category"
+                  aria-label="Protobuf breaking category"
+                  aria-describedby="protobuf-breaking-category-hint"
+                  className="hive-control sg-select gd-policy-select"
+                  value={draft.protobufBreakingCategory}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    state.setProtobufBreakingCategory(
+                      event.target.value as ProtobufBreakingCategory
+                    )
+                  }
+                >
+                  {PROTOBUF_BREAKING_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="sg-field__hint" id="protobuf-breaking-category-hint">
+                  {protobufCategory?.description}
+                </p>
+              </div>
+            </div>
+            <ul className="gd-switch-list">
+              <li className="gd-switch-row">
+                <span className="gd-switch-row__text">
+                  <Label htmlFor="compatibility-transitive" className="gd-switch-row__title">
+                    Check every earlier version
+                  </Label>
+                  <span className="gd-switch-row__desc">
+                    {draft.compatibilityMode === 'NONE'
+                      ? 'With the mode set to None nothing fails, so checking earlier versions adds nothing.'
+                      : 'A change must also be compatible with every earlier version, not only the one it is compared with (the transitive form of the mode).'}
+                  </span>
+                </span>
+                <Switch
+                  id="compatibility-transitive"
+                  aria-label="Check every earlier version"
+                  checked={draft.compatibilityTransitive}
+                  disabled={disabled}
+                  onCheckedChange={(checked) => state.setCompatibilityTransitive(checked)}
+                />
+              </li>
+            </ul>
           </div>
 
           <div>

@@ -29,6 +29,16 @@ The level is a style-guide setting resolved through the GOV-1.4 chain (project �
 default): ``off`` / ``warn`` (default) / ``block``. Only ``block`` refuses the publish, and
 only a force-publish (``skipPublishChecks`` + reason, the GOV-2.5 pattern) gets past it.
 
+Compatibility mode (XPC-4.5)
+----------------------------
+The project's compatibility policy (the same style-guide chain) also applies here. When both
+revisions' source format has a mode- or category-aware classifier (Avro, JSON Schema, AsyncAPI,
+Protobuf) the comparison is graded by it under the policy's mode or category instead of the
+OpenAPI taxonomy. When the policy is **transitive** (``FULL_TRANSITIVE`` and friends) the candidate
+is also compared against every earlier published revision, so a change compatible with the
+baseline but not with an older revision still counts — and its entry names that revision
+(``againstVersion``). ``evaluatedUnder`` on the payload says what the verdict was graded under.
+
 Everything here is **best-effort**: a fault anywhere — missing baseline, unbuildable spec,
 DB error — degrades to :data:`STATUS_UNAVAILABLE`, which never blocks a publish. A guardrail
 that fails closed on its own bugs would be worse than the semver violation it guards against.
@@ -38,7 +48,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .breaking_publish_policy import (
     BREAKING_PUBLISH_POLICY_BLOCK,
@@ -46,9 +56,22 @@ from .breaking_publish_policy import (
     DEFAULT_BREAKING_PUBLISH_POLICY,
     normalize_breaking_publish_policy,
 )
-from .change_taxonomy import classify_openapi_changes
+from .change_taxonomy import ClassifiedChange, classify_openapi_changes, summarize_changes
 from .changelog_generator import build_changelog
 from .compatibility_engine import openapi_for_revision
+from .compatibility_modes import (
+    CTG_RULESET,
+    Baseline,
+    FormatEvaluation,
+    canonical_model_for_revision,
+    classify_under,
+    ctg_changes,
+    evaluated_under,
+    merge_transitive,
+    revision_format,
+    transitive_baselines,
+)
+from .compatibility_policy import CompatibilityPolicy, resolve_policy
 from .database import db
 from .semver_version import is_major_bump, next_major_label
 
@@ -102,12 +125,16 @@ class BreakingPublishAssessment:
         to_version: Candidate version label.
         baseline_revision_id: The compared baseline revision, when one exists.
         breaking_changes: Up to :data:`MAX_LISTED_BREAKING_CHANGES` breaking entries, each
-            ``{pointer, ruleId, pathGroup, summary}``, in changelog order.
+            ``{pointer, ruleId, pathGroup, summary}``, in changelog order. On a transitive check
+            each also names the revision it breaks against (``againstRevisionId`` /
+            ``againstVersion``).
         breaking_count: Total breaking changes found (may exceed the listed ones).
         counts: Full CTG-1.3 severity tally for the comparison.
         max_severity: Worst severity across all classified changes.
         recommended_version: The label a compliant major bump would use.
         detail: Free-text explanation for ``unavailable``/unknown-scheme outcomes.
+        evaluated_under: The XPC-4.5 ``evaluatedUnder`` payload (mode, transitivity, category,
+            formats, whether the mode applied, the revisions compared), when a comparison ran.
     """
 
     policy: str = DEFAULT_BREAKING_PUBLISH_POLICY
@@ -123,6 +150,7 @@ class BreakingPublishAssessment:
     max_severity: Optional[str] = None
     recommended_version: Optional[str] = None
     detail: Optional[str] = None
+    evaluated_under: Optional[Dict[str, Any]] = None
 
     @property
     def triggered(self) -> bool:
@@ -149,6 +177,15 @@ class BreakingPublishAssessment:
             f"{self.breaking_count} breaking change(s){scope} "
             f"published as {self.to_version or 'this version'}"
         )
+        older = list(
+            dict.fromkeys(
+                str(c["againstVersion"])
+                for c in self.breaking_changes
+                if c.get("againstVersion") and c.get("againstVersion") != self.from_version
+            )
+        )
+        if older:
+            lead += f" (breaking against earlier revision(s) {', '.join(older)})"
         if self.major_bumped is None:
             return (
                 f"{lead}, and the version labels are not semver so a major bump cannot be "
@@ -175,6 +212,7 @@ class BreakingPublishAssessment:
             "maxSeverity": self.max_severity,
             "recommendedVersion": self.recommended_version,
             "detail": self.detail,
+            "evaluatedUnder": self.evaluated_under,
             "message": self.message(),
         }
 
@@ -208,6 +246,87 @@ def resolve_breaking_publish_policy(
             exc_info=True,
         )
         return DEFAULT_BREAKING_PUBLISH_POLICY
+
+
+def _listed_entry(entry: Any, against: Optional[Dict[Tuple[str, str, str], Baseline]]) -> Dict[str, str]:
+    """One breaking changelog entry as the payload lists it, naming its revision on a transitive check."""
+    out = {
+        "pointer": str(entry.pointer),
+        "ruleId": str(entry.rule_id),
+        "pathGroup": str(entry.path_group),
+        "summary": str(entry.summary),
+    }
+    if against is not None:
+        found = against.get((entry.rule_id, entry.pointer, entry.change_kind))
+        if found is not None:
+            out["againstRevisionId"] = found.revision_id
+            out["againstVersion"] = found.version_label
+    return out
+
+
+def _classified_pairs(
+    *,
+    tenant_slug: str,
+    tenant_id: str,
+    head_version: Mapping[str, Any],
+    head_spec: Optional[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+    baselines: Sequence[Baseline],
+    compat: CompatibilityPolicy,
+    load_openapi: Callable[..., Mapping[str, Any]],
+) -> Tuple[List[Tuple[Baseline, List[ClassifiedChange]]], List[FormatEvaluation]]:
+    """Classify the candidate against each baseline, canonically for mode-graded formats.
+
+    Args:
+        tenant_slug: Tenant slug (to materialize OpenAPI).
+        tenant_id: Tenant id.
+        head_version: The candidate revision row.
+        head_spec: The candidate OpenAPI, when the caller already built it.
+        baseline: The previous published revision row (the first of ``baselines``).
+        baselines: The baseline, then any earlier published revisions a transitive policy adds.
+        compat: The project's compatibility policy.
+        load_openapi: Materializes a revision's OpenAPI.
+
+    Returns:
+        ``(pairs, evaluations)``: CTG-shaped changes per baseline and how each pair was graded. An
+        earlier revision that cannot be loaded is skipped.
+    """
+    head_id = str(head_version.get("id") or "")
+    head_model = canonical_model_for_revision(db, tenant_id, head_id)
+    base_model = (
+        canonical_model_for_revision(db, tenant_id, str(baseline.get("id") or ""))
+        if head_model is not None
+        else None
+    )
+    pairs: List[Tuple[Baseline, List[ClassifiedChange]]] = []
+    if head_model is not None and base_model is not None:
+        evaluations: List[FormatEvaluation] = []
+        for item in baselines:
+            model = (
+                base_model
+                if item.role == "base"
+                else canonical_model_for_revision(db, tenant_id, item.revision_id)
+            )
+            if model is None:
+                continue
+            result, evaluation = classify_under(model, head_model, compat)
+            evaluations.append(evaluation)
+            pairs.append((item, [change for change, _ in ctg_changes(result)]))
+        return pairs, evaluations
+
+    baseline_spec = load_openapi(baseline, tenant_slug, tenant_id)
+    candidate_spec = head_spec if head_spec is not None else load_openapi(head_version, tenant_slug, tenant_id)
+    for item in baselines:
+        if item.role == "base":
+            spec = baseline_spec
+        else:
+            row = db.get_version_by_id(item.revision_id, tenant_id)
+            if not isinstance(row, dict) or not row:
+                continue
+            spec = load_openapi(row, tenant_slug, tenant_id)
+        pairs.append((item, list(classify_openapi_changes(spec, candidate_spec).changes)))
+    fmt = revision_format(db, tenant_id, head_id) if head_id else "openapi"
+    return pairs, [FormatEvaluation(format=fmt, ruleset=CTG_RULESET)]
 
 
 def assess_breaking_publish(
@@ -269,18 +388,43 @@ def assess_breaking_publish(
             )
 
         from_label = str(baseline.get("version_id") or "") or None
-        baseline_spec = load_openapi(baseline, tenant_slug, tenant_id)
-        candidate_spec = (
-            head_spec
-            if head_spec is not None
-            else load_openapi(head_version, tenant_slug, tenant_id)
+        compat = resolve_policy(db, tenant_id, project_id)
+        baselines, truncated = transitive_baselines(
+            db,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            base_revision_id=str(baseline_revision_id),
+            base_label=from_label or "",
+            transitive=compat.transitive,
         )
-
+        pairs, evaluations = _classified_pairs(
+            tenant_slug=tenant_slug,
+            tenant_id=tenant_id,
+            head_version=head_version,
+            head_spec=head_spec,
+            baseline=baseline,
+            baselines=baselines,
+            compat=compat,
+            load_openapi=load_openapi,
+        )
+        merged = merge_transitive(
+            pairs,
+            key=lambda c: (c.rule_id, c.pointer, c.change_kind),
+            is_breaking=lambda c: c.severity == "breaking",
+        )
+        against = {(c.rule_id, c.pointer, c.change_kind): b for b, c in merged}
         changelog = build_changelog(
-            classify_openapi_changes(baseline_spec, candidate_spec),
+            summarize_changes([c for _, c in merged]),
             from_version=from_label,
             to_version=to_label,
         )
+        under = evaluated_under(
+            compat,
+            evaluations,
+            requested={"mode": False, "transitive": False, "category": False},
+            compared=baselines,
+            truncated=truncated,
+        ).model_dump(by_alias=True)
     except Exception as exc:  # noqa: BLE001 - a broken guardrail must not break publishing
         logger.warning(
             "Breaking-publish guardrail could not classify revision %s; continuing "
@@ -297,12 +441,7 @@ def assess_breaking_publish(
 
     breaking_entries = [e for e in changelog.entries if e.severity == "breaking"]
     listed = tuple(
-        {
-            "pointer": str(e.pointer),
-            "ruleId": str(e.rule_id),
-            "pathGroup": str(e.path_group),
-            "summary": str(e.summary),
-        }
+        _listed_entry(e, against if compat.transitive else None)
         for e in breaking_entries[:MAX_LISTED_BREAKING_CHANGES]
     )
     major_bumped = (
@@ -323,6 +462,7 @@ def assess_breaking_publish(
             baseline_revision_id=str(baseline_revision_id),
             counts=counts,
             max_severity=changelog.max_severity,
+            evaluated_under=under,
         )
 
     # Breaking *and* correctly majored — the release is well-formed, no friction.
@@ -353,4 +493,5 @@ def assess_breaking_publish(
         max_severity=changelog.max_severity,
         recommended_version=next_major_label(from_label or ""),
         detail=detail,
+        evaluated_under=under,
     )

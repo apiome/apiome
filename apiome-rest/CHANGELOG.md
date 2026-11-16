@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.718.0] - 2026-11-15
+
+### Added
+- **Compatibility modes in the classified diff and compatibility API (XPC-4.5, #5749)** — OpenAPI 1.578.0:
+  - `POST /v1/diff/{tenant}/classified` and `POST /v1/versions/{tenant}/{project}/compatibility` take `mode`
+    (`BACKWARD` / `FORWARD` / `FULL` / `NONE`, any case; a `_TRANSITIVE` name also sets `transitive`), `transitive`
+    and `category` (Protobuf: `WIRE` / `WIRE_JSON` / `PACKAGE` / `FILE`). Each defaults to the project's style-guide
+    policy; an unknown value is a `400`.
+  - Revisions whose `source_format` has a mode-aware classifier (Avro, JSON Schema, AsyncAPI) or a category-aware one
+    (Protobuf) are rebuilt as canonical models and graded by it (`app.compatibility_modes`); an inline head is read
+    with the base's importer. Other formats keep the OpenAPI taxonomy (`ctg`) or the native engine
+    (`openapi-compatibility`).
+  - Every response carries `evaluatedUnder` (`mode`, `transitive`, `category`, `formats`, `modeApplied`,
+    `categoryApplied`, `ruleset`, `source`, `comparedRevisions`, `comparedRevisionsTruncated`). Classified-diff
+    changes add `grade` and `rationale` when a canonical classifier graded them; compatibility findings add `ruleId`,
+    `severity` and, on a transitive check, `against`. The markdown changelog ends with a "Graded under …" line when a
+    mode, category or transitive check applied.
+  - `transitive` compares the head with every earlier revision of the base (published ancestors; a catalog item's
+    earlier revisions), at most 50: every base finding is kept, earlier revisions add only breaking findings not
+    already reported, each naming its revision (`Database.list_prior_revisions_for_transitive_check`).
+  - `NONE` grades as `BACKWARD` would, with breaks lowered to dangerous and rationales led by `[NONE]`.
+  - `GET /v1/compatibility/rules?format=` — the rule catalogue (`app.compatibility_rule_catalogue`): every rule id
+    XPC-4.1–4.4 emit with its family, formats, direction, severity per mode or per Protobuf category, and description.
+    Readable with `diff:read` and `registry:read` API keys. `scripts/generate_compatibility_rule_catalogue.py` renders
+    it into `apiome-docs/docs/govern/compatibility-modes.md`.
+  - Style-guide policy `compatibilityMode` (default `BACKWARD`), `compatibilityTransitive` (default `false`) and
+    `protobufBreakingCategory` (default `WIRE_JSON`) on `GET`/`PUT /v1/style-guides/{tenant}/{guide}/policy`, resolved
+    through the GOV-1.4 guide chain (`app.compatibility_policy`) and frozen into `style_guide_revisions.policy`
+    (migration V382; the roadmap's V276 was taken).
+  - The breaking-change publish guardrail grades by the project's policy: canonical classifiers for mode-graded
+    formats, and every earlier published revision when transitive. `breakingChanges[]` entries name `againstVersion`
+    / `againstRevisionId`, the message names the earlier version, and the payload carries `evaluatedUnder`.
+
+### Changed
+- `AvroBreakingChangeClassifier(mode=…)` grades by mode (a problem is breaking when the mode checks its direction,
+  dangerous otherwise); under a mode other than the default `BACKWARD` its rationale starts with the mode.
+- `ClassifiedChange` carries an optional `rationale` (omitted when unset), used as the changelog summary of a rule the
+  taxonomy does not know.
+
 ## [1.717.0] - 2026-11-15
 
 ### Added

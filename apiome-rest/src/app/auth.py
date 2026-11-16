@@ -64,6 +64,11 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         re.compile(r"^/v1/diff/[^/]+/classified/?$"),
         API_KEY_SCOPE_DIFF_READ,
     ),
+    # XPC-4.5 (#5749): the compatibility rule catalogue is static reference data that explains a
+    # classified diff's rule ids (CI gate) and a registry verdict's (CDG-4), so either read scope
+    # may fetch it.
+    ("GET", re.compile(r"^/v1/compatibility/rules/?$"), API_KEY_SCOPE_DIFF_READ),
+    ("GET", re.compile(r"^/v1/compatibility/rules/?$"), API_KEY_SCOPE_REGISTRY_READ),
     (
         "GET",
         re.compile(r"^/v1/versions/[^/]+/[^/]+/[^/]+/lint/?$"),

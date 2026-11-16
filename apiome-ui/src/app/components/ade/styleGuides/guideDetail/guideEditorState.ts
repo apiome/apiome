@@ -27,7 +27,9 @@ import * as React from 'react';
 
 import {
   DEFAULT_BREAKING_PUBLISH_POLICY,
+  DEFAULT_COMPATIBILITY_MODE,
   DEFAULT_GUIDE_CI_OUTCOMES,
+  DEFAULT_PROTOBUF_BREAKING_CATEGORY,
   DEFAULT_REQUIRED_APPROVALS,
   fetchProjectOptions,
   fetchVersionOptions,
@@ -38,6 +40,7 @@ import {
   styleGuidesApi,
   styleGuidesApiWithValidation,
   type BreakingPublishPolicyLevel,
+  type CompatibilityMode,
   type ComponentApprovalStage,
   type CustomRulesPreviewResult,
   type GuideCiOutcomes,
@@ -47,6 +50,7 @@ import {
   type GuidePolicyVersionList,
   type GuideRulesView,
   type ProjectOption,
+  type ProtobufBreakingCategory,
   type VersionOption,
 } from '@/app/ade/dashboard/style-guides/api';
 import {
@@ -491,6 +495,12 @@ export interface PolicyDraft {
   componentApprovalStages: ComponentApprovalStage[];
   /** Minimum days between scheduling a component deprecation and its sunset (DCW-3.4). */
   componentDeprecationNoticeDays: number;
+  /** The compatibility mode diffs, checks and publishes grade by (XPC-4.5). */
+  compatibilityMode: CompatibilityMode;
+  /** Whether a change is also checked against every earlier version (XPC-4.5). */
+  compatibilityTransitive: boolean;
+  /** The buf breaking category Protobuf changes are graded at (XPC-4.5). */
+  protobufBreakingCategory: ProtobufBreakingCategory;
 }
 
 /**
@@ -517,6 +527,10 @@ export function toPolicyDraft(settings: GuidePolicySettings): PolicyDraft {
     componentDeprecationNoticeDays: normalizeComponentDeprecationNoticeDays(
       settings.componentDeprecationNoticeDays
     ),
+    compatibilityMode: settings.compatibilityMode ?? DEFAULT_COMPATIBILITY_MODE,
+    compatibilityTransitive: settings.compatibilityTransitive === true,
+    protobufBreakingCategory:
+      settings.protobufBreakingCategory ?? DEFAULT_PROTOBUF_BREAKING_CATEGORY,
   };
 }
 
@@ -536,6 +550,9 @@ export function isPolicyDirty(draft: PolicyDraft, baseline: PolicyDraft): boolea
     return true;
   }
   if (draft.breakingPublishPolicy !== baseline.breakingPublishPolicy) return true;
+  if (draft.compatibilityMode !== baseline.compatibilityMode) return true;
+  if (draft.compatibilityTransitive !== baseline.compatibilityTransitive) return true;
+  if (draft.protobufBreakingCategory !== baseline.protobufBreakingCategory) return true;
   if (draft.requiredApprovals !== baseline.requiredApprovals) return true;
   if (draft.requiredReviewerRole !== baseline.requiredReviewerRole) return true;
   if (draft.componentDeprecationNoticeDays !== baseline.componentDeprecationNoticeDays) {
@@ -583,6 +600,12 @@ export interface GuidePolicyState {
   toggleCoverage: (axis: string, required: boolean) => void;
   /** Change the breaking-publish guardrail. */
   setBreakingPublishPolicy: (level: BreakingPublishPolicyLevel) => void;
+  /** Change the compatibility mode (XPC-4.5). */
+  setCompatibilityMode: (mode: CompatibilityMode) => void;
+  /** Turn checking every earlier version on or off (XPC-4.5). */
+  setCompatibilityTransitive: (transitive: boolean) => void;
+  /** Change the Protobuf breaking category (XPC-4.5). */
+  setProtobufBreakingCategory: (category: ProtobufBreakingCategory) => void;
   /** Change how many approvals a publish needs; `0` switches the gate off. */
   setRequiredApprovals: (approvals: number | string) => void;
   /** Change the role one approval must come from; `''` means any approver counts. */
@@ -690,6 +713,22 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
   const setBreakingPublishPolicy = React.useCallback(
     (level: BreakingPublishPolicyLevel) =>
       patch((prev) => ({ ...prev, breakingPublishPolicy: level })),
+    [patch]
+  );
+
+  const setCompatibilityMode = React.useCallback(
+    (mode: CompatibilityMode) => patch((prev) => ({ ...prev, compatibilityMode: mode })),
+    [patch]
+  );
+
+  const setCompatibilityTransitive = React.useCallback(
+    (transitive: boolean) => patch((prev) => ({ ...prev, compatibilityTransitive: transitive })),
+    [patch]
+  );
+
+  const setProtobufBreakingCategory = React.useCallback(
+    (category: ProtobufBreakingCategory) =>
+      patch((prev) => ({ ...prev, protobufBreakingCategory: category })),
     [patch]
   );
 
@@ -806,6 +845,9 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
             name: stage.name.trim(),
           })),
           componentDeprecationNoticeDays: draft.componentDeprecationNoticeDays,
+          compatibilityMode: draft.compatibilityMode,
+          compatibilityTransitive: draft.compatibilityTransitive,
+          protobufBreakingCategory: draft.protobufBreakingCategory,
           snapshot: true,
         }),
       });
@@ -838,6 +880,9 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
     setQualityMinGrade,
     toggleCoverage,
     setBreakingPublishPolicy,
+    setCompatibilityMode,
+    setCompatibilityTransitive,
+    setProtobufBreakingCategory,
     setRequiredApprovals,
     setRequiredReviewerRole,
     setCiOutcome,

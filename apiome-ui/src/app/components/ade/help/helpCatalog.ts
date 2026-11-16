@@ -1780,7 +1780,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'compatibility-modes',
     title: 'Compatibility modes',
     summary:
-      'How BACKWARD, FORWARD and FULL grade schema changes: JSON Schema content models, Protobuf categories and AsyncAPI consumer/producer sides.',
+      'How BACKWARD, FORWARD, FULL and NONE grade schema changes, set per project or per request, transitively, with the rule catalogue.',
     page: 'apiome-docs/docs/govern/compatibility-modes.md',
     section: 'reference',
     keywords: [
@@ -1796,6 +1796,11 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
       'consumer',
       'producer',
       'channel',
+      'transitive',
+      'full_transitive',
+      'evaluatedUnder',
+      'rule catalogue',
+      'rule id',
     ],
   },
   {

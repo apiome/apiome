@@ -120,6 +120,17 @@ export interface GuideCiOutcomes {
  */
 export type BreakingPublishPolicyLevel = 'off' | 'warn' | 'block';
 
+/**
+ * Compatibility mode a change between two versions is graded under (XPC-4.5, #5749).
+ *
+ * `BACKWARD` (default) — new readers must read what old writers wrote; `FORWARD` — old readers
+ * must read what new writers write; `FULL` — both; `NONE` — changes are listed, nothing fails.
+ */
+export type CompatibilityMode = 'BACKWARD' | 'FORWARD' | 'FULL' | 'NONE';
+
+/** The buf breaking category Protobuf changes are graded at (XPC-4.5, #5749). */
+export type ProtobufBreakingCategory = 'WIRE' | 'WIRE_JSON' | 'PACKAGE' | 'FILE';
+
 /** Draft policy gate settings — `GET/PUT /api/style-guides/{id}/policy` (CLX-1.3, #4850). */
 export interface GuidePolicySettings {
   guideId: string;
@@ -139,6 +150,12 @@ export interface GuidePolicySettings {
   componentApprovalStages?: ComponentApprovalStage[];
   /** Minimum days between scheduling a component deprecation and its sunset (DCW-3.4). */
   componentDeprecationNoticeDays?: number;
+  /** Compatibility mode diffs, checks and publishes grade by (XPC-4.5, #5749). */
+  compatibilityMode?: CompatibilityMode;
+  /** Whether a change is also checked against every earlier version (XPC-4.5). */
+  compatibilityTransitive?: boolean;
+  /** The buf breaking category Protobuf changes are graded at (XPC-4.5). */
+  protobufBreakingCategory?: ProtobufBreakingCategory;
 }
 
 /** One component-library approval stage (DCW-3.4, private-suite#2364). */
@@ -208,6 +225,70 @@ export const BREAKING_PUBLISH_POLICY_OPTIONS: ReadonlyArray<{
     label: 'Block',
     description:
       'Refuse the publish until the major version is bumped, or it is force-published with a reason.',
+  },
+];
+
+/** What a guide gets without choosing a compatibility mode — Confluent's default (XPC-4.5). */
+export const DEFAULT_COMPATIBILITY_MODE: CompatibilityMode = 'BACKWARD';
+
+/** What a guide gets without choosing a Protobuf category (XPC-4.5). */
+export const DEFAULT_PROTOBUF_BREAKING_CATEGORY: ProtobufBreakingCategory = 'WIRE_JSON';
+
+/** Compatibility modes, with the copy the policy editor shows (XPC-4.5, #5749). */
+export const COMPATIBILITY_MODE_OPTIONS: ReadonlyArray<{
+  value: CompatibilityMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'BACKWARD',
+    label: 'Backward (default)',
+    description:
+      'The new version must read data written with the old one. Upgrade readers first.',
+  },
+  {
+    value: 'FORWARD',
+    label: 'Forward',
+    description:
+      'The old version must read data written with the new one. Upgrade writers first.',
+  },
+  {
+    value: 'FULL',
+    label: 'Full',
+    description: 'Both directions must hold, so readers and writers upgrade in any order.',
+  },
+  {
+    value: 'NONE',
+    label: 'None',
+    description: 'Changes are listed with their rules, but no change fails a check.',
+  },
+];
+
+/** buf breaking categories, least strict first, with the copy the policy editor shows (XPC-4.5). */
+export const PROTOBUF_BREAKING_CATEGORY_OPTIONS: ReadonlyArray<{
+  value: ProtobufBreakingCategory;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'WIRE',
+    label: 'Wire',
+    description: 'Breaks only when binary-encoded messages no longer decode the same way.',
+  },
+  {
+    value: 'WIRE_JSON',
+    label: 'Wire and JSON (default)',
+    description: 'Wire, plus a changed JSON key, such as a renamed field or a new json_name.',
+  },
+  {
+    value: 'PACKAGE',
+    label: 'Package',
+    description: 'Wire and JSON, plus a deleted, renamed or relabelled declaration in a package.',
+  },
+  {
+    value: 'FILE',
+    label: 'File',
+    description: 'Package, plus a declaration moved to another file.',
   },
 ];
 
