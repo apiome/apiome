@@ -569,6 +569,26 @@ The grades, the rule ids and the modes they break are on
 [Compatibility modes](../govern/compatibility-modes.md#json-schema). If either version has no
 stored document, both are compared on their types instead, without content models.
 
+## AsyncAPI: what a comparison reads
+
+An AsyncAPI catalog item (2.x or 3.x) keeps the document you imported. When two versions are
+compared, Apiome grades each change for **consumers** and **producers**, and reads these parts of
+the document:
+
+| In the document | What the comparison uses it for |
+| --- | --- |
+| A channel's `address` (the channel key in 2.x) and its `parameters` | Whether consumers subscribed to the old address stop receiving, and whether a new parameter has a `default` |
+| A channel's name (3.x), or the `operationId` of an operation on it | Whether a removed and an added channel are one channel with a new address |
+| An operation's `action` (`send` / `receive`; `publish` / `subscribe` in 2.x) | Whether the operation flipped direction |
+| An operation's `reply` (3.x) | Whether requesters still get a reply |
+| A channel's `messages` (an operation's `message.oneOf` in 2.x) | Which messages each side must handle |
+| A message's `schemaFormat` and `payload` (3.x: the payload's `schemaFormat` and `schema`) | Which format's check grades the payload: JSON Schema, Avro or Protobuf |
+| `bindings` on a server, channel, operation or message | Whether the transport settings both sides share changed |
+| Each server's `protocol`, address, variables and `security` | Whether the connection both sides make changed |
+
+The grades, the rule ids and how each mode reads them are on
+[Compatibility modes](../govern/compatibility-modes.md#asyncapi).
+
 ## What absence means: the capability panel
 
 At the bottom of the tab, the **"_Format_ — what apiome records"** panel is the honest
