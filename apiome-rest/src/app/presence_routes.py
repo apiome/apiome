@@ -165,7 +165,15 @@ def post_heartbeat(
         raise _http_error(exc) from exc
 
 
-@router.post(f"{_BASE}/leave", status_code=204, summary="Leave a project (release presence and locks)")
+# ``response_model=None``: under ``from __future__ import annotations`` the ``-> None`` return is the
+# string ``"None"``, which FastAPI 0.115 (the pinned Docker version) reads as a body model and
+# refuses on a 204.
+@router.post(
+    f"{_BASE}/leave",
+    status_code=204,
+    response_model=None,
+    summary="Leave a project (release presence and locks)",
+)
 def post_leave(
     tenant_slug: str,
     project_ref: str,
