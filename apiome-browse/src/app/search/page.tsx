@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { searchPublicMcpCatalog } from '../../../lib/db/helper';
-import { runCatalogSearch } from '../../../lib/db/search';
+import { runCatalogSearch, runHitVersionsLookup } from '../../../lib/db/search';
 import { resolveSearchRequest, type SearchUrlState } from '../../../lib/search/params';
 import { textNeedles } from '../../../lib/search/query';
 import { sanitizeSearchInput } from '../utils/searchValidation';
@@ -52,5 +52,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     mcpQuery ? searchPublicMcpCatalog(mcpQuery, 'relevance') : Promise.resolve([]),
   ]);
 
-  return <SearchClient request={request} response={response} mcpHits={mcpHits} mcpQuery={mcpQuery} />;
+  // BDX-2.6: one follow-up query fills the version quick-switch menus of the page's hits.
+  const hitVersions = await runHitVersionsLookup(response.rows);
+
+  return <SearchClient request={request} response={response} hitVersions={hitVersions} mcpHits={mcpHits} mcpQuery={mcpQuery} />;
 }

@@ -12,6 +12,7 @@ import connectionPool from './db';
 import { emptySearchResponse, type CatalogSearchHit, type CatalogSearchResponse, type FacetBucket, type ProjectFacet } from '../search/hits';
 import { isEmptyRequest, type SearchRequest } from '../search/params';
 import { SEARCH_HIT_CAP, buildCatalogSearchSql } from '../search/sql';
+import { buildHitVersionsSql, type HitVersion, type HitVersionsMap } from '../search/compare';
 
 interface SearchRow {
   total: number;
@@ -69,5 +70,29 @@ export async function runCatalogSearch(request: SearchRequest): Promise<CatalogS
     const e = err as { message?: string };
     console.error('[db] runCatalogSearch:', e?.message ?? err);
     return emptySearchResponse(request.page, request.perPage);
+  }
+}
+
+/**
+ * Look up the version quick-switch menus for a page of hits (BDX-2.6): each eligible hit's
+ * project's published versions, and whether its operation or schema exists in each.
+ *
+ * @param rows The page's rows (only version / operation / schema hits are looked up).
+ * @returns hit_id → versions, newest first; an empty map when nothing is eligible or the lookup
+ *   fails (the menus then simply do not render — never a 500).
+ */
+export async function runHitVersionsLookup(rows: readonly CatalogSearchHit[]): Promise<HitVersionsMap> {
+  noStore();
+  const statement = buildHitVersionsSql(rows);
+  if (!statement) return {};
+  try {
+    const result = await connectionPool.query<{ hit_id: string; versions: HitVersion[] }>(statement.text, statement.values);
+    const map: HitVersionsMap = {};
+    for (const row of result.rows) map[row.hit_id] = Array.isArray(row.versions) ? row.versions : [];
+    return map;
+  } catch (err) {
+    const e = err as { message?: string };
+    console.error('[db] runHitVersionsLookup:', e?.message ?? err);
+    return {};
   }
 }

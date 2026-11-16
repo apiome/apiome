@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { formatLabel, paradigmLabel } from '../../../lib/browseFacets';
 import { severityLabel } from '../../../lib/changelog/group';
-import { groupHitsByKind, hitHref, type CatalogSearchResponse } from '../../../lib/search/hits';
+import { isCompareEligible, toggleCompare, versionMenuEntries, type HitVersionsMap } from '../../../lib/search/compare';
+import { groupHitsByKind, hitHref, type CatalogSearchHit, type CatalogSearchResponse } from '../../../lib/search/hits';
 import {
   HIT_KIND_LABELS,
   SCOPE_KINDS,
@@ -39,6 +40,7 @@ import { GradeBadge } from '../mcp/McpShared';
 import { FacetRail, type FacetRailActions } from '../components/search/FacetRail';
 import { Highlight } from '../components/search/Highlight';
 import { HitRow } from '../components/search/HitRow';
+import { CompareBar } from '../components/search/CompareBar';
 import { SearchBox } from '../components/search/SearchBox';
 import { OperatorChips, SyntaxHelpCard } from '../components/search/SyntaxHelp';
 import { RECENT_SEARCHES_KEY, clearRecentSearches, pushRecentSearch } from '../components/search/searchPaletteBus';
@@ -88,16 +90,20 @@ function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
 /**
  * The results page. The URL is the state: every control navigates, the server re-runs the
  * engine, and this component renders what came back. Local state is limited to the text in the
- * box, the keyboard cursor, the group toggle and the mobile filter drawer.
+ * box, the keyboard cursor, the group toggle, the mobile filter drawer and the compare selection
+ * (BDX-2.6), which survives paging and filtering so the two sides can come from different pages.
  */
 export function SearchClient({
   request,
   response,
+  hitVersions = {},
   mcpHits,
   mcpQuery,
 }: {
   request: SearchRequest;
   response: CatalogSearchResponse;
+  /** hit_id → the project's published versions, for the version chip menus (BDX-2.6). */
+  hitVersions?: HitVersionsMap;
   mcpHits: McpPublicSearchHit[];
   mcpQuery: string;
 }) {
@@ -123,6 +129,21 @@ export function SearchClient({
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // BDX-2.6: the hits ticked for compare (at most two, one project) and the last refusal.
+  const [compareSelection, setCompareSelection] = useState<CatalogSearchHit[]>([]);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const toggleCompareHit = useCallback(
+    (hit: CatalogSearchHit) => {
+      const result = toggleCompare(compareSelection, hit);
+      setCompareSelection(result.selection);
+      setCompareError(result.error);
+    },
+    [compareSelection]
+  );
+  const clearCompare = useCallback(() => {
+    setCompareSelection([]);
+    setCompareError(null);
+  }, []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const needles = useMemo(() => textNeedles(request.parsed), [request.parsed]);
@@ -186,7 +207,8 @@ export function SearchClient({
 
   const chips = useMemo<ActiveChip[]>(() => activeChips(request, removeInline), [request, removeInline]);
 
-  // Keyboard: j/k or arrows walk the results, Enter opens, `/` focuses the box.
+  // Keyboard: j/k or arrows walk the results, Enter opens, `c` toggles compare on the cursor row,
+  // `/` focuses the box.
   const rows = response.rows;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -204,13 +226,16 @@ export function SearchClient({
       } else if (e.key === 'Enter' && cursor >= 0 && rows[cursor]) {
         e.preventDefault();
         router.push(hitHref(rows[cursor]));
+      } else if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && cursor >= 0 && rows[cursor]) {
+        e.preventDefault();
+        toggleCompareHit(rows[cursor]);
       } else if (e.key === 'Escape') {
         setCursor(-1);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [rows, cursor, router, setCursor]);
+  }, [rows, cursor, router, setCursor, toggleCompareHit]);
 
   useEffect(() => {
     if (cursor < 0) return;
@@ -275,7 +300,8 @@ export function SearchClient({
               <span className="hidden text-[11px] text-zinc-400 lg:inline">
                 <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">/</kbd> focus ·{' '}
                 <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">j</kbd>/<kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">k</kbd> move ·{' '}
-                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">↵</kbd> open
+                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">↵</kbd> open ·{' '}
+                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">c</kbd> compare
               </span>
             </div>
 
@@ -491,13 +517,29 @@ export function SearchClient({
                             )}
                             <ul className="flex flex-col gap-2">
                               {group.rows.map((hit, i) => (
-                                <HitRow key={hit.hit_id} id={`hit-${offset + i}`} hit={hit} needles={needles} active={cursor === offset + i} />
+                                <HitRow
+                                  key={hit.hit_id}
+                                  id={`hit-${offset + i}`}
+                                  hit={hit}
+                                  needles={needles}
+                                  active={cursor === offset + i}
+                                  compare={
+                                    isCompareEligible(hit)
+                                      ? { checked: compareSelection.some((s) => s.hit_id === hit.hit_id), onToggle: () => toggleCompareHit(hit) }
+                                      : undefined
+                                  }
+                                  versionMenu={versionMenuEntries(hit, hitVersions[hit.hit_id])}
+                                />
                               ))}
                             </ul>
                           </div>
                         );
                       })}
                     </div>
+                  )}
+
+                  {(compareSelection.length > 0 || compareError) && (
+                    <CompareBar selection={compareSelection} error={compareError} onRemove={toggleCompareHit} onClear={clearCompare} />
                   )}
 
                   {response.pageCount > 1 && (

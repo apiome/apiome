@@ -119,7 +119,8 @@ them were tagged once, so the `format:` and `paradigm:` filters find them too:
   **Changes** tab. The matched words are highlighted.
 - **Top projects** — where the matches concentrate, with a link to each project.
 - **Keyboard** — <kbd>/</kbd> focuses the box, <kbd>j</kbd>/<kbd>k</kbd> (or the arrows) move
-  through the results, <kbd>↵</kbd> opens the selected one.
+  through the results, <kbd>↵</kbd> opens the selected one, <kbd>c</kbd> ticks or unticks it for
+  [compare](#compare-from-search).
 - **Share** — the URL carries the whole search (`q`, `scope`, `type`, `org`, `method`, `format`,
   `paradigm`, `severity`, `after`, `before`, `sort`, `all`, `page`), so **Copy link** gives a colleague the same
   view.
@@ -127,6 +128,31 @@ them were tagged once, so the `format:` and `paradigm:` filters find them too:
 By default a search covers each project's most recently published version. Choose **All published**
 in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
 per version.
+
+### Compare from search {#compare-from-search}
+
+With **All published** on, the same operation shows once per version. Two controls on **Version**,
+**Operation** and **Schema** results turn that into a diff or a jump.
+
+**Compare two versions:**
+
+1. **Choose All published** in the **Versions** section of the rail, and search for the operation
+   or schema (for example `method:POST path:/orders`).
+2. **Tick Compare** on two results of the same project in different versions — or move to a result
+   with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>c</kbd>. A bar under the results lists the two picks.
+3. **Click "▸ Compare v1.0.0 → v2.0.0"** in the bar. The project's compare page opens at those
+   versions (`/tenant/<org>/<project>/compare?v1=…&v2=…`), older version first.
+
+The bar keeps your picks while you page or change filters, so the two sides can come from different
+searches. It refuses, with a message, a result of a **different project**, a **second result from
+the same version**, and a **third** pick. Remove a pick with its **×**, or **Clear** both.
+
+**Switch version from a result:** the version chip on a result (for example **v2.0.0 ⌄**) opens a
+menu of the project's other published versions. Each entry opens that version **at the same
+operation or schema** when it exists there; an entry marked *not in this version* opens the version
+page instead.
+
+To diff versions from a terminal or CI, see [Compare published versions](./compare-published-versions.md).
 
 ### Search changelogs {#search-changelogs}
 
