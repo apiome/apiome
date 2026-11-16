@@ -1,0 +1,31 @@
+---
+slug: usage-data-controls
+title: Export, retention and erasure for usage data
+description: "Export usage rollups, keep them for less time, and erase a consumer's identity."
+authors: [apiome]
+---
+
+Usage counters about a named consumer are personal data when that consumer is a person's client.
+A workspace can now show what it keeps, keep it for less time, and delete it on request. All of it
+is under **Usage data** on a project's **Consumers** page.
+
+{/* truncate */}
+
+- **Export.** Download a project's daily usage rollups as CSV or JSON for the last 1 to 730 days.
+  Each row shows the day, operation, status and consumer handle (or `anonymous`), with calls, errors,
+  latency and bytes. The JSON ends with totals.
+- **Keep less.** An Owner or Admin can set hourly and daily retention below the plan's limit. A value
+  above the limit is refused with the limit named. The purge always uses the smaller value.
+- **Erase a consumer.** **Erase usage identity**, in a consumer's **Bindings and traffic**, deletes
+  its bindings and their hashes and moves its counted calls to `anonymous` in one step. Totals stay
+  the same, and no usage view names the consumer afterwards.
+- **One place for body samples.** Each usage source's sampling, field capture and body samples,
+  and each agent toolset's body capture, are set in one panel with the same words. Opening a sample
+  window takes an explicit acknowledgement. Body capture for agent toolsets used to need an operator
+  running SQL.
+
+Every export, retention change, sampling change and erasure is recorded in the access audit.
+REST API 1.583.0 adds `GET`/`PUT …/usage/retention`, `GET …/usage/export`,
+`GET`/`PATCH …/usage/sources`, `PATCH …/agent-toolsets/{id}/body-samples` and
+`DELETE …/consumers/{c}/bindings?erase=true`. See [Runtime usage](/govern/runtime-usage#erase-a-consumer)
+and [Agent access](/bring-in/agent-access#body-samples).

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.582.0",
+    "version": "1.583.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -36494,6 +36494,128 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "consumer-contracts"
+        ],
+        "summary": "Delete all of a consumer's bindings, optionally erasing its usage identity",
+        "description": "Without `erase`, every live binding stops matching traffic and history stays attributed, as when they are deleted one by one.\n\nWith `erase=true` (RDG-5.4), in **one transaction**: every binding of the consumer, live or deleted, is removed with its hash; every hourly and daily counter it attributed is re-attributed to `anonymous` (the counts are kept, so totals do not change); the suggested-consumer rows carrying its hashes and its runtime graph edges are deleted. Afterwards no usage read names the consumer. The consumer and its contract stay.\n\nRequires `consumer_contracts:delete`. An erasure is audited as `usage.consumer.erased`.",
+        "operationId": "delete_consumer_bindings_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "consumer_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer Ref",
+              "description": "Consumer Ref schema."
+            },
+            "description": "Path parameter identifying the consumer ref segment."
+          },
+          {
+            "name": "erase",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also re-attribute the consumer's counters to `anonymous`.",
+              "default": false,
+              "title": "Erase"
+            },
+            "description": "Also re-attribute the consumer's counters to `anonymous`."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteallofaconsumersbindingsoptionallyeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteallofaconsumersbindingsoptionallyeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteallofaconsumersbindingsoptionallye Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteallofaconsumersbindingsoptionallye Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete all of a consumer's bindings, optionally erasing its usage identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindingsDeletedResponse",
+                  "description": "Response payload for deleteallofaconsumersbindingsoptionallyeresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`anonymous` cannot be erased."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteallofaconsumersbindingsoptionallyeresponse422."
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings/{binding_id}": {
@@ -41455,6 +41577,630 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/usage/retention": {
+      "get": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Read the workspace's usage retention",
+        "description": "How long the usage index keeps **hourly counters** and **daily rollups**: the tier's caps (`usage_hourly_retention_days`, `usage_rollup_retention_days`; `-1` keeps rows forever), the workspace's own values (`null` uses the cap), and what the nightly purge applies (the smaller of the two). Body samples are purged after 7 days whatever the tier.\n\nRequires `projects:view`.",
+        "operationId": "get_usage_retention_v1_tenants__tenant_slug__usage_retention_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacesusageretentionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacesusageretentionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacesusageretention Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacesusageretention Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the workspace's usage retention.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageRetentionResponse",
+                  "description": "Response payload for readtheworkspacesusageretentionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readtheworkspacesusageretentionresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Lower the workspace's usage retention",
+        "description": "Keep usage counters for **fewer** days than the tier allows. A value above the cap is refused (`422 usage-retention-above-cap`, the message names the cap). `null` goes back to the cap. The next nightly purge deletes what is now past retention.\n\nRequires `members:edit` (Owner and Admin). Audited as `usage.retention.update`.",
+        "operationId": "put_usage_retention_v1_tenants__tenant_slug__usage_retention_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lowertheworkspacesusageretentionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lowertheworkspacesusageretentionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lowertheworkspacesusageretention Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lowertheworkspacesusageretention Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionUpdate",
+                "description": "Request body for lowertheworkspacesusageretentionrequest."
+              }
+            }
+          },
+          "description": "Request body for lower the workspace's usage retention."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for lower the workspace's usage retention.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageRetentionResponse",
+                  "description": "Response payload for lowertheworkspacesusageretentionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`usage-retention-above-cap`, or a value below 1."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/usage/export": {
+      "get": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Export the project's usage rollups",
+        "description": "Stream the project's **daily usage rollups** for the last `days` UTC days (ending today) as `csv` or `json`: one row per day, environment, source, version, operation, status and consumer, with calls, errors, latency and bytes. The consumer is its slug, or `anonymous` for traffic no binding attributes. A binding's name, value or hash is never exported.\n\nThe JSON document ends with `totals` (`rows`, `calls`, `errors`), the same sums the adoption views show for the window.\n\nRequires `versions:view`. Audited as `usage.export`.",
+        "operationId": "export_usage_v1_tenants__tenant_slug__projects__project_ref__usage_export_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "type": "string",
+              "description": "`csv` or `json`.",
+              "default": "csv",
+              "title": "Format"
+            },
+            "description": "`csv` or `json`."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 730,
+              "minimum": 1,
+              "description": "Window in UTC days, ending today.",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "Window in UTC days, ending today."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exporttheprojectsusagerollupsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exporttheprojectsusagerollupsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exporttheprojectsusagerollups Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exporttheprojectsusagerollups Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export, streamed as an attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for exporttheprojectsusagerollupsresponse200."
+                }
+              },
+              "text/csv": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for exporttheprojectsusagerollupsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/usage/sources": {
+      "get": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "List the project's usage sources and agent toolsets",
+        "description": "Everything that can keep this project's traffic: each **usage source** with its head sampling, field capture and body samples (at most 5 %, at most 7 days ahead), and each **agent toolset** with its AGX-3.3 body capture (at most 7 days ahead). Both opt-ins use one shape, `bodySamples`, and the sentence that opens a window is `acknowledgement`.\n\nRequires `projects:view`.",
+        "operationId": "list_usage_sources_v1_tenants__tenant_slug__projects__project_ref__usage_sources_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheprojectsusagesourcesandagenttoolsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheprojectsusagesourcesandagenttoolsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheprojectsusagesourcesandagenttools Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheprojectsusagesourcesandagenttools Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the project's usage sources and agent toolsets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageSourceList",
+                  "description": "Response payload for listtheprojectsusagesourcesandagenttoolsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listtheprojectsusagesourcesandagenttoolsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/usage/sources/{source_id}": {
+      "patch": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Change what a usage source captures",
+        "description": "Set head sampling (`samplingRate`, in (0, 1]), field capture (`fieldCapture`: field names, never values) and/or body samples (`bodySamples`). A body-sample window takes a `rate` of at most 0.05 and an `until` at most 7 days ahead, and opening one requires the exact `acknowledgement` sentence (`422 usage-body-samples-acknowledgement-required`). `rate: 0` closes it.\n\nRequires `projects:edit`. Audited as `usage.source.update`, before and after.",
+        "operationId": "patch_usage_source_v1_tenants__tenant_slug__projects__project_ref__usage_sources__source_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id",
+              "description": "Source Id schema."
+            },
+            "description": "Path parameter identifying the source id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changewhatausagesourcecapturesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changewhatausagesourcecapturesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changewhatausagesourcecaptures Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changewhatausagesourcecaptures Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageSourceUpdate",
+                "description": "Request body for changewhatausagesourcecapturesrequest."
+              }
+            }
+          },
+          "description": "Request body for change what a usage source captures."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change what a usage source captures.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageSourceOut",
+                  "description": "Response payload for changewhatausagesourcecapturesresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`usage-source-not-found`."
+          },
+          "422": {
+            "description": "`usage-body-samples-invalid`, `usage-body-samples-acknowledgement-required` or `usage-settings-unchanged`."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/body-samples": {
+      "patch": {
+        "tags": [
+          "usage"
+        ],
+        "summary": "Open or close an agent toolset's body capture",
+        "description": "The AGX-3.3 opt-in that keeps the bodies of a fraction of an agent toolset's `tools/call` invocations for debugging, in the same shape as a usage source's `bodySamples`: a `rate` (at most 1) and an `until` at most 7 days ahead. Opening a window requires the exact `acknowledgement` sentence. `rate: 0` closes it.\n\nRequires `api_keys:edit`, like every toolset setting. Audited as `agent.toolset.body_samples.update`, before and after.",
+        "operationId": "patch_toolset_body_samples_v1_tenants__tenant_slug__agent_toolsets__toolset_id__body_samples_patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Openorcloseanagenttoolsetsbodycaptureauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Openorcloseanagenttoolsetsbodycaptureauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Openorcloseanagenttoolsetsbodycapture Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Openorcloseanagenttoolsetsbodycapture Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BodySampleWindow",
+                "description": "Request body for openorcloseanagenttoolsetsbodycapturerequest."
+              }
+            }
+          },
+          "description": "Request body for open or close an agent toolset's body capture."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for open or close an agent toolset's body capture.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolsetBodySamplesOut",
+                  "description": "Response payload for openorcloseanagenttoolsetsbodycaptureresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`agent-toolset-not-found`."
+          },
+          "422": {
+            "description": "`usage-body-samples-invalid` or `usage-body-samples-acknowledgement-required`."
           }
         }
       }
@@ -246750,6 +247496,501 @@
         ],
         "title": "WriteRuleResponse",
         "description": "The outcome of a rule write."
+      },
+      "UsageSourceUpdate": {
+        "properties": {
+          "samplingRate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "description": "Usage Source Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "title": "Samplingrate",
+            "description": "Head sampling, in (0, 1]."
+          },
+          "fieldCapture": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Usage Source Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "title": "Fieldcapture",
+            "description": "Field Capture."
+          },
+          "bodySamples": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BodySampleWindow"
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "description": "Body Samples."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UsageSourceUpdate",
+        "description": "Body of ``PATCH \u2026/usage/sources/{id}``. At least one field is required."
+      },
+      "BodySampleWindow": {
+        "properties": {
+          "rate": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Rate",
+            "description": "Fraction of exchanges to keep; `0` closes the window.",
+            "example": 1.0
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Body Sample Window schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Sample Window schema."
+              }
+            ],
+            "title": "Until",
+            "description": "When sampling stops; at most 7 days ahead."
+          },
+          "acknowledgement": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "description": "Body Sample Window schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Sample Window schema."
+              }
+            ],
+            "title": "Acknowledgement",
+            "description": "Required to open a window: the exact sentence `BODY_SAMPLE_ACKNOWLEDGEMENT` (shown in the UI)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rate"
+        ],
+        "title": "BodySampleWindow",
+        "description": "Open, change or close a body-sample window.\n\nSet ``rate`` to ``0`` to close it. Opening it takes ``until`` and the exact acknowledgement sentence."
+      },
+      "RetentionUpdate": {
+        "properties": {
+          "hourlyDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Retention Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Update schema."
+              }
+            ],
+            "title": "Hourlydays",
+            "description": "Days of hourly counters to keep (at most the cap)."
+          },
+          "rollupDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Retention Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Update schema."
+              }
+            ],
+            "title": "Rollupdays",
+            "description": "Days of daily rollups to keep (at most the cap)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RetentionUpdate",
+        "description": "Body of ``PUT \u2026/usage/retention``. `null` (or an omitted field) goes back to the tier cap."
+      },
+      "UsageSourceList": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/UsageSourceOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          },
+          "agentToolsets": {
+            "items": {
+              "$ref": "#/components/schemas/ToolsetBodySamplesOut"
+            },
+            "type": "array",
+            "title": "Agenttoolsets",
+            "description": "Agent Toolsets.",
+            "maxItems": 1000
+          },
+          "acknowledgement": {
+            "type": "string",
+            "title": "Acknowledgement",
+            "description": "The sentence that opens a body-sample window.",
+            "default": "I understand that sampled request and response bodies are stored, after redaction, for up to 7 days.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "title": "UsageSourceList",
+        "description": "The project's sources and agent toolsets: everything that can keep traffic or bodies."
+      },
+      "ToolsetBodySamplesOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for toolset body samples."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for toolset body samples."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          },
+          "bodySamples": {
+            "$ref": "#/components/schemas/BodySamples",
+            "description": "Body Samples."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "versionId",
+          "enabled",
+          "bodySamples"
+        ],
+        "title": "ToolsetBodySamplesOut",
+        "description": "An agent toolset of the project, with its AGX-3.3 body-capture opt-in."
+      },
+      "BodySamples": {
+        "properties": {
+          "rate": {
+            "type": "number",
+            "title": "Rate",
+            "description": "Fraction of exchanges whose bodies are kept. `0` keeps none.",
+            "example": 1.0
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Body Samples schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Samples schema."
+              }
+            ],
+            "title": "Until",
+            "description": "When sampling stops."
+          },
+          "open": {
+            "type": "boolean",
+            "title": "Open",
+            "description": "Whether sampling is happening right now (`rate > 0` and `until` ahead).",
+            "example": false
+          },
+          "maxRate": {
+            "type": "number",
+            "title": "Maxrate",
+            "description": "The hard cap on `rate`.",
+            "example": 1.0
+          },
+          "maxWindowDays": {
+            "type": "integer",
+            "title": "Maxwindowdays",
+            "description": "`until` may be at most this many days ahead.",
+            "default": 7,
+            "example": 1
+          },
+          "retentionDays": {
+            "type": "integer",
+            "title": "Retentiondays",
+            "description": "How long a kept body is stored.",
+            "default": 7,
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "rate",
+          "open",
+          "maxRate"
+        ],
+        "title": "BodySamples",
+        "description": "A body-sample opt-in as it stands, with its hard caps."
+      },
+      "UsageSourceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`otlp`, `har`, `access_log`, `mock`, `agent` or `sdk_beacon`.",
+            "example": "example"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Environment.",
+            "example": "example"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          },
+          "samplingRate": {
+            "type": "number",
+            "title": "Samplingrate",
+            "description": "Head sampling: fraction (0..1] of events kept.",
+            "example": 1.0
+          },
+          "fieldCapture": {
+            "type": "boolean",
+            "title": "Fieldcapture",
+            "description": "Whether field presence (names, never values) is counted.",
+            "example": false
+          },
+          "bodySamples": {
+            "$ref": "#/components/schemas/BodySamples",
+            "description": "Body Samples."
+          },
+          "lastReceivedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for usage source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for usage source."
+              }
+            ],
+            "title": "Lastreceivedat",
+            "description": "Last Received At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "environment",
+          "enabled",
+          "samplingRate",
+          "fieldCapture",
+          "bodySamples"
+        ],
+        "title": "UsageSourceOut",
+        "description": "One traffic source of a project, with what it captures."
+      },
+      "UsageRetentionResponse": {
+        "properties": {
+          "caps": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "The tier's caps. `-1` keeps rows forever."
+          },
+          "setting": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "The workspace's own values. `null` uses the cap."
+          },
+          "effective": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "What the nightly purge applies: the smaller of the two."
+          },
+          "sampleRetentionDays": {
+            "type": "integer",
+            "title": "Sampleretentiondays",
+            "description": "Body samples are purged after this many days, whatever the tier.",
+            "default": 7,
+            "example": 1
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for usage retention."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for usage retention."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "When the setting last changed."
+          }
+        },
+        "type": "object",
+        "required": [
+          "caps",
+          "setting",
+          "effective"
+        ],
+        "title": "UsageRetentionResponse",
+        "description": "What the workspace keeps, for how long, and the caps it may lower."
+      },
+      "RetentionDays": {
+        "properties": {
+          "hourlyDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Days schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Days schema."
+              }
+            ],
+            "title": "Hourlydays",
+            "description": "How long hourly counters are kept, in days."
+          },
+          "rollupDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Days schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Days schema."
+              }
+            ],
+            "title": "Rollupdays",
+            "description": "How long daily rollups are kept, in days."
+          }
+        },
+        "type": "object",
+        "title": "RetentionDays",
+        "description": "A pair of retention values in days. ``-1`` means \"kept forever\" (a tier cap only)."
+      },
+      "BindingsDeletedResponse": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's slug.",
+            "example": "example"
+          },
+          "erased": {
+            "type": "boolean",
+            "title": "Erased",
+            "description": "Whether the consumer's counters were re-attributed to `anonymous`.",
+            "example": false
+          },
+          "bindings": {
+            "type": "integer",
+            "title": "Bindings",
+            "description": "Bindings deleted.",
+            "example": 1
+          },
+          "hourly_rows": {
+            "type": "integer",
+            "title": "Hourly Rows",
+            "description": "Hourly counter rows re-attributed to `anonymous`.",
+            "default": 0,
+            "example": 1
+          },
+          "daily_rows": {
+            "type": "integer",
+            "title": "Daily Rows",
+            "description": "Daily rollup rows re-attributed to `anonymous`.",
+            "default": 0,
+            "example": 1
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls those daily rows counted (kept, now anonymous).",
+            "default": 0,
+            "example": 1
+          },
+          "unattributed_rows": {
+            "type": "integer",
+            "title": "Unattributed Rows",
+            "description": "Suggested-consumer rows carrying its hashes, deleted.",
+            "default": 0,
+            "example": 1
+          },
+          "edges": {
+            "type": "integer",
+            "title": "Edges",
+            "description": "Runtime dependency-graph edges from the consumer, deleted.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "erased",
+          "bindings"
+        ],
+        "title": "BindingsDeletedResponse",
+        "description": "What ``DELETE \u2026/bindings`` deleted and, with ``erase=true``, re-attributed (RDG-5.4)."
       }
     },
     "securitySchemes": {

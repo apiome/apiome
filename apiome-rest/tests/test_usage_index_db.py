@@ -212,6 +212,14 @@ def _count(cursor: Any, table: str, tenant: str, where: str = "true", params: Tu
 #: Every column of every usage_* table, with its type. A new column must be reviewed against the
 #: privacy model (no header value, body, query value or address), so the list is pinned.
 EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
+    # RDG-5.4 (V384): a workspace's own, shorter, retention — two day counts and who set them.
+    "usage_retention_setting": {
+        "tenant_id": "uuid",
+        "hourly_retention_days": "integer",
+        "rollup_retention_days": "integer",
+        "updated_at": "timestamp with time zone",
+        "updated_by": "uuid",
+    },
     # CDG-3.5 (V293): a client key is a scrubbed user-agent product token or a consumer_hint HMAC.
     "usage_unattributed_client_daily": {
         "tenant_id": "uuid",

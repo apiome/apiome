@@ -1,6 +1,6 @@
 ---
 title: "Usage"
-description: "REST endpoints tagged usage: 4 operations."
+description: "REST endpoints tagged usage: 10 operations."
 sidebar_position: 113
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,132 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.582.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.583.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `usage` · 4 operations
+Tag: `usage` · 10 operations
+
+## `PATCH /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/body-samples` {#patch-toolset-body-samples-v1-tenants-tenant-slug-agent-toolsets-toolset-id-body-samples-patch}
+
+**Open or close an agent toolset's body capture**
+
+The AGX-3.3 opt-in that keeps the bodies of a fraction of an agent toolset's `tools/call` invocations for debugging, in the same shape as a usage source's `bodySamples`: a `rate` (at most 1) and an `until` at most 7 days ahead. Opening a window requires the exact `acknowledgement` sentence. `rate: 0` closes it.
+
+Requires `api_keys:edit`, like every toolset setting. Audited as `agent.toolset.body_samples.update`, before and after.
+
+Operation id: `patch_toolset_body_samples_v1_tenants__tenant_slug__agent_toolsets__toolset_id__body_samples_patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `toolset_id` | path | string (uuid) | yes | Path parameter identifying the toolset id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for open or close an agent toolset's body capture.
+
+- `application/json` — [`BodySampleWindow`](#schema-bodysamplewindow)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for open or close an agent toolset's body capture. | `application/json` [`ToolsetBodySamplesOut`](#schema-toolsetbodysamplesout) |
+| 404 | `agent-toolset-not-found`. | — |
+| 422 | `usage-body-samples-invalid` or `usage-body-samples-acknowledgement-required`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/usage/export` {#export-usage-v1-tenants-tenant-slug-projects-project-ref-usage-export-get}
+
+**Export the project's usage rollups**
+
+Stream the project's **daily usage rollups** for the last `days` UTC days (ending today) as `csv` or `json`: one row per day, environment, source, version, operation, status and consumer, with calls, errors, latency and bytes. The consumer is its slug, or `anonymous` for traffic no binding attributes. A binding's name, value or hash is never exported.
+
+The JSON document ends with `totals` (`rows`, `calls`, `errors`), the same sums the adoption views show for the window.
+
+Requires `versions:view`. Audited as `usage.export`.
+
+Operation id: `export_usage_v1_tenants__tenant_slug__projects__project_ref__usage_export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `format` | query | enum `"csv"`, `"json"` | no | `csv` or `json`. |
+| `days` | query | integer | no | Window in UTC days, ending today. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The export, streamed as an attachment. | `application/json` any; `text/csv` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/usage/sources` {#list-usage-sources-v1-tenants-tenant-slug-projects-project-ref-usage-sources-get}
+
+**List the project's usage sources and agent toolsets**
+
+Everything that can keep this project's traffic: each **usage source** with its head sampling, field capture and body samples (at most 5 %, at most 7 days ahead), and each **agent toolset** with its AGX-3.3 body capture (at most 7 days ahead). Both opt-ins use one shape, `bodySamples`, and the sentence that opens a window is `acknowledgement`.
+
+Requires `projects:view`.
+
+Operation id: `list_usage_sources_v1_tenants__tenant_slug__projects__project_ref__usage_sources_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the project's usage sources and agent toolsets. | `application/json` [`UsageSourceList`](#schema-usagesourcelist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PATCH /v1/tenants/{tenant_slug}/projects/{project_ref}/usage/sources/{source_id}` {#patch-usage-source-v1-tenants-tenant-slug-projects-project-ref-usage-sources-source-id-patch}
+
+**Change what a usage source captures**
+
+Set head sampling (`samplingRate`, in (0, 1]), field capture (`fieldCapture`: field names, never values) and/or body samples (`bodySamples`). A body-sample window takes a `rate` of at most 0.05 and an `until` at most 7 days ahead, and opening one requires the exact `acknowledgement` sentence (`422 usage-body-samples-acknowledgement-required`). `rate: 0` closes it.
+
+Requires `projects:edit`. Audited as `usage.source.update`, before and after.
+
+Operation id: `patch_usage_source_v1_tenants__tenant_slug__projects__project_ref__usage_sources__source_id__patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `source_id` | path | string | yes | Path parameter identifying the source id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for change what a usage source captures.
+
+- `application/json` — [`UsageSourceUpdate`](#schema-usagesourceupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for change what a usage source captures. | `application/json` [`UsageSourceOut`](#schema-usagesourceout) |
+| 404 | `usage-source-not-found`. | — |
+| 422 | `usage-body-samples-invalid`, `usage-body-samples-acknowledgement-required` or `usage-settings-unchanged`. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/usage/ingest` {#ingest-usage-v1-tenants-tenant-slug-usage-ingest-post}
 
@@ -60,6 +183,62 @@ A batch of at most 5000 `apiome.usage.event/v1` events, at most 2097152 bytes (s
 | 413 | Over 2 MiB or 5,000 events. | — |
 | 422 | `usage-body-not-accepted`: a sample was sent while the body window is closed. | — |
 | 429 | `usage-quota-exceeded`: over today's cap; `retryAt` says when it resets. | — |
+
+## `GET /v1/tenants/{tenant_slug}/usage/retention` {#get-usage-retention-v1-tenants-tenant-slug-usage-retention-get}
+
+**Read the workspace's usage retention**
+
+How long the usage index keeps **hourly counters** and **daily rollups**: the tier's caps (`usage_hourly_retention_days`, `usage_rollup_retention_days`; `-1` keeps rows forever), the workspace's own values (`null` uses the cap), and what the nightly purge applies (the smaller of the two). Body samples are purged after 7 days whatever the tier.
+
+Requires `projects:view`.
+
+Operation id: `get_usage_retention_v1_tenants__tenant_slug__usage_retention_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the workspace's usage retention. | `application/json` [`UsageRetentionResponse`](#schema-usageretentionresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/usage/retention` {#put-usage-retention-v1-tenants-tenant-slug-usage-retention-put}
+
+**Lower the workspace's usage retention**
+
+Keep usage counters for **fewer** days than the tier allows. A value above the cap is refused (`422 usage-retention-above-cap`, the message names the cap). `null` goes back to the cap. The next nightly purge deletes what is now past retention.
+
+Requires `members:edit` (Owner and Admin). Audited as `usage.retention.update`.
+
+Operation id: `put_usage_retention_v1_tenants__tenant_slug__usage_retention_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for lower the workspace's usage retention.
+
+- `application/json` — [`RetentionUpdate`](#schema-retentionupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for lower the workspace's usage retention. | `application/json` [`UsageRetentionResponse`](#schema-usageretentionresponse) |
+| 422 | `usage-retention-above-cap`, or a value below 1. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/usage/sdk-beacon` {#report-sdk-beacon-v1-tenants-tenant-slug-usage-sdk-beacon-post}
 
@@ -166,6 +345,18 @@ Request body for find or create a project's har usage source.
 
 ## Schemas used {#schemas-used}
 
+### `BodySampleWindow` {#schema-bodysamplewindow}
+
+Open, change or close a body-sample window.
+
+Set ``rate`` to ``0`` to close it. Opening it takes ``until`` and the exact acknowledgement sentence.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `rate` | number | yes | Fraction of exchanges to keep; `0` closes the window. |
+| `until` | string (date-time) or null | no | When sampling stops; at most 7 days ahead. |
+| `acknowledgement` | string or null | no | Required to open a window: the exact sentence `BODY_SAMPLE_ACKNOWLEDGEMENT` (shown in the UI). |
+
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
 Validation error response emitted when request data fails schema checks.
@@ -198,6 +389,15 @@ The source a HAR upload posts its events to.
 | `fieldCapture` | boolean | yes | Whether field presence is counted (on for a source created here). |
 | `bodySamplesOpen` | boolean | yes | Whether the source accepts opt-in body samples right now (its body window is open). |
 | `created` | boolean | yes | Whether this call created the source. |
+
+### `RetentionUpdate` {#schema-retentionupdate}
+
+Body of ``PUT …/usage/retention``. `null` (or an omitted field) goes back to the tier cap.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `hourlyDays` | integer or null | no | Days of hourly counters to keep (at most the cap). |
+| `rollupDays` | integer or null | no | Days of daily rollups to keep (at most the cap). |
 
 ### `SdkBeaconBatch` {#schema-sdkbeaconbatch}
 
@@ -236,6 +436,18 @@ What happened to a report.
 | `calls` | integer | yes | Calls the counted events stood for. |
 | `rejected` | array of `SdkBeaconRejection` | no | Rejected. |
 
+### `ToolsetBodySamplesOut` {#schema-toolsetbodysamplesout}
+
+An agent toolset of the project, with its AGX-3.3 body-capture opt-in.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `versionId` | string | yes | Version ID. |
+| `versionLabel` | string or null | no | Version Label. |
+| `enabled` | boolean | yes | Whether the resource is active. |
+| `bodySamples` | `BodySamples` | yes | Body Samples. |
+
 ### `UsageIngestResponse` {#schema-usageingestresponse}
 
 The ledger row of an admitted batch, echoed back.
@@ -257,3 +469,50 @@ The ledger row of an admitted batch, echoed back.
 | `samples` | `UsageIngestSamples` | yes | Samples. |
 | `rejections` | array of `UsageIngestRejection` | yes | Per-event rejections, at most 100 (the counts cover every event). |
 | `rejectionsTruncated` | boolean | yes | Whether `rejections` was cut short. |
+
+### `UsageRetentionResponse` {#schema-usageretentionresponse}
+
+What the workspace keeps, for how long, and the caps it may lower.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `caps` | `RetentionDays` | yes | The tier's caps. `-1` keeps rows forever. |
+| `setting` | `RetentionDays` | yes | The workspace's own values. `null` uses the cap. |
+| `effective` | `RetentionDays` | yes | What the nightly purge applies: the smaller of the two. |
+| `sampleRetentionDays` | integer | no | Body samples are purged after this many days, whatever the tier. |
+| `updatedAt` | string (date-time) or null | no | When the setting last changed. |
+
+### `UsageSourceList` {#schema-usagesourcelist}
+
+The project's sources and agent toolsets: everything that can keep traffic or bodies.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sources` | array of [`UsageSourceOut`](#schema-usagesourceout) | no | Sources. |
+| `agentToolsets` | array of [`ToolsetBodySamplesOut`](#schema-toolsetbodysamplesout) | no | Agent Toolsets. |
+| `acknowledgement` | string | no | The sentence that opens a body-sample window. |
+
+### `UsageSourceOut` {#schema-usagesourceout}
+
+One traffic source of a project, with what it captures.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `kind` | string | yes | `otlp`, `har`, `access_log`, `mock`, `agent` or `sdk_beacon`. |
+| `environment` | string | yes | Environment. |
+| `enabled` | boolean | yes | Whether the resource is active. |
+| `samplingRate` | number | yes | Head sampling: fraction (0..1] of events kept. |
+| `fieldCapture` | boolean | yes | Whether field presence (names, never values) is counted. |
+| `bodySamples` | `BodySamples` | yes | Body Samples. |
+| `lastReceivedAt` | string (date-time) or null | no | Last Received At. |
+
+### `UsageSourceUpdate` {#schema-usagesourceupdate}
+
+Body of ``PATCH …/usage/sources/{id}``. At least one field is required.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `samplingRate` | number or null | no | Head sampling, in (0, 1]. |
+| `fieldCapture` | boolean or null | no | Field Capture. |
+| `bodySamples` | [`BodySampleWindow`](#schema-bodysamplewindow) or null | no | Body Samples. |

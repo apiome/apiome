@@ -42,8 +42,8 @@ accepts any custom key:
 | `max_projects` | Catalog projects |
 | `max_versions` | Versions per project |
 | `max_ai_requests` | AI assistant requests; `0` is none and `-1` unlimited |
-| `usage_hourly_retention_days` | Days the [usage index](../govern/runtime-usage.mdx) keeps hourly counters: Free 7, Paid 30, Sponsor 90 |
-| `usage_rollup_retention_days` | Days it keeps daily counters, field and unmatched-path counts and the ingest ledger: Free 90, Paid 395, Sponsor 730 |
+| `usage_hourly_retention_days` | The most days the [usage index](../govern/runtime-usage.mdx) keeps hourly counters: Free 7, Paid 30, Sponsor 90. A workspace may [keep less](../govern/runtime-usage.mdx#keep-less), never more |
+| `usage_rollup_retention_days` | The most days it keeps daily counters, field and unmatched-path counts and the ingest ledger: Free 90, Paid 395, Sponsor 730. A workspace may keep less, never more |
 | `usage_events_per_day` | Usage events a workspace may send per UTC day: Free 100,000, Paid 10,000,000, Sponsor 100,000,000; `0` or a negative value is unlimited |
 
 A negative value means unlimited (for the two `usage_*_retention_days` keys: keep forever). A key a
@@ -52,6 +52,10 @@ value. Upgrading an installation adds the `usage_*` keys to the built-in Free, P
 and keeps any value an operator already set.
 Operators can switch member-seat enforcement off without a redeploy by setting
 `APIOME_LICENSE_ENFORCEMENT_ENABLED=false` on the REST API; the tenant cap is always enforced.
+
+Lowering a retention limit takes effect at the next usage sweep, even for a workspace that set its
+own longer value earlier: the purge always uses the smaller of the plan's limit and the workspace's
+value.
 
 ## Create or edit a plan
 

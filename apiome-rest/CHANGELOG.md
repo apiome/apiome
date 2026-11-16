@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.723.0] - 2026-11-16
+
+### Added
+- **Usage export, retention and erasure controls (RDG-5.4, #5789)** — OpenAPI 1.583.0:
+  - `GET /v1/tenants/{t}/projects/{p}/usage/export?format=csv|json&days=` (`versions:view`, 1–730 days) streams the
+    project's `usage_daily` rollups one UTC day at a time as an attachment: day, environment, source, version, operation,
+    status, consumer slug (or `anonymous`), calls, errors, latency and bytes. The JSON document
+    (`apiome.usage.export/v1`) ends with `totals`. A binding's name, value or hash is never exported; CSV cells cannot
+    start a formula. Audited as `usage.export`.
+  - `GET`/`PUT /v1/tenants/{t}/usage/retention` (`projects:view` / `members:edit`): the tier caps, the workspace's own
+    `hourlyDays` / `rollupDays` (`null` = the cap) and the effective values. A value above a cap is refused with
+    `422 usage-retention-above-cap` naming the seats key and the cap. Audited as `usage.retention.update`. apiome-db
+    **V384** adds `usage_retention_setting`, and `usage_retention()` now applies the smaller of cap and setting, so a
+    later downgrade still wins.
+  - `GET /v1/tenants/{t}/projects/{p}/usage/sources` (`projects:view`) lists the project's usage sources and agent
+    toolsets with one `bodySamples` shape (`rate`, `until`, `open`, `maxRate`, `maxWindowDays`, `retentionDays`) and the
+    `acknowledgement` sentence. `PATCH …/usage/sources/{id}` (`projects:edit`) sets `samplingRate`, `fieldCapture` and
+    `bodySamples`; `PATCH /v1/tenants/{t}/agent-toolsets/{id}/body-samples` (`api_keys:edit`) sets the AGX-3.3
+    `body_capture_rate` / `body_capture_until`, which previously needed operator SQL. Opening a window requires the
+    exact sentence (`422 usage-body-samples-acknowledgement-required`); a rate above the cap (5 % for a source, 100 % for
+    a toolset) or an `until` more than 7 days ahead is `422 usage-body-samples-invalid`. Audited as
+    `usage.source.update` / `agent.toolset.body_samples.update`.
+  - `DELETE /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` (`consumer_contracts:delete`) stamps every live binding
+    deleted. With `?erase=true`, V384's `erase_usage_consumer()` deletes every binding of the consumer (live or deleted,
+    hashes included), merges every `usage_hourly` / `usage_daily` row they attributed into the anonymous row of the same
+    grain (totals unchanged, finalized days included), deletes the unattributed-client rows carrying its hashes and
+    clears `runtime_last_seen_at`, in one transaction; its runtime graph edges are deleted with it. Audited as
+    `usage.consumer.erased`. (`app.usage_controls`, `app.usage_controls_store`, `app.usage_controls_routes`.)
+
 ## [1.722.0] - 2026-11-16
 
 ### Added

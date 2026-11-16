@@ -6,6 +6,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
+import { Checkbox } from '@/app/components/ui/Checkbox';
 import {
   Drawer,
   DrawerBody,
@@ -77,7 +78,17 @@ export interface ConsumerBindingsDrawerProps {
   canDelete: boolean;
   /** The caller holds `consumer_contracts:edit`. */
   canEdit: boolean;
+  /**
+   * Erase the consumer from the usage index (RDG-5.4): delete every binding and re-attribute its
+   * counted calls to `anonymous`. Resolves to an error sentence, or `null` on success. When it
+   * is omitted, the drawer shows no erase section.
+   */
+  onErase?: (consumerSlug: string) => Promise<string | null>;
 }
+
+/** The sentence a person ticks before erasing a consumer's usage identity (RDG-5.4). */
+export const ERASE_ACKNOWLEDGEMENT =
+  "I understand this deletes this consumer's bindings and moves its counted calls to anonymous. It cannot be undone.";
 
 /** What the drawer has read. */
 interface DrawerData {
@@ -154,6 +165,7 @@ export default function ConsumerBindingsDrawer({
   canCreate,
   canDelete,
   canEdit,
+  onErase,
 }: ConsumerBindingsDrawerProps) {
   const slug = summary?.consumer.slug ?? null;
   const [data, setData] = React.useState<DrawerData>({ bindings: [], runtime: null });
@@ -162,6 +174,8 @@ export default function ConsumerBindingsDrawer({
   const [draft, setDraft] = React.useState<BindingDraft>(EMPTY_BINDING_DRAFT);
   const [formError, setFormError] = React.useState('');
   const [busy, setBusy] = React.useState<string | null>(null);
+  const [eraseAck, setEraseAck] = React.useState(false);
+  const [erased, setErased] = React.useState(false);
 
   const reload = React.useCallback(async () => {
     if (!slug) return;
@@ -181,6 +195,8 @@ export default function ConsumerBindingsDrawer({
     if (!open || !slug) return;
     setDraft(EMPTY_BINDING_DRAFT);
     setFormError('');
+    setEraseAck(false);
+    setErased(false);
     void reload();
   }, [open, slug, reload]);
 
@@ -220,6 +236,20 @@ export default function ConsumerBindingsDrawer({
     setBusy(null);
     if (error) setLoadError(error);
     else await reload();
+  };
+
+  const erase = async () => {
+    if (!slug || !onErase || !eraseAck) return;
+    setBusy('erase');
+    const error = await onErase(slug);
+    setBusy(null);
+    if (error) {
+      setLoadError(error);
+      return;
+    }
+    setEraseAck(false);
+    setErased(true);
+    await reload();
   };
 
   const runtime = data.runtime;
@@ -389,6 +419,38 @@ export default function ConsumerBindingsDrawer({
               </div>
             )}
           </section>
+
+          {onErase && canDelete && (
+            <section className="cns-drawer__section" data-testid="consumer-erase">
+              <h3 className="cns-drawer__heading">Erase usage identity</h3>
+              <p className="cns-drawer__empty">
+                For a deletion request: removes every binding of this consumer, with its hash, and moves the
+                calls it was counted for to <code className="mono">anonymous</code>. Totals stay the same; no
+                usage view names this consumer afterwards. The consumer and its contract stay.
+              </p>
+              {erased && <Alert variant="success">Erased. Its calls now count as anonymous.</Alert>}
+              <label className="usg-ack" htmlFor="consumer-erase-ack">
+                <Checkbox
+                  id="consumer-erase-ack"
+                  checked={eraseAck}
+                  onCheckedChange={(checked) => setEraseAck(checked === true)}
+                />
+                <span>{ERASE_ACKNOWLEDGEMENT}</span>
+              </label>
+              <div className="usg-actions">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={busy !== null || !eraseAck}
+                  title={eraseAck ? undefined : 'Tick the acknowledgement first.'}
+                  onClick={() => void erase()}
+                >
+                  {busy === 'erase' && <Spinner aria-hidden="true" />}
+                  Erase usage identity
+                </Button>
+              </div>
+            </section>
+          )}
         </DrawerBody>
       </DrawerContent>
     </Drawer>

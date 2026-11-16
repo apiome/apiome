@@ -2072,6 +2072,16 @@
       "data": "fixture:hive-a11y/agent-access-usage.html"
     },
     {
+      "id": "runtime-sources-retention",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/runtime-sources-retention.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/usage/UsageDataDrawer.tsx",
+        "apiome-ui/src/app/components/ade/usage/usageDataModel.ts"
+      ]
+    },
+    {
       "id": "design-system-control-sizes",
       "route": "/design-system",
       "waitFor": "[data-testid=\"design-system-control-sizes\"]",

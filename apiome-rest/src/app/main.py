@@ -206,6 +206,7 @@ from .mock_broker_bindings import validate_broker_credential_keys
 from .slate_cdn_crypto import validate_slate_cdn_credential_keys
 from .usage_ingest_routes import router as usage_ingest_router
 from .usage_source_routes import router as usage_source_router
+from .usage_controls_routes import router as usage_controls_router
 from .verification_evidence_routes import router as verification_evidence_router
 from .verification_policy_routes import router as verification_policy_router
 from .verification_schedule_routes import router as verification_schedule_router
@@ -486,6 +487,8 @@ app.include_router(graph_router)
 app.include_router(usage_ingest_router)
 # usage_source_router: RDG-1.4 HAR source find-or-create POST /v1/tenants/{t}/usage/sources/har (#5762).
 app.include_router(usage_source_router)
+# usage_controls_router: RDG-5.4 usage export, retention, source capture and toolset body samples (#5789).
+app.include_router(usage_controls_router)
 app.include_router(comment_router)
 app.include_router(presence_router)
 app.include_router(review_suggestion_router)
