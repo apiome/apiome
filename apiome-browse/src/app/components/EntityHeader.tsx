@@ -1,6 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
+import type { CardFacts, FactKind } from '../../../lib/cardFacts';
+import { FactsLine } from './FactsLine';
 
 type Variant = 'tenant' | 'project' | 'version';
 
@@ -13,6 +15,10 @@ interface EntityHeaderProps {
   meta?: { label: string; value?: ReactNode; tone?: 'neutral' | 'success' | 'brand' }[];
   actions?: ReactNode;
   badges?: ReactNode;
+  /** The retail facts line (BDX-2.2) under the description. */
+  facts?: CardFacts | null;
+  /** Facts the header already states another way (a badge, a meta cell). */
+  factsOmit?: readonly FactKind[];
 }
 
 const monogramTone: Record<Variant, string> = {
@@ -61,6 +67,8 @@ export function EntityHeader({
   meta,
   actions,
   badges,
+  facts,
+  factsOmit,
 }: EntityHeaderProps) {
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
@@ -91,6 +99,7 @@ export function EntityHeader({
                 {description}
               </p>
             )}
+            <FactsLine facts={facts} omit={factsOmit} size="md" className="mt-3" />
           </div>
         </div>
         {actions && (

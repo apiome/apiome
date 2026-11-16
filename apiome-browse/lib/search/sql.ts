@@ -16,6 +16,7 @@
  * database; `lib/db/search.ts` runs it.
  */
 
+import { cardFactsJoinSql } from '../cardFacts';
 import { HIT_KIND_WEIGHT, type HitKind } from './kinds';
 import type { SearchRequest } from './params';
 import { SEVERITY_RANK_BONUS } from './severity';
@@ -552,6 +553,20 @@ ${members.join('\n      UNION ALL\n')}
       FROM hits h
       ORDER BY ${orderBySql(request.sort)}
       LIMIT ${perSlot} OFFSET ${offsetSlot}
+    ),
+    page_facts AS (
+      -- BDX-2.2: a project hit carries the card facts of the version it links to. Only the page's
+      -- rows (at most perPage) are looked up, so the counts never run over the whole hit set.
+      SELECT pg.*, to_jsonb(cf) AS facts
+      FROM page pg
+      LEFT JOIN LATERAL (
+        SELECT sv.version_pk FROM sv
+        WHERE pg.hit_type = 'project'
+          AND pg.hit_id = 'project:' || sv.project_id::text
+          AND sv.version_slug = pg.version_slug
+        LIMIT 1
+      ) fv ON TRUE
+      ${cardFactsJoinSql('fv.version_pk', 'cf')}
     )
     SELECT
       (SELECT COUNT(*)::int FROM hits) AS total,
@@ -574,7 +589,7 @@ ${members.join('\n      UNION ALL\n')}
                 FROM (SELECT tenant_slug, tenant_name, project_slug, project_name, COUNT(*)::int AS c
                       FROM hits WHERE project_slug IS NOT NULL
                       GROUP BY 1, 2, 3, 4 ORDER BY c DESC, project_name LIMIT 8) x), '[]'::json) AS project_facets,
-      COALESCE((SELECT json_agg(to_jsonb(pg) - 'ord' ORDER BY pg.ord) FROM page pg), '[]'::json) AS rows
+      COALESCE((SELECT json_agg(to_jsonb(pf) - 'ord' ORDER BY pf.ord) FROM page_facts pf), '[]'::json) AS rows
   `;
 
   return { text, values: params.values };

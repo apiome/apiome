@@ -27,7 +27,7 @@ The Browse release candidate is the baseline above plus the **MVP (Y)** issues b
 - **BDX-1.1** Full-text index and ranking over the normalized public model (#6285) — tsvector + GIN over operations/schemas/properties/notes; `websearch_to_tsquery`; `ts_rank` replaces the ILIKE tiers
 - ✅ **BDX-1.3** Search within a version (#6287) — **Complete** — An in-page find over one version's operations, schemas and properties, with the same query language and highlighting in the viewer
 - **BDX-1.6** Public search API, CLI command and shared contract (#6290) — `GET /v1/browse/search` in REST with the Browse engine's contract; `apiome browse search`; Browse calls REST or shares the builder
-- **BDX-2.2** Project and version cards that answer the retail questions (#6294) — Operation/schema counts, quality grade, mock and SDK availability, formats and last-published on every card and project hit
+- ✅ **BDX-2.2** Project and version cards that answer the retail questions (#6294) — **Complete** — Operation/schema counts, quality grade, mock and SDK availability, formats and last-published on every card and project hit
 - **BDX-2.6** Compare from search and version quick-switch on hits (#6298) — Select two version hits to open `/compare`; a hit's version chip opens a switcher to other published versions
 - **BDX-3.2** Accessibility gate for Browse routes (#6302) — axe CI over a Browse route ledger (home, search landing/results, palette, org, project, version, compare, MCP) with keyboard checks
 - **BDX-3.3** Performance budgets and server paging for directory pages (#6303) — First-row budgets for home and search; the organization directory and tenant project lists page on the server; indexes for the search joins
@@ -85,7 +85,6 @@ flowchart TB
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
 | #6293 | **BDX-2.1** Explore pages by format, paradigm and organization | `/explore/formats`, `/explore/paradigms`, `/explore/organizations` — indexable facet listings with counts and canonical URLs | `enhancement`, `browser`, `portal`, `ui`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/src/app/explore/**, lib/db/helper.ts, lib/browseFacets.ts |
-| #6294 | **BDX-2.2** Project and version cards that answer the retail questions | Operation/schema counts, quality grade, mock and SDK availability, formats and last-published on every card and project hit | `enhancement`, `browser`, `portal`, `ui`, `mvp`, `roadmap-browse-discovery` | Y | Y | M | apiome-browse/lib/db/helper.ts, components/SpecCard.tsx, EntityHeader.tsx, search/HitRow.tsx, HomeClient.tsx, TenantClient.tsx |
 | #6295 | **BDX-2.3** Organization profiles: logo, links, verified badge | Tenant settings gain a public profile; Browse shows it in the organization header and search hits | `enhancement`, `browser`, `portal`, `ui`, `rest`, `database`, `tenancy`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (tenant profile columns), apiome-rest tenants API, apiome-ui tenant settings, apiome-browse EntityHeader/HitRow/SpecCard |
 | #6296 | **BDX-2.4** Curated collections and featured APIs | Admin-curated lists shown as a *Featured* rail on home and as `/collections/{slug}` pages; version tags become browse facets | `enhancement`, `browser`, `portal`, `ui`, `rest`, `database`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (collections), apiome-rest, apiome-ui admin, apiome-browse home + collections pages |
 | #6297 | **BDX-2.5** Related APIs and “more from this organization” | On project and version pages: other projects by the org, projects sharing schema names, and (after BDX-1.5) nearest by embedding | `enhancement`, `browser`, `portal`, `ui`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/lib/db/helper.ts, ProjectClient.tsx, VersionClient.tsx |
@@ -386,7 +385,7 @@ flowchart LR
           └─ /organizations (A–Z, counts)
 ```
 
-#### BDX-2.2 — Project and version cards that answer the retail questions (#6294)
+#### ✅ BDX-2.2 — Project and version cards that answer the retail questions (#6294) — **Complete**
 
 **Problem statement.** A card shows a name, a description and a date. `versions.quality_grade`, `mock_enabled`, the SDK offer, the operation and schema counts and the formats all exist and are not shown where a visitor decides whether to click.
 

@@ -7,8 +7,11 @@ import { Breadcrumb } from '../../../components/Breadcrumb';
 import { EntityHeader } from '../../../components/EntityHeader';
 import { VersionTimeline } from '../../../components/VersionTimeline';
 import type { Severity } from '../../../../../lib/changelog/types';
+import { pickCardFacts, type CardFacts } from '../../../../../lib/cardFacts';
+import { relativeTime } from '../../../../../lib/relativeTime';
 
-interface Project {
+/** The project row, with its latest version's card facts (BDX-2.2). */
+interface Project extends Partial<CardFacts> {
   id: string;
   name: string;
   slug: string;
@@ -34,23 +37,6 @@ interface ProjectClientProps {
   changelogSeverities: Record<string, Severity>;
   tenantSlug: string;
   projectSlug: string;
-}
-
-function relativeTime(iso?: string): string | undefined {
-  if (!iso) return undefined;
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return undefined;
-  const seconds = Math.round((Date.now() - then) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.round(months / 12)}y ago`;
 }
 
 export function ProjectClient({
@@ -92,6 +78,8 @@ export function ProjectClient({
           title={project.name}
           subtitle={`/${tenantSlug}/${project.slug}`}
           description={project.description}
+          facts={pickCardFacts(project)}
+          factsOmit={['updated']}
           badges={
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

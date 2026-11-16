@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import type { CardFacts, FactKind } from '../../../lib/cardFacts';
+import { FactsLine } from './FactsLine';
 
 type Variant = 'tenant' | 'project' | 'version';
 
@@ -13,6 +15,10 @@ interface SpecCardProps {
   meta?: { label: string; value?: string }[];
   badge?: { label: string; tone?: 'neutral' | 'success' | 'brand' };
   monogram?: string;
+  /** The retail facts line (BDX-2.2): counts, grade, mock, SDK, format, updated. */
+  facts?: CardFacts | null;
+  /** Facts the card already states another way (e.g. `updated` when the badge is the date). */
+  factsOmit?: readonly FactKind[];
 }
 
 const monogramTone: Record<Variant, string> = {
@@ -61,6 +67,8 @@ export function SpecCard({
   meta,
   badge,
   monogram,
+  facts,
+  factsOmit,
 }: SpecCardProps) {
   return (
     <Link
@@ -100,6 +108,7 @@ export function SpecCard({
             {description}
           </p>
         )}
+        <FactsLine facts={facts} omit={factsOmit} className="mt-2" />
       </div>
 
       {meta && meta.length > 0 && (

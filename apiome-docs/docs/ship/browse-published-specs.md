@@ -20,7 +20,42 @@ now; private versions for readers are coming next.
 
 - Open [Published](./published.mdx) at `/ade/dashboard/published` to see your tenant's published versions.
 - The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI, and
-  searches across every published public specification (next section).
+  searches across every published public specification (see [Search the public catalog](#search-the-public-catalog)).
+
+## What a card tells you {#what-a-card-tells-you}
+
+Every project card, the project and version page headers, and each **Project** search result carry
+a *facts line* about the latest published version, so you can judge an API before you open it:
+
+```text
+42 operations · 18 schemas · Grade B · Mock · SDK · OpenAPI 3.1 · updated 3d ago
+```
+
+| Fact | What it means | Shown when |
+|---|---|---|
+| **42 operations** | The operations (method + path) in the version | The version has at least one |
+| **18 schemas** | The schemas (models) in the version | The version has at least one |
+| **Grade B** | The quality grade, A (best) to F, from [Lint and quality](../build/lint-and-quality.md). Hover it to see the score out of 100 | The version has been scored |
+| **Mock** | A public mock server answers this version; see [Mock and try out](./mock-try-out.mdx) | Its mock is switched on |
+| **SDK** | The version page offers **Get SDK**: a client kit and code snippets to download | The owner turned on **Public SDK access** in **Export studio** › **SDK & branding**, for the workspace or for this project |
+| **OpenAPI 3.1** | The format the version was imported from | The format was recorded |
+| **updated 3d ago** | When the version was published | Always |
+
+A fact that does not apply is left out, not shown as *0* or *No*. Surfaces that already say a fact
+another way skip it. On the version page, for example, the **Mock available** badge, **Published**
+and **Format** already appear in the header.
+
+### Sort by size or grade
+
+- **Home** — the project rail has three orders: **Most versions** (*Most active projects*), **Most
+  operations** (*Largest APIs*) and **Best grade** (*Best graded APIs*). The choice is kept in the
+  URL (`/?projects=operations`, `/?projects=grade`), so you can share it.
+- **Organization page** — **Sort** above the project list offers **Name**, **Recently updated**,
+  **Most operations** and **Best grade**, in both the grid and the table. The table also has
+  **Operations** and **Grade** columns; click a header to sort by it.
+
+**Best grade** puts A before F, and the higher score first within a grade. Projects that have not
+been scored come last.
 
 ## Search the public catalog
 

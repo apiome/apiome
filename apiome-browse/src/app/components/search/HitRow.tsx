@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { formatLabel, paradigmLabel } from '../../../../lib/browseFacets';
+import { pickCardFacts } from '../../../../lib/cardFacts';
 import { severityBadgeClasses, severityDotClasses, severityLabel } from '../../../../lib/changelog/group';
 import { excerptAround } from '../../../../lib/search/highlight';
 import { hitCrumbs, hitHref, hitKindLabel, type CatalogSearchHit } from '../../../../lib/search/hits';
 import type { HitKind } from '../../../../lib/search/kinds';
+import { FactsLine } from '../FactsLine';
 import { Highlight } from './Highlight';
 import { MethodBadge } from './httpMethodTone';
 
@@ -193,6 +195,11 @@ export function HitRow({
               <p className={`mt-1 text-zinc-600 dark:text-zinc-400 ${compact ? 'line-clamp-1 text-[12px]' : 'line-clamp-2 text-[13px] leading-relaxed'}`}>
                 <Highlight text={snippet} needles={needles} />
               </p>
+            )}
+
+            {/* BDX-2.2: a project hit answers the retail questions; format and date stay in the row below. */}
+            {!compact && hit.hit_type === 'project' && (
+              <FactsLine facts={pickCardFacts(hit.facts)} omit={['format', 'updated']} className="mt-2" />
             )}
 
             {!compact && (

@@ -1,0 +1,26 @@
+---
+slug: browse-card-facts
+title: Cards that answer the retail questions
+description: "Browse cards and project results now show size, grade, mock, SDK, format and freshness."
+authors: [apiome]
+---
+
+A Browse card used to show a name, a description and a date. Each project card, project and
+version header, and **Project** search result now has a *facts line* about the latest published
+version: `42 operations · 18 schemas · Grade B · Mock · SDK · OpenAPI 3.1 · updated 3d ago`.
+
+{/* truncate */}
+
+- **Size at a glance.** The operation and schema counts of the latest version.
+- **Quality.** The A–F grade when the version has been scored; hover it for the score out of 100.
+- **Can I try it?** **Mock** when a public mock answers the version, **SDK** when the owner offers
+  **Get SDK** through **Public SDK access**.
+- **Format and freshness.** The format it was imported from and when it was published.
+- **Sort by them.** The home page's project rail switches between **Most versions**, **Most
+  operations** and **Best grade** (kept in the URL as `?projects=`). An organization page's **Sort**
+  menu offers **Name**, **Recently updated**, **Most operations** and **Best grade**, and its table
+  gains **Operations** and **Grade** columns.
+
+The facts come from the same database query as the cards; nothing new is cached.
+
+See [What a card tells you](/ship/browse-published-specs#what-a-card-tells-you).

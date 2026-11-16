@@ -197,3 +197,16 @@ describe('change member (BDX-1.4)', () => {
     expect(resolveSearchRequest({ q: 'type:changelog' }).kinds).toEqual(['change']);
   });
 });
+
+describe('project hit facts (BDX-2.2)', () => {
+  it('joins the card facts to the page rows only, keyed to the project hit\'s version', () => {
+    const { text } = build({ q: 'payments' });
+    const pageFacts = text.slice(text.indexOf('page_facts AS ('));
+    expect(pageFacts).toContain('FROM page pg');
+    expect(pageFacts).toContain("pg.hit_type = 'project'");
+    expect(pageFacts).toContain("pg.hit_id = 'project:' || sv.project_id::text");
+    expect(pageFacts).toContain('WHERE f_v.id = fv.version_pk');
+    expect(pageFacts).toContain('to_jsonb(cf) AS facts');
+    expect(text).toContain("json_agg(to_jsonb(pf) - 'ord' ORDER BY pf.ord) FROM page_facts pf");
+  });
+});

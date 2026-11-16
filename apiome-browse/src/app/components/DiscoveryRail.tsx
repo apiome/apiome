@@ -11,6 +11,8 @@ interface DiscoveryRailProps {
   emptyMessage?: string;
   children: ReactNode;
   itemCount: number;
+  /** Controls shown beside the scroll buttons, such as the project rail's sort (BDX-2.2). */
+  controls?: ReactNode;
 }
 
 export function DiscoveryRail({
@@ -21,6 +23,7 @@ export function DiscoveryRail({
   emptyMessage = 'Nothing here yet.',
   children,
   itemCount,
+  controls,
 }: DiscoveryRailProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -51,7 +54,7 @@ export function DiscoveryRail({
 
   return (
     <section className="space-y-3">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
           <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{title}</h2>
           {description && (
@@ -59,6 +62,7 @@ export function DiscoveryRail({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {controls}
           {itemCount > 0 && (
             <div className="hidden items-center gap-1 sm:flex">
               <button

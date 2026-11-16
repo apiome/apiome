@@ -20,6 +20,14 @@ import { FacetFilter, FacetValueChips } from '../../components/FacetFilter';
 import { SpecCard } from '../../components/SpecCard';
 import { sanitizeSearchInput, SAFE_SEARCH_HTML_PATTERN } from '../../utils/searchValidation';
 import { siteManifestLinks, xregistryRegistryUrl } from '../../../../lib/agentic/siteManifest';
+import {
+  PROJECT_SORT_OPTIONS,
+  parseProjectSort,
+  pickCardFacts,
+  sortProjectsByFacts,
+  type CardFacts,
+  type ProjectSort,
+} from '../../../../lib/cardFacts';
 
 interface Tenant {
   id: string;
@@ -29,7 +37,8 @@ interface Tenant {
   created_at?: string;
 }
 
-interface Project {
+/** A project row: identity, facet roll-up, and its latest version's card facts (BDX-2.2). */
+interface Project extends Partial<CardFacts> {
   id: string;
   name: string;
   slug: string;
@@ -91,6 +100,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
   const [layout, setLayout] = useState<LayoutMode>(readLayoutPreference);
   const [query, setQuery] = useState('');
   const [facets, setFacets] = useState<BrowseFacetSelection>(NO_FACET_SELECTION);
+  const [sort, setSort] = useState<ProjectSort>('name');
 
   const updateLayout = (next: LayoutMode) => {
     setLayout(next);
@@ -130,12 +140,16 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
   );
 
   const filteredProjects = useMemo(
-    () => filterByFacets(searchedProjects, facets),
-    [searchedProjects, facets]
+    () => sortProjectsByFacts(filterByFacets(searchedProjects, facets), sort),
+    [searchedProjects, facets, sort]
   );
 
-  // The table view keeps its own search box, so it only takes the facet narrowing.
-  const facetedProjects = useMemo(() => filterByFacets(projects, facets), [projects, facets]);
+  // The table view keeps its own search box, so it only takes the facet narrowing (and the sort,
+  // until a column header is clicked).
+  const facetedProjects = useMemo(
+    () => sortProjectsByFacts(filterByFacets(projects, facets), sort),
+    [projects, facets, sort]
+  );
 
   const facetsActive = hasFacetSelection(facets);
   const emptyFilterSummary = [query.trim() ? `"${query.trim()}"` : '', describeFacetSelection(facets)]
@@ -205,7 +219,24 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {projects.length > 1 && (
+                <label className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+                  Sort
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(parseProjectSort(e.target.value))}
+                    className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-900 shadow-xs focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+                    data-testid="project-sort"
+                  >
+                    {PROJECT_SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {projects.length > 0 && (
                 <div className="relative max-w-xs">
                   <svg
@@ -286,6 +317,8 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                     title={p.name}
                     subtitle={`/${p.slug}`}
                     description={p.description}
+                    facts={pickCardFacts(p)}
+                    factsOmit={['format']}
                     meta={[
                       ...projectFacetMeta(p),
                       ...(p.created_at
@@ -352,6 +385,30 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   width: 'w-48',
                   render: (project) => (
                     <FacetValueChips protocols={project.protocols} formats={project.formats} />
+                  ),
+                },
+                {
+                  key: 'operation_count',
+                  header: 'Operations',
+                  width: 'w-28',
+                  sortable: true,
+                  render: (project) => (
+                    <span className="tabular-nums text-zinc-700 dark:text-zinc-300">
+                      {project.operation_count ? project.operation_count.toLocaleString('en-US') : '—'}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'quality_grade',
+                  header: 'Grade',
+                  width: 'w-20',
+                  sortable: true,
+                  render: (project) => (
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300" title={
+                      project.quality_score != null ? `Score ${project.quality_score} of 100` : undefined
+                    }>
+                      {project.quality_grade || '—'}
+                    </span>
                   ),
                 },
                 {

@@ -27,6 +27,14 @@ import { OperatorChips } from './components/search/SyntaxHelp';
 import { MethodBadge } from './components/search/httpMethodTone';
 import { pushRecentSearch } from './components/search/searchPaletteBus';
 import { toSearchParams, type SearchUrlState } from '../../lib/search/params';
+import {
+  PROJECT_RAIL_SORTS,
+  PROJECT_RAIL_SORT_PARAM,
+  pickCardFacts,
+  type CardFacts,
+  type ProjectRailSort,
+} from '../../lib/cardFacts';
+import { relativeTime } from '../../lib/relativeTime';
 
 const HERO_EXAMPLES: { label: string; q: string }[] = [
   { label: 'POST operations', q: 'method:POST' },
@@ -56,7 +64,7 @@ interface Tenant {
   formats?: string[] | null;
 }
 
-interface RecentVersion {
+interface RecentVersion extends Partial<CardFacts> {
   id: string;
   version_id: string;
   description?: string;
@@ -68,7 +76,7 @@ interface RecentVersion {
   tenant_slug: string;
 }
 
-interface PopularProject {
+interface PopularProject extends Partial<CardFacts> {
   id: string;
   name: string;
   slug: string;
@@ -84,23 +92,41 @@ interface HomeClientProps {
   recentVersions: RecentVersion[];
   popularProjects: PopularProject[];
   newestTenants: Tenant[];
+  /** How the project rail is ordered (`?projects=`, BDX-2.2). */
+  railSort: ProjectRailSort;
 }
 
-function relativeTime(iso?: string): string | undefined {
-  if (!iso) return undefined;
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return undefined;
-  const seconds = Math.round((Date.now() - then) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.round(months / 12)}y ago`;
+/**
+ * The project rail's sort control: one link per order, so the server re-queries and the choice is
+ * shareable. `scroll={false}` keeps the visitor at the rail.
+ */
+function RailSortControl({ current }: { current: ProjectRailSort }) {
+  return (
+    <nav
+      aria-label="Sort projects"
+      className="flex items-center gap-0.5 rounded-md border border-zinc-200 bg-white p-0.5 text-[12px] shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      {PROJECT_RAIL_SORTS.map((option) => {
+        const active = option.value === current;
+        const href = option.value === 'versions' ? '/' : `/?${PROJECT_RAIL_SORT_PARAM}=${option.value}`;
+        return (
+          <Link
+            key={option.value}
+            href={href}
+            scroll={false}
+            aria-current={active ? 'true' : undefined}
+            className={`rounded px-2 py-0.5 font-medium transition-colors ${
+              active
+                ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
+                : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50'
+            }`}
+          >
+            {option.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 }
 
 function monogram(name: string): string {
@@ -113,7 +139,9 @@ export function HomeClient({
   recentVersions,
   popularProjects,
   newestTenants,
+  railSort,
 }: HomeClientProps) {
+  const rail = PROJECT_RAIL_SORTS.find((o) => o.value === railSort) ?? PROJECT_RAIL_SORTS[0];
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [facets, setFacets] = useState<BrowseFacetSelection>(NO_FACET_SELECTION);
@@ -322,18 +350,21 @@ export function HomeClient({
                       : undefined
                   }
                   meta={[{ label: v.tenant_name }, { label: v.project_name }]}
+                  facts={pickCardFacts(v)}
+                  factsOmit={['updated']}
                 />
               </div>
             ))}
           </DiscoveryRail>
 
           <DiscoveryRail
-            title="Most active projects"
-            description="Projects with the largest published version history."
+            title={rail.title}
+            description={rail.description}
             seeAllHref="#organizations"
             seeAllLabel="Browse all"
             itemCount={popularProjects.length}
             emptyMessage="No projects to highlight yet."
+            controls={<RailSortControl current={railSort} />}
           >
             {popularProjects.map((p) => (
               <div key={p.id} className="w-[300px] shrink-0">
@@ -347,11 +378,7 @@ export function HomeClient({
                     label: `${p.version_count} ${p.version_count === 1 ? 'version' : 'versions'}`,
                     tone: 'brand',
                   }}
-                  meta={
-                    p.latest_published_at
-                      ? [{ label: 'Updated', value: relativeTime(p.latest_published_at) }]
-                      : undefined
-                  }
+                  facts={pickCardFacts(p)}
                 />
               </div>
             ))}
