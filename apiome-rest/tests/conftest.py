@@ -406,3 +406,16 @@ def _no_repository_manifest_by_default(monkeypatch):
         raise ValueError("GitHub file not found (path or ref may be stale)")
 
     monkeypatch.setattr("app.repository_file_scan.read_scan_manifest_text", _missing)
+
+
+@pytest.fixture(autouse=True)
+def _no_stored_overlay_chain_by_default(request, monkeypatch):
+    """
+    Keep export tests hermetic: every export and verify reads the revision's stored overlay chain
+    (GVM-4.3, ``apiome.version_overlays``) before applying inline overlays. Default that read to
+    "no chain" so export tests run without Postgres. Tests of the chain patch it with their own rows,
+    and ``requires_db`` tests read the real table.
+    """
+    if request.node.get_closest_marker("requires_db") is not None:
+        return
+    monkeypatch.setattr("app.version_overlay_store.list_overlays", lambda *_args, **_kwargs: [])

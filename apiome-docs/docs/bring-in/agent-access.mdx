@@ -37,6 +37,20 @@ host](../getting-started/connect-an-mcp-host.mdx).
 
 **Show revoked keys** includes revoked ones; **Revoke key** stops a key at once.
 
+## Save enrichment as an overlay
+
+Accepted description enrichment reaches agents, and it can reach your exports too. **On the toolset,
+click “Save as overlay”**, pick the **Draft revision** of the same project, and **click “Save as
+overlay”**. Apiome turns every accepted tool and parameter description into one action of an
+[OpenAPI Overlay](./overlays.md#stored-overlay-chains) and adds it to that revision's chain as
+**Agent enrichment**. When the revision is exported or published, its descriptions are the accepted
+ones. The proposals themselves are not changed.
+
+The toolset's own version is published, so its chain is read-only: the overlay goes to a draft.
+Operations an OpenAPI overlay cannot address (for example GraphQL fields) are left out and counted.
+With the API: `GET /v1/tenants/{tenant}/agent-toolsets/{toolset}/enrichment/overlay` returns the
+overlay; `POST` it to the draft's `…/overlays` with `"source": "enrichment-export"`.
+
 ## Usage
 
 **Usage** shows calls, error rate, latency and active agents over **7 days**, **30 days** or **90

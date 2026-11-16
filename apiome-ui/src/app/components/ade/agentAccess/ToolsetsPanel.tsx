@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, KeyRound, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Bot, KeyRound, Layers, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -12,6 +12,7 @@ import { LoadingState } from '@/app/components/ui/LoadingState';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { Switch } from '@/app/components/ui/Switch';
 
+import SaveEnrichmentOverlayDialog from './SaveEnrichmentOverlayDialog';
 import {
   toolsetLabel,
   type AgentTool,
@@ -162,6 +163,7 @@ function ToolsetDetail({
   onCreateKey,
   onRetry,
 }: ToolsetsPanelProps) {
+  const [overlayDialogOpen, setOverlayDialogOpen] = React.useState(false);
   if (detailError) {
     return (
       <ErrorState
@@ -191,6 +193,16 @@ function ToolsetDetail({
           >
             <KeyRound aria-hidden />
             Create agent key
+          </Button>
+          {/* GVM-4.3: copy the accepted enrichment into a draft revision's overlay chain. */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setOverlayDialogOpen(true)}
+            data-testid="agx-toolset-save-overlay"
+          >
+            <Layers aria-hidden />
+            Save as overlay
           </Button>
           <Button
             variant="danger-soft"
@@ -302,6 +314,11 @@ function ToolsetDetail({
           </table>
         </div>
       )}
+      <SaveEnrichmentOverlayDialog
+        open={overlayDialogOpen}
+        onOpenChange={setOverlayDialogOpen}
+        toolsetId={detail.id}
+      />
     </section>
   );
 }

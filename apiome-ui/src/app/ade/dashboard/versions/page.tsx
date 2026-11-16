@@ -29,6 +29,7 @@ import {
   MessagesSquare,
   GitPullRequestArrow,
   Network,
+  Layers,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
@@ -236,6 +237,7 @@ import { CompatibilityReportPanel } from '../../../components/ade/dashboard/Comp
 import { ExternalCompatEvidencePanel } from '../../../components/ade/dashboard/ExternalCompatEvidencePanel';
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
 import { VersionChangesPanel } from './VersionChangesPanel';
+import { VersionOverlaysPanel } from '@/app/components/ade/versionOverlays/VersionOverlaysPanel';
 import { SchemaTestBench } from '@/app/components/ade/dashboard/test-bench/SchemaTestBench';
 import { SuiteRegressionBadge } from '@/app/components/ade/dashboard/SuiteRegressionBadge';
 import {
@@ -470,6 +472,7 @@ const Versions = () => {
     | 'repository'
     | 'sources'
     | 'dependencies'
+    | 'overlays'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
   const [focusThreadId, setFocusThreadId] = useState<string | null>(null);
@@ -957,6 +960,7 @@ const Versions = () => {
     if (tab === 'merge-requests') setVersionsMainTab('merge-requests');
     if (tab === 'dependencies') setVersionsMainTab('dependencies');
     if (tab === 'sources') setVersionsMainTab('sources');
+    if (tab === 'overlays') setVersionsMainTab('overlays');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
   }, [searchParams]);
 
@@ -3254,6 +3258,8 @@ const Versions = () => {
   const showChangeReportTab = changeReportUiEnabled && Boolean(selectedProjectId);
   /** Stored classified changelogs (CTG-3.2, #4476) — available for any selected project, no feature flag. */
   const showChangesTab = Boolean(selectedProjectId);
+  /** Stored overlay chains (GVM-4.3, #5878): every project's revisions can carry one. */
+  const showOverlaysTab = Boolean(selectedProjectId);
   /** Schema Test Bench (IXH-5.3, #5115) — addresses schemas by project slug, so it needs one. */
   const showTestBenchTab = Boolean(selectedProjectId && selectedProject?.slug);
   /** Conversion provenance history (CPDO-3.3, #4803): the tab exists only when this project was
@@ -3292,6 +3298,7 @@ const Versions = () => {
     (versionsMainTab === 'merge-requests' && !showMergeRequestsTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
+    (versionsMainTab === 'overlays' && !showOverlaysTab) ||
     (versionsMainTab === 'test-bench' && !showTestBenchTab) ||
     (versionsMainTab === 'conversion' && !showConversionTab)
       ? 'timeline'
@@ -3588,6 +3595,19 @@ const Versions = () => {
         >
           <FileText className="ver-tab-glyph" aria-hidden />
           Change report
+        </button>
+      ) : null}
+      {showOverlaysTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'overlays'}
+          data-testid="versions-tab-overlays"
+          className={tabTriggerClass({ active: effectiveMainTab === 'overlays' })}
+          onClick={() => setVersionsMainTab('overlays')}
+        >
+          <Layers className="ver-tab-glyph" aria-hidden />
+          Overlays
         </button>
       ) : null}
       {showTestBenchTab ? (
@@ -3984,6 +4004,16 @@ const Versions = () => {
             projectId={selectedProjectId}
             versions={versions}
             onOpenDiff={handleOpenDiffFromChanges}
+          />
+        ) : null}
+
+        {showOverlaysTab && effectiveMainTab === 'overlays' ? (
+          /* Stored overlay chains (GVM-4.3, #5878): applied at export and publish render only. */
+          <VersionOverlaysPanel
+            key={selectedProjectId}
+            projectId={selectedProjectId}
+            versions={versions}
+            initialRevisionId={selectedVersion?.id ?? null}
           />
         ) : null}
 

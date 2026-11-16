@@ -47,6 +47,8 @@ export interface MultiExportJobBody {
   confirm?: boolean;
   /** Overlays applied, in order, to the source before every target (GVM-4.2). */
   overlays?: ExportStudioOverlay[];
+  /** False to export without the revision's stored overlay chain (GVM-4.3); omitted applies it. */
+  apply_stored_overlays?: boolean;
   /**
    * Delivery profiles (MFX-38.4) the export is delivered with on completion. Never sent with a dry
    * run: {@link MultiExportRun}'s Verify drops them.
@@ -62,6 +64,7 @@ export interface MultiExportJobBody {
  * @param targetKeys The target keys, in the order chosen; duplicates are dropped.
  * @param dryRun True to stop after the fidelity report (Verify).
  * @param overlays The Overlays step's chain (GVM-4.2); null or empty sends none.
+ * @param applyStoredOverlays False to skip the revision's stored chain (GVM-4.3); true sends nothing.
  * @returns The request body.
  */
 export function multiTargetJobBody(
@@ -70,6 +73,7 @@ export function multiTargetJobBody(
   targetKeys: readonly string[],
   dryRun = false,
   overlays: readonly ExportStudioOverlay[] | null = null,
+  applyStoredOverlays = true,
 ): MultiExportJobBody {
   return {
     artifact,
@@ -77,6 +81,7 @@ export function multiTargetJobBody(
     targets: [...new Set(targetKeys)].map((target) => ({ target })),
     ...(dryRun ? { dry_run: true } : {}),
     ...(overlays && overlays.length > 0 ? { overlays: [...overlays] } : {}),
+    ...(applyStoredOverlays ? {} : { apply_stored_overlays: false }),
   };
 }
 

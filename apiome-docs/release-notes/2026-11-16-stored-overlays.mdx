@@ -1,0 +1,29 @@
+---
+slug: stored-overlays
+title: Stored overlays curate what a version exports
+description: "Keep an ordered overlay chain on a version; exports and publishing apply it."
+authors: [apiome]
+---
+
+Some edits should change what leaves the building without changing the source: public
+descriptions, a partner's servers, the descriptions you accepted for agents. A version can now keep
+those as a stored chain of [OpenAPI Overlays](/bring-in/overlays#stored-overlay-chains).
+
+{/* truncate */}
+
+- **An Overlays tab on every version.** **Add overlay** uploads overlay files, **×** removes one, and
+  **Preview** renders the chain exactly as an export does: every value it changes, and every action
+  that no longer matches.
+- **Applied at export and publish only.** Every export and Verify applies the chain first, then
+  any overlays you add. Publishing records the source and resolved fingerprints side by side. The
+  version's model, the Studio, lint, diff and SDKs are unchanged.
+- **One place for curation.** Export Studio's **Overlays** step lists the chain with an **Apply
+  stored overlays** switch and saves an uploaded file into it. **Agent access → Save as overlay**
+  copies a toolset's accepted descriptions into a draft's chain.
+- **Safe by design.** Overlays are write-once with a fingerprint each, a published version's chain
+  is read-only (`409 overlay-version-published`), and a stale overlay is a finding, never a
+  silent no-op.
+
+With the API: `GET|POST /v1/versions/{t}/{p}/{v}/overlays`, `PUT|DELETE …/overlays/{id}` and
+`GET …/overlays/preview`; exports take `apply_stored_overlays: false` to skip the chain. See
+[Versions](/build/versions#overlays).

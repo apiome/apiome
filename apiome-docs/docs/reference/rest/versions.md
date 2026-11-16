@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 58 operations."
+description: "REST endpoints tagged versions: 63 operations."
 sidebar_position: 117
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.585.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.586.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 58 operations
+Tag: `versions` · 63 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -1816,6 +1816,209 @@ Request body for set version mock scenarios.
 | 200 | Successful response for set version mock scenarios. | `application/json` [`VersionMockScenariosResponse`](#schema-versionmockscenariosresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays` {#list-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-get}
+
+**List Version Overlays**
+
+List a revision's stored overlay chain, in the order it is applied.
+
+Args:
+    tenant_slug: The tenant slug (the tenant comes from the credential).
+    project_id: The project id.
+    version_record_id: The revision id.
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The chain, whether it is read-only, and the publish render record when there is one.
+
+Operation id: `list_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list version overlays. | `application/json` [`VersionOverlayChainOut`](#schema-versionoverlaychainout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays` {#add-version-overlay-v1-versions-tenant-slug-project-id-version-record-id-overlays-post}
+
+**Add Version Overlay**
+
+Add an overlay to a draft revision's chain.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision id.
+    body: The overlay, its label, source and optional position.
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The stored overlay.
+
+Raises:
+    HTTPException: 404 unknown revision; 409 ``overlay-version-published``,
+        ``overlay-chain-full`` or ``overlay-chain-conflict`` (a concurrent write; retry); 422 when
+        the source is not OpenAPI or the body is invalid.
+
+Operation id: `add_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for add version overlay.
+
+- `application/json` — [`VersionOverlayWrite`](#schema-versionoverlaywrite)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for add version overlay. | `application/json` [`VersionOverlayOut`](#schema-versionoverlayout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/preview` {#preview-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-preview-get}
+
+**Preview Version Overlays**
+
+Render the revision's source with its stored chain, as an export would.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision id.
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The resolved document, the source and resolved fingerprints, and the ledger/findings.
+
+Raises:
+    HTTPException: 404 for an unknown revision; 422 (``{code, message}``) when the source is not
+        OpenAPI or the chain cannot be applied.
+
+Operation id: `preview_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_preview_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview version overlays. | `application/json` [`VersionOverlayPreviewOut`](#schema-versionoverlaypreviewout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/{overlay_id}` {#replace-version-overlay-v1-versions-tenant-slug-project-id-version-record-id-overlays-overlay-id-put}
+
+**Replace Version Overlay**
+
+Replace one overlay of a draft revision's chain, keeping its position.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision id.
+    overlay_id: The overlay to replace.
+    body: The new overlay (``position`` is ignored).
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The new stored overlay. It has a new id, because stored overlays are write-once.
+
+Raises:
+    HTTPException: 404 unknown revision or overlay; 409 ``overlay-version-published``.
+
+Operation id: `replace_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays__overlay_id__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `overlay_id` | path | string | yes | Path parameter identifying the overlay id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for replace version overlay.
+
+- `application/json` — [`VersionOverlayWrite`](#schema-versionoverlaywrite)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for replace version overlay. | `application/json` [`VersionOverlayOut`](#schema-versionoverlayout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/{overlay_id}` {#delete-version-overlay-v1-versions-tenant-slug-project-id-version-record-id-overlays-overlay-id-delete}
+
+**Delete Version Overlay**
+
+Remove one overlay from a draft revision's chain.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision id.
+    overlay_id: The overlay to remove.
+    auth_data: Authenticated tenant context.
+
+Returns:
+    204 No Content.
+
+Raises:
+    HTTPException: 404 unknown revision or overlay; 409 ``overlay-version-published``.
+
+Operation id: `delete_version_overlay_v1_versions__tenant_slug___project_id___version_record_id__overlays__overlay_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `overlay_id` | path | string | yes | Path parameter identifying the overlay id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete version overlay. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/preservation` {#get-preservation-envelope-v1-versions-tenant-slug-project-id-version-record-id-preservation-get}
 
 **Get Preservation Envelope**
@@ -2600,6 +2803,57 @@ Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5).
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `enabled` | boolean | yes | When true, apiome-mock serves this version (draft mocks are private/key-gated). |
+
+### `VersionOverlayChainOut` {#schema-versionoverlaychainout}
+
+``GET …/overlays``: the chain in application order.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version_record_id` | string | yes | Version Record ID. |
+| `published` | boolean | yes | True when the revision is published: the chain is read-only. |
+| `max_overlays` | integer | no | Longest chain a revision may hold. |
+| `overlays` | array of [`VersionOverlayOut`](#schema-versionoverlayout) | yes | Overlays. |
+| `render` | `VersionOverlayRenderOut` or null | no | What the publish render recorded; null before publish or without a chain. |
+
+### `VersionOverlayOut` {#schema-versionoverlayout}
+
+One stored overlay of a revision's chain.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | The overlay id. A replace gives the overlay a new id (rows are write-once). |
+| `position` | integer | yes | Order in the chain; 0 applies first. |
+| `name` | string | yes | Human-readable name. |
+| `source` | enum `"manual"`, `"lint-fix"`, `"export-studio"`, `"enrichment-export"` | yes | Provenance source for the record (for example human or imported). |
+| `content_fingerprint` | string | yes | `sha256:` of the document's canonical JSON. |
+| `action_count` | integer | yes | How many actions the overlay declares. |
+| `created_by` | string or null | no | Created By. |
+| `created_at` | string (date-time) or null | no | Creation timestamp (ISO 8601). |
+| `document` | object | yes | The Overlay document. |
+
+### `VersionOverlayPreviewOut` {#schema-versionoverlaypreviewout}
+
+``GET …/overlays/preview``: the resolved document and the provenance of every change.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version_record_id` | string | yes | Version Record ID. |
+| `source_fingerprint` | string | yes | Fingerprint of the source OpenAPI document. |
+| `resolved_fingerprint` | string | yes | Fingerprint of the resolved document. |
+| `document` | object | yes | The resolved OpenAPI document (source + chain). |
+| `report` | `ExportOverlayReport` or null | no | Ledger rows and `overlay.*` findings; null when the chain is empty. |
+
+### `VersionOverlayWrite` {#schema-versionoverlaywrite}
+
+Body of ``POST`` / ``PUT …/overlays``: one Overlay document and its label and origin.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | The overlay's label, shown in ledger rows. |
+| `source` | enum `"manual"`, `"lint-fix"`, `"export-studio"`, `"enrichment-export"` | no | Where the overlay came from: `manual` (uploaded), `lint-fix` (a saved fix plan), `export-studio` (saved from Export Studio) or `enrichment-export` (accepted agent-toolset enrichment). |
+| `document` | object | yes | The parsed Overlay 1.0 / 1.1 / 1.2 document, at most 1 MiB serialized. |
+| `position` | integer or null | no | POST only: where to insert it (0 applies first). Omitted or past the end appends. Ignored by PUT, which keeps the replaced overlay's position. |
 
 ### `VersionPublishRequest` {#schema-versionpublishrequest}
 

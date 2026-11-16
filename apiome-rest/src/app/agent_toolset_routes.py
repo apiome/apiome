@@ -71,6 +71,7 @@ from .agent_server_json import (
 from .agent_toolset_enrichment import (
     CODE_ENRICHMENT_NOT_FOUND,
     CompiledToolsetOut,
+    EnrichmentOverlayOut,
     EnrichmentProposalOut,
     EnrichmentReport,
     EnrichmentReview,
@@ -78,6 +79,7 @@ from .agent_toolset_enrichment import (
     EnrichmentRunResult,
     compile_agent_toolset,
     get_toolset_enrichment,
+    get_toolset_enrichment_overlay,
     review_toolset_enrichment,
     run_toolset_enrichment,
 )
@@ -651,6 +653,46 @@ async def get_agent_toolset_enrichment_route(
     _ = tenant_slug
     try:
         return get_toolset_enrichment(_tenant_id(auth_data), str(toolset_id))
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.get(
+    _BASE + "/{toolset_id}/enrichment/overlay",
+    response_model=EnrichmentOverlayOut,
+    summary="Export an agent toolset's accepted enrichment as an Overlay",
+    description=(
+        "GVM-4.3: the toolset's **accepted** description proposals as an Overlay 1.0 document — one "
+        "`update` action per accepted tool or parameter description, targeted by path, method and "
+        "parameter `name`/`in`. Read-only: the stored proposals are not changed. Save it into a draft "
+        "revision's overlay chain (`POST /v1/versions/{t}/{p}/{v}/overlays` with "
+        "`source: enrichment-export`) so the descriptions reach that revision's exports.\n\n"
+        "Requires `api_keys:view`."
+    ),
+    responses={404: {"description": "No such agent toolset in this tenant."}},
+)
+async def get_agent_toolset_enrichment_overlay_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> EnrichmentOverlayOut:
+    """Project a toolset's accepted enrichment into an Overlay document.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        toolset_id: The toolset.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The overlay and the toolset version's coordinates.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        return get_toolset_enrichment_overlay(_tenant_id(auth_data), str(toolset_id))
     except AgentToolsetError as exc:
         raise _refusal(exc) from exc
 

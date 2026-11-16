@@ -39,6 +39,7 @@ import { ExportStudioTitle, exportStudioBreadcrumb } from './ExportStudioHeaderP
 import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import { MultiTargetChecklist } from './MultiTargetChecklist';
 import { ExportOverlaysStep } from './ExportOverlaysStep';
+import { useStoredOverlayChain } from '../../versionOverlays/useStoredOverlayChain';
 import { OverlayReportPanel } from './OverlayReportPanel';
 import { overlaysRequestField, type ExportStudioOverlay } from './exportOverlays';
 import { multiTargetJobBody, withTargetOptions } from './exportBatchJob';
@@ -317,6 +318,12 @@ export function ExportStudio({
    */
   const [overlays, setOverlays] = useState<ExportStudioOverlay[]>([]);
   const overlayField = useMemo(() => overlaysRequestField(overlays), [overlays]);
+  /**
+   * The revision's stored overlay chain (GVM-4.3): applied by the server before `overlays` unless
+   * the Overlays step switches it off, which sends `apply_stored_overlays: false`.
+   */
+  const storedOverlays = useStoredOverlayChain(artifact, version);
+  const applyStoredOverlays = storedOverlays.apply;
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
   // replaces it when the source's format is known.
   const cards = useMemo(
@@ -379,6 +386,7 @@ export function ExportStudio({
     fromCache: verifyFromCache,
   } = useExportVerify(artifact, version, selectedKey, changedOpts, {
     overlays: overlayField,
+    applyStoredOverlays,
     // Only while the Verify step is showing: a dry-run is a real emit, so browsing the target grid
     // with the opt-in on must not fire one per card the user tries. A change made on an earlier
     // step verifies itself the moment the user arrives at Verify, which is when it is needed.
@@ -674,11 +682,11 @@ export function ExportStudio({
   const multiBody = useMemo(() => {
     // MFX-39.3 / 38.4: a preset's per-target options, and the delivery profiles ticked on Review.
     const body = withTargetOptions(
-      multiTargetJobBody(artifact, version, multiKeys, false, overlayField),
+      multiTargetJobBody(artifact, version, multiKeys, false, overlayField, applyStoredOverlays),
       multiOptions,
     );
     return deliveryProfileIds.length > 0 ? { ...body, delivery_profiles: deliveryProfileIds } : body;
-  }, [artifact, version, multiKeys, overlayField, multiOptions, deliveryProfileIds]);
+  }, [artifact, version, multiKeys, overlayField, applyStoredOverlays, multiOptions, deliveryProfileIds]);
 
   /**
    * Apply an export preset (MFX-39.3): a one-target preset selects its card with its options; a
@@ -816,9 +824,19 @@ export function ExportStudio({
       confirm: acknowledged,
       acknowledgedSnapshot: acceptedSnapshot,
       overlays: overlayField,
+      applyStoredOverlays,
       deliveryProfiles: deliveryProfileIds,
     });
-  }, [selected, optionValues, acknowledged, displayVerifyResult, start, overlayField, deliveryProfileIds]);
+  }, [
+    selected,
+    optionValues,
+    acknowledged,
+    displayVerifyResult,
+    start,
+    overlayField,
+    applyStoredOverlays,
+    deliveryProfileIds,
+  ]);
 
   /**
    * Run verification, dropping any validation-gate override so the fresh result shows.
@@ -1537,6 +1555,20 @@ export function ExportStudio({
                 setMultiVerified(false);
                 setOverlays(next);
               }}
+              stored={
+                storedOverlays.available
+                  ? {
+                      chain: storedOverlays.chain,
+                      error: storedOverlays.error,
+                      apply: storedOverlays.apply,
+                      onToggleApply: (apply) => {
+                        setMultiVerified(false);
+                        storedOverlays.setApply(apply);
+                      },
+                      onSaveToChain: storedOverlays.saveToChain,
+                    }
+                  : null
+              }
             />
           )}
 

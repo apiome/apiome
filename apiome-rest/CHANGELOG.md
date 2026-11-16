@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.726.0] - 2026-11-16
+
+### Added
+- **Stored overlays as the curation form (GVM-4.3, #5878)** — OpenAPI 1.586.0:
+  - apiome-db **V385** (the roadmap's V277 shipped as `artifact_tags`): `version_overlays` — an ordered, write-once
+    chain of Overlay 1.x documents per revision (`position`, `name`, `source` in
+    `manual|lint-fix|export-studio|enrichment-export`, `document`, `content_fingerprint`, `created_by`); an UPDATE
+    trigger refuses every update, so a replace is delete + insert under one `version.overlay_replaced` audit row;
+    `UNIQUE (version_record_id, position)` is deferrable so positions stay dense. `version_overlay_renders` records the
+    publish render.
+  - `GET|POST /v1/versions/{t}/{p}/{v}/overlays`, `PUT|DELETE …/overlays/{id}` (`versions:edit` for writes; a
+    published revision refuses them with `409 overlay-version-published`; `409 overlay-chain-full` past 10;
+    `409 overlay-chain-conflict` when a concurrent write took the same position (retry); a
+    non-OpenAPI source is `422 OVERLAY_SOURCE_UNSUPPORTED`). `GET …/overlays/preview` returns the resolved document,
+    both fingerprints and the provenance ledger through the same function the export uses
+    (`version_overlay_store.resolve_for_export`), so the preview equals the export.
+  - Export jobs and `POST /v1/export/{t}/verify` apply the stored chain before inline `overlays` by default; send
+    `apply_stored_overlays: false` to skip it. Stored overlays are labelled `stored:<name>` in the ledger and findings;
+    stored + inline share the 10-overlay cap. The stored canonical model, Studio, lint, diff and SDK paths are
+    unchanged.
+  - Publishing a revision with a chain renders it (background task, never fails the publish) and records
+    `source_fingerprint` beside `resolved_fingerprint` plus the `overlay.*` findings (audited
+    `version.overlay_rendered`); an overlay that no longer matches after a Studio edit is an
+    `overlay.unmatched-target` finding, never a silent no-op. `GET /v1/schema` is unchanged.
+  - `GET /v1/tenants/{t}/agent-toolsets/{id}/enrichment/overlay` (`api_keys:view`): a read-only projection of the
+    toolset's accepted AGX-1.3 enrichment (V273 is not migrated) into an Overlay 1.0 document — one `update` per
+    accepted tool or parameter description, targeted by path, method and parameter `name`/`in`; non-HTTP operations
+    are listed under `skipped`.
+  - `source: lint-fix` is accepted for GVM-3.6, whose fix-plan UI is not on `main` yet.
+
 ## [1.725.0] - 2026-11-16
 
 ### Added

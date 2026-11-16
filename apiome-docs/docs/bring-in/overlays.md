@@ -10,7 +10,8 @@ it: add a production server, hide an internal path, rewrite descriptions for a p
 overlay lists **actions**, and each action picks parts of the base with a JSONPath `target` and
 updates, copies or removes them. Apiome applies the overlays to the base before it reads the API,
 and records which overlay changed each value. You can also apply overlays [when you export](#apply-overlays-on-export),
-so one version ships with partner-specific servers or descriptions without a fork.
+so one version ships with partner-specific servers or descriptions without a fork, and
+[store a chain of overlays on a version](#stored-overlay-chains) so every export and publish uses it.
 
 ## Supported revisions
 
@@ -88,6 +89,56 @@ Overlays modify OpenAPI documents, so a version imported from another format (Gr
 …) is refused with `OVERLAY_SOURCE_UNSUPPORTED`. An overlay Apiome cannot read (for example
 `overlay: 1.3.0`) is refused with `OVERLAY_INVALID`.
 
+## Stored overlay chains
+
+A version can keep its own ordered **chain** of overlays — the place for curation that must not
+change the source: accepted agent descriptions, Export Studio tweaks, lint fixes you would rather
+keep out of the repository. The chain applies **only when the version is exported or published**.
+The version's model, the Studio, lint, diff and SDK generation never see it.
+
+**Where chains come from:**
+
+| Source | How it gets there |
+| --- | --- |
+| **Uploaded** | The version's [**Overlays** tab](../build/versions.mdx#overlays): **click “Add overlay”**. |
+| **Export Studio** | The **Overlays** step's save button next to an uploaded file. See [Export studio](../ship/export-studio.mdx#4-overlays). |
+| **Agent enrichment** | **Agent access → Save as overlay** copies a toolset's accepted descriptions. See [Agent access](./agent-access.mdx#save-enrichment-as-an-overlay). |
+| **Lint fix** | Accepted by the API (`source: lint-fix`) for saved fix plans. |
+
+**The rules:**
+
+- **Order.** Stored overlays apply first, top down, then any overlays an export adds. A chain holds
+  at most 10 overlays, and stored plus added overlays share that limit.
+- **Write-once.** An overlay is never edited in place. Replacing one removes it and adds the new
+  document at the same place, as one audit event (`version.overlay_replaced`). Each overlay carries
+  a `sha256:` fingerprint of its document.
+- **Drafts only.** A published version's chain is read-only; a change is refused with
+  `409 overlay-version-published`.
+- **Exports apply it.** Every export and Verify of the version applies its chain unless you switch
+  **Apply stored overlays** off (REST: `apply_stored_overlays: false`). In the ledger, a stored
+  overlay is named `stored:<name>`.
+- **Publishing records it.** When a version with a chain is published, Apiome renders it and
+  records the source document's fingerprint beside the resolved document's, with any findings.
+  The schema download (`GET /v1/schema/…`) is not changed by the chain.
+- **Nothing goes silent.** If a Studio edit removes what an overlay targets, the next render reports
+  `overlay.unmatched-target` instead of skipping it.
+
+**Preview** on the Overlays tab renders the chain exactly as an export does — the same code — so
+what it shows is what the export gets.
+
+With the API:
+
+```http
+GET    /v1/versions/{tenant}/{project}/{version}/overlays            # the chain + publish render
+POST   /v1/versions/{tenant}/{project}/{version}/overlays            # {name, source, document, position?}
+PUT    /v1/versions/{tenant}/{project}/{version}/overlays/{id}       # replace in place
+DELETE /v1/versions/{tenant}/{project}/{version}/overlays/{id}
+GET    /v1/versions/{tenant}/{project}/{version}/overlays/preview    # resolved document + ledger
+```
+
+Reading needs permission to view versions; changing the chain needs permission to edit them. See the
+[Versions reference](../reference/rest/versions.md).
+
 ## Lint an overlay on its own
 
 You can check an overlay without its base:
@@ -108,5 +159,6 @@ as passed. See the [Lint reference](../reference/rest/lint.md).
 
 - [Import a specification](./import-a-spec.md): the import wizard and pre-flight
 - [Export studio](../ship/export-studio.mdx): apply overlays when you export
+- [Versions](../build/versions.mdx#overlays): a version's stored overlay chain
 - [Supported formats](./supported-formats.md#version-coverage): the Overlay row in the version table
 - [Built-in lint rules](../build/lint-rules.md): every rule, including the overlay pack

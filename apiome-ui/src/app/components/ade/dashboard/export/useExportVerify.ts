@@ -52,6 +52,8 @@ export interface UseExportVerifyOptions {
    * key — a different chain is a different document, so its verdict is a different one.
    */
   overlays?: ExportStudioOverlay[] | null;
+  /** False to verify without the revision's stored overlay chain (GVM-4.3); defaults to true. */
+  applyStoredOverlays?: boolean;
 }
 
 /** What a settled run left behind, and the configuration it describes. */
@@ -114,6 +116,7 @@ export function useExportVerify(
     debounceMs = VERIFY_AUTO_DEBOUNCE_MS,
     cache = sessionVerifyCache,
     overlays = null,
+    applyStoredOverlays = true,
   } = settings;
 
   const [settled, setSettled] = useState<SettledVerify | null>(null);
@@ -122,8 +125,8 @@ export function useExportVerify(
   const runToken = useRef(0);
 
   const configKey = useMemo(
-    () => verifyConfigKey({ artifact, version, target, options, overlays }),
-    [artifact, version, target, options, overlays],
+    () => verifyConfigKey({ artifact, version, target, options, overlays, applyStoredOverlays }),
+    [artifact, version, target, options, overlays, applyStoredOverlays],
   );
 
   // What to display: the settled run when it describes the current configuration, else a cached
@@ -172,6 +175,7 @@ export function useExportVerify(
             target,
             options: options ?? null,
             ...(overlays && overlays.length > 0 ? { overlays } : {}),
+            ...(applyStoredOverlays ? {} : { apply_stored_overlays: false }),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -197,7 +201,7 @@ export function useExportVerify(
         if (token === runToken.current) setRunningKey(null);
       }
     },
-    [artifact, version, target, options, overlays, configKey, cache],
+    [artifact, version, target, options, overlays, applyStoredOverlays, configKey, cache],
   );
 
   const reset = useCallback(() => {
