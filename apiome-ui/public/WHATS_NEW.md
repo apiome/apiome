@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- **Publication change reports** — a new docs page explains the report each publish writes: what it covers (schemas, properties, references, relationships, documentation), how the baseline is chosen (`auto`, `initial`, `manual`), editing and regenerating it, the Mustache templates and their order (regenerate, project, tenant, system), and the review and PDF export
 - **Breaking changes across formats** — a new docs page explains how Avro, JSON Schema, Protobuf and AsyncAPI changes are graded **Safe**, **Dangerous** or **Breaking** under a registry-style compatibility mode or a Buf category, where the grades show (Versions, `apiome diff`, the CI gate, the publish guardrail), and how the grades are checked against the reference tools
 - **Find your way around** — a new docs page maps the sidebar and the launcher: which group holds each page, why **Workspace** starts folded, the footer's **Notifications** count, and where **Tenants**, **SDK settings**, **Data browser** and **Migrations** live now
 - Readers can sign in to Browse: an organization's portal page has a **Sign in** chip; enter your email, open the link we send (it works once, for 15 minutes) and press **Continue**. You stay signed in for a week, or until you **Sign out** — no workspace seat or API key needed

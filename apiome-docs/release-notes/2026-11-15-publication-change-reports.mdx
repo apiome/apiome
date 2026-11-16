@@ -1,0 +1,29 @@
+---
+slug: publication-change-reports
+title: Publication change reports — readable release notes written by every publish
+description: "Each publish compares the spec with a baseline and writes an editable, templated report."
+authors: [apiome]
+---
+
+Every publish now writes a change report: what changed since the previous published version, as a
+header, a body and a footnote you can edit. One new page explains how the parts fit:
+[Publication change reports](/ship/publication-change-reports). (#2698)
+
+{/* truncate */}
+
+- **A semantic comparison.** Two resolved OpenAPI documents are compared by schemas, properties,
+  references, relationships and documentation, and the result is kept with the report. Compare
+  any two documents with [`POST /v1/openapi/change-report`](/reference/rest/openapi-change-report). (#2699)
+- **Stored with each publication.** A report belongs to one published version, with your edits kept
+  beside the generated text. (#2700)
+- **Templates.** Header, body and footnote are Mustache templates, chosen from the request, the
+  project's default, the tenant's default or the built-in **1.0.0**
+  ([Change report templates](/reference/rest/change-report-templates)). (#2701)
+- **Written on publish.** `changeReportBaselineMode` compares with the previous published version
+  (`auto`), with nothing (`initial`) or with one you choose (`manual`), and `…/change-report/publish-preview`
+  shows the report before you publish. A failed report never blocks the publish. (#2702)
+- **Read, edit and regenerate** over [`…/change-report`](/reference/rest/version-change-report), or on the
+  **Change report** tab of Versions, which is behind `FEATURE_GITLIKE`. (#2703)
+- **Checked by golden fixtures** for the comparison and the rendered text. (#2704)
+- **Review, PDF export and an audit log** for enterprise tenants — see
+  [Review, approve and export change reports as PDF](/release-notes/change-report-approvals). (#2705)
