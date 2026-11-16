@@ -3,7 +3,21 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "04-telemetry-stress.proto": {
+          "package": "example.telemetry.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.telemetry.v1.Alert",
+            "example.telemetry.v1.Reading",
+            "example.telemetry.v1.Snapshot",
+            "example.telemetry.v1.SnapshotRequest",
+            "example.telemetry.v1.UploadSummary"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

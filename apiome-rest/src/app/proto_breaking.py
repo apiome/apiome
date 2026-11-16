@@ -17,7 +17,12 @@ It has two layers, same shape as those providers:
   :attr:`~app.breaking_change.Severity.SAFE`. Registered under the ``protobuf`` format key (the
   one the MFI-9.2 normalizer emits), it is what the sync SPI dispatch
   (:func:`app.breaking_change.classify`) resolves for a Protobuf artifact even when no ``buf``
-  binary is present.
+  binary is present. Since XPC-4.3 (#5747) the baseline is graded **per category**: the
+  classifier takes a ``category`` (``FILE`` / ``PACKAGE`` / ``WIRE_JSON`` / ``WIRE``, default
+  ``WIRE_JSON``) and adds the Protobuf rules of :mod:`app.proto_breaking_rules` — reserved
+  numbers and names, deleted fields, ``json_name``, file and package moves, enum value numbers,
+  ``oneof`` membership and labels — each with its category in its ``rule_id``
+  (``protobuf.wire_json.json-name-changed``) and every category's grade in its rationale.
 
 * **The ``buf breaking`` overlay** — :meth:`ProtobufBreakingChangeClassifier.classify_async`
   (and the module convenience :func:`classify_protobuf`) runs ``buf breaking`` over the new and
@@ -57,13 +62,24 @@ from .breaking_change import (
     ChangeClassification,
     ClassificationResult,
     Severity,
+    UnattributedFinding,
+    _assemble_result,
+    _classify_modified_attribute,
+    _worst,
 )
 from .canonical_model import CanonicalApi
-from .diff import ModelDiff, diff
+from .diff import ChangeKind, EntityCategory, EntityChange, ModelDiff, diff
+from .proto_breaking_rules import (
+    COMPATIBLE_RULE_ID,
+    EXPLAINED_FIELD_EXTRAS,
+    EXPLAINED_TYPE_EXTRAS,
+    category_findings,
+)
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "BufBreakingCategory",
     "BufBreakingStrictness",
     "DEFAULT_BREAKING_STRICTNESS",
     "BUF_BREAKING_RULE_PREFIX",
@@ -76,6 +92,8 @@ __all__ = [
     "run_buf_breaking",
     "ProtobufBreakingChangeClassifier",
     "classify_protobuf",
+    "coerce_category",
+    "overlay_disagreement",
 ]
 
 
@@ -109,6 +127,9 @@ class BufBreakingStrictness(str, Enum):
     PACKAGE = "PACKAGE"
     FILE = "FILE"
 
+
+#: The name the XPC-4.3 classifier API uses for the same four values.
+BufBreakingCategory = BufBreakingStrictness
 
 #: The default strictness. ``WIRE_JSON`` is the roadmap's "default for services": gRPC traffic is
 #: both binary and (via transcoding) JSON, so both wire formats must stay compatible, while
@@ -464,36 +485,207 @@ async def run_buf_breaking(
 # The Protobuf breaking-change classifier
 # ===========================================================================
 
-# Ordinal rank of each severity (worst-last), for taking a worst-of aggregate locally without
-# reaching into the SPI module's internals (mirrors app.graphql_diff).
-_SEVERITY_RANK: Dict[Severity, int] = {
-    Severity.SAFE: 0,
-    Severity.DANGEROUS: 1,
-    Severity.BREAKING: 2,
-}
+
+def coerce_category(value: Any) -> BufBreakingStrictness:
+    """Coerce a category name (any case) or enum member into a :class:`BufBreakingStrictness`.
+
+    Args:
+        value: ``"wire_json"``, ``"FILE"``, a member, or ``None`` for the default.
+
+    Returns:
+        The category; :data:`DEFAULT_BREAKING_STRICTNESS` for ``None`` / blank.
+
+    Raises:
+        ValueError: If ``value`` names no category.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return DEFAULT_BREAKING_STRICTNESS
+    if isinstance(value, BufBreakingStrictness):
+        return value
+    name = str(value).strip().upper()
+    try:
+        return BufBreakingStrictness(name)
+    except ValueError:
+        choices = ", ".join(c.value for c in BufBreakingStrictness)
+        raise ValueError(f"Unknown buf breaking category {value!r}; expected one of {choices}") from None
+
+
+def _without(extras: Any, keys: frozenset) -> Dict[str, Any]:
+    """An ``extras`` dict with ``keys`` removed (``{}`` for anything that is not a dict)."""
+    return {k: v for k, v in extras.items() if k not in keys} if isinstance(extras, dict) else {}
+
+
+def _same_core(before: Any, after: Any) -> bool:
+    """Whether two ``TypeRef`` dicts name the same element type (nullability / list ignored)."""
+
+    def core(ref: Any) -> Any:
+        while isinstance(ref, dict) and isinstance(ref.get("item"), dict):
+            ref = ref["item"]
+        return ref.get("name") if isinstance(ref, dict) else None
+
+    return core(before) == core(after)
+
+
+#: Label rules whose finding accounts for a ``type`` move that only changes nullability / list
+#: wrapping (``optional`` → ``repeated``, ``required`` → ``optional``).
+_LABEL_SLUGS = frozenset({"cardinality-changed", "required-changed", "presence-changed"})
 
 
 class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register=True):
-    """Grade a Protobuf diff, sharpening the structural baseline with ``buf breaking``.
+    """Grade a Protobuf diff per ``buf breaking`` category, optionally confirmed by ``buf``.
 
     Registered under the ``protobuf`` format key (the one the MFI-9.2 normalizer emits). It
     **subclasses** the format-agnostic
-    :class:`~app.breaking_change.BuiltinBreakingChangeClassifier`, so the synchronous SPI methods
-    it inherits (:meth:`~app.breaking_change.BreakingChangeClassifier.classify_change` /
-    :meth:`~app.breaking_change.BreakingChangeClassifier.classify`) grade a Protobuf diff from
-    structure alone — the always-available, pure baseline the sync
-    :func:`app.breaking_change.classify` dispatch resolves for a Protobuf artifact. That baseline
-    is already wire-aware: it treats a reused ``field_number`` and a changed ``type`` as breaking
-    and an added optional field as safe.
+    :class:`~app.breaking_change.BuiltinBreakingChangeClassifier` and sharpens it with the
+    Protobuf rules of :mod:`app.proto_breaking_rules` (XPC-4.3): reserved numbers and names,
+    deleted fields, ``json_name``, file and package moves, enum value numbers, ``oneof``
+    membership and labels, each graded at :attr:`category` (``WIRE`` / ``WIRE_JSON`` /
+    ``PACKAGE`` / ``FILE``, default ``WIRE_JSON``). Every grade's rationale starts with the
+    category it was taken at, and a Protobuf finding's rationale also lists its grade under the
+    other three.
 
-    The authoritative ``buf breaking`` grading is the async :meth:`classify_async`, which overlays
-    ``buf``'s verdict at a configurable strictness onto that baseline. It is separate because the
-    tool shells out asynchronously (the SPI is sync), and it degrades gracefully back to the
-    baseline when the ``.proto`` sources or the tool are unavailable.
+    The synchronous :meth:`classify` needs no ``buf`` binary — it is what the sync
+    :func:`app.breaking_change.classify` dispatch resolves for a Protobuf artifact. The async
+    :meth:`classify_async` additionally runs ``buf breaking`` at the same category and overlays
+    its verdict, degrading back to :meth:`classify` when the sources or the tool are missing.
     """
 
     format = "protobuf"
     classifier_id = "buf-breaking"
+
+    def __init__(self, category: Any = None) -> None:
+        """Create a classifier that grades at ``category``.
+
+        Args:
+            category: A :class:`BufBreakingStrictness` or its name in any case; ``None`` selects
+                :data:`DEFAULT_BREAKING_STRICTNESS` (``WIRE_JSON``).
+
+        Raises:
+            ValueError: If ``category`` names no category.
+        """
+        self.category = coerce_category(category)
+
+    def classify(
+        self, model_diff: ModelDiff, base: CanonicalApi, target: CanonicalApi
+    ) -> ClassificationResult:
+        """Grade every change at :attr:`category` with the baseline and the Protobuf rules.
+
+        A change a Protobuf finding joins takes the worst of its findings' grades at the
+        category, plus — for an added or modified change — the baseline grade of whatever else
+        moved on it. A modified change whose every movement the rules explain without a finding
+        (a reservation added) is safe. A finding that joins no change (a message moved to
+        another file, which is not part of the diff) is reported in ``unattributed``.
+
+        Args:
+            model_diff: The diff to grade (as produced by :func:`app.diff.diff`).
+            base: The "from" model.
+            target: The "to" model.
+
+        Returns:
+            The :class:`~app.breaking_change.ClassificationResult`, 1:1 with
+            ``model_diff.changes``.
+        """
+        category = self.category.value
+        found = category_findings(base, target)
+        index: Dict[tuple, List[int]] = {}
+        for position, change in enumerate(model_diff.changes):
+            index.setdefault((change.category, change.key), []).append(position)
+
+        joined: Dict[int, List[Any]] = {}
+        unattributed: List[UnattributedFinding] = []
+        for finding in found.findings:
+            positions = sorted({p for join in finding.joins for p in index.get(join, [])})
+            for position in positions:
+                joined.setdefault(position, []).append(finding)
+            if not positions:
+                unattributed.append(
+                    UnattributedFinding(
+                        severity=finding.severity(category),
+                        rule_id=finding.rule_id,
+                        rationale=finding.rationale(category),
+                        shape=finding.subject,
+                    )
+                )
+
+        graded = [
+            self._grade_change(change, joined.get(position, []), found, base, target)
+            for position, change in enumerate(model_diff.changes)
+        ]
+        return _assemble_result(self, target, graded, unattributed)
+
+    def _grade_change(
+        self,
+        change: EntityChange,
+        findings: List[Any],
+        found: Any,
+        base: CanonicalApi,
+        target: CanonicalApi,
+    ) -> ChangeClassification:
+        """Grade one change from its joined findings and the baseline of what they leave."""
+        category = self.category.value
+        baseline = self.classify_change(change, base, target)
+        residual = self._residual(change, findings, found, baseline)
+        if not findings:
+            if residual is None:
+                return baseline.model_copy(
+                    update={
+                        "severity": Severity.SAFE,
+                        "rule_id": COMPATIBLE_RULE_ID,
+                        "rationale": f"[{category}] {change.key}: only reservations or oneof "
+                        "declarations moved; compatible under every category",
+                    }
+                )
+            return baseline.model_copy(update={"rationale": f"[{category}] {baseline.rationale}"})
+
+        severities = [f.severity(category) for f in findings]
+        if residual is not None:
+            severities.append(residual)
+        worst = _worst(severities)
+        lead = next((f for f in findings if f.severity(category) is worst), None)
+        reasons = list(dict.fromkeys(f.rationale(category) for f in findings))
+        if lead is None:  # the baseline residue is worse than every finding
+            reasons.append(f"[{category}] {baseline.rationale}")
+        return baseline.model_copy(
+            update={
+                "severity": worst,
+                "rule_id": lead.rule_id if lead is not None else baseline.rule_id,
+                "rationale": "; ".join(reasons),
+            }
+        )
+
+    @staticmethod
+    def _residual(
+        change: EntityChange, findings: List[Any], found: Any, baseline: ChangeClassification
+    ) -> Optional[Severity]:
+        """The baseline grade of the part of ``change`` no Protobuf rule explains.
+
+        Returns:
+            ``None`` when the rules explain all of it (a removal a finding joined, or a
+            modification confined to the explained ``extras`` keys); otherwise the baseline's
+            severity over the remaining attribute moves (an addition keeps its baseline grade).
+        """
+        if change.kind is ChangeKind.REMOVED:
+            return None if findings else baseline.severity
+        if change.kind is ChangeKind.ADDED or not change.fields:
+            return baseline.severity
+        if change.category not in (EntityCategory.FIELD, EntityCategory.TYPE):
+            return baseline.severity
+        labelled = any(f.slug in _LABEL_SLUGS for f in findings)
+        explained = (
+            EXPLAINED_FIELD_EXTRAS if change.category is EntityCategory.FIELD else EXPLAINED_TYPE_EXTRAS
+        )
+        left: List[Severity] = []
+        for moved in change.fields:
+            if moved.field == "extras" and _without(moved.before, explained) == _without(
+                moved.after, explained
+            ):
+                continue
+            if moved.field == "type" and labelled and _same_core(moved.before, moved.after):
+                continue
+            if moved.field == "enum_values" and change.key in found.explained_enum_values:
+                continue
+            left.append(_classify_modified_attribute(moved))
+        return _worst(left) if left else None
 
     async def classify_async(
         self,
@@ -503,29 +695,29 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
         *,
         against_files: "Any" = None,
         target_files: "Any" = None,
-        strictness: BufBreakingStrictness = DEFAULT_BREAKING_STRICTNESS,
+        strictness: Any = None,
         runner: "Any" = None,
         timeout: Optional[float] = None,
         policy: "Any" = None,
     ) -> ClassificationResult:
-        """Grade ``model_diff`` with the structural baseline, overlaid with ``buf breaking``.
+        """Grade ``model_diff`` structurally, overlaid with ``buf breaking`` at the same category.
 
-        Starts from the inherited structural grades, then — when the new and baseline ``.proto``
-        sources are supplied — runs ``buf breaking`` between them and overlays its authoritative
-        verdict at ``strictness``:
+        Starts from :meth:`classify` at the category, then — when the new and baseline
+        ``.proto`` sources are supplied — runs ``buf breaking`` at that category and overlays
+        its authoritative verdict:
 
-        * If ``buf`` reports **any** break, the diff is breaking at this strictness: the structural
-          per-change grades are kept (they are the best per-change attribution available, since
-          ``buf``'s file-scoped output cannot pin a verdict to one canonical key) and the overall
-          severity is forced to :attr:`~app.breaking_change.Severity.BREAKING`.
-        * If ``buf`` reports **none**, the diff is wire/JSON-compatible at this strictness, so the
-          conservative structural over-approximations are *capped* down: any structural
-          :attr:`~app.breaking_change.Severity.BREAKING` grade becomes
-          :attr:`~app.breaking_change.Severity.DANGEROUS` (compatible by the letter — e.g. a field
-          deletion is wire-compatible — but review warranted), while safe/dangerous grades stand.
+        * If ``buf`` reports **any** break, the structural per-change grades are kept (``buf``'s
+          file-scoped output cannot pin a verdict to one canonical key) and each ``buf`` finding
+          is added to ``unattributed`` as breaking, so the overall severity is breaking.
+        * If ``buf`` reports **none**, any structural
+          :attr:`~app.breaking_change.Severity.BREAKING` grade is capped to
+          :attr:`~app.breaking_change.Severity.DANGEROUS`.
+
+        Either way, when ``buf`` and the structural rules disagree about whether the diff
+        breaks, the rationales say so (see :func:`overlay_disagreement`).
 
         Every fall-through case — no sources supplied, or the ``buf`` tool unavailable/erroring —
-        keeps the structural baseline unchanged, and a deterministic result is still returned.
+        keeps the structural grades unchanged, and a deterministic result is still returned.
 
         Args:
             model_diff: The diff to grade (as produced by :func:`app.diff.diff`).
@@ -536,7 +728,8 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
                 (:class:`~app.proto_descriptor.ProtoFile`\\s). When omitted, the overlay is skipped.
             target_files: The new (``target``) ``.proto`` files. When omitted, the overlay is
                 skipped.
-            strictness: The breaking strictness (see :class:`BufBreakingStrictness`).
+            strictness: The category to grade and run ``buf`` at; ``None`` keeps
+                :attr:`category`.
             runner: Optional toolchain runner override (injectable for tests).
             timeout: Optional per-call breaking timeout in seconds.
             policy: Optional sandbox policy override.
@@ -545,7 +738,9 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             A :class:`~app.breaking_change.ClassificationResult`, 1:1 with and in the same order as
             ``model_diff.changes``.
         """
-        baseline = self.classify(model_diff, base, target)
+        category = self.category if strictness is None else coerce_category(strictness)
+        classifier = self if category is self.category else type(self)(category)
+        baseline = classifier.classify(model_diff, base, target)
 
         if not against_files or not target_files:
             # No source protos to compare; the structural baseline is the best we can do.
@@ -555,7 +750,7 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             result = await run_buf_breaking(
                 target_files,
                 against_files,
-                strictness=strictness,
+                strictness=category,
                 runner=runner,
                 timeout=timeout,
                 policy=policy,
@@ -566,7 +761,7 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             )
             return baseline
 
-        return self._overlay(baseline, result, target)
+        return classifier._overlay(baseline, result, target)
 
     def _overlay(
         self,
@@ -575,28 +770,42 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
         target: CanonicalApi,
     ) -> ClassificationResult:
         """Overlay ``buf breaking``'s authoritative verdict onto the structural ``baseline``."""
+        category = self.category.value
+        disagreement = overlay_disagreement(baseline, result)
+        note = f" ({disagreement})" if disagreement else ""
+        unattributed = list(baseline.unattributed)
         if result.has_breaking:
-            # buf confirms a break at this strictness. Keep the structural per-change grades and
-            # force the overall verdict to BREAKING (buf is authoritative even if its file-scoped
-            # finding did not join the change the structural pass happened to flag).
+            # buf confirms a break at this category. Keep the structural per-change grades and
+            # list buf's findings, which make the overall verdict breaking (buf is authoritative
+            # even if its file-scoped finding did not join the change the structural pass flagged).
             classifications = list(baseline.classifications)
-            overall = Severity.BREAKING
+            for change in result.changes:
+                where = f"{change.path}:{change.start_line}" if change.start_line else change.path
+                unattributed.append(
+                    UnattributedFinding(
+                        severity=change.severity,
+                        rule_id=change.rule,
+                        rationale=f"[{category}] buf breaking at {where}: {change.message}{note}",
+                        shape=change.path,
+                    )
+                )
         else:
-            # buf authoritatively finds the new set wire/JSON-compatible with the baseline at this
-            # strictness: nothing is a hard break, so cap structural over-approximations.
+            # buf authoritatively finds the new set compatible with the baseline at this
+            # category: nothing is a hard break, so cap structural over-approximations.
             classifications = [
-                self._cap_dangerous(classification)
+                self._cap_dangerous(classification, note)
                 for classification in baseline.classifications
             ]
-            overall = self._worst(classifications)
+            unattributed = [self._cap_unattributed(f, note) for f in unattributed]
+        return _assemble_result(self, target, classifications, unattributed)
 
-        return self._assemble(target, classifications, overall)
-
-    def _cap_dangerous(self, classification: ChangeClassification) -> ChangeClassification:
+    def _cap_dangerous(
+        self, classification: ChangeClassification, note: str = ""
+    ) -> ChangeClassification:
         """Cap a structural :attr:`Severity.BREAKING` grade down to ``DANGEROUS``.
 
-        Used when ``buf breaking`` authoritatively found no break at the configured strictness: a
-        change the structural baseline called breaking is, per ``buf``, compatible by the letter
+        Used when ``buf breaking`` authoritatively found no break at the configured category: a
+        change the structural rules called breaking is, per ``buf``, compatible by the letter
         (e.g. a wire-compatible field deletion) — so it is downgraded to ``DANGEROUS`` (review
         warranted). Safe/dangerous grades are returned unchanged.
         """
@@ -609,40 +818,49 @@ class ProtobufBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register
             severity=Severity.DANGEROUS,
             rule_id=f"{self.classifier_id}.wire-compatible",
             rationale=(
-                f"buf breaking found this {classification.kind.value} "
-                f"{classification.category.value} wire/JSON-compatible; review warranted but it "
-                "is not a hard break at the configured strictness."
+                f"[{self.category.value}] buf breaking found this {classification.kind.value} "
+                f"{classification.category.value} compatible; review warranted but it "
+                f"is not a hard break at this category (structural rule "
+                f"{classification.rule_id}){note}"
             ),
         )
 
-    @staticmethod
-    def _worst(classifications: List[ChangeClassification]) -> Severity:
-        """Return the worst (most breaking) severity across ``classifications``."""
-        worst = Severity.SAFE
-        for classification in classifications:
-            if _SEVERITY_RANK[classification.severity] > _SEVERITY_RANK[worst]:
-                worst = classification.severity
-        return worst
-
-    def _assemble(
-        self,
-        target: CanonicalApi,
-        classifications: List[ChangeClassification],
-        overall: Severity,
-    ) -> ClassificationResult:
-        """Assemble the overlaid result: the given overall + a per-severity tally."""
-        counts: Dict[str, int] = {}
-        for classification in classifications:
-            counts[classification.severity.value] = (
-                counts.get(classification.severity.value, 0) + 1
-            )
-        return ClassificationResult(
-            format=target.format,
-            classifier=self.classifier_id or type(self).__name__,
-            overall_severity=overall,
-            classifications=classifications,
-            counts_by_severity=counts,
+    def _cap_unattributed(self, finding: UnattributedFinding, note: str) -> UnattributedFinding:
+        """Cap a structural unattributed :attr:`Severity.BREAKING` finding to ``DANGEROUS``."""
+        if finding.severity is not Severity.BREAKING:
+            return finding
+        return finding.model_copy(
+            update={"severity": Severity.DANGEROUS, "rationale": finding.rationale + note}
         )
+
+
+def overlay_disagreement(
+    structural: ClassificationResult, result: ProtoBreakingResult
+) -> Optional[str]:
+    """Say whether ``buf breaking`` and the structural rules disagree about a diff breaking.
+
+    Args:
+        structural: The structural grading (:meth:`ProtobufBreakingChangeClassifier.classify`)
+            at the category ``buf`` ran at.
+        result: ``buf breaking``'s result at that category.
+
+    Returns:
+        ``None`` when both call the diff breaking or both call it compatible; otherwise one
+        sentence naming which side found the break and the category.
+    """
+    if structural.breaking == result.has_breaking:
+        return None
+    category = result.strictness.value
+    if result.has_breaking:
+        rules = ", ".join(sorted({c.rule for c in result.changes}))
+        return f"disagreement: buf breaking finds a {category} break ({rules}) the structural rules grade non-breaking"
+    rules = ", ".join(
+        sorted(
+            {c.rule_id for c in structural.classifications if c.severity is Severity.BREAKING}
+            | {f.rule_id for f in structural.unattributed if f.severity is Severity.BREAKING}
+        )
+    )
+    return f"disagreement: the structural rules find a {category} break ({rules}) buf breaking does not"
 
 
 # ===========================================================================
@@ -656,7 +874,7 @@ async def classify_protobuf(
     *,
     against_files: "Any",
     target_files: "Any",
-    strictness: BufBreakingStrictness = DEFAULT_BREAKING_STRICTNESS,
+    strictness: Any = None,
     runner: "Any" = None,
     timeout: Optional[float] = None,
     policy: "Any" = None,
@@ -674,7 +892,8 @@ async def classify_protobuf(
         against_files: The baseline (``base``) ``.proto`` files
             (:class:`~app.proto_descriptor.ProtoFile`\\s).
         target_files: The new (``target``) ``.proto`` files.
-        strictness: The breaking strictness (see :class:`BufBreakingStrictness`).
+        strictness: The category to grade and run ``buf`` at (a :class:`BufBreakingStrictness`
+            or its name); ``None`` grades at :data:`DEFAULT_BREAKING_STRICTNESS`.
         runner: Optional toolchain runner override (injectable for tests).
         timeout: Optional per-call breaking timeout in seconds.
         policy: Optional sandbox policy override.
@@ -683,14 +902,13 @@ async def classify_protobuf(
         The :class:`~app.breaking_change.ClassificationResult` for the diff of the two models.
     """
     model_diff = diff(base, target)
-    classifier = ProtobufBreakingChangeClassifier()
+    classifier = ProtobufBreakingChangeClassifier(strictness)
     return await classifier.classify_async(
         model_diff,
         base,
         target,
         against_files=against_files,
         target_files=target_files,
-        strictness=strictness,
         runner=runner,
         timeout=timeout,
         policy=policy,

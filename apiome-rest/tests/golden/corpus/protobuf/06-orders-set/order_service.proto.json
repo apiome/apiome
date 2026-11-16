@@ -3,7 +3,28 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "order_service.proto": {
+          "package": "example.orders.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.orders.v1.CancelOrderRequest",
+            "example.orders.v1.CreateOrderRequest",
+            "example.orders.v1.GetOrderRequest"
+          ]
+        },
+        "order_types.proto": {
+          "package": "example.orders.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.orders.v1.Order",
+            "example.orders.v1.OrderLine",
+            "example.orders.v1.OrderStatus"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.716.0] - 2026-11-15
+
+### Added
+- **Protobuf reserved numbers and Buf breaking categories (XPC-4.3, #5747)** — OpenAPI 1.576.0 (no schema change):
+  - `ProtobufBreakingChangeClassifier(category=…)` grades at a `buf breaking` category (`WIRE` / `WIRE_JSON` / `PACKAGE`
+    / `FILE`, any case; default `WIRE_JSON`). `classify_protobuf(..., strictness=…)` and `classify_async(strictness=…)`
+    take the same values and run `buf` at that category. New `coerce_category` and the `BufBreakingCategory` alias.
+  - New module `app.proto_breaking_rules` (`category_findings`): structural rules graded under all four categories, with
+    no `buf` binary needed — `reserved-removed` (dangerous), `reserved-number-reused` / `reserved-name-reused` (breaking),
+    `field-deleted-unreserved` / `field-deleted` (graded by which of number and name the new version reserves),
+    `field-renamed`, `field-number-reused`, `json-name-changed`, `type-moved-file`, `package-changed`,
+    `enum-value-number-reused`, `enum-value-number-changed`, `oneof-membership-changed`, `cardinality-changed`,
+    `required-changed` and `presence-changed`. Rule ids are `protobuf.<category>.<rule>`, naming the least strict category
+    where the rule is at its worst (`protobuf.wire_json.json-name-changed`); every rationale starts with the category
+    graded at (`[WIRE_JSON] …`) and a rule's rationale lists its grade under all four. A modified change confined to
+    reservations / oneof declarations grades `protobuf.compatible` (safe).
+  - Grades follow Buf's rule placement except where the roadmap decided otherwise: removing a reservation is dangerous,
+    and deleting a field whose number is not reserved is dangerous under `WIRE`. A Buf rule corpus
+    (`tests/fixtures/proto_breaking_categories`, recorded by `scripts/record_proto_breaking_fixtures.py`) pins every rule
+    in every category and lists those two disagreements.
+  - The `buf breaking` overlay now lists each `buf` finding in `unattributed` (rule `protobuf.buf-breaking.<type>`) when
+    it finds a break, and names any disagreement with the structural rules in the rationale
+    (`overlay_disagreement`).
+  - The Protobuf normalizer records a field's `json_name` in `extras` when it differs from the `protoc` default, and each
+    target file's package, syntax and top-level types under `CanonicalApi.extras["protobuf_files"]` (kept out of the
+    version fingerprint, like `xml_import_graph`, and out of the import pipeline's revision fingerprint, so a descriptor set
+    and its source tree still fingerprint alike). The `.proto` emitter writes a recorded `json_name` back.
+
+### Changed
+- Protobuf grades now carry the category in their rationale, and catalog drift and the re-import delta show the new
+  rules' grades. Protobuf corpus goldens gain the `protobuf_files` record (fingerprints unchanged).
+
+
 ## [1.715.0] - 2026-11-15
 
 ### Added

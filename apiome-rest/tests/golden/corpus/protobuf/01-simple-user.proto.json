@@ -3,7 +3,18 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "01-simple-user.proto": {
+          "package": "example.user.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.user.v1.Status",
+            "example.user.v1.User"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

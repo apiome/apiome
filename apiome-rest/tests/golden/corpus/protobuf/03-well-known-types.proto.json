@@ -3,7 +3,19 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "03-well-known-types.proto": {
+          "package": "example.billing.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.billing.v1.Charge",
+            "example.billing.v1.Money",
+            "example.billing.v1.Subscription"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

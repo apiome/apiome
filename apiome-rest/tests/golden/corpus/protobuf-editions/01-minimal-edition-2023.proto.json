@@ -35,6 +35,15 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "01-minimal-edition-2023.proto": {
+          "package": "example.ping.v1",
+          "syntax": "editions",
+          "types": [
+            "example.ping.v1.Beacon"
+          ]
+        }
       }
     },
     "format": "protobuf",

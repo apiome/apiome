@@ -35,6 +35,20 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "05-real-world-telemetry-edition-2023.proto": {
+          "package": "example.telemetry.v1",
+          "syntax": "editions",
+          "types": [
+            "example.telemetry.v1.ExportRequest",
+            "example.telemetry.v1.ExportResponse",
+            "example.telemetry.v1.LogRecord",
+            "example.telemetry.v1.Metric",
+            "example.telemetry.v1.Resource",
+            "example.telemetry.v1.Severity"
+          ]
+        }
       }
     },
     "format": "protobuf",

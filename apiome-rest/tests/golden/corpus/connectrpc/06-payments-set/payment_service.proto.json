@@ -15,6 +15,25 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "payment_service.proto": {
+          "package": "payments.v1",
+          "syntax": "proto3",
+          "types": [
+            "payments.v1.CreatePaymentRequest",
+            "payments.v1.GetPaymentRequest"
+          ]
+        },
+        "payment_types.proto": {
+          "package": "payments.v1",
+          "syntax": "proto3",
+          "types": [
+            "payments.v1.Money",
+            "payments.v1.Payment",
+            "payments.v1.PaymentState"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

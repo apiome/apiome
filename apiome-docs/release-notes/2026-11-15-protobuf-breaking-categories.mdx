@@ -1,0 +1,30 @@
+---
+slug: protobuf-breaking-categories
+title: Protobuf changes graded by Buf's breaking-change categories
+description: "Protobuf changes are graded under WIRE, WIRE_JSON, PACKAGE or FILE, the way Buf does."
+authors: [apiome]
+---
+
+Comparing two versions of a Protobuf or gRPC catalog item now grades each change under one of
+Buf's four breaking-change **categories**: `WIRE`, `WIRE_JSON`, `PACKAGE` or `FILE`. The default is
+`WIRE_JSON`, as before. Each explanation now starts with the category, such as `[WIRE_JSON]`, and
+says how the change grades under the other three. So you can see that renaming a field is safe on
+the wire but breaks JSON clients.
+
+{/* truncate */}
+
+- **Reserved numbers and names.** Removing a `reserved` entry is **Dangerous**. Using a reserved
+  number or name again is **Breaking**. A deleted field is graded by what it left reserved:
+  **Dangerous** under `WIRE` when its number is free, **Safe** once the number is reserved.
+- **New rules, with or without `buf`.** `json_name` changes, messages moved to another file or
+  package, renamed or renumbered enum values, `oneof` membership, and `optional` / `required` /
+  `repeated` label changes are graded from the model. You no longer need a `buf` binary on the
+  server to catch them.
+- **Rule ids name the category.** For example, `protobuf.wire_json.json-name-changed` is safe under
+  `WIRE` and breaking from `WIRE_JSON` up. The full table is on
+  [Compatibility modes](/govern/compatibility-modes#protobuf).
+- **`buf` disagreements are reported.** When `buf breaking` runs, its findings are listed next to
+  the grades, and an explanation says `disagreement:` when `buf` and these rules disagree.
+
+You see the new grades in drift (**What changed** on a catalog item's **Versions** tab) and when you
+re-import a file over an existing item. Choosing the category in the API and CLI comes later.

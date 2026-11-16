@@ -15,6 +15,18 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "04-chat-stress.proto": {
+          "package": "chat.v1",
+          "syntax": "proto3",
+          "types": [
+            "chat.v1.Event",
+            "chat.v1.GetRoomRequest",
+            "chat.v1.ImportSummary",
+            "chat.v1.Room"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

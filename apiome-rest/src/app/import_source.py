@@ -1433,15 +1433,22 @@ def load_builtin_import_sources() -> None:
 # ===========================================================================
 
 
+#: ``CanonicalApi.extras`` key of the Protobuf file record
+#: (:data:`app.proto_normalizer.PROTOBUF_FILES_EXTRA_KEY`), left out of :func:`canonical_fingerprint`.
+#: Spelled out to keep this module free of the Protobuf import.
+_PROTOBUF_FILES_EXTRA_KEY = "protobuf_files"
+
+
 def canonical_fingerprint(model: CanonicalApi) -> str:
     """Return a stable ``sha256:`` fingerprint of a normalized canonical model.
 
     The hash is taken over the model's JSON serialization with the ``raw``
     fidelity bag excluded (it is the native AST, not part of the *normalized*
-    identity) and object keys sorted, so it depends only on the normalized
-    content. Since normalizers run :func:`app.normalizer.normalize_ordering`, two
-    imports of the same source — however the source ordered its paths/schemas —
-    produce byte-identical input here and therefore the same fingerprint.
+    identity) — as is the Protobuf file record, which only names files — and
+    object keys sorted, so it depends only on the normalized content. Since
+    normalizers run :func:`app.normalizer.normalize_ordering`, two imports of
+    the same source — however the source ordered its paths/schemas — produce
+    byte-identical input here and therefore the same fingerprint.
 
     Args:
         model: The canonical model to fingerprint.
@@ -1450,6 +1457,11 @@ def canonical_fingerprint(model: CanonicalApi) -> str:
         ``"sha256:<hex>"``.
     """
     payload = model.model_dump(mode="json", exclude={"raw"})
+    # The Protobuf file record (XPC-4.3) names the files, which a descriptor set and the source
+    # tree it was built from spell differently; the same API must still fingerprint the same.
+    extras = payload.get("extras")
+    if isinstance(extras, dict):
+        extras.pop(_PROTOBUF_FILES_EXTRA_KEY, None)
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     digest = hashlib.sha256(blob.encode("utf-8")).hexdigest()
     return f"sha256:{digest}"

@@ -529,6 +529,26 @@ The ledger marks a CEL rule **partially mapped**, because the rule itself is kep
 predefined rule **not parsed by the adapter**. How each rule fares on export is on
 [Understand export fidelity](../ship/export-fidelity.md#protovalidate-rules).
 
+## Protobuf: what a comparison reads
+
+When two versions of a Protobuf or gRPC catalog item are compared, the grade depends on more than
+the messages and fields. The item records what Buf's breaking-change categories need:
+
+| In the `.proto` | What the catalog item records | What the comparison uses it for |
+| --- | --- | --- |
+| `reserved 5, 9 to 11;` and `reserved "old";` | The reserved numbers and names, on the message or enum | Whether a deleted field left its number and name reserved, and whether a new field reuses one |
+| `[json_name = "login"]` | The JSON name, only when it differs from the default (`user_name` → `userName`) | Whether a field's JSON key changed |
+| `optional`, `required`, `repeated` | The label, and whether a proto3 field tracks presence | Whether a field's cardinality or presence changed |
+| `oneof choice { … }` | Which `oneof` each field belongs to | Whether a field moved into or out of a `oneof` |
+| Each file's `package` and the messages and enums it declares | The file, its package and its syntax | Whether a declaration moved to another file or package |
+
+The file a declaration sits in is not part of the version comparison. Renaming a file, or moving a
+message between files, does not create a new version on its own. When it comes with other changes,
+the move is graded under the `FILE` category.
+
+The grades, the four categories and the rule ids are on
+[Compatibility modes](../govern/compatibility-modes.md#protobuf).
+
 ## JSON Schema: compatibility
 
 A JSON Schema catalog item keeps the document you imported. Each `$defs` (or `definitions`) entry

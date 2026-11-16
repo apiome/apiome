@@ -90,7 +90,9 @@ _OPAQUE_KEYS = frozenset(
 # hash of a WSDL / XSD import (MFI-13.1), which keeps ``xs:documentation`` — or that name files
 # (the XML import graph) — and would otherwise mint a version for an edit the fingerprint is meant
 # to ignore. API Blueprint's Refract hash (MFI-16.1) exists only where drafter is installed, so it is
-# kept out too: the same blueprint must mint the same version on every server.
+# kept out too: the same blueprint must mint the same version on every server. The Protobuf file
+# record (XPC-4.3) names files too: moving a message to another file is graded by the classifier,
+# not by minting a version.
 UNHASHED_EXTRAS = frozenset(
     {
         "avro_semantic_hashes",
@@ -101,6 +103,7 @@ UNHASHED_EXTRAS = frozenset(
         "apib_refract_algorithm",
         "apib_drafter_version",
         "smithy_shape_hashes",
+        "protobuf_files",
     }
 )
 

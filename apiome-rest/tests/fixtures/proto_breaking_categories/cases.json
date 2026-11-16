@@ -1,0 +1,406 @@
+{
+  "description": "XPC-4.3 (#5747) Buf rule corpus: one .proto change per case, the grade expected under each buf breaking category, and the categories where the roadmap deliberately departs from buf. recordings.json (scripts/record_proto_breaking_fixtures.py) holds each side's compiled descriptor set and buf's own findings.",
+  "cases": [
+    {
+      "id": "reserved-removed",
+      "rule": "reserved-removed",
+      "note": "Dropping a reservation breaks nothing yet, but lets a later change reuse the number or name.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved 5, 9 to 11;\n  reserved \"old\";\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "dangerous",
+        "WIRE_JSON": "dangerous",
+        "PACKAGE": "dangerous",
+        "FILE": "dangerous"
+      },
+      "known_disagreements": {
+        "WIRE": "XPC-4.3 decision: removing a reservation is dangerous; buf's RESERVED_MESSAGE_NO_DELETE calls it breaking",
+        "WIRE_JSON": "XPC-4.3 decision: removing a reservation is dangerous; buf's RESERVED_MESSAGE_NO_DELETE calls it breaking",
+        "PACKAGE": "XPC-4.3 decision: removing a reservation is dangerous; buf's RESERVED_MESSAGE_NO_DELETE calls it breaking",
+        "FILE": "XPC-4.3 decision: removing a reservation is dangerous; buf's RESERVED_MESSAGE_NO_DELETE calls it breaking"
+      }
+    },
+    {
+      "id": "reserved-number-reused",
+      "rule": "reserved-number-reused",
+      "note": "A number retired by reservation now carries a new field.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved 5;\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string z = 5;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "reserved-name-reused",
+      "rule": "reserved-name-reused",
+      "note": "A reserved name is used again.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved \"old\";\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string old = 6;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "enum-reserved-number-reused",
+      "rule": "reserved-number-reused",
+      "note": "An enum number retired by reservation is used again.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  reserved 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  E_B = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "field-deleted-unreserved",
+      "rule": "field-deleted-unreserved",
+      "note": "Neither the number nor the name is reserved.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "dangerous",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      },
+      "known_disagreements": {
+        "WIRE": "XPC-4.3 decision: an unreserved deletion is dangerous under WIRE; buf's FIELD_NO_DELETE_UNLESS_NUMBER_RESERVED calls it breaking"
+      }
+    },
+    {
+      "id": "field-deleted-name-unreserved",
+      "rule": "field-deleted-unreserved",
+      "note": "The number is reserved, the name is not.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved 2;\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "field-deleted-reserved",
+      "rule": "field-deleted",
+      "note": "Number and name reserved: wire- and JSON-safe, but generated code loses the field.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved 2;\n  reserved \"b\";\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "field-renamed",
+      "rule": "field-renamed",
+      "note": "Same number and type, new name.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string c = 2;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "field-number-reused",
+      "rule": "field-number-reused",
+      "note": "The number now carries a field of another type.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  int64 c = 2;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "json-name-changed",
+      "rule": "json-name-changed",
+      "note": "The JSON key moves from userName to login.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string user_name = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string user_name = 1 [json_name = \"login\"];\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "type-moved-file",
+      "rule": "type-moved-file",
+      "note": "N moves to another file in the same package.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n\nmessage N {\n  string b = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n",
+        "acme/v1/b.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage N {\n  string b = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "safe",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "file-renamed",
+      "rule": "type-moved-file",
+      "note": "The only file is renamed.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/b.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "safe",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "package-changed",
+      "rule": "package-changed",
+      "note": "The package changes, so M's full name does.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v2;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "enum-value-renamed",
+      "rule": "enum-value-number-reused",
+      "note": "Number 1 now has another name.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  E_A = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  E_B = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "enum-value-number-changed",
+      "rule": "enum-value-number-changed",
+      "note": "E_A is sent as another number.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  E_A = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nenum E {\n  E_UNSPECIFIED = 0;\n  E_A = 2;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "oneof-joined",
+      "rule": "oneof-membership-changed",
+      "note": "Two fields join a oneof.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  string b = 2;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  oneof choice {\n    string a = 1;\n    string b = 2;\n  }\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "oneof-left",
+      "rule": "oneof-membership-changed",
+      "note": "A field leaves its oneof.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  oneof choice {\n    string a = 1;\n    string b = 2;\n  }\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n  oneof choice {\n    string b = 2;\n  }\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "cardinality-changed",
+      "rule": "cardinality-changed",
+      "note": "Singular becomes repeated.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  repeated string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "presence-added",
+      "rule": "presence-changed",
+      "note": "proto3 optional adds presence tracking: same bytes, new generated API.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  optional string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "presence-removed",
+      "rule": "presence-changed",
+      "note": "proto3 optional removed.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  optional string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "required-to-optional",
+      "rule": "required-changed",
+      "note": "Old readers reject a message without the field.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto2\";\npackage acme.v1;\n\nmessage M {\n  required string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto2\";\npackage acme.v1;\n\nmessage M {\n  optional string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "optional-to-required",
+      "rule": "required-changed",
+      "note": "New readers reject messages old writers send without it.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto2\";\npackage acme.v1;\n\nmessage M {\n  optional string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto2\";\npackage acme.v1;\n\nmessage M {\n  required string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "breaking",
+        "WIRE_JSON": "breaking",
+        "PACKAGE": "breaking",
+        "FILE": "breaking"
+      }
+    },
+    {
+      "id": "reservation-added",
+      "rule": "compatible",
+      "note": "Reserving more numbers is always compatible.",
+      "old": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  string a = 1;\n}\n"
+      },
+      "new": {
+        "acme/v1/a.proto": "syntax = \"proto3\";\npackage acme.v1;\n\nmessage M {\n  reserved 7;\n  string a = 1;\n}\n"
+      },
+      "expected": {
+        "WIRE": "safe",
+        "WIRE_JSON": "safe",
+        "PACKAGE": "safe",
+        "FILE": "safe"
+      }
+    }
+  ]
+}

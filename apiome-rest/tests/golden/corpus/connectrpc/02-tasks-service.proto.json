@@ -15,6 +15,21 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "02-tasks-service.proto": {
+          "package": "tasks.v1",
+          "syntax": "proto3",
+          "types": [
+            "tasks.v1.CompleteTaskRequest",
+            "tasks.v1.CreateTaskRequest",
+            "tasks.v1.GetTaskRequest",
+            "tasks.v1.ListTasksRequest",
+            "tasks.v1.ListTasksResponse",
+            "tasks.v1.Task",
+            "tasks.v1.TaskState"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

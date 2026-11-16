@@ -141,7 +141,22 @@ from .proto_validate import (
 
 # ``EDITIONS_PROVENANCE_EXTRA_KEY`` is re-exported for the readers that already import it
 # from here; its home is :mod:`app.proto_editions`, with the rest of the vocabulary.
-__all__ = ["EDITIONS_PROVENANCE_EXTRA_KEY", "ProtoNormalizer"]
+__all__ = [
+    "EDITIONS_PROVENANCE_EXTRA_KEY",
+    "JSON_NAME_EXTRA_KEY",
+    "PROTOBUF_FILES_EXTRA_KEY",
+    "ProtoNormalizer",
+    "default_json_name",
+]
+
+#: A field's ``json_name``, recorded in its ``extras`` only when it differs from the name
+#: ``protoc`` derives (XPC-4.3): JSON keys on it, so changing it breaks JSON readers.
+JSON_NAME_EXTRA_KEY = "json_name"
+
+#: ``CanonicalApi.extras`` key holding each target file's package and top-level types
+#: (XPC-4.3), so a declaration moved to another file can be told apart. Kept out of the
+#: fingerprint (:data:`app.fingerprint.UNHASHED_EXTRAS`): renaming a file mints no version.
+PROTOBUF_FILES_EXTRA_KEY = "protobuf_files"
 
 
 # The protobuf format key this normalizer registers under and stamps onto the canonical
@@ -288,6 +303,9 @@ class ProtoNormalizer(Normalizer, register=True):
         unsupported = unsupported_constraints(api.types)
         if unsupported:
             api.extras[PROTOVALIDATE_EXTRA_KEY] = {"capability_limits": unsupported}
+        files = _files_record(target_protos)
+        if files:
+            api.extras[PROTOBUF_FILES_EXTRA_KEY] = files
         return api
 
     # --- source coercion ----------------------------------------------------
@@ -604,6 +622,9 @@ class ProtoNormalizer(Normalizer, register=True):
             and 0 <= field.oneof_index < len(message.oneof_decl)
         ):
             extras["oneof"] = message.oneof_decl[field.oneof_index].name
+        # XPC-4.3: the compiler fills `json_name` on every field, so only a custom one is kept.
+        if field.HasField("json_name") and field.json_name != default_json_name(field.name):
+            extras[JSON_NAME_EXTRA_KEY] = field.json_name
 
         resolved = context.field_scope(parent_features, field)
         is_repeated = field.label == descriptor_pb2.FieldDescriptorProto.LABEL_REPEATED
@@ -867,6 +888,58 @@ def _is_map_field(field: descriptor_pb2.FieldDescriptorProto) -> bool:
         and field.label == descriptor_pb2.FieldDescriptorProto.LABEL_REPEATED
         and field.type_name.endswith("Entry")
     )
+
+
+def default_json_name(name: str) -> str:
+    """Return the ``json_name`` ``protoc`` derives from a field name.
+
+    Each underscore is dropped and the letter after it upper-cased (``user_id`` → ``userId``),
+    the same rule as ``protoc``'s ``ToJsonName``.
+
+    Args:
+        name: The field's proto name.
+
+    Returns:
+        Its default JSON name.
+    """
+    out: List[str] = []
+    upper_next = False
+    for char in name:
+        if char == "_":
+            upper_next = True
+        elif upper_next:
+            out.append(char.upper())
+            upper_next = False
+        else:
+            out.append(char)
+    return "".join(out)
+
+
+def _files_record(
+    target_protos: Sequence[descriptor_pb2.FileDescriptorProto],
+) -> Dict[str, Any]:
+    """Return each target file's package, syntax and top-level message / enum keys.
+
+    Nested types are left out: they move with the message that holds them. The syntax tells
+    a proto3 field without presence from a proto2 ``optional`` one, which share a label.
+
+    Args:
+        target_protos: The target files, in descriptor order.
+
+    Returns:
+        ``{file name: {"package": str, "syntax": "proto2" | "proto3" | "editions",
+        "types": [sorted type keys]}}``; ``{}`` for no files.
+    """
+    record: Dict[str, Any] = {}
+    for file_proto in target_protos:
+        package = file_proto.package
+        names = [m.name for m in file_proto.message_type] + [e.name for e in file_proto.enum_type]
+        record[file_proto.name] = {
+            "package": package,
+            "syntax": file_proto.syntax or "proto2",
+            "types": sorted(_qualified(package or None, name) for name in names),
+        }
+    return record
 
 
 def _reserved_extras(

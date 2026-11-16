@@ -51,6 +51,7 @@ output, and the round-trip ticket (MFX-12.3) automates the full loop.
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -1152,6 +1153,9 @@ class _ProtoWriter:
         self._record_feature_losses(field.extras, field.key, "Field")
 
         option_list = ["deprecated = true"] if field.deprecated else []
+        json_name = field.extras.get("json_name")
+        if isinstance(json_name, str) and json_name:
+            option_list.append(f"json_name = {json.dumps(json_name)}")
         option_list.extend(self._validation_options(field, type_expr, prefix))
         decl = f"{pad}{prefix}{type_expr} {name} = {number}{_field_options(option_list, pad)};"
         comment = _comment(field.description, pad)

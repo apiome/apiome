@@ -3,7 +3,25 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "05-pubsub-style.proto": {
+          "package": "example.pubsub.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.pubsub.v1.DeleteTopicRequest",
+            "example.pubsub.v1.GetTopicRequest",
+            "example.pubsub.v1.ListTopicsRequest",
+            "example.pubsub.v1.ListTopicsResponse",
+            "example.pubsub.v1.MessageStoragePolicy",
+            "example.pubsub.v1.PublishRequest",
+            "example.pubsub.v1.PublishResponse",
+            "example.pubsub.v1.PubsubMessage",
+            "example.pubsub.v1.Topic"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},
