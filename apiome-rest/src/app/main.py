@@ -205,6 +205,7 @@ from .mock_broker_binding_routes import router as mock_broker_binding_router
 from .mock_broker_bindings import validate_broker_credential_keys
 from .slate_cdn_crypto import validate_slate_cdn_credential_keys
 from .usage_ingest_routes import router as usage_ingest_router
+from .usage_source_routes import router as usage_source_router
 from .verification_evidence_routes import router as verification_evidence_router
 from .verification_policy_routes import router as verification_policy_router
 from .verification_schedule_routes import router as verification_schedule_router
@@ -232,7 +233,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.580.0",
+    version="1.581.0",
 )
 
 
@@ -483,6 +484,8 @@ app.include_router(two_factor_policy_router)
 app.include_router(graph_router)
 # usage_ingest_router: RDG-1.2 usage ingest door POST /v1/tenants/{t}/usage/ingest (#5760).
 app.include_router(usage_ingest_router)
+# usage_source_router: RDG-1.4 HAR source find-or-create POST /v1/tenants/{t}/usage/sources/har (#5762).
+app.include_router(usage_source_router)
 app.include_router(comment_router)
 app.include_router(presence_router)
 app.include_router(review_suggestion_router)

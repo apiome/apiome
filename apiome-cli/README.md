@@ -671,6 +671,27 @@ and warns on stderr when it is stale (the draft or the policy moved since). Runn
 full-access API key; `checks show --version` also works with a CI key holding `diff:read` or
 `lint:read`.
 
+### Upload a HAR file to the usage index (`usage upload`)
+
+`apiome usage upload FILE.har --project <slug|uuid> --environment <env>` turns a browser devtools or
+proxy recording into usage events (RDG-1.4). The file is streamed and checked end to end first; then
+each entry becomes an event **on this machine** — field presence is computed from the bodies, which
+are then discarded, and header and query values are never sent. Events go up in batches of at most
+5,000 (`POST …/usage/ingest`), and the server's counts and scrub summary are printed.
+
+```bash
+export APIOME_API_KEY=<a usage:ingest key>   # the "Usage source" preset
+apiome usage upload session.har --project payments-api --environment staging
+apiome usage upload session.har --project payments-api --environment prod --source 6f1c9a52-...
+apiome --json usage upload session.har --project payments-api --environment staging
+```
+
+Without `--source`, the project's `har` source for the environment is found or created
+(`POST …/usage/sources/har`). `--sample-bodies` sends redacted samples only when the source's body
+window is open (refused before anything is sent otherwise). `.http` / `.rest` files are refused:
+they hold no responses. Exit 0 uploaded; 2 parse error or rejected request (auth included); 1
+unreachable.
+
 ### Open the browse app (`browse open`)
 
 `apiome browse open PATH` opens a page of the `apiome-browse` app in the default browser, like

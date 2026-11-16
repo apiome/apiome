@@ -45,6 +45,7 @@ from apiome_cli.commands import (
     tags,
     teams,
     types,
+    usage,
     verify,
     versions,
 )
@@ -111,6 +112,7 @@ app.add_typer(teams.app, name="teams")
 app.add_typer(graph.app, name="graph")
 app.add_typer(registry.app, name="registry")
 app.add_typer(sdk.app, name="sdk")
+app.add_typer(usage.app, name="usage")
 app.command("diff")(diff.diff)
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")

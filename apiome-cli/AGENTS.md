@@ -33,6 +33,7 @@ Key REST surfaces used by the CLI:
 | Area | Endpoints (representative) |
 |------|----------------------------|
 | Health | `GET /health` (anonymous) |
+| Usage upload (RDG-1.4, #5762) | `POST /v1/tenants/{t}/usage/sources/har` (find/check/create the project's `har` source), then `POST /v1/tenants/{t}/usage/ingest` (gzip batches ≤ 5,000 events, `X-Apiome-Usage-Source`) — `apiome usage upload FILE.har`. The one place the CLI reads traffic itself: `usage_har.py` streams the HAR and builds events locally so bodies, header values and query values never leave the machine; templating and scrubbing stay the server's. A `usage:ingest` key cannot read `/v1/tenants/me`, so the configured tenant ref is used in the path as-is (the server takes the tenant from the key) |
 | SDK compatibility (SGD-2.1, #4735) | `GET /v1/tenants/{t}/projects/{p}/sdk-compatibility?version=` — `apiome sdk compatibility` renders it; `--fail-on` exits 4 |
 | CLI login (#5501) | `POST /v1/cli/login`, `POST /v1/cli/login/token` (anonymous; RFC 8628-shaped poll, `detail.error` codes), `DELETE /v1/cli/login/key` (`X-API-Key`; revokes only a `cli_login` key) |
 | List / get | `GET /projects`, `GET /properties`, `GET /schemas`, `GET /project-versions`, `GET /types`, `GET /{resource}/{id}` |
@@ -109,7 +110,8 @@ Follow [Command Line Interface Guidelines](https://clig.dev/):
 | `src/apiome_cli/schema_test.py` | Pure logic for `schema test`: suite discovery, case judging, verdict/exit rules, JUnit + JSON + human renderings (IXH-5.5). No HTTP, no typer |
 | `src/apiome_cli/client/spec_download.py` | Browse spec and import-source HTTP download helpers |
 | `src/apiome_cli/spec_output.py` | Write document bytes; emit metadata on stdout/stderr per clig.dev |
-| `src/apiome_cli/commands/` | Typer subcommands (`auth`, `api-keys`, `browse`, `integrations`, `config`, `doctor`, `health`, `projects`, `properties`, `classes`, `schema`, `schemas`, `types`, `tokens`, `versions`, `paths`, `operations`, `workflows`, `spec`, `import`, `export`, `convert`, `diff`, `contract`, `verify`, `repos`, `repository`, `mcp`, `mcp_governance`, `mock`) |
+| `src/apiome_cli/commands/` | Typer subcommands (`auth`, `api-keys`, `browse`, `integrations`, `config`, `doctor`, `health`, `projects`, `properties`, `classes`, `schema`, `schemas`, `types`, `tokens`, `versions`, `paths`, `operations`, `workflows`, `spec`, `import`, `export`, `convert`, `diff`, `contract`, `verify`, `repos`, `repository`, `mcp`, `mcp_governance`, `mock`, `usage`) |
+| `src/apiome_cli/usage_har.py` | RDG-1.4: streaming HAR reader → `HttpObservation`-shaped entries → `apiome.usage.event/v1` events (field pointers computed, bodies discarded) → ingest batches |
 | `src/apiome_cli/output_diff.py` | Against-ref parse, `--fail-on` threshold, text/json formatting for `diff` (CTG-2.1) |
 | `src/apiome_cli/client/conversion_output.py` | Fidelity summary + mandatory-warning formatting and low-tier detection for `convert` (MFI-22.6) |
 | `src/apiome_cli/client/export_registry.py` | Emitter-registry export client: targets discovery (`GET /export/targets`) + dry-run fidelity preview (`POST /export/preview`) + projection evidence paging (`POST /export/projection-evidence`, EFP-2.1) + target resolution for generic export (MFX-9.4 / MFX-8.1) |

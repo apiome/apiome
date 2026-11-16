@@ -1,6 +1,6 @@
 ---
 title: "Usage"
-description: "REST endpoints tagged usage: 3 operations."
+description: "REST endpoints tagged usage: 4 operations."
 sidebar_position: 113
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.580.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.581.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `usage` · 3 operations
+Tag: `usage` · 4 operations
 
 ## `POST /v1/tenants/{tenant_slug}/usage/ingest` {#ingest-usage-v1-tenants-tenant-slug-usage-ingest-post}
 
@@ -126,6 +126,44 @@ Operation id: `read_sdk_beacons_v1_tenants__tenant_slug__usage_sdk_beacons_get`
 | 200 | Successful response for read a project's sdk beacon counts. | `application/json` [`SdkBeaconCounts`](#schema-sdkbeaconcounts) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/usage/sources/har` {#resolve-har-usage-source-v1-tenants-tenant-slug-usage-sources-har-post}
+
+**Find or create a project's HAR usage source**
+
+Answers the `har` usage source that `apiome usage upload` posts a HAR file's events to (RDG-1.4).
+
+* With `sourceId`, that source is checked: it must belong to the project and be a `har` source (`409` otherwise).
+* Without it, the project's oldest `har` source in the environment is answered, or one is created with field capture on, sampling rate 1 and no body window. A disabled source is refused with `403`, never replaced.
+
+Takes a workspace API key with the `usage:ingest` scope (or full access), or a session.
+
+Operation id: `resolve_har_usage_source_v1_tenants__tenant_slug__usage_sources_har_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for find or create a project's har usage source.
+
+- `application/json` — [`HarSourceRequest`](#schema-harsourcerequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for find or create a project's har usage source. | `application/json` [`HarSourceResponse`](#schema-harsourceresponse) |
+| 400 | Invalid or reserved environment. | — |
+| 403 | The source is disabled. | — |
+| 404 | Unknown project or source. | — |
+| 409 | The named source belongs to another project, or is not a `har` source. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -135,6 +173,31 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `HarSourceRequest` {#schema-harsourcerequest}
+
+Which project and environment a HAR upload reports, and optionally which source.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project` | string | yes | Project slug or UUID. |
+| `environment` | string | yes | The environment the recorded traffic happened in (`prod`, `staging`, ...). `mock` is reserved. |
+| `sourceId` | string or null | no | A `har` source of the project to use. Omit it to find the project's source, or create one. |
+
+### `HarSourceResponse` {#schema-harsourceresponse}
+
+The source a HAR upload posts its events to.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sourceId` | string | yes | The `usage_source` to name on `…/usage/ingest`. |
+| `projectId` | string | yes | The source's project. |
+| `kind` | string | yes | Always `har`. |
+| `environment` | string | yes | The source's default environment. |
+| `samplingRate` | number | yes | The source's head-sampling rate. |
+| `fieldCapture` | boolean | yes | Whether field presence is counted (on for a source created here). |
+| `bodySamplesOpen` | boolean | yes | Whether the source accepts opt-in body samples right now (its body window is open). |
+| `created` | boolean | yes | Whether this call created the source. |
 
 ### `SdkBeaconBatch` {#schema-sdkbeaconbatch}
 
