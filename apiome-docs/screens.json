@@ -2244,6 +2244,32 @@
       ]
     },
     {
+      "id": "browse-changelog",
+      "app": "browse",
+      "route": "/tenant/acme-corp/petstore-sample/changelog",
+      "waitFor": "[data-testid=\"project-changelog\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/tenant/[tenantSlug]/[projectSlug]/changelog",
+        "apiome-browse/src/app/components/SeverityPill.tsx",
+        "apiome-browse/lib/changelog",
+        "apiome-browse/src/app/globals.css"
+      ]
+    },
+    {
+      "id": "browse-changelog-filtered",
+      "app": "browse",
+      "route": "/tenant/acme-corp/petstore-sample/changelog?severity=breaking",
+      "waitFor": "[data-testid=\"project-changelog\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/tenant/[tenantSlug]/[projectSlug]/changelog",
+        "apiome-browse/src/app/components/SeverityPill.tsx",
+        "apiome-browse/lib/changelog",
+        "apiome-browse/src/app/globals.css"
+      ]
+    },
+    {
       "id": "export-studio-sdk-compat",
       "route": "/ade/dashboard/export/studio?tab=sdk-compat",
       "waitFor": "#a11y-mount > *",

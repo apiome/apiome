@@ -57,6 +57,14 @@ and **Format** already appear in the header.
 **Best grade** puts A before F, and the higher score first within a grade. Projects that have not
 been scored come last.
 
+## The API changelog
+
+Each project has a **Changelog** page (`/tenant/<org>/<project>/changelog`) that lists the classified
+changes of every published version, newest first and breaking first, with **Severity**, **Path
+group** and **Since version** filters and a Markdown copy. Open it with **Changelog** next to the
+project's **Version history**, or **See the whole changelog →** on a version's **Changes** tab. See
+[API changelog](./api-changelog.mdx).
+
 ## Search the public catalog
 
 The browse app's **Search** page (`/search`) searches the normalized model of every published public
@@ -300,6 +308,7 @@ documents the Apiome REST API itself — see [API reference](../reference/api-re
 ```http
 GET /v1/browse/tenants/{tenant_slug}/projects                              # public projects
 GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions      # published versions
+GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md  # the changelog as Markdown
 GET /v1/browse/tenants/{tenant_slug}/agents.json?site_url=…                # the agents.json
 GET /v1/browse/tenants/{tenant_slug}/llms.txt?site_url=…                   # the llms.txt
 ```
@@ -369,4 +378,5 @@ list and renders in its Swagger UI.
 
 - [Export a spec](./export-a-spec.md) — download the raw OpenAPI document
 - [Compare published versions](./compare-published-versions.md) — what changed between two of them
+- [API changelog](./api-changelog.mdx) — every version's changes on one page
 - [MCP quick-start](../reference/mcp-quickstart.md) — query the same published specs from an MCP host

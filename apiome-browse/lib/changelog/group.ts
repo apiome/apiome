@@ -37,7 +37,7 @@ const SEVERITY_LABELS: Record<Severity, string> = {
  */
 const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
   breaking: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
-  'non-breaking': 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  'non-breaking': 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300',
   'docs-only': 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
 };
 

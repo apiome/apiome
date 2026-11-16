@@ -17,6 +17,7 @@ This document outlines the planned features, improvements, and enhancements for 
 - ✅ Data tables with sorting, searching, and pagination
 - ✅ Compare from search — a *Compare* tick on version/operation/schema hits (max two, one project; `c` on the cursor row) and a sticky bar linking to `/compare?v1=&v2=`; the version chip on a hit switches to the same operation/schema in another published version (BDX-2.6)
 - ✅ Card facts line — operation/schema counts, quality grade, Mock, SDK, format and last published on every project card, project/version header and project search hit; sort by most operations or best grade (BDX-2.2)
+- ✅ API changelog page — `/tenant/{t}/{p}/changelog`: every published version's classified changes, breaking first, with severity / path-group / since filters, entry permalinks into compare, and `changelog.md` (PCX-2.1)
 - ✅ Breadcrumb navigation
 - ✅ Responsive design
 - ✅ Docker containerization

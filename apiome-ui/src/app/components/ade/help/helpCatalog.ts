@@ -224,6 +224,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['catalog', 'discover', 'search', 'public', 'api key'],
   },
   {
+    id: 'api-changelog',
+    title: 'API changelog',
+    summary: "One page per API listing every published version's changes, breaking first.",
+    page: 'apiome-docs/docs/ship/api-changelog.mdx',
+    section: 'reference',
+    keywords: ['breaking changes', 'release notes', 'what changed', 'markdown', 'rss', 'since'],
+  },
+  {
     id: 'serve-an-xregistry',
     title: 'Serve your catalog as an xRegistry',
     summary:

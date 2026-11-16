@@ -30256,6 +30256,54 @@ class Database:
         rows = self.execute_query(q, (tenant_id, project_slug))
         return bool(rows)
 
+    def list_public_version_changelogs_for_project(
+        self,
+        tenant_id: str,
+        project_slug: str,
+        *,
+        limit: int = 500,
+    ) -> List[Dict[str, Any]]:
+        """
+        Stored publish changelogs for every published **public** version of a project (PCX-2.1, #5896).
+
+        Same rows (and order) as apiome-browse ``getPublicChangelogsForProject``: one row per published
+        public revision, newest ``published_at`` first, LEFT JOINed to ``version_changelogs`` so a
+        version without a classification row still appears (``status`` NULL = pending). The private
+        ``error`` column is deliberately never selected.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            project_slug: Project slug within the tenant.
+            limit: Max rows, newest first.
+
+        Returns:
+            Rows with ``published_revision_id``, ``version_label``, ``published_at``,
+            ``baseline_version_label``, ``max_severity``, ``status`` and ``changelog_json``.
+        """
+        q = """
+            SELECT
+                v.id::text AS published_revision_id,
+                v.version_id AS version_label,
+                v.published_at,
+                bl.version_id AS baseline_version_label,
+                vc.max_severity,
+                vc.status,
+                vc.changelog_json
+            FROM apiome.versions v
+            INNER JOIN apiome.projects p ON v.project_id = p.id
+            LEFT JOIN apiome.version_changelogs vc ON vc.published_revision_id = v.id
+            LEFT JOIN apiome.versions bl ON bl.id = vc.baseline_revision_id
+            WHERE p.tenant_id = %s
+              AND p.slug = %s
+              AND p.deleted_at IS NULL
+              AND v.deleted_at IS NULL
+              AND v.published IS TRUE
+              AND v.visibility = 'public'
+            ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+            LIMIT %s
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id, project_slug, int(limit)))]
+
     def list_public_browse_versions_for_project(
         self,
         tenant_id: str,

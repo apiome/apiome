@@ -32,6 +32,8 @@ import {
   severityDotClasses,
   severityLabel,
 } from '../../../../../../lib/changelog/group';
+import { compareFocusHref, versionAnchor } from '../../../../../../lib/changelog/projectChangelog';
+import { ChangesNote, SeverityPill } from '../../../../components/SeverityPill';
 import { formatLabel } from '../../../../../../lib/browseFacets';
 import { pickCardFacts, type CardFacts } from '../../../../../../lib/cardFacts';
 import { MockCallout } from './MockCallout';
@@ -372,11 +374,22 @@ export function VersionClient({
         )}
 
         {activeTab === 'changes' && (
-          <ChangesPanel
-            changelog={changelog}
-            tenantSlug={tenantSlug}
-            projectSlug={projectSlug}
-          />
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              {/* PCX-2.1 (#5896): every version's changes on one page, scrolled to this version. */}
+              <Link
+                href={`/tenant/${tenantSlug}/${projectSlug}/changelog#${versionAnchor(versionSlug)}`}
+                className="text-[13px] font-medium text-[var(--brand-soft-text)] hover:underline"
+              >
+                See the whole changelog →
+              </Link>
+            </div>
+            <ChangesPanel
+              changelog={changelog}
+              tenantSlug={tenantSlug}
+              projectSlug={projectSlug}
+            />
+          </div>
         )}
 
         {activeTab === 'feedback' && (
@@ -400,27 +413,6 @@ export function VersionClient({
         restApiBaseUrl={restApiBaseUrl}
       />
     </AppShell>
-  );
-}
-
-/** Small severity pill (dot + label), the same rounded-full style as the header badges. */
-function SeverityPill({ severity, label }: { severity: Severity | string; label: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(severity)}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(severity)}`}></span>
-      {label}
-    </span>
-  );
-}
-
-/** Dashed empty-state note used for the pending / initial / failed changelog states. */
-function ChangesNote({ text }: { text: string }) {
-  return (
-    <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
-    </div>
   );
 }
 
@@ -460,9 +452,13 @@ function ChangesPanel({
 
   /** Compare deep-link for one entry; null when there is no baseline to diff against. */
   const compareHref = (pointer: string): string | null =>
-    changelog.baselineVersionLabel
-      ? `/tenant/${tenantSlug}/${projectSlug}/compare?v1=${encodeURIComponent(changelog.baselineVersionLabel)}&v2=${encodeURIComponent(changelog.versionLabel)}&focus=${encodeURIComponent(pointer)}`
-      : null;
+    compareFocusHref(
+      tenantSlug,
+      projectSlug,
+      changelog.baselineVersionLabel,
+      changelog.versionLabel,
+      pointer
+    );
 
   return (
     <section className="space-y-4">
