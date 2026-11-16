@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "C",
+  "namespace": "com.example",
+  "fields": [
+    {
+      "name": "n",
+      "type": "int"
+    }
+  ]
+}

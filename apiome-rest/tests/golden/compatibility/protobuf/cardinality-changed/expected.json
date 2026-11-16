@@ -1,0 +1,66 @@
+{
+  "case": "protobuf/cardinality-changed",
+  "description": "Singular becomes repeated.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_SAME_CARDINALITY"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_SAME_CARDINALITY"
+          ]
+        },
+        "WIRE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_WIRE_COMPATIBLE_CARDINALITY"
+          ]
+        },
+        "WIRE_JSON": {
+          "compatible": false,
+          "detail": [
+            "FIELD_WIRE_JSON_COMPATIBLE_CARDINALITY"
+          ]
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `cardinality-changed`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.wire.cardinality-changed"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.wire.cardinality-changed"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.wire.cardinality-changed"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE_JSON": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.wire.cardinality-changed"
+      ],
+      "severity": "breaking"
+    }
+  }
+}

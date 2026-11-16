@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/ref-cycle",
+  "description": "A self-referential definition terminates",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `ref-cycle`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.max-length-tightened"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

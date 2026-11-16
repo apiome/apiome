@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-message-removed",
+  "description": "A message leaves the channel's messages.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "breaking:remove:/channels/orders/messages/OrderCancelled"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-message-removed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.consumer.message-removed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.consumer.message-removed"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "asyncapi.consumer.message-removed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.consumer.message-removed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

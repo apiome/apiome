@@ -1,0 +1,7 @@
+syntax = "proto3";
+package acme.v1;
+
+enum E {
+  E_UNSPECIFIED = 0;
+  E_B = 1;
+}

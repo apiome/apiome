@@ -1,0 +1,155 @@
+name: Compatibility Corpus
+
+# The XPC-4.6 cross-format compatibility golden corpus (#5750): Avro, JSON Schema, Protobuf,
+# AsyncAPI and GraphQL fixture pairs with Apiome's verdict under every compatibility mode, checked
+# against the reference tool each format's teams already run — an Apicurio Registry (a throwaway
+# service container, through its Confluent-compatible API) for Avro and JSON Schema, `buf breaking`
+# for Protobuf, `@asyncapi/diff` and GraphQL-Inspector. A disagreement between Apiome and a
+# reference tool fails the run unless tests/golden/compatibility/waivers.json documents it.
+#
+# Runs on every change that can move a verdict: the classifiers, the importers they read, the
+# corpus and this workflow. Regenerate after an intended change with
+#   uv run pytest tests/test_compatibility_corpus_golden.py --update-golden
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/avro_*.py'
+      - 'apiome-rest/src/app/jsonschema_*.py'
+      - 'apiome-rest/src/app/proto_*.py'
+      - 'apiome-rest/src/app/asyncapi_*.py'
+      - 'apiome-rest/src/app/graphql_*.py'
+      - 'apiome-rest/src/app/compatibility_*.py'
+      - 'apiome-rest/src/app/breaking_change.py'
+      - 'apiome-rest/src/app/diff.py'
+      - 'apiome-rest/src/app/canonical_model.py'
+      - 'apiome-rest/src/app/toolchain_*.py'
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/uv.lock'
+      - 'apiome-rest/tests/compatibility_corpus.py'
+      - 'apiome-rest/tests/test_compatibility_corpus_golden.py'
+      - 'apiome-rest/tests/golden/compatibility/**'
+      - 'apiome-docs/docs/govern/compatibility-modes.md'
+      - '.github/workflows/compatibility-corpus.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/avro_*.py'
+      - 'apiome-rest/src/app/jsonschema_*.py'
+      - 'apiome-rest/src/app/proto_*.py'
+      - 'apiome-rest/src/app/asyncapi_*.py'
+      - 'apiome-rest/src/app/graphql_*.py'
+      - 'apiome-rest/src/app/compatibility_*.py'
+      - 'apiome-rest/src/app/breaking_change.py'
+      - 'apiome-rest/src/app/diff.py'
+      - 'apiome-rest/src/app/canonical_model.py'
+      - 'apiome-rest/src/app/toolchain_*.py'
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/uv.lock'
+      - 'apiome-rest/tests/compatibility_corpus.py'
+      - 'apiome-rest/tests/test_compatibility_corpus_golden.py'
+      - 'apiome-rest/tests/golden/compatibility/**'
+      - 'apiome-docs/docs/govern/compatibility-modes.md'
+      - '.github/workflows/compatibility-corpus.yml'
+  workflow_dispatch:
+
+jobs:
+  corpus:
+    name: Compatibility golden corpus
+    runs-on: self-hosted
+    env:
+      DATABASE_URL: ""
+      APIOME_COMPAT_APICURIO_URL: http://localhost:18080/apis/ccompat/v7
+      # Every reference tool this job installs must answer; a missing one fails instead of skipping.
+      APIOME_COMPAT_CORPUS_STRICT: apicurio-registry,buf,graphql-inspector,asyncapi-diff
+      APIOME_COMPAT_CORPUS_REPORT: ${{ github.workspace }}/apiome-rest/compatibility-corpus-report.json
+    defaults:
+      run:
+        working-directory: apiome-rest
+
+    services:
+      apicurio:
+        image: apicurio/apicurio-registry:3.3.4
+        ports:
+          - 18080:8080
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # uv-managed Python: setup-python's Ubuntu 26.04 builds need an x86-64-v3 CPU the
+      # self-hosted runner does not have (see apiome-rest-test.yml).
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies (incl. dev/test group)
+        run: uv sync
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Install buf
+        run: ./scripts/install_dev_toolchain.sh buf
+
+      # @asyncapi/diff and GraphQL-Inspector at the production image's pins (Dockerfile ARGs),
+      # behind the same wrappers the image puts on PATH.
+      - name: Install @asyncapi/diff and GraphQL-Inspector
+        run: |
+          pin() { grep -E "^ARG $1=" Dockerfile | head -1 | cut -d= -f2; }
+          prefix="$PWD/.tools/node-compat"
+          mkdir -p "$prefix" .tools/bin
+          npm install --prefix "$prefix" --no-audit --no-fund --silent \
+            "@asyncapi/diff@$(pin ASYNCAPI_DIFF_VERSION)" \
+            "graphql@$(pin GRAPHQL_JS_VERSION)" "@graphql-inspector/core@$(pin GRAPHQL_INSPECTOR_VERSION)"
+          for tool in asyncapi-diff graphql-inspector-diff; do
+            cp "toolchain/${tool}.mjs" "$prefix/${tool}.mjs"
+            printf '#!/bin/sh\nexec node %s/%s.mjs "$@"\n' "$prefix" "$tool" > ".tools/bin/${tool}"
+            chmod +x ".tools/bin/${tool}"
+          done
+
+      - name: Wait for the Apicurio registry
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$APIOME_COMPAT_APICURIO_URL/subjects" >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          echo "Apicurio Registry did not become ready" >&2
+          exit 1
+
+      - name: Compatibility golden corpus
+        run: uv run pytest tests/test_compatibility_corpus_golden.py -p no:cacheprovider -q
+
+      - name: Reference disagreements summary
+        if: always()
+        run: |
+          {
+            echo '### Compatibility corpus: reference disagreements'
+            echo ''
+            if [ -f compatibility-corpus-report.json ]; then
+              echo '```json'
+              cat compatibility-corpus-report.json
+              echo '```'
+            else
+              echo 'No report was written.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the disagreement report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-corpus-report
+          path: apiome-rest/compatibility-corpus-report.json
+          if-no-files-found: ignore
+        continue-on-error: true

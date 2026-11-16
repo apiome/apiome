@@ -1,0 +1,27 @@
+{
+  "case": "graphql/argument-default-changed",
+  "description": "Change an argument default",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "DANGEROUS:FIELD_ARGUMENT_DEFAULT_CHANGED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

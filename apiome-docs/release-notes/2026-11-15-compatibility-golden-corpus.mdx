@@ -1,0 +1,28 @@
+---
+slug: compatibility-golden-corpus
+title: Compatibility grades checked against reference tools
+description: "A golden corpus checks compatibility grades against registries, buf, @asyncapi/diff and GraphQL-Inspector."
+authors: [apiome]
+---
+
+Apiome's compatibility grades for Avro, JSON Schema, Protobuf, AsyncAPI and GraphQL are now
+checked against the tools teams already run. A corpus of 128 version pairs records Apiome's
+verdict under every mode, and each change to a classifier is checked against an Apicurio
+Registry, `buf breaking`, `@asyncapi/diff` and GraphQL-Inspector.
+
+{/* truncate */}
+
+- **Confluent's tables, reproduced.** The Avro cases cover Confluent's compatibility-types table
+  (add or delete a field, with or without a default) under `BACKWARD`, `FORWARD`, `FULL` and
+  `NONE`. The JSON Schema cases cover the open, closed and partially open content models.
+- **Every Buf rule.** The Protobuf cases fire every Protobuf rule in the rule catalogue, under all
+  four `buf breaking` categories.
+- **Disagreements fail the build.** If Apiome and a reference tool disagree about whether a change
+  is compatible, the build fails unless the difference is documented.
+- **Known differences, published.** The documented differences, each with the reason Apiome grades
+  it its own way, are listed on
+  [Compatibility modes](/govern/compatibility-modes#known-differences-from-reference-tools).
+  They include five GraphQL cases where the compatibility API's grade differs from
+  GraphQL-Inspector's, such as a removed enum value graded **Dangerous**.
+
+Grades themselves are unchanged.

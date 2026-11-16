@@ -1,0 +1,71 @@
+{
+  "case": "protobuf/package-changed",
+  "description": "The package changes, so M's full name does.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "FILE_SAME_PACKAGE"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "FILE_SAME_PACKAGE",
+            "PACKAGE_NO_DELETE"
+          ]
+        },
+        "WIRE": {
+          "compatible": false,
+          "detail": [
+            "FILE_SAME_PACKAGE"
+          ]
+        },
+        "WIRE_JSON": {
+          "compatible": false,
+          "detail": [
+            "FILE_SAME_PACKAGE"
+          ]
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `package-changed`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "added-entity",
+        "protobuf.wire.package-changed"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": false,
+      "rule_ids": [
+        "added-entity",
+        "protobuf.wire.package-changed"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE": {
+      "compatible": false,
+      "rule_ids": [
+        "added-entity",
+        "protobuf.wire.package-changed"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE_JSON": {
+      "compatible": false,
+      "rule_ids": [
+        "added-entity",
+        "protobuf.wire.package-changed"
+      ],
+      "severity": "breaking"
+    }
+  }
+}

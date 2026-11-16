@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/open-property-removed",
+  "description": "New data may carry the name with a value old readers reject",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "Confluent JSON Schema compatibility, open content model: remove a property",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.open-property-removed"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.open-property-removed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.open-property-removed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.open-property-removed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

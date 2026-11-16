@@ -1,0 +1,60 @@
+{
+  "case": "protobuf/type-moved-file",
+  "description": "N moves to another file in the same package.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "MESSAGE_NO_DELETE"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": true,
+          "detail": []
+        },
+        "WIRE": {
+          "compatible": true,
+          "detail": []
+        },
+        "WIRE_JSON": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `type-moved-file`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.file.type-moved-file"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.file.type-moved-file"
+      ],
+      "severity": "safe"
+    },
+    "WIRE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.file.type-moved-file"
+      ],
+      "severity": "safe"
+    },
+    "WIRE_JSON": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.file.type-moved-file"
+      ],
+      "severity": "safe"
+    }
+  }
+}

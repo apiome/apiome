@@ -1,0 +1,27 @@
+{
+  "case": "graphql/output-field-made-nullable",
+  "description": "Make a non-null output field nullable",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": false,
+          "detail": [
+            "BREAKING:FIELD_TYPE_CHANGED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-safe"
+      ],
+      "severity": "safe"
+    }
+  }
+}

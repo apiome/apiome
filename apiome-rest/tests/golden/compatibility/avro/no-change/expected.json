@@ -1,0 +1,67 @@
+{
+  "case": "avro/no-change",
+  "description": "The same schema again",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `no-change`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [],
+      "severity": "safe"
+    }
+  }
+}

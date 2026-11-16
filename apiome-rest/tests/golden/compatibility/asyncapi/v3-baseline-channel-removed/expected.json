@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-baseline-channel-removed",
+  "description": "A plain channel removal keeps the baseline grade (breaking in every mode).",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "breaking:remove:/channels/orderReplies"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-baseline-channel-removed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "removed-entity"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "removed-entity"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "removed-entity"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "removed-entity"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/type-widened-integer-to-number",
+  "description": "Every integer is a number: the reader direction only",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `type-widened-integer-to-number`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.type-widened"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

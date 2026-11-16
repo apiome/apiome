@@ -1,0 +1,27 @@
+{
+  "case": "graphql/required-argument-added",
+  "description": "Add a required argument to a query field",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": false,
+          "detail": [
+            "BREAKING:FIELD_ARGUMENT_ADDED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

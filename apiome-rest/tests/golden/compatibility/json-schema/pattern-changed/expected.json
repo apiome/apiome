@@ -1,0 +1,62 @@
+{
+  "case": "json-schema/pattern-changed",
+  "description": "Patterns cannot be ordered",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `pattern-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.pattern-changed",
+        "jsonschema.forward.pattern-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.pattern-changed",
+        "jsonschema.forward.pattern-changed"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.pattern-changed",
+        "jsonschema.forward.pattern-changed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.pattern-changed",
+        "jsonschema.forward.pattern-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

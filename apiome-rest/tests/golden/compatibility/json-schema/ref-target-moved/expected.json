@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/ref-target-moved",
+  "description": "The ref now resolves to a closed schema",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": true,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `ref-target-moved`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.additional-properties-closed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

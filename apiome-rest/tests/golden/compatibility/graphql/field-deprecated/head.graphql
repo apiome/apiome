@@ -1,0 +1,27 @@
+type Query {
+  user(id: ID!): User
+  users(first: Int = 10): [User!]!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String @deprecated(reason: "Use contacts")
+  status: Status!
+}
+
+enum Status {
+  ACTIVE
+  SUSPENDED
+}
+
+input CreateUserInput {
+  name: String!
+  email: String
+}
+
+union SearchResult = User

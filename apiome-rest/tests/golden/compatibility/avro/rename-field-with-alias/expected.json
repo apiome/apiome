@@ -1,0 +1,83 @@
+{
+  "case": "avro/rename-field-with-alias",
+  "description": "Rename a field, keeping the old name as an alias",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "READER_FIELD_MISSING_DEFAULT_VALUE"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `rename-field-with-alias`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.reader-field-missing-default-value"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

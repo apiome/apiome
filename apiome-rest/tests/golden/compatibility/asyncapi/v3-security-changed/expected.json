@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-security-changed",
+  "description": "The server now requires SASL.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "breaking:add:/servers/prod/security"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-security-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.security-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.security-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.security-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.security-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

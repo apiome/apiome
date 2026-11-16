@@ -1,0 +1,81 @@
+{
+  "case": "avro/string-to-int",
+  "description": "Change string to int",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "TYPE_MISMATCH"
+          ]
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": [
+            "TYPE_MISMATCH"
+          ]
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "TYPE_MISMATCH"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `string-to-int`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.type-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.type-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.type-mismatch"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.type-mismatch"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

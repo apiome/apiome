@@ -1,0 +1,83 @@
+{
+  "case": "avro/union-remove-branch",
+  "description": "Remove a union branch",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    },
+    "confluent-schema-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "MISSING_UNION_BRANCH"
+          ]
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": [
+            "MISSING_UNION_BRANCH"
+          ]
+        }
+      },
+      "version": "7.7.1"
+    }
+  },
+  "source": "MFI-12.4 Avro fixture `union-remove-branch`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.missing-union-branch"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.missing-union-branch"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.missing-union-branch"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "avro-compatibility.compatible",
+        "avro-compatibility.missing-union-branch"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

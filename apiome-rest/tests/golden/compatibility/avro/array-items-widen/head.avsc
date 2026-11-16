@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "A",
+  "namespace": "com.example",
+  "fields": [
+    {
+      "name": "a",
+      "type": {
+        "type": "array",
+        "items": "long"
+      }
+    }
+  ]
+}

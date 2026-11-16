@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/maximum-loosened",
+  "description": "Bound removed",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `maximum-loosened`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.maximum-loosened"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.maximum-loosened"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.maximum-loosened"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.maximum-loosened"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/closed-property-added",
+  "description": "Old readers of a closed model reject the new property",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "Confluent JSON Schema compatibility, closed content model: add a property",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "severity": "breaking"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.forward.closed-property-added"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

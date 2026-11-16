@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "H",
+  "namespace": "com.example",
+  "fields": [
+    {
+      "name": "d",
+      "type": {
+        "type": "fixed",
+        "name": "Digest",
+        "size": 16
+      }
+    }
+  ]
+}

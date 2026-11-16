@@ -1,0 +1,27 @@
+{
+  "case": "graphql/type-removed",
+  "description": "Remove a type and every reference to it",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": false,
+          "detail": [
+            "BREAKING:TYPE_REMOVED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": false,
+      "rule_ids": [
+        "removed-entity"
+      ],
+      "severity": "breaking"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "case": "protobuf/field-deleted-reserved",
+  "description": "Number and name reserved: wire- and JSON-safe, but generated code loses the field.",
+  "references": {
+    "buf": {
+      "verdicts": {
+        "FILE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_NO_DELETE"
+          ]
+        },
+        "PACKAGE": {
+          "compatible": false,
+          "detail": [
+            "FIELD_NO_DELETE"
+          ]
+        },
+        "WIRE": {
+          "compatible": true,
+          "detail": []
+        },
+        "WIRE_JSON": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "1.72.0"
+    }
+  },
+  "source": "Buf rule placement (buf.build/docs/breaking/rules); XPC-4.3 fixture `field-deleted-reserved`",
+  "verdicts": {
+    "FILE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.package.field-deleted"
+      ],
+      "severity": "breaking"
+    },
+    "PACKAGE": {
+      "compatible": false,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.package.field-deleted"
+      ],
+      "severity": "breaking"
+    },
+    "WIRE": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.package.field-deleted"
+      ],
+      "severity": "safe"
+    },
+    "WIRE_JSON": {
+      "compatible": true,
+      "rule_ids": [
+        "protobuf.compatible",
+        "protobuf.package.field-deleted"
+      ],
+      "severity": "safe"
+    }
+  }
+}

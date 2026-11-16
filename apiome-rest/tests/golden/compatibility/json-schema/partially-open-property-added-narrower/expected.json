@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/partially-open-property-added-narrower",
+  "description": "Old data may carry `nick` as an integer",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "Confluent JSON Schema compatibility, partially open content model: add a property narrower than additionalProperties allows",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.type-narrowed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

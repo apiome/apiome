@@ -1,0 +1,58 @@
+{
+  "case": "json-schema/unique-items-tightened",
+  "description": "Duplicates now rejected",
+  "references": {
+    "apicurio-registry": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": []
+        },
+        "FORWARD": {
+          "compatible": true,
+          "detail": []
+        },
+        "FULL": {
+          "compatible": false,
+          "detail": []
+        },
+        "NONE": {
+          "compatible": true,
+          "detail": []
+        }
+      },
+      "version": "3.3.4"
+    }
+  },
+  "source": "XPC-4.2 JSON Schema fixture `unique-items-tightened`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.unique-items-tightened"
+      ],
+      "severity": "breaking"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.unique-items-tightened"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": false,
+      "rule_ids": [
+        "jsonschema.backward.unique-items-tightened"
+      ],
+      "severity": "breaking"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "jsonschema.backward.unique-items-tightened"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

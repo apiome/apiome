@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v3-payload-compatible",
+  "description": "A payload edit the JSON Schema check reads both ways.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": null,
+          "detail": [
+            "unclassified:add:/channels/orders/messages/OrderPlaced/payload/properties/id/description"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v3-payload-compatible`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.payload-compatible"
+      ],
+      "severity": "safe"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.payload-compatible"
+      ],
+      "severity": "safe"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.payload-compatible"
+      ],
+      "severity": "safe"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.payload-compatible"
+      ],
+      "severity": "safe"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+type Query {
+  user(id: ID!): User
+  users(first: Int = 25): [User!]!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String
+  status: Status!
+}
+
+enum Status {
+  ACTIVE
+  SUSPENDED
+}
+
+input CreateUserInput {
+  name: String!
+  email: String
+}
+
+union SearchResult = User

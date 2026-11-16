@@ -1,0 +1,48 @@
+{
+  "case": "asyncapi/v2-server-changed",
+  "description": "The server's address moves.",
+  "references": {
+    "asyncapi-diff": {
+      "verdicts": {
+        "BACKWARD": {
+          "compatible": false,
+          "detail": [
+            "breaking:edit:/servers/prod/url"
+          ]
+        }
+      },
+      "version": "0.5.0"
+    }
+  },
+  "source": "XPC-4.4 AsyncAPI fixture `v2-server-changed`",
+  "verdicts": {
+    "BACKWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.server-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "FORWARD": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.server-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "FULL": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.server-changed"
+      ],
+      "severity": "dangerous"
+    },
+    "NONE": {
+      "compatible": true,
+      "rule_ids": [
+        "asyncapi.both.server-changed"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}

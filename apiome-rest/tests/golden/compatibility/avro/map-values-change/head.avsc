@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "M",
+  "namespace": "com.example",
+  "fields": [
+    {
+      "name": "m",
+      "type": {
+        "type": "map",
+        "values": "int"
+      }
+    }
+  ]
+}

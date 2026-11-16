@@ -1,0 +1,27 @@
+{
+  "case": "graphql/enum-value-added",
+  "description": "Add an enum value",
+  "references": {
+    "graphql-inspector": {
+      "verdicts": {
+        "DEFAULT": {
+          "compatible": true,
+          "detail": [
+            "DANGEROUS:ENUM_VALUE_ADDED"
+          ]
+        }
+      },
+      "version": "6.2.0"
+    }
+  },
+  "source": "GraphQL-Inspector criticality (@graphql-inspector/core)",
+  "verdicts": {
+    "DEFAULT": {
+      "compatible": true,
+      "rule_ids": [
+        "modified-dangerous"
+      ],
+      "severity": "dangerous"
+    }
+  }
+}
