@@ -4,6 +4,13 @@ import { unstable_noStore as noStore } from 'next/cache';
 import connectionPool from './db';
 import { mcpSortOrderSql, type McpSortMode } from '../mcpSort';
 import {
+  cardFactsJoinSql,
+  cardFactsSelectSql,
+  latestPublicVersionJoinSql,
+  projectRailOrderSql,
+  type ProjectRailSort,
+} from '../cardFacts';
+import {
   OFFICIAL_REGISTRY_URL,
   federateRegistryEntries,
   fetchRegistryServers,
@@ -39,6 +46,24 @@ interface PgError {
 function logError(scope: string, err: unknown) {
   const e = err as PgError;
   console.error(`[db] ${scope}:`, e?.message ?? err);
+}
+
+/**
+ * Run a statement as a *named* (server-side prepared) statement.
+ *
+ * The home page's card queries (BDX-2.2) carry the facts join, whose planning costs more than
+ * running it on a small catalog. A named statement is planned once per pooled connection and
+ * re-used, which keeps the home page's render inside its budget. This is a plan cache, not a data
+ * cache: every call still reads current rows, and Postgres re-plans by itself after a migration.
+ *
+ * @param name - A name unique to this exact `text` (node-postgres rejects one name with two texts
+ *   on the same connection, so a variant of the SQL needs its own name).
+ * @param text - The statement.
+ * @param values - Its parameters.
+ * @returns The query result.
+ */
+function queryPrepared(name: string, text: string, values: unknown[]) {
+  return connectionPool.query({ name, text, values });
 }
 
 /**
@@ -95,24 +120,32 @@ export async function getPublicTenants() {
  * Get all projects for a tenant that have at least one published public version.
  *
  * Each row also carries the distinct protocols/formats across its published public versions, which
- * is what the tenant page's protocol/format facets count and filter on (MFI-6.1).
+ * is what the tenant page's protocol/format facets count and filter on (MFI-6.1), and the card facts
+ * of its latest published public version — operation and schema counts, grade, mock, SDK, format,
+ * published date (BDX-2.2) — computed in the same statement.
  */
 export async function getPublicProjectsForTenant(tenantSlug: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT p.id, p.name, p.slug, p.description, p.created_at,
-              ${FACET_ROLLUP_SQL}
-       FROM apiome.projects p
-       JOIN apiome.tenants t ON p.tenant_id = t.id
-       JOIN apiome.versions v ON p.id = v.project_id
-       WHERE t.slug = $1
-         AND v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       GROUP BY p.id, p.name, p.slug, p.description, p.created_at
-       ORDER BY p.name ASC`,
+      `WITH tenant_projects AS (
+         SELECT p.id, p.name, p.slug, p.description, p.created_at,
+                ${FACET_ROLLUP_SQL}
+         FROM apiome.projects p
+         JOIN apiome.tenants t ON p.tenant_id = t.id
+         JOIN apiome.versions v ON p.id = v.project_id
+         WHERE t.slug = $1
+           AND v.published = true
+           AND v.visibility = 'public'
+           AND t.deleted_at IS NULL
+           AND p.deleted_at IS NULL
+           AND v.deleted_at IS NULL
+         GROUP BY p.id, p.name, p.slug, p.description, p.created_at
+       )
+       SELECT tp.*, ${cardFactsSelectSql('cf')}
+       FROM tenant_projects tp
+       ${latestPublicVersionJoinSql('tp.id', 'lv')}
+       ${cardFactsJoinSql('lv.id', 'cf')}
+       ORDER BY tp.name ASC`,
       [tenantSlug]
     );
     return result.rows;
@@ -151,7 +184,8 @@ export async function getPublicVersionsForProject(tenantSlug: string, projectSlu
 }
 
 /**
- * Get version details by tenant, project, and version slugs.
+ * Get version details by tenant, project, and version slugs, with the version's card facts
+ * (BDX-2.2) for the version header.
  */
 export async function getPublicVersionDetails(
   tenantSlug: string,
@@ -163,10 +197,12 @@ export async function getPublicVersionDetails(
       `SELECT v.id, v.version_id, v.description, v.change_log, v.published, v.visibility,
               v.created_at, v.updated_at, v.published_at, v.mock_enabled,
               p.name as project_name, p.slug as project_slug, p.description as project_description,
-              t.name as tenant_name, t.slug as tenant_slug, t.description as tenant_description
+              t.name as tenant_name, t.slug as tenant_slug, t.description as tenant_description,
+              ${cardFactsSelectSql('cf')}
        FROM apiome.versions v
        JOIN apiome.projects p ON v.project_id = p.id
        JOIN apiome.tenants t ON p.tenant_id = t.id
+       ${cardFactsJoinSql('v.id', 'cf')}
        WHERE t.slug = $1
          AND p.slug = $2
          AND v.version_id = $3
@@ -351,23 +387,25 @@ export async function getPublicTenantBySlug(tenantSlug: string) {
 }
 
 /**
- * Get project details by tenant and project slugs.
+ * Get project details by tenant and project slugs, with the card facts of the project's latest
+ * published public version (BDX-2.2) for the project header.
  */
 export async function getPublicProjectBySlug(tenantSlug: string, projectSlug: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT DISTINCT p.id, p.name, p.slug, p.description, p.created_at,
-              t.name as tenant_name, t.slug as tenant_slug, t.description as tenant_description
+      `SELECT p.id, p.name, p.slug, p.description, p.created_at,
+              t.name as tenant_name, t.slug as tenant_slug, t.description as tenant_description,
+              ${cardFactsSelectSql('cf')}
        FROM apiome.projects p
        JOIN apiome.tenants t ON p.tenant_id = t.id
-       JOIN apiome.versions v ON p.id = v.project_id
+       ${latestPublicVersionJoinSql('p.id', 'lv')}
+       ${cardFactsJoinSql('lv.id', 'cf')}
        WHERE t.slug = $1
          AND p.slug = $2
-         AND v.published = true
-         AND v.visibility = 'public'
+         AND lv.id IS NOT NULL
          AND t.deleted_at IS NULL
          AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL`,
+       LIMIT 1`,
       [tenantSlug, projectSlug]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
@@ -378,26 +416,36 @@ export async function getPublicProjectBySlug(tenantSlug: string, projectSlug: st
 }
 
 /**
- * Recently published public versions across all tenants/projects.
- * Used by the discovery home page.
+ * Recently published public versions across all tenants/projects, each with its card facts
+ * (BDX-2.2). Used by the discovery home page.
  */
 export async function getRecentlyPublishedVersions(limit = 8) {
   noStore();
   try {
-    const result = await connectionPool.query(
-      `SELECT v.id, v.version_id, v.description, v.published_at,
-              p.name as project_name, p.slug as project_slug, p.description as project_description,
-              t.name as tenant_name, t.slug as tenant_slug
-       FROM apiome.versions v
-       JOIN apiome.projects p ON v.project_id = p.id
-       JOIN apiome.tenants t ON p.tenant_id = t.id
-       WHERE v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
-       LIMIT $1`,
+    const result = await queryPrepared(
+      'browse-home-recent-versions-v1',
+      // The facts join runs on the limited page only, so the counts cost `limit` lookups.
+      `WITH recent AS (
+         SELECT v.id, v.version_id, v.description, v.published_at, v.created_at,
+                p.name as project_name, p.slug as project_slug, p.description as project_description,
+                t.name as tenant_name, t.slug as tenant_slug
+         FROM apiome.versions v
+         JOIN apiome.projects p ON v.project_id = p.id
+         JOIN apiome.tenants t ON p.tenant_id = t.id
+         WHERE v.published = true
+           AND v.visibility = 'public'
+           AND t.deleted_at IS NULL
+           AND p.deleted_at IS NULL
+           AND v.deleted_at IS NULL
+         ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+         LIMIT $1
+       )
+       SELECT r.id, r.version_id, r.description, r.published_at,
+              r.project_name, r.project_slug, r.project_description, r.tenant_name, r.tenant_slug,
+              ${cardFactsSelectSql('cf')}
+       FROM recent r
+       ${cardFactsJoinSql('r.id', 'cf')}
+       ORDER BY r.published_at DESC NULLS LAST, r.created_at DESC`,
       [limit]
     );
     return result.rows;
@@ -408,27 +456,46 @@ export async function getRecentlyPublishedVersions(limit = 8) {
 }
 
 /**
- * Most-versioned public projects (a proxy for "active" projects).
+ * Public projects for the home page's project rail, each with the card facts of its latest
+ * published public version (BDX-2.2).
+ *
+ * `sort` picks the rail: most versions (a proxy for "active" projects, the default), most
+ * operations, or best grade. In the default order the facts are joined after the LIMIT, so they
+ * cost `limit` lookups; the other two orders need the facts of every public project to rank them,
+ * and pay for that only when a visitor asks for them.
+ *
+ * @param limit - How many projects the rail shows.
+ * @param sort - The rail order (validated by `parseProjectRailSort`).
  */
-export async function getMostVersionedProjects(limit = 8) {
+export async function getMostVersionedProjects(limit = 8, sort: ProjectRailSort = 'versions') {
   noStore();
+  const rankByFacts = sort !== 'versions';
   try {
-    const result = await connectionPool.query(
-      `SELECT p.id, p.name, p.slug, p.description,
-              t.name as tenant_name, t.slug as tenant_slug,
-              COUNT(v.id)::int as version_count,
-              MAX(v.published_at) as latest_published_at
-       FROM apiome.projects p
-       JOIN apiome.tenants t ON p.tenant_id = t.id
-       JOIN apiome.versions v ON p.id = v.project_id
-       WHERE v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       GROUP BY p.id, p.name, p.slug, p.description, t.name, t.slug
-       ORDER BY version_count DESC, latest_published_at DESC NULLS LAST
-       LIMIT $1`,
+    const result = await queryPrepared(
+      `browse-home-project-rail-${sort}-v1`,
+      `WITH project_versions AS (
+         SELECT p.id, p.name, p.slug, p.description,
+                t.name as tenant_name, t.slug as tenant_slug,
+                COUNT(v.id)::int as version_count,
+                MAX(v.published_at) as latest_published_at
+         FROM apiome.projects p
+         JOIN apiome.tenants t ON p.tenant_id = t.id
+         JOIN apiome.versions v ON p.id = v.project_id
+         WHERE v.published = true
+           AND v.visibility = 'public'
+           AND t.deleted_at IS NULL
+           AND p.deleted_at IS NULL
+           AND v.deleted_at IS NULL
+         GROUP BY p.id, p.name, p.slug, p.description, t.name, t.slug
+         ${rankByFacts ? '' : `ORDER BY ${projectRailOrderSql('versions')}
+         LIMIT $1`}
+       )
+       SELECT pv.*, ${cardFactsSelectSql('cf')}
+       FROM project_versions pv
+       ${latestPublicVersionJoinSql('pv.id', 'lv')}
+       ${cardFactsJoinSql('lv.id', 'cf')}
+       ORDER BY ${projectRailOrderSql(sort)}
+       ${rankByFacts ? 'LIMIT $1' : ''}`,
       [limit]
     );
     return result.rows;

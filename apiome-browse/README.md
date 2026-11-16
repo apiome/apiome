@@ -188,6 +188,19 @@ Compare two versions side-by-side or in unified diff mode:
   in the browser over the loaded spec — same query language, `method:` / `path:` / `type:`, `?find=`
   in the URL, `/` to focus and `↵` to jump to the next match
 - `GET /api/search/suggest?q=` feeds the ⌘K palette with the same engine
+- Project hits carry the card facts of the version they link to (BDX-2.2): the statement joins
+  `lib/cardFacts.ts`'s facts fragment to the page's rows only
+
+### Card facts (BDX-2.2)
+
+Project cards, the project and version headers and project search hits show a facts line —
+`42 operations · 18 schemas · Grade B · Mock · SDK · OpenAPI 3.1 · updated 3d ago` — for the latest
+published public version. `lib/cardFacts.ts` holds the SQL fragments the queries in
+`lib/db/helper.ts` splice in (counts as correlated sub-selects, so they come back in the same
+statement; nothing is cached), the line's wording and order, and the sorts: the home rail's
+`?projects=versions|operations|grade` and the organization page's **Sort** menu. The SDK flag
+follows REST's public-SDK rule (`publicSdkEnabled`, project row over tenant row, default off).
+`FactsLine` renders it.
 
 The pure modules under `lib/search/` are unit-tested; `lib/db/search.ts` runs the statement.
 

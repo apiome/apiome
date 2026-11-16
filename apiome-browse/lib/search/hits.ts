@@ -3,6 +3,7 @@
  * what it is called, how its kind is shown.
  */
 
+import type { CardFacts } from '../cardFacts';
 import { operationAnchorId, schemaAnchorId, versionChangesHref, versionHref } from './anchors';
 import { HIT_KIND_LABELS, type HitKind } from './kinds';
 
@@ -28,6 +29,11 @@ export interface CatalogSearchHit {
   name_key: string;
   /** The changelog severity (`breaking` / `non-breaking` / `docs-only`) on `change` hits; null otherwise. */
   severity: string | null;
+  /**
+   * The card facts of the version a `project` hit links to (BDX-2.2): counts, grade, mock, SDK,
+   * format and published date. Null on every other kind, and absent from rows built by hand.
+   */
+  facts?: CardFacts | null;
 }
 
 /** One facet bucket. */

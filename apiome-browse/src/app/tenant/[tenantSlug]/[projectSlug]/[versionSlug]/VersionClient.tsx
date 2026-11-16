@@ -32,10 +32,13 @@ import {
   severityDotClasses,
   severityLabel,
 } from '../../../../../../lib/changelog/group';
+import { formatLabel } from '../../../../../../lib/browseFacets';
+import { pickCardFacts, type CardFacts } from '../../../../../../lib/cardFacts';
 import { MockCallout } from './MockCallout';
 import { FeedbackPanel } from './FeedbackPanel';
 
-interface Version {
+/** The version row, with its card facts (BDX-2.2). */
+interface Version extends Partial<CardFacts> {
   id: string;
   version_id: string;
   description?: string;
@@ -247,6 +250,9 @@ export function VersionClient({
               )}
             </>
           }
+          // BDX-2.2: counts, grade and SDK; the mock badge, Published and Format cells say the rest.
+          facts={pickCardFacts(version)}
+          factsOmit={['mock', 'updated', 'format']}
           meta={[
             { label: 'Project', value: version.project_name ?? projectSlug },
             { label: 'Organization', value: version.tenant_name ?? tenantSlug },
@@ -256,7 +262,10 @@ export function VersionClient({
                 ? new Date(version.published_at).toLocaleDateString()
                 : '—',
             },
-            { label: 'Format', value: 'OpenAPI / Arazzo / JSON Schema' },
+            {
+              label: 'Format',
+              value: version.facts_format ? formatLabel(version.facts_format) : 'OpenAPI / Arazzo / JSON Schema',
+            },
           ]}
         />
 
