@@ -14,6 +14,10 @@ It lists *what* changed. To grade changes as breaking or not, use
 [`apiome versions compatibility`](../reference/ci/version-compatibility-gate.md), which asks the
 server's compatibility engine.
 
+In the browse app, you can open the same comparison from a search: tick **Compare** on two results
+of one project and click **Compare v1.0.0 → v2.0.0** — see
+[Compare from search](./browse-published-specs.md#compare-from-search).
+
 ## Run it
 
 ```bash

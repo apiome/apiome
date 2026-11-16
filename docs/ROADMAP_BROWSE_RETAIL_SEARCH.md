@@ -28,7 +28,7 @@ The Browse release candidate is the baseline above plus the **MVP (Y)** issues b
 - ✅ **BDX-1.3** Search within a version (#6287) — **Complete** — An in-page find over one version's operations, schemas and properties, with the same query language and highlighting in the viewer
 - **BDX-1.6** Public search API, CLI command and shared contract (#6290) — `GET /v1/browse/search` in REST with the Browse engine's contract; `apiome browse search`; Browse calls REST or shares the builder
 - ✅ **BDX-2.2** Project and version cards that answer the retail questions (#6294) — **Complete** — Operation/schema counts, quality grade, mock and SDK availability, formats and last-published on every card and project hit
-- **BDX-2.6** Compare from search and version quick-switch on hits (#6298) — Select two version hits to open `/compare`; a hit's version chip opens a switcher to other published versions
+- ✅ **BDX-2.6** Compare from search and version quick-switch on hits (#6298) — **Complete** — Select two version hits to open `/compare`; a hit's version chip opens a switcher to other published versions
 - **BDX-3.2** Accessibility gate for Browse routes (#6302) — axe CI over a Browse route ledger (home, search landing/results, palette, org, project, version, compare, MCP) with keyboard checks
 - **BDX-3.3** Performance budgets and server paging for directory pages (#6303) — First-row budgets for home and search; the organization directory and tenant project lists page on the server; indexes for the search joins
 - **BDX-3.4** SEO, sharing metadata and OpenSearch (#6304) — `sitemap.xml`, `robots.txt`, JSON-LD (`WebAPI`, `Organization`), Open Graph images, canonical URLs, and `opensearch.xml`
@@ -88,7 +88,6 @@ flowchart TB
 | #6295 | **BDX-2.3** Organization profiles: logo, links, verified badge | Tenant settings gain a public profile; Browse shows it in the organization header and search hits | `enhancement`, `browser`, `portal`, `ui`, `rest`, `database`, `tenancy`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (tenant profile columns), apiome-rest tenants API, apiome-ui tenant settings, apiome-browse EntityHeader/HitRow/SpecCard |
 | #6296 | **BDX-2.4** Curated collections and featured APIs | Admin-curated lists shown as a *Featured* rail on home and as `/collections/{slug}` pages; version tags become browse facets | `enhancement`, `browser`, `portal`, `ui`, `rest`, `database`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-db (collections), apiome-rest, apiome-ui admin, apiome-browse home + collections pages |
 | #6297 | **BDX-2.5** Related APIs and “more from this organization” | On project and version pages: other projects by the org, projects sharing schema names, and (after BDX-1.5) nearest by embedding | `enhancement`, `browser`, `portal`, `ui`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/lib/db/helper.ts, ProjectClient.tsx, VersionClient.tsx |
-| #6298 | **BDX-2.6** Compare from search and version quick-switch on hits | Select two version hits to open `/compare`; a hit's version chip opens a switcher to other published versions | `enhancement`, `browser`, `diff`, `versions`, `mvp`, `roadmap-browse-discovery` | Y | Y | S | apiome-browse/src/app/search/SearchClient.tsx, components/search/HitRow.tsx |
 | #6299 | **BDX-2.7** Popularity signals: views, downloads and “Popular this week” | Consent-aware view/download counters feed a popularity sort and a home rail | `enhancement`, `browser`, `portal`, `analytics`, `database`, `v2`, `roadmap-browse-discovery` | N | N | M | apiome-browse/lib/db, apiome-db counters, HomeClient.tsx, lib/search/sql.ts (sort) |
 | #6300 | **BDX-2.8** Mobile and touch pass | Bottom navigation, swipeable rails, a filter sheet, 44 px targets, and a mobile-safe spec viewer | `enhancement`, `browser`, `portal`, `ui`, `a11y`, `v2`, `roadmap-browse-discovery` | Y | N | M | apiome-browse/src/app/components/**, search/SearchClient.tsx, SpecViewer.tsx |
 
@@ -489,7 +488,7 @@ admin ▸ Collections ─▶ api_collections(slug, members[]) ─▶ Browse: Fea
 Related ▸ [same org] → [shared schemas ≥3] → [embedding nearest]  (max 6)
 ```
 
-#### BDX-2.6 — Compare from search and version quick-switch on hits (#6298)
+#### ✅ BDX-2.6 — Compare from search and version quick-switch on hits (#6298) — **Complete**
 
 **Problem statement.** Search with *All published* shows the same operation once per version, but turning that into a diff takes four clicks and a URL edit.
 

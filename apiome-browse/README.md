@@ -190,6 +190,11 @@ Compare two versions side-by-side or in unified diff mode:
 - `GET /api/search/suggest?q=` feeds the ⌘K palette with the same engine
 - Project hits carry the card facts of the version they link to (BDX-2.2): the statement joins
   `lib/cardFacts.ts`'s facts fragment to the page's rows only
+- Compare from search (BDX-2.6, `lib/search/compare.ts`): version / operation / schema hits carry a
+  *Compare* tick (`c` on the cursor row); two hits of one project in two versions light up the sticky
+  bar's link to `/tenant/{t}/{p}/compare?v1=<older>&v2=<newer>`. One follow-up statement
+  (`runHitVersionsLookup`) returns each such hit's project versions and whether its operation or
+  schema exists in each, for the version chip's quick-switch menu
 
 ### Card facts (BDX-2.2)
 

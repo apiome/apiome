@@ -5,11 +5,13 @@ import { Fragment } from 'react';
 import { formatLabel, paradigmLabel } from '../../../../lib/browseFacets';
 import { pickCardFacts } from '../../../../lib/cardFacts';
 import { severityBadgeClasses, severityDotClasses, severityLabel } from '../../../../lib/changelog/group';
+import type { VersionMenuEntry } from '../../../../lib/search/compare';
 import { excerptAround } from '../../../../lib/search/highlight';
 import { hitCrumbs, hitHref, hitKindLabel, type CatalogSearchHit } from '../../../../lib/search/hits';
 import type { HitKind } from '../../../../lib/search/kinds';
 import { FactsLine } from '../FactsLine';
 import { Highlight } from './Highlight';
+import { HitVersionMenu } from './HitVersionMenu';
 import { MethodBadge } from './httpMethodTone';
 
 /** The icon tile tone per kind: what a visitor scans first. */
@@ -106,9 +108,21 @@ function formatPublished(iso: string | null): string | null {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+/** The *Compare* tick of a results-page row (BDX-2.6). */
+export interface HitCompareControl {
+  checked: boolean;
+  onToggle: () => void;
+}
+
+/** The classes that stretch a row's title link over the whole card (the "stretched link" pattern). */
+const STRETCHED_LINK = "focus:outline-none after:absolute after:inset-0 after:rounded-xl after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-[var(--brand)]";
+
 /**
  * One search result. A density switch keeps the same row usable in the palette (`compact`) and on
  * the results page.
+ *
+ * The title is the row's link, stretched over the card, so the row's own controls — the *Compare*
+ * tick and the version chip's menu (BDX-2.6) — sit above it and are never nested inside an anchor.
  */
 export function HitRow({
   hit,
@@ -117,6 +131,8 @@ export function HitRow({
   active = false,
   id,
   onSelect,
+  compare,
+  versionMenu,
 }: {
   hit: CatalogSearchHit;
   needles: readonly string[];
@@ -125,9 +141,17 @@ export function HitRow({
   active?: boolean;
   id?: string;
   onSelect?: () => void;
+  /** Results page only: the *Compare* tick on a version / operation / schema hit. */
+  compare?: HitCompareControl;
+  /** Results page only: the project's other published versions, for the version chip's menu. */
+  versionMenu?: readonly VersionMenuEntry[];
 }) {
   const href = hitHref(hit);
-  const crumbs = hitCrumbs(hit);
+  const allCrumbs = hitCrumbs(hit);
+  // With a version menu, the version crumb becomes the chip (outside the truncating crumb span, so
+  // the menu is not clipped).
+  const showVersionMenu = !compact && Boolean(versionMenu && versionMenu.length > 0) && Boolean(hit.version_slug) && allCrumbs.length === 3;
+  const crumbs = showVersionMenu ? allCrumbs.slice(0, 2) : allCrumbs;
   const published = formatPublished(hit.published_at);
   const isOperation = hit.hit_type === 'operation' && hit.method && hit.path;
   const snippet = hit.snippet ? excerptAround(hit.snippet, needles, compact ? 70 : 140) : '';
@@ -137,14 +161,13 @@ export function HitRow({
 
   return (
     <li id={id} className="list-none">
-      <Link
-        href={href}
-        onClick={onSelect}
+      <div
         aria-current={active ? 'true' : undefined}
-        className={`group block rounded-xl border bg-white transition-colors dark:bg-zinc-950 ${
+        data-compare-selected={compare?.checked ? 'true' : undefined}
+        className={`group relative block rounded-xl border bg-white transition-colors dark:bg-zinc-950 ${
           compact ? 'px-3 py-2' : 'p-4'
         } ${
-          active
+          active || compare?.checked
             ? 'border-[var(--brand)] shadow-sm ring-1 ring-[var(--brand)]/30'
             : 'border-zinc-200 hover:border-sky-300 dark:border-zinc-800 dark:hover:border-sky-700'
         }`}
@@ -169,6 +192,13 @@ export function HitRow({
                   </Fragment>
                 ))}
               </span>
+              {showVersionMenu && <HitVersionMenu versionSlug={hit.version_slug as string} entries={versionMenu ?? []} />}
+              {compare && (
+                <label className="hit-compare-toggle relative z-10 ml-auto" data-checked={compare.checked ? 'true' : 'false'} data-testid="hit-compare">
+                  <input type="checkbox" checked={compare.checked} onChange={compare.onToggle} aria-label={`Compare ${hit.title} (v${hit.version_slug})`} />
+                  Compare
+                </label>
+              )}
             </div>
 
             <div className={`mt-1 flex items-center gap-2 ${compact ? '' : 'flex-wrap'}`}>
@@ -176,11 +206,15 @@ export function HitRow({
               {hit.hit_type === 'change' && hit.severity && <SeverityPill severity={hit.severity} />}
               {isOperation ? (
                 <code className={`min-w-0 truncate font-mono font-medium text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50 ${compact ? 'text-[13px]' : 'text-[14px]'}`}>
-                  <Highlight text={hit.path as string} needles={needles} />
+                  <Link href={href} onClick={onSelect} className={STRETCHED_LINK}>
+                    <Highlight text={hit.path as string} needles={needles} />
+                  </Link>
                 </code>
               ) : (
                 <h3 className={`min-w-0 truncate font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50 ${compact ? 'text-[13px]!' : 'text-[15px]!'}`}>
-                  <Highlight text={hit.title} needles={needles} />
+                  <Link href={href} onClick={onSelect} className={STRETCHED_LINK}>
+                    <Highlight text={hit.title} needles={needles} />
+                  </Link>
                 </h3>
               )}
             </div>
@@ -232,7 +266,7 @@ export function HitRow({
             )}
           </div>
         </div>
-      </Link>
+      </div>
     </li>
   );
 }
