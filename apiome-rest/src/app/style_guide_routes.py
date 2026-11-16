@@ -47,6 +47,7 @@ from .approval_policy import (
     normalize_required_reviewer_role,
 )
 from .breaking_publish_policy import normalize_breaking_publish_policy
+from .compatibility_policy import policy_from_guide
 from .component_governance import (
     normalize_approval_stages,
     normalize_deprecation_notice_days,
@@ -1004,6 +1005,7 @@ async def get_style_guide_revision(
 def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
     """Map a guide row's draft gate columns onto the settings response."""
     ci = default_ci_outcomes(guide.get("ci_outcomes"))
+    compat = policy_from_guide(guide)
     return StyleGuidePolicySettingsOut(
         guide_id=str(guide["id"]),
         axis_gates=default_axis_gates(guide.get("axis_gates")),
@@ -1023,6 +1025,9 @@ def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
         component_deprecation_notice_days=normalize_deprecation_notice_days(
             guide.get("component_deprecation_notice_days")
         ),
+        compatibility_mode=compat.mode,
+        compatibility_transitive=compat.transitive,
+        protobuf_breaking_category=compat.category,
     )
 
 
@@ -1114,6 +1119,9 @@ async def put_style_guide_policy_settings(
         set_required_reviewer_role="required_reviewer_role" in body.model_fields_set,
         component_approval_stages=component_stages,
         component_deprecation_notice_days=body.component_deprecation_notice_days,
+        compatibility_mode=body.compatibility_mode,
+        compatibility_transitive=body.compatibility_transitive,
+        protobuf_breaking_category=body.protobuf_breaking_category,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Style guide not found")

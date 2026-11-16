@@ -20,6 +20,8 @@ With ``--consumers`` the report also names *whose* build each change breaks ("br
 
 With ``--blast-radius`` each breaking change also says what it affects in the dependency graph — consumers reached directly or transitively, their owner teams, and the verification runs it invalidates — in all three formats. The threshold is unchanged here too.
 
+``--mode``, ``--transitive`` and ``--category`` pick the compatibility mode the server grades by. Left off, the server uses the baseline project's policy, and the report says what it was graded under. For an Avro, JSON Schema, AsyncAPI or Protobuf baseline, ``file`` is read as the baseline's format; for any other format it must be OpenAPI.
+
 ```text
 apiome diff [OPTIONS] FILE
 ```
@@ -28,7 +30,7 @@ apiome diff [OPTIONS] FILE
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `FILE` | file | yes | Path to the candidate OpenAPI YAML/JSON file. |
+| `FILE` | file | yes | Path to the candidate file: OpenAPI YAML/JSON, or the baseline's own format (an Avro .avsc, a JSON Schema, an AsyncAPI document, a .proto). |
 
 **Options**
 
@@ -39,3 +41,6 @@ apiome diff [OPTIONS] FILE
 | `--format` | text | `text` |  | Output format: text (default), json, or md (CTG-1.3 markdown changelog). |
 | `--consumers` | flag |  |  | Add the CTG-4.2 per-consumer analysis: which registered consumers of the baseline project this change breaks. Needs consumer_contracts:view. |
 | `--blast-radius` | flag |  |  | Add the CDG-3.3 blast radius to each breaking change: "affects N consumers across M teams (…); K verification runs invalidated". Needs projects:view. |
+| `--mode` | text | project policy |  | Compatibility mode: backward, forward, full or none (optionally with _transitive, e.g. full_transitive). Applies to Avro, JSON Schema and AsyncAPI baselines. Default: the project's style-guide policy. |
+| `--transitive` / `--no-transitive` | flag | project policy |  | Also compare against every earlier version of the baseline, not only the baseline. Default: the project's style-guide policy. |
+| `--category` | text | project policy |  | Protobuf buf breaking category: wire, wire_json, package or file. Default: the project's style-guide policy. |

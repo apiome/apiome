@@ -1,6 +1,9 @@
 """CI classified-diff gate: ``apiome diff <file> --against <project>@<ref>`` (CTG-2.1).
 
 ``--blast-radius`` (CDG-3.6, #5971) adds what each breaking change affects in the dependency graph.
+
+``--mode`` / ``--transitive`` / ``--category`` (XPC-4.5, #5749) choose the compatibility mode the
+server grades by; left off, the baseline project's style-guide policy applies.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ import typer
 from apiome_cli.client import api_paths
 from apiome_cli.client.errors import format_api_error, format_connection_error
 from apiome_cli.client.version_scope import tenant_scoped_client
+from apiome_cli.compat_modes import mode_request_fields
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.output import json_mode_from_context
 from apiome_cli.output_diff import (
@@ -35,7 +39,7 @@ def _exit_operational(message: str) -> None:
 
 
 def _read_inline_spec(path: Path) -> str:
-    """Load a local OpenAPI file as UTF-8 text, enforcing the 10MB inline cap."""
+    """Load a local candidate file as UTF-8 text, enforcing the 10MB inline cap."""
     if not path.is_file():
         _exit_operational(f"Spec file not found: {path}")
     try:
@@ -44,7 +48,7 @@ def _read_inline_spec(path: Path) -> str:
         _exit_operational(f"Cannot read spec file: {exc}")
     if len(raw) > INLINE_SPEC_MAX_BYTES:
         _exit_operational(
-            f"Inline OpenAPI document exceeds the {INLINE_SPEC_MAX_BYTES}-byte "
+            f"Inline document exceeds the {INLINE_SPEC_MAX_BYTES}-byte "
             f"limit ({len(raw)} bytes)"
         )
     try:
@@ -81,7 +85,10 @@ def diff(
         ...,
         exists=False,
         dir_okay=False,
-        help="Path to the candidate OpenAPI YAML/JSON file.",
+        help=(
+            "Path to the candidate file: OpenAPI YAML/JSON, or the baseline's own format "
+            "(an Avro .avsc, a JSON Schema, an AsyncAPI document, a .proto)."
+        ),
     ),
     against: str = typer.Option(
         ...,
@@ -118,6 +125,34 @@ def diff(
             "teams (…); K verification runs invalidated\". Needs projects:view."
         ),
     ),
+    mode: str | None = typer.Option(
+        None,
+        "--mode",
+        show_default="project policy",
+        help=(
+            "Compatibility mode: backward, forward, full or none (optionally with _transitive, "
+            "e.g. full_transitive). Applies to Avro, JSON Schema and AsyncAPI baselines. "
+            "Default: the project's style-guide policy."
+        ),
+    ),
+    transitive: bool | None = typer.Option(
+        None,
+        "--transitive/--no-transitive",
+        show_default="project policy",
+        help=(
+            "Also compare against every earlier version of the baseline, not only the baseline. "
+            "Default: the project's style-guide policy."
+        ),
+    ),
+    category: str | None = typer.Option(
+        None,
+        "--category",
+        show_default="project policy",
+        help=(
+            "Protobuf buf breaking category: wire, wire_json, package or file. "
+            "Default: the project's style-guide policy."
+        ),
+    ),
 ) -> None:
     """Diff a local OpenAPI file against a published project version (CI gate).
 
@@ -132,6 +167,11 @@ def diff(
     With ``--blast-radius`` each breaking change also says what it affects in the dependency
     graph — consumers reached directly or transitively, their owner teams, and the verification
     runs it invalidates — in all three formats. The threshold is unchanged here too.
+
+    ``--mode``, ``--transitive`` and ``--category`` pick the compatibility mode the server grades
+    by. Left off, the server uses the baseline project's policy, and the report says what it was
+    graded under. For an Avro, JSON Schema, AsyncAPI or Protobuf baseline, ``file`` is read as the
+    baseline's format; for any other format it must be OpenAPI.
     """
     fmt = (output_format or "text").strip().lower()
     if json_mode_from_context(ctx):
@@ -152,6 +192,7 @@ def diff(
         project, version_ref = parse_against(against)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--against") from exc
+    mode_fields = mode_request_fields(mode, transitive, category)
 
     # Remap setup/HTTP EXIT_ERROR → 2 so gate failure (1) stays distinguishable.
     try:
@@ -166,6 +207,7 @@ def diff(
             body["consumers"] = True
         if blast_radius:
             body["blastRadius"] = True
+        body.update(mode_fields)
 
         # Markdown is fetched separately below; the JSON call then only needs the severity, so it
         # skips the per-change graph traversals.

@@ -69,6 +69,26 @@ Under each breaking change, the comment says what the change affects in the
 Set `blast-radius: false` to leave that line out. It needs the API key to have `projects:view`, and it
 never changes whether the check passes.
 
+### Compatibility mode
+
+The gate grades changes by the baseline project's compatibility policy, so it agrees with
+[`POST /v1/diff/{tenant}/classified`](../rest/classified-diff.md) and with the publish check.
+For an Avro, JSON Schema, AsyncAPI or Protobuf baseline, point `spec` at the schema file and set
+the mode for one workflow when you need to:
+
+```yaml
+          spec: schemas/order-created.avsc
+          project: orders-events@latest
+          mode: full
+          transitive: "true"
+```
+
+`mode` takes `backward`, `forward`, `full` or `none`, `transitive` takes `true` or `false`, and
+`category` takes a Protobuf category (`wire`, `wire_json`, `package` or `file`). Leave them out to
+use the policy. When one applied, the comment ends with what the changes were graded under, such as
+`` _Graded under `FULL_TRANSITIVE` by avro-compatibility, against 2.0.0, 1.0.0._ ``. See
+[Compatibility modes](../../govern/compatibility-modes.md).
+
 ### Fail on warnings too
 
 ```yaml
@@ -90,6 +110,7 @@ export APIOME_BASE_URL=https://api.apiome.dev
 export APIOME_API_KEY=…          # from secrets
 export APIOME_TENANT_ID=…        # from secrets
 apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --format md --blast-radius
+apiome diff ./order-created.avsc --against orders-events@latest --mode full --transitive
 ```
 
 ## Related

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.577.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.578.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 58 operations
 
@@ -2067,6 +2067,7 @@ trail, so the dialog, the API error, and the audit row can never disagree.
 | `maxSeverity` | string or null | no | Max Severity. |
 | `recommendedVersion` | string or null | no | Recommended Version. |
 | `detail` | string or null | no | Detail. |
+| `evaluatedUnder` | `EvaluatedUnderOut` or null | no | What the comparison was graded under: the project's compatibility mode, transitivity and Protobuf category, and the published revisions compared (XPC-4.5). |
 | `message` | string | yes | Message. |
 
 ### `FreezeSchemaRequest` {#schema-freezeschemarequest}

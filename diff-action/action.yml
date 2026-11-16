@@ -44,6 +44,25 @@ inputs:
       "affects N consumers across M teams (…); K verification runs invalidated". Needs projects:view.
     required: false
     default: "true"
+  mode:
+    description: >
+      Compatibility mode the changes are graded under: backward, forward, full or none
+      (optionally with _transitive, e.g. full_transitive). Applies to Avro, JSON Schema and
+      AsyncAPI baselines. Empty (default) uses the project's style-guide policy.
+    required: false
+    default: ""
+  transitive:
+    description: >
+      true to also compare against every earlier version of the baseline, false to compare
+      against the baseline only. Empty (default) uses the project's style-guide policy.
+    required: false
+    default: ""
+  category:
+    description: >
+      Protobuf buf breaking category: wire, wire_json, package or file. Empty (default) uses the
+      project's style-guide policy.
+    required: false
+    default: ""
 
 outputs:
   exit-code:
@@ -64,3 +83,6 @@ runs:
     INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
     INPUT_COMMENT: ${{ inputs.comment }}
     INPUT_BLAST_RADIUS: ${{ inputs.blast-radius }}
+    INPUT_MODE: ${{ inputs.mode }}
+    INPUT_TRANSITIVE: ${{ inputs.transitive }}
+    INPUT_CATEGORY: ${{ inputs.category }}

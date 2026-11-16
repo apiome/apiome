@@ -48,6 +48,7 @@ from .approval_policy import (
     normalize_required_reviewer_role,
 )
 from .breaking_publish_policy import normalize_breaking_publish_policy
+from .compatibility_policy import policy_from_guide
 from .policy_evaluate import (
     default_axis_gates,
     default_ci_outcomes,
@@ -161,6 +162,8 @@ def guide_snapshot(
             "requiredReviewerRole": normalize_required_reviewer_role(
                 guide.get("required_reviewer_role")
             ),
+            # XPC-4.5 (#5749): the compatibility mode, transitivity and Protobuf category.
+            **policy_from_guide(guide).as_settings(),
         },
     }
 

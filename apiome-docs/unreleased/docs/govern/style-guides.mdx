@@ -138,6 +138,9 @@ The gates applied when lint results are judged against this guide:
 | --- | --- |
 | **Quality minimum grade** | Results graded below it fail the quality gate. |
 | **Breaking-change publishes** | **Off**, **Warn (default)** or **Block** publishing a version with breaking changes. |
+| **Compatibility mode** | How a change between versions is graded: **Backward (default)**, **Forward**, **Full** or **None** — see [Compatibility](#compatibility). |
+| **Protobuf breaking category** | How strictly Protobuf changes are graded: **Wire**, **Wire and JSON (default)**, **Package** or **File**. |
+| **Check every earlier version** | Also check a change against every earlier version, not only the one it is compared with. |
 | **Required approvals** | How many approvals a review round needs before publishing — see [Reviews](./reviews.mdx). |
 | **Required reviewer role** | At least one approval must come from this role. |
 | **CI outcomes** | Whether unwaived errors, missing coverage or axis gates fail `apiome lint gate`. |
@@ -145,6 +148,26 @@ The gates applied when lint results are judged against this guide:
 **Click “Save”.** Every save is an immutable policy version, listed under **Policy versions**.
 
 <Screenshot id="style-guide-policy" alt="A guide's Policy tab: minimum grade B, block breaking changes, two approvals from Release Manager" />
+
+#### Compatibility
+
+The **Compatibility** section sets how a change between two versions is graded in classified diffs,
+compatibility checks, the CI diff gate and the **Breaking-change publishes** check.
+
+<Screenshot id="style-guide-policy-compatibility" alt="The Policy tab's Compatibility section: compatibility mode Full, Protobuf breaking category Wire and JSON, and Check every earlier version switched on" />
+
+- **Compatibility mode** — **Backward (default)**: the new version must read data written with the
+  old one. **Forward**: the old version must read data written with the new one. **Full**: both.
+  **None**: changes are listed with their rules, but none fails.
+- **Protobuf breaking category** — **Wire**, **Wire and JSON (default)**, **Package** or **File**.
+- **Check every earlier version** — the transitive form of the mode, such as `FULL_TRANSITIVE`.
+
+Avro, JSON Schema and AsyncAPI follow the mode, Protobuf follows the category, and other formats keep
+their own rules. To hold an event schema to `FULL_TRANSITIVE`, **choose “Full”**, **turn on “Check
+every earlier version”** and **click “Save”**. A publish compatible with the last published version
+but not with an older one is then reported as breaking, naming the older version; with
+**Breaking-change publishes** on **Block**, it is refused. The rules per format are in
+[Compatibility modes](./compatibility-modes.md).
 
 ## Import & export policy
 

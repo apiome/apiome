@@ -713,6 +713,9 @@ describe('the docs fixtures', () => {
     requiredReviewerRole: 'release-manager',
   };
 
+  /** The policy the docs dumps read; one test swaps in the XPC-4.5 compatibility settings. */
+  let docsPolicy: Record<string, unknown> = DOCS_POLICY;
+
   const DOCS_POLICY_VERSIONS = [
     {
       id: 'pv-2',
@@ -739,6 +742,7 @@ describe('the docs fixtures', () => {
   ];
 
   beforeEach(() => {
+    docsPolicy = DOCS_POLICY;
     const base = global.fetch;
     const fn = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString();
@@ -769,7 +773,7 @@ describe('the docs fixtures', () => {
         });
       }
       if (method === 'GET' && url.endsWith(`${GUIDE_ID}/policy`)) {
-        return jsonResponse({ success: true, data: DOCS_POLICY });
+        return jsonResponse({ success: true, data: docsPolicy });
       }
       return (base as typeof fetch)(input, init);
     });
@@ -815,6 +819,22 @@ describe('the docs fixtures', () => {
       expect(within(panel).getByLabelText('Required reviewer role')).toHaveValue('release-manager')
     );
     writeA11yFixture('style-guide-policy', liveMarkup(page()));
+  });
+
+  it('renders the policy’s compatibility section with a FULL transitive policy (XPC-4.5)', async () => {
+    docsPolicy = {
+      ...DOCS_POLICY,
+      compatibilityMode: 'FULL',
+      compatibilityTransitive: true,
+      protobufBreakingCategory: 'WIRE_JSON',
+    };
+    render(<GuideEditorClient guideId={GUIDE_ID} />);
+    await screen.findByText('security-defined');
+    fireEvent.click(screen.getByTestId('guide-tab-policy'));
+    const section = await screen.findByTestId('guide-policy-compatibility');
+    await waitFor(() => expect(within(section).getByLabelText('Compatibility mode')).toHaveValue('FULL'));
+    expect(within(section).getByLabelText('Check every earlier version')).toBeChecked();
+    writeA11yFixture('style-guide-policy-compatibility', liveMarkup(page()));
   });
 
   it('renders the built-in guide’s read-only catalog', async () => {

@@ -77,6 +77,16 @@
       "data": "fixture:hive-a11y/style-guide-policy.html"
     },
     {
+      "id": "style-guide-policy-compatibility",
+      "route": "/ade/dashboard/style-guides/[guideId]",
+      "waitFor": "[data-testid=\"guide-policy-compatibility\"]",
+      "data": "fixture:hive-a11y/style-guide-policy-compatibility.html",
+      "scrollTo": "[data-testid=\"guide-policy-compatibility\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/styleGuides/guideDetail/PolicyTab.tsx"
+      ]
+    },
+    {
       "id": "style-guides-policies",
       "route": "/ade/dashboard/style-guides",
       "waitFor": "#a11y-mount > *",

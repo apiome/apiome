@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.577.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.578.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `style-guides` · 21 operations
 
@@ -779,6 +779,9 @@ Draft policy gate settings on a live style guide (CLX-1.3, #4850).
 | `requiredReviewerRole` | string or null | no | Role slug at least one of those approvals must come from (COL-2.3); null means any approver counts. |
 | `componentApprovalStages` | array of `ComponentApprovalStageModel` | no | Ordered approval stages a component-library revision must pass before it can be published (DCW-3.4); empty (default) means no component approval gate. |
 | `componentDeprecationNoticeDays` | integer | no | Minimum days between scheduling a component revision deprecation and its sunset (DCW-3.4). |
+| `compatibilityMode` | enum `"BACKWARD"`, `"FORWARD"`, `"FULL"`, `"NONE"` | no | Compatibility mode classified diffs, compatibility checks, the CI diff gate and the publish guardrail grade by when a request names none (XPC-4.5): BACKWARD (default), FORWARD, FULL or NONE. |
+| `compatibilityTransitive` | boolean | no | When true, a change is checked against every earlier revision, not only the base (BACKWARD_TRANSITIVE and friends; XPC-4.5). |
+| `protobufBreakingCategory` | enum `"WIRE"`, `"WIRE_JSON"`, `"PACKAGE"`, `"FILE"` | no | buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON (default), PACKAGE or FILE. |
 
 ### `StyleGuidePolicySettingsPutRequest` {#schema-styleguidepolicysettingsputrequest}
 
@@ -794,6 +797,9 @@ Replace draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 | `requiredReviewerRole` | string or null | no | Role slug at least one approval must come from (COL-2.3); send null to clear it, omit to leave unchanged. |
 | `componentApprovalStages` | array of `ComponentApprovalStageModel` or null | no | Ordered component-library approval stages (DCW-3.4), at most 5; send [] to turn the gate off, omit to leave unchanged. |
 | `componentDeprecationNoticeDays` | integer or null | no | Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged. |
+| `compatibilityMode` | enum `"BACKWARD"`, `"FORWARD"`, `"FULL"`, `"NONE"` or null | no | Compatibility mode (XPC-4.5); omit to leave unchanged. |
+| `compatibilityTransitive` | boolean or null | no | Check every earlier revision, not only the base (XPC-4.5); omit to leave unchanged. |
+| `protobufBreakingCategory` | enum `"WIRE"`, `"WIRE_JSON"`, `"PACKAGE"`, `"FILE"` or null | no | buf breaking category for Protobuf changes (XPC-4.5); omit to leave unchanged. |
 | `snapshot` | boolean | no | When true (default), also append an immutable policy pack version. |
 
 ### `StyleGuidePolicyVersionListResponse` {#schema-styleguidepolicyversionlistresponse}

@@ -14,6 +14,12 @@ Only the old schema cannot read the new one's      dangerous   FORWARD, FULL (+ 
 Both read each other                               safe        none
 =================================================  ==========  ===============================
 
+Since XPC-4.5 (#5749) the classifier takes a **mode**: construct it with ``mode="FORWARD"`` or
+``mode="FULL"`` (``*_TRANSITIVE`` accepted) and a problem is breaking when the mode checks its
+direction, dangerous otherwise — so the same pair grades differently under ``BACKWARD`` and
+``FORWARD``. Under a mode other than ``BACKWARD`` each rationale starts with the mode in brackets
+(``[FORWARD] breaks FORWARD and FULL: …``); the default keeps the rationale it always had.
+
 So adding a field without a ``default`` is breaking (new readers have nothing to fill it with),
 removing one is dangerous (old readers miss it), and adding or removing a field that has a
 ``default`` is safe — which the format-agnostic baseline cannot tell apart.
@@ -34,7 +40,7 @@ an IDL protocol every named type both versions declare.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import ClassVar, Dict, List, Optional, Set, Tuple
 
 from .avro_compatibility import AvroCompatibilityError, Incompatibility, can_read, describe, schema_of_document
 from .avro_parser import AvroDocument
@@ -49,17 +55,40 @@ from .breaking_change import (
 )
 from .canonical_model import CanonicalApi
 from .diff import EntityCategory, ModelDiff
+from .jsonschema_compatibility import mode_directions
 
-__all__ = ["AvroBreakingChangeClassifier", "compatibility_findings"]
+__all__ = ["AvroBreakingChangeClassifier", "compatibility_findings", "direction_severity"]
 
 _RULE_PREFIX = "avro-compatibility."
 _COMPATIBLE_RULE = f"{_RULE_PREFIX}compatible"
 
-#: Direction → (severity, the modes a problem in that direction breaks).
-_DIRECTIONS: Dict[str, Tuple[Severity, str]] = {
-    "backward": (Severity.BREAKING, "breaks BACKWARD and FULL: the new schema cannot read data written with the old"),
-    "forward": (Severity.DANGEROUS, "breaks FORWARD and FULL: the old schema cannot read data written with the new"),
+#: Direction → the modes a problem in that direction breaks, in words.
+_DIRECTIONS: Dict[str, str] = {
+    "backward": "breaks BACKWARD and FULL: the new schema cannot read data written with the old",
+    "forward": "breaks FORWARD and FULL: the old schema cannot read data written with the new",
 }
+
+#: The mode grades are taken against when the classifier is built without one.
+_DEFAULT_MODE = "BACKWARD"
+
+
+def direction_severity(direction: str, mode: str = _DEFAULT_MODE) -> Severity:
+    """Grade a problem by its direction under ``mode``.
+
+    Args:
+        direction: ``backward`` or ``forward``.
+        mode: A Confluent mode name (``BACKWARD``, ``FORWARD``, ``FULL``, optionally ``_TRANSITIVE``).
+
+    Returns:
+        :attr:`Severity.BREAKING` when the mode checks the direction, else :attr:`Severity.DANGEROUS`.
+    """
+    return Severity.BREAKING if direction in mode_directions(mode) else Severity.DANGEROUS
+
+
+def _reason(direction: str, found: Incompatibility, mode: str) -> str:
+    """One problem's rationale, led by the mode when it is not the default."""
+    text = f"{_DIRECTIONS[direction]} — {describe(direction, found)}"
+    return text if mode == _DEFAULT_MODE else f"[{mode}] {text}"
 
 Finding = Tuple[str, Incompatibility]
 
@@ -138,11 +167,11 @@ def _owner(key: str, type_keys: Set[str]) -> Optional[str]:
     return max(owners, key=len) if owners else None
 
 
-def _graded(baseline: ChangeClassification, findings: List[Finding]) -> ChangeClassification:
-    severities = [_DIRECTIONS[direction][0] for direction, _ in findings]
+def _graded(baseline: ChangeClassification, findings: List[Finding], mode: str) -> ChangeClassification:
+    severities = [direction_severity(direction, mode) for direction, _ in findings]
     worst = _worst(severities)
     direction, first = next((d, f) for (d, f), s in zip(findings, severities) if s is worst)
-    reasons = list(dict.fromkeys(f"{_DIRECTIONS[d][1]} — {describe(d, f)}" for d, f in findings))
+    reasons = list(dict.fromkeys(_reason(d, f, mode) for d, f in findings))
     return ChangeClassification(
         category=baseline.category,
         kind=baseline.kind,
@@ -168,6 +197,21 @@ class AvroBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register=Tru
 
     format = "avro"
     classifier_id = "avro-compatibility"
+
+    #: The compatibility mode grades are taken against when none is passed to the constructor.
+    default_mode: ClassVar[str] = _DEFAULT_MODE
+
+    def __init__(self, mode: Optional[str] = None) -> None:
+        """Create a classifier for ``mode``.
+
+        Args:
+            mode: ``BACKWARD`` (default), ``FORWARD`` or ``FULL``, optionally ``_TRANSITIVE``.
+
+        Raises:
+            ValueError: If ``mode`` is not a known compatibility mode.
+        """
+        self.mode = (mode or self.default_mode).strip().upper()
+        mode_directions(self.mode)  # validate early
 
     def classify(self, model_diff: ModelDiff, base: CanonicalApi, target: CanonicalApi) -> ClassificationResult:
         """Grade every change with the baseline, then by the Avro compatibility check.
@@ -196,12 +240,11 @@ class AvroBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register=Tru
             for position in positions:
                 joined.setdefault(position, []).append((direction, found))
             if not positions:
-                severity, modes = _DIRECTIONS[direction]
                 unattributed.append(
                     UnattributedFinding(
-                        severity=severity,
+                        severity=direction_severity(direction, self.mode),
                         rule_id=f"{_RULE_PREFIX}{found.type.lower().replace('_', '-')}",
-                        rationale=f"{modes} — {describe(direction, found)}",
+                        rationale=_reason(direction, found, self.mode),
                         shape=found.schema or found.record,
                     )
                 )
@@ -225,7 +268,7 @@ class AvroBreakingChangeClassifier(BuiltinBreakingChangeClassifier, register=Tru
             return False
 
         graded = [
-            _graded(c, joined[p]) if p in joined else (_compatible(c) if covered(c) else c)
+            _graded(c, joined[p], self.mode) if p in joined else (_compatible(c) if covered(c) else c)
             for p, c in enumerate(baseline)
         ]
         return _assemble_result(self, target, graded, unattributed)

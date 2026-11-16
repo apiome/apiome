@@ -16,19 +16,49 @@ Sending ``blastRadius: true`` adds the CDG-3.6 blast-radius line to every breaki
 "affects N consumers across M teams (…); K verification runs invalidated", from the CDG-3.3 blast
 radius of the change against the **base** project (:mod:`app.diff_blast_radius`). Opt-in too: it
 needs ``projects:view`` and runs one graph traversal per breaking pointer.
+
+Since XPC-4.5 (#5749) the request takes a compatibility ``mode`` (``BACKWARD`` / ``FORWARD`` / ``FULL``
+/ ``NONE``), ``transitive`` and a Protobuf ``category``, each defaulting to the base project's
+style-guide policy. When the base revision's source format has a mode-aware classifier (Avro, JSON
+Schema, AsyncAPI) or a category-aware one (Protobuf), both sides are compared as canonical models and
+graded by it — an inline head is read with the same importer as the base. Every other format keeps
+the CTG-1.1 OpenAPI taxonomy. The response's ``evaluatedUnder`` says which ran and what it ran under,
+and every change carries its ``ruleId``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import validate_authentication
-from .change_taxonomy import ClassifiedDiff, classify_openapi_changes
+from .change_taxonomy import ClassifiedChange, ClassifiedDiff, classify_openapi_changes, summarize_changes
 from .changelog_generator import build_changelog, render_changelog_markdown
 from .compatibility_engine import openapi_for_revision
+from .compatibility_modes import (
+    Baseline,
+    FormatEvaluation,
+    canonical_model_for_revision,
+    classify_under,
+    ctg_changes,
+    evaluated_under,
+    evaluated_under_markdown,
+    merge_transitive,
+    parse_candidate,
+    revision_format,
+    transitive_baselines,
+    CTG_RULESET,
+)
+from .compatibility_policy import (
+    CompatibilityPolicy,
+    PolicyValueError,
+    effective_policy,
+    requested_settings,
+    resolve_policy,
+)
+from .compatibility_report_models import EvaluatedUnderOut
 from .consumer_impact import ConsumerImpactReport, render_consumer_impact_markdown
 from .consumer_impact_service import consumer_impact_for_diff
 from .database import db
@@ -114,6 +144,28 @@ class ClassifiedDiffRequest(BaseModel):
             "``projects:view``."
         ),
     )
+    mode: Optional[str] = Field(
+        default=None,
+        description=(
+            "Compatibility mode (XPC-4.5): BACKWARD, FORWARD, FULL or NONE, any case. A "
+            "``_TRANSITIVE`` name (``FULL_TRANSITIVE``) also sets ``transitive``. Omit to use the "
+            "base project's style-guide policy."
+        ),
+    )
+    transitive: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Also compare the head against every earlier revision of the base, not only the base "
+            "(XPC-4.5). Omit to use the base project's policy."
+        ),
+    )
+    category: Optional[str] = Field(
+        default=None,
+        description=(
+            "buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON, "
+            "PACKAGE or FILE. Omit to use the base project's policy."
+        ),
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -166,6 +218,15 @@ class ClassifiedDiffHeadMeta(BaseModel):
     version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
 
 
+class ClassifiedDiffAgainstOut(BaseModel):
+    """The stored revision a change was found against (transitive comparisons, XPC-4.5)."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    revision_id: str = Field(serialization_alias="revisionId")
+    version_label: str = Field(serialization_alias="versionLabel")
+
+
 class ClassifiedDiffChangeOut(BaseModel):
     """One classified change in the API response."""
 
@@ -194,6 +255,25 @@ class ClassifiedDiffChangeOut(BaseModel):
             "With ``blastRadius: true``, on a breaking change: what it affects. Absent otherwise."
         ),
     )
+    grade: Optional[Literal["safe", "dangerous", "breaking"]] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description=(
+            "The three-tier grade when a mode- or category-aware classifier graded the change "
+            "(XPC-4.5); ``severity`` then maps dangerous and safe to ``non-breaking``. Absent for "
+            "the OpenAPI taxonomy."
+        ),
+    )
+    rationale: Optional[str] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Why the classifier graded it so, led by the mode or category. Absent for the OpenAPI taxonomy.",
+    )
+    against: Optional[ClassifiedDiffAgainstOut] = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="On a transitive comparison: the stored revision the change was found against.",
+    )
 
 
 class ClassifiedDiffResponse(BaseModel):
@@ -217,6 +297,13 @@ class ClassifiedDiffResponse(BaseModel):
         serialization_alias="blastRadius",
         exclude_if=lambda value: value is None,
         description="With ``blastRadius: true``: how many breaking changes were annotated. Absent otherwise.",
+    )
+    evaluated_under: EvaluatedUnderOut = Field(
+        serialization_alias="evaluatedUnder",
+        description=(
+            "What the changes were graded under: mode, transitivity, Protobuf category, the formats "
+            "compared, whether the mode was applied, the ruleset and the revisions compared (XPC-4.5)."
+        ),
     )
 
 
@@ -303,23 +390,42 @@ def _resolve_version_row(
 
 
 def _resolve_stored_side(
-    tenant_id: str, tenant_slug: str, ref: ClassifiedDiffStoredRef
-) -> tuple[Dict[str, Any], ClassifiedDiffResolvedStored, Dict[str, Any]]:
-    """Resolve a stored ref to OpenAPI document + response metadata.
+    tenant_id: str, ref: ClassifiedDiffStoredRef
+) -> tuple[ClassifiedDiffResolvedStored, Dict[str, Any]]:
+    """Resolve a stored ref to response metadata and its version row.
 
     Returns:
-        ``(openapi_doc, resolved_meta, version_row)``.
+        ``(resolved_meta, version_row)``. The document is built later, once the comparison knows
+        whether it reads the OpenAPI document or the canonical model.
     """
     project = _resolve_project(tenant_id, ref.project)
     version = _resolve_version_row(tenant_id, str(project["id"]), ref.version)
-    doc = openapi_for_revision(version, tenant_slug, tenant_id)
     meta = ClassifiedDiffResolvedStored(
         project_id=str(project["id"]),
         project_slug=str(project["slug"]),
         version_record_id=str(version["id"]),
         version_label=str(version["version_id"]),
     )
-    return doc, meta, version
+    return meta, version
+
+
+def _check_inline_size(inline: Optional[str]) -> None:
+    """Reject an empty or over-cap inline document.
+
+    Raises:
+        HTTPException: 400 when empty; 413 when over the 10MB cap.
+    """
+    if inline is None:
+        raise HTTPException(status_code=400, detail="inline document is empty")
+    size = len(inline.encode("utf-8"))
+    if size > INLINE_SPEC_MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"Inline document exceeds the {INLINE_SPEC_MAX_BYTES}-byte "
+                f"limit ({size} bytes)"
+            ),
+        )
 
 
 def _parse_inline(inline: str) -> Dict[str, Any]:
@@ -334,21 +440,103 @@ def _parse_inline(inline: str) -> Dict[str, Any]:
     Raises:
         HTTPException: 413 when over the 10MB cap; 400 when empty/unparseable.
     """
-    if inline is None:
-        raise HTTPException(status_code=400, detail="inline document is empty")
-    size = len(inline.encode("utf-8"))
-    if size > INLINE_SPEC_MAX_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=(
-                f"Inline OpenAPI document exceeds the {INLINE_SPEC_MAX_BYTES}-byte "
-                f"limit ({size} bytes)"
-            ),
-        )
+    _check_inline_size(inline)
     try:
         return parse_document(inline, source_label="inline")
     except IngestionError as exc:
         raise HTTPException(status_code=400, detail=exc.message) from exc
+
+
+class _GradedRow:
+    """One change in a comparison, with what the response adds beyond the CTG model."""
+
+    __slots__ = ("change", "grade")
+
+    def __init__(self, change: ClassifiedChange, grade: Optional[str] = None) -> None:
+        self.change = change
+        self.grade = grade
+
+
+def _canonical_rows(base_model: Any, head_model: Any, policy: CompatibilityPolicy) -> Tuple[List[_GradedRow], FormatEvaluation]:
+    """Grade one canonical pair under ``policy`` as CTG-shaped rows."""
+    result, evaluation = classify_under(base_model, head_model, policy)
+    return [_GradedRow(change, grade) for change, grade in ctg_changes(result)], evaluation
+
+
+def _compare(
+    *,
+    tenant_id: str,
+    tenant_slug: str,
+    body: ClassifiedDiffRequest,
+    base_version: Dict[str, Any],
+    head_version: Optional[Dict[str, Any]],
+    baselines: Sequence[Baseline],
+    policy: CompatibilityPolicy,
+) -> Tuple[List[Tuple[Baseline, List[_GradedRow]]], List[FormatEvaluation]]:
+    """Compare the head against each baseline: canonically for mode-graded formats, else as OpenAPI.
+
+    Args:
+        tenant_id: Tenant id.
+        tenant_slug: Tenant slug (to materialize OpenAPI).
+        body: The request (its ``head`` is stored or inline).
+        base_version: The base revision row.
+        head_version: The stored head revision row, or ``None`` for an inline head.
+        baselines: The base, then any earlier revisions a transitive comparison adds.
+        policy: The effective mode / category.
+
+    Returns:
+        ``(pairs, evaluations)``: the rows per baseline, and how each pair was graded.
+
+    Raises:
+        HTTPException: 400 when an inline head cannot be read as the base's format.
+    """
+    base_id = str(base_version["id"])
+    base_model = canonical_model_for_revision(db, tenant_id, base_id)
+    head_model: Any = None
+    if base_model is not None:
+        if head_version is None:
+            inline = body.head.inline  # type: ignore[union-attr]
+            _check_inline_size(inline)
+            try:
+                head_model = parse_candidate(base_model.format, inline)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        else:
+            head_model = canonical_model_for_revision(db, tenant_id, str(head_version["id"]))
+
+    pairs: List[Tuple[Baseline, List[_GradedRow]]] = []
+    if base_model is not None and head_model is not None:
+        evaluations: List[FormatEvaluation] = []
+        for baseline in baselines:
+            model = (
+                base_model
+                if baseline.role == "base"
+                else canonical_model_for_revision(db, tenant_id, baseline.revision_id)
+            )
+            if model is None:
+                continue
+            rows, evaluation = _canonical_rows(model, head_model, policy)
+            evaluations.append(evaluation)
+            pairs.append((baseline, rows))
+        return pairs, evaluations
+
+    # The base document is built before the head's, as it always was.
+    base_doc = openapi_for_revision(base_version, tenant_slug, tenant_id)
+    if head_version is None:
+        head_doc = _parse_inline(body.head.inline)  # type: ignore[union-attr]
+    else:
+        head_doc = openapi_for_revision(head_version, tenant_slug, tenant_id)
+    for baseline in baselines:
+        if baseline.role == "base":
+            doc = base_doc
+        else:
+            row = db.get_version_by_id(baseline.revision_id, tenant_id)
+            if not row:
+                continue
+            doc = openapi_for_revision(row, tenant_slug, tenant_id)
+        pairs.append((baseline, [_GradedRow(c) for c in classify_openapi_changes(doc, head_doc).changes]))
+    fmt = revision_format(db, tenant_id, base_id)
+    return pairs, [FormatEvaluation(format=fmt, ruleset=CTG_RULESET)]
 
 
 def _response_from_classified(
@@ -356,6 +544,8 @@ def _response_from_classified(
     *,
     base_meta: ClassifiedDiffResolvedStored,
     head_meta: ClassifiedDiffHeadMeta,
+    evaluated: EvaluatedUnderOut,
+    extras: Optional[Sequence[Tuple[Optional[str], Optional[ClassifiedDiffAgainstOut]]]] = None,
     impact: Optional[ConsumerImpactReport] = None,
     annotations: Optional[BlastRadiusAnnotations] = None,
 ) -> ClassifiedDiffResponse:
@@ -369,6 +559,9 @@ def _response_from_classified(
             carries the handles it touches, so a caller never has to re-join the two lists.
         annotations: CDG-3.6 blast-radius summaries, when they were requested; each breaking change
             with a summary carries it as ``blastRadius``.
+        evaluated: The ``evaluatedUnder`` block (XPC-4.5).
+        extras: Per change, in ``result.changes`` order: its three-tier grade and the revision it
+            was found against (each ``None`` when it does not apply).
 
     Returns:
         The response model.
@@ -400,8 +593,11 @@ def _response_from_classified(
                     if annotations is not None and c.severity == "breaking"
                     else None
                 ),
+                grade=(extras[i][0] if extras else None),
+                rationale=c.rationale,
+                against=(extras[i][1] if extras else None),
             )
-            for c in result.changes
+            for i, c in enumerate(result.changes)
         ],
         counts=dict(result.counts),
         max_severity=result.max_severity,
@@ -409,6 +605,7 @@ def _response_from_classified(
         head=head_meta,
         consumers=impact,
         blast_radius=None if annotations is None else annotations.meta(),
+        evaluated_under=evaluated,
     )
 
 
@@ -463,17 +660,13 @@ async def post_classified_diff(
         enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
     tenant_id = str(auth_data["tenant_id"])
 
-    base_doc, base_meta, base_version = _resolve_stored_side(
-        tenant_id, tenant_slug, body.base
-    )
+    base_meta, base_version = _resolve_stored_side(tenant_id, body.base)
 
+    head_version: Optional[Dict[str, Any]] = None
     if isinstance(body.head, ClassifiedDiffInlineHead):
-        head_doc = _parse_inline(body.head.inline)
         head_meta = ClassifiedDiffHeadMeta(source="inline")
     else:
-        head_doc, stored_head, _ = _resolve_stored_side(
-            tenant_id, tenant_slug, body.head
-        )
+        stored_head, head_version = _resolve_stored_side(tenant_id, body.head)
         head_meta = ClassifiedDiffHeadMeta(
             source="stored",
             project_id=stored_head.project_id,
@@ -482,7 +675,54 @@ async def post_classified_diff(
             version_label=stored_head.version_label,
         )
 
-    result = classify_openapi_changes(base_doc, head_doc)
+    try:
+        policy = effective_policy(
+            resolve_policy(db, tenant_id, base_meta.project_id),
+            mode=body.mode,
+            transitive=body.transitive,
+            category=body.category,
+        )
+    except PolicyValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    baselines, truncated = transitive_baselines(
+        db,
+        tenant_id=tenant_id,
+        project_id=base_meta.project_id,
+        base_revision_id=base_meta.version_record_id,
+        base_label=base_meta.version_label,
+        transitive=policy.transitive,
+    )
+    pairs, evaluations = _compare(
+        tenant_id=tenant_id,
+        tenant_slug=tenant_slug,
+        body=body,
+        base_version=base_version,
+        head_version=head_version,
+        baselines=baselines,
+        policy=policy,
+    )
+    merged = merge_transitive(
+        pairs,
+        key=lambda r: (r.change.rule_id, r.change.pointer, r.change.change_kind),
+        is_breaking=lambda r: r.change.severity == "breaking",
+    )
+    result = summarize_changes([row.change for _, row in merged])
+    extras = [
+        (
+            row.grade,
+            ClassifiedDiffAgainstOut(revision_id=b.revision_id, version_label=b.version_label)
+            if policy.transitive
+            else None,
+        )
+        for b, row in merged
+    ]
+    evaluated = evaluated_under(
+        policy,
+        evaluations,
+        requested=requested_settings(mode=body.mode, transitive=body.transitive, category=body.category),
+        compared=baselines,
+        truncated=truncated,
+    )
 
     impact: Optional[ConsumerImpactReport] = None
     if body.consumers:
@@ -520,8 +760,17 @@ async def post_classified_diff(
             )
         if impact is not None:
             md = md.rstrip("\n") + "\n\n" + render_consumer_impact_markdown(impact)
+        graded_under = evaluated_under_markdown(evaluated)
+        if graded_under:
+            md = md.rstrip("\n") + "\n\n" + graded_under + "\n"
         return Response(content=md, media_type="text/markdown; charset=utf-8")
 
     return _response_from_classified(
-        result, base_meta=base_meta, head_meta=head_meta, impact=impact, annotations=annotations
+        result,
+        base_meta=base_meta,
+        head_meta=head_meta,
+        evaluated=evaluated,
+        extras=extras,
+        impact=impact,
+        annotations=annotations,
     )

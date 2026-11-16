@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.577.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.578.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `classified-diff` · 1 operation
 
@@ -74,6 +74,9 @@ Request body for classified diff: stored base vs stored or inline head.
 | `head` | `ClassifiedDiffStoredRef` or `ClassifiedDiffInlineHead` | yes | Head side: either another stored ``{project, version}`` or ``{inline}`` candidate document text. |
 | `consumers` | boolean | no | Include the CTG-4.2 per-consumer analysis for the base project's registered consumers. Requires ``consumer_contracts:view``. |
 | `blastRadius` | boolean | no | Annotate each breaking change with its CDG-3.3 blast radius against the base project: consumers affected, their owner teams and the verification runs invalidated. Requires ``projects:view``. |
+| `mode` | string or null | no | Compatibility mode (XPC-4.5): BACKWARD, FORWARD, FULL or NONE, any case. A ``_TRANSITIVE`` name (``FULL_TRANSITIVE``) also sets ``transitive``. Omit to use the base project's style-guide policy. |
+| `transitive` | boolean or null | no | Also compare the head against every earlier revision of the base, not only the base (XPC-4.5). Omit to use the base project's policy. |
+| `category` | string or null | no | buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON, PACKAGE or FILE. Omit to use the base project's policy. |
 
 ### `ClassifiedDiffResponse` {#schema-classifieddiffresponse}
 
@@ -88,6 +91,7 @@ Classified change list with summary counts, max severity, and resolved sides.
 | `head` | `ClassifiedDiffHeadMeta` | yes | Head. |
 | `consumers` | `ConsumerImpactReport` or null | no | CTG-4.2 per-consumer verdicts, present only when ``consumers: true`` was sent. |
 | `blastRadius` | `BlastRadiusDiffMeta` or null | no | With ``blastRadius: true``: how many breaking changes were annotated. Absent otherwise. |
+| `evaluatedUnder` | `EvaluatedUnderOut` | yes | What the changes were graded under: mode, transitivity, Protobuf category, the formats compared, whether the mode was applied, the ruleset and the revisions compared (XPC-4.5). |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

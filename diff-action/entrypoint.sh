@@ -28,6 +28,10 @@ TENANT="${INPUT_TENANT:-}"
 BASE_URL="${INPUT_BASE_URL:-https://api.apiome.dev}"
 COMMENT="${INPUT_COMMENT:-true}"
 BLAST_RADIUS="${INPUT_BLAST_RADIUS:-true}"
+# XPC-4.5 (#5749): empty means "the project's style-guide policy decides".
+MODE="${INPUT_MODE:-}"
+TRANSITIVE="${INPUT_TRANSITIVE:-}"
+CATEGORY="${INPUT_CATEGORY:-}"
 GITHUB_TOKEN="${INPUT_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 
 log() {
@@ -89,6 +93,14 @@ case "${BLAST_RADIUS}" in
     ;;
 esac
 
+case "${TRANSITIVE}" in
+  ""|true|false) ;;
+  *)
+    echo "::error::Input 'transitive' must be 'true', 'false' or empty (got: ${TRANSITIVE})"
+    exit 2
+    ;;
+esac
+
 cd "${WORKSPACE}"
 
 SPEC_PATH="${SPEC}"
@@ -107,6 +119,19 @@ DIFF_FLAGS=()
 if [[ "${BLAST_RADIUS}" == "true" ]]; then
   DIFF_FLAGS+=(--blast-radius)
 fi
+# XPC-4.5 (#5749): the compatibility mode, passed only when set so the policy applies otherwise.
+# The CLI validates the values (exit 2 on an unknown one).
+if [[ -n "${MODE}" ]]; then
+  DIFF_FLAGS+=(--mode "${MODE}")
+fi
+if [[ "${TRANSITIVE}" == "true" ]]; then
+  DIFF_FLAGS+=(--transitive)
+elif [[ "${TRANSITIVE}" == "false" ]]; then
+  DIFF_FLAGS+=(--no-transitive)
+fi
+if [[ -n "${CATEGORY}" ]]; then
+  DIFF_FLAGS+=(--category "${CATEGORY}")
+fi
 
 log "Running: ${APIOME_BIN} diff ${SPEC_PATH} --against ${PROJECT} --fail-on ${FAIL_ON} --format md ${DIFF_FLAGS[*]:-}"
 
@@ -116,7 +141,7 @@ set +e
   --against "${PROJECT}" \
   --fail-on "${FAIL_ON}" \
   --format md \
-  "${DIFF_FLAGS[@]}" \
+  ${DIFF_FLAGS[@]+"${DIFF_FLAGS[@]}"} \
   >"${CHANGELOG_PATH}" 2>"${ERR_PATH}"
 DIFF_EXIT=$?
 set -e

@@ -184,6 +184,8 @@ def _summary_for_change(change: ClassifiedChange) -> str:
         return rule.summary
     if change.unclassified:
         return "Unclassified change (treated as breaking)."
+    if change.rationale:
+        return change.rationale
     if change.change_kind:
         return f"Change of kind `{change.change_kind}`."
     return f"Change under rule `{change.rule_id}`."

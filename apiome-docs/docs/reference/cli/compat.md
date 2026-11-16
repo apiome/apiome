@@ -1,6 +1,6 @@
 ---
 title: "apiome compat"
-description: "Compare two OpenAPI revisions via independent oasdiff compatibility evidence."
+description: "Compare two revisions: oasdiff evidence, or the native check graded by compatibility mode."
 sidebar_position: 7
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,7 +12,7 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome compat {#compat}
 
-Compare two OpenAPI revisions via independent oasdiff compatibility evidence.
+Compare two revisions: oasdiff evidence, or the native check graded by compatibility mode.
 
 ```text
 apiome compat [OPTIONS] COMMAND [ARGS]...
@@ -27,3 +27,6 @@ apiome compat [OPTIONS] COMMAND [ARGS]...
 | `--base-version` | text |  | yes | Baseline version (UUID, slug, or label) to compare against. |
 | `--format` | text | `json` |  | Gate output format: json (default), sarif, or junit. |
 | `--fail-on` | text | `breaking` |  | Exit non-zero when findings at this level or higher are present: breaking (default), dangerous, or info. |
+| `--mode` | text | project policy |  | Use the native check graded by this compatibility mode: backward, forward, full or none (optionally with _transitive). JSON output only. |
+| `--transitive` / `--no-transitive` | flag | project policy |  | Use the native check, also comparing against every earlier version of the base. |
+| `--category` | text | project policy |  | Use the native check with this Protobuf category: wire, wire_json, package or file. |

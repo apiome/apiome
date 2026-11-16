@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from apiome_cli.compat_modes import describe_evaluated_under
+
 #: Inline OpenAPI upload cap (matches apiome-rest INLINE_SPEC_MAX_BYTES).
 INLINE_SPEC_MAX_BYTES = 10 * 1024 * 1024
 
@@ -78,7 +80,9 @@ def format_diff_text(payload: dict[str, Any]) -> str:
     """Render a human-readable text report from a ClassifiedDiffResponse.
 
     A breaking change that carries ``blastRadius`` (``--blast-radius``, CDG-3.6) gets an indented
-    "Blast radius:" line under it.
+    "Blast radius:" line under it. The report also says what it was graded under
+    (``evaluatedUnder``, XPC-4.5), names the earlier version a transitive change was found against,
+    and prints a mode-aware classifier's rationale under its change.
 
     Args:
         payload: Parsed JSON body from ``POST …/diff/…/classified``.
@@ -101,6 +105,9 @@ def format_diff_text(payload: dict[str, Any]) -> str:
             t=counts.get("total", 0),
         ),
     ]
+    evaluated = describe_evaluated_under(payload.get("evaluatedUnder"))
+    if evaluated:
+        lines.append(evaluated)
     for change in payload.get("changes") or []:
         if not isinstance(change, dict):
             continue
@@ -109,7 +116,15 @@ def format_diff_text(payload: dict[str, Any]) -> str:
         pointer = change.get("pointer") or ""
         consumers = change.get("consumers")
         touches = f" — breaks {', '.join(consumers)}" if consumers else ""
-        lines.append(f"  [{sev}] {rule} {pointer}{touches}")
+        against = change.get("against")
+        versus = (
+            f" (against {against['versionLabel']})"
+            if isinstance(against, dict) and against.get("versionLabel")
+            else ""
+        )
+        lines.append(f"  [{sev}] {rule} {pointer}{versus}{touches}")
+        if change.get("rationale"):
+            lines.append(f"      {change['rationale']}")
         blast = change.get("blastRadius")
         if isinstance(blast, dict) and blast.get("line"):
             lines.append(f"      Blast radius: {blast['line']}")
