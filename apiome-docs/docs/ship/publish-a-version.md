@@ -45,6 +45,10 @@ X-API-Key: <your-api-key>
 
 Returns the version with `published = true`. To reverse it, see [Unpublish a version](#unpublish-a-version).
 
+Straight after the publish, Apiome writes a change report comparing this version with the previous
+published one. `changeReportBaselineMode` (`auto`, `initial` or `manual`) chooses what it is compared
+with — see [Publication change reports](./publication-change-reports.md).
+
 ## Unpublish a version
 
 Unpublishing returns a published version to **draft** — for a bad release, a publish to the wrong
@@ -167,3 +171,4 @@ failures before you hit them.
 
 - [Cut a version](./cut-a-version.md) — the version you publish
 - [Browse published specs](./browse-published-specs.md) — where it lands
+- [Publication change reports](./publication-change-reports.md) — the report each publish writes
