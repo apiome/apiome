@@ -15,7 +15,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Bookmark, History, Package, PanelsTopLeft, Send, type LucideIcon } from 'lucide-react';
+import { Bookmark, History, Package, PanelsTopLeft, Send, ShieldCheck, type LucideIcon } from 'lucide-react';
 
 import { isFeatureReleased } from '@lib/feature-release';
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
@@ -34,6 +34,7 @@ const EXPORT_STUDIO_PATH = '/ade/dashboard/export/studio';
 const TAB_ICON: Readonly<Record<ExportStudioTabId, LucideIcon>> = {
   export: PanelsTopLeft,
   sdk: Package,
+  'sdk-compat': ShieldCheck,
   delivery: Send,
   presets: Bookmark,
   history: History,
