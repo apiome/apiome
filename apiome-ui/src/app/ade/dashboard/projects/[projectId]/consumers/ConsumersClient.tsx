@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { OwnerFilter, useTeams } from '@/app/components/ade/owners';
 import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
-import { FileJson, Plus } from 'lucide-react';
+import { Database, FileJson, Plus } from 'lucide-react';
 import { toast } from '../../../../../components/ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
@@ -46,12 +46,14 @@ import {
   type RuntimeOperation,
   type SelectionPayloadOperation,
 } from '@/app/components/ade/consumers';
+import { UsageDataDrawer } from '@/app/components/ade/usage';
 
 import {
   createBinding,
   createConsumer,
   declareContract,
   deleteBinding,
+  eraseConsumerUsage,
   fetchAvailableSurface,
   fetchBindings,
   fetchConsumers,
@@ -92,7 +94,7 @@ import {
 const HOME_ROUTE = '/ade/dashboard';
 
 /** Which overlay, if any, is open over the page. */
-type ConsumerOverlay = 'none' | 'register' | 'edit' | 'declare' | 'import' | 'surface' | 'bindings';
+type ConsumerOverlay = 'none' | 'register' | 'edit' | 'declare' | 'import' | 'surface' | 'bindings' | 'usage';
 
 /** The caller's effective permissions, as `/api/access/permissions/me` reports them. */
 interface MyPermissions {
@@ -168,6 +170,12 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
         permissions?.is_admin ||
           permissions?.permissions.includes(`consumer_contracts:${action}`),
       ),
+    [permissions],
+  );
+
+  /** Any permission by its full name (`projects:edit`), for the usage-data drawer (RDG-5.4). */
+  const hasPermission = React.useCallback(
+    (permission: string) => Boolean(permissions?.is_admin || permissions?.permissions.includes(permission)),
     [permissions],
   );
 
@@ -329,6 +337,17 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
     }
   };
 
+  /** Erase a consumer's usage identity (RDG-5.4): bindings and hashes go, counted calls turn anonymous. */
+  const eraseUsage = async (consumerSlug: string): Promise<string | null> => {
+    try {
+      const result = await eraseConsumerUsage(projectRef, consumerSlug);
+      toast.success(`Erased ${result.bindings} binding${result.bindings === 1 ? '' : 's'}; ${result.calls} calls now count as anonymous`);
+      return null;
+    } catch (error) {
+      return describeFailure(error, 'The usage identity could not be erased');
+    }
+  };
+
   /** "Add to contract": the current declaration plus one operation, through the picker's PUT. */
   const addToContract = async (row: ConsumerSummary, operation: RuntimeOperation): Promise<string | null> => {
     try {
@@ -415,7 +434,12 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
         ]}
         description="Who depends on this API, and which operations and fields each of them uses."
         actions={
-          can('create') ? (
+          <>
+            <Button variant="secondary" onClick={() => openOverlay('usage', null)}>
+              <Database aria-hidden="true" />
+              Usage data
+            </Button>
+            {can('create') ? (
             <>
               <Button variant="secondary" onClick={() => openOverlay('import', null)}>
                 <FileJson aria-hidden="true" />
@@ -426,7 +450,8 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
                 Register consumer
               </Button>
             </>
-          ) : null
+            ) : null}
+          </>
         }
       />
 
@@ -497,6 +522,14 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
         canCreate={can('create')}
         canDelete={can('delete')}
         canEdit={can('edit')}
+        onErase={eraseUsage}
+      />
+
+      <UsageDataDrawer
+        open={overlay === 'usage'}
+        onOpenChange={(next) => !next && setOverlay('none')}
+        projectRef={projectRef}
+        can={hasPermission}
       />
     </Page>
   );

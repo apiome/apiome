@@ -36196,6 +36196,110 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   USAGE DATA CONTROLS  (RDG-5.4, #5789)
+   --------------------------------------------------------------------------
+   The Consumers page's **Usage data** drawer (export, retention, sources and
+   agent-toolset body samples) and the bindings drawer's erase section. Tokens
+   only, nothing frozen in pixels, and every row wraps, so a long environment
+   name or a narrow drawer never scrolls sideways.
+   ========================================================================== */
+
+.usg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.usg-row > .cns-form__field {
+  flex: 1 1 10rem;
+}
+
+.usg-problem {
+  font-size: var(--fs-sm);
+  color: var(--danger-fg);
+}
+
+.usg-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.usg-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.usg-item__head,
+.usg-item__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.usg-item__name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.usg-item__meta {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.usg-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.usg-sample-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+}
+
+.usg-sample-form__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: var(--space-3);
+}
+
+.usg-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.usg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
    SDK GENERATION SETTINGS  (SDK-3.4, #4494)
    --------------------------------------------------------------------------
    The Ship → SDK settings screen: a scope picker, one form of four fields, and

@@ -44,6 +44,24 @@ days**, with charts per day, per tool and per agent.
 
 <Screenshot id="agent-access-usage" alt="The Usage tab: calls, error rate, latency and active agents, with charts per day, tool and agent" />
 
+## Body samples
+
+To debug an agent's calls you can keep the bodies of a share of a toolset's `tools/call`
+invocations for a short time. This is off by default and uses the same control as a usage source's
+[body samples](../govern/runtime-usage.mdx#open-a-sample-window):
+
+1. Open the toolset version's project, go to **Consumers** and click **Usage data**.
+2. Under **Agent toolsets**, find the version and click **Sample bodies…**.
+3. Enter the **Rate (%)** (up to 100) and **Stop after (days)** (at most 7).
+4. Tick **I understand that sampled request and response bodies are stored, after redaction, for up
+   to 7 days.**, then click **Start sampling**.
+
+**Stop sampling** ends it at once. Kept bodies are capped at 16 KiB each and deleted after 7 days.
+Changing the window takes permission to edit API keys and is recorded in the access audit as
+`agent.toolset.body_samples.update`. With the API:
+`PATCH /v1/tenants/{tenant}/agent-toolsets/{toolset}/body-samples` with
+`{"rate": 0.1, "until": "…", "acknowledgement": "…"}`, or `{"rate": 0}` to stop.
+
 ## Export server.json
 
 Hosts, gateways and registries pass MCP servers around as a registry `server.json` document. Apiome
@@ -92,4 +110,5 @@ but only to callers who sign in with one of the tenant's credentials.
 `GET` / `POST /v1/tenants/{tenant}/agent-toolsets`, `GET …/agent-toolsets/{toolset}/tools`,
 `GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET /v1/tenants/{tenant}/agent-usage`,
 `GET …/agent-toolsets/{toolset}/server.json` and `GET /v1/tenants/{tenant}/agent-access/server.json`
-(these two need permission to view API keys) — see the [API reference](../reference/api-reference.md).
+(these two need permission to view API keys) and
+`PATCH …/agent-toolsets/{toolset}/body-samples` (permission to edit API keys) — see the [API reference](../reference/api-reference.md).

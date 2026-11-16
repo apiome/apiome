@@ -9,6 +9,10 @@ same ``consumer_contracts`` permissions:
   transaction opens, and never stored or returned;
 * ``DELETE …/bindings/{binding_id}`` — ``consumer_contracts:delete`` (Owner and Admin), because
   unbinding removes a signal other people's changes are judged by. History stays attributed;
+* ``DELETE …/bindings`` — ``consumer_contracts:delete``: every live binding at once, or with
+  ``?erase=true`` (RDG-5.4, #5789) the consumer's identity is erased from the usage index — its
+  bindings and hashes deleted and its counters re-attributed to ``anonymous`` in one transaction,
+  audited as ``usage.consumer.erased``;
 * ``GET …/runtime`` — ``consumer_contracts:view``. ``anonymous`` is accepted as the consumer: it
   reports the traffic no binding attributes;
 * ``GET …/projects/{p}/consumer-suggestions`` — ``consumer_contracts:view``, and
@@ -53,6 +57,9 @@ from .consumer_suggestions import (
 from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .redacted_validation_route import RedactedValidationRoute
+from .usage_controls import AUDIT_CONSUMER_ERASED
+from .usage_controls_routes import audit as usage_audit
+from .usage_controls_store import delete_all_bindings, erase_consumer
 
 __all__ = ["DEFAULT_RUNTIME_DAYS", "MAX_RUNTIME_DAYS", "attach_runtime_summaries", "router", "runtime_window"]
 
@@ -302,6 +309,91 @@ async def delete_consumer_binding(
     except BindingError as exc:
         raise _binding_error(exc) from exc
     return Response(status_code=204)
+
+
+class BindingsDeletedResponse(BaseModel):
+    """What ``DELETE …/bindings`` deleted and, with ``erase=true``, re-attributed (RDG-5.4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    consumer: str = Field(description="The consumer's slug.")
+    erased: bool = Field(description="Whether the consumer's counters were re-attributed to `anonymous`.")
+    bindings: int = Field(description="Bindings deleted.")
+    hourly_rows: int = Field(default=0, description="Hourly counter rows re-attributed to `anonymous`.")
+    daily_rows: int = Field(default=0, description="Daily rollup rows re-attributed to `anonymous`.")
+    calls: int = Field(default=0, description="Calls those daily rows counted (kept, now anonymous).")
+    unattributed_rows: int = Field(default=0, description="Suggested-consumer rows carrying its hashes, deleted.")
+    edges: int = Field(default=0, description="Runtime dependency-graph edges from the consumer, deleted.")
+
+
+@router.delete(
+    "/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings",
+    response_model=BindingsDeletedResponse,
+    summary="Delete all of a consumer's bindings, optionally erasing its usage identity",
+    description=(
+        "Without `erase`, every live binding stops matching traffic and history stays attributed, "
+        "as when they are deleted one by one.\n\n"
+        "With `erase=true` (RDG-5.4), in **one transaction**: every binding of the consumer, live or "
+        "deleted, is removed with its hash; every hourly and daily counter it attributed is "
+        "re-attributed to `anonymous` (the counts are kept, so totals do not change); the "
+        "suggested-consumer rows carrying its hashes and its runtime graph edges are deleted. "
+        "Afterwards no usage read names the consumer. The consumer and its contract stay.\n\n"
+        "Requires `consumer_contracts:delete`. An erasure is audited as `usage.consumer.erased`."
+    ),
+    responses={400: {"description": "`anonymous` cannot be erased."}},
+)
+async def delete_consumer_bindings(
+    tenant_slug: str,
+    project_ref: str,
+    consumer_ref: str,
+    erase: bool = Query(default=False, description="Also re-attribute the consumer's counters to `anonymous`."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> BindingsDeletedResponse:
+    """Delete a consumer's bindings, or erase it from the usage index.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_ref: Project slug or id.
+        consumer_ref: Consumer slug or id.
+        erase: Re-attribute its counters to ``anonymous`` and delete its hashes too.
+        auth_data: The authenticated principal.
+
+    Returns:
+        What was deleted and re-attributed.
+
+    Raises:
+        HTTPException: 400 for ``anonymous``, 404 for an unknown project or consumer, 403 without
+            ``consumer_contracts:delete``.
+    """
+    user_id = enforce_permission(
+        db, auth_data, Resource.CONSUMER_CONTRACTS, Action.DELETE, target=consumer_ref
+    )
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    if consumer_ref == ANONYMOUS_CONSUMER_SLUG:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "consumer-anonymous-reserved", "message": "`anonymous` has no bindings to delete"},
+        )
+    try:
+        project = resolve_project(tenant_id, project_ref)
+        consumer = get_consumer(tenant_id, str(project["id"]), consumer_ref)
+    except ConsumerValidationError as exc:
+        raise _http_error(exc) from exc
+    actor = actor_from_auth(auth_data, user_id).user_id
+    if not erase:
+        count = delete_all_bindings(db, tenant_id, consumer.id, user_id=actor)
+        return BindingsDeletedResponse(consumer=consumer.slug, erased=False, bindings=count)
+    result = erase_consumer(db, tenant_id, consumer.id)
+    usage_audit(
+        tenant_id=tenant_id,
+        action=AUDIT_CONSUMER_ERASED,
+        auth_data=auth_data,
+        actor_id=user_id,
+        target=consumer.id,
+        detail={"projectId": str(project["id"]), "consumer": consumer.slug, **result},
+    )
+    return BindingsDeletedResponse(consumer=consumer.slug, erased=True, **result)
 
 
 @router.get(

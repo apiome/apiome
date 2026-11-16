@@ -1,6 +1,6 @@
 ---
 title: "Consumer contracts"
-description: "REST endpoints tagged consumer-contracts: 17 operations."
+description: "REST endpoints tagged consumer-contracts: 18 operations."
 sidebar_position: 27
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.582.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.583.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `consumer-contracts` · 17 operations
+Tag: `consumer-contracts` · 18 operations
 
 ## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports` {#import-pact-contract-v1-tenants-tenant-slug-projects-project-ref-consumer-pact-imports-post}
 
@@ -394,6 +394,37 @@ Request body for bind a header, api key, jwt claim or user agent to a consumer.
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 | 503 | `consumer-binding-key-unavailable`: no envelope master key is configured. | — |
 
+## `DELETE /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings` {#delete-consumer-bindings-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-bindings-delete}
+
+**Delete all of a consumer's bindings, optionally erasing its usage identity**
+
+Without `erase`, every live binding stops matching traffic and history stays attributed, as when they are deleted one by one.
+
+With `erase=true` (RDG-5.4), in **one transaction**: every binding of the consumer, live or deleted, is removed with its hash; every hourly and daily counter it attributed is re-attributed to `anonymous` (the counts are kept, so totals do not change); the suggested-consumer rows carrying its hashes and its runtime graph edges are deleted. Afterwards no usage read names the consumer. The consumer and its contract stay.
+
+Requires `consumer_contracts:delete`. An erasure is audited as `usage.consumer.erased`.
+
+Operation id: `delete_consumer_bindings_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `erase` | query | boolean | no | Also re-attribute the consumer's counters to `anonymous`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for delete all of a consumer's bindings, optionally erasing its usage identity. | `application/json` [`BindingsDeletedResponse`](#schema-bindingsdeletedresponse) |
+| 400 | `anonymous` cannot be erased. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `DELETE /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings/{binding_id}` {#delete-consumer-binding-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-bindings-binding-id-delete}
 
 **Delete a consumer binding**
@@ -608,6 +639,21 @@ Attributes:
 | `last_matched_at` | string or null | no | Last Matched At timestamp (ISO 8601). |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `deleted_at` | string or null | no | Deleted At timestamp (ISO 8601). |
+
+### `BindingsDeletedResponse` {#schema-bindingsdeletedresponse}
+
+What ``DELETE …/bindings`` deleted and, with ``erase=true``, re-attributed (RDG-5.4).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer` | string | yes | The consumer's slug. |
+| `erased` | boolean | yes | Whether the consumer's counters were re-attributed to `anonymous`. |
+| `bindings` | integer | yes | Bindings deleted. |
+| `hourly_rows` | integer | no | Hourly counter rows re-attributed to `anonymous`. |
+| `daily_rows` | integer | no | Daily rollup rows re-attributed to `anonymous`. |
+| `calls` | integer | no | Calls those daily rows counted (kept, now anonymous). |
+| `unattributed_rows` | integer | no | Suggested-consumer rows carrying its hashes, deleted. |
+| `edges` | integer | no | Runtime dependency-graph edges from the consumer, deleted. |
 
 ### `ConsumerBindingBindingListResponse` {#schema-consumerbindingbindinglistresponse}
 

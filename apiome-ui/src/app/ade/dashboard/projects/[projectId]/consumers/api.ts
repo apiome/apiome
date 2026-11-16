@@ -243,6 +243,33 @@ export async function deleteBinding(projectRef: string, consumerRef: string, bin
   );
 }
 
+/** What an erasure deleted and re-attributed (RDG-5.4). */
+export interface ConsumerErasure {
+  consumer: string;
+  erased: boolean;
+  bindings: number;
+  hourly_rows: number;
+  daily_rows: number;
+  calls: number;
+  unattributed_rows: number;
+  edges: number;
+}
+
+/**
+ * Erase a consumer from the usage index (RDG-5.4): every binding and hash is deleted and its
+ * counted calls move to `anonymous`, in one transaction. Totals are kept.
+ *
+ * @param projectRef Project slug or id.
+ * @param consumerRef Consumer slug or id.
+ * @returns What was deleted and re-attributed.
+ */
+export function eraseConsumerUsage(projectRef: string, consumerRef: string): Promise<ConsumerErasure> {
+  return call<ConsumerErasure>(
+    `/${encodeURIComponent(projectRef)}/${encodeURIComponent(consumerRef)}/bindings?erase=true`,
+    { method: 'DELETE' },
+  );
+}
+
 /**
  * Declared versus observed for one consumer (or `anonymous`).
  *

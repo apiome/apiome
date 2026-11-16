@@ -15,9 +15,11 @@ hour, not the requests themselves, so it can never become a store of credentials
 :::note[What is available today]
 The index, its retention, the **ingest endpoint** that fills it and the **HAR upload** in the CLI
 are available: [upload a HAR file](#upload-a-har-file) to fill the index from a browser or proxy
-recording. The other ready-made sources (an OpenTelemetry receiver, gateway logs) and managing
-sources from the app come in later releases. Until then, a script or a log shipper can
-[send usage events](#send-usage-events) directly.
+recording. A project's **Consumers** page → **Usage data** shows each source and lets you change
+what it captures, [lower retention](#keep-less), [export the rollups](#export-usage) and
+[erase a consumer](#erase-a-consumer). The other ready-made sources (an OpenTelemetry receiver,
+gateway logs) and creating sources from the app come in later releases. Until then, a script or a
+log shipper can [send usage events](#send-usage-events) directly.
 :::
 
 ## What the index stores
@@ -68,6 +70,35 @@ bounded on every side:
 
 An event carries its exchange in a `sample` field. A batch that sends one while the source's sample
 window is closed is refused with `422 usage-body-not-accepted`.
+
+#### Open a sample window
+
+1. On the project's **Consumers** page, click **Usage data**.
+2. Under **Sources**, find the source and click **Sample bodies…**.
+3. Enter the **Rate (%)** (at most 5) and **Stop after (days)** (at most 7).
+4. Tick **I understand that sampled request and response bodies are stored, after redaction, for up
+   to 7 days.** The button stays disabled until you do.
+5. Click **Start sampling**. The source shows **Body samples: 2 % until 19 Nov 2026, 12:00 UTC**.
+
+**Stop sampling** closes the window at once. Samples already kept are still deleted on their 7-day
+schedule. Agent toolsets have the same control under **Agent toolsets**; see
+[Agent access](../bring-in/agent-access.mdx#body-samples).
+
+<Screenshot id="runtime-sources-retention" alt="The Usage data drawer: export, retention fields with the tier caps, and a source with the body-sample form open and its acknowledgement unticked" />
+
+With the API, send the window with the exact sentence, which `GET …/usage/sources` returns as
+`acknowledgement`:
+
+```bash
+curl -X PATCH https://api.apiome.dev/v1/tenants/northwind/projects/pets/usage/sources/$SOURCE_ID \
+  -H "Authorization: Bearer $APIOME_TOKEN" -H "Content-Type: application/json" \
+  -d '{"bodySamples": {"rate": 0.02, "until": "2026-11-19T12:00:00Z",
+       "acknowledgement": "I understand that sampled request and response bodies are stored, after redaction, for up to 7 days."}}'
+```
+
+Without the sentence the call is refused with `422 usage-body-samples-acknowledgement-required`. A
+rate above 5 % or an `until` more than 7 days ahead is refused with `422 usage-body-samples-invalid`.
+`{"bodySamples": {"rate": 0}}` closes the window.
 
 ## Upload a HAR file
 
@@ -151,9 +182,11 @@ POST /v1/tenants/{tenant}/usage/ingest
 
 - **A usage source.** Each source belongs to one project and sets its environment (`prod` by
   default), its sampling rate, whether it reports field presence, and its sample window. A
-  [HAR upload](#upload-a-har-file) creates its own source. For any other kind, creating sources from
-  the app comes in a later release; until then, an operator creates one in the database and passes
-  its id to whoever runs the source:
+  [HAR upload](#upload-a-har-file) creates its own source. Once a source exists, change its
+  sampling, field presence and sample window under **Usage data** or with
+  `PATCH …/usage/sources/{id}` (see [Usage data with the API](#usage-data-with-the-api)). For any
+  other kind, creating sources from the app comes in a later release; until then, an operator
+  creates one in the database and passes its id to whoever runs the source:
 
   ```sql
   INSERT INTO apiome.usage_source (tenant_id, project_id, kind, environment, sampling_rate)
@@ -301,7 +334,32 @@ part. The handle `anonymous` cannot be used for a real consumer.
 agent, add up to that one consumer. A consumer can hold up to 50 bindings.
 
 **Deleting a binding** stops it matching from the next batch on. Calls it already attributed stay
-attributed to the consumer, so reports about the past do not change.
+attributed to the consumer, so reports about the past do not change. To remove the attribution as
+well, [erase the consumer](#erase-a-consumer).
+
+### Erase a consumer
+
+When a consumer is a person's client, its counters are personal data. **Erasing** a consumer answers
+a deletion request without changing any total. In one transaction it:
+
+- deletes every binding of the consumer, live or already deleted, with its hash;
+- moves every hourly and daily count those bindings attributed to **anonymous**, so calls, errors,
+  latency and bytes per day and operation stay the same;
+- deletes the [unattributed client](#what-the-index-stores) rows that carry one of its hashes, and its
+  runtime edges in the dependency graph.
+
+Afterwards no usage view, export or report names the consumer. The consumer and its contract stay
+in the registry.
+
+1. On the project's **Consumers** page, open the consumer's **Bindings and traffic**.
+2. Under **Erase usage identity**, tick **I understand this deletes this consumer's bindings and
+   moves its counted calls to anonymous. It cannot be undone.**
+3. Click **Erase usage identity**.
+
+With the API: `DELETE /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings?erase=true`
+(`consumer_contracts:delete`). The answer says how many bindings, rows and calls it moved. Every
+erasure is recorded in the [access audit](./access-audit.mdx) as `usage.consumer.erased`. Without
+`erase=true`, the call only deletes every live binding and keeps history attributed.
 
 ### Declared vs observed
 
@@ -328,6 +386,7 @@ All four calls take the `consumer_contracts` permissions of the consumer registr
 | `GET /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` | `consumer_contracts:view` (add `?include_deleted=true` for deleted bindings) |
 | `POST /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` | `consumer_contracts:create` |
 | `DELETE /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings/{id}` | `consumer_contracts:delete` |
+| `DELETE /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings` | `consumer_contracts:delete`. Deletes every live binding; `?erase=true` [erases the consumer](#erase-a-consumer) |
 | `GET /v1/tenants/{t}/projects/{p}/consumers/{c}/runtime?days=30` | `consumer_contracts:view`. Use `anonymous` as `{c}` for unattributed traffic |
 
 ```bash
@@ -363,10 +422,50 @@ Hourly counters are deleted only after their day has been rolled up and **finali
 numbers always match what they were built from. A day is finalized a few hours after it ends (6 by
 default). After that it is never recomputed and takes no new counts.
 
+### Keep less
+
+The plan sets the **most** a workspace keeps. An Owner or Admin can keep less:
+
+1. On a project's **Consumers** page, click **Usage data**.
+2. Under **Retention**, enter **Hourly counters (days)** and/or **Daily rollups (days)**. Leave a
+   field empty to use the plan's value. **Applies** shows what the purge uses.
+3. Click **Save retention**.
+
+The setting covers the whole workspace. A value above the plan's limit is refused with the limit
+named, for example `usage_rollup_retention_days may be at most 395 days on this workspace's tier`.
+The next [usage sweep](#for-operators) deletes what is now past retention. If the workspace later
+moves to a plan with a lower limit, the lower limit wins. Body samples stay at 7 days on every plan.
+
+## Export usage
+
+Download a project's daily rollups to keep a record or to check what the index holds:
+
+1. On the project's **Consumers** page, click **Usage data**.
+2. Under **Export**, pick **CSV** or **JSON** and enter how many days back (1 to 730).
+3. Click **Download export**.
+
+Each row is one UTC day, environment, source, version, operation, status code and consumer, with
+`calls`, `errors`, `latency_sum_ms`, `latency_max_ms`, `request_bytes` and `response_bytes`. The
+consumer is its handle, or `anonymous`. No binding name, value or hash is exported. The JSON document
+(`apiome.usage.export/v1`) ends with `totals` (`rows`, `calls`, `errors`), the same sums the runtime
+views show for the window. Each export is recorded in the audit log as `usage.export`.
+
+## Usage data with the API
+
+| Call | Permission | What it does |
+| --- | --- | --- |
+| `GET /v1/tenants/{t}/usage/retention` | `projects:view` | The plan's limits (`caps`), the workspace's own values (`setting`) and what the purge applies (`effective`) |
+| `PUT /v1/tenants/{t}/usage/retention` | `members:edit` | `{"hourlyDays": 14, "rollupDays": null}`. `422 usage-retention-above-cap` above a limit. Audited as `usage.retention.update` |
+| `GET /v1/tenants/{t}/projects/{p}/usage/export?format=csv&days=30` | `versions:view` | Streams the daily rollups as an attachment (`format` is `csv` or `json`) |
+| `GET /v1/tenants/{t}/projects/{p}/usage/sources` | `projects:view` | Every source and agent toolset with its `bodySamples` (`rate`, `until`, `open`, `maxRate`, `maxWindowDays`), plus the `acknowledgement` sentence |
+| `PATCH /v1/tenants/{t}/projects/{p}/usage/sources/{id}` | `projects:edit` | `samplingRate`, `fieldCapture` and/or `bodySamples`. Audited as `usage.source.update` |
+| `PATCH /v1/tenants/{t}/agent-toolsets/{id}/body-samples` | `api_keys:edit` | An agent toolset's body capture, in the same shape. Audited as `agent.toolset.body_samples.update` |
+
 ## For operators
 
 The REST API runs the **usage sweep** in the background. Each run rolls up open days, finalizes
-closed ones, deletes what is past retention, then refreshes the dependency graph's
+closed ones, deletes what is past retention (the plan's limit, or the workspace's
+[lower value](#keep-less)), then refreshes the dependency graph's
 [runtime edges](../reference/rest/graph.md). Only one replica sweeps at a time.
 
 | Variable | Default | Effect |

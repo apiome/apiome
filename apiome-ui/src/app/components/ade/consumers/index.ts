@@ -29,6 +29,7 @@ export type { ConsumerSurfaceDrawerProps } from './ConsumerSurfaceDrawer';
 
 export { default as ConsumerBindingsDrawer } from './ConsumerBindingsDrawer';
 export type { ConsumerBindingsDrawerProps } from './ConsumerBindingsDrawer';
+export { ERASE_ACKNOWLEDGEMENT } from './ConsumerBindingsDrawer';
 
 export * from './consumersModel';
 export * from './bindingsModel';
