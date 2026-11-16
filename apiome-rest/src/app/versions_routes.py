@@ -158,8 +158,9 @@ from .version_unpublish import (
 )
 from .sdk_regen_subscriptions import enqueue_regen_on_publish
 from .export_auto_worker import enqueue_auto_export_on_publish
-from .permissions import enforce_permission, Resource, Action
+from .permissions import enforce_permission, has_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
+from .sunset_readiness_store import readiness_for_entries
 from .revision_deprecation import (
     coerce_metadata,
     parse_calendar_date,
@@ -688,7 +689,40 @@ async def get_sunset_timeline(
             )
         )
 
+    readiness = _sunset_readiness(tid, auth_data, [(entry.revision_id, entry.project_id) for entry in entries])
+    entries = [entry.model_copy(update={"still_used": readiness.get(entry.revision_id)}) for entry in entries]
     return SunsetTimelineResponse(entries=entries)
+
+
+def _sunset_readiness(
+    tenant_id: str, auth_data: Dict[str, Any], revisions: List[tuple]
+) -> Dict[str, Any]:
+    """Who still calls each timeline row (RDG-5.3, #5788) — never fails the timeline.
+
+    Consumer names are attached only for a reader holding ``consumer_contracts:view``; everyone
+    sees the counts. A usage index that cannot be read leaves every row's ``stillUsed`` null.
+
+    Args:
+        tenant_id: The tenant.
+        auth_data: The caller.
+        revisions: ``(revision_id, project_id)`` per row.
+
+    Returns:
+        ``{revision_id: SunsetUsage | None}``; empty when the read failed.
+    """
+    if not revisions:
+        return {}
+    try:
+        visible = bool(has_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW))
+    except Exception:  # noqa: BLE001 - an unreadable grant hides the names; it never fails a read
+        visible = False
+    try:
+        return readiness_for_entries(
+            db, tenant_id, revisions, consumers_visible=visible, today=datetime.now(timezone.utc).date()
+        )
+    except Exception:  # noqa: BLE001 - the schedule must load even when the usage index does not
+        logger.warning("sunset timeline: usage readiness could not be read", exc_info=True)
+        return {}
 
 
 @router.get("/{tenant_slug}/{project_id}")

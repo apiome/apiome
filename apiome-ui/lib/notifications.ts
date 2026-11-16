@@ -57,6 +57,9 @@ export const NOTIFICATION_TYPES = [
   // MFX-39.4: an auto-export on publish halted before delivery (or failed); its payload carries its
   // own `summary` and `link`, like an owner finding.
   'export_auto_halted',
+  // RDG-5.3: a deprecated revision near its sunset still carries traffic from bound consumers;
+  // written by the usage sweep at most once a week, with its own `summary` and `link`.
+  'sunset_still_used',
   ...OWNER_NOTIFICATION_TYPES,
 ] as const;
 
@@ -84,6 +87,7 @@ export const NOTIFICATION_TYPE_LABELS: Readonly<Record<NotificationType, string>
   thread_resolved: 'Resolved threads',
   version_published: 'Publishes',
   export_auto_halted: 'Halted auto-exports',
+  sunset_still_used: 'Sunsets still in use',
   owner_finding: 'Lint findings',
   owner_breaking_change: 'Breaking changes',
   owner_verification_drift: 'Verification drift',
@@ -106,6 +110,8 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Readonly<Record<NotificationType, s
   thread_resolved: 'When a thread you took part in is resolved.',
   version_published: 'When a version you collaborated on is published.',
   export_auto_halted: 'When an export a publish triggered is held back for its loss, or fails.',
+  sunset_still_used:
+    'When a version you worked on sunsets within 30 days and bound consumers still call it.',
   owner_finding: 'When something your team owns gets a new error-level lint finding.',
   owner_breaking_change: 'When a refresh brings a breaking change to something your team owns.',
   owner_verification_drift: 'When verification finds drift on something your team owns.',
@@ -345,6 +351,9 @@ export function notificationSentence(row: Readonly<NotificationRow>): string {
     case 'export_auto_halted':
       // Written by the auto-export sweep, not a person: the payload says what happened.
       return row.payload.summary?.trim() || 'An auto-export was held back before delivery';
+    case 'sunset_still_used':
+      // Written by the usage sweep: the payload names the version, the days left and the count.
+      return row.payload.summary?.trim() || 'A version near its sunset is still in use';
     default:
       // Unreachable while `type` is the union, but a future sixth type written by a newer
       // apiome-rest must not render as a blank row.
@@ -447,6 +456,7 @@ export const VERSIONS_THREAD_PARAM = 'thread';
  * | `review_requested`, `review_decision` | `/ade/reviews/{id}` |
  * | `version_published` | the project's version timeline |
  * | `export_auto_halted` | its own `link` (Export studio's Presets tab) — an `/ade/` path only |
+ * | `sunset_still_used` | its own `link` (the sunset timeline) — an `/ade/` path only |
  * | `owner_*` | the finding's own `link` — an `/ade/` path only |
  *
  * @param row - The notification.
@@ -474,6 +484,7 @@ export function notificationHref(row: Readonly<NotificationRow>): string | null 
       return `${VERSIONS_ROUTE}?${new URLSearchParams({ projectId: row.project_id }).toString()}`;
     }
     case 'export_auto_halted':
+    case 'sunset_still_used':
       return ownerFindingHref(row.payload.link);
     default:
       if (isOwnerNotificationType(row.type)) return ownerFindingHref(row.payload.link);

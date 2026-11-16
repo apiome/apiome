@@ -15,6 +15,7 @@ import {
   RefreshCwOff,
   Rocket,
   ShieldAlert,
+  Sunset,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -53,6 +54,7 @@ export const NOTIFICATION_TYPE_ICONS: Readonly<Record<NotificationType, LucideIc
   thread_resolved: MessageSquareCheck,
   version_published: Rocket,
   export_auto_halted: PackageX,
+  sunset_still_used: Sunset,
   owner_finding: Bug,
   owner_breaking_change: FileDiff,
   owner_verification_drift: Activity,

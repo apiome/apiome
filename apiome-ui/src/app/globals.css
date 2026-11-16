@@ -32555,6 +32555,54 @@ tr:focus-within .pub-url__glyph {
   flex-shrink: 0;
 }
 
+/* Sunset readiness (RDG-5.3, #5788): "Still used by N consumers (M calls, 7-day)", the first
+   handles and a Consumers link. The same three rules draw it on the Published page's version
+   cell, so the two screens read alike. Bound traffic is the page ink — it is the fact that
+   blocks a sunset; anonymous-only and no-traffic lines are the quiet step. */
+.stl-usage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.stl-usage__line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.stl-usage[data-state='anonymous'] .stl-usage__line,
+.stl-usage[data-state='unused'] .stl-usage__line {
+  color: var(--fg-muted);
+  font-weight: 400;
+}
+
+.stl-usage__line > svg,
+.stl-usage__link > svg {
+  inline-size: 0.6875rem;
+  block-size: 0.6875rem;
+  flex-shrink: 0;
+}
+
+.stl-usage__handles {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.stl-usage__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--accent-fg);
+}
+
 /* The row a timeline marker points at. A tint plus a leading rule, never a
    tint alone: the same "colour is not the only signal" rule the legend
    follows, and the rule is what a reader scanning the table sees first. */

@@ -59,13 +59,44 @@ project.
 | **Timeline** | **past**, **imminent** or **scheduled**. |
 | **Lifecycle** | **Deprecated (migrate before sunset)** or **Sunset reached (read-only / redirect)**. |
 | **Successor** | The replacement version, or —. |
-| **Notes / #507** | The deprecation message or warning, and a **Migration guide** link. |
+| **Notes / #507** | Who still calls the version (see [Who still uses a version](#who-still-uses-a-version)), the deprecation message or warning, and a **Migration guide** link. |
 
 When rows carry the same structured warnings as compatibility checks, a **Where these warnings come
 from** button appears next to **Export CSV**. **Click it** for the explanation, then open the
 version on [Versions](../build/versions.mdx) to see the warnings in context.
 
 <Screenshot id="sunset-timeline-warnings" alt="Where these warnings come from: the dialog explaining the #507 structured warnings, with a link to Versions" />
+
+## Who still uses a version
+
+When the version's project has a [usage source](../govern/runtime-usage.mdx), the **Notes / #507**
+cell opens with who still calls the version, counted over the last 7 days of `prod` traffic:
+
+- *Still used by 2 consumers (1,240 calls, 7-day)* — consumers you have bound to their traffic still
+  call it. Their handles follow (`billing-service, orders-web`, then *+N more*), and
+  **“Consumers”** opens the project's Consumers page (see [Attribute traffic to consumers](../govern/runtime-usage.mdx#attribute-traffic-to-consumers)). Handles
+  show only if you hold `consumer_contracts:view`; otherwise you see the count alone.
+- *Anonymous traffic only — bind consumers to attribute it* — the version is still called, but no
+  [consumer binding](../govern/runtime-usage.mdx#attribute-traffic-to-consumers) recognises who calls it.
+  **“Bind consumers”** opens the Consumers page, where you add one.
+- *No traffic in the last 7 days* — nobody calls it, so the sunset can go ahead.
+
+A version whose project has no usage source shows no line: there is no traffic to go on.
+
+<Screenshot id="sunset-timeline-still-used" alt="Sunset timeline Notes cells: still used by 2 consumers with their handles, anonymous traffic only, and no traffic in the last 7 days" />
+
+### The weekly warning
+
+Each time the usage sweep rolls up usage (hourly by default), Apiome checks every version whose
+sunset is **30 days away or less**. If bound consumers called it in the last 7 days, the version's collaborators get a
+**Sunsets still in use** [notification](../workspace/notifications.mdx#sunsets-still-in-use) —
+*1.2.0 sunsets in 20 days and is still used by 2 consumers (1,240 calls, 7-day)* — and every push
+webhook subscription in the workspace receives a `sunset.still_used` event. The event carries
+the project, the revision, the sunset, the days left, the call counts and each consumer's handle.
+
+A version is warned about **at most once a week**. Apiome records when it last warned, so a restart
+or a second server never sends the warning twice. Anonymous traffic on its own never sends one,
+because there is nobody to tell. The weekly warning stops once the sunset date has passed.
 
 ## Export CSV
 
@@ -81,11 +112,15 @@ sunset schedule* with the reason and **“Try again”**.
 
 ## With the API
 
-`GET /v1/versions/{tenant}/sunset-timeline` (optionally `?projectId=`) returns the same entries;
-the sunset itself is version metadata, set with `PUT /v1/versions/{tenant}/{project_id}/{version_record_id}`.
+`GET /v1/versions/{tenant}/sunset-timeline` (optionally `?projectId=`) returns the same entries.
+Each entry's `stillUsed` holds the usage line: `state` (`bound`, `anonymous` or `unused`),
+`summary`, `calls`, `boundCalls`, `anonymousCalls`, `consumerCount`, `consumers` (`null` without
+`consumer_contracts:view`) and `consumersHref`. `stillUsed` is `null` when the project has no
+usage source. The sunset itself is version metadata, set with `PUT /v1/versions/{tenant}/{project_id}/{version_record_id}`.
 See the [API reference](../reference/api-reference.md).
 
 ## Where next
 
 - [Published](./published.mdx)
 - [Versions](../build/versions.mdx)
+- [Runtime usage](../govern/runtime-usage.mdx)

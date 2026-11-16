@@ -37,6 +37,12 @@
  * 5. **The search box vanished with the rows.** Loading, empty and search-miss each replaced
  *    the whole table *and* its toolbar, so the only way out of a bad search was to reload. All
  *    three are inside the table's card now.
+ *
+ * ### Sunset readiness (RDG-5.3, #5788)
+ *
+ * When any row is deprecated the screen also reads the sunset timeline once, for its
+ * `stillUsed` blocks, and the table draws *Still used by N consumers* under those rows. The
+ * read only decorates rows already on screen: a failure leaves them without the line.
  */
 
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -71,6 +77,7 @@ import {
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import type { VersionMockChange } from '@/app/components/ade/dashboard/VersionMockCell';
+import { stillUsedByRevision, type SunsetUsage } from '@/app/components/ade/sunset/sunsetModel';
 import {
   clearStoredPreviewApiKey,
   getStoredPreviewApiKey,
@@ -94,6 +101,7 @@ import {
   isPublishedListFiltered,
   nextVisibility,
   publishedFootLabel,
+  publishedLifecyclePill,
   publishedSummaryLine,
   publishedViewUrl,
   searchPublishedVersions,
@@ -225,6 +233,38 @@ export default function PublishedVersions({
     },
     []
   );
+
+  // ---- sunset readiness (RDG-5.3) ----------------------------------------------------------
+
+  /** Whether any row is deprecated — the only rows the "still used" line is drawn on. */
+  const hasDeprecated = React.useMemo(
+    () => versions.some((version) => publishedLifecyclePill(version) !== null),
+    [versions]
+  );
+  const [stillUsed, setStillUsed] = React.useState<ReadonlyMap<string, SunsetUsage>>(
+    () => new Map()
+  );
+  React.useEffect(() => {
+    if (!currentTenantId || !hasDeprecated) {
+      setStillUsed(new Map());
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch('/api/versions/sunset-timeline');
+        const data = await response.json();
+        if (!cancelled && response.ok && data?.success && Array.isArray(data.entries)) {
+          setStillUsed(stillUsedByRevision(data.entries));
+        }
+      } catch {
+        // Decoration only: the rows stay, without the line.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenantId, hasDeprecated]);
 
   /** 30-day mock usage across the tenant's published versions (#4443, SIM-2.2). */
   const { seriesByVersion: mockUsageByVersion } = useMockUsage({
@@ -544,6 +584,7 @@ export default function PublishedVersions({
               footer={footer}
               empty={empty}
               onOwnerChange={updateOwner}
+              stillUsedByRevision={stillUsed}
             />
           </>
         )}

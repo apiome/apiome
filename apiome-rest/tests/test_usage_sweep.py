@@ -49,6 +49,9 @@ class FakeDb:
         if "catalog_edges" in query:
             # CDG-3.5: the runtime-edge refresh lists tenants with usage; none here.
             return []
+        if "sunset_still_used_alert" in query:
+            # RDG-5.3: the sunset check lists revisions to alert about; none here.
+            return []
         if "pg_advisory_unlock" in query:
             return [{"unlocked": True}]
         raise AssertionError(f"unexpected query {query}")
@@ -64,6 +67,7 @@ class FakeDb:
             "purge_usage_sdk_beacons",
             "purge_usage",
             "catalog_edges",
+            "sunset_still_used_alert",
             "pg_advisory_unlock",
         )
         return [next(n for n in names if n in q) for q, _ in self.calls]
@@ -79,6 +83,7 @@ def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
         "purge_usage_unattributed",
         "purge_usage_sdk_beacons",
         "catalog_edges",
+        "sunset_still_used_alert",
         "pg_advisory_unlock",
     ]
     assert db.calls[0][1] == (SWEEP_LOCK_KEY,) and db.calls[-1][1] == (SWEEP_LOCK_KEY,)
@@ -95,6 +100,7 @@ def test_a_tick_rolls_up_then_purges_under_the_lock() -> None:
         unattributed_purged=7,
         sdk_beacons_purged=2,
         runtime_tenants=0,
+        sunset_alerts=0,
     )
 
 
@@ -205,3 +211,29 @@ def test_a_failed_runtime_edge_refresh_never_fails_the_tick(monkeypatch: pytest.
     monkeypatch.setattr("app.runtime_graph.refresh_runtime_edges", boom)
     result = run_usage_sweep(FakeDb())
     assert result is not None and result.runtime_tenants == 0 and result.days_rolled_up == 2
+
+
+def test_the_sunset_check_runs_inside_the_tick_and_reports_its_alerts(monkeypatch: pytest.MonkeyPatch) -> None:
+    """RDG-5.3: the sweep runs the sunset still-used check after the rollup and counts its alerts."""
+    seen: List[Any] = []
+
+    def check(db: Any) -> int:
+        seen.append(db)
+        return 3
+
+    monkeypatch.setattr("app.sunset_readiness_sweep.check_sunset_still_used", check)
+    db = FakeDb()
+    result = run_usage_sweep(db)
+    assert seen == [db]
+    assert result is not None and result.sunset_alerts == 3
+
+
+def test_a_failed_sunset_check_never_fails_the_tick(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(_db: Any) -> int:
+        raise RuntimeError("sunset down")
+
+    monkeypatch.setattr("app.sunset_readiness_sweep.check_sunset_still_used", boom)
+    db = FakeDb()
+    result = run_usage_sweep(db)
+    assert result is not None and result.sunset_alerts == 0 and result.days_rolled_up == 2
+    assert db.statements()[-1] == "pg_advisory_unlock"

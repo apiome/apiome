@@ -182,6 +182,15 @@
       "fallback": "fixture:hive-sunset-timeline/timeline.html"
     },
     {
+      "id": "sunset-timeline-still-used",
+      "route": "/ade/dashboard/versions/sunset-timeline",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-sunset-timeline/still-used.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/sunset/SunsetStillUsed.tsx"
+      ]
+    },
+    {
       "id": "sunset-timeline-warnings",
       "route": "/ade/dashboard/versions/sunset-timeline",
       "waitFor": "#a11y-mount > *",

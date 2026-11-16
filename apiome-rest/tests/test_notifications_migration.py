@@ -80,22 +80,32 @@ def test_migration_adds_no_rbac_resource_no_enum_type_and_no_preferences():
 
 def test_the_type_vocabulary_matches_the_rest_models():
     """V263 created the five collaboration types; V286 (CDG-2.3) swapped the CHECK to add the seven
-    owner types, and V359 (MFX-39.4) `export_auto_halted`. Together they are exactly the vocabulary the
-    API knows."""
-    from app.notifications import NOTIFICATION_TYPES, OWNER_NOTIFICATION_TYPES, TYPE_EXPORT_AUTO_HALTED
+    owner types, V359 (MFX-39.4) `export_auto_halted` and V383 (RDG-5.3) `sunset_still_used`. Together
+    they are exactly the vocabulary the API knows."""
+    from app.notifications import (
+        NOTIFICATION_TYPES,
+        OWNER_NOTIFICATION_TYPES,
+        TYPE_EXPORT_AUTO_HALTED,
+        TYPE_SUNSET_STILL_USED,
+    )
 
     statements = _statements()
     check = statements[statements.index("CHECK (type IN (") : statements.index("payload JSONB")]
     original = {fragment.split("'")[0] for fragment in check.split("'")[1::2]}
-    assert original == set(NOTIFICATION_TYPES) - set(OWNER_NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED}
+    assert original == (
+        set(NOTIFICATION_TYPES) - set(OWNER_NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED, TYPE_SUNSET_STILL_USED}
+    )
 
     def widened(script: str) -> set:
         text = (_REPO_ROOT / f"apiome-db/scripts/{script}").read_text()
         check = text[text.index("CHECK (type IN (") : text.index("COMMENT ON COLUMN notifications.type")]
         return {fragment for fragment in check.split("'")[1::2]}
 
-    assert widened("V286__owner_routing_cdg_2_3.sql") == set(NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED}
-    assert widened("V359__export_auto_on_publish_4336.sql") == set(NOTIFICATION_TYPES)
+    assert widened("V286__owner_routing_cdg_2_3.sql") == (
+        set(NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED, TYPE_SUNSET_STILL_USED}
+    )
+    assert widened("V359__export_auto_on_publish_4336.sql") == set(NOTIFICATION_TYPES) - {TYPE_SUNSET_STILL_USED}
+    assert widened("V383__sunset_still_used_rdg_5_3.sql") == set(NOTIFICATION_TYPES)
 
 
 def test_the_retention_cap_matches_the_constant_the_api_advertises():

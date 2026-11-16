@@ -32,6 +32,12 @@
  * `copiedUrl` state, reset it after two seconds, and never rendered anything from it — the
  * only way to copy an access URL was the kebab, and nothing on screen ever confirmed it.
  *
+ * ### Sunset readiness (RDG-5.3, #5788)
+ *
+ * A deprecated row also says who still calls it — *Still used by 2 consumers (1,240 calls,
+ * 7-day)* with the handles and a Consumers link — under its chips, drawn by the sunset
+ * timeline's own {@link SunsetStillUsed} so the two screens read alike.
+ *
  * @see `./publishedModel.ts` — every rule these cells draw.
  */
 
@@ -56,6 +62,9 @@ import { formatVersionStamp, versionLabel } from '@/app/components/ade/versions/
 import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
 import { isAsyncapiSourceFormat, isGraphqlSourceFormat } from '@lib/mock/mockUrl';
 import { cn } from '@lib/utils';
+
+import { SunsetStillUsed } from '@/app/components/ade/sunset/SunsetStillUsed';
+import type { SunsetUsage } from '@/app/components/ade/sunset/sunsetModel';
 
 import { PublishedRowMenu } from './PublishedRowMenu';
 import {
@@ -108,6 +117,11 @@ export interface PublishedTableProps {
   caption?: string;
   /** A project's owner changed in place (a suggestion confirmed from the list, CDG-2.4). */
   onOwnerChange?: (projectId: string, owner: EntityOwner | null) => void;
+  /**
+   * Who still calls each deprecated revision (RDG-5.3), keyed by revision id — the sunset
+   * timeline's `stillUsed`. A row with no entry draws no line.
+   */
+  stillUsedByRevision?: ReadonlyMap<string, SunsetUsage>;
 }
 
 /**
@@ -134,6 +148,7 @@ export function PublishedTable({
   empty,
   caption = 'Published versions',
   onOwnerChange,
+  stillUsedByRevision,
 }: PublishedTableProps) {
   const columns = React.useMemo<DataTableColumn<PublishedVersion>[]>(
     () => [
@@ -142,7 +157,9 @@ export function PublishedTable({
         header: 'Project / Version',
         className: 'pub-col-version',
         headerClassName: 'pub-col-version',
-        cell: (version) => <VersionCell version={version} />,
+        cell: (version) => (
+          <VersionCell version={version} stillUsed={stillUsedByRevision?.get(version.id)} />
+        ),
         skeletonWidth: '11rem',
       },
       // Ownership is held back with Teams (lib/feature-release.ts).
@@ -280,6 +297,7 @@ export function PublishedTable({
       onOwnerChange,
       onRowAction,
       onToggleVisibility,
+      stillUsedByRevision,
     ]
   );
 
@@ -309,6 +327,8 @@ export function PublishedTable({
 interface VersionCellProps {
   /** The row. */
   version: PublishedVersion;
+  /** Who still calls it, when it is deprecated and its project has a usage source. */
+  stillUsed?: SunsetUsage | null;
 }
 
 /**
@@ -323,7 +343,7 @@ interface VersionCellProps {
  * @param props See {@link VersionCellProps}.
  * @returns The cell contents.
  */
-function VersionCell({ version }: VersionCellProps) {
+function VersionCell({ version, stillUsed }: VersionCellProps) {
   const pill = publishedLifecyclePill(version);
   return (
     <div className="pub-version">
@@ -345,6 +365,9 @@ function VersionCell({ version }: VersionCellProps) {
           </Link>
         ) : null}
       </div>
+      {pill ? (
+        <SunsetStillUsed usage={stillUsed} testId={`published-still-used-${version.id}`} />
+      ) : null}
       {version.description ? (
         <DataTableCellSub className="pub-version__desc" title={version.description}>
           {version.description}

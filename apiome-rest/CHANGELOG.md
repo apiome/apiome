@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.722.0] - 2026-11-16
+
+### Added
+- **Sunset readiness and deprecation signals (RDG-5.3, #5788)** — OpenAPI 1.582.0:
+  - `GET /v1/versions/{tenant_slug}/sunset-timeline` entries gain `stillUsed` (`SunsetUsage`): 7-day `prod` calls to the
+    revision from `usage_daily`, split into bound consumers (through the RDG-1.8 binding, deleted or not) and anonymous
+    traffic — `state` (`bound` | `anonymous` | `unused`), `summary` (`Still used by 2 consumers (1,240 calls, 7-day)`,
+    `Anonymous traffic only — bind consumers to attribute it`, `No traffic in the last 7 days`), `calls`, `boundCalls`,
+    `anonymousCalls`, `consumerCount`, `consumers` (`SunsetConsumerUsage`, most calls first; `null` without
+    `consumer_contracts:view`), `consumersVisible` and `consumersHref`. `null` when the project has no non-mock usage
+    source, or when the usage index cannot be read (the timeline still loads). (`app.sunset_readiness`,
+    `app.sunset_readiness_store`.)
+  - The usage sweep checks, every tick, each revision whose sunset is 0–30 days away and that bound consumers called in
+    the last 7 days: the version's collaborators (COL-3.1) get a `sunset_still_used` notification (payload `summary`,
+    `link` to the sunset timeline, `sunset_at`, `days_until_sunset`, `consumer_count`, `calls`; no consumer names) and
+    every active push-webhook subscription a `sunset.still_used` event with the consumer handles. At most one alert per
+    revision per 7 days, enforced by apiome-db **V383** `sunset_still_used_alert` (an upsert on `last_notified_at`,
+    written in the same transaction as the inbox rows), so restarts and replicas never repeat it. Anonymous traffic
+    alone never alerts. `UsageSweepResult.sunset_alerts` counts the alerts (`app.sunset_readiness_sweep`).
+  - The notification type vocabulary gains `sunset_still_used` (V383 widens `notifications_type_check`).
+
 ## [1.721.0] - 2026-11-16
 
 ### Added

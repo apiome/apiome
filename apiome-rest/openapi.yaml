@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.581.0
+  version: 1.582.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -169157,6 +169157,40 @@ components:
       title: SuiteUnsupportedOperation
       description: An operation the version declares that the suite deliberately does
         not cover.
+    SunsetConsumerUsage:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Consumer id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: Consumer handle.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Consumer display name.
+          example: Pet
+        calls:
+          type: integer
+          minimum: 0.0
+          title: Calls
+          description: Its calls to this revision in the window.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      - calls
+      title: SunsetConsumerUsage
+      description: "One bound consumer still calling a revision.\n\nAttributes:\n    id:\
+        \ The consumer id.\n    slug: Its handle.\n    name: Its display name.\n    calls:\
+        \ Its calls in the window."
     SunsetTimelineEntryOut:
       properties:
         revisionId:
@@ -169245,6 +169279,14 @@ components:
           title: Deprecationwarnings
           description: Deprecation Warnings.
           maxItems: 1000
+        stillUsed:
+          anyOf:
+          - $ref: '#/components/schemas/SunsetUsage'
+          - type: 'null'
+            description: Response payload for sunset timeline entry.
+          description: 'Who still calls this revision (RDG-5.3): 7-day prod calls from bound
+            consumers and anonymous traffic. Null when the project has no usage source, or
+            the usage index could not be read.'
       type: object
       required:
       - revisionId
@@ -169268,6 +169310,95 @@ components:
       title: SunsetTimelineResponse
       description: Aggregated sunset / deprecation timeline for accessible projects
         (#508).
+    SunsetUsage:
+      properties:
+        windowDays:
+          type: integer
+          title: Windowdays
+          description: UTC days counted, ending today.
+          example: 1
+        environment:
+          type: string
+          title: Environment
+          description: The environment counted (prod).
+          example: example
+        state:
+          type: string
+          enum:
+          - bound
+          - anonymous
+          - unused
+          title: State
+          description: '`bound` (consumers still call it), `anonymous` (only unattributed
+            traffic) or `unused`.'
+          example: bound
+        summary:
+          type: string
+          title: Summary
+          description: The line, e.g. `Still used by 2 consumers (1,240 calls, 7-day)`.
+          example: List pets
+        calls:
+          type: integer
+          minimum: 0.0
+          title: Calls
+          description: Every call in the window, bound and anonymous.
+          example: 1
+        boundCalls:
+          type: integer
+          minimum: 0.0
+          title: Boundcalls
+          description: Calls from bound consumers.
+          example: 1
+        anonymousCalls:
+          type: integer
+          minimum: 0.0
+          title: Anonymouscalls
+          description: Calls no consumer binding recognised.
+          example: 1
+        consumerCount:
+          type: integer
+          minimum: 0.0
+          title: Consumercount
+          description: Bound consumers calling it.
+          example: 1
+        consumers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SunsetConsumerUsage'
+            type: array
+            description: Sunset Usage schema.
+          - type: 'null'
+            description: Sunset Usage schema.
+          title: Consumers
+          description: The bound consumers, most calls first; null when the reader may
+            not see consumer names.
+        consumersVisible:
+          type: boolean
+          title: Consumersvisible
+          description: Whether the reader holds `consumer_contracts:view` (and so sees
+            `consumers`).
+          example: false
+        consumersHref:
+          type: string
+          title: Consumershref
+          description: The project's Consumers page in apiome-ui.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - windowDays
+      - environment
+      - state
+      - summary
+      - calls
+      - boundCalls
+      - anonymousCalls
+      - consumerCount
+      - consumersVisible
+      - consumersHref
+      title: SunsetUsage
+      description: Who still calls a revision — the line the sunset timeline and the Published
+        page draw.
     SurfaceSelection:
       properties:
         operations:

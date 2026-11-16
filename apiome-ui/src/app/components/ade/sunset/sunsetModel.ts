@@ -77,6 +77,107 @@ export interface SunsetEntry {
   successorRevisionId?: string | null;
   published: boolean;
   deprecationWarnings: SunsetDeprecationWarning[];
+  /**
+   * Who still calls the revision (RDG-5.3, #5788): 7-day `prod` traffic from bound consumers
+   * and anonymous calls. `null` (or absent) when the project has no usage source, or the
+   * usage index could not be read — the row then says nothing rather than "No traffic".
+   */
+  stillUsed?: SunsetUsage | null;
+}
+
+// ---------------------------------------------------------------------------------------
+// Sunset readiness (RDG-5.3, #5788)
+// ---------------------------------------------------------------------------------------
+
+/** One bound consumer still calling a revision. */
+export interface SunsetConsumerUsage {
+  id: string;
+  /** Its handle — `billing-service`. */
+  slug: string;
+  name: string;
+  calls: number;
+}
+
+/** `bound` — consumers still call it; `anonymous` — only unattributed traffic; `unused`. */
+export type SunsetUsageState = 'bound' | 'anonymous' | 'unused';
+
+/** The `stillUsed` block of a timeline row, as REST serialises it. */
+export interface SunsetUsage {
+  windowDays: number;
+  environment: string;
+  state: SunsetUsageState;
+  /** The line, written by REST: `Still used by 2 consumers (1,240 calls, 7-day)`. */
+  summary: string;
+  calls: number;
+  boundCalls: number;
+  anonymousCalls: number;
+  consumerCount: number;
+  /** The bound consumers, most calls first; `null` when the reader may not see their names. */
+  consumers: SunsetConsumerUsage[] | null;
+  consumersVisible: boolean;
+  /** The project's Consumers page. */
+  consumersHref: string;
+}
+
+/**
+ * Index the timeline's usage blocks by revision, for a screen that draws the line on rows it
+ * read elsewhere (the Published page).
+ *
+ * @param entries The timeline rows.
+ * @returns `revisionId → stillUsed`, only for rows that carry one.
+ */
+export function stillUsedByRevision(
+  entries: readonly SunsetEntry[]
+): ReadonlyMap<string, SunsetUsage> {
+  const map = new Map<string, SunsetUsage>();
+  for (const entry of entries) {
+    if (entry?.revisionId && entry.stillUsed) map.set(entry.revisionId, entry.stillUsed);
+  }
+  return map;
+}
+
+/** Most consumer handles a line names before it says `+N more`. */
+export const SUNSET_USAGE_HANDLE_LIMIT = 3;
+
+/** What one usage line draws — see {@link sunsetUsageView}. */
+export interface SunsetUsageView {
+  state: SunsetUsageState;
+  summary: string;
+  /** The first {@link SUNSET_USAGE_HANDLE_LIMIT} handles; empty when names are hidden. */
+  handles: string[];
+  /** How many handles were left out. */
+  moreHandles: number;
+  /** The Consumers page, or `null` for a revision nobody calls. */
+  href: string | null;
+  /** The link's words. */
+  linkLabel: string;
+}
+
+/**
+ * How a revision's usage reads in a cell — the sunset timeline's Notes and the Published
+ * page's version cell draw the same view, so the two screens can never disagree.
+ *
+ * The sentence is REST's own (`summary`), so the inbox row, the webhook and the two screens
+ * count the same traffic with the same words. A revision with only anonymous traffic links to
+ * the Consumers page with **Bind consumers**, because binding is what turns the line into
+ * names; one nobody calls draws no link.
+ *
+ * @param usage The row's `stillUsed`.
+ * @returns The view, or `null` when the row has no usage evidence.
+ */
+export function sunsetUsageView(usage: SunsetUsage | null | undefined): SunsetUsageView | null {
+  if (!usage || typeof usage.summary !== 'string' || !usage.summary.trim()) return null;
+  const all = (usage.consumers ?? []).map((consumer) => consumer.slug).filter(Boolean);
+  const handles = all.slice(0, SUNSET_USAGE_HANDLE_LIMIT);
+  const href = usage.state === 'unused' ? null : usage.consumersHref || null;
+  return {
+    state: usage.state,
+    summary: usage.summary.trim(),
+    handles,
+    moreHandles: Math.max(0, all.length - handles.length),
+    href,
+    linkLabel: usage.state === 'anonymous' ? 'Bind consumers' : 'Consumers',
+  };
 }
 
 /** One project, as `/api/projects` returns it — the filter's options. */
