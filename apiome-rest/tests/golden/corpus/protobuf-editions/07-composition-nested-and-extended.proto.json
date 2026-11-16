@@ -35,6 +35,20 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "07-composition-nested-and-extended.proto": {
+          "package": "example.composition.v1",
+          "syntax": "editions",
+          "types": [
+            "example.composition.v1.Address",
+            "example.composition.v1.Money",
+            "example.composition.v1.Order",
+            "example.composition.v1.OrderEnvelope",
+            "example.composition.v1.OrderLine",
+            "example.composition.v1.Party"
+          ]
+        }
       }
     },
     "format": "protobuf",

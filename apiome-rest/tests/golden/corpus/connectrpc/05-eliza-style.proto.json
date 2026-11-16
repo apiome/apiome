@@ -15,6 +15,20 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "05-eliza-style.proto": {
+          "package": "eliza.v1",
+          "syntax": "proto3",
+          "types": [
+            "eliza.v1.ConverseRequest",
+            "eliza.v1.ConverseResponse",
+            "eliza.v1.IntroduceRequest",
+            "eliza.v1.IntroduceResponse",
+            "eliza.v1.SayRequest",
+            "eliza.v1.SayResponse"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

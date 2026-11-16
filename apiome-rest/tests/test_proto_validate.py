@@ -983,5 +983,8 @@ class TestRealBuf:
         )
         again = ProtoNormalizer().normalize(compiled, include_raw=False)
         assert again.types == api.types
-        assert again.extras == api.extras
+        # The XPC-4.3 file record names the emitted file, not the fixture's.
+        assert {k: v for k, v in again.extras.items() if k != "protobuf_files"} == {
+            k: v for k, v in api.extras.items() if k != "protobuf_files"
+        }
         assert canonical_fingerprint(again) == canonical_fingerprint(api)

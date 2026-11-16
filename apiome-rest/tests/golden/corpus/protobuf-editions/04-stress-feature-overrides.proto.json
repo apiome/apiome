@@ -35,6 +35,17 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "04-stress-feature-overrides.proto": {
+          "package": "example.stress.v1",
+          "syntax": "editions",
+          "types": [
+            "example.stress.v1.ClosedByFile",
+            "example.stress.v1.OpenByOverride",
+            "example.stress.v1.Overrides"
+          ]
+        }
       }
     },
     "format": "protobuf",

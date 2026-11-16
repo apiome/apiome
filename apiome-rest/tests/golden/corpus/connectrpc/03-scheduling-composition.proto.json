@@ -15,6 +15,20 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "03-scheduling-composition.proto": {
+          "package": "scheduling.v1",
+          "syntax": "proto3",
+          "types": [
+            "scheduling.v1.BookSlotRequest",
+            "scheduling.v1.Booking",
+            "scheduling.v1.CancelBookingRequest",
+            "scheduling.v1.ListSlotsRequest",
+            "scheduling.v1.ListSlotsResponse",
+            "scheduling.v1.Slot"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

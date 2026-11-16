@@ -4,6 +4,18 @@
     "channels": [],
     "description": null,
     "extras": {
+      "protobuf_files": {
+        "10-protovalidate-accounts.proto": {
+          "package": "example.accounts.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.accounts.v1.Account",
+            "example.accounts.v1.CreateAccountRequest",
+            "example.accounts.v1.GetAccountRequest",
+            "example.accounts.v1.Plan"
+          ]
+        }
+      },
       "protovalidate": {
         "capability_limits": [
           {

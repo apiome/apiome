@@ -350,11 +350,17 @@ def test_descriptor_set_and_buf_image_match_source_tree_canonical_model() -> Non
         adapter = adapter_for(entry)
         models[feature] = adapter.normalize(parse_native(adapter, entry))
 
+    def payload(model: CanonicalApi) -> dict:
+        # The XPC-4.3 file record names the files, which differ between the pair members.
+        dumped = model.model_dump(mode="json", exclude={"raw"})
+        dumped["extras"].pop("protobuf_files", None)
+        return dumped
+
     reference = models["binary-pair-source"]
-    reference_payload = reference.model_dump(mode="json", exclude={"raw"})
+    reference_payload = payload(reference)
     reference_fingerprint = canonical_fingerprint(reference)
     for feature, model in models.items():
-        assert model.model_dump(mode="json", exclude={"raw"}) == reference_payload, (
+        assert payload(model) == reference_payload, (
             f"{feature}: canonical model differs from the source tree's"
         )
         assert canonical_fingerprint(model) == reference_fingerprint, feature

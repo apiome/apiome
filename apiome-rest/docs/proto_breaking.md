@@ -33,6 +33,47 @@ when no `buf` binary is present. The built-in ruleset is already wire-aware:
 That baseline alone satisfies the acceptance criteria (a field-number reuse / type change is
 breaking, a safe addition passes) with no external tool.
 
+### Categories and Protobuf rules (XPC-4.3, #5747)
+
+The classifier grades at a **category** — `ProtobufBreakingChangeClassifier(category="FILE")`
+(any case; default `WIRE_JSON`; the sync dispatch uses the default). On top of the built-in
+ruleset, `app.proto_breaking_rules.category_findings(base, target)` grades the Protobuf-specific
+changes under **all four** categories from the canonical model alone:
+
+| Rule slug | `WIRE` | `WIRE_JSON` | `PACKAGE` | `FILE` |
+|-----------|--------|-------------|-----------|--------|
+| `reserved-removed` | dangerous | dangerous | dangerous | dangerous |
+| `reserved-number-reused`, `reserved-name-reused` | breaking | breaking | breaking | breaking |
+| `field-deleted-unreserved` (number free) | dangerous | breaking | breaking | breaking |
+| `field-deleted-unreserved` (name free) | safe | breaking | breaking | breaking |
+| `field-deleted` (both reserved) | safe | safe | breaking | breaking |
+| `field-renamed` (same number and type) | safe | breaking | breaking | breaking |
+| `field-number-reused` (new type) | breaking | breaking | breaking | breaking |
+| `json-name-changed` | safe | breaking | breaking | breaking |
+| `type-moved-file` | safe | safe | safe | breaking |
+| `package-changed` | breaking | breaking | breaking | breaking |
+| `enum-value-number-reused` (renamed) | safe | breaking | breaking | breaking |
+| `enum-value-number-changed` | breaking | breaking | breaking | breaking |
+| `oneof-membership-changed` | breaking | breaking | breaking | breaking |
+| `cardinality-changed`, `required-changed` | breaking | breaking | breaking | breaking |
+| `presence-changed` (proto3 `optional`) | safe | safe | breaking | breaking |
+
+Rule ids are `protobuf.<category>.<slug>`, the category being the least strict one where the rule
+is at its worst. Every grade's rationale starts with the category graded at (`[WIRE_JSON] …`); a
+rule's rationale adds its grade under all four. A finding joins the diff change(s) it describes
+and takes the worst of its grade and the baseline grade of whatever else moved on that change; a
+modified change confined to reservations / oneof declarations is `protobuf.compatible` (safe); a
+finding that joins no change — a file move, which the diff does not see — goes to `unattributed`.
+
+The rules read the normalizer's `reserved_ranges` / `reserved_names`, `label`, `proto3_optional`,
+`field_presence`, `oneof` and `json_name` (recorded only when not the `protoc` default) extras, and
+`CanonicalApi.extras["protobuf_files"]` (file → package, syntax and top-level types; unhashed).
+
+The grades follow Buf except for two roadmap decisions — a removed reservation is dangerous, and an
+unreserved field deletion is dangerous under `WIRE` — recorded as `known_disagreements` in the Buf
+corpus (`tests/fixtures/proto_breaking_categories`; re-record with
+`scripts/record_proto_breaking_fixtures.py`).
+
 ## `buf breaking` overlay (`run_buf_breaking` / `classify_async`)
 
 The authoritative ruleset is **`buf breaking`** at a **configurable strictness**. Rather than
@@ -77,12 +118,14 @@ treated as hard breaks by default.
 applies `buf`'s verdict at the granularity `buf` provides:
 
 - **`buf` reports a break** → the diff is breaking at this strictness: the structural per-change
-  grades are kept (the best per-change attribution available) and the **overall** severity is forced
-  to `breaking`.
+  grades are kept (the best per-change attribution available) and each `buf` finding is added to
+  `unattributed` (rule `protobuf.buf-breaking.<type>`), so the **overall** severity is `breaking`.
 - **`buf` reports none** → the diff is wire/JSON-compatible at this strictness: the conservative
   structural over-approximations are **capped** down — any structural `breaking` grade becomes
   `dangerous` (compatible by the letter — e.g. a wire-compatible field deletion — but review
   warranted), while `safe` / `dangerous` grades stand.
+- When `buf` and the structural rules disagree about whether the diff breaks, the rationales carry
+  `overlay_disagreement`'s sentence (`disagreement: …`).
 
 The result is a standard `ClassificationResult`, 1:1 with the diff's changes, so the severities
 surface on the diff view exactly like every other format's. The fully-detailed authoritative `buf`
@@ -104,6 +147,11 @@ unavailable / erroring — keeps the structural baseline unchanged, so a determi
 always returned.
 
 ## Tests
+
+`tests/test_proto_breaking_categories.py` (XPC-4.3) — every Buf corpus case in every category,
+without `buf` (recorded descriptor sets) and, when `buf` resolves, live; agreement with the recorded
+`buf breaking` verdicts or a listed disagreement; the overlay replaying `buf`'s recorded output;
+requesting a category; and the normalizer / emitter `json_name` and file record.
 
 `tests/test_proto_breaking.py` — the classifier is registered under `protobuf` and the sync
 dispatch resolves it; the structural baseline grades a field-number reuse and a type change as

@@ -40,6 +40,17 @@
           "default_symbol_visibility",
           "enforce_naming_style"
         ]
+      },
+      "protobuf_files": {
+        "06-typical-edition-2024.proto": {
+          "package": "example.catalogue.v2",
+          "syntax": "editions",
+          "types": [
+            "example.catalogue.v2.ListProductsRequest",
+            "example.catalogue.v2.ListProductsResponse",
+            "example.catalogue.v2.Product"
+          ]
+        }
       }
     },
     "format": "protobuf",

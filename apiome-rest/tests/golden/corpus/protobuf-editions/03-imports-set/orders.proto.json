@@ -48,6 +48,23 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "common.proto": {
+          "package": "example.common.v1",
+          "syntax": "editions",
+          "types": [
+            "example.common.v1.Address",
+            "example.common.v1.Money"
+          ]
+        },
+        "orders.proto": {
+          "package": "example.shipping.v1",
+          "syntax": "editions",
+          "types": [
+            "example.shipping.v1.Shipment"
+          ]
+        }
       }
     },
     "format": "protobuf",

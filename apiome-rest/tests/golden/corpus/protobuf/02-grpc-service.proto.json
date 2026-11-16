@@ -3,7 +3,22 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "02-grpc-service.proto": {
+          "package": "example.catalog.v1",
+          "syntax": "proto3",
+          "types": [
+            "example.catalog.v1.CreateProductRequest",
+            "example.catalog.v1.Dimensions",
+            "example.catalog.v1.GetProductRequest",
+            "example.catalog.v1.ListProductsRequest",
+            "example.catalog.v1.ListProductsResponse",
+            "example.catalog.v1.Product"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

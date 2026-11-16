@@ -3,7 +3,22 @@
   "canonical": {
     "channels": [],
     "description": null,
-    "extras": {},
+    "extras": {
+      "protobuf_files": {
+        "inventory.proto": {
+          "package": "examples.inventory.v1",
+          "syntax": "proto3",
+          "types": [
+            "examples.inventory.v1.AdjustStockRequest",
+            "examples.inventory.v1.GetItemRequest",
+            "examples.inventory.v1.Item",
+            "examples.inventory.v1.ItemStatus",
+            "examples.inventory.v1.ListItemsRequest",
+            "examples.inventory.v1.ListItemsResponse"
+          ]
+        }
+      }
+    },
     "format": "protobuf",
     "identity": {
       "extras": {},

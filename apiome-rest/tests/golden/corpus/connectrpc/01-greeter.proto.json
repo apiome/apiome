@@ -15,6 +15,16 @@
           "application/proto"
         ]
       },
+      "protobuf_files": {
+        "01-greeter.proto": {
+          "package": "greet.v1",
+          "syntax": "proto3",
+          "types": [
+            "greet.v1.GreetRequest",
+            "greet.v1.GreetResponse"
+          ]
+        }
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",

@@ -1,8 +1,8 @@
 ---
 title: Compatibility modes
-description: "How BACKWARD, FORWARD and FULL grade schema changes, per format."
+description: "How compatibility modes and Buf categories grade schema changes, per format."
 sidebar_position: 2
-tags: [governance, compatibility, breaking-changes, json-schema, avro, schema-registry]
+tags: [governance, compatibility, breaking-changes, json-schema, avro, protobuf, schema-registry]
 ---
 
 When you compare two versions of a catalog item, Apiome grades every change **Safe**,
@@ -37,9 +37,10 @@ names the modes the change breaks.
 | --- | --- | --- |
 | Avro | Avro schema resolution, the way a Confluent registry applies it | [Compatibility between versions](../bring-in/avro-import.md#compatibility-between-versions) |
 | JSON Schema | The open and closed content models, the way Confluent and Apicurio apply them | [JSON Schema](#json-schema) on this page |
+| Protobuf | Buf's four breaking-change **categories** instead of modes | [Protobuf](#protobuf) on this page |
 
-Other formats keep their own rules, such as `buf breaking` for Protobuf, GraphQL-Inspector for
-GraphQL, and the built-in ruleset where a format has none.
+Other formats keep their own rules, such as GraphQL-Inspector for GraphQL, and the built-in
+ruleset where a format has none.
 
 ## JSON Schema
 
@@ -123,10 +124,105 @@ other grade joins its type's change. Some changes have no row of their own, such
 `additionalProperties` flip or a property inside a nested object. They are still graded, and they
 count toward the overall grade, so a breaking one is never missed.
 
+## Protobuf
+
+Protobuf has no reader and writer modes. [Buf](https://buf.build/docs/breaking/rules) instead
+sorts breaking changes into four **categories**, from least to most strict. Each one includes
+everything the one above it checks:
+
+| Category | Protects | Breaks when… |
+| --- | --- | --- |
+| `WIRE` | Binary-encoded messages | The bytes no longer decode the same way, such as a field number now carrying another type |
+| `WIRE_JSON` | Binary and JSON-encoded messages | `WIRE`, or a JSON key changes, such as a renamed field or a new `json_name` |
+| `PACKAGE` | Code generated for a package | `WIRE_JSON`, or a declaration is deleted, renamed or changes label |
+| `FILE` | Code generated per file | `PACKAGE`, or a declaration moves to another file |
+
+Changes are graded under `WIRE_JSON` by default, because gRPC services carry both binary and
+JSON (transcoded) traffic. A change is **Breaking** when it breaks the category, otherwise the
+severity in the table below.
+
+Each grade's explanation starts with the category it was graded under, such as `[WIRE_JSON]`. A
+Protobuf rule's explanation also lists its grade under all four, so you can see that a change is
+safe on the wire but breaks generated code:
+
+```text
+[WIRE_JSON] acme.v1.User.user_name: json_name changed 'userName' → 'login'
+(breaking under WIRE_JSON, PACKAGE, FILE; safe under WIRE)
+```
+
+### The Protobuf rules
+
+| Change | `WIRE` | `WIRE_JSON` | `PACKAGE` | `FILE` | Rule id |
+| --- | --- | --- | --- | --- | --- |
+| A `reserved` number or name removed | Dangerous | Dangerous | Dangerous | Dangerous | `protobuf.wire.reserved-removed` |
+| A reserved number used again | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.reserved-number-reused` |
+| A reserved name used again | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.reserved-name-reused` |
+| A field deleted, number not reserved | Dangerous | Breaking | Breaking | Breaking | `protobuf.wire_json.field-deleted-unreserved` |
+| A field deleted, number reserved but name not | Safe | Breaking | Breaking | Breaking | `protobuf.wire_json.field-deleted-unreserved` |
+| A field deleted, number and name reserved | Safe | Safe | Breaking | Breaking | `protobuf.package.field-deleted` |
+| A field renamed, same number and type | Safe | Breaking | Breaking | Breaking | `protobuf.wire_json.field-renamed` |
+| A field number now carrying another type | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.field-number-reused` |
+| `json_name` changed | Safe | Breaking | Breaking | Breaking | `protobuf.wire_json.json-name-changed` |
+| A message or enum moved to another file in the same package | Safe | Safe | Safe | Breaking | `protobuf.file.type-moved-file` |
+| A message or enum moved to another package | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.package-changed` |
+| An enum value renamed (its number taken by a new name) | Safe | Breaking | Breaking | Breaking | `protobuf.wire_json.enum-value-number-reused` |
+| An enum value moved to another number | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.enum-value-number-changed` |
+| A field moved into, out of or between `oneof`s | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.oneof-membership-changed` |
+| A field made `repeated`, or no longer `repeated` | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.cardinality-changed` |
+| A field made `required`, or no longer `required` | Breaking | Breaking | Breaking | Breaking | `protobuf.wire.required-changed` |
+| `optional` added to or removed from a proto3 field | Safe | Safe | Breaking | Breaking | `protobuf.package.presence-changed` |
+| A number or name reserved | Safe | Safe | Safe | Safe | `protobuf.compatible` |
+
+Rule ids follow `protobuf.<category>.<rule>`. The category is the least strict one where the rule
+reaches its worst severity, so `protobuf.wire_json.json-name-changed` is safe under `WIRE` and
+breaking from `WIRE_JSON` up.
+
+Changes these rules do not cover keep the built-in grade under every category, such as a field's
+type changing (**Breaking**) or a field being added (**Safe**).
+
+### Where Apiome differs from Buf
+
+The grades follow Buf's rules in all but two places, where Apiome is deliberately softer:
+
+- **Removing a reservation** is **Dangerous**, not breaking. Nothing breaks until a later change
+  reuses the number or name, and that reuse is graded **Breaking**.
+- **Deleting a field whose number is not reserved** is **Dangerous** under `WIRE`, not breaking.
+  The bytes old writers send are skipped as an unknown field. Under `WIRE_JSON` and above it is
+  **Breaking**, as in Buf.
+
+### With `buf` installed
+
+When the server has `buf` and both versions' `.proto` sources, it also runs `buf breaking` under
+the same category and uses its verdict for the overall grade:
+
+- If `buf` finds a break, each `buf` finding is listed too, under rule ids such as
+  `protobuf.buf-breaking.field_same_json_name`, and the overall grade is **Breaking**.
+- If `buf` finds none, every **Breaking** grade is lowered to **Dangerous**, with rule id
+  `buf-breaking.wire-compatible`.
+
+When `buf` and the rules above disagree about whether the change breaks, the explanation says
+`disagreement:` and names the rules on each side. Without `buf`, the rules above grade on their
+own.
+
+### Where the Protobuf results show
+
+The grades appear wherever Apiome grades a Protobuf or gRPC catalog item's changes. That includes
+drift, under **What changed** on the item's **Versions** tab (see
+[Catalog refresh](../bring-in/catalog-refresh.mdx#see-what-changed)), and the change list when you
+re-import a file over an existing item. The **Why** column starts with the category in brackets.
+The classifier is named `buf-breaking`.
+
+A message or enum moved to another file has no row of its own, because the file a declaration sits
+in is not part of the version comparison. It is still graded under `FILE`, and it counts toward the
+overall grade.
+
 ## Related
 
 - [Avro import](../bring-in/avro-import.md): the Avro compatibility check and the schema registry's levels
 - [Read a catalog item's format details](../bring-in/catalog-format-details.md#json-schema-compatibility)
+- [What a Protobuf item records for comparison](../bring-in/catalog-format-details.md#protobuf-what-a-comparison-reads)
 - [Reviews](./reviews.mdx): require approval for breaking changes
 - [Apicurio Registry rules](https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/getting-started/assembly-rule-reference.html):
   the compatibility rules this check follows
+- [Buf breaking rules and categories](https://buf.build/docs/breaking/rules): the categories the
+  Protobuf grades follow

@@ -35,6 +35,18 @@
           "editions"
         ],
         "unmodelled_features": []
+      },
+      "protobuf_files": {
+        "02-typical-orders-edition-2023.proto": {
+          "package": "example.orders.v1",
+          "syntax": "editions",
+          "types": [
+            "example.orders.v1.GetOrderRequest",
+            "example.orders.v1.Order",
+            "example.orders.v1.OrderLine",
+            "example.orders.v1.OrderStatus"
+          ]
+        }
       }
     },
     "format": "protobuf",
