@@ -107,6 +107,51 @@ recently the deployment was verified. It always answers `200` with the verdict i
 pipeline can tell a failing gate from a network error. A signal that nothing has produced yet is
 reported as `not_configured` and left out of the verdict.
 
+### Grant consent before security probes
+
+Security probes check that a deployment enforces what its contract says about authentication.
+They send requests a normal client would not, so a verification target needs your written consent
+before a probe may run against it. Consent and probe reports are available over the REST API now;
+there is no screen for them yet, and the probe run itself (`apiome verify probe`) is still to come.
+
+1. **Grant consent.** `POST /v1/tenants/{tenant}/verification-targets/{target}/probe-consent` with:
+   - `ownership_declared: true` — you own the target or are allowed to test it;
+   - `expires_at` — when the consent ends (required, with a timezone);
+   - `profiles_allowed` — any of `passive`, `safe-active` and `payload`;
+   - optionally `identity_a` and `identity_b` — the test accounts a probe signs in as, given as a
+     credential *reference* like a target's `auth` (`{"kind": "env", "scheme": "bearer", "ref":
+     "PROBE_TOKEN_A"}`). A pasted token is rejected.
+2. **Check it.** `GET …/probe-consent` returns the consent with its `status`: `active`, or
+   `expired` once `expires_at` has passed.
+3. **Revoke it** when testing ends: `DELETE …/probe-consent`. Probes against the target are
+   refused from then on.
+
+A target has one consent at a time: granting a new one replaces the old one. Granting and revoking
+need the `verification_evidence:create` permission; a `production` target also needs a tenant
+administrator signed in (an API key cannot grant it). Every grant, revocation and refused probe run
+is written to the [access audit](../govern/access-audit.mdx).
+
+| Target | Consent needed | Strongest result a probe can report |
+| --- | --- | --- |
+| Environment `mock` on the Apiome-hosted mock's address | No | **Observed** — the mock serves the contract, so it cannot prove the real deployment enforces it |
+| Any other target | Yes, active and listing the profile | **Exploited in test** |
+
+Two more rules apply to every run:
+
+- **The `payload` profile** sends hostile payloads, so each run must also carry its own approval
+  flag, even when the consent lists `payload`.
+- **The kill switch.** Security probing is off until an operator sets
+  `APIOME_SECURITY_PROBE_ENABLED=true`. While it is off, every probe against a target other than the
+  hosted mock is refused, whatever consent exists. Each workspace is also limited to
+  `APIOME_SECURITY_PROBE_MAX_CONCURRENT_PER_TENANT` runs at once (default 2) and
+  `APIOME_SECURITY_PROBE_MAX_RUNS_PER_HOUR_PER_TENANT` per hour (default 20), the hosted mock
+  included.
+
+Each run leaves a report you cannot edit afterwards: `GET
+/v1/tenants/{tenant}/security-probe-reports` lists them newest first, with the target as it was,
+the profile, the consent, the limits, the strongest result allowed and the number of findings at
+each level. See the [Contract assurance API](../reference/rest/contract-assurance.md).
+
 ## Contract test a GraphQL API
 
 A contract run works on a GraphQL version too. Apiome turns every root `query` and `mutation`

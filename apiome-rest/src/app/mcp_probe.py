@@ -76,46 +76,31 @@ from .mcp_owasp import validate_risk_ids
 from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_trust_posture import ProbeEvidence
 
-# =================================================================================================
-# Classification — the three tiers of proof a probe result can carry.
-# =================================================================================================
-# AC4: "Findings distinguish suspected, observed, and exploited-in-test." This is the axis the whole
-# feature turns on, so it is modelled as first-class data, ordered weakest-to-strongest, and every
-# probe must declare which of the two tiers it is *capable* of reaching (a passive probe can never
-# reach exploited-in-test — it sends nothing).
-
-#: A static signal — a pattern that *indicates* a risk without demonstrating it. This is what the
-#: static engines emit; probes never downgrade to it, but it is part of the shared taxonomy so a UI
-#: can render all three tiers on one scale.
-CLASS_SUSPECTED = "suspected"
-
-#: A probe *observed* the server do the risky thing — e.g. accept a malformed request a conformant
-#: server would reject, or echo a mismatched id. The behaviour is real and was witnessed, but nothing
-#: was exploited and no harm was demonstrated.
-CLASS_OBSERVED = "observed"
-
-#: A probe *demonstrated* the defect against a live server in isolation: a canary was reflected, an
-#: unauthorized call returned data, an injected instruction was honoured. This is the only tier that
-#: becomes :class:`~app.mcp_trust_posture.ProbeEvidence`.
-CLASS_EXPLOITED_IN_TEST = "exploited-in-test"
-
-#: Every classification, weakest first. The order is load-bearing: :func:`_class_rank` compares by
-#: index, so a report can say "the strongest thing we proved here was *observed*".
-CLASSIFICATIONS: Tuple[str, ...] = (CLASS_SUSPECTED, CLASS_OBSERVED, CLASS_EXPLOITED_IN_TEST)
-
-#: Human labels. As with CLX-3.2's exploitability labels, the wording is deliberately explicit so a
-#: reader skimming red chips cannot come away believing an *observed* behaviour was *exploited*.
-CLASSIFICATION_LABELS: Mapping[str, str] = {
-    CLASS_SUSPECTED: "Suspected — static signal, not probed",
-    CLASS_OBSERVED: "Observed — probe witnessed the behaviour",
-    CLASS_EXPLOITED_IN_TEST: "Exploited in test — probe demonstrated it against an isolated server",
-}
-
-
-def _class_rank(classification: str) -> int:
-    """Return the strength ordinal of a classification (higher = stronger proof)."""
-    return CLASSIFICATIONS.index(classification)
-
+# The consent, limits, governor and transport-budget model is shared with REST security probes
+# (ASP-4.1, #5939) and lives in :mod:`app.probe_consent`. Every name is re-exported here so callers
+# of this module — and its tests — are unchanged.
+from .probe_consent import (  # noqa: F401 - re-exported
+    CLASS_EXPLOITED_IN_TEST,
+    CLASS_OBSERVED,
+    CLASS_SUSPECTED,
+    CLASSIFICATION_LABELS,
+    CLASSIFICATIONS,
+    DEFAULT_LIMITS,
+    TRANSPORT_HTTP,
+    TRANSPORT_STDIO,
+    TRANSPORTS,
+    ConsentError,
+    ConsentRecord,
+    CountingTransport,
+    GovernorPolicy,
+    KillSwitchError,
+    LimitExceededError,
+    ProbeLimits,
+    RateLimitError,
+    TenantUsage,
+    authorize_active_run,
+)
+from .probe_consent import class_rank as _class_rank
 
 # =================================================================================================
 # Profiles — passive / safe-active / payload-fuzzing.
@@ -261,173 +246,6 @@ def resolve_profile(profile_id: Optional[str]) -> ProbeProfile:
         return PROFILES[profile_id]
     except KeyError as exc:
         raise UnknownProfileError(profile_id) from exc
-
-
-# =================================================================================================
-# Limits — the hard caps every active run carries.
-# =================================================================================================
-
-
-@dataclass(frozen=True)
-class ProbeLimits:
-    """The hard resource ceilings a single probe run must not exceed.
-
-    Recorded into the audit envelope (AC2: "record ... limits ... in evidence") and enforced by the
-    transport wrapper (:class:`CountingTransport`) so an over-budget run *stops* rather than merely
-    being noted after the fact.
-
-    Attributes:
-        max_requests: The most JSON-RPC requests the whole run may send. A hard stop, not a target.
-        rate_per_minute: The most requests per minute the run may send (client-side pacing; the
-            per-tenant governor enforces the cross-run rate separately).
-        wall_clock_seconds: The most wall-clock seconds the run may take before it is aborted.
-        max_response_bytes: The largest single response the run will read before treating it as an
-            abuse signal and stopping — a server that answers a 10-byte probe with a gigabyte is
-            attacking the prober.
-    """
-
-    max_requests: int = 50
-    rate_per_minute: int = 60
-    wall_clock_seconds: int = 30
-    max_response_bytes: int = 1_048_576
-
-    def __post_init__(self) -> None:
-        for name in ("max_requests", "rate_per_minute", "wall_clock_seconds", "max_response_bytes"):
-            if getattr(self, name) <= 0:
-                raise ValueError(f"probe limit '{name}' must be positive")
-
-    def as_dict(self) -> Dict[str, Any]:
-        """Return the limits as a JSON-ready dict."""
-        return {
-            "max_requests": self.max_requests,
-            "rate_per_minute": self.rate_per_minute,
-            "wall_clock_seconds": self.wall_clock_seconds,
-            "max_response_bytes": self.max_response_bytes,
-        }
-
-
-#: The default limits an active run gets when a caller names none. Deliberately small: a probe run is
-#: a diagnostic, not a load test, and a conservative default is the safe one to have to raise
-#: explicitly rather than to have to remember to lower.
-DEFAULT_LIMITS = ProbeLimits()
-
-
-# =================================================================================================
-# Consent — the record that must exist before an active probe may run.
-# =================================================================================================
-# AC2: "Active profiles record target, scope, test identity, limits, and consent in evidence." Every
-# one of those is a required field here, and validate() refuses the run if the profile needs consent
-# and any of them is missing. The record is copied verbatim into the audit envelope, so the evidence
-# always answers "who authorized firing what at whom, under what limits, as which identity".
-
-TRANSPORT_HTTP = "http"
-TRANSPORT_STDIO = "stdio"
-TRANSPORTS: Tuple[str, ...] = (TRANSPORT_HTTP, TRANSPORT_STDIO)
-
-
-class ConsentError(ValueError):
-    """Raised when an active profile is asked to run without valid consent for it."""
-
-
-@dataclass(frozen=True)
-class ConsentRecord:
-    """Operator authorization to run active probes against one target.
-
-    Attributes:
-        target_endpoint_id: The catalogued endpoint under test.
-        target_locator: The resolved target — a URL for an ``http`` server, a command reference for a
-            ``stdio`` one. Recorded so the audit says exactly what was contacted, not just an id.
-        transport: :data:`TRANSPORT_HTTP` or :data:`TRANSPORT_STDIO`. Decides whether an isolation
-            sandbox is mandatory (stdio runs untrusted code locally; http contacts a remote host).
-        allowlisted: Whether the target is on the tenant's probe allowlist. A run against a
-            non-allowlisted target is refused even with every other field present — you may only fire
-            at hosts someone explicitly enrolled.
-        ownership_declared: Whether the operator has asserted they own, or are authorized to test,
-            the target. Probing a system you do not control is an attack; this is the record that you
-            said you do.
-        test_identity: The id of the *dedicated test credential* the run authenticates with. Never a
-            production credential — a probe must not act as a real user. ``None`` is allowed only for
-            an unauthenticated target.
-        dedicated_credentials: Whether ``test_identity`` names a credential provisioned specifically
-            for probing (as opposed to a reused production one). Required true when a test identity is
-            present.
-        acknowledged_by: The user id that acknowledged the run. Required for any consent record.
-        acknowledged_at: When it was acknowledged (ISO-8601, supplied by the caller so this module
-            stays clock-free and its evidence stays reproducible in tests).
-        explicit_approval: The stronger, per-run acknowledgement payload fuzzing requires — a
-            separate flag from ``acknowledged_by`` so "I logged in" can never be mistaken for "I
-            approved firing hostile payloads".
-    """
-
-    target_endpoint_id: str
-    target_locator: str
-    transport: str
-    allowlisted: bool
-    ownership_declared: bool
-    acknowledged_by: str
-    acknowledged_at: str
-    test_identity: Optional[str] = None
-    dedicated_credentials: bool = False
-    explicit_approval: bool = False
-
-    def __post_init__(self) -> None:
-        if self.transport not in TRANSPORTS:
-            raise ValueError(
-                f"consent declares unknown transport {self.transport!r}; known: {list(TRANSPORTS)}"
-            )
-
-    def validate(self, profile: ProbeProfile) -> None:
-        """Raise :class:`ConsentError` unless this record authorizes ``profile``.
-
-        A profile that ``sends_requests`` is only allowed to run when the target was allowlisted, the
-        operator declared ownership, the run was acknowledged, and — when a test identity is used — it
-        is a dedicated credential. Payload fuzzing additionally demands ``explicit_approval``. A
-        passive profile needs none of this and this method is a no-op for it.
-
-        Args:
-            profile: The profile about to run.
-
-        Raises:
-            ConsentError: If any required element of consent for ``profile`` is missing.
-        """
-        if not profile.requires_consent:
-            return
-        problems: List[str] = []
-        if not self.allowlisted:
-            problems.append("target is not on the tenant probe allowlist")
-        if not self.ownership_declared:
-            problems.append("operator has not declared ownership/authorization of the target")
-        if not self.acknowledged_by:
-            problems.append("run was not acknowledged by a user")
-        if self.test_identity is not None and not self.dedicated_credentials:
-            problems.append(
-                "test identity is not a dedicated probe credential (production credentials may not "
-                "be used for probing)"
-            )
-        if profile.requires_explicit_approval and not self.explicit_approval:
-            problems.append(
-                "payload fuzzing requires explicit per-run approval, which was not given"
-            )
-        if problems:
-            raise ConsentError(
-                f"consent does not authorize the '{profile.profile_id}' profile: "
-                + "; ".join(problems)
-            )
-
-    def as_dict(self) -> Dict[str, Any]:
-        """Return the consent record as a JSON-ready dict (goes verbatim into the audit envelope)."""
-        return {
-            "target_endpoint_id": self.target_endpoint_id,
-            "target_locator": self.target_locator,
-            "transport": self.transport,
-            "allowlisted": self.allowlisted,
-            "ownership_declared": self.ownership_declared,
-            "test_identity": self.test_identity,
-            "dedicated_credentials": self.dedicated_credentials,
-            "acknowledged_by": self.acknowledged_by,
-            "acknowledged_at": self.acknowledged_at,
-            "explicit_approval": self.explicit_approval,
-        }
 
 
 # =================================================================================================
@@ -578,91 +396,6 @@ def require_isolation(consent: ConsentRecord, isolation: Optional[IsolationSpec]
 
 
 # =================================================================================================
-# Kill switch + per-tenant governor.
-# =================================================================================================
-# AC5: "Kill switch, tenant concurrency/rate limits, and audit trail exist before rollout." The
-# governor is kept as a *pure decision function over supplied usage*, not a stateful object that owns
-# counters — the route layer reads the live counts from the audit table and hands them in, so the
-# same policy is testable in isolation and there is one source of truth (the DB) for how many runs a
-# tenant already has in flight.
-
-
-@dataclass(frozen=True)
-class GovernorPolicy:
-    """The global and per-tenant guardrails an active run is checked against.
-
-    Attributes:
-        enabled: The global kill switch. When ``False`` *no* active probe runs for *any* tenant,
-            regardless of consent — the single flag an operator flips to stop the feature dead during
-            an incident. Passive runs are unaffected (they send nothing), which is what lets the
-            catalog keep classifying observed behaviour while active probing is frozen.
-        max_concurrent_per_tenant: The most active runs one tenant may have in flight at once.
-        max_runs_per_hour_per_tenant: The most active runs one tenant may start per rolling hour.
-    """
-
-    enabled: bool = False
-    max_concurrent_per_tenant: int = 2
-    max_runs_per_hour_per_tenant: int = 20
-
-
-@dataclass(frozen=True)
-class TenantUsage:
-    """The live usage the route layer reads from the audit trail and hands to the governor.
-
-    Attributes:
-        active_runs: How many of this tenant's runs are currently in flight.
-        runs_last_hour: How many runs this tenant started in the trailing hour.
-    """
-
-    active_runs: int = 0
-    runs_last_hour: int = 0
-
-
-class KillSwitchError(RuntimeError):
-    """Raised when an active probe is requested while the global kill switch is off."""
-
-
-class RateLimitError(RuntimeError):
-    """Raised when a tenant is over its concurrency or hourly run limit."""
-
-
-def authorize_active_run(
-    profile: ProbeProfile, policy: GovernorPolicy, usage: TenantUsage
-) -> None:
-    """Gate an active run on the kill switch and the tenant's concurrency/rate budget.
-
-    A no-op for a profile that sends nothing — the kill switch and rate limits govern *traffic*, and
-    a passive run produces none, so freezing active probing never blinds the passive lane.
-
-    Args:
-        profile: The profile about to run.
-        policy: The global/per-tenant guardrails.
-        usage: The tenant's live in-flight and trailing-hour run counts.
-
-    Raises:
-        KillSwitchError: If ``profile`` sends requests and the kill switch is off.
-        RateLimitError: If the tenant is at its concurrency or hourly limit.
-    """
-    if not profile.sends_requests:
-        return
-    if not policy.enabled:
-        raise KillSwitchError(
-            "MCP active probing is disabled by the global kill switch "
-            "(mcp_probe_enabled=false); only the read-only passive profile may run"
-        )
-    if usage.active_runs >= policy.max_concurrent_per_tenant:
-        raise RateLimitError(
-            f"tenant already has {usage.active_runs} active probe run(s) in flight; the limit is "
-            f"{policy.max_concurrent_per_tenant}"
-        )
-    if usage.runs_last_hour >= policy.max_runs_per_hour_per_tenant:
-        raise RateLimitError(
-            f"tenant has started {usage.runs_last_hour} probe run(s) in the last hour; the limit is "
-            f"{policy.max_runs_per_hour_per_tenant}"
-        )
-
-
-# =================================================================================================
 # Transport — the injected boundary between policy (here) and bytes-on-the-wire (the runner).
 # =================================================================================================
 
@@ -708,48 +441,6 @@ class ProbeTransport(Protocol):
         """Send one JSON-RPC ``method`` with ``params`` and return the redacted response."""
         ...
 
-
-class LimitExceededError(RuntimeError):
-    """Raised by :class:`CountingTransport` when a run would exceed its request or byte budget."""
-
-
-class CountingTransport:
-    """A transport wrapper that *enforces* :class:`ProbeLimits` rather than merely recording them.
-
-    Wrapping the injected transport here means every probe, however written, is bounded by the same
-    counter — a probe cannot bust the request cap by looping, because the cap lives in the wrapper it
-    has to call through, not in each probe's good intentions. AC3's "hard limits" made real at the
-    one point all traffic passes.
-
-    Attributes:
-        request_count: How many requests have been sent so far (read into the audit envelope).
-    """
-
-    def __init__(self, inner: ProbeTransport, limits: ProbeLimits) -> None:
-        self._inner = inner
-        self._limits = limits
-        self.request_count = 0
-
-    async def send(self, method: str, params: Mapping[str, Any]) -> ProbeResponse:
-        """Send through the inner transport after checking, and then updating, the request budget.
-
-        Raises:
-            LimitExceededError: If the request cap is already reached, or the response exceeds the
-                byte cap (a server answering a tiny probe with an enormous body is an abuse signal,
-                so the run stops rather than reads it).
-        """
-        if self.request_count >= self._limits.max_requests:
-            raise LimitExceededError(
-                f"probe run reached its request cap of {self._limits.max_requests}"
-            )
-        self.request_count += 1
-        response = await self._inner.send(method, params)
-        if response.response_bytes > self._limits.max_response_bytes:
-            raise LimitExceededError(
-                f"a probe response of {response.response_bytes} bytes exceeded the cap of "
-                f"{self._limits.max_response_bytes}; the run was stopped"
-            )
-        return response
 
 
 # =================================================================================================

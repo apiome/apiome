@@ -54,3 +54,17 @@ a session token, an IP address or a full browser string.
 
 A request for a sign-in link is not recorded. A link that was never used leaves no trace in the
 audit.
+
+## Security probe consent events
+
+[Security probe consent](../ship/contract-testing-and-ci-gates.mdx#grant-consent-before-security-probes)
+on a verification target is recorded here, with the target's id as the row's target:
+
+| Event | Recorded when | Detail |
+|---|---|---|
+| `security_probe.consent.grant` | Someone grants consent (replacing any earlier consent on the target). | `consent_id`, `target_slug`, `environment`, `profiles_allowed`, `expires_at`, which `identities` were named, `replaced_consent_ids` |
+| `security_probe.consent.revoke` | Someone revokes the target's consent. | `consent_id`, `target_slug` |
+| `security_probe.run.refused` | A probe run is refused before it sends anything. | `code` (for example `probe-consent-missing`, `probe-consent-expired`, `probe-kill-switch-off`), `profile`, `explicit_approval`, `consent_id` |
+
+The detail never contains a credential: an identity is listed by name (`identity_a`), not by the
+reference it points to.

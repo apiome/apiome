@@ -1,6 +1,6 @@
 ---
 title: "Contract assurance"
-description: "REST endpoints tagged contract-assurance: 23 operations."
+description: "REST endpoints tagged contract-assurance: 28 operations."
 sidebar_position: 28
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.586.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.587.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `contract-assurance` · 23 operations
+Tag: `contract-assurance` · 28 operations
 
 ## `POST /v1/tenants/{tenant_slug}/contracts/{version_ref}/run` {#run-contract-suite-for-version-v1-tenants-tenant-slug-contracts-version-ref-run-post}
 
@@ -186,6 +186,59 @@ Operation id: `read_provider_verification_v1_tenants__tenant_slug__provider_veri
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read one provider verification report. | `application/json` [`ConformanceReportRecord`](#schema-conformancereportrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/security-probe-reports` {#list-security-probe-reports-v1-tenants-tenant-slug-security-probe-reports-get}
+
+**List security probe reports**
+
+The tenant's write-once security probe reports, newest first: target snapshot, profile, consent, limits, proof ceiling and counts by tier.
+
+Requires `verification_evidence:view`.
+
+Operation id: `list_security_probe_reports_v1_tenants__tenant_slug__security_probe_reports_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `target_id` | query | string or null | no | Restrict to one target id. |
+| `limit` | query | integer | no | Maximum reports. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list security probe reports. | `application/json` [`SecurityProbeReportListResponse`](#schema-securityprobereportlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/security-probe-reports/{report_id}` {#get-security-probe-report-v1-tenants-tenant-slug-security-probe-reports-report-id-get}
+
+**Read one security probe report**
+
+One report with its body.
+
+Requires `verification_evidence:view`.
+
+Operation id: `get_security_probe_report_v1_tenants__tenant_slug__security_probe_reports__report_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `report_id` | path | string | yes | Path parameter identifying the report id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read one security probe report. | `application/json` [`SecurityProbeReportRecord`](#schema-securityprobereportrecord) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/verification-runs` {#list-verification-runs-v1-tenants-tenant-slug-verification-runs-get}
@@ -725,6 +778,94 @@ Operation id: `delete_verification_target_v1_tenants__tenant_slug__verification_
 | 204 | Successful response for retire a verification target. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/verification-targets/{target_ref}/probe-consent` {#get-probe-consent-v1-tenants-tenant-slug-verification-targets-target-ref-probe-consent-get}
+
+**Read a target's security probe consent**
+
+The target's live (unrevoked) consent, with `status` `active` or `expired` at read time. 404 when the target has none.
+
+Requires `verification_evidence:view`.
+
+Operation id: `get_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `target_ref` | path | string | yes | Path parameter identifying the target ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a target's security probe consent. | `application/json` [`ProbeConsentRecord`](#schema-probeconsentrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/verification-targets/{target_ref}/probe-consent` {#grant-probe-consent-v1-tenants-tenant-slug-verification-targets-target-ref-probe-consent-post}
+
+**Grant security probe consent for a target**
+
+Authorize security probes against this verification target until `expires_at`, for the listed `profiles_allowed` (`passive`, `safe-active`, `payload`).
+
+You must declare `ownership_declared: true` — that you own the target or are authorized to test it. Test identities are credential **references** (an environment-variable name or a credential-vault id), never a credential; a pasted token is rejected.
+
+A target has one live consent: granting replaces (revokes) the previous one. A target whose environment is `mock` and whose base URL is the Apiome-hosted mock needs no consent.
+
+Requires `verification_evidence:create`; a `production` target also needs a signed-in tenant administrator. Every grant is written to the access audit.
+
+Operation id: `grant_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `target_ref` | path | string | yes | Path parameter identifying the target ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for grant security probe consent for a target.
+
+- `application/json` — [`ProbeConsentGrant`](#schema-probeconsentgrant)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for grant security probe consent for a target. | `application/json` [`ProbeConsentRecord`](#schema-probeconsentrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/verification-targets/{target_ref}/probe-consent` {#revoke-probe-consent-v1-tenants-tenant-slug-verification-targets-target-ref-probe-consent-delete}
+
+**Revoke a target's security probe consent**
+
+Revoke the target's live consent. Probe runs against the target are refused from then on. The row is kept, revoked, for the audit trail.
+
+Requires `verification_evidence:create`. Every revocation is written to the access audit.
+
+Operation id: `revoke_probe_consent_v1_tenants__tenant_slug__verification_targets__target_ref__probe_consent_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `target_ref` | path | string | yes | Path parameter identifying the target ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for revoke a target's security probe consent. | `application/json` [`ProbeConsentRecord`](#schema-probeconsentrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/verification-targets/{target_ref}/resolve` {#resolve-verification-target-v1-tenants-tenant-slug-verification-targets-target-ref-resolve-post}
 
 **Resolve a verification target for a run**
@@ -913,6 +1054,39 @@ Validation error response emitted when request data fails schema checks.
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
 
+### `ProbeConsentGrant` {#schema-probeconsentgrant}
+
+The body of a consent grant.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ownership_declared` | boolean | yes | You declare that you own this target or are authorized to test it. Must be `true`; probing a system you do not control is an attack. |
+| `expires_at` | string (date-time) | yes | When the consent stops authorizing runs. Required, timezone-aware, in the future. |
+| `profiles_allowed` | array of string | yes | Probe profiles the consent authorizes: passive, safe-active, payload. |
+| `identity_a` | `TargetAuthReference` or null | no | Test identity A — a credential reference (`env` variable name or `stored` vault id), never a credential. |
+| `identity_b` | `TargetAuthReference` or null | no | Test identity B, for probes that need two identities. Same shape as A. |
+
+### `ProbeConsentRecord` {#schema-probeconsentrecord}
+
+A stored consent, as the API returns it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Consent id. |
+| `tenant_id` | string | yes | Tenant that owns it. |
+| `target_id` | string | yes | Verification target it authorizes probing. |
+| `ownership_declared` | boolean | yes | The grantor's ownership declaration. |
+| `approved_by` | string or null | no | User who granted it. |
+| `approved_at` | string (date-time) | yes | When it was granted. |
+| `expires_at` | string (date-time) | yes | When it stops authorizing runs. |
+| `profiles_allowed` | array of string | yes | Profiles it authorizes. |
+| `identity_a` | `TargetAuthReference` or null | no | Test identity A. |
+| `identity_b` | `TargetAuthReference` or null | no | Test identity B. |
+| `revoked_at` | string (date-time) or null | no | When it was revoked. |
+| `revoked_by` | string or null | no | User who revoked it. |
+| `created_at` | string (date-time) or null | no | When the row was written. |
+| `status` | string | yes | `active`, `expired` or `revoked`, at read time. |
+
 ### `ProviderVerificationRequest` {#schema-providerverificationrequest}
 
 What to verify, against which deployment, and how much of it may be touched.
@@ -969,6 +1143,44 @@ truths.
 | `policy` | `VerificationPolicy` | yes | The policy the runner must honour. |
 | `auth` | `TargetAuthReference` | yes | Where the runner obtains the credential. No credential material is returned by this API — an `env` reference is read from the runner's own environment, and a `stored` one is unsealed only at request time by the runner service. |
 | `resolved_at` | string (date-time) | yes | When the target was resolved. |
+
+### `SecurityProbeReportListResponse` {#schema-securityprobereportlistresponse}
+
+A tenant's security probe reports.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `reports` | array of `SecurityProbeReportSummary` | no | Reports, newest first. |
+| `count` | integer | yes | How many reports were returned. |
+
+### `SecurityProbeReportRecord` {#schema-securityprobereportrecord}
+
+A probe report with its body.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Report id. |
+| `tenant_id` | string | yes | Tenant that owns it. |
+| `target_id` | string or null | no | Target id at run time. |
+| `target_slug` | string | yes | Target handle at run time. |
+| `target_environment` | string | yes | Environment class at run time. |
+| `target_network_class` | string | no | `public` or `private`. |
+| `target_base_url` | string | yes | Base URL at run time. |
+| `profile` | string | yes | Profile that ran. |
+| `consent_id` | string or null | no | Consent that authorized it. |
+| `hosted_mock` | boolean | yes | Whether the target was the Apiome-hosted mock. |
+| `explicit_approval` | boolean | yes | The per-run approval flag. |
+| `proof_ceiling` | string | yes | Strongest tier the run could report. |
+| `limits` | object | no | Per-run limits. |
+| `count_suspected` | integer | yes | Findings at `suspected`. |
+| `count_observed` | integer | yes | Findings at `observed`. |
+| `count_exploited_in_test` | integer | yes | Findings at `exploited-in-test`. |
+| `evidence_run_id` | string or null | no | ECA-1.3 evidence run. |
+| `created_at` | string (date-time) or null | no | When it was written. |
+| `created_by` | string or null | no | User who ran it. |
+| `actor_label` | string or null | no | Actor label at the time. |
+| `actor_kind` | string | no | `user`, `api_key` or `system`. |
+| `report` | object | no | The stored report body. |
 
 ### `TargetAuditResponse` {#schema-targetauditresponse}
 
