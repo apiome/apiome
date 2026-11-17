@@ -147,7 +147,6 @@ Each provisioner diffs that against the gateway and applies the difference idemp
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-1.3 · #6100 | Product pages in Browse | Product landing page listing its APIs and plans, with a Request access action | `portal`, `browser` | Y | N | M | apiome-browse |
 | APX-1.4 · #6101 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
 
 #### ✅ APX-1.1 (#6098) — API product model — **Complete**
@@ -211,7 +210,19 @@ API product "Payments"
 - **Parallelism/Dependencies:** After 1.1.
 - **Documentation (Docusaurus):** “Plans” section in `ship/api-products.mdx`; screenshot `api-plan-editor`.
 
-#### APX-1.3 (#6100) — Product pages in Browse
+#### ✅ APX-1.3 (#6100) — Product pages in Browse — **Complete**
+
+- **Shipped:** apiome-browse 0.63.0 — `/tenant/{t}/products/{slug}` (the existing `/tenant/` prefix of
+  every Browse page) for a `portal` product that is `published` or `deprecated`; anything else is a
+  404. Members link to the newest *public, published* version they cover (the same `2.x` range rule as
+  apiome-rest) or a public MCP server's catalog page. Plan cards show published/deprecated plans only
+  — auth strategy (+ key header / OAuth scopes), limits, concurrency, approval, key lifetime, pricing,
+  terms — and never `billing_ref`, `environments` or the IdP config id (the reads do not select them).
+  **Sign in to request access** for anonymous readers (PCX-1.1); signed-in readers see a disabled
+  **Request access** until APX-2.3 (#6105) adds the request flow. The tenant page lists products under
+  **Products**; catalog search has a `product` kind (`type:product`, *Projects & orgs* tab). PCX-5.4
+  branding is not on `main` yet, so nothing to apply. Docs: `ship/browse-published-specs.md`
+  (API products), `ship/api-products.mdx` (On the portal), screenshot `browse-product-page`.
 
 - **Solution/Scope:** `apiome-browse` route `/{tenant}/products/{slug}`: summary, member APIs (links into existing
   version pages), plan cards (auth strategy, limits, approval), **Request access** (requires PCX-1.1 sign-in; for

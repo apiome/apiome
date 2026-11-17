@@ -651,6 +651,249 @@ a.table-row:hover {
 }
 
 /*
+ * API product pages (APX-1.3, #6100): the product's members, its plan cards with their Request
+ * access action, and the tenant page's product cards. Tokens only, so both themes follow the palette.
+ */
+.product-section-title {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.product-section-hint,
+.product-empty {
+  margin-top: 0.125rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.product-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--brand-soft);
+  color: var(--brand-soft-text);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.product-badge-warning {
+  background-color: var(--gold-soft);
+  color: var(--gold-soft-text);
+}
+
+.product-members {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+}
+
+.product-member {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+.product-member + .product-member {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.product-member-kind {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.product-member-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.product-member-link {
+  color: var(--brand-soft-text);
+}
+
+.product-member-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.product-member-meta {
+  color: var(--text-secondary);
+  font-family: var(--app-font-mono);
+  font-size: 0.75rem;
+}
+
+.product-plans,
+.product-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.product-plan,
+.product-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.product-plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.product-plan-name {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.product-plan-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.product-plan-facts {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+}
+
+.product-plan-facts dt {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.product-plan-facts dd {
+  color: var(--text-primary);
+}
+
+.product-plan-facts code {
+  padding: 0 0.25rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--surface-muted);
+  font-family: var(--app-font-mono);
+  font-size: 0.8125rem;
+}
+
+.product-plan-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.product-plan-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.875rem;
+}
+
+.product-plan-request {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.product-plan-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-md);
+  /* The soft brand pair (as the reader chip) keeps AA contrast in both themes. */
+  background-color: var(--brand-soft);
+  color: var(--brand-soft-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 120ms ease;
+}
+
+.product-plan-action:hover {
+  background-color: var(--brand-soft-hover);
+}
+
+.product-plan-action:focus-visible,
+.product-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.product-plan-action:disabled {
+  background-color: var(--surface-muted);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.product-plan-request-note {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.product-card {
+  gap: 0.5rem;
+  transition: border-color 120ms ease;
+}
+
+.product-card:hover {
+  border-color: var(--border-strong);
+}
+
+.product-card-name {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.product-card-summary {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.product-card-facts {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .product-member {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}
+
+/*
  * Consumer feedback (COL-4.4, #4528): the version page's Feedback tab — the form, the reader's
  * threads, and the team's replies. Builds on the portal-* sign-in classes; tokens only.
  */

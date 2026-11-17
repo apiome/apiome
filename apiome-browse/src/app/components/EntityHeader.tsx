@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import type { CardFacts, FactKind } from '../../../lib/cardFacts';
 import { FactsLine } from './FactsLine';
 
-type Variant = 'tenant' | 'project' | 'version';
+type Variant = 'tenant' | 'project' | 'version' | 'product';
 
 interface EntityHeaderProps {
   variant: Variant;
@@ -28,6 +28,8 @@ const monogramTone: Record<Variant, string> = {
     'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-blue-800 dark:text-blue-300',
   version:
     'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300',
+  product:
+    'bg-gradient-to-br from-violet-500/25 to-violet-500/5 text-violet-700 dark:text-violet-300',
 };
 
 const metaTone: Record<NonNullable<EntityHeaderProps['meta']>[number]['tone'] & string, string> = {
@@ -48,6 +50,14 @@ function VariantIcon({ variant }: { variant: Variant }) {
     return (
       <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    );
+  }
+  if (variant === 'product') {
+    // An API product (APX-1.3): a box of APIs.
+    return (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
       </svg>
     );
   }
@@ -111,7 +121,7 @@ export function EntityHeader({
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-zinc-100 pt-4 sm:grid-cols-4 dark:border-zinc-800/80">
           {meta.map((m, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <dt className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">
+              <dt className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 {m.label}
               </dt>
               <dd className={`text-sm font-medium ${metaTone[m.tone ?? 'neutral']}`}>

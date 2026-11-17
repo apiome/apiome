@@ -2288,6 +2288,20 @@
       ]
     },
     {
+      "id": "browse-product-page",
+      "app": "browse",
+      "route": "/tenant/acme-corp/products/payments",
+      "waitFor": "[data-testid=\"product-plans\"]",
+      "scrollTo": "[data-testid=\"plan-sign-in-to-request\"]",
+      "data": "signed-out",
+      "sources": [
+        "apiome-browse/src/app/tenant/[tenantSlug]/products",
+        "apiome-browse/src/app/components/RequestAccess.tsx",
+        "apiome-browse/lib/products",
+        "apiome-browse/src/app/globals.css"
+      ]
+    },
+    {
       "id": "browse-changelog",
       "app": "browse",
       "route": "/tenant/acme-corp/petstore-sample/changelog",

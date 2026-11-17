@@ -6,6 +6,7 @@
 import type { CardFacts } from '../cardFacts';
 import { operationAnchorId, schemaAnchorId, versionChangesHref, versionHref } from './anchors';
 import { HIT_KIND_LABELS, type HitKind } from './kinds';
+import { productHref } from '../products/portalProducts';
 
 /** One search hit, as the SQL projects it. */
 export interface CatalogSearchHit {
@@ -92,11 +93,13 @@ export function emptySearchResponse(page = 1, perPage = 25): CatalogSearchRespon
 }
 
 /**
- * Where a hit links: the organization page, the project page, or the version page — at the
- * operation or schema anchor when the row has one, on the *Changes* tab for a changelog entry.
+ * Where a hit links: the organization page, an API product's page, the project page, or the version
+ * page — at the operation or schema anchor when the row has one, on the *Changes* tab for a
+ * changelog entry.
  */
 export function hitHref(hit: CatalogSearchHit): string {
   const tenant = encodeURIComponent(hit.tenant_slug);
+  if (hit.hit_type === 'product' && hit.anchor_key) return productHref(hit.tenant_slug, hit.anchor_key);
   if (hit.hit_type === 'organization' || !hit.project_slug) return `/tenant/${tenant}`;
   const project = encodeURIComponent(hit.project_slug);
   if (hit.hit_type === 'project' || !hit.version_slug) return `/tenant/${tenant}/${project}`;

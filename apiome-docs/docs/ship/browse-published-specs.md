@@ -22,6 +22,27 @@ now; private versions for readers are coming next.
 - The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI, and
   searches across every published public specification (see [Search the public catalog](#search-the-public-catalog)).
 
+## API products {#api-products}
+
+An organization's page lists its [API products](./api-products.mdx) under **Products** — bundles of
+APIs you can request access to. Only products made visible on the **Portal** and **Published** (or
+**Deprecated**) appear.
+
+1. **Open the organization's page** (for example `/tenant/acme-corp`) and **click a product card**
+   under **Products**. The product page is `/tenant/<org>/products/<product>`, and you need not sign
+   in to read it.
+2. **What's included** lists the product's APIs. **Click an API** to open the version page it
+   resolves to.
+3. **Plans** shows one card per plan: how you authenticate (for example *API key in the `X-Api-Key`
+   header*), the limits (*100 requests / minute*), whether a person approves your request, the key
+   lifetime, pricing and terms.
+4. To ask for a plan, **click "Sign in to request access"** on its card, sign in with the emailed
+   link, and you return to the product. Signed in, the card shows **Request access**; it stays
+   disabled until requests from the portal open, so contact the API team in the meantime.
+
+A screenshot and the rules for what the page shows are in
+[API products › On the portal](./api-products.mdx#on-the-portal).
+
 ## What a card tells you {#what-a-card-tells-you}
 
 Every project card, the project and version page headers, and each **Project** search result carry
@@ -68,9 +89,10 @@ project's **Version history**, or **See the whole changelog →** on a version's
 ## Search the public catalog
 
 The browse app's **Search** page (`/search`) searches the normalized model of every published public
-version, not only names and descriptions: organizations, projects, version notes, tags, operations,
-parameters, request bodies, responses, schemas, schema properties and the entries of each version's
-classified changelog. Private and unpublished versions never appear.
+version, not only names and descriptions: organizations, API products on the portal, projects,
+version notes, tags, operations, parameters, request bodies, responses, schemas, schema properties
+and the entries of each version's classified changelog. Private and unpublished versions, and
+products that are not on the portal, never appear.
 
 ### Where to start a search
 
@@ -89,7 +111,8 @@ Words, phrases and filters go in one box. Every word must match; filters narrow 
 | `create order` | Items mentioning both words |
 | `"payment intent"` | Items containing that phrase |
 | `orders -deprecated` | Items about orders that do not mention *deprecated* |
-| `type:operation` | Only one kind — `organization`, `project`, `version`, `tag`, `operation`, `parameter`, `request_body`, `response`, `schema`, `property`, `change` (aliases such as `endpoint`, `model` and `changelog` work) |
+| `type:operation` | Only one kind — `organization`, `product`, `project`, `version`, `tag`, `operation`, `parameter`, `request_body`, `response`, `schema`, `property`, `change` (aliases such as `endpoint`, `model` and `changelog` work) |
+| `type:product` | Only [API products](#api-products) on the portal. A `project:`, `version:`, `format:`, `paradigm:`, `tag:`, `after:` or `before:` filter leaves products out, because those describe versions |
 | `type:change` | Only changelog entries — one result per classified change (its summary, JSON Pointer and severity) |
 | `severity:breaking` | Changelog entries of that severity — `breaking`, `non-breaking` (or `warning`) and `docs-only` (or `info`). Narrows the results to changelog entries |
 | `method:POST` | Operations with that HTTP method |

@@ -110,3 +110,23 @@ describe('highlight', () => {
     expect(excerptAround('short', ['x'])).toBe('short');
   });
 });
+
+describe('API product hits (APX-1.3)', () => {
+  it('link to the product page and crumb to the organization', () => {
+    const product = hit({
+      hit_type: 'product',
+      project_slug: null,
+      project_name: null,
+      version_slug: null,
+      anchor_key: 'payments',
+    });
+    expect(hitHref(product)).toBe('/tenant/acme/products/payments');
+    expect(hitCrumbs(product)).toEqual([{ label: 'Acme', href: '/tenant/acme' }]);
+  });
+
+  it('belong to the catalog scope', () => {
+    expect(resolveHitKind('product')).toBe('product');
+    expect(resolveHitKind('api-product')).toBe('product');
+    expect(scopeOfKind('product')).toBe('catalog');
+  });
+});

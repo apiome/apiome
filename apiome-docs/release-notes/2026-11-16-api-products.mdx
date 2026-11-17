@@ -31,6 +31,12 @@ access (APX).
   whose security schemes do not fit the auth strategy is flagged, and an OpenAPI export of an included
   version carries the plans as `x-apiome-plans` (other formats drop them, and the fidelity report
   says so).
+- **Product pages in Browse (APX-1.3).** A **Portal** product that is published or deprecated gets
+  a [page in the browse app](/ship/api-products#on-the-portal) at `/tenant/<org>/products/<product>`:
+  its summary, the APIs it includes (each linking to the version it resolves to) and a card per plan
+  with the authentication, limits, approval, key lifetime, pricing and terms — never the billing
+  reference. **Sign in to request access** signs a reader in to the portal. The organization's page
+  lists its products under **Products**, and catalog search finds them (`type:product`).
 
 With the API: `GET|POST /v1/tenants/{t}/products`, `GET|PATCH|DELETE …/products/{slug}`,
 `GET|POST …/products/{slug}/members`, `DELETE …/members/{id}`, `GET|POST …/products/{slug}/plans` and

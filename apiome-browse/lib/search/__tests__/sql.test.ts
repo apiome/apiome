@@ -210,3 +210,33 @@ describe('project hit facts (BDX-2.2)', () => {
     expect(text).toContain("json_agg(to_jsonb(pf) - 'ord' ORDER BY pf.ord) FROM page_facts pf");
   });
 });
+
+describe('API product hits (APX-1.3)', () => {
+  it('searches portal products by name, slug and summary, never private ones', () => {
+    const { text } = build({ q: 'payments' });
+    expect(text).toContain("'product' AS hit_type");
+    expect(text).toContain('FROM apiome.api_products ap');
+    expect(text).toContain("ap.visibility = 'portal'");
+    expect(text).toContain("ap.state IN ('published', 'deprecated')");
+    expect(text).toContain('ap.deleted_at IS NULL');
+    expect(text).not.toContain('billing_ref');
+  });
+
+  it('only finds products in tenants that are in scope, so the org filter applies', () => {
+    const { text } = build({ q: 'payments org:acme' });
+    expect(text).toContain('SELECT DISTINCT tenant_pk, tenant_slug, tenant_name FROM sv');
+  });
+
+  it('drops products when a filter only a version can honour is set', () => {
+    for (const q of ['x project:pay', 'x version:2', 'x format:openapi', 'x tag:beta', 'x after:2026-01-01']) {
+      expect(applicableKinds(resolveSearchRequest({ q }))).not.toContain('product');
+    }
+    expect(applicableKinds(resolveSearchRequest({ q: 'x org:acme' }))).toContain('product');
+  });
+
+  it('lists products in the Projects & orgs tab', () => {
+    expect(resolveSearchRequest({ q: 'x', scope: 'catalog' }).kinds).toContain('product');
+    expect(resolveSearchRequest({ q: 'type:product x' }).kinds).toEqual(['product']);
+    expect(resolveSearchRequest({ q: 'type:products x' }).kinds).toEqual(['product']);
+  });
+});
