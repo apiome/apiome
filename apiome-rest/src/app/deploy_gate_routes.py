@@ -195,12 +195,14 @@ def _audit(
     tags=["deploy-gate"],
     summary="Can I promote this API version?",
     description=(
-        "One aggregate verdict for a CD pipeline, composed of the four signals that already "
+        "One aggregate verdict for a CD pipeline, composed of five signals that already "
         "exist elsewhere in the platform:\n\n"
         "* **lint** — the GOV grade stored on the revision (never recomputed here);\n"
         "* **breaking** — the CTG-3.1 classification of the publish against its predecessor;\n"
         "* **consumers** — the CTG-4.2 per-consumer verdicts (\"breaks 2 of 7\");\n"
-        "* **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report.\n\n"
+        "* **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report;\n"
+        "* **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or the "
+        "style guide's `requiredPublishLevel`); `not_configured` without a ladder.\n\n"
         "**Partial inputs are the normal case.** A signal with nothing behind it reports "
         "`not_configured` and is excluded from the verdict rather than failing it; a signal that "
         "exists but could not be read reports `unknown` and is also excluded, counted apart. "

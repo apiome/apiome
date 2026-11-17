@@ -174,6 +174,7 @@ def test_running_the_suite_records_one_verdict_and_reports_it_on_the_pull_reques
         "consumers",
         "contract",
         "sdk",
+        "maturity",
     ]
     assert body["replayed"] is False
     assert body["provider"]["recorded"] is True

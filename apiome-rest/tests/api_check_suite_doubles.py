@@ -19,6 +19,7 @@ from app import api_check_suite_evidence, api_check_suite_store
 from app.api_check_suite import BreakingFacts, ContractFacts, LintFacts, SdkFacts
 from app.api_check_suite_evidence import Classification
 from app.consumer_impact import ConsumerImpactReport
+from app.maturity_gate import MaturityJudgement, judge_maturity
 
 __all__ = ["Evidence", "Provider", "install_evidence"]
 
@@ -59,6 +60,7 @@ class Evidence:
         consumers: What the consumer intersection returns.
         contract: What the contract reader returns.
         sdk: What the SDK reader returns.
+        maturity: What the maturity reader returns (GVM-1.3) — no ladder by default.
         broken: Readers that raise instead of answering.
         model_error: A specific error the canonical-model loader raises, when set.
         calls: How often each reader was asked.
@@ -77,6 +79,7 @@ class Evidence:
         self.consumers: Optional[ConsumerImpactReport] = None
         self.contract = ContractFacts(applicable=True)
         self.sdk = SdkFacts(operation_count=2, total_operation_count=2, kit_digest="sha256:kit")
+        self.maturity: MaturityJudgement = judge_maturity(None, ladder=None, required_level=None)
         self.broken: set = set()
         self.model_error: Optional[Exception] = None
         self.calls: Counter = Counter()
@@ -113,6 +116,11 @@ class Evidence:
     def read_sdk(self, **_kwargs: Any) -> SdkFacts:
         return self._answer("sdk", self.sdk)
 
+    def read_maturity(self, **_kwargs: Any):
+        return self._answer(
+            "maturity", (self.maturity, {"policyVersionId": "pack-1", "evaluationId": "eval-1"})
+        )
+
 
 def install_evidence(monkeypatch) -> Evidence:
     """Swap every evidence reader beneath the suite for one :class:`Evidence` double.
@@ -129,6 +137,7 @@ def install_evidence(monkeypatch) -> Evidence:
     monkeypatch.setattr(api_check_suite_evidence, "read_breaking_facts", doubles.read_breaking)
     monkeypatch.setattr(api_check_suite_evidence, "read_contract_facts", doubles.read_contract)
     monkeypatch.setattr(api_check_suite_evidence, "read_sdk_facts", doubles.read_sdk)
+    monkeypatch.setattr(api_check_suite_evidence, "read_maturity_judgement", doubles.read_maturity)
     monkeypatch.setattr("app.export_source.load_export_source", doubles.load_source)
     monkeypatch.setattr(
         "app.consumer_impact_service.consumer_impact_for_diff", doubles.consumer_impact

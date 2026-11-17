@@ -13,6 +13,7 @@ from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .database import db
+from .maturity_publish_gate import assess_maturity_gate
 from .models import VersionPublishRequest
 from .provenance_publish_gate import converted_source_provenance_violation
 from .publication_change_report import resolve_baseline_revision_id_for_change_report
@@ -44,6 +45,7 @@ class PublishPrecheckOutcome:
         approval_gate: COL-2.3 approval-policy verdict when assessed.
         check_suite_gate: GNC-3.1 API change check suite verdict when assessed.
         owner_gate: CDG-2.5 "require an owner to publish" verdict when assessed.
+        maturity_gate: GVM-1.3 required-publish-level verdict when assessed.
     """
 
     lint_error_count: Optional[int] = None
@@ -56,6 +58,7 @@ class PublishPrecheckOutcome:
     approval_gate: Optional[Dict[str, Any]] = None
     check_suite_gate: Optional[Dict[str, Any]] = None
     owner_gate: Optional[Dict[str, Any]] = None
+    maturity_gate: Optional[Dict[str, Any]] = None
 
 
 def enforce_publish_prechecks(
@@ -83,6 +86,8 @@ def enforce_publish_prechecks(
     current content has no passing API change check suite evaluation.
     Since COL-2.3 (#4519) the tenant's approval policy is applied: a draft that has not
     collected the required review approvals is refused with the same 422 contract.
+    Since GVM-1.3 (#5856) the maturity gate runs just before the approval gate: a draft below
+    its guide's ``required_publish_level`` is refused with the blockers to its next level.
     Since CDG-2.5 (#5964) the owner gate is applied last: with ``require_owner_to_publish`` on, a
     project with no confirmed owner team is refused with reason ``no-owner``.
 
@@ -92,7 +97,8 @@ def enforce_publish_prechecks(
     Raises:
         HTTPException: 422 for documentation gaps, style-guide errors, a blocking
             verification-policy decision, a blocked breaking publish, a required API change
-            check suite that has not passed, or unmet approvals.
+            check suite that has not passed, a draft below the required maturity level, or
+            unmet approvals.
         HTTPException: 409 when compatibility is breaking and ``allow_breaking`` is false.
     """
     if bool(request.skip_publish_checks):
@@ -259,6 +265,13 @@ def enforce_publish_prechecks(
         version=existing,
     )
 
+    outcome = _with_maturity_gate(
+        outcome,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version=existing,
+    )
+
     outcome = _with_approval_gate(
         outcome,
         tenant_id=tenant_id,
@@ -298,6 +311,50 @@ def _with_owner_gate(
             },
         )
     return replace(outcome, owner_gate=payload)
+
+
+def _with_maturity_gate(
+    outcome: PublishPrecheckOutcome,
+    *,
+    tenant_id: str,
+    project_id: str,
+    version: Dict[str, Any],
+) -> PublishPrecheckOutcome:
+    """Attach the GVM-1.3 verdict and refuse publish when the draft is below the required level.
+
+    Runs after every automated gate and before the COL-2.3 approval gate: a level is climbed by
+    fixing the specification (or producing the evidence a level asks for), which a publisher
+    should do before collecting approvals for a revision they are about to edit.
+
+    Args:
+        outcome: The precheck outcome so far.
+        tenant_id: Tenant context.
+        project_id: Project of the revision being published.
+        version: The candidate revision row.
+
+    Returns:
+        ``outcome`` with ``maturity_gate`` set — always a payload, including the ``disabled``
+        and ``unavailable`` cases, so a caller can tell "checked and clean" from "not checked".
+
+    Raises:
+        HTTPException: 422 when the guide requires a level the draft has not reached.
+    """
+    assessment = assess_maturity_gate(
+        tenant_id=tenant_id, project_id=project_id, version=version
+    )
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"{assessment.message()} Clear the blockers, lower the guide's required "
+                    "publish level, or force-publish with a reason."
+                ),
+                "maturityGate": payload,
+            },
+        )
+    return replace(outcome, maturity_gate=payload)
 
 
 def _with_approval_gate(

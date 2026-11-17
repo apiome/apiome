@@ -472,3 +472,94 @@ def test_gate_without_a_ladder_records_no_maturity_block():
     row = record.call_args.args[0]
     assert "maturity" not in row["gate_results"]
     assert row["maturity_level"] is None
+
+
+# ---------------------------------------------------------------------------
+# Required publish level in the CI gate (GVM-1.3, #5856)
+# ---------------------------------------------------------------------------
+
+_TWO_LEVELS = {
+    "name": "Maturity",
+    "levels": [
+        {"key": "bronze", "label": "Bronze", "rules": [], "axes": [], "evidence": []},
+        {
+            "key": "silver",
+            "label": "Silver",
+            "rules": [{"ruleId": "naming.rule", "maxSeverity": "none"}],
+            "axes": [],
+            "evidence": [],
+            "waiversSatisfy": False,
+        },
+    ],
+}
+
+
+def _level_gate(*, toggle: bool, required="silver", query: str = ""):
+    """Gate a revision at Bronze (one naming.rule warning) under a pack requiring ``required``."""
+    pack = {
+        **PACK,
+        "ladder": _TWO_LEVELS,
+        "required_publish_level": required,
+        "ci_outcomes": {**PACK["ci_outcomes"], "failOnMaturityLevel": toggle},
+    }
+    stack = _gate_patches([_run("r1", "apiome.lint", [_finding("fp-w", "warning")], "2026-07-01")])
+    stack[2] = patch("app.lint_gate.resolve_policy_pack", return_value=pack)
+    with stack[0], stack[1], stack[2], stack[3], stack[4], stack[5], stack[6], stack[7], stack[8]:
+        return client.get(f"/v1/versions/acme/{PID}/{VID}/lint/gate{query}")
+
+
+def test_gate_reports_the_level_but_keeps_its_verdict_while_the_toggle_is_off():
+    r = _level_gate(toggle=False)
+    assert r.status_code == 200
+    gate = r.json()["gate"]
+    assert gate["passed"] is True
+    maturity = gate["maturityGate"]
+    assert maturity["status"] == "fail"
+    assert maturity["level"] == "bronze" and maturity["requiredLevel"] == "silver"
+    assert maturity["counted"] is False and maturity["passed"] is None
+    assert maturity["blockers"][0]["ruleId"] == "naming.rule"
+    assert r.json()["policy"]["ciOutcomes"]["failOnMaturityLevel"] is False
+
+
+def test_gate_fails_below_the_required_level_when_the_toggle_is_on():
+    r = _level_gate(toggle=True)
+    gate = r.json()["gate"]
+    assert gate["passed"] is False
+    assert gate["maturityGate"]["counted"] is True
+    assert gate["maturityGate"]["passed"] is False
+
+
+def test_gate_passes_at_the_required_level_with_the_toggle_on():
+    r = _level_gate(toggle=True, required="bronze")
+    gate = r.json()["gate"]
+    assert gate["passed"] is True
+    assert gate["maturityGate"]["status"] == "pass"
+    assert gate["maturityGate"]["passed"] is True
+
+
+def test_gate_without_a_required_level_never_fails_on_maturity():
+    r = _level_gate(toggle=True, required=None)
+    gate = r.json()["gate"]
+    assert gate["passed"] is True
+    assert gate["maturityGate"]["status"] == "not_configured"
+    assert gate["maturityGate"]["passed"] is None
+
+
+def test_sarif_and_junit_carry_the_level_as_a_property():
+    sarif = _level_gate(toggle=True, query="?format=sarif").json()
+    props = sarif["runs"][0]["properties"]["apiome"]["maturity"]
+    assert props == {
+        "status": "fail",
+        "level": "bronze",
+        "levelLabel": "Bronze",
+        "requiredLevel": "silver",
+        "counted": True,
+        "passed": False,
+        "blockerCount": 1,
+    }
+    junit = _level_gate(toggle=True, query="?format=junit").text
+    assert '<property name="apiome.maturity.level" value="bronze"/>' in junit
+    assert '<property name="apiome.maturity.requiredLevel" value="silver"/>' in junit
+    assert '<property name="apiome.maturity.status" value="fail"/>' in junit
+    markdown = _level_gate(toggle=False, query="?format=markdown").text
+    assert "| Maturity level (Bronze; required silver) | off | fail |" in markdown

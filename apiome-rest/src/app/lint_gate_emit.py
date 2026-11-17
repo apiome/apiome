@@ -59,6 +59,30 @@ def _gate_findings(gate: Mapping[str, Any]) -> Sequence[Mapping[str, Any]]:
     return [f for f in findings if isinstance(f, Mapping)] if isinstance(findings, list) else []
 
 
+def maturity_properties(gate: Mapping[str, Any]) -> Dict[str, Any]:
+    """The GVM-1.3 level line of a gate payload, flattened for SARIF / JUnit properties.
+
+    Args:
+        gate: Payload from :func:`app.lint_gate.gate_payload`.
+
+    Returns:
+        ``{status, level, levelLabel, requiredLevel, counted, passed, blockerCount}`` from
+        ``gate.maturityGate``; empty when the payload carries none.
+    """
+    verdict = (gate.get("gate") or {}).get("maturityGate")
+    if not isinstance(verdict, Mapping):
+        return {}
+    return {
+        "status": verdict.get("status"),
+        "level": verdict.get("level"),
+        "levelLabel": verdict.get("levelLabel"),
+        "requiredLevel": verdict.get("requiredLevel"),
+        "counted": bool(verdict.get("counted")),
+        "passed": verdict.get("passed"),
+        "blockerCount": len(verdict.get("blockers") or []),
+    }
+
+
 def _provenance(gate: Mapping[str, Any]) -> Dict[str, Any]:
     """Run-level provenance block: subject, policy, per-scanner fingerprints, evaluation.
 
@@ -78,6 +102,7 @@ def _provenance(gate: Mapping[str, Any]) -> Dict[str, Any]:
         "evaluation": dict(gate.get("evaluation") or {}),
         "gate": dict(gate.get("gate") or {}),
         "links": dict(gate.get("links") or {}),
+        "maturity": maturity_properties(gate),
     }
 
 
@@ -210,6 +235,8 @@ def to_gate_junit(gate: Mapping[str, Any], *, suite_name: str = "apiome.lint-gat
         "apiome.gatePassed": (provenance["gate"] or {}).get("passed"),
         "apiome.newOnly": provenance["newOnly"],
     }
+    for key, value in provenance["maturity"].items():
+        flat[f"apiome.maturity.{key}"] = value
     for scanner in provenance["scanners"]:
         sid = str(scanner.get("scannerId") or "")
         flat[f"apiome.scanner.{sid}.reportFingerprint"] = scanner.get("reportFingerprint")
@@ -295,6 +322,14 @@ def to_gate_markdown(gate: Mapping[str, Any]) -> str:
         lines.append(
             f"| {label} | {'on' if configured[key] else 'off'} | "
             f"{status if result else 'n/a'} |"
+        )
+    maturity = maturity_properties(gate)
+    if maturity and maturity.get("status") != "not_configured":
+        level = maturity.get("levelLabel") or maturity.get("level") or "below the first level"
+        verdict = {True: "✅ pass", False: "❌ fail"}.get(maturity.get("passed"), maturity["status"])
+        lines.append(
+            f"| Maturity level ({level}; required {maturity.get('requiredLevel')}) | "
+            f"{'on' if maturity.get('counted') else 'off'} | {verdict} |"
         )
     lines.append("")
     lines.append(

@@ -1895,3 +1895,108 @@ def test_get_revision_exposes_the_frozen_ladder_or_null():
         assert r.status_code == 200
         ladder = r.json()["ladder"]
         assert (ladder["name"] if ladder else None) == expected
+
+
+# ---------------------------------------------------------------------------
+# Required publish level (GVM-1.3, #5856)
+# ---------------------------------------------------------------------------
+
+_TWO_LEVEL_ROW = _ladder_row(
+    [
+        {"key": "bronze", "label": "Bronze", "rules": [], "axes": [], "evidence": []},
+        {"key": "silver", "label": "Silver", "rules": [], "axes": [], "evidence": []},
+    ]
+)
+
+
+def test_get_policy_reports_the_required_publish_level_and_toggle():
+    guide = _custom_row(
+        required_publish_level="silver", ci_outcomes={"failOnMaturityLevel": True}
+    )
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=guide):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+    body = r.json()
+    assert body["requiredPublishLevel"] == "silver"
+    assert body["ciOutcomes"]["failOnMaturityLevel"] is True
+
+
+def test_get_policy_defaults_to_no_required_level_and_the_toggle_off():
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()):
+        body = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy").json()
+    assert body["requiredPublishLevel"] is None
+    assert body["ciOutcomes"]["failOnMaturityLevel"] is False
+
+
+def test_put_policy_sets_a_required_level_of_the_ladder_and_snapshots(governance):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_ladder", return_value=_TWO_LEVEL_ROW
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(required_publish_level="silver"),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy") as snapshot:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={
+                "requiredPublishLevel": "silver",
+                "ciOutcomes": {"failOnMaturityLevel": True},
+            },
+        )
+    assert r.status_code == 200, r.text
+    assert r.json()["requiredPublishLevel"] == "silver"
+    kwargs = update.call_args.kwargs
+    assert kwargs["required_publish_level"] == "silver"
+    assert kwargs["set_required_publish_level"] is True
+    assert kwargs["ci_outcomes"]["failOnMaturityLevel"] is True
+    snapshot.assert_called_once()
+
+
+def test_put_policy_leaves_the_required_level_alone_when_omitted_and_clears_on_null():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        client.put(f"/v1/style-guides/acme/{GUIDE_ID}/policy", json={"snapshot": False})
+        assert update.call_args.kwargs["set_required_publish_level"] is False
+        client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredPublishLevel": None, "snapshot": False},
+        )
+        assert update.call_args.kwargs["set_required_publish_level"] is True
+        assert update.call_args.kwargs["required_publish_level"] is None
+
+
+@pytest.mark.parametrize("ladder_row,level", [(_TWO_LEVEL_ROW, "gold"), (None, "silver")])
+def test_put_policy_refuses_a_level_the_ladder_does_not_have(ladder_row, level):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_ladder", return_value=ladder_row
+    ), patch("app.style_guide_routes.db.update_style_guide_policy_settings") as update:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredPublishLevel": level, "snapshot": False},
+        )
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert detail["code"] == "required-publish-level-unknown"
+    assert detail["pointer"] == "/requiredPublishLevel"
+    update.assert_not_called()
+
+
+def test_put_ladder_refuses_to_drop_the_required_publish_level():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id",
+        return_value=_custom_row(required_publish_level="silver"),
+    ), patch("app.style_guide_routes.db.upsert_style_guide_ladder") as upsert:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder", json=_ladder_body(_bronze())
+        )
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert detail["code"] == "ladder-required-level-removed"
+    assert detail["level"] == "silver"
+    upsert.assert_not_called()

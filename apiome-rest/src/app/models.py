@@ -7313,6 +7313,15 @@ class StyleGuideCiOutcomesOut(BaseModel):
         validation_alias=AliasChoices("failOnAxisGates", "fail_on_axis_gates"),
         serialization_alias="failOnAxisGates",
     )
+    fail_on_maturity_level: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("failOnMaturityLevel", "fail_on_maturity_level"),
+        serialization_alias="failOnMaturityLevel",
+        description=(
+            "Fail the lint CI gate when the revision is below the guide's required publish "
+            "level (GVM-1.3). Off by default, so existing pipelines keep their exit code."
+        ),
+    )
 
 
 class ComponentApprovalStageModel(BaseModel):
@@ -7427,6 +7436,14 @@ class StyleGuidePolicySettingsOut(BaseModel):
             "(default), PACKAGE or FILE."
         ),
     )
+    required_publish_level: Optional[str] = Field(
+        default=None,
+        serialization_alias="requiredPublishLevel",
+        description=(
+            "Key of the maturity level a draft must reach before it publishes (GVM-1.3); a "
+            "level of the guide's own ladder. null (default) means no level gate."
+        ),
+    )
 
 
 class StyleGuidePolicySettingsPutRequest(BaseModel):
@@ -7512,6 +7529,16 @@ class StyleGuidePolicySettingsPutRequest(BaseModel):
         validation_alias=AliasChoices("protobufBreakingCategory", "protobuf_breaking_category"),
         serialization_alias="protobufBreakingCategory",
         description="buf breaking category for Protobuf changes (XPC-4.5); omit to leave unchanged.",
+    )
+    required_publish_level: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        validation_alias=AliasChoices("requiredPublishLevel", "required_publish_level"),
+        serialization_alias="requiredPublishLevel",
+        description=(
+            "Maturity level key a draft must reach before it publishes (GVM-1.3); must be a "
+            "level of the guide's ladder. Send null to clear it, omit to leave unchanged."
+        ),
     )
     snapshot: bool = Field(
         default=True,
@@ -7676,6 +7703,14 @@ class StyleGuidePolicyVersionOut(BaseModel):
     ladder: Optional[StyleGuideLadderModel] = Field(
         default=None,
         description="The maturity ladder frozen into this pack (GVM-1.1); null when none.",
+    )
+    required_publish_level: Optional[str] = Field(
+        default=None,
+        serialization_alias="requiredPublishLevel",
+        description=(
+            "The level key the publish gate requires, frozen into this pack (GVM-1.3); null "
+            "when no level gate is armed."
+        ),
     )
     actor_user_id: Optional[str] = Field(
         default=None, serialization_alias="actorUserId"
@@ -8860,6 +8895,15 @@ class LintGateVerdictOut(BaseModel):
     passed: bool
     new_only: bool = Field(default=False, alias="newOnly")
     gate_results: Dict[str, Any] = Field(default_factory=dict, alias="gateResults")
+    maturity_gate: Optional[Dict[str, Any]] = Field(
+        default=None,
+        alias="maturityGate",
+        description=(
+            "The required-publish-level judgement (GVM-1.3): status pass | fail | "
+            "not_configured | unknown, level, requiredLevel, blockers, plus `counted` "
+            "(ciOutcomes.failOnMaturityLevel) — `passed` folds it in only when counted."
+        ),
+    )
 
 
 class LintGateResponse(BaseModel):
@@ -8897,6 +8941,7 @@ def style_guide_ci_outcomes_from_raw(raw: Optional[Any]) -> StyleGuideCiOutcomes
         fail_on_unwaived_errors=d["failOnUnwaivedErrors"],
         fail_on_required_coverage=d["failOnRequiredCoverage"],
         fail_on_axis_gates=d["failOnAxisGates"],
+        fail_on_maturity_level=d["failOnMaturityLevel"],
     )
 
 
@@ -8915,6 +8960,7 @@ def style_guide_policy_version_out_from_row(
         required_coverage=default_required_coverage(row.get("required_coverage")),
         ci_outcomes=style_guide_ci_outcomes_from_raw(row.get("ci_outcomes")),
         ladder=style_guide_ladder_model_from_raw(row.get("ladder")),
+        required_publish_level=row.get("required_publish_level") or None,
         actor_user_id=str(row["actor_user_id"]) if row.get("actor_user_id") else None,
         actor_label=row.get("actor_label"),
         created_at=_iso_or_none(row.get("created_at")),

@@ -33,6 +33,7 @@ from app.deploy_gate import (
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
     SIGNAL_LINT,
+    SIGNAL_MATURITY,
     SIGNAL_VERIFICATION,
     STATUS_FAIL,
     STATUS_NOT_CONFIGURED,
@@ -153,7 +154,15 @@ def test_an_unknown_key_is_refused_rather_than_ignored():
 def test_the_fingerprint_covers_every_threshold_even_the_defaulted_ones():
     """A stored policy must keep meaning the same thing after a release changes a default."""
     body = canonical_thresholds_body(DEFAULT_THRESHOLDS)
-    assert set(body) == {"schemaVersion", "lint", "breaking", "consumers", "verification"}
+    assert set(body) == {
+        "schemaVersion",
+        "lint",
+        "breaking",
+        "consumers",
+        "verification",
+        "maturity",
+    }
+    assert body["maturity"] == {"minMaturityLevel": None}
     assert body["lint"] == {"warnBelowGrade": "B", "failBelowGrade": "D"}
 
     moved = thresholds_from_body({"lint": {"failBelowGrade": "C"}})
@@ -476,7 +485,7 @@ def test_a_gate_with_nothing_to_judge_says_so_rather_than_vouching():
     assert "nothing vouches for it" in report.summary
 
 
-def test_the_report_always_carries_all_four_signals_in_a_fixed_order():
+def test_the_report_always_carries_every_signal_in_a_fixed_order():
     """A diff of two gate responses must line up, whatever order the service gathered them in."""
     report = build_gate_report(
         project_id="p",
@@ -490,13 +499,14 @@ def test_the_report_always_carries_all_four_signals_in_a_fixed_order():
             _signal(SIGNAL_CONSUMERS, STATUS_FAIL),
             _signal(SIGNAL_BREAKING, STATUS_PASS),
             _signal(SIGNAL_LINT, STATUS_WARN),
+            _signal(SIGNAL_MATURITY, STATUS_PASS),
         ],
         policy=_policy(),
         evaluated_at=_NOW,
     )
     assert [s.signal for s in report.signals] == list(GATE_SIGNALS)
     assert report.status == STATUS_FAIL
-    assert report.evaluated_signals == 4
+    assert report.evaluated_signals == 5
     assert "consumers" in report.summary
 
 

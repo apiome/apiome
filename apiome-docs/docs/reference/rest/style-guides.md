@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.592.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.593.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `style-guides` · 23 operations
 
@@ -398,7 +398,9 @@ or the ladder is otherwise malformed. The built-in guide is read-only (``409``).
 
 A successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both
 freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
-Saving an identical ladder changes nothing.
+Saving an identical ladder changes nothing. A ladder without the guide's
+``requiredPublishLevel`` is refused (``422 ladder-required-level-removed``, GVM-1.3): clear
+or change the required level first.
 
 Operation id: `put_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_put`
 
@@ -463,8 +465,10 @@ DCW-3.4 (private-suite#2364) adds the component-library policy: ordered
 dropped) and ``componentDeprecationNoticeDays``.
 
 ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the
-stored role alone, sending ``null`` clears it. Every other field keeps the
-omit-to-leave-unchanged rule the endpoint has always had.
+stored role alone, sending ``null`` clears it. ``requiredPublishLevel`` (GVM-1.3, #5856)
+follows the same rule and must name a level of the guide's ladder (``422
+required-publish-level-unknown`` otherwise); it is frozen into the next policy pack.
+Every other field keeps the omit-to-leave-unchanged rule the endpoint has always had.
 
 Operation id: `put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put`
 
@@ -871,6 +875,7 @@ Draft policy gate settings on a live style guide (CLX-1.3, #4850).
 | `compatibilityMode` | enum `"BACKWARD"`, `"FORWARD"`, `"FULL"`, `"NONE"` | no | Compatibility mode classified diffs, compatibility checks, the CI diff gate and the publish guardrail grade by when a request names none (XPC-4.5): BACKWARD (default), FORWARD, FULL or NONE. |
 | `compatibilityTransitive` | boolean | no | When true, a change is checked against every earlier revision, not only the base (BACKWARD_TRANSITIVE and friends; XPC-4.5). |
 | `protobufBreakingCategory` | enum `"WIRE"`, `"WIRE_JSON"`, `"PACKAGE"`, `"FILE"` | no | buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON (default), PACKAGE or FILE. |
+| `requiredPublishLevel` | string or null | no | Key of the maturity level a draft must reach before it publishes (GVM-1.3); a level of the guide's own ladder. null (default) means no level gate. |
 
 ### `StyleGuidePolicySettingsPutRequest` {#schema-styleguidepolicysettingsputrequest}
 
@@ -889,6 +894,7 @@ Replace draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 | `compatibilityMode` | enum `"BACKWARD"`, `"FORWARD"`, `"FULL"`, `"NONE"` or null | no | Compatibility mode (XPC-4.5); omit to leave unchanged. |
 | `compatibilityTransitive` | boolean or null | no | Check every earlier revision, not only the base (XPC-4.5); omit to leave unchanged. |
 | `protobufBreakingCategory` | enum `"WIRE"`, `"WIRE_JSON"`, `"PACKAGE"`, `"FILE"` or null | no | buf breaking category for Protobuf changes (XPC-4.5); omit to leave unchanged. |
+| `requiredPublishLevel` | string or null | no | Maturity level key a draft must reach before it publishes (GVM-1.3); must be a level of the guide's ladder. Send null to clear it, omit to leave unchanged. |
 | `snapshot` | boolean | no | When true (default), also append an immutable policy pack version. |
 
 ### `StyleGuidePolicyVersionListResponse` {#schema-styleguidepolicyversionlistresponse}
@@ -914,6 +920,7 @@ One immutable style-guide policy pack version (CLX-1.3, #4850).
 | `requiredCoverage` | array of string | no | Required Coverage. |
 | `ciOutcomes` | `StyleGuideCiOutcomesOut` | no | Ci Outcomes. |
 | `ladder` | `StyleGuideLadderModelOutput` or null | no | The maturity ladder frozen into this pack (GVM-1.1); null when none. |
+| `requiredPublishLevel` | string or null | no | The level key the publish gate requires, frozen into this pack (GVM-1.3); null when no level gate is armed. |
 | `actorUserId` | string or null | no | Actor User ID. |
 | `actorLabel` | string or null | no | Actor Label. |
 | `createdAt` | string or null | no | Created At. |

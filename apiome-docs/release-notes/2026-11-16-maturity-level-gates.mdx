@@ -1,0 +1,31 @@
+---
+slug: maturity-level-gates
+title: Gate publishing and deploys on a maturity level
+description: "A required level now blocks publishing and feeds the deploy gate, check suite and CI."
+authors: [apiome]
+---
+
+A style guide with a [maturity ladder](/govern/maturity-ladders#gate-publishing-on-a-level) can
+now name the level a version must reach before it publishes. One rule judges the level everywhere,
+so publishing, the deploy gate, the API change check suite and the lint CI gate agree about every
+version.
+
+{/* truncate */}
+
+- **Required publish level.** Set `requiredPublishLevel` (such as `silver`) in the guide's policy
+  settings. It must be one of the ladder's levels, and it is frozen into the policy version beside
+  the ladder.
+- **Publishing.** A version below the level is refused with `422` and a `maturityGate` object
+  with the level reached, the level required and the blockers to the next level. Force-publish
+  with a reason gets past it, and every judged publish is audited as `version.maturity_gate`
+  (`satisfied`, `forced` or `unavailable`).
+- **Deploy gate.** A new `maturity` signal. It uses `maturity.minMaturityLevel` from the deploy-gate
+  policy, or the guide's required level when that is `null`. Without a ladder the signal is
+  `not_configured`.
+- **Check suite.** A new `maturity` component, judged the same way as the deploy-gate signal. It is
+  `advisory` by default and `skipped` without a ladder.
+- **Lint CI gate.** `apiome lint gate` prints the level, and SARIF and JUnit carry it as
+  `apiome.maturity.*` properties. It fails the gate only when the new `failOnMaturityLevel` CI
+  outcome is on. The toggle is off by default, so existing pipelines keep their exit codes.
+
+A guide without a ladder never arms any of these gates.

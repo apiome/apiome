@@ -41,7 +41,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Tuple
 
 from .api_check_suite import (
     COMPONENT_BREAKING,
@@ -49,6 +49,7 @@ from .api_check_suite import (
     COMPONENT_CONTRACT,
     COMPONENT_LABELS,
     COMPONENT_LINT,
+    COMPONENT_MATURITY,
     COMPONENT_SDK,
     COMPONENTS,
     REQUIREMENT_OFF,
@@ -63,12 +64,14 @@ from .api_check_suite import (
     judge_consumers,
     judge_contract,
     judge_lint,
+    judge_maturity_component,
     judge_sdk,
     unavailable_component,
     unbuildable_component,
 )
 from .database import db
 from .deploy_gate import DeployGateThresholds
+from .maturity_gate import MaturityJudgement
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,7 @@ __all__ = [
     "read_breaking_facts",
     "read_contract_facts",
     "read_lint_facts",
+    "read_maturity_judgement",
     "read_sdk_facts",
 ]
 
@@ -110,6 +114,7 @@ def evidence_links(tenant_slug: str, project_id: str, version_id: str) -> Dict[s
         COMPONENT_CONSUMERS: f"/v1/tenants/{tenant_slug}/projects/{project_id}/consumers",
         COMPONENT_CONTRACT: f"/v1/tenants/{tenant_slug}/verification-runs",
         COMPONENT_SDK: f"/v1/projects/{tenant_slug}/{project_id}/sdk-settings",
+        COMPONENT_MATURITY: f"/v1/versions/{tenant_slug}/{project_id}/{version_id}/lint/level",
     }
 
 
@@ -405,6 +410,41 @@ def read_sdk_facts(
 
 
 # ---------------------------------------------------------------------------------------------
+# maturity
+# ---------------------------------------------------------------------------------------------
+
+
+def read_maturity_judgement(
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_record_id: str,
+    required_level: Optional[str],
+) -> Tuple[MaturityJudgement, Mapping[str, Optional[str]]]:
+    """The draft's level judgement — the deploy gate's own read (GVM-1.3, #5856).
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: The project.
+        version_record_id: The revision judged.
+        required_level: The deploy gate's ``minMaturityLevel``; ``None`` uses the guide's
+            frozen ``requiredPublishLevel``.
+
+    Returns:
+        ``(judgement, {policyVersionId, evaluationId})`` from
+        :func:`app.lint_policy_service.judge_catalog_revision_maturity`.
+    """
+    from .lint_policy_service import judge_catalog_revision_maturity  # Lazy: flat imports.
+
+    return judge_catalog_revision_maturity(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version_record_id=version_record_id,
+        required_level=required_level,
+    )
+
+
+# ---------------------------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------------------------
 
@@ -466,7 +506,7 @@ async def gather_components(
     policy: CheckSuitePolicy,
     thresholds: DeployGateThresholds,
 ) -> List[SuiteComponent]:
-    """Judge all five components for one draft, in report order.
+    """Judge all six components for one draft, in report order.
 
     Args:
         tenant_id: The caller's tenant.
@@ -478,7 +518,8 @@ async def gather_components(
         thresholds: The deploy-gate thresholds the CTG components are judged against.
 
     Returns:
-        One component per entry of :data:`app.api_check_suite.COMPONENTS`.
+        One component per entry of :data:`app.api_check_suite.COMPONENTS`. ``maturity``
+        (GVM-1.3) reads the same level judgement as the deploy gate's ``maturity`` signal.
     """
     project_id = str(project["id"])
     version_id = str(version["id"])
@@ -630,5 +671,34 @@ async def gather_components(
             judged[component] = await _guarded(
                 component, requirement[component], links[component], gather
             )
+
+    # ---- maturity: the deploy gate's level judgement (GVM-1.3) -------------------------------
+    async def maturity() -> SuiteComponent:
+        judgement, context = await asyncio.to_thread(
+            read_maturity_judgement,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_record_id=version_id,
+            required_level=thresholds.maturity.min_maturity_level,
+        )
+        return judge_maturity_component(
+            judgement,
+            thresholds=thresholds.maturity,
+            requirement=requirement[COMPONENT_MATURITY],
+            link=links[COMPONENT_MATURITY],
+            evidence={
+                "minMaturityLevel": thresholds.maturity.min_maturity_level,
+                "policyVersionId": context.get("policyVersionId"),
+                "evaluationId": context.get("evaluationId"),
+            },
+        )
+
+    if requirement[COMPONENT_MATURITY] != REQUIREMENT_OFF:
+        judged[COMPONENT_MATURITY] = await _guarded(
+            COMPONENT_MATURITY,
+            requirement[COMPONENT_MATURITY],
+            links[COMPONENT_MATURITY],
+            maturity,
+        )
 
     return [judged.get(component) or disabled_component(component) for component in COMPONENTS]

@@ -282,3 +282,77 @@ def test_verify_attestation_unreadable_file_is_usage_error(tmp_path: Path) -> No
         ],
     )
     assert result.exit_code == EXIT_USAGE
+
+
+# ---------------------------------------------------------------------------
+# Maturity level line (GVM-1.3, #5856)
+# ---------------------------------------------------------------------------
+
+
+def _with_maturity(payload: dict, **maturity: object) -> dict:
+    payload["gate"]["maturityGate"] = {
+        "status": "fail",
+        "reason": "maturity-below-required-level",
+        "level": "bronze",
+        "levelLabel": "Bronze",
+        "requiredLevel": "silver",
+        "requiredLevelLabel": "Silver",
+        "blockers": [{"ruleId": "operation-description", "count": 2}],
+        "counted": False,
+        "passed": None,
+        **maturity,
+    }
+    return payload
+
+
+def test_gate_prints_the_level_line_and_keeps_exit_zero_with_the_toggle_off(
+    httpx_mock: object,
+) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(
+        url=f"{_GATE_URL}?format=json", json=_with_maturity(_gate_payload(passed=True))
+    )
+    result = _invoke_gate()
+    assert result.exit_code == EXIT_SUCCESS
+    assert (
+        "Maturity level: Bronze (required Silver) — fail, 1 blocker; "
+        "reported only (failOnMaturityLevel is off)"
+    ) in result.stdout
+    assert "Failed gates" not in result.stdout
+
+
+def test_gate_exit_code_changes_only_when_the_toggle_is_on(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(
+        url=f"{_GATE_URL}?format=json",
+        json=_with_maturity(_gate_payload(passed=False), counted=True, passed=False),
+    )
+    result = _invoke_gate()
+    assert result.exit_code == EXIT_ERROR
+    assert "counts toward the gate" in result.stdout
+    assert "Failed gates: maturity" in result.stdout
+
+
+def test_gate_without_a_ladder_prints_no_level_line(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    payload = _with_maturity(
+        _gate_payload(passed=True), status="not_configured", reason="maturity-no-ladder"
+    )
+    httpx_mock.add_response(url=f"{_GATE_URL}?format=json", json=payload)
+    result = _invoke_gate()
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Maturity level" not in result.stdout
+
+
+def test_gate_level_line_goes_to_stderr_when_the_artifact_owns_stdout(
+    httpx_mock: object,
+) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(
+        url=f"{_GATE_URL}?format=json", json=_with_maturity(_gate_payload(passed=True))
+    )
+    httpx_mock.add_response(url=f"{_GATE_URL}?format=junit", text="<testsuite/>")
+    result = _invoke_gate("--format", "junit")
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Maturity level: Bronze" in result.stderr
+    assert "Maturity level" not in result.stdout

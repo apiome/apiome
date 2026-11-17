@@ -13,8 +13,9 @@ meet, instead of a single grade.
 The Style guides screen is not yet available, so a ladder is read and saved through the REST API
 (see [With the API](#with-the-api)). Saving a ladder records it in the guide's history and its
 policy pack. From then on every policy evaluation of a version or MCP server version reports its
-level — read it with [`GET …/lint/level`](#read-a-level). A level does not yet block publishing
-or deploys.
+level — read it with [`GET …/lint/level`](#read-a-level). Set a **required publish level** and
+the level also gates publishing, the deploy gate, the API change check suite and the lint CI gate
+(see [Gate publishing on a level](#gate-publishing-on-a-level)).
 
 ## What a level requires
 
@@ -186,8 +187,52 @@ The level is part of the version's policy evaluation (`gateResults.maturity` on
 [Lint REST reference](../reference/rest/lint.md#lint-revision-level-v1-versions-tenant-slug-project-id-version-record-id-lint-level-get)
 and the [MCP catalog REST reference](../reference/rest/mcp-catalog.md#get-mcp-endpoint-version-lint-level-v1-mcp-tenant-slug-endpoints-endpoint-id-versions-version-id-lint-level-get).
 
+## Gate publishing on a level
+
+A level becomes binding when the guide names the level a version must reach before it publishes.
+Set `requiredPublishLevel` with the guide's policy settings (workspace administrators only):
+
+```bash
+curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  https://<host>/v1/style-guides/acme/$GUIDE_ID/policy \
+  -d '{"requiredPublishLevel": "silver", "ciOutcomes": {"failOnMaturityLevel": true}}'
+```
+
+- The value must be the `key` of one of the guide's levels. Anything else is refused with `422`
+  and `detail.code` `required-publish-level-unknown`, which lists the valid keys. A guide without a
+  ladder has no valid keys.
+- Send `null` to clear it. Leave the field out to keep the current value.
+- The level is frozen into the policy version the save publishes (`requiredPublishLevel` on
+  `GET …/policy-versions/{id}`), beside the ladder. Gates read the frozen value.
+- While a level is required, a ladder save that drops that level is refused with
+  `ladder-required-level-removed`. Clear or change `requiredPublishLevel` first.
+
+Four places then judge the version's level against the required level, with the same rule, so
+they never disagree about one version:
+
+| Where | What happens below the required level | Without a ladder |
+| --- | --- | --- |
+| **Publish** | Refused with `422` and `detail.maturityGate` (level, required level, blockers). Force-publish with a reason gets past it; every judged publish is audited as `version.maturity_gate`. See [Publish a version](../ship/publish-a-version.md#the-maturity-level-gate). | Not armed. |
+| **Deploy gate** | The `maturity` signal is `fail`. Set `maturity.minMaturityLevel` in the deploy-gate policy to require a different level; leave it `null` to use the guide's required publish level. See the [Deploy gate REST reference](../reference/rest/deploy-gate.md). | `not_configured`, left out of the verdict. |
+| **API change check suite** | The `maturity` component is `fail`. It is `advisory` by default, so it is reported but does not change the verdict until the suite policy makes it `required`. See the [check suite REST reference](../reference/rest/api-check-suite.md). | `skipped`, never `pass`. |
+| **Lint CI gate** | `gate.maturityGate` reports the level, and [`apiome lint gate`](../reference/cli/lint.md#lint-gate) prints it. SARIF and JUnit carry it as `apiome.maturity.*` properties. `gate.passed` fails only when the guide's `ciOutcomes.failOnMaturityLevel` is on. | No level line. |
+
+`failOnMaturityLevel` is **off** by default, so an existing pipeline keeps its exit code until you
+turn it on.
+
+The level is judged with these statuses:
+
+| Status | Meaning |
+| --- | --- |
+| `pass` | The version is at or above the required level. |
+| `fail` | The version is below it. `blockers` list what keeps it from its next level. |
+| `not_configured` | The guide has no ladder, or no level is required. Nothing is judged. |
+| `unknown` | The required level is not a level of the frozen ladder, or the level could not be read. Never blocks a publish. |
+
 ## Related
 
+- [Publish a version](../ship/publish-a-version.md)
+- [Contract testing and CI gates](../ship/contract-testing-and-ci-gates.mdx)
 - [Lint posture](./lint-posture.mdx)
 - [Axis score algorithm](../build/axis-score.md)
 - [Built-in lint rules](../build/lint-rules.md)

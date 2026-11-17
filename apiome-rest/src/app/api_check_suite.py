@@ -6,7 +6,7 @@ a reviewer who read none of them. The platform already *knew* every one of those
 module turns them into **one** verdict, in the four words GNC-2.2 publishes to a provider:
 ``pending``, ``pass``, ``fail``, ``skipped``.
 
-The suite has five components, and each is a reading of evidence an earlier ticket already
+The suite has six components, and each is a reading of evidence an earlier ticket already
 produces — nothing here is a new analysis:
 
 ============  ======  ==========================================================================
@@ -23,11 +23,15 @@ contract      ECA     The newest ECA-1.3 contract run of this revision, and whet
                       still the suite this draft compiles to.
 sdk           SDK     The SDK-3.3 client-kit manifest built from the draft: whether the Go client
                       and the server stubs still generate.
+maturity      GVM     The draft's GVM-1.2 ladder level against the deploy gate's
+                      ``minMaturityLevel`` (or the guide's ``requiredPublishLevel``), judged by
+                      CTG-4.5's ``evaluate_maturity`` (GVM-1.3). Without a ladder it is
+                      ``skipped`` — never ``pass``.
 ============  ======  ==========================================================================
 
 Three rules make the verdict **deterministic**.
 
-**One verdict model.** The lint, breaking and consumer components call the deploy gate's pure
+**One verdict model.** The lint, breaking, consumer and maturity components call the deploy gate's pure
 evaluators (:mod:`app.deploy_gate`) against the deploy gate's thresholds, so the pull request and
 the deploy gate cannot disagree about what "too breaking" means: this is a transport for that
 verdict model, not a second opinion. A gate ``warn`` is a ``pass`` here (with ``warned`` set),
@@ -72,7 +76,9 @@ from .deploy_gate import (
     evaluate_breaking,
     evaluate_consumers,
     evaluate_lint,
+    evaluate_maturity,
 )
+from .maturity_gate import MaturityJudgement
 from .provider_checks import (
     DEFAULT_CHECK_NAME,
     MAX_SUMMARY_LENGTH,
@@ -104,6 +110,7 @@ __all__ = [
     "COMPONENT_CONTRACT",
     "COMPONENT_LABELS",
     "COMPONENT_LINT",
+    "COMPONENT_MATURITY",
     "COMPONENT_SDK",
     "CheckSuiteError",
     "CheckSuitePolicy",
@@ -163,6 +170,7 @@ __all__ = [
     "judge_consumers",
     "judge_contract",
     "judge_lint",
+    "judge_maturity_component",
     "judge_sdk",
     "policy_fingerprint",
     "policy_from_body",
@@ -193,14 +201,16 @@ COMPONENT_BREAKING = "breaking"
 COMPONENT_CONSUMERS = "consumers"
 COMPONENT_CONTRACT = "contract"
 COMPONENT_SDK = "sdk"
+COMPONENT_MATURITY = "maturity"
 
-#: Every component, in the order the suite reports them.
+#: Every component, in the order the suite reports them (``maturity``, GVM-1.3, appended).
 COMPONENTS: Tuple[str, ...] = (
     COMPONENT_LINT,
     COMPONENT_BREAKING,
     COMPONENT_CONSUMERS,
     COMPONENT_CONTRACT,
     COMPONENT_SDK,
+    COMPONENT_MATURITY,
 )
 
 #: What a reviewer reads for each component.
@@ -210,6 +220,7 @@ COMPONENT_LABELS: Dict[str, str] = {
     COMPONENT_CONSUMERS: "Consumers",
     COMPONENT_CONTRACT: "Contract tests",
     COMPONENT_SDK: "SDK generation",
+    COMPONENT_MATURITY: "Maturity level",
 }
 
 #: The component takes part in the verdict.
@@ -223,14 +234,21 @@ REQUIREMENTS: Tuple[str, ...] = (REQUIREMENT_REQUIRED, REQUIREMENT_ADVISORY, REQ
 #: What a tenant that has configured nothing gets. The three components computed from the draft
 #: itself are required; the two that depend on evidence somebody has to *produce* (a contract run
 #: against a deployment, a published SDK line) are advisory, so a project that has never run a
-#: contract test is not held pending forever by default.
+#: contract test is not held pending forever by default. ``maturity`` (GVM-1.3) is advisory, so
+#: adding it changes no existing verdict; a tenant that wants the level to block requires it.
 DEFAULT_REQUIREMENTS: Dict[str, str] = {
     COMPONENT_LINT: REQUIREMENT_REQUIRED,
     COMPONENT_BREAKING: REQUIREMENT_REQUIRED,
     COMPONENT_CONSUMERS: REQUIREMENT_REQUIRED,
     COMPONENT_CONTRACT: REQUIREMENT_ADVISORY,
     COMPONENT_SDK: REQUIREMENT_ADVISORY,
+    COMPONENT_MATURITY: REQUIREMENT_ADVISORY,
 }
+
+#: Components added after the policy body was first fingerprinted. While one sits at its default
+#: it is left out of the digests, so every policy saved before it existed keeps its fingerprint —
+#: and every evaluation keyed on that fingerprint stays current for the publish gate.
+_LATE_COMPONENTS: Tuple[str, ...] = (COMPONENT_MATURITY,)
 
 POLICY_SOURCE_DEFAULT = "default"
 POLICY_SOURCE_TENANT = "tenant"
@@ -362,7 +380,7 @@ class CheckSuitePolicy(_CamelModel):
     """The ``gnc.check-suite-policy.v1`` body: what the suite requires.
 
     Attributes:
-        components: The requirement of every component — always all five after parsing.
+        components: The requirement of every component — always all six after parsing.
         required_for_publish: Whether publishing a version needs a passing (or skipped) suite
             evaluation of exactly its current content under exactly this policy.
     """
@@ -370,7 +388,7 @@ class CheckSuitePolicy(_CamelModel):
     components: Dict[str, str] = Field(
         default_factory=lambda: dict(DEFAULT_REQUIREMENTS),
         description="`required` | `advisory` | `off` for each of lint, breaking, consumers, "
-        "contract and sdk.",
+        "contract, sdk and maturity.",
     )
     required_for_publish: bool = Field(
         default=False,
@@ -414,7 +432,7 @@ def policy_from_body(body: Optional[Mapping[str, Any]]) -> CheckSuitePolicy:
         body: The policy object, or ``None``/empty for the documented default.
 
     Returns:
-        The policy, with all five components present.
+        The policy, with all six components present.
 
     Raises:
         CheckSuitePolicyError: When the body is not an object, names an unknown key or component,
@@ -499,6 +517,26 @@ def _digest(payload: Any) -> str:
     return f"sha256:{hashlib.sha256(blob.encode('utf-8')).hexdigest()}"
 
 
+def _fingerprint_body(policy: CheckSuitePolicy) -> Dict[str, Any]:
+    """:func:`canonical_policy_body` without the late components that sit at their default.
+
+    Args:
+        policy: The policy.
+
+    Returns:
+        The body the digests are taken over.
+    """
+    body = canonical_policy_body(policy)
+    body["components"] = {
+        component: requirement
+        for component, requirement in body["components"].items()
+        if not (
+            component in _LATE_COMPONENTS and requirement == DEFAULT_REQUIREMENTS[component]
+        )
+    }
+    return body
+
+
 def policy_fingerprint(policy: CheckSuitePolicy) -> str:
     """A stable digest of a policy body.
 
@@ -506,9 +544,10 @@ def policy_fingerprint(policy: CheckSuitePolicy) -> str:
         policy: The policy.
 
     Returns:
-        ``"sha256:<hex>"`` over :func:`canonical_policy_body`.
+        ``"sha256:<hex>"`` over :func:`canonical_policy_body` (late components at their default
+        left out, see :data:`_LATE_COMPONENTS`).
     """
-    return _digest(canonical_policy_body(policy))
+    return _digest(_fingerprint_body(policy))
 
 
 def requirements_fingerprint(policy: CheckSuitePolicy) -> str:
@@ -523,9 +562,9 @@ def requirements_fingerprint(policy: CheckSuitePolicy) -> str:
         policy: The policy.
 
     Returns:
-        ``"sha256:<hex>"`` over the schema version and the five requirements.
+        ``"sha256:<hex>"`` over the schema version and the component requirements.
     """
-    body = canonical_policy_body(policy)
+    body = _fingerprint_body(policy)
     return _digest({"schemaVersion": body["schemaVersion"], "components": body["components"]})
 
 
@@ -792,6 +831,37 @@ def component_from_signal(
         link=signal.link,
         evidence={**dict(signal.data), **dict(evidence or {})},
         rule=rule,
+    )
+
+
+def judge_maturity_component(
+    judgement: MaturityJudgement,
+    *,
+    thresholds: BaseModel,
+    requirement: str,
+    link: Optional[str],
+    evidence: Optional[Mapping[str, Any]] = None,
+) -> SuiteComponent:
+    """Judge the draft's maturity level with CTG-4.5's :func:`~app.deploy_gate.evaluate_maturity`.
+
+    The deploy gate's ``maturity`` signal and this component are the same evaluator over the same
+    judgement, so the pull request and the deploy gate agree on one draft (GVM-1.3). Without a
+    ladder (or a required level) the signal is ``not_configured`` and the component ``skipped`` —
+    never ``pass``; an unreadable level is ``pending``.
+
+    Args:
+        judgement: The :func:`app.maturity_gate.judge_maturity` result for the draft.
+        thresholds: The deploy gate's maturity thresholds.
+        requirement: The component's requirement.
+        link: Path to the draft's level read.
+        evidence: Facts beyond the judgement (the pack and evaluation ids).
+
+    Returns:
+        The component.
+    """
+    signal = evaluate_maturity(judgement=judgement, link=link, extra=evidence)
+    return component_from_signal(
+        COMPONENT_MATURITY, signal, requirement, rule=_thresholds_rule(thresholds)
     )
 
 
