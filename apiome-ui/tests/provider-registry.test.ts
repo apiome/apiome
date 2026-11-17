@@ -82,6 +82,8 @@ const ALL_ENABLED_ENV = {
   ZOOM_CLIENT_SECRET: 'zm-secret',
   HUGGINGFACE_CLIENT_ID: 'hf-id',
   HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
+  VERCEL_CLIENT_ID: 'vc-id',
+  VERCEL_CLIENT_SECRET: 'vc-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -111,6 +113,7 @@ describe('registry vocabulary', () => {
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
   });
 
@@ -139,6 +142,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('dropbox')?.label).toBe('Dropbox');
     expect(getProviderDescriptor('zoom')?.label).toBe('Zoom');
     expect(getProviderDescriptor('huggingface')?.label).toBe('Hugging Face');
+    expect(getProviderDescriptor('vercel')?.label).toBe('Vercel');
   });
 
   it('pins each available provider env contract', () => {
@@ -241,9 +245,13 @@ describe('registry vocabulary', () => {
       'HUGGINGFACE_CLIENT_ID',
       'HUGGINGFACE_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('vercel')?.requiredEnvKeys).toEqual([
+      'VERCEL_CLIENT_ID',
+      'VERCEL_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.26, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.27, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -265,6 +273,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('dropbox')?.status).toBe('available');
     expect(getProviderDescriptor('zoom')?.status).toBe('available');
     expect(getProviderDescriptor('huggingface')?.status).toBe('available');
+    expect(getProviderDescriptor('vercel')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -311,6 +320,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('dropbox', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('zoom', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('huggingface', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('vercel', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -472,6 +482,10 @@ describe('isProviderEnabled', () => {
       })
     ).toBe(true);
     expect(isProviderEnabled('huggingface', { HUGGINGFACE_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('vercel', { VERCEL_CLIENT_ID: 'x', VERCEL_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('vercel', { VERCEL_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -506,6 +520,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -537,6 +552,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
   });
 
@@ -566,6 +582,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
   });
 });
@@ -599,6 +616,7 @@ describe('providerSummaries', () => {
       { id: 'dropbox', label: 'Dropbox', status: 'available', enabled: false },
       { id: 'zoom', label: 'Zoom', status: 'available', enabled: false },
       { id: 'huggingface', label: 'Hugging Face', status: 'available', enabled: false },
+      { id: 'vercel', label: 'Vercel', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

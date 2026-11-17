@@ -131,6 +131,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
     clientId: 'HUGGINGFACE_CLIENT_ID',
     clientSecret: 'HUGGINGFACE_CLIENT_SECRET',
   },
+  // Vercel (OLO-9.27, #5040): credentials-only; fixed endpoints, no issuer extra.
+  vercel: { clientId: 'VERCEL_CLIENT_ID', clientSecret: 'VERCEL_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

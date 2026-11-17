@@ -144,7 +144,6 @@ describe('the trust-class table covers the whole catalog', () => {
       'paybin',
       'polar',
       'railway',
-      'vercel',
       'yandex',
     ]);
     for (const [, entry] of provisional) {

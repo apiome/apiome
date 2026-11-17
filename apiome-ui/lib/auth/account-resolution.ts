@@ -143,6 +143,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `huggingface` (OLO-9.26) is trusted through the generic path: Sign in with Hugging Face (OIDC)
  * carries a native `email_verified` claim on its userinfo resource; absent or false fail-closes
  * to link-first.
+ * `vercel` (OLO-9.27) is trusted on the `email_verified` flag of Sign in with Vercel's userinfo
+ * resource, re-stamped fail-closed onto the profile (`better-auth-oauth-providers.ts`); anything
+ * but `true` fail-closes.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -171,6 +174,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'dropbox',
   'zoom',
   'huggingface',
+  'vercel',
 ]);
 
 /**
@@ -232,6 +236,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'dropbox',
   'zoom',
   'huggingface',
+  'vercel',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

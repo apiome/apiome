@@ -89,6 +89,8 @@ const ALL_ENABLED_ENV = {
   ZOOM_CLIENT_SECRET: 'zm-secret',
   HUGGINGFACE_CLIENT_ID: 'hf-id',
   HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
+  VERCEL_CLIENT_ID: 'vc-id',
+  VERCEL_CLIENT_SECRET: 'vc-secret',
 };
 
 describe('providerEnvIssues', () => {

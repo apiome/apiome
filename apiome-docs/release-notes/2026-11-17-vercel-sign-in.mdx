@@ -1,0 +1,30 @@
+---
+slug: vercel-sign-in
+title: Sign in with Vercel
+description: "People can now sign in and link with their Vercel account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Vercel account, and link Vercel beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Vercel** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and client secret of an **App** created under your Vercel team's
+  **Settings → Apps** — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Vercel's side. The environment variables are `VERCEL_CLIENT_ID` and `VERCEL_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/vercel`, added under
+  **Authorization Callback URLs** on the app's **Manage** page.
+- **Scopes.** The app needs **openid**, **email** and **profile** only, enabled on its
+  **Permissions** page. Apiome uses them to read the name, email address and picture of the person
+  signing in. Apiome reads no projects, deployments or teams and keeps no Vercel token.
+- **Who can sign in.** Anyone with a Vercel account, unless you set the app's **Sign-In Access** to
+  **Members of the team**.
+- **Email addresses.** Vercel is a **Trusted** provider: a sign-in joins the account with the same
+  address, or starts a new one, only when Vercel reports the email address as verified. An
+  unverified address is refused. To use such an account, verify the address in Vercel, or sign in
+  another way first and link Vercel from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `vercel` as an available provider, and
+  `PUT /v1/admin/auth-providers/vercel` stores its credentials.

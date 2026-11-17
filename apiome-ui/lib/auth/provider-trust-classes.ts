@@ -179,10 +179,9 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
     evidence: '`email_verified` claim',
   },
   vercel: {
-    trustClass: 'link-first',
+    trustClass: 'trusted',
     ticket: 'OLO-9.27',
-    evidence: 'Email and verified semantics confirmed at implementation',
-    provisional: true,
+    evidence: '`email_verified` on `/login/oauth/userinfo`',
   },
   railway: {
     trustClass: 'link-first',
