@@ -94,6 +94,8 @@ const ALL_ENABLED: Record<string, string> = {
   LINKEDIN_CLIENT_SECRET: 'li-secret',
   DISCORD_CLIENT_ID: 'dc-id',
   DISCORD_CLIENT_SECRET: 'dc-secret',
+  SALESFORCE_CLIENT_ID: 'sf-id',
+  SALESFORCE_CLIENT_SECRET: 'sf-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -205,6 +207,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
   });
 
@@ -228,6 +231,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
   });
 
@@ -281,6 +285,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const discord = buildGenericOAuthConfig('discord', ALL_ENABLED)!;
     expect(discord.clientId).toBe('dc-id');
     expect(discord.clientSecret).toBe('dc-secret');
+    const salesforce = buildGenericOAuthConfig('salesforce', ALL_ENABLED)!;
+    expect(salesforce.clientId).toBe('sf-id');
+    expect(salesforce.clientSecret).toBe('sf-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -359,6 +366,31 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(mock.discoveryUrl).toBe(
       'http://localhost:9006/okta/.well-known/openid-configuration'
     );
+  });
+
+  test('salesforce: discovery on login.salesforce.com by default; PKCE on (OLO-9.20)', () => {
+    const cfg = buildGenericOAuthConfig('salesforce', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('salesforce');
+    expect(cfg.discoveryUrl).toBe(
+      'https://login.salesforce.com/.well-known/openid-configuration'
+    );
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
+    // Discovery supplies the endpoints — nothing is hard-coded.
+    expect(cfg.authorizationUrl).toBeUndefined();
+    expect(cfg.tokenUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test.each([
+    ['a My Domain', 'https://acme.my.salesforce.com', 'https://acme.my.salesforce.com'],
+    ['a sandbox', 'https://test.salesforce.com', 'https://test.salesforce.com'],
+    ['a trailing slash', 'https://acme.my.salesforce.com/', 'https://acme.my.salesforce.com'],
+    ['surrounding whitespace', '  https://acme.my.salesforce.com  ', 'https://acme.my.salesforce.com'],
+    ['a blank value', '   ', 'https://login.salesforce.com'],
+  ])('salesforce: SALESFORCE_ISSUER with %s drives OIDC discovery (OLO-9.20)', (_label, issuer, base) => {
+    const cfg = buildGenericOAuthConfig('salesforce', { ...ALL_ENABLED, SALESFORCE_ISSUER: issuer })!;
+    expect(cfg.discoveryUrl).toBe(`${base}/.well-known/openid-configuration`);
   });
 
   test('aws: COGNITO_ISSUER drives OIDC discovery; PKCE on (OLO-9.4)', () => {
@@ -2272,6 +2304,236 @@ describe('getUserInfo — LinkedIn sign-in and linking (OLO-9.18)', () => {
 
     const { result, override } = await runGetUserInfo(
       'linkedin',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Salesforce (OLO-9.20) ────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Salesforce sign-in and linking (OLO-9.20)', () => {
+  /** The identity URL Salesforce uses as `sub`: it names the org and the user. */
+  const SUB = 'https://login.salesforce.com/id/00Dxx0000001gPLEAY/005xx000001SwiUAAS';
+  /** The claims Salesforce's userinfo resource returns (and the id token, when so configured). */
+  const CLAIMS = {
+    sub: SUB,
+    user_id: '005xx000001SwiUAAS',
+    organization_id: '00Dxx0000001gPLEAY',
+    preferred_username: 'ada@acme.example',
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    email_verified: true,
+    picture: 'https://acme.file.force.com/profilephoto/005/F',
+  };
+  /** The id token Salesforce issues by default: who signed in, but no profile claims. */
+  const BARE_ID_TOKEN = { iss: 'https://login.salesforce.com', sub: SUB, aud: 'sf-id' };
+
+  /** A fetch stub answering `userInfoUrl` with `body`, recording each request. */
+  const salesforceUserInfo = (
+    body: unknown,
+    userInfoUrl = 'https://login.salesforce.com/services/oauth2/userinfo'
+  ) => {
+    const requests: Array<{ url: string; authorization: string | undefined }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      if (url === userInfoUrl && body) return { ok: true, json: async () => body };
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the identity URL', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = salesforceUserInfo(null);
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(CLAIMS) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: SUB,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'https://acme.file.force.com/profilephoto/005/F',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // The id token carried the email, so the userinfo resource is never called.
+    expect(requests).toEqual([]);
+  });
+
+  test('a bare id token is completed from userinfo on the default issuer', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl, requests } = salesforceUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(BARE_ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: SUB, email: 'ada@example.com', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'salesforce', providerUserId: SUB },
+    });
+    expect(requests).toEqual([
+      {
+        url: 'https://login.salesforce.com/services/oauth2/userinfo',
+        authorization: 'Bearer tok',
+      },
+    ]);
+  });
+
+  test('a My Domain issuer moves the userinfo call to that host', async () => {
+    const env = { ...ALL_ENABLED, SALESFORCE_ISSUER: 'https://acme.my.salesforce.com/' };
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = salesforceUserInfo(
+      CLAIMS,
+      'https://acme.my.salesforce.com/services/oauth2/userinfo'
+    );
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok' },
+      { store, env, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: SUB, email: 'ada@example.com', emailVerified: true });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests.map((r) => r.url)).toEqual([
+      'https://acme.my.salesforce.com/services/oauth2/userinfo',
+    ]);
+  });
+
+  test('a userinfo body for another subject is discarded → email-required', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = salesforceUserInfo({
+      ...CLAIMS,
+      sub: 'https://login.salesforce.com/id/00Dxx0000001gPLEAY/005xx000009OTHER',
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(BARE_ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(CLAIMS) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'salesforce',
+      providerUserId: SUB,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+  ])('email_verified %s → fail-closed unverified, never linked', async (_label, claim) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: claim }) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('unverified email from userinfo is refused the same way', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = salesforceUserInfo({ ...CLAIMS, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(BARE_ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('no email from either source → email-required rejection', async () => {
+    const { store } = makeStore();
+    const { fetchImpl } = salesforceUserInfo({ ...CLAIMS, email: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor(BARE_ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('explicit link intent links the Salesforce account to the session user', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: false }) },
+      { store, env: ALL_ENABLED, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'salesforce', providerUserId: SUB },
+    });
+  });
+
+  test('no id token and a failed userinfo call is refused, never linked', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = salesforceUserInfo(null);
+
+    const { result, override } = await runGetUserInfo(
+      'salesforce',
       { accessToken: 'tok' },
       { store, env: ALL_ENABLED, fetchImpl }
     );

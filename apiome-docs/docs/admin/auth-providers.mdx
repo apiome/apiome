@@ -159,6 +159,7 @@ with neither set the line is left out, rather than linking to nothing.
 | Slack | `slack` | client ID, client secret | — |
 | LinkedIn | `linkedin` | client ID, client secret | — |
 | Discord | `discord` | client ID, client secret | — |
+| Salesforce | `salesforce` | client ID, client secret | **Issuer** — a My Domain or a sandbox; `https://login.salesforce.com` when left empty |
 
 **OIDC** is any conformant OpenID provider (Authentik, PingFederate, ZITADEL and others); one
 generic OIDC provider is supported per installation.
@@ -178,6 +179,12 @@ LinkedIn account. Its endpoints are fixed, so it needs only a client ID and a cl
 
 **Discord** is for developer communities whose members already have a Discord account. Its
 endpoints are fixed, so it needs only a client ID and a client secret.
+
+**Salesforce** signs people in with the account they use for a Salesforce org. Its **client ID**
+is the app's **Consumer Key** and its **client secret** the **Consumer Secret**. Unlike Okta's,
+its **Issuer** is optional: leave it empty to sign in through `https://login.salesforce.com`, or
+set it to your org's My Domain (`https://acme.my.salesforce.com`) to send everyone to that org's
+own login page, or to `https://test.salesforce.com` for a sandbox.
 
 ## Register the OAuth application
 
@@ -216,6 +223,7 @@ than the callback URI:
 | Slack | [api.slack.com/apps](https://api.slack.com/apps): **Create New App → From scratch** | Under **OAuth & Permissions**, add the callback URL to **Redirect URLs** — Slack accepts only `https://` URLs — and add **`openid`**, **`profile`** and **`email`** to **User Token Scopes**. Turn on **Manage Distribution → Activate Public Distribution** so people from other Slack workspaces can sign in. The client ID and client secret are under **Basic Information → App Credentials**. No issuer |
 | LinkedIn | [Developer Portal](https://www.linkedin.com/developers/apps): **Create app** | The app must be associated with a **LinkedIn Page**. On the **Products** tab, **Request access** to **Sign In with LinkedIn using OpenID Connect** — without it, LinkedIn refuses the sign-in. On the **Auth** tab, add the callback URL to **Authorized redirect URLs for your app**; the **Client ID** and **Primary Client Secret** are on the same tab. Keep the same app once people have signed in: LinkedIn identifies each person per app, so a new app does not recognize them. No issuer |
 | Discord | [Developer Portal](https://discord.com/developers/applications): **New Application** | On the **OAuth2** page, **Add Redirect** with the callback URL and **Save Changes**. The **Client ID** is on the same page; choose **Reset Secret** to see the **Client Secret**, which Discord shows once. No bot is needed. People sign in with the email address of their Discord account, which must be verified — otherwise sign-in fails with *could not confirm that your email address is verified*. No issuer |
+| Salesforce | Salesforce **Setup**: **External Client App Manager → New External Client App**, or **App Manager → New Connected App** | Turn on **Enable OAuth Settings**, enter the callback URL as the **Callback URL**, and add the scopes **Access the identity URL service (id, profile, email, address, phone)** and **Access unique user identifiers (openid)**. The client ID and client secret are the **Consumer Key** and **Consumer Secret**, under **Manage Consumer Details**. A new app can take up to 10 minutes to work. People sign in with the email address of their Salesforce user, which must be verified — otherwise sign-in fails with *could not confirm that your email address is verified*. **Issuer** is optional: `https://<my-domain>.my.salesforce.com` for one org, `https://test.salesforce.com` for a sandbox |
 
 The full per-provider guide — including LINE, VK and WeChat, the environment variable matrix, boot
 validation and secret encryption — is
@@ -231,7 +239,7 @@ one of three classes:
 
 | Class | What the provider gives Apiome | What a sign-in does | Providers |
 | --- | --- | --- | --- |
-| **Trusted** | An email address and proof it is verified | Joins the account with that address, or creates one. An address the provider does not report as verified is refused: *Your sign-in provider could not confirm that your email address is verified…* | GitHub, GitLab, Microsoft, Google, Okta, AWS (Cognito), Keycloak, OIDC, Auth0, LINE, Atlassian, Bitbucket, Slack, LinkedIn, Discord |
+| **Trusted** | An email address and proof it is verified | Joins the account with that address, or creates one. An address the provider does not report as verified is refused: *Your sign-in provider could not confirm that your email address is verified…* | GitHub, GitLab, Microsoft, Google, Okta, AWS (Cognito), Keycloak, OIDC, Auth0, LINE, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce |
 | **Link first** | An email address, with no proof it is verified | Never matches an account by email. Signs in only people who have already linked the provider | VK |
 | **Link only** | No email address | The same as **Link first** — there is no address to match | WeChat |
 
@@ -326,9 +334,10 @@ each extra setting. The client credentials are:
 | Slack | `SLACK_CLIENT_ID` | `SLACK_CLIENT_SECRET` |
 | LinkedIn | `LINKEDIN_CLIENT_ID` | `LINKEDIN_CLIENT_SECRET` |
 | Discord | `DISCORD_CLIENT_ID` | `DISCORD_CLIENT_SECRET` |
+| Salesforce | `SALESFORCE_CLIENT_ID` | `SALESFORCE_CLIENT_SECRET` |
 
 `apiome-ui/.env.example` lists them all with their extra settings — see
-[Operating Apiome](./operating-apiome.mdx).
+[Operating Apiome](./operating-apiome.mdx). Salesforce's optional issuer is `SALESFORCE_ISSUER`.
 
 ## If a saved provider does not appear at sign-in
 

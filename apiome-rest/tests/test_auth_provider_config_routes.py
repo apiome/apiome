@@ -148,7 +148,7 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert resp.status_code == 200
     providers = resp.json()["providers"]
     ids = [p["provider_id"] for p in providers]
-    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord"]
+    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce"]
     # With no rows, every field falls back to env and nothing is enabled/stored.
     gh = providers[0]
     assert gh["enabled"] is None
@@ -220,6 +220,12 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert discord["status"] == "available"
     assert discord["required_fields"] == ["client_id", "client_secret"]
     assert discord["can_enable"] is False
+    salesforce = next(p for p in providers if p["provider_id"] == "salesforce")
+    assert salesforce["label"] == "Salesforce"
+    assert salesforce["status"] == "available"
+    # The issuer is an optional extra, so only the credentials are required.
+    assert salesforce["required_fields"] == ["client_id", "client_secret"]
+    assert salesforce["can_enable"] is False
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):

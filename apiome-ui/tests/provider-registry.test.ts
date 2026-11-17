@@ -68,6 +68,8 @@ const ALL_ENABLED_ENV = {
   LINKEDIN_CLIENT_SECRET: 'li-secret',
   DISCORD_CLIENT_ID: 'dc-id',
   DISCORD_CLIENT_SECRET: 'dc-secret',
+  SALESFORCE_CLIENT_ID: 'sf-id',
+  SALESFORCE_CLIENT_SECRET: 'sf-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -90,6 +92,7 @@ describe('registry vocabulary', () => {
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
   });
 
@@ -111,6 +114,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('slack')?.label).toBe('Slack');
     expect(getProviderDescriptor('linkedin')?.label).toBe('LinkedIn');
     expect(getProviderDescriptor('discord')?.label).toBe('Discord');
+    expect(getProviderDescriptor('salesforce')?.label).toBe('Salesforce');
   });
 
   it('pins each available provider env contract', () => {
@@ -184,9 +188,14 @@ describe('registry vocabulary', () => {
       'DISCORD_CLIENT_ID',
       'DISCORD_CLIENT_SECRET',
     ]);
+    // The Salesforce issuer is an optional extra, so it is not a required env key.
+    expect(getProviderDescriptor('salesforce')?.requiredEnvKeys).toEqual([
+      'SALESFORCE_CLIENT_ID',
+      'SALESFORCE_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.19, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.20, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -201,6 +210,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('slack')?.status).toBe('available');
     expect(getProviderDescriptor('linkedin')?.status).toBe('available');
     expect(getProviderDescriptor('discord')?.status).toBe('available');
+    expect(getProviderDescriptor('salesforce')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -240,6 +250,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('slack', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('linkedin', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('discord', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('salesforce', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -366,6 +377,16 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('discord', { DISCORD_CLIENT_ID: 'x', DISCORD_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('discord', { DISCORD_CLIENT_SECRET: 'y' })).toBe(false);
+    // Salesforce is enabled without an issuer (it defaults to login.salesforce.com).
+    expect(
+      isProviderEnabled('salesforce', { SALESFORCE_CLIENT_ID: 'x', SALESFORCE_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(
+      isProviderEnabled('salesforce', {
+        SALESFORCE_CLIENT_ID: 'x',
+        SALESFORCE_ISSUER: 'https://acme.my.salesforce.com',
+      })
+    ).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -393,6 +414,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -417,6 +439,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
   });
 
@@ -439,6 +462,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'slack',
       'linkedin',
       'discord',
+      'salesforce',
     ]);
   });
 });
@@ -465,6 +489,7 @@ describe('providerSummaries', () => {
       { id: 'slack', label: 'Slack', status: 'available', enabled: false },
       { id: 'linkedin', label: 'LinkedIn', status: 'available', enabled: false },
       { id: 'discord', label: 'Discord', status: 'available', enabled: false },
+      { id: 'salesforce', label: 'Salesforce', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

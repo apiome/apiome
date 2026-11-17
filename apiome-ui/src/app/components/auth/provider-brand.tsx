@@ -11,7 +11,7 @@
  * Adding a provider: add its registry entry, then one `PROVIDER_BRANDS` entry here.
  */
 import { KeyRound } from 'lucide-react';
-import { SiAmazon, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiGithub, SiGitlab, SiGoogle, SiKeycloak, SiLine, SiLinkedin, SiOkta, SiSlack, SiVk, SiWechat } from 'react-icons/si';
+import { SiAmazon, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiGithub, SiGitlab, SiGoogle, SiKeycloak, SiLine, SiLinkedin, SiOkta, SiSalesforce, SiSlack, SiVk, SiWechat } from 'react-icons/si';
 import { ICON_SIZE } from '../ui/iconSizes';
 
 /** Props every brand icon accepts (matches the `react-icons` component contract we use). */
@@ -86,6 +86,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   slack: { Icon: SiSlack, iconClassName: 'text-[#4A154B] dark:text-[#E9D5EA]' },
   linkedin: { Icon: SiLinkedin, iconClassName: 'text-[#0A66C2]' },
   discord: { Icon: SiDiscord, iconClassName: 'text-[#5865F2]' },
+  salesforce: { Icon: SiSalesforce, iconClassName: 'text-[#00A1E0]' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {

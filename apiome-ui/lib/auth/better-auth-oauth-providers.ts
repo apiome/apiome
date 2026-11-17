@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -14,8 +14,8 @@
  * The generic plugin exposes `authorizationUrl`/`tokenUrl`/`userInfoUrl`/`discoveryUrl`, so every
  * endpoint stays overridable via the same env vars the NextAuth path reads (`GITHUB_OAUTH_BASE_URL`,
  * `GITHUB_API_BASE_URL`, `GITLAB_BASE_URL`, `GOOGLE_ISSUER`, `OKTA_ISSUER`, `COGNITO_ISSUER`,
- * `KEYCLOAK_ISSUER`, `OIDC_ISSUER`, `AUTH0_ISSUER`, `AZURE_AD_AUTHORITY_BASE_URL`,
- * `AZURE_AD_TENANT`). The generic callback path (`/oauth2/callback/:id`) is exactly the prefix the
+ * `KEYCLOAK_ISSUER`, `OIDC_ISSUER`, `AUTH0_ISSUER`, `SALESFORCE_ISSUER`,
+ * `AZURE_AD_AUTHORITY_BASE_URL`, `AZURE_AD_TENANT`). The generic callback path (`/oauth2/callback/:id`) is exactly the prefix the
  * OLO-10.6 resolution adapter already recognises.
  *
  * What each provider re-attaches (identical policy to the NextAuth engine, proven by tests):
@@ -58,6 +58,10 @@
  *  - **Discord (OLO-9.19):** fixed Discord endpoints (`discord.com/api/oauth2`,
  *    `discord.com/api/users/@me`), scopes `identify email`; the profile's `verified` flag is
  *    normalized to `email_verified`, so an unverified Discord address is refused.
+ *  - **Salesforce (OLO-9.20):** OIDC discovery on `SALESFORCE_ISSUER` (optional; default
+ *    `login.salesforce.com`, set for a My Domain or a sandbox); PKCE on; native `email_verified`
+ *    claim from the id token or `<issuer>/services/oauth2/userinfo`, fail-closed via
+ *    `resolveOAuthEmailVerified` (`salesforce-issuer.ts`).
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -124,6 +128,7 @@ import { cognitoIssuerBaseUrl } from './cognito-issuer';
 import { keycloakIssuerBaseUrl } from './keycloak-issuer';
 import { oidcIssuerBaseUrl, oidcScopes } from './oidc-issuer';
 import { auth0IssuerBaseUrl } from './auth0-issuer';
+import { salesforceIssuerBaseUrl, salesforceUserInfoUrl } from './salesforce-issuer';
 import { entraAuthorityBaseUrl, entraIdProfile, type EntraIdProfile } from './entra-provider';
 
 /* ── Request-scoped redirect override ──────────────────────────────────────────────────────── */
@@ -963,6 +968,46 @@ async function normalizeDiscord(
   };
 }
 
+/**
+ * Normalize a Salesforce sign-in (OLO-9.20): prefer the id-token claims; when they carry no
+ * `email` (Salesforce puts the standard claims on the id token only when the app is configured
+ * to), read the OIDC userinfo resource under the configured issuer instead. The claims pass
+ * through untouched, so `resolveOAuthEmailVerified` honors `email_verified` only when Salesforce
+ * sends it as true; an absent or false claim fail-closes to link-first.
+ *
+ * The identity is keyed on `sub` — the user's identity URL, which names the org and the user. A
+ * userinfo body whose `sub` differs from the id token's is discarded (OIDC Core §5.3.2): it does
+ * not describe the person who signed in.
+ *
+ * @param tokens The tokens from the code exchange (`idToken`, then `accessToken`, are read).
+ * @param env Resolved environment (`SALESFORCE_ISSUER` selects the userinfo host).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine; empty (no account id, no email) when
+ *   neither source yields claims, which the engine refuses.
+ */
+async function normalizeSalesforce(
+  tokens: OAuth2Tokens,
+  env: Record<string, string | undefined>,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  let profile: Record<string, unknown> = decodeJwtClaims(tokens.idToken) ?? {};
+  if (typeof profile.email !== 'string' && tokens.accessToken) {
+    const body = await fetchJsonWithToken(salesforceUserInfoUrl(env), tokens.accessToken, fetchImpl);
+    if (body && typeof body === 'object') {
+      const userInfo = body as Record<string, unknown>;
+      const idTokenSub = typeof profile.sub === 'string' ? profile.sub : null;
+      if (!idTokenSub || userInfo.sub === idTokenSub) profile = userInfo;
+    }
+  }
+  return {
+    accountId: typeof profile.sub === 'string' ? profile.sub : '',
+    profile,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.picture === 'string' ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1005,6 +1050,7 @@ const NORMALIZERS: Record<
   slack: (tokens, _env, fetchImpl) => normalizeSlack(tokens, fetchImpl),
   linkedin: (tokens, _env, fetchImpl) => normalizeLinkedin(tokens, fetchImpl),
   discord: (tokens, _env, fetchImpl) => normalizeDiscord(tokens, fetchImpl),
+  salesforce: (tokens, env, fetchImpl) => normalizeSalesforce(tokens, env, fetchImpl),
 };
 
 /**
@@ -1038,7 +1084,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord).
+ *   discord | salesforce).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1425,6 +1471,20 @@ export function buildGenericOAuthConfig(
         scopes: ['identify', 'email'],
         pkce: false,
         prompt: 'none',
+        getUserInfo,
+      };
+    }
+    case 'salesforce': {
+      return {
+        providerId: 'salesforce',
+        clientId: readEnvString(env, 'SALESFORCE_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'SALESFORCE_CLIENT_SECRET') ?? '',
+        // Discovery on the configured issuer — login.salesforce.com unless SALESFORCE_ISSUER
+        // names a My Domain or a sandbox — supplies authorize/token. PKCE on, as Better Auth's
+        // `salesforce()` helper does and as newer Salesforce apps require.
+        discoveryUrl: `${salesforceIssuerBaseUrl(env)}/.well-known/openid-configuration`,
+        scopes: ['openid', 'email', 'profile'],
+        pkce: true,
         getUserInfo,
       };
     }
