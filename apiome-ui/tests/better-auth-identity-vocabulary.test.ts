@@ -135,6 +135,7 @@ const makeCtx = (): BetterAuthOAuthContext => ({
 describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK', () => {
   test('the enabled registry ids are exactly the live available providers', () => {
     expect([...ENABLED_IDS].sort()).toEqual([
+      'atlassian',
       'auth0',
       'aws',
       'azure',
@@ -198,11 +199,11 @@ describe('identities persist under the correct slug on the Better Auth path', ()
   });
 
   test('a slug outside the linkable vocabulary is refused, never persisted', async () => {
-    // `atlassian` is in the DB CHECK (forward-looking for OLO-9.8) but not yet linkable, so the
+    // `bitbucket` is in the DB CHECK (forward-looking for OLO-9.9) but not yet linkable, so the
     // adapter refuses it before any write — LINKABLE_PROVIDERS, not the CHECK, is the dispatch gate.
     const { store, calls } = makeStore({ identityUserId: OK_USER.id });
 
-    const result = await resolveBetterAuthOAuthSignIn('atlassian', makeCtx(), null, store);
+    const result = await resolveBetterAuthOAuthSignIn('bitbucket', makeCtx(), null, store);
 
     expect(result).toBe('/login?error=provider-not-configured');
     expect(calls.recordIdentityLogin).toHaveLength(0);

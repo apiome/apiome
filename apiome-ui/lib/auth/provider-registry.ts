@@ -21,11 +21,11 @@
  *     only partially set (OLO-7.2), reading the merged DB-over-env overlay so a provider
  *     configured from the admin screen is not flagged as "missing env" (OLO-8.8).
  *
- * Adding a provider later (Atlassian #4991, Bitbucket #4992, …) means: one entry here, one
+ * Adding a provider later (Bitbucket #4992, …) means: one entry here, one
  * generic-OAuth config in `better-auth-oauth-providers.ts`, one brand icon in
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
- * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6), and
- * Auth0 (OLO-9.7) followed exactly that path.
+ * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
+ * Auth0 (OLO-9.7), and Atlassian (OLO-9.8) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -261,6 +261,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // (`snsapi_login`) exposes openid/unionid and **no email** → link-only. Country MVP for
     // China — see AUTH_PROVIDER_SETUP.md (unionid for multi-app deployments).
     requiredFields: clientCredentialFields('WECHAT_CLIENT_ID', 'WECHAT_CLIENT_SECRET'),
+  },
+  {
+    id: 'atlassian',
+    label: 'Atlassian',
+    status: 'available',
+    // Atlassian (OLO-9.8, #4991): credentials only — the OAuth 2.0 (3LO) endpoints are fixed, so
+    // no issuer. `email_verified` from the User Identity API is honored when present, otherwise
+    // fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('ATLASSIAN_CLIENT_ID', 'ATLASSIAN_CLIENT_SECRET'),
   },
 ];
 

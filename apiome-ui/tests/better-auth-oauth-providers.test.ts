@@ -84,6 +84,8 @@ const ALL_ENABLED: Record<string, string> = {
   VK_CLIENT_SECRET: 'vk-secret',
   WECHAT_CLIENT_ID: 'wx-id',
   WECHAT_CLIENT_SECRET: 'wx-secret',
+  ATLASSIAN_CLIENT_ID: 'atl-id',
+  ATLASSIAN_CLIENT_SECRET: 'atl-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -190,6 +192,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'line',
       'vk',
       'wechat',
+      'atlassian',
     ]);
   });
 
@@ -208,6 +211,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'line',
       'vk',
       'wechat',
+      'atlassian',
     ]);
   });
 
@@ -246,6 +250,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const wechat = buildGenericOAuthConfig('wechat', ALL_ENABLED)!;
     expect(wechat.clientId).toBe('wx-id');
     expect(wechat.clientSecret).toBe('wx-secret');
+    const atlassian = buildGenericOAuthConfig('atlassian', ALL_ENABLED)!;
+    expect(atlassian.clientId).toBe('atl-id');
+    expect(atlassian.clientSecret).toBe('atl-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -418,6 +425,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.pkce).toBe(true);
     expect(cfg.scopes).toEqual(['email', 'phone']);
     expect(cfg.discoveryUrl).toBeUndefined();
+  });
+
+  test('atlassian: fixed Atlassian endpoints; api.atlassian.com audience; PKCE on (OLO-9.8)', () => {
+    const cfg = buildGenericOAuthConfig('atlassian', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('atlassian');
+    expect(cfg.authorizationUrl).toBe('https://auth.atlassian.com/authorize');
+    expect(cfg.tokenUrl).toBe('https://auth.atlassian.com/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.atlassian.com/me');
+    expect(cfg.scopes).toEqual(['read:me', 'read:account']);
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toEqual({
+      audience: 'api.atlassian.com',
+      prompt: 'consent',
+    });
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -1425,6 +1448,178 @@ describe('getUserInfo — WeChat link-only (OLO-9.43)', () => {
 
     expect(result).toMatchObject({ id: 'wx-openid-1', email: 'ada@example.com' });
     expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+});
+
+/* ── getUserInfo: Atlassian /me profile (OLO-9.8) ──────────────────────────────────────────── */
+
+describe('getUserInfo — Atlassian sign-in and linking (OLO-9.8)', () => {
+  /** Serve `profile` from the User Identity API and record the request it was fetched with. */
+  const atlassianMe = (profile: Record<string, unknown> | null) => {
+    const requests: Array<{ url: string; authorization: string | undefined }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      if (url === 'https://api.atlassian.com/me' && profile) {
+        return { ok: true, json: async () => profile };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  const ME = {
+    account_type: 'atlassian',
+    account_id: '712020:atl-account-1',
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    nickname: 'ada',
+    picture: 'http://img/atl.png',
+    account_status: 'active',
+  };
+
+  test('verified email auto-links an existing account and signs in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl, requests } = atlassianMe({ ...ME, email_verified: true });
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: '712020:atl-account-1',
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'http://img/atl.png',
+    });
+    expect(requests).toEqual([
+      { url: 'https://api.atlassian.com/me', authorization: 'Bearer tok' },
+    ]);
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'atlassian',
+      providerUserId: '712020:atl-account-1',
+    });
+  });
+
+  test('known identity signs in on a later visit', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = atlassianMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: '712020:atl-account-1', email: 'ada@example.com' });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('email without a verified claim → fail-closed unverified (no auto-link)', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = atlassianMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('an explicit email_verified: false is not trusted', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = atlassianMe({ ...ME, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('explicit link intent links the Atlassian account to the session user', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = atlassianMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      {
+        store,
+        env: ALL_ENABLED,
+        fetchImpl,
+        resolveLinkToUserId: async () => 'session-user',
+      }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'atlassian',
+      providerUserId: '712020:atl-account-1',
+    });
+  });
+
+  test('no email → email-required rejection', async () => {
+    const { store } = makeStore();
+    const { fetchImpl } = atlassianMe({ ...ME, email: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('falls back to the nickname when the profile has no name', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = atlassianMe({ ...ME, name: undefined });
+
+    const { result } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ name: 'ada' });
+  });
+
+  test('a failed /me fetch never signs anyone in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = atlassianMe(null);
+
+    const { result, override } = await runGetUserInfo(
+      'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.recordUserLogin).toHaveLength(0);
   });
 });
 

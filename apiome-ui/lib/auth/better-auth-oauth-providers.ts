@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -43,6 +43,9 @@
  *  - **WeChat Open Platform (OLO-9.43):** QR Website App flow (`open.weixin.qq.com/connect/qrconnect`);
  *    custom `getToken` (GET `appid`/`secret` exchange); identity keyed on `unionid`||`openid`;
  *    **no email** → link-only.
+ *  - **Atlassian (OLO-9.8):** fixed Atlassian endpoints (`auth.atlassian.com` / `api.atlassian.com/me`),
+ *    `audience=api.atlassian.com`; PKCE on; `email_verified` from `/me` honored when present,
+ *    otherwise fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -495,6 +498,13 @@ const WECHAT_AUTHORIZE_URL = 'https://open.weixin.qq.com/connect/qrconnect#wecha
 const WECHAT_TOKEN_URL = 'https://api.weixin.qq.com/sns/oauth2/access_token';
 const WECHAT_USERINFO_URL = 'https://api.weixin.qq.com/sns/userinfo';
 
+/** Atlassian OAuth 2.0 (3LO) endpoints and the User Identity API profile resource (OLO-9.8). */
+const ATLASSIAN_AUTHORIZE_URL = 'https://auth.atlassian.com/authorize';
+const ATLASSIAN_TOKEN_URL = 'https://auth.atlassian.com/oauth/token';
+const ATLASSIAN_USERINFO_URL = 'https://api.atlassian.com/me';
+/** The `audience` Atlassian's authorize endpoint requires for tokens that call `api.atlassian.com`. */
+const ATLASSIAN_AUDIENCE = 'api.atlassian.com';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -704,6 +714,39 @@ async function normalizeWechat(
   };
 }
 
+/**
+ * Normalize an Atlassian sign-in (OLO-9.8): fetch the User Identity API `/me` resource with the
+ * access token and map `account_id` / `email` / `name` / `picture`. The profile is passed through
+ * untouched, so `resolveOAuthEmailVerified` honors `email_verified` only when Atlassian sends it
+ * as true; an absent or false claim fail-closes to link-first. A failed fetch yields an empty
+ * profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeAtlassian(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(ATLASSIAN_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const profile: Record<string, unknown> =
+    body && typeof body === 'object' ? { ...(body as object) } : {};
+  return {
+    accountId: typeof profile.account_id === 'string' ? profile.account_id : '',
+    profile,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    name:
+      (typeof profile.name === 'string' && profile.name) ||
+      (typeof profile.nickname === 'string' && profile.nickname) ||
+      null,
+    image: typeof profile.picture === 'string' ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -741,6 +784,7 @@ const NORMALIZERS: Record<
   line: (tokens, env, fetchImpl) => normalizeLine(tokens, env, fetchImpl),
   vk: (tokens, env, fetchImpl) => normalizeVk(tokens, env, fetchImpl),
   wechat: (tokens, env, fetchImpl) => normalizeWechat(tokens, env, fetchImpl),
+  atlassian: (tokens, _env, fetchImpl) => normalizeAtlassian(tokens, fetchImpl),
 };
 
 /**
@@ -773,7 +817,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * own account handling sees the identical verified signal the engine decided over.
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
- *   oidc | auth0 | line | vk | wechat).
+ *   oidc | auth0 | line | vk | wechat | atlassian).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1073,6 +1117,23 @@ export function buildGenericOAuthConfig(
             env,
             runnerDeps.fetchImpl ?? (fetch as unknown as FetchLike)
           ),
+        getUserInfo,
+      };
+    }
+    case 'atlassian': {
+      return {
+        providerId: 'atlassian',
+        clientId: readEnvString(env, 'ATLASSIAN_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'ATLASSIAN_CLIENT_SECRET') ?? '',
+        // Fixed Atlassian OAuth 2.0 (3LO) endpoints — no issuer. The profile comes from the User
+        // Identity API (`/me`), which needs the `read:me` scope and the `api.atlassian.com`
+        // audience; `prompt=consent` is what Atlassian's authorize endpoint expects.
+        authorizationUrl: ATLASSIAN_AUTHORIZE_URL,
+        tokenUrl: ATLASSIAN_TOKEN_URL,
+        userInfoUrl: ATLASSIAN_USERINFO_URL,
+        scopes: ['read:me', 'read:account'],
+        pkce: true,
+        authorizationUrlParams: { audience: ATLASSIAN_AUDIENCE, prompt: 'consent' },
         getUserInfo,
       };
     }
