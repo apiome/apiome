@@ -7597,12 +7597,13 @@ class StyleGuideLadderLevelModel(BaseModel):
         max_length=4,
         description="Evidence this level requires.",
     )
-    waivers_satisfy: bool = Field(
-        default=False,
+    waivers_satisfy: Optional[bool] = Field(
+        default=None,
         alias="waiversSatisfy",
         description=(
-            "Whether an effective waiver counts as meeting a rule requirement. Once a level "
-            "turns this off, no higher level may turn it back on."
+            "Whether an effective waiver counts as meeting a rule requirement. Omitted, it is "
+            "true on every level but the last. Once a level turns this off, no higher level "
+            "may turn it back on."
         ),
     )
 
@@ -8691,6 +8692,100 @@ class LintPolicyResponse(BaseModel):
     )
     evaluation: LintPolicyEvaluationOut
     findings: List[LintPolicyAnnotatedFindingOut] = Field(default_factory=list)
+
+
+class LintLevelBlockerOut(BaseModel):
+    """One requirement that keeps a subject from its next maturity level (GVM-1.2, #5855)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    level_key: str = Field(
+        alias="levelKey", description="The level this requirement blocks (the next level)."
+    )
+    kind: Literal["rule", "axis", "evidence"] = Field(
+        description="What blocks: a rule's findings, an axis floor, or missing evidence."
+    )
+    rule_id: Optional[str] = Field(
+        default=None, alias="ruleId", description="The rule, for a `rule` blocker."
+    )
+    max_severity: Optional[str] = Field(
+        default=None,
+        alias="maxSeverity",
+        description="The worst severity the level allows for the rule.",
+    )
+    axis: Optional[str] = Field(default=None, description="The axis, for an `axis` blocker.")
+    evidence: Optional[str] = Field(
+        default=None, description="The evidence kind, for an `evidence` blocker."
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description=(
+            "`not_assessed` (the axis or evidence was never assessed), `below_threshold` "
+            "(an axis misses its floor) or `missing` (the evidence is absent)."
+        ),
+    )
+    min_grade: Optional[str] = Field(default=None, alias="minGrade")
+    min_score: Optional[float] = Field(default=None, alias="minScore")
+    grade: Optional[str] = Field(default=None, description="The axis grade, when assessed.")
+    score: Optional[float] = Field(default=None, description="The axis score, when assessed.")
+    count: int = Field(default=1, description="Findings of the rule over the limit (1 otherwise).")
+    sample: List[str] = Field(
+        default_factory=list,
+        description="Up to three fingerprints of those findings.",
+    )
+
+
+class LintLevelResponse(BaseModel):
+    """``GET …/lint/level``: a subject's maturity level under its policy pack (GVM-1.2, #5855)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    subject_type: str = Field(serialization_alias="subjectType")
+    subject_id: str = Field(serialization_alias="subjectId")
+    evaluation_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="evaluationId",
+        description=(
+            "The persisted `lint_policy_evaluations` row; unchanged inputs return the same id."
+        ),
+    )
+    evaluated_at: Optional[str] = Field(default=None, serialization_alias="evaluatedAt")
+    policy_version_id: str = Field(serialization_alias="policyVersionId")
+    policy_content_fingerprint: str = Field(serialization_alias="policyContentFingerprint")
+    ladder_name: Optional[str] = Field(default=None, serialization_alias="ladderName")
+    level: Optional[str] = Field(
+        default=None,
+        description="Key of the highest level satisfied; null when none is or there is no ladder.",
+    )
+    level_label: Optional[str] = Field(default=None, serialization_alias="levelLabel")
+    level_index: Optional[int] = Field(
+        default=None,
+        serialization_alias="levelIndex",
+        description="Position of `level` in the ladder (0 = lowest).",
+    )
+    next_level: Optional[str] = Field(
+        default=None,
+        serialization_alias="nextLevel",
+        description="The level above `level`; null at the top or without a ladder.",
+    )
+    next_level_label: Optional[str] = Field(default=None, serialization_alias="nextLevelLabel")
+    blockers: List[LintLevelBlockerOut] = Field(
+        default_factory=list, description="What keeps the subject from `nextLevel`."
+    )
+    waivers_counted: int = Field(
+        default=0,
+        serialization_alias="waiversCounted",
+        description="Waived findings the satisfied levels excused.",
+    )
+    unassessed_axes: List[str] = Field(
+        default_factory=list,
+        serialization_alias="unassessedAxes",
+        description="Axes the ladder names that were never assessed for this subject.",
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="`no-ladder` or `below-first-level` when `level` is null; null otherwise.",
+    )
 
 
 class LintGateFindingOut(BaseModel):

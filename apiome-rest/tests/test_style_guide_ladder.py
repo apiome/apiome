@@ -373,3 +373,30 @@ def test_the_default_template_validates_against_the_real_registry():
     ladder = default_ladder_template()
     assert len(ladder["levels"]) == 3
     assert all(lv["rules"] for lv in ladder["levels"])
+
+
+# ---------------------------------------------------------------------------
+# waiversSatisfy default (GVM-1.2, #5855)
+# ---------------------------------------------------------------------------
+
+
+def test_waivers_satisfy_defaults_to_true_except_on_the_top_level():
+    ladder = _validate({"name": "L", "levels": [{"key": "bronze"}, {"key": "silver"}, {"key": "gold"}]})
+    assert [lv["waiversSatisfy"] for lv in ladder["levels"]] == [True, True, False]
+
+
+def test_a_single_level_ladder_defaults_waivers_off():
+    ladder = _validate({"name": "L", "levels": [{"key": "bronze"}]})
+    assert ladder["levels"][0]["waiversSatisfy"] is False
+
+
+def test_an_explicit_waivers_satisfy_wins_over_the_default():
+    ladder = _validate(
+        {"name": "L", "levels": [{"key": "bronze", "waiversSatisfy": False}, {"key": "gold", "waiversSatisfy": False}]}
+    )
+    assert [lv["waiversSatisfy"] for lv in ladder["levels"]] == [False, False]
+
+
+def test_the_default_template_takes_the_top_level_waiver_default():
+    levels = default_ladder_template(_descriptors())["levels"]
+    assert [lv["waiversSatisfy"] for lv in levels] == [True, True, False]

@@ -6510,41 +6510,84 @@ class Database:
         return self.execute_query(query, (decision_id, tenant_id))
 
     def record_lint_policy_evaluation(self, evaluation: Dict[str, Any]) -> Optional[str]:
-        """Insert one write-once policy evaluation (CLX-1.3, #4850).
+        """Insert one write-once policy evaluation, or reuse the identical stored one.
 
-        Skips when the same subject + policy content fingerprint + evidence fingerprint
-        already exists (reproducible no-op recompute).
-
-        Args:
-            evaluation: Column-name -> value dict for ``lint_policy_evaluations``.
+        Thin wrapper over :meth:`record_lint_policy_evaluation_row` for callers that only need
+        the id (CLX-1.3, #4850).
 
         Returns:
-            The new evaluation id, or ``None`` when an identical row already exists.
+            The new or reused evaluation id, or ``None`` when nothing could be written.
         """
+        row = self.record_lint_policy_evaluation_row(evaluation)
+        return str(row["id"]) if row else None
+
+    def record_lint_policy_evaluation_row(
+        self, evaluation: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Insert one write-once policy evaluation, or return the identical stored one.
+
+        An evaluation is identical when the subject, policy content fingerprint, evidence
+        fingerprint and axis evaluation match **and** it reached the same gate results and
+        per-finding decisions. Re-evaluating unchanged inputs therefore returns the stored
+        row and its id (GVM-1.2, #5855), while a changed waiver, axis evaluation or maturity
+        result appends a new row.
+
+        Args:
+            evaluation: Column-name -> value dict for ``lint_policy_evaluations``
+                (``maturity_level`` optional, GVM-1.2).
+
+        Returns:
+            ``{id, evaluated_at, reused}`` — ``reused`` is true when the stored row was
+            returned — or ``None`` when nothing could be written.
+        """
+        version_record_id = evaluation.get("version_record_id")
+        mcp_version_id = evaluation.get("mcp_version_id")
+        gate_results = Json(evaluation.get("gate_results") or {})
+        finding_decisions = Json(evaluation.get("finding_decisions") or [])
         query = """
-            INSERT INTO apiome.lint_policy_evaluations (
-                subject_type, version_record_id, mcp_version_id, policy_version_id,
-                policy_content_fingerprint, evidence_run_id, axis_evaluation_id,
-                evidence_fingerprint, passed, gate_results, finding_decisions
-            )
-            SELECT %s, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid, %s, %s,
-                   %s::jsonb, %s::jsonb
-            WHERE NOT EXISTS (
-                SELECT 1 FROM apiome.lint_policy_evaluations e
+            WITH existing AS (
+                SELECT e.id, e.evaluated_at, TRUE AS reused
+                FROM apiome.lint_policy_evaluations e
                 WHERE e.policy_content_fingerprint = %s
                   AND e.evidence_fingerprint IS NOT DISTINCT FROM %s
+                  AND e.axis_evaluation_id IS NOT DISTINCT FROM %s::uuid
+                  AND e.gate_results = %s::jsonb
+                  AND e.finding_decisions = %s::jsonb
                   AND (
                         (%s::uuid IS NOT NULL AND e.version_record_id = %s::uuid)
                         OR (%s::uuid IS NOT NULL AND e.mcp_version_id = %s::uuid)
                       )
+                ORDER BY e.evaluated_at DESC, e.id DESC
+                LIMIT 1
+            ),
+            inserted AS (
+                INSERT INTO apiome.lint_policy_evaluations (
+                    subject_type, version_record_id, mcp_version_id, policy_version_id,
+                    policy_content_fingerprint, evidence_run_id, axis_evaluation_id,
+                    evidence_fingerprint, passed, gate_results, finding_decisions,
+                    maturity_level
+                )
+                SELECT %s, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid, %s, %s,
+                       %s::jsonb, %s::jsonb, %s
+                WHERE NOT EXISTS (SELECT 1 FROM existing)
+                RETURNING id, evaluated_at, FALSE AS reused
             )
-            RETURNING id
+            SELECT id, evaluated_at, reused FROM inserted
+            UNION ALL
+            SELECT id, evaluated_at, reused FROM existing
         """
-        version_record_id = evaluation.get("version_record_id")
-        mcp_version_id = evaluation.get("mcp_version_id")
         rows = self.execute_query(
             query,
             (
+                evaluation["policy_content_fingerprint"],
+                evaluation.get("evidence_fingerprint"),
+                evaluation.get("axis_evaluation_id"),
+                gate_results,
+                finding_decisions,
+                version_record_id,
+                version_record_id,
+                mcp_version_id,
+                mcp_version_id,
                 evaluation["subject_type"],
                 version_record_id,
                 mcp_version_id,
@@ -6554,17 +6597,12 @@ class Database:
                 evaluation.get("axis_evaluation_id"),
                 evaluation.get("evidence_fingerprint"),
                 bool(evaluation.get("passed")),
-                Json(evaluation.get("gate_results") or {}),
-                Json(evaluation.get("finding_decisions") or []),
-                evaluation["policy_content_fingerprint"],
-                evaluation.get("evidence_fingerprint"),
-                version_record_id,
-                version_record_id,
-                mcp_version_id,
-                mcp_version_id,
+                gate_results,
+                finding_decisions,
+                evaluation.get("maturity_level"),
             ),
         )
-        return str(rows[0]["id"]) if rows else None
+        return dict(rows[0]) if rows else None
 
     def get_latest_lint_policy_evaluation_for_version(
         self, version_record_id: str, tenant_id: str
@@ -6574,7 +6612,7 @@ class Database:
             SELECT e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
                    e.policy_version_id, e.policy_content_fingerprint, e.evidence_run_id,
                    e.axis_evaluation_id, e.evidence_fingerprint, e.passed, e.gate_results,
-                   e.finding_decisions, e.evaluated_at, e.created_at
+                   e.finding_decisions, e.maturity_level, e.evaluated_at, e.created_at
             FROM apiome.lint_policy_evaluations e
             JOIN apiome.versions v ON v.id = e.version_record_id
             JOIN apiome.projects p ON p.id = v.project_id
@@ -6593,7 +6631,7 @@ class Database:
             SELECT e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
                    e.policy_version_id, e.policy_content_fingerprint, e.evidence_run_id,
                    e.axis_evaluation_id, e.evidence_fingerprint, e.passed, e.gate_results,
-                   e.finding_decisions, e.evaluated_at, e.created_at
+                   e.finding_decisions, e.maturity_level, e.evaluated_at, e.created_at
             FROM apiome.lint_policy_evaluations e
             WHERE e.mcp_version_id = %s
             ORDER BY e.evaluated_at DESC, e.id DESC

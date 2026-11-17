@@ -25,7 +25,7 @@ gate evaluation — a deliberate CI action — never from plain policy reads.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .database import db
@@ -36,6 +36,8 @@ from .lint_evidence import (
 )
 from .lint_policy_service import (
     findings_from_evidence_or_report,
+    ladder_evidence,
+    maturity_gate_result,
     resolve_policy_pack,
 )
 from .policy_evaluate import (
@@ -45,6 +47,7 @@ from .policy_evaluate import (
     evaluate_policy,
     match_decision_for_fingerprint,
 )
+from .style_guide_ladder import ladder_from_row
 
 _logger = logging.getLogger(__name__)
 
@@ -347,6 +350,28 @@ def evaluate_lint_gate(
         rules_snapshot=pack.get("rules_snapshot") or [],
         content_fingerprint=str(pack["content_fingerprint"]),
     )
+    # GVM-1.2 (#5855): the same maturity judgement build_lint_policy_response stores, so a
+    # gate run and a policy read of unchanged inputs share one evaluation row.
+    ladder = ladder_from_row(pack.get("ladder"))
+    maturity = maturity_gate_result(
+        policy_version=pack,
+        findings=findings,
+        axes=axes,
+        decisions_by_fingerprint=by_fp,
+        evidence=ladder_evidence(
+            tenant_id=tenant_id,
+            subject_type=subject_type,
+            subject_id=subject_id,
+            project_id=project_id,
+            ladder=ladder,
+        )
+        if ladder
+        else None,
+    )
+    if maturity is not None:
+        evaluation = replace(
+            evaluation, gate_results={**evaluation.gate_results, "maturity": maturity}
+        )
 
     evaluation_id: Optional[str] = None
     if persist:
@@ -366,6 +391,7 @@ def evaluate_lint_gate(
             "passed": evaluation.passed,
             "gate_results": evaluation.gate_results,
             "finding_decisions": list(evaluation.finding_decisions),
+            "maturity_level": maturity.get("level") if maturity else None,
         }
         try:
             evaluation_id = db.record_lint_policy_evaluation(row)
