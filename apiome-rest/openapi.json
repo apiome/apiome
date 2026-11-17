@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.591.0",
+    "version": "1.592.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -54039,6 +54039,135 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for lint revision policyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/level": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Lint Revision Level",
+        "description": "The revision's maturity level under its style guide's ladder (GVM-1.2, #5855).\n\nReturns the highest level satisfied, the next level and what blocks it. The result is the\nrevision's policy evaluation (``gate_results.maturity``): unchanged inputs return the stored\nevaluation and its id, a changed input records a new one. A guide without a ladder answers\n``level: null, reason: no-ladder``.",
+        "operationId": "lint_revision_level_v1_versions__tenant_slug___project_id___version_record_id__lint_level_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "policyVersionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Levelpolicy Version ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Levelpolicy Version ID schema."
+                }
+              ],
+              "description": "Optional historical policy pack id; defaults to the latest for the assigned guide.",
+              "title": "Policyversionid"
+            },
+            "description": "Optional historical policy pack id; defaults to the latest for the assigned guide."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Levelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Levelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Level Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Level Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for lint revision level.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintLevelResponse",
+                  "description": "Response payload for lint revision levelresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for lint revision levelresponse422."
                 }
               }
             }
@@ -116257,6 +116386,137 @@
         }
       }
     },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/level": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Endpoint Version Lint Level",
+        "description": "The MCP version's maturity level under the tenant guide's ladder (GVM-1.2, #5855).\n\nSame contract as the catalog-revision read. Review and verification evidence do not exist\nfor MCP versions, so a level that requires them is blocked as ``not_assessed``.",
+        "operationId": "get_mcp_endpoint_version_lint_level_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_level_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "policyVersionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Levelpolicy Version ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Levelpolicy Version ID schema."
+                }
+              ],
+              "description": "Optional historical policy pack id; defaults to the latest for the assigned guide.",
+              "title": "Policyversionid"
+            },
+            "description": "Optional historical policy pack id; defaults to the latest for the assigned guide."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Levelauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Levelauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Level Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Level Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp endpoint version lint level.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintLevelResponse",
+                  "description": "Response payload for get mcp endpoint version lint levelresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp endpoint version lint levelresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/gate": {
       "get": {
         "tags": [
@@ -175891,6 +176151,364 @@
         "title": "LintFindingOut",
         "description": "One itemized lint finding from the deterministic quality-scoring service (#3609)."
       },
+      "LintLevelBlockerOut": {
+        "properties": {
+          "levelKey": {
+            "type": "string",
+            "title": "Levelkey",
+            "description": "The level this requirement blocks (the next level).",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rule",
+              "axis",
+              "evidence"
+            ],
+            "title": "Kind",
+            "description": "What blocks: a rule's findings, an axis floor, or missing evidence.",
+            "example": "rule"
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Ruleid",
+            "description": "The rule, for a `rule` blocker."
+          },
+          "maxSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Maxseverity",
+            "description": "The worst severity the level allows for the rule."
+          },
+          "axis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Axis",
+            "description": "The axis, for an `axis` blocker."
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Evidence",
+            "description": "The evidence kind, for an `evidence` blocker."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Reason",
+            "description": "`not_assessed` (the axis or evidence was never assessed), `below_threshold` (an axis misses its floor) or `missing` (the evidence is absent)."
+          },
+          "minGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Mingrade",
+            "description": "Min Grade."
+          },
+          "minScore": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Minscore",
+            "description": "Min Score."
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Grade",
+            "description": "The axis grade, when assessed."
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Response payload for lint level blocker."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level blocker."
+              }
+            ],
+            "title": "Score",
+            "description": "The axis score, when assessed."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Findings of the rule over the limit (1 otherwise).",
+            "default": 1,
+            "example": 1
+          },
+          "sample": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sample",
+            "description": "Up to three fingerprints of those findings.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "levelKey",
+          "kind"
+        ],
+        "title": "LintLevelBlockerOut",
+        "description": "One requirement that keeps a subject from its next maturity level (GVM-1.2, #5855)."
+      },
+      "LintLevelResponse": {
+        "properties": {
+          "subjectType": {
+            "type": "string",
+            "title": "Subjecttype",
+            "description": "Subject Type.",
+            "example": "example"
+          },
+          "subjectId": {
+            "type": "string",
+            "title": "Subjectid",
+            "description": "Subject ID.",
+            "example": "example"
+          },
+          "evaluationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Evaluationid",
+            "description": "The persisted `lint_policy_evaluations` row; unchanged inputs return the same id."
+          },
+          "evaluatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Evaluatedat",
+            "description": "Evaluated At."
+          },
+          "policyVersionId": {
+            "type": "string",
+            "title": "Policyversionid",
+            "description": "Policy Version ID.",
+            "example": "1.0.0"
+          },
+          "policyContentFingerprint": {
+            "type": "string",
+            "title": "Policycontentfingerprint",
+            "description": "Policy Content Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "ladderName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Laddername",
+            "description": "Ladder Name."
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Level",
+            "description": "Key of the highest level satisfied; null when none is or there is no ladder."
+          },
+          "levelLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Levellabel",
+            "description": "Level Label."
+          },
+          "levelIndex": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Levelindex",
+            "description": "Position of `level` in the ladder (0 = lowest)."
+          },
+          "nextLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Nextlevel",
+            "description": "The level above `level`; null at the top or without a ladder."
+          },
+          "nextLevelLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Nextlevellabel",
+            "description": "Next Level Label."
+          },
+          "blockers": {
+            "items": {
+              "$ref": "#/components/schemas/LintLevelBlockerOut"
+            },
+            "type": "array",
+            "title": "Blockers",
+            "description": "What keeps the subject from `nextLevel`.",
+            "maxItems": 1000
+          },
+          "waiversCounted": {
+            "type": "integer",
+            "title": "Waiverscounted",
+            "description": "Waived findings the satisfied levels excused.",
+            "default": 0,
+            "example": 1
+          },
+          "unassessedAxes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unassessedaxes",
+            "description": "Axes the ladder names that were never assessed for this subject.",
+            "maxItems": 1000
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint level."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint level."
+              }
+            ],
+            "title": "Reason",
+            "description": "`no-ladder` or `below-first-level` when `level` is null; null otherwise."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subjectType",
+          "subjectId",
+          "policyVersionId",
+          "policyContentFingerprint"
+        ],
+        "title": "LintLevelResponse",
+        "description": "``GET \u2026/lint/level``: a subject's maturity level under its policy pack (GVM-1.2, #5855)."
+      },
       "LintPolicyAnnotatedFindingOut": {
         "properties": {
           "evidence": {
@@ -227905,11 +228523,18 @@
             "description": "Evidence this level requires."
           },
           "waiversSatisfy": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Style Guide Ladder Level Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Style Guide Ladder Level Model schema."
+              }
+            ],
             "title": "Waiverssatisfy",
-            "description": "Whether an effective waiver counts as meeting a rule requirement. Once a level turns this off, no higher level may turn it back on.",
-            "default": false,
-            "example": false
+            "description": "Whether an effective waiver counts as meeting a rule requirement. Omitted, it is true on every level but the last. Once a level turns this off, no higher level may turn it back on."
           }
         },
         "type": "object",

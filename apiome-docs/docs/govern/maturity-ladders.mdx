@@ -12,7 +12,9 @@ meet, instead of a single grade.
 
 The Style guides screen is not yet available, so a ladder is read and saved through the REST API
 (see [With the API](#with-the-api)). Saving a ladder records it in the guide's history and its
-policy pack. It does not yet change any lint result, publish or gate.
+policy pack. From then on every policy evaluation of a version or MCP server version reports its
+level — read it with [`GET …/lint/level`](#read-a-level). A level does not yet block publishing
+or deploys.
 
 ## What a level requires
 
@@ -23,7 +25,7 @@ A level lists what it **adds** to the levels below it:
 | `rules` | For each listed rule, the worst finding severity it may still report: `error`, `warning`, `info` or `none` (the rule must report nothing). Rule ids come from [Built-in lint rules](../build/lint-rules.md). |
 | `axes` | A floor on an [axis score](../build/axis-score.md): `quality`, `protocol`, `security`, `supply_chain`, `supportability` or `compatibility`, with a `minGrade` (A–F), a `minScore` (0–100) or both. The axis must be assessed. |
 | `evidence` | Evidence the level needs: `review_approved` (an approved [review](./reviews.mdx)) or `verification_passing`. |
-| `waiversSatisfy` | Whether a waived finding counts as meeting a rule requirement. |
+| `waiversSatisfy` | Whether a waived finding counts as meeting a rule requirement. Leave it out and it is `true` on every level except the top one. |
 
 Each level also has a `key` (lowercase, such as `bronze`) and a `label` (such as `Bronze`). List
 levels lowest first.
@@ -77,7 +79,29 @@ ladder.
 | **Silver** | Bronze, plus a quality grade of B or better and no errors at all. |
 | **Gold** | Silver, plus a quality grade of A, the security axis assessed at A with every security rule clean, and an approved review. |
 
-Waivers count at every level of the default ladder.
+Waivers count at Bronze and Silver. Gold, the top level, asks for waived findings to be fixed.
+
+## How a level is judged
+
+Levels are checked lowest first, and the check stops at the first level that is not met. That
+level is the **next level**, and what keeps the API from it are its **blockers**. Each level is
+checked against everything it and the levels below it require:
+
+- **Rules** — a finding of a listed rule that is worse than the rule's `maxSeverity` blocks the
+  level. Findings marked **fixed** or **false positive** never count. A **waived** finding counts
+  only on a level whose `waiversSatisfy` is off; an expired waiver, or one that is only
+  requested, counts like an open finding.
+- **Axes** — the axis must be **assessed** and meet the floor. An axis that was never assessed
+  blocks the level with `reason: not_assessed`. It is never treated as clean: a version whose
+  security axis was never scored cannot reach a level that asks for security.
+- **Evidence** — `review_approved` is met by an approved [review](./reviews.mdx) of the version
+  (the guide's approval rules, or one approval when the guide sets none); `verification_passing`
+  by a passing verification-policy evaluation. Missing evidence blocks with `reason: missing`,
+  evidence that cannot be read with `reason: not_assessed`. MCP server versions have neither, so
+  a level that asks for evidence is `not_assessed` for them.
+
+A version that meets no level has `level: null` with `reason: below-first-level`. A guide without
+a ladder gives `level: null` with `reason: no-ladder` — never a level.
 
 ## What is recorded
 
@@ -110,9 +134,9 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
   -d '{
     "name": "Payments maturity",
     "levels": [
-      {"key": "bronze", "label": "Bronze", "waiversSatisfy": true,
+      {"key": "bronze", "label": "Bronze",
        "rules": [{"ruleId": "naming.schema-pascal-case", "maxSeverity": "warning"}]},
-      {"key": "silver", "label": "Silver", "waiversSatisfy": true,
+      {"key": "silver", "label": "Silver",
        "axes": [{"axis": "quality", "minGrade": "B"}]}
     ]
   }'
@@ -120,6 +144,47 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
 
 The response returns the stored `ladder`, its `contentFingerprint` and `updatedAt`. The endpoints
 are in the [Style guides REST reference](../reference/rest/style-guides.md#get-style-guide-ladder-v1-style-guides-tenant-slug-guide-id-ladder-get).
+
+### Read a level
+
+Any workspace member can read the level of a version or an MCP server version:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  https://<host>/v1/versions/acme/$PROJECT_ID/$VERSION_ID/lint/level
+
+curl -H "Authorization: Bearer $TOKEN" \
+  https://<host>/v1/mcp/acme/endpoints/$ENDPOINT_ID/versions/$MCP_VERSION_ID/lint/level
+```
+
+```json
+{
+  "subjectType": "catalog_revision",
+  "evaluationId": "6f1c…",
+  "ladderName": "Payments maturity",
+  "level": "bronze", "levelLabel": "Bronze", "levelIndex": 0,
+  "nextLevel": "silver", "nextLevelLabel": "Silver",
+  "blockers": [
+    {"levelKey": "silver", "kind": "axis", "axis": "quality", "minGrade": "B",
+     "reason": "below_threshold", "grade": "C", "score": 74, "count": 1, "sample": []}
+  ],
+  "waiversCounted": 1,
+  "unassessedAxes": [],
+  "reason": null
+}
+```
+
+A rule blocker names the `ruleId`, its `maxSeverity`, how many findings are over it (`count`) and
+up to three of their fingerprints (`sample`). `waiversCounted` is how many waived findings the
+levels the version met have excused, and `unassessedAxes` lists every axis the ladder names that
+was never assessed.
+
+The level is part of the version's policy evaluation (`gateResults.maturity` on
+`GET …/lint/policy` and `…/lint/gate`). Reading it again with nothing changed returns the same
+`evaluationId`; a new finding, decision, axis score or ladder records a new evaluation. Add
+`?policyVersionId=` to judge an earlier policy version. The endpoints are in the
+[Lint REST reference](../reference/rest/lint.md#lint-revision-level-v1-versions-tenant-slug-project-id-version-record-id-lint-level-get)
+and the [MCP catalog REST reference](../reference/rest/mcp-catalog.md#get-mcp-endpoint-version-lint-level-v1-mcp-tenant-slug-endpoints-endpoint-id-versions-version-id-lint-level-get).
 
 ## Related
 

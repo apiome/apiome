@@ -1,0 +1,577 @@
+{
+  "catalog/a2a-duplicate-skill-id": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/a2a-security-undeclared-scheme": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/acp-duplicate-agent-name": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/agents-manifest-broken-endpoint-ref": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/agents-manifest-undeclared-via": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/apiblueprint-drafter-error": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-async-source-before-1-1": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-dangling-operation-id": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arzzo-unresolvable-operation-ref": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/asn1-choice-tags-distinct": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/asn1-sequence-tags-unambiguous": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/asn1-set-tags-distinct": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/asn1-type-resolves": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/avro-alias-conflict": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/avro-invalid-alias": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/avro-invalid-default": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/avro-invalid-union": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/capnproto-contiguous-ordinals": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/capnproto-file-id-declared": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/capnproto-unique-ordinals": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/compatibility-breaking": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-exception-as-type": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-identifier-not-keyword": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-inheritance-acyclic": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-member-names-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-oneway-signature": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-operation-names-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-raises-declared": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/corbaidl-type-resolves": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/data-contract-classification-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-clean": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-column-description-coverage": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-freshness-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-owner-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-owner-unresolvable": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-primary-key-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-quality-rules-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-retention-undocumented": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-server-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-sla-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-status-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/data-contract-version-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/edifact-control-counts-match": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/edifact-control-references-match": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/edix12-control-numbers-match": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/edix12-control-totals-match": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/fhir-profile-base": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/fhir-profile-url": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/fix-orchestra-code-values-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/fix-orchestra-message-msgtype-declared": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/fix-orchestra-msgtype-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/flatbuffers-explicit-ids-all-or-none": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/flatbuffers-unique-field-ids": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/graphql-composition-error": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/graphql-composition-invalid-key": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/graphql-composition-non-shareable-field": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/graphql-composition-unresolvable-selection": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/hl7v2-message-type-declared": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/iso8583-de-number-valid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/multi-format-index": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/odata-entity-key": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/odata-unresolved-reference": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/oncrpc-enum-values-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/oncrpc-procedure-names-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/oncrpc-procedure-numbers-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/oncrpc-type-resolves": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/oncrpc-version-numbers-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/openrpc-required-params-first": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/openrpc-unique-method-names": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/openrpc-unique-param-names": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/overlay-version-unsupported": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/raml-shacl-violation": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/smithy-validation-error": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/thrift-oneway-void": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/thrift-unique-field-ids": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wadl-method-id-unique": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wadl-reference-resolved": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wadl-template-param-declared": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-binding-style": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-document-literal": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-literal-use": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-rpc-literal": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-unique-operation-signature": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-unresolved-import": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/wsdl-wsdl-import-target": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "mcp/safe/clean-surface": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-list-result-missing-items": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-missing-protocol-version": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-missing-server-name": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-modern-version-via-handshake": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-response-id-not-echoed": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-result-type-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-undeclared-capability-listed": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/conformance/protocol-unsupported-protocol-version": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp01-hidden-instruction": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp01-invisible-characters": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp01-proven-input-injection": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp02-exfiltration-directive": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp03-privileged-container": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp04-remote-script-execution": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp05-command-execution": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp06-committed-private-key": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp06-credential-in-description": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp06-hardcoded-provider-credential": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp07-proven-auth-bypass": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp07-tls-verification-disabled": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp08-context-oversharing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp09-tool-name-shadowing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/owasp/mcp10-undeclared-destructive": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/surface/naming-item-name-missing": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/surface/schema-resource-invalid-uri": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/surface/schema-resource-template-invalid-uri-template": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/surface/schema-tool-input-schema-invalid": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/toolbench/ambiguous-tool-name": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "mcp/unsafe/toolbench/missing-parameter-descriptions": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  }
+}

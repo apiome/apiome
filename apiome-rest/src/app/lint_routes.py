@@ -25,7 +25,10 @@ from .import_routing import PUBLISHABLE_FORMATS
 from .lint_evidence import SUBJECT_CATALOG_REVISION
 from .lint_gate import evaluate_lint_gate, gate_payload
 from .lint_gate_emit import serialize_lint_gate
-from .lint_policy_service import evaluate_catalog_revision_policy
+from .lint_policy_service import (
+    evaluate_catalog_revision_level,
+    evaluate_catalog_revision_policy,
+)
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .lint_workspace import (
     ACTION_PUBLISH,
@@ -50,6 +53,7 @@ from .models import (
     LintFindingDecisionUpsertRequest,
     LintFindingOut,
     LintGateResponse,
+    LintLevelResponse,
     LintPolicyResponse,
     LintReportResponse,
     LintRuleCatalogResponse,
@@ -1060,6 +1064,58 @@ async def lint_revision_policy(
 
     try:
         return evaluate_catalog_revision_policy(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_record_id=version_record_id,
+            policy_version_id=policy_version_id,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/lint/level",
+    response_model=LintLevelResponse,
+)
+async def lint_revision_level(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    policy_version_id: Optional[str] = Query(
+        default=None,
+        alias="policyVersionId",
+        description="Optional historical policy pack id; defaults to the latest for the assigned guide.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintLevelResponse:
+    """
+    The revision's maturity level under its style guide's ladder (GVM-1.2, #5855).
+
+    Returns the highest level satisfied, the next level and what blocks it. The result is the
+    revision's policy evaluation (``gate_results.maturity``): unchanged inputs return the stored
+    evaluation and its id, a changed input records a new one. A guide without a ladder answers
+    ``level: null, reason: no-ladder``.
+    """
+    _ = tenant_slug
+    tenant_id = auth_data["tenant_id"]
+
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
+    if version["project_id"] != project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Revision does not belong to the specified project",
+        )
+
+    try:
+        return evaluate_catalog_revision_level(
             tenant_id=tenant_id,
             project_id=project_id,
             version_record_id=version_record_id,

@@ -4,10 +4,17 @@ Policy pack snapshot + evaluation orchestration (CLX-1.3, #4850).
 Bridges the pure :mod:`app.policy_evaluate` engine with DB accessors: ensuring a pinned
 policy pack exists for the assigned style guide, loading decisions, evaluating gates, and
 recording append-only ``lint_policy_evaluations`` rows.
+
+GVM-1.2 (#5855): when the pack carries a maturity ladder, every evaluation also runs the pure
+:func:`app.maturity_ladder.evaluate_ladder` and stores its result as
+``gate_results.maturity`` (plus the ``maturity_level`` column). :func:`ladder_evidence`
+gathers the evidence a ladder asks for, and :func:`evaluate_catalog_revision_level` /
+:func:`evaluate_mcp_version_level` back the ``GET …/lint/level`` reads.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .database import db
@@ -17,9 +24,12 @@ from .lint_evidence import (
     merged_findings_from_runs,
     normalize_native_finding,
 )
+from .maturity_ladder import evaluate_ladder, no_ladder_result
 from .models import (
     LintEvidenceFindingOut,
     LintFindingDecisionOut,
+    LintLevelBlockerOut,
+    LintLevelResponse,
     LintPolicyAnnotatedFindingOut,
     LintPolicyEvaluationOut,
     LintPolicyResponse,
@@ -38,6 +48,12 @@ from .policy_evaluate import (
 )
 from .style_guide_engine import resolve_style_guide
 from .style_guide_ladder import ladder_from_row
+
+logger = logging.getLogger(__name__)
+
+#: Evidence kinds a ladder level may require (GVM-1.1 vocabulary).
+EVIDENCE_REVIEW_APPROVED = "review_approved"
+EVIDENCE_VERIFICATION_PASSING = "verification_passing"
 
 
 def snapshot_style_guide_policy(
@@ -210,6 +226,128 @@ def _decisions_map(
     return out
 
 
+def _required_evidence(ladder: Optional[Mapping[str, Any]]) -> List[str]:
+    """Every evidence kind any level of ``ladder`` requires, in first-seen order."""
+    kinds: List[str] = []
+    for level in (ladder or {}).get("levels") or []:
+        for kind in level.get("evidence") or []:
+            if kind not in kinds:
+                kinds.append(kind)
+    return kinds
+
+
+def _review_approved(tenant_id: str, project_id: str, version_record_id: str) -> Optional[bool]:
+    """Whether the revision's open review is approved, per the COL-2.3 approval gate.
+
+    The guide's own approval policy is used when it is on; otherwise a single approval of the
+    current round counts, so a ladder can ask for review evidence in a tenant that does not
+    gate publishing on approvals. ``None`` when the review could not be read.
+    """
+    from .approval_publish_gate import (
+        STATUS_BLOCKED,
+        STATUS_SATISFIED,
+        ApprovalPolicy,
+        assess_approval_gate,
+        resolve_approval_policy,
+    )
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        return None
+    policy = resolve_approval_policy(tenant_id, project_id)
+    if not policy.active:
+        policy = ApprovalPolicy(required_approvals=1)
+    status = assess_approval_gate(
+        tenant_id=tenant_id, project_id=project_id, version=version, policy=policy
+    ).status
+    if status == STATUS_SATISFIED:
+        return True
+    if status == STATUS_BLOCKED:
+        return False
+    return None
+
+
+def _verification_passing(tenant_id: str, version_record_id: str) -> Optional[bool]:
+    """Whether the revision's latest verification-policy evaluation (ECA-1.4) passed.
+
+    Read, never re-run: evaluating the verification policy records its own audit row. ``None``
+    when the revision has no evaluation or the policy judged no gate (nothing was verified).
+    """
+    rows = db.list_verification_policy_evaluations(
+        tenant_id, version_record_id=version_record_id, limit=1
+    )
+    if not rows:
+        return None
+    latest = rows[0]
+    if not latest.get("gate_results"):
+        return None
+    return bool(latest.get("passed"))
+
+
+def ladder_evidence(
+    *,
+    tenant_id: str,
+    subject_type: str,
+    subject_id: str,
+    project_id: Optional[str],
+    ladder: Optional[Mapping[str, Any]],
+) -> Dict[str, Optional[bool]]:
+    """Gather the evidence ``ladder`` requires for one subject. Never raises.
+
+    Only the kinds some level asks for are read. Review and verification evidence exist for
+    catalog revisions; for an MCP endpoint version they are ``None`` (not assessed), so a level
+    that requires them is blocked with ``reason: not_assessed`` rather than passed.
+
+    Args:
+        tenant_id: The subject's tenant.
+        subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.
+        subject_id: The revision or MCP version id.
+        project_id: The revision's project (``None`` for MCP).
+        ladder: The pack's ``{name, levels}`` ladder, or ``None``.
+
+    Returns:
+        ``{kind: True | False | None}`` for each required kind.
+    """
+    out: Dict[str, Optional[bool]] = {}
+    for kind in _required_evidence(ladder):
+        value: Optional[bool] = None
+        if subject_type == SUBJECT_CATALOG_REVISION and project_id:
+            try:
+                if kind == EVIDENCE_REVIEW_APPROVED:
+                    value = _review_approved(tenant_id, project_id, subject_id)
+                elif kind == EVIDENCE_VERIFICATION_PASSING:
+                    value = _verification_passing(tenant_id, subject_id)
+            except Exception:  # noqa: BLE001 - unreadable evidence is not assessed, not a 500
+                logger.warning(
+                    "Could not read %s evidence for %s %s", kind, subject_type, subject_id,
+                    exc_info=True,
+                )
+                value = None
+        out[kind] = value
+    return out
+
+
+def maturity_gate_result(
+    *,
+    policy_version: Mapping[str, Any],
+    findings: Sequence[Mapping[str, Any]],
+    axes: Optional[Sequence[Mapping[str, Any]]],
+    decisions_by_fingerprint: Mapping[str, Mapping[str, Any]],
+    evidence: Optional[Mapping[str, Optional[bool]]],
+) -> Optional[Dict[str, Any]]:
+    """Judge the pack's ladder, or return ``None`` when the pack has no ladder.
+
+    The one call every evaluation path makes (``build_lint_policy_response`` and the lint
+    gate), so ``gate_results.maturity`` is always produced by :func:`evaluate_ladder`.
+    """
+    ladder = ladder_from_row(policy_version.get("ladder"))
+    if ladder is None:
+        return None
+    return evaluate_ladder(
+        findings, axes, decisions_by_fingerprint, ladder, evidence=evidence
+    )
+
+
 def build_lint_policy_response(
     *,
     tenant_id: str,
@@ -224,8 +362,14 @@ def build_lint_policy_response(
     evidence_fingerprint: Optional[str],
     decisions: Sequence[Mapping[str, Any]],
     persist: bool = True,
+    evidence: Optional[Mapping[str, Optional[bool]]] = None,
 ) -> LintPolicyResponse:
-    """Evaluate policy, optionally persist, and shape the API response."""
+    """Evaluate policy, optionally persist, and shape the API response.
+
+    When the pack carries a ladder, ``gate_results.maturity`` holds the level result
+    (GVM-1.2) judged with ``evidence`` (see :func:`ladder_evidence`). Persisting unchanged
+    inputs returns the stored evaluation's id and time.
+    """
     fps = [
         str(f.get("source_fingerprint") or f.get("id") or "")
         for f in findings
@@ -242,8 +386,19 @@ def build_lint_policy_response(
         rules_snapshot=policy_version.get("rules_snapshot") or [],
         content_fingerprint=str(policy_version["content_fingerprint"]),
     )
+    gate_results = dict(evaluation.gate_results)
+    maturity = maturity_gate_result(
+        policy_version=policy_version,
+        findings=findings,
+        axes=axes,
+        decisions_by_fingerprint=by_fp,
+        evidence=evidence,
+    )
+    if maturity is not None:
+        gate_results["maturity"] = maturity
 
     eval_id: Optional[str] = None
+    evaluated_at: Optional[str] = None
     if persist:
         row = {
             "subject_type": subject_type,
@@ -259,13 +414,18 @@ def build_lint_policy_response(
             "axis_evaluation_id": axis_evaluation_id,
             "evidence_fingerprint": evidence_fingerprint,
             "passed": evaluation.passed,
-            "gate_results": evaluation.gate_results,
+            "gate_results": gate_results,
             "finding_decisions": list(evaluation.finding_decisions),
+            "maturity_level": maturity.get("level") if maturity else None,
         }
         try:
-            eval_id = db.record_lint_policy_evaluation(row)
+            stored = db.record_lint_policy_evaluation_row(row)
         except Exception:  # noqa: BLE001 - persistence is best-effort on read path
-            eval_id = None
+            stored = None
+        if stored:
+            eval_id = str(stored["id"])
+            stamp = stored.get("evaluated_at")
+            evaluated_at = stamp.isoformat() if hasattr(stamp, "isoformat") else stamp
 
     policy_out = style_guide_policy_version_out_from_row(policy_version)
     eval_out = LintPolicyEvaluationOut(
@@ -275,8 +435,8 @@ def build_lint_policy_response(
         policy_version_id=str(policy_version["id"]),
         policy_content_fingerprint=evaluation.policy_content_fingerprint,
         passed=evaluation.passed,
-        gate_results=evaluation.gate_results,
-        evaluated_at=None,
+        gate_results=gate_results,
+        evaluated_at=evaluated_at,
     )
 
     annotated: List[LintPolicyAnnotatedFindingOut] = []
@@ -358,6 +518,13 @@ def evaluate_catalog_revision_policy(
     decisions = db.list_lint_finding_decisions(
         tenant_id, project_id=project_id, fingerprints=fps or None
     )
+    evidence = ladder_evidence(
+        tenant_id=tenant_id,
+        subject_type=SUBJECT_CATALOG_REVISION,
+        subject_id=version_record_id,
+        project_id=project_id,
+        ladder=ladder_from_row(pack.get("ladder")),
+    )
 
     return build_lint_policy_response(
         tenant_id=tenant_id,
@@ -371,6 +538,7 @@ def evaluate_catalog_revision_policy(
         axis_evaluation_id=axis_id,
         evidence_fingerprint=evidence_fp,
         decisions=decisions,
+        evidence=evidence,
     )
 
 
@@ -401,6 +569,13 @@ def evaluate_mcp_version_policy(
         if f.get("source_fingerprint")
     ]
     decisions = db.list_lint_finding_decisions(tenant_id, fingerprints=fps or None)
+    evidence = ladder_evidence(
+        tenant_id=tenant_id,
+        subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+        subject_id=version_id,
+        project_id=None,
+        ladder=ladder_from_row(pack.get("ladder")),
+    )
 
     return build_lint_policy_response(
         tenant_id=tenant_id,
@@ -414,13 +589,87 @@ def evaluate_mcp_version_policy(
         axis_evaluation_id=axis_id,
         evidence_fingerprint=evidence_fp,
         decisions=decisions,
+        evidence=evidence,
+    )
+
+
+def level_response(policy: LintPolicyResponse) -> LintLevelResponse:
+    """Project a policy evaluation onto the ``GET …/lint/level`` response (GVM-1.2).
+
+    The level comes from the evaluation's ``gate_results.maturity``; a pack without a ladder
+    carries none, and the response says ``level: null, reason: no-ladder``.
+    """
+    evaluation = policy.evaluation
+    maturity = evaluation.gate_results.get("maturity")
+    result = dict(maturity) if isinstance(maturity, Mapping) else no_ladder_result()
+    return LintLevelResponse(
+        subject_type=evaluation.subject_type,
+        subject_id=evaluation.subject_id,
+        evaluation_id=evaluation.id,
+        evaluated_at=evaluation.evaluated_at,
+        policy_version_id=evaluation.policy_version_id,
+        policy_content_fingerprint=evaluation.policy_content_fingerprint,
+        ladder_name=result.get("ladderName"),
+        level=result.get("level"),
+        level_label=result.get("levelLabel"),
+        level_index=result.get("levelIndex"),
+        next_level=result.get("nextLevel"),
+        next_level_label=result.get("nextLevelLabel"),
+        blockers=[LintLevelBlockerOut.model_validate(b) for b in result.get("blockers") or []],
+        waivers_counted=int(result.get("waiversCounted") or 0),
+        unassessed_axes=list(result.get("unassessedAxes") or []),
+        reason=result.get("reason"),
+    )
+
+
+def evaluate_catalog_revision_level(
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_record_id: str,
+    policy_version_id: Optional[str] = None,
+) -> LintLevelResponse:
+    """The maturity level of a catalog revision for ``GET …/lint/level`` (GVM-1.2).
+
+    Stored-first: the policy evaluation is recomputed from current evidence, and when nothing
+    changed the stored row is returned with its original id and time; only a changed input
+    (evidence, axes, a decision, the pack) records a new evaluation.
+    """
+    return level_response(
+        evaluate_catalog_revision_policy(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_record_id=version_record_id,
+            policy_version_id=policy_version_id,
+        )
+    )
+
+
+def evaluate_mcp_version_level(
+    *,
+    tenant_id: str,
+    version_id: str,
+    policy_version_id: Optional[str] = None,
+) -> LintLevelResponse:
+    """The maturity level of an MCP endpoint version for ``GET …/lint/level`` (GVM-1.2)."""
+    return level_response(
+        evaluate_mcp_version_policy(
+            tenant_id=tenant_id,
+            version_id=version_id,
+            policy_version_id=policy_version_id,
+        )
     )
 
 
 __all__ = [
     "build_lint_policy_response",
     "ensure_latest_policy_pack",
+    "evaluate_catalog_revision_level",
     "evaluate_catalog_revision_policy",
+    "evaluate_mcp_version_level",
     "evaluate_mcp_version_policy",
+    "ladder_evidence",
+    "level_response",
+    "maturity_gate_result",
     "snapshot_style_guide_policy",
 ]

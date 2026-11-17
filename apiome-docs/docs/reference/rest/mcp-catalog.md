@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 97 operations."
+description: "REST endpoints tagged mcp-catalog: 98 operations."
 sidebar_position: 54
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.591.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.592.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 97 operations
+Tag: `mcp-catalog` · 98 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -2652,6 +2652,35 @@ Operation id: `get_mcp_endpoint_version_lint_gate_v1_mcp__tenant_slug__endpoints
 | 200 | Successful response for get mcp endpoint version lint gate. | `application/json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/level` {#get-mcp-endpoint-version-lint-level-v1-mcp-tenant-slug-endpoints-endpoint-id-versions-version-id-lint-level-get}
+
+**Get Mcp Endpoint Version Lint Level**
+
+The MCP version's maturity level under the tenant guide's ladder (GVM-1.2, #5855).
+
+Same contract as the catalog-revision read. Review and verification evidence do not exist
+for MCP versions, so a level that requires them is blocked as ``not_assessed``.
+
+Operation id: `get_mcp_endpoint_version_lint_level_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_level_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `version_id` | path | string (uuid) | yes | Version identifier or semantic version label, depending on the route. |
+| `policyVersionId` | query | string or null | no | Optional historical policy pack id; defaults to the latest for the assigned guide. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get mcp endpoint version lint level. | `application/json` [`LintLevelResponse`](#schema-lintlevelresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/policy` {#get-mcp-endpoint-version-lint-policy-v1-mcp-tenant-slug-endpoints-endpoint-id-versions-version-id-lint-policy-get}
 
 **Get Mcp Endpoint Version Lint Policy**
@@ -3186,6 +3215,29 @@ All lint evidence for one catalog revision or MCP endpoint version (CLX-1.1, #48
 | `runs` | array of `LintEvidenceRunOut` | no | Immutable evidence runs, most recent first. |
 | `coverage` | array of `LintEvidenceCoverageOut` | no | Per-scanner coverage: expected scanners first, then any additional scanners with historical runs. Never-run scanners appear as not_run — never as clean. |
 | `count` | integer | yes | Number of evidence runs (== len(runs)). |
+
+### `LintLevelResponse` {#schema-lintlevelresponse}
+
+``GET …/lint/level``: a subject's maturity level under its policy pack (GVM-1.2, #5855).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `subjectType` | string | yes | Subject Type. |
+| `subjectId` | string | yes | Subject ID. |
+| `evaluationId` | string or null | no | The persisted `lint_policy_evaluations` row; unchanged inputs return the same id. |
+| `evaluatedAt` | string or null | no | Evaluated At. |
+| `policyVersionId` | string | yes | Policy Version ID. |
+| `policyContentFingerprint` | string | yes | Policy Content Fingerprint. |
+| `ladderName` | string or null | no | Ladder Name. |
+| `level` | string or null | no | Key of the highest level satisfied; null when none is or there is no ladder. |
+| `levelLabel` | string or null | no | Level Label. |
+| `levelIndex` | integer or null | no | Position of `level` in the ladder (0 = lowest). |
+| `nextLevel` | string or null | no | The level above `level`; null at the top or without a ladder. |
+| `nextLevelLabel` | string or null | no | Next Level Label. |
+| `blockers` | array of `LintLevelBlockerOut` | no | What keeps the subject from `nextLevel`. |
+| `waiversCounted` | integer | no | Waived findings the satisfied levels excused. |
+| `unassessedAxes` | array of string | no | Axes the ladder names that were never assessed for this subject. |
+| `reason` | string or null | no | `no-ladder` or `below-first-level` when `level` is null; null otherwise. |
 
 ### `LintPolicyResponse` {#schema-lintpolicyresponse}
 

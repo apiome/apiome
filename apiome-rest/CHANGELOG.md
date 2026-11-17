@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.732.0] - 2026-11-16
+
+### Added
+- **Maturity-level evaluation engine (GVM-1.2, #5855)** — OpenAPI 1.592.0:
+  - `app.maturity_ladder.evaluate_ladder(findings, axes, decisions, ladder, *, evidence, now)` (pure): walks
+    the levels lowest first against each level's accumulated requirements and stops at the first unmet one;
+    returns `{ladderName, level, levelLabel, levelIndex, nextLevel, nextLevelLabel, blockers[{levelKey, kind:
+    rule|axis|evidence, ruleId|axis|evidence, count, sample[], reason?}], waiversCounted, unassessedAxes,
+    reason}`. Unassessed axes block with `reason: not_assessed`; `fixed` / `false_positive` findings never
+    count; `waived` ones count unless the level's `waiversSatisfy` is on. No ladder → `level: null, reason:
+    no-ladder`; no level met → `reason: below-first-level`.
+  - Evidence (`app.lint_policy_service.ladder_evidence`): `review_approved` from the COL-2.3 approval gate (one
+    approval when the guide sets none), `verification_passing` from the latest verification-policy evaluation;
+    `null` (not assessed) for MCP versions and on a read fault.
+  - `build_lint_policy_response` and the lint gate store the result as `gate_results.maturity` and in apiome-db
+    **V391**'s new `lint_policy_evaluations.maturity_level` column (indexed with `evaluated_at`); packs without a
+    ladder store no maturity block. `LintPolicyEvaluationOut.evaluatedAt` is now filled.
+  - `record_lint_policy_evaluation` returns the stored row's id when subject, pack, evidence, axis evaluation,
+    gate results and finding decisions are unchanged (previously `null`), and appends a row when any of them
+    changed (previously a changed decision or axis evaluation was not recorded).
+  - `GET /v1/versions/{t}/{p}/{v}/lint/level` and `GET /v1/mcp/{t}/endpoints/{e}/versions/{v}/lint/level`
+    (`LintLevelResponse`, `?policyVersionId=`).
+
+### Changed
+- Ladder levels (GVM-1.1): an omitted `waiversSatisfy` defaults to `true` on every level but the last (was
+  `false`); the default template's Gold level now asks for waived findings to be fixed (GVM-1.2, #5855).
+
 ## [1.731.0] - 2026-11-16
 
 ### Added

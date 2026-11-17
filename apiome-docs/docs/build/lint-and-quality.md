@@ -203,6 +203,22 @@ Content-Type: application/json
 Strictly validates a [Spectral-compatible custom-rule guide](./custom-rules.md) and echoes the
 parsed rules; a malformed guide returns HTTP 422 with a pointer to the offending YAML node.
 
+### The maturity level
+
+When the style guide carries a [maturity ladder](../govern/maturity-ladders.mdx), the revision's
+level — Bronze, Silver, Gold or whatever the ladder names — and what blocks the next one are a
+separate read:
+
+```http
+GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/level
+X-API-Key: <your-api-key>
+```
+
+It answers `level`, `nextLevel`, the `blockers` (rule findings over a level's limit, axes below a
+floor or never assessed, missing evidence) and the policy `evaluationId` the level is stored on.
+Without a ladder it answers `level: null` and `reason: no-ladder`. MCP server versions have the
+same read at `/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/level`.
+
 ## Style guides govern every lint run
 
 Every lint entry point — the editor/CLI lint above, the catalog item lint, the quality score

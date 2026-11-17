@@ -10,6 +10,8 @@ Gold). Each level states, on top of everything the levels below it require:
 * **axes** — ``[{axis, minGrade?, minScore?}]``: CLX axis floors (the axis must be assessed);
 * **evidence** — required evidence (``review_approved`` | ``verification_passing``);
 * **waiversSatisfy** — whether an effective waiver counts as satisfying a rule requirement.
+  When omitted it is ``true`` on every level but the last (GVM-1.2, #5855): the top level asks
+  for findings to be fixed, not waived.
 
 Ladders are **cumulative**: level *n* implicitly includes every requirement of level *n−1*, so a
 level lists only what it adds. :func:`validate_ladder` enforces that by refusing a level that
@@ -147,6 +149,7 @@ def _normalize_level(
     *,
     registered_rule_ids: frozenset,
     axis_keys: frozenset,
+    is_last: bool = False,
 ) -> Dict[str, Any]:
     """Validate one level's own content (not the cumulative rule) and canonicalize it.
 
@@ -155,6 +158,7 @@ def _normalize_level(
         index: Its position in ``levels`` (for the pointer).
         registered_rule_ids: Every rule id the ladder may reference.
         axis_keys: Every axis key the ladder may reference.
+        is_last: Whether this is the top level, which decides the ``waiversSatisfy`` default.
 
     Returns:
         The level with rules sorted by ``ruleId``, axes by ``axis`` and evidence de-duplicated
@@ -283,7 +287,9 @@ def _normalize_level(
         if kind not in evidence:
             evidence.append(kind)
 
-    waivers = _field(raw, "waiversSatisfy", "waivers_satisfy", False)
+    waivers = _field(raw, "waiversSatisfy", "waivers_satisfy", None)
+    if waivers is None:
+        waivers = not is_last
     if not isinstance(waivers, bool):
         raise LadderValidationError(
             CODE_INVALID,
@@ -417,7 +423,11 @@ def validate_ladder(
     seen_keys: set = set()
     for index, raw_level in enumerate(raw_levels):
         level = _normalize_level(
-            raw_level, index, registered_rule_ids=rule_ids, axis_keys=axes
+            raw_level,
+            index,
+            registered_rule_ids=rule_ids,
+            axis_keys=axes,
+            is_last=index == len(raw_levels) - 1,
         )
         if level["key"] in seen_keys:
             raise LadderValidationError(
@@ -445,7 +455,8 @@ def default_ladder_template(
     * **Gold** — Silver, plus quality ≥ A, the security axis assessed at A with every security
       rule clean (``none``), and an approved review.
 
-    Waivers satisfy rule requirements at every level. The template is never applied to a
+    Waivers satisfy rule requirements at Bronze and Silver; Gold takes the top-level default
+    and asks for waived findings to be fixed (GVM-1.2, #5855). The template is never applied to a
     tenant: it is returned beside the built-in guide's ``ladder: null`` so an editor can start
     from it.
 
@@ -475,14 +486,12 @@ def default_ladder_template(
                 "key": "bronze",
                 "label": "Bronze",
                 "rules": capped(others, "warning"),
-                "waiversSatisfy": True,
             },
             {
                 "key": "silver",
                 "label": "Silver",
                 "rules": capped(documentation, "warning"),
                 "axes": [{"axis": "quality", "minGrade": "B"}],
-                "waiversSatisfy": True,
             },
             {
                 "key": "gold",
@@ -493,7 +502,6 @@ def default_ladder_template(
                     {"axis": "security", "minGrade": "A"},
                 ],
                 "evidence": ["review_approved"],
-                "waiversSatisfy": True,
             },
         ],
     }

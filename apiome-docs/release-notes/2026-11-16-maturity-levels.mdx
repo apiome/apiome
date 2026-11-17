@@ -1,0 +1,30 @@
+---
+slug: maturity-levels
+title: Read a version's maturity level
+description: "Every policy evaluation now reports the ladder level reached and what blocks the next."
+authors: [apiome]
+---
+
+When a style guide carries a [maturity ladder](/govern/maturity-ladders), every version and MCP
+server version scored under it now has a **level**: the highest one it meets, the next one, and
+what keeps it from that next level.
+
+{/* truncate */}
+
+- **Read it over REST.** `GET /v1/versions/{tenant}/{project}/{version}/lint/level` and
+  `GET /v1/mcp/{tenant}/endpoints/{endpoint}/versions/{version}/lint/level` return `level`,
+  `nextLevel`, the `blockers`, `waiversCounted` and `unassessedAxes`.
+- **Blockers say why.** A rule blocker counts the findings over the level's limit and samples
+  three. An axis blocker gives the floor and the grade, or `not_assessed` when the axis was never
+  scored, because an unassessed axis is never treated as clean. An evidence blocker says whether the
+  approved review or passing verification is `missing` or `not_assessed`.
+- **Waivers per level.** A waived finding satisfies a rule on a level whose `waiversSatisfy` is
+  on. Leave the setting out and it is on for every level except the top one, so the default Gold
+  level asks for waived findings to be fixed.
+- **Stored with the evaluation.** The level is part of the policy evaluation
+  (`gateResults.maturity` on `…/lint/policy` and `…/lint/gate`). Reading it again with nothing
+  changed returns the same `evaluationId`.
+- **No ladder, no level.** A guide without a ladder answers `level: null` with
+  `reason: no-ladder`.
+
+A level does not block publishing or deploys yet.

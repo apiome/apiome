@@ -430,3 +430,45 @@ def test_mcp_gate_smoke():
     # A lone warning is not an unwaived error: the gate passes.
     assert body["gate"]["passed"] is True
     assert body["scanners"][0]["scannerId"] == "apiome.mcp-lint"
+
+
+# ---------------------------------------------------------------------------
+# Maturity level (GVM-1.2, #5855)
+# ---------------------------------------------------------------------------
+
+
+def test_gate_with_a_laddered_pack_records_the_same_maturity_block():
+    ladder = {
+        "name": "Maturity",
+        "levels": [
+            {
+                "key": "bronze",
+                "label": "Bronze",
+                "rules": [{"ruleId": "naming.rule", "maxSeverity": "warning"}],
+                "axes": [],
+                "evidence": [],
+                "waiversSatisfy": True,
+            }
+        ],
+    }
+    stack = _gate_patches([_run("r1", "apiome.lint", [_finding("fp-a")], "2026-07-01")])
+    stack[2] = patch("app.lint_gate.resolve_policy_pack", return_value={**PACK, "ladder": ladder})
+    with stack[0], stack[1], stack[2], stack[3], stack[4], stack[5], stack[6], stack[7] as record, stack[8]:
+        r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint/gate")
+    assert r.status_code == 200
+    row = record.call_args.args[0]
+    maturity = row["gate_results"]["maturity"]
+    # fp-a is an error of naming.rule, capped at warning: Bronze is not met.
+    assert maturity["level"] is None and maturity["nextLevel"] == "bronze"
+    assert maturity["blockers"][0]["ruleId"] == "naming.rule"
+    assert row["maturity_level"] is None
+    assert r.json()["evaluation"]["gateResults"]["maturity"]["reason"] == "below-first-level"
+
+
+def test_gate_without_a_ladder_records_no_maturity_block():
+    stack = _gate_patches([_run("r1", "apiome.lint", [_finding("fp-a")], "2026-07-01")])
+    with stack[0], stack[1], stack[2], stack[3], stack[4], stack[5], stack[6], stack[7] as record, stack[8]:
+        client.get(f"/v1/versions/acme/{PID}/{VID}/lint/gate")
+    row = record.call_args.args[0]
+    assert "maturity" not in row["gate_results"]
+    assert row["maturity_level"] is None
