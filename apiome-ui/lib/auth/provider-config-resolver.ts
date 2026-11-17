@@ -111,6 +111,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   slack: { clientId: 'SLACK_CLIENT_ID', clientSecret: 'SLACK_CLIENT_SECRET' },
   // LinkedIn (OLO-9.18, #5031): credentials-only; fixed OIDC discovery document, no issuer extra.
   linkedin: { clientId: 'LINKEDIN_CLIENT_ID', clientSecret: 'LINKEDIN_CLIENT_SECRET' },
+  // Discord (OLO-9.19, #5032): credentials-only; fixed endpoints, no issuer extra.
+  discord: { clientId: 'DISCORD_CLIENT_ID', clientSecret: 'DISCORD_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

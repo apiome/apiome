@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -55,6 +55,9 @@
  *  - **LinkedIn (OLO-9.18):** Sign In with LinkedIn over LinkedIn's fixed OIDC discovery document
  *    (`www.linkedin.com/oauth/.well-known/openid-configuration`), scopes `openid profile email`;
  *    native `email_verified` claim fail-closed via `resolveOAuthEmailVerified`.
+ *  - **Discord (OLO-9.19):** fixed Discord endpoints (`discord.com/api/oauth2`,
+ *    `discord.com/api/users/@me`), scopes `identify email`; the profile's `verified` flag is
+ *    normalized to `email_verified`, so an unverified Discord address is refused.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -533,6 +536,13 @@ const SLACK_USER_ID_CLAIM = 'https://slack.com/user_id';
 const LINKEDIN_DISCOVERY_URL = 'https://www.linkedin.com/oauth/.well-known/openid-configuration';
 const LINKEDIN_USERINFO_URL = 'https://api.linkedin.com/v2/userinfo';
 
+/** Discord OAuth 2.0: fixed endpoints, mirrored from Better Auth's `discord` provider (OLO-9.19). */
+const DISCORD_AUTHORIZE_URL = 'https://discord.com/api/oauth2/authorize';
+const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
+const DISCORD_USERINFO_URL = 'https://discord.com/api/users/@me';
+/** Discord's image CDN, which serves user avatars and the default (embed) avatars. */
+const DISCORD_CDN_URL = 'https://cdn.discordapp.com';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -891,6 +901,68 @@ async function normalizeLinkedin(
   };
 }
 
+/**
+ * Build a Discord user's avatar URL the way Better Auth's `discord` provider does: the uploaded
+ * avatar (`a_`-prefixed hashes are animated, so `.gif`) or, when none is set, one of Discord's
+ * default avatars — indexed by the user id for the current username system (discriminator `0`)
+ * and by the discriminator for legacy accounts.
+ *
+ * @param profile The `/users/@me` body.
+ * @returns The avatar URL, or null when the profile has no usable id.
+ */
+function discordAvatarUrl(profile: Record<string, unknown>): string | null {
+  const id = typeof profile.id === 'string' ? profile.id : '';
+  if (!/^\d+$/.test(id)) return null;
+  if (typeof profile.avatar === 'string' && profile.avatar) {
+    const format = profile.avatar.startsWith('a_') ? 'gif' : 'png';
+    return `${DISCORD_CDN_URL}/avatars/${id}/${profile.avatar}.${format}`;
+  }
+  const discriminator = typeof profile.discriminator === 'string' ? profile.discriminator : '0';
+  const legacyIndex = Number.parseInt(discriminator, 10) % 5;
+  const index =
+    discriminator === '0' || Number.isNaN(legacyIndex)
+      ? Number((BigInt(id) >> BigInt(22)) % BigInt(6))
+      : legacyIndex;
+  return `${DISCORD_CDN_URL}/embed/avatars/${index}.png`;
+}
+
+/**
+ * Normalize a Discord sign-in (OLO-9.19): fetch `/users/@me` with the access token and map `id`
+ * / `email` / `global_name` / avatar. Discord reports whether the account's email is verified as
+ * the boolean `verified`; it is stamped onto the profile as `email_verified` — true only when
+ * `verified` is exactly `true` — so `resolveOAuthEmailVerified` refuses an unverified address
+ * (`unverified-email`). Any `email_verified` field in the body itself is overwritten, never
+ * trusted. The identity is keyed on the user id (a snowflake); the mutable `username` is never
+ * the key. A failed fetch yields an empty profile (no account id, no email), which the engine
+ * refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeDiscord(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(DISCORD_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const profile: Record<string, unknown> =
+    body && typeof body === 'object' ? { ...(body as object) } : {};
+  profile.email_verified = profile.verified === true;
+  return {
+    accountId: typeof profile.id === 'string' ? profile.id : '',
+    profile,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    name:
+      (typeof profile.global_name === 'string' && profile.global_name) ||
+      (typeof profile.username === 'string' && profile.username) ||
+      null,
+    image: discordAvatarUrl(profile),
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -932,6 +1004,7 @@ const NORMALIZERS: Record<
   bitbucket: (tokens, _env, fetchImpl) => normalizeBitbucket(tokens, fetchImpl),
   slack: (tokens, _env, fetchImpl) => normalizeSlack(tokens, fetchImpl),
   linkedin: (tokens, _env, fetchImpl) => normalizeLinkedin(tokens, fetchImpl),
+  discord: (tokens, _env, fetchImpl) => normalizeDiscord(tokens, fetchImpl),
 };
 
 /**
@@ -964,7 +1037,8 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * own account handling sees the identical verified signal the engine decided over.
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
- *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin).
+ *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
+ *   discord).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1331,6 +1405,26 @@ export function buildGenericOAuthConfig(
         discoveryUrl: LINKEDIN_DISCOVERY_URL,
         scopes: ['openid', 'profile', 'email'],
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'discord': {
+      return {
+        providerId: 'discord',
+        clientId: readEnvString(env, 'DISCORD_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'DISCORD_CLIENT_SECRET') ?? '',
+        // Fixed Discord OAuth 2.0 endpoints, mirrored from Better Auth's `discord()` helper — no
+        // issuer. `identify` returns the user, `email` adds the address and its `verified` flag
+        // (see normalizeDiscord). Like the helper, this confidential client sends no PKCE
+        // challenge (it authenticates the code exchange with the client secret, and Better Auth
+        // enforces `state`) and asks with `prompt=none`, so a person who has already authorized
+        // the application is not shown Discord's consent screen again.
+        authorizationUrl: DISCORD_AUTHORIZE_URL,
+        tokenUrl: DISCORD_TOKEN_URL,
+        userInfoUrl: DISCORD_USERINFO_URL,
+        scopes: ['identify', 'email'],
+        pkce: false,
+        prompt: 'none',
         getUserInfo,
       };
     }

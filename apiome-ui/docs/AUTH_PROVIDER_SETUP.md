@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -127,6 +127,8 @@ config is stored in the database need none of them set; see
 | `SLACK_CLIENT_SECRET` | Slack | To enable Slack | Slack app **Client Secret** |
 | `LINKEDIN_CLIENT_ID` | LinkedIn | To enable LinkedIn | LinkedIn app **Client ID** |
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn | To enable LinkedIn | LinkedIn app **Primary Client Secret** |
+| `DISCORD_CLIENT_ID` | Discord | To enable Discord | Discord application **Client ID** |
+| `DISCORD_CLIENT_SECRET` | Discord | To enable Discord | Discord application **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -210,7 +212,7 @@ links an account.
 | `wechat` | **link-only** | OLO-9.43 | yes | No email; identity is keyed on `openid` / `unionid` |
 | `slack` | **trusted** | OLO-9.17 | yes | `email_verified` claim (Sign in with Slack, OIDC) |
 | `linkedin` | **trusted** | OLO-9.18 | yes | `email_verified` claim (Sign In with LinkedIn, OIDC) |
-| `discord` | **trusted** | OLO-9.19 | no | `verified` on `/users/@me` |
+| `discord` | **trusted** | OLO-9.19 | yes | `verified` on `/users/@me` |
 | `salesforce` | **trusted** | OLO-9.20 | no | `email_verified` claim |
 | `notion` | **link-first** | OLO-9.21 | no | Owner-user email from the token exchange, no verified claim |
 | `figma` | **link-first** | OLO-9.22 | no | `/v1/me` email, no verified claim |
@@ -883,6 +885,42 @@ member's primary LinkedIn email.
 it is absent or false the engine fail-closes (**link-first** — explicit link intent or an
 already-bound identity). A sign-in with no `email` claim surfaces `email-required`.
 
+## Discord (OLO-9.19)
+
+For developer communities whose members already have a Discord account.
+
+1. On the [Discord Developer Portal](https://discord.com/developers/applications), choose **New
+   Application** and name it (or open an existing application). The name and icon are what
+   people see on Discord's consent screen.
+2. Open **OAuth2**. Under **Redirects**, choose **Add Redirect**, enter the callback URL and
+   **Save Changes**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/discord`
+3. Still on **OAuth2**, under **Client information**, copy the **Client ID**, then choose **Reset
+   Secret** and copy the **Client Secret** — Discord shows it once.
+4. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+DISCORD_CLIENT_ID=<Client ID>
+DISCORD_CLIENT_SECRET=<Client Secret>
+```
+
+No bot, and no scope selection in the portal, is needed: Apiome asks for the scopes at sign-in.
+Discord's endpoints are fixed, so there is no issuer to configure:
+
+- Authorize: `https://discord.com/api/oauth2/authorize` with the `identify email` scopes and
+  `prompt=none` (a person who has already authorized the application is not asked again)
+- Token: `https://discord.com/api/oauth2/token` — the client secret is sent in the request body;
+  no PKCE challenge is sent
+- User: `https://discord.com/api/users/@me`
+
+The identity is keyed on the Discord user id (`id`, a snowflake); the username can change and is
+never the key. The display name is `global_name`, falling back to `username`.
+**Email verified semantics:** Discord reports the boolean `verified` on `/users/@me`; Apiome
+normalizes it to `email_verified`, true only when `verified` is exactly `true`. An unverified
+address is rejected with `unverified-email` unless the person is linking Discord explicitly or
+the identity is already bound (**link-first**). An account with no email address surfaces
+`email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1055,7 +1093,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack and LinkedIn need no issuer.) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn and Discord need no issuer.) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

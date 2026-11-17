@@ -29,11 +29,11 @@ _SNAPSHOT_PATH = (
 
 def test_registry_ids_and_order_match_ui_and_v196():
     """Slugs and display order mirror PROVIDER_REGISTRY (UI) and the V196 CHECK list."""
-    assert known_provider_ids() == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin"]
+    assert known_provider_ids() == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord"]
 
 
 def test_available_vs_coming_soon_status():
-    """github/gitlab/azure/google/okta/aws/keycloak/oidc/auth0/line/vk/wechat/atlassian/bitbucket/slack/linkedin are available; no coming-soon placeholders remain."""
+    """github/gitlab/azure/google/okta/aws/keycloak/oidc/auth0/line/vk/wechat/atlassian/bitbucket/slack/linkedin/discord are available; no coming-soon placeholders remain."""
     status = {p.id: p.status for p in PROVIDER_REGISTRY}
     assert status["github"] == STATUS_AVAILABLE
     assert status["gitlab"] == STATUS_AVAILABLE
@@ -51,6 +51,7 @@ def test_available_vs_coming_soon_status():
     assert status["bitbucket"] == STATUS_AVAILABLE
     assert status["slack"] == STATUS_AVAILABLE
     assert status["linkedin"] == STATUS_AVAILABLE
+    assert status["discord"] == STATUS_AVAILABLE
     assert all(p.status == STATUS_AVAILABLE for p in PROVIDER_REGISTRY)
 
 
@@ -103,6 +104,7 @@ def test_lookup_known_and_unknown():
     assert get_provider_descriptor("bitbucket").label == "Bitbucket"
     assert get_provider_descriptor("slack").label == "Slack"
     assert get_provider_descriptor("linkedin").label == "LinkedIn"
+    assert get_provider_descriptor("discord").label == "Discord"
     assert get_provider_descriptor("not-a-provider") is None
 
 

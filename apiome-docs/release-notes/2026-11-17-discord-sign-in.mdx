@@ -1,0 +1,26 @@
+---
+slug: discord-sign-in
+title: Sign in with Discord
+description: "People can now sign in and link with their Discord account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Discord account, and link Discord beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Discord** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and **Client Secret** of a Discord application — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Discord's side. The environment variables are `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/discord`, added under
+  **Redirects** on the application's **OAuth2** page.
+- **Scopes.** Apiome asks for **`identify`** and **`email`** at sign-in. Nothing needs selecting
+  in the Developer Portal, and no bot is needed.
+- **Email addresses.** Discord is a **Trusted** provider: a sign-in joins the account with the
+  same address, or starts a new one, only when the Discord account's email address is verified.
+  An unverified address is refused. To use such an account, verify the address in Discord, or
+  sign in another way first and link Discord from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `discord` as an available provider, and
+  `PUT /v1/admin/auth-providers/discord` stores its credentials.
