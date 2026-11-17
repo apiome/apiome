@@ -8,13 +8,14 @@ providers' *verified* domains are routable, that the plugin's fallback model is 
 that ``external_auth_providers`` accepts ``sso:<slug>``.
 
 Runs inside one always-rolled-back transaction (the ``tx`` fixture of ``test_usage_index_db``);
-V312 and V393 are applied inside that transaction when the database does not have them yet, so
-nothing persists. Skipped when no database is reachable.
+V312, V393 and V394 are applied inside that transaction when the database does not have them yet,
+so nothing persists. Skipped when no database is reachable.
 """
 
 from __future__ import annotations
 
 import pathlib
+import uuid
 from typing import Any, Tuple
 
 import psycopg2
@@ -31,6 +32,7 @@ pytestmark = pytest.mark.requires_db
 _SCRIPTS = pathlib.Path(__file__).resolve().parents[2] / "apiome-db" / "scripts"
 MIGRATION = _SCRIPTS / "V312__sso_providers_5011.sql"
 DOMAIN_MIGRATION = _SCRIPTS / "V393__sso_domain_verification_5012.sql"
+JIT_MIGRATION = _SCRIPTS / "V394__sso_jit_provisioning_5013.sql"
 
 OIDC_CONFIG = {"client_id": "apiome", "jwks_uri": "https://idp.example.com/certs"}
 SAML_CONFIG = {"idp_entity_id": "https://idp.example.com/saml", "email_source": "nameid"}
@@ -45,10 +47,27 @@ def sso(tx: Tuple[Any, Any]):
     cursor.execute("SELECT to_regclass('apiome.sso_provider_domain_verified_uq') AS i")
     if not cursor.fetchone()["i"]:
         cursor.execute(DOMAIN_MIGRATION.read_text(encoding="utf-8"))
+    cursor.execute(
+        "SELECT 1 AS present FROM pg_constraint WHERE conname = 'sso_provider_tenant_required_ck' "
+        "AND conrelid = 'apiome.sso_provider'::regclass"
+    )
+    if not cursor.fetchone():
+        cursor.execute(JIT_MIGRATION.read_text(encoding="utf-8"))
     return db, cursor
 
 
+def _workspace(db) -> str:
+    """A fresh workspace's id (V394: a provider always belongs to one)."""
+    suffix = uuid.uuid4().hex[:10]
+    rows = db.execute_query(
+        "INSERT INTO apiome.tenants (name, slug) VALUES (%s, %s) RETURNING id::text AS id",
+        (f"sso {suffix}", f"sso-{suffix}"),
+    )
+    return rows[0]["id"]
+
+
 def _oidc(db, slug="acme-okta", **extra):
+    extra.setdefault("tenant_id", _workspace(db))
     return store.create_provider(
         db,
         {
@@ -205,21 +224,25 @@ def test_a_slug_is_unique(sso) -> None:
     _savepoint(cursor, again)
 
 
+#: A provider insert that names a workspace, so each case below fails for its own reason only.
+_INSERT = "INSERT INTO apiome.sso_provider (tenant_id, slug, protocol, display_name, issuer, "
+_WORKSPACE = "(SELECT id FROM apiome.tenants LIMIT 1)"
+
+
 @pytest.mark.parametrize(
     "sql",
     [
         # A slug too long for `sso:<slug>` in VARCHAR(32), or the wrong shape.
-        "INSERT INTO apiome.sso_provider (slug, protocol, display_name, issuer, oidc_config) VALUES ('"
-        + "a" * 29
-        + "', 'oidc', 'x', 'i', '{}')",
-        "INSERT INTO apiome.sso_provider (slug, protocol, display_name, issuer, oidc_config) "
-        "VALUES ('Bad Slug', 'oidc', 'x', 'i', '{}')",
+        f"{_INSERT}oidc_config) VALUES ({_WORKSPACE}, '" + "a" * 29 + "', 'oidc', 'x', 'i', '{}')",
+        f"{_INSERT}oidc_config) VALUES ({_WORKSPACE}, 'Bad Slug', 'oidc', 'x', 'i', '{{}}')",
         # Config must match the protocol.
-        "INSERT INTO apiome.sso_provider (slug, protocol, display_name, issuer, saml_config) "
-        "VALUES ('mismatch', 'oidc', 'x', 'i', '{}')",
+        f"{_INSERT}saml_config) VALUES ({_WORKSPACE}, 'mismatch', 'oidc', 'x', 'i', '{{}}')",
+        # A provider with no workspace (V394).
+        "INSERT INTO apiome.sso_provider (slug, protocol, display_name, issuer, oidc_config) "
+        "VALUES ('homeless', 'oidc', 'x', 'i', '{}')",
         # Ciphertext without its key id.
-        "INSERT INTO apiome.sso_provider (slug, protocol, display_name, issuer, oidc_config, client_secret_encrypted) "
-        "VALUES ('nokey', 'oidc', 'x', 'i', '{}', '\\x01')",
+        f"{_INSERT}oidc_config, client_secret_encrypted) "
+        f"VALUES ({_WORKSPACE}, 'nokey', 'oidc', 'x', 'i', '{{}}', '\\x01')",
     ],
 )
 def test_the_constraints_hold(sso, sql) -> None:

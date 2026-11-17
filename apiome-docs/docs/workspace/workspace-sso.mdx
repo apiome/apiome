@@ -1,6 +1,6 @@
 ---
 title: Single sign-on
-description: Connect your identity provider, prove your email domains by DNS, and turn it on.
+description: Connect your identity provider, verify your domains, and let colleagues join by signing in.
 sidebar_position: 2.5
 tags: [workspace, sign-in, sso, saml, oidc, domains]
 ---
@@ -47,7 +47,8 @@ Use whichever protocol your IdP offers — most offer both.
    where the email address comes from: **The NameID**, or **An attribute** and its name (for example
    `mail`). Add an **SP signing key** only if your IdP requires signed sign-in requests.
 4. Choose a **Default role** — the role a member gets the first time they sign in through this
-   provider — or leave **Workspace default**. **Owner** is not offered.
+   provider — or leave **Workspace default**, which is **Viewer**. **Owner** is not offered. See
+   [Who becomes a member](#who-becomes-a-member).
 5. **Click “Add provider”.** The provider is added **Disabled** and its drawer opens.
 
 The client secret and the signing key are stored encrypted and never shown again.
@@ -122,6 +123,57 @@ password field gives way to **“Continue with SSO”**, which takes them to you
 
 **Click “Disable”** to stop it. The very next sign-in no longer goes to the IdP.
 
+## Who becomes a member
+
+A provider belongs to your workspace, so signing in through it is how people join. You do not
+invite them first.
+
+The **first time** someone at one of your verified domains signs in through the provider, Apiome
+creates their account if they have none, adds them to this workspace as an **active** member with
+the provider's **Default role**, and takes them straight to the workspace's Home. They are not asked
+to create a workspace of their own.
+
+What a sign-in does depends on the membership the person already has:
+
+| The person is… | What signing in does |
+| --- | --- |
+| **Not a member** | Adds them with the provider's **Default role** (**Viewer** when it is **Workspace default**) |
+| **Invited** (pending) | Accepts the invitation. They keep the role they were invited with |
+| **Already a member** | Nothing changes. They keep their role — signing in never lowers or raises it |
+| **Suspended** | Nothing changes. They stay suspended until an owner or admin reinstates them on [Members & seats](./members.mdx#suspend-and-reinstate) |
+
+- **Owner is never given by signing in.** Make someone an owner on
+  [Members & seats](./members.mdx).
+- **Only this workspace.** A provider adds people to the workspace it belongs to and to no other.
+  Someone who works with two companies can be a member of both, each through that company's own
+  provider.
+- **You can see who joined this way.** On [Members & seats](./members.mdx#find-people), a member
+  added by single sign-on shows **SSO ·** and the provider's name under **Joined**, and their drawer
+  shows it as **Provisioned by**.
+- If your installation is closed to new sign-ups, a person with no Apiome account cannot join this
+  way. Ask your administrator about the [sign-up policy](../admin/auth-providers.mdx#sign-up-policy).
+
+### When the workspace is out of seats
+
+Each new member takes one of your plan's member seats. Pending invitations hold a seat; suspended
+members do not.
+
+When every seat is in use and someone who is not yet a member signs in:
+
+1. Their sign-in completes, but they are **not added** to the workspace.
+2. They see **Your workspace is out of seats**, which tells them the owners have been notified.
+
+   <Screenshot id="login-out-of-seats" alt="Your workspace is out of seats: You signed in, but Northwind has no member seat left, so you were not added to it. The owners have been notified. A Sign out button" />
+
+3. Every owner and administrator of the workspace gets a
+   [notification](./notifications.mdx#sign-ins-blocked-by-the-seat-limit) naming the person — once
+   per person per day, however often they try.
+4. The block is recorded in the access audit as `member.provision_blocked`.
+
+To let them in, free a seat on [Members & seats](./members.mdx) — offboard or suspend someone, or
+cancel an invitation — or change the plan. The next time the person signs in they are added.
+People who are already members sign in as usual while the workspace is full.
+
 ## Remove a provider
 
 1. **Click “Remove…”** at the foot of the drawer. Apiome tells you how many members have signed in
@@ -142,6 +194,8 @@ Every change on this page is written to the workspace's access audit, with who m
 | `sso.provider.updated` | Settings change, the provider is enabled or disabled, or a domain is added or removed |
 | `sso.domain.verified` | A domain passes its DNS check |
 | `sso.provider.deleted` | A provider is removed |
+| `member.provisioned` | Someone is added to the workspace by signing in, or accepts an invitation that way. The source is `sso` |
+| `member.provision_blocked` | Someone signed in but was not added, because every member seat was in use. The source is `sso` |
 
 No secret is ever written to the audit. Sign-in attempts themselves are recorded separately, as
 `sso:<id>`.
@@ -169,6 +223,11 @@ What happens when someone signs in, and the codes a failed sign-in shows, are on
 - `APIOME_SSO_PUBLIC_DOMAINS` on apiome-rest replaces the built-in list of public email providers
   with your own comma-separated list.
 - Domain checks use the DNS resolvers of the machine apiome-rest runs on.
+- Members are added by apiome-ui calling apiome-rest with `INTERNAL_SERVICE_TOKEN` after each
+  single sign-on. If that call gets no answer, people who are already members still sign in; anyone
+  else sees *You signed in, but we could not add you to your workspace just now* and can try again.
+- Setting `APIOME_LICENSE_ENFORCEMENT_ENABLED=false` on apiome-rest switches the member-seat limit
+  off for single sign-on too.
 - The installation administrator can still connect a provider for any workspace, and mark a domain
   verified without a DNS record, from the admin console's
   [Single sign-on](../admin/single-sign-on.mdx) card.

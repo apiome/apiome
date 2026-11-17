@@ -199,6 +199,10 @@ class FakeSsoStore:
         return out
 
 
+WORKSPACE = "11111111-1111-4111-8111-111111111111"
+OTHER_WORKSPACE = "22222222-2222-4222-8222-222222222222"
+
+
 def _mint_admin_token(key: str) -> str:
     payload = {"v": 1, "sub": "admin", "iat": 0, "exp": 9_999_999_999_999}
     encoded = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
@@ -247,6 +251,14 @@ def admin(monkeypatch):
 
     audit: List[Dict[str, Any]] = []
     monkeypatch.setattr(routes.db, "write_auth_event", lambda **kw: audit.append(kw))
+    # The installation has two workspaces (EID-1.3: a provider always belongs to one).
+    monkeypatch.setattr(
+        routes,
+        "get_tenant",
+        lambda _db, tenant_id: (
+            {"id": tenant_id, "slug": "acme", "name": "Acme"} if tenant_id in (WORKSPACE, OTHER_WORKSPACE) else None
+        ),
+    )
 
     headers = {"X-Admin-Session": _mint_admin_token("sso-admin-secret")}
     return {"headers": headers, "store": fake, "audit": audit}
@@ -260,6 +272,7 @@ def _create_oidc(headers, **overrides) -> Dict[str, Any]:
         "issuer": ISSUER,
         "client_id": "apiome",
         "client_secret": CLIENT_SECRET,
+        "tenant_id": WORKSPACE,
         **overrides,
     }
     response = client.post(BASE, json=body, headers=headers)
@@ -275,6 +288,7 @@ def _create_saml(headers, **overrides) -> Dict[str, Any]:
         "metadata_url": "https://idp.example.com/saml/metadata",
         "email_source": "nameid",
         "sp_private_key": SP_PRIVATE_KEY,
+        "tenant_id": WORKSPACE,
         **overrides,
     }
     response = client.post(BASE, json=body, headers=headers)
@@ -356,6 +370,7 @@ class TestRegistration:
                 "display_name": "Artifact",
                 "metadata_xml": artifact,
                 "email_source": "nameid",
+                "tenant_id": WORKSPACE,
             },
             headers=admin["headers"],
         )
@@ -380,6 +395,7 @@ class TestRegistration:
             "issuer": ISSUER,
             "client_id": "apiome",
             "client_secret": CLIENT_SECRET,
+            "tenant_id": WORKSPACE,
             **overrides,
         }
         response = client.post(BASE, json=body, headers=admin["headers"])
@@ -397,6 +413,7 @@ class TestRegistration:
                 "issuer": ISSUER,
                 "client_id": "a",
                 "client_secret": "s",
+                "tenant_id": WORKSPACE,
             },
             headers=admin["headers"],
         )
@@ -414,6 +431,7 @@ class TestRegistration:
                 "issuer": ISSUER,
                 "client_id": "a",
                 "client_secret": "s",
+                "tenant_id": WORKSPACE,
             },
             headers=admin["headers"],
         )
@@ -716,3 +734,69 @@ def test_the_openapi_schema_carries_no_secret(admin) -> None:
     _create_oidc(admin["headers"])
     schema = json.dumps(app.openapi())
     assert CLIENT_SECRET not in schema
+
+
+class TestWorkspaceIsRequired:
+    """EID-1.3 (#5013): a provider always belongs to a workspace."""
+
+    def test_a_provider_without_a_workspace_is_refused(self, admin) -> None:
+        body = {
+            "protocol": "oidc",
+            "slug": "acme-okta",
+            "display_name": "Acme",
+            "issuer": ISSUER,
+            "client_id": "apiome",
+            "client_secret": CLIENT_SECRET,
+        }
+        response = client.post(BASE, json=body, headers=admin["headers"])
+        assert response.status_code == 422
+        assert response.json()["detail"]["error"] == "sso-tenant-required"
+        assert admin["store"].providers == {}
+
+    @pytest.mark.parametrize("tenant_id", ["not-a-uuid", "99999999-9999-4999-8999-999999999999"])
+    def test_a_workspace_that_does_not_exist_is_refused(self, admin, tenant_id) -> None:
+        body = {
+            "protocol": "oidc",
+            "slug": "acme-okta",
+            "display_name": "Acme",
+            "issuer": ISSUER,
+            "client_id": "apiome",
+            "client_secret": CLIENT_SECRET,
+            "tenant_id": tenant_id,
+        }
+        response = client.post(BASE, json=body, headers=admin["headers"])
+        assert response.status_code == 422
+        assert response.json()["detail"]["error"] == "sso-tenant-not-found"
+
+    def test_a_provider_cannot_be_detached_from_its_workspace(self, admin) -> None:
+        created = _create_oidc(admin["headers"])
+        for value in (None, "", "  "):
+            response = client.patch(f"{BASE}/{created['id']}", json={"tenant_id": value}, headers=admin["headers"])
+            assert response.status_code == 422
+            assert response.json()["detail"]["error"] == "sso-tenant-required"
+        assert admin["store"].providers[created["id"]]["tenant_id"] == WORKSPACE
+
+    def test_a_provider_can_move_to_another_existing_workspace(self, admin) -> None:
+        created = _create_oidc(admin["headers"])
+        response = client.patch(
+            f"{BASE}/{created['id']}", json={"tenant_id": OTHER_WORKSPACE}, headers=admin["headers"]
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["tenant_id"] == OTHER_WORKSPACE
+
+    def test_a_provider_from_before_the_rule_needs_a_workspace_before_any_other_change(self, admin) -> None:
+        created = _create_oidc(admin["headers"])
+        admin["store"].providers[created["id"]]["tenant_id"] = None  # registered before EID-1.3
+
+        response = client.patch(f"{BASE}/{created['id']}", json={"display_name": "Renamed"}, headers=admin["headers"])
+        assert response.status_code == 422
+        assert response.json()["detail"]["error"] == "sso-tenant-required"
+
+        response = client.patch(
+            f"{BASE}/{created['id']}",
+            json={"display_name": "Renamed", "tenant_id": WORKSPACE},
+            headers=admin["headers"],
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["tenant_id"] == WORKSPACE
+

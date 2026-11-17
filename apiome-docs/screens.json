@@ -25,6 +25,12 @@
       ]
     },
     {
+      "id": "login-out-of-seats",
+      "route": "/login/out-of-seats",
+      "waitFor": "[data-testid=\"out-of-seats-screen\"]",
+      "data": "fixture:hive-a11y/login-out-of-seats.html"
+    },
+    {
       "id": "signup",
       "route": "/signup",
       "waitFor": "[data-testid=\"signup-card\"]",

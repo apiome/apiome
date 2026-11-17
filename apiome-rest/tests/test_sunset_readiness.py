@@ -29,7 +29,7 @@ from app import sunset_readiness_store as store
 from app.auth import validate_authentication
 from app.main import app
 from app.notification_fanout import NotificationDraft
-from app.notifications import NOTIFICATION_TYPES, TYPE_SUNSET_STILL_USED
+from app.notifications import NOTIFICATION_TYPES, TYPE_SEAT_CAP_BLOCKED_SSO, TYPE_SUNSET_STILL_USED
 from app.sunset_readiness import (
     ALERT_WITHIN_DAYS,
     EVENT_STILL_USED,
@@ -536,7 +536,8 @@ def _executable(sql: str) -> str:
 def test_v383_widens_the_notification_check_to_the_whole_vocabulary() -> None:
     text = _executable(_MIGRATION.read_text(encoding="utf-8"))
     check = text[text.index("CHECK (type IN (") : text.index("COMMENT ON COLUMN notifications.type")]
-    assert set(check.split("'")[1::2]) == set(NOTIFICATION_TYPES)
+    # Everything the API knew when V383 shipped; types added since belong to their own migration.
+    assert set(check.split("'")[1::2]) == set(NOTIFICATION_TYPES) - {TYPE_SEAT_CAP_BLOCKED_SSO}
     assert "sunset_still_used" in check
 
 

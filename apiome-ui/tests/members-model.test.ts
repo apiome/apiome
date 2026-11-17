@@ -25,6 +25,8 @@ import {
   MEMBERS_COMING_NEXT,
   describeOffboard,
   formatMemberDate,
+  MEMBER_PROVENANCE_INVITATION,
+  memberProvenanceLabel,
   formatMemberRelative,
   inviteBlockedBySeats,
   isPendingInvite,
@@ -600,6 +602,36 @@ describe('the activity a member appears in', () => {
 /* -------------------------------------------------------------------------
    7. Time
    ------------------------------------------------------------------------- */
+
+describe('where a membership came from (EID-1.3)', () => {
+  it('names the single sign-on provider that provisioned it', () => {
+    expect(memberProvenanceLabel({ provisioned_by: 'sso:acme-okta', provisioned_by_label: 'Acme Okta' })).toBe(
+      'SSO · Acme Okta'
+    );
+  });
+
+  it('falls back to the slug once the provider has been removed', () => {
+    expect(memberProvenanceLabel({ provisioned_by: 'sso:acme-okta', provisioned_by_label: null })).toBe(
+      'SSO · acme-okta'
+    );
+    expect(memberProvenanceLabel({ provisioned_by: 'sso:acme-okta', provisioned_by_label: '  ' })).toBe(
+      'SSO · acme-okta'
+    );
+  });
+
+  it('says nothing of an invited member, so the drawer can say Invitation', () => {
+    for (const provisioned_by of [null, undefined, '', '  ']) {
+      expect(memberProvenanceLabel({ provisioned_by })).toBeNull();
+    }
+    expect(MEMBER_PROVENANCE_INVITATION).toBe('Invitation');
+  });
+
+  it('names SCIM, and prints a source it does not know as written', () => {
+    expect(memberProvenanceLabel({ provisioned_by: 'scim' })).toBe('SCIM');
+    expect(memberProvenanceLabel({ provisioned_by: 'import' })).toBe('import');
+    expect(memberProvenanceLabel({ provisioned_by: 'sso:' })).toBe('SSO');
+  });
+});
 
 describe('printing an instant', () => {
   const NOW = Date.parse('2026-08-17T12:00:00Z');

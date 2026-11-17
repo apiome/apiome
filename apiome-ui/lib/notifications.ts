@@ -60,6 +60,9 @@ export const NOTIFICATION_TYPES = [
   // RDG-5.3: a deprecated revision near its sunset still carries traffic from bound consumers;
   // written by the usage sweep at most once a week, with its own `summary` and `link`.
   'sunset_still_used',
+  // EID-1.3: somebody signed in through the workspace's identity provider but every member seat
+  // was taken; told to the owners, with its own `summary` and `link` (the members list).
+  'seat_cap_blocked_sso',
   ...OWNER_NOTIFICATION_TYPES,
 ] as const;
 
@@ -88,6 +91,7 @@ export const NOTIFICATION_TYPE_LABELS: Readonly<Record<NotificationType, string>
   version_published: 'Publishes',
   export_auto_halted: 'Halted auto-exports',
   sunset_still_used: 'Sunsets still in use',
+  seat_cap_blocked_sso: 'Sign-ins blocked by the seat limit',
   owner_finding: 'Lint findings',
   owner_breaking_change: 'Breaking changes',
   owner_verification_drift: 'Verification drift',
@@ -112,6 +116,8 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Readonly<Record<NotificationType, s
   export_auto_halted: 'When an export a publish triggered is held back for its loss, or fails.',
   sunset_still_used:
     'When a version you worked on sunsets within 30 days and bound consumers still call it.',
+  seat_cap_blocked_sso:
+    'When somebody signs in through single sign-on and cannot join because every member seat is in use.',
   owner_finding: 'When something your team owns gets a new error-level lint finding.',
   owner_breaking_change: 'When a refresh brings a breaking change to something your team owns.',
   owner_verification_drift: 'When verification finds drift on something your team owns.',
@@ -354,6 +360,12 @@ export function notificationSentence(row: Readonly<NotificationRow>): string {
     case 'sunset_still_used':
       // Written by the usage sweep: the payload names the version, the days left and the count.
       return row.payload.summary?.trim() || 'A version near its sunset is still in use';
+    case 'seat_cap_blocked_sso':
+      // Written when a sign-in is provisioned, not by a member: the payload names who and why.
+      return (
+        row.payload.summary?.trim() ||
+        'Somebody signed in through single sign-on but every member seat is in use'
+      );
     default:
       // Unreachable while `type` is the union, but a future sixth type written by a newer
       // apiome-rest must not render as a blank row.
@@ -457,6 +469,7 @@ export const VERSIONS_THREAD_PARAM = 'thread';
  * | `version_published` | the project's version timeline |
  * | `export_auto_halted` | its own `link` (Export studio's Presets tab) — an `/ade/` path only |
  * | `sunset_still_used` | its own `link` (the sunset timeline) — an `/ade/` path only |
+ * | `seat_cap_blocked_sso` | its own `link` (the members list) — an `/ade/` path only |
  * | `owner_*` | the finding's own `link` — an `/ade/` path only |
  *
  * @param row - The notification.
@@ -485,6 +498,7 @@ export function notificationHref(row: Readonly<NotificationRow>): string | null 
     }
     case 'export_auto_halted':
     case 'sunset_still_used':
+    case 'seat_cap_blocked_sso':
       return ownerFindingHref(row.payload.link);
     default:
       if (isOwnerNotificationType(row.type)) return ownerFindingHref(row.payload.link);

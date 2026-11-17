@@ -229,9 +229,15 @@ async function availableMethods(ctx: OAuthChallengeContext, userId: string): Pro
  * hooks do.
  *
  * @param rawCtx The Better Auth middleware context.
+ * @param takeDestination Called once a challenge is certain: a destination the sign-in itself chose
+ *   for after the second step, or `null` to keep the callback's own. Enterprise SSO uses it to carry
+ *   the out-of-seats page through the challenge (`takeOutOfSeatsRedirect`, EID-1.3).
  * @throws The redirect to the second step, when a challenge was started.
  */
-export async function oauthTwoFactorChallengeHandler(rawCtx: unknown): Promise<void> {
+export async function oauthTwoFactorChallengeHandler(
+  rawCtx: unknown,
+  takeDestination: () => string | null = () => null
+): Promise<void> {
   const ctx = rawCtx as OAuthChallengeContext;
   if (!oauthProviderFromCallbackPath(ctx.path)) return;
 
@@ -261,7 +267,7 @@ export async function oauthTwoFactorChallengeHandler(rawCtx: unknown): Promise<v
   await ctx.setSignedCookie(cookie.name, identifier, ctx.context.secret, cookie.attributes);
 
   const query = new URLSearchParams();
-  const destination = callbackDestination(ctx);
+  const destination = takeDestination() ?? callbackDestination(ctx);
   // The page re-validates this against the callback allowlist; it is only carried here.
   if (destination) query.set('callbackUrl', destination);
   const methods = await availableMethods(ctx, userId);

@@ -1,0 +1,38 @@
+---
+slug: sso-just-in-time-provisioning
+title: Colleagues join your workspace by signing in
+description: "Single sign-on now adds first-time people to the provider's workspace with a default role."
+authors: [apiome]
+---
+
+A workspace's identity provider now brings people in. The first time a colleague signs in through
+it, Apiome adds them to your workspace with the provider's default role and opens it — no
+invitation, and no detour through creating a workspace of their own. See
+[Who becomes a member](/workspace/workspace-sso#who-becomes-a-member).
+
+{/* truncate */}
+
+- **First sign-in.** Someone at one of your verified domains who is not yet a member is added as an
+  **active** member with the provider's **Default role** — **Viewer** when it is **Workspace
+  default**. **Owner** is never given by signing in.
+- **Existing members keep their role.** Signing in never changes a member's role, accepts a pending
+  invitation with the role it was sent with, and leaves a suspended member suspended.
+- **Only the provider's workspace.** A provider adds people to the workspace it belongs to and to no
+  other.
+- **See who joined this way.** On [Members & seats](/workspace/members), a member added by single
+  sign-on shows **SSO ·** and the provider's name under **Joined**; their drawer shows
+  **Provisioned by**. The roster export's `provenance` column reads `sso:<provider>`.
+- **Out of seats.** When every member seat is in use, a new colleague's sign-in completes but they
+  are not added. They see **Your workspace is out of seats**, every owner and administrator gets a
+  **Sign-ins blocked by the seat limit** [notification](/workspace/notifications#sign-ins-blocked-by-the-seat-limit)
+  (once a day per person), and the block is in the access audit. Free a seat and they are added the
+  next time they sign in.
+- **Audit.** `member.provisioned` and `member.provision_blocked`, both with the source `sso`.
+- **Admin console.** A provider now needs a **Workspace ID**. Upgrading disables any provider that
+  was added without one and keeps its settings — see
+  [Providers added before workspaces were required](/admin/single-sign-on#providers-added-before-workspaces-were-required).
+- **REST API.** `POST /v1/tenants/{tenant}/sso/providers/{id}/provision` (service-to-service) — see
+  the [SSO reference](/reference/rest/sso). Member rows gain `provisioned_by` and
+  `provisioned_by_label`. REST API 1.737.0, OpenAPI 1.595.0.
+- **For operators.** apiome-db **V394** must be applied. Provisioning uses `INTERNAL_SERVICE_TOKEN`
+  between apiome-ui and apiome-rest, as single sign-on already does.

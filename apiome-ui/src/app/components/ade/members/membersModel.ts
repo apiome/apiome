@@ -80,6 +80,43 @@ export interface MemberRecord {
   role_name: string | null;
   role_slug: string | null;
   is_admin: boolean;
+  /**
+   * How the membership was created (EID-1.3, #5013): `sso:<provider slug>` for a member
+   * provisioned on their first sign-in through the workspace's identity provider; `null` or
+   * absent for an invited member.
+   */
+  provisioned_by?: string | null;
+  /** The provider's display name for an `sso:` provenance; `null` once the provider is removed. */
+  provisioned_by_label?: string | null;
+}
+
+/** What the drawer says of a membership nobody provisioned. */
+export const MEMBER_PROVENANCE_INVITATION = 'Invitation';
+
+/**
+ * Name where a membership came from, when something other than an invitation made it.
+ *
+ * | `provisioned_by` | Label |
+ * | --- | --- |
+ * | `sso:okta`, provider still registered | `SSO · Acme Okta` (the provider's display name) |
+ * | `sso:okta`, provider removed | `SSO · okta` (the slug the row still carries) |
+ * | `scim` | `SCIM` |
+ * | empty | `null` — the membership was invited |
+ *
+ * @param member The membership row.
+ * @returns The label, or `null` for an invited member.
+ */
+export function memberProvenanceLabel(
+  member: Pick<MemberRecord, 'provisioned_by' | 'provisioned_by_label'>
+): string | null {
+  const source = member.provisioned_by?.trim();
+  if (!source) return null;
+  if (source.startsWith('sso:')) {
+    const name = member.provisioned_by_label?.trim() || source.slice('sso:'.length);
+    return name ? `SSO · ${name}` : 'SSO';
+  }
+  if (source === 'scim') return 'SCIM';
+  return source;
 }
 
 // A role and the viewer's own grants are the Roles screen's records as much as this one's

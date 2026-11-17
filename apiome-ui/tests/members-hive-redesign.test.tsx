@@ -935,10 +935,17 @@ describe('the docs fixtures', () => {
     await user.click(within(invite).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByTestId('members-invite-dialog')).not.toBeInTheDocument());
 
+    // EID-1.3: a member provisioned by single sign-on says so under Joined; an invited one does not.
+    expect(within(rowFor('sam.okafor@northwind.io')).getByTestId('member-provenance')).toHaveTextContent(
+      'SSO · Northwind Okta'
+    );
+    expect(within(rowFor('priya.raman@northwind.io')).queryByTestId('member-provenance')).not.toBeInTheDocument();
+
     await user.click(within(rowFor('sam.okafor@northwind.io')).getByText('Sam Okafor'));
     const drawer = await screen.findByTestId('member-drawer');
     await within(drawer).findByTestId('member-activity');
     expect(drawer).toHaveTextContent('Release manager');
+    expect(drawer).toHaveTextContent('Provisioned bySSO · Northwind Okta');
     writeA11yFixture('members-drawer', liveMarkup(drawer));
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByTestId('member-drawer')).not.toBeInTheDocument());
@@ -1340,5 +1347,19 @@ describe('the docs fixtures for the CSV import', () => {
     await within(dialog).findByTestId('members-import-report');
     expect(within(dialog).getByTestId('members-import-send')).toHaveTextContent('Send 1 invite');
     writeA11yFixture('members-import-report', liveMarkup(dialog));
+  });
+});
+
+/* -------------------------------------------------------------------------
+ * Provenance (EID-1.3, #5013). Kept last so the docs fixtures above keep their React ids.
+ * ------------------------------------------------------------------------- */
+
+describe('where a membership came from', () => {
+  it('says an invited member was provisioned by Invitation in the drawer', async () => {
+    const { user } = await renderMembers();
+    await user.click(within(rowFor('linus@acme.io')).getByText(/Linus/));
+    const drawer = await screen.findByTestId('member-drawer');
+    expect(drawer).toHaveTextContent('Provisioned byInvitation');
+    expect(within(rowFor('linus@acme.io')).queryByTestId('member-provenance')).not.toBeInTheDocument();
   });
 });

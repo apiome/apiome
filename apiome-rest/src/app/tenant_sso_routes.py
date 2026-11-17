@@ -1,4 +1,4 @@
-"""Single sign-on for one workspace, run by its owners — EID-1.2 (#5012).
+"""Single sign-on for one workspace, run by its owners — EID-1.2 (#5012), EID-1.3 (#5013).
 
 ```
 GET    /v1/tenants/{t}/sso/providers
@@ -9,6 +9,7 @@ DELETE /v1/tenants/{t}/sso/providers/{id}
 POST   /v1/tenants/{t}/sso/providers/{id}/domains
 DELETE /v1/tenants/{t}/sso/providers/{id}/domains/{domain}
 POST   /v1/tenants/{t}/sso/providers/{id}/domains/{domain}/verify
+POST   /v1/tenants/{t}/sso/providers/{id}/provision                  (service-to-service)
 ```
 
 The same providers the installation admin manages at ``/v1/admin/sso/providers``
@@ -32,6 +33,12 @@ differences that make it safe to hand to a customer:
 Secrets stay write-only and sealed, exactly as on the admin surface. Every change is written to the
 workspace's access audit as ``sso.provider.created`` / ``updated`` / ``deleted`` or
 ``sso.domain.verified``, source ``web``, with no secret in it.
+
+**Provisioning (EID-1.3).** ``provision`` is the one route here that is not for people: apiome-ui
+calls it with the internal service token after a sign-in through the provider succeeded, and it
+makes that person a member of the provider's workspace (:mod:`app.sso_provisioning`). Unlike its
+siblings it has no session to scope by, so the workspace in the URL is checked: a provider can only
+ever provision into the workspace it belongs to.
 """
 
 from __future__ import annotations
@@ -45,8 +52,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from . import sso_provider_store as store
+from . import sso_provisioning as provisioning
 from .auth import get_authenticated_user_id, require_tenant_admin_session, validate_authentication
+from .auth_provider_resolved_routes import require_internal_service
+from .config import settings
 from .database import db
+from .license_capacity import member_seat_limit
 from .redacted_validation_route import RedactedValidationRoute
 from .sso_domain_verification import (
     STATUS_VERIFIED,
@@ -181,6 +192,31 @@ class SsoDomainCheckView(BaseModel):
         description="What the resolver answered: the TXT values found, or why the lookup failed.",
     )
     message: str
+
+
+class SsoProvisionRequest(BaseModel):
+    """Body of the provision route: who just signed in through the provider."""
+
+    model_config = {"extra": "forbid"}
+
+    user_id: str = Field(..., description="The signed-in account's id.")
+
+
+class SsoProvisionResponse(BaseModel):
+    """What provisioning decided for one sign-in."""
+
+    outcome: str = Field(
+        ...,
+        description="`provisioned`, `activated`, `existing`, `suspended` or `seat-cap-blocked`.",
+    )
+    tenant_id: str
+    tenant_slug: str
+    tenant_name: str
+    role_slug: Optional[str] = Field(None, description="The member's role after the call, if they hold one.")
+    role_name: Optional[str] = None
+    seat_limit: Optional[int] = Field(
+        None, description="The workspace's licensed member seats; `null` when seat enforcement is off."
+    )
 
 
 class SsoDomainVerifyResponse(BaseModel):
@@ -566,4 +602,99 @@ async def verify_tenant_sso_domain(
         )
     return SsoDomainVerifyResponse(
         provider=_tenant_view(_load(tenant_id, provider_id), tenant_id), check=_check_view(check)
+    )
+
+
+def _provision_refusal(status: int, code: str, message: str) -> HTTPException:
+    """An HTTP refusal of a provisioning call, with a stable ``sso-*`` code."""
+    return HTTPException(status_code=status, detail={"error": code, "message": message})
+
+
+@router.post(
+    _BASE + "/{provider_id}/provision",
+    response_model=SsoProvisionResponse,
+    responses={
+        401: {"description": "No internal service token presented."},
+        403: {
+            "description": "Internal service token invalid; or `sso-identity-missing` / "
+            "`sso-email-domain-mismatch`: this person did not sign in through this provider."
+        },
+        404: {"description": "`sso-provider-not-found` in this workspace, or `sso-user-not-found`."},
+        409: {"description": "`sso-provider-disabled`: a disabled provider provisions nobody."},
+        503: {"description": "Internal service path disabled (no INTERNAL_SERVICE_TOKEN)."},
+    },
+    summary="Provision a member on SSO sign-in (service-to-service)",
+    description=(
+        "Called by apiome-ui with the internal service token after a sign-in through this provider "
+        "succeeded. Makes that person a member of the provider's workspace, idempotently on "
+        "`(workspace, user)`, and answers `200` with `outcome`:\n\n"
+        "- `provisioned` — first sign-in: an active membership with the provider's default role "
+        "(`viewer` when none is set; never `owner`), recorded as `provisioned_by: sso:<slug>` and "
+        "audited as `member.provisioned`, source `sso`;\n"
+        "- `activated` — a pending invitation was accepted by signing in; the invited role is kept;\n"
+        "- `existing` — already a member; nothing changes and the member keeps their role;\n"
+        "- `suspended` — the membership is suspended; nothing changes;\n"
+        "- `seat-cap-blocked` — every licensed member seat is in use. **No membership is created**; "
+        "the block is audited as `member.provision_blocked` and every owner receives a "
+        "`seat_cap_blocked_sso` notification (once per person per 24 hours).\n\n"
+        "`{tenant}` is the workspace's id or slug and must be the provider's own workspace: a "
+        "provider of one workspace cannot provision into another (`404`). Only an account that "
+        "holds this provider's `sso:<slug>` identity and whose email is in one of the provider's "
+        "verified domains is provisioned."
+    ),
+)
+async def provision_tenant_sso_member(
+    tenant_slug: str,
+    provider_id: str,
+    payload: SsoProvisionRequest,
+    _: None = Depends(require_internal_service),
+) -> SsoProvisionResponse:
+    """Provision the person who just signed in through a provider into its workspace."""
+    not_found = _provision_refusal(404, "sso-provider-not-found", "No such SSO provider in this workspace.")
+    try:
+        UUID(provider_id)
+    except ValueError:
+        raise not_found from None
+    provider = store.get_provider(db, provider_id)
+    if provider is None or not provider.get("tenant_id"):
+        raise not_found
+    tenant = provisioning.get_tenant(db, provider["tenant_id"])
+    # The workspace named in the URL must be the provider's own — by id or by slug.
+    if tenant is None or tenant_slug not in (tenant["id"], tenant["slug"]):
+        raise not_found
+    if not provider.get("enabled"):
+        raise _provision_refusal(409, "sso-provider-disabled", "This SSO provider is disabled.")
+
+    try:
+        UUID(payload.user_id)
+    except ValueError:
+        user = None
+    else:
+        user = provisioning.get_sso_user(db, payload.user_id)
+    if user is None:
+        raise _provision_refusal(404, "sso-user-not-found", "No such account.")
+    if not provisioning.user_has_identity(db, user["id"], provider["slug"]):
+        raise _provision_refusal(403, "sso-identity-missing", "This account has not signed in through this provider.")
+    email_domain = str(user.get("email") or "").rpartition("@")[2].lower()
+    verified = {d["domain"] for d in provider.get("domains") or [] if d.get("verified_at") is not None}
+    if not email_domain or email_domain not in verified:
+        raise _provision_refusal(
+            403, "sso-email-domain-mismatch", "This account's email is outside the provider's verified domains."
+        )
+
+    seat_limit = member_seat_limit(tenant["id"]) if settings.license_enforcement_enabled else None
+    try:
+        result = provisioning.provision_member(db, provider=provider, user=user, seat_limit=seat_limit)
+    except LookupError:
+        raise not_found from None
+    if result["outcome"] in (provisioning.OUTCOME_PROVISIONED, provisioning.OUTCOME_SEAT_CAP_BLOCKED):
+        logger.info("sso provisioning for %s: %s", provider["slug"], result["outcome"])
+    return SsoProvisionResponse(
+        outcome=result["outcome"],
+        tenant_id=tenant["id"],
+        tenant_slug=tenant["slug"],
+        tenant_name=tenant["name"],
+        role_slug=result["role_slug"],
+        role_name=result["role_name"],
+        seat_limit=result["seat_limit"],
     )

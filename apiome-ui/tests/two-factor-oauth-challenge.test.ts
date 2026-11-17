@@ -133,9 +133,9 @@ function makeContext(world: World = {}) {
 }
 
 /** Run the handler and return the redirect it threw, or `null` when it returned normally. */
-async function run(ctx: unknown): Promise<URL | null> {
+async function run(ctx: unknown, takeDestination?: () => string | null): Promise<URL | null> {
   try {
-    await oauthTwoFactorChallengeHandler(ctx);
+    await oauthTwoFactorChallengeHandler(ctx, takeDestination);
     return null;
   } catch (thrown) {
     if (thrown instanceof FakeRedirect) return new URL(thrown.url, 'https://app.test');
@@ -234,6 +234,24 @@ describe('starting the challenge', () => {
     const world = makeContext({ location: null });
     world.ctx.context.responseHeaders.set('location', 'https://app.test/ade');
     expect((await run(world.ctx))?.searchParams.get('callbackUrl')).toBe('https://app.test/ade');
+  });
+
+  test('a destination the sign-in chose replaces the callback’s (EID-1.3: out of seats)', async () => {
+    const world = makeContext({ location: '/ade/dashboard' });
+    const taken = jest.fn(() => '/login/out-of-seats?workspace=Acme%20Corp');
+    const redirect = await run(world.ctx, taken);
+
+    expect(redirect?.pathname).toBe('/login/2fa');
+    expect(redirect?.searchParams.get('callbackUrl')).toBe('/login/out-of-seats?workspace=Acme%20Corp');
+    expect(taken).toHaveBeenCalledTimes(1);
+  });
+
+  test('the chosen destination is asked for only once a challenge is certain', async () => {
+    const taken = jest.fn(() => '/login/out-of-seats');
+    // Not an enrolled user: no challenge, so nothing is taken and the callback's redirect stands.
+    const world = makeContext({ location: '/ade/dashboard', twoFactorEnabled: false });
+    expect(await run(world.ctx, taken)).toBeNull();
+    expect(taken).not.toHaveBeenCalled();
   });
 
   test('omits the destination when the callback named none', async () => {

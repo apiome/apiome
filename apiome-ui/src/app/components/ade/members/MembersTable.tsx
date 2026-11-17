@@ -20,6 +20,7 @@ import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   describeMemberBreakdown,
   formatMemberDate,
+  memberProvenanceLabel,
   formatMemberRelative,
   isPendingInvite,
   isSelf,
@@ -279,11 +280,20 @@ export default function MembersTable({
         id: 'joined',
         header: 'Joined',
         sortable: true,
-        cell: (member) => (
-          <span className="whitespace-nowrap text-sm text-fg-muted tabular-nums">
-            {formatMemberDate(member.joined_at)}
-          </span>
-        ),
+        cell: (member) => {
+          // EID-1.3: a member provisioned by single sign-on says so under the date.
+          const provenance = memberProvenanceLabel(member);
+          return (
+            <span className="whitespace-nowrap text-sm text-fg-muted tabular-nums">
+              {formatMemberDate(member.joined_at)}
+              {provenance && (
+                <span className="block text-xs" data-testid="member-provenance">
+                  {provenance}
+                </span>
+              )}
+            </span>
+          );
+        },
         skeletonWidth: '5.5rem',
       },
       {

@@ -36,6 +36,7 @@ import logging
 import secrets
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -72,6 +73,11 @@ from .sso_metadata import (
     provider_identity_kind,
     saml_config_from_metadata,
 )
+from .sso_provisioning import get_tenant
+
+#: A provider was written without a workspace, or with one that does not exist (EID-1.3).
+CODE_TENANT_REQUIRED = "sso-tenant-required"
+CODE_TENANT_NOT_FOUND = "sso-tenant-not-found"
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +163,10 @@ class SsoProviderCreateRequest(BaseModel):
     protocol: str = Field(..., description="`oidc` or `saml`.")
     slug: str = Field(..., description="2–28 lower-case letters, digits and hyphens.")
     display_name: str = Field(..., min_length=1, max_length=120)
-    tenant_id: Optional[str] = Field(None, description="The workspace this IdP signs in to.")
+    tenant_id: Optional[str] = Field(
+        None,
+        description="The workspace this IdP signs in to and provisions members into. Required (`sso-tenant-required`).",
+    )
     preset: Optional[str] = Field(None, max_length=32)
     default_role_slug: Optional[str] = Field(None, max_length=64)
     issuer: Optional[str] = Field(None, description="OIDC issuer URL (https).")
@@ -269,6 +278,33 @@ def _secret_updates(raw: Optional[str], *, column: str, what: str) -> Dict[str, 
     return {f"{column}_encrypted": blob, f"{column}_key_id": key_id}
 
 
+def _require_workspace(tenant_id: Optional[str]) -> str:
+    """The id of an existing workspace, for a provider the installation admin is assigning.
+
+    Args:
+        tenant_id: What the admin sent.
+
+    Returns:
+        The workspace's canonical id.
+
+    Raises:
+        SsoConfigError: ``sso-tenant-required`` when none was given; ``sso-tenant-not-found`` when
+            it is not the id of a live workspace.
+    """
+    candidate = (tenant_id or "").strip()
+    if not candidate:
+        raise SsoConfigError(CODE_TENANT_REQUIRED, "Choose the workspace this provider signs people in to.")
+    try:
+        UUID(candidate)
+    except ValueError:
+        tenant = None
+    else:
+        tenant = get_tenant(db, candidate)
+    if tenant is None:
+        raise SsoConfigError(CODE_TENANT_NOT_FOUND, "No workspace has that id.")
+    return str(tenant["id"])
+
+
 def _reserved_slugs() -> List[str]:
     """The installation OAuth provider ids, which an SSO slug may not reuse."""
     return [descriptor.id for descriptor in PROVIDER_REGISTRY]
@@ -365,6 +401,8 @@ async def build_create_values(payload: Any, *, tenant_id: Optional[str]) -> Dict
         SsoConfigError: With a stable ``sso-*`` code.
         HTTPException: ``503`` when a secret is given but encryption is unconfigured.
     """
+    if not tenant_id:
+        raise SsoConfigError(CODE_TENANT_REQUIRED, "Choose the workspace this provider signs people in to.")
     slug = normalize_slug(payload.slug, reserved=_reserved_slugs())
     protocol = (payload.protocol or "").strip().lower()
     if protocol not in PROTOCOLS:
@@ -423,7 +461,9 @@ async def build_updates(existing: Dict[str, Any], payload: Any) -> Dict[str, Any
             value = getattr(payload, column)
             updates[column] = value.strip() if isinstance(value, str) else value
     if "tenant_id" in provided:
-        updates["tenant_id"] = payload.tenant_id or None
+        if not (payload.tenant_id or "").strip():
+            raise SsoConfigError(CODE_TENANT_REQUIRED, "A provider always belongs to a workspace.")
+        updates["tenant_id"] = payload.tenant_id.strip()
     if "enabled" in provided:
         updates["enabled"] = bool(payload.enabled)
 
@@ -547,7 +587,7 @@ async def create_sso_provider(
             encryption is unconfigured.
     """
     try:
-        values = await build_create_values(payload, tenant_id=payload.tenant_id or None)
+        values = await build_create_values(payload, tenant_id=_require_workspace(payload.tenant_id))
         row = store.create_provider(db, values, actor=ADMIN_ACTOR)
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
@@ -585,6 +625,12 @@ async def update_sso_provider(
     existing = _load(provider_id)
     try:
         updates = await build_updates(existing, payload)
+        if "tenant_id" in updates:
+            updates["tenant_id"] = _require_workspace(updates["tenant_id"])
+        elif updates and not existing.get("tenant_id"):
+            # A provider registered before EID-1.3 with no workspace: nothing else about it can
+            # change until it has one (V394's CHECK would refuse the write).
+            raise SsoConfigError(CODE_TENANT_REQUIRED, "Assign this provider a workspace before changing it.")
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
 
