@@ -202,7 +202,7 @@ test("package.json, pyproject.toml and uv.lock agree on the version", () => {
 });
 
 test("release workflows exist", () => {
-  for (const file of ["apiome-cli-release-pr.yml", "apiome-cli-changeset.yml"]) {
+  for (const file of ["apiome-cli-changeset.yml"]) {
     assert.ok(existsSync(join(repoRoot, ".github", "workflows", file)), `expected ${file}`);
   }
 });

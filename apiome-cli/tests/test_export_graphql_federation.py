@@ -15,6 +15,7 @@ from typer.testing import CliRunner
 
 from apiome_cli.exit_codes import EXIT_SUCCESS
 from apiome_cli.main import app
+from helpers import strip_ansi
 
 pytestmark = pytest.mark.usefixtures("api_key_env")
 
@@ -86,4 +87,5 @@ def test_without_the_flag_no_options_are_sent(httpx_mock: object, tmp_path: Path
 def test_graphql_help_documents_the_federation_flag() -> None:
     result = runner.invoke(app, ["export", "graphql", "--help"])
     assert result.exit_code == EXIT_SUCCESS
-    assert "--federation" in result.stdout and "@key" in result.stdout
+    help_text = strip_ansi(result.stdout)
+    assert "--federation" in help_text and "@key" in help_text

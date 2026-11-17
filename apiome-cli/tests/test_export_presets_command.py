@@ -19,6 +19,7 @@ from typer.testing import CliRunner
 from apiome_cli.client.export_presets import build_targets, targets_summary
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.main import app
+from helpers import strip_ansi
 
 pytestmark = pytest.mark.usefixtures("api_key_env")
 
@@ -177,7 +178,7 @@ def test_export_preset_writes_a_one_target_file_and_adds_deliver_profiles(httpx_
 def test_export_preset_usage_errors():
     assert runner.invoke(app, ["export", "--preset", "nightly-sync"]).exit_code == EXIT_USAGE
     no_out = runner.invoke(app, ["export", "--preset", "nightly-sync", _A])
-    assert no_out.exit_code == EXIT_USAGE and "--out is required" in no_out.output
+    assert no_out.exit_code == EXIT_USAGE and "--out is required" in strip_ansi(no_out.output)
     both = runner.invoke(app, ["export", "--preset", "nightly-sync", _A, "--items", _A, "--out", "x"])
     assert both.exit_code == EXIT_USAGE
 
@@ -185,4 +186,4 @@ def test_export_preset_usage_errors():
 def test_an_unknown_option_without_a_preset_is_still_refused():
     outcome = runner.invoke(app, ["export", "--items", "x"])
     assert outcome.exit_code == EXIT_USAGE
-    assert "No such option: --items" in outcome.output
+    assert "No such option: --items" in strip_ansi(outcome.output)

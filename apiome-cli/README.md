@@ -2137,9 +2137,10 @@ yarn cli:lint
 
 Versions come from [changesets](https://github.com/changesets/changesets). With your change, run
 `npx changeset` in this folder, pick `@apiome/cli` and the bump, and commit the
-`.changeset/<name>.md` it writes. After merge a `Release: apiome-cli vX.Y.Z` pull request bumps the
-version and [`CHANGELOG.md`](CHANGELOG.md); merging it pushes the `cli-vX.Y.Z` tag. See *Release the
-CLI* in the docs site (`apiome-docs/docs/admin/release-the-cli.md`).
+`.changeset/<name>.md` it writes. To ship, a maintainer runs `yarn workspace @apiome/cli
+release:version`, merges the result as a `Release: apiome-cli vX.Y.Z` pull request (it bumps the
+version and [`CHANGELOG.md`](CHANGELOG.md)) and publishes a GitHub release tagged `cli-vX.Y.Z`. See
+*Release the CLI* in the docs site (`apiome-docs/docs/admin/release-the-cli.md`).
 
 See [`AGENTS.md`](AGENTS.md) for contributor conventions, layout, and review checklist.
 

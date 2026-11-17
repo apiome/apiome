@@ -1,0 +1,19 @@
+---
+slug: cli-releases-on-github
+title: CLI releases are published on GitHub
+description: "The apiome-cli release pull request and cli-v tag are now made by a maintainer, not a workflow."
+authors: [apiome]
+---
+
+The workflow that opened the **Release: apiome-cli vX.Y.Z** pull request and pushed the `cli-vX.Y.Z`
+tag is gone. A maintainer now opens that pull request and publishes the release on GitHub.
+[Release the CLI](/admin/release-the-cli) has the steps.
+
+{/* truncate */}
+
+- **Changesets are unchanged.** Pull requests that change `apiome-cli/` still add a changeset or
+  carry the `no-cli-release` label.
+- **The release pull request.** Run `yarn workspace @apiome/cli release:version` on a
+  `changeset-release/<name>` branch and merge the result.
+- **The release.** Draft a release on GitHub with the new tag `cli-vX.Y.Z`; publishing it creates
+  the tag. The `APIOME_RELEASE_TOKEN` secret is no longer used.
