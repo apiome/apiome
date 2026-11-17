@@ -102,6 +102,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   vk: 'VK ID sign-in',
   wechat: 'WeChat Open Platform QR sign-in',
   atlassian: 'Atlassian account for Jira and Confluence teams',
+  bitbucket: 'Bitbucket Cloud account sign-in',
 };
 
 /**

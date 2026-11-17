@@ -60,6 +60,8 @@ const ALL_ENABLED_ENV = {
   WECHAT_CLIENT_SECRET: 'wx-secret',
   ATLASSIAN_CLIENT_ID: 'atl-id',
   ATLASSIAN_CLIENT_SECRET: 'atl-secret',
+  BITBUCKET_CLIENT_ID: 'bb-key',
+  BITBUCKET_CLIENT_SECRET: 'bb-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -78,6 +80,7 @@ describe('registry vocabulary', () => {
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
   });
 
@@ -95,6 +98,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('vk')?.label).toBe('VK');
     expect(getProviderDescriptor('wechat')?.label).toBe('WeChat');
     expect(getProviderDescriptor('atlassian')?.label).toBe('Atlassian');
+    expect(getProviderDescriptor('bitbucket')?.label).toBe('Bitbucket');
   });
 
   it('pins each available provider env contract', () => {
@@ -152,9 +156,13 @@ describe('registry vocabulary', () => {
       'ATLASSIAN_CLIENT_ID',
       'ATLASSIAN_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('bitbucket')?.requiredEnvKeys).toEqual([
+      'BITBUCKET_CLIENT_ID',
+      'BITBUCKET_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/line/vk/wechat available (OLO-9.2–9.8, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/line/vk/wechat available (OLO-9.2–9.9, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -165,6 +173,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('vk')?.status).toBe('available');
     expect(getProviderDescriptor('wechat')?.status).toBe('available');
     expect(getProviderDescriptor('atlassian')?.status).toBe('available');
+    expect(getProviderDescriptor('bitbucket')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -200,6 +209,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('vk', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('wechat', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('atlassian', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('bitbucket', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -309,6 +319,13 @@ describe('isProviderEnabled', () => {
       })
     ).toBe(true);
     expect(isProviderEnabled('atlassian', { ATLASSIAN_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('bitbucket', {
+        BITBUCKET_CLIENT_ID: 'x',
+        BITBUCKET_CLIENT_SECRET: 'y',
+      })
+    ).toBe(true);
+    expect(isProviderEnabled('bitbucket', { BITBUCKET_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -332,6 +349,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -352,6 +370,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
   });
 
@@ -370,6 +389,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
   });
 });
@@ -392,6 +412,7 @@ describe('providerSummaries', () => {
       { id: 'vk', label: 'VK', status: 'available', enabled: false },
       { id: 'wechat', label: 'WeChat', status: 'available', enabled: false },
       { id: 'atlassian', label: 'Atlassian', status: 'available', enabled: false },
+      { id: 'bitbucket', label: 'Bitbucket', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

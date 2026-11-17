@@ -1,0 +1,27 @@
+---
+slug: bitbucket-sign-in
+title: Sign in with Bitbucket
+description: "People can now sign in and link with their Bitbucket Cloud account."
+authors: [apiome]
+---
+
+Bitbucket joins GitHub and GitLab as a way to sign in to Apiome. People can sign in with their
+Bitbucket Cloud account and link it on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Bitbucket** is a new entry in **System settings → Add Provider**. It
+  needs the **Key** and **Secret** of an OAuth consumer from a Bitbucket workspace — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Bitbucket's side. The environment variables are `BITBUCKET_CLIENT_ID` and
+  `BITBUCKET_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/bitbucket`.
+- **Permissions.** The consumer needs the Account **Email** and **Read** permissions. Bitbucket's
+  profile carries no email address, so Apiome reads the account's addresses separately.
+- **Email addresses.** People sign in with their **primary** Bitbucket address, and it must be
+  confirmed. With an unconfirmed primary address, sign in another way first and link Bitbucket
+  from **Linked accounts**.
+- **Repositories.** Browsing a linked account's repositories still works for GitHub only. Add a
+  Bitbucket repository with **Public Git URL** on [Repositories](/bring-in/repositories).
+- **REST API.** `GET /v1/admin/auth-providers` lists `bitbucket` as an available provider, and
+  `PUT /v1/admin/auth-providers/bitbucket` stores its credentials.

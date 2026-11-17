@@ -21,11 +21,11 @@
  *     only partially set (OLO-7.2), reading the merged DB-over-env overlay so a provider
  *     configured from the admin screen is not flagged as "missing env" (OLO-8.8).
  *
- * Adding a provider later (Bitbucket #4992, …) means: one entry here, one
+ * Adding a provider later means: one entry here, one
  * generic-OAuth config in `better-auth-oauth-providers.ts`, one brand icon in
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
- * Auth0 (OLO-9.7), and Atlassian (OLO-9.8) followed exactly that path.
+ * Auth0 (OLO-9.7), Atlassian (OLO-9.8), and Bitbucket (OLO-9.9) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -270,6 +270,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // no issuer. `email_verified` from the User Identity API is honored when present, otherwise
     // fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('ATLASSIAN_CLIENT_ID', 'ATLASSIAN_CLIENT_SECRET'),
+  },
+  {
+    id: 'bitbucket',
+    label: 'Bitbucket',
+    status: 'available',
+    // Bitbucket Cloud (OLO-9.9, #4992): credentials only (the OAuth consumer's Key and Secret) —
+    // fixed endpoints, no issuer. The profile has no email; the primary confirmed address comes
+    // from `/2.0/user/emails` — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('BITBUCKET_CLIENT_ID', 'BITBUCKET_CLIENT_SECRET'),
   },
 ];
 

@@ -290,6 +290,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'auth0',
       'aws',
       'azure',
+      'bitbucket',
       'github',
       'gitlab',
       'google',

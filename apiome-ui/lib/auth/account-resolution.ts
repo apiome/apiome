@@ -118,6 +118,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `wechat` (OLO-9.43) is **not** listed: WeChat exposes no email at all (link-only).
  * `atlassian` (OLO-9.8) is trusted through the generic path: `email_verified` from the User
  * Identity API is honored when present, otherwise the engine fail-closes to link-first.
+ * `bitbucket` (OLO-9.9) is trusted on the confirmed flag of its primary address, normalized onto
+ * the profile from `/2.0/user/emails` (`verified-email.ts`).
  */
 export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'github',
@@ -132,6 +134,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'line',
   'vk',
   'atlassian',
+  'bitbucket',
 ]);
 
 /**
@@ -177,6 +180,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'vk',
   'wechat',
   'atlassian',
+  'bitbucket',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

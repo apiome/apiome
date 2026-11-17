@@ -152,7 +152,7 @@ describe('buildLinkedAccountRows', () => {
     const rows = buildLinkedAccountRows({
       accounts: [
         account({ id: 'a', provider: 'azure', provider_username: null }),
-        account({ id: 'b', provider: 'bitbucket', provider_username: 'ada' }),
+        account({ id: 'b', provider: 'sourcehut', provider_username: 'ada' }),
       ],
       providers: PROVIDERS,
       hasPassword: true,
@@ -161,8 +161,8 @@ describe('buildLinkedAccountRows', () => {
     // azure is in the registry but unconfigured: the row still reads "Microsoft".
     expect(rows[0].label).toBe('Microsoft');
     expect(rows[0].handle).toBe('ada@example.com');
-    // bitbucket is in neither table: capitalised rather than dropped or printed as a slug.
-    expect(rows[1].label).toBe('Bitbucket');
+    // sourcehut is in neither table: capitalised rather than dropped or printed as a slug.
+    expect(rows[1].label).toBe('Sourcehut');
   });
 
   it('reports the stored token without carrying it', () => {
@@ -259,9 +259,9 @@ describe('the provider cards', () => {
   });
 
   it('gives none to a provider it does not know, rather than a guess', () => {
-    expect(providerTagline('bitbucket')).toBeNull();
+    expect(providerTagline('sourcehut')).toBeNull();
     const [card] = buildProviderCards({
-      providers: [{ id: 'bitbucket', label: 'Bitbucket', status: 'available', enabled: true }],
+      providers: [{ id: 'sourcehut', label: 'Sourcehut', status: 'available', enabled: true }],
       accounts: [],
     });
     expect(card.tagline).toBeNull();

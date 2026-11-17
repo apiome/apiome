@@ -86,6 +86,8 @@ const ALL_ENABLED: Record<string, string> = {
   WECHAT_CLIENT_SECRET: 'wx-secret',
   ATLASSIAN_CLIENT_ID: 'atl-id',
   ATLASSIAN_CLIENT_SECRET: 'atl-secret',
+  BITBUCKET_CLIENT_ID: 'bb-key',
+  BITBUCKET_CLIENT_SECRET: 'bb-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -193,6 +195,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
   });
 
@@ -212,6 +215,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'vk',
       'wechat',
       'atlassian',
+      'bitbucket',
     ]);
   });
 
@@ -253,6 +257,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const atlassian = buildGenericOAuthConfig('atlassian', ALL_ENABLED)!;
     expect(atlassian.clientId).toBe('atl-id');
     expect(atlassian.clientSecret).toBe('atl-secret');
+    const bitbucket = buildGenericOAuthConfig('bitbucket', ALL_ENABLED)!;
+    expect(bitbucket.clientId).toBe('bb-key');
+    expect(bitbucket.clientSecret).toBe('bb-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -439,6 +446,19 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
       audience: 'api.atlassian.com',
       prompt: 'consent',
     });
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('bitbucket: fixed Bitbucket Cloud endpoints; Basic client auth; PKCE off (OLO-9.9)', () => {
+    const cfg = buildGenericOAuthConfig('bitbucket', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('bitbucket');
+    expect(cfg.authorizationUrl).toBe('https://bitbucket.org/site/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://bitbucket.org/site/oauth2/access_token');
+    expect(cfg.userInfoUrl).toBe('https://api.bitbucket.org/2.0/user');
+    expect(cfg.scopes).toEqual(['account', 'email']);
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(false);
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -1612,6 +1632,194 @@ describe('getUserInfo — Atlassian sign-in and linking (OLO-9.8)', () => {
 
     const { result, override } = await runGetUserInfo(
       'atlassian',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.recordUserLogin).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Bitbucket /2.0/user + /2.0/user/emails (OLO-9.9) ─────────────────────────── */
+
+describe('getUserInfo — Bitbucket primary confirmed email (OLO-9.9)', () => {
+  const USER_URL = 'https://api.bitbucket.org/2.0/user';
+  const EMAILS_URL = 'https://api.bitbucket.org/2.0/user/emails?pagelen=100';
+
+  /** Serve the profile and the emails envelope, recording each request's url + bearer token. */
+  const bitbucketApi = (user: Record<string, unknown> | null, emails: unknown) => {
+    const requests: Array<{ url: string; authorization: string | undefined }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      if (url === USER_URL && user) return { ok: true, json: async () => user };
+      if (url === EMAILS_URL && emails) return { ok: true, json: async () => emails };
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  const USER = {
+    uuid: '{5d6f0c1e-bb01-4c0f-9a57-0d2f6f2f9d11}',
+    account_id: '712020:bb-account-1',
+    username: 'ada',
+    display_name: 'Ada Lovelace',
+    links: { avatar: { href: 'http://img/bb.png' } },
+  };
+  /** A confirmed secondary address first, so "first entry" and "primary" cannot be confused. */
+  const emailsWithPrimary = (isConfirmed: boolean) => ({
+    pagelen: 100,
+    values: [
+      { email: 'old@example.com', is_primary: false, is_confirmed: true, type: 'email' },
+      { email: 'ada@example.com', is_primary: true, is_confirmed: isConfirmed, type: 'email' },
+    ],
+  });
+
+  test('primary confirmed address auto-links an existing account and signs in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl, requests } = bitbucketApi(USER, emailsWithPrimary(true));
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: USER.uuid,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'http://img/bb.png',
+    });
+    expect(requests).toEqual([
+      { url: USER_URL, authorization: 'Bearer tok' },
+      { url: EMAILS_URL, authorization: 'Bearer tok' },
+    ]);
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'bitbucket',
+      providerUserId: USER.uuid,
+    });
+  });
+
+  test('known identity signs in on a later visit', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = bitbucketApi(USER, emailsWithPrimary(true));
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER.uuid, email: 'ada@example.com' });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('unconfirmed primary address → unverified-email (a confirmed secondary does not count)', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = bitbucketApi(USER, emailsWithPrimary(false));
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('explicit link intent links the Bitbucket account to the session user', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = bitbucketApi(USER, emailsWithPrimary(true));
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      {
+        store,
+        env: ALL_ENABLED,
+        fetchImpl,
+        resolveLinkToUserId: async () => 'session-user',
+      }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'bitbucket',
+      providerUserId: USER.uuid,
+    });
+  });
+
+  test('emails API unavailable (no email scope) → email-required rejection', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = bitbucketApi(USER, null);
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('an email on the profile itself is ignored — only the emails API is trusted', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'victim@example.com': OK_USER } });
+    const { fetchImpl } = bitbucketApi(
+      { ...USER, email: 'victim@example.com', email_verified: true },
+      emailsWithPrimary(false)
+    );
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('falls back to account_id and username when uuid and display_name are missing', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = bitbucketApi(
+      { account_id: USER.account_id, username: 'ada' },
+      emailsWithPrimary(true)
+    );
+
+    const { result } = await runGetUserInfo(
+      'bitbucket',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: USER.account_id, name: 'ada' });
+  });
+
+  test('a failed /2.0/user fetch never signs anyone in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = bitbucketApi(null, emailsWithPrimary(true));
+
+    const { result, override } = await runGetUserInfo(
+      'bitbucket',
       { accessToken: 'tok' },
       { store, env: ALL_ENABLED, fetchImpl }
     );

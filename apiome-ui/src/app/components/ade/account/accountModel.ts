@@ -230,6 +230,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   vk: 'VK',
   wechat: 'WeChat',
   atlassian: 'Atlassian',
+  bitbucket: 'Bitbucket',
 };
 
 /**
