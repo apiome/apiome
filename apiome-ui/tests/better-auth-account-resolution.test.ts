@@ -307,6 +307,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'okta',
       'salesforce',
       'slack',
+      'vercel',
       'vk',
       'wechat',
       'zoom',

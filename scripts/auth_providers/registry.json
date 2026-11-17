@@ -221,6 +221,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "HUGGINGFACE_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "HUGGINGFACE_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "vercel",
+      "label": "Vercel",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "VERCEL_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "VERCEL_CLIENT_SECRET" }
+      ]
     }
   ]
 }

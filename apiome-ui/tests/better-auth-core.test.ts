@@ -186,6 +186,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'okta',
       'salesforce',
       'slack',
+      'vercel',
       'vk',
       'wechat',
       'zoom',

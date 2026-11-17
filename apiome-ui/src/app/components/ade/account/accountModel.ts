@@ -241,6 +241,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   dropbox: 'Dropbox',
   zoom: 'Zoom',
   huggingface: 'Hugging Face',
+  vercel: 'Vercel',
 };
 
 /**

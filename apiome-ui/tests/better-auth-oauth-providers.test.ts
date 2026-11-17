@@ -108,6 +108,8 @@ const ALL_ENABLED: Record<string, string> = {
   ZOOM_CLIENT_SECRET: 'zm-secret',
   HUGGINGFACE_CLIENT_ID: 'hf-id',
   HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
+  VERCEL_CLIENT_ID: 'vc-id',
+  VERCEL_CLIENT_SECRET: 'vc-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -226,6 +228,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
   });
 
@@ -256,6 +259,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'dropbox',
       'zoom',
       'huggingface',
+      'vercel',
     ]);
   });
 
@@ -330,6 +334,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const huggingface = buildGenericOAuthConfig('huggingface', ALL_ENABLED)!;
     expect(huggingface.clientId).toBe('hf-id');
     expect(huggingface.clientSecret).toBe('hf-secret');
+    const vercel = buildGenericOAuthConfig('vercel', ALL_ENABLED)!;
+    expect(vercel.clientId).toBe('vc-id');
+    expect(vercel.clientSecret).toBe('vc-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -677,6 +684,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrl).toBeUndefined();
     expect(cfg.tokenUrl).toBeUndefined();
     expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('vercel: fixed Sign in with Vercel endpoints; openid email profile; body-credential exchange; PKCE on (OLO-9.27)', () => {
+    const cfg = buildGenericOAuthConfig('vercel', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('vercel');
+    expect(cfg.authorizationUrl).toBe('https://vercel.com/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.vercel.com/login/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.vercel.com/login/oauth/userinfo');
+    // No offline_access: Apiome keeps no Vercel token, so no refresh token is asked for.
+    expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
+    expect(cfg.authentication).toBe('post');
+    // Vercel rejects an authorization request without a PKCE challenge.
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
 
@@ -4409,6 +4432,278 @@ describe('getUserInfo — Hugging Face sign-in and linking (OLO-9.26)', () => {
 
     const { result, override } = await runGetUserInfo(
       'huggingface',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Sign in with Vercel (OLO-9.27) ───────────────────────────────────────────── */
+
+describe('getUserInfo — Vercel sign-in and linking (OLO-9.27)', () => {
+  /** The claims Vercel's userinfo resource returns for `openid email profile`. */
+  const CLAIMS = {
+    sub: '345e869043f1e55f8bdc837c',
+    email: 'ada@example.com',
+    email_verified: true,
+    name: 'Ada Lovelace',
+    preferred_username: 'ada',
+    picture: 'https://vercel.com/api/www/avatar/ada',
+  };
+  const USERINFO_URL = 'https://api.vercel.com/login/oauth/userinfo';
+
+  /** Serve `claims` from the userinfo resource (a failed response when null); record requests. */
+  const vercelUserInfo = (claims: unknown) => {
+    const requests: Array<{ url: string; method?: string; authorization: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, method: init.method, authorization: init.headers.Authorization });
+      if (url === USERINFO_URL && claims !== null) {
+        return { ok: true, json: async () => claims };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Vercel sub', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = vercelUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: CLAIMS.sub,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'https://vercel.com/api/www/avatar/ada',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([
+      { url: USERINFO_URL, method: undefined, authorization: 'Bearer tok' },
+    ]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = vercelUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'vercel', providerUserId: CLAIMS.sub },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = vercelUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'vercel',
+      providerUserId: CLAIMS.sub,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "true"', 'true'],
+    ['the string "false"', 'false'],
+    ['null', null],
+    ['the number 1', 1],
+  ])(
+    'email_verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, claim) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email_verified: claim });
+
+      const { result, override } = await runGetUserInfo(
+        'vercel',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('unverified email on a new account is refused, not sent to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('unverified email on an already-linked identity still signs in', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Vercel account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'vercel', providerUserId: CLAIMS.sub },
+    });
+  });
+
+  test.each([
+    ['null', null],
+    ['absent', undefined],
+    ['empty', ''],
+    ['not a string', 42],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['no full name', { name: undefined }],
+    ['an empty full name', { name: '' }],
+    ['a full name that is not a string', { name: 7 }],
+  ])('%s → the display name falls back to the username', async (_label, overrides) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, ...overrides });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, name: 'ada' });
+  });
+
+  test('a user without a picture signs in with no image', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, picture: undefined });
+
+    const { result } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: CLAIMS.sub });
+    expect((result as { image?: unknown }).image ?? null).toBeNull();
+  });
+
+  test('the id token is not read: the userinfo resource is the source of the claims', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = vercelUserInfo({ ...CLAIMS, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: true }) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([
+    ['a failed userinfo request', null, 'tok'],
+    ['a body that is not an object', 'nope', 'tok'],
+    ['an array body', [CLAIMS], 'tok'],
+    ['claims without a sub', { ...CLAIMS, sub: '' }, 'tok'],
+    ['a sub that is not a string', { ...CLAIMS, sub: 42 }, 'tok'],
+    ['a stray id in place of the sub', { ...CLAIMS, sub: undefined, id: 'stray' }, 'tok'],
+    ['a missing access token', CLAIMS, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = vercelUserInfo(body);
+
+    const { result, override } = await runGetUserInfo(
+      'vercel',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

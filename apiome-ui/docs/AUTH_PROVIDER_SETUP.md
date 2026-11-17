@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -144,6 +144,8 @@ config is stored in the database need none of them set; see
 | `ZOOM_CLIENT_SECRET` | Zoom | To enable Zoom | Zoom app **Client Secret** |
 | `HUGGINGFACE_CLIENT_ID` | Hugging Face | To enable Hugging Face | Hugging Face OAuth app client ID |
 | `HUGGINGFACE_CLIENT_SECRET` | Hugging Face | To enable Hugging Face | Hugging Face OAuth app client secret |
+| `VERCEL_CLIENT_ID` | Vercel | To enable Vercel | Vercel App **Client ID** |
+| `VERCEL_CLIENT_SECRET` | Vercel | To enable Vercel | Vercel App client secret |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -235,7 +237,7 @@ links an account.
 | `dropbox` | **trusted** | OLO-9.24 | yes | `email_verified` on `get_current_account` |
 | `zoom` | **trusted** | OLO-9.25 | yes | `verified` on `/v2/users/me` |
 | `huggingface` | **trusted** | OLO-9.26 | yes | `email_verified` claim |
-| `vercel` | **link-first** (provisional) | OLO-9.27 | no | Email and verified semantics confirmed at implementation |
+| `vercel` | **trusted** | OLO-9.27 | yes | `email_verified` on `/login/oauth/userinfo` |
 | `railway` | **link-first** (provisional) | OLO-9.28 | no | Email and verified semantics confirmed at implementation |
 | `hubspot` | **link-first** | OLO-9.29 | no | Token-info email, no verified claim |
 | `apple` | **trusted** | OLO-9.30 | no | `email_verified` claim; private-relay addresses are handled in the provider ticket |
@@ -1315,6 +1317,67 @@ Hugging Face is a **trusted** provider and `huggingface` is in `AUTO_LINK_TRUSTE
 A sign-in with no `email` claim surfaces `email-required`. A failed userinfo request, or a
 response with no string `sub`, yields no identity and the sign-in is refused.
 
+## Vercel — Sign in with Vercel (OLO-9.27)
+
+For frontend and API teams whose people already have a Vercel account. Apiome uses **Sign in with
+Vercel**, Vercel's OAuth 2.0 / OpenID Connect flow.
+
+1. In the Vercel dashboard, open your team's **Settings**, select **Apps** and click **Create**.
+   Give the app a name (unique across Vercel — people see it on the consent page) and click
+   **Save**. The app belongs to the team, not to one person.
+2. On the app's **Manage** page, under **Authorization Callback URLs**, enter the callback URL and
+   click **Add**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/vercel`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/vercel` for local dev)
+3. Open **Permissions** and enable **openid**, **email** and **profile**, then click **Save**. No
+   other scope or permission is needed, and **offline_access** can stay off — Apiome keeps no
+   Vercel token. Apiome asks for exactly these three scopes; Vercel rejects the sign-in with
+   `invalid_scope` when the app does not have **email** or **profile**.
+4. Open **Authentication** and make sure **client_secret_post** is selected — Apiome sends the
+   client secret in the form body of the token request.
+5. Click **Generate** to create a client secret and copy it; copy the app's **Client ID** from the
+   same page.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+VERCEL_CLIENT_ID=<Client ID>
+VERCEL_CLIENT_SECRET=<client secret>
+```
+
+By default anyone with a Vercel account can sign in through the app. To limit sign-in to members of
+the owning team, set **Sign-In Access** to **Members of the team** on the app's **General** page;
+everyone else then sees Vercel's `access_denied` error.
+
+Vercel's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`vercel()` helper; they match Vercel's discovery document at
+`https://vercel.com/.well-known/openid-configuration`):
+
+- Authorize: `https://vercel.com/oauth/authorize` with the `openid email profile` scopes and a
+  PKCE challenge (`S256`) — Vercel requires PKCE
+- Token: `https://api.vercel.com/login/oauth/token` — the client id and secret are sent in the form
+  body, with the PKCE verifier
+- User info: `https://api.vercel.com/login/oauth/userinfo`
+
+The identity is keyed on the `sub` claim, the Vercel user id. The display name is `name`, or
+`preferred_username` (the Vercel username) when the account has no full name; the picture is
+`picture`. The mutable username is never the key. Apiome uses the access token for that one
+request and keeps no Vercel token; it reads no projects, deployments or teams.
+
+**Email verified semantics:** Vercel's userinfo resource reports the boolean `email_verified`.
+Apiome re-stamps it fail-closed and honors it only when it is exactly `true`; a missing, `null`,
+numeric or string value is unverified. Vercel's discovery document leaves `email_verified` out
+of `claims_supported`, so the claim is read from the userinfo response only, never assumed. Vercel
+was a provisional **link-first** provider until this was confirmed; it is now a **trusted**
+provider and `vercel` is in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Verified address** — signs in the linked account, joins the account with the same address,
+  or starts a new account.
+- **Unverified address** — rejected with `unverified-email` unless the person is linking Vercel
+  explicitly or the identity is already bound (**link-first**).
+
+A sign-in with no `email` claim surfaces `email-required`. A failed userinfo request, or a response
+with no string `sub`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1487,7 +1550,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom and Hugging Face need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face and Vercel need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

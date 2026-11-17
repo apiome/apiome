@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -89,6 +89,12 @@
  *    discovery document (`huggingface.co/.well-known/openid-configuration`), scopes
  *    `openid profile email`, PKCE on; the claims come from `huggingface.co/oauth/userinfo`, and
  *    the native `email_verified` claim is fail-closed via `resolveOAuthEmailVerified`.
+ *  - **Vercel (OLO-9.27):** Sign in with Vercel on fixed endpoints mirrored from Better Auth's
+ *    `vercel` provider (`vercel.com/oauth/authorize`, `api.vercel.com/login/oauth/token`), scopes
+ *    `openid email profile`, client credentials in the exchange body, PKCE on (Vercel requires
+ *    it); the claims come from `api.vercel.com/login/oauth/userinfo`, whose `email_verified` flag
+ *    is re-stamped fail-closed (true only when exactly `true`), so an unverified Vercel address is
+ *    refused.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -615,6 +621,11 @@ const ZOOM_USERINFO_URL = 'https://api.zoom.us/v2/users/me';
  */
 const HUGGINGFACE_DISCOVERY_URL = 'https://huggingface.co/.well-known/openid-configuration';
 const HUGGINGFACE_USERINFO_URL = 'https://huggingface.co/oauth/userinfo';
+
+/** Sign in with Vercel: fixed endpoints, mirrored from Better Auth's `vercel` provider (OLO-9.27). */
+const VERCEL_AUTHORIZE_URL = 'https://vercel.com/oauth/authorize';
+const VERCEL_TOKEN_URL = 'https://api.vercel.com/login/oauth/token';
+const VERCEL_USERINFO_URL = 'https://api.vercel.com/login/oauth/userinfo';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1428,6 +1439,54 @@ async function normalizeHuggingface(
   };
 }
 
+/**
+ * Normalize a Sign in with Vercel callback (OLO-9.27): fetch the userinfo resource with the access
+ * token and map `sub` / `email` / `name` / `picture` — the resource and mapping of Better Auth's
+ * `vercel()` helper. The display name falls back to `preferred_username` (the Vercel username)
+ * when the account has no full name.
+ *
+ * Vercel's userinfo resource reports whether the email is verified as the boolean
+ * `email_verified`. It is re-stamped onto the profile fail-closed: true only when it is exactly
+ * `true` — a missing, null, numeric or string value (even `"true"`, which
+ * `resolveOAuthEmailVerified` would otherwise accept) is unverified, so the engine refuses the
+ * address (`unverified-email`). The identity is keyed on `sub`, the Vercel user id; the mutable
+ * username is never the key. A failed fetch, or a body whose `sub` is not a non-empty string,
+ * yields an empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeVercel(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(VERCEL_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const claims =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  // A body without a string `sub` is no identity at all: drop it whole, so the engine cannot
+  // fall back to keying on a malformed `sub` (or a stray `id`) from the raw profile.
+  const accountId = typeof claims.sub === 'string' ? claims.sub : '';
+  const profile: Record<string, unknown> = accountId ? { ...claims } : {};
+  profile.email_verified = profile.email_verified === true;
+  const name =
+    (typeof profile.name === 'string' && profile.name) ||
+    (typeof profile.preferred_username === 'string' && profile.preferred_username) ||
+    null;
+  return {
+    accountId,
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name,
+    image: typeof profile.picture === 'string' && profile.picture ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1477,6 +1536,7 @@ const NORMALIZERS: Record<
   dropbox: (tokens, _env, fetchImpl) => normalizeDropbox(tokens, fetchImpl),
   zoom: (tokens, _env, fetchImpl) => normalizeZoom(tokens, fetchImpl),
   huggingface: (tokens, _env, fetchImpl) => normalizeHuggingface(tokens, fetchImpl),
+  vercel: (tokens, _env, fetchImpl) => normalizeVercel(tokens, fetchImpl),
 };
 
 /**
@@ -1510,7 +1570,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface).
+ *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2026,6 +2086,26 @@ export function buildGenericOAuthConfig(
         // (discovery advertises `S256`); the code exchange also carries the client secret.
         discoveryUrl: HUGGINGFACE_DISCOVERY_URL,
         scopes: ['openid', 'profile', 'email'],
+        pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'vercel': {
+      return {
+        providerId: 'vercel',
+        clientId: readEnvString(env, 'VERCEL_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'VERCEL_CLIENT_SECRET') ?? '',
+        // Fixed Sign in with Vercel endpoints, mirrored from Better Auth's `vercel()` helper — no
+        // issuer. The app's **Manage** page must enable the `email` and `profile` scopes Apiome
+        // asks for (Vercel rejects a request for a scope the app does not have). The code
+        // exchange sends the client id and secret in the form body together with the PKCE
+        // verifier; Vercel requires PKCE (`S256`). The userinfo `email_verified` flag is
+        // re-stamped fail-closed (see normalizeVercel).
+        authorizationUrl: VERCEL_AUTHORIZE_URL,
+        tokenUrl: VERCEL_TOKEN_URL,
+        userInfoUrl: VERCEL_USERINFO_URL,
+        scopes: ['openid', 'email', 'profile'],
+        authentication: 'post',
         pkce: true,
         getUserInfo,
       };
