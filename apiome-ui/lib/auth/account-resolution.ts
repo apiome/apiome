@@ -146,6 +146,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `vercel` (OLO-9.27) is trusted on the `email_verified` flag of Sign in with Vercel's userinfo
  * resource, re-stamped fail-closed onto the profile (`better-auth-oauth-providers.ts`); anything
  * but `true` fail-closes.
+ * `railway` (OLO-9.28) is **not** listed: Login with Railway's `/oauth/me` returns an email with
+ * no documented verified claim (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -237,6 +239,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'zoom',
   'huggingface',
   'vercel',
+  'railway',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

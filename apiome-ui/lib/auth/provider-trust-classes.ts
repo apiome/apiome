@@ -186,8 +186,7 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
   railway: {
     trustClass: 'link-first',
     ticket: 'OLO-9.28',
-    evidence: 'Email and verified semantics confirmed at implementation',
-    provisional: true,
+    evidence: '`/oauth/me` email, no documented verified claim',
   },
   hubspot: {
     trustClass: 'link-first',

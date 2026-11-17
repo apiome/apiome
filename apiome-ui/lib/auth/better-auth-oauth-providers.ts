@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -95,6 +95,11 @@
  *    it); the claims come from `api.vercel.com/login/oauth/userinfo`, whose `email_verified` flag
  *    is re-stamped fail-closed (true only when exactly `true`), so an unverified Vercel address is
  *    refused.
+ *  - **Railway (OLO-9.28):** Login with Railway on fixed endpoints mirrored from Better Auth's
+ *    `railway` provider (`backboard.railway.com/oauth/auth`, `backboard.railway.com/oauth/token`),
+ *    scopes `openid email profile`, HTTP Basic code exchange, PKCE on; the claims come from
+ *    `backboard.railway.com/oauth/me`, whose documented claims carry no verified flag (Better Auth
+ *    `railway()` hard-codes `emailVerified: false`) → fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -626,6 +631,11 @@ const HUGGINGFACE_USERINFO_URL = 'https://huggingface.co/oauth/userinfo';
 const VERCEL_AUTHORIZE_URL = 'https://vercel.com/oauth/authorize';
 const VERCEL_TOKEN_URL = 'https://api.vercel.com/login/oauth/token';
 const VERCEL_USERINFO_URL = 'https://api.vercel.com/login/oauth/userinfo';
+
+/** Login with Railway: fixed endpoints, mirrored from Better Auth's `railway` provider (OLO-9.28). */
+const RAILWAY_AUTHORIZE_URL = 'https://backboard.railway.com/oauth/auth';
+const RAILWAY_TOKEN_URL = 'https://backboard.railway.com/oauth/token';
+const RAILWAY_USERINFO_URL = 'https://backboard.railway.com/oauth/me';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1487,6 +1497,51 @@ async function normalizeVercel(
   };
 }
 
+/**
+ * Normalize a Login with Railway callback (OLO-9.28): fetch the `/oauth/me` resource with the
+ * access token and map `sub` / `email` / `name` / `picture` — the resource and mapping of Better
+ * Auth's `railway()` helper. Railway puts no claims in the id token, so `/oauth/me` is the only
+ * source.
+ *
+ * Railway documents no verified flag for that email: its claims table lists only `sub`, `email`,
+ * `name` and `picture`, and Better Auth hard-codes `emailVerified: false`. The discovery document
+ * names `email_verified` among `claims_supported`, but Railway does not document it on `/oauth/me`,
+ * so the profile never carries it — any such field in a Railway body is dropped, not trusted —
+ * and `resolveOAuthEmailVerified` fail-closes to link-first: the address can neither join nor
+ * create an account. The identity is keyed on `sub`, the Railway user id. A failed fetch, or a
+ * body whose `sub` is not a non-empty string, yields an empty profile (no account id, no email),
+ * which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeRailway(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(RAILWAY_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const claims =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  // A body without a string `sub` is no identity at all: drop it whole, so the engine cannot
+  // fall back to keying on a malformed `sub` (or a stray `id`) from the raw profile.
+  const accountId = typeof claims.sub === 'string' ? claims.sub : '';
+  const profile: Record<string, unknown> = accountId ? { ...claims } : {};
+  delete profile.email_verified;
+  return {
+    accountId,
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.picture === 'string' && profile.picture ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1537,6 +1592,7 @@ const NORMALIZERS: Record<
   zoom: (tokens, _env, fetchImpl) => normalizeZoom(tokens, fetchImpl),
   huggingface: (tokens, _env, fetchImpl) => normalizeHuggingface(tokens, fetchImpl),
   vercel: (tokens, _env, fetchImpl) => normalizeVercel(tokens, fetchImpl),
+  railway: (tokens, _env, fetchImpl) => normalizeRailway(tokens, fetchImpl),
 };
 
 /**
@@ -1570,7 +1626,8 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel).
+ *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
+ *   railway).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2106,6 +2163,26 @@ export function buildGenericOAuthConfig(
         userInfoUrl: VERCEL_USERINFO_URL,
         scopes: ['openid', 'email', 'profile'],
         authentication: 'post',
+        pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'railway': {
+      return {
+        providerId: 'railway',
+        clientId: readEnvString(env, 'RAILWAY_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'RAILWAY_CLIENT_SECRET') ?? '',
+        // Fixed Login with Railway endpoints, mirrored from Better Auth's `railway()` helper — no
+        // issuer. The app must be a **Web** (confidential) app: a Native app has no client secret.
+        // Like the helper, the code exchange sends the client id and secret as HTTP Basic, and a
+        // PKCE challenge (`S256`, the only method Railway supports) is sent — Railway recommends
+        // it for web apps. The `/oauth/me` email carries no documented verified claim →
+        // fail-closed link-first (see normalizeRailway).
+        authorizationUrl: RAILWAY_AUTHORIZE_URL,
+        tokenUrl: RAILWAY_TOKEN_URL,
+        userInfoUrl: RAILWAY_USERINFO_URL,
+        scopes: ['openid', 'email', 'profile'],
+        authentication: 'basic',
         pkce: true,
         getUserInfo,
       };

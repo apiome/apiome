@@ -135,7 +135,8 @@ class ProviderDescriptor:
 # ``zoom`` is available (OLO-9.25, #5038) as credentials-only Zoom OAuth 2.0 (fixed endpoints, no issuer);
 # ``huggingface`` is available (OLO-9.26, #5039) as credentials-only Sign in with Hugging Face (OIDC discovery,
 # no issuer);
-# ``vercel`` is available (OLO-9.27, #5040) as credentials-only Sign in with Vercel (fixed endpoints, no issuer).
+# ``vercel`` is available (OLO-9.27, #5040) as credentials-only Sign in with Vercel (fixed endpoints, no issuer);
+# ``railway`` is available (OLO-9.28, #5041) as credentials-only Login with Railway (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -288,6 +289,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Vercel",
         STATUS_AVAILABLE,
         client_credential_fields("VERCEL_CLIENT_ID", "VERCEL_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "railway",
+        "Railway",
+        STATUS_AVAILABLE,
+        client_credential_fields("RAILWAY_CLIENT_ID", "RAILWAY_CLIENT_SECRET"),
     ),
 )
 

@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -146,6 +146,8 @@ config is stored in the database need none of them set; see
 | `HUGGINGFACE_CLIENT_SECRET` | Hugging Face | To enable Hugging Face | Hugging Face OAuth app client secret |
 | `VERCEL_CLIENT_ID` | Vercel | To enable Vercel | Vercel App **Client ID** |
 | `VERCEL_CLIENT_SECRET` | Vercel | To enable Vercel | Vercel App client secret |
+| `RAILWAY_CLIENT_ID` | Railway | To enable Railway | Railway OAuth app client ID |
+| `RAILWAY_CLIENT_SECRET` | Railway | To enable Railway | Railway OAuth app client secret |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -238,7 +240,7 @@ links an account.
 | `zoom` | **trusted** | OLO-9.25 | yes | `verified` on `/v2/users/me` |
 | `huggingface` | **trusted** | OLO-9.26 | yes | `email_verified` claim |
 | `vercel` | **trusted** | OLO-9.27 | yes | `email_verified` on `/login/oauth/userinfo` |
-| `railway` | **link-first** (provisional) | OLO-9.28 | no | Email and verified semantics confirmed at implementation |
+| `railway` | **link-first** | OLO-9.28 | yes | `/oauth/me` email, no documented verified claim |
 | `hubspot` | **link-first** | OLO-9.29 | no | Token-info email, no verified claim |
 | `apple` | **trusted** | OLO-9.30 | no | `email_verified` claim; private-relay addresses are handled in the provider ticket |
 | `facebook` | **link-first** | OLO-9.31 | no | Graph email, no verified claim |
@@ -1378,6 +1380,62 @@ provider and `vercel` is in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
 A sign-in with no `email` claim surfaces `email-required`. A failed userinfo request, or a response
 with no string `sub`, yields no identity and the sign-in is refused.
 
+## Railway — Login with Railway (OLO-9.28)
+
+For indie and startup API builders who deploy on Railway. Apiome uses **Login with Railway**,
+Railway's OAuth 2.0 / OpenID Connect flow. Railway is a **link-first** provider: read
+[Email verified semantics](#railway-email-verified-semantics) below before turning it on, because
+nobody can *create* an Apiome account with it.
+
+1. In the Railway dashboard, open your workspace's **Settings**, select **Developer** and click
+   **New OAuth App**. Only a workspace admin can create one. Give the app a name people will
+   recognize — Railway shows it on the consent screen.
+2. Add the redirect URI (Railway requires an exact match of scheme, host, port and path):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/railway`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/railway` for local dev)
+3. Choose the **Web** app type. A **Native** app has no client secret, and Apiome cannot use it.
+4. Create the app and copy the client secret straight away — Railway shows it only once. Copy the
+   client ID from the same page.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+RAILWAY_CLIENT_ID=<client ID>
+RAILWAY_CLIENT_SECRET=<client secret>
+```
+
+Railway's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`railway()` helper; they match Railway's discovery document at
+`https://backboard.railway.com/.well-known/openid-configuration`):
+
+- Authorize: `https://backboard.railway.com/oauth/auth` with the `openid email profile` scopes
+  and a PKCE challenge (`S256`). Apiome asks for no `offline_access`, workspace or project scope:
+  it keeps no Railway token and reads no workspaces, projects or deployments.
+- Token: `https://backboard.railway.com/oauth/token` — the client id and secret are sent as HTTP
+  Basic, with the PKCE verifier
+- User info: `https://backboard.railway.com/oauth/me` — Railway puts no claims in the id token
+
+The identity is keyed on the `sub` claim, the Railway user id. The display name is `name` and the
+picture is `picture`.
+
+<a id="railway-email-verified-semantics"></a>
+**Email verified semantics:** `/oauth/me` carries the account's email address (`email`), but
+Railway does **not** document a verified claim: its claims table lists only `sub`, `email`, `name`
+and `picture`, and Better Auth hard-codes `emailVerified: false`. Railway's discovery document
+names `email_verified` in `claims_supported`, but because `/oauth/me` is not documented to return
+it, Apiome drops any such field rather than trust it. The engine always fail-closes
+(**link-first**), and `railway` is not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16). Railway was a
+provisional **link-first** provider until this was confirmed; the class is now decided:
+
+- **Linking** — a signed-in person chooses **Link** on the Railway card on **Linked accounts**.
+  The explicit link binds the Railway identity to their account whatever its email address.
+- **Subsequent sign-in** — once linked, **Sign in with Railway** signs that person in.
+- **Fresh sign-up, or a first sign-in without linking** — rejected with `unverified-email`, even
+  when the address matches an existing account. This is intended: the address is never used to
+  join or create an account.
+
+A sign-in with no `email` claim surfaces `email-required`. A failed `/oauth/me` request, or a
+response with no string `sub`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1550,7 +1608,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face and Vercel need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel and Railway need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

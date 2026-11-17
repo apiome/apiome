@@ -133,6 +133,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   },
   // Vercel (OLO-9.27, #5040): credentials-only; fixed endpoints, no issuer extra.
   vercel: { clientId: 'VERCEL_CLIENT_ID', clientSecret: 'VERCEL_CLIENT_SECRET' },
+  // Railway (OLO-9.28, #5041): credentials-only; fixed endpoints, no issuer extra.
+  railway: { clientId: 'RAILWAY_CLIENT_ID', clientSecret: 'RAILWAY_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */
