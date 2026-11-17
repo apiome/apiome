@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.738.0] - 2026-11-17
+
+### Changed
+- **Provider-slug vocabulary widened to the full Better Auth catalog (OLO-9.16, #5029)** — OpenAPI 1.596.0. No
+  endpoint, request or response changes.
+  - Migration `V395` widens the two provider CHECKs — `external_auth_providers_provider_supported_ck` (linked
+    identities) and `auth_provider_config_provider_id_check` (the rows behind `/v1/admin/auth-providers`) — to 30 more
+    slugs: `slack`, `linkedin`, `discord`, `salesforce`, `notion`, `figma`, `linear`, `dropbox`, `zoom`, `huggingface`,
+    `vercel`, `railway`, `hubspot`, `apple`, `facebook`, `twitter`, `reddit`, `spotify`, `twitch`, `tiktok`, `roblox`,
+    `kick`, `kakao`, `naver`, `yandex`, `paypal`, `polar`, `patreon`, `gumroad`, `paybin`. Every slug accepted before
+    is still accepted, and the identity CHECK keeps the `sso:<slug>` kind. The migration is idempotent.
+  - The new slugs are inert: `GET /v1/admin/auth-providers` lists, and `PUT /v1/admin/auth-providers/{provider_id}`
+    accepts, only providers in the registry (`auth_provider_registry.py`), which this release does not change. A
+    provider ticket (OLO-9.17–9.49) now ships its registry entry without a migration.
+  - Whether a provider's email may auto-link an account is recorded per provider in
+    `apiome-ui/lib/auth/provider-trust-classes.ts` (trusted / link-first / link-only).
+
+
 ## [1.737.0] - 2026-11-17
 
 ### Added

@@ -183,8 +183,9 @@ application's **client ID** and **client secret**; issuer-based providers also g
 ### Settings on the provider's side
 
 Apiome requests the scopes it needs itself and trusts an email address only when the provider says
-it is verified — a missing claim counts as unverified. A few providers need more than the callback
-URI:
+it is verified — a missing claim counts as unverified (see
+[How a provider's email is trusted](#how-a-providers-email-is-trusted)). A few providers need more
+than the callback URI:
 
 | Provider | Where to register | What else to set |
 | --- | --- | --- |
@@ -204,6 +205,31 @@ The full per-provider guide — including LINE, VK and WeChat, the environment v
 validation and secret encryption — is
 `apiome-ui/docs/AUTH_PROVIDER_SETUP.md`
 in the repository.
+
+## How a provider's email is trusted
+
+A provider sign-in **joins an existing account**, or **creates a new one**, only when the provider
+proves the email address is verified. Apiome never takes an address on trust: a provider that let
+someone claim an address they do not own would hand them that person's account. Each provider is in
+one of three classes:
+
+| Class | What the provider gives Apiome | What a sign-in does | Providers |
+| --- | --- | --- | --- |
+| **Trusted** | An email address and proof it is verified | Joins the account with that address, or creates one. An address the provider does not report as verified is refused: *Your sign-in provider could not confirm that your email address is verified…* | GitHub, GitLab, Microsoft, Google, Okta, AWS (Cognito), Keycloak, OIDC, Auth0, LINE, Atlassian, Bitbucket |
+| **Link first** | An email address, with no proof it is verified | Never matches an account by email. Signs in only people who have already linked the provider | VK |
+| **Link only** | No email address | The same as **Link first** — there is no address to match | WeChat |
+
+For a **Link first** or **Link only** provider, people **sign in another way first**, link the
+provider on [Linked accounts](../workspace/linked-accounts.mdx), and can sign in with it from then
+on. The class is fixed per provider and is not a setting: no administrator option makes Apiome
+trust an unproven address.
+
+**LINE** sends its verified claim only when the channel has the approved email permission; without
+it, LINE behaves as **Link first**. **Microsoft** needs the `xms_edov` claim — see the table above.
+
+Developers adding a provider record its class in
+`apiome-ui/lib/auth/provider-trust-classes.ts`; the per-provider guide lists the class of every
+provider in the Better Auth catalog, including those not yet available.
 
 ## Add a provider
 
