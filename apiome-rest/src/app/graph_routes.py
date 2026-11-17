@@ -360,7 +360,10 @@ class AffectedEntity(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     depth: int = Field(description="1 for a direct dependent, 2+ for a transitive one.")
-    edge_kind: str = Field(description="The edge that reached it: `consumes`, `depends_on` or `runtime_calls`.")
+    edge_kind: str = Field(description=(
+        "The edge that reached it: `consumes`, `depends_on`, `runtime_calls` or `includes` (an API product "
+        "that bundles it)."
+    ))
     provenance: str
     provenances: List[str] = Field(
         default_factory=list,
@@ -419,7 +422,7 @@ class BlastRadiusResponse(BaseModel):
     summary="Ask what a change affects",
     description=(
         "Who depends on `entity` (optionally narrowed to `pointers` into it), directly and "
-        "transitively, along inbound `consumes`, `depends_on` and `runtime_calls` edges — each with "
+        "transitively, along inbound `consumes`, `depends_on`, `runtime_calls` and `includes` edges — each with "
         "its edge path, provenance and owner team — and the evidence a change invalidates: "
         "verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, "
         "agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated "

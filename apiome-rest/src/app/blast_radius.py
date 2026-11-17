@@ -5,7 +5,8 @@ catalog graph (:mod:`app.catalog_graph`, apiome-db V288) and the evidence tables
 
 **Affected entities.** A change to an entity (optionally narrowed to JSON ``pointers`` into it)
 affects whatever depends on it, along *inbound* edges of the dependency kinds — ``consumes``,
-``depends_on`` and ``runtime_calls`` (:data:`DEPENDENCY_EDGES`). Structural edges (``served_by``,
+``depends_on``, ``runtime_calls`` and ``includes`` (:data:`DEPENDENCY_EDGES`; APX-1.1: an API
+product that bundles the entity is affected by its change). Structural edges (``served_by``,
 ``deployed_on``, ``built_from``, ``identity_of``, ``converted_from``) are not dependents.
 
 * **Direct** (depth 1): for a project or catalog item, the ``consumes`` layer is the **CTG-4.2
@@ -73,7 +74,7 @@ __all__ = [
 _logger = logging.getLogger(__name__)
 
 #: Inbound edges of these kinds make their source a dependent of their target.
-DEPENDENCY_EDGES: Tuple[str, ...] = ("consumes", "depends_on", "runtime_calls")
+DEPENDENCY_EDGES: Tuple[str, ...] = ("consumes", "depends_on", "runtime_calls", "includes")
 
 DEFAULT_DEPTH = 3
 MAX_DEPTH = 5

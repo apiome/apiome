@@ -248,7 +248,9 @@ def test_the_sweep_materializes_every_tenant_and_survives_one_failure(monkeypatc
 
 
 def test_every_family_is_materialized_in_a_fixed_order() -> None:
-    assert FAMILIES == ("consumes", "converted_from", "identity_of", "built_from", "deployed_on", "served_by")
+    assert FAMILIES == (
+        "consumes", "converted_from", "identity_of", "built_from", "deployed_on", "served_by", "includes",
+    )
     with pytest.raises(ValueError, match="runtime_calls"):  # runtime edges belong to RDG-1.x, not here
         graph.materialize_on_cursor(_Cursor(), _TENANT, ("runtime_calls",))
 

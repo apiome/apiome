@@ -26,6 +26,8 @@ export const GRAPH_NODE_KINDS = [
   'gateway_config',
   // CDG-5.5 (V299): an accepted Backstage or Compass component; declares its own edges.
   'component',
+  // APX-1.1 (V387): an API product; its `includes` edges point at what it bundles.
+  'api_product',
 ] as const;
 export type GraphNodeKind = (typeof GRAPH_NODE_KINDS)[number];
 
@@ -39,6 +41,8 @@ export const GRAPH_EDGE_KINDS = [
   'built_from',
   'converted_from',
   'identity_of',
+  // APX-1.1 (V387): an API product bundles a project, catalog item or MCP server.
+  'includes',
 ] as const;
 export type GraphEdgeKind = (typeof GRAPH_EDGE_KINDS)[number];
 
@@ -57,6 +61,7 @@ export const NODE_KIND_LABELS: Readonly<Record<GraphNodeKind, string>> = {
   identity_group: 'Identity group',
   gateway_config: 'Gateway config',
   component: 'Component',
+  api_product: 'API product',
 };
 
 /** A short, text-only kind marker drawn inside a graph node (colour is never the only signal). */
@@ -71,6 +76,7 @@ export const NODE_KIND_ABBREVIATIONS: Readonly<Record<GraphNodeKind, string>> = 
   identity_group: 'I',
   gateway_config: 'E',
   component: 'K',
+  api_product: 'A',
 };
 
 /** How an edge reads from its source's side (`out`) and from its target's side (`in`). */
@@ -83,6 +89,7 @@ export const EDGE_KIND_LABELS: Readonly<Record<GraphEdgeKind, { out: string; in:
   built_from: { out: 'Built from', in: 'Builds' },
   converted_from: { out: 'Converted from', in: 'Converted into' },
   identity_of: { out: 'Same API as', in: 'Groups' },
+  includes: { out: 'Includes', in: 'Included in' },
 };
 
 export const PROVENANCE_LABELS: Readonly<Record<GraphProvenance, string>> = {

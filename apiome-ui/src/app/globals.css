@@ -40209,6 +40209,139 @@ a.tm-list__name {
   min-block-size: var(--target-min);
 }
 
+/* ---- API products (APX-1.1, #6098) ----------------------------------------
+   `/ade/dashboard/products` and `/ade/dashboard/products/[slug]`. The list mirrors the teams table
+   (`.tm-table`); the editor is the details form over the members table and the add-member row.
+   Tokens only. */
+.apx-note,
+.apx-muted {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.apx-error {
+  color: var(--danger-fg);
+  font-size: var(--fs-xs);
+}
+
+.apx-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.apx-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.apx-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-block-end: 1px solid var(--border);
+}
+
+.apx-table td {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.apx-table tr:last-child td {
+  border-block-end: 0;
+}
+
+.apx-name {
+  display: block;
+  color: var(--fg);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.apx-name:hover,
+a.apx-name:focus-visible,
+.apx-link:hover,
+.apx-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.apx-link {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.apx-slug,
+.apx-summary {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.apx-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.apx-actions {
+  text-align: end;
+}
+
+.apx-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.apx-editor {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.apx-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.apx-section__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* The add-member row: the fields side by side, wrapping on narrow screens. */
+.apx-add {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  align-items: start;
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+}
+
+.apx-add__submit {
+  display: flex;
+  align-items: flex-end;
+  min-block-size: 100%;
+}
+
+.apx-add__error {
+  grid-column: 1 / -1;
+}
+
+.apx-danger {
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border);
+}
+
 /* ---- Tenant drawer: Ownership section (CDG-2.5, #5964) ------------------- */
 .tnt-own-select {
   inline-size: 100%;

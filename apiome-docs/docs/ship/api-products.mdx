@@ -1,0 +1,103 @@
+---
+title: API products
+description: Bundle projects, versions and MCP servers into one product consumers get access to.
+sidebar_position: 4.2
+tags: [products, access, portal]
+---
+
+<Route path="/ade/dashboard/products" />
+
+An **API product** is the thing a consumer is given access to — "Payments API" — rather than the
+projects behind it. One product bundles several **members**: projects at a version or at latest, MCP
+servers and catalog items, under one name, with a **state**, a **visibility** and an owner team.
+**Go to Ship → Products.**
+
+<Screenshot id="api-products-list" alt="Products: one row per product with its handle, summary, state, visibility and member count, and the New product button" />
+
+Each row shows the product's name, its handle and summary, its **State** (**Draft**, **Published**,
+**Deprecated** or **Retired**), its **Visibility** and how many **Members** it has. Click a name to
+open the product.
+
+## Create a product
+
+1. On **Products**, **click “New product”**.
+2. Enter a **Name**, the way a consumer would ask for it — for example *Payments*.
+3. Optionally enter a **Handle** (`payments`). It is used in URLs and plans and is derived from the
+   name when left empty. It cannot be changed later.
+4. Optionally add a **Summary** — *Card payments, refunds and the payments MCP server.*
+5. **Click “Create product”.** The product opens, as a **Draft** with **Private** visibility and no
+   members.
+
+## Add members
+
+<Screenshot id="api-product-editor" alt="A product: the details form with visibility and state, and the members table with each member's version, environment and status" />
+
+Below the details, the add-member row takes one member at a time:
+
+1. Choose a **Kind**:
+
+   | Kind | What it includes |
+   | --- | --- |
+   | **Project at latest** | A project at whatever version it published last. The product follows every new publish. |
+   | **Project at a version** | A project at an exact version (`1.4.0`) or a range (`2.x`, `2.1.x`): the newest published version in range. |
+   | **MCP server** | An MCP server from the catalog. |
+   | **Catalog item** | A spec in the catalog that is not a project. |
+
+2. Name the member by its **slug or id** — for example `payments-api`.
+3. For **Project at a version**, enter the **Version** — for example `2.x`.
+4. Optionally enter an **Environment** (`production`, `sandbox`) to narrow the member to one; leave it
+   empty for every environment.
+5. **Click “Add member”.**
+
+The **Members** table shows, for each member, its **Kind**, its **Version** as what it was added with
+and what it means today (`latest → 1.4.0`, `2.x → 2.3.1`, or `nothing yet` when no version is in
+range), its **Environment** and its **Status**: **Published**, **Not published**, or **Deleted** when
+the project or server behind it is gone. **Click “Remove”** on a row to take a member out; the
+project or server itself is untouched.
+
+A product never stores a version number for **Project at latest** or a range: it reads the newest
+published version every time, so publishing `payments` 1.5.0 moves the product to 1.5.0 with no edit.
+
+## Visibility and state
+
+Change both in **Details** and **click “Save product”**. Only the fields you changed are saved.
+
+| Visibility | Who sees the product |
+| --- | --- |
+| **Private** | The owner team and workspace admins. |
+| **Workspace** | Everyone in the workspace. |
+| **Portal** | Readers of the developer portal. |
+
+**Portal** needs every member published. While one is not, the option is unavailable and the hint
+under **Visibility** names the members to publish first — *Portal needs every member published. Not
+published: Payments MCP.* The same rule applies when you add an unpublished member to a product that
+is already on the portal: the add is refused.
+
+**State** is the product's lifecycle — **Draft** while you assemble it, **Published** once consumers
+can ask for it, then **Deprecated** and **Retired** — and is shown on the list.
+
+## Owner team
+
+A product has one owner team. The **Owner team** picker appears in **Details** when Teams is available
+in your workspace; otherwise set it with the REST API (`owner_team` on
+[the products endpoints](../reference/rest/api-products.md)).
+
+## Products in the dependency graph
+
+Each product is a node of the dependency graph with an **Includes** edge to every member. When you
+ask what a breaking change in a project reaches, the blast radius lists the products that include it,
+with their owner team — so you know which products, and through them which consumers, a change
+touches. Deleting a product takes its edges out of the graph.
+
+## Delete a product
+
+At the bottom of the product, **click “Delete product”**, then **“Delete product”** again to confirm.
+The projects and MCP servers it bundled are untouched, and its handle becomes free again.
+
+## Permissions and the API
+
+Products use the **Projects** permissions: **view** to read, **create** to create, **edit** to change
+details or members and **delete** to delete. Everything on this page is also available from
+[the REST API](../reference/rest/api-products.md):
+`GET | POST /v1/tenants/{t}/products`, `GET | PATCH | DELETE /v1/tenants/{t}/products/{slug}` and
+`GET | POST /v1/tenants/{t}/products/{slug}/members` with `DELETE …/members/{id}`.

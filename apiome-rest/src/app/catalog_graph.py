@@ -16,6 +16,9 @@ Family             Edge                                        Source rows
                    (CDG-5.3: the connector's environment)     discovered) × ``catalog_gateway_configs``
 ``served_by``      project / catalog item → repository         ``repository_import_spec`` and live
                                                                ``draft_repository_bindings``
+``includes``       API product → project / catalog item / MCP  ``api_product_members`` of live products
+                   endpoint (APX-1.1: what the product         (apiome-db V387)
+                   bundles)
 =================  ==========================================  ========================================
 
 A projects row is a ``project`` when it is publishable and a ``catalog_item`` otherwise.
@@ -75,6 +78,8 @@ NODE_KINDS = (
     "gateway_config",
     # CDG-5.5 (V299): an accepted Backstage or Compass component; declares its own edges.
     "component",
+    # APX-1.1 (V387): an API product; its `includes` edges point at what it bundles.
+    "api_product",
 )
 
 EDGE_KINDS = (
@@ -86,6 +91,8 @@ EDGE_KINDS = (
     "converted_from",
     "identity_of",
     "runtime_calls",
+    # APX-1.1 (V387): an API product bundles a project, catalog item or MCP server.
+    "includes",
 )
 
 PROVENANCES = ("declared", "derived", "runtime")
@@ -191,6 +198,31 @@ _FAMILY_SQL: Dict[str, str] = {
         JOIN apiome.tenant_repositories r ON r.id = b.repository_id AND r.deleted_at IS NULL
         JOIN apiome.projects p ON p.id = b.project_id AND p.deleted_at IS NULL
         WHERE b.tenant_id = %(tenant)s::uuid AND b.released_at IS NULL
+    """,
+    # APX-1.1: a live product includes each of its members. One edge per member row, so a product
+    # that bundles a project twice (two environments, two version ranges) has two edges.
+    "includes": f"""
+        SELECT 'api_product' AS from_kind, ap.id AS from_id,
+               {_PROJECT_KIND} AS to_kind, p.id AS to_id,
+               NULL::text AS pointer, 'api_product_member:' || m.id::text AS source_ref,
+               jsonb_strip_nulls(jsonb_build_object(
+                   'member_kind', m.member_kind, 'version_selector', m.version_selector,
+                   'environment', m.environment, 'product_slug', ap.slug
+               )) AS evidence
+        FROM apiome.api_product_members m
+        JOIN apiome.api_products ap ON ap.id = m.product_id AND ap.deleted_at IS NULL
+        JOIN apiome.projects p ON p.id = m.member_ref AND p.tenant_id = m.tenant_id AND p.deleted_at IS NULL
+        WHERE m.tenant_id = %(tenant)s::uuid AND m.member_kind <> 'mcp_server'
+        UNION ALL
+        SELECT 'api_product', ap.id, 'mcp_endpoint', e.id,
+               NULL::text, 'api_product_member:' || m.id::text,
+               jsonb_strip_nulls(jsonb_build_object(
+                   'member_kind', m.member_kind, 'environment', m.environment, 'product_slug', ap.slug
+               ))
+        FROM apiome.api_product_members m
+        JOIN apiome.api_products ap ON ap.id = m.product_id AND ap.deleted_at IS NULL
+        JOIN apiome.mcp_endpoints e ON e.id = m.member_ref AND e.tenant_id = m.tenant_id AND e.deleted_at IS NULL
+        WHERE m.tenant_id = %(tenant)s::uuid AND m.member_kind = 'mcp_server'
     """,
 }
 

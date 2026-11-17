@@ -92,7 +92,7 @@ describe('platform-nav model — shape', () => {
       home: ['home'],
       build: ['projects', 'primitives'],
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
-      ship: ['published', 'sunset-timeline', 'export-studio'],
+      ship: ['published', 'products', 'sunset-timeline', 'export-studio'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
       workspace: ['members', 'roles', 'teams', 'api-keys', 'schema-registry'],
     });
@@ -112,6 +112,7 @@ describe('platform-nav model — shape', () => {
       'Connectors',
       'MCP servers',
       'Published',
+      'Products',
       'Sunset timeline',
       'Export studio',
       'Style guides',
@@ -298,6 +299,7 @@ describe('platform-nav model — workspace gating', () => {
     'connectors',
     'mcp',
     'published',
+    'products',
     'sunset-timeline',
     'export-studio',
     'style-guides',
@@ -564,11 +566,11 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 13 released destinations in the rail (MCP servers, then Primitives & types, joined in RC8), 20 with every feature previewed', () => {
+  it('leaves 14 released destinations in the rail (MCP servers, then Primitives & types, joined in RC8; Products in APX-1.1), 21 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(13);
+    expect(releasedRailCount()).toBe(14);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
-    expect(releasedRailCount()).toBe(20);
+    expect(releasedRailCount()).toBe(21);
   });
 
   it('takes Tenants and SDK settings out of the rail and gives every off-rail item a home', () => {

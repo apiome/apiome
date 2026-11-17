@@ -27,6 +27,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenCheck,
   Box,
+  Boxes,
   Building2,
   CircleUser,
   Clock,
@@ -63,6 +64,7 @@ import { DEFAULT_PLATFORM_NAV_ICON } from './platform-nav';
 export const PLATFORM_NAV_ICONS: Readonly<Record<string, LucideIcon>> = {
   'book-open-check': BookOpenCheck,
   box: Box,
+  boxes: Boxes,
   'building-2': Building2,
   'circle-user': CircleUser,
   clock: Clock,

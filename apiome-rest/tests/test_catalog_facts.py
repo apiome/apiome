@@ -70,9 +70,11 @@ def _facts(db: FakeDb, kind_key: str, owner: Dict[str, bool] | None = None) -> D
 # ---------------------------------------------------------------------------------------------
 
 
-def test_every_kind_but_team_carries_facts_and_every_fact_is_labelled() -> None:
-    assert {entry.key for entry in REGISTRY} - set(APPLICABLE_FACTS) == {"team"}
-    assert facts_for_kind("team") == ()
+def test_every_kind_but_team_and_api_product_carries_facts_and_every_fact_is_labelled() -> None:
+    # An API product's owner is its own owner_team_id (APX-1.1), not an entity_owners row the
+    # owner facts read, so it carries none yet.
+    assert {entry.key for entry in REGISTRY} - set(APPLICABLE_FACTS) == {"team", "api_product"}
+    assert facts_for_kind("team") == () and facts_for_kind("api_product") == ()
     for keys in APPLICABLE_FACTS.values():
         assert keys[:2] == ("owner.present", "owner.contactable")
         assert all(key in FACT_LABELS for key in keys)

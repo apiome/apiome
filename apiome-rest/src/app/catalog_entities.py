@@ -213,6 +213,22 @@ REGISTRY: Tuple[EntityKind, ...] = (
         detail_route="/ade/dashboard/catalog/components/{slug}",
         list_route=None,
     ),
+    # APX-1.1 (V387): an API product — a bundle of projects, versions, MCP servers and catalog items.
+    # Its owner team is a column of its own (``owner_team_id``), not an ``entity_owners`` row.
+    EntityKind(
+        key="api_product",
+        label="API product",
+        plural_label="API products",
+        table="apiome.api_products",
+        live_where="e.deleted_at IS NULL",
+        slug_sql="e.slug",
+        description_sql="e.summary",
+        owner_kind=None,
+        graph_kind="api_product",
+        resource=Resource.PROJECTS,
+        detail_route="/ade/dashboard/products/{slug}",
+        list_route="/ade/dashboard/products",
+    ),
     EntityKind(
         key="team",
         label="Team",

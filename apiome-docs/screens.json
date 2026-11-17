@@ -172,6 +172,26 @@
       "fallback": "fixture:hive-published/table.html"
     },
     {
+      "id": "api-products-list",
+      "route": "/ade/dashboard/products",
+      "waitFor": "[data-testid=\"products-table\"]",
+      "data": "fixture:hive-a11y/api-products-list.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/products/ProductsClient.tsx",
+        "apiome-ui/lib/api-products.ts"
+      ]
+    },
+    {
+      "id": "api-product-editor",
+      "route": "/ade/dashboard/products/payments",
+      "waitFor": "[data-testid=\"product-editor\"]",
+      "data": "fixture:hive-a11y/api-product-editor.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/products/[slug]",
+        "apiome-ui/lib/api-products.ts"
+      ]
+    },
+    {
       "id": "sunset-timeline",
       "route": "/ade/dashboard/versions/sunset-timeline",
       "waitFor": "[data-testid=\"page-header\"]",
