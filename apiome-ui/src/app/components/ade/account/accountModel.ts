@@ -243,6 +243,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   huggingface: 'Hugging Face',
   vercel: 'Vercel',
   railway: 'Railway',
+  hubspot: 'HubSpot',
 };
 
 /**

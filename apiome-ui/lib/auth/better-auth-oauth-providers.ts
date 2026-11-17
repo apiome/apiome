@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -100,6 +100,12 @@
  *    scopes `openid email profile`, HTTP Basic code exchange, PKCE on; the claims come from
  *    `backboard.railway.com/oauth/me`, whose documented claims carry no verified flag (Better Auth
  *    `railway()` hard-codes `emailVerified: false`) → fail-closed link-first.
+ *  - **HubSpot (OLO-9.29):** HubSpot OAuth on fixed endpoints mirrored from Better Auth's
+ *    `hubspot` provider (`app.hubspot.com/oauth/authorize`, `api.hubapi.com/oauth/v1/token`),
+ *    scope `oauth`, client credentials in the form body, PKCE off; the claims come from the
+ *    token-info resource `api.hubapi.com/oauth/v1/access-tokens/{token}`, whose `user` email
+ *    carries no verified flag (Better Auth `hubspot()` hard-codes `emailVerified: false`) →
+ *    fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -636,6 +642,12 @@ const VERCEL_USERINFO_URL = 'https://api.vercel.com/login/oauth/userinfo';
 const RAILWAY_AUTHORIZE_URL = 'https://backboard.railway.com/oauth/auth';
 const RAILWAY_TOKEN_URL = 'https://backboard.railway.com/oauth/token';
 const RAILWAY_USERINFO_URL = 'https://backboard.railway.com/oauth/me';
+
+/** HubSpot OAuth: fixed endpoints, mirrored from Better Auth's `hubspot` provider (OLO-9.29). */
+const HUBSPOT_AUTHORIZE_URL = 'https://app.hubspot.com/oauth/authorize';
+const HUBSPOT_TOKEN_URL = 'https://api.hubapi.com/oauth/v1/token';
+/** HubSpot has no userinfo endpoint: the token-info resource takes the access token in its path. */
+const HUBSPOT_TOKEN_INFO_URL = 'https://api.hubapi.com/oauth/v1/access-tokens';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1542,6 +1554,91 @@ async function normalizeRailway(
   };
 }
 
+/**
+ * Read a HubSpot user id from a token-info field: a positive integer (what HubSpot returns) or a
+ * non-empty string, rendered as a string. Anything else — a missing value, zero, a negative,
+ * fractional or non-finite number, a boolean, an object — is no id.
+ *
+ * @param value The raw `user_id` (or `signed_access_token.userId`) value.
+ * @returns The id as a string, or '' when the value is not a usable id.
+ */
+function hubspotUserId(value: unknown): string {
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) && value > 0 ? String(value) : '';
+  }
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Fetch HubSpot's token-info resource (OLO-9.29): GET `/oauth/v1/access-tokens/{token}`, matching
+ * Better Auth's `hubspot()` helper. The access token is the path segment (URL-encoded) and no
+ * `Authorization` header is sent. Fail-soft to null on a transport or parse error, a non-2xx
+ * response, or a body that is not an object.
+ *
+ * @param accessToken The HubSpot access token from the code exchange.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The token-info object, or null when HubSpot returned none.
+ */
+async function fetchHubspotTokenInfo(
+  accessToken: string,
+  fetchImpl: FetchLike
+): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetchImpl(`${HUBSPOT_TOKEN_INFO_URL}/${encodeURIComponent(accessToken)}`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'apiome' },
+    });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalize a HubSpot sign-in (OLO-9.29): fetch the token-info resource for the access token and
+ * map `user_id` (falling back to `signed_access_token.userId`) / `user` — the resource and mapping
+ * of Better Auth's `hubspot()` helper. `user` is the email address of the HubSpot user who
+ * authorized the app; it is also the display name, as in the helper, because token info carries
+ * no name and no picture.
+ *
+ * HubSpot asserts **nothing** about whether that email is verified (Better Auth hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` and
+ * `resolveOAuthEmailVerified` fail-closes to link-first: the address can neither join nor create
+ * an account. The profile is built from the identity fields only (`user_id`, `email`, `hub_id`,
+ * `hub_domain`): the token-info body echoes the access token (`token`, `signed_access_token`), and
+ * no part of it — nor any `email_verified` field — travels further. The identity is keyed on the
+ * HubSpot user id, which is the same across the HubSpot accounts (hubs) a person belongs to. A
+ * failed fetch, or a body without a usable user id, yields an empty profile (no account id, no
+ * email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeHubspot(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const info = accessToken ? await fetchHubspotTokenInfo(accessToken, fetchImpl) : null;
+  const signed =
+    info && info.signed_access_token && typeof info.signed_access_token === 'object'
+      ? (info.signed_access_token as Record<string, unknown>)
+      : {};
+  const accountId = info ? hubspotUserId(info.user_id) || hubspotUserId(signed.userId) : '';
+  if (!info || !accountId) {
+    return { accountId: '', profile: {}, email: null, name: null, image: null };
+  }
+  const email = typeof info.user === 'string' && info.user ? info.user : null;
+  const profile: Record<string, unknown> = { user_id: accountId, email };
+  if (info.hub_id !== undefined) profile.hub_id = info.hub_id;
+  if (typeof info.hub_domain === 'string') profile.hub_domain = info.hub_domain;
+  return { accountId, profile, email, name: email, image: null };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1593,6 +1690,7 @@ const NORMALIZERS: Record<
   huggingface: (tokens, _env, fetchImpl) => normalizeHuggingface(tokens, fetchImpl),
   vercel: (tokens, _env, fetchImpl) => normalizeVercel(tokens, fetchImpl),
   railway: (tokens, _env, fetchImpl) => normalizeRailway(tokens, fetchImpl),
+  hubspot: (tokens, _env, fetchImpl) => normalizeHubspot(tokens, fetchImpl),
 };
 
 /**
@@ -1627,7 +1725,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway).
+ *   railway | hubspot).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2184,6 +2282,26 @@ export function buildGenericOAuthConfig(
         scopes: ['openid', 'email', 'profile'],
         authentication: 'basic',
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'hubspot': {
+      return {
+        providerId: 'hubspot',
+        clientId: readEnvString(env, 'HUBSPOT_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'HUBSPOT_CLIENT_SECRET') ?? '',
+        // Fixed HubSpot OAuth endpoints, mirrored from Better Auth's `hubspot()` helper — no
+        // issuer. `oauth` is the one scope token info needs (and the helper's default); Apiome
+        // reads no CRM data. Like the helper, the code exchange sends the client id and secret in
+        // the form body and this confidential client sends no PKCE challenge (Better Auth enforces
+        // `state`). HubSpot has no userinfo endpoint: the normalizer reads token info, whose URL
+        // carries the access token, so no `userInfoUrl` is set. The token-info email carries no
+        // verified claim → fail-closed link-first (see normalizeHubspot).
+        authorizationUrl: HUBSPOT_AUTHORIZE_URL,
+        tokenUrl: HUBSPOT_TOKEN_URL,
+        scopes: ['oauth'],
+        authentication: 'post',
+        pkce: false,
         getUserInfo,
       };
     }

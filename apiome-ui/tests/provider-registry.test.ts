@@ -86,6 +86,8 @@ const ALL_ENABLED_ENV = {
   VERCEL_CLIENT_SECRET: 'vc-secret',
   RAILWAY_CLIENT_ID: 'rw-id',
   RAILWAY_CLIENT_SECRET: 'rw-secret',
+  HUBSPOT_CLIENT_ID: 'hs-id',
+  HUBSPOT_CLIENT_SECRET: 'hs-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -117,6 +119,7 @@ describe('registry vocabulary', () => {
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
   });
 
@@ -147,6 +150,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('huggingface')?.label).toBe('Hugging Face');
     expect(getProviderDescriptor('vercel')?.label).toBe('Vercel');
     expect(getProviderDescriptor('railway')?.label).toBe('Railway');
+    expect(getProviderDescriptor('hubspot')?.label).toBe('HubSpot');
   });
 
   it('pins each available provider env contract', () => {
@@ -257,9 +261,13 @@ describe('registry vocabulary', () => {
       'RAILWAY_CLIENT_ID',
       'RAILWAY_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('hubspot')?.requiredEnvKeys).toEqual([
+      'HUBSPOT_CLIENT_ID',
+      'HUBSPOT_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.28, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.29, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -283,6 +291,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('huggingface')?.status).toBe('available');
     expect(getProviderDescriptor('vercel')?.status).toBe('available');
     expect(getProviderDescriptor('railway')?.status).toBe('available');
+    expect(getProviderDescriptor('hubspot')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -331,6 +340,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('huggingface', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('vercel', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('railway', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('hubspot', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -500,6 +510,10 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('railway', { RAILWAY_CLIENT_ID: 'x', RAILWAY_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('railway', { RAILWAY_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('hubspot', { HUBSPOT_CLIENT_ID: 'x', HUBSPOT_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('hubspot', { HUBSPOT_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -536,6 +550,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -569,6 +584,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
   });
 
@@ -600,6 +616,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
   });
 });
@@ -635,6 +652,7 @@ describe('providerSummaries', () => {
       { id: 'huggingface', label: 'Hugging Face', status: 'available', enabled: false },
       { id: 'vercel', label: 'Vercel', status: 'available', enabled: false },
       { id: 'railway', label: 'Railway', status: 'available', enabled: false },
+      { id: 'hubspot', label: 'HubSpot', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

@@ -28,7 +28,7 @@
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
- * (OLO-9.27), and Railway (OLO-9.28) followed exactly that path.
+ * (OLO-9.27), Railway (OLO-9.28), and HubSpot (OLO-9.29) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -391,6 +391,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // so no issuer. `/oauth/me` documents no verified claim → fail-closed link-first — see
     // AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('RAILWAY_CLIENT_ID', 'RAILWAY_CLIENT_SECRET'),
+  },
+  {
+    id: 'hubspot',
+    label: 'HubSpot',
+    status: 'available',
+    // HubSpot OAuth (OLO-9.29, #5042): credentials only — fixed OAuth 2.0 endpoints, so no
+    // issuer. The token-info email carries no verified claim → fail-closed link-first — see
+    // AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('HUBSPOT_CLIENT_ID', 'HUBSPOT_CLIENT_SECRET'),
   },
 ];
 
