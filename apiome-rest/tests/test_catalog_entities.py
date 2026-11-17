@@ -109,6 +109,7 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
         "model": ["Claude", "Llama self-hosted"],
         "gateway_config": ["Kong · prod", "Kong · staging"],
         "component": ["Checkout", "Ledger service"],
+        "api_product": ["Payments product", "Checkout bundle"],
         "team": ["Payments", "Catalog team"],
     }
     rows: Dict[str, List[Dict[str, Any]]] = {}
@@ -121,7 +122,8 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
                 "id": _id(n),
                 "name": label,
                 "slug": None if key == "connector" else label.lower().replace(" ", "-"),
-                "owner": _OWNER if key != "team" and n % 2 else None,
+                # Neither a team nor an API product (APX-1.1: owner_team_id) has an entity_owners row.
+                "owner": _OWNER if key not in ("team", "api_product") and n % 2 else None,
             })
     return rows
 
@@ -134,7 +136,7 @@ def _catalog() -> Dict[str, List[Dict[str, Any]]]:
 def test_the_registry_lists_its_kinds_in_order() -> None:
     assert catalog_entities.kind_keys() == (
         "api", "spec", "mcp_server", "consumer", "connector", "agent", "model", "gateway_config", "component",
-        "team",
+        "api_product", "team",
     )
 
 
@@ -270,8 +272,8 @@ def test_one_statement_per_kind_whatever_the_rows(limit: int) -> None:
 def test_a_team_filter_skips_kinds_without_owners_and_filters_in_sql() -> None:
     db = FakeDb(_catalog())
     catalog_entity_store.list_entities(db, _TENANT, REGISTRY, team="Payments", limit=10)
-    assert len(db.statements) == len(REGISTRY) - 1
-    assert not any("apiome.teams e" in sql for sql, _ in db.statements)
+    assert len(db.statements) == len(REGISTRY) - 2  # neither teams nor API products have owner rows
+    assert not any("apiome.teams e" in sql or "apiome.api_products e" in sql for sql, _ in db.statements)
     for sql, params in db.statements:
         assert "own.entity_owner->'team'->>'slug' = %s" in sql and "payments" in params
 
@@ -391,8 +393,8 @@ def test_the_kind_filter_and_its_refusal(authed) -> None:
 def test_kinds_the_caller_cannot_view_are_left_out(authed) -> None:
     db = FakeDb(_catalog())
     body = _get(authed, f"/v1/catalog/{_TENANT}/entities", db, allowed=lambda r: r == Resource.PROJECTS).json()
-    assert {item["kind"] for item in body["items"]} == {"api", "spec", "mcp_server"}
-    assert len(db.statements) == 3
+    assert {item["kind"] for item in body["items"]} == {"api", "spec", "mcp_server", "api_product"}
+    assert len(db.statements) == 4
 
 
 def test_a_malformed_cursor_is_a_400(authed) -> None:

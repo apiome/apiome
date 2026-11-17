@@ -72,9 +72,11 @@ An edge goes *from* one node *to* another and has a kind:
 | `served_by` | Project or catalog item → repository | A repository import, or a draft bound to a repository branch |
 | `depends_on` | Project or catalog item → what it depends on | A [declared dependency](#declare-dependencies). A Backstage `consumesApis` entry is a declared `consumes` edge. |
 | `runtime_calls` | consumer → Project or catalog item | Calls the [usage index](./runtime-usage.mdx) attributed to the consumer. One edge per operation it called. See [Runtime edges](#runtime-edges). |
+| `includes` | API product → Project, catalog item or MCP endpoint | A member of an [API product](../ship/api-products.mdx). One edge per member; deleting the product makes its edges stale. |
 
 Node kinds are `project`, `catalog_item`, `consumer`, `connector`, `mcp_endpoint`, `mcp_source`,
-`repository`, `identity_group` and `gateway_config` (one per connector environment). A Project that is not yet publishable is a `catalog_item`.
+`repository`, `identity_group`, `gateway_config` (one per connector environment) and `api_product`
+(an [API product](../ship/api-products.mdx), drawn with the letter **A**). A Project that is not yet publishable is a `catalog_item`.
 
 ## Provenance
 
@@ -264,7 +266,9 @@ apiome graph dependencies project orders
 ## Blast radius
 
 Before you change an operation or a schema, ask what the change affects: who depends on it, and
-which evidence you would have to produce again.
+which evidence you would have to produce again. Dependents are found along `consumes`, `depends_on`,
+`runtime_calls` and `includes` edges, so the [API products](../ship/api-products.mdx) that bundle the
+changed project are listed with their owner team, and so is whatever depends on those products.
 
 ### The Blast radius drawer
 

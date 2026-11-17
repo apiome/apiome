@@ -48,7 +48,8 @@ FACT_LABELS: Dict[str, str] = {
 }
 
 #: The facts each registry kind (:data:`app.catalog_entities.REGISTRY`) carries, in display order.
-#: A kind that is not listed (``team``) has none.
+#: A kind that is not listed (``team``; ``api_product``, whose owner is its own ``owner_team_id``
+#: column rather than an ``entity_owners`` row) has none.
 APPLICABLE_FACTS: Dict[str, Tuple[str, ...]] = {
     "api": (
         "owner.present",

@@ -1,0 +1,29 @@
+---
+slug: api-products
+title: API products bundle what consumers get access to
+description: "Bundle projects, versions and MCP servers into one product with a visibility and state."
+authors: [apiome]
+---
+
+Consumers ask for access to "Payments API", not to four projects and an MCP server. [API
+products](/ship/api-products) are that bundle — the first piece of API products and application
+access (APX).
+
+{/* truncate */}
+
+- **Ship → Products.** **New product** names the bundle; the editor's **Add member** includes a
+  project at latest, a project at a version or range (`2.x`), an MCP server or a catalog item, by
+  slug or id, optionally in one environment.
+- **Members follow publishes.** A project at latest, or a range, is read at its newest published
+  version every time — publish `payments` 1.5.0 and the product moves to it with no edit. The
+  members table shows what each member was added with and what it means today.
+- **Visibility and state.** **Private**, **Workspace** or **Portal**; **Portal** needs every member
+  published, and the editor names the ones that are not. State runs **Draft → Published →
+  Deprecated → Retired**.
+- **In the dependency graph.** Each product is an `api_product` node with an `includes` edge per
+  member, so the blast radius of a breaking change in a project lists the products that bundle it,
+  with their owner team.
+
+With the API: `GET|POST /v1/tenants/{t}/products`, `GET|PATCH|DELETE …/products/{slug}`,
+`GET|POST …/products/{slug}/members` and `DELETE …/members/{id}` — see the
+[REST reference](/reference/rest/api-products).

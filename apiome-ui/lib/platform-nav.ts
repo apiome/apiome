@@ -336,6 +336,15 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         requiresTenant: true,
       },
       {
+        // APX-1.1: the bundles of projects, versions and MCP servers consumers get access to.
+        id: 'products',
+        label: 'Products',
+        href: `${DASHBOARD_HREF}/products`,
+        icon: 'boxes',
+        requiresTenant: true,
+        match: 'subtree',
+      },
+      {
         id: 'sunset-timeline',
         label: 'Sunset timeline',
         href: PLATFORM_NAV_SUNSET_TIMELINE_HREF,

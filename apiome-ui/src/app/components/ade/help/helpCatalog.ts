@@ -1008,6 +1008,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['visibility', 'public', 'private', 'access url', 'api key', 'hosted mock', 'scenarios'],
   },
   {
+    id: 'api-products',
+    title: 'API products',
+    summary: 'Bundle projects, versions, MCP servers and catalog items into one thing consumers get access to.',
+    page: 'apiome-docs/docs/ship/api-products.mdx',
+    section: 'reference',
+    keywords: ['bundle', 'members', 'latest', 'portal', 'visibility', 'owner team', 'apx'],
+  },
+  {
     id: 'sunset-timeline',
     title: 'Sunset timeline',
     summary: 'When each deprecated version reaches end of life, how to schedule it, and the CSV export.',

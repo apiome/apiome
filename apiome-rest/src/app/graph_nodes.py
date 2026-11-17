@@ -97,18 +97,31 @@ def label_nodes(db: Any, tenant_id: str, refs: Sequence[Tuple[str, str]]) -> Dic
 
 
 def node_owners(db: Any, tenant_id: str, ids: Sequence[str]) -> Dict[str, Dict[str, Any]]:
-    """``{id: {slug, name, status}}`` — each node's confirmed owner team, else its oldest suggestion."""
+    """``{id: {slug, name, status}}`` — each node's confirmed owner team, else its oldest suggestion.
+
+    An API product (APX-1.1) names its owner in ``api_products.owner_team_id`` rather than in
+    ``entity_owners``; that team is read as a confirmed owner.
+    """
     if not ids:
         return {}
+    wanted = sorted({str(i) for i in ids})
     rows = db.execute_query(
         """
-        SELECT DISTINCT ON (eo.entity_id) eo.entity_id::text AS id, t.slug, t.name, eo.status
-        FROM apiome.entity_owners eo
-        JOIN apiome.teams t ON t.id = eo.team_id AND t.deleted_at IS NULL
-        WHERE eo.tenant_id = %s::uuid AND eo.entity_id = ANY(%s::uuid[])
-        ORDER BY eo.entity_id, (eo.status = 'confirmed') DESC, eo.created_at
+        SELECT DISTINCT ON (o.id) o.id, o.slug, o.name, o.status
+        FROM (
+            SELECT eo.entity_id::text AS id, t.slug, t.name, eo.status, eo.created_at
+            FROM apiome.entity_owners eo
+            JOIN apiome.teams t ON t.id = eo.team_id AND t.deleted_at IS NULL
+            WHERE eo.tenant_id = %s::uuid AND eo.entity_id = ANY(%s::uuid[])
+            UNION ALL
+            SELECT ap.id::text, t.slug, t.name, 'confirmed', ap.created_at
+            FROM apiome.api_products ap
+            JOIN apiome.teams t ON t.id = ap.owner_team_id AND t.deleted_at IS NULL
+            WHERE ap.tenant_id = %s::uuid AND ap.id = ANY(%s::uuid[])
+        ) o
+        ORDER BY o.id, (o.status = 'confirmed') DESC, o.created_at
         """,
-        (tenant_id, sorted({str(i) for i in ids})),
+        (tenant_id, wanted, tenant_id, wanted),
     )
     return {str(row["id"]): {"slug": row["slug"], "name": row["name"], "status": row["status"]} for row in rows}
 

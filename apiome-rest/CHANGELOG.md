@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.728.0] - 2026-11-16
+
+### Added
+- **API products (APX-1.1, #6098)** — OpenAPI 1.588.0:
+  - apiome-db **V387** (the roadmap's V311 shipped as the provenance-pack reseed): `api_products` (`slug` shaped
+    like a team slug and unique among live products, `name`, `summary`, `owner_team_id` → `teams` with
+    `ON DELETE SET NULL`, `visibility` `private | workspace | portal`, `state` `draft | published | deprecated |
+    retired`, soft delete) and `api_product_members` (`member_kind` `project_version | project_latest |
+    mcp_server | catalog_item`, `member_ref` the entity id, `version_selector` — an exact label or a `2.x` range —
+    required for `project_version` and refused otherwise, optional `environment`; the composite
+    `(product_id, tenant_id)` key keeps members in their product's tenant; each member listed once).
+    `catalog_edges` gains the `api_product` node kind and the `includes` edge kind.
+  - `GET | POST /v1/tenants/{t}/products`, `GET | PATCH | DELETE /v1/tenants/{t}/products/{slug}`,
+    `GET | POST /v1/tenants/{t}/products/{slug}/members` and `DELETE …/members/{id}` (`projects:view|create|edit|
+    delete`). A member is named by id or slug; reads resolve each Project member to the newest published version
+    it covers (`resolved_version`), so a `project_latest` member follows every publish with no write, and report
+    `published` per member and `portal_ready` per product. A visibility change to `portal`, or a member add to a
+    `portal` product, with an unpublished member is refused `422 api-product-portal-unpublished` with `blockers`.
+    Every write is audited (`api_product.create | update | delete | member.add | member.remove`).
+  - The graph derives an `includes` family (product → Project / catalog item / MCP endpoint, one edge per
+    member of a live product), re-derived in each product write's transaction. The blast radius follows
+    `includes` as a dependency edge, so a change in a member lists the products that bundle it; a product's
+    `owner_team_id` is its owner in graph reads. `api_product` joins the catalog entity registry.
+  - `main.py`'s app version caught up with the published document (it read 1.586.0 while `openapi.json` said
+    1.587.0).
+
 ## [1.727.0] - 2026-11-16
 
 ### Added

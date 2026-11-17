@@ -1,7 +1,7 @@
 ---
 title: "Graph"
 description: "REST endpoints tagged graph: 6 operations."
-sidebar_position: 42
+sidebar_position: 43
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.587.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.588.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `graph` · 6 operations
 
@@ -17,7 +17,7 @@ Tag: `graph` · 6 operations
 
 **Ask what a change affects**
 
-Who depends on `entity` (optionally narrowed to `pointers` into it), directly and transitively, along inbound `consumes`, `depends_on` and `runtime_calls` edges — each with its edge path, provenance and owner team — and the evidence a change invalidates: verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated or sunset version. The direct `consumes` layer is the consumer-impact intersection, so the two agree. At most 5 levels and 2,000 entities; `truncated` is true past that. `evidence_checked: true` with empty sections means nothing is affected.
+Who depends on `entity` (optionally narrowed to `pointers` into it), directly and transitively, along inbound `consumes`, `depends_on`, `runtime_calls` and `includes` edges — each with its edge path, provenance and owner team — and the evidence a change invalidates: verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated or sunset version. The direct `consumes` layer is the consumer-impact intersection, so the two agree. At most 5 levels and 2,000 entities; `truncated` is true past that. `evidence_checked: true` with empty sections means nothing is affected.
 
 Requires `projects:view`.
 

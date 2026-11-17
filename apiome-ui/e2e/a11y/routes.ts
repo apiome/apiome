@@ -250,6 +250,13 @@ const ADDITIONAL: A11yRoute[] = [
       ],
     },
   },
+  {
+    // APX-1.1 (#6098): Ship → Products and one product's editor, dumped by
+    // `tests/api-products-ui.test.tsx`.
+    id: 'api-products',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['api-products-list.html', 'api-product-editor.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

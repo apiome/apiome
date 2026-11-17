@@ -193,6 +193,7 @@ from .spec_snapshot import build_live_spec
 from .spec_sync_routes import router as spec_sync_router
 from .style_guide_routes import router as style_guide_router
 from .team_routes import router as team_router
+from .api_product_routes import router as api_product_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
@@ -237,7 +238,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.586.0",
+    version="1.588.0",
 )
 
 
@@ -480,6 +481,7 @@ app.include_router(consumer_contract_router)
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)
 app.include_router(team_router)
+app.include_router(api_product_router)
 # Agent and model entities (CDG-5.2, #5980): `/v1/tenants/{t}/catalog-agents|catalog-models…`.
 app.include_router(catalog_agent_router)
 app.include_router(entity_owner_router)

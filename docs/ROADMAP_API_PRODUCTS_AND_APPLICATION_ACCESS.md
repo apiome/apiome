@@ -147,12 +147,18 @@ Each provisioner diffs that against the gateway and applies the difference idemp
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-1.1 · #6098 | API product model | `api_products` bundling projects/versions, MCP servers and event channels, with owner team and visibility; a catalog kind and graph node | `catalog`, `data-model`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
 | APX-1.2 · #6099 | Plans | Tiers per product: auth strategy, declared limits, approval mode, environments, terms | `catalog`, `api-keys`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
 | APX-1.3 · #6100 | Product pages in Browse | Product landing page listing its APIs and plans, with a Request access action | `portal`, `browser` | Y | N | M | apiome-browse |
 | APX-1.4 · #6101 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
 
-#### APX-1.1 (#6098) — API product model
+#### ✅ APX-1.1 (#6098) — API product model — **Complete**
+
+- **Shipped:** apiome-db **V387** (V311 was taken) — `api_products`, `api_product_members` (with a
+  `version_selector` for `project_version` members: an exact label or a `2.x` range), the `api_product` graph node
+  and the derived `includes` edge, which the blast radius follows. REST 1.588.0 `/v1/tenants/{t}/products[/{slug}
+  [/members[/{id}]]]` (`projects:*`); reads resolve each Project member to its newest published version and report
+  `portal_ready`. UI: Ship → **Products** list and editor. Docs: `ship/api-products.mdx`, screenshots
+  `api-products-list` and `api-product-editor`.
 
 - **Problem Statement:** Access is granted to *a thing a consumer understands* (“Payments API”), which is usually
   several projects and versions, possibly MCP servers and event channels. Apiome has projects and catalog items but

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.587.0
+  version: 1.588.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28646,6 +28646,573 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for replaceateamsmembersresponse422.
+  /v1/tenants/{tenant_slug}/products:
+    get:
+      tags:
+      - api-products
+      summary: List API products
+      description: 'Every live API product of the tenant, by name, with its owner
+        team, visibility, state and member count. Deleted products are not listed.
+
+
+        Requires `projects:view`.'
+      operationId: list_tenant_products_v1_tenants__tenant_slug__products_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Apiproductsauthorization schema.
+          - type: 'null'
+            description: List Apiproductsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Apiproducts Xapikey schema.
+          - type: 'null'
+            description: List Apiproducts Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list api products.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductListResponse'
+                description: Response payload for list apiproductsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list apiproductsresponse422.
+    post:
+      tags:
+      - api-products
+      summary: Create an API product
+      description: 'Create an API product, optionally with its first members. The
+        `slug` is derived from `name` when omitted and cannot be changed afterwards.
+        `owner_team` is a team slug. `visibility` is `private` (default), `workspace`
+        or `portal`; a `portal` product needs every member published (`api-product-portal-unpublished`,
+        422, with `blockers`). `state` is `draft` (default), `published`, `deprecated`
+        or `retired`.
+
+
+        Audited as `api_product.create`. Requires `projects:create`.'
+      operationId: create_tenant_product_v1_tenants__tenant_slug__products_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createan Apiproductauthorization schema.
+          - type: 'null'
+            description: Createan Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createan Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Createan Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiProductInput'
+              description: Request body for createan apiproductrequest.
+        description: Request body for create an api product.
+      responses:
+        '201':
+          description: Successful response for create an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductRecord'
+                description: Response payload for createan apiproductresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for createan apiproductresponse422.
+  /v1/tenants/{tenant_slug}/products/{product_slug}:
+    get:
+      tags:
+      - api-products
+      summary: Read an API product
+      description: 'One live API product with its members, each resolved to its entity
+        and — for a Project member — the version it means today: a `project_latest`
+        member follows every new publish. `portal_ready` is true when every member
+        is published.
+
+
+        Requires `projects:view`.'
+      operationId: read_tenant_product_v1_tenants__tenant_slug__products__product_slug__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readan Apiproductauthorization schema.
+          - type: 'null'
+            description: Readan Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readan Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Readan Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductRecord'
+                description: Response payload for readan apiproductresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readan apiproductresponse422.
+    patch:
+      tags:
+      - api-products
+      summary: Update an API product
+      description: 'Change a product''s name, summary, owner team, visibility or state.
+        Omitted fields are left alone; `null` clears `summary` or `owner_team`. The
+        slug is not updatable. Setting `visibility` to `portal` is refused while a
+        member is unpublished.
+
+
+        Audited as `api_product.update`. Requires `projects:edit`.'
+      operationId: patch_tenant_product_v1_tenants__tenant_slug__products__product_slug__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updatean Apiproductauthorization schema.
+          - type: 'null'
+            description: Updatean Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updatean Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Updatean Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiProductPatch'
+              description: Request body for updatean apiproductrequest.
+        description: Request body for update an api product.
+      responses:
+        '200':
+          description: Successful response for update an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductRecord'
+                description: Response payload for updatean apiproductresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for updatean apiproductresponse422.
+    delete:
+      tags:
+      - api-products
+      summary: Delete an API product
+      description: 'Soft-delete a product; its slug is free again and its `includes`
+        edges leave the dependency graph. The Projects and MCP servers it bundled
+        are untouched.
+
+
+        Audited as `api_product.delete`. Requires `projects:delete`.'
+      operationId: delete_tenant_product_v1_tenants__tenant_slug__products__product_slug__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletean Apiproductauthorization schema.
+          - type: 'null'
+            description: Deletean Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletean Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Deletean Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for delete an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductDeleteResponse'
+                description: Response payload for deletean apiproductresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deletean apiproductresponse422.
+  /v1/tenants/{tenant_slug}/products/{product_slug}/members:
+    get:
+      tags:
+      - api-products
+      summary: List an API product's members
+      description: 'The product''s members, each resolved to its entity and (for a
+        Project) the version it means today, with whether it is published.
+
+
+        Requires `projects:view`.'
+      operationId: list_tenant_product_members_v1_tenants__tenant_slug__products__product_slug__members_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listan Apiproductsmembersauthorization schema.
+          - type: 'null'
+            description: Listan Apiproductsmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listan Apiproductsmembers Xapikey schema.
+          - type: 'null'
+            description: Listan Apiproductsmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list an api product's members.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductMemberListResponse'
+                description: Response payload for listan apiproductsmembersresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listan apiproductsmembersresponse422.
+    post:
+      tags:
+      - api-products
+      summary: Add a member to an API product
+      description: 'Include a Project (`project_latest`, or `project_version` with
+        a `version` label or a `2.x` range), an MCP server (`mcp_server`) or a catalog
+        item (`catalog_item`), by id or slug, optionally in one `environment`. Adding
+        an unpublished member to a `portal` product is refused (422, with `blockers`).
+
+
+        Audited as `api_product.member.add`. Requires `projects:edit`.'
+      operationId: add_tenant_product_member_v1_tenants__tenant_slug__products__product_slug__members_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Addamembertoan Apiproductauthorization schema.
+          - type: 'null'
+            description: Addamembertoan Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Addamembertoan Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Addamembertoan Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiProductMemberInput'
+              description: Request body for addamembertoan apiproductrequest.
+        description: Request body for add a member to an api product.
+      responses:
+        '201':
+          description: Successful response for add a member to an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductRecord'
+                description: Response payload for addamembertoan apiproductresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for addamembertoan apiproductresponse422.
+  /v1/tenants/{tenant_slug}/products/{product_slug}/members/{member_id}:
+    delete:
+      tags:
+      - api-products
+      summary: Remove a member from an API product
+      description: 'Remove one member by its id (from the product''s `members`). The
+        entity itself is untouched.
+
+
+        Audited as `api_product.member.remove`. Requires `projects:edit`.'
+      operationId: remove_tenant_product_member_v1_tenants__tenant_slug__products__product_slug__members__member_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Member Id
+          description: Member Id schema.
+        description: Tenant member identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeamemberfroman Apiproductauthorization schema.
+          - type: 'null'
+            description: Removeamemberfroman Apiproductauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeamemberfroman Apiproduct Xapikey schema.
+          - type: 'null'
+            description: Removeamemberfroman Apiproduct Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove a member from an api product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiProductRecord'
+                description: Response payload for removeamemberfroman apiproductresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removeamemberfroman apiproductresponse422.
   /v1/tenants/{tenant_slug}/catalog-agents:
     get:
       tags:
@@ -30659,8 +31226,8 @@ paths:
       - graph
       summary: Ask what a change affects
       description: 'Who depends on `entity` (optionally narrowed to `pointers` into
-        it), directly and transitively, along inbound `consumes`, `depends_on` and
-        `runtime_calls` edges — each with its edge path, provenance and owner team
+        it), directly and transitively, along inbound `consumes`, `depends_on`, `runtime_calls`
+        and `includes` edges — each with its edge path, provenance and owner team
         — and the evidence a change invalidates: verification runs, consumer contracts,
         deploy-gate evaluations, SDK regeneration targets, agent-toolset tools, mock
         fixture packs and scenarios, and consumers pinned to a deprecated or sunset
@@ -93343,7 +93910,8 @@ components:
         edge_kind:
           type: string
           title: Edge Kind
-          description: 'The edge that reached it: `consumes`, `depends_on` or `runtime_calls`.'
+          description: 'The edge that reached it: `consumes`, `depends_on`, `runtime_calls`
+            or `includes` (an API product that bundles it).'
           example: example
         provenance:
           type: string
@@ -95472,6 +96040,448 @@ components:
         are load-bearing (for example ``channels`` matter for ``EVENT`` but not for
 
         ``REST``) and drives browse/search facets.'
+    ApiProductDeleteResponse:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: The deleted product's slug (now free for reuse).
+          example: pet-store
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      title: ApiProductDeleteResponse
+      description: What a delete did.
+    ApiProductInput:
+      properties:
+        slug:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: API Product Input schema.
+          - type: 'null'
+            description: API Product Input schema.
+          title: Slug
+          description: URL-safe identifier.
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        summary:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: API Product Input schema.
+          - type: 'null'
+            description: API Product Input schema.
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        owner_team:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: API Product Input schema.
+          - type: 'null'
+            description: API Product Input schema.
+          title: Owner Team
+          description: The owning team's slug.
+        visibility:
+          type: string
+          enum:
+          - private
+          - workspace
+          - portal
+          title: Visibility
+          default: private
+          description: Visibility.
+          example: private
+        state:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+          - retired
+          title: State
+          default: draft
+          description: State.
+          example: draft
+        members:
+          items:
+            $ref: '#/components/schemas/ApiProductMemberInput'
+          type: array
+          maxItems: 200
+          title: Members
+          description: Members.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: ApiProductInput
+      description: "A product to create.\n\nAttributes:\n    slug: The handle; derived\
+        \ from ``name`` when omitted. Not editable afterwards.\n    name: The display\
+        \ name.\n    summary: What the product is, in a sentence or two.\n    owner_team:\
+        \ The owning team's slug.\n    visibility: ``private`` (default), ``workspace``\
+        \ or ``portal``.\n    state: ``draft`` (default), ``published``, ``deprecated``\
+        \ or ``retired``.\n    members: Members to include from the start."
+    ApiProductListResponse:
+      properties:
+        products:
+          items:
+            $ref: '#/components/schemas/ApiProductRecord'
+          type: array
+          title: Products
+          description: The products, by name.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many products were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: ApiProductListResponse
+      description: Every live product of the tenant.
+    ApiProductMember:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        kind:
+          type: string
+          enum:
+          - project_latest
+          - project_version
+          - mcp_server
+          - catalog_item
+          title: Kind
+          description: Kind.
+          example: project_latest
+        ref:
+          type: string
+          title: Ref
+          description: The member's id.
+          example: example
+        slug:
+          anyOf:
+          - type: string
+            description: API Product Member schema.
+          - type: 'null'
+            description: API Product Member schema.
+          title: Slug
+          description: The member's slug; `null` when it is gone.
+        name:
+          anyOf:
+          - type: string
+            description: API Product Member schema.
+          - type: 'null'
+            description: API Product Member schema.
+          title: Name
+          description: The member's name; `null` when it is gone.
+        version_selector:
+          anyOf:
+          - type: string
+            description: API Product Member schema.
+          - type: 'null'
+            description: API Product Member schema.
+          title: Version Selector
+          description: '`project_version` only: the label or range it was added with.'
+        environment:
+          anyOf:
+          - type: string
+            description: API Product Member schema.
+          - type: 'null'
+            description: API Product Member schema.
+          title: Environment
+          description: Environment.
+        resolved_version:
+          anyOf:
+          - $ref: '#/components/schemas/MemberVersion'
+          - type: 'null'
+            description: API Product Member schema.
+          description: 'Project members: the newest published version the member covers
+            (else the newest it covers). A `project_latest` member moves with every
+            publish.'
+        published:
+          type: boolean
+          title: Published
+          description: 'Whether the member is published: a Project member''s resolved
+            version is, or the MCP server is.'
+          example: false
+        missing:
+          type: boolean
+          title: Missing
+          description: True when the member's entity was deleted.
+          default: false
+          example: false
+        created_at:
+          anyOf:
+          - type: string
+            description: API Product Member schema.
+          - type: 'null'
+            description: API Product Member schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - kind
+      - ref
+      - published
+      title: ApiProductMember
+      description: One member, as a read returns it.
+    ApiProductMemberInput:
+      properties:
+        kind:
+          type: string
+          enum:
+          - project_latest
+          - project_version
+          - mcp_server
+          - catalog_item
+          title: Kind
+          description: Kind.
+          example: project_latest
+        ref:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Ref
+          description: Ref.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            maxLength: 100
+            description: API Product Member Input schema.
+          - type: 'null'
+            description: API Product Member Input schema.
+          title: Version
+          description: Version.
+        environment:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: API Product Member Input schema.
+          - type: 'null'
+            description: API Product Member Input schema.
+          title: Environment
+          description: Environment.
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - ref
+      title: ApiProductMemberInput
+      description: "One member to add.\n\nAttributes:\n    kind: The member kind.\n\
+        \    ref: The member's id, or its slug (a Project, catalog item or MCP server\
+        \ slug).\n    version: For ``project_version`` only: a version label or a\
+        \ ``2.x`` range.\n    environment: Narrows the member to one environment (``production``);\
+        \ empty for all."
+    ApiProductMemberListResponse:
+      properties:
+        members:
+          items:
+            $ref: '#/components/schemas/ApiProductMember'
+          type: array
+          title: Members
+          description: Members.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: Number of count.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: ApiProductMemberListResponse
+      description: A product's members.
+    ApiProductPatch:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            description: API Product Patch schema.
+          - type: 'null'
+            description: API Product Patch schema.
+          title: Name
+          description: Human-readable name.
+        summary:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: API Product Patch schema.
+          - type: 'null'
+            description: API Product Patch schema.
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        owner_team:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: API Product Patch schema.
+          - type: 'null'
+            description: API Product Patch schema.
+          title: Owner Team
+          description: Owner Team.
+        visibility:
+          anyOf:
+          - type: string
+            enum:
+            - private
+            - workspace
+            - portal
+            description: API Product Patch schema.
+          - type: 'null'
+            description: API Product Patch schema.
+          title: Visibility
+          description: Visibility.
+        state:
+          anyOf:
+          - type: string
+            enum:
+            - draft
+            - published
+            - deprecated
+            - retired
+            description: API Product Patch schema.
+          - type: 'null'
+            description: API Product Patch schema.
+          title: State
+          description: State.
+      additionalProperties: false
+      type: object
+      title: ApiProductPatch
+      description: 'A partial update. Omitted fields are left alone; ``null`` clears
+        ``summary`` or ``owner_team``.
+
+
+        The slug is deliberately absent: it is the handle URLs and plans name. Members
+        change through
+
+        the members sub-resource.'
+    ApiProductRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        summary:
+          anyOf:
+          - type: string
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        owner_team:
+          anyOf:
+          - $ref: '#/components/schemas/OwnerTeam'
+          - type: 'null'
+            description: API Product schema.
+          description: Owner Team.
+        visibility:
+          type: string
+          enum:
+          - private
+          - workspace
+          - portal
+          title: Visibility
+          description: Visibility.
+          example: private
+        state:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+          - retired
+          title: State
+          description: State.
+          example: draft
+        member_count:
+          type: integer
+          title: Member Count
+          description: How many members the product has.
+          default: 0
+          example: 1
+        created_by:
+          anyOf:
+          - type: string
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Created By
+          description: Created By.
+        created_at:
+          anyOf:
+          - type: string
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        members:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ApiProductMember'
+            type: array
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Members
+          description: The members; present on single-product reads and writes.
+        portal_ready:
+          anyOf:
+          - type: boolean
+            description: API Product schema.
+          - type: 'null'
+            description: API Product schema.
+          title: Portal Ready
+          description: 'Present with `members`: true when every member is published,
+            so `portal` is allowed.'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      - visibility
+      - state
+      title: ApiProductRecord
+      description: A stored product.
     ApprovalDecisionBody:
       properties:
         id:
@@ -101405,7 +102415,8 @@ components:
           type: string
           title: Kind
           description: 'The registry kind: `api`, `spec`, `mcp_server`, `consumer`,
-            `connector`, `agent`, `model`, `gateway_config`, `component` or `team`.'
+            `connector`, `agent`, `model`, `gateway_config`, `component`, `api_product`
+            or `team`.'
           example: example
         id:
           type: string
@@ -140751,6 +141762,33 @@ components:
       type: object
       title: MemberUpdateRequest
       description: Change a member's role and/or lifecycle status.
+    MemberVersion:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        label:
+          anyOf:
+          - type: string
+            description: Member Version schema.
+          - type: 'null'
+            description: Member Version schema.
+          title: Label
+          description: Label.
+        published:
+          type: boolean
+          title: Published
+          default: false
+          description: Published.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      title: MemberVersion
+      description: The version a Project member resolves to today.
     MembershipActivationRequest:
       properties:
         tenant_id:
@@ -145771,6 +146809,25 @@ components:
       - source
       title: OwnerRecord
       description: One owner row, confirmed or suggested.
+    OwnerTeam:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      title: OwnerTeam
+      description: The team that owns a product.
     OwnerTeamRef:
       properties:
         id:
