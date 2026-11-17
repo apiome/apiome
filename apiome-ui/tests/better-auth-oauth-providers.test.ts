@@ -92,6 +92,8 @@ const ALL_ENABLED: Record<string, string> = {
   SLACK_CLIENT_SECRET: 'slack-secret',
   LINKEDIN_CLIENT_ID: 'li-id',
   LINKEDIN_CLIENT_SECRET: 'li-secret',
+  DISCORD_CLIENT_ID: 'dc-id',
+  DISCORD_CLIENT_SECRET: 'dc-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -202,6 +204,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'bitbucket',
       'slack',
       'linkedin',
+      'discord',
     ]);
   });
 
@@ -224,6 +227,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'bitbucket',
       'slack',
       'linkedin',
+      'discord',
     ]);
   });
 
@@ -274,6 +278,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const linkedin = buildGenericOAuthConfig('linkedin', ALL_ENABLED)!;
     expect(linkedin.clientId).toBe('li-id');
     expect(linkedin.clientSecret).toBe('li-secret');
+    const discord = buildGenericOAuthConfig('discord', ALL_ENABLED)!;
+    expect(discord.clientId).toBe('dc-id');
+    expect(discord.clientSecret).toBe('dc-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -500,6 +507,19 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     // Discovery supplies the endpoints — nothing is hard-coded and there is no issuer to set.
     expect(cfg.authorizationUrl).toBeUndefined();
     expect(cfg.tokenUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('discord: fixed Discord endpoints; identify email; prompt none; PKCE off (OLO-9.19)', () => {
+    const cfg = buildGenericOAuthConfig('discord', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('discord');
+    expect(cfg.authorizationUrl).toBe('https://discord.com/api/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://discord.com/api/oauth2/token');
+    expect(cfg.userInfoUrl).toBe('https://discord.com/api/users/@me');
+    expect(cfg.scopes).toEqual(['identify', 'email']);
+    expect(cfg.pkce).toBe(false);
+    expect(cfg.prompt).toBe('none');
+    expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
 
@@ -2252,6 +2272,239 @@ describe('getUserInfo — LinkedIn sign-in and linking (OLO-9.18)', () => {
 
     const { result, override } = await runGetUserInfo(
       'linkedin',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Discord (OLO-9.19) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Discord sign-in and linking (OLO-9.19)', () => {
+  /** The `/users/@me` body for a current-username-system account with an uploaded avatar. */
+  const ME = {
+    id: '80351110224678912',
+    username: 'ada',
+    discriminator: '0',
+    global_name: 'Ada Lovelace',
+    avatar: '8342729096ea3675442027381ff50dfe',
+    email: 'ada@example.com',
+    verified: true,
+  };
+  const AVATAR =
+    'https://cdn.discordapp.com/avatars/80351110224678912/8342729096ea3675442027381ff50dfe.png';
+
+  /** Serve `profile` from `/users/@me` and record the request it was fetched with. */
+  const discordMe = (profile: Record<string, unknown> | null) => {
+    const requests: Array<{ url: string; authorization: string | undefined }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      if (url === 'https://discord.com/api/users/@me' && profile) {
+        return { ok: true, json: async () => profile };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Discord user id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = discordMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: '80351110224678912',
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: AVATAR,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([
+      { url: 'https://discord.com/api/users/@me', authorization: 'Bearer tok' },
+    ]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = discordMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: '80351110224678912', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'discord', providerUserId: '80351110224678912' },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = discordMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'discord',
+      providerUserId: '80351110224678912',
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['false', false],
+    ['absent', undefined],
+    ['null', null],
+    ['the string "true"', 'true'],
+    ['the number 1', 1],
+  ])('verified %s → rejected with unverified-email, never linked', async (_label, verified) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = discordMe({ ...ME, verified });
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an `email_verified` field in the body is never trusted over `verified`', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = discordMe({ ...ME, verified: false, email_verified: true });
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([
+    ['null', null],
+    ['absent', undefined],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = discordMe({ ...ME, email });
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('explicit link intent links the Discord account to the session user', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = discordMe({ ...ME, verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'discord', providerUserId: '80351110224678912' },
+    });
+  });
+
+  test.each([
+    [
+      'animated avatar → .gif',
+      { avatar: 'a_1269e74af4df7417b13759eae50c83dc' },
+      'https://cdn.discordapp.com/avatars/80351110224678912/a_1269e74af4df7417b13759eae50c83dc.gif',
+    ],
+    // (80351110224678912 >> 22) % 6 === 5
+    [
+      'no avatar → default by user id',
+      { avatar: null },
+      'https://cdn.discordapp.com/embed/avatars/5.png',
+    ],
+    [
+      'no avatar, legacy discriminator → default by discriminator',
+      { avatar: null, discriminator: '1337' },
+      'https://cdn.discordapp.com/embed/avatars/2.png',
+    ],
+  ])('avatar: %s', async (_label, overrides, expected) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = discordMe({ ...ME, ...overrides });
+
+    const { result } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ image: expected });
+  });
+
+  test('falls back to the username when no display name is set', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = discordMe({ ...ME, global_name: null });
+
+    const { result } = await runGetUserInfo(
+      'discord',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ name: 'ada' });
+  });
+
+  test('a failed /users/@me fetch refuses the sign-in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = discordMe(null);
+
+    const { result, override } = await runGetUserInfo(
+      'discord',
       { accessToken: 'tok' },
       { store, env: ALL_ENABLED, fetchImpl }
     );

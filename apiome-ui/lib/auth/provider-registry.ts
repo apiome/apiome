@@ -25,8 +25,8 @@
  * generic-OAuth config in `better-auth-oauth-providers.ts`, one brand icon in
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
- * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), and LinkedIn
- * (OLO-9.18) followed exactly that path.
+ * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
+ * (OLO-9.18), and Discord (OLO-9.19) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -298,6 +298,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // LinkedIn's fixed OpenID Connect discovery document, so no issuer. The `email_verified`
     // claim is honored when true, otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET'),
+  },
+  {
+    id: 'discord',
+    label: 'Discord',
+    status: 'available',
+    // Discord (OLO-9.19, #5032): credentials only — fixed OAuth 2.0 endpoints, so no issuer. The
+    // `verified` flag of `/users/@me` is normalized to `email_verified` and honored when true,
+    // otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'),
   },
 ];
 

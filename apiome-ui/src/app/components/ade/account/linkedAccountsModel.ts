@@ -105,6 +105,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   bitbucket: 'Bitbucket Cloud account sign-in',
   slack: 'Slack workspace account sign-in',
   linkedin: 'LinkedIn professional account sign-in',
+  discord: 'Discord account sign-in',
 };
 
 /**

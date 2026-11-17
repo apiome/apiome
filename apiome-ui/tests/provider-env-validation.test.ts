@@ -73,6 +73,8 @@ const ALL_ENABLED_ENV = {
   SLACK_CLIENT_SECRET: 'slack-secret',
   LINKEDIN_CLIENT_ID: 'li-id',
   LINKEDIN_CLIENT_SECRET: 'li-secret',
+  DISCORD_CLIENT_ID: 'dc-id',
+  DISCORD_CLIENT_SECRET: 'dc-secret',
 };
 
 describe('providerEnvIssues', () => {
