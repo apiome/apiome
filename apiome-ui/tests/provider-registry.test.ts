@@ -78,6 +78,8 @@ const ALL_ENABLED_ENV = {
   LINEAR_CLIENT_SECRET: 'ln-secret',
   DROPBOX_CLIENT_ID: 'db-id',
   DROPBOX_CLIENT_SECRET: 'db-secret',
+  ZOOM_CLIENT_ID: 'zm-id',
+  ZOOM_CLIENT_SECRET: 'zm-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -105,6 +107,7 @@ describe('registry vocabulary', () => {
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
   });
 
@@ -131,6 +134,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('figma')?.label).toBe('Figma');
     expect(getProviderDescriptor('linear')?.label).toBe('Linear');
     expect(getProviderDescriptor('dropbox')?.label).toBe('Dropbox');
+    expect(getProviderDescriptor('zoom')?.label).toBe('Zoom');
   });
 
   it('pins each available provider env contract', () => {
@@ -225,9 +229,13 @@ describe('registry vocabulary', () => {
       'DROPBOX_CLIENT_ID',
       'DROPBOX_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('zoom')?.requiredEnvKeys).toEqual([
+      'ZOOM_CLIENT_ID',
+      'ZOOM_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.24, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.25, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -247,6 +255,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('figma')?.status).toBe('available');
     expect(getProviderDescriptor('linear')?.status).toBe('available');
     expect(getProviderDescriptor('dropbox')?.status).toBe('available');
+    expect(getProviderDescriptor('zoom')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -291,6 +300,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('figma', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('linear', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('dropbox', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('zoom', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -443,6 +453,8 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('dropbox', { DROPBOX_CLIENT_ID: 'x', DROPBOX_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('dropbox', { DROPBOX_CLIENT_ID: 'x' })).toBe(false);
+    expect(isProviderEnabled('zoom', { ZOOM_CLIENT_ID: 'x', ZOOM_CLIENT_SECRET: 'y' })).toBe(true);
+    expect(isProviderEnabled('zoom', { ZOOM_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -475,6 +487,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -504,6 +517,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
   });
 
@@ -531,6 +545,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
   });
 });
@@ -562,6 +577,7 @@ describe('providerSummaries', () => {
       { id: 'figma', label: 'Figma', status: 'available', enabled: false },
       { id: 'linear', label: 'Linear', status: 'available', enabled: false },
       { id: 'dropbox', label: 'Dropbox', status: 'available', enabled: false },
+      { id: 'zoom', label: 'Zoom', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

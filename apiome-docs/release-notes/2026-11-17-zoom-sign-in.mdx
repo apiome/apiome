@@ -1,0 +1,27 @@
+---
+slug: zoom-sign-in
+title: Sign in with Zoom
+description: "People can now sign in and link with their Zoom account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Zoom account, and link Zoom beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Zoom** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and **Client Secret** of a Zoom **General App** — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Zoom's side. The environment variables are `ZOOM_CLIENT_ID` and `ZOOM_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/zoom`, entered as the **OAuth
+  Redirect URL** and added to the **OAuth Allow Lists** on the app's **Basic Information** page.
+- **Scope.** The Zoom app needs **`user:read:user`** only, added on its **Scopes** page. Apiome
+  uses it to read the name, email address and picture of the person signing in. Apiome reads no
+  meetings or recordings and keeps no Zoom token.
+- **Email addresses.** Zoom is a **Trusted** provider: a sign-in joins the account with the same
+  address, or starts a new one, only when the Zoom account's email address is verified. An
+  unverified address is refused. To use such an account, verify the address in Zoom, or sign in
+  another way first and link Zoom from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `zoom` as an available provider, and
+  `PUT /v1/admin/auth-providers/zoom` stores its credentials.

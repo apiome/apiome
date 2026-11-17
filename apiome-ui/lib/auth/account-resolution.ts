@@ -137,6 +137,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `dropbox` (OLO-9.24) is trusted on the `email_verified` flag of `get_current_account`,
  * re-stamped fail-closed onto the profile (`better-auth-oauth-providers.ts`); anything but `true`
  * fail-closes.
+ * `zoom` (OLO-9.25) is trusted on the `verified` flag of `/v2/users/me` (`1` = verified email),
+ * normalized fail-closed to `email_verified` on the profile (`better-auth-oauth-providers.ts`);
+ * anything but `1` fail-closes.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -163,6 +166,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'discord',
   'salesforce',
   'dropbox',
+  'zoom',
 ]);
 
 /**
@@ -222,6 +226,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'figma',
   'linear',
   'dropbox',
+  'zoom',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

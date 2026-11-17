@@ -124,6 +124,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   linear: { clientId: 'LINEAR_CLIENT_ID', clientSecret: 'LINEAR_CLIENT_SECRET' },
   // Dropbox (OLO-9.24, #5037): credentials-only; fixed endpoints, no issuer extra.
   dropbox: { clientId: 'DROPBOX_CLIENT_ID', clientSecret: 'DROPBOX_CLIENT_SECRET' },
+  // Zoom (OLO-9.25, #5038): credentials-only; fixed endpoints, no issuer extra.
+  zoom: { clientId: 'ZOOM_CLIENT_ID', clientSecret: 'ZOOM_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

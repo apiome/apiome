@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.747.0] - 2026-11-17
+
+### Added
+- **Zoom sign-in (OLO-9.25, #5038)** — OpenAPI 1.596.9:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `zoom` (label `Zoom`, `available`), a
+    credentials-only provider: required fields `client_id` (`ZOOM_CLIENT_ID`) and `client_secret`
+    (`ZOOM_CLIENT_SECRET`), no issuer — Zoom's OAuth 2.0 endpoints are fixed.
+    `GET /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/zoom` and
+    the resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - Zoom is a **trusted** provider: `/v2/users/me` reports `verified`, and the sign-in engine accepts
+    the address only when that flag is `1`. That decision is made in `apiome-ui`; nothing in the REST
+    API changed for it.
+  - No migration: `zoom` has been in the provider vocabulary CHECKs since V395. No request or response
+    shape changed.
+
 ## [1.746.0] - 2026-11-17
 
 ### Added

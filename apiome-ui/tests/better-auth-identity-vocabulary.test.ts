@@ -158,6 +158,7 @@ describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK',
       'slack',
       'vk',
       'wechat',
+      'zoom',
     ]);
   });
 
