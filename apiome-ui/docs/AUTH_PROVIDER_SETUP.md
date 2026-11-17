@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -134,6 +134,8 @@ config is stored in the database need none of them set; see
 | `SALESFORCE_ISSUER` | Salesforce | No (default `https://login.salesforce.com`) | Issuer for a My Domain (e.g. `https://acme.my.salesforce.com`) or a sandbox (`https://test.salesforce.com`) |
 | `NOTION_CLIENT_ID` | Notion | To enable Notion | Notion public integration **OAuth Client ID** |
 | `NOTION_CLIENT_SECRET` | Notion | To enable Notion | Notion public integration **OAuth Client Secret** |
+| `FIGMA_CLIENT_ID` | Figma | To enable Figma | Figma OAuth app **Client ID** |
+| `FIGMA_CLIENT_SECRET` | Figma | To enable Figma | Figma OAuth app **Client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -220,7 +222,7 @@ links an account.
 | `discord` | **trusted** | OLO-9.19 | yes | `verified` on `/users/@me` |
 | `salesforce` | **trusted** | OLO-9.20 | yes | `email_verified` claim |
 | `notion` | **link-first** | OLO-9.21 | yes | Owner-user email from the token exchange, no verified claim |
-| `figma` | **link-first** | OLO-9.22 | no | `/v1/me` email, no verified claim |
+| `figma` | **link-first** | OLO-9.22 | yes | `/v1/me` email, no verified claim |
 | `linear` | **link-first** | OLO-9.23 | no | Viewer email, no verified claim |
 | `dropbox` | **trusted** | OLO-9.24 | no | `email_verified` on `get_current_account` |
 | `zoom` | **trusted** | OLO-9.25 | no | `verified` on `/v2/users/me` |
@@ -1039,6 +1041,59 @@ always fail-closes (**link-first**), and `notion` is not in `AUTO_LINK_TRUSTED_P
 
 A Notion account that shares no email address surfaces `email-required`.
 
+## Figma (OLO-9.22)
+
+For design-adjacent API consumers — designers and front-end developers who already have a Figma
+account. Figma is a **link-first** provider: read
+[Email verified semantics](#figma-email-verified-semantics) below before turning it on, because
+nobody can *create* an Apiome account with it.
+
+1. On Figma's [developer apps page](https://www.figma.com/developers/apps), choose **Create a new
+   app**, name it and pick the team or organization that owns it.
+2. On the app's **OAuth credentials** tab, add the callback URL under **Redirect URLs**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/figma`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/figma` for local dev)
+3. On the **OAuth scopes** tab, select **`current_user:read`** — the one scope Apiome asks for.
+   Without it Figma refuses the authorization request. Apiome reads no files, so no other scope
+   is needed.
+4. Copy the **Client ID** and the **Client secret**. Figma shows the secret once.
+5. A new app is a draft that only members of the owning team can authorize. To let anyone sign
+   in, set its audience to **Public** and **publish** it (Figma reviews public apps); a
+   **Private** app serves the owning organization only.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+FIGMA_CLIENT_ID=<Client ID>
+FIGMA_CLIENT_SECRET=<Client secret>
+```
+
+Figma's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`figma()` helper):
+
+- Authorize: `https://www.figma.com/oauth` with the scope `current_user:read` and a PKCE (S256)
+  challenge
+- Token: `https://api.figma.com/v1/oauth/token` — the client id and secret are sent as HTTP
+  Basic credentials
+- User: `https://api.figma.com/v1/me`
+
+The identity is keyed on the Figma user id (`id`). The display name is `handle` and the picture
+is `img_url`; the mutable handle is never the key.
+
+<a id="figma-email-verified-semantics"></a>
+**Email verified semantics:** `/v1/me` returns the account's email address (`email`) but does
+**not** assert a verified claim (Better Auth hard-codes `emailVerified: false`). The engine
+always fail-closes (**link-first**), and `figma` is not in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Figma card on **Linked accounts**.
+  The explicit link binds the Figma identity to their account whatever its email address.
+- **Subsequent sign-in** — once linked, **Sign in with Figma** signs that person in.
+- **Fresh sign-up, or a first sign-in without linking** — rejected with `unverified-email`, even
+  when the address matches an existing account. This is intended: the address is never used to
+  join or create an account.
+
+A `/v1/me` response with no email address surfaces `email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1211,7 +1266,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord and Notion need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion and Figma need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

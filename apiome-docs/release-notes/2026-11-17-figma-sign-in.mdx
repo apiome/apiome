@@ -1,0 +1,29 @@
+---
+slug: figma-sign-in
+title: Sign in with Figma
+description: "People can now link their Figma account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Figma account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Figma** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and **Client secret** of a Figma OAuth app — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Figma's side. The environment variables are `FIGMA_CLIENT_ID` and `FIGMA_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/figma`, added under the app's
+  **Redirect URLs**.
+- **Scope.** On the app's **OAuth scopes** tab, select `current_user:read`. It is the only scope
+  Apiome asks for; Apiome reads no Figma files.
+- **Link first.** Figma does not say whether an email address is verified, so Apiome never uses
+  a Figma address to find or create an account. People sign in another way, link Figma from
+  **Linked accounts**, and can sign in with Figma after that. Signing up with Figma, or signing
+  in with it before linking, ends with *Your sign-in provider could not confirm that your email
+  address is verified…* — even when the address matches an existing account.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `figma` as an available provider, and
+  `PUT /v1/admin/auth-providers/figma` stores its credentials.

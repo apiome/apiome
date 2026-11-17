@@ -171,6 +171,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'azure',
       'bitbucket',
       'discord',
+      'figma',
       'github',
       'gitlab',
       'google',

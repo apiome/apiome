@@ -130,6 +130,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `email_verified` claim (id token or userinfo); absent or false fail-closes to link-first.
  * `notion` (OLO-9.21) is **not** listed: Notion returns the owner user's email with no verified
  * claim (link-first).
+ * `figma` (OLO-9.22) is **not** listed: Figma's `/v1/me` returns an email with no verified claim
+ * (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -211,6 +213,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'discord',
   'salesforce',
   'notion',
+  'figma',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

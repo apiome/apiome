@@ -79,6 +79,8 @@ const ALL_ENABLED_ENV = {
   SALESFORCE_CLIENT_SECRET: 'sf-secret',
   NOTION_CLIENT_ID: 'nt-id',
   NOTION_CLIENT_SECRET: 'nt-secret',
+  FIGMA_CLIENT_ID: 'fg-id',
+  FIGMA_CLIENT_SECRET: 'fg-secret',
 };
 
 describe('providerEnvIssues', () => {
