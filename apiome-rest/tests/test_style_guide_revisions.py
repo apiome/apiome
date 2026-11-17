@@ -18,11 +18,16 @@ Covers the service module that turns in-place guide edits into an append-only hi
   DB fault degrades to ``None``.
 * **Audit** — events reach the hash-chained access ledger with the ``style_guide.`` prefix,
   and a ledger failure never propagates.
+* **Ladders** (GVM-1.1, #5854) — the guide's ladder is frozen into the snapshot and the
+  revision row; a guide without one fingerprints exactly as before ladders existed, and a
+  ladder change moves the snapshot fingerprint but not the rule-content fingerprint.
 """
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from app.database import Database
 from app.style_guide_engine import compile_style_guide, rules_content_fingerprint
@@ -33,6 +38,7 @@ from app.style_guide_revisions import (
     CHANGE_CREATED,
     CHANGE_EDITED,
     CHANGE_KINDS,
+    CHANGE_LADDER_CHANGED,
     CHANGE_RULES_CHANGED,
     audit_style_guide_event,
     ensure_guide_revision,
@@ -49,6 +55,27 @@ GUIDE = "00000000-0000-4000-8000-0000000000c1"
 PROJECT = "00000000-0000-4000-8000-0000000000b1"
 REVISION = "00000000-0000-4000-8000-0000000000d1"
 USER = "00000000-0000-4000-8000-0000000000e1"
+
+LADDER = {
+    "name": "Maturity",
+    "levels": [
+        {
+            "key": "bronze",
+            "label": "Bronze",
+            "rules": [{"ruleId": "naming.schema-pascal-case", "maxSeverity": "warning"}],
+            "axes": [],
+            "evidence": [],
+            "waiversSatisfy": True,
+        }
+    ],
+}
+
+
+@pytest.fixture(autouse=True)
+def _no_ladder():
+    """Guides have no ladder unless a test says otherwise (GVM-1.1, #5854)."""
+    with patch("app.database.db.get_style_guide_ladder", return_value=None) as ladder:
+        yield ladder
 
 
 def _guide_row(**over):
@@ -576,3 +603,96 @@ def test_by_content_guards_an_empty_fingerprint():
     db = _database_with_mock_query()
     assert db.get_style_guide_revision_by_content(GUIDE, TENANT, "") is None
     db.execute_query.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Ladders (GVM-1.1, #5854)
+# ---------------------------------------------------------------------------
+
+
+def test_ladder_changed_is_an_accepted_change_kind():
+    assert CHANGE_LADDER_CHANGED == "ladder_changed"
+    assert CHANGE_LADDER_CHANGED in CHANGE_KINDS
+
+
+def test_a_guide_without_a_ladder_snapshots_ladder_none_and_keeps_its_old_fingerprint():
+    snapshot = guide_snapshot(_guide_row(), _rule_rows())
+    assert snapshot["ladder"] is None
+    # The pre-GVM-1.1 snapshot had no ladder key; its fingerprint must not move on upgrade.
+    legacy = {k: v for k, v in snapshot.items() if k != "ladder"}
+    assert snapshot_fingerprint(snapshot) == snapshot_fingerprint(legacy)
+
+
+def test_a_ladder_moves_the_snapshot_fingerprint_but_not_the_rule_content():
+    without = guide_snapshot(_guide_row(), _rule_rows())
+    with_ladder = guide_snapshot(_guide_row(), _rule_rows(), LADDER)
+    assert with_ladder["ladder"] == LADDER
+    assert snapshot_fingerprint(with_ladder) != snapshot_fingerprint(without)
+    assert rules_content_fingerprint(with_ladder["rules"]) == rules_content_fingerprint(
+        without["rules"]
+    )
+
+
+def test_record_freezes_the_live_ladder_into_the_revision(_no_ladder):
+    _no_ladder.return_value = {"name": LADDER["name"], "levels": LADDER["levels"]}
+    guide, rules = _guide_row(), _rule_rows()
+    snapshot = guide_snapshot(guide, rules, LADDER)
+    patches = _patched_db(guide=guide, rules=rules, latest=None)
+    with patches[0], patches[1], patches[2], patches[3], patch(
+        "app.database.db.insert_style_guide_revision",
+        return_value=_revision_row(snapshot, change_kind=CHANGE_LADDER_CHANGED),
+    ) as insert:
+        record_guide_revision(GUIDE, TENANT, change_kind=CHANGE_LADDER_CHANGED)
+
+    kwargs = insert.call_args.kwargs
+    assert kwargs["change_kind"] == CHANGE_LADDER_CHANGED
+    assert kwargs["ladder"] == LADDER
+    assert kwargs["snapshot_fingerprint"] == snapshot_fingerprint(snapshot)
+
+
+def test_record_appends_a_revision_when_only_the_ladder_changed(_no_ladder):
+    guide, rules = _guide_row(), _rule_rows()
+    latest = _revision_row(guide_snapshot(guide, rules), revision_number=2)
+    _no_ladder.return_value = dict(LADDER)
+    patches = _patched_db(guide=guide, rules=rules, latest=latest)
+    with patches[0], patches[1], patches[2], patches[3], patch(
+        "app.database.db.insert_style_guide_revision", return_value={"id": "new"}
+    ) as insert:
+        record_guide_revision(GUIDE, TENANT, change_kind=CHANGE_LADDER_CHANGED)
+
+    insert.assert_called_once()
+
+
+def test_record_passes_ladder_none_for_a_guide_without_one():
+    guide, rules = _guide_row(), _rule_rows()
+    patches = _patched_db(guide=guide, rules=rules, latest=None)
+    with patches[0], patches[1], patches[2], patches[3], patch(
+        "app.database.db.insert_style_guide_revision", return_value={"id": "new"}
+    ) as insert:
+        record_guide_revision(GUIDE, TENANT, change_kind=CHANGE_RULES_CHANGED)
+
+    assert insert.call_args.kwargs["ladder"] is None
+
+
+def test_insert_revision_stores_the_ladder_as_jsonb_or_null():
+    db = _database_with_mock_query()
+    db.execute_query.return_value = [{"id": REVISION}]
+    common = dict(
+        guide_id=GUIDE,
+        tenant_id=TENANT,
+        change_kind=CHANGE_LADDER_CHANGED,
+        name="G",
+        description=None,
+        external_lint_profile="baseline",
+        rules=[],
+        policy={},
+        content_fingerprint="c",
+        snapshot_fingerprint="s",
+    )
+    db.insert_style_guide_revision(**common, ladder=LADDER)
+    query, params = db.execute_query.call_args.args
+    assert "ladder" in query
+    assert params[9].adapted == LADDER
+
+    db.insert_style_guide_revision(**common)
+    assert db.execute_query.call_args.args[1][9] is None

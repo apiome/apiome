@@ -66,6 +66,27 @@ def test_policy_content_fingerprint_is_stable():
     assert len(fp1) == 64
 
 
+def test_policy_content_fingerprint_moves_with_the_ladder_only_when_one_exists():
+    """GVM-1.1 (#5854): a pack without a ladder keeps its pre-ladder fingerprint."""
+    rules = rules_snapshot_from_rows(
+        [{"rule_id": "a", "enabled": True, "severity": "error"}]
+    )
+    common = dict(
+        rules_snapshot=rules,
+        axis_gates={},
+        required_coverage=["quality"],
+        ci_outcomes=DEFAULT_CI_OUTCOMES,
+    )
+    bronze = {"name": "L", "levels": [{"key": "bronze", "rules": []}]}
+    silver = {"name": "L", "levels": [{"key": "bronze", "rules": []}, {"key": "silver"}]}
+    base = policy_content_fingerprint(**common)
+    assert policy_content_fingerprint(**common, ladder=None) == base
+    assert policy_content_fingerprint(**common, ladder=bronze) != base
+    assert policy_content_fingerprint(**common, ladder=bronze) != policy_content_fingerprint(
+        **common, ladder=silver
+    )
+
+
 def test_expired_waiver_reopens_to_open():
     now = datetime(2026, 7, 14, tzinfo=timezone.utc)
     decision = {

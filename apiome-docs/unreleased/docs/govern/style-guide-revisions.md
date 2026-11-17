@@ -23,13 +23,15 @@ Each of these appends one write-once row to the guide's history:
 | Custom-rules save (`PUT …/custom-rules`) | `custom_rules_changed` |
 | Policy-gate save (`PUT …/policy`) | `policy_changed` |
 | Rules taken from an imported ruleset | `imported` |
+| Maturity-ladder save (`PUT …/ladder`) | `ladder_changed` |
 
 A save that changes nothing appends nothing — the history is real changes, not save-button
 presses. **Assigning** a guide (tenant default, or to a project) is *not* a revision: it changes
 no guide content. It is an audit event.
 
 Each revision freezes the guide's name, description, external lint profile, every rule row
-(enable flag, severity, custom definition) and its policy gates, plus who made the change.
+(enable flag, severity, custom definition), its policy gates and its
+[maturity ladder](./maturity-ladders.mdx) (`null` when it has none), plus who made the change.
 
 ## Reading the history
 
@@ -55,7 +57,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 }
 ```
 
-The single-revision response adds `rules` (the frozen rows) and `policy` (the frozen gates).
+The single-revision response adds `rules` (the frozen rows), `policy` (the frozen gates) and
+`ladder` (the frozen ladder, or `null`).
 Both endpoints are readable by **any tenant member** — compliance review is not an admin-only
 activity. Mutating a guide still requires a tenant administrator.
 
@@ -64,8 +67,9 @@ Two fingerprints, two jobs:
 * `contentFingerprint` — SHA-256 of the **rule rows alone**. It is byte-identical to the
   fingerprint the linter stamps on the guide it compiled, which is how a lint result resolves
   its revision.
-* `snapshotFingerprint` — SHA-256 of the **whole snapshot** (identity + rules + gates). Equal to
-  the previous revision means the edit changed nothing, so no revision is appended.
+* `snapshotFingerprint` — SHA-256 of the **whole snapshot** (identity + rules + gates + ladder).
+  Equal to the previous revision means the edit changed nothing, so no revision is appended. A
+  ladder change moves it; `contentFingerprint` stays the same.
 
 ## Pinning a lint result to a revision
 
@@ -110,6 +114,7 @@ Guide governance writes into the tenant's existing hash-chained access ledger, u
 | `style_guide.rules_updated` | `PUT …/{guideId}/rules` |
 | `style_guide.custom_rules_updated` | `PUT …/{guideId}/custom-rules` |
 | `style_guide.policy_updated` | `PUT …/{guideId}/policy` |
+| `style_guide.ladder_changed` | `PUT …/{guideId}/ladder` |
 | `style_guide.assigned` | `PUT …/{guideId}/default`, `PUT …/{guideId}/assignments/projects/{projectId}` |
 | `style_guide.unassigned` | `DELETE …/assignments/projects/{projectId}` |
 

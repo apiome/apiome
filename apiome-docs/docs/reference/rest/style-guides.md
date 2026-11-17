@@ -1,6 +1,6 @@
 ---
 title: "Style guides"
-description: "REST endpoints tagged style-guides: 21 operations."
+description: "REST endpoints tagged style-guides: 23 operations."
 sidebar_position: 106
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.590.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.591.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `style-guides` · 21 operations
+Tag: `style-guides` · 23 operations
 
 ## `GET /v1/style-guides/{tenant_slug}` {#list-style-guides-v1-style-guides-tenant-slug-get}
 
@@ -355,6 +355,73 @@ Operation id: `export_style_guide_v1_style_guides__tenant_slug___guide_id__expor
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for export style guide. | `application/json` [`StyleGuideExportDocument`](#schema-styleguideexportdocument) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/style-guides/{tenant_slug}/{guide_id}/ladder` {#get-style-guide-ladder-v1-style-guides-tenant-slug-guide-id-ladder-get}
+
+**Get Style Guide Ladder**
+
+Return the guide's maturity ladder, or ``ladder: null`` when it has none (GVM-1.1).
+
+Readable by any tenant member. For the built-in Apiome Recommended guide the response
+also carries the default Bronze / Silver / Gold ladder as a read-only ``template``.
+
+Operation id: `get_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `guide_id` | path | string | yes | Style guide identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get style guide ladder. | `application/json` [`StyleGuideLadderResponse`](#schema-styleguideladderresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/style-guides/{tenant_slug}/{guide_id}/ladder` {#put-style-guide-ladder-v1-style-guides-tenant-slug-guide-id-ladder-put}
+
+**Put Style Guide Ladder**
+
+Create or replace the guide's maturity ladder (GVM-1.1, #5854). Tenant admin only.
+
+The body is the complete ladder, levels lowest first. Refused with ``422`` and a
+``detail.code`` / ``detail.pointer`` when a level relaxes a lower one
+(``ladder-level-not-cumulative``, naming the level and rule), a rule id is not in the
+registry (``ladder-unknown-rule``), an axis is not an axis key (``ladder-unknown-axis``),
+or the ladder is otherwise malformed. The built-in guide is read-only (``409``).
+
+A successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both
+freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
+Saving an identical ladder changes nothing.
+
+Operation id: `put_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `guide_id` | path | string | yes | Style guide identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for put style guide ladder.
+
+- `application/json` — [`StyleGuideLadderModelInput`](#schema-styleguideladdermodelinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for put style guide ladder. | `application/json` [`StyleGuideLadderResponse`](#schema-styleguideladderresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/style-guides/{tenant_slug}/{guide_id}/policy` {#get-style-guide-policy-settings-v1-style-guides-tenant-slug-guide-id-policy-get}
@@ -731,6 +798,28 @@ The guide an import created, with what it stored and what it skipped (#1747).
 | `customRuleCount` | integer | yes | Custom rules stored. |
 | `skipped` | array of `StyleGuideImportSkippedRuleOut` | no | Entries not stored — e.g. built-in rule ids this instance does not register. |
 
+### `StyleGuideLadderModelInput` {#schema-styleguideladdermodelinput}
+
+A style guide's ordered maturity ladder, lowest level first (GVM-1.1, #5854).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | Ladder display name. |
+| `levels` | array of `StyleGuideLadderLevelModel` | yes | Ordered levels, lowest first. An empty ladder is refused (`ladder-empty`). |
+
+### `StyleGuideLadderResponse` {#schema-styleguideladderresponse}
+
+``GET|PUT /v1/style-guides/{tenant}/{guideId}/ladder`` (GVM-1.1, #5854).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `guideId` | string | yes | Guide ID. |
+| `ladder` | `StyleGuideLadderModelOutput` or null | no | The guide's ladder, or null when it has none. A guide without a ladder has no levels to meet — it is never reported as meeting every level. |
+| `contentFingerprint` | string or null | no | SHA-256 of the canonical ladder; null when there is no ladder. |
+| `updatedAt` | string or null | no | Updated At. |
+| `readOnly` | boolean | no | True for the built-in guide, whose ladder cannot be set. |
+| `template` | `StyleGuideLadderModelOutput` or null | no | The default Bronze / Silver / Gold ladder, returned for the built-in Apiome Recommended guide only. A read-only template: it is not applied to any tenant. |
+
 ### `StyleGuideListResponse` {#schema-styleguidelistresponse}
 
 The tenant's style guides for the Control Panel list view (GOV-2.1, #4433).
@@ -824,6 +913,7 @@ One immutable style-guide policy pack version (CLX-1.3, #4850).
 | `axisGates` | object | no | Axis Gates. |
 | `requiredCoverage` | array of string | no | Required Coverage. |
 | `ciOutcomes` | `StyleGuideCiOutcomesOut` | no | Ci Outcomes. |
+| `ladder` | `StyleGuideLadderModelOutput` or null | no | The maturity ladder frozen into this pack (GVM-1.1); null when none. |
 | `actorUserId` | string or null | no | Actor User ID. |
 | `actorLabel` | string or null | no | Actor Label. |
 | `createdAt` | string or null | no | Created At. |
@@ -837,7 +927,7 @@ A style-guide revision including its frozen rules and policy gates (GOV-1.6, #44
 | `id` | string | yes | Revision id — what a lint result pins to. |
 | `guideId` | string | yes | The guide this revision belongs to. |
 | `revisionNumber` | integer | yes | Monotonic revision number within the guide (starts at 1). |
-| `changeKind` | string | yes | What produced the revision: created \| edited \| rules_changed \| custom_rules_changed \| policy_changed \| imported. |
+| `changeKind` | string | yes | What produced the revision: created \| edited \| rules_changed \| custom_rules_changed \| policy_changed \| imported \| ladder_changed. |
 | `name` | string | yes | Guide name at the time of this revision. |
 | `description` | string or null | no | Guide description at the time of this revision. |
 | `externalLintProfile` | string or null | no | External validation profile at the time of this revision (CLX-2.2). |
@@ -851,6 +941,7 @@ A style-guide revision including its frozen rules and policy gates (GOV-1.6, #44
 | `createdAt` | string or null | no | When the revision was recorded (rows are write-once). |
 | `rules` | array of object | no | The guide's rule rows as they were, sorted by rule id: `ruleId`-equivalent `rule_id`, `enabled`, `severity`, and `custom_def` for custom rules. |
 | `policy` | object | no | Draft policy gates at the time of this revision: `axisGates`, `requiredCoverage`, `ciOutcomes` (CLX-1.3). |
+| `ladder` | `StyleGuideLadderModelOutput` or null | no | The maturity ladder at the time of this revision (GVM-1.1); null when the guide had none. |
 
 ### `StyleGuideRevisionListResponse` {#schema-styleguiderevisionlistresponse}
 

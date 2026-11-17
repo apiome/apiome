@@ -37,6 +37,7 @@ from .policy_evaluate import (
     rules_snapshot_from_rows,
 )
 from .style_guide_engine import resolve_style_guide
+from .style_guide_ladder import ladder_from_row
 
 
 def snapshot_style_guide_policy(
@@ -46,7 +47,7 @@ def snapshot_style_guide_policy(
     actor_user_id: Optional[str] = None,
     actor_label: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Append an immutable policy pack version from the live guide + rules.
+    """Append an immutable policy pack version from the live guide + rules + ladder.
 
     Args:
         guide_id: Style guide to snapshot.
@@ -65,11 +66,14 @@ def snapshot_style_guide_policy(
     axis_gates = default_axis_gates(guide.get("axis_gates"))
     required_coverage = default_required_coverage(guide.get("required_coverage"))
     ci_outcomes = default_ci_outcomes(guide.get("ci_outcomes"))
+    # GVM-1.1 (#5854): the maturity ladder is frozen beside rules and gates.
+    ladder = ladder_from_row(db.get_style_guide_ladder(guide_id, tenant_id))
     fingerprint = policy_content_fingerprint(
         rules_snapshot=rules_snapshot,
         axis_gates=axis_gates,
         required_coverage=required_coverage,
         ci_outcomes=ci_outcomes,
+        ladder=ladder,
     )
     return db.insert_style_guide_policy_version(
         guide_id=guide_id,
@@ -79,6 +83,7 @@ def snapshot_style_guide_policy(
         required_coverage=required_coverage,
         ci_outcomes=ci_outcomes,
         content_fingerprint=fingerprint,
+        ladder=ladder,
         actor_user_id=actor_user_id,
         actor_label=actor_label,
     )

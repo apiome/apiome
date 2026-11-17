@@ -1785,6 +1785,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['traffic', 'usage index', 'retention', 'privacy', 'counters', 'sampling', 'sweep', 'consumer bindings', 'declared vs observed', 'anonymous'],
   },
   {
+    id: 'maturity-ladders',
+    title: 'Maturity ladders',
+    summary: "Ordered Bronze, Silver and Gold levels a style guide's APIs climb, and the default ladder.",
+    page: 'apiome-docs/docs/govern/maturity-ladders.mdx',
+    section: 'reference',
+    keywords: ['bronze', 'silver', 'gold', 'level', 'cumulative', 'style guide', 'policy pack'],
+  },
+  {
     id: 'reviews',
     title: 'Reviews and the approval gate',
     summary: 'Review a draft version, approve or request changes, and require approvals before publishing.',

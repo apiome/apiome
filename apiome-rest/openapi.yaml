@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.590.0
+  version: 1.591.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -43139,6 +43139,170 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get style guide policy versionresponse422.
+  /v1/style-guides/{tenant_slug}/{guide_id}/ladder:
+    get:
+      tags:
+      - style-guides
+      summary: Get Style Guide Ladder
+      description: 'Return the guide''s maturity ladder, or ``ladder: null`` when it
+        has none (GVM-1.1).
+
+
+        Readable by any tenant member. For the built-in Apiome Recommended guide the
+        response
+
+        also carries the default Bronze / Silver / Gold ladder as a read-only ``template``.'
+      operationId: get_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: guide_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Guide Id
+          description: Guide Id schema.
+        description: Style guide identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Style Guide Ladderauthorization schema.
+          - type: 'null'
+            description: Get Style Guide Ladderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Style Guide Ladder Xapikey schema.
+          - type: 'null'
+            description: Get Style Guide Ladder Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get style guide ladder.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StyleGuideLadderResponse'
+                description: Response payload for get style guide ladderresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get style guide ladderresponse422.
+    put:
+      tags:
+      - style-guides
+      summary: Put Style Guide Ladder
+      description: 'Create or replace the guide''s maturity ladder (GVM-1.1, #5854).
+        Tenant admin only.
+
+
+        The body is the complete ladder, levels lowest first. Refused with ``422`` and
+        a
+
+        ``detail.code`` / ``detail.pointer`` when a level relaxes a lower one
+
+        (``ladder-level-not-cumulative``, naming the level and rule), a rule id is not
+        in the
+
+        registry (``ladder-unknown-rule``), an axis is not an axis key (``ladder-unknown-axis``),
+
+        or the ladder is otherwise malformed. The built-in guide is read-only (``409``).
+
+
+        A successful save appends a ``ladder_changed`` revision, snapshots a new policy
+        pack (both
+
+        freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
+
+        Saving an identical ladder changes nothing.'
+      operationId: put_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: guide_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Guide Id
+          description: Guide Id schema.
+        description: Style guide identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Put Style Guide Ladderauthorization schema.
+          - type: 'null'
+            description: Put Style Guide Ladderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Put Style Guide Ladder Xapikey schema.
+          - type: 'null'
+            description: Put Style Guide Ladder Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StyleGuideLadderModelInput'
+              description: Request body for put style guide ladderrequest.
+        description: Request body for put style guide ladder.
+      responses:
+        '200':
+          description: Successful response for put style guide ladder.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StyleGuideLadderResponse'
+                description: Response payload for put style guide ladderresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for put style guide ladderresponse422.
   /v1/tenants/{tenant_slug}/governance/quality-policy:
     get:
       tags:
@@ -171207,6 +171371,182 @@ components:
       - detail
       title: StyleGuideImportSkippedRuleOut
       description: A document entry the import reported instead of storing (#1747).
+    StyleGuideLadderAxisModel:
+      properties:
+        axis:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Axis
+          description: 'Axis key: quality | protocol | security | supply_chain | supportability
+            | compatibility. The axis must be assessed to meet the level.'
+          example: example
+        minGrade:
+          anyOf:
+          - type: string
+            enum:
+            - A
+            - B
+            - C
+            - D
+            - F
+            description: Style Guide Ladder Axis Model schema.
+          - type: 'null'
+            description: Style Guide Ladder Axis Model schema.
+          title: Mingrade
+          description: Lowest acceptable letter grade.
+        minScore:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+            description: Style Guide Ladder Axis Model schema.
+          - type: 'null'
+            description: Style Guide Ladder Axis Model schema.
+          title: Minscore
+          description: Lowest acceptable score, 0–100.
+      type: object
+      required:
+      - axis
+      title: StyleGuideLadderAxisModel
+      description: 'One axis floor of a ladder level (GVM-1.1, #5854). At least one threshold
+        is required.'
+    StyleGuideLadderLevelModel:
+      properties:
+        key:
+          type: string
+          maxLength: 64
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9_-]*$
+          title: Key
+          description: Stable level key, e.g. `bronze` (lowercase letters, digits, `-`,
+            `_`).
+          example: example
+        label:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Label
+          description: Display label, e.g. `Bronze`.
+          example: example
+        rules:
+          items:
+            $ref: '#/components/schemas/StyleGuideLadderRuleModel'
+          type: array
+          maxItems: 1000
+          title: Rules
+          description: Rule requirements this level adds.
+        axes:
+          items:
+            $ref: '#/components/schemas/StyleGuideLadderAxisModel'
+          type: array
+          maxItems: 16
+          title: Axes
+          description: Axis floors this level adds.
+        evidence:
+          items:
+            type: string
+            enum:
+            - review_approved
+            - verification_passing
+          type: array
+          maxItems: 4
+          title: Evidence
+          description: Evidence this level requires.
+        waiversSatisfy:
+          type: boolean
+          title: Waiverssatisfy
+          description: Whether an effective waiver counts as meeting a rule requirement.
+            Once a level turns this off, no higher level may turn it back on.
+          default: false
+          example: false
+      type: object
+      required:
+      - key
+      - label
+      title: StyleGuideLadderLevelModel
+      description: 'One level of a maturity ladder (GVM-1.1, #5854).
+
+
+        Levels are cumulative: a level lists only what it adds to the levels below it,
+        and may not
+
+        relax any of their requirements.'
+    StyleGuideLadderResponse:
+      properties:
+        guideId:
+          type: string
+          title: Guideid
+          description: Guide ID.
+          example: example
+        ladder:
+          anyOf:
+          - $ref: '#/components/schemas/StyleGuideLadderModelOutput'
+          - type: 'null'
+            description: Response payload for style guide ladder.
+          description: The guide's ladder, or null when it has none. A guide without a
+            ladder has no levels to meet — it is never reported as meeting every level.
+        contentFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for style guide ladder.
+          - type: 'null'
+            description: Response payload for style guide ladder.
+          title: Contentfingerprint
+          description: SHA-256 of the canonical ladder; null when there is no ladder.
+        updatedAt:
+          anyOf:
+          - type: string
+            description: Response payload for style guide ladder.
+          - type: 'null'
+            description: Response payload for style guide ladder.
+          title: Updatedat
+          description: Updated At.
+        readOnly:
+          type: boolean
+          title: Readonly
+          description: True for the built-in guide, whose ladder cannot be set.
+          default: false
+          example: false
+        template:
+          anyOf:
+          - $ref: '#/components/schemas/StyleGuideLadderModelOutput'
+          - type: 'null'
+            description: Response payload for style guide ladder.
+          description: 'The default Bronze / Silver / Gold ladder, returned for the built-in
+            Apiome Recommended guide only. A read-only template: it is not applied to
+            any tenant.'
+      type: object
+      required:
+      - guideId
+      title: StyleGuideLadderResponse
+      description: '``GET|PUT /v1/style-guides/{tenant}/{guideId}/ladder`` (GVM-1.1, #5854).'
+    StyleGuideLadderRuleModel:
+      properties:
+        ruleId:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Ruleid
+          description: A rule id from the built-in rule registry.
+          example: documentation.schema-missing-description
+        maxSeverity:
+          type: string
+          enum:
+          - error
+          - warning
+          - info
+          - none
+          title: Maxseverity
+          description: Worst finding severity the rule may still produce at this level;
+            `none` means the rule must report nothing.
+          example: error
+      type: object
+      required:
+      - ruleId
+      - maxSeverity
+      title: StyleGuideLadderRuleModel
+      description: 'One rule requirement of a ladder level (GVM-1.1, #5854).'
     StyleGuideListResponse:
       properties:
         guides:
@@ -171623,6 +171963,13 @@ components:
         ciOutcomes:
           $ref: '#/components/schemas/StyleGuideCiOutcomesOut'
           description: Ci Outcomes.
+        ladder:
+          anyOf:
+          - $ref: '#/components/schemas/StyleGuideLadderModelOutput'
+          - type: 'null'
+            description: Response payload for style guide policy version.
+          description: The maturity ladder frozen into this pack (GVM-1.1); null when
+            none.
         actorUserId:
           anyOf:
           - type: string
@@ -171693,8 +172040,8 @@ components:
         changeKind:
           type: string
           title: Changekind
-          description: 'What produced the revision: created | edited | rules_changed
-            | custom_rules_changed | policy_changed | imported.'
+          description: 'What produced the revision: created | edited | rules_changed |
+            custom_rules_changed | policy_changed | imported | ladder_changed.'
           example: example
         name:
           type: string
@@ -171755,8 +172102,7 @@ components:
           - type: 'null'
             description: Response payload for style guide revision detail.
           title: Actoruserid
-          description: User who made the change; null for system captures or deleted
-            users.
+          description: User who made the change; null for system captures or deleted users.
         actorLabel:
           anyOf:
           - type: string
@@ -171788,6 +172134,13 @@ components:
           title: Policy
           description: 'Draft policy gates at the time of this revision: `axisGates`,
             `requiredCoverage`, `ciOutcomes` (CLX-1.3).'
+        ladder:
+          anyOf:
+          - $ref: '#/components/schemas/StyleGuideLadderModelOutput'
+          - type: 'null'
+            description: Response payload for style guide revision detail.
+          description: The maturity ladder at the time of this revision (GVM-1.1); null
+            when the guide had none.
       type: object
       required:
       - id
@@ -171852,8 +172205,8 @@ components:
         changeKind:
           type: string
           title: Changekind
-          description: 'What produced the revision: created | edited | rules_changed
-            | custom_rules_changed | policy_changed | imported.'
+          description: 'What produced the revision: created | edited | rules_changed |
+            custom_rules_changed | policy_changed | imported | ladder_changed.'
           example: example
         name:
           type: string
@@ -171914,8 +172267,7 @@ components:
           - type: 'null'
             description: Response payload for style guide revision.
           title: Actoruserid
-          description: User who made the change; null for system captures or deleted
-            users.
+          description: User who made the change; null for system captures or deleted users.
         actorLabel:
           anyOf:
           - type: string
@@ -171946,11 +172298,9 @@ components:
         (GOV-1.6, #4432).
 
 
-        The history-list projection: what changed, when, by whom, and how large the
-        resulting
+        The history-list projection: what changed, when, by whom, and how large the resulting
 
-        ruleset was. The frozen rules themselves are served by the single-revision
-        endpoint
+        ruleset was. The frozen rules themselves are served by the single-revision endpoint
 
         (:class:`StyleGuideRevisionDetailOut`) so a long history stays cheap to render.'
     StyleGuideRuleOut:
@@ -188593,6 +188943,52 @@ components:
       title: MockScenarioRuleSpec
       description: 'One declarative rule: request predicates plus the response(s)
         they select (#4744 PMR-2.1).'
+    StyleGuideLadderModelInput:
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Name
+          description: Ladder display name.
+          example: Pet
+        levels:
+          items:
+            $ref: '#/components/schemas/StyleGuideLadderLevelModel'
+          type: array
+          maxItems: 10
+          title: Levels
+          description: Ordered levels, lowest first. An empty ladder is refused (`ladder-empty`).
+      type: object
+      required:
+      - name
+      - levels
+      title: StyleGuideLadderModel
+      description: 'A style guide''s ordered maturity ladder, lowest level first (GVM-1.1,
+        #5854).'
+    StyleGuideLadderModelOutput:
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Name
+          description: Ladder display name.
+          example: Pet
+        levels:
+          items:
+            $ref: '#/components/schemas/StyleGuideLadderLevelModel'
+          type: array
+          maxItems: 10
+          title: Levels
+          description: Ordered levels, lowest first. An empty ladder is refused (`ladder-empty`).
+      type: object
+      required:
+      - name
+      - levels
+      title: StyleGuideLadderModel
+      description: 'A style guide''s ordered maturity ladder, lowest level first (GVM-1.1,
+        #5854).'
     ComponentLibraryRevisionBody:
       properties:
         id:

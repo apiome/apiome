@@ -139,6 +139,7 @@ def policy_content_fingerprint(
     axis_gates: Mapping[str, Any],
     required_coverage: Sequence[str],
     ci_outcomes: Mapping[str, Any],
+    ladder: Optional[Mapping[str, Any]] = None,
 ) -> str:
     """SHA-256 hex digest of a canonicalized policy pack body.
 
@@ -147,6 +148,9 @@ def policy_content_fingerprint(
         axis_gates: Frozen axis gates.
         required_coverage: Frozen required axes.
         ci_outcomes: Frozen CI toggles.
+        ladder: Frozen ``{name, levels}`` maturity ladder (GVM-1.1, #5854), or ``None``.
+            Only a real ladder enters the body, so a guide without one keeps the fingerprint
+            it had before ladders existed.
 
     Returns:
         Hex SHA-256 of the canonical JSON body.
@@ -157,6 +161,8 @@ def policy_content_fingerprint(
         "required_coverage": list(required_coverage),
         "ci_outcomes": default_ci_outcomes(ci_outcomes),
     }
+    if ladder is not None:
+        body["ladder"] = dict(ladder)
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 

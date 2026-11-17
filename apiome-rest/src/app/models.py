@@ -7519,6 +7519,141 @@ class StyleGuidePolicySettingsPutRequest(BaseModel):
     )
 
 
+class StyleGuideLadderRuleModel(BaseModel):
+    """One rule requirement of a ladder level (GVM-1.1, #5854)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(
+        alias="ruleId",
+        min_length=1,
+        max_length=200,
+        description="A rule id from the built-in rule registry.",
+    )
+    max_severity: Literal["error", "warning", "info", "none"] = Field(
+        alias="maxSeverity",
+        description=(
+            "Worst finding severity the rule may still produce at this level; `none` means "
+            "the rule must report nothing."
+        ),
+    )
+
+
+class StyleGuideLadderAxisModel(BaseModel):
+    """One axis floor of a ladder level (GVM-1.1, #5854). At least one threshold is required."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    axis: str = Field(
+        min_length=1,
+        max_length=64,
+        description=(
+            "Axis key: quality | protocol | security | supply_chain | supportability | "
+            "compatibility. The axis must be assessed to meet the level."
+        ),
+    )
+    min_grade: Optional[Literal["A", "B", "C", "D", "F"]] = Field(
+        default=None, alias="minGrade", description="Lowest acceptable letter grade."
+    )
+    min_score: Optional[float] = Field(
+        default=None,
+        alias="minScore",
+        ge=0,
+        le=100,
+        description="Lowest acceptable score, 0–100.",
+    )
+
+
+class StyleGuideLadderLevelModel(BaseModel):
+    """One level of a maturity ladder (GVM-1.1, #5854).
+
+    Levels are cumulative: a level lists only what it adds to the levels below it, and may not
+    relax any of their requirements.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str = Field(
+        min_length=1,
+        max_length=64,
+        pattern=r"^[a-z0-9][a-z0-9_-]*$",
+        description="Stable level key, e.g. `bronze` (lowercase letters, digits, `-`, `_`).",
+    )
+    label: str = Field(
+        min_length=1, max_length=100, description="Display label, e.g. `Bronze`."
+    )
+    rules: List[StyleGuideLadderRuleModel] = Field(
+        default_factory=list,
+        max_length=1000,
+        description="Rule requirements this level adds.",
+    )
+    axes: List[StyleGuideLadderAxisModel] = Field(
+        default_factory=list,
+        max_length=16,
+        description="Axis floors this level adds.",
+    )
+    evidence: List[Literal["review_approved", "verification_passing"]] = Field(
+        default_factory=list,
+        max_length=4,
+        description="Evidence this level requires.",
+    )
+    waivers_satisfy: bool = Field(
+        default=False,
+        alias="waiversSatisfy",
+        description=(
+            "Whether an effective waiver counts as meeting a rule requirement. Once a level "
+            "turns this off, no higher level may turn it back on."
+        ),
+    )
+
+
+class StyleGuideLadderModel(BaseModel):
+    """A style guide's ordered maturity ladder, lowest level first (GVM-1.1, #5854)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(min_length=1, max_length=100, description="Ladder display name.")
+    levels: List[StyleGuideLadderLevelModel] = Field(
+        max_length=10,
+        description=(
+            "Ordered levels, lowest first. An empty ladder is refused (`ladder-empty`)."
+        ),
+    )
+
+
+class StyleGuideLadderResponse(BaseModel):
+    """``GET|PUT /v1/style-guides/{tenant}/{guideId}/ladder`` (GVM-1.1, #5854)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guide_id: str = Field(serialization_alias="guideId")
+    ladder: Optional[StyleGuideLadderModel] = Field(
+        default=None,
+        description=(
+            "The guide's ladder, or null when it has none. A guide without a ladder has no "
+            "levels to meet — it is never reported as meeting every level."
+        ),
+    )
+    content_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="contentFingerprint",
+        description="SHA-256 of the canonical ladder; null when there is no ladder.",
+    )
+    updated_at: Optional[str] = Field(default=None, serialization_alias="updatedAt")
+    read_only: bool = Field(
+        default=False,
+        serialization_alias="readOnly",
+        description="True for the built-in guide, whose ladder cannot be set.",
+    )
+    template: Optional[StyleGuideLadderModel] = Field(
+        default=None,
+        description=(
+            "The default Bronze / Silver / Gold ladder, returned for the built-in Apiome "
+            "Recommended guide only. A read-only template: it is not applied to any tenant."
+        ),
+    )
+
+
 class StyleGuidePolicyVersionOut(BaseModel):
     """One immutable style-guide policy pack version (CLX-1.3, #4850)."""
 
@@ -7536,6 +7671,10 @@ class StyleGuidePolicyVersionOut(BaseModel):
     )
     ci_outcomes: StyleGuideCiOutcomesOut = Field(
         default_factory=StyleGuideCiOutcomesOut, serialization_alias="ciOutcomes"
+    )
+    ladder: Optional[StyleGuideLadderModel] = Field(
+        default=None,
+        description="The maturity ladder frozen into this pack (GVM-1.1); null when none.",
     )
     actor_user_id: Optional[str] = Field(
         default=None, serialization_alias="actorUserId"
@@ -7575,7 +7714,7 @@ class StyleGuideRevisionOut(BaseModel):
         serialization_alias="changeKind",
         description=(
             "What produced the revision: created | edited | rules_changed | "
-            "custom_rules_changed | policy_changed | imported."
+            "custom_rules_changed | policy_changed | imported | ladder_changed."
         ),
     )
     name: str = Field(description="Guide name at the time of this revision.")
@@ -7648,6 +7787,13 @@ class StyleGuideRevisionDetailOut(StyleGuideRevisionOut):
         description=(
             "Draft policy gates at the time of this revision: `axisGates`, "
             "`requiredCoverage`, `ciOutcomes` (CLX-1.3)."
+        ),
+    )
+    ladder: Optional[StyleGuideLadderModel] = Field(
+        default=None,
+        description=(
+            "The maturity ladder at the time of this revision (GVM-1.1); null when the guide "
+            "had none."
         ),
     )
 
@@ -8673,10 +8819,29 @@ def style_guide_policy_version_out_from_row(
         axis_gates=row.get("axis_gates") if isinstance(row.get("axis_gates"), dict) else {},
         required_coverage=default_required_coverage(row.get("required_coverage")),
         ci_outcomes=style_guide_ci_outcomes_from_raw(row.get("ci_outcomes")),
+        ladder=style_guide_ladder_model_from_raw(row.get("ladder")),
         actor_user_id=str(row["actor_user_id"]) if row.get("actor_user_id") else None,
         actor_label=row.get("actor_label"),
         created_at=_iso_or_none(row.get("created_at")),
     )
+
+
+def style_guide_ladder_model_from_raw(raw: Any) -> Optional[StyleGuideLadderModel]:
+    """Build a :class:`StyleGuideLadderModel` from a stored ``{name, levels}`` JSON value.
+
+    Args:
+        raw: A frozen ladder (``style_guide_revisions.ladder`` /
+            ``style_guide_policy_versions.ladder``) or a ladder row.
+
+    Returns:
+        The model, or ``None`` when there is no ladder (``NULL``, not an object, or no levels).
+    """
+    from .style_guide_ladder import ladder_from_row
+
+    ladder = ladder_from_row(raw) if isinstance(raw, Mapping) else None
+    if ladder is None:
+        return None
+    return StyleGuideLadderModel.model_validate(ladder)
 
 
 def _style_guide_revision_fields(row: Mapping[str, Any]) -> Dict[str, Any]:
@@ -8723,6 +8888,7 @@ def style_guide_revision_detail_from_row(
         if isinstance(rules, list)
         else [],
         policy=dict(policy) if isinstance(policy, Mapping) else {},
+        ladder=style_guide_ladder_model_from_raw(row.get("ladder")),
     )
 
 
