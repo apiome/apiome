@@ -190,7 +190,9 @@ def test_changing_the_strategy_rechecks_the_stored_auth_config(env) -> None:
 
 def test_an_export_of_an_included_revision_reads_the_plans(env) -> None:
     _create(env)
-    _create(env, name="Retired", state="retired", environments=[])
+    _create(env, name="Retired", state="published", environments=[])
+    store.update_plan(env["tenant"], "payments", "retired", ApiPlanPatch(state="deprecated"), actor=env["actor"])
+    store.update_plan(env["tenant"], "payments", "retired", ApiPlanPatch(state="retired"), actor=env["actor"])
     entries = store.plans_for_revision(env["tenant"], env["project"], env["version"])
     assert [(e["product"], e["plan"]) for e in entries] == [("payments", "standard")]
     assert entries[0]["limits"] == [{"window": "minute", "requests": 100}, {"window": "day", "requests": 50000}]

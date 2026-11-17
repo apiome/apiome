@@ -17,6 +17,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from .api_lifecycle_store import timeline_entries as product_timeline_entries
 from .auth import get_authenticated_user_id, validate_authentication
 from .branch_push_policy import effective_require_merge_path
 from .api_check_suite_gate import assess_check_suite_gate
@@ -692,7 +693,30 @@ async def get_sunset_timeline(
 
     readiness = _sunset_readiness(tid, auth_data, [(entry.revision_id, entry.project_id) for entry in entries])
     entries = [entry.model_copy(update={"still_used": readiness.get(entry.revision_id)}) for entry in entries]
-    return SunsetTimelineResponse(entries=entries)
+    return SunsetTimelineResponse(entries=entries, products=_product_timeline(tid, auth_data, project_id))
+
+
+def _product_timeline(tenant_id: str, auth_data: Dict[str, Any], project_id: Optional[str]) -> List[Any]:
+    """Deprecated and retired API products and plans for the sunset timeline (APX-1.4, #6101).
+
+    Products are read with ``projects:view``, so a reader without it gets none. A read fault is
+    logged and yields none: the version schedule must load either way.
+
+    Args:
+        tenant_id: The caller's tenant.
+        auth_data: The authenticated principal.
+        project_id: Only products that include this project.
+
+    Returns:
+        :class:`SunsetTimelineProductEntryOut` entries, soonest retirement first.
+    """
+    try:
+        if not has_permission(db, auth_data, Resource.PROJECTS, Action.VIEW):
+            return []
+        return product_timeline_entries(tenant_id, project_id)
+    except Exception:  # noqa: BLE001 - the schedule must load even when products cannot be read
+        logger.warning("sunset timeline: API products could not be read", exc_info=True)
+        return []
 
 
 def _sunset_readiness(

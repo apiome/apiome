@@ -103,3 +103,29 @@ export const PORTAL_PRODUCT_PLANS_SQL = `
        WHERE pl.tenant_id = $1 AND pl.product_id = $2
          AND ${PORTAL_PLAN_GATES}
        ORDER BY lower(pl.name), pl.slug`;
+
+/**
+ * APX-1.4 (#6101). `$1` tenant slug, `$2` project id → the lifecycle news for that API's changelog:
+ * one row per portal product that includes the project (a non-MCP member) and is deprecated or has
+ * a deprecated portal plan — with that plan's columns when there is one (`plan_slug` null
+ * otherwise). A successor is named only when it is itself a portal plan. Only public columns.
+ */
+export const PRODUCT_LIFECYCLE_FOR_PROJECT_SQL = `
+       SELECT ap.slug, ap.name, ap.state, ap.retire_at, ap.deprecation_message,
+              pl.slug AS plan_slug, pl.name AS plan_name, pl.retire_at AS plan_retire_at,
+              pl.deprecation_message AS plan_deprecation_message, s.name AS successor_name
+       FROM apiome.api_products ap
+       JOIN apiome.tenants t ON t.id = ap.tenant_id
+       LEFT JOIN apiome.api_plans pl
+              ON pl.product_id = ap.id AND pl.tenant_id = ap.tenant_id
+             AND pl.state = 'deprecated' AND pl.deleted_at IS NULL
+       LEFT JOIN apiome.api_plans s
+              ON s.id = pl.successor_plan_id AND s.tenant_id = ap.tenant_id
+             AND s.state IN ${PLAN_STATES} AND s.deleted_at IS NULL
+       WHERE t.slug = $1
+         AND ${PORTAL_PRODUCT_GATES}
+         AND EXISTS (SELECT 1 FROM apiome.api_product_members m
+                     WHERE m.product_id = ap.id AND m.tenant_id = ap.tenant_id
+                       AND m.member_kind <> 'mcp_server' AND m.member_ref = $2::uuid)
+         AND (ap.state = 'deprecated' OR pl.id IS NOT NULL)
+       ORDER BY lower(ap.name), ap.slug, pl.retire_at NULLS LAST, lower(pl.name)`;

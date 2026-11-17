@@ -37,8 +37,16 @@ access (APX).
   with the authentication, limits, approval, key lifetime, pricing and terms — never the billing
   reference. **Sign in to request access** signs a reader in to the portal. The organization's page
   lists its products under **Products**, and catalog search finds them (`type:product`).
+- **Product and plan lifecycle (APX-1.4).** Deprecating a plan blocks new subscriptions and takes a
+  **Retire on** date, a **Replacement plan** (published, same auth strategy) and a message for
+  subscribers, who are told once. **Migrate to plan…** previews and then moves a deprecated plan's
+  subscriptions to the replacement's consumer group without new keys; **Retired** waits for the date
+  and revokes the plan's provisioning. A product retires once its plans have. Deprecated products and
+  plans appear on the [Sunset timeline](/ship/sunset-timeline#api-products-and-plans) and on the
+  [changelog](/ship/api-changelog#plan-and-product-changes) of every API a portal product includes. See
+  [Lifecycle](/ship/api-products#lifecycle).
 
 With the API: `GET|POST /v1/tenants/{t}/products`, `GET|PATCH|DELETE …/products/{slug}`,
 `GET|POST …/products/{slug}/members`, `DELETE …/members/{id}`, `GET|POST …/products/{slug}/plans` and
-`GET|PATCH|DELETE …/plans/{plan}` — see the
+`GET|PATCH|DELETE …/plans/{plan}` and `POST …/plans/{plan}/migrate` — see the
 [REST reference](/reference/rest/api-products).

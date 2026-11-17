@@ -7,7 +7,13 @@
  * wire types, the words the editor uses for each value, the body fields the proxy forwards, and the
  * pure rules the Plans section shares: the draft ↔ wire mapping and the checks that run before a save
  * (limits positive, every window once).
+ *
+ * APX-1.4 (#6101) adds the lifecycle: a deprecated plan carries a retirement date, a message and
+ * the plan consumers move to ({@link successorChoices}), and **Migrate to plan** moves its
+ * subscriptions without changing any key ({@link ApiPlanMigration}).
  */
+
+import { dateInputValue, retireAtFromInput } from './api-lifecycle';
 
 export const PLAN_AUTH_STRATEGIES = ['key_auth', 'oauth2_client_credentials', 'mtls', 'none'] as const;
 export type PlanAuthStrategy = (typeof PLAN_AUTH_STRATEGIES)[number];
@@ -86,6 +92,13 @@ export interface PlanNotice {
   member?: { kind: string; ref: string; name: string | null } | null;
 }
 
+/** Another plan of the same product, as a lifecycle field names it. */
+export interface PlanRef {
+  slug: string;
+  name: string;
+  state: PlanState;
+}
+
 /** One plan, as REST returns it. */
 export interface ApiPlan {
   id: string;
@@ -105,6 +118,16 @@ export interface ApiPlan {
   pricing_note: string | null;
   billing_ref: string | null;
   state: PlanState;
+  /** True only for a published plan; a deprecated plan blocks new subscriptions. */
+  accepts_subscriptions: boolean;
+  deprecated_at: string | null;
+  retire_at: string | null;
+  retired_at: string | null;
+  deprecation_message: string | null;
+  /** The plan consumers move to. */
+  successor: PlanRef | null;
+  /** When subscribed application owners were told of the deprecation (once). */
+  owners_notified_at: string | null;
   notices: PlanNotice[];
   warnings: PlanNotice[];
   created_by: string | null;
@@ -128,9 +151,26 @@ export interface ApiPlanInput {
   pricing_note: string | null;
   billing_ref: string | null;
   state: PlanState;
+  /** Deprecated plans only: the retirement date, the message and the successor's slug. */
+  retire_at?: string | null;
+  deprecation_message?: string | null;
+  successor?: string | null;
 }
 
-/** The body fields a plan create may carry; a patch carries the same minus `slug`. */
+/** What **Migrate to plan** moved (or, on a dry run, would move). */
+export interface ApiPlanMigration {
+  from_plan: PlanRef;
+  to_plan: PlanRef;
+  dry_run: boolean;
+  from_group: string;
+  to_group: string;
+  subscriptions: number;
+  /** Always false: consumers keep their keys. */
+  credentials_changed: boolean;
+  message: string;
+}
+
+/** The body fields a plan create may carry; a patch carries the same minus `slug`, plus the lifecycle. */
 export const PLAN_CREATE_FIELDS = [
   'name',
   'slug',
@@ -147,7 +187,14 @@ export const PLAN_CREATE_FIELDS = [
   'billing_ref',
   'state',
 ] as const;
-export const PLAN_PATCH_FIELDS = PLAN_CREATE_FIELDS.filter((field) => field !== 'slug');
+export const PLAN_PATCH_FIELDS = [
+  ...PLAN_CREATE_FIELDS.filter((field) => field !== 'slug'),
+  'retire_at',
+  'deprecation_message',
+  'successor',
+] as const;
+/** The body fields **Migrate to plan** carries. */
+export const PLAN_MIGRATE_FIELDS = ['to', 'dry_run'] as const;
 
 /** One limit row in the editor: the count is what the input holds. */
 export interface PlanLimitDraft {
@@ -175,6 +222,11 @@ export interface PlanDraft {
   pricing_note: string;
   billing_ref: string;
   state: PlanState;
+  /** Deprecated plans: the retirement date as a date input holds it (`2027-03-31`). */
+  retire_at: string;
+  deprecation_message: string;
+  /** The successor's slug, or `''` for none. */
+  successor: string;
 }
 
 /**
@@ -200,6 +252,9 @@ export function emptyPlanDraft(): PlanDraft {
     pricing_note: '',
     billing_ref: '',
     state: 'draft',
+    retire_at: '',
+    deprecation_message: '',
+    successor: '',
   };
 }
 
@@ -227,6 +282,9 @@ export function draftFromPlan(plan: ApiPlan): PlanDraft {
     pricing_note: plan.pricing_note ?? '',
     billing_ref: plan.billing_ref ?? '',
     state: plan.state,
+    retire_at: dateInputValue(plan.retire_at),
+    deprecation_message: plan.deprecation_message ?? '',
+    successor: plan.successor?.slug ?? '',
   };
 }
 
@@ -273,6 +331,10 @@ export function planDraftError(draft: PlanDraft): string | null {
   if (draft.terms_url.trim() && !HTTP_URL.test(draft.terms_url.trim())) {
     return 'The terms URL must start with http:// or https://.';
   }
+  if (draft.state === 'deprecated' && draft.retire_at.trim() && retireAtFromInput(draft.retire_at) === null) {
+    return 'The retirement date must be a date, like 2027-03-31.';
+  }
+  if (draft.deprecation_message.length > 1000) return 'The deprecation message is at most 1000 characters.';
   return null;
 }
 
@@ -317,7 +379,27 @@ export function draftToInput(draft: PlanDraft, includeSlug: boolean): ApiPlanInp
     state: draft.state,
   };
   if (includeSlug && draft.slug.trim()) input.slug = draft.slug.trim().toLowerCase();
+  // REST refuses the deprecation fields on any other state, so they travel only with `deprecated`.
+  if (!includeSlug && draft.state === 'deprecated') {
+    input.retire_at = retireAtFromInput(draft.retire_at);
+    input.deprecation_message = draft.deprecation_message.trim() || null;
+    input.successor = draft.successor || null;
+  }
   return input;
+}
+
+/**
+ * The plans a plan's consumers can move to: the product's other published plans with the same auth
+ * strategy, so each consumer keeps its key (REST's `api-lifecycle-successor-invalid` rule).
+ *
+ * @param plans - The product's plans.
+ * @param plan - The plan being replaced.
+ * @returns The candidates, in the product's order.
+ */
+export function successorChoices(plans: readonly ApiPlan[], plan: Pick<ApiPlan, 'id' | 'auth_strategy'>): ApiPlan[] {
+  return plans.filter(
+    (candidate) => candidate.id !== plan.id && candidate.state === 'published' && candidate.auth_strategy === plan.auth_strategy,
+  );
 }
 
 /**

@@ -32473,6 +32473,19 @@ tr:focus-within .pub-url__glyph {
   min-inline-size: 0;
 }
 
+/* APX-1.4 (#6101): deprecated and retired API products and plans, under the version schedule. */
+.stl-products {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.stl-products__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
 .stl-project {
   display: flex;
   align-items: center;
@@ -40371,6 +40384,20 @@ a.apx-name:focus-visible,
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-surface);
+}
+
+/* APX-1.4 (#6101): a deprecated plan's Migrate to plan action and the groups a migration moves between. */
+.apx-lifecycle__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.apx-lifecycle__groups {
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
 }
 
 /* One limit row: the count, the window and Remove, wrapping on narrow screens. */

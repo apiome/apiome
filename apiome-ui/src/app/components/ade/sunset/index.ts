@@ -10,3 +10,5 @@ export { SunsetTimelineChart, type SunsetTimelineChartProps } from './SunsetTime
 export { SunsetTable, type SunsetTableProps } from './SunsetTable';
 export { SunsetStillUsed, type SunsetStillUsedProps } from './SunsetStillUsed';
 export { SunsetWarningsDialog, type SunsetWarningsDialogProps } from './SunsetWarningsDialog';
+export * from './sunsetProductsModel';
+export { SunsetProductsTable, type SunsetProductsTableProps } from './SunsetProductsTable';

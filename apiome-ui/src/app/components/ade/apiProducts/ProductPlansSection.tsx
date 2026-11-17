@@ -14,10 +14,16 @@
  *   the editor refuses a count below 1 or a window used twice before anything is sent.
  * - A member whose security schemes do not fit the auth strategy is a warning, not a refusal.
  * - **Delete** removes a plan after a confirmation.
+ *
+ * **Lifecycle** (APX-1.4, #6101): **State** offers only the steps REST accepts (draft ⇄ published →
+ * deprecated → retired, and back to published to reinstate). Choosing **Deprecated** opens the
+ * **Deprecation** fields — retirement date, replacement plan and a message for subscribed owners;
+ * **Retired** stays disabled until the retirement date. A deprecated plan's editor offers
+ * **Migrate to plan…**, which previews and then moves its subscriptions without changing any key.
  */
 
 import * as React from 'react';
-import { Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ArrowRightLeft, Pencil, Plus, Trash2, X } from 'lucide-react';
 
 import {
   Alert,
@@ -48,7 +54,6 @@ import {
   PLAN_APPROVALS,
   PLAN_AUTH_STRATEGIES,
   PLAN_LIMIT_WINDOWS,
-  PLAN_STATES,
   PLAN_STATE_LABELS,
   WINDOW_LABELS,
   draftFromPlan,
@@ -57,16 +62,22 @@ import {
   freeWindows,
   limitsText,
   planDraftError,
+  successorChoices,
   type ApiPlan,
+  type ApiPlanMigration,
   type PlanApproval,
   type PlanAuthStrategy,
   type PlanDraft,
   type PlanLimitWindow,
   type PlanState,
 } from '@lib/api-plans';
+import { canRetireNow, dateInputValue, retireText, selectableStates } from '@lib/api-lifecycle';
 import type { GatewayConfig } from '@lib/gateway-configs';
-import { createPlan, deletePlan, fetchPlans, updatePlan } from './apiProductsApi';
+import { createPlan, deletePlan, fetchPlans, migratePlan, updatePlan } from './apiProductsApi';
 import { fetchGatewayConfigs } from '../gatewayConfigs/gatewayConfigsApi';
+
+/** The replacement-plan picker's value for "no replacement" (a Select item cannot be empty). */
+const NO_SUCCESSOR = '__none__';
 
 /** Which plan the editor holds: a new one, or a stored one. */
 type Editing = { mode: 'new' } | { mode: 'edit'; plan: ApiPlan } | null;
@@ -153,8 +164,10 @@ export default function ProductPlansSection({ product }: { product: ApiProduct }
           key={editing.mode === 'edit' ? `${editing.plan.id}:${editing.plan.updated_at ?? ''}` : 'new'}
           product={product}
           plan={editing.mode === 'edit' ? editing.plan : null}
+          plans={plans ?? []}
           gateways={gateways}
           onSaved={saved}
+          onMigrated={() => void load()}
           onClose={() => setEditing(null)}
         />
       ) : null}
@@ -228,7 +241,15 @@ function PlansTable({
                   </span>
                 ) : null}
               </td>
-              <td>{PLAN_STATE_LABELS[plan.state]}</td>
+              <td>
+                {PLAN_STATE_LABELS[plan.state]}
+                {plan.state === 'deprecated' ? (
+                  <span className="apx-plan__flag apx-muted" data-testid={`plan-retires-${plan.slug}`}>
+                    {retireText(plan.retire_at)}
+                    {plan.successor ? ` · moves to ${plan.successor.name}` : ''}
+                  </span>
+                ) : null}
+              </td>
               <td className="apx-actions">
                 <Button variant="ghost" size="sm" onClick={() => onEdit(plan)} aria-label={`Edit ${plan.name}`}>
                   <Pencil aria-hidden />
@@ -250,23 +271,30 @@ function PlansTable({
 /**
  * The plan editor: a new plan, or a stored one with its notices and warnings above the form.
  *
- * @param props - The product, the plan (or `null` for a new one), the workspace's gateway configs,
- *   what to do with the saved plan, and how to close the editor.
+ * @param props - The product, the plan (or `null` for a new one), the product's plans (replacement
+ *   candidates), the workspace's gateway configs, what to do with the saved plan, what to do after a
+ *   migration, and how to close the editor.
  * @returns The editor.
  */
 function PlanEditor({
   product,
   plan,
+  plans,
   gateways,
   onSaved,
+  onMigrated,
   onClose,
 }: {
   product: ApiProduct;
   plan: ApiPlan | null;
+  plans: ApiPlan[];
   gateways: GatewayConfig[];
   onSaved: (plan: ApiPlan) => void;
+  onMigrated: () => void;
   onClose: () => void;
 }) {
+  const [migrating, setMigrating] = React.useState(false);
+  const retireBlocked = plan !== null && plan.state === 'deprecated' && !canRetireNow(plan.retire_at);
   const initial = React.useMemo(() => (plan ? draftFromPlan(plan) : emptyPlanDraft()), [plan]);
   const [draft, setDraft] = React.useState<PlanDraft>(initial);
   const [saving, setSaving] = React.useState(false);
@@ -308,6 +336,15 @@ function PlanEditor({
           {notice.message}
         </Alert>
       ))}
+      {plan?.state === 'deprecated' ? (
+        <div className="apx-lifecycle__actions">
+          <Button variant="soft" size="sm" onClick={() => setMigrating(true)} data-testid="plan-migrate">
+            <ArrowRightLeft aria-hidden />
+            Migrate to plan…
+          </Button>
+          <span className="apx-muted">Moves this plan&apos;s subscriptions to another plan. Keys stay the same.</span>
+        </div>
+      ) : null}
       {plan && plan.warnings.length > 0 ? (
         <Alert variant="warn" role="status" data-testid="plan-warnings">
           <p>The auth strategy does not match every member:</p>
@@ -345,14 +382,24 @@ function PlanEditor({
           <FormField label="Description" htmlFor={id('description')}>
             <Textarea id={id('description')} rows={2} value={draft.description} onChange={(event) => set('description', event.target.value)} />
           </FormField>
-          <FormField label="State" htmlFor={id('state')}>
+          <FormField
+            label="State"
+            htmlFor={id('state')}
+            helperText={
+              retireBlocked
+                ? `Retired is available from ${dateInputValue(plan?.retire_at)}.`
+                : plan === null
+                  ? 'Deprecate or retire a plan once it exists.'
+                  : undefined
+            }
+          >
             <Select value={draft.state} onValueChange={(value) => set('state', value as PlanState)}>
-              <SelectTrigger id={id('state')}>
+              <SelectTrigger id={id('state')} data-testid="plan-state">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PLAN_STATES.map((value) => (
-                  <SelectItem key={value} value={value}>
+                {selectableStates(plan ? plan.state : null).map((value) => (
+                  <SelectItem key={value} value={value} disabled={value === 'retired' && retireBlocked}>
                     {PLAN_STATE_LABELS[value]}
                   </SelectItem>
                 ))}
@@ -360,6 +407,10 @@ function PlanEditor({
             </Select>
           </FormField>
         </FormSection>
+
+        {plan && draft.state === 'deprecated' ? (
+          <DeprecationSection plan={plan} plans={plans} draft={draft} onChange={set} />
+        ) : null}
 
         <FormSection title="Access" headingLevel="h4">
           <FormField label="Auth strategy" htmlFor={id('auth')} helperText={AUTH_STRATEGY_LABELS[draft.auth_strategy].hint}>
@@ -431,7 +482,204 @@ function PlanEditor({
           </FormField>
         </FormSection>
       </FormFrame>
+      {plan && migrating ? (
+        <MigratePlanDialog
+          product={product}
+          plan={plan}
+          plans={plans}
+          onDone={() => {
+            setMigrating(false);
+            onMigrated();
+          }}
+          onCancel={() => setMigrating(false)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * The **Deprecation** part of the editor, shown while the plan is (or is becoming) deprecated: when
+ * it retires, the plan consumers move to, and what subscribed owners are told.
+ *
+ * @param props - The plan, the product's plans, the draft, and the draft setter.
+ * @returns The section.
+ */
+function DeprecationSection({
+  plan,
+  plans,
+  draft,
+  onChange,
+}: {
+  plan: ApiPlan;
+  plans: ApiPlan[];
+  draft: PlanDraft;
+  onChange: <K extends keyof PlanDraft>(key: K, value: PlanDraft[K]) => void;
+}) {
+  const choices = successorChoices(plans, { id: plan.id, auth_strategy: draft.auth_strategy });
+  return (
+    <FormSection
+      title="Deprecation"
+      headingLevel="h4"
+      description="A deprecated plan takes no new subscriptions. Owners of subscribed applications are told once."
+      data-testid="plan-deprecation"
+    >
+      <FormField label="Retire on" htmlFor="plan-retire-at" helperText="Leave empty to retire whenever you decide. Dates are UTC.">
+        <Input
+          id="plan-retire-at"
+          type="date"
+          value={draft.retire_at}
+          onChange={(event) => onChange('retire_at', event.target.value)}
+        />
+      </FormField>
+      <FormField
+        label="Replacement plan"
+        htmlFor="plan-successor"
+        helperText={
+          choices.length === 0
+            ? 'No published plan uses the same auth strategy, so consumers could not keep their keys. Publish one first.'
+            : 'A published plan with the same auth strategy, so consumers keep their keys.'
+        }
+      >
+        <Select
+          value={draft.successor || NO_SUCCESSOR}
+          onValueChange={(value) => onChange('successor', value === NO_SUCCESSOR ? '' : value)}
+        >
+          <SelectTrigger id="plan-successor" data-testid="plan-successor">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_SUCCESSOR}>No replacement</SelectItem>
+            {choices.map((choice) => (
+              <SelectItem key={choice.slug} value={choice.slug}>
+                {choice.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+      <FormField label="Message to subscribers" htmlFor="plan-deprecation-message">
+        <Textarea
+          id="plan-deprecation-message"
+          rows={2}
+          value={draft.deprecation_message}
+          placeholder="Standard retires on 31 March. Move to Premium; your key keeps working."
+          onChange={(event) => onChange('deprecation_message', event.target.value)}
+        />
+      </FormField>
+    </FormSection>
+  );
+}
+
+/**
+ * **Migrate to plan**: pick a target, **Preview** what would move, then **Migrate**.
+ *
+ * @param props - The product, the deprecated plan, the product's plans, and what to do after a
+ *   migration or on cancel.
+ * @returns The dialog.
+ */
+function MigratePlanDialog({
+  product,
+  plan,
+  plans,
+  onDone,
+  onCancel,
+}: {
+  product: ApiProduct;
+  plan: ApiPlan;
+  plans: ApiPlan[];
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const choices = successorChoices(plans, plan);
+  const initial = choices.some((choice) => choice.slug === plan.successor?.slug) ? plan.successor?.slug : choices[0]?.slug;
+  const [target, setTarget] = React.useState<string>(initial ?? '');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [result, setResult] = React.useState<ApiPlanMigration | null>(null);
+  const migrated = result !== null && !result.dry_run;
+
+  const run = async (dryRun: boolean) => {
+    if (!target) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(await migratePlan(product.slug, plan.slug, target, dryRun));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not migrate the plan');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    // After a real migration, closing reloads the plans (the successor changed); before, it cancels.
+    <Dialog open onOpenChange={(open) => (open ? null : migrated ? onDone() : onCancel())}>
+      <DialogContent data-testid="plan-migrate-dialog">
+        <DialogHeader>
+          <DialogTitle>Migrate {plan.name} to another plan</DialogTitle>
+          <DialogDescription>
+            Each subscription moves to the new plan&apos;s consumer group on the gateway. No key is issued, rotated or revoked.
+          </DialogDescription>
+        </DialogHeader>
+        {choices.length === 0 ? (
+          <p className="apx-muted">No published plan uses the same auth strategy. Publish one first.</p>
+        ) : (
+          <FormField label="Move to" htmlFor="plan-migrate-to">
+            <Select
+              value={target}
+              onValueChange={(value) => {
+                setTarget(value);
+                setResult(null);
+              }}
+            >
+              <SelectTrigger id="plan-migrate-to" data-testid="plan-migrate-to">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {choices.map((choice) => (
+                  <SelectItem key={choice.slug} value={choice.slug}>
+                    {choice.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        )}
+        {result ? (
+          <Alert variant="info" role="status" data-testid="plan-migrate-result">
+            <p>{result.message}</p>
+            <p className="apx-lifecycle__groups mono">
+              {result.from_group} → {result.to_group}
+            </p>
+          </Alert>
+        ) : null}
+        {error ? (
+          <p className="apx-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <DialogFooter>
+          {migrated ? (
+            <Button onClick={onDone} data-testid="plan-migrate-done">
+              Done
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button variant="soft" onClick={() => void run(true)} disabled={busy || !target} data-testid="plan-migrate-preview">
+                Preview
+              </Button>
+              <Button onClick={() => void run(false)} disabled={busy || !target} data-testid="plan-migrate-confirm">
+                {busy ? 'Migrating…' : 'Migrate'}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

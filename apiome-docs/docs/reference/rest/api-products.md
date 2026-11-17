@@ -1,6 +1,6 @@
 ---
 title: "API products"
-description: "REST endpoints tagged api-products: 13 operations."
+description: "REST endpoints tagged api-products: 14 operations."
 sidebar_position: 10
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.589.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.590.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `api-products` · 13 operations
+Tag: `api-products` · 14 operations
 
 ## `GET /v1/tenants/{tenant_slug}/products` {#list-tenant-products-v1-tenants-tenant-slug-products-get}
 
@@ -42,7 +42,7 @@ Operation id: `list_tenant_products_v1_tenants__tenant_slug__products_get`
 
 **Create an API product**
 
-Create an API product, optionally with its first members. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `owner_team` is a team slug. `visibility` is `private` (default), `workspace` or `portal`; a `portal` product needs every member published (`api-product-portal-unpublished`, 422, with `blockers`). `state` is `draft` (default), `published`, `deprecated` or `retired`.
+Create an API product, optionally with its first members. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `owner_team` is a team slug. `visibility` is `private` (default), `workspace` or `portal`; a `portal` product needs every member published (`api-product-portal-unpublished`, 422, with `blockers`). `state` is `draft` (default) or `published`; anything else is `api-lifecycle-invalid-state` — deprecate and retire with an update.
 
 Audited as `api_product.create`. Requires `projects:create`.
 
@@ -101,7 +101,9 @@ Operation id: `read_tenant_product_v1_tenants__tenant_slug__products__product_sl
 
 Change a product's name, summary, owner team, visibility or state. Omitted fields are left alone; `null` clears `summary` or `owner_team`. The slug is not updatable. Setting `visibility` to `portal` is refused while a member is unpublished.
 
-Audited as `api_product.update`. Requires `projects:edit`.
+**Lifecycle.** `state` moves draft ⇄ published → deprecated → retired, and deprecated → published reinstates. `retire_at` and `deprecation_message` describe a deprecation and are refused on any other state; a deprecated product appears on the sunset timeline. Retiring is refused before `retire_at` (`api-lifecycle-retire-early`, 409) and while any plan of the product is not retired (`api-product-plans-live`, 409); any other step is `api-lifecycle-transition` (409).
+
+Audited as `api_product.deprecate`, `.reinstate`, `.retire` or `.update`. Requires `projects:edit`.
 
 Operation id: `patch_tenant_product_v1_tenants__tenant_slug__products__product_slug__patch`
 
@@ -268,7 +270,7 @@ Operation id: `list_product_plans_v1_tenants__tenant_slug__products__product_slu
 
 **Create an API plan**
 
-Add a plan to the product. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `auth_strategy` is `key_auth` (default; `auth_config.header_name`), `oauth2_client_credentials` (`auth_config.idp_config_id`, `auth_config.scopes`), `mtls` or `none`. `limits` is `[{window, requests}]` with `window` one of `second`, `minute`, `hour`, `day`, `month` — every count positive, every window once. `approval` is `manual` (default) or `auto`. `environments` are gateway config slugs or ids; a plan with none, or with one whose connector cannot provision, is saved with `declared_only: true` and an `api-plan-declared-only` notice. `billing_ref` is internal and never exported.
+Add a plan to the product. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `auth_strategy` is `key_auth` (default; `auth_config.header_name`), `oauth2_client_credentials` (`auth_config.idp_config_id`, `auth_config.scopes`), `mtls` or `none`. `limits` is `[{window, requests}]` with `window` one of `second`, `minute`, `hour`, `day`, `month` — every count positive, every window once. `approval` is `manual` (default) or `auto`. `environments` are gateway config slugs or ids; a plan with none, or with one whose connector cannot provision, is saved with `declared_only: true` and an `api-plan-declared-only` notice. `billing_ref` is internal and never exported. A new plan starts as `draft` (default) or `published`; anything else is `api-lifecycle-invalid-state`.
 
 Audited as `api_product.plan.create`. Requires `projects:edit`.
 
@@ -329,7 +331,9 @@ Operation id: `read_product_plan_v1_tenants__tenant_slug__products__product_slug
 
 Change any of a plan's fields but its slug. Omitted fields are left alone; `null` clears an optional one. `limits` and `environments` are replaced as a whole; changing `environments` re-derives `declared_only`. Changing `auth_strategy` without `auth_config` re-checks the stored config against the new strategy.
 
-Audited as `api_product.plan.update`. Requires `projects:edit`.
+**Lifecycle.** `state` moves draft ⇄ published → deprecated → retired, and deprecated → published reinstates (clearing the deprecation). Deprecating stamps `deprecated_at`, blocks new subscriptions (`accepts_subscriptions: false`) and notifies subscribed application owners once. `retire_at`, `deprecation_message` and `successor` (a published plan of the product with the same auth strategy) describe a deprecation and are refused on any other state. Retiring is refused with `api-lifecycle-retire-early` (409) before `retire_at`, and revokes the plan's provisioning. Any other step is `api-lifecycle-transition` (409); an unusable successor is `api-lifecycle-successor-invalid` (422).
+
+Audited as `api_product.plan.deprecate`, `.reinstate`, `.retire` or `.update`. Requires `projects:edit`.
 
 Operation id: `patch_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__patch`
 
@@ -383,6 +387,41 @@ Operation id: `delete_product_plan_v1_tenants__tenant_slug__products__product_sl
 | 200 | Successful response for delete an api plan. | `application/json` [`ApiPlanDeleteResponse`](#schema-apiplandeleteresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/products/{product_slug}/plans/{plan_slug}/migrate` {#migrate-product-plan-v1-tenants-tenant-slug-products-product-slug-plans-plan-slug-migrate-post}
+
+**Migrate a deprecated plan's subscriptions**
+
+**Migrate to plan.** Moves every subscription of a deprecated plan to `to` — a published plan of the same product with the same auth strategy — re-provisioning each consumer into the target's consumer group (`plan:<product>-<plan>`) with the credential it already holds: `credentials_changed` is always false. The target becomes the plan's `successor`. `dry_run: true` reports what would move and changes nothing.
+
+A plan that is not deprecated is `api-lifecycle-transition` (409); an unknown, unpublished or differently-authenticated target is `api-lifecycle-successor-invalid` (422).
+
+Audited as `api_product.plan.migrate` (not on a dry run). Requires `projects:edit`.
+
+Operation id: `migrate_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__migrate_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `product_slug` | path | string | yes | Path parameter identifying the product slug segment. |
+| `plan_slug` | path | string | yes | Path parameter identifying the plan slug segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for migrate a deprecated plan's subscriptions.
+
+- `application/json` — [`ApiPlanMigrateInput`](#schema-apiplanmigrateinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for migrate a deprecated plan's subscriptions. | `application/json` [`ApiPlanMigration`](#schema-apiplanmigration) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `ApiPlanDeleteResponse` {#schema-apiplandeleteresponse}
@@ -411,7 +450,8 @@ Attributes:
     terms_url: The plan's terms (http or https).
     pricing_note: A short note on price, shown to consumers.
     billing_ref: An external billing id; internal only.
-    state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``.
+    state: ``draft`` (default) or ``published``. A plan is deprecated and retired by an
+        update once it exists (:mod:`app.api_lifecycle`).
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -439,12 +479,44 @@ A product's live plans.
 | `plans` | array of [`ApiPlanRecord`](#schema-apiplanrecord) | no | The plans, oldest first. |
 | `count` | integer | yes | How many plans were returned. |
 
+### `ApiPlanMigrateInput` {#schema-apiplanmigrateinput}
+
+Move a deprecated plan's subscriptions to another plan.
+
+Attributes:
+    to: The slug of the target plan: published, in the same product, with the same auth strategy.
+    dry_run: True to report what would move without moving it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `to` | string | yes | To. |
+| `dry_run` | boolean | no | Dry Run. |
+
+### `ApiPlanMigration` {#schema-apiplanmigration}
+
+What a migration moved (or, on a dry run, would move).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `from_plan` | `PlanRef` | yes | From Plan. |
+| `to_plan` | `PlanRef` | yes | To Plan. |
+| `dry_run` | boolean | yes | Dry Run. |
+| `from_group` | string | yes | The gateway consumer group the consumers leave (`plan:payments-standard`). |
+| `to_group` | string | yes | The gateway consumer group the consumers join. |
+| `subscriptions` | integer | yes | How many subscriptions moved (or would move). |
+| `credentials_changed` | boolean | no | Always false: consumers keep their keys, only their group changes. |
+| `message` | string | yes | One sentence saying what happened. |
+
 ### `ApiPlanPatch` {#schema-apiplanpatch}
 
 A partial update. Omitted fields are left alone; ``null`` clears an optional field.
 
 ``limits`` and ``environments`` are replaced as a whole. The slug is deliberately absent: it is
 the handle subscriptions name.
+
+**Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps. ``retire_at``,
+``deprecation_message`` and ``successor`` describe a deprecation, so they are accepted only for a
+plan that is (or is becoming) ``deprecated``; reinstating it (``published``) clears them.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -461,6 +533,9 @@ the handle subscriptions name.
 | `pricing_note` | string or null | no | Pricing Note. |
 | `billing_ref` | string or null | no | Billing Ref. |
 | `state` | enum `"draft"`, `"published"`, `"deprecated"`, `"retired"` or null | no | State. |
+| `retire_at` | string (date-time) or null | no | Deprecated plans: the date it retires (UTC when no offset is given). |
+| `deprecation_message` | string or null | no | Deprecated plans: what subscribed application owners are told. |
+| `successor` | string or null | no | Deprecated plans: the slug of the published plan, same auth strategy, consumers move to. |
 
 ### `ApiPlanRecord` {#schema-apiplanrecord}
 
@@ -485,7 +560,14 @@ A stored plan.
 | `pricing_note` | string or null | no | Pricing Note. |
 | `billing_ref` | string or null | no | Internal; never exported or shown on the portal. |
 | `state` | enum `"draft"`, `"published"`, `"deprecated"`, `"retired"` | yes | State. |
-| `notices` | array of `PlanNotice` | no | E.g. `api-plan-declared-only`. |
+| `accepts_subscriptions` | boolean | no | True only for a published plan; a deprecated one blocks new subscriptions. |
+| `deprecated_at` | string or null | no | Deprecated At timestamp (ISO 8601). |
+| `retire_at` | string or null | no | When a deprecated plan retires. |
+| `retired_at` | string or null | no | Retired At timestamp (ISO 8601). |
+| `deprecation_message` | string or null | no | Deprecation Message. |
+| `successor` | `PlanRef` or null | no | The plan consumers move to. |
+| `owners_notified_at` | string or null | no | When subscribed application owners were told of the deprecation (once). |
+| `notices` | array of `PlanNotice` | no | E.g. `api-plan-declared-only`, `api-plan-deprecated`. |
 | `warnings` | array of `PlanNotice` | no | E.g. `api-plan-auth-mismatch`, one per member that does not match. |
 | `created_by` | string or null | no | Created By. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
@@ -509,7 +591,8 @@ Attributes:
     summary: What the product is, in a sentence or two.
     owner_team: The owning team's slug.
     visibility: ``private`` (default), ``workspace`` or ``portal``.
-    state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``.
+    state: ``draft`` (default) or ``published``; a product is deprecated and retired by an update
+        once it exists (APX-1.4, :mod:`app.api_lifecycle`).
     members: Members to include from the start.
 
 | Property | Type | Required | Description |
@@ -564,6 +647,10 @@ A partial update. Omitted fields are left alone; ``null`` clears ``summary`` or 
 The slug is deliberately absent: it is the handle URLs and plans name. Members change through
 the members sub-resource.
 
+**Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps; ``retire_at``
+and ``deprecation_message`` describe a deprecation and are accepted only for a product that is
+(or is becoming) ``deprecated``. A product retires once every plan of it is retired.
+
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `name` | string or null | no | Human-readable name. |
@@ -571,6 +658,8 @@ the members sub-resource.
 | `owner_team` | string or null | no | Owner Team. |
 | `visibility` | enum `"private"`, `"workspace"`, `"portal"` or null | no | Visibility. |
 | `state` | enum `"draft"`, `"published"`, `"deprecated"`, `"retired"` or null | no | State. |
+| `retire_at` | string (date-time) or null | no | Deprecated products: the date it retires (UTC when no offset is given). |
+| `deprecation_message` | string or null | no | Deprecated products: what consumers are told. |
 
 ### `ApiProductRecord` {#schema-apiproductrecord}
 
@@ -585,6 +674,10 @@ A stored product.
 | `owner_team` | `OwnerTeam` or null | no | Owner Team. |
 | `visibility` | enum `"private"`, `"workspace"`, `"portal"` | yes | Visibility. |
 | `state` | enum `"draft"`, `"published"`, `"deprecated"`, `"retired"` | yes | State. |
+| `deprecated_at` | string or null | no | Deprecated At timestamp (ISO 8601). |
+| `retire_at` | string or null | no | When a deprecated product retires. |
+| `retired_at` | string or null | no | Retired At timestamp (ISO 8601). |
+| `deprecation_message` | string or null | no | Deprecation Message. |
 | `member_count` | integer | no | How many members the product has. |
 | `created_by` | string or null | no | Created By. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |

@@ -9,7 +9,7 @@
  * have their own module, `@lib/api-plans`; their paths go through the same proxy.
  */
 
-import { PLAN_CREATE_FIELDS, PLAN_PATCH_FIELDS } from './api-plans';
+import { PLAN_CREATE_FIELDS, PLAN_MIGRATE_FIELDS, PLAN_PATCH_FIELDS } from './api-plans';
 
 /** Where the products list lives (Ship → Products). */
 export const PRODUCTS_HREF = '/ade/dashboard/products';
@@ -83,6 +83,11 @@ export interface ApiProduct {
   owner_team: ProductOwnerTeam | null;
   visibility: ProductVisibility;
   state: ProductState;
+  /** APX-1.4 (#6101): when the product was deprecated, when it retires, the message, when it retired. */
+  deprecated_at?: string | null;
+  retire_at?: string | null;
+  retired_at?: string | null;
+  deprecation_message?: string | null;
   member_count: number;
   created_by: string | null;
   created_at: string | null;
@@ -108,6 +113,9 @@ export interface ApiProductPatch {
   owner_team?: string | null;
   visibility?: ProductVisibility;
   state?: ProductState;
+  /** Deprecated products only (APX-1.4). */
+  retire_at?: string | null;
+  deprecation_message?: string | null;
 }
 
 /** A member to add. */
@@ -158,14 +166,20 @@ export type ProductProxyMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
  * | `{slug}/members/{id}`      | DELETE             |
  * | `{slug}/plans`             | GET, POST          |
  * | `{slug}/plans/{plan}`      | GET, PATCH, DELETE |
+ * | `{slug}/plans/{plan}/migrate` | POST           |
  *
  * @param segments - The path segments after `/api/products`.
  * @param method - The HTTP method.
  * @returns The REST path, or `null`.
  */
 export function productProxyPath(segments: readonly string[], method: ProductProxyMethod): string | null {
-  const [slug, sub, childId, ...rest] = segments;
+  const [slug, sub, childId, action, ...rest] = segments;
   if (rest.length > 0) return null;
+  if (action !== undefined) {
+    // APX-1.4 (#6101): the one action below a plan.
+    const ok = sub === 'plans' && action === 'migrate' && method === 'POST';
+    return ok && isProductSlug(slug ?? '') && isProductSlug(childId ?? '') ? `products/${slug}/plans/${childId}/migrate` : null;
+  }
   if (slug === undefined) return method === 'GET' || method === 'POST' ? 'products' : null;
   if (!isProductSlug(slug)) return null;
   const base = `products/${slug}`;
@@ -182,7 +196,7 @@ export function productProxyPath(segments: readonly string[], method: ProductPro
 
 /** The body fields each write may carry. */
 const CREATE_FIELDS = ['name', 'slug', 'summary', 'owner_team', 'visibility', 'state'] as const;
-const PATCH_FIELDS = ['name', 'summary', 'owner_team', 'visibility', 'state'] as const;
+const PATCH_FIELDS = ['name', 'summary', 'owner_team', 'visibility', 'state', 'retire_at', 'deprecation_message'] as const;
 const MEMBER_FIELDS = ['kind', 'ref', 'version', 'environment'] as const;
 
 /**
@@ -196,7 +210,9 @@ const MEMBER_FIELDS = ['kind', 'ref', 'version', 'environment'] as const;
 export function productProxyBody(path: string, method: 'POST' | 'PATCH', raw: unknown): Record<string, unknown> {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   const plan = /^products\/[^/]+\/plans(\/|$)/.test(path);
-  const fields: readonly string[] = plan
+  const fields: readonly string[] = path.endsWith('/migrate')
+    ? PLAN_MIGRATE_FIELDS
+    : plan
     ? method === 'PATCH'
       ? PLAN_PATCH_FIELDS
       : PLAN_CREATE_FIELDS

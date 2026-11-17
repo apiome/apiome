@@ -65,6 +65,20 @@ filter is on, a section's total reads *3 of 5 changes*. A version with no matchi
 *No changes in this version match the filters.* A **Since version** that is not published on this
 API is ignored, and the page says so.
 
+## Plan and product changes
+
+When the API is part of a **Portal** [API product](./api-products.mdx) that is deprecated, or that has
+a deprecated plan, a **Plan and product changes** box sits above the filters. It names the product
+(click it to open the product page) and says what is going away and what to move to:
+
+- *This API is part of Payments. Payments is deprecated and retires on 2027-06-30.*
+- *The Standard plan is deprecated and retires on 2027-03-31. It takes no new subscriptions. Move to
+  Premium; your key keeps working.*
+
+The deprecation message follows each line when one was written. The box appears on the page only, not
+in the Markdown or the feeds, and disappears once the product and its plans are retired. See
+[Lifecycle](./api-products.mdx#lifecycle).
+
 ## Link to one change
 
 Every version and every change has a permalink. **Click the "#"** next to it and copy the address

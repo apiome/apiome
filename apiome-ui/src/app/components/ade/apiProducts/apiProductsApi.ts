@@ -1,6 +1,6 @@
 /**
- * Browser calls for API products (APX-1.1, #6098) and their plans (APX-1.2, #6099), through the
- * `/api/products` proxy.
+ * Browser calls for API products (APX-1.1, #6098), their plans (APX-1.2, #6099) and plan migration
+ * (APX-1.4, #6101), through the `/api/products` proxy.
  *
  * Nothing here talks to apiome-rest directly. A failure is thrown as an `Error` carrying REST's
  * message, so a caller can show it next to the control that failed.
@@ -12,7 +12,7 @@ import type {
   ApiProductPatch,
   ProductMemberInput,
 } from '@lib/api-products';
-import type { ApiPlan, ApiPlanInput } from '@lib/api-plans';
+import type { ApiPlan, ApiPlanInput, ApiPlanMigration } from '@lib/api-plans';
 
 /**
  * Read a proxy answer, or throw its message.
@@ -175,4 +175,25 @@ export async function updatePlan(productSlug: string, planSlug: string, input: A
  */
 export async function deletePlan(productSlug: string, planSlug: string): Promise<void> {
   await readJson<unknown>(await fetch(planUrl(productSlug, planSlug), { method: 'DELETE' }), 'Could not delete the plan');
+}
+
+/**
+ * **Migrate to plan**: move a deprecated plan's subscriptions to another plan, keeping every key.
+ *
+ * @param productSlug - The product's slug.
+ * @param planSlug - The deprecated plan's slug.
+ * @param to - The target plan's slug.
+ * @param dryRun - True to see what would move without moving it.
+ * @returns What moved (or would move).
+ */
+export async function migratePlan(
+  productSlug: string,
+  planSlug: string,
+  to: string,
+  dryRun: boolean,
+): Promise<ApiPlanMigration> {
+  return readJson<ApiPlanMigration>(
+    await send(`${planUrl(productSlug, planSlug)}/migrate`, 'POST', { to, dry_run: dryRun }),
+    'Could not migrate the plan',
+  );
 }

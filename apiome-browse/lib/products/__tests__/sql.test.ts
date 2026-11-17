@@ -5,9 +5,11 @@ import {
   PORTAL_PRODUCT_PLANS_SQL,
   PORTAL_PRODUCT_SQL,
   PORTAL_PRODUCTS_FOR_TENANT_SQL,
+  PRODUCT_LIFECYCLE_FOR_PROJECT_SQL,
 } from '../sql';
 
 const ALL = [
+  PRODUCT_LIFECYCLE_FOR_PROJECT_SQL,
   MEMBER_PUBLIC_VERSIONS_SQL,
   PORTAL_PRODUCT_MEMBERS_SQL,
   PORTAL_PRODUCT_PLANS_SQL,
@@ -51,5 +53,16 @@ describe('portal product statements', () => {
     expect(PORTAL_PRODUCT_MEMBERS_SQL).toContain('p.tenant_id = m.tenant_id');
     expect(PORTAL_PRODUCT_MEMBERS_SQL).toContain('e.tenant_id = m.tenant_id');
     expect(PORTAL_PRODUCT_PLANS_SQL).toContain('pl.tenant_id = $1 AND pl.product_id = $2');
+  });
+
+  it('reads lifecycle news only for portal products that include the API (APX-1.4)', () => {
+    const text = PRODUCT_LIFECYCLE_FOR_PROJECT_SQL;
+    expect(text).toContain("ap.visibility = 'portal'");
+    expect(text).toContain("ap.state IN ('published', 'deprecated')");
+    expect(text).toContain("pl.state = 'deprecated' AND pl.deleted_at IS NULL");
+    expect(text).toContain("s.state IN ('published', 'deprecated') AND s.deleted_at IS NULL");
+    expect(text).toContain("m.member_kind <> 'mcp_server' AND m.member_ref = $2::uuid");
+    expect(text).toContain("(ap.state = 'deprecated' OR pl.id IS NOT NULL)");
+    expect(text).toContain('s.tenant_id = ap.tenant_id');
   });
 });

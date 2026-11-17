@@ -20,12 +20,14 @@ import {
   type PortalState,
   type PublicVersionRow,
 } from '../products/portalProducts';
+import { toLifecycleNotices, type LifecycleNotice, type LifecycleRow } from '../products/lifecycle';
 import {
   MEMBER_PUBLIC_VERSIONS_SQL,
   PORTAL_PRODUCT_MEMBERS_SQL,
   PORTAL_PRODUCT_PLANS_SQL,
   PORTAL_PRODUCT_SQL,
   PORTAL_PRODUCTS_FOR_TENANT_SQL,
+  PRODUCT_LIFECYCLE_FOR_PROJECT_SQL,
 } from '../products/sql';
 
 function logError(scope: string, err: unknown) {
@@ -112,5 +114,24 @@ export async function getPortalProduct(tenantSlug: string, productSlug: string):
   } catch (err) {
     logError('getPortalProduct', err);
     return null;
+  }
+}
+
+/**
+ * The lifecycle news for one API's changelog (APX-1.4, #6101): the portal products that include it
+ * and are deprecated or have a deprecated plan.
+ *
+ * @param tenantSlug - The tenant.
+ * @param projectId - The project (the API).
+ * @returns One notice per product; empty when there is nothing to say or the read fails.
+ */
+export async function getProductLifecycleForProject(tenantSlug: string, projectId: string): Promise<LifecycleNotice[]> {
+  noStore();
+  try {
+    const result = await connectionPool.query<LifecycleRow>(PRODUCT_LIFECYCLE_FOR_PROJECT_SQL, [tenantSlug, projectId]);
+    return toLifecycleNotices(result.rows);
+  } catch (err) {
+    logError('getProductLifecycleForProject', err);
+    return [];
   }
 }

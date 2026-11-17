@@ -91,7 +91,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: detail }, { status: response.status });
     }
 
-    return NextResponse.json({ success: true, entries: data.entries ?? [] });
+    // `products` (APX-1.4, #6101): deprecated and retired API products and plans.
+    return NextResponse.json({ success: true, entries: data.entries ?? [], products: data.products ?? [] });
   } catch (error) {
     console.error('[sunset-timeline]', error);
     const message = error instanceof Error ? error.message : 'Internal server error';

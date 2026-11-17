@@ -21,6 +21,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from .api_lifecycle import CODE_RETIRE_EARLY, CODE_TRANSITION
 from .api_product_store import (
     add_member,
     create_product,
@@ -36,6 +37,7 @@ from .api_products import (
     CODE_MEMBER_NOT_FOUND,
     CODE_MEMBER_REF_NOT_FOUND,
     CODE_NOT_FOUND,
+    CODE_PLANS_LIVE,
     CODE_PORTAL_UNPUBLISHED,
     CODE_SLUG_TAKEN,
     CODE_TEAM_NOT_FOUND,
@@ -64,6 +66,9 @@ _STATUS_BY_CODE = {
     CODE_TEAM_NOT_FOUND: 422,
     CODE_MEMBER_REF_NOT_FOUND: 422,
     CODE_PORTAL_UNPUBLISHED: 422,
+    CODE_TRANSITION: 409,
+    CODE_RETIRE_EARLY: 409,
+    CODE_PLANS_LIVE: 409,
 }
 
 
@@ -168,7 +173,8 @@ async def list_tenant_products(
         "`name` when omitted and cannot be changed afterwards. `owner_team` is a team slug. "
         "`visibility` is `private` (default), `workspace` or `portal`; a `portal` product needs "
         "every member published (`api-product-portal-unpublished`, 422, with `blockers`). "
-        "`state` is `draft` (default), `published`, `deprecated` or `retired`.\n\n"
+        "`state` is `draft` (default) or `published`; anything else is `api-lifecycle-invalid-state` "
+        "— deprecate and retire with an update.\n\n"
         "Audited as `api_product.create`. Requires `projects:create`."
     ),
 )
@@ -243,7 +249,14 @@ async def read_tenant_product(
         "Change a product's name, summary, owner team, visibility or state. Omitted fields are left "
         "alone; `null` clears `summary` or `owner_team`. The slug is not updatable. Setting "
         "`visibility` to `portal` is refused while a member is unpublished.\n\n"
-        "Audited as `api_product.update`. Requires `projects:edit`."
+        "**Lifecycle.** `state` moves draft ⇄ published → deprecated → retired, and deprecated → "
+        "published reinstates. `retire_at` and `deprecation_message` describe a deprecation and are "
+        "refused on any other state; a deprecated product appears on the sunset timeline. Retiring "
+        "is refused before `retire_at` (`api-lifecycle-retire-early`, 409) and while any plan of the "
+        "product is not retired (`api-product-plans-live`, 409); any other step is "
+        "`api-lifecycle-transition` (409).\n\n"
+        "Audited as `api_product.deprecate`, `.reinstate`, `.retire` or `.update`. Requires "
+        "`projects:edit`."
     ),
 )
 async def patch_tenant_product(

@@ -50,7 +50,7 @@ import {
 } from '../lib/api-plans';
 import { productProxyBody, productProxyPath, type ApiProduct } from '../lib/api-products';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
-import { GATEWAYS, PLANS, plan } from './helpers/api-plans-fixtures';
+import { DEPRECATED_PLANS, GATEWAYS, PLANS, plan } from './helpers/api-plans-fixtures';
 
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 
@@ -289,9 +289,11 @@ describe('Plans section', () => {
   });
 
   it('passes axe and dumps the docs fixture', async () => {
+    // APX-1.4 (#6101): the screenshot shows the deprecate / migrate states.
+    plans = DEPRECATED_PLANS;
     const { container } = await renderEditor();
     fireEvent.click(screen.getByRole('button', { name: 'Edit Standard' }));
-    await screen.findByTestId('plan-editor');
+    await screen.findByTestId('plan-deprecation');
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('api-plan-editor', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
   });

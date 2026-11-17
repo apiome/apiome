@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.730.0] - 2026-11-16
+
+### Added
+- **Product and plan lifecycle (APX-1.4, #6101)** — OpenAPI 1.590.0:
+  - apiome-db **V389**: `api_plans` gains `deprecated_at`, `retire_at`, `retired_at`, `deprecation_message`,
+    `successor_plan_id` (→ `api_plans`, `ON DELETE SET NULL`, never itself) and `owners_notified_at`;
+    `api_products` gains `deprecated_at`, `retire_at`, `retired_at` and `deprecation_message`. A `retire_at`
+    needs a deprecated or retired record and a `retired_at` a retired one; messages are at most 1000 characters.
+  - Lifecycle steps (`app.api_lifecycle`): `draft ⇄ published → deprecated → retired`, and `deprecated →
+    published` reinstates (clearing the deprecation). `PATCH …/products/{p}` and `…/plans/{plan}` take `retire_at`
+    and `deprecation_message` (and, for a plan, `successor` — a published plan of the product with the same auth
+    strategy) while the record is deprecated. Refusals: `409 api-lifecycle-transition`, `409
+    api-lifecycle-retire-early` (before `retire_at`), `422 api-lifecycle-successor-invalid`, `409
+    api-product-plans-live` (a product retires only once every plan has), and `400 api-lifecycle-invalid-state`
+    for creating a record as `deprecated` or `retired`.
+  - Deprecating a plan blocks new subscriptions (`accepts_subscriptions: false`, for APX-2.2), adds an
+    `api-plan-deprecated` notice and notifies subscribed application owners once per deprecation
+    (`owners_notified_at`, claimed with a conditional update). Retiring revokes the plan's provisioning. Until
+    applications (APX-2.1/2.2) and provisioning (APX-4.1) ship, those hooks reach nobody and revoke nothing; each
+    step is audited as `api_product.plan.deprecate | reinstate | retire` (`api_product.deprecate | reinstate |
+    retire` for products) with `owners_notified` / `provisioning_revoked` counts.
+  - `POST …/plans/{plan}/migrate` (`{to, dry_run}`, `projects:edit`) moves a deprecated plan's subscriptions to
+    `to`'s consumer group (`plan:<product>-<plan>`) keeping every credential (`credentials_changed: false`),
+    records `to` as the successor and is audited as `api_product.plan.migrate` (not on a dry run).
+  - `GET /v1/versions/{t}/sunset-timeline` returns `products`: deprecated and retired products and plans with
+    `retireAt`, `timelineStatus`, `lifecyclePhase` (`deprecated | sunset_reached | retired`), the message and the
+    successor plan — empty without `projects:view`, filtered by `projectId`.
+  - `x-apiome-plans` entries of a deprecated plan carry `retire_at`, `deprecation_message` and `successor`.
+
 ## [1.729.0] - 2026-11-16
 
 ### Added
