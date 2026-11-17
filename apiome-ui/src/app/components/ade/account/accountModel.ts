@@ -231,6 +231,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   wechat: 'WeChat',
   atlassian: 'Atlassian',
   bitbucket: 'Bitbucket',
+  slack: 'Slack',
 };
 
 /**

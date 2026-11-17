@@ -88,6 +88,8 @@ const ALL_ENABLED: Record<string, string> = {
   ATLASSIAN_CLIENT_SECRET: 'atl-secret',
   BITBUCKET_CLIENT_ID: 'bb-key',
   BITBUCKET_CLIENT_SECRET: 'bb-secret',
+  SLACK_CLIENT_ID: 'slack-id',
+  SLACK_CLIENT_SECRET: 'slack-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -196,6 +198,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'wechat',
       'atlassian',
       'bitbucket',
+      'slack',
     ]);
   });
 
@@ -216,6 +219,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'wechat',
       'atlassian',
       'bitbucket',
+      'slack',
     ]);
   });
 
@@ -260,6 +264,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const bitbucket = buildGenericOAuthConfig('bitbucket', ALL_ENABLED)!;
     expect(bitbucket.clientId).toBe('bb-key');
     expect(bitbucket.clientSecret).toBe('bb-secret');
+    const slack = buildGenericOAuthConfig('slack', ALL_ENABLED)!;
+    expect(slack.clientId).toBe('slack-id');
+    expect(slack.clientSecret).toBe('slack-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -460,6 +467,18 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(false);
     expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('slack: fixed Slack OIDC discovery; openid profile email; PKCE off (OLO-9.17)', () => {
+    const cfg = buildGenericOAuthConfig('slack', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('slack');
+    expect(cfg.discoveryUrl).toBe('https://slack.com/.well-known/openid-configuration');
+    expect(cfg.scopes).toEqual(['openid', 'profile', 'email']);
+    expect(cfg.pkce).toBe(false);
+    // Discovery supplies the endpoints — nothing is hard-coded and there is no issuer to set.
+    expect(cfg.authorizationUrl).toBeUndefined();
+    expect(cfg.tokenUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
 
@@ -1832,6 +1851,199 @@ describe('getUserInfo — Bitbucket primary confirmed email (OLO-9.9)', () => {
 });
 
 /* ── getUserInfo: azure nOAuth hardening (OLO-1.4) ─────────────────────────────────────────── */
+
+/* ── getUserInfo: Sign in with Slack (OLO-9.17) ────────────────────────────────────────────── */
+
+describe('getUserInfo — Slack sign-in and linking (OLO-9.17)', () => {
+  /** The claims Sign in with Slack puts on the id token (and on `openid.connect.userInfo`). */
+  const CLAIMS = {
+    sub: 'U0R7JM',
+    'https://slack.com/user_id': 'U0R7JM',
+    'https://slack.com/team_id': 'T0R7GR',
+    email: 'ada@example.com',
+    email_verified: true,
+    name: 'Ada',
+    picture: 'http://img/slack.png',
+  };
+
+  /** A fetch stub answering Slack's userinfo resource with `body`, recording each request. */
+  const slackUserInfo = (body: unknown, ok = true) => {
+    const requests: Array<{ url: string; authorization: string | undefined }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      if (url === 'https://slack.com/api/openid.connect.userInfo') {
+        return { ok, json: async () => body };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Slack user id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = slackUserInfo(null);
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor(CLAIMS) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: 'U0R7JM',
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada',
+      image: 'http://img/slack.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // The id token carried the claims, so the userinfo resource is never called.
+    expect(requests).toEqual([]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor(CLAIMS) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: 'U0R7JM', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'slack', providerUserId: 'U0R7JM' },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor(CLAIMS) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'slack',
+      providerUserId: 'U0R7JM',
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['null', null],
+  ])('email_verified %s → fail-closed unverified, never linked', async (_label, claim) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: claim }) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('no email claim → email-required rejection', async () => {
+    const { store } = makeStore();
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email: undefined }) },
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('explicit link intent links the Slack account to the session user', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: false }) },
+      { store, env: ALL_ENABLED, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'slack', providerUserId: 'U0R7JM' },
+    });
+  });
+
+  test('falls back to openid.connect.userInfo when the id token is absent', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    // Slack's userinfo body carries `ok: true` and may omit `sub` in favour of the namespaced id.
+    const { fetchImpl, requests } = slackUserInfo({ ...CLAIMS, ok: true, sub: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: 'U0R7JM', email: 'ada@example.com', emailVerified: true });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([
+      { url: 'https://slack.com/api/openid.connect.userInfo', authorization: 'Bearer tok' },
+    ]);
+  });
+
+  test('a Slack `ok: false` userinfo body (HTTP 200) is discarded, never trusted', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = slackUserInfo({ ...CLAIMS, ok: false, error: 'invalid_auth' });
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('no id token and a failed userinfo fetch refuses the sign-in', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = slackUserInfo(null, false);
+
+    const { result, override } = await runGetUserInfo(
+      'slack',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toMatch(/^\/login\?error=/);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+});
 
 describe('getUserInfo — azure nOAuth hardening (OLO-1.4)', () => {
   test('forged token (guest upn, no evidence) is rejected with unverified-email', async () => {

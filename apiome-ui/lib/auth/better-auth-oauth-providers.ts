@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -49,6 +49,9 @@
  *  - **Bitbucket (OLO-9.9):** fixed Bitbucket Cloud endpoints (`bitbucket.org/site/oauth2`,
  *    `api.bitbucket.org/2.0/user`); the profile has no email, so `/2.0/user/emails` supplies the
  *    primary address and its confirmed flag (the GitHub `/user/emails` pattern).
+ *  - **Slack (OLO-9.17):** Sign in with Slack over Slack's fixed OIDC discovery document
+ *    (`slack.com/.well-known/openid-configuration`), scopes `openid profile email`; native
+ *    `email_verified` claim fail-closed via `resolveOAuthEmailVerified`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -517,6 +520,12 @@ const BITBUCKET_USERINFO_URL = 'https://api.bitbucket.org/2.0/user';
 /** The emails list, asked for at the API's largest page so the primary address is on page one. */
 const BITBUCKET_EMAILS_URL = 'https://api.bitbucket.org/2.0/user/emails?pagelen=100';
 
+/** Sign in with Slack: the fixed OIDC discovery document and its userinfo resource (OLO-9.17). */
+const SLACK_DISCOVERY_URL = 'https://slack.com/.well-known/openid-configuration';
+const SLACK_USERINFO_URL = 'https://slack.com/api/openid.connect.userInfo';
+/** Slack's namespaced claim carrying the Slack user id (the same value as `sub`). */
+const SLACK_USER_ID_CLAIM = 'https://slack.com/user_id';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -806,6 +815,44 @@ async function normalizeBitbucket(
   };
 }
 
+/**
+ * Normalize a Sign in with Slack callback (OLO-9.17): prefer the id-token claims; fall back to
+ * Slack's `openid.connect.userInfo` resource when the id token is absent. Slack answers that
+ * resource with HTTP 200 and `ok: false` on a bad token, so such a body is discarded. The claims
+ * pass through untouched, so `resolveOAuthEmailVerified` honors `email_verified` only when Slack
+ * sends it as true; an absent or false claim fail-closes to link-first. The identity is keyed on
+ * `sub` (the Slack user id), falling back to the namespaced `https://slack.com/user_id` claim.
+ *
+ * @param tokens The tokens from the code exchange (`idToken`, then `accessToken`, are read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine; empty (no account id, no email) when
+ *   neither source yields claims, which the engine refuses.
+ */
+async function normalizeSlack(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  let claims = decodeJwtClaims(tokens.idToken);
+  if (!claims && tokens.accessToken) {
+    const body = await fetchJsonWithToken(SLACK_USERINFO_URL, tokens.accessToken, fetchImpl);
+    if (body && typeof body === 'object' && (body as Record<string, unknown>).ok !== false) {
+      claims = body as Record<string, unknown>;
+    }
+  }
+  const profile = claims ?? {};
+  const slackUserId = profile[SLACK_USER_ID_CLAIM];
+  return {
+    accountId:
+      (typeof profile.sub === 'string' && profile.sub) ||
+      (typeof slackUserId === 'string' && slackUserId) ||
+      '',
+    profile,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.picture === 'string' ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -845,6 +892,7 @@ const NORMALIZERS: Record<
   wechat: (tokens, env, fetchImpl) => normalizeWechat(tokens, env, fetchImpl),
   atlassian: (tokens, _env, fetchImpl) => normalizeAtlassian(tokens, fetchImpl),
   bitbucket: (tokens, _env, fetchImpl) => normalizeBitbucket(tokens, fetchImpl),
+  slack: (tokens, _env, fetchImpl) => normalizeSlack(tokens, fetchImpl),
 };
 
 /**
@@ -877,7 +925,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * own account handling sees the identical verified signal the engine decided over.
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
- *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket).
+ *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1212,6 +1260,21 @@ export function buildGenericOAuthConfig(
         // (key:secret) and does not document PKCE; like GitHub, this confidential client relies
         // on the secret and Better Auth's `state` check.
         authentication: 'basic',
+        pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'slack': {
+      return {
+        providerId: 'slack',
+        clientId: readEnvString(env, 'SLACK_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'SLACK_CLIENT_SECRET') ?? '',
+        // Sign in with Slack is OpenID Connect on one fixed issuer — no issuer to configure;
+        // discovery supplies the authorize/token endpoints. Like Better Auth's `slack()` helper
+        // this confidential client sends no PKCE challenge: it authenticates the code exchange
+        // with the client secret, and Better Auth enforces `state`.
+        discoveryUrl: SLACK_DISCOVERY_URL,
+        scopes: ['openid', 'profile', 'email'],
         pkce: false,
         getUserInfo,
       };

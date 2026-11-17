@@ -298,6 +298,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'line',
       'oidc',
       'okta',
+      'slack',
       'vk',
       'wechat',
     ]);

@@ -107,6 +107,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   atlassian: { clientId: 'ATLASSIAN_CLIENT_ID', clientSecret: 'ATLASSIAN_CLIENT_SECRET' },
   // Bitbucket (OLO-9.9, #4992): credentials-only; fixed endpoints, no issuer extra.
   bitbucket: { clientId: 'BITBUCKET_CLIENT_ID', clientSecret: 'BITBUCKET_CLIENT_SECRET' },
+  // Slack (OLO-9.17, #5030): credentials-only; fixed OIDC discovery document, no issuer extra.
+  slack: { clientId: 'SLACK_CLIENT_ID', clientSecret: 'SLACK_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

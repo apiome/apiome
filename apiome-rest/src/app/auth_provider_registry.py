@@ -122,7 +122,8 @@ class ProviderDescriptor:
 # ``vk`` is available (OLO-9.42, #5055) as credentials-only VK ID (Russia / CIS country MVP);
 # ``wechat`` is available (OLO-9.43, #5056) as credentials-only WeChat Open Platform (China country MVP);
 # ``atlassian`` is available (OLO-9.8, #4991) as credentials-only Atlassian OAuth 2.0 (fixed endpoints, no issuer);
-# ``bitbucket`` is available (OLO-9.9, #4992) as credentials-only Bitbucket Cloud OAuth 2.0 (fixed endpoints, no issuer).
+# ``bitbucket`` is available (OLO-9.9, #4992) as credentials-only Bitbucket Cloud OAuth 2.0 (fixed endpoints, no issuer);
+# ``slack`` is available (OLO-9.17, #5030) as credentials-only Sign in with Slack (fixed OIDC discovery, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -209,6 +210,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Bitbucket",
         STATUS_AVAILABLE,
         client_credential_fields("BITBUCKET_CLIENT_ID", "BITBUCKET_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "slack",
+        "Slack",
+        STATUS_AVAILABLE,
+        client_credential_fields("SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET"),
     ),
 )
 

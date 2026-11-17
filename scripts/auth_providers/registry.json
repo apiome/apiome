@@ -131,6 +131,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "BITBUCKET_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "BITBUCKET_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "slack",
+      "label": "Slack",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "SLACK_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "SLACK_CLIENT_SECRET" }
+      ]
     }
   ]
 }

@@ -69,6 +69,8 @@ const ALL_ENABLED_ENV = {
   ATLASSIAN_CLIENT_SECRET: 'atl-secret',
   BITBUCKET_CLIENT_ID: 'bb-key',
   BITBUCKET_CLIENT_SECRET: 'bb-secret',
+  SLACK_CLIENT_ID: 'slack-id',
+  SLACK_CLIENT_SECRET: 'slack-secret',
 };
 
 describe('providerEnvIssues', () => {

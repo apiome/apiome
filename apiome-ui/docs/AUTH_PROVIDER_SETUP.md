@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -123,6 +123,8 @@ config is stored in the database need none of them set; see
 | `ATLASSIAN_CLIENT_SECRET` | Atlassian | To enable Atlassian | OAuth 2.0 (3LO) integration **Secret** |
 | `BITBUCKET_CLIENT_ID` | Bitbucket | To enable Bitbucket | OAuth consumer **Key** |
 | `BITBUCKET_CLIENT_SECRET` | Bitbucket | To enable Bitbucket | OAuth consumer **Secret** |
+| `SLACK_CLIENT_ID` | Slack | To enable Slack | Slack app **Client ID** |
+| `SLACK_CLIENT_SECRET` | Slack | To enable Slack | Slack app **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -204,7 +206,7 @@ links an account.
 | `line` | **trusted** | OLO-9.41 | yes | `email_verified` claim, sent only with the approved email permission; absent means unverified |
 | `vk` | **link-first** | OLO-9.42 | yes | Email returned with the grant, no verified claim |
 | `wechat` | **link-only** | OLO-9.43 | yes | No email; identity is keyed on `openid` / `unionid` |
-| `slack` | **trusted** | OLO-9.17 | no | `email_verified` claim (Sign in with Slack, OIDC) |
+| `slack` | **trusted** | OLO-9.17 | yes | `email_verified` claim (Sign in with Slack, OIDC) |
 | `linkedin` | **trusted** | OLO-9.18 | no | `email_verified` claim (Sign In with LinkedIn, OIDC) |
 | `discord` | **trusted** | OLO-9.19 | no | `verified` on `/users/@me` |
 | `salesforce` | **trusted** | OLO-9.20 | no | `email_verified` claim |
@@ -798,6 +800,45 @@ address **confirmed** (`is_confirmed`). An unconfirmed primary address fail-clos
 address, surfaces `email-required`. Bitbucket Data Center is not covered — the endpoints are
 Bitbucket Cloud's.
 
+## Slack — Sign in with Slack (OLO-9.17)
+
+For teams whose workspace identity is Slack rather than a formal identity provider. Apiome uses
+**Sign in with Slack**, Slack's OpenID Connect flow.
+
+1. On [api.slack.com/apps](https://api.slack.com/apps), choose **Create New App → From scratch**,
+   name the app and pick the workspace that owns it (or open an existing app).
+2. Under **OAuth & Permissions → Redirect URLs**, choose **Add New Redirect URL**, enter the
+   callback URL and **Save URLs**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/slack`
+   - Slack accepts only `https://` redirect URLs. For local development, put an HTTPS tunnel in
+     front of the UI and set `BETTER_AUTH_URL` to the tunnel's address.
+3. Under **OAuth & Permissions → Scopes → User Token Scopes**, add **`openid`**, **`profile`** and
+   **`email`**. No bot scopes are needed.
+4. To let people from workspaces other than the app's own sign in, open **Manage Distribution**
+   and **Activate Public Distribution**. Without it, only members of the app's workspace can.
+5. Under **Basic Information → App Credentials**, copy the **Client ID** and **Client Secret**.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+SLACK_CLIENT_ID=<Client ID>
+SLACK_CLIENT_SECRET=<Client Secret>
+```
+
+Slack is one fixed OpenID Connect issuer, so there is no issuer to configure. The endpoints come
+from Slack's discovery document:
+
+- Discovery: `https://slack.com/.well-known/openid-configuration`
+- Authorize: `https://slack.com/openid/connect/authorize` with the `openid profile email` scopes
+- Token: `https://slack.com/api/openid.connect.token`
+- User info: `https://slack.com/api/openid.connect.userInfo` — read only when the token response
+  carries no id token
+
+The identity is keyed on the Slack user id (the `sub` claim). A person who belongs to several
+Slack workspaces has one user id per workspace, so each is a separate linked identity.
+**Email verified semantics:** the `email_verified` claim is honored only when it is `true`; when
+it is absent or false the engine fail-closes (**link-first** — explicit link intent or an
+already-bound identity). A sign-in with no `email` claim surfaces `email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -970,7 +1011,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian needs no issuer.) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket and Slack need no issuer.) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 
