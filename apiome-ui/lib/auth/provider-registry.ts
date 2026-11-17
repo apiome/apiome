@@ -27,8 +27,8 @@
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
- * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), and Vercel
- * (OLO-9.27) followed exactly that path.
+ * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
+ * (OLO-9.27), and Railway (OLO-9.28) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -382,6 +382,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // so no issuer. The userinfo `email_verified` flag is re-stamped fail-closed → trusted when
     // verified, refused otherwise — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('VERCEL_CLIENT_ID', 'VERCEL_CLIENT_SECRET'),
+  },
+  {
+    id: 'railway',
+    label: 'Railway',
+    status: 'available',
+    // Login with Railway (OLO-9.28, #5041): credentials only — fixed OAuth 2.0 / OIDC endpoints,
+    // so no issuer. `/oauth/me` documents no verified claim → fail-closed link-first — see
+    // AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('RAILWAY_CLIENT_ID', 'RAILWAY_CLIENT_SECRET'),
   },
 ];
 

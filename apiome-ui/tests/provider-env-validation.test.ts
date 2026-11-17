@@ -91,6 +91,8 @@ const ALL_ENABLED_ENV = {
   HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
   VERCEL_CLIENT_ID: 'vc-id',
   VERCEL_CLIENT_SECRET: 'vc-secret',
+  RAILWAY_CLIENT_ID: 'rw-id',
+  RAILWAY_CLIENT_SECRET: 'rw-secret',
 };
 
 describe('providerEnvIssues', () => {

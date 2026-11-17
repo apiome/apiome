@@ -305,6 +305,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'notion',
       'oidc',
       'okta',
+      'railway',
       'salesforce',
       'slack',
       'vercel',

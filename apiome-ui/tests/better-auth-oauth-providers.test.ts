@@ -110,6 +110,8 @@ const ALL_ENABLED: Record<string, string> = {
   HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
   VERCEL_CLIENT_ID: 'vc-id',
   VERCEL_CLIENT_SECRET: 'vc-secret',
+  RAILWAY_CLIENT_ID: 'rw-id',
+  RAILWAY_CLIENT_SECRET: 'rw-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -229,6 +231,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'zoom',
       'huggingface',
       'vercel',
+      'railway',
     ]);
   });
 
@@ -260,6 +263,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'zoom',
       'huggingface',
       'vercel',
+      'railway',
     ]);
   });
 
@@ -337,6 +341,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const vercel = buildGenericOAuthConfig('vercel', ALL_ENABLED)!;
     expect(vercel.clientId).toBe('vc-id');
     expect(vercel.clientSecret).toBe('vc-secret');
+    const railway = buildGenericOAuthConfig('railway', ALL_ENABLED)!;
+    expect(railway.clientId).toBe('rw-id');
+    expect(railway.clientSecret).toBe('rw-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -697,6 +704,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
     expect(cfg.authentication).toBe('post');
     // Vercel rejects an authorization request without a PKCE challenge.
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('railway: fixed Login with Railway endpoints; openid email profile; Basic exchange; PKCE on (OLO-9.28)', () => {
+    const cfg = buildGenericOAuthConfig('railway', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('railway');
+    expect(cfg.authorizationUrl).toBe('https://backboard.railway.com/oauth/auth');
+    expect(cfg.tokenUrl).toBe('https://backboard.railway.com/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://backboard.railway.com/oauth/me');
+    // No offline_access: Apiome keeps no Railway token, so no refresh token is asked for, and no
+    // workspace or project scope: Apiome reads no Railway resources.
+    expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
+    expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
@@ -4704,6 +4727,205 @@ describe('getUserInfo — Vercel sign-in and linking (OLO-9.27)', () => {
 
     const { result, override } = await runGetUserInfo(
       'vercel',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Login with Railway (OLO-9.28) ───────────────────────────────────────────── */
+
+describe('getUserInfo — Railway fail-closed link-first (OLO-9.28)', () => {
+  /** The claims Railway's `/oauth/me` resource returns for `openid email profile`. */
+  const CLAIMS = {
+    sub: 'user_abc123',
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    picture: 'https://avatars.githubusercontent.com/u/12345',
+  };
+  const USERINFO_URL = 'https://backboard.railway.com/oauth/me';
+
+  /** Serve `claims` from `/oauth/me` (a failed response when null); record each request. */
+  const railwayUserInfo = (claims: unknown) => {
+    const requests: Array<{ url: string; method?: string; authorization: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, method: init.method, authorization: init.headers.Authorization });
+      if (url === USERINFO_URL && claims !== null) {
+        return { ok: true, json: async () => claims };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Railway sub (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = railwayUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: CLAIMS.sub,
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'https://avatars.githubusercontent.com/u/12345',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([
+      { url: USERINFO_URL, method: undefined, authorization: 'Bearer tok' },
+    ]);
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = railwayUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = railwayUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in a Railway body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = railwayUserInfo({ ...CLAIMS, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'railway',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('a verified claim in the id token is not read either', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = railwayUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok', idToken: idTokenFor({ ...CLAIMS, email_verified: true }) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = railwayUserInfo(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'railway',
+      providerUserId: CLAIMS.sub,
+    });
+  });
+
+  test.each([undefined, null, '', 42])('email %p → email-required rejection', async (email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = railwayUserInfo({ ...CLAIMS, email });
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('a user without a name or picture signs in with no image, named by the sub', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = railwayUserInfo({ ...CLAIMS, name: undefined, picture: '' });
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    // Better Auth needs a display name, so the runner falls back to the account id.
+    expect(result).toMatchObject({ id: CLAIMS.sub, name: CLAIMS.sub });
+    expect((result as { image?: unknown }).image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed /oauth/me request', null, 'tok'],
+    ['a body that is not an object', 'nope', 'tok'],
+    ['an array body', [CLAIMS], 'tok'],
+    ['claims without a sub', { ...CLAIMS, sub: '' }, 'tok'],
+    ['a sub that is not a string', { ...CLAIMS, sub: 42 }, 'tok'],
+    ['a stray id in place of the sub', { ...CLAIMS, sub: undefined, id: 'stray' }, 'tok'],
+    ['a missing access token', CLAIMS, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = railwayUserInfo(body);
+
+    const { result, override } = await runGetUserInfo(
+      'railway',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

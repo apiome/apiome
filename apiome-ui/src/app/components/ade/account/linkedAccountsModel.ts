@@ -114,6 +114,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   zoom: 'Zoom account sign-in',
   huggingface: 'Hugging Face account sign-in',
   vercel: 'Vercel account sign-in',
+  railway: 'Railway account sign-in',
 };
 
 /**
