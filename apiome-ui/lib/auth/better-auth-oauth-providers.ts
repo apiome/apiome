@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -52,6 +52,9 @@
  *  - **Slack (OLO-9.17):** Sign in with Slack over Slack's fixed OIDC discovery document
  *    (`slack.com/.well-known/openid-configuration`), scopes `openid profile email`; native
  *    `email_verified` claim fail-closed via `resolveOAuthEmailVerified`.
+ *  - **LinkedIn (OLO-9.18):** Sign In with LinkedIn over LinkedIn's fixed OIDC discovery document
+ *    (`www.linkedin.com/oauth/.well-known/openid-configuration`), scopes `openid profile email`;
+ *    native `email_verified` claim fail-closed via `resolveOAuthEmailVerified`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -526,6 +529,10 @@ const SLACK_USERINFO_URL = 'https://slack.com/api/openid.connect.userInfo';
 /** Slack's namespaced claim carrying the Slack user id (the same value as `sub`). */
 const SLACK_USER_ID_CLAIM = 'https://slack.com/user_id';
 
+/** Sign In with LinkedIn: the fixed OIDC discovery document and its userinfo resource (OLO-9.18). */
+const LINKEDIN_DISCOVERY_URL = 'https://www.linkedin.com/oauth/.well-known/openid-configuration';
+const LINKEDIN_USERINFO_URL = 'https://api.linkedin.com/v2/userinfo';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -853,6 +860,37 @@ async function normalizeSlack(
   };
 }
 
+/**
+ * Normalize a Sign In with LinkedIn callback (OLO-9.18): prefer the id-token claims; fall back to
+ * LinkedIn's OIDC userinfo resource when the id token is absent. The claims pass through
+ * untouched, so `resolveOAuthEmailVerified` honors `email_verified` only when LinkedIn sends it as
+ * true; an absent or false claim fail-closes to link-first. The identity is keyed on `sub`, the
+ * member identifier LinkedIn issues to this application.
+ *
+ * @param tokens The tokens from the code exchange (`idToken`, then `accessToken`, are read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine; empty (no account id, no email) when
+ *   neither source yields claims, which the engine refuses.
+ */
+async function normalizeLinkedin(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  let claims = decodeJwtClaims(tokens.idToken);
+  if (!claims && tokens.accessToken) {
+    const body = await fetchJsonWithToken(LINKEDIN_USERINFO_URL, tokens.accessToken, fetchImpl);
+    if (body && typeof body === 'object') claims = body as Record<string, unknown>;
+  }
+  const profile = claims ?? {};
+  return {
+    accountId: typeof profile.sub === 'string' ? profile.sub : '',
+    profile,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.picture === 'string' ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -893,6 +931,7 @@ const NORMALIZERS: Record<
   atlassian: (tokens, _env, fetchImpl) => normalizeAtlassian(tokens, fetchImpl),
   bitbucket: (tokens, _env, fetchImpl) => normalizeBitbucket(tokens, fetchImpl),
   slack: (tokens, _env, fetchImpl) => normalizeSlack(tokens, fetchImpl),
+  linkedin: (tokens, _env, fetchImpl) => normalizeLinkedin(tokens, fetchImpl),
 };
 
 /**
@@ -925,7 +964,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * own account handling sees the identical verified signal the engine decided over.
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
- *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack).
+ *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1274,6 +1313,22 @@ export function buildGenericOAuthConfig(
         // this confidential client sends no PKCE challenge: it authenticates the code exchange
         // with the client secret, and Better Auth enforces `state`.
         discoveryUrl: SLACK_DISCOVERY_URL,
+        scopes: ['openid', 'profile', 'email'],
+        pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'linkedin': {
+      return {
+        providerId: 'linkedin',
+        clientId: readEnvString(env, 'LINKEDIN_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'LINKEDIN_CLIENT_SECRET') ?? '',
+        // Sign In with LinkedIn is OpenID Connect on one fixed issuer — no issuer to configure;
+        // discovery supplies the authorize/token endpoints. Like Better Auth's `linkedin()` helper
+        // this confidential client sends no PKCE challenge (LinkedIn offers PKCE only to native
+        // apps, on a separate endpoint): it authenticates the code exchange with the client
+        // secret in the request body, and Better Auth enforces `state`.
+        discoveryUrl: LINKEDIN_DISCOVERY_URL,
         scopes: ['openid', 'profile', 'email'],
         pkce: false,
         getUserInfo,

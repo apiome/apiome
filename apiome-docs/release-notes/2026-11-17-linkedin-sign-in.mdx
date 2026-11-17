@@ -1,0 +1,29 @@
+---
+slug: linkedin-sign-in
+title: Sign in with LinkedIn
+description: "People can now sign in and link with their LinkedIn account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their LinkedIn account, and link LinkedIn beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **LinkedIn** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and **Primary Client Secret** of a LinkedIn app — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  LinkedIn's side. The environment variables are `LINKEDIN_CLIENT_ID` and
+  `LINKEDIN_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/linkedin`, added to the app's
+  **Authorized redirect URLs for your app** on its **Auth** tab.
+- **Product.** The LinkedIn app needs the **Sign In with LinkedIn using OpenID Connect** product,
+  requested on its **Products** tab. It grants the **`openid`**, **`profile`** and **`email`**
+  scopes.
+- **Keep the same app.** LinkedIn identifies each person per app. Rotate the secret of the app you
+  have rather than replacing the app, or people who linked LinkedIn must link it again.
+- **Email addresses.** LinkedIn is a **Trusted** provider: a sign-in joins the account with the
+  same address, or starts a new one, only when LinkedIn reports the address as verified.
+  Otherwise, sign in another way first and link LinkedIn from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `linkedin` as an available provider, and
+  `PUT /v1/admin/auth-providers/linkedin` stores its credentials.

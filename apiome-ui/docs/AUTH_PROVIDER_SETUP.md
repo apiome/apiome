@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -125,6 +125,8 @@ config is stored in the database need none of them set; see
 | `BITBUCKET_CLIENT_SECRET` | Bitbucket | To enable Bitbucket | OAuth consumer **Secret** |
 | `SLACK_CLIENT_ID` | Slack | To enable Slack | Slack app **Client ID** |
 | `SLACK_CLIENT_SECRET` | Slack | To enable Slack | Slack app **Client Secret** |
+| `LINKEDIN_CLIENT_ID` | LinkedIn | To enable LinkedIn | LinkedIn app **Client ID** |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn | To enable LinkedIn | LinkedIn app **Primary Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -207,7 +209,7 @@ links an account.
 | `vk` | **link-first** | OLO-9.42 | yes | Email returned with the grant, no verified claim |
 | `wechat` | **link-only** | OLO-9.43 | yes | No email; identity is keyed on `openid` / `unionid` |
 | `slack` | **trusted** | OLO-9.17 | yes | `email_verified` claim (Sign in with Slack, OIDC) |
-| `linkedin` | **trusted** | OLO-9.18 | no | `email_verified` claim (Sign In with LinkedIn, OIDC) |
+| `linkedin` | **trusted** | OLO-9.18 | yes | `email_verified` claim (Sign In with LinkedIn, OIDC) |
 | `discord` | **trusted** | OLO-9.19 | no | `verified` on `/users/@me` |
 | `salesforce` | **trusted** | OLO-9.20 | no | `email_verified` claim |
 | `notion` | **link-first** | OLO-9.21 | no | Owner-user email from the token exchange, no verified claim |
@@ -839,6 +841,48 @@ Slack workspaces has one user id per workspace, so each is a separate linked ide
 it is absent or false the engine fail-closes (**link-first** — explicit link intent or an
 already-bound identity). A sign-in with no `email` claim surfaces `email-required`.
 
+## LinkedIn — Sign In with LinkedIn (OLO-9.18)
+
+For people whose professional identity is their LinkedIn account. Apiome uses **Sign In with
+LinkedIn using OpenID Connect**, LinkedIn's OpenID Connect flow.
+
+1. On the [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps), choose **Create
+   app**, name the app and associate it with a **LinkedIn Page** (LinkedIn requires one), or open
+   an existing app.
+2. On the **Products** tab, find **Sign In with LinkedIn using OpenID Connect** and choose
+   **Request access**. This adds the **`openid`**, **`profile`** and **`email`** scopes to the
+   app; without it LinkedIn refuses the sign-in with an `unauthorized_scope_error`.
+3. On the **Auth** tab, under **OAuth 2.0 settings**, add the callback URL to **Authorized
+   redirect URLs for your app**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/linkedin`
+4. On the **Auth** tab, under **Application credentials**, copy the **Client ID** and the
+   **Primary Client Secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+LINKEDIN_CLIENT_ID=<Client ID>
+LINKEDIN_CLIENT_SECRET=<Primary Client Secret>
+```
+
+LinkedIn is one fixed OpenID Connect issuer, so there is no issuer to configure. The endpoints
+come from LinkedIn's discovery document:
+
+- Discovery: `https://www.linkedin.com/oauth/.well-known/openid-configuration`
+- Authorize: `https://www.linkedin.com/oauth/v2/authorization` with the `openid profile email`
+  scopes
+- Token: `https://www.linkedin.com/oauth/v2/accessToken` — the client secret is sent in the
+  request body; no PKCE challenge is sent
+- User info: `https://api.linkedin.com/v2/userinfo` — read only when the token response carries
+  no id token
+
+The identity is keyed on the `sub` claim, a member identifier LinkedIn issues **per
+application**: the same person has a different `sub` under a different LinkedIn app, so replacing
+the app (rather than rotating its secret) orphans existing linked identities. The address is the
+member's primary LinkedIn email.
+**Email verified semantics:** the `email_verified` claim is honored only when it is `true`; when
+it is absent or false the engine fail-closes (**link-first** — explicit link intent or an
+already-bound identity). A sign-in with no `email` claim surfaces `email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1011,7 +1055,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket and Slack need no issuer.) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack and LinkedIn need no issuer.) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

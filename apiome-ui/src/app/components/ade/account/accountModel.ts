@@ -232,6 +232,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   atlassian: 'Atlassian',
   bitbucket: 'Bitbucket',
   slack: 'Slack',
+  linkedin: 'LinkedIn',
 };
 
 /**

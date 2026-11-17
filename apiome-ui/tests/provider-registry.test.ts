@@ -64,6 +64,8 @@ const ALL_ENABLED_ENV = {
   BITBUCKET_CLIENT_SECRET: 'bb-secret',
   SLACK_CLIENT_ID: 'slack-id',
   SLACK_CLIENT_SECRET: 'slack-secret',
+  LINKEDIN_CLIENT_ID: 'li-id',
+  LINKEDIN_CLIENT_SECRET: 'li-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -84,6 +86,7 @@ describe('registry vocabulary', () => {
       'atlassian',
       'bitbucket',
       'slack',
+      'linkedin',
     ]);
   });
 
@@ -103,6 +106,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('atlassian')?.label).toBe('Atlassian');
     expect(getProviderDescriptor('bitbucket')?.label).toBe('Bitbucket');
     expect(getProviderDescriptor('slack')?.label).toBe('Slack');
+    expect(getProviderDescriptor('linkedin')?.label).toBe('LinkedIn');
   });
 
   it('pins each available provider env contract', () => {
@@ -168,9 +172,13 @@ describe('registry vocabulary', () => {
       'SLACK_CLIENT_ID',
       'SLACK_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('linkedin')?.requiredEnvKeys).toEqual([
+      'LINKEDIN_CLIENT_ID',
+      'LINKEDIN_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/line/vk/wechat available (OLO-9.2–9.9, 9.17, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.18, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -183,6 +191,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('atlassian')?.status).toBe('available');
     expect(getProviderDescriptor('bitbucket')?.status).toBe('available');
     expect(getProviderDescriptor('slack')?.status).toBe('available');
+    expect(getProviderDescriptor('linkedin')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -220,6 +229,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('atlassian', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('bitbucket', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('slack', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('linkedin', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -338,6 +348,10 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('bitbucket', { BITBUCKET_CLIENT_ID: 'x' })).toBe(false);
     expect(isProviderEnabled('slack', { SLACK_CLIENT_ID: 'x', SLACK_CLIENT_SECRET: 'y' })).toBe(true);
     expect(isProviderEnabled('slack', { SLACK_CLIENT_SECRET: 'y' })).toBe(false);
+    expect(
+      isProviderEnabled('linkedin', { LINKEDIN_CLIENT_ID: 'x', LINKEDIN_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('linkedin', { LINKEDIN_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -363,6 +377,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'atlassian',
       'bitbucket',
       'slack',
+      'linkedin',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -385,6 +400,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'atlassian',
       'bitbucket',
       'slack',
+      'linkedin',
     ]);
   });
 
@@ -405,6 +421,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'atlassian',
       'bitbucket',
       'slack',
+      'linkedin',
     ]);
   });
 });
@@ -429,6 +446,7 @@ describe('providerSummaries', () => {
       { id: 'atlassian', label: 'Atlassian', status: 'available', enabled: false },
       { id: 'bitbucket', label: 'Bitbucket', status: 'available', enabled: false },
       { id: 'slack', label: 'Slack', status: 'available', enabled: false },
+      { id: 'linkedin', label: 'LinkedIn', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);
