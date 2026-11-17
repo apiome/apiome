@@ -1,0 +1,30 @@
+---
+slug: provider-email-trust-classes
+title: How a sign-in provider's email is trusted
+description: "One rule now decides whether a provider's email can join an account."
+authors: [apiome]
+---
+
+Apiome lets a provider sign-in join an existing account, or create one, only when the provider
+proves the email address is verified. That rule is now written down in one place, with a class for
+every provider, and the database is ready for the rest of the sign-in provider catalog.
+
+{/* truncate */}
+
+- **Three classes.** A provider is **Trusted** (it proves the address is verified), **Link first**
+  (it returns an address with no proof) or **Link only** (it returns no address).
+  [Sign-in providers](/admin/auth-providers#how-a-providers-email-is-trusted) lists the class of
+  each available provider and what a sign-in does in each.
+- **Nothing changes for people signing in.** The twelve trusted providers behave as before. **VK**
+  is **Link first** and **WeChat** is **Link only**, as they were: people sign in another way
+  first and link them on [Linked accounts](/workspace/linked-accounts).
+- **VK, hardened.** VK returns an address with no verified claim, so Apiome already refused to
+  match accounts on it. VK is now also left out of the list of providers whose verified claim is
+  accepted, so that stays true whatever VK sends.
+- **For administrators upgrading.** Migration `V395` lets the database store linked identities and
+  provider settings for 30 more providers — Slack, LinkedIn, Discord, Apple and others. None of
+  them is available yet: a provider appears under **System settings → Add Provider** only when its
+  own release adds it. The migration changes no existing row and is safe to run twice.
+- **For developers.** A new provider needs no migration. Its trust class is recorded in
+  `apiome-ui/lib/auth/provider-trust-classes.ts`, and `apiome-ui/docs/AUTH_PROVIDER_SETUP.md`
+  lists the class of every provider in the catalog.

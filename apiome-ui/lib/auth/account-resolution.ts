@@ -114,12 +114,19 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * and `line` (OLO-9.41) are likewise trusted through the generic path when their tokens carry a
  * native `email_verified` claim. LINE's email claim requires an approved channel permission —
  * when `email_verified` is absent the engine fail-closes to link-first (OLO-9.41). `vk` (OLO-9.42)
- * returns email with the grant but no verified claim — always fail-closed link-first.
+ * is **not** listed: VK returns an email with the grant but no verified claim (link-first).
  * `wechat` (OLO-9.43) is **not** listed: WeChat exposes no email at all (link-only).
  * `atlassian` (OLO-9.8) is trusted through the generic path: `email_verified` from the User
  * Identity API is honored when present, otherwise the engine fail-closes to link-first.
  * `bitbucket` (OLO-9.9) is trusted on the confirmed flag of its primary address, normalized onto
  * the profile from `/2.0/user/emails` (`verified-email.ts`).
+ *
+ * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
+ * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
+ * providers (an email with no proof) and `link-only` providers (no email) stay out, so their email
+ * can never auto-link or create an account even if a normalizer were to mark it verified. A new
+ * provider is added here by its own ticket, and only with the class `trusted`;
+ * `provider-trust-classes.test.ts` fails when this set and the table disagree.
  */
 export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'github',
@@ -132,7 +139,6 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'oidc',
   'auth0',
   'line',
-  'vk',
   'atlassian',
   'bitbucket',
 ]);
@@ -165,6 +171,11 @@ export function isAutoLinkTrustedProvider(provider: string): boolean {
  * any slug outside this set so a typo'd or unsupported provider never reaches the OAuth flow
  * with a linking-intent cookie already set. (OLO-2.3 will replace this with the provider
  * registry; keep the two sets aligned until then.)
+ *
+ * **Growth path (OLO-9.16, #5029).** The DB vocabulary (V395) already admits every Better Auth
+ * catalog slug, so a provider ticket needs no migration: it adds its slug here in the change that
+ * ships its registry entry. Every slug here must have a trust class in `provider-trust-classes.ts`
+ * — being linkable says nothing about whether the provider's email is trusted.
  */
 export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'github',

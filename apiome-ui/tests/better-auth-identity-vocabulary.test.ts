@@ -4,7 +4,8 @@
  * Identity-slug vocabulary parity under the Better Auth engine (OLO-10.9, #5004).
  *
  * The `apiome.external_auth_providers.provider` column is the OLO-2.2 identity vocabulary, bounded by
- * a DB CHECK (`external_auth_providers_provider_supported_ck`, narrowed in V181 and widened in V198).
+ * a DB CHECK (`external_auth_providers_provider_supported_ck`, narrowed in V181, widened in V198 and
+ * to the full Better Auth catalog in V395).
  * The account-resolution engine writes that column with the provider slug verbatim, and the Better
  * Auth `account.providerId` column is backfilled from it (V199). For the vocabulary to hold under
  * `AUTH_ENGINE=better-auth`, three things must line up and stay lined up:
@@ -50,8 +51,8 @@ import {
 const DB_SCRIPTS = path.join(__dirname, '..', '..', 'apiome-db', 'scripts');
 const V198 = path.join(DB_SCRIPTS, 'V198__auth_provider_vocabulary_4984.sql');
 const V199 = path.join(DB_SCRIPTS, 'V199__better_auth_core_tables_4999.sql');
-/** Latest vocabulary widen (WeChat / OLO-9.43); supersedes V203 for the live CHECK set. */
-const V204 = path.join(DB_SCRIPTS, 'V204__auth_provider_vocabulary_wechat_5056.sql');
+/** Latest vocabulary widen (full Better Auth catalog / OLO-9.16); the live CHECK set. */
+const V395 = path.join(DB_SCRIPTS, 'V395__auth_provider_vocabulary_full_catalog_5029.sql');
 
 /**
  * Extract the single-quoted slug list from a named `ADD CONSTRAINT … CHECK (… IN ( … ))` block.
@@ -72,9 +73,9 @@ function checkVocabulary(sql: string, constraint: string): Set<string> {
 
 const V198_SQL = fs.readFileSync(V198, 'utf8');
 const V199_SQL = fs.readFileSync(V199, 'utf8');
-const V204_SQL = fs.readFileSync(V204, 'utf8');
-/** The effective identity vocabulary the DB permits (latest widen: V204 / OLO-9.43). */
-const IDENTITY_VOCABULARY = checkVocabulary(V204_SQL, 'external_auth_providers_provider_supported_ck');
+const V395_SQL = fs.readFileSync(V395, 'utf8');
+/** The effective identity vocabulary the DB permits (latest widen: V395 / OLO-9.16). */
+const IDENTITY_VOCABULARY = checkVocabulary(V395_SQL, 'external_auth_providers_provider_supported_ck');
 
 /** The registry ids that are actually enabled (available), i.e. the live sign-in providers. */
 const ENABLED_IDS = PROVIDER_REGISTRY.filter((provider) => provider.status === 'available').map(
@@ -172,7 +173,7 @@ describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK',
   });
 
   test('the auth_provider_config CHECK shares the same vocabulary (store ↔ identity parity)', () => {
-    const configVocabulary = checkVocabulary(V204_SQL, 'auth_provider_config_provider_id_check');
+    const configVocabulary = checkVocabulary(V395_SQL, 'auth_provider_config_provider_id_check');
     expect([...configVocabulary].sort()).toEqual([...IDENTITY_VOCABULARY].sort());
   });
 });

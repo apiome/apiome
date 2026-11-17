@@ -150,6 +150,91 @@ required before the provider can be enabled from the database (the issuer is sto
 **probed** at boot and on admin Validate (`GET <issuer>/.well-known/openid-configuration`) so a bad
 or unreachable IdP fails loud instead of leaving a broken login page.
 
+## Provider vocabulary and trust classes (OLO-9.16)
+
+Two things are decided once for the whole Better Auth catalog, so a provider ticket
+(OLO-9.17–9.49) does neither on its own:
+
+**The slug vocabulary.** `V395__auth_provider_vocabulary_full_catalog_5029.sql` widens both
+provider CHECKs — `external_auth_providers_provider_supported_ck` (linked identities) and
+`auth_provider_config_provider_id_check` (stored provider config) — to every slug in the table
+below. A provider ticket needs **no migration**. A slug is inert until its registry entry ships:
+the registry and `LINKABLE_PROVIDERS` remain the gates on what can be enabled, linked or signed
+in with; the CHECK is only a typo backstop. Slugs are Better Auth's own provider ids.
+
+**The trust-gate rule.** A provider joins `AUTO_LINK_TRUSTED_PROVIDERS`
+(`lib/auth/account-resolution.ts`) only when it *proves* a verified email — a signed
+`email_verified` claim, or an explicit verified flag from its own API that the provider's
+`getUserInfo` normalizes onto `email_verified`, fail-closed (missing, malformed or false means
+unverified). Each provider has exactly one class:
+
+| Class | The provider gives | In `AUTO_LINK_TRUSTED_PROVIDERS` | Sign-in |
+| --- | --- | --- | --- |
+| **trusted** | An email and proof it is verified | Yes | A verified email auto-links the matching account or creates one; an unverified one is refused (`unverified-email`) |
+| **link-first** | An email with no proof | No | Resolves only through an already-bound identity; bind one from **Linked accounts** while signed in |
+| **link-only** | No email | No | As link-first (`email-required` when nothing is bound) |
+
+The table of record is `PROVIDER_TRUST_CLASSES` in `lib/auth/provider-trust-classes.ts`; this
+copy is for reading. A provider ticket cites its row and, in the change that ships its registry
+entry:
+
+1. adds the slug to `LINKABLE_PROVIDERS`;
+2. adds the slug to `AUTO_LINK_TRUSTED_PROVIDERS` **only if** its class is `trusted`;
+3. for a **provisional** class (the fail-closed default where the roadmap says *confirmed at
+   implementation*): either keeps `link-first` and drops `provisional`, or promotes the row to
+   `trusted` with the proving claim or field named in `evidence`. Never promote without one.
+
+`tests/provider-trust-classes.test.ts` fails when the sets, the table and the V395 vocabulary
+disagree, and proves that a verified-looking email from a link-first or link-only provider never
+links an account.
+
+| Slug | Trust class | Ticket | Shipped | Evidence |
+| --- | --- | --- | --- | --- |
+| `github` | **trusted** | OLO-2.5 | yes | Primary address with `verified: true` from `/user/emails` |
+| `gitlab` | **trusted** | OLO-2.5 | yes | `email_verified` claim, or `confirmed_at` on the user |
+| `azure` | **trusted** | OLO-1.4 | yes | `xms_edov` domain-owner-verified claim (nOAuth hardening); never the bare email claim |
+| `google` | **trusted** | OLO-9.2 | yes | `email_verified` id-token claim |
+| `okta` | **trusted** | OLO-9.3 | yes | `email_verified` id-token claim |
+| `aws` | **trusted** | OLO-9.4 | yes | Cognito `email_verified` claim |
+| `keycloak` | **trusted** | OLO-9.5 | yes | `email_verified` claim |
+| `oidc` | **trusted** | OLO-9.6 | yes | `email_verified` claim from the configured issuer |
+| `auth0` | **trusted** | OLO-9.7 | yes | `email_verified` claim |
+| `atlassian` | **trusted** | OLO-9.8 | yes | `email_verified` from the User Identity API; absent means unverified |
+| `bitbucket` | **trusted** | OLO-9.9 | yes | Primary address with `is_confirmed` from `/2.0/user/emails` |
+| `line` | **trusted** | OLO-9.41 | yes | `email_verified` claim, sent only with the approved email permission; absent means unverified |
+| `vk` | **link-first** | OLO-9.42 | yes | Email returned with the grant, no verified claim |
+| `wechat` | **link-only** | OLO-9.43 | yes | No email; identity is keyed on `openid` / `unionid` |
+| `slack` | **trusted** | OLO-9.17 | no | `email_verified` claim (Sign in with Slack, OIDC) |
+| `linkedin` | **trusted** | OLO-9.18 | no | `email_verified` claim (Sign In with LinkedIn, OIDC) |
+| `discord` | **trusted** | OLO-9.19 | no | `verified` on `/users/@me` |
+| `salesforce` | **trusted** | OLO-9.20 | no | `email_verified` claim |
+| `notion` | **link-first** | OLO-9.21 | no | Owner-user email from the token exchange, no verified claim |
+| `figma` | **link-first** | OLO-9.22 | no | `/v1/me` email, no verified claim |
+| `linear` | **link-first** | OLO-9.23 | no | Viewer email, no verified claim |
+| `dropbox` | **trusted** | OLO-9.24 | no | `email_verified` on `get_current_account` |
+| `zoom` | **trusted** | OLO-9.25 | no | `verified` on `/v2/users/me` |
+| `huggingface` | **trusted** | OLO-9.26 | no | `email_verified` claim |
+| `vercel` | **link-first** (provisional) | OLO-9.27 | no | Email and verified semantics confirmed at implementation |
+| `railway` | **link-first** (provisional) | OLO-9.28 | no | Email and verified semantics confirmed at implementation |
+| `hubspot` | **link-first** | OLO-9.29 | no | Token-info email, no verified claim |
+| `apple` | **trusted** | OLO-9.30 | no | `email_verified` claim; private-relay addresses are handled in the provider ticket |
+| `facebook` | **link-first** | OLO-9.31 | no | Graph email, no verified claim |
+| `twitter` | **link-first** | OLO-9.32 | no | Email needs elevated API access and carries no verified claim |
+| `reddit` | **link-only** | OLO-9.33 | no | No email address (`has_verified_email` alone names no address) |
+| `spotify` | **link-first** | OLO-9.34 | no | `/v1/me` email is documented as unverified |
+| `twitch` | **trusted** | OLO-9.35 | no | `email_verified` claim with the `user:read:email` scope |
+| `tiktok` | **link-only** | OLO-9.36 | no | No email in user info |
+| `roblox` | **link-only** | OLO-9.37 | no | Profile claims only, no email claim |
+| `kick` | **link-first** (provisional) | OLO-9.38 | no | Email availability and verified semantics confirmed at implementation |
+| `kakao` | **trusted** | OLO-9.39 | no | `is_email_valid` and `is_email_verified` on `kakao_account`, both true |
+| `naver` | **link-first** (provisional) | OLO-9.40 | no | `/v1/nid/me` email; verified semantics confirmed at implementation |
+| `yandex` | **link-first** (provisional) | OLO-9.44 | no | `default_email`; verified semantics confirmed at implementation |
+| `paypal` | **trusted** | OLO-9.45 | no | `email_verified` claim |
+| `polar` | **link-first** (provisional) | OLO-9.46 | no | Email and verified semantics confirmed at implementation |
+| `patreon` | **trusted** | OLO-9.47 | no | `is_email_verified` on the identity resource |
+| `gumroad` | **link-first** | OLO-9.48 | no | User email, no verified claim |
+| `paybin` | **link-first** (provisional) | OLO-9.49 | no | Email semantics confirmed at implementation |
+
 ## Boot-time validation
 
 At server startup ([`src/instrumentation.ts`](../src/instrumentation.ts) →
@@ -592,7 +677,7 @@ The sign-in flow uses fixed VK ID endpoints (`https://id.vk.com/authorize`,
 **POST** form body (`access_token` + `client_id`). **Email verified semantics:** VK returns
 email with the grant but does **not** assert a verified claim (Better Auth hard-codes
 `emailVerified: false`). The engine always fail-closes (**link-first** — explicit link intent
-or an already-bound identity). Missing email surfaces `email-required`.
+or an already-bound identity), and `vk` is not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16). Missing email surfaces `email-required`.
 
 ### Hosting / compliance (RU / CIS)
 
