@@ -187,6 +187,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'slack',
       'vk',
       'wechat',
+      'zoom',
     ]);
     expect(auth).toBeDefined();
   });

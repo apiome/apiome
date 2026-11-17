@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -80,6 +80,11 @@
  *    exchange body, PKCE on; the user comes from a body-less POST to
  *    `api.dropboxapi.com/2/users/get_current_account`, whose `email_verified` flag is normalized
  *    fail-closed (true only when exactly `true`), so an unverified Dropbox address is refused.
+ *  - **Zoom (OLO-9.25):** fixed Zoom endpoints (`zoom.us/oauth/authorize`, `zoom.us/oauth/token`),
+ *    no scope parameter (a Zoom app's scopes are set on the app), client credentials in the
+ *    exchange body, PKCE on; the user comes from `api.zoom.us/v2/users/me`, whose integer
+ *    `verified` flag (`1` = verified email) is normalized fail-closed to `email_verified`, so an
+ *    unverified Zoom address is refused.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -594,6 +599,11 @@ const DROPBOX_AUTHORIZE_URL = 'https://www.dropbox.com/oauth2/authorize';
 const DROPBOX_TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
 /** Dropbox's user resource is an RPC endpoint: a POST with no body, not a GET. */
 const DROPBOX_USERINFO_URL = 'https://api.dropboxapi.com/2/users/get_current_account';
+
+/** Zoom OAuth 2.0: fixed endpoints, mirrored from Better Auth's `zoom` provider (OLO-9.25). */
+const ZOOM_AUTHORIZE_URL = 'https://zoom.us/oauth/authorize';
+const ZOOM_TOKEN_URL = 'https://zoom.us/oauth/token';
+const ZOOM_USERINFO_URL = 'https://api.zoom.us/v2/users/me';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1314,6 +1324,54 @@ async function normalizeDropbox(
   };
 }
 
+/**
+ * Normalize a Zoom sign-in (OLO-9.25): fetch `/v2/users/me` with the access token and map `id` /
+ * `email` / `display_name` / `pic_url` — the resource and mapping of Better Auth's `zoom()`
+ * helper.
+ *
+ * Zoom reports whether the account's email is verified as the integer `verified` (`1` verified,
+ * `0` not). It is normalized onto the profile as the boolean `email_verified`, fail-closed: true
+ * only when `verified` is exactly the number `1` — Better Auth's `Boolean(verified)` would also
+ * accept `2`, `"0"` or `"false"`. A missing, null, boolean or string value is unverified, any
+ * `email_verified` field in the Zoom body is overwritten, never trusted, and
+ * `resolveOAuthEmailVerified` then refuses the address (`unverified-email`). The identity is keyed
+ * on the user id; the mutable display name is never the key. A failed fetch, or a body whose `id`
+ * is not a non-empty string, yields an empty profile (no account id, no email), which the engine
+ * refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeZoom(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(ZOOM_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const user =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  // A body without a string user id is no identity at all: drop it whole, so the engine cannot
+  // fall back to keying on a malformed `id` (or a stray `sub`) from the raw profile.
+  const accountId = typeof user.id === 'string' ? user.id : '';
+  const profile: Record<string, unknown> = accountId ? { ...user } : {};
+  profile.email_verified = profile.verified === 1;
+  return {
+    accountId,
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name:
+      typeof profile.display_name === 'string' && profile.display_name
+        ? profile.display_name
+        : null,
+    image: typeof profile.pic_url === 'string' && profile.pic_url ? profile.pic_url : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1361,6 +1419,7 @@ const NORMALIZERS: Record<
   figma: (tokens, _env, fetchImpl) => normalizeFigma(tokens, fetchImpl),
   linear: (tokens, _env, fetchImpl) => normalizeLinear(tokens, fetchImpl),
   dropbox: (tokens, _env, fetchImpl) => normalizeDropbox(tokens, fetchImpl),
+  zoom: (tokens, _env, fetchImpl) => normalizeZoom(tokens, fetchImpl),
 };
 
 /**
@@ -1394,7 +1453,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma | linear | dropbox).
+ *   discord | salesforce | notion | figma | linear | dropbox | zoom).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1874,6 +1933,26 @@ export function buildGenericOAuthConfig(
         tokenUrl: DROPBOX_TOKEN_URL,
         userInfoUrl: DROPBOX_USERINFO_URL,
         scopes: ['account_info.read'],
+        authentication: 'post',
+        pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'zoom': {
+      return {
+        providerId: 'zoom',
+        clientId: readEnvString(env, 'ZOOM_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'ZOOM_CLIENT_SECRET') ?? '',
+        // Fixed Zoom OAuth 2.0 endpoints, mirrored from Better Auth's `zoom()` helper — no
+        // issuer. No scope is requested: the helper sends none, because a Zoom app's scopes are
+        // chosen on the app (`user:read:user` is the one `/v2/users/me` needs). The code exchange
+        // sends the client id and secret in the form body together with the PKCE verifier (the
+        // helper's default, so PKCE stays on). The `verified` flag of `/v2/users/me` is
+        // normalized fail-closed to `email_verified` (see normalizeZoom).
+        authorizationUrl: ZOOM_AUTHORIZE_URL,
+        tokenUrl: ZOOM_TOKEN_URL,
+        userInfoUrl: ZOOM_USERINFO_URL,
+        scopes: [],
         authentication: 'post',
         pkce: true,
         getUserInfo,

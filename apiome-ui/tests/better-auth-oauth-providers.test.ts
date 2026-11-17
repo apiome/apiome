@@ -104,6 +104,8 @@ const ALL_ENABLED: Record<string, string> = {
   LINEAR_CLIENT_SECRET: 'ln-secret',
   DROPBOX_CLIENT_ID: 'db-id',
   DROPBOX_CLIENT_SECRET: 'db-secret',
+  ZOOM_CLIENT_ID: 'zm-id',
+  ZOOM_CLIENT_SECRET: 'zm-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -220,6 +222,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
   });
 
@@ -248,6 +251,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'figma',
       'linear',
       'dropbox',
+      'zoom',
     ]);
   });
 
@@ -316,6 +320,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const dropbox = buildGenericOAuthConfig('dropbox', ALL_ENABLED)!;
     expect(dropbox.clientId).toBe('db-id');
     expect(dropbox.clientSecret).toBe('db-secret');
+    const zoom = buildGenericOAuthConfig('zoom', ALL_ENABLED)!;
+    expect(zoom.clientId).toBe('zm-id');
+    expect(zoom.clientSecret).toBe('zm-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -633,6 +640,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(true);
     // No offline access is requested: Apiome keeps no Dropbox token.
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('zoom: fixed Zoom endpoints; no scope parameter; body-credential exchange; PKCE on (OLO-9.25)', () => {
+    const cfg = buildGenericOAuthConfig('zoom', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('zoom');
+    expect(cfg.authorizationUrl).toBe('https://zoom.us/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://zoom.us/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.zoom.us/v2/users/me');
+    // A Zoom app's scopes are set on the app, so none is requested.
+    expect(cfg.scopes).toEqual([]);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
@@ -3819,6 +3841,281 @@ describe('getUserInfo — Dropbox sign-in and linking (OLO-9.24)', () => {
 
     const { result, override } = await runGetUserInfo(
       'dropbox',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Zoom (OLO-9.25) ──────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Zoom sign-in and linking (OLO-9.25)', () => {
+  /** A Zoom user as `/v2/users/me` returns it (`verified: 1` = verified email). */
+  const ME = {
+    id: 'KDcuGIm1QgePTO8WbOqwIQ',
+    first_name: 'Ada',
+    last_name: 'Lovelace',
+    display_name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    type: 2,
+    verified: 1,
+    pic_url: 'http://img/zoom.png',
+    account_id: 'q6gBJVO5TzexKYTb_I2rpg',
+    status: 'active',
+  };
+  const ME_URL = 'https://api.zoom.us/v2/users/me';
+
+  /** Serve `me` from `/v2/users/me` (a failed response when null) and record each request. */
+  const zoomMe = (me: unknown) => {
+    const requests: Array<{ url: string; method?: string; authorization: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, method: init.method, authorization: init.headers.Authorization });
+      if (url === ME_URL && me !== null) {
+        return { ok: true, json: async () => me };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Zoom user id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = zoomMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: ME.id,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'http://img/zoom.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: ME_URL, method: undefined, authorization: 'Bearer tok' }]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = zoomMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ME.id, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'zoom', providerUserId: ME.id },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = zoomMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'zoom',
+      providerUserId: ME.id,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['0', 0],
+    ['absent', undefined],
+    ['null', null],
+    ['the boolean true', true],
+    ['the string "1"', '1'],
+    ['the string "true"', 'true'],
+    ['the number 2', 2],
+  ])(
+    'verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, verified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = zoomMe({ ...ME, verified });
+
+      const { result, override } = await runGetUserInfo(
+        'zoom',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('an email_verified field in a Zoom body is overwritten, never trusted', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = zoomMe({ ...ME, verified: 0, email_verified: true });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('unverified email on a new account is refused, not sent to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = zoomMe({ ...ME, verified: 0 });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('unverified email on an already-linked identity still signs in', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = zoomMe({ ...ME, verified: 0 });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ME.id, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Zoom account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = zoomMe({ ...ME, verified: 0 });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'zoom', providerUserId: ME.id },
+    });
+  });
+
+  test.each([
+    ['null', null],
+    ['absent', undefined],
+    ['empty', ''],
+    ['not a string', 42],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = zoomMe({ ...ME, email });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['no display name', { display_name: undefined }],
+    ['an empty display name', { display_name: '' }],
+    ['a display name that is not a string', { display_name: 7 }],
+  ])('%s → signs in with no display name', async (_label, overrides) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = zoomMe({ ...ME, ...overrides });
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ME.id });
+    expect((result as { name?: unknown }).name).not.toBe('Ada Lovelace');
+  });
+
+  test('a user without a picture signs in with no image', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = zoomMe({ ...ME, pic_url: undefined });
+
+    const { result } = await runGetUserInfo(
+      'zoom',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: ME.id });
+    expect((result as { image?: unknown }).image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed /v2/users/me request', null, 'tok'],
+    ['a body that is not an object', 'nope', 'tok'],
+    ['an array body', [ME], 'tok'],
+    ['a user without an id', { ...ME, id: '' }, 'tok'],
+    ['a user id that is not a string', { ...ME, id: 42 }, 'tok'],
+    ['a missing access token', ME, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = zoomMe(body);
+
+    const { result, override } = await runGetUserInfo(
+      'zoom',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

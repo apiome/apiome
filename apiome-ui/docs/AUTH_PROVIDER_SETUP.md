@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -140,6 +140,8 @@ config is stored in the database need none of them set; see
 | `LINEAR_CLIENT_SECRET` | Linear | To enable Linear | Linear OAuth application **Client secret** |
 | `DROPBOX_CLIENT_ID` | Dropbox | To enable Dropbox | Dropbox app **App key** |
 | `DROPBOX_CLIENT_SECRET` | Dropbox | To enable Dropbox | Dropbox app **App secret** |
+| `ZOOM_CLIENT_ID` | Zoom | To enable Zoom | Zoom app **Client ID** |
+| `ZOOM_CLIENT_SECRET` | Zoom | To enable Zoom | Zoom app **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -229,7 +231,7 @@ links an account.
 | `figma` | **link-first** | OLO-9.22 | yes | `/v1/me` email, no verified claim |
 | `linear` | **link-first** | OLO-9.23 | yes | Viewer email, no verified claim |
 | `dropbox` | **trusted** | OLO-9.24 | yes | `email_verified` on `get_current_account` |
-| `zoom` | **trusted** | OLO-9.25 | no | `verified` on `/v2/users/me` |
+| `zoom` | **trusted** | OLO-9.25 | yes | `verified` on `/v2/users/me` |
 | `huggingface` | **trusted** | OLO-9.26 | no | `email_verified` claim |
 | `vercel` | **link-first** (provisional) | OLO-9.27 | no | Email and verified semantics confirmed at implementation |
 | `railway` | **link-first** (provisional) | OLO-9.28 | no | Email and verified semantics confirmed at implementation |
@@ -1202,6 +1204,61 @@ Dropbox is a **trusted** provider and `dropbox` is in `AUTO_LINK_TRUSTED_PROVIDE
 An account with no email address surfaces `email-required`. A failed `get_current_account`
 request, or a response with no `account_id`, yields no identity and the sign-in is refused.
 
+## Zoom (OLO-9.25)
+
+For organizations whose people already have a Zoom account.
+
+1. On the [Zoom App Marketplace](https://marketplace.zoom.us/), sign in, open **Develop** and
+   choose **Build App**, then **General App**. On **Basic Information**, keep the app
+   **User-managed**: each person authorizes it for their own Zoom account.
+2. Still on **Basic Information**, under **OAuth Information**, set the **OAuth Redirect URL** and
+   add the same URL to the **OAuth Allow Lists**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/zoom`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/zoom` for local dev)
+3. On **Scopes**, choose **Add Scopes** and add **`user:read:user`** (*View a user*). No other
+   scope is needed. Zoom takes an app's scopes from this page, so Apiome sends no scope parameter.
+4. Back on **Basic Information**, copy the **Client ID** and the **Client Secret** from **App
+   Credentials**. Zoom shows a **Development** and a **Production** pair; use the pair that
+   matches the redirect URL you entered.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+ZOOM_CLIENT_ID=<Client ID>
+ZOOM_CLIENT_SECRET=<Client Secret>
+```
+
+An app that is not published can be authorized only by people in the Zoom account that built it.
+That is enough for a single organization; publish the app on the Zoom App Marketplace before
+opening sign-in to people in other Zoom accounts.
+
+Zoom's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's `zoom()`
+helper):
+
+- Authorize: `https://zoom.us/oauth/authorize` with a PKCE challenge (`S256`) and no scope
+  parameter
+- Token: `https://zoom.us/oauth/token` — the client id and secret are sent in the form body, with
+  the PKCE verifier
+- User: `https://api.zoom.us/v2/users/me`
+
+The identity is keyed on the Zoom user id (`id`). The display name is `display_name` and the
+picture is `pic_url`; the mutable name is never the key. Apiome uses the access token for that
+one request and keeps no Zoom token.
+
+**Email verified semantics:** `/v2/users/me` reports the integer `verified` — `1` when the
+account's email address is verified, `0` when it is not. Apiome normalizes it to `email_verified`
+and honors it only when it is exactly the number `1`; a missing, `null`, boolean or string value
+is unverified. Zoom is a **trusted** provider and `zoom` is in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Verified address** — signs in the linked account, joins the account with the same address,
+  or starts a new account.
+- **Unverified address** — rejected with `unverified-email` unless the person is linking Zoom
+  explicitly or the identity is already bound (**link-first**).
+
+A user with no email address surfaces `email-required`. A failed `/v2/users/me` request — for
+example when the app lacks the `user:read:user` scope — or a response with no string `id`, yields
+no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1374,7 +1431,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear and Dropbox need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox and Zoom need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

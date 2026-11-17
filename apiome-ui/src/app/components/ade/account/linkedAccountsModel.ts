@@ -111,6 +111,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   figma: 'Figma account sign-in',
   linear: 'Linear account sign-in',
   dropbox: 'Dropbox account sign-in',
+  zoom: 'Zoom account sign-in',
 };
 
 /**

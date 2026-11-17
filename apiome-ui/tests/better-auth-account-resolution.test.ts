@@ -308,6 +308,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'slack',
       'vk',
       'wechat',
+      'zoom',
     ]);
     expect(SUPPORTED_OAUTH_PROVIDERS.has('credentials')).toBe(false);
   });

@@ -85,6 +85,8 @@ const ALL_ENABLED_ENV = {
   LINEAR_CLIENT_SECRET: 'ln-secret',
   DROPBOX_CLIENT_ID: 'db-id',
   DROPBOX_CLIENT_SECRET: 'db-secret',
+  ZOOM_CLIENT_ID: 'zm-id',
+  ZOOM_CLIENT_SECRET: 'zm-secret',
 };
 
 describe('providerEnvIssues', () => {

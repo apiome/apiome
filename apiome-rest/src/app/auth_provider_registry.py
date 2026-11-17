@@ -131,7 +131,8 @@ class ProviderDescriptor:
 # ``notion`` is available (OLO-9.21, #5034) as credentials-only Notion OAuth 2.0 (fixed endpoints, no issuer);
 # ``figma`` is available (OLO-9.22, #5035) as credentials-only Figma OAuth 2.0 (fixed endpoints, no issuer);
 # ``linear`` is available (OLO-9.23, #5036) as credentials-only Linear OAuth 2.0 (fixed endpoints, no issuer);
-# ``dropbox`` is available (OLO-9.24, #5037) as credentials-only Dropbox OAuth 2.0 (fixed endpoints, no issuer).
+# ``dropbox`` is available (OLO-9.24, #5037) as credentials-only Dropbox OAuth 2.0 (fixed endpoints, no issuer);
+# ``zoom`` is available (OLO-9.25, #5038) as credentials-only Zoom OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -266,6 +267,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Dropbox",
         STATUS_AVAILABLE,
         client_credential_fields("DROPBOX_CLIENT_ID", "DROPBOX_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "zoom",
+        "Zoom",
+        STATUS_AVAILABLE,
+        client_credential_fields("ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"),
     ),
 )
 

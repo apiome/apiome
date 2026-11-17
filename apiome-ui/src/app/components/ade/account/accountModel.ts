@@ -239,6 +239,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   figma: 'Figma',
   linear: 'Linear',
   dropbox: 'Dropbox',
+  zoom: 'Zoom',
 };
 
 /**
