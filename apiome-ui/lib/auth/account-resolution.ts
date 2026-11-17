@@ -120,6 +120,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * Identity API is honored when present, otherwise the engine fail-closes to link-first.
  * `bitbucket` (OLO-9.9) is trusted on the confirmed flag of its primary address, normalized onto
  * the profile from `/2.0/user/emails` (`verified-email.ts`).
+ * `slack` (OLO-9.17) is trusted through the generic path: Sign in with Slack (OIDC) carries a
+ * native `email_verified` claim; absent or false fail-closes to link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -141,6 +143,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'line',
   'atlassian',
   'bitbucket',
+  'slack',
 ]);
 
 /**
@@ -192,6 +195,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'wechat',
   'atlassian',
   'bitbucket',
+  'slack',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

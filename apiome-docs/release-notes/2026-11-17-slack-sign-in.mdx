@@ -1,0 +1,29 @@
+---
+slug: slack-sign-in
+title: Sign in with Slack
+description: "People can now sign in and link with their Slack account."
+authors: [apiome]
+---
+
+Teams whose shared identity is their Slack workspace can now sign in to Apiome with **Sign in with
+Slack**, and link Slack beside any other provider on
+[Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Slack** is a new entry in **System settings → Add Provider**. It needs
+  the **Client ID** and **Client Secret** of a Slack app — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Slack's side. The environment variables are `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/slack`. Slack accepts only
+  `https://` redirect URLs.
+- **Scopes.** The Slack app needs the **`openid`**, **`profile`** and **`email`** user token
+  scopes.
+- **Other workspaces.** A new Slack app signs in only members of the workspace that owns it. Turn
+  on **Manage Distribution → Activate Public Distribution** to let people from other Slack
+  workspaces sign in.
+- **Email addresses.** Slack is a **Trusted** provider: a sign-in joins the account with the same
+  address, or starts a new one, only when Slack reports the address as verified. Otherwise, sign
+  in another way first and link Slack from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `slack` as an available provider, and
+  `PUT /v1/admin/auth-providers/slack` stores its credentials.

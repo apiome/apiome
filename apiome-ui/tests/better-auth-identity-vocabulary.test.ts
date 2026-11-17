@@ -148,6 +148,7 @@ describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK',
       'line',
       'oidc',
       'okta',
+      'slack',
       'vk',
       'wechat',
     ]);

@@ -177,6 +177,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'line',
       'oidc',
       'okta',
+      'slack',
       'vk',
       'wechat',
     ]);
