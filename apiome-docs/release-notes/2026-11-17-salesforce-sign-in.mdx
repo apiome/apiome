@@ -1,0 +1,33 @@
+---
+slug: salesforce-sign-in
+title: Sign in with Salesforce
+description: "People can now sign in and link with their Salesforce account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Salesforce account, and link Salesforce beside any
+other provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Salesforce** is a new entry in **System settings → Add Provider**. It
+  needs the **Consumer Key** and **Consumer Secret** of a Salesforce External Client App or
+  Connected App, entered as the **Client ID** and **Client secret**.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Salesforce's side. The environment variables are `SALESFORCE_CLIENT_ID` and
+  `SALESFORCE_CLIENT_SECRET`.
+- **Issuer (optional).** Left empty, people sign in through `https://login.salesforce.com`. Set
+  the **Issuer** — `SALESFORCE_ISSUER` in `.env` — to your org's My Domain, such as
+  `https://acme.my.salesforce.com`, to send everyone to that org's own login page, or to
+  `https://test.salesforce.com` for a sandbox. A trailing slash is ignored.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/salesforce`, entered as the app's
+  **Callback URL**.
+- **Scopes.** The app needs **Access the identity URL service (id, profile, email, address,
+  phone)** and **Access unique user identifiers (openid)**.
+- **Email addresses.** Salesforce is a **Trusted** provider: a sign-in joins the account with the
+  same address, or starts a new one, only when Salesforce reports the address as verified.
+  Otherwise, verify the address in Salesforce, or sign in another way first and link Salesforce
+  from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `salesforce` as an available provider, and
+  `PUT /v1/admin/auth-providers/salesforce` stores its credentials and, under
+  `config.SALESFORCE_ISSUER`, its issuer.

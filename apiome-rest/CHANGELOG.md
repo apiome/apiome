@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.742.0] - 2026-11-17
+
+### Added
+- **Salesforce sign-in (OLO-9.20, #5033)** — OpenAPI 1.596.4:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `salesforce` (label `Salesforce`, `available`), a
+    credentials-only provider: required fields `client_id` (`SALESFORCE_CLIENT_ID`) and `client_secret`
+    (`SALESFORCE_CLIENT_SECRET`). Its issuer is an **optional** extra — `config.SALESFORCE_ISSUER`, a My Domain
+    or sandbox base URL, defaulting to `https://login.salesforce.com` — so it is not a required field and
+    never appears in `missing_fields`. `GET /v1/admin/auth-providers` lists the provider last, and `PUT` /
+    `DELETE /v1/admin/auth-providers/salesforce` and the resolved-config endpoint accept it like any other
+    provider. The canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - No migration: `salesforce` has been in the provider vocabulary CHECKs since V395. No request or response
+    shape changed.
+
 ## [1.741.0] - 2026-11-17
 
 ### Added

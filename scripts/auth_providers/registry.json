@@ -158,6 +158,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "DISCORD_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "DISCORD_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "salesforce",
+      "label": "Salesforce",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "SALESFORCE_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "SALESFORCE_CLIENT_SECRET" }
+      ]
     }
   ]
 }

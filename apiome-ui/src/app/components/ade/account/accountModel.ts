@@ -234,6 +234,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   slack: 'Slack',
   linkedin: 'LinkedIn',
   discord: 'Discord',
+  salesforce: 'Salesforce',
 };
 
 /**

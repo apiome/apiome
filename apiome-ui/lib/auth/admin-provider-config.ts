@@ -116,6 +116,8 @@ export interface ProviderExtraField {
  *   - Generic OIDC issuer (required) + optional display name / scopes: `oidc-issuer.ts`
  *     (`OIDC_ISSUER`, `OIDC_DISPLAY_NAME`, `OIDC_SCOPES`).
  *   - Auth0 tenant issuer (required): `auth0-issuer.ts` (`AUTH0_ISSUER`).
+ *   - Salesforce issuer (optional — My Domain or sandbox): `salesforce-issuer.ts`
+ *     (`SALESFORCE_ISSUER`).
  *
  * Providers without an entry (and coming-soon placeholders) simply render no extras.
  */
@@ -214,6 +216,14 @@ export const PROVIDER_EXTRA_FIELDS: Record<string, readonly ProviderExtraField[]
       label: 'Issuer',
       defaultValue: '(required)',
       help: 'Auth0 tenant issuer URL, e.g. https://acme.auth0.com.',
+    },
+  ],
+  salesforce: [
+    {
+      envKey: 'SALESFORCE_ISSUER',
+      label: 'Issuer',
+      defaultValue: 'https://login.salesforce.com',
+      help: 'Change for a My Domain (https://acme.my.salesforce.com) or a sandbox (https://test.salesforce.com).',
     },
   ],
 };

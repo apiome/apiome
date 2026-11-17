@@ -26,7 +26,7 @@
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
- * (OLO-9.18), and Discord (OLO-9.19) followed exactly that path.
+ * (OLO-9.18), Discord (OLO-9.19), and Salesforce (OLO-9.20) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -307,6 +307,16 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // `verified` flag of `/users/@me` is normalized to `email_verified` and honored when true,
     // otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'),
+  },
+  {
+    id: 'salesforce',
+    label: 'Salesforce',
+    status: 'available',
+    // Salesforce (OLO-9.20, #5033): credentials only. The issuer is an *optional* extra
+    // (`SALESFORCE_ISSUER`, default https://login.salesforce.com; set for a My Domain or a
+    // sandbox), so it is not a required field. The `email_verified` claim is honored when true,
+    // otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('SALESFORCE_CLIENT_ID', 'SALESFORCE_CLIENT_SECRET'),
   },
 ];
 

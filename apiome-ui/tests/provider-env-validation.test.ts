@@ -75,6 +75,8 @@ const ALL_ENABLED_ENV = {
   LINKEDIN_CLIENT_SECRET: 'li-secret',
   DISCORD_CLIENT_ID: 'dc-id',
   DISCORD_CLIENT_SECRET: 'dc-secret',
+  SALESFORCE_CLIENT_ID: 'sf-id',
+  SALESFORCE_CLIENT_SECRET: 'sf-secret',
 };
 
 describe('providerEnvIssues', () => {

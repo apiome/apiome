@@ -113,6 +113,9 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   linkedin: { clientId: 'LINKEDIN_CLIENT_ID', clientSecret: 'LINKEDIN_CLIENT_SECRET' },
   // Discord (OLO-9.19, #5032): credentials-only; fixed endpoints, no issuer extra.
   discord: { clientId: 'DISCORD_CLIENT_ID', clientSecret: 'DISCORD_CLIENT_SECRET' },
+  // Salesforce (OLO-9.20, #5033): the optional issuer (My Domain / sandbox) lives in config
+  // JSONB and overlays via the extras loop below; credentials overlay env.
+  salesforce: { clientId: 'SALESFORCE_CLIENT_ID', clientSecret: 'SALESFORCE_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

@@ -106,6 +106,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   slack: 'Slack workspace account sign-in',
   linkedin: 'LinkedIn professional account sign-in',
   discord: 'Discord account sign-in',
+  salesforce: 'Salesforce org account sign-in',
 };
 
 /**

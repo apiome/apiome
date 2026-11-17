@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -129,6 +129,9 @@ config is stored in the database need none of them set; see
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn | To enable LinkedIn | LinkedIn app **Primary Client Secret** |
 | `DISCORD_CLIENT_ID` | Discord | To enable Discord | Discord application **Client ID** |
 | `DISCORD_CLIENT_SECRET` | Discord | To enable Discord | Discord application **Client Secret** |
+| `SALESFORCE_CLIENT_ID` | Salesforce | To enable Salesforce | Salesforce app **Consumer Key** |
+| `SALESFORCE_CLIENT_SECRET` | Salesforce | To enable Salesforce | Salesforce app **Consumer Secret** |
+| `SALESFORCE_ISSUER` | Salesforce | No (default `https://login.salesforce.com`) | Issuer for a My Domain (e.g. `https://acme.my.salesforce.com`) or a sandbox (`https://test.salesforce.com`) |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -213,7 +216,7 @@ links an account.
 | `slack` | **trusted** | OLO-9.17 | yes | `email_verified` claim (Sign in with Slack, OIDC) |
 | `linkedin` | **trusted** | OLO-9.18 | yes | `email_verified` claim (Sign In with LinkedIn, OIDC) |
 | `discord` | **trusted** | OLO-9.19 | yes | `verified` on `/users/@me` |
-| `salesforce` | **trusted** | OLO-9.20 | no | `email_verified` claim |
+| `salesforce` | **trusted** | OLO-9.20 | yes | `email_verified` claim |
 | `notion` | **link-first** | OLO-9.21 | no | Owner-user email from the token exchange, no verified claim |
 | `figma` | **link-first** | OLO-9.22 | no | `/v1/me` email, no verified claim |
 | `linear` | **link-first** | OLO-9.23 | no | Viewer email, no verified claim |
@@ -921,6 +924,63 @@ address is rejected with `unverified-email` unless the person is linking Discord
 the identity is already bound (**link-first**). An account with no email address surfaces
 `email-required`.
 
+## Salesforce — OIDC (OLO-9.20)
+
+For organizations whose people already sign in to a Salesforce org.
+
+1. In Salesforce **Setup**, create the app that represents Apiome: an **External Client App**
+   (**External Client App Manager → New External Client App**) or a **Connected App**
+   (**App Manager → New Connected App**).
+2. Turn on **Enable OAuth Settings** and configure:
+   - **Callback URL:** `{BETTER_AUTH_URL}/api/auth/oauth2/callback/salesforce`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/salesforce` for local dev)
+   - **Selected OAuth Scopes:** **Access the identity URL service (id, profile, email, address,
+     phone)** and **Access unique user identifiers (openid)**
+   - Keep **Require Secret for Web Server Flow** ticked. **Require Proof Key for Code Exchange
+     (PKCE)** may be ticked too — Apiome always sends a PKCE challenge.
+3. Save, then copy the **Consumer Key** and **Consumer Secret** (**Manage Consumer Details**).
+   Salesforce can take up to 10 minutes to start accepting a new app.
+4. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+SALESFORCE_CLIENT_ID=<Consumer Key>
+SALESFORCE_CLIENT_SECRET=<Consumer Secret>
+# Optional — only for a My Domain or a sandbox:
+# SALESFORCE_ISSUER=https://acme.my.salesforce.com
+```
+
+**The issuer is optional.** Unset, sign-in goes through `https://login.salesforce.com`,
+Salesforce's shared login page for production orgs. Set `SALESFORCE_ISSUER` to:
+
+- an org's **My Domain** — `https://acme.my.salesforce.com` — to send everyone to that org's own
+  login page (its branding, and its single sign-on if it has one);
+- `https://test.salesforce.com`, or a sandbox My Domain
+  (`https://acme--dev.sandbox.my.salesforce.com`), to sign in against a **sandbox**.
+
+`SALESFORCE_ISSUER` is read the way `OKTA_ISSUER` is: surrounding whitespace is trimmed, a blank
+value counts as unset (so the default applies) and one trailing slash is dropped. It is the base
+URL only — no path. The same value can be set from **Admin → System Configuration** (the
+**Issuer** field on the Salesforce card, stored under `config.SALESFORCE_ISSUER` and overlaid onto
+the env var per OLO-8.5 / OLO-10.8). Because it is optional it is never reported as missing by
+boot validation or by the admin **Validate** action: the client id and secret alone enable the
+provider.
+
+The sign-in flow discovers its endpoints from
+`{SALESFORCE_ISSUER}/.well-known/openid-configuration`, uses PKCE and requests the
+`openid email profile` scopes. Salesforce's id token carries the profile claims only when the
+app is configured to include them, so when the id token has no `email` Apiome reads
+`{SALESFORCE_ISSUER}/services/oauth2/userinfo` with the access token instead; a userinfo answer
+for a different `sub` than the id token's is discarded.
+
+The identity is keyed on `sub` — the person's Salesforce **identity URL**, which names both the
+org and the user, so the same username in two orgs is two identities.
+**Email verified semantics:** Salesforce reports `email_verified`; it is honored when true. When
+it is absent or false the engine fail-closes (**link-first** — explicit link intent or an
+already-bound identity), and the sign-in is rejected with `unverified-email`. A person whose
+Salesforce email address is unverified verifies it in Salesforce, or signs in another way and
+links Salesforce. A sign-in with no
+email at all surfaces `email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1093,7 +1153,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn and Discord need no issuer.) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn and Discord need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 
