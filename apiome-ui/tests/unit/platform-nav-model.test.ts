@@ -94,7 +94,7 @@ describe('platform-nav model — shape', () => {
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
       ship: ['published', 'products', 'sunset-timeline', 'export-studio'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
-      workspace: ['members', 'roles', 'teams', 'api-keys', 'schema-registry'],
+      workspace: ['members', 'roles', 'teams', 'sso', 'api-keys', 'schema-registry'],
     });
     expect(PLATFORM_USER_MENU_ITEMS.map((navItem) => navItem.id)).toEqual([
       'profile',
@@ -123,6 +123,7 @@ describe('platform-nav model — shape', () => {
       'Members',
       'Roles',
       'Teams',
+      'Single sign-on',
       'API keys',
       'Schema registry',
       'Profile',
@@ -225,6 +226,7 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/roles', 'roles'],
     ['/ade/dashboard/teams', 'teams'],
     ['/ade/dashboard/teams/payments', 'teams'],
+    ['/ade/dashboard/sso', 'sso'],
     ['/ade/dashboard/api-keys', 'api-keys'],
     ['/ade/dashboard/schema-registry', 'schema-registry'],
     ['/ade/dashboard/tenants', 'tenants'],
@@ -310,6 +312,7 @@ describe('platform-nav model — workspace gating', () => {
     'members',
     'roles',
     'teams',
+    'sso',
     'api-keys',
     'schema-registry',
   ];
@@ -566,11 +569,11 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 14 released destinations in the rail (MCP servers, then Primitives & types, joined in RC8; Products in APX-1.1), 21 with every feature previewed', () => {
+  it('leaves 15 released destinations in the rail (MCP servers, then Primitives & types, joined in RC8; Products in APX-1.1; Single sign-on in EID-1.2), 22 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(14);
+    expect(releasedRailCount()).toBe(15);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
-    expect(releasedRailCount()).toBe(21);
+    expect(releasedRailCount()).toBe(22);
   });
 
   it('takes Tenants and SDK settings out of the rail and gives every off-rail item a home', () => {

@@ -172,6 +172,9 @@ services:
       # resolver: without the token, providers saved on the admin screen are ignored for sign-in
       # on the Studio origin. Must match the `rest` service's value; optional, like there.
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      # EID-1.2: public email domains no workspace may claim for single sign-on (comma-separated).
+      # Blank keeps the built-in list (gmail.com, outlook.com, yahoo.com, …).
+      APIOME_SSO_PUBLIC_DOMAINS: ${APIOME_SSO_PUBLIC_DOMAINS:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}@postgres:5432/${POSTGRES_DB:-apiome}
       PGHOST: postgres
       PGPORT: "5432"

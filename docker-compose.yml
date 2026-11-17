@@ -139,6 +139,9 @@ services:
       AUTH_CONFIG_ENC_KEY: ${AUTH_CONFIG_ENC_KEY:-}
       AUTH_CONFIG_ENC_ACTIVE_KEY_ID: ${AUTH_CONFIG_ENC_ACTIVE_KEY_ID:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      # EID-1.2: public email domains no workspace may claim for single sign-on (comma-separated).
+      # Blank keeps the built-in list (gmail.com, outlook.com, yahoo.com, …).
+      APIOME_SSO_PUBLIC_DOMAINS: ${APIOME_SSO_PUBLIC_DOMAINS:-}
       # ── Agent upstream auth vault (AGX-2.2, #4534) ──────────────────────────────────────────
       # Master-key map that seals the upstream API credentials managed MCP toolsets present to
       # tenants' real APIs. Optional pass-through (empty ⇒ unset): without it the vault fails

@@ -14,8 +14,8 @@ import { ICON_SIZE } from '@/app/components/ui/iconSizes';
  * A workspace's own identity provider (SAML 2.0 or OIDC) is found from the email domain: the user
  * types their work email, and Better Auth's SSO plugin sends them to the IdP registered for that
  * domain. Starts as one button beside the other providers; pressing it reveals the email field so
- * the page does not grow a second form until someone asks for it. Email-first routing (the page
- * choosing SSO from the email typed in the main form) is EID-1.2.
+ * the page does not grow a second form until someone asks for it. The main form also chooses SSO
+ * by itself from the email typed into it (email-first routing, EID-1.2 — `useSsoEmailRouting`).
  */
 
 /** What the inline message says when no enabled provider covers the domain. */

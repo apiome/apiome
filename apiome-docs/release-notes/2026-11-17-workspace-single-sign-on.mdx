@@ -1,0 +1,36 @@
+---
+slug: workspace-single-sign-on
+title: Set up single sign-on for your own workspace
+description: "Connect your identity provider and prove your email domains by DNS."
+authors: [apiome]
+---
+
+Workspace owners and admins can now connect their company's identity provider themselves, on the
+new [Workspace → Single sign-on](/workspace/workspace-sso) page — no installation administrator
+needed. A domain sends people to your identity provider only after you have proved you own it.
+
+{/* truncate */}
+
+- **Connect.** **Add provider** takes an OIDC issuer, client ID and client secret, or a SAML 2.0
+  metadata URL or XML. The drawer's **Configure** tab shows the redirect URI, or the ACS URL and
+  SP entity ID, to paste into your identity provider.
+- **Verify.** Add your email domain on the **Domains** tab, publish the TXT record Apiome shows at
+  `_apiome-challenge.<your domain>`, and **click “Verify”**. If the DNS lookup itself fails, Apiome
+  says *Could not check* and shows what DNS answered — it never marks a domain verified on a failed
+  lookup. You can check a domain three times an hour.
+- **Enable.** A provider is **Live** once it is enabled and has a verified domain. **Disable** stops
+  the next sign-in from reaching it.
+- **One domain, one workspace.** A verified domain cannot be claimed by another workspace, and
+  public email providers such as `gmail.com` are refused. Listing a domain without verifying it
+  reserves nothing.
+- **Sign-in page.** Type a work email at a verified domain into the sign-in form and the password
+  field gives way to **Continue with SSO**. See
+  [Sign in](/getting-started/sign-in#sign-in-with-your-companys-single-sign-on).
+- **Removing a provider** first tells you how many members have signed in through it.
+- **Audit.** Every change is recorded in the workspace's access audit as `sso.provider.created`,
+  `sso.provider.updated`, `sso.provider.deleted` or `sso.domain.verified`.
+- **REST API.** `/v1/tenants/{tenant}/sso/providers` — see the
+  [SSO reference](/reference/rest/sso). REST API 1.736.0, OpenAPI 1.594.0.
+- **For operators.** apiome-db **V393** must be applied. `APIOME_SSO_PUBLIC_DOMAINS` replaces the
+  built-in list of public email providers. The installation administrator's
+  [Single sign-on](/admin/single-sign-on) card works as before.

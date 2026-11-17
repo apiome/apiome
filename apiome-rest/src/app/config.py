@@ -884,6 +884,16 @@ class Settings(BaseSettings):
         ),
     )
 
+    # EID-1.2 (#5012): public mailbox domains no workspace may claim for single sign-on.
+    # Comma-separated; when set it replaces the built-in list (``app.sso_domain_verification``).
+    sso_public_domains: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SSO_PUBLIC_DOMAINS",
+            "sso_public_domains",
+        ),
+    )
+
     # COL-4.1 (#4525): presence heartbeats and lock actions per user, per tenant. A tab heartbeats
     # every ~20s, so the default leaves room for many tabs plus lock traffic.
     presence_rate_limit_per_minute: int = Field(

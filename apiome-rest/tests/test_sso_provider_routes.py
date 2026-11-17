@@ -35,7 +35,7 @@ from fastapi.testclient import TestClient
 from app import sso_provider_routes as routes
 from app.config import settings
 from app.main import app
-from app.sso_metadata import CODE_DOMAIN_CLAIMED, CODE_SLUG_TAKEN, SsoConfigError
+from app.sso_metadata import CODE_DOMAIN_CLAIMED, CODE_DOMAIN_EXISTS, CODE_SLUG_TAKEN, SsoConfigError
 
 client = TestClient(app)
 #: For sweeping every GET route: a route that fails (say, one that needs a database CI does not
@@ -69,11 +69,17 @@ SAML_METADATA = f"""<?xml version="1.0"?>
 
 class FakeSsoStore:
     """An in-memory stand-in for :mod:`app.sso_provider_store` with the same read guarantees:
-    admin reads never carry the ciphertext; only :meth:`list_routable_with_secrets` does."""
+    admin reads never carry the ciphertext; only :meth:`list_routable_with_secrets` does.
+
+    Domains follow V393: a provider lists a domain once, several providers may list the same
+    domain unverified, and only one may hold it verified. ``linked`` maps ``(tenant_id, slug)`` to
+    how many members signed in through that provider.
+    """
 
     def __init__(self) -> None:
         self.providers: Dict[str, Dict[str, Any]] = {}
-        self.domains: Dict[str, Dict[str, Any]] = {}
+        self.domains: Dict[tuple, Dict[str, Any]] = {}
+        self.linked: Dict[tuple, int] = {}
 
     def _public(self, row: Dict[str, Any]) -> Dict[str, Any]:
         out = {
@@ -91,12 +97,23 @@ class FakeSsoStore:
             key=lambda d: d["domain"],
         )
 
-    def list_providers(self, _db):
-        return [self._public(r) for r in self.providers.values()]
+    def list_providers(self, _db, *, tenant_id=None):
+        return [self._public(r) for r in self.providers.values() if tenant_id is None or r["tenant_id"] == tenant_id]
 
-    def get_provider(self, _db, provider_id):
+    def get_provider(self, _db, provider_id, *, tenant_id=None):
         row = self.providers.get(provider_id)
-        return self._public(row) if row else None
+        if row is None or (tenant_id is not None and row["tenant_id"] != tenant_id):
+            return None
+        return self._public(row)
+
+    def domain_verified_elsewhere(self, _db, provider_id, domain):
+        return any(
+            d["domain"] == domain and d["verified_at"] is not None and d["provider_id"] != provider_id
+            for d in self.domains.values()
+        )
+
+    def count_linked_members(self, _db, tenant_id, slug):
+        return self.linked.get((tenant_id, slug), 0)
 
     def create_provider(self, _db, values, *, actor):
         if any(r["slug"] == values["slug"] for r in self.providers.values()):
@@ -141,9 +158,11 @@ class FakeSsoStore:
         return public
 
     def add_domain(self, _db, provider_id, domain, *, token):
-        if domain in self.domains:
+        if self.domain_verified_elsewhere(_db, provider_id, domain):
             raise SsoConfigError(CODE_DOMAIN_CLAIMED, "claimed")
-        self.domains[domain] = {
+        if (provider_id, domain) in self.domains:
+            raise SsoConfigError(CODE_DOMAIN_EXISTS, "exists")
+        self.domains[(provider_id, domain)] = {
             "id": str(uuid.uuid4()),
             "provider_id": provider_id,
             "domain": domain,
@@ -152,22 +171,20 @@ class FakeSsoStore:
             "verified_by": None,
             "created_at": datetime.now(timezone.utc),
         }
-        return dict(self.domains[domain])
+        return dict(self.domains[(provider_id, domain)])
 
     def verify_domain(self, _db, provider_id, domain, *, actor):
-        row = self.domains.get(domain)
-        if row is None or row["provider_id"] != provider_id:
+        row = self.domains.get((provider_id, domain))
+        if row is None:
             return None
+        if self.domain_verified_elsewhere(_db, provider_id, domain):
+            raise SsoConfigError(CODE_DOMAIN_CLAIMED, "claimed")
         row["verified_at"] = row["verified_at"] or datetime.now(timezone.utc)
         row["verified_by"] = row["verified_by"] or actor
         return dict(row)
 
     def remove_domain(self, _db, provider_id, domain):
-        row = self.domains.get(domain)
-        if row is None or row["provider_id"] != provider_id:
-            return False
-        del self.domains[domain]
-        return True
+        return self.domains.pop((provider_id, domain), None) is not None
 
     def list_routable_with_secrets(self, _db):
         out = []
@@ -428,17 +445,37 @@ class TestDomainsAndEnabling:
         assert verified["domains"][0]["verified_by"] == "admin"
         assert verified["routable"] is True
 
-    def test_a_domain_belongs_to_one_provider(self, admin) -> None:
+    def test_a_verified_domain_belongs_to_one_provider(self, admin) -> None:
         headers = admin["headers"]
         first = _create_oidc(headers)
         second = _create_saml(headers)
-        assert (
-            client.post(f"{BASE}/{first['id']}/domains", json={"domain": "acme.com"}, headers=headers).status_code
-            == 201
-        )
+        _verified(headers, first["id"], "acme.com")
         response = client.post(f"{BASE}/{second['id']}/domains", json={"domain": "acme.com"}, headers=headers)
         assert response.status_code == 409
         assert response.json()["detail"]["error"] == "sso-domain-claimed"
+
+    def test_an_unverified_domain_reserves_nothing(self, admin) -> None:
+        """V393: listing a domain without proving it does not lock anyone else out."""
+        headers = admin["headers"]
+        first = _create_oidc(headers)
+        second = _create_saml(headers)
+        for provider in (first, second):
+            added = client.post(f"{BASE}/{provider['id']}/domains", json={"domain": "acme.com"}, headers=headers)
+            assert added.status_code == 201
+            assert added.json()["domains"][0]["record_name"] == "_apiome-challenge.acme.com"
+        assert client.post(f"{BASE}/{second['id']}/domains/acme.com/verify", headers=headers).status_code == 200
+        # The first to verify holds it; the other can no longer be verified.
+        late = client.post(f"{BASE}/{first['id']}/domains/acme.com/verify", headers=headers)
+        assert late.status_code == 409
+        assert late.json()["detail"]["error"] == "sso-domain-claimed"
+
+    def test_a_provider_lists_a_domain_once(self, admin) -> None:
+        headers = admin["headers"]
+        provider = _create_oidc(headers)
+        client.post(f"{BASE}/{provider['id']}/domains", json={"domain": "acme.com"}, headers=headers)
+        again = client.post(f"{BASE}/{provider['id']}/domains", json={"domain": "acme.com"}, headers=headers)
+        assert again.status_code == 409
+        assert again.json()["detail"]["error"] == "sso-domain-exists"
 
     def test_refuses_an_invalid_domain(self, admin) -> None:
         provider = _create_oidc(admin["headers"])

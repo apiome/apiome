@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.593.2
+  version: 1.594.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -92325,8 +92325,8 @@ paths:
       tags:
       - sso
       summary: Add Sso Domain
-      description: Attach an email domain, unverified. A domain belongs to one provider
-        installation-wide.
+      description: Attach an email domain, unverified. A domain another provider has
+        verified is refused.
       operationId: add_sso_domain_v1_admin_sso_providers__provider_id__domains_post
       parameters:
       - name: provider_id
@@ -92386,14 +92386,18 @@ paths:
         '404':
           description: No such provider.
         '409':
-          description: '`sso-domain-claimed`.'
+          description: '`sso-domain-claimed` or `sso-domain-exists`.'
   /v1/admin/sso/providers/{provider_id}/domains/{domain}/verify:
     post:
       tags:
       - sso
       summary: Verify Sso Domain
-      description: Mark a domain verified on the admin's word (DNS verification arrives
-        in EID-1.2).
+      description: 'Mark a domain verified on the admin''s word.
+
+
+        A workspace owner proves a domain with a DNS TXT record instead
+
+        (``POST /v1/tenants/{tenant}/sso/providers/{id}/domains/{domain}/verify``).'
       operationId: verify_sso_domain_v1_admin_sso_providers__provider_id__domains__domain__verify_post
       parameters:
       - name: provider_id
@@ -92452,6 +92456,8 @@ paths:
           description: 'Refused with a stable `sso-*` code: `{error, message}`.'
         '404':
           description: No such provider or domain.
+        '409':
+          description: '`sso-domain-claimed`: another provider has verified this domain.'
   /v1/admin/sso/providers/{provider_id}/domains/{domain}:
     delete:
       tags:
@@ -92566,6 +92572,600 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get resolved sso providersresponse422.
+  /v1/tenants/{tenant_slug}/sso/providers:
+    get:
+      tags:
+      - sso
+      summary: List the workspace's SSO providers
+      description: 'Every identity provider of this workspace with its domains, newest
+        first. Secrets are never included.
+
+
+        Requires a signed-in owner or tenant administrator; API keys are refused.'
+      operationId: list_tenant_sso_providers_v1_tenants__tenant_slug__sso_providers_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspaces Ssoprovidersauthorization schema.
+          - type: 'null'
+            description: Listtheworkspaces Ssoprovidersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspaces Ssoproviders Xapikey schema.
+          - type: 'null'
+            description: Listtheworkspaces Ssoproviders Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the workspace's sso providers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderListResponse'
+                description: Response payload for listtheworkspaces ssoprovidersresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+    post:
+      tags:
+      - sso
+      summary: Register an SSO provider
+      description: 'Register this workspace''s identity provider: OIDC by issuer (the
+        discovery document is fetched and checked) or SAML 2.0 by metadata URL or XML.
+        It starts disabled, and routes no sign-in until it is enabled **and** has a
+        verified domain.
+
+
+        Audited as `sso.provider.created`. Requires a signed-in owner or tenant administrator;
+        API keys are refused.'
+      operationId: create_tenant_sso_provider_v1_tenants__tenant_slug__sso_providers_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeran Ssoproviderauthorization schema.
+          - type: 'null'
+            description: Registeran Ssoproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeran Ssoprovider Xapikey schema.
+          - type: 'null'
+            description: Registeran Ssoprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSsoProviderCreateRequest'
+              description: Request body for registeran ssoproviderrequest.
+        description: Request body for register an sso provider.
+      responses:
+        '201':
+          description: Successful response for register an sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for registeran ssoproviderresponse201.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '503':
+          description: Secret encryption not configured.
+  /v1/tenants/{tenant_slug}/sso/providers/{provider_id}:
+    get:
+      tags:
+      - sso
+      summary: Read one SSO provider
+      description: 'One provider with its domains and how many members sign in through
+        it.
+
+
+        Requires a signed-in owner or tenant administrator; API keys are refused.'
+      operationId: get_tenant_sso_provider_v1_tenants__tenant_slug__sso_providers__provider_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readone Ssoproviderauthorization schema.
+          - type: 'null'
+            description: Readone Ssoproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readone Ssoprovider Xapikey schema.
+          - type: 'null'
+            description: Readone Ssoprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for readone ssoproviderresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider in this workspace.
+    patch:
+      tags:
+      - sso
+      summary: Change an SSO provider
+      description: 'Partially update a provider; omitted fields are left alone. `enabled:
+        false` stops sign-ins reaching the identity provider at once. Enabling an OIDC
+        provider needs its client secret (`sso-enable-incomplete`).
+
+
+        Audited as `sso.provider.updated` with the names of the changed fields. Requires
+        a signed-in owner or tenant administrator; API keys are refused.'
+      operationId: update_tenant_sso_provider_v1_tenants__tenant_slug__sso_providers__provider_id__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changean Ssoproviderauthorization schema.
+          - type: 'null'
+            description: Changean Ssoproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changean Ssoprovider Xapikey schema.
+          - type: 'null'
+            description: Changean Ssoprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSsoProviderUpdateRequest'
+              description: Request body for changean ssoproviderrequest.
+        description: Request body for change an sso provider.
+      responses:
+        '200':
+          description: Successful response for change an sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for changean ssoproviderresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider in this workspace.
+        '503':
+          description: Secret encryption not configured.
+    delete:
+      tags:
+      - sso
+      summary: Remove an SSO provider
+      description: 'Remove a provider, its domains and its sealed secrets. Members who
+        signed in through it keep their accounts but can no longer sign in this way;
+        `member_count` in the response says how many.
+
+
+        Audited as `sso.provider.deleted`. Requires a signed-in owner or tenant administrator;
+        API keys are refused.'
+      operationId: delete_tenant_sso_provider_v1_tenants__tenant_slug__sso_providers__provider_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removean Ssoproviderauthorization schema.
+          - type: 'null'
+            description: Removean Ssoproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removean Ssoprovider Xapikey schema.
+          - type: 'null'
+            description: Removean Ssoprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove an sso provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for removean ssoproviderresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider in this workspace.
+  /v1/tenants/{tenant_slug}/sso/providers/{provider_id}/domains:
+    post:
+      tags:
+      - sso
+      summary: Add an email domain
+      description: 'Attach an email domain, unverified, and issue the DNS challenge
+        for it: publish `verification_token` as a TXT record at `record_name`, then
+        call verify. An unverified domain routes no sign-in.
+
+
+        Refused: a public mailbox domain (`sso-domain-public`), a domain another workspace
+        has verified (`sso-domain-claimed`), a domain already on this provider (`sso-domain-exists`).
+
+
+        Audited as `sso.provider.updated`. Requires a signed-in owner or tenant administrator;
+        API keys are refused.'
+      operationId: add_tenant_sso_domain_v1_tenants__tenant_slug__sso_providers__provider_id__domains_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Addanemaildomainauthorization schema.
+          - type: 'null'
+            description: Addanemaildomainauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Addanemaildomain Xapikey schema.
+          - type: 'null'
+            description: Addanemaildomain Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoDomainCreateRequest'
+              description: Request body for addanemaildomainrequest.
+        description: Request body for add an email domain.
+      responses:
+        '201':
+          description: Successful response for add an email domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for addanemaildomainresponse201.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider in this workspace.
+        '409':
+          description: '`sso-domain-claimed` or `sso-domain-exists`.'
+  /v1/tenants/{tenant_slug}/sso/providers/{provider_id}/domains/{domain}:
+    delete:
+      tags:
+      - sso
+      summary: Remove an email domain
+      description: 'Detach a domain. Sign-ins from it stop reaching this identity provider
+        at once, and another workspace may then verify it.
+
+
+        Audited as `sso.provider.updated`. Requires a signed-in owner or tenant administrator;
+        API keys are refused.'
+      operationId: remove_tenant_sso_domain_v1_tenants__tenant_slug__sso_providers__provider_id__domains__domain__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Domain
+          description: Domain schema.
+        description: Path parameter identifying the domain segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeanemaildomainauthorization schema.
+          - type: 'null'
+            description: Removeanemaildomainauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeanemaildomain Xapikey schema.
+          - type: 'null'
+            description: Removeanemaildomain Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove an email domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSsoProviderView'
+                description: Response payload for removeanemaildomainresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider or domain in this workspace.
+  /v1/tenants/{tenant_slug}/sso/providers/{provider_id}/domains/{domain}/verify:
+    post:
+      tags:
+      - sso
+      summary: Verify an email domain by DNS
+      description: 'Look up the TXT record `_apiome-challenge.<domain>` and mark the
+        domain verified when it holds the domain''s `verification_token`. Always answers
+        `200` with `check.status`:
+
+
+        - `verified` — the domain now routes sign-ins (once the provider is enabled);
+
+        - `not-found` — no TXT record at that name yet;
+
+        - `mismatch` — a TXT record is there with another value (`check.observed` lists
+        what was found);
+
+        - `could-not-check` — the lookup itself failed (`check.observed` says why).
+        Nothing is changed, and the domain is **not** verified.
+
+
+        An already verified domain answers `verified` without a lookup. Limited to three
+        checks an hour per domain.
+
+
+        A successful verification is audited as `sso.domain.verified`. Requires a signed-in
+        owner or tenant administrator; API keys are refused.'
+      operationId: verify_tenant_sso_domain_v1_tenants__tenant_slug__sso_providers__provider_id__domains__domain__verify_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Domain
+          description: Domain schema.
+        description: Path parameter identifying the domain segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyanemaildomainby Dnsauthorization schema.
+          - type: 'null'
+            description: Verifyanemaildomainby Dnsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyanemaildomainby Dnsxapikey schema.
+          - type: 'null'
+            description: Verifyanemaildomainby Dnsxapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for verify an email domain by dns.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoDomainVerifyResponse'
+                description: Response payload for verifyanemaildomainby dnsresponse200.
+        '403':
+          description: Not a signed-in owner or tenant administrator of this workspace.
+        '422':
+          description: 'Refused with a stable `sso-*` code: `{error, message}`.'
+        '404':
+          description: No such provider or domain in this workspace.
+        '409':
+          description: '`sso-domain-claimed`: another workspace has verified this domain.'
+        '429':
+          description: '`sso-verify-rate-limited`: three checks an hour per domain.'
   /v1/internal/auth-events:
     post:
       tags:
@@ -170597,6 +171197,50 @@ components:
         by the
 
         import call itself.'
+    SsoDomainCheckView:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: '`verified`, `not-found`, `mismatch` or `could-not-check`.'
+          example: active
+        verified:
+          type: boolean
+          title: Verified
+          description: Whether the domain is now verified.
+          example: false
+        record_name:
+          type: string
+          title: Record Name
+          description: The TXT record that was looked up.
+          example: Example
+        expected:
+          type: string
+          title: Expected
+          description: The value the record must hold.
+          example: example
+        observed:
+          items:
+            type: string
+          type: array
+          title: Observed
+          description: 'What the resolver answered: the TXT values found, or why the lookup
+            failed.'
+          maxItems: 1000
+        message:
+          type: string
+          title: Message
+          description: Message.
+          example: Example validation message.
+      type: object
+      required:
+      - status
+      - verified
+      - record_name
+      - expected
+      - message
+      title: SsoDomainCheckView
+      description: What one DNS check found.
     SsoDomainCreateRequest:
       properties:
         domain:
@@ -170610,6 +171254,21 @@ components:
       - domain
       title: SsoDomainCreateRequest
       description: Body of ``POST /v1/admin/sso/providers/{id}/domains``.
+    SsoDomainVerifyResponse:
+      properties:
+        provider:
+          $ref: '#/components/schemas/TenantSsoProviderView'
+          description: Provider.
+        check:
+          $ref: '#/components/schemas/SsoDomainCheckView'
+          description: Check.
+      type: object
+      required:
+      - provider
+      - check
+      title: SsoDomainVerifyResponse
+      description: 'Payload of the verify route: the provider as it now stands, and what
+        the check found.'
     SsoDomainView:
       properties:
         domain:
@@ -170642,8 +171301,13 @@ components:
         verification_token:
           type: string
           title: Verification Token
-          description: The value EID-1.2's DNS TXT check looks for. Not a secret.
+          description: The value the DNS TXT record must hold. Not a secret.
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+        record_name:
+          type: string
+          title: Record Name
+          description: 'The TXT record to publish: `_apiome-challenge.<domain>`.'
+          example: Example
         created_at:
           anyOf:
           - type: string
@@ -170658,6 +171322,7 @@ components:
       - domain
       - verified
       - verification_token
+      - record_name
       title: SsoDomainView
       description: One email domain of a provider.
     SsoProviderCreateRequest:
@@ -177906,6 +178571,413 @@ components:
         and
 
         camelCase spellings so the UI can send either.'
+    TenantSsoProviderCreateRequest:
+      properties:
+        protocol:
+          type: string
+          title: Protocol
+          description: '`oidc` or `saml`.'
+          example: example
+        slug:
+          type: string
+          title: Slug
+          description: 2–28 lower-case letters, digits and hyphens. Unique installation-wide.
+          example: pet-store
+        display_name:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Display Name
+          description: Display Name.
+          example: Example
+        preset:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Default Role Slug
+          description: A role of this workspace, other than `owner`.
+        issuer:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Issuer
+          description: OIDC issuer URL (https).
+        client_id:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Client Id
+          description: Client ID.
+        client_secret:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Client Secret
+          description: Write-only; sealed at rest. Never returned.
+        metadata_url:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Metadata Url
+          description: SAML IdP metadata URL (https).
+        metadata_xml:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Metadata Xml
+          description: SAML IdP metadata XML, pasted.
+        email_source:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Email Source
+          description: 'SAML: `nameid` or `attribute`.'
+        email_attribute:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Email Attribute
+          description: Email Attribute.
+        sp_private_key:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider create.
+          - type: 'null'
+            description: Request body for tenant sso provider create.
+          title: Sp Private Key
+          description: SAML SP signing key (PEM). Write-only; sealed at rest.
+      additionalProperties: false
+      type: object
+      required:
+      - protocol
+      - slug
+      - display_name
+      title: TenantSsoProviderCreateRequest
+      description: 'Body of ``POST /v1/tenants/{t}/sso/providers``.
+
+
+        OIDC needs ``issuer`` + ``client_id`` + ``client_secret``; SAML needs ``metadata_url``
+        or
+
+        ``metadata_xml`` plus ``email_source`` (and ``email_attribute`` when that is ``attribute``).
+
+        Secrets are write-only. The provider belongs to the caller''s workspace.'
+    TenantSsoProviderListResponse:
+      properties:
+        providers:
+          items:
+            $ref: '#/components/schemas/TenantSsoProviderView'
+          type: array
+          title: Providers
+          description: Providers.
+          maxItems: 1000
+      type: object
+      title: TenantSsoProviderListResponse
+      description: Payload of ``GET /v1/tenants/{t}/sso/providers``.
+    TenantSsoProviderUpdateRequest:
+      properties:
+        display_name:
+          anyOf:
+          - type: string
+            maxLength: 120
+            minLength: 1
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Display Name
+          description: Display Name.
+        enabled:
+          anyOf:
+          - type: boolean
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Enabled
+          description: Whether the resource is active.
+        preset:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Default Role Slug
+          description: Default Role Slug.
+        client_id:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Client Id
+          description: Client ID.
+        client_secret:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Client Secret
+          description: Client Secret.
+        metadata_url:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Metadata Url
+          description: Metadata URL.
+        metadata_xml:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Metadata Xml
+          description: Metadata Xml.
+        email_source:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Email Source
+          description: Email Source.
+        email_attribute:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Email Attribute
+          description: Email Attribute.
+        sp_private_key:
+          anyOf:
+          - type: string
+            description: Request body for tenant sso provider update.
+          - type: 'null'
+            description: Request body for tenant sso provider update.
+          title: Sp Private Key
+          description: Sp Private Key.
+      additionalProperties: false
+      type: object
+      title: TenantSsoProviderUpdateRequest
+      description: 'Body of ``PATCH /v1/tenants/{t}/sso/providers/{id}`` — a partial update,
+        by field presence.
+
+
+        An omitted field is left as stored. ``client_secret`` / ``sp_private_key`` are
+        write-only: a
+
+        value replaces the sealed secret, ``null`` clears it. Sending ``metadata_url``
+        or
+
+        ``metadata_xml`` re-reads the SAML metadata; sending ``client_id`` re-runs OIDC
+        discovery.'
+    TenantSsoProviderView:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        plugin_provider_id:
+          type: string
+          title: Plugin Provider Id
+          description: '`sso-<slug>`: the id in sign-in URLs.'
+          example: plugin_01h2xcejqtf3fz5y5j0v8k9m2p
+        identity_kind:
+          type: string
+          title: Identity Kind
+          description: '`sso:<slug>`: the provider recorded on identities and auth events.'
+          example: example
+        protocol:
+          type: string
+          title: Protocol
+          description: '`oidc` or `saml`.'
+          example: example
+        display_name:
+          type: string
+          title: Display Name
+          description: Display Name.
+          example: Example
+        issuer:
+          type: string
+          title: Issuer
+          description: OIDC issuer, or the SAML IdP entity id.
+          example: example
+        tenant_id:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Tenant Id
+          description: Tenant that owns the resource.
+        tenant_name:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Tenant Name
+          description: Tenant Name.
+        oidc_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Oidc Config
+          description: Client id and discovered endpoints; no secret.
+        saml_config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Saml Config
+          description: IdP entity id, SSO URL, binding, certificates and email source.
+        has_client_secret:
+          type: boolean
+          title: Has Client Secret
+          description: Whether client secret.
+          example: true
+        has_sp_private_key:
+          type: boolean
+          title: Has Sp Private Key
+          description: Whether sp private key.
+          example: true
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        routable:
+          type: boolean
+          title: Routable
+          description: 'Enabled and at least one verified domain: sign-ins reach the IdP.'
+          example: false
+        preset:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Preset
+          description: Preset.
+        default_role_slug:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Default Role Slug
+          description: Default Role Slug.
+        domains:
+          items:
+            $ref: '#/components/schemas/SsoDomainView'
+          type: array
+          title: Domains
+          description: Domains.
+          maxItems: 1000
+        created_by:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Created By
+          description: Created By.
+        updated_by:
+          anyOf:
+          - type: string
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Updated By
+          description: Updated By.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Tenant SSO Provider View schema.
+          - type: 'null'
+            description: Tenant SSO Provider View schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        member_count:
+          type: integer
+          title: Member Count
+          description: Members of this workspace who have signed in through this provider.
+          default: 0
+          example: 1
+      type: object
+      required:
+      - id
+      - slug
+      - plugin_provider_id
+      - identity_kind
+      - protocol
+      - display_name
+      - issuer
+      - has_client_secret
+      - has_sp_private_key
+      - enabled
+      - routable
+      title: TenantSsoProviderView
+      description: A provider as its workspace's owners see it. Never carries a secret.
     TenantsMeResponse:
       properties:
         items:

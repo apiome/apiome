@@ -16,6 +16,15 @@
       ]
     },
     {
+      "id": "login-sso-routed",
+      "route": "/login",
+      "waitFor": "[data-testid=\"login-sso-routed\"]",
+      "data": "fixture:hive-a11y/login-sso-routed.html",
+      "sources": [
+        "apiome-ui/src/app/login/useSsoEmailRouting.ts"
+      ]
+    },
+    {
       "id": "signup",
       "route": "/signup",
       "waitFor": "[data-testid=\"signup-card\"]",
@@ -1272,6 +1281,39 @@
       "route": "/ade/dashboard/roles",
       "waitFor": "[data-testid=\"roles-lock-note\"]",
       "data": "fixture:hive-a11y/roles-builtin.html"
+    },
+    {
+      "id": "sso-providers",
+      "route": "/ade/dashboard/sso",
+      "waitFor": "[data-testid=\"sso-table\"]",
+      "data": "fixture:hive-a11y/sso-providers.html",
+      "sources": [
+        "apiome-ui/lib/workspace-sso.ts"
+      ]
+    },
+    {
+      "id": "sso-provider-configure",
+      "route": "/ade/dashboard/sso",
+      "waitFor": "[data-testid=\"sso-configure-form\"]",
+      "data": "fixture:hive-a11y/sso-provider-configure.html",
+      "sources": [
+        "apiome-ui/lib/workspace-sso.ts",
+        "apiome-ui/src/app/components/ade/sso/SsoProviderDrawer.tsx",
+        "apiome-ui/src/app/components/ade/sso/SsoConnectionFields.tsx",
+        "apiome-ui/src/app/components/ade/sso/SsoCopyValue.tsx"
+      ]
+    },
+    {
+      "id": "sso-domain-verify",
+      "route": "/ade/dashboard/sso",
+      "waitFor": "[data-testid=\"sso-domains-panel\"]",
+      "data": "fixture:hive-a11y/sso-domain-verify.html",
+      "sources": [
+        "apiome-ui/lib/workspace-sso.ts",
+        "apiome-ui/src/app/components/ade/sso/SsoProviderDrawer.tsx",
+        "apiome-ui/src/app/components/ade/sso/SsoDomainsPanel.tsx",
+        "apiome-ui/src/app/components/ade/sso/SsoCopyValue.tsx"
+      ]
     },
     {
       "id": "roles-draft",
