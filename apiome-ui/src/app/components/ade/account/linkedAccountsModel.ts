@@ -110,6 +110,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   notion: 'Notion account sign-in',
   figma: 'Figma account sign-in',
   linear: 'Linear account sign-in',
+  dropbox: 'Dropbox account sign-in',
 };
 
 /**

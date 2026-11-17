@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -138,6 +138,8 @@ config is stored in the database need none of them set; see
 | `FIGMA_CLIENT_SECRET` | Figma | To enable Figma | Figma OAuth app **Client secret** |
 | `LINEAR_CLIENT_ID` | Linear | To enable Linear | Linear OAuth application **Client ID** |
 | `LINEAR_CLIENT_SECRET` | Linear | To enable Linear | Linear OAuth application **Client secret** |
+| `DROPBOX_CLIENT_ID` | Dropbox | To enable Dropbox | Dropbox app **App key** |
+| `DROPBOX_CLIENT_SECRET` | Dropbox | To enable Dropbox | Dropbox app **App secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -226,7 +228,7 @@ links an account.
 | `notion` | **link-first** | OLO-9.21 | yes | Owner-user email from the token exchange, no verified claim |
 | `figma` | **link-first** | OLO-9.22 | yes | `/v1/me` email, no verified claim |
 | `linear` | **link-first** | OLO-9.23 | yes | Viewer email, no verified claim |
-| `dropbox` | **trusted** | OLO-9.24 | no | `email_verified` on `get_current_account` |
+| `dropbox` | **trusted** | OLO-9.24 | yes | `email_verified` on `get_current_account` |
 | `zoom` | **trusted** | OLO-9.25 | no | `verified` on `/v2/users/me` |
 | `huggingface` | **trusted** | OLO-9.26 | no | `email_verified` claim |
 | `vercel` | **link-first** (provisional) | OLO-9.27 | no | Email and verified semantics confirmed at implementation |
@@ -1148,6 +1150,58 @@ engine always fail-closes (**link-first**), and `linear` is not in `AUTO_LINK_TR
 A `viewer` with no email address surfaces `email-required`. A GraphQL error, or a response with
 no `viewer`, yields no identity and the sign-in is refused.
 
+## Dropbox (OLO-9.24)
+
+For people whose personal or work identity is their Dropbox account.
+
+1. On the [Dropbox App Console](https://www.dropbox.com/developers/apps), choose **Create app**.
+   Choose **Scoped access**, then **App folder** — Apiome reads no files, so the narrowest access
+   type is enough — and name the app. The name is what people see on Dropbox's consent screen.
+2. On the **Settings** tab, under **OAuth 2 → Redirect URIs**, add:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/dropbox`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/dropbox` for local dev)
+3. On the **Permissions** tab, make sure **`account_info.read`** is selected (it is by default)
+   and choose **Submit** if you changed anything. No other permission is needed.
+4. Back on **Settings**, copy the **App key**, then choose **Show** beside **App secret** and
+   copy it.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+DROPBOX_CLIENT_ID=<App key>
+DROPBOX_CLIENT_SECRET=<App secret>
+```
+
+A new Dropbox app has **Development** status and can be linked by a limited number of Dropbox
+users; choose **Apply for production** on the **Settings** tab before opening sign-in to
+everyone.
+
+Dropbox's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`dropbox()` helper):
+
+- Authorize: `https://www.dropbox.com/oauth2/authorize` with the scope `account_info.read` — the
+  only scope Apiome asks for — and a PKCE challenge (`S256`). No `token_access_type` is sent, so
+  Dropbox issues a short-lived access token and no refresh token; Apiome uses it for one request
+  and keeps no Dropbox token.
+- Token: `https://api.dropboxapi.com/oauth2/token` — the client id and secret are sent in the
+  form body, with the PKCE verifier
+- User: `https://api.dropboxapi.com/2/users/get_current_account` — an RPC endpoint, so Apiome
+  sends a `POST` with no body
+
+The identity is keyed on the Dropbox account id (`account_id`, `dbid:…`). The display name is
+`name.display_name` and the picture is `profile_photo_url`; the mutable name is never the key.
+
+**Email verified semantics:** `get_current_account` reports the boolean `email_verified`; Apiome
+honors it only when it is exactly `true` — a missing, `null` or non-boolean value is unverified.
+Dropbox is a **trusted** provider and `dropbox` is in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Verified address** — signs in the linked account, joins the account with the same address,
+  or starts a new account.
+- **Unverified address** — rejected with `unverified-email` unless the person is linking Dropbox
+  explicitly or the identity is already bound (**link-first**).
+
+An account with no email address surfaces `email-required`. A failed `get_current_account`
+request, or a response with no `account_id`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1320,7 +1374,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma and Linear need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear and Dropbox need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

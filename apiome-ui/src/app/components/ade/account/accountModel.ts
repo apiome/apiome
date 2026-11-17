@@ -238,6 +238,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   notion: 'Notion',
   figma: 'Figma',
   linear: 'Linear',
+  dropbox: 'Dropbox',
 };
 
 /**

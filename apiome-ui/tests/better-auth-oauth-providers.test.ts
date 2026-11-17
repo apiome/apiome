@@ -102,6 +102,8 @@ const ALL_ENABLED: Record<string, string> = {
   FIGMA_CLIENT_SECRET: 'fg-secret',
   LINEAR_CLIENT_ID: 'ln-id',
   LINEAR_CLIENT_SECRET: 'ln-secret',
+  DROPBOX_CLIENT_ID: 'db-id',
+  DROPBOX_CLIENT_SECRET: 'db-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -217,6 +219,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'notion',
       'figma',
       'linear',
+      'dropbox',
     ]);
   });
 
@@ -244,6 +247,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'notion',
       'figma',
       'linear',
+      'dropbox',
     ]);
   });
 
@@ -309,6 +313,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const linear = buildGenericOAuthConfig('linear', ALL_ENABLED)!;
     expect(linear.clientId).toBe('ln-id');
     expect(linear.clientSecret).toBe('ln-secret');
+    const dropbox = buildGenericOAuthConfig('dropbox', ALL_ENABLED)!;
+    expect(dropbox.clientId).toBe('db-id');
+    expect(dropbox.clientSecret).toBe('db-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -612,6 +619,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['read']);
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(false);
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('dropbox: fixed Dropbox endpoints; account_info.read; body-credential exchange; PKCE on (OLO-9.24)', () => {
+    const cfg = buildGenericOAuthConfig('dropbox', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('dropbox');
+    expect(cfg.authorizationUrl).toBe('https://www.dropbox.com/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.dropboxapi.com/oauth2/token');
+    expect(cfg.userInfoUrl).toBe('https://api.dropboxapi.com/2/users/get_current_account');
+    expect(cfg.scopes).toEqual(['account_info.read']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(true);
+    // No offline access is requested: Apiome keeps no Dropbox token.
+    expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -3527,5 +3549,284 @@ describe('getUserInfo — Linear fail-closed link-first (OLO-9.23)', () => {
     expect(result).toBeNull();
     expect(override).not.toBeNull();
     expect(calls.recordUserLogin).toEqual([]);
+  });
+});
+
+/* ── getUserInfo: Dropbox (OLO-9.24) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Dropbox sign-in and linking (OLO-9.24)', () => {
+  /** A Dropbox account as `get_current_account` returns it. */
+  const ACCOUNT = {
+    account_id: 'dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc',
+    name: {
+      given_name: 'Ada',
+      surname: 'Lovelace',
+      familiar_name: 'Ada',
+      display_name: 'Ada Lovelace',
+      abbreviated_name: 'AL',
+    },
+    email: 'ada@example.com',
+    email_verified: true,
+    profile_photo_url: 'http://img/dropbox.png',
+  };
+  const ACCOUNT_URL = 'https://api.dropboxapi.com/2/users/get_current_account';
+
+  /** Serve `account` from `get_current_account` (a failed response when null) and record each request. */
+  const dropboxAccount = (account: unknown) => {
+    const requests: Array<{
+      url: string;
+      method?: string;
+      authorization: string;
+      contentType: string | undefined;
+      body?: string;
+    }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({
+        url,
+        method: init.method,
+        authorization: init.headers.Authorization,
+        contentType: init.headers['Content-Type'],
+        body: init.body,
+      });
+      if (url === ACCOUNT_URL && account !== null) {
+        return { ok: true, json: async () => account };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Dropbox account id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = dropboxAccount(ACCOUNT);
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: ACCOUNT.account_id,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'http://img/dropbox.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // An RPC endpoint: POST, no body, and no JSON content type (Dropbox rejects an empty JSON body).
+    expect(requests).toEqual([
+      {
+        url: ACCOUNT_URL,
+        method: 'POST',
+        authorization: 'Bearer tok',
+        contentType: undefined,
+        body: undefined,
+      },
+    ]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = dropboxAccount(ACCOUNT);
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ACCOUNT.account_id, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'dropbox', providerUserId: ACCOUNT.account_id },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = dropboxAccount(ACCOUNT);
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'dropbox',
+      providerUserId: ACCOUNT.account_id,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['false', false],
+    ['absent', undefined],
+    ['null', null],
+    ['the string "true"', 'true'],
+    ['the number 1', 1],
+  ])(
+    'email_verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = dropboxAccount({ ...ACCOUNT, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'dropbox',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('unverified email on a new account is refused, not sent to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('unverified email on an already-linked identity still signs in', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ACCOUNT.account_id, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Dropbox account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'dropbox', providerUserId: ACCOUNT.account_id },
+    });
+  });
+
+  test.each([
+    ['null', null],
+    ['absent', undefined],
+    ['empty', ''],
+    ['not a string', 42],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, email });
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['no name object', { name: undefined }],
+    ['a name that is not an object', { name: 'Ada Lovelace' }],
+    ['an empty display name', { name: { display_name: '' } }],
+  ])('%s → signs in with no display name', async (_label, overrides) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, ...overrides });
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: ACCOUNT.account_id });
+    expect((result as { name?: unknown }).name).not.toBe('Ada Lovelace');
+  });
+
+  test('an account without a profile photo signs in with no image', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = dropboxAccount({ ...ACCOUNT, profile_photo_url: undefined });
+
+    const { result } = await runGetUserInfo(
+      'dropbox',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: ACCOUNT.account_id });
+    expect((result as { image?: unknown }).image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed get_current_account request', null, 'tok'],
+    ['a body that is not an object', 'nope', 'tok'],
+    ['an array body', [ACCOUNT], 'tok'],
+    ['an account without an account_id', { ...ACCOUNT, account_id: '' }, 'tok'],
+    ['a missing access token', ACCOUNT, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = dropboxAccount(body);
+
+    const { result, override } = await runGetUserInfo(
+      'dropbox',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
   });
 });

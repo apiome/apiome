@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -75,6 +75,11 @@
  *    PKCE; the user comes from the GraphQL `viewer` query (`api.linear.app/graphql`), whose email
  *    carries no verified claim (Better Auth `linear()` hard-codes `emailVerified: false`) →
  *    fail-closed link-first.
+ *  - **Dropbox (OLO-9.24):** fixed Dropbox endpoints (`www.dropbox.com/oauth2/authorize`,
+ *    `api.dropboxapi.com/oauth2/token`), scope `account_info.read`, client credentials in the
+ *    exchange body, PKCE on; the user comes from a body-less POST to
+ *    `api.dropboxapi.com/2/users/get_current_account`, whose `email_verified` flag is normalized
+ *    fail-closed (true only when exactly `true`), so an unverified Dropbox address is refused.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -583,6 +588,12 @@ const LINEAR_TOKEN_URL = 'https://api.linear.app/oauth/token';
 const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
 /** The `viewer` fields the normalizer maps — the identity subset of Better Auth's `linear()` query. */
 const LINEAR_VIEWER_QUERY = 'query { viewer { id name email avatarUrl } }';
+
+/** Dropbox OAuth 2.0: fixed endpoints, mirrored from Better Auth's `dropbox` provider (OLO-9.24). */
+const DROPBOX_AUTHORIZE_URL = 'https://www.dropbox.com/oauth2/authorize';
+const DROPBOX_TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
+/** Dropbox's user resource is an RPC endpoint: a POST with no body, not a GET. */
+const DROPBOX_USERINFO_URL = 'https://api.dropboxapi.com/2/users/get_current_account';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1230,6 +1241,79 @@ async function normalizeLinear(
   };
 }
 
+/**
+ * Fetch the signed-in Dropbox account (OLO-9.24): POST `get_current_account` with the access
+ * token and **no body**, matching Better Auth's `dropbox()` helper. No `Content-Type` is sent —
+ * Dropbox rejects an empty body declared as JSON. Fail-soft to null on a transport or parse
+ * error, a non-2xx response, or a body that is not an object.
+ *
+ * @param accessToken The Dropbox access token from the code exchange.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The account object, or null when Dropbox returned none.
+ */
+async function fetchDropboxAccount(
+  accessToken: string,
+  fetchImpl: FetchLike
+): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetchImpl(DROPBOX_USERINFO_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'User-Agent': 'apiome',
+      },
+    });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalize a Dropbox sign-in (OLO-9.24): fetch `get_current_account` with the access token and
+ * map `account_id` / `email` / `name.display_name` / `profile_photo_url` — the resource and
+ * mapping of Better Auth's `dropbox()` helper.
+ *
+ * Dropbox reports whether the account's email is verified as the boolean `email_verified`. It is
+ * re-stamped onto the profile fail-closed — true only when the field is exactly `true` — so a
+ * missing, null or non-boolean value (the string `"true"`, the number `1`) is unverified and
+ * `resolveOAuthEmailVerified` refuses the address (`unverified-email`). The identity is keyed on
+ * the account id (`dbid:…`); the mutable display name is never the key. A failed fetch yields an
+ * empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeDropbox(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const account = accessToken ? await fetchDropboxAccount(accessToken, fetchImpl) : null;
+  const profile: Record<string, unknown> = account ? { ...account } : {};
+  profile.email_verified = profile.email_verified === true;
+  const names =
+    profile.name && typeof profile.name === 'object'
+      ? (profile.name as Record<string, unknown>)
+      : {};
+  return {
+    accountId: typeof profile.account_id === 'string' ? profile.account_id : '',
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name: typeof names.display_name === 'string' && names.display_name ? names.display_name : null,
+    image:
+      typeof profile.profile_photo_url === 'string' && profile.profile_photo_url
+        ? profile.profile_photo_url
+        : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1276,6 +1360,7 @@ const NORMALIZERS: Record<
   notion: (tokens, _env, fetchImpl) => normalizeNotion(tokens, fetchImpl),
   figma: (tokens, _env, fetchImpl) => normalizeFigma(tokens, fetchImpl),
   linear: (tokens, _env, fetchImpl) => normalizeLinear(tokens, fetchImpl),
+  dropbox: (tokens, _env, fetchImpl) => normalizeDropbox(tokens, fetchImpl),
 };
 
 /**
@@ -1309,7 +1394,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma | linear).
+ *   discord | salesforce | notion | figma | linear | dropbox).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1770,6 +1855,27 @@ export function buildGenericOAuthConfig(
         scopes: ['read'],
         authentication: 'post',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'dropbox': {
+      return {
+        providerId: 'dropbox',
+        clientId: readEnvString(env, 'DROPBOX_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'DROPBOX_CLIENT_SECRET') ?? '',
+        // Fixed Dropbox OAuth 2.0 endpoints, mirrored from Better Auth's `dropbox()` helper — no
+        // issuer. `account_info.read` is the one scope `get_current_account` needs; the code
+        // exchange sends the client id and secret in the form body together with the PKCE
+        // verifier (the helper passes one, so PKCE stays on). No `token_access_type` is sent:
+        // Apiome keeps no Dropbox token, so the default short-lived grant is enough.
+        // `userInfoUrl` names the RPC endpoint the normalizer POSTs to; its `email_verified`
+        // flag is honored fail-closed (see normalizeDropbox).
+        authorizationUrl: DROPBOX_AUTHORIZE_URL,
+        tokenUrl: DROPBOX_TOKEN_URL,
+        userInfoUrl: DROPBOX_USERINFO_URL,
+        scopes: ['account_info.read'],
+        authentication: 'post',
+        pkce: true,
         getUserInfo,
       };
     }
