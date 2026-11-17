@@ -908,13 +908,13 @@ describe('accessibility', () => {
  * `A11Y_FIXTURE_DUMP=1 npx jest tests/linked-accounts-hive-redesign.test.tsx -t "docs fixtures"`.
  */
 describe('the docs fixtures', () => {
-  /** A deployment with four sign-in providers enabled and one teaser. */
+  /** A deployment with five sign-in providers enabled (Atlassian shipped in OLO-9.8, #4991). */
   const DOCS_PROVIDERS: ProviderSummary[] = [
     { id: 'github', label: 'GitHub', status: 'available', enabled: true },
     { id: 'gitlab', label: 'GitLab', status: 'available', enabled: true },
     { id: 'azure', label: 'Microsoft', status: 'available', enabled: true },
     { id: 'google', label: 'Google', status: 'available', enabled: true },
-    { id: 'atlassian', label: 'Atlassian', status: 'coming-soon', enabled: false },
+    { id: 'atlassian', label: 'Atlassian', status: 'available', enabled: true },
   ];
 
   /** GitHub with a stored token, GitLab without one. */

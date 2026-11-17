@@ -116,6 +116,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * when `email_verified` is absent the engine fail-closes to link-first (OLO-9.41). `vk` (OLO-9.42)
  * returns email with the grant but no verified claim — always fail-closed link-first.
  * `wechat` (OLO-9.43) is **not** listed: WeChat exposes no email at all (link-only).
+ * `atlassian` (OLO-9.8) is trusted through the generic path: `email_verified` from the User
+ * Identity API is honored when present, otherwise the engine fail-closes to link-first.
  */
 export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'github',
@@ -129,6 +131,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'auth0',
   'line',
   'vk',
+  'atlassian',
 ]);
 
 /**
@@ -173,6 +176,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'line',
   'vk',
   'wechat',
+  'atlassian',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

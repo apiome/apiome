@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -119,6 +119,8 @@ config is stored in the database need none of them set; see
 | `WECHAT_CLIENT_ID` | WeChat | To enable WeChat | WeChat Open Platform Website App **AppID** |
 | `WECHAT_CLIENT_SECRET` | WeChat | To enable WeChat | WeChat Open Platform Website App **AppSecret** |
 | `WECHAT_LANG` | WeChat | No (default `cn`) | QR page language: `cn` or `en` |
+| `ATLASSIAN_CLIENT_ID` | Atlassian | To enable Atlassian | OAuth 2.0 (3LO) integration **Client ID** |
+| `ATLASSIAN_CLIENT_SECRET` | Atlassian | To enable Atlassian | OAuth 2.0 (3LO) integration **Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -643,6 +645,40 @@ enabling WeChat so identity traffic and personal data stay aligned with local co
 expectations. Enabling WeChat from a non-CN deployment is technically possible but should be a
 deliberate operator choice.
 
+## Atlassian — OAuth 2.0 (3LO) integration (OLO-9.8)
+
+For teams whose people hold Atlassian accounts (Jira, Confluence) rather than GitHub or GitLab.
+
+1. In the [Atlassian developer console](https://developer.atlassian.com/console/myapps/), choose
+   **Create → OAuth 2.0 integration** (or open an existing one).
+2. Under **Permissions**, add the **User identity API** and configure it with the
+   **`read:me`** and **`read:account`** scopes.
+3. Under **Authorization**, add **OAuth 2.0 (3LO)** with the **Callback URL**:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/atlassian`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/atlassian` for local dev)
+4. Under **Distribution**, set the status to **Sharing** if people outside the account that owns
+   the integration must be able to sign in.
+5. Under **Settings**, copy the **Client ID** and **Secret**.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+ATLASSIAN_CLIENT_ID=<Client ID>
+ATLASSIAN_CLIENT_SECRET=<Secret>
+```
+
+The sign-in flow uses fixed Atlassian endpoints — there is no issuer to configure:
+
+- Authorize: `https://auth.atlassian.com/authorize` with `audience=api.atlassian.com`,
+  `prompt=consent`, PKCE, and the `read:me read:account` scopes
+- Token: `https://auth.atlassian.com/oauth/token`
+- User info: GET `https://api.atlassian.com/me` (the User Identity API) with the bearer token
+
+The identity is keyed on the Atlassian `account_id`. **Email verified semantics:** the
+`email_verified` value in the `/me` response is honored when it is `true`; when it is absent or
+false the engine fail-closes (**link-first** — explicit link intent or an already-bound identity).
+A profile with no email surfaces `email-required` — an Atlassian account whose email visibility is
+restricted must link from **Linked accounts** first.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -815,7 +851,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian needs no issuer.) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

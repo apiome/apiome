@@ -65,6 +65,8 @@ const ALL_ENABLED_ENV = {
   VK_CLIENT_SECRET: 'vk-secret',
   WECHAT_CLIENT_ID: 'wx-id',
   WECHAT_CLIENT_SECRET: 'wx-secret',
+  ATLASSIAN_CLIENT_ID: 'atl-id',
+  ATLASSIAN_CLIENT_SECRET: 'atl-secret',
 };
 
 describe('providerEnvIssues', () => {

@@ -120,7 +120,8 @@ class ProviderDescriptor:
 # generic OIDC connector with an issuer config field; ``auth0`` is available (OLO-9.7, #4990) with
 # a tenant-issuer config field; ``line`` is available (OLO-9.41, #5054) as credentials-only LINE Login;
 # ``vk`` is available (OLO-9.42, #5055) as credentials-only VK ID (Russia / CIS country MVP);
-# ``wechat`` is available (OLO-9.43, #5056) as credentials-only WeChat Open Platform (China country MVP).
+# ``wechat`` is available (OLO-9.43, #5056) as credentials-only WeChat Open Platform (China country MVP);
+# ``atlassian`` is available (OLO-9.8, #4991) as credentials-only Atlassian OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -195,6 +196,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "WeChat",
         STATUS_AVAILABLE,
         client_credential_fields("WECHAT_CLIENT_ID", "WECHAT_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "atlassian",
+        "Atlassian",
+        STATUS_AVAILABLE,
+        client_credential_fields("ATLASSIAN_CLIENT_ID", "ATLASSIAN_CLIENT_SECRET"),
     ),
 )
 

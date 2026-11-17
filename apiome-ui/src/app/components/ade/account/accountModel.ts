@@ -229,6 +229,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   line: 'LINE',
   vk: 'VK',
   wechat: 'WeChat',
+  atlassian: 'Atlassian',
 };
 
 /**

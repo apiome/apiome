@@ -1,0 +1,24 @@
+---
+slug: atlassian-sign-in
+title: Sign in with Atlassian
+description: "Sign in and link with the Atlassian account you use for Jira."
+authors: [apiome]
+---
+
+Teams that live in Jira and Confluence can now sign in to Apiome with their Atlassian account, and
+link it beside GitHub, GitLab or any other provider on
+[Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Atlassian** is a new entry in **System settings → Add Provider**. It
+  needs a client ID and a client secret from an OAuth 2.0 integration in the Atlassian developer
+  console — no issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side)
+  lists what to set on Atlassian's side. The environment variables are `ATLASSIAN_CLIENT_ID` and
+  `ATLASSIAN_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/atlassian`.
+- **Email addresses.** Apiome joins an Atlassian sign-in to an existing account only when Atlassian
+  reports the address as verified. Otherwise, sign in another way first and link Atlassian from
+  **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `atlassian` as an available provider, and
+  `PUT /v1/admin/auth-providers/atlassian` stores its credentials.

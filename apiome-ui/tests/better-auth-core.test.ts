@@ -165,6 +165,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     // Better Auth seals the provider tokens it writes to `apiome.account` (#4960) — never plaintext.
     expect(config.account.encryptOAuthTokens).toBe(true);
     expect([...config.account.accountLinking.trustedProviders].sort()).toEqual([
+      'atlassian',
       'auth0',
       'aws',
       'azure',
