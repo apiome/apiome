@@ -257,6 +257,13 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['api-products-list.html', 'api-product-editor.html'] },
   },
+  {
+    // APX-1.2 (#6099): the product editor with the plan editor open, dumped by
+    // `tests/api-plans-ui.test.tsx`.
+    id: 'api-plans',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['api-plan-editor.html'] },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

@@ -38,10 +38,11 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional, Union
 
+from .api_plans import plans_loss_item
 from .canonical_model import CanonicalApi
 from .emitter import CapabilityProfile, Emitter
-from .fidelity_rulepack import CapabilityRulePack, FidelityRulePack
-from .lossiness import LossinessReport
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityRulePack
+from .lossiness import LossinessReport, LossItem
 
 __all__ = [
     "compute_lossiness",
@@ -121,4 +122,10 @@ def compute_lossiness_for_emitter(
     pack = pack_cls(profile, label)
     if options:
         pack.apply_options(options)
-    return compute_lossiness(api, profile, rule_pack=pack)
+    report = compute_lossiness(api, profile, rule_pack=pack)
+    # APX-1.2 (#6099): a revision's API plans — kept as ``x-apiome-plans`` by OpenAPI, dropped by
+    # every other target. Added here rather than in a pack, so no target's pack can forget them.
+    plans = plans_loss_item(api.extras, emitter_cls.key, label)
+    if plans is None:
+        return report
+    return LossinessReport(items=[*report.items, LossItem(construct=ROOT_CONSTRUCT_KEY, **plans)])

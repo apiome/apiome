@@ -1,9 +1,9 @@
 /**
  * @jest-environment node
  *
- * The API products proxy — APX-1.1 (#6098): the list, one product and its members map onto
- * apiome-rest's `/v1/tenants/{t}/products…` routes with only their own fields; anything else is a
- * 404 without calling apiome-rest.
+ * The API products proxy — APX-1.1 (#6098): the list, one product, its members and (APX-1.2, #6099)
+ * its plans map onto apiome-rest's `/v1/tenants/{t}/products…` routes with only their own fields;
+ * anything else is a 404 without calling apiome-rest.
  */
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
@@ -71,11 +71,29 @@ describe('the API products proxy', () => {
     ]);
   });
 
+  test('forwards plans with only plan fields', async () => {
+    await GET(bare(), ctx('payments', 'plans'));
+    await POST(withBody('POST', { name: 'Standard', limits: [{ window: 'minute', requests: 100 }], tenant: 'x' }), ctx('payments', 'plans'));
+    await PATCH(withBody('PATCH', { slug: 'renamed', approval: 'auto' }), ctx('payments', 'plans', 'standard'));
+    await DELETE(bare(), ctx('payments', 'plans', 'standard'));
+    expect(upstream).toEqual([
+      { url: 'http://rest.test/v1/tenants/acme/products/payments/plans', method: 'GET', body: undefined },
+      {
+        url: 'http://rest.test/v1/tenants/acme/products/payments/plans',
+        method: 'POST',
+        body: { name: 'Standard', limits: [{ window: 'minute', requests: 100 }] },
+      },
+      { url: 'http://rest.test/v1/tenants/acme/products/payments/plans/standard', method: 'PATCH', body: { approval: 'auto' } },
+      { url: 'http://rest.test/v1/tenants/acme/products/payments/plans/standard', method: 'DELETE', body: undefined },
+    ]);
+  });
+
   test('refuses every other path or method without calling apiome-rest', async () => {
     expect((await DELETE(bare(), ctx())).status).toBe(404);
     expect((await POST(withBody('POST', {}), ctx('payments'))).status).toBe(404);
     expect((await GET(bare(), ctx('Not A Slug'))).status).toBe(404);
-    expect((await GET(bare(), ctx('payments', 'plans'))).status).toBe(404);
+    expect((await GET(bare(), ctx('payments', 'pricing'))).status).toBe(404);
+    expect((await POST(withBody('POST', {}), ctx('payments', 'plans', 'standard'))).status).toBe(404);
     expect((await DELETE(bare(), ctx('payments', 'members', 'not-a-uuid'))).status).toBe(404);
     expect((await GET(bare(), ctx('payments', 'members', MEMBER))).status).toBe(404);
     expect((await GET(bare(), ctx('payments', 'members', MEMBER, 'x'))).status).toBe(404);

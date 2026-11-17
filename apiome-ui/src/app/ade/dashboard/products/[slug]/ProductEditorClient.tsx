@@ -3,7 +3,7 @@
 /**
  * Ship → Products → one product — `/ade/dashboard/products/{slug}` (APX-1.1, #6098).
  *
- * The product editor, in three parts:
+ * The product editor, in four parts:
  *
  * - **Details** — name, summary, owner team (when Teams is released), visibility and state, saved
  *   together with **Save product**. **Portal** is offered only while every member is published,
@@ -11,6 +11,8 @@
  * - **Members** — what the product includes, each with the version it means today: a project at
  *   latest follows every new publish, a project at a version or range (`2.x`) shows the newest
  *   published version in range. **Add member** names one by slug or id; **Remove** drops one.
+ * - **Plans** — the tiers consumers subscribe to (APX-1.2, #6099): auth strategy, limits, approval,
+ *   environments and terms, edited in place ({@link ProductPlansSection}).
  * - **Delete product** — soft-deletes it after a confirmation; the members themselves are untouched.
  */
 
@@ -71,6 +73,7 @@ import {
   removeProductMember,
   updateProduct,
 } from '@/app/components/ade/apiProducts/apiProductsApi';
+import ProductPlansSection from '@/app/components/ade/apiProducts/ProductPlansSection';
 import { fetchTeams } from '@/app/components/ade/owners/ownersApi';
 
 const HOME_ROUTE = '/ade/dashboard';
@@ -146,6 +149,7 @@ export default function ProductEditorClient({ slug }: { slug: string }) {
           <div className="apx-editor" data-testid="product-editor">
             <DetailsForm product={product} teams={teams} showOwner={showOwner} onSaved={setProduct} />
             <MembersSection product={product} onChanged={setProduct} />
+            <ProductPlansSection product={product} />
             <DeleteSection product={product} />
           </div>
         )}

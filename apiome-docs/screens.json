@@ -188,7 +188,20 @@
       "data": "fixture:hive-a11y/api-product-editor.html",
       "sources": [
         "apiome-ui/src/app/ade/dashboard/products/[slug]",
-        "apiome-ui/lib/api-products.ts"
+        "apiome-ui/src/app/components/ade/apiProducts/ProductPlansSection.tsx",
+        "apiome-ui/lib/api-products.ts",
+        "apiome-ui/lib/api-plans.ts"
+      ]
+    },
+    {
+      "id": "api-plan-editor",
+      "route": "/ade/dashboard/products/payments",
+      "waitFor": "[data-testid=\"plan-editor\"]",
+      "scrollTo": "[data-testid=\"plan-notice\"]",
+      "data": "fixture:hive-a11y/api-plan-editor.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/apiProducts/ProductPlansSection.tsx",
+        "apiome-ui/lib/api-plans.ts"
       ]
     },
     {

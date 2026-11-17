@@ -40342,6 +40342,69 @@ a.apx-name:focus-visible,
   border-block-start: 1px solid var(--border);
 }
 
+/* ---- API plans (APX-1.2, #6099) -------------------------------------------
+   The Plans section of the product editor: the plans table, and the plan editor below it with the
+   limit rows and the environment checklist. Tokens only. */
+.apx-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.apx-plan__flag {
+  display: block;
+  margin-block-start: var(--space-1);
+}
+
+.apx-plan__list {
+  margin-block-start: var(--space-1);
+  padding-inline-start: var(--space-4);
+  list-style: disc;
+}
+
+.apx-plan-editor {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* One limit row: the count, the window and Remove, wrapping on narrow screens. */
+.apx-limits {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.apx-limits__row {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  align-items: start;
+}
+
+.apx-limits__remove {
+  display: flex;
+  align-items: flex-end;
+  min-block-size: 100%;
+}
+
+.apx-envs {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.apx-envs__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-block-size: var(--target-min);
+  cursor: pointer;
+}
+
 /* ---- Tenant drawer: Ownership section (CDG-2.5, #5964) ------------------- */
 .tnt-own-select {
   inline-size: 100%;

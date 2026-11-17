@@ -1,5 +1,6 @@
 /**
- * Browser calls for API products (APX-1.1, #6098), through the `/api/products` proxy.
+ * Browser calls for API products (APX-1.1, #6098) and their plans (APX-1.2, #6099), through the
+ * `/api/products` proxy.
  *
  * Nothing here talks to apiome-rest directly. A failure is thrown as an `Error` carrying REST's
  * message, so a caller can show it next to the control that failed.
@@ -11,6 +12,7 @@ import type {
   ApiProductPatch,
   ProductMemberInput,
 } from '@lib/api-products';
+import type { ApiPlan, ApiPlanInput } from '@lib/api-plans';
 
 /**
  * Read a proxy answer, or throw its message.
@@ -120,4 +122,57 @@ export async function removeProductMember(slug: string, memberId: string): Promi
     await fetch(`${productUrl(slug)}/members/${encodeURIComponent(memberId)}`, { method: 'DELETE' }),
     'Could not remove the member',
   );
+}
+
+/** The proxy URL of a product's plans, or of one plan. */
+function planUrl(productSlug: string, planSlug?: string): string {
+  const base = `${productUrl(productSlug)}/plans`;
+  return planSlug === undefined ? base : `${base}/${encodeURIComponent(planSlug)}`;
+}
+
+/**
+ * A product's live plans, oldest first.
+ *
+ * @param productSlug - The product's slug.
+ * @returns The plans, each with its environments, notices and warnings.
+ */
+export async function fetchPlans(productSlug: string): Promise<ApiPlan[]> {
+  const body = await readJson<{ plans?: ApiPlan[] }>(
+    await fetch(planUrl(productSlug), { cache: 'no-store' }),
+    'Could not load the plans',
+  );
+  return Array.isArray(body.plans) ? body.plans : [];
+}
+
+/**
+ * Create a plan.
+ *
+ * @param productSlug - The product's slug.
+ * @param input - The plan.
+ * @returns The stored plan.
+ */
+export async function createPlan(productSlug: string, input: ApiPlanInput): Promise<ApiPlan> {
+  return readJson<ApiPlan>(await send(planUrl(productSlug), 'POST', input), 'Could not create the plan');
+}
+
+/**
+ * Save a plan's fields (every field but its slug).
+ *
+ * @param productSlug - The product's slug.
+ * @param planSlug - The plan's slug.
+ * @param input - The fields.
+ * @returns The stored plan.
+ */
+export async function updatePlan(productSlug: string, planSlug: string, input: ApiPlanInput): Promise<ApiPlan> {
+  return readJson<ApiPlan>(await send(planUrl(productSlug, planSlug), 'PATCH', input), 'Could not save the plan');
+}
+
+/**
+ * Delete a plan.
+ *
+ * @param productSlug - The product's slug.
+ * @param planSlug - The plan's slug.
+ */
+export async function deletePlan(productSlug: string, planSlug: string): Promise<void> {
+  await readJson<unknown>(await fetch(planUrl(productSlug, planSlug), { method: 'DELETE' }), 'Could not delete the plan');
 }

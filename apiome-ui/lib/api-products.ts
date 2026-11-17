@@ -5,8 +5,11 @@
  * items under one name, owner team, visibility and lifecycle state (apiome-rest
  * `/v1/tenants/{t}/products`). This module holds the wire types, the words the screens use for each
  * value, the proxy's allow-list (which paths and methods `/api/products/…` forwards, and which body
- * fields each write may carry) and the small pure rules the list and editor share.
+ * fields each write may carry) and the small pure rules the list and editor share. Plans (APX-1.2)
+ * have their own module, `@lib/api-plans`; their paths go through the same proxy.
  */
+
+import { PLAN_CREATE_FIELDS, PLAN_PATCH_FIELDS } from './api-plans';
 
 /** Where the products list lives (Ship → Products). */
 export const PRODUCTS_HREF = '/ade/dashboard/products';
@@ -153,21 +156,28 @@ export type ProductProxyMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
  * | `{slug}`                   | GET, PATCH, DELETE |
  * | `{slug}/members`           | GET, POST          |
  * | `{slug}/members/{id}`      | DELETE             |
+ * | `{slug}/plans`             | GET, POST          |
+ * | `{slug}/plans/{plan}`      | GET, PATCH, DELETE |
  *
  * @param segments - The path segments after `/api/products`.
  * @param method - The HTTP method.
  * @returns The REST path, or `null`.
  */
 export function productProxyPath(segments: readonly string[], method: ProductProxyMethod): string | null {
-  const [slug, sub, memberId, ...rest] = segments;
+  const [slug, sub, childId, ...rest] = segments;
   if (rest.length > 0) return null;
   if (slug === undefined) return method === 'GET' || method === 'POST' ? 'products' : null;
   if (!isProductSlug(slug)) return null;
   const base = `products/${slug}`;
   if (sub === undefined) return method === 'POST' ? null : base;
+  if (sub === 'plans') {
+    // APX-1.2 (#6099): a plan slug has the product slug's shape.
+    if (childId === undefined) return method === 'GET' || method === 'POST' ? `${base}/plans` : null;
+    return method !== 'POST' && isProductSlug(childId) ? `${base}/plans/${childId}` : null;
+  }
   if (sub !== 'members') return null;
-  if (memberId === undefined) return method === 'GET' || method === 'POST' ? `${base}/members` : null;
-  return method === 'DELETE' && UUID.test(memberId) ? `${base}/members/${memberId}` : null;
+  if (childId === undefined) return method === 'GET' || method === 'POST' ? `${base}/members` : null;
+  return method === 'DELETE' && UUID.test(childId) ? `${base}/members/${childId}` : null;
 }
 
 /** The body fields each write may carry. */
@@ -185,8 +195,16 @@ const MEMBER_FIELDS = ['kind', 'ref', 'version', 'environment'] as const;
  */
 export function productProxyBody(path: string, method: 'POST' | 'PATCH', raw: unknown): Record<string, unknown> {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
-  const fields: readonly string[] =
-    method === 'PATCH' ? PATCH_FIELDS : path.endsWith('/members') ? MEMBER_FIELDS : CREATE_FIELDS;
+  const plan = /^products\/[^/]+\/plans(\/|$)/.test(path);
+  const fields: readonly string[] = plan
+    ? method === 'PATCH'
+      ? PLAN_PATCH_FIELDS
+      : PLAN_CREATE_FIELDS
+    : method === 'PATCH'
+      ? PATCH_FIELDS
+      : path.endsWith('/members')
+        ? MEMBER_FIELDS
+        : CREATE_FIELDS;
   const out: Record<string, unknown> = {};
   for (const field of fields) {
     if (field in source) out[field] = source[field];

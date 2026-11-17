@@ -147,7 +147,6 @@ Each provisioner diffs that against the gateway and applies the difference idemp
 
 | # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-1.2 · #6099 | Plans | Tiers per product: auth strategy, declared limits, approval mode, environments, terms | `catalog`, `api-keys`, `rest` | N | Y | M | apiome-db, apiome-rest, apiome-ui |
 | APX-1.3 · #6100 | Product pages in Browse | Product landing page listing its APIs and plans, with a Request access action | `portal`, `browser` | Y | N | M | apiome-browse |
 | APX-1.4 · #6101 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
 
@@ -186,7 +185,17 @@ API product "Payments"
  Plans: Sandbox (auto, 10/min) · Standard (manual, 100/min) · Partner (manual, mTLS, 1 000/min)
 ```
 
-#### APX-1.2 (#6099) — Plans
+#### ✅ APX-1.2 (#6099) — Plans — **Complete**
+
+- **Shipped:** apiome-db **V388** — `api_plans` (auth strategy + `auth_config`, `limits` `[{window, requests}]`
+  with optional `concurrency`, `approval`, `environments` as gateway config ids with a stored `declared_only`,
+  `credential_ttl_days`, terms, pricing note, internal `billing_ref`, state). REST 1.589.0
+  `/v1/tenants/{t}/products/{p}/plans[/{plan}]` (`projects:view|edit`); limits validate (positive, windows unique);
+  every environment is declared only until APX-4.1 adds connector provisioning, with an `api-plan-declared-only`
+  notice; an auth strategy no member's scheme fits is an `api-plan-auth-mismatch` warning. OpenAPI export writes
+  `x-apiome-plans`; other targets report an `info` drop. UI: the product editor's **Plans** section and plan
+  editor. Docs: `ship/api-products.mdx` (Plans), `ship/export-fidelity.md` (`x-apiome-plans`), screenshot
+  `api-plan-editor`.
 
 - **Problem Statement:** A gateway holds rate limits per consumer group, but the *intent* (what the Standard tier
   promises) lives in wikis and contracts.

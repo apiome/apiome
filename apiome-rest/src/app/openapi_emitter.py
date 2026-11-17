@@ -68,6 +68,7 @@ from typing import Any, Dict, List, Literal, Mapping, Optional, Set, Tuple, Unio
 
 from pydantic import Field, ValidationError
 
+from .api_plans import PLANS_EXTENSION_KEY, PLANS_EXTRAS_KEY
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
@@ -475,6 +476,17 @@ class OpenApiEmitter(Emitter, register=True):
         document, path, media_type = self._apply_version(
             document, options.openapi_version, tracker, losses
         )
+
+        # APX-1.2 (#6099): the plans of the API products that include this revision. Written after
+        # the dialect downgrade, which rebuilds the root, so every dialect (Swagger 2.0 too) keeps them.
+        plans = (api.extras or {}).get(PLANS_EXTRAS_KEY)
+        if plans:
+            document[PLANS_EXTENSION_KEY] = plans
+            tracker.record(
+                ProvenanceTracker.child("", PLANS_EXTENSION_KEY),
+                Provenance.INFERRED,
+                "API product plans (APX-1.2)",
+            )
 
         return EmitResult.from_document(
             document,

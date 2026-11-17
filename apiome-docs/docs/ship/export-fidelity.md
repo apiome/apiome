@@ -351,6 +351,39 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Diagram/code exports (Mermaid, PlantUML, GraphML, DOT) | No extension slot — skipped (`destination_unsupported`). |
 | PNG / JPEG / SVG / PDF canvas images | Notes render as drawn; the Export Wizard's **Include notes** overlay toggle includes or excludes them. |
 
+## API plans (`x-apiome-plans`) {#api-plans}
+
+A version that an [API product](./api-products.mdx) includes carries the product's
+[plans](./api-products.mdx#plans) into its exports — every plan but the retired ones.
+
+| Target | What happens to the plans |
+| --- | --- |
+| OpenAPI (3.2, 3.1, 3.0 and Swagger 2.0) | Written as the root `x-apiome-plans` extension; the fidelity report lists them as `retained`. |
+| Every other format | Dropped, because the format has no equivalent; the fidelity report lists them once, as an `info` drop on the document root. |
+
+Each entry names the product and the plan and carries the plan's auth (`strategy`, plus `header_name`
+or `scopes`), `limits`, `concurrency`, `approval`, `environments`, `declared_only`,
+`credential_ttl_days`, `terms_url`, `pricing_note` and `state`:
+
+```yaml
+x-apiome-plans:
+  - product: payments
+    product_name: Payments
+    plan: standard
+    name: Standard
+    state: published
+    auth: { strategy: key_auth, header_name: X-API-Key }
+    limits:
+      - { window: minute, requests: 100 }
+      - { window: day, requests: 50000 }
+    approval: manual
+    declared_only: true
+    environments: [kong-prod-cp]
+```
+
+The billing reference and the identity-provider config id are internal, so they are never written.
+Exports from Browse, which need no sign-in, carry no plans.
+
 ## How exports are tested
 
 Every format Apiome imports is exported to every target on each change to the exporter. One
