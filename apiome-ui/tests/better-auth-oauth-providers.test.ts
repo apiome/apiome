@@ -96,6 +96,8 @@ const ALL_ENABLED: Record<string, string> = {
   DISCORD_CLIENT_SECRET: 'dc-secret',
   SALESFORCE_CLIENT_ID: 'sf-id',
   SALESFORCE_CLIENT_SECRET: 'sf-secret',
+  NOTION_CLIENT_ID: 'nt-id',
+  NOTION_CLIENT_SECRET: 'nt-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -208,6 +210,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
   });
 
@@ -232,6 +235,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
   });
 
@@ -288,6 +292,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const salesforce = buildGenericOAuthConfig('salesforce', ALL_ENABLED)!;
     expect(salesforce.clientId).toBe('sf-id');
     expect(salesforce.clientSecret).toBe('sf-secret');
+    const notion = buildGenericOAuthConfig('notion', ALL_ENABLED)!;
+    expect(notion.clientId).toBe('nt-id');
+    expect(notion.clientSecret).toBe('nt-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -551,6 +558,20 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['identify', 'email']);
     expect(cfg.pkce).toBe(false);
     expect(cfg.prompt).toBe('none');
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('notion: fixed Notion endpoints; owner=user; Basic exchange; no scopes; PKCE off (OLO-9.21)', () => {
+    const cfg = buildGenericOAuthConfig('notion', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('notion');
+    expect(cfg.authorizationUrl).toBe('https://api.notion.com/v1/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.notion.com/v1/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.notion.com/v1/users/me');
+    expect(cfg.scopes).toEqual([]);
+    expect(cfg.authorizationUrlParams).toEqual({ owner: 'user' });
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(false);
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -2891,5 +2912,245 @@ describe('applyOauthRedirectOverride', () => {
     } as any);
     expect(result).toMatchObject({ id: '42', emailVerified: true });
     expect(getOauthRedirectOverride()).toBeNull();
+  });
+});
+
+/* ── getUserInfo: Notion fail-closed / link-first (OLO-9.21) ────────────────────────────────── */
+
+describe('getUserInfo — Notion fail-closed link-first (OLO-9.21)', () => {
+  /** A Notion person as the token response's `owner.user` and `/v1/users/me` both carry it. */
+  const PERSON = {
+    object: 'user',
+    id: 'd40e767c-d7af-4b18-a86d-55c61f1e39a4',
+    type: 'person',
+    name: 'Ada Lovelace',
+    avatar_url: 'http://img/notion.png',
+    person: { email: 'ada@example.com' },
+  };
+
+  /** Tokens whose raw exchange response names `user` as the owner. */
+  const tokensFor = (user: Record<string, unknown> | null) => ({
+    accessToken: 'tok',
+    raw: user ? { owner: { type: 'user', user } } : {},
+  });
+
+  /** Serve `owner` as the bot owner on `/v1/users/me` and record each request's headers. */
+  const notionMe = (owner: Record<string, unknown> | null) => {
+    const requests: Array<{ url: string; headers: Record<string, string> }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, headers: init.headers });
+      if (url === 'https://api.notion.com/v1/users/me' && owner) {
+        return {
+          ok: true,
+          json: async () => ({ object: 'user', id: 'bot-1', type: 'bot', bot: { owner } }),
+        };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in from the token exchange, with no userinfo call (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = notionMe(null);
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(PERSON), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: PERSON.id,
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'http://img/notion.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([]);
+  });
+
+  test('falls back to /v1/users/me (Bearer + Notion-Version) when the exchange kept no owner', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = notionMe({ type: 'user', user: PERSON });
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(null), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: PERSON.id, email: 'ada@example.com', emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].url).toBe('https://api.notion.com/v1/users/me');
+    expect(requests[0].headers).toMatchObject({
+      Authorization: 'Bearer tok',
+      'Notion-Version': '2022-06-28',
+    });
+  });
+
+  test('a partial owner on the exchange is completed from /v1/users/me', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = notionMe({ type: 'user', user: PERSON });
+
+    const { result } = await runGetUserInfo(
+      'notion',
+      tokensFor({ object: 'user', id: PERSON.id, type: 'person' }),
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: PERSON.id, email: 'ada@example.com', name: 'Ada Lovelace' });
+    expect(requests).toHaveLength(1);
+  });
+
+  test('/v1/users/me naming a different person never replaces the exchange owner', async () => {
+    const { store } = makeStore();
+    const { fetchImpl } = notionMe({
+      type: 'user',
+      user: { ...PERSON, id: 'someone-else', person: { email: 'eve@example.com' } },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'notion',
+      tokensFor({ object: 'user', id: PERSON.id, type: 'person' }),
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = notionMe(null);
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(PERSON), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = notionMe(null);
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(PERSON), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([true, 'true'])(
+    'an email_verified field in a Notion body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = notionMe(null);
+
+      const { result, override } = await runGetUserInfo(
+        'notion',
+        tokensFor({ ...PERSON, email_verified: emailVerified }),
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+    }
+  );
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = notionMe(null);
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(PERSON), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+      resolveLinkToUserId: async () => 'session-user',
+    });
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'notion',
+      providerUserId: PERSON.id,
+    });
+  });
+
+  test('a person with no email → email-required rejection', async () => {
+    const { store } = makeStore();
+    const { fetchImpl } = notionMe({ type: 'user', user: { ...PERSON, person: {} } });
+
+    const { result, override } = await runGetUserInfo(
+      'notion',
+      tokensFor({ ...PERSON, person: {} }),
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['a bot owner', { ...PERSON, type: 'bot' }],
+    ['a user object without an id', { ...PERSON, id: '' }],
+  ])('%s is refused: only a person can sign in', async (_label, user) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = notionMe({ type: 'user', user });
+
+    const { result, override } = await runGetUserInfo('notion', tokensFor(user), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+  });
+
+  test('a workspace-level token and a failed userinfo fetch yield no identity', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = notionMe(null);
+
+    const { result, override } = await runGetUserInfo(
+      'notion',
+      { accessToken: 'tok', raw: { owner: { workspace: true } } },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
   });
 });

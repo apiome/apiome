@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -132,6 +132,8 @@ config is stored in the database need none of them set; see
 | `SALESFORCE_CLIENT_ID` | Salesforce | To enable Salesforce | Salesforce app **Consumer Key** |
 | `SALESFORCE_CLIENT_SECRET` | Salesforce | To enable Salesforce | Salesforce app **Consumer Secret** |
 | `SALESFORCE_ISSUER` | Salesforce | No (default `https://login.salesforce.com`) | Issuer for a My Domain (e.g. `https://acme.my.salesforce.com`) or a sandbox (`https://test.salesforce.com`) |
+| `NOTION_CLIENT_ID` | Notion | To enable Notion | Notion public integration **OAuth Client ID** |
+| `NOTION_CLIENT_SECRET` | Notion | To enable Notion | Notion public integration **OAuth Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -217,7 +219,7 @@ links an account.
 | `linkedin` | **trusted** | OLO-9.18 | yes | `email_verified` claim (Sign In with LinkedIn, OIDC) |
 | `discord` | **trusted** | OLO-9.19 | yes | `verified` on `/users/@me` |
 | `salesforce` | **trusted** | OLO-9.20 | yes | `email_verified` claim |
-| `notion` | **link-first** | OLO-9.21 | no | Owner-user email from the token exchange, no verified claim |
+| `notion` | **link-first** | OLO-9.21 | yes | Owner-user email from the token exchange, no verified claim |
 | `figma` | **link-first** | OLO-9.22 | no | `/v1/me` email, no verified claim |
 | `linear` | **link-first** | OLO-9.23 | no | Viewer email, no verified claim |
 | `dropbox` | **trusted** | OLO-9.24 | no | `email_verified` on `get_current_account` |
@@ -981,6 +983,62 @@ Salesforce email address is unverified verifies it in Salesforce, or signs in an
 links Salesforce. A sign-in with no
 email at all surfaces `email-required`.
 
+## Notion (OLO-9.21)
+
+For product and documentation teams whose people already have a Notion account. Notion is a
+**link-first** provider: read [Email verified semantics](#notion-email-verified-semantics) below
+before turning it on, because nobody can *create* an Apiome account with it.
+
+1. On Notion's [integrations page](https://www.notion.so/profile/integrations), choose **New
+   integration**, name it and set its **Type** to **Public** — only a public integration has an
+   OAuth client. Notion asks for a company name, a website, a privacy policy URL, a terms of use
+   URL and a support email address.
+2. Under **Redirect URIs**, add the callback URL:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/notion`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/notion` for local dev)
+3. Under **Capabilities → User Capabilities**, choose **Read user information including email
+   addresses**. Without it Notion shares no address and every sign-in ends in `email-required`.
+   Apiome reads no pages or databases, so the content capabilities can be left at their minimum.
+4. Copy the **OAuth Client ID** and the **OAuth Client Secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+NOTION_CLIENT_ID=<OAuth Client ID>
+NOTION_CLIENT_SECRET=<OAuth Client Secret>
+```
+
+Notion has no scopes — what an integration may do is set by its capabilities — and its endpoints
+are fixed, so there is no issuer to configure (mirroring Better Auth's `notion()` helper):
+
+- Authorize: `https://api.notion.com/v1/oauth/authorize` with `owner=user`, so the grant is a
+  user-level one that names the person who authorized it
+- Token: `https://api.notion.com/v1/oauth/token` — the client id and secret are sent as HTTP
+  Basic credentials; no PKCE challenge is sent
+- User: the **owner user** on the token response; when it carries no email address,
+  `https://api.notion.com/v1/users/me` (`bot.owner.user`), sent with `Notion-Version: 2022-06-28`
+
+Notion's consent screen asks the person which pages to share with the integration. Apiome reads
+none of them, so they can share nothing and continue.
+
+The identity is keyed on the Notion user id (`id`, a UUID). The display name is `name` and the
+picture is `avatar_url`. Only a **person** can sign in: a bot owner or a workspace-level token
+carries no identity and is refused.
+
+<a id="notion-email-verified-semantics"></a>
+**Email verified semantics:** Notion returns the owner user's email address (`person.email`) but
+does **not** assert a verified claim (Better Auth hard-codes `emailVerified: false`). The engine
+always fail-closes (**link-first**), and `notion` is not in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Notion card on **Linked accounts**.
+  The explicit link binds the Notion identity to their account whatever its email address.
+- **Subsequent sign-in** — once linked, **Sign in with Notion** signs that person in.
+- **Fresh sign-up, or a first sign-in without linking** — rejected with `unverified-email`, even
+  when the address matches an existing account. This is intended: the address is never used to
+  join or create an account.
+
+A Notion account that shares no email address surfaces `email-required`.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1153,7 +1211,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn and Discord need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord and Notion need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

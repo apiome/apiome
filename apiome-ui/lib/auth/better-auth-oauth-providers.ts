@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -62,6 +62,10 @@
  *    `login.salesforce.com`, set for a My Domain or a sandbox); PKCE on; native `email_verified`
  *    claim from the id token or `<issuer>/services/oauth2/userinfo`, fail-closed via
  *    `resolveOAuthEmailVerified` (`salesforce-issuer.ts`).
+ *  - **Notion (OLO-9.21):** fixed Notion endpoints (`api.notion.com/v1/oauth`,
+ *    `api.notion.com/v1/users/me`), `owner=user`, HTTP Basic code exchange, no scopes; the owner
+ *    user's email carries no verified claim (Better Auth `notion()` hard-codes
+ *    `emailVerified: false`) → fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -238,12 +242,14 @@ export function githubOauthWebBaseUrl(
  * @param url Absolute URL to fetch.
  * @param accessToken The OAuth access token from the code exchange.
  * @param fetchImpl Fetch implementation (injectable for tests; defaults to global fetch).
+ * @param extraHeaders Extra request headers a provider's API requires (e.g. `Notion-Version`).
  * @returns The parsed JSON body, or null when it could not be retrieved.
  */
 async function fetchJsonWithToken(
   url: string,
   accessToken: string,
-  fetchImpl: FetchLike
+  fetchImpl: FetchLike,
+  extraHeaders: Record<string, string> = {}
 ): Promise<unknown> {
   try {
     const res = await fetchImpl(url, {
@@ -251,6 +257,7 @@ async function fetchJsonWithToken(
         Authorization: `Bearer ${accessToken}`,
         Accept: 'application/json',
         'User-Agent': 'apiome',
+        ...extraHeaders,
       },
     });
     if (!res.ok) return null;
@@ -547,6 +554,13 @@ const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USERINFO_URL = 'https://discord.com/api/users/@me';
 /** Discord's image CDN, which serves user avatars and the default (embed) avatars. */
 const DISCORD_CDN_URL = 'https://cdn.discordapp.com';
+
+/** Notion OAuth 2.0: fixed endpoints, mirrored from Better Auth's `notion` provider (OLO-9.21). */
+const NOTION_AUTHORIZE_URL = 'https://api.notion.com/v1/oauth/authorize';
+const NOTION_TOKEN_URL = 'https://api.notion.com/v1/oauth/token';
+const NOTION_USERINFO_URL = 'https://api.notion.com/v1/users/me';
+/** The Notion API version sent as `Notion-Version` (required on every API call but the exchange). */
+const NOTION_API_VERSION = '2022-06-28';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1008,6 +1022,91 @@ async function normalizeSalesforce(
   };
 }
 
+/**
+ * Read a Notion **person** user object, or null when the value is not one. A bot owner, a
+ * workspace-level owner (`{ workspace: true }`) and a user object without an id are all refused:
+ * only a person can sign in.
+ *
+ * @param value A candidate Notion user object (the token response's `owner.user`, or
+ *   `bot.owner.user` from `/v1/users/me`).
+ * @returns The user object, or null.
+ */
+function readNotionPerson(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object') return null;
+  const user = value as Record<string, unknown>;
+  if (typeof user.id !== 'string' || !user.id) return null;
+  return user.type === 'person' ? user : null;
+}
+
+/**
+ * The email address of a Notion person (`person.email`), or null when Notion shared none.
+ *
+ * @param user A Notion user object.
+ * @returns The address, or null.
+ */
+function notionPersonEmail(user: Record<string, unknown>): string | null {
+  const person = user.person;
+  if (!person || typeof person !== 'object') return null;
+  const email = (person as Record<string, unknown>).email;
+  return typeof email === 'string' && email ? email : null;
+}
+
+/**
+ * Normalize a Notion sign-in (OLO-9.21). The person who authorized the integration is its
+ * **owner user**: Notion returns it with the code exchange (`owner.user` on the token response,
+ * kept on `tokens.raw`), and again as `bot.owner.user` from `/v1/users/me` — the resource Better
+ * Auth's `notion()` helper reads. The token response is used when it names a person and an email;
+ * otherwise (a partial user object, or a custom exchange that kept no raw response) `/v1/users/me`
+ * is fetched with the access token.
+ *
+ * Notion asserts **nothing** about whether that email is verified (Better Auth hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in a
+ * Notion body is dropped, not trusted — and `resolveOAuthEmailVerified` fail-closes to link-first:
+ * the address can neither join nor create an account. The identity is keyed on the user id (a
+ * UUID). A failed fetch, a bot owner or a workspace-level token yields an empty profile (no
+ * account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (`raw.owner` and `accessToken` are read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeNotion(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const raw = tokens.raw && typeof tokens.raw === 'object' ? tokens.raw : {};
+  const owner =
+    raw.owner && typeof raw.owner === 'object' ? (raw.owner as Record<string, unknown>) : {};
+  let user = readNotionPerson(owner.user);
+  if ((!user || !notionPersonEmail(user)) && tokens.accessToken) {
+    const body = await fetchJsonWithToken(NOTION_USERINFO_URL, tokens.accessToken, fetchImpl, {
+      'Notion-Version': NOTION_API_VERSION,
+    });
+    const bot =
+      body && typeof body === 'object' ? (body as Record<string, unknown>).bot : undefined;
+    const botOwner =
+      bot && typeof bot === 'object' ? (bot as Record<string, unknown>).owner : undefined;
+    const fetched = readNotionPerson(
+      botOwner && typeof botOwner === 'object'
+        ? (botOwner as Record<string, unknown>).user
+        : undefined
+    );
+    // Never swap in a different person than the one the code exchange named.
+    if (fetched && (!user || fetched.id === user.id)) user = fetched;
+  }
+  const profile: Record<string, unknown> = user ? { ...user } : {};
+  delete profile.email_verified;
+  const email = user ? notionPersonEmail(user) : null;
+  if (email) profile.email = email;
+  return {
+    accountId: typeof profile.id === 'string' ? profile.id : '',
+    profile,
+    email,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.avatar_url === 'string' && profile.avatar_url ? profile.avatar_url : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1051,6 +1150,7 @@ const NORMALIZERS: Record<
   linkedin: (tokens, _env, fetchImpl) => normalizeLinkedin(tokens, fetchImpl),
   discord: (tokens, _env, fetchImpl) => normalizeDiscord(tokens, fetchImpl),
   salesforce: (tokens, env, fetchImpl) => normalizeSalesforce(tokens, env, fetchImpl),
+  notion: (tokens, _env, fetchImpl) => normalizeNotion(tokens, fetchImpl),
 };
 
 /**
@@ -1084,7 +1184,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce).
+ *   discord | salesforce | notion).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1485,6 +1585,27 @@ export function buildGenericOAuthConfig(
         discoveryUrl: `${salesforceIssuerBaseUrl(env)}/.well-known/openid-configuration`,
         scopes: ['openid', 'email', 'profile'],
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'notion': {
+      return {
+        providerId: 'notion',
+        clientId: readEnvString(env, 'NOTION_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'NOTION_CLIENT_SECRET') ?? '',
+        // Fixed Notion OAuth 2.0 endpoints, mirrored from Better Auth's `notion()` helper — no
+        // issuer. Notion has no scopes (an integration's capabilities are set on the integration),
+        // `owner=user` asks for a user-level grant so the token names the person who authorized
+        // it, and the code exchange authenticates with HTTP Basic. Like the helper, this
+        // confidential client sends no PKCE challenge (Better Auth enforces `state`). The owner
+        // user's email carries no verified claim → fail-closed link-first (see normalizeNotion).
+        authorizationUrl: NOTION_AUTHORIZE_URL,
+        tokenUrl: NOTION_TOKEN_URL,
+        userInfoUrl: NOTION_USERINFO_URL,
+        scopes: [],
+        authorizationUrlParams: { owner: 'user' },
+        authentication: 'basic',
+        pkce: false,
         getUserInfo,
       };
     }

@@ -116,6 +116,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   // Salesforce (OLO-9.20, #5033): the optional issuer (My Domain / sandbox) lives in config
   // JSONB and overlays via the extras loop below; credentials overlay env.
   salesforce: { clientId: 'SALESFORCE_CLIENT_ID', clientSecret: 'SALESFORCE_CLIENT_SECRET' },
+  // Notion (OLO-9.21, #5034): credentials-only; fixed endpoints, no issuer extra.
+  notion: { clientId: 'NOTION_CLIENT_ID', clientSecret: 'NOTION_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

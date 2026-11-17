@@ -70,6 +70,8 @@ const ALL_ENABLED_ENV = {
   DISCORD_CLIENT_SECRET: 'dc-secret',
   SALESFORCE_CLIENT_ID: 'sf-id',
   SALESFORCE_CLIENT_SECRET: 'sf-secret',
+  NOTION_CLIENT_ID: 'nt-id',
+  NOTION_CLIENT_SECRET: 'nt-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -93,6 +95,7 @@ describe('registry vocabulary', () => {
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
   });
 
@@ -115,6 +118,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('linkedin')?.label).toBe('LinkedIn');
     expect(getProviderDescriptor('discord')?.label).toBe('Discord');
     expect(getProviderDescriptor('salesforce')?.label).toBe('Salesforce');
+    expect(getProviderDescriptor('notion')?.label).toBe('Notion');
   });
 
   it('pins each available provider env contract', () => {
@@ -193,9 +197,13 @@ describe('registry vocabulary', () => {
       'SALESFORCE_CLIENT_ID',
       'SALESFORCE_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('notion')?.requiredEnvKeys).toEqual([
+      'NOTION_CLIENT_ID',
+      'NOTION_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.20, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.21, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -211,6 +219,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('linkedin')?.status).toBe('available');
     expect(getProviderDescriptor('discord')?.status).toBe('available');
     expect(getProviderDescriptor('salesforce')?.status).toBe('available');
+    expect(getProviderDescriptor('notion')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -251,6 +260,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('linkedin', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('discord', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('salesforce', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('notion', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -387,6 +397,10 @@ describe('isProviderEnabled', () => {
         SALESFORCE_ISSUER: 'https://acme.my.salesforce.com',
       })
     ).toBe(false);
+    expect(isProviderEnabled('notion', { NOTION_CLIENT_ID: 'x', NOTION_CLIENT_SECRET: 'y' })).toBe(
+      true
+    );
+    expect(isProviderEnabled('notion', { NOTION_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -415,6 +429,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -440,6 +455,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
   });
 
@@ -463,6 +479,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'linkedin',
       'discord',
       'salesforce',
+      'notion',
     ]);
   });
 });
@@ -490,6 +507,7 @@ describe('providerSummaries', () => {
       { id: 'linkedin', label: 'LinkedIn', status: 'available', enabled: false },
       { id: 'discord', label: 'Discord', status: 'available', enabled: false },
       { id: 'salesforce', label: 'Salesforce', status: 'available', enabled: false },
+      { id: 'notion', label: 'Notion', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

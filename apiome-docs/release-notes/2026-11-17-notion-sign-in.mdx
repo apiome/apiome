@@ -1,0 +1,30 @@
+---
+slug: notion-sign-in
+title: Sign in with Notion
+description: "People can now link their Notion account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Notion account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Notion** is a new entry in **System settings → Add Provider**. It
+  needs the **OAuth Client ID** and **OAuth Client Secret** of a **public** Notion integration,
+  entered as the **Client ID** and **Client secret** — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Notion's side. The environment variables are `NOTION_CLIENT_ID` and `NOTION_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/notion`, added under the
+  integration's **Redirect URIs**.
+- **Capabilities.** Notion has no scopes. Under **User Capabilities**, choose **Read user
+  information including email addresses**. Apiome reads no pages or databases.
+- **Link first.** Notion does not say whether an email address is verified, so Apiome never uses
+  a Notion address to find or create an account. People sign in another way, link Notion from
+  **Linked accounts**, and can sign in with Notion after that. Signing up with Notion, or signing
+  in with it before linking, ends with *Your sign-in provider could not confirm that your email
+  address is verified…* — even when the address matches an existing account.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `notion` as an available provider, and
+  `PUT /v1/admin/auth-providers/notion` stores its credentials.

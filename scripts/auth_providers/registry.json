@@ -167,6 +167,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "SALESFORCE_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "SALESFORCE_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "notion",
+      "label": "Notion",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "NOTION_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "NOTION_CLIENT_SECRET" }
+      ]
     }
   ]
 }
