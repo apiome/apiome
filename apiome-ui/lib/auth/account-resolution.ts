@@ -148,6 +148,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * but `true` fail-closes.
  * `railway` (OLO-9.28) is **not** listed: Login with Railway's `/oauth/me` returns an email with
  * no documented verified claim (link-first).
+ * `hubspot` (OLO-9.29) is **not** listed: HubSpot's token-info resource returns the authorizing
+ * user's email with no verified claim (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -240,6 +242,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'huggingface',
   'vercel',
   'railway',
+  'hubspot',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

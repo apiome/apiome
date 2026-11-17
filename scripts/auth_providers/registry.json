@@ -239,6 +239,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "RAILWAY_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "RAILWAY_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "hubspot",
+      "label": "HubSpot",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "HUBSPOT_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "HUBSPOT_CLIENT_SECRET" }
+      ]
     }
   ]
 }

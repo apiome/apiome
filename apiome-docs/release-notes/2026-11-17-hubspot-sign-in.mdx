@@ -1,0 +1,31 @@
+---
+slug: hubspot-sign-in
+title: Sign in with HubSpot
+description: "People can now link their HubSpot account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their HubSpot account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **HubSpot** is a new entry in **System settings → Add Provider**. It
+  needs the client ID and client secret of a **public app** in a HubSpot developer account — no
+  issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to
+  set on HubSpot's side. The environment variables are `HUBSPOT_CLIENT_ID` and
+  `HUBSPOT_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/hubspot`, added as the app's
+  redirect URL.
+- **Scopes.** Apiome asks for the **oauth** scope only, and uses it to read the email address of
+  the person signing in. Apiome reads no contacts, companies, deals or other HubSpot data and keeps
+  no HubSpot token.
+- **Link first.** HubSpot does not say whether an email address is verified, so Apiome never uses
+  a HubSpot address to find or create an account. People sign in another way, link HubSpot from
+  **Linked accounts**, and can sign in with HubSpot after that. Signing up with HubSpot, or signing
+  in with it before linking, ends with *Your sign-in provider could not confirm that your email
+  address is verified…* — even when the address matches an existing account.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `hubspot` as an available provider, and
+  `PUT /v1/admin/auth-providers/hubspot` stores its credentials.

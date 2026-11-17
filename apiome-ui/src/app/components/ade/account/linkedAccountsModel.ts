@@ -115,6 +115,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   huggingface: 'Hugging Face account sign-in',
   vercel: 'Vercel account sign-in',
   railway: 'Railway account sign-in',
+  hubspot: 'HubSpot account sign-in',
 };
 
 /**

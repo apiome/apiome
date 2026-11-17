@@ -112,6 +112,8 @@ const ALL_ENABLED: Record<string, string> = {
   VERCEL_CLIENT_SECRET: 'vc-secret',
   RAILWAY_CLIENT_ID: 'rw-id',
   RAILWAY_CLIENT_SECRET: 'rw-secret',
+  HUBSPOT_CLIENT_ID: 'hs-id',
+  HUBSPOT_CLIENT_SECRET: 'hs-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -232,6 +234,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
   });
 
@@ -264,6 +267,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'huggingface',
       'vercel',
       'railway',
+      'hubspot',
     ]);
   });
 
@@ -344,6 +348,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const railway = buildGenericOAuthConfig('railway', ALL_ENABLED)!;
     expect(railway.clientId).toBe('rw-id');
     expect(railway.clientSecret).toBe('rw-secret');
+    const hubspot = buildGenericOAuthConfig('hubspot', ALL_ENABLED)!;
+    expect(hubspot.clientId).toBe('hs-id');
+    expect(hubspot.clientSecret).toBe('hs-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -721,6 +728,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
     expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('hubspot: fixed HubSpot OAuth endpoints; oauth scope; post exchange; PKCE off (OLO-9.29)', () => {
+    const cfg = buildGenericOAuthConfig('hubspot', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('hubspot');
+    expect(cfg.authorizationUrl).toBe('https://app.hubspot.com/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.hubapi.com/oauth/v1/token');
+    // Token info takes the access token in its path, so there is no fixed userinfo URL.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    // Only `oauth`: Apiome reads no contacts, companies or other CRM data.
+    expect(cfg.scopes).toEqual(['oauth']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
@@ -4926,6 +4949,210 @@ describe('getUserInfo — Railway fail-closed link-first (OLO-9.28)', () => {
 
     const { result, override } = await runGetUserInfo(
       'railway',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: HubSpot (OLO-9.29) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — HubSpot fail-closed link-first (OLO-9.29)', () => {
+  /** The token-info body HubSpot returns for an access token granted the `oauth` scope. */
+  const TOKEN_INFO = {
+    token: 'tok',
+    user: 'ada@example.com',
+    hub_domain: 'example.hubspot.com',
+    scopes: ['oauth'],
+    hub_id: 62515,
+    app_id: 456,
+    expires_in: 1800,
+    user_id: 123456,
+    token_type: 'access',
+    signed_access_token: { userId: 123456, hubId: 62515, appId: 456 },
+  };
+  const TOKEN_INFO_URL = 'https://api.hubapi.com/oauth/v1/access-tokens/tok';
+
+  /** Serve `body` from the token-info resource (a failed response when null); record each request. */
+  const hubspotTokenInfo = (body: unknown) => {
+    const requests: Array<{ url: string; method?: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, method: init.method, authorization: init.headers.Authorization });
+      if (url.startsWith('https://api.hubapi.com/oauth/v1/access-tokens/') && body !== null) {
+        return { ok: true, json: async () => body };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the HubSpot user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = hubspotTokenInfo(TOKEN_INFO);
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    // Token info carries no name or picture: the email is the display name, as in Better Auth.
+    expect(result).toMatchObject({
+      id: '123456',
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'ada@example.com',
+    });
+    expect((result as { image?: unknown }).image ?? null).toBeNull();
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // The token is the path segment; no bearer header is sent.
+    expect(requests).toEqual([{ url: TOKEN_INFO_URL, method: undefined, authorization: undefined }]);
+  });
+
+  test('the access token is URL-encoded into the token-info path', async () => {
+    const { store } = makeStore();
+    const { fetchImpl, requests } = hubspotTokenInfo(TOKEN_INFO);
+
+    await runGetUserInfo('hubspot', { accessToken: 'a/b?c#d' }, { store, env: ALL_ENABLED, fetchImpl });
+
+    expect(requests[0].url).toBe('https://api.hubapi.com/oauth/v1/access-tokens/a%2Fb%3Fc%23d');
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = hubspotTokenInfo(TOKEN_INFO);
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = hubspotTokenInfo(TOKEN_INFO);
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in a token-info body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = hubspotTokenInfo({ ...TOKEN_INFO, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'hubspot',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('explicit link intent links despite the unverified email, persisting no token-info secret', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = hubspotTokenInfo(TOKEN_INFO);
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'hubspot',
+      providerUserId: '123456',
+      email: 'ada@example.com',
+    });
+    // The token-info body echoes the access token; neither copy reaches profile_data.
+    const profileData = JSON.stringify(calls.linkIdentity[0].identity.profileData);
+    expect(profileData).not.toContain('signed_access_token');
+    expect(profileData).not.toContain('"token"');
+  });
+
+  test('falls back to signed_access_token.userId when user_id is absent', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = hubspotTokenInfo({ ...TOKEN_INFO, user_id: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: '123456' });
+  });
+
+  test.each([undefined, null, '', 42])('user %p → email-required rejection', async (user) => {
+    const { store } = makeStore();
+    const { fetchImpl } = hubspotTokenInfo({ ...TOKEN_INFO, user });
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['a failed token-info request', null, 'tok'],
+    ['a body that is not an object', 'nope', 'tok'],
+    ['an array body', [TOKEN_INFO], 'tok'],
+    ['no user id anywhere', { ...TOKEN_INFO, user_id: undefined, signed_access_token: undefined }, 'tok'],
+    ['a zero user id', { ...TOKEN_INFO, user_id: 0, signed_access_token: undefined }, 'tok'],
+    ['a fractional user id', { ...TOKEN_INFO, user_id: 1.5, signed_access_token: undefined }, 'tok'],
+    ['a boolean user id', { ...TOKEN_INFO, user_id: true, signed_access_token: undefined }, 'tok'],
+    ['a blank string user id', { ...TOKEN_INFO, user_id: '  ', signed_access_token: undefined }, 'tok'],
+    ['a missing access token', TOKEN_INFO, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = hubspotTokenInfo(body);
+
+    const { result, override } = await runGetUserInfo(
+      'hubspot',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

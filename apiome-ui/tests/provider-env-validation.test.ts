@@ -93,6 +93,8 @@ const ALL_ENABLED_ENV = {
   VERCEL_CLIENT_SECRET: 'vc-secret',
   RAILWAY_CLIENT_ID: 'rw-id',
   RAILWAY_CLIENT_SECRET: 'rw-secret',
+  HUBSPOT_CLIENT_ID: 'hs-id',
+  HUBSPOT_CLIENT_SECRET: 'hs-secret',
 };
 
 describe('providerEnvIssues', () => {
