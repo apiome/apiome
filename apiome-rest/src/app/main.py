@@ -25,6 +25,7 @@ from .auth_provider_resolved_routes import router as auth_provider_resolved_rout
 from .internal_auth_event_routes import router as internal_auth_event_router
 from .sso_provider_routes import admin_router as sso_provider_admin_router
 from .sso_provider_routes import internal_router as sso_provider_internal_router
+from .tenant_sso_routes import router as tenant_sso_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .avro_registry_push_routes import router as avro_registry_push_router
 from .schema_registry_push_routes import router as schema_registry_push_router
@@ -239,7 +240,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.593.2",
+    version="1.594.0",
 )
 
 
@@ -671,6 +672,7 @@ app.include_router(auth_provider_resolved_router)
 # the server-to-server auth_events write path apiome-ui records SSO sign-in outcomes through.
 app.include_router(sso_provider_admin_router)
 app.include_router(sso_provider_internal_router)
+app.include_router(tenant_sso_router)
 app.include_router(internal_auth_event_router)
 # Super-admin installation sign-up policy (SGN-1.4, #5653): GET/PUT /v1/admin/signup-policy —
 # open / invite_only / closed + allowed email domains, DB-first with AUTH_SIGNUP_DISABLED fallback.

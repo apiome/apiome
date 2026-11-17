@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.736.0] - 2026-11-17
+
+### Added
+- **Per-tenant IdP registration & domain verification (EID-1.2, #5012)** — OpenAPI 1.594.0:
+  - A workspace's owners and tenant admins manage their own SAML 2.0 / OIDC identity providers:
+    `GET|POST /v1/tenants/{t}/sso/providers`, `GET|PATCH|DELETE /v1/tenants/{t}/sso/providers/{id}`,
+    `POST …/{id}/domains`, `DELETE …/{id}/domains/{domain}` and `POST …/{id}/domains/{domain}/verify`. Every route —
+    reads included — needs a signed-in tenant administrator (`require_tenant_admin_session`; API keys are refused, no
+    new RBAC resource). The authenticated tenant scopes every read and write: another workspace's provider is a `404`,
+    and a provider created here always belongs to the caller's workspace. The request and response shapes are the admin
+    surface's, minus `tenant_id`, plus `member_count` (members who signed in through the provider).
+  - **Domain verification by DNS.** Adding a domain issues a challenge: publish `verification_token` as a TXT record at
+    `record_name` (`_apiome-challenge.<domain>`). `verify` looks it up (`dnspython`, 5 s) and always answers `200` with
+    `check.status`: `verified`, `not-found`, `mismatch` (with the values found) or `could-not-check` (timeout, SERVFAIL —
+    with what the resolver said; nothing is changed and the domain is never marked verified). An already verified
+    domain answers without a lookup. Three checks an hour per domain (`429 sso-verify-rate-limited`, `Retry-After`).
+  - Refusals: a public mailbox domain or a subdomain of one (`422 sso-domain-public`; `APIOME_SSO_PUBLIC_DOMAINS`
+    replaces the built-in list), a domain another provider has verified (`409 sso-domain-claimed`), a domain the
+    provider already lists (`409 sso-domain-exists`), a default role that is `owner` or not a role of the workspace
+    (`422 sso-default-role-invalid`).
+  - Every change is written to the workspace's access audit, source `web`, secret-free: `sso.provider.created`,
+    `sso.provider.updated` (changed field names; a domain added or removed), `sso.provider.deleted`,
+    `sso.domain.verified`.
+  - `SsoDomainView` (admin and tenant) gains `record_name`.
+
+### Changed
+- apiome-db **V393**: a domain is unique installation-wide only once **verified** (partial unique index); an
+  unverified domain reserves nothing, and a provider lists a domain once (`UNIQUE (provider_id, domain)`). On
+  `/v1/admin/sso/providers`, adding a domain is refused `409 sso-domain-claimed` only when another provider has
+  *verified* it (and `409 sso-domain-exists` when the same provider already lists it); marking a domain verified can
+  now answer `409 sso-domain-claimed`.
+- `dnspython` is declared as a direct dependency (it was already installed through `email-validator`).
+
 ## [1.735.0] - 2026-11-17
 
 ### Added

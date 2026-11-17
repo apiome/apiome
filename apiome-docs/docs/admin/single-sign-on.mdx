@@ -15,8 +15,10 @@ Auth0 or any other that speaks **SAML 2.0** or **OpenID Connect (OIDC)**. You co
 give it the email domains the company owns, and from then on anyone with an address at those domains
 can choose **“Sign in with SSO”** on the [sign-in page](../getting-started/sign-in.mdx).
 
-It is set up by an installation administrator: **sign in to the admin console, choose System
-settings** in the sidebar and find the **Single sign-on** card.
+A workspace's owners and admins set it up for their own workspace, and prove each domain with a DNS
+record, on [Workspace → Single sign-on](../workspace/workspace-sso.mdx). This page is the
+installation administrator's view of the same providers, for every workspace: **sign in to the admin
+console, choose System settings** in the sidebar and find the **Single sign-on** card.
 
 <Screenshot id="admin-sso-providers" alt="System settings: the Single sign-on card with Northwind Okta (OIDC, Live, northwind.io verified) and Contoso Entra ID (SAML 2.0, needs a verified domain)" />
 
@@ -60,9 +62,12 @@ HTTP-Redirect), or a discovery document that names a different issuer.
    “Add domain”**.
 2. **Click “Mark verified”** once you have confirmed the company owns the domain.
 
-Only verified domains are used for sign-in, and a domain can belong to only one identity provider
-on the installation. Automatic verification by DNS record is coming with the workspace owner's
-single sign-on page.
+Only verified domains are used for sign-in, and a verified domain belongs to only one identity
+provider on the installation: adding or verifying a domain another provider has verified is
+refused. A domain that is listed but not verified reserves nothing.
+
+**“Mark verified”** takes your word for it. A workspace's owners verify a domain by DNS record
+instead, on [Workspace → Single sign-on](../workspace/workspace-sso.mdx#verify-a-domain).
 
 :::caution Verify only domains the company owns
 An identity provider signs in *anyone* at its verified domains. Marking a domain you have not
@@ -72,7 +77,8 @@ confirmed would let that IdP sign in people at a company it does not represent.
 ## Turn it on
 
 **Click “Enable”.** The provider shows **Live** once it is enabled and has at least one verified
-domain — from the next sign-in, people at those domains can use **“Sign in with SSO”**.
+domain — from the next sign-in, people at those domains can use **“Sign in with SSO”**, and the
+sign-in form offers them **“Continue with SSO”** as soon as they type their work email.
 **Needs a verified domain** means it is enabled but nothing routes to it yet. **“Disable”** stops
 new sign-ins through it at once; **“Remove…”** deletes it, with its secrets.
 
@@ -123,3 +129,5 @@ The sign-in page explains each refusal. The codes appear in the address bar and 
   production.
 - The same operations are available over the REST API:
   [`/v1/admin/sso/providers`](../reference/rest/sso.md).
+- Workspace owners manage their own providers at `/v1/tenants/{tenant}/sso/providers`; see
+  [Workspace → Single sign-on](../workspace/workspace-sso.mdx#for-operators).

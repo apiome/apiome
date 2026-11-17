@@ -1,0 +1,176 @@
+---
+title: Single sign-on
+description: Connect your identity provider, prove your email domains by DNS, and turn it on.
+sidebar_position: 2.5
+tags: [workspace, sign-in, sso, saml, oidc, domains]
+---
+
+<Route path="/ade/dashboard/sso" />
+
+**Single sign-on** lets everyone at your company sign in to Apiome with their work account, through
+your own identity provider (IdP) — Okta, Microsoft Entra ID, Google Workspace, Keycloak, Auth0 or
+any other that speaks **SAML 2.0** or **OpenID Connect (OIDC)**. You set it up in three steps:
+**connect** the IdP, **verify** an email domain you own, and **enable** the provider. **Go to
+Workspace → Single sign-on.**
+
+<Screenshot id="sso-providers" alt="Single sign-on: Northwind Okta (OIDC, northwind.io verified, 42 members, Live) and Northwind Entra ID (SAML 2.0, northwind.co.uk not verified, Disabled), with Add provider in the header" />
+
+The page is for workspace **owners and admins**. Everyone else sees *Owners and admins only*.
+
+Each provider in the list shows its protocol, its domains and how many are verified, how many
+members have signed in through it, and one of three states:
+
+| State | What it means |
+| --- | --- |
+| **Live** | Enabled, with at least one verified domain. People at those domains are sent to it when they sign in |
+| **Needs a verified domain** | Enabled, but no domain is verified yet, so nobody is sent to it |
+| **Disabled** | Off. Nobody is sent to it |
+
+## Connect your identity provider
+
+Use whichever protocol your IdP offers — most offer both.
+
+| | OIDC | SAML 2.0 |
+| --- | --- | --- |
+| **You give Apiome** | The issuer URL, a client ID and a client secret | The IdP's metadata URL, or its metadata XML pasted in |
+| **You give the IdP** | The **Redirect URI** Apiome shows | The **ACS URL** and the **SP entity ID** Apiome shows |
+| **Where the email comes from** | The ID token's `email` — the IdP must mark it verified | The NameID, or an attribute you name |
+
+1. **Click “Add provider”.**
+2. Choose **OIDC** or **SAML 2.0**, and give it a **Name** — for example `Northwind Okta`. The **ID**
+   fills in from the name; it appears in sign-in URLs and in the audit trail as `sso:<id>`.
+3. For **OIDC**, enter the **Issuer URL** (for example `https://northwind.okta.com`), the **Client
+   ID** and the **Client secret** from the app you registered at the IdP. Apiome reads the issuer's
+   discovery document and checks it before saving.
+
+   For **SAML 2.0**, enter the **IdP metadata URL** or paste the **IdP metadata XML**, then choose
+   where the email address comes from: **The NameID**, or **An attribute** and its name (for example
+   `mail`). Add an **SP signing key** only if your IdP requires signed sign-in requests.
+4. Choose a **Default role** — the role a member gets the first time they sign in through this
+   provider — or leave **Workspace default**. **Owner** is not offered.
+5. **Click “Add provider”.** The provider is added **Disabled** and its drawer opens.
+
+The client secret and the signing key are stored encrypted and never shown again.
+
+Apiome refuses an IdP it could never sign anyone in through, and says why — for example a discovery
+document that names a different issuer, or an IdP that offers single sign-on only over
+HTTP-Artifact.
+
+### Give the IdP its values
+
+**Click a provider's name** to open its drawer. The **Configure** tab starts with what your IdP's
+app settings need — the **Redirect URI** for OIDC, or the **ACS URL (reply URL)** and **SP entity ID
+(audience)** for SAML — each with a **“Copy”** button.
+
+<Screenshot id="sso-provider-configure" alt="The Northwind Entra ID drawer on Configure: ACS URL, SP entity ID and SP metadata with Copy buttons, then Name, IdP metadata URL and XML, Email address comes from, SP signing key and Default role" />
+
+Below them you can change the provider's settings. Leave **Client secret**, **SP signing key** and
+the two metadata fields blank to keep what is stored — Apiome never reads a secret back.
+**Click “Save changes”** when you are done.
+
+## Verify a domain
+
+An IdP may only sign in addresses at domains you have proved you own. Until a domain is verified,
+it sends no one anywhere.
+
+1. In the provider's drawer, **click the “Domains” tab**.
+2. Type your email domain in **Add a domain** — for example `northwind.io` — and **click “Add
+   domain”**.
+3. At your DNS provider, add the **TXT** record the row shows. **“Copy”** copies each value:
+
+   | Field | Value |
+   | --- | --- |
+   | **Type** | `TXT` |
+   | **Name** | `_apiome-challenge.northwind.io` |
+   | **Value** | The token shown for the domain |
+
+4. **Click “Verify”.** Apiome looks the record up and tells you what it found.
+
+<Screenshot id="sso-domain-verify" alt="The Domains tab: northwind.co.uk, Not verified, with its TXT record name and value, a Verify button and a Could not check result showing the DNS answer" />
+
+| Result | What it means | What to do |
+| --- | --- | --- |
+| **Verified** | The record holds the token. The domain now routes sign-ins | Nothing — you can remove the DNS record |
+| **Record not found** | There is no TXT record at that name yet | Check the record name, wait for DNS to update and try again |
+| **Record has another value** | A TXT record is there, but it is not this token. The answer is shown | Replace it with the value shown |
+| **Could not check** | The lookup itself failed — a timeout, or the DNS servers did not answer. The answer is shown | Nothing was changed. Try again in a few minutes |
+
+A domain is never marked verified unless the lookup succeeded and found the token.
+
+You can check a domain **three times an hour**. After that, Apiome tells you how long to wait.
+
+Apiome refuses some domains outright:
+
+- **Public email providers** — `gmail.com`, `outlook.com`, `yahoo.com` and the like. Add a domain
+  your organization owns.
+- **A domain another workspace has verified.** A domain signs in through one identity provider
+  only. If you own the domain, ask whoever verified it to remove it.
+
+Adding a domain without verifying it reserves nothing: someone else who can prove the domain may
+still verify it first.
+
+**Click “Remove”** beside a domain to take it off the provider. Sign-ins from it stop at once.
+
+## Turn it on
+
+**Click “Enable”** at the foot of the drawer. The provider becomes **Live** as soon as it is enabled
+and has a verified domain.
+
+From then on, when someone types a work email at one of your verified domains on the
+[sign-in page](../getting-started/sign-in.mdx#sign-in-with-your-companys-single-sign-on), the
+password field gives way to **“Continue with SSO”**, which takes them to your IdP.
+
+**Click “Disable”** to stop it. The very next sign-in no longer goes to the IdP.
+
+## Remove a provider
+
+1. **Click “Remove…”** at the foot of the drawer. Apiome tells you how many members have signed in
+   through the provider.
+2. **Click “Remove” followed by the provider's name** to confirm, or **“Keep it”** to go back.
+
+Removing a provider deletes its domains and its stored secrets. Members who signed in through it
+keep their accounts, but can no longer sign in this way — make sure they have a password or another
+sign-in method first.
+
+## What is recorded
+
+Every change on this page is written to the workspace's access audit, with who made it:
+
+| Action | When |
+| --- | --- |
+| `sso.provider.created` | A provider is added |
+| `sso.provider.updated` | Settings change, the provider is enabled or disabled, or a domain is added or removed |
+| `sso.domain.verified` | A domain passes its DNS check |
+| `sso.provider.deleted` | A provider is removed |
+
+No secret is ever written to the audit. Sign-in attempts themselves are recorded separately, as
+`sso:<id>`.
+
+## When something is refused
+
+| Code | What it means | What to do |
+| --- | --- | --- |
+| `sso-domain-public` | The domain is a public email provider | Add a domain your organization owns |
+| `sso-domain-claimed` | Another workspace has verified this domain | Ask its owner to remove it there |
+| `sso-domain-exists` | The provider already lists this domain | Nothing to add |
+| `sso-domain-invalid` | That is not an email domain such as `acme.com` | Check the spelling; wildcards are not accepted |
+| `sso-verify-rate-limited` | The domain was checked three times in the last hour | Wait as long as the message says |
+| `sso-default-role-invalid` | The default role is **Owner**, or not a role of this workspace | Choose another role |
+| `sso-enable-incomplete` | An OIDC provider has no client secret | Add the client secret on **Configure**, then enable |
+| `sso-slug-taken` | Another provider already uses that **ID** | Choose a different ID |
+
+What happens when someone signs in, and the codes a failed sign-in shows, are on the admin guide's
+[Single sign-on](../admin/single-sign-on.mdx#what-happens-when-someone-signs-in) page.
+
+## For operators
+
+- Single sign-on needs `AUTH_CONFIG_ENC_KEY` and `INTERNAL_SERVICE_TOKEN` set, as described under
+  [For operators](../admin/single-sign-on.mdx#for-operators) in the admin guide.
+- `APIOME_SSO_PUBLIC_DOMAINS` on apiome-rest replaces the built-in list of public email providers
+  with your own comma-separated list.
+- Domain checks use the DNS resolvers of the machine apiome-rest runs on.
+- The installation administrator can still connect a provider for any workspace, and mark a domain
+  verified without a DNS record, from the admin console's
+  [Single sign-on](../admin/single-sign-on.mdx) card.
+- The same operations are available over the REST API:
+  [`/v1/tenants/{tenant}/sso/providers`](../reference/rest/sso.md).

@@ -164,6 +164,23 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['teams.html', 'team-detail.html'] },
   },
   {
+    // EID-1.2 (#5012): Workspace → Single sign-on — the provider list and the drawer's Configure
+    // and Domains tabs (`tests/workspace-sso-page.test.tsx`), and the sign-in form once an email
+    // routes to SSO (`tests/login-email-first-sso.test.tsx`).
+    id: 'workspace-sso',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: [
+        'sso-providers.html',
+        'sso-provider-configure.html',
+        'sso-domain-verify.html',
+        'login-sso-routed.html',
+      ],
+    },
+  },
+  {
     // CDG-3.4 (#5969): the graph page, the Dependencies tab and the blast-radius drawer, dumped by
     // `tests/dependency-graph-ui.test.tsx`.
     id: 'dependency-graph',

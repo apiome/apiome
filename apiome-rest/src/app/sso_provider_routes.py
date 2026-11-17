@@ -5,8 +5,9 @@ Two routers over apiome-db V312 (``sso_provider``, ``sso_provider_domain``):
 * **Admin** — ``/v1/admin/sso/providers`` — gated by :func:`require_super_admin` exactly like
   the installation OAuth providers (``/v1/admin/auth-providers``). An installation admin
   registers a workspace's IdP (OIDC by issuer discovery, SAML 2.0 by metadata URL or XML), attaches
-  email domains, marks them verified (DNS verification and the owner-facing page arrive in
-  EID-1.2), and enables it.
+  email domains, marks them verified on their own word, and enables it. A workspace owner does
+  the same for their own workspace, with DNS proof of each domain, through
+  :mod:`app.tenant_sso_routes` (EID-1.2), which shares this module's models and builders.
 * **Internal** — ``/v1/internal/sso/providers/resolved`` — gated by the shared
   ``INTERNAL_SERVICE_TOKEN`` (:func:`require_internal_service`), like
   ``/v1/internal/auth-providers/resolved``. apiome-ui reads it at sign-in time to hand the
@@ -22,7 +23,8 @@ Security invariants:
 * **Only verified, enabled providers route.** The internal endpoint returns nothing else, and
   apiome-ui's plugin falls back to an always-empty table, so a disabled or unverified provider
   cannot be reached by any path.
-* **One domain, one IdP.** A domain is unique across the installation (``sso-domain-claimed``).
+* **One domain, one IdP.** A *verified* domain is unique across the installation
+  (``sso-domain-claimed``); an unverified one reserves nothing (V393).
 * **Every change is audited** in ``auth_events`` (event type ``sso_provider``), secret-free.
 """
 
@@ -52,7 +54,10 @@ from .auth_provider_secret_crypto import (
     unseal_provider_secret,
 )
 from .database import db
+from .sso_domain_verification import challenge_record_name
 from .sso_metadata import (
+    CODE_DOMAIN_CLAIMED,
+    CODE_DOMAIN_EXISTS,
     CODE_ENABLE_INCOMPLETE,
     PROTOCOL_OIDC,
     PROTOCOL_SAML,
@@ -99,7 +104,8 @@ class SsoDomainView(BaseModel):
     verified: bool = Field(..., description="Whether sign-ins from this domain may route to the IdP.")
     verified_at: Optional[datetime] = None
     verified_by: Optional[str] = None
-    verification_token: str = Field(..., description="The value EID-1.2's DNS TXT check looks for. Not a secret.")
+    verification_token: str = Field(..., description="The value the DNS TXT record must hold. Not a secret.")
+    record_name: str = Field(..., description="The TXT record to publish: `_apiome-challenge.<domain>`.")
     created_at: Optional[datetime] = None
 
 
@@ -277,6 +283,7 @@ def _view(row: Dict[str, Any]) -> SsoProviderView:
             verified_at=d.get("verified_at"),
             verified_by=d.get("verified_by"),
             verification_token=d["verification_token"],
+            record_name=challenge_record_name(d["domain"]),
             created_at=d.get("created_at"),
         )
         for d in row.get("domains") or []
@@ -338,6 +345,167 @@ async def _saml_config(
     )
 
 
+async def build_create_values(payload: Any, *, tenant_id: Optional[str]) -> Dict[str, Any]:
+    """Validate a create request and build the row to insert.
+
+    OIDC: the issuer's discovery document is fetched and checked. SAML: the IdP metadata is read
+    from the URL or the pasted XML. Secrets are sealed here; the returned mapping holds ciphertext
+    only.
+
+    Args:
+        payload: An :class:`SsoProviderCreateRequest` (or the workspace-owner twin without
+            ``tenant_id``).
+        tenant_id: The workspace the provider signs in to — the admin's choice, or the caller's
+            own workspace for an owner.
+
+    Returns:
+        The values for :func:`app.sso_provider_store.create_provider`.
+
+    Raises:
+        SsoConfigError: With a stable ``sso-*`` code.
+        HTTPException: ``503`` when a secret is given but encryption is unconfigured.
+    """
+    slug = normalize_slug(payload.slug, reserved=_reserved_slugs())
+    protocol = (payload.protocol or "").strip().lower()
+    if protocol not in PROTOCOLS:
+        raise SsoConfigError("sso-protocol-invalid", "Choose OIDC or SAML 2.0.")
+    values: Dict[str, Any] = {
+        "slug": slug,
+        "protocol": protocol,
+        "display_name": payload.display_name.strip(),
+        "tenant_id": tenant_id,
+        "preset": payload.preset,
+        "default_role_slug": payload.default_role_slug,
+    }
+    if protocol == PROTOCOL_OIDC:
+        if not (payload.client_secret or "").strip():
+            raise SsoConfigError(CODE_ENABLE_INCOMPLETE, "An OIDC provider needs the client secret the IdP issued.")
+        discovered = await discover_oidc(payload.issuer or "", client_id=payload.client_id or "")
+        values["issuer"] = discovered["issuer"]
+        values["oidc_config"] = discovered["oidc_config"]
+        values.update(_secret_updates(payload.client_secret, column="client_secret", what="client secret"))
+    else:
+        saml_config = await _saml_config(
+            metadata_url=payload.metadata_url,
+            metadata_xml=payload.metadata_xml,
+            email_source=payload.email_source,
+            email_attribute=payload.email_attribute,
+        )
+        values["issuer"] = saml_config["idp_entity_id"]
+        values["saml_config"] = saml_config
+        if (payload.sp_private_key or "").strip():
+            values.update(_secret_updates(payload.sp_private_key, column="sp_private_key", what="SP private key"))
+    return values
+
+
+async def build_updates(existing: Dict[str, Any], payload: Any) -> Dict[str, Any]:
+    """Validate a partial update and build the columns to write.
+
+    Only fields present in the request are touched. Enabling requires a complete provider: an OIDC
+    provider must hold a client secret.
+
+    Args:
+        existing: The stored provider.
+        payload: An :class:`SsoProviderUpdateRequest` (or the workspace-owner twin, which has no
+            ``tenant_id`` and so can never move a provider to another workspace).
+
+    Returns:
+        Column → value for :func:`app.sso_provider_store.update_provider`; empty for a no-op.
+
+    Raises:
+        SsoConfigError: With a stable ``sso-*`` code.
+        HTTPException: ``503`` when a secret is given but encryption is unconfigured.
+    """
+    provided = payload.model_fields_set
+    updates: Dict[str, Any] = {}
+    for column in ("display_name", "preset", "default_role_slug"):
+        if column in provided:
+            value = getattr(payload, column)
+            updates[column] = value.strip() if isinstance(value, str) else value
+    if "tenant_id" in provided:
+        updates["tenant_id"] = payload.tenant_id or None
+    if "enabled" in provided:
+        updates["enabled"] = bool(payload.enabled)
+
+    if existing["protocol"] == PROTOCOL_OIDC:
+        if "client_id" in provided:
+            discovered = await discover_oidc(existing["issuer"], client_id=payload.client_id or "")
+            updates["oidc_config"] = discovered["oidc_config"]
+        if "client_secret" in provided:
+            updates.update(_secret_updates(payload.client_secret, column="client_secret", what="client secret"))
+    else:
+        current = existing.get("saml_config") or {}
+        rereads = {"metadata_url", "metadata_xml"} & provided
+        if rereads or {"email_source", "email_attribute"} & provided:
+            email_source = payload.email_source if "email_source" in provided else current.get("email_source")
+            email_attribute = (
+                payload.email_attribute if "email_attribute" in provided else current.get("email_attribute")
+            )
+            if rereads:
+                saml_config = await _saml_config(
+                    metadata_url=payload.metadata_url,
+                    metadata_xml=payload.metadata_xml,
+                    email_source=email_source,
+                    email_attribute=email_attribute,
+                )
+            else:
+                saml_config = saml_config_from_metadata(
+                    SamlIdpMetadata(
+                        entity_id=current.get("idp_entity_id", existing["issuer"]),
+                        sso_url=current.get("sso_url", ""),
+                        sso_binding=current.get("sso_binding", ""),
+                        certificates=list(current.get("certificates") or []),
+                        name_id_formats=list(current.get("name_id_formats") or []),
+                    ),
+                    metadata_url=current.get("metadata_url"),
+                    email_source=email_source or "",
+                    email_attribute=email_attribute,
+                )
+            updates["saml_config"] = saml_config
+            updates["issuer"] = saml_config["idp_entity_id"]
+        if "sp_private_key" in provided:
+            updates.update(_secret_updates(payload.sp_private_key, column="sp_private_key", what="SP private key"))
+
+    will_enable = updates.get("enabled", existing.get("enabled"))
+    has_secret = (
+        updates["client_secret_key_id"] is not None
+        if "client_secret_key_id" in updates
+        else bool(existing.get("has_client_secret"))
+    )
+    if will_enable and existing["protocol"] == PROTOCOL_OIDC and not has_secret:
+        raise SsoConfigError(CODE_ENABLE_INCOMPLETE, "Add the client secret before enabling this OIDC provider.")
+    return updates
+
+
+def audited_fields(updates: Dict[str, Any]) -> List[str]:
+    """The changed fields as an audit row names them.
+
+    A secret is named by the secret (``client_secret``), never by its ciphertext / key-id column
+    pair, and no value is included.
+
+    Args:
+        updates: Column → value, as :func:`build_updates` returns it.
+
+    Returns:
+        Sorted field names.
+    """
+    return sorted(
+        {
+            "client_secret"
+            if key.startswith("client_secret")
+            else "sp_private_key"
+            if key.startswith("sp_private_key")
+            else key
+            for key in updates
+        }
+    )
+
+
+def domain_conflict_status(exc: SsoConfigError) -> int:
+    """``409`` for a domain someone holds or that is listed twice, else ``422``."""
+    return 409 if exc.code in (CODE_DOMAIN_CLAIMED, CODE_DOMAIN_EXISTS) else 422
+
+
 def _load(provider_id: str) -> Dict[str, Any]:
     """A stored provider, or ``404``."""
     row = store.get_provider(db, provider_id)
@@ -379,39 +547,11 @@ async def create_sso_provider(
             encryption is unconfigured.
     """
     try:
-        slug = normalize_slug(payload.slug, reserved=_reserved_slugs())
-        protocol = (payload.protocol or "").strip().lower()
-        if protocol not in PROTOCOLS:
-            raise SsoConfigError("sso-protocol-invalid", "Choose OIDC or SAML 2.0.")
-        values: Dict[str, Any] = {
-            "slug": slug,
-            "protocol": protocol,
-            "display_name": payload.display_name.strip(),
-            "tenant_id": payload.tenant_id or None,
-            "preset": payload.preset,
-            "default_role_slug": payload.default_role_slug,
-        }
-        if protocol == PROTOCOL_OIDC:
-            if not (payload.client_secret or "").strip():
-                raise SsoConfigError(CODE_ENABLE_INCOMPLETE, "An OIDC provider needs the client secret the IdP issued.")
-            discovered = await discover_oidc(payload.issuer or "", client_id=payload.client_id or "")
-            values["issuer"] = discovered["issuer"]
-            values["oidc_config"] = discovered["oidc_config"]
-            values.update(_secret_updates(payload.client_secret, column="client_secret", what="client secret"))
-        else:
-            saml_config = await _saml_config(
-                metadata_url=payload.metadata_url,
-                metadata_xml=payload.metadata_xml,
-                email_source=payload.email_source,
-                email_attribute=payload.email_attribute,
-            )
-            values["issuer"] = saml_config["idp_entity_id"]
-            values["saml_config"] = saml_config
-            if (payload.sp_private_key or "").strip():
-                values.update(_secret_updates(payload.sp_private_key, column="sp_private_key", what="SP private key"))
+        values = await build_create_values(payload, tenant_id=payload.tenant_id or None)
         row = store.create_provider(db, values, actor=ADMIN_ACTOR)
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
+    slug, protocol = values["slug"], values["protocol"]
     _audit(slug, "created", protocol=protocol, tenant_id=values.get("tenant_id"))
     return _view(row)
 
@@ -443,69 +583,8 @@ async def update_sso_provider(
     not ``routable`` until a domain is verified.
     """
     existing = _load(provider_id)
-    provided = payload.model_fields_set
-    updates: Dict[str, Any] = {}
     try:
-        for column in ("display_name", "preset", "default_role_slug"):
-            if column in provided:
-                value = getattr(payload, column)
-                updates[column] = value.strip() if isinstance(value, str) else value
-        if "tenant_id" in provided:
-            updates["tenant_id"] = payload.tenant_id or None
-        if "enabled" in provided:
-            updates["enabled"] = bool(payload.enabled)
-
-        if existing["protocol"] == PROTOCOL_OIDC:
-            if "client_id" in provided:
-                discovered = await discover_oidc(existing["issuer"], client_id=payload.client_id or "")
-                updates["oidc_config"] = discovered["oidc_config"]
-            if "client_secret" in provided:
-                updates.update(_secret_updates(payload.client_secret, column="client_secret", what="client secret"))
-        else:
-            current = existing.get("saml_config") or {}
-            rereads = {"metadata_url", "metadata_xml"} & provided
-            if rereads or {"email_source", "email_attribute"} & provided:
-                if rereads:
-                    saml_config = await _saml_config(
-                        metadata_url=payload.metadata_url,
-                        metadata_xml=payload.metadata_xml,
-                        email_source=payload.email_source
-                        if "email_source" in provided
-                        else current.get("email_source"),
-                        email_attribute=payload.email_attribute
-                        if "email_attribute" in provided
-                        else current.get("email_attribute"),
-                    )
-                else:
-                    saml_config = saml_config_from_metadata(
-                        SamlIdpMetadata(
-                            entity_id=current.get("idp_entity_id", existing["issuer"]),
-                            sso_url=current.get("sso_url", ""),
-                            sso_binding=current.get("sso_binding", ""),
-                            certificates=list(current.get("certificates") or []),
-                            name_id_formats=list(current.get("name_id_formats") or []),
-                        ),
-                        metadata_url=current.get("metadata_url"),
-                        email_source=payload.email_source
-                        if "email_source" in provided
-                        else current.get("email_source", ""),
-                        email_attribute=payload.email_attribute
-                        if "email_attribute" in provided
-                        else current.get("email_attribute"),
-                    )
-                updates["saml_config"] = saml_config
-                updates["issuer"] = saml_config["idp_entity_id"]
-            if "sp_private_key" in provided:
-                updates.update(_secret_updates(payload.sp_private_key, column="sp_private_key", what="SP private key"))
-
-        will_enable = updates.get("enabled", existing.get("enabled"))
-        has_secret = (
-            updates["client_secret_key_id"] is not None
-            if "client_secret_key_id" in updates
-            else bool(existing.get("has_client_secret"))
-        )
-        if will_enable and existing["protocol"] == PROTOCOL_OIDC and not has_secret:
-            raise SsoConfigError(CODE_ENABLE_INCOMPLETE, "Add the client secret before enabling this OIDC provider.")
+        updates = await build_updates(existing, payload)
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
 
@@ -513,17 +592,7 @@ async def update_sso_provider(
     _audit(
         existing["slug"],
         "updated",
-        # Secret columns are named by the secret, never by the ciphertext / key-id column pair.
-        fields=sorted(
-            {
-                "client_secret"
-                if k.startswith("client_secret")
-                else "sp_private_key"
-                if k.startswith("sp_private_key")
-                else k
-                for k in updates
-            }
-        ),
+        fields=audited_fields(updates),
     )
     return _view(row)  # type: ignore[arg-type]
 
@@ -550,18 +619,22 @@ async def delete_sso_provider(provider_id: str, _: None = Depends(require_super_
     "/{provider_id}/domains",
     response_model=SsoProviderView,
     status_code=201,
-    responses={**_ERRORS, 404: {"description": "No such provider."}, 409: {"description": "`sso-domain-claimed`."}},
+    responses={
+        **_ERRORS,
+        404: {"description": "No such provider."},
+        409: {"description": "`sso-domain-claimed` or `sso-domain-exists`."},
+    },
 )
 async def add_sso_domain(
     provider_id: str, payload: SsoDomainCreateRequest, _: None = Depends(require_super_admin)
 ) -> SsoProviderView:
-    """Attach an email domain, unverified. A domain belongs to one provider installation-wide."""
+    """Attach an email domain, unverified. A domain another provider has verified is refused."""
     existing = _load(provider_id)
     try:
         domain = normalize_domain(payload.domain)
         store.add_domain(db, provider_id, domain, token=secrets.token_urlsafe(24))
     except SsoConfigError as exc:
-        raise _refuse(exc, 409 if exc.code == "sso-domain-claimed" else 422) from exc
+        raise _refuse(exc, domain_conflict_status(exc)) from exc
     _audit(existing["slug"], "domain_added", domain=domain)
     return _view(_load(provider_id))
 
@@ -569,16 +642,25 @@ async def add_sso_domain(
 @admin_router.post(
     "/{provider_id}/domains/{domain}/verify",
     response_model=SsoProviderView,
-    responses={**_ERRORS, 404: {"description": "No such provider or domain."}},
+    responses={
+        **_ERRORS,
+        404: {"description": "No such provider or domain."},
+        409: {"description": "`sso-domain-claimed`: another provider has verified this domain."},
+    },
 )
 async def verify_sso_domain(provider_id: str, domain: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
-    """Mark a domain verified on the admin's word (DNS verification arrives in EID-1.2)."""
+    """Mark a domain verified on the admin's word.
+
+    A workspace owner proves a domain with a DNS TXT record instead
+    (``POST /v1/tenants/{tenant}/sso/providers/{id}/domains/{domain}/verify``).
+    """
     existing = _load(provider_id)
     try:
         normalized = normalize_domain(domain)
+        verified = store.verify_domain(db, provider_id, normalized, actor=ADMIN_ACTOR)
     except SsoConfigError as exc:
-        raise _refuse(exc) from exc
-    if store.verify_domain(db, provider_id, normalized, actor=ADMIN_ACTOR) is None:
+        raise _refuse(exc, domain_conflict_status(exc)) from exc
+    if verified is None:
         raise HTTPException(
             status_code=404,
             detail={"error": "sso-domain-not-found", "message": f"{normalized} is not a domain of this provider."},

@@ -437,6 +437,14 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         match: 'subtree',
       },
       {
+        // EID-1.2: the workspace's own identity provider, and the email domains it signs in.
+        id: 'sso',
+        label: 'Single sign-on',
+        href: `${DASHBOARD_HREF}/sso`,
+        icon: 'fingerprint',
+        requiresTenant: true,
+      },
+      {
         id: 'api-keys',
         label: 'API keys',
         href: `${DASHBOARD_HREF}/api-keys`,

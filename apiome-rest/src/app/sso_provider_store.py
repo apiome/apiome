@@ -1,7 +1,14 @@
-"""Persistence for SSO providers and their domains — EID-1.1 (#5011).
+"""Persistence for SSO providers and their domains — EID-1.1 (#5011), EID-1.2 (#5012).
 
 :mod:`app.sso_metadata` says what a provider is; this module is the only place one is read or
-written (apiome-db V312: ``sso_provider``, ``sso_provider_domain``).
+written (apiome-db V312, V393: ``sso_provider``, ``sso_provider_domain``).
+
+**A workspace sees only its own providers.** The reads and writes the workspace-owner routes use
+take ``tenant_id``; with it, a provider of another workspace is simply not found.
+
+**A verified domain is unique installation-wide; an unverified one is not** (V393). Several
+workspaces may list ``acme.com``; the first to prove it holds it, and the others are refused
+``sso-domain-claimed`` when they add or verify it.
 
 **Ciphertext never leaves through a read.** :data:`_READ_COLUMNS` does not select the two
 ``*_encrypted`` columns — only their key ids, so a caller can report "secret set" — and the one
@@ -18,12 +25,14 @@ from typing import Any, Dict, List, Mapping, Optional
 import psycopg2
 from psycopg2.extras import Json
 
-from .sso_metadata import CODE_DOMAIN_CLAIMED, CODE_SLUG_TAKEN, SsoConfigError
+from .sso_metadata import CODE_DOMAIN_CLAIMED, CODE_DOMAIN_EXISTS, CODE_SLUG_TAKEN, SsoConfigError
 
 __all__ = [
     "add_domain",
+    "count_linked_members",
     "create_provider",
     "delete_provider",
+    "domain_verified_elsewhere",
     "get_provider",
     "list_domains",
     "list_providers",
@@ -71,48 +80,64 @@ def _adapt(column: str, value: Any) -> Any:
     return value
 
 
-def list_providers(db) -> List[Dict[str, Any]]:
-    """Every provider, newest first, each with its domains under ``domains``.
+def list_providers(db, *, tenant_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Providers, newest first, each with its domains under ``domains``.
 
     Args:
         db: The database.
+        tenant_id: When given, only that workspace's providers.
 
     Returns:
         Provider rows (no ciphertext), each carrying a ``domains`` list.
     """
+    scope, params = ("WHERE p.tenant_id = %s::uuid", (tenant_id,)) if tenant_id else ("", ())
     providers = db.execute_query(
         f"""
         SELECT {_READ_COLUMNS}
         FROM apiome.sso_provider p
         LEFT JOIN apiome.tenants t ON t.id = p.tenant_id
+        {scope}
         ORDER BY p.created_at DESC, p.slug
-        """
+        """,
+        params,
     )
-    domains = db.execute_query(f"SELECT {_DOMAIN_COLUMNS} FROM apiome.sso_provider_domain d ORDER BY d.domain")
+    domains = db.execute_query(
+        f"""
+        SELECT {_DOMAIN_COLUMNS}
+        FROM apiome.sso_provider_domain d
+        JOIN apiome.sso_provider p ON p.id = d.provider_id
+        {scope}
+        ORDER BY d.domain
+        """,
+        params,
+    )
     by_provider: Dict[str, List[Dict[str, Any]]] = {}
     for row in domains:
         by_provider.setdefault(row["provider_id"], []).append(dict(row))
     return [{**dict(row), "domains": by_provider.get(row["id"], [])} for row in providers]
 
 
-def get_provider(db, provider_id: str) -> Optional[Dict[str, Any]]:
+def get_provider(db, provider_id: str, *, tenant_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """One provider with its domains, or ``None``.
 
     Args:
         db: The database.
         provider_id: The provider's uuid.
+        tenant_id: When given, the provider must belong to that workspace.
 
     Returns:
-        The provider row (no ciphertext) with ``domains``, or ``None`` when absent.
+        The provider row (no ciphertext) with ``domains``, or ``None`` when absent — or when it
+        belongs to another workspace.
     """
+    scope, params = ("AND p.tenant_id = %s::uuid", (provider_id, tenant_id)) if tenant_id else ("", (provider_id,))
     rows = db.execute_query(
         f"""
         SELECT {_READ_COLUMNS}
         FROM apiome.sso_provider p
         LEFT JOIN apiome.tenants t ON t.id = p.tenant_id
-        WHERE p.id = %s::uuid
+        WHERE p.id = %s::uuid {scope}
         """,
-        (provider_id,),
+        params,
     )
     if not rows:
         return None
@@ -210,14 +235,17 @@ def add_domain(db, provider_id: str, domain: str, *, token: str) -> Dict[str, An
         db: The database.
         provider_id: The provider's uuid.
         domain: A normalized domain (:func:`app.sso_metadata.normalize_domain`).
-        token: The verification token EID-1.2's DNS check will look for.
+        token: The verification token the DNS check looks for (EID-1.2).
 
     Returns:
         The domain row.
 
     Raises:
-        SsoConfigError: ``sso-domain-claimed`` when any provider already holds the domain.
+        SsoConfigError: ``sso-domain-claimed`` when another provider has verified the domain;
+            ``sso-domain-exists`` when this provider already lists it.
     """
+    if domain_verified_elsewhere(db, provider_id, domain):
+        raise SsoConfigError(CODE_DOMAIN_CLAIMED, f"{domain} is already verified for another SSO provider.")
     try:
         rows = db.execute_query(
             f"""
@@ -228,8 +256,56 @@ def add_domain(db, provider_id: str, domain: str, *, token: str) -> Dict[str, An
             (provider_id, domain, token),
         )
     except psycopg2.errors.UniqueViolation as exc:
-        raise SsoConfigError(CODE_DOMAIN_CLAIMED, f"{domain} is already assigned to an SSO provider.") from exc
+        raise SsoConfigError(CODE_DOMAIN_EXISTS, f"{domain} is already on this SSO provider.") from exc
     return dict(rows[0])
+
+
+def domain_verified_elsewhere(db, provider_id: str, domain: str) -> bool:
+    """Whether a *different* provider has already verified ``domain``.
+
+    Args:
+        db: The database.
+        provider_id: The provider asking.
+        domain: A normalized domain.
+
+    Returns:
+        True when the domain is taken: it can be neither added to nor verified for this provider.
+    """
+    rows = db.execute_query(
+        """
+        SELECT 1 FROM apiome.sso_provider_domain
+        WHERE domain = %s AND verified_at IS NOT NULL AND provider_id <> %s::uuid
+        LIMIT 1
+        """,
+        (domain, provider_id),
+    )
+    return bool(rows)
+
+
+def count_linked_members(db, tenant_id: str, slug: str) -> int:
+    """How many of a workspace's members have signed in through a provider.
+
+    A member counts when they hold an ``sso:<slug>`` identity (``external_auth_providers``).
+    Removing the provider keeps those identities, but the members can no longer use them.
+
+    Args:
+        db: The database.
+        tenant_id: The workspace.
+        slug: The provider's slug.
+
+    Returns:
+        The number of members.
+    """
+    rows = db.execute_query(
+        """
+        SELECT COUNT(DISTINCT tu.user_id) AS members
+        FROM apiome.tenant_users tu
+        JOIN apiome.external_auth_providers eap ON eap.user_id = tu.user_id
+        WHERE tu.tenant_id = %s::uuid AND eap.provider = %s
+        """,
+        (tenant_id, f"sso:{slug}"),
+    )
+    return int(rows[0]["members"]) if rows else 0
 
 
 def verify_domain(db, provider_id: str, domain: str, *, actor: str) -> Optional[Dict[str, Any]]:
@@ -237,17 +313,24 @@ def verify_domain(db, provider_id: str, domain: str, *, actor: str) -> Optional[
 
     Returns:
         The domain row, or ``None`` when the provider has no such domain.
+
+    Raises:
+        SsoConfigError: ``sso-domain-claimed`` when another provider verified it first (V393's
+            partial unique index decides a race).
     """
-    rows = db.execute_query(
-        f"""
-        UPDATE apiome.sso_provider_domain AS d
-        SET verified_at = COALESCE(d.verified_at, now()),
-            verified_by = COALESCE(d.verified_by, %s)
-        WHERE d.provider_id = %s::uuid AND d.domain = %s
-        RETURNING {_DOMAIN_COLUMNS}
-        """,
-        (actor, provider_id, domain),
-    )
+    try:
+        rows = db.execute_query(
+            f"""
+            UPDATE apiome.sso_provider_domain AS d
+            SET verified_at = COALESCE(d.verified_at, now()),
+                verified_by = COALESCE(d.verified_by, %s)
+            WHERE d.provider_id = %s::uuid AND d.domain = %s
+            RETURNING {_DOMAIN_COLUMNS}
+            """,
+            (actor, provider_id, domain),
+        )
+    except psycopg2.errors.UniqueViolation as exc:
+        raise SsoConfigError(CODE_DOMAIN_CLAIMED, f"{domain} is already verified for another SSO provider.") from exc
     return dict(rows[0]) if rows else None
 
 

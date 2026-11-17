@@ -42985,3 +42985,254 @@ tr[data-selected="true"] > td:first-child {
   align-items: center;
   gap: var(--space-2);
 }
+
+/* ---- Workspace → Single sign-on (EID-1.2, #5012) ---------------------------
+   `/ade/dashboard/sso`: the provider list reuses the Teams table (`.tm-table`); these rules draw
+   the add dialog's form, the provider drawer and the DNS challenge of its Domains tab. Tokens
+   only. */
+.wsso-note {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-normal);
+}
+
+.wsso-name {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.wsso-name:hover,
+.wsso-name:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.125rem;
+}
+
+.wsso-domains-cell {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.wsso-form,
+.wsso-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* The dialog's body has no padding of its own; the drawer's does. */
+.wsso-form--dialog {
+  padding-block: var(--space-4);
+}
+
+.wsso-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+}
+
+.wsso-fieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wsso-legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.wsso-radios {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.wsso-select {
+  inline-size: 100%;
+  block-size: var(--control-h);
+  padding-inline: var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.wsso-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.wsso-section__title {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.wsso-record {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  font-size: var(--fs-xs);
+}
+
+.wsso-record__row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.wsso-record__row dt {
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+
+.wsso-record__row dd {
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--fg);
+}
+
+.wsso-break,
+.wsso-copy__value {
+  overflow-wrap: anywhere;
+}
+
+.wsso-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.wsso-copy__value {
+  min-inline-size: 0;
+  color: var(--fg);
+}
+
+.wsso-save,
+.wsso-add-domain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.wsso-add-domain {
+  align-items: flex-end;
+}
+
+.wsso-add-domain__field {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.wsso-domains {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wsso-domain {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.wsso-domain__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.wsso-domain__name {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.wsso-domain__remove {
+  margin-inline-start: auto;
+}
+
+.wsso-check__title {
+  font-weight: 600;
+}
+
+.wsso-observed {
+  display: grid;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.wsso-observed__label {
+  font-weight: 600;
+}
+
+.wsso-observed ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wsso-observed li {
+  overflow-wrap: anywhere;
+}
+
+.wsso-drawer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.wsso-drawer__footer {
+  align-items: center;
+}
+
+.wsso-drawer__status {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  text-align: end;
+}
+
+.wsso-confirm {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.wsso-confirm__text {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}

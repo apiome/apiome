@@ -1860,6 +1860,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['permission matrix', 'custom role', 'built-in', 'rbac', 'duplicate', 'unsaved changes'],
   },
   {
+    id: 'workspace-sso',
+    title: 'Single sign-on for your workspace',
+    summary: 'Connect your identity provider, prove your email domains by DNS, and turn it on.',
+    page: 'apiome-docs/docs/workspace/workspace-sso.mdx',
+    section: 'reference',
+    keywords: ['sso', 'saml', 'oidc', 'okta', 'entra id', 'idp', 'txt record', 'verify', 'default role'],
+  },
+  {
     id: 'api-keys',
     title: 'API keys & agent keys',
     summary: 'Create scoped keys for REST access, copy the secret once, rotate before expiry, and disable or delete keys.',

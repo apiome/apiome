@@ -38,12 +38,19 @@ others, over SAML or OIDC), the sign-in page shows **“Sign in with SSO”**.
    “Continue with SSO”**.
 3. Sign in on your company's page. You come back to Apiome signed in.
 
+You do not have to find the button. If you **click “or use your email”** and type a work email that
+your company has set up for single sign-on, the **Password** field goes away, the page says *Your
+organization signs in with single sign-on.* and the button reads **“Continue with SSO”**.
+
+<Screenshot id="login-sso-routed" alt="The sign-in form with priya@northwind.io typed: no password field, the line Your organization signs in with single sign-on, and a Continue with SSO button" />
+
 The first time you sign in this way, Apiome asks you to finish setting up your account, as it does
 for any new sign-in. If you already have an Apiome account with the same email, single sign-on is
 added to it.
 
 **“No single sign-on is set up for this email domain.”** means your domain has no identity
-provider connected — sign in another way, or ask your administrator. If your company's provider
+provider connected — sign in another way, or ask a workspace owner to
+[set it up](../workspace/workspace-sso.mdx). If your company's provider
 refuses or Apiome cannot verify its answer, you land back here with a message saying so; see
 [Single sign-on](../admin/single-sign-on.mdx#when-sign-in-fails) for what each one means.
 

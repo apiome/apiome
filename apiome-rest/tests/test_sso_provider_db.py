@@ -1,13 +1,15 @@
-"""SSO providers against a live Postgres — EID-1.1 (#5011).
+"""SSO providers against a live Postgres — EID-1.1 (#5011), EID-1.2 (#5012).
 
-What only the real schema can prove: the V312 constraints (slug shape, one domain per installation,
-secret ciphertext and key id both-or-neither, config matching protocol), that admin reads never
-select the ciphertext, that only enabled providers' *verified* domains are routable, that the
-plugin's fallback model is always empty, and that ``external_auth_providers`` accepts ``sso:<slug>``.
+What only the real schema can prove: the V312 constraints (slug shape, secret ciphertext and key id
+both-or-neither, config matching protocol), V393's domain rules (a provider lists a domain once, an
+unverified domain reserves nothing, a verified one is unique installation-wide), that admin reads
+never select the ciphertext, that a workspace reads only its own providers, that only enabled
+providers' *verified* domains are routable, that the plugin's fallback model is always empty, and
+that ``external_auth_providers`` accepts ``sso:<slug>``.
 
 Runs inside one always-rolled-back transaction (the ``tx`` fixture of ``test_usage_index_db``);
-V312 is applied inside that transaction when the database does not have it yet, so nothing
-persists. Skipped when no database is reachable.
+V312 and V393 are applied inside that transaction when the database does not have them yet, so
+nothing persists. Skipped when no database is reachable.
 """
 
 from __future__ import annotations
@@ -19,14 +21,16 @@ import psycopg2
 import pytest
 
 from app import sso_provider_store as store
-from app.sso_metadata import CODE_DOMAIN_CLAIMED, CODE_SLUG_TAKEN, SsoConfigError
+from app.sso_metadata import CODE_DOMAIN_CLAIMED, CODE_DOMAIN_EXISTS, CODE_SLUG_TAKEN, SsoConfigError
 from tests import test_usage_index_db as index_db
 
 tx = index_db.tx
 
 pytestmark = pytest.mark.requires_db
 
-MIGRATION = pathlib.Path(__file__).resolve().parents[2] / "apiome-db" / "scripts" / "V312__sso_providers_5011.sql"
+_SCRIPTS = pathlib.Path(__file__).resolve().parents[2] / "apiome-db" / "scripts"
+MIGRATION = _SCRIPTS / "V312__sso_providers_5011.sql"
+DOMAIN_MIGRATION = _SCRIPTS / "V393__sso_domain_verification_5012.sql"
 
 OIDC_CONFIG = {"client_id": "apiome", "jwks_uri": "https://idp.example.com/certs"}
 SAML_CONFIG = {"idp_entity_id": "https://idp.example.com/saml", "email_source": "nameid"}
@@ -38,6 +42,9 @@ def sso(tx: Tuple[Any, Any]):
     cursor.execute("SELECT to_regclass('apiome.sso_provider') AS t")
     if not cursor.fetchone()["t"]:
         cursor.execute(MIGRATION.read_text(encoding="utf-8"))
+    cursor.execute("SELECT to_regclass('apiome.sso_provider_domain_verified_uq') AS i")
+    if not cursor.fetchone()["i"]:
+        cursor.execute(DOMAIN_MIGRATION.read_text(encoding="utf-8"))
     return db, cursor
 
 
@@ -106,18 +113,84 @@ def test_verification_is_idempotent(sso) -> None:
     assert second["verified_by"] == "admin"
 
 
-def test_a_domain_is_unique_across_the_installation(sso) -> None:
+def test_an_unverified_domain_reserves_nothing_and_a_verified_one_is_unique(sso) -> None:
     db, cursor = sso
     first = _oidc(db, slug="acme-one")
     second = _oidc(db, slug="acme-two")
-    store.add_domain(db, first["id"], "claimed.example", token="t")
+    third = _oidc(db, slug="acme-three")
+    store.add_domain(db, first["id"], "claimed.example", token="t1")
+    # Unverified: a second provider may list it too.
+    store.add_domain(db, second["id"], "claimed.example", token="t2")
+    assert store.domain_verified_elsewhere(db, first["id"], "claimed.example") is False
 
-    def claim_again():
+    store.verify_domain(db, second["id"], "claimed.example", actor="owner-2")
+    assert store.domain_verified_elsewhere(db, first["id"], "claimed.example") is True
+    assert store.domain_verified_elsewhere(db, second["id"], "claimed.example") is False
+
+    def verify_late():
         with pytest.raises(SsoConfigError) as caught:
-            store.add_domain(db, second["id"], "claimed.example", token="t")
+            store.verify_domain(db, first["id"], "claimed.example", actor="owner-1")
         assert caught.value.code == CODE_DOMAIN_CLAIMED
 
-    _savepoint(cursor, claim_again)
+    _savepoint(cursor, verify_late)
+
+    with pytest.raises(SsoConfigError) as caught:
+        store.add_domain(db, third["id"], "claimed.example", token="t3")
+    assert caught.value.code == CODE_DOMAIN_CLAIMED
+
+    # Once the holder lets go, the domain can be proved by someone else.
+    assert store.remove_domain(db, second["id"], "claimed.example") is True
+    assert store.verify_domain(db, first["id"], "claimed.example", actor="owner-1")["verified_at"] is not None
+
+
+def test_a_provider_lists_a_domain_once(sso) -> None:
+    db, cursor = sso
+    provider = _oidc(db)
+    store.add_domain(db, provider["id"], "acme.example", token="t")
+
+    def again():
+        with pytest.raises(SsoConfigError) as caught:
+            store.add_domain(db, provider["id"], "acme.example", token="t")
+        assert caught.value.code == CODE_DOMAIN_EXISTS
+
+    _savepoint(cursor, again)
+
+
+def test_a_workspace_reads_only_its_own_providers(sso) -> None:
+    db, cursor = sso
+    mine = index_db._tenant(cursor)["tenant"]
+    theirs = index_db._tenant(cursor)["tenant"]
+    own = _oidc(db, slug="acme-mine", tenant_id=mine)
+    other = _oidc(db, slug="acme-theirs", tenant_id=theirs)
+    store.add_domain(db, other["id"], "theirs.example", token="t")
+
+    listed = store.list_providers(db, tenant_id=mine)
+    assert [row["slug"] for row in listed] == ["acme-mine"]
+    assert listed[0]["domains"] == []
+    assert store.get_provider(db, own["id"], tenant_id=mine)["slug"] == "acme-mine"
+    assert store.get_provider(db, other["id"], tenant_id=mine) is None
+
+
+def test_members_who_signed_in_through_a_provider_are_counted(sso) -> None:
+    db, cursor = sso
+    tenant = index_db._tenant(cursor)["tenant"]
+    provider = _oidc(db, slug="acme-count", tenant_id=tenant)
+    assert store.count_linked_members(db, tenant, provider["slug"]) == 0
+
+    cursor.execute("SELECT id FROM apiome.users LIMIT 1")
+    user = cursor.fetchone()["id"]
+    cursor.execute(
+        "INSERT INTO apiome.tenant_users (tenant_id, user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+        (tenant, user),
+    )
+    cursor.execute(
+        "INSERT INTO apiome.external_auth_providers (user_id, provider, provider_user_id) "
+        "VALUES (%s, 'sso:acme-count', 'sub-count') ON CONFLICT DO NOTHING",
+        (user,),
+    )
+    assert store.count_linked_members(db, tenant, provider["slug"]) == 1
+    # A member of another workspace with the same identity is not this workspace's.
+    assert store.count_linked_members(db, index_db._tenant(cursor)["tenant"], provider["slug"]) == 0
 
 
 def test_a_slug_is_unique(sso) -> None:

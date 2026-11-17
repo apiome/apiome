@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Mail, Lock, ShieldCheck, Zap, CreditCard, ArrowRight, RotateCcw } from 'lucide-react';
 import { signIn } from '@lib/auth/session-client';
+import { signInWithSso } from '@lib/auth/better-auth-client-compat';
 import { BrandMark } from '../components/brand';
 import type { ProviderSummary } from '../../../lib/auth/provider-registry';
 import { getProviderBrand } from '../components/auth/provider-brand';
@@ -10,7 +11,8 @@ import { AuthShell } from '../components/auth/AuthShell';
 import { AuthField } from '../components/auth/AuthField';
 import { BetaBadge } from '../components/auth/BetaBadge';
 import LoginBrandPanel from './LoginBrandPanel';
-import EnterpriseSsoSignIn from './EnterpriseSsoSignIn';
+import EnterpriseSsoSignIn, { SSO_NO_PROVIDER_MESSAGE, SSO_START_FAILED_MESSAGE } from './EnterpriseSsoSignIn';
+import { useSsoEmailRouting } from './useSsoEmailRouting';
 import { SSOButton } from './SSOButton';
 import { LegalLine } from './LegalLine';
 import type { LegalLinks } from '@lib/auth/signup-page';
@@ -70,7 +72,8 @@ interface LoginClientProps {
   /**
    * Whether at least one enterprise SSO provider (a workspace's own SAML / OIDC IdP, EID-1.1) is
    * enabled with a verified domain. Adds "Sign in with SSO" beside the provider buttons, and like
-   * them makes the credentials form start collapsed.
+   * them makes the credentials form start collapsed. It also turns on email-first routing
+   * (EID-1.2): an email in such a domain is offered only "Continue with SSO".
    */
   enterpriseSso?: boolean;
   /** The installation's Terms / Privacy pages, for the footer; left out when neither is set. */
@@ -102,10 +105,29 @@ const LoginClient: React.FC<LoginClientProps> = ({
   // The rejected pair is marked on the fields themselves until the user edits either one —
   // an error the reader has already started fixing should stop shouting.
   const [credentialsRejected, setCredentialsRejected] = useState(error === 'CredentialsSignin');
+  // Email-first routing (EID-1.2): an email in a verified domain of an enabled workspace IdP
+  // signs in through that IdP, so the password field gives way to "Continue with SSO".
+  const ssoRouting = useSsoEmailRouting(payload['email'], enterpriseSso);
+  const [ssoRouteError, setSsoRouteError] = useState<string | undefined>(undefined);
+
+  /** Send the email in the form to its workspace's identity provider. */
+  const continueWithSso = async () => {
+    setSsoRouteError(undefined);
+    const outcome = await signInWithSso(payload['email'], callbackUrl);
+    if (outcome === 'redirecting') return; // the browser is leaving for the IdP
+    setSignInEnabled(true);
+    setSsoRouteError(outcome === 'no-provider' ? SSO_NO_PROVIDER_MESSAGE : SSO_START_FAILED_MESSAGE);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignInEnabled(false);
+    // Asked again here rather than read from state: a fast typist can submit before the
+    // debounced lookup lands, and must not be sent down the password path by that race.
+    if (enterpriseSso && (await ssoRouting.resolve(payload['email']))) {
+      await continueWithSso();
+      return;
+    }
     // Sign-up has its own page (`/signup`, SGN-1.2); this form only signs in.
     // `signIn` navigates on every outcome (the destination, the second-factor step, or this page
     // with `?error=`), so the button stays off while the browser leaves. Re-enabling it when the
@@ -133,6 +155,7 @@ const LoginClient: React.FC<LoginClientProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.name === 'email' || e.target.name === 'password') {
       setCredentialsRejected(false);
+      setSsoRouteError(undefined);
     }
     setPayload({
       ...payload,
@@ -282,26 +305,37 @@ const LoginClient: React.FC<LoginClientProps> = ({
             autoComplete="email"
             placeholder="you@example.com"
             invalid={Boolean(fieldError)}
+            error={ssoRouting.routed ? ssoRouteError : undefined}
           />
 
-          <AuthField
-            id="password"
-            label="Password"
-            icon={<Lock size={ICON_SIZE.dense} aria-hidden="true" />}
-            aside={
-              <a href="#" className="auth-link text-xs font-medium">
-                Forgot your password?
-              </a>
-            }
-            type="password"
-            name="password"
-            value={payload['password']}
-            onChange={handleChange}
-            required
-            autoComplete="current-password"
-            placeholder="••••••••"
-            error={fieldError}
-          />
+          {ssoRouting.routed && (
+            <p className="auth-sub" role="status" data-testid="login-sso-routed">
+              Your organization signs in with single sign-on.
+            </p>
+          )}
+
+          {/* An SSO-routed email has no password here: the field leaves the form (a hidden
+              `required` input would block the submit). */}
+          {!ssoRouting.routed && (
+            <AuthField
+              id="password"
+              label="Password"
+              icon={<Lock size={ICON_SIZE.dense} aria-hidden="true" />}
+              aside={
+                <a href="#" className="auth-link text-xs font-medium">
+                  Forgot your password?
+                </a>
+              }
+              type="password"
+              name="password"
+              value={payload['password']}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+              placeholder="••••••••"
+              error={fieldError}
+            />
+          )}
 
 
           <Button
@@ -310,8 +344,9 @@ const LoginClient: React.FC<LoginClientProps> = ({
             size="lg"
             className="w-full"
             disabled={!signInEnabled || isSSOLoading}
+            data-testid="login-submit"
           >
-            Sign In
+            {ssoRouting.routed ? 'Continue with SSO' : 'Sign In'}
             <ArrowRight aria-hidden="true" />
           </Button>
         </form>
