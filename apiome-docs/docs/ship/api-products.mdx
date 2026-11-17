@@ -74,7 +74,8 @@ published: Payments MCP.* The same rule applies when you add an unpublished memb
 is already on the portal: the add is refused.
 
 **State** is the product's lifecycle — **Draft** while you assemble it, **Published** once consumers
-can ask for it, then **Deprecated** and **Retired** — and is shown on the list.
+can ask for it, then **Deprecated** and **Retired** — and is shown on the list. **State** offers only
+the next step; see [Lifecycle](#lifecycle).
 
 ## Owner team
 
@@ -88,7 +89,7 @@ A **plan** is a tier of the product — *Sandbox*, *Standard*, *Partner* — and
 consumer: how they authenticate, how many requests they may send, who approves a request and which
 gateway environments enforce it. Apiome records the plan; the gateway enforces it.
 
-<Screenshot id="api-plan-editor" alt="The Plans table with Declared only and auth-mismatch flags, and the plan editor open on Standard with its declared-only notice, auth warning and Plan fields" />
+<Screenshot id="api-plan-editor" alt="The plan editor on the deprecated Standard plan: Migrate to plan, State set to Deprecated with Retired available from 2027-03-31, and the Deprecation fields — Retire on 2027-03-31, Replacement plan Premium and a message to subscribers" />
 
 The **Plans** table, under **Members**, shows each plan's **Auth**, its **Limits** (`100 / minute ·
 50,000 / day`), its **Approval**, its **Environments** and its **State**. **Declared only** marks a plan
@@ -99,7 +100,8 @@ Apiome cannot provision yet, and **1 member does not match** marks an auth misma
 1. **Click “New plan”.** The plan editor opens under the table.
 2. Under **Plan**, enter a **Name** — for example *Standard*. Optionally enter a **Handle**
    (`standard`); it is derived from the name when left empty and cannot be changed later. Add a
-   **Description** and pick a **State**.
+   **Description** and pick a **State** — **Draft** or **Published**. A plan is deprecated and
+   retired once it exists ([Lifecycle](#lifecycle)).
 3. Under **Access**, choose the **Auth strategy**:
 
    | Auth strategy | What a consumer uses | Settings |
@@ -149,6 +151,84 @@ When you export a version that a product includes, an OpenAPI export carries the
 the `x-apiome-plans` extension. Other formats have no equivalent, so the plans are dropped and the
 fidelity report says so — see [Understand export fidelity](./export-fidelity.md#api-plans).
 
+## Lifecycle
+
+Plans change: a tier is withdrawn or replaced. A product and each of its plans move through the same
+states, one step at a time:
+
+| State | What it means | Next steps |
+| --- | --- | --- |
+| **Draft** | Being written; not offered. | **Published** |
+| **Published** | Offered: consumers can subscribe. | **Draft**, **Deprecated** |
+| **Deprecated** | Still served, but **takes no new subscriptions**. Shows a retirement date and what to move to. | **Published** (reinstate), **Retired** |
+| **Retired** | Over. A retired plan's gateway provisioning is revoked. | — |
+
+**State** offers only those steps. Every step is recorded in the
+[access audit](../govern/access-audit.mdx) as `api_product.plan.deprecate`, `.reinstate`, `.retire`
+or `.migrate` (and `api_product.deprecate`, `.reinstate`, `.retire` for the product).
+
+### Deprecate a plan
+
+1. **Click “Edit”** on the plan's row.
+2. Set **State** to **Deprecated**. The **Deprecation** fields appear.
+3. Optionally enter **Retire on** — the date the plan retires, for example `2027-03-31` (UTC). Leave it
+   empty to retire whenever you decide.
+4. Choose a **Replacement plan** — for example **Premium**. Only a **Published** plan of the same
+   product with the **same auth strategy** is offered, because migrated consumers keep their keys.
+5. Optionally enter a **Message to subscribers** — *Standard retires on 31 March. Move to Premium;
+   your key keeps working.*
+6. **Click “Save plan”.**
+
+From then on the plan takes no new subscriptions, and the editor says so: *Deprecated: new
+subscriptions are blocked. It retires on 2027-03-31. Consumers move to Premium (premium).* The
+**Plans** table shows *Retires on 2027-03-31 · moves to Premium* under its state. The owners of
+applications subscribed to the plan are told **once** per deprecation; moving the date or editing the
+message does not tell them again.
+
+To withdraw a deprecation, set **State** back to **Published** and **click “Save plan”**. The
+retirement date, message and replacement are cleared, and a later deprecation tells owners again.
+
+### Migrate to plan
+
+A deprecated plan's editor has **Migrate to plan…**, which moves the plan's subscriptions to another
+plan without new keys:
+
+1. **Click “Migrate to plan…”**.
+2. Under **Move to**, pick the plan — the replacement plan is chosen for you.
+3. **Click “Preview”** to see what would move. The result names the gateway consumer groups the
+   consumers leave and join, for example `plan:payments-standard → plan:payments-premium`.
+4. **Click “Migrate”.** Each consumer is moved into the new plan's consumer group with the key it
+   already holds; no key is issued, rotated or revoked. The target is recorded as the plan's
+   replacement.
+5. **Click “Done”.**
+
+Until applications can subscribe to plans, nothing moves: the result says *No application is
+subscribed to Standard, so nothing moved. Premium is recorded as its replacement.*
+
+### Retire a plan
+
+Once the **Retire on** date has passed — or at any time when the plan has no date — set **State** to
+**Retired** and **click “Save plan”**. Before the date, **Retired** is unavailable and the hint says
+*Retired is available from 2027-03-31.* A retired plan's gateway provisioning is revoked, it leaves
+the portal and OpenAPI exports, and it cannot be published again.
+
+### Deprecate or retire a product
+
+In **Details**, set **State** to **Deprecated**. The **Deprecation** fields appear: **Retire on** and a
+**Deprecation message** — *Payments v1 retires on 31 March; Payments v2 replaces it.* **Click “Save
+product”.** Deprecate the product's plans as well so they stop taking subscriptions.
+
+A product retires on or after its **Retire on** date, and only once **every plan of it is retired** —
+retiring the product first would strand plans that still have consumers.
+
+### Where a deprecation shows
+
+- On the [Sunset timeline](./sunset-timeline.mdx#api-products-and-plans), beside deprecated versions,
+  soonest retirement first.
+- On the [changelog](./api-changelog.mdx#plan-and-product-changes) of every API a **Portal** product
+  includes.
+- On the portal's product page, where a deprecated plan's card reads **Deprecated**.
+
 ## On the portal
 
 A product whose visibility is **Portal** and whose state is **Published** or **Deprecated** gets a
@@ -193,6 +273,15 @@ details, members or plans and **delete** to delete. Everything on this page is a
 [the REST API](../reference/rest/api-products.md):
 `GET | POST /v1/tenants/{t}/products`, `GET | PATCH | DELETE /v1/tenants/{t}/products/{slug}`,
 `GET | POST /v1/tenants/{t}/products/{slug}/members` with `DELETE …/members/{id}`, and
-`GET | POST /v1/tenants/{t}/products/{slug}/plans` with `GET | PATCH | DELETE …/plans/{plan}`. A plan
-read returns `declared_only`, its `notices` (`api-plan-declared-only`) and its `warnings`
-(`api-plan-auth-mismatch`).
+`GET | POST /v1/tenants/{t}/products/{slug}/plans` with `GET | PATCH | DELETE …/plans/{plan}`, and
+`POST …/plans/{plan}/migrate` (`{"to": "premium", "dry_run": true}`). A plan read returns
+`declared_only`, `accepts_subscriptions`, its lifecycle (`deprecated_at`, `retire_at`, `retired_at`,
+`deprecation_message`, `successor`), its `notices` (`api-plan-declared-only`, `api-plan-deprecated`)
+and its `warnings` (`api-plan-auth-mismatch`).
+
+A lifecycle step is a `PATCH` of `state`, with `retire_at`, `deprecation_message` and (for a plan)
+`successor` while it is deprecated. Refusals carry a code: `api-lifecycle-transition` (409, a step
+that is not allowed), `api-lifecycle-retire-early` (409, before `retire_at`),
+`api-lifecycle-successor-invalid` (422, a replacement that is not published or uses another auth
+strategy), `api-lifecycle-invalid-state` (400, creating a record as deprecated or retired) and
+`api-product-plans-live` (409, retiring a product whose plans are not all retired).

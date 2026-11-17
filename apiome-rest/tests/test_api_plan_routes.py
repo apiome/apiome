@@ -10,6 +10,8 @@ endpoint's own contract:
 * a declared-only plan is saved (201), not refused, and carries its notice;
 * a refusal becomes the status that matches its kind (404 unknown product or plan, 409 slug taken,
   422 unknown environment, 400 otherwise);
+* **migrate** (APX-1.4) is gated on ``projects:edit`` and returns what moved, never a changed
+  credential; lifecycle refusals map to 409 (a step not allowed yet) and 422 (a bad successor);
 * the routes are part of the published OpenAPI document.
 """
 
@@ -21,17 +23,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import api_plan_routes
+from app.api_lifecycle import CODE_INVALID_STATE, CODE_RETIRE_EARLY, CODE_SUCCESSOR_INVALID, CODE_TRANSITION
 from app.api_plans import (
     CODE_ENVIRONMENT_NOT_FOUND,
     CODE_INVALID,
     CODE_NOT_FOUND,
     CODE_SLUG_TAKEN,
     NOTICE_DECLARED_ONLY,
+    ApiPlanMigration,
     ApiPlanRecord,
     ApiPlanValidationError,
     PlanAuthConfig,
     PlanEnvironment,
     PlanNotice,
+    PlanRef,
 )
 from app.api_products import CODE_NOT_FOUND as PRODUCT_NOT_FOUND
 from app.api_products import ApiProductValidationError
@@ -73,7 +78,18 @@ def calls(monkeypatch) -> List[tuple]:
                         lambda t, p, s, patch, actor: seen.append(("update", s, patch.model_dump(exclude_unset=True)))
                         or _record(s))
     monkeypatch.setattr(api_plan_routes, "delete_plan", lambda t, p, s, actor: seen.append(("delete", s)) or s)
+    monkeypatch.setattr(api_plan_routes, "migrate_plan",
+                        lambda t, p, s, body, actor: seen.append(("migrate", s, body.model_dump())) or _migration(body))
     return seen
+
+
+def _migration(body: Any) -> ApiPlanMigration:
+    return ApiPlanMigration(
+        from_plan=PlanRef(slug="standard", name="Standard", state="deprecated"),
+        to_plan=PlanRef(slug=body.to, name="Premium", state="published"),
+        dry_run=body.dry_run, from_group="plan:payments-standard", to_group=f"plan:payments-{body.to}",
+        subscriptions=0, message="No application is subscribed to Standard, so nothing moved.",
+    )
 
 
 @pytest.fixture
@@ -165,6 +181,10 @@ def test_the_slug_cannot_be_patched(calls: List[tuple], role: Dict[str, Any]) ->
         (ApiPlanValidationError(CODE_SLUG_TAKEN, "refused"), 409),
         (ApiPlanValidationError(CODE_ENVIRONMENT_NOT_FOUND, "refused"), 422),
         (ApiPlanValidationError(CODE_INVALID, "the minute window is limited twice"), 400),
+        (ApiPlanValidationError(CODE_TRANSITION, "deprecate the plan before retiring it"), 409),
+        (ApiPlanValidationError(CODE_RETIRE_EARLY, "this plan retires on 2027-03-31"), 409),
+        (ApiPlanValidationError(CODE_SUCCESSOR_INVALID, "cannot use that replacement plan"), 422),
+        (ApiPlanValidationError(CODE_INVALID_STATE, "a new plan starts as draft or published"), 400),
     ],
 )
 def test_a_refusal_maps_to_its_status_with_its_code(
@@ -180,9 +200,40 @@ def test_a_refusal_maps_to_its_status_with_its_code(
     assert detail["code"] == error.code and detail["message"] == str(error)
 
 
+def test_migrate_moves_subscriptions_without_new_credentials(calls: List[tuple], role: Dict[str, Any]) -> None:
+    response = client.post(f"{_BASE}/standard/migrate", json={"to": "premium", "dry_run": True})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["credentials_changed"] is False and body["dry_run"] is True
+    assert (body["from_group"], body["to_group"]) == ("plan:payments-standard", "plan:payments-premium")
+    assert calls == [("migrate", "standard", {"to": "premium", "dry_run": True})]
+    assert role["checked"] == [("projects", "edit")]
+
+
+def test_a_viewer_cannot_migrate(calls: List[tuple], role: Dict[str, Any]) -> None:
+    role["role"] = "viewer"
+    assert client.post(f"{_BASE}/standard/migrate", json={"to": "premium"}).status_code == 403
+    assert calls == []
+
+
+def test_migrate_needs_a_target(calls: List[tuple], role: Dict[str, Any]) -> None:
+    assert client.post(f"{_BASE}/standard/migrate", json={}).status_code == 422
+    assert calls == []
+
+
+def test_the_patch_forwards_the_lifecycle_fields(calls: List[tuple], role: Dict[str, Any]) -> None:
+    body = {"state": "deprecated", "retire_at": "2027-03-31T00:00:00Z", "successor": "premium",
+            "deprecation_message": "Move to Premium."}
+    assert client.patch(f"{_BASE}/standard", json=body).status_code == 200
+    sent = calls[0][2]
+    assert sent["state"] == "deprecated" and sent["successor"] == "premium"
+    assert sent["retire_at"].isoformat() == "2027-03-31T00:00:00+00:00"
+
+
 def test_the_routes_are_in_the_openapi_document() -> None:
     paths = app.openapi()["paths"]
     assert set(paths["/v1/tenants/{tenant_slug}/products/{product_slug}/plans"]) == {"get", "post"}
     assert set(paths["/v1/tenants/{tenant_slug}/products/{product_slug}/plans/{plan_slug}"]) == {
         "get", "patch", "delete",
     }
+    assert set(paths["/v1/tenants/{tenant_slug}/products/{product_slug}/plans/{plan_slug}/migrate"]) == {"post"}

@@ -49,6 +49,12 @@
  * *Where these warnings come from* ghost button in the header's actions, which shows under the
  * same condition — so the drawing and the table start one banner higher.
  *
+ * ### API products and plans (APX-1.4, #6101)
+ *
+ * Under the version table, {@link SunsetProductsTable} lists deprecated and retired API products
+ * and plans from the same read (`products`), each linking to its product. It draws nothing when
+ * there are none, and the CSV stays the versions' contract.
+ *
  * @see `@/app/components/ade/sunset` — the rules, the drawing and the table.
  */
 
@@ -84,6 +90,7 @@ import {
   SUNSET_NO_TENANT,
   SUNSET_SIGNED_OUT,
   SUNSET_WARNINGS_LINK,
+  SunsetProductsTable,
   SunsetTable,
   SunsetTimelineChart,
   SunsetWarningsDialog,
@@ -94,6 +101,7 @@ import {
   sunsetTimelineLayout,
   type SunsetEntry,
   type SunsetMarker,
+  type SunsetProductEntry,
   type SunsetProject,
 } from '@/app/components/ade/sunset';
 
@@ -110,6 +118,7 @@ export default function SunsetTimelinePage() {
   const [projects, setProjects] = React.useState<SunsetProject[]>([]);
   const [projectFilter, setProjectFilter] = React.useState<string>(ALL_PROJECTS);
   const [entries, setEntries] = React.useState<SunsetEntry[]>([]);
+  const [products, setProducts] = React.useState<SunsetProductEntry[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [selectedRevisionId, setSelectedRevisionId] = React.useState<string | null>(null);
@@ -145,12 +154,15 @@ export default function SunsetTimelinePage() {
       if (!response.ok || !data.success) {
         setError(typeof data.error === 'string' ? data.error : SUNSET_LOAD_ERROR);
         setEntries([]);
+        setProducts([]);
         return;
       }
       setEntries(Array.isArray(data.entries) ? data.entries : []);
+      setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : SUNSET_LOAD_ERROR);
       setEntries([]);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -353,6 +365,8 @@ export default function SunsetTimelinePage() {
                 />
               }
             />
+
+            <SunsetProductsTable entries={products} />
           </>
         )}
       </PageBody>

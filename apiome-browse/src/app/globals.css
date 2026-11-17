@@ -683,6 +683,35 @@ a.table-row:hover {
   color: var(--gold-soft-text);
 }
 
+/* APX-1.4 (#6101): a deprecated product or plan, on the changelog of an API it includes. */
+.product-lifecycle {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background-color: var(--gold-soft);
+  color: var(--gold-soft-text);
+  font-size: 0.875rem;
+}
+
+.product-lifecycle-item {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.product-lifecycle-link {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.product-lifecycle-plans {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
 .product-members {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);

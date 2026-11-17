@@ -197,7 +197,7 @@
       "id": "api-plan-editor",
       "route": "/ade/dashboard/products/payments",
       "waitFor": "[data-testid=\"plan-editor\"]",
-      "scrollTo": "[data-testid=\"plan-notice\"]",
+      "scrollTo": "[data-testid=\"plan-state\"]",
       "data": "fixture:hive-a11y/api-plan-editor.html",
       "sources": [
         "apiome-ui/src/app/components/ade/apiProducts/ProductPlansSection.tsx",

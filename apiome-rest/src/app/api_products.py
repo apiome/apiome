@@ -29,6 +29,7 @@ them and :mod:`app.api_product_routes` serves them. Every refusal is an
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -41,6 +42,7 @@ __all__ = [
     "CODE_MEMBER_NOT_FOUND",
     "CODE_MEMBER_REF_NOT_FOUND",
     "CODE_NOT_FOUND",
+    "CODE_PLANS_LIVE",
     "CODE_PORTAL_UNPUBLISHED",
     "CODE_SLUG_TAKEN",
     "CODE_TEAM_NOT_FOUND",
@@ -76,6 +78,8 @@ CODE_INVALID = "api-product-invalid"
 CODE_TEAM_NOT_FOUND = "api-product-team-not-found"
 #: A member's ``ref`` names no live entity of its kind in the tenant.
 CODE_MEMBER_REF_NOT_FOUND = "api-product-member-ref-not-found"
+#: The product cannot retire while a plan of it is not retired (APX-1.4).
+CODE_PLANS_LIVE = "api-product-plans-live"
 #: The product has no member with that id.
 CODE_MEMBER_NOT_FOUND = "api-product-member-not-found"
 #: The product already includes that member (same kind, ref, selector and environment).
@@ -321,7 +325,8 @@ class ApiProductInput(BaseModel):
         summary: What the product is, in a sentence or two.
         owner_team: The owning team's slug.
         visibility: ``private`` (default), ``workspace`` or ``portal``.
-        state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``.
+        state: ``draft`` (default) or ``published``; a product is deprecated and retired by an update
+            once it exists (APX-1.4, :mod:`app.api_lifecycle`).
         members: Members to include from the start.
     """
 
@@ -341,6 +346,10 @@ class ApiProductPatch(BaseModel):
 
     The slug is deliberately absent: it is the handle URLs and plans name. Members change through
     the members sub-resource.
+
+    **Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps; ``retire_at``
+    and ``deprecation_message`` describe a deprecation and are accepted only for a product that is
+    (or is becoming) ``deprecated``. A product retires once every plan of it is retired.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -350,6 +359,12 @@ class ApiProductPatch(BaseModel):
     owner_team: Optional[str] = Field(default=None, max_length=128)
     visibility: Optional[Visibility] = None
     state: Optional[State] = None
+    retire_at: Optional[datetime] = Field(
+        default=None, description="Deprecated products: the date it retires (UTC when no offset is given)."
+    )
+    deprecation_message: Optional[str] = Field(
+        default=None, max_length=1000, description="Deprecated products: what consumers are told."
+    )
 
 
 class OwnerTeam(BaseModel):
@@ -411,6 +426,10 @@ class ApiProductRecord(BaseModel):
     owner_team: Optional[OwnerTeam] = None
     visibility: Visibility
     state: State
+    deprecated_at: Optional[str] = None
+    retire_at: Optional[str] = Field(default=None, description="When a deprecated product retires.")
+    retired_at: Optional[str] = None
+    deprecation_message: Optional[str] = None
     member_count: int = Field(default=0, description="How many members the product has.")
     created_by: Optional[str] = None
     created_at: Optional[str] = None

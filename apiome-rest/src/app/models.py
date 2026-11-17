@@ -6282,12 +6282,48 @@ class SunsetTimelineEntryOut(BaseModel):
     )
 
 
+class SunsetTimelineProductEntryOut(BaseModel):
+    """A deprecated or retired API product or plan on the sunset timeline (APX-1.4, #6101)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: Literal["product", "plan"]
+    product_slug: str = Field(serialization_alias="productSlug")
+    product_name: str = Field(serialization_alias="productName")
+    plan_slug: Optional[str] = Field(default=None, serialization_alias="planSlug", description="Plans only.")
+    plan_name: Optional[str] = Field(default=None, serialization_alias="planName", description="Plans only.")
+    state: Literal["deprecated", "retired"]
+    deprecated_at: Optional[str] = Field(default=None, serialization_alias="deprecatedAt")
+    retire_at: Optional[str] = Field(
+        default=None, serialization_alias="retireAt", description="When it retires; null when no date is set."
+    )
+    retired_at: Optional[str] = Field(default=None, serialization_alias="retiredAt")
+    timeline_status: str = Field(
+        serialization_alias="timelineStatus", description="announced | imminent (≤ 30 days) | past"
+    )
+    lifecycle_phase: str = Field(
+        serialization_alias="lifecyclePhase", description="deprecated | sunset_reached | retired"
+    )
+    deprecation_message: Optional[str] = Field(default=None, serialization_alias="deprecationMessage")
+    successor_plan_slug: Optional[str] = Field(
+        default=None, serialization_alias="successorPlanSlug", description="Plans only: the plan consumers move to."
+    )
+    successor_plan_name: Optional[str] = Field(default=None, serialization_alias="successorPlanName")
+
+
 class SunsetTimelineResponse(BaseModel):
     """Aggregated sunset / deprecation timeline for accessible projects (#508)."""
 
     model_config = ConfigDict(populate_by_name=True)
 
     entries: List[SunsetTimelineEntryOut] = Field(default_factory=list)
+    products: List[SunsetTimelineProductEntryOut] = Field(
+        default_factory=list,
+        description=(
+            "Deprecated and retired API products and plans (APX-1.4), soonest retirement first. Empty "
+            "without `projects:view`; with `projectId`, only products that include that project."
+        ),
+    )
 
 
 class VersionDraftLockAcquireRequest(BaseModel):

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.589.0",
+    "version": "1.590.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -38781,7 +38781,7 @@
           "api-products"
         ],
         "summary": "Create an API product",
-        "description": "Create an API product, optionally with its first members. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `owner_team` is a team slug. `visibility` is `private` (default), `workspace` or `portal`; a `portal` product needs every member published (`api-product-portal-unpublished`, 422, with `blockers`). `state` is `draft` (default), `published`, `deprecated` or `retired`.\n\nAudited as `api_product.create`. Requires `projects:create`.",
+        "description": "Create an API product, optionally with its first members. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `owner_team` is a team slug. `visibility` is `private` (default), `workspace` or `portal`; a `portal` product needs every member published (`api-product-portal-unpublished`, 422, with `blockers`). `state` is `draft` (default) or `published`; anything else is `api-lifecycle-invalid-state` \u2014 deprecate and retire with an update.\n\nAudited as `api_product.create`. Requires `projects:create`.",
         "operationId": "create_tenant_product_v1_tenants__tenant_slug__products_post",
         "parameters": [
           {
@@ -38976,7 +38976,7 @@
           "api-products"
         ],
         "summary": "Update an API product",
-        "description": "Change a product's name, summary, owner team, visibility or state. Omitted fields are left alone; `null` clears `summary` or `owner_team`. The slug is not updatable. Setting `visibility` to `portal` is refused while a member is unpublished.\n\nAudited as `api_product.update`. Requires `projects:edit`.",
+        "description": "Change a product's name, summary, owner team, visibility or state. Omitted fields are left alone; `null` clears `summary` or `owner_team`. The slug is not updatable. Setting `visibility` to `portal` is refused while a member is unpublished.\n\n**Lifecycle.** `state` moves draft \u21c4 published \u2192 deprecated \u2192 retired, and deprecated \u2192 published reinstates. `retire_at` and `deprecation_message` describe a deprecation and are refused on any other state; a deprecated product appears on the sunset timeline. Retiring is refused before `retire_at` (`api-lifecycle-retire-early`, 409) and while any plan of the product is not retired (`api-product-plans-live`, 409); any other step is `api-lifecycle-transition` (409).\n\nAudited as `api_product.deprecate`, `.reinstate`, `.retire` or `.update`. Requires `projects:edit`.",
         "operationId": "patch_tenant_product_v1_tenants__tenant_slug__products__product_slug__patch",
         "parameters": [
           {
@@ -39593,7 +39593,7 @@
           "api-products"
         ],
         "summary": "Create an API plan",
-        "description": "Add a plan to the product. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `auth_strategy` is `key_auth` (default; `auth_config.header_name`), `oauth2_client_credentials` (`auth_config.idp_config_id`, `auth_config.scopes`), `mtls` or `none`. `limits` is `[{window, requests}]` with `window` one of `second`, `minute`, `hour`, `day`, `month` \u2014 every count positive, every window once. `approval` is `manual` (default) or `auto`. `environments` are gateway config slugs or ids; a plan with none, or with one whose connector cannot provision, is saved with `declared_only: true` and an `api-plan-declared-only` notice. `billing_ref` is internal and never exported.\n\nAudited as `api_product.plan.create`. Requires `projects:edit`.",
+        "description": "Add a plan to the product. The `slug` is derived from `name` when omitted and cannot be changed afterwards. `auth_strategy` is `key_auth` (default; `auth_config.header_name`), `oauth2_client_credentials` (`auth_config.idp_config_id`, `auth_config.scopes`), `mtls` or `none`. `limits` is `[{window, requests}]` with `window` one of `second`, `minute`, `hour`, `day`, `month` \u2014 every count positive, every window once. `approval` is `manual` (default) or `auto`. `environments` are gateway config slugs or ids; a plan with none, or with one whose connector cannot provision, is saved with `declared_only: true` and an `api-plan-declared-only` notice. `billing_ref` is internal and never exported. A new plan starts as `draft` (default) or `published`; anything else is `api-lifecycle-invalid-state`.\n\nAudited as `api_product.plan.create`. Requires `projects:edit`.",
         "operationId": "create_product_plan_v1_tenants__tenant_slug__products__product_slug__plans_post",
         "parameters": [
           {
@@ -39810,7 +39810,7 @@
           "api-products"
         ],
         "summary": "Update an API plan",
-        "description": "Change any of a plan's fields but its slug. Omitted fields are left alone; `null` clears an optional one. `limits` and `environments` are replaced as a whole; changing `environments` re-derives `declared_only`. Changing `auth_strategy` without `auth_config` re-checks the stored config against the new strategy.\n\nAudited as `api_product.plan.update`. Requires `projects:edit`.",
+        "description": "Change any of a plan's fields but its slug. Omitted fields are left alone; `null` clears an optional one. `limits` and `environments` are replaced as a whole; changing `environments` re-derives `declared_only`. Changing `auth_strategy` without `auth_config` re-checks the stored config against the new strategy.\n\n**Lifecycle.** `state` moves draft \u21c4 published \u2192 deprecated \u2192 retired, and deprecated \u2192 published reinstates (clearing the deprecation). Deprecating stamps `deprecated_at`, blocks new subscriptions (`accepts_subscriptions: false`) and notifies subscribed application owners once. `retire_at`, `deprecation_message` and `successor` (a published plan of the product with the same auth strategy) describe a deprecation and are refused on any other state. Retiring is refused with `api-lifecycle-retire-early` (409) before `retire_at`, and revokes the plan's provisioning. Any other step is `api-lifecycle-transition` (409); an unusable successor is `api-lifecycle-successor-invalid` (422).\n\nAudited as `api_product.plan.deprecate`, `.reinstate`, `.retire` or `.update`. Requires `projects:edit`.",
         "operationId": "patch_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__patch",
         "parameters": [
           {
@@ -40025,6 +40025,127 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for deletean apiplanresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/products/{product_slug}/plans/{plan_slug}/migrate": {
+      "post": {
+        "tags": [
+          "api-products"
+        ],
+        "summary": "Migrate a deprecated plan's subscriptions",
+        "description": "**Migrate to plan.** Moves every subscription of a deprecated plan to `to` \u2014 a published plan of the same product with the same auth strategy \u2014 re-provisioning each consumer into the target's consumer group (`plan:<product>-<plan>`) with the credential it already holds: `credentials_changed` is always false. The target becomes the plan's `successor`. `dry_run: true` reports what would move and changes nothing.\n\nA plan that is not deprecated is `api-lifecycle-transition` (409); an unknown, unpublished or differently-authenticated target is `api-lifecycle-successor-invalid` (422).\n\nAudited as `api_product.plan.migrate` (not on a dry run). Requires `projects:edit`.",
+        "operationId": "migrate_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__migrate_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "product_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Slug",
+              "description": "Product Slug schema."
+            },
+            "description": "Path parameter identifying the product slug segment."
+          },
+          {
+            "name": "plan_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan Slug",
+              "description": "Plan Slug schema."
+            },
+            "description": "Path parameter identifying the plan slug segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Migrateadeprecatedplanssubscriptionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Migrateadeprecatedplanssubscriptionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Migrateadeprecatedplanssubscriptions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Migrateadeprecatedplanssubscriptions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiPlanMigrateInput",
+                "description": "Request body for migrateadeprecatedplanssubscriptionsrequest."
+              }
+            }
+          },
+          "description": "Request body for migrate a deprecated plan's subscriptions."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for migrate a deprecated plan's subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPlanMigration",
+                  "description": "Response payload for migrateadeprecatedplanssubscriptionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for migrateadeprecatedplanssubscriptionsresponse422."
                 }
               }
             }
@@ -131279,7 +131400,7 @@
           "name"
         ],
         "title": "ApiPlanInput",
-        "description": "A plan to create.\n\nAttributes:\n    slug: The handle; derived from ``name`` when omitted. Not editable afterwards.\n    name: The display name (``Standard``).\n    description: What the plan offers.\n    auth_strategy: How a consumer authenticates; ``key_auth`` by default.\n    auth_config: The strategy's settings.\n    limits: Declared request limits, at most one per window.\n    concurrency: Optional cap on requests in flight.\n    approval: ``manual`` (default) or ``auto``.\n    environments: Gateway config slugs or ids the plan is provisioned to.\n    credential_ttl_days: Optional maximum key age, in days.\n    terms_url: The plan's terms (http or https).\n    pricing_note: A short note on price, shown to consumers.\n    billing_ref: An external billing id; internal only.\n    state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``."
+        "description": "A plan to create.\n\nAttributes:\n    slug: The handle; derived from ``name`` when omitted. Not editable afterwards.\n    name: The display name (``Standard``).\n    description: What the plan offers.\n    auth_strategy: How a consumer authenticates; ``key_auth`` by default.\n    auth_config: The strategy's settings.\n    limits: Declared request limits, at most one per window.\n    concurrency: Optional cap on requests in flight.\n    approval: ``manual`` (default) or ``auto``.\n    environments: Gateway config slugs or ids the plan is provisioned to.\n    credential_ttl_days: Optional maximum key age, in days.\n    terms_url: The plan's terms (http or https).\n    pricing_note: A short note on price, shown to consumers.\n    billing_ref: An external billing id; internal only.\n    state: ``draft`` (default) or ``published``. A plan is deprecated and retired by an\n        update once it exists (:mod:`app.api_lifecycle`)."
       },
       "ApiPlanListResponse": {
         "properties": {
@@ -131306,6 +131427,94 @@
         ],
         "title": "ApiPlanListResponse",
         "description": "A product's live plans."
+      },
+      "ApiPlanMigrateInput": {
+        "properties": {
+          "to": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "To",
+            "description": "To.",
+            "example": "example"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": false,
+            "description": "Dry Run.",
+            "example": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "to"
+        ],
+        "title": "ApiPlanMigrateInput",
+        "description": "Move a deprecated plan's subscriptions to another plan.\n\nAttributes:\n    to: The slug of the target plan: published, in the same product, with the same auth strategy.\n    dry_run: True to report what would move without moving it."
+      },
+      "ApiPlanMigration": {
+        "properties": {
+          "from_plan": {
+            "$ref": "#/components/schemas/PlanRef",
+            "description": "From Plan."
+          },
+          "to_plan": {
+            "$ref": "#/components/schemas/PlanRef",
+            "description": "To Plan."
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "Dry Run.",
+            "example": true
+          },
+          "from_group": {
+            "type": "string",
+            "title": "From Group",
+            "description": "The gateway consumer group the consumers leave (`plan:payments-standard`).",
+            "example": "example"
+          },
+          "to_group": {
+            "type": "string",
+            "title": "To Group",
+            "description": "The gateway consumer group the consumers join.",
+            "example": "example"
+          },
+          "subscriptions": {
+            "type": "integer",
+            "title": "Subscriptions",
+            "description": "How many subscriptions moved (or would move).",
+            "example": 1
+          },
+          "credentials_changed": {
+            "type": "boolean",
+            "title": "Credentials Changed",
+            "description": "Always false: consumers keep their keys, only their group changes.",
+            "default": false,
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "One sentence saying what happened.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from_plan",
+          "to_plan",
+          "dry_run",
+          "from_group",
+          "to_group",
+          "subscriptions",
+          "message"
+        ],
+        "title": "ApiPlanMigration",
+        "description": "What a migration moved (or, on a dry run, would move)."
       },
       "ApiPlanPatch": {
         "properties": {
@@ -131522,12 +131731,57 @@
             ],
             "title": "State",
             "description": "State."
+          },
+          "retire_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "API Plan Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan Patch schema."
+              }
+            ],
+            "title": "Retire At",
+            "description": "Deprecated plans: the date it retires (UTC when no offset is given)."
+          },
+          "deprecation_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "API Plan Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan Patch schema."
+              }
+            ],
+            "title": "Deprecation Message",
+            "description": "Deprecated plans: what subscribed application owners are told."
+          },
+          "successor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "API Plan Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan Patch schema."
+              }
+            ],
+            "title": "Successor",
+            "description": "Deprecated plans: the slug of the published plan, same auth strategy, consumers move to."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "ApiPlanPatch",
-        "description": "A partial update. Omitted fields are left alone; ``null`` clears an optional field.\n\n``limits`` and ``environments`` are replaced as a whole. The slug is deliberately absent: it is\nthe handle subscriptions name."
+        "description": "A partial update. Omitted fields are left alone; ``null`` clears an optional field.\n\n``limits`` and ``environments`` are replaced as a whole. The slug is deliberately absent: it is\nthe handle subscriptions name.\n\n**Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps. ``retire_at``,\n``deprecation_message`` and ``successor`` describe a deprecation, so they are accepted only for a\nplan that is (or is becoming) ``deprecated``; reinstating it (``published``) clears them."
       },
       "ApiPlanRecord": {
         "properties": {
@@ -131701,13 +131955,102 @@
             "description": "State.",
             "example": "draft"
           },
+          "accepts_subscriptions": {
+            "type": "boolean",
+            "title": "Accepts Subscriptions",
+            "description": "True only for a published plan; a deprecated one blocks new subscriptions.",
+            "default": false,
+            "example": false
+          },
+          "deprecated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "title": "Deprecated At",
+            "description": "Deprecated At timestamp (ISO 8601)."
+          },
+          "retire_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "title": "Retire At",
+            "description": "When a deprecated plan retires."
+          },
+          "retired_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "title": "Retired At",
+            "description": "Retired At timestamp (ISO 8601)."
+          },
+          "deprecation_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "title": "Deprecation Message",
+            "description": "Deprecation Message."
+          },
+          "successor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanRef"
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "description": "The plan consumers move to."
+          },
+          "owners_notified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "API Plan schema."
+              }
+            ],
+            "title": "Owners Notified At",
+            "description": "When subscribed application owners were told of the deprecation (once)."
+          },
           "notices": {
             "items": {
               "$ref": "#/components/schemas/PlanNotice"
             },
             "type": "array",
             "title": "Notices",
-            "description": "E.g. `api-plan-declared-only`.",
+            "description": "E.g. `api-plan-declared-only`, `api-plan-deprecated`.",
             "maxItems": 1000
           },
           "warnings": {
@@ -131891,7 +132234,7 @@
           "name"
         ],
         "title": "ApiProductInput",
-        "description": "A product to create.\n\nAttributes:\n    slug: The handle; derived from ``name`` when omitted. Not editable afterwards.\n    name: The display name.\n    summary: What the product is, in a sentence or two.\n    owner_team: The owning team's slug.\n    visibility: ``private`` (default), ``workspace`` or ``portal``.\n    state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``.\n    members: Members to include from the start."
+        "description": "A product to create.\n\nAttributes:\n    slug: The handle; derived from ``name`` when omitted. Not editable afterwards.\n    name: The display name.\n    summary: What the product is, in a sentence or two.\n    owner_team: The owning team's slug.\n    visibility: ``private`` (default), ``workspace`` or ``portal``.\n    state: ``draft`` (default) or ``published``; a product is deprecated and retired by an update\n        once it exists (APX-1.4, :mod:`app.api_lifecycle`).\n    members: Members to include from the start."
       },
       "ApiProductListResponse": {
         "properties": {
@@ -132226,12 +132569,42 @@
             ],
             "title": "State",
             "description": "State."
+          },
+          "retire_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "API Product Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product Patch schema."
+              }
+            ],
+            "title": "Retire At",
+            "description": "Deprecated products: the date it retires (UTC when no offset is given)."
+          },
+          "deprecation_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "API Product Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product Patch schema."
+              }
+            ],
+            "title": "Deprecation Message",
+            "description": "Deprecated products: what consumers are told."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "ApiProductPatch",
-        "description": "A partial update. Omitted fields are left alone; ``null`` clears ``summary`` or ``owner_team``.\n\nThe slug is deliberately absent: it is the handle URLs and plans name. Members change through\nthe members sub-resource."
+        "description": "A partial update. Omitted fields are left alone; ``null`` clears ``summary`` or ``owner_team``.\n\nThe slug is deliberately absent: it is the handle URLs and plans name. Members change through\nthe members sub-resource.\n\n**Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps; ``retire_at``\nand ``deprecation_message`` describe a deprecation and are accepted only for a product that is\n(or is becoming) ``deprecated``. A product retires once every plan of it is retired."
       },
       "ApiProductRecord": {
         "properties": {
@@ -132301,6 +132674,62 @@
             "title": "State",
             "description": "State.",
             "example": "draft"
+          },
+          "deprecated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Product schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product schema."
+              }
+            ],
+            "title": "Deprecated At",
+            "description": "Deprecated At timestamp (ISO 8601)."
+          },
+          "retire_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Product schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product schema."
+              }
+            ],
+            "title": "Retire At",
+            "description": "When a deprecated product retires."
+          },
+          "retired_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Product schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product schema."
+              }
+            ],
+            "title": "Retired At",
+            "description": "Retired At timestamp (ISO 8601)."
+          },
+          "deprecation_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "API Product schema."
+              },
+              {
+                "type": "null",
+                "description": "API Product schema."
+              }
+            ],
+            "title": "Deprecation Message",
+            "description": "Deprecation Message."
           },
           "member_count": {
             "type": "integer",
@@ -198197,6 +198626,43 @@
         "title": "PlanNotice",
         "description": "A notice or warning about a plan, with the member it concerns when there is one."
       },
+      "PlanRef": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "deprecated",
+              "retired"
+            ],
+            "title": "State",
+            "description": "State.",
+            "example": "draft"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "state"
+        ],
+        "title": "PlanRef",
+        "description": "Another plan of the same product, as a lifecycle field names it."
+      },
       "PlatformOverrideRequest": {
         "properties": {
           "tenant_id": {
@@ -230491,6 +230957,177 @@
         "title": "SunsetTimelineEntryOut",
         "description": "One row in the tenant-wide deprecation / sunset schedule (#508)."
       },
+      "SunsetTimelineProductEntryOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "product",
+              "plan"
+            ],
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "product"
+          },
+          "productSlug": {
+            "type": "string",
+            "title": "Productslug",
+            "description": "Product Slug.",
+            "example": "example-resource"
+          },
+          "productName": {
+            "type": "string",
+            "title": "Productname",
+            "description": "Product Name.",
+            "example": "Example"
+          },
+          "planSlug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Planslug",
+            "description": "Plans only."
+          },
+          "planName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Planname",
+            "description": "Plans only."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "deprecated",
+              "retired"
+            ],
+            "title": "State",
+            "description": "State.",
+            "example": "deprecated"
+          },
+          "deprecatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Deprecatedat",
+            "description": "Deprecated At."
+          },
+          "retireAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Retireat",
+            "description": "When it retires; null when no date is set."
+          },
+          "retiredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Retiredat",
+            "description": "Retired At."
+          },
+          "timelineStatus": {
+            "type": "string",
+            "title": "Timelinestatus",
+            "description": "announced | imminent (\u2264 30 days) | past",
+            "example": "active"
+          },
+          "lifecyclePhase": {
+            "type": "string",
+            "title": "Lifecyclephase",
+            "description": "deprecated | sunset_reached | retired",
+            "example": "example"
+          },
+          "deprecationMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Deprecationmessage",
+            "description": "Deprecation Message."
+          },
+          "successorPlanSlug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Successorplanslug",
+            "description": "Plans only: the plan consumers move to."
+          },
+          "successorPlanName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sunset timeline product entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sunset timeline product entry."
+              }
+            ],
+            "title": "Successorplanname",
+            "description": "Successor Plan Name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "productSlug",
+          "productName",
+          "state",
+          "timelineStatus",
+          "lifecyclePhase"
+        ],
+        "title": "SunsetTimelineProductEntryOut",
+        "description": "A deprecated or retired API product or plan on the sunset timeline (APX-1.4, #6101)."
+      },
       "SunsetTimelineResponse": {
         "properties": {
           "entries": {
@@ -230501,6 +231138,15 @@
             "title": "Entries",
             "description": "Entries.",
             "maxItems": 100
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/SunsetTimelineProductEntryOut"
+            },
+            "type": "array",
+            "title": "Products",
+            "description": "Deprecated and retired API products and plans (APX-1.4), soonest retirement first. Empty without `projects:view`; with `projectId`, only products that include that project.",
+            "maxItems": 1000
           }
         },
         "type": "object",

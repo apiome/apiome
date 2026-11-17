@@ -30,6 +30,11 @@ declares — a ``key_auth`` plan over an API that declares only OAuth2 promises 
 A member that does not is reported as an ``api-plan-auth-mismatch`` *warning* on reads; the write is
 not refused (:func:`auth_mismatch_warnings`).
 
+**Lifecycle** (APX-1.4, :mod:`app.api_lifecycle`). A deprecated plan blocks new subscriptions, carries
+an optional retirement date, a message and a ``successor`` plan, and reads back with an
+``api-plan-deprecated`` notice (:func:`deprecated_notice`); consumers move with the **migrate**
+action (:class:`ApiPlanMigrateInput`, :class:`ApiPlanMigration`) and keep their credentials.
+
 **Export.** An OpenAPI export of a revision a product includes carries that product's plans as the
 root ``x-apiome-plans`` extension (:func:`plan_extension_entry`); every other target reports them as
 dropped in its fidelity report (:func:`plans_loss_item`).
@@ -42,6 +47,7 @@ stable ``api-plan-*`` code.
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any, Dict, FrozenSet, Iterable, List, Literal, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -65,7 +71,10 @@ __all__ = [
     "PROVISIONING_CONNECTOR_KINDS",
     "STATES",
     "WARNING_AUTH_MISMATCH",
+    "NOTICE_DEPRECATED",
     "ApiPlanInput",
+    "ApiPlanMigrateInput",
+    "ApiPlanMigration",
     "ApiPlanPatch",
     "ApiPlanRecord",
     "ApiPlanValidationError",
@@ -73,9 +82,11 @@ __all__ = [
     "PlanEnvironment",
     "PlanLimit",
     "PlanNotice",
+    "PlanRef",
     "auth_mismatch_warnings",
     "connector_can_provision",
     "declared_only_notice",
+    "deprecated_notice",
     "is_declared_only",
     "normalize_auth_config",
     "normalize_limits",
@@ -98,6 +109,8 @@ CODE_ENVIRONMENT_NOT_FOUND = "api-plan-environment-not-found"
 
 #: Notice: the plan is recorded, but no environment can be provisioned.
 NOTICE_DECLARED_ONLY = "api-plan-declared-only"
+#: Notice: the plan is deprecated — no new subscriptions; when it retires and what replaces it.
+NOTICE_DEPRECATED = "api-plan-deprecated"
 #: Warning: a member declares no security scheme the plan's auth strategy can use.
 WARNING_AUTH_MISMATCH = "api-plan-auth-mismatch"
 
@@ -207,7 +220,8 @@ class ApiPlanInput(BaseModel):
         terms_url: The plan's terms (http or https).
         pricing_note: A short note on price, shown to consumers.
         billing_ref: An external billing id; internal only.
-        state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``.
+        state: ``draft`` (default) or ``published``. A plan is deprecated and retired by an
+            update once it exists (:mod:`app.api_lifecycle`).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -233,6 +247,10 @@ class ApiPlanPatch(BaseModel):
 
     ``limits`` and ``environments`` are replaced as a whole. The slug is deliberately absent: it is
     the handle subscriptions name.
+
+    **Lifecycle** (APX-1.4): ``state`` moves along :mod:`app.api_lifecycle`'s steps. ``retire_at``,
+    ``deprecation_message`` and ``successor`` describe a deprecation, so they are accepted only for a
+    plan that is (or is becoming) ``deprecated``; reinstating it (``published``) clears them.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -250,6 +268,58 @@ class ApiPlanPatch(BaseModel):
     pricing_note: Optional[str] = Field(default=None, max_length=1000)
     billing_ref: Optional[str] = Field(default=None, max_length=200)
     state: Optional[State] = None
+    retire_at: Optional[datetime] = Field(
+        default=None, description="Deprecated plans: the date it retires (UTC when no offset is given)."
+    )
+    deprecation_message: Optional[str] = Field(
+        default=None, max_length=1000, description="Deprecated plans: what subscribed application owners are told."
+    )
+    successor: Optional[str] = Field(
+        default=None,
+        max_length=128,
+        description="Deprecated plans: the slug of the published plan, same auth strategy, consumers move to.",
+    )
+
+
+class PlanRef(BaseModel):
+    """Another plan of the same product, as a lifecycle field names it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    slug: str
+    name: str
+    state: State
+
+
+class ApiPlanMigrateInput(BaseModel):
+    """Move a deprecated plan's subscriptions to another plan.
+
+    Attributes:
+        to: The slug of the target plan: published, in the same product, with the same auth strategy.
+        dry_run: True to report what would move without moving it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    to: str = Field(min_length=1, max_length=128)
+    dry_run: bool = False
+
+
+class ApiPlanMigration(BaseModel):
+    """What a migration moved (or, on a dry run, would move)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    from_plan: PlanRef
+    to_plan: PlanRef
+    dry_run: bool
+    from_group: str = Field(description="The gateway consumer group the consumers leave (`plan:payments-standard`).")
+    to_group: str = Field(description="The gateway consumer group the consumers join.")
+    subscriptions: int = Field(description="How many subscriptions moved (or would move).")
+    credentials_changed: bool = Field(
+        default=False, description="Always false: consumers keep their keys, only their group changes."
+    )
+    message: str = Field(description="One sentence saying what happened.")
 
 
 class PlanEnvironment(BaseModel):
@@ -302,7 +372,20 @@ class ApiPlanRecord(BaseModel):
     pricing_note: Optional[str] = None
     billing_ref: Optional[str] = Field(default=None, description="Internal; never exported or shown on the portal.")
     state: State
-    notices: List[PlanNotice] = Field(default_factory=list, description="E.g. `api-plan-declared-only`.")
+    accepts_subscriptions: bool = Field(
+        default=False, description="True only for a published plan; a deprecated one blocks new subscriptions."
+    )
+    deprecated_at: Optional[str] = None
+    retire_at: Optional[str] = Field(default=None, description="When a deprecated plan retires.")
+    retired_at: Optional[str] = None
+    deprecation_message: Optional[str] = None
+    successor: Optional[PlanRef] = Field(default=None, description="The plan consumers move to.")
+    owners_notified_at: Optional[str] = Field(
+        default=None, description="When subscribed application owners were told of the deprecation (once)."
+    )
+    notices: List[PlanNotice] = Field(
+        default_factory=list, description="E.g. `api-plan-declared-only`, `api-plan-deprecated`."
+    )
     warnings: List[PlanNotice] = Field(
         default_factory=list, description="E.g. `api-plan-auth-mismatch`, one per member that does not match."
     )
@@ -499,6 +582,31 @@ def declared_only_notice(environments: Sequence[PlanEnvironment]) -> Optional[Pl
     return PlanNotice(code=NOTICE_DECLARED_ONLY, message=message)
 
 
+def deprecated_notice(
+    state: str, retire_at: Optional[str], successor: Optional[PlanRef]
+) -> Optional[PlanNotice]:
+    """The notice a deprecated plan carries: new subscriptions are blocked, when it retires, what replaces it.
+
+    Args:
+        state: The plan's state.
+        retire_at: Its retirement date (ISO), or ``None``.
+        successor: The plan consumers move to, or ``None``.
+
+    Returns:
+        An ``api-plan-deprecated`` notice, or ``None`` for a plan that is not deprecated.
+    """
+    if state != "deprecated":
+        return None
+    parts = ["Deprecated: new subscriptions are blocked."]
+    if retire_at:
+        parts.append(f"It retires on {retire_at[:10]}.")
+    if successor:
+        parts.append(f"Consumers move to {successor.name} ({successor.slug}).")
+    else:
+        parts.append("Choose a replacement plan so consumers can be migrated.")
+    return PlanNotice(code=NOTICE_DEPRECATED, message=" ".join(parts))
+
+
 # ---------------------------------------------------------------------------------------------
 # Auth strategy vs member security schemes
 # ---------------------------------------------------------------------------------------------
@@ -563,7 +671,8 @@ def plan_extension_entry(product_slug: str, product_name: str, plan: ApiPlanReco
     """One plan as an ``x-apiome-plans`` entry.
 
     What a consumer of the document needs: the product, the plan's handle and name, its auth, limits,
-    approval, environments and terms. ``billing_ref`` is internal and the IdP config id is an
+    approval, environments and terms — and, for a deprecated plan, when it retires, the message and the
+    successor's slug. ``billing_ref`` is internal and the IdP config id is an
     internal id, so neither is written; empty fields are left out.
 
     Args:
@@ -596,6 +705,9 @@ def plan_extension_entry(product_slug: str, product_name: str, plan: ApiPlanReco
         "credential_ttl_days": plan.credential_ttl_days,
         "terms_url": plan.terms_url,
         "pricing_note": plan.pricing_note,
+        "retire_at": plan.retire_at,
+        "deprecation_message": plan.deprecation_message,
+        "successor": plan.successor.slug if plan.successor else None,
     }
     entry.update({key: value for key, value in optional.items() if value is not None})
     environments = [env.slug for env in plan.environments if env.slug and not env.missing]

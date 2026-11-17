@@ -145,9 +145,7 @@ Each provisioner diffs that against the gateway and applies the difference idemp
 
 ### APX-EPIC-1 (#6097) — API products and plans
 
-| # | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| APX-1.4 · #6101 | Product and plan lifecycle | Deprecate/retire plans, migrate subscriptions, tie to sunset timeline and changelog | `governance`, `versions` | Y | N | M | apiome-rest, apiome-ui |
+Every APX-EPIC-1 issue is complete.
 
 #### ✅ APX-1.1 (#6098) — API product model — **Complete**
 
@@ -232,7 +230,23 @@ API product "Payments"
 - **Parallelism/Dependencies:** After 1.2; request flow after 2.3.
 - **Documentation (Docusaurus):** update `ship/browse-published-specs.md`; screenshot `browse-product-page`.
 
-#### APX-1.4 (#6101) — Product and plan lifecycle
+#### ✅ APX-1.4 (#6101) — Product and plan lifecycle — **Complete**
+
+- **Shipped:** apiome-db **V389** — `api_plans` + `deprecated_at`, `retire_at`, `retired_at`,
+  `deprecation_message`, `successor_plan_id`, `owners_notified_at`; `api_products` + the same dates and message.
+  REST 1.590.0: lifecycle steps `draft ⇄ published → deprecated → retired` (reinstate back to published) through
+  `PATCH` (`app.api_lifecycle`; `api-lifecycle-transition | retire-early | successor-invalid | invalid-state`,
+  `api-product-plans-live`); a successor must be a published plan of the product with the same auth strategy;
+  `POST …/plans/{plan}/migrate` (`dry_run`, `credentials_changed: false`, consumer groups
+  `plan:<product>-<plan>`); sunset timeline `products`; deprecated `x-apiome-plans` entries carry the
+  deprecation. UI: plan editor **Deprecation** fields and **Migrate to plan…**, product **Deprecation** fields,
+  Sunset timeline **API products and plans** table. Browse 0.64.0: **Plan and product changes** on an API's
+  changelog. Docs: `ship/api-products.mdx` (Lifecycle), `ship/sunset-timeline.mdx`, `ship/api-changelog.mdx`,
+  screenshot `api-plan-editor`.
+- **Hooks left for later issues:** subscriptions and applications do not exist yet, so `app.api_plan_store`'s
+  `_subscribed_owner_ids` (APX-2.1/2.2 — write the inbox notification beside it), `_move_subscriptions`
+  (APX-2.2 + APX-4.1) and `_revoke_provisioning` (APX-4.1/4.7) return nothing today. APX-2.2's request engine
+  must refuse a plan whose `accepts_new_subscriptions(state)` is false (`app.api_lifecycle`).
 
 - **Solution/Scope:** Deprecating a plan blocks new subscriptions, notifies subscribed application owners and
   offers a **migrate to plan** action (re-provisions consumers into the new group without new keys). Retiring a

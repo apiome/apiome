@@ -7,8 +7,9 @@ tags: [versions, deprecation, sunset]
 
 <Route path="/ade/dashboard/versions/sunset-timeline" />
 
-The **Sunset timeline** is the end-of-life schedule for deprecated versions: which ones sunset when,
-what replaces them, and which sunsets are close. **Go to Ship → Sunset timeline.** A sunset is
+The **Sunset timeline** is the end-of-life schedule for deprecated versions — and for deprecated
+[API products and plans](#api-products-and-plans): which ones sunset when, what replaces them, and
+which sunsets are close. **Go to Ship → Sunset timeline.** A sunset is
 **imminent** when it falls within 30 days.
 
 <Screenshot id="sunset-timeline" alt="Sunset timeline: one lane per project with a marker per sunset, and the table of deprecated versions" />
@@ -98,6 +99,25 @@ A version is warned about **at most once a week**. Apiome records when it last w
 or a second server never sends the warning twice. Anonymous traffic on its own never sends one,
 because there is nobody to tell. The weekly warning stops once the sunset date has passed.
 
+## API products and plans
+
+Under the version table, **API products and plans** lists every deprecated or retired
+[API product and plan](./api-products.mdx#lifecycle) in the workspace, soonest retirement first. It
+appears only when there is one, and only to readers who can view projects.
+
+| Column | What it shows |
+| --- | --- |
+| **Product or plan** | The product, or `Payments · Standard` for a plan. **Click it** to open the product. |
+| **Retires** | The **Retire on** date (the day it retired, for a retired one), or —. |
+| **Timeline** | **past**, **imminent (≤ 30 days)** or **scheduled**, the same words as the versions. |
+| **Lifecycle** | **Deprecated (no new subscriptions)**, **Retirement date passed — ready to retire** or **Retired**. |
+| **Moves to** | A plan's replacement plan, or —. |
+| **Message** | The deprecation message, or —. |
+
+**Filter by project** narrows it to the products that include that project. Retirement dates are set
+on the product, not here — see [Deprecate a plan](./api-products.mdx#deprecate-a-plan). The CSV export
+covers versions only.
+
 ## Export CSV
 
 **Click “Export CSV”** to download `sunset-timeline.csv` for the rows on screen, with the columns
@@ -117,6 +137,12 @@ Each entry's `stillUsed` holds the usage line: `state` (`bound`, `anonymous` or 
 `summary`, `calls`, `boundCalls`, `anonymousCalls`, `consumerCount`, `consumers` (`null` without
 `consumer_contracts:view`) and `consumersHref`. `stillUsed` is `null` when the project has no
 usage source. The sunset itself is version metadata, set with `PUT /v1/versions/{tenant}/{project_id}/{version_record_id}`.
+
+The same response carries `products`: one entry per deprecated or retired API product or plan, with
+`kind` (`product` or `plan`), `productSlug`, `productName`, `planSlug`, `planName`, `state`,
+`deprecatedAt`, `retireAt`, `retiredAt`, `timelineStatus`, `lifecyclePhase` (`deprecated`,
+`sunset_reached` or `retired`), `deprecationMessage`, `successorPlanSlug` and `successorPlanName`. It
+is empty without `projects:view`; with `projectId`, it holds only products that include the project.
 See the [API reference](../reference/api-reference.md).
 
 ## Where next
@@ -124,3 +150,4 @@ See the [API reference](../reference/api-reference.md).
 - [Published](./published.mdx)
 - [Versions](../build/versions.mdx)
 - [Runtime usage](../govern/runtime-usage.mdx)
+- [API products](./api-products.mdx#lifecycle)

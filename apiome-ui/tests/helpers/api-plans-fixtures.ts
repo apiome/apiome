@@ -45,6 +45,13 @@ export function plan(overrides: Partial<ApiPlan> = {}): ApiPlan {
     pricing_note: '$49 a month',
     billing_ref: 'price_standard',
     state: 'published',
+    accepts_subscriptions: true,
+    deprecated_at: null,
+    retire_at: null,
+    retired_at: null,
+    deprecation_message: null,
+    successor: null,
+    owners_notified_at: null,
     notices: [
       {
         code: 'api-plan-declared-only',
@@ -95,4 +102,43 @@ export const PLANS: ApiPlan[] = [
 export const GATEWAYS: Partial<GatewayConfig>[] = [
   { id: 'g-prod', slug: 'kong-prod-cp', name: 'Kong · prod-cp', connector: { id: 'c-1', name: 'Kong', kind: 'kong-admin' } },
   { id: 'g-stage', slug: 'kong-staging-cp', name: 'Kong · staging-cp', connector: { id: 'c-1', name: 'Kong', kind: 'kong-admin' } },
+];
+
+/**
+ * APX-1.4 (#6101): the Payments plans with **Standard** deprecated — retiring on 31 March 2027, its
+ * consumers moving to a new **Premium** tier — for the lifecycle tests and the `api-plan-editor`
+ * screenshot (deprecate / migrate states).
+ */
+export const DEPRECATED_PLANS: ApiPlan[] = [
+  PLANS[0],
+  plan({
+    state: 'deprecated',
+    accepts_subscriptions: false,
+    deprecated_at: '2026-11-16T10:00:00+00:00',
+    retire_at: '2027-03-31T00:00:00+00:00',
+    deprecation_message: 'Standard retires on 31 March 2027. Move to Premium; your key keeps working.',
+    successor: { slug: 'premium', name: 'Premium', state: 'published' },
+    owners_notified_at: '2026-11-16T10:00:00+00:00',
+    notices: [
+      PLANS[1].notices[0],
+      {
+        code: 'api-plan-deprecated',
+        message:
+          'Deprecated: new subscriptions are blocked. It retires on 2027-03-31. Consumers move to Premium (premium).',
+      },
+    ],
+  }),
+  plan({
+    id: 'pl-premium',
+    slug: 'premium',
+    name: 'Premium',
+    description: 'Higher limits for production traffic.',
+    limits: [
+      { window: 'minute', requests: 500 },
+      { window: 'day', requests: 250000 },
+    ],
+    pricing_note: '$149 a month',
+    billing_ref: 'price_premium',
+    warnings: [],
+  }),
 ];

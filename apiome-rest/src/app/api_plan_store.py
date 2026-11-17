@@ -18,16 +18,41 @@ follow every publish.
 **Export.** :func:`plans_for_revision` returns the ``x-apiome-plans`` entries of every product that
 includes a revision, for :func:`app.export_source.load_export_source`.
 
+**Lifecycle** (APX-1.4, :mod:`app.api_lifecycle`). An update moves ``state`` one step at a time and
+is audited by what it did — ``api_product.plan.deprecate``, ``.reinstate``, ``.retire`` or ``.update``:
+
+* **deprecate** stamps ``deprecated_at`` (new subscriptions are blocked from then) and tells the
+  owners of subscribed applications once (:func:`_notify_owners_once`, marked by
+  ``owners_notified_at``);
+* **retire** waits for ``retire_at`` and revokes the plan's provisioning (:func:`_revoke_provisioning`);
+* **migrate** (:func:`migrate_plan`) moves a deprecated plan's subscriptions to its successor's
+  consumer group, keeping every credential (:func:`_move_subscriptions`).
+
+Applications and subscriptions (APX-2.1/2.2) and gateway provisioning (APX-4.1) are not built yet, so
+those three hooks find nobody to notify, nothing to revoke and nothing to move: they return ``0`` and
+each transition is still checked and audited. They are the only places those epics change.
+
 **A delete is soft**, freeing the slug.
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 import psycopg2
 from psycopg2.extras import Json
 
+from .api_lifecycle import (
+    CODE_SUCCESSOR_INVALID,
+    CODE_TRANSITION,
+    LifecycleError,
+    accepts_new_subscriptions,
+    check_initial_state,
+    lifecycle_changes,
+    plan_group_name,
+    successor_problem,
+)
 from .api_plans import (
     CODE_ENVIRONMENT_NOT_FOUND,
     CODE_INVALID,
@@ -35,15 +60,19 @@ from .api_plans import (
     CODE_SLUG_TAKEN,
     MAX_PLANS,
     ApiPlanInput,
+    ApiPlanMigrateInput,
+    ApiPlanMigration,
     ApiPlanPatch,
     ApiPlanRecord,
     ApiPlanValidationError,
     PlanAuthConfig,
     PlanEnvironment,
     PlanLimit,
+    PlanRef,
     auth_mismatch_warnings,
     connector_can_provision,
     declared_only_notice,
+    deprecated_notice,
     is_declared_only,
     normalize_auth_config,
     normalize_limits,
@@ -63,6 +92,7 @@ __all__ = [
     "delete_plan",
     "get_plan",
     "list_plans",
+    "migrate_plan",
     "plans_for_revision",
     "update_plan",
 ]
@@ -72,6 +102,10 @@ _PLAN_COLUMNS = """
     pl.id::text AS id, pl.slug, pl.name, pl.description, pl.auth_strategy, pl.auth_config, pl.limits,
     pl.concurrency, pl.approval, pl.environments::text[] AS environments, pl.credential_ttl_days,
     pl.terms_url, pl.pricing_note, pl.billing_ref, pl.state,
+    pl.deprecated_at, pl.retire_at, pl.retired_at, pl.deprecation_message, pl.owners_notified_at,
+    pl.successor_plan_id::text AS successor_plan_id,
+    (SELECT json_build_object('slug', s.slug, 'name', s.name, 'state', s.state)
+     FROM apiome.api_plans s WHERE s.id = pl.successor_plan_id AND s.deleted_at IS NULL) AS successor,
     pl.created_by::text AS created_by, pl.created_at, pl.updated_at
 """
 
@@ -98,6 +132,21 @@ def _run(work: Callable[[Any], Any]) -> Any:
 def _optional_text(value: Optional[str]) -> Optional[str]:
     """Trim a free-text field, mapping blank to ``None``."""
     return (value or "").strip() or None
+
+
+def _now() -> datetime:
+    """The current time, aware and in UTC (patched by tests)."""
+    return datetime.now(timezone.utc)
+
+
+def _lifecycle_refusal(exc: LifecycleError) -> ApiPlanValidationError:
+    """Re-raise a lifecycle refusal as a plan refusal with the same code."""
+    return ApiPlanValidationError(exc.code, str(exc))
+
+
+def _jsonable(detail: Mapping[str, Any]) -> Dict[str, Any]:
+    """An audit detail with every ``datetime`` rendered as ISO-8601, so it serializes."""
+    return {key: _iso(value) if isinstance(value, datetime) else value for key, value in detail.items()}
 
 
 def _resolve_environments(cursor: Any, tenant_id: str, refs: Sequence[str]) -> List[str]:
@@ -235,7 +284,13 @@ def _record(
         The record.
     """
     envs = [environments[str(i)] for i in row.get("environments") or [] if str(i) in environments]
-    notice = declared_only_notice(envs)
+    successor = PlanRef(**row["successor"]) if row.get("successor") else None
+    retire_at = _iso(row.get("retire_at"))
+    notices = [
+        notice
+        for notice in (declared_only_notice(envs), deprecated_notice(row["state"], retire_at, successor))
+        if notice is not None
+    ]
     return ApiPlanRecord(
         id=str(row["id"]),
         product=product_slug,
@@ -254,7 +309,14 @@ def _record(
         pricing_note=row.get("pricing_note"),
         billing_ref=row.get("billing_ref"),
         state=row["state"],
-        notices=[notice] if notice else [],
+        accepts_subscriptions=accepts_new_subscriptions(row["state"]),
+        deprecated_at=_iso(row.get("deprecated_at")),
+        retire_at=retire_at,
+        retired_at=_iso(row.get("retired_at")),
+        deprecation_message=row.get("deprecation_message"),
+        successor=successor,
+        owners_notified_at=_iso(row.get("owners_notified_at")),
+        notices=notices,
         warnings=auth_mismatch_warnings(row["auth_strategy"], member_schemes),
         created_by=row.get("created_by"),
         created_at=_iso(row.get("created_at")),
@@ -346,6 +408,145 @@ def _declared_only(cursor: Any, tenant_id: str, environment_ids: Sequence[str]) 
     """Whether a plan with these environments is declared only (for the stored column)."""
     resolved = _read_environments(cursor, tenant_id, environment_ids)
     return is_declared_only([resolved[str(i)] for i in environment_ids])
+
+
+def _find_plan(
+    cursor: Any, tenant_id: str, product: Mapping[str, Any], *, slug: Optional[str] = None,
+    plan_id: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """A live plan of the product by slug or id, or ``None`` (no lock; for successor checks).
+
+    Args:
+        cursor: An open cursor.
+        tenant_id: The caller's tenant.
+        product: The product row.
+        slug: The plan's slug.
+        plan_id: The plan's id (used when ``slug`` is ``None``).
+
+    Returns:
+        The plan row, or ``None``.
+    """
+    if slug is None and not is_uuid_string(plan_id or ""):
+        return None
+    rows = _rows(
+        cursor,
+        f"""
+        SELECT {_PLAN_COLUMNS}
+        FROM apiome.api_plans pl
+        WHERE pl.tenant_id = %s::uuid AND pl.product_id = %s::uuid AND pl.deleted_at IS NULL
+          AND (pl.slug = %s::text OR pl.id::text = %s::text)
+        """,
+        (tenant_id, product["id"], (slug or "").strip().lower() or None, plan_id if slug is None else None),
+    )
+    return rows[0] if rows else None
+
+
+def _check_successor(plan: Mapping[str, Any], candidate: Optional[Mapping[str, Any]]) -> None:
+    """Refuse a successor that cannot take the plan's consumers.
+
+    Args:
+        plan: The plan being replaced (``id``, ``auth_strategy`` as it will be stored).
+        candidate: The successor's row, or ``None`` when the product has no such plan.
+
+    Raises:
+        ApiPlanValidationError: ``api-lifecycle-successor-invalid`` naming the problem
+            (:func:`app.api_lifecycle.successor_problem`).
+    """
+    problem = successor_problem(plan, candidate)
+    if problem:
+        raise ApiPlanValidationError(CODE_SUCCESSOR_INVALID, f"cannot use that replacement plan: {problem}")
+
+
+# ---------------------------------------------------------------------------------------------
+# Lifecycle hooks — where APX-2.x (subscriptions) and APX-4.x (provisioning) plug in
+# ---------------------------------------------------------------------------------------------
+
+
+def _subscribed_owner_ids(cursor: Any, tenant_id: str, plan_id: str) -> List[str]:
+    """The user ids of the owners of applications subscribed to a plan.
+
+    Applications and subscriptions arrive with APX-2.1/2.2 (#6103, #6104); until then no
+    application can subscribe, so there is nobody to tell.
+
+    Args:
+        cursor: The transaction's cursor.
+        tenant_id: The plan's tenant.
+        plan_id: The plan.
+
+    Returns:
+        The owners, once each — empty today.
+    """
+    _ = cursor, tenant_id, plan_id
+    return []
+
+
+def _notify_owners_once(cursor: Any, tenant_id: str, plan_id: str, now: datetime) -> Optional[int]:
+    """Tell subscribed application owners a plan is deprecated — once per deprecation.
+
+    The ``owners_notified_at`` marker is claimed with a conditional update inside the deprecation's
+    transaction, so a retried request or a second server never notifies twice; reinstating the plan
+    clears the marker, so a later deprecation notifies again.
+
+    Args:
+        cursor: The transaction's cursor.
+        tenant_id: The plan's tenant.
+        plan_id: The plan.
+        now: The deprecation's time.
+
+    Returns:
+        How many owners were told, or ``None`` when they had already been told.
+    """
+    claimed = _rows(
+        cursor,
+        "UPDATE apiome.api_plans SET owners_notified_at = %s "
+        "WHERE id = %s::uuid AND owners_notified_at IS NULL RETURNING id::text AS id",
+        (now, plan_id),
+    )
+    if not claimed:
+        return None
+    # APX-2.2 writes one inbox notification per owner here, in this transaction.
+    return len(_subscribed_owner_ids(cursor, tenant_id, plan_id))
+
+
+def _revoke_provisioning(cursor: Any, tenant_id: str, plan: Mapping[str, Any]) -> int:
+    """Revoke what a retired plan provisioned on its gateways.
+
+    Gateway provisioning arrives with APX-4.1 (#6115); until then every plan is declared only and
+    nothing was pushed to a gateway, so there is nothing to revoke.
+
+    Args:
+        cursor: The transaction's cursor.
+        tenant_id: The plan's tenant.
+        plan: The plan row.
+
+    Returns:
+        How many consumer provisionings were revoked — ``0`` today.
+    """
+    _ = cursor, tenant_id, plan
+    return 0
+
+
+def _move_subscriptions(
+    cursor: Any, tenant_id: str, source: Mapping[str, Any], target: Mapping[str, Any], *, dry_run: bool
+) -> int:
+    """Move a plan's subscriptions to another plan, re-provisioning each consumer into the target's
+    consumer group with the credential it already holds.
+
+    Subscriptions arrive with APX-2.2 (#6104) and provisioning with APX-4.1 (#6115); until then no
+    plan has a subscription, so nothing moves.
+
+    Args:
+        cursor: The transaction's cursor.
+        tenant_id: The plans' tenant.
+        source: The deprecated plan.
+        target: The plan consumers move to.
+        dry_run: True to count without moving.
+
+    Returns:
+        How many subscriptions moved (or would) — ``0`` today.
+    """
+    _ = cursor, tenant_id, source, target, dry_run
+    return 0
 
 
 # ---------------------------------------------------------------------------------------------
@@ -474,6 +675,10 @@ def create_plan(
             setting on the wrong strategy, the product is full), ``api-plan-slug-taken`` or
             ``api-plan-environment-not-found``.
     """
+    try:
+        check_initial_state(body.state, "plan")
+    except LifecycleError as exc:
+        raise _lifecycle_refusal(exc) from exc
     name = normalize_plan_name(body.name)
     slug = resolve_plan_slug(body.slug, name)
     limits = normalize_limits(body.limits)
@@ -522,11 +727,17 @@ def create_plan(
 def update_plan(
     tenant_id: str, product_slug: str, plan_slug: str, patch: ApiPlanPatch, *, actor: ConsumerActor
 ) -> ApiPlanRecord:
-    """Apply a partial update, audited as ``api_product.plan.update`` with the fields that changed.
+    """Apply a partial update, audited by what it did.
+
+    The audit action is ``api_product.plan.deprecate``, ``.reinstate`` or ``.retire`` when ``state``
+    takes that lifecycle step, ``api_product.plan.update`` otherwise; the detail holds the fields
+    that changed. Deprecating notifies subscribed application owners once; retiring revokes the
+    plan's provisioning (see the module docstring for what those hooks do today).
 
     Changing ``auth_strategy`` without sending ``auth_config`` re-checks the stored config against the
     new strategy (a header name does not carry over to an OAuth2 plan). Sending ``environments``
-    re-derives ``declared_only``.
+    re-derives ``declared_only``. A deprecated plan's successor is re-checked against the auth
+    strategy it will have.
 
     Args:
         tenant_id: The caller's tenant.
@@ -540,14 +751,17 @@ def update_plan(
 
     Raises:
         ApiProductValidationError: ``api-product-not-found``.
-        ApiPlanValidationError: ``api-plan-not-found``, ``api-plan-invalid`` or
-            ``api-plan-environment-not-found``.
+        ApiPlanValidationError: ``api-plan-not-found``, ``api-plan-invalid``,
+            ``api-plan-environment-not-found``, ``api-lifecycle-transition`` (a step that is not
+            allowed, or deprecation fields on a plan that is not deprecated),
+            ``api-lifecycle-retire-early`` or ``api-lifecycle-successor-invalid``.
     """
     sent = patch.model_fields_set
 
     def work(cursor: Any) -> ApiPlanRecord:
         product = _select_product(cursor, tenant_id, product_slug, lock=True)
         row = _select_plan(cursor, tenant_id, product, plan_slug, lock=True)
+        now = _now()
         changes: Dict[str, Any] = {}
         if "name" in sent and patch.name is not None:
             changes["name"] = normalize_plan_name(patch.name)
@@ -559,9 +773,8 @@ def update_plan(
         for field in ("concurrency", "credential_ttl_days"):
             if field in sent:
                 changes[field] = getattr(patch, field)
-        for field in ("approval", "state"):
-            if field in sent and getattr(patch, field) is not None:
-                changes[field] = getattr(patch, field)
+        if "approval" in sent and patch.approval is not None:
+            changes["approval"] = patch.approval
         strategy = patch.auth_strategy if "auth_strategy" in sent and patch.auth_strategy else row["auth_strategy"]
         if strategy != row["auth_strategy"]:
             changes["auth_strategy"] = strategy
@@ -573,6 +786,14 @@ def update_plan(
         if "environments" in sent and patch.environments is not None:
             changes["environments"] = _resolve_environments(cursor, tenant_id, patch.environments)
             changes["declared_only"] = _declared_only(cursor, tenant_id, changes["environments"])
+
+        target = patch.state if "state" in sent and patch.state is not None else row["state"]
+        changes.update(_plan_lifecycle_changes(cursor, tenant_id, product, row, patch, target, strategy, now))
+        if target != row["state"]:
+            changes["state"] = target
+
+        notified: Optional[int] = None
+        revoked: Optional[int] = None
         if changes:
             assignments = []
             values: List[Any] = []
@@ -583,6 +804,9 @@ def update_plan(
                 elif column == "environments":
                     assignments.append(f"{column} = %s::uuid[]")
                     values.append(value)
+                elif column == "successor_plan_id":
+                    assignments.append(f"{column} = %s::uuid")
+                    values.append(value)
                 else:
                     assignments.append(f"{column} = %s")
                     values.append(value)
@@ -591,11 +815,176 @@ def update_plan(
                 "WHERE id = %s::uuid",
                 (*values, row["id"]),
             )
+            if target == "deprecated" and row["state"] != "deprecated":
+                notified = _notify_owners_once(cursor, tenant_id, row["id"], now)
+            if target == "retired" and row["state"] != "retired":
+                revoked = _revoke_provisioning(cursor, tenant_id, row)
             _touch(cursor, product["id"])
-            _audit(cursor, tenant_id, actor, "api_product.plan.update", product["slug"], {
-                "product_id": product["id"], "plan_id": row["id"], "plan": row["slug"], **changes,
-            })
+            detail: Dict[str, Any] = {"product_id": product["id"], "plan_id": row["id"], "plan": row["slug"], **changes}
+            if notified is not None:
+                detail["owners_notified"] = notified
+            if revoked is not None:
+                detail["provisioning_revoked"] = revoked
+            _audit(cursor, tenant_id, actor, _update_action(row["state"], target), product["slug"], _jsonable(detail))
         return _finish(cursor, tenant_id, product, row["slug"])
+
+    return _run(work)
+
+
+def _update_action(current: str, target: str) -> str:
+    """The audit action an update is recorded as: the lifecycle step it took, else ``update``.
+
+    Args:
+        current: The stored state.
+        target: The state after the update.
+
+    Returns:
+        ``api_product.plan.deprecate``, ``.reinstate``, ``.retire`` or ``.update``.
+    """
+    if current != target:
+        if target == "deprecated":
+            return "api_product.plan.deprecate"
+        if target == "retired":
+            return "api_product.plan.retire"
+        if current == "deprecated" and target == "published":
+            return "api_product.plan.reinstate"
+    return "api_product.plan.update"
+
+
+def _plan_lifecycle_changes(
+    cursor: Any,
+    tenant_id: str,
+    product: Mapping[str, Any],
+    row: Mapping[str, Any],
+    patch: ApiPlanPatch,
+    target: str,
+    strategy: str,
+    now: datetime,
+) -> Dict[str, Any]:
+    """The lifecycle columns an update changes: dates, message and successor.
+
+    Args:
+        cursor: The transaction's cursor.
+        tenant_id: The caller's tenant.
+        product: The product row.
+        row: The stored plan.
+        patch: The update.
+        target: The state after the update.
+        strategy: The auth strategy after the update.
+        now: The update's time.
+
+    Returns:
+        ``{column: value}`` for the columns that change (``deprecated_at``, ``retire_at``,
+        ``retired_at``, ``deprecation_message``, ``successor_plan_id``, ``owners_notified_at``).
+
+    Raises:
+        ApiPlanValidationError: ``api-lifecycle-transition``, ``api-lifecycle-retire-early`` or
+            ``api-lifecycle-successor-invalid``.
+    """
+    sent = patch.model_fields_set
+    try:
+        changes = lifecycle_changes(
+            row, target=target, sent=frozenset(sent), retire_at=patch.retire_at,
+            message=patch.deprecation_message, now=now, noun="plan",
+        )
+    except LifecycleError as exc:
+        raise _lifecycle_refusal(exc) from exc
+
+    if "successor" in sent and target != "deprecated":
+        raise ApiPlanValidationError(CODE_TRANSITION, "a replacement plan belongs to a deprecated plan")
+    if row["state"] == "deprecated" and target == "published":
+        changes.update(successor_plan_id=None, owners_notified_at=None)
+        return changes
+
+    successor_id = row.get("successor_plan_id")
+    if "successor" in sent:
+        if patch.successor is None or not patch.successor.strip():
+            changes["successor_plan_id"] = None
+            return changes
+        candidate = _find_plan(cursor, tenant_id, product, slug=patch.successor)
+        _check_successor({"id": row["id"], "auth_strategy": strategy}, candidate)
+        if candidate and candidate["id"] != successor_id:
+            changes["successor_plan_id"] = candidate["id"]
+    elif successor_id and target == "deprecated" and strategy != row["auth_strategy"]:
+        _check_successor(
+            {"id": row["id"], "auth_strategy": strategy}, _find_plan(cursor, tenant_id, product, plan_id=successor_id)
+        )
+    return changes
+
+
+def migrate_plan(
+    tenant_id: str, product_slug: str, plan_slug: str, body: ApiPlanMigrateInput, *, actor: ConsumerActor
+) -> ApiPlanMigration:
+    """Move a deprecated plan's subscriptions to another plan of the product — **migrate to plan**.
+
+    Each subscription is re-provisioned into the target plan's consumer group with the credential it
+    already holds (:func:`_move_subscriptions`); no key is issued, rotated or revoked, which is why
+    the target must use the same auth strategy. A real migration also records the target as the
+    plan's successor and is audited as ``api_product.plan.migrate``; a dry run changes nothing.
+
+    Args:
+        tenant_id: The caller's tenant.
+        product_slug: The product's slug.
+        plan_slug: The deprecated plan's slug.
+        body: The target plan and whether this is a dry run.
+        actor: Who is migrating.
+
+    Returns:
+        What moved (or would move).
+
+    Raises:
+        ApiProductValidationError: ``api-product-not-found``.
+        ApiPlanValidationError: ``api-plan-not-found``, ``api-lifecycle-transition`` (the plan is
+            not deprecated) or ``api-lifecycle-successor-invalid`` (the target is unknown, the same
+            plan, not published, or uses another auth strategy).
+    """
+
+    def work(cursor: Any) -> ApiPlanMigration:
+        product = _select_product(cursor, tenant_id, product_slug, lock=True)
+        source = _select_plan(cursor, tenant_id, product, plan_slug, lock=True)
+        if source["state"] != "deprecated":
+            raise ApiPlanValidationError(
+                CODE_TRANSITION, f"'{source['slug']}' is {source['state']}; deprecate it before migrating its consumers"
+            )
+        found = _find_plan(cursor, tenant_id, product, slug=body.to)
+        _check_successor(source, found)
+        target: Mapping[str, Any] = found or {}
+        moved = _move_subscriptions(cursor, tenant_id, source, target, dry_run=body.dry_run)
+        from_ref = PlanRef(slug=source["slug"], name=source["name"], state=source["state"])
+        to_ref = PlanRef(slug=target["slug"], name=target["name"], state=target["state"])
+        noun = "subscription" if moved == 1 else "subscriptions"
+        if body.dry_run:
+            message = f"Would move {moved} {noun} from {source['name']} to {target['name']}; keys stay the same."
+        elif moved:
+            message = f"Moved {moved} {noun} from {source['name']} to {target['name']}; keys stay the same."
+        else:
+            message = (
+                f"No application is subscribed to {source['name']}, so nothing moved. "
+                f"{target['name']} is recorded as its replacement."
+            )
+        if not body.dry_run:
+            if source.get("successor_plan_id") != target["id"]:
+                cursor.execute(
+                    "UPDATE apiome.api_plans SET successor_plan_id = %s::uuid, updated_at = CURRENT_TIMESTAMP "
+                    "WHERE id = %s::uuid",
+                    (target["id"], source["id"]),
+                )
+            _touch(cursor, product["id"])
+            _audit(cursor, tenant_id, actor, "api_product.plan.migrate", product["slug"], {
+                "product_id": product["id"], "plan_id": source["id"], "plan": source["slug"],
+                "to_plan_id": target["id"], "to_plan": target["slug"], "subscriptions": moved,
+                "credentials_changed": False,
+            })
+        return ApiPlanMigration(
+            from_plan=from_ref,
+            to_plan=to_ref,
+            dry_run=body.dry_run,
+            from_group=plan_group_name(product["slug"], source["slug"]),
+            to_group=plan_group_name(product["slug"], target["slug"]),
+            subscriptions=moved,
+            credentials_changed=False,
+            message=message,
+        )
 
     return _run(work)
 

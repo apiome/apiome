@@ -19,23 +19,30 @@ written, so the rules below are applied once rather than at each route.
 it means is read from ``versions`` on every read (:func:`app.api_products.pick_version`), so the
 product follows each new publish with no write.
 
+**Lifecycle** (APX-1.4, :mod:`app.api_lifecycle`). An update moves ``state`` one step at a time,
+stamping ``deprecated_at`` / ``retired_at``, and is audited as ``api_product.deprecate``,
+``.reinstate``, ``.retire`` or ``.update``. A product retires only once every plan of it is retired
+(``api-product-plans-live``), so retiring a product never strands a plan that still has provisioning.
+
 **A delete is soft**, freeing the slug; the product's ``includes`` edges turn stale and drop out of
 the blast radius.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import psycopg2
 
+from .api_lifecycle import LifecycleError, check_initial_state, lifecycle_changes
 from .api_products import (
     CODE_INVALID,
     CODE_MEMBER_DUPLICATE,
     CODE_MEMBER_NOT_FOUND,
     CODE_MEMBER_REF_NOT_FOUND,
     CODE_NOT_FOUND,
+    CODE_PLANS_LIVE,
     CODE_PORTAL_UNPUBLISHED,
     CODE_SLUG_TAKEN,
     CODE_TEAM_NOT_FOUND,
@@ -81,6 +88,7 @@ _MEMBER_KEY = "api_product_members_identity_key"
 #: The product columns every read selects, with the owner team and live member count beside them.
 _PRODUCT_COLUMNS = """
     ap.id::text AS id, ap.slug, ap.name, ap.summary, ap.visibility, ap.state,
+    ap.deprecated_at, ap.retire_at, ap.retired_at, ap.deprecation_message,
     ap.created_by::text AS created_by, ap.created_at, ap.updated_at,
     t.slug AS team_slug, t.name AS team_name,
     (SELECT count(*) FROM apiome.api_product_members m WHERE m.product_id = ap.id)::int AS member_count
@@ -140,6 +148,10 @@ def _record(row: Dict[str, Any], members: Optional[List[ApiProductMember]] = Non
         owner_team=team,
         visibility=row["visibility"],
         state=row["state"],
+        deprecated_at=_iso(row.get("deprecated_at")),
+        retire_at=_iso(row.get("retire_at")),
+        retired_at=_iso(row.get("retired_at")),
+        deprecation_message=row.get("deprecation_message"),
         member_count=int(row.get("member_count") or 0),
         created_by=row.get("created_by"),
         created_at=_iso(row.get("created_at")),
@@ -560,6 +572,10 @@ def create_product(tenant_id: str, body: ApiProductInput, *, actor: ConsumerActo
     """
     if not is_uuid_string(tenant_id):
         raise ApiProductValidationError(CODE_INVALID, "no tenant context")
+    try:
+        check_initial_state(body.state, "product")
+    except LifecycleError as exc:
+        raise ApiProductValidationError(exc.code, str(exc)) from exc
     name = normalize_name(body.name)
     slug = resolve_slug(body.slug, name)
     summary = (body.summary or "").strip() or None
@@ -601,8 +617,9 @@ def update_product(tenant_id: str, slug: str, patch: ApiProductPatch, *, actor: 
 
     Raises:
         ApiProductValidationError: ``api-product-not-found``, ``api-product-invalid``,
-            ``api-product-team-not-found`` or ``api-product-portal-unpublished`` (when the patch
-            sets ``portal`` and a member is not published).
+            ``api-product-team-not-found``, ``api-product-portal-unpublished`` (when the patch
+            sets ``portal`` and a member is not published), ``api-lifecycle-transition``,
+            ``api-lifecycle-retire-early`` or ``api-product-plans-live``.
     """
     sent = patch.model_fields_set
 
@@ -617,8 +634,18 @@ def update_product(tenant_id: str, slug: str, patch: ApiProductPatch, *, actor: 
             changes["owner_team_id"] = _owner_team_id(cursor, tenant_id, patch.owner_team)
         if "visibility" in sent and patch.visibility is not None:
             changes["visibility"] = patch.visibility
-        if "state" in sent and patch.state is not None:
-            changes["state"] = patch.state
+        target = patch.state if "state" in sent and patch.state is not None else row["state"]
+        try:
+            changes.update(lifecycle_changes(
+                row, target=target, sent=frozenset(sent), retire_at=patch.retire_at,
+                message=patch.deprecation_message, now=_now(), noun="product",
+            ))
+        except LifecycleError as exc:
+            raise ApiProductValidationError(exc.code, str(exc)) from exc
+        if target == "retired" and row["state"] != "retired":
+            _check_plans_retired(cursor, row)
+        if target != row["state"]:
+            changes["state"] = target
         if changes:
             assignments = ", ".join(
                 f"{column} = %s::uuid" if column == "owner_team_id" else f"{column} = %s" for column in changes
@@ -627,13 +654,62 @@ def update_product(tenant_id: str, slug: str, patch: ApiProductPatch, *, actor: 
                 f"UPDATE apiome.api_products SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = %s::uuid",
                 (*changes.values(), row["id"]),
             )
-            detail = {k: v for k, v in changes.items() if k != "owner_team_id"}
+            detail = {k: _iso(v) if isinstance(v, datetime) else v for k, v in changes.items() if k != "owner_team_id"}
             if "owner_team_id" in changes:
                 detail["owner_team"] = (patch.owner_team or "").strip().lower() or None
-            _audit(cursor, tenant_id, actor, "api_product.update", row["slug"], {"product_id": row["id"], **detail})
+            _audit(cursor, tenant_id, actor, _update_action(row["state"], target), row["slug"],
+                   {"product_id": row["id"], **detail})
         return _finish(cursor, tenant_id, row["slug"], check_portal=changes.get("visibility") == "portal")
 
     return _run(work)
+
+
+def _now() -> datetime:
+    """The current time, aware and in UTC (patched by tests)."""
+    return datetime.now(timezone.utc)
+
+
+def _update_action(current: str, target: str) -> str:
+    """The audit action a product update is recorded as: the lifecycle step it took, else ``update``.
+
+    Args:
+        current: The stored state.
+        target: The state after the update.
+
+    Returns:
+        ``api_product.deprecate``, ``.reinstate``, ``.retire`` or ``.update``.
+    """
+    if current != target:
+        if target == "deprecated":
+            return "api_product.deprecate"
+        if target == "retired":
+            return "api_product.retire"
+        if current == "deprecated" and target == "published":
+            return "api_product.reinstate"
+    return "api_product.update"
+
+
+def _check_plans_retired(cursor: Any, product: Dict[str, Any]) -> None:
+    """Refuse retiring a product while any plan of it is not retired.
+
+    Args:
+        cursor: The transaction's cursor.
+        product: The product row.
+
+    Raises:
+        ApiProductValidationError: ``api-product-plans-live`` naming the plans still live.
+    """
+    live = _rows(
+        cursor,
+        "SELECT slug FROM apiome.api_plans WHERE product_id = %s::uuid AND deleted_at IS NULL "
+        "AND state <> 'retired' ORDER BY slug",
+        (product["id"],),
+    )
+    if live:
+        names = ", ".join(r["slug"] for r in live)
+        raise ApiProductValidationError(
+            CODE_PLANS_LIVE, f"retire every plan of the product first; still live: {names}"
+        )
 
 
 def delete_product(tenant_id: str, slug: str, *, actor: ConsumerActor) -> str:

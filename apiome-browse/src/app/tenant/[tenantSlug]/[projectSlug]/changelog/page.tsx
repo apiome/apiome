@@ -7,6 +7,10 @@
  * the server and applied by a no-JavaScript GET form, so every filtered view is a shareable URL.
  * All shaping lives in `lib/changelog/projectChangelog.ts`, where it is unit-tested; this file
  * only renders the model.
+ *
+ * APX-1.4 (#6101): when the API belongs to a portal product that is deprecated or has a deprecated
+ * plan, {@link ProductLifecycleNotice} says so under the header — what retires, when, and what to
+ * move to.
  */
 
 import type { Metadata } from 'next';
@@ -15,6 +19,8 @@ import { notFound } from 'next/navigation';
 import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
 import { ChangesNote, SeverityPill } from '../../../../components/SeverityPill';
+import { ProductLifecycleNotice } from '../../../../components/ProductLifecycleNotice';
+import { getProductLifecycleForProject } from '../../../../../../lib/db/products';
 import {
   getPublicChangelogsForProject,
   getPublicProjectBySlug,
@@ -236,11 +242,10 @@ export default async function ProjectChangelogPage({
   }
 
   const filters = parseChangelogFilters(await searchParams);
-  const rows = await getPublicChangelogsForProject(
-    tenantSlug,
-    projectSlug,
-    CHANGELOG_PAGE_VERSION_LIMIT
-  );
+  const [rows, lifecycle] = await Promise.all([
+    getPublicChangelogsForProject(tenantSlug, projectSlug, CHANGELOG_PAGE_VERSION_LIMIT),
+    getProductLifecycleForProject(tenantSlug, String(project.id)),
+  ]);
   const model = buildProjectChangelog(rows, filters, tenantSlug, projectSlug);
 
   const projectHref = `/tenant/${tenantSlug}/${projectSlug}`;
@@ -282,6 +287,8 @@ export default async function ProjectChangelogPage({
             </a>
           </div>
         </header>
+
+        <ProductLifecycleNotice tenantSlug={tenantSlug} notices={lifecycle} />
 
         {rows.length > 0 && (
           <form

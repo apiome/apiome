@@ -7,7 +7,9 @@
  *
  * - **Details** — name, summary, owner team (when Teams is released), visibility and state, saved
  *   together with **Save product**. **Portal** is offered only while every member is published,
- *   and the unpublished members are named under the picker.
+ *   and the unpublished members are named under the picker. **State** offers only the lifecycle
+ *   steps REST accepts (APX-1.4, #6101); a deprecated product takes a retirement date and a message,
+ *   and appears on the sunset timeline.
  * - **Members** — what the product includes, each with the version it means today: a project at
  *   latest follows every new publish, a project at a version or range (`2.x`) shows the newest
  *   published version in range. **Add member** names one by slug or id; **Remove** drops one.
@@ -45,6 +47,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/app/components/ui';
+import { canRetireNow, dateInputValue, retireAtFromInput, selectableStates } from '@lib/api-lifecycle';
 import { useAuthSession } from '@lib/auth/session-client';
 import { isFeatureReleased } from '@lib/feature-release';
 import type { Team } from '@lib/owners';
@@ -52,7 +55,6 @@ import {
   MEMBER_KIND_LABELS,
   PRODUCTS_HREF,
   PRODUCT_MEMBER_KINDS,
-  PRODUCT_STATES,
   PRODUCT_VISIBILITIES,
   STATE_LABELS,
   VISIBILITY_LABELS,
@@ -181,7 +183,10 @@ function DetailsForm({
   const [owner, setOwner] = React.useState(product.owner_team?.slug ?? NO_OWNER);
   const [visibility, setVisibility] = React.useState<ProductVisibility>(product.visibility);
   const [state, setState] = React.useState<ProductState>(product.state);
+  const [retireAt, setRetireAt] = React.useState(dateInputValue(product.retire_at));
+  const [message, setMessage] = React.useState(product.deprecation_message ?? '');
   const [saving, setSaving] = React.useState(false);
+  const retireBlocked = product.state === 'deprecated' && !canRetireNow(product.retire_at);
   const [error, setError] = React.useState<string | undefined>();
 
   const patch = React.useMemo<ApiProductPatch>(() => {
@@ -191,8 +196,14 @@ function DetailsForm({
     if (showOwner && owner !== (product.owner_team?.slug ?? NO_OWNER)) out.owner_team = owner === NO_OWNER ? null : owner;
     if (visibility !== product.visibility) out.visibility = visibility;
     if (state !== product.state) out.state = state;
+    // REST refuses the deprecation fields on any other state, so they travel only with `deprecated`.
+    if (state === 'deprecated') {
+      const nextRetire = retireAtFromInput(retireAt);
+      if (dateInputValue(nextRetire) !== dateInputValue(product.retire_at)) out.retire_at = nextRetire;
+      if ((message.trim() || null) !== (product.deprecation_message ?? null)) out.deprecation_message = message.trim() || null;
+    }
     return out;
-  }, [name, summary, owner, visibility, state, product, showOwner]);
+  }, [name, summary, owner, visibility, state, retireAt, message, product, showOwner]);
   const dirty = Object.keys(patch).length > 0;
   const blockers = unpublishedMembers(product.members ?? []);
   const portalBlocked = blockers.length > 0 && product.visibility !== 'portal';
@@ -267,14 +278,24 @@ function DetailsForm({
             </SelectContent>
           </Select>
         </FormField>
-        <FormField label="State" htmlFor="product-state">
+        <FormField
+          label="State"
+          htmlFor="product-state"
+          helperText={
+            retireBlocked
+              ? `Retired is available from ${dateInputValue(product.retire_at)}, once every plan is retired.`
+              : product.state === 'deprecated'
+                ? 'A product retires once every plan of it is retired.'
+                : undefined
+          }
+        >
           <Select value={state} onValueChange={(value) => setState(value as ProductState)}>
-            <SelectTrigger id="product-state">
+            <SelectTrigger id="product-state" data-testid="product-state">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PRODUCT_STATES.map((value) => (
-                <SelectItem key={value} value={value}>
+              {selectableStates(product.state).map((value) => (
+                <SelectItem key={value} value={value} disabled={value === 'retired' && retireBlocked}>
                   {STATE_LABELS[value]}
                 </SelectItem>
               ))}
@@ -282,6 +303,27 @@ function DetailsForm({
           </Select>
         </FormField>
       </FormSection>
+      {state === 'deprecated' ? (
+        <FormSection
+          title="Deprecation"
+          headingLevel="h3"
+          description="Shown on the sunset timeline. Deprecate the plans too so they stop taking subscriptions."
+          data-testid="product-deprecation"
+        >
+          <FormField label="Retire on" htmlFor="product-retire-at" helperText="Leave empty to retire whenever you decide. Dates are UTC.">
+            <Input id="product-retire-at" type="date" value={retireAt} onChange={(event) => setRetireAt(event.target.value)} />
+          </FormField>
+          <FormField label="Deprecation message" htmlFor="product-deprecation-message">
+            <Textarea
+              id="product-deprecation-message"
+              rows={2}
+              value={message}
+              placeholder="Payments v1 retires on 31 March; Payments v2 replaces it."
+              onChange={(event) => setMessage(event.target.value)}
+            />
+          </FormField>
+        </FormSection>
+      ) : null}
     </FormFrame>
   );
 }
