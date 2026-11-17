@@ -296,6 +296,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'google',
       'keycloak',
       'line',
+      'linkedin',
       'oidc',
       'okta',
       'slack',

@@ -104,6 +104,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   atlassian: 'Atlassian account for Jira and Confluence teams',
   bitbucket: 'Bitbucket Cloud account sign-in',
   slack: 'Slack workspace account sign-in',
+  linkedin: 'LinkedIn professional account sign-in',
 };
 
 /**

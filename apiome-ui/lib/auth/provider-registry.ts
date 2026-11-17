@@ -25,8 +25,8 @@
  * generic-OAuth config in `better-auth-oauth-providers.ts`, one brand icon in
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
- * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), and Slack (OLO-9.17) followed exactly
- * that path.
+ * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), and LinkedIn
+ * (OLO-9.18) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -289,6 +289,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // fixed OpenID Connect discovery document, so no issuer. The `email_verified` claim is
     // honored when true, otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('SLACK_CLIENT_ID', 'SLACK_CLIENT_SECRET'),
+  },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    status: 'available',
+    // Sign In with LinkedIn (OLO-9.18, #5031): credentials only — the endpoints come from
+    // LinkedIn's fixed OpenID Connect discovery document, so no issuer. The `email_verified`
+    // claim is honored when true, otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET'),
   },
 ];
 

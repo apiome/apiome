@@ -71,6 +71,8 @@ const ALL_ENABLED_ENV = {
   BITBUCKET_CLIENT_SECRET: 'bb-secret',
   SLACK_CLIENT_ID: 'slack-id',
   SLACK_CLIENT_SECRET: 'slack-secret',
+  LINKEDIN_CLIENT_ID: 'li-id',
+  LINKEDIN_CLIENT_SECRET: 'li-secret',
 };
 
 describe('providerEnvIssues', () => {
