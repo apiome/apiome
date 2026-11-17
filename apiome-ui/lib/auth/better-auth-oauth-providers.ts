@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -66,6 +66,10 @@
  *    `api.notion.com/v1/users/me`), `owner=user`, HTTP Basic code exchange, no scopes; the owner
  *    user's email carries no verified claim (Better Auth `notion()` hard-codes
  *    `emailVerified: false`) → fail-closed link-first.
+ *  - **Figma (OLO-9.22):** fixed Figma endpoints (`www.figma.com/oauth`,
+ *    `api.figma.com/v1/oauth/token`, `api.figma.com/v1/me`), scope `current_user:read`, HTTP Basic
+ *    code exchange, PKCE on; the `/v1/me` email carries no verified claim (Better Auth `figma()`
+ *    hard-codes `emailVerified: false`) → fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -561,6 +565,11 @@ const NOTION_TOKEN_URL = 'https://api.notion.com/v1/oauth/token';
 const NOTION_USERINFO_URL = 'https://api.notion.com/v1/users/me';
 /** The Notion API version sent as `Notion-Version` (required on every API call but the exchange). */
 const NOTION_API_VERSION = '2022-06-28';
+
+/** Figma OAuth 2.0: fixed endpoints, mirrored from Better Auth's `figma` provider (OLO-9.22). */
+const FIGMA_AUTHORIZE_URL = 'https://www.figma.com/oauth';
+const FIGMA_TOKEN_URL = 'https://api.figma.com/v1/oauth/token';
+const FIGMA_USERINFO_URL = 'https://api.figma.com/v1/me';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1107,6 +1116,41 @@ async function normalizeNotion(
   };
 }
 
+/**
+ * Normalize a Figma sign-in (OLO-9.22): fetch `/v1/me` with the access token and map `id` /
+ * `email` / `handle` / `img_url` — the resource and mapping of Better Auth's `figma()` helper.
+ *
+ * Figma asserts **nothing** about whether that email is verified (Better Auth hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in a
+ * Figma body is dropped, not trusted — and `resolveOAuthEmailVerified` fail-closes to link-first:
+ * the address can neither join nor create an account. The identity is keyed on the user id; the
+ * mutable `handle` is never the key. A failed fetch yields an empty profile (no account id, no
+ * email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeFigma(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(FIGMA_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const profile: Record<string, unknown> =
+    body && typeof body === 'object' ? { ...(body as object) } : {};
+  delete profile.email_verified;
+  return {
+    accountId: typeof profile.id === 'string' ? profile.id : '',
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name: typeof profile.handle === 'string' && profile.handle ? profile.handle : null,
+    image: typeof profile.img_url === 'string' && profile.img_url ? profile.img_url : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1151,6 +1195,7 @@ const NORMALIZERS: Record<
   discord: (tokens, _env, fetchImpl) => normalizeDiscord(tokens, fetchImpl),
   salesforce: (tokens, env, fetchImpl) => normalizeSalesforce(tokens, env, fetchImpl),
   notion: (tokens, _env, fetchImpl) => normalizeNotion(tokens, fetchImpl),
+  figma: (tokens, _env, fetchImpl) => normalizeFigma(tokens, fetchImpl),
 };
 
 /**
@@ -1184,7 +1229,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion).
+ *   discord | salesforce | notion | figma).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1606,6 +1651,25 @@ export function buildGenericOAuthConfig(
         authorizationUrlParams: { owner: 'user' },
         authentication: 'basic',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'figma': {
+      return {
+        providerId: 'figma',
+        clientId: readEnvString(env, 'FIGMA_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'FIGMA_CLIENT_SECRET') ?? '',
+        // Fixed Figma OAuth 2.0 endpoints, mirrored from Better Auth's `figma()` helper — no
+        // issuer. `current_user:read` is the one scope `/v1/me` needs; the code exchange
+        // authenticates with HTTP Basic, and the helper requires a PKCE verifier, so PKCE stays
+        // on. The `/v1/me` email carries no verified claim → fail-closed link-first (see
+        // normalizeFigma).
+        authorizationUrl: FIGMA_AUTHORIZE_URL,
+        tokenUrl: FIGMA_TOKEN_URL,
+        userInfoUrl: FIGMA_USERINFO_URL,
+        scopes: ['current_user:read'],
+        authentication: 'basic',
+        pkce: true,
         getUserInfo,
       };
     }

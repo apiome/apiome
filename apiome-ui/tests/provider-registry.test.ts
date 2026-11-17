@@ -72,6 +72,8 @@ const ALL_ENABLED_ENV = {
   SALESFORCE_CLIENT_SECRET: 'sf-secret',
   NOTION_CLIENT_ID: 'nt-id',
   NOTION_CLIENT_SECRET: 'nt-secret',
+  FIGMA_CLIENT_ID: 'fg-id',
+  FIGMA_CLIENT_SECRET: 'fg-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -96,6 +98,7 @@ describe('registry vocabulary', () => {
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
   });
 
@@ -119,6 +122,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('discord')?.label).toBe('Discord');
     expect(getProviderDescriptor('salesforce')?.label).toBe('Salesforce');
     expect(getProviderDescriptor('notion')?.label).toBe('Notion');
+    expect(getProviderDescriptor('figma')?.label).toBe('Figma');
   });
 
   it('pins each available provider env contract', () => {
@@ -201,9 +205,13 @@ describe('registry vocabulary', () => {
       'NOTION_CLIENT_ID',
       'NOTION_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('figma')?.requiredEnvKeys).toEqual([
+      'FIGMA_CLIENT_ID',
+      'FIGMA_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.21, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.22, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -220,6 +228,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('discord')?.status).toBe('available');
     expect(getProviderDescriptor('salesforce')?.status).toBe('available');
     expect(getProviderDescriptor('notion')?.status).toBe('available');
+    expect(getProviderDescriptor('figma')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -261,6 +270,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('discord', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('salesforce', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('notion', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('figma', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -401,6 +411,10 @@ describe('isProviderEnabled', () => {
       true
     );
     expect(isProviderEnabled('notion', { NOTION_CLIENT_ID: 'x' })).toBe(false);
+    expect(isProviderEnabled('figma', { FIGMA_CLIENT_ID: 'x', FIGMA_CLIENT_SECRET: 'y' })).toBe(
+      true
+    );
+    expect(isProviderEnabled('figma', { FIGMA_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -430,6 +444,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -456,6 +471,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
   });
 
@@ -480,6 +496,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
   });
 });
@@ -508,6 +525,7 @@ describe('providerSummaries', () => {
       { id: 'discord', label: 'Discord', status: 'available', enabled: false },
       { id: 'salesforce', label: 'Salesforce', status: 'available', enabled: false },
       { id: 'notion', label: 'Notion', status: 'available', enabled: false },
+      { id: 'figma', label: 'Figma', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

@@ -128,7 +128,8 @@ class ProviderDescriptor:
 # ``discord`` is available (OLO-9.19, #5032) as credentials-only Discord OAuth 2.0 (fixed endpoints, no issuer);
 # ``salesforce`` is available (OLO-9.20, #5033) as credentials-only Salesforce OIDC — its issuer is an
 # optional ``config`` extra (``SALESFORCE_ISSUER``, default login.salesforce.com), so not a required field;
-# ``notion`` is available (OLO-9.21, #5034) as credentials-only Notion OAuth 2.0 (fixed endpoints, no issuer).
+# ``notion`` is available (OLO-9.21, #5034) as credentials-only Notion OAuth 2.0 (fixed endpoints, no issuer);
+# ``figma`` is available (OLO-9.22, #5035) as credentials-only Figma OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -245,6 +246,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Notion",
         STATUS_AVAILABLE,
         client_credential_fields("NOTION_CLIENT_ID", "NOTION_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "figma",
+        "Figma",
+        STATUS_AVAILABLE,
+        client_credential_fields("FIGMA_CLIENT_ID", "FIGMA_CLIENT_SECRET"),
     ),
 )
 

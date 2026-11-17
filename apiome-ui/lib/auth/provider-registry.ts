@@ -26,8 +26,8 @@
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
- * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), and Notion (OLO-9.21) followed exactly
- * that path.
+ * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), and Figma (OLO-9.22)
+ * followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -327,6 +327,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // owner user's email arrives with no verified claim → fail-closed link-first (Better Auth
     // `notion()` hard-codes `emailVerified: false`) — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('NOTION_CLIENT_ID', 'NOTION_CLIENT_SECRET'),
+  },
+  {
+    id: 'figma',
+    label: 'Figma',
+    status: 'available',
+    // Figma (OLO-9.22, #5035): credentials only — fixed OAuth 2.0 endpoints, so no issuer. The
+    // `/v1/me` email arrives with no verified claim → fail-closed link-first (Better Auth
+    // `figma()` hard-codes `emailVerified: false`) — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('FIGMA_CLIENT_ID', 'FIGMA_CLIENT_SECRET'),
   },
 ];
 

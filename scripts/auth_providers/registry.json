@@ -176,6 +176,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "NOTION_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "NOTION_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "figma",
+      "label": "Figma",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "FIGMA_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "FIGMA_CLIENT_SECRET" }
+      ]
     }
   ]
 }

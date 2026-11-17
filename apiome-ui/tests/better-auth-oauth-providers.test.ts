@@ -98,6 +98,8 @@ const ALL_ENABLED: Record<string, string> = {
   SALESFORCE_CLIENT_SECRET: 'sf-secret',
   NOTION_CLIENT_ID: 'nt-id',
   NOTION_CLIENT_SECRET: 'nt-secret',
+  FIGMA_CLIENT_ID: 'fg-id',
+  FIGMA_CLIENT_SECRET: 'fg-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -211,6 +213,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
   });
 
@@ -236,6 +239,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'discord',
       'salesforce',
       'notion',
+      'figma',
     ]);
   });
 
@@ -295,6 +299,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const notion = buildGenericOAuthConfig('notion', ALL_ENABLED)!;
     expect(notion.clientId).toBe('nt-id');
     expect(notion.clientSecret).toBe('nt-secret');
+    const figma = buildGenericOAuthConfig('figma', ALL_ENABLED)!;
+    expect(figma.clientId).toBe('fg-id');
+    expect(figma.clientSecret).toBe('fg-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -572,6 +579,19 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toEqual({ owner: 'user' });
     expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(false);
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('figma: fixed Figma endpoints; current_user:read; Basic exchange; PKCE on (OLO-9.22)', () => {
+    const cfg = buildGenericOAuthConfig('figma', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('figma');
+    expect(cfg.authorizationUrl).toBe('https://www.figma.com/oauth');
+    expect(cfg.tokenUrl).toBe('https://api.figma.com/v1/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.figma.com/v1/me');
+    expect(cfg.scopes).toEqual(['current_user:read']);
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(true);
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -3146,6 +3166,159 @@ describe('getUserInfo — Notion fail-closed link-first (OLO-9.21)', () => {
     const { result, override } = await runGetUserInfo(
       'notion',
       { accessToken: 'tok', raw: { owner: { workspace: true } } },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+  });
+});
+
+/* ── getUserInfo: Figma fail-closed / link-first (OLO-9.22) ─────────────────────────────────── */
+
+describe('getUserInfo — Figma fail-closed link-first (OLO-9.22)', () => {
+  /** A Figma user as `/v1/me` returns it. */
+  const ME = {
+    id: '1234567890123456789',
+    email: 'ada@example.com',
+    handle: 'Ada Lovelace',
+    img_url: 'http://img/figma.png',
+  };
+
+  /** Serve `profile` on `/v1/me` (a failed response when null) and record each request. */
+  const figmaMe = (profile: Record<string, unknown> | null) => {
+    const requests: Array<{ url: string; authorization: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      if (url === 'https://api.figma.com/v1/me' && profile) {
+        return { ok: true, json: async () => profile };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Figma user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = figmaMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: ME.id,
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'http://img/figma.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: 'https://api.figma.com/v1/me', authorization: 'Bearer tok' }]);
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = figmaMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = figmaMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([true, 'true'])(
+    'an email_verified field in a Figma body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = figmaMe({ ...ME, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'figma',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+    }
+  );
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = figmaMe(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'figma',
+      providerUserId: ME.id,
+    });
+  });
+
+  test.each([undefined, '', 42])('email %p → email-required rejection', async (email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = figmaMe({ ...ME, email });
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['a failed /v1/me fetch', null, 'tok'],
+    ['a body without an id', { ...ME, id: '' }, 'tok'],
+    ['a missing access token', ME, ''],
+  ])('%s yields no identity', async (_label, profile, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = figmaMe(profile);
+
+    const { result, override } = await runGetUserInfo(
+      'figma',
+      { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );
 
