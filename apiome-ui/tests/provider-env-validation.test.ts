@@ -87,6 +87,8 @@ const ALL_ENABLED_ENV = {
   DROPBOX_CLIENT_SECRET: 'db-secret',
   ZOOM_CLIENT_ID: 'zm-id',
   ZOOM_CLIENT_SECRET: 'zm-secret',
+  HUGGINGFACE_CLIENT_ID: 'hf-id',
+  HUGGINGFACE_CLIENT_SECRET: 'hf-secret',
 };
 
 describe('providerEnvIssues', () => {

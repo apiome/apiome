@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -142,6 +142,8 @@ config is stored in the database need none of them set; see
 | `DROPBOX_CLIENT_SECRET` | Dropbox | To enable Dropbox | Dropbox app **App secret** |
 | `ZOOM_CLIENT_ID` | Zoom | To enable Zoom | Zoom app **Client ID** |
 | `ZOOM_CLIENT_SECRET` | Zoom | To enable Zoom | Zoom app **Client Secret** |
+| `HUGGINGFACE_CLIENT_ID` | Hugging Face | To enable Hugging Face | Hugging Face OAuth app client ID |
+| `HUGGINGFACE_CLIENT_SECRET` | Hugging Face | To enable Hugging Face | Hugging Face OAuth app client secret |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -232,7 +234,7 @@ links an account.
 | `linear` | **link-first** | OLO-9.23 | yes | Viewer email, no verified claim |
 | `dropbox` | **trusted** | OLO-9.24 | yes | `email_verified` on `get_current_account` |
 | `zoom` | **trusted** | OLO-9.25 | yes | `verified` on `/v2/users/me` |
-| `huggingface` | **trusted** | OLO-9.26 | no | `email_verified` claim |
+| `huggingface` | **trusted** | OLO-9.26 | yes | `email_verified` claim |
 | `vercel` | **link-first** (provisional) | OLO-9.27 | no | Email and verified semantics confirmed at implementation |
 | `railway` | **link-first** (provisional) | OLO-9.28 | no | Email and verified semantics confirmed at implementation |
 | `hubspot` | **link-first** | OLO-9.29 | no | Token-info email, no verified claim |
@@ -1259,6 +1261,60 @@ A user with no email address surfaces `email-required`. A failed `/v2/users/me` 
 example when the app lacks the `user:read:user` scope — or a response with no string `id`, yields
 no identity and the sign-in is refused.
 
+## Hugging Face — Sign in with Hugging Face (OLO-9.26)
+
+For machine-learning teams whose people already have a Hugging Face account. Apiome uses **Sign
+in with Hugging Face**, Hugging Face's OpenID Connect flow.
+
+1. Sign in to Hugging Face and open
+   [huggingface.co/settings/applications/new](https://huggingface.co/settings/applications/new)
+   to create an OAuth app. On a Team or Enterprise plan, an organization admin can create it
+   under the organization's settings (**OAuth Apps**) instead, so the app belongs to the
+   organization rather than to one person.
+2. Create the app **with a client secret**. Hugging Face also offers public apps with no secret;
+   Apiome needs the secret.
+3. Select the **`openid`**, **`profile`** and **`email`** scopes. No other scope is needed.
+   Without `email`, Hugging Face sends no address and the sign-in fails with `email-required`.
+4. Add the redirect URI. Hugging Face requires an exact match:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/huggingface`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/huggingface` for local dev)
+5. Copy the app's client ID and client secret.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+HUGGINGFACE_CLIENT_ID=<client ID>
+HUGGINGFACE_CLIENT_SECRET=<client secret>
+```
+
+Hugging Face is one fixed OpenID Connect issuer, so there is no issuer to configure. The endpoints
+come from Hugging Face's discovery document (the scopes and PKCE mirror Better Auth's
+`huggingface()` helper):
+
+- Discovery: `https://huggingface.co/.well-known/openid-configuration`
+- Authorize: `https://huggingface.co/oauth/authorize` with the `openid profile email` scopes and
+  a PKCE challenge (`S256`)
+- Token: `https://huggingface.co/oauth/token` — the client id and secret are sent in the form
+  body, with the PKCE verifier
+- User info: `https://huggingface.co/oauth/userinfo`
+
+The identity is keyed on the `sub` claim, the Hugging Face user id. The display name is `name`,
+or `preferred_username` (the Hugging Face username) when the account has no full name; the
+picture is `picture`. The mutable username is never the key. Apiome uses the access token for
+that one request and keeps no Hugging Face token; it reads no models, datasets or Spaces.
+
+**Email verified semantics:** the `email_verified` claim is honored only when it is `true`.
+Hugging Face is a **trusted** provider and `huggingface` is in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Verified address** — signs in the linked account, joins the account with the same address,
+  or starts a new account.
+- **Unverified address** (the claim is absent or false) — rejected with `unverified-email` unless
+  the person is linking Hugging Face explicitly or the identity is already bound
+  (**link-first**).
+
+A sign-in with no `email` claim surfaces `email-required`. A failed userinfo request, or a
+response with no string `sub`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1431,7 +1487,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox and Zoom need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom and Hugging Face need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

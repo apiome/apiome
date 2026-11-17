@@ -27,7 +27,8 @@
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
- * Linear (OLO-9.23), Dropbox (OLO-9.24), and Zoom (OLO-9.25) followed exactly that path.
+ * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), and Hugging Face (OLO-9.26) followed
+ * exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -363,6 +364,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // `verified` flag of `/v2/users/me` is normalized fail-closed to `email_verified` → trusted
     // when verified, refused otherwise — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET'),
+  },
+  {
+    id: 'huggingface',
+    label: 'Hugging Face',
+    status: 'available',
+    // Sign in with Hugging Face (OLO-9.26, #5039): credentials only — the endpoints come from
+    // Hugging Face's fixed OpenID Connect discovery document, so no issuer. The `email_verified`
+    // claim → trusted when verified, refused otherwise — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('HUGGINGFACE_CLIENT_ID', 'HUGGINGFACE_CLIENT_SECRET'),
   },
 ];
 

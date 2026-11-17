@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -85,6 +85,10 @@
  *    exchange body, PKCE on; the user comes from `api.zoom.us/v2/users/me`, whose integer
  *    `verified` flag (`1` = verified email) is normalized fail-closed to `email_verified`, so an
  *    unverified Zoom address is refused.
+ *  - **Hugging Face (OLO-9.26):** Sign in with Hugging Face over Hugging Face's fixed OIDC
+ *    discovery document (`huggingface.co/.well-known/openid-configuration`), scopes
+ *    `openid profile email`, PKCE on; the claims come from `huggingface.co/oauth/userinfo`, and
+ *    the native `email_verified` claim is fail-closed via `resolveOAuthEmailVerified`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -604,6 +608,13 @@ const DROPBOX_USERINFO_URL = 'https://api.dropboxapi.com/2/users/get_current_acc
 const ZOOM_AUTHORIZE_URL = 'https://zoom.us/oauth/authorize';
 const ZOOM_TOKEN_URL = 'https://zoom.us/oauth/token';
 const ZOOM_USERINFO_URL = 'https://api.zoom.us/v2/users/me';
+
+/**
+ * Sign in with Hugging Face: the fixed OIDC discovery document and its userinfo resource
+ * (OLO-9.26).
+ */
+const HUGGINGFACE_DISCOVERY_URL = 'https://huggingface.co/.well-known/openid-configuration';
+const HUGGINGFACE_USERINFO_URL = 'https://huggingface.co/oauth/userinfo';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1372,6 +1383,51 @@ async function normalizeZoom(
   };
 }
 
+/**
+ * Normalize a Sign in with Hugging Face callback (OLO-9.26): fetch the OIDC userinfo resource
+ * with the access token and map `sub` / `email` / `name` / `picture` — the resource and mapping
+ * of Better Auth's `huggingface()` helper. The display name falls back to `preferred_username`
+ * (the Hugging Face username) when the account has no full name.
+ *
+ * The claims pass through untouched, so `resolveOAuthEmailVerified` honors `email_verified` only
+ * when Hugging Face sends it as true; an absent or false claim fail-closes to link-first
+ * (`unverified-email`). The identity is keyed on `sub`, the Hugging Face user id; the mutable
+ * username is never the key. A failed fetch, or a body whose `sub` is not a non-empty string,
+ * yields an empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeHuggingface(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(HUGGINGFACE_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const claims =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  // A body without a string `sub` is no identity at all: drop it whole, so the engine cannot
+  // fall back to keying on a malformed `sub` (or a stray `id`) from the raw profile.
+  const accountId = typeof claims.sub === 'string' ? claims.sub : '';
+  const profile: Record<string, unknown> = accountId ? claims : {};
+  const name =
+    (typeof profile.name === 'string' && profile.name) ||
+    (typeof profile.preferred_username === 'string' && profile.preferred_username) ||
+    null;
+  return {
+    accountId,
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name,
+    image: typeof profile.picture === 'string' && profile.picture ? profile.picture : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1420,6 +1476,7 @@ const NORMALIZERS: Record<
   linear: (tokens, _env, fetchImpl) => normalizeLinear(tokens, fetchImpl),
   dropbox: (tokens, _env, fetchImpl) => normalizeDropbox(tokens, fetchImpl),
   zoom: (tokens, _env, fetchImpl) => normalizeZoom(tokens, fetchImpl),
+  huggingface: (tokens, _env, fetchImpl) => normalizeHuggingface(tokens, fetchImpl),
 };
 
 /**
@@ -1453,7 +1510,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma | linear | dropbox | zoom).
+ *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1954,6 +2011,21 @@ export function buildGenericOAuthConfig(
         userInfoUrl: ZOOM_USERINFO_URL,
         scopes: [],
         authentication: 'post',
+        pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'huggingface': {
+      return {
+        providerId: 'huggingface',
+        clientId: readEnvString(env, 'HUGGINGFACE_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'HUGGINGFACE_CLIENT_SECRET') ?? '',
+        // Sign in with Hugging Face is OpenID Connect on one fixed issuer — no issuer to
+        // configure; discovery supplies the authorize/token endpoints. Like Better Auth's
+        // `huggingface()` helper it asks for `openid profile email` and sends a PKCE challenge
+        // (discovery advertises `S256`); the code exchange also carries the client secret.
+        discoveryUrl: HUGGINGFACE_DISCOVERY_URL,
+        scopes: ['openid', 'profile', 'email'],
         pkce: true,
         getUserInfo,
       };

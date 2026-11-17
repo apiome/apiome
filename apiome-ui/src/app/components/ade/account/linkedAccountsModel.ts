@@ -112,6 +112,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   linear: 'Linear account sign-in',
   dropbox: 'Dropbox account sign-in',
   zoom: 'Zoom account sign-in',
+  huggingface: 'Hugging Face account sign-in',
 };
 
 /**

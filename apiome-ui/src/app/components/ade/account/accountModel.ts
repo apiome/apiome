@@ -240,6 +240,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   linear: 'Linear',
   dropbox: 'Dropbox',
   zoom: 'Zoom',
+  huggingface: 'Hugging Face',
 };
 
 /**

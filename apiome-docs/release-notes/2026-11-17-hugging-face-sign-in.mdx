@@ -1,0 +1,30 @@
+---
+slug: hugging-face-sign-in
+title: Sign in with Hugging Face
+description: "People can now sign in and link with their Hugging Face account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Hugging Face account, and link Hugging Face beside any
+other provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Hugging Face** is a new entry in **System settings → Add Provider**.
+  It needs the client ID and client secret of a Hugging Face OAuth app — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Hugging Face's side. The environment variables are `HUGGINGFACE_CLIENT_ID` and
+  `HUGGINGFACE_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/huggingface`, added to the OAuth
+  app as a redirect URI. Hugging Face requires an exact match.
+- **Scopes.** The OAuth app needs **`openid`**, **`profile`** and **`email`** only. Apiome uses
+  them to read the name, email address and picture of the person signing in. Apiome reads no
+  models, datasets or Spaces and keeps no Hugging Face token.
+- **Client secret.** Create the OAuth app with a client secret. Apiome cannot use a public
+  Hugging Face app that has none.
+- **Email addresses.** Hugging Face is a **Trusted** provider: a sign-in joins the account with
+  the same address, or starts a new one, only when Hugging Face reports the email address as
+  verified. An unverified address is refused. To use such an account, verify the address in
+  Hugging Face, or sign in another way first and link Hugging Face from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `huggingface` as an available provider, and
+  `PUT /v1/admin/auth-providers/huggingface` stores its credentials.

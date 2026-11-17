@@ -132,7 +132,9 @@ class ProviderDescriptor:
 # ``figma`` is available (OLO-9.22, #5035) as credentials-only Figma OAuth 2.0 (fixed endpoints, no issuer);
 # ``linear`` is available (OLO-9.23, #5036) as credentials-only Linear OAuth 2.0 (fixed endpoints, no issuer);
 # ``dropbox`` is available (OLO-9.24, #5037) as credentials-only Dropbox OAuth 2.0 (fixed endpoints, no issuer);
-# ``zoom`` is available (OLO-9.25, #5038) as credentials-only Zoom OAuth 2.0 (fixed endpoints, no issuer).
+# ``zoom`` is available (OLO-9.25, #5038) as credentials-only Zoom OAuth 2.0 (fixed endpoints, no issuer);
+# ``huggingface`` is available (OLO-9.26, #5039) as credentials-only Sign in with Hugging Face (OIDC discovery,
+# no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -273,6 +275,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Zoom",
         STATUS_AVAILABLE,
         client_credential_fields("ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "huggingface",
+        "Hugging Face",
+        STATUS_AVAILABLE,
+        client_credential_fields("HUGGINGFACE_CLIENT_ID", "HUGGINGFACE_CLIENT_SECRET"),
     ),
 )
 
