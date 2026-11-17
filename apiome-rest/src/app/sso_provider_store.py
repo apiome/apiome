@@ -348,7 +348,10 @@ def remove_domain(db, provider_id: str, domain: str) -> bool:
 
 
 def list_routable_with_secrets(db) -> List[Dict[str, Any]]:
-    """Enabled providers with at least one verified domain, **including ciphertext**.
+    """Enabled providers with a workspace and at least one verified domain, **including ciphertext**.
+
+    A provider without a workspace (registered before EID-1.3 and switched off by V394) has nowhere
+    to provision into, so it never routes.
 
     For the service-token-gated internal endpoint only: the caller unseals the secrets in-process
     and hands them to apiome-ui's sign-in resolver. This must never back a client-facing response.
@@ -370,7 +373,7 @@ def list_routable_with_secrets(db) -> List[Dict[str, Any]]:
         FROM apiome.sso_provider p
         JOIN apiome.sso_provider_domain d
           ON d.provider_id = p.id AND d.verified_at IS NOT NULL
-        WHERE p.enabled
+        WHERE p.enabled AND p.tenant_id IS NOT NULL
         GROUP BY p.id
         ORDER BY p.slug
         """

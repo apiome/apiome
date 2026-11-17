@@ -1,5 +1,6 @@
 /**
- * Enterprise SSO sign-ins through the account-resolution engine — EID-1.1 (#5011).
+ * Enterprise SSO sign-ins through the account-resolution engine — EID-1.1 (#5011) — and into the
+ * provider's workspace — EID-1.3 (#5013).
  *
  * `lib/auth/sso-resolution.ts` runs the engine in Better Auth's database hooks on the SSO callback
  * routes. Every dependency is injected (an in-memory store, a fake id-token verifier, captured audit
@@ -8,9 +9,14 @@
  *
  * Pinned: routes other than SSO callbacks are untouched; an email outside the provider's verified
  * domains, an OIDC identity whose email the IdP did not verify, a bad id token and a closed sign-up
- * policy are all refused with a stable code, an `auth_events` failure row and no account; a new user
- * goes to the onboarding wizard with no stray user row; an existing account is auto-linked through
- * the engine; and plugin-native failures map onto stable `sso-*` codes.
+ * policy are all refused with a stable code, an `auth_events` failure row and no account; an existing
+ * account is auto-linked through the engine; and plugin-native failures map onto stable `sso-*` codes.
+ *
+ * Just-in-time provisioning: a first-time user keeps the account core created (password-less) and is
+ * provisioned into the provider's workspace instead of meeting the onboarding wizard; every SSO
+ * sign-in asks apiome-rest, which is idempotent; a full workspace completes the sign-in on the
+ * out-of-seats page; with no answer a member still signs in and anyone else is refused
+ * `sso-provisioning-failed`; and a refused first-time user leaves no row behind.
  */
 
 jest.mock('better-auth/api', () => {
@@ -33,8 +39,14 @@ jest.mock('../lib/db/db', () => ({ query: jest.fn() }));
 import { describe, expect, test } from '@jest/globals';
 
 import type { ResolutionStore, ResolutionUser } from '../lib/auth/account-resolution';
-import { getOauthRedirectOverride, runWithOauthRedirectOverride } from '../lib/auth/better-auth-oauth-providers';
+import {
+  applyOauthRedirectOverride,
+  getOauthRedirectOverride,
+  runWithOauthRedirectOverride,
+  setOauthRedirectOverride,
+} from '../lib/auth/better-auth-oauth-providers';
 import type { ResolvedSsoProvider, ResolvedSsoProviders } from '../lib/auth/sso-provider-resolver';
+import type { SsoProvisionOutcome, SsoProvisionResult } from '../lib/auth/sso-provisioning';
 import {
   emailInProviderDomains,
   isSsoCallbackPath,
@@ -46,6 +58,7 @@ import {
   ssoProviderIdFromContext,
   ssoSessionCreateBefore,
   ssoUserCreateBefore,
+  takeOutOfSeatsRedirect,
   type SsoAuthEvent,
   type SsoResolutionDeps,
 } from '../lib/auth/sso-resolution';
@@ -61,7 +74,7 @@ const OIDC: ResolvedSsoProvider = {
   protocol: 'oidc',
   displayName: 'Acme',
   issuer: 'https://idp.acme.test',
-  tenantId: null,
+  tenantId: 't-acme',
   domains: ['acme.test'],
   oidcConfig: { client_id: 'apiome', jwks_uri: 'https://idp.acme.test/certs' },
   samlConfig: null,
@@ -121,12 +134,19 @@ function makeStore(init: { users?: ResolutionUser[]; identities?: Record<string,
       return { id: 'pending-1' };
     },
   };
-  return { store, calls, identities };
+  return { store, calls, identities, users };
+}
+
+/** What apiome-rest answers a provisioning call with. */
+function provisionResult(outcome: SsoProvisionOutcome = 'existing'): SsoProvisionResult {
+  return { outcome, tenantId: 't-acme', tenantName: 'Acme Corp', roleSlug: outcome === 'seat-cap-blocked' ? null : 'viewer' };
 }
 
 function makeDeps(store: ResolutionStore, over: Partial<SsoResolutionDeps> = {}) {
   const events: SsoAuthEvent[] = [];
   const discarded: [string, string][] = [];
+  const adopted: [string, string][] = [];
+  const provisionCalls: [string, string][] = [];
   const deps: SsoResolutionDeps = {
     store,
     verifyIdToken: async () => ({ email: 'ada@acme.test', email_verified: true }),
@@ -137,9 +157,17 @@ function makeDeps(store: ResolutionStore, over: Partial<SsoResolutionDeps> = {})
     recordEvent: async (event) => {
       events.push(event);
     },
+    adoptNewUser: async (id, marker) => {
+      adopted.push([id, marker]);
+    },
+    provisionMember: async (provider, userId) => {
+      provisionCalls.push([provider.id, userId]);
+      return provisionResult();
+    },
+    hasMembership: async () => false,
     ...over,
   };
-  return { deps, events, discarded };
+  return { deps, events, discarded, adopted, provisionCalls };
 }
 
 /** Run `fn` inside the handler's two request scopes; report the redirect and any throw. */
@@ -212,7 +240,7 @@ describe('outside SSO callbacks', () => {
 /* ── A new user ───────────────────────────────────────────────────────────────────────────── */
 
 describe('a brand-new SSO user', () => {
-  test('goes to the onboarding wizard, leaving no user row behind', async () => {
+  test('keeps the account core creates until the sign-in is decided — no onboarding wizard', async () => {
     const { store, calls } = makeStore();
     const { deps, events, discarded } = makeDeps(store);
     let marker = '';
@@ -225,33 +253,48 @@ describe('a brand-new SSO user', () => {
       marker = created?.data.password as string;
       expect(marker).toMatch(/^sso-pending-[0-9a-f]{48}$/);
       await ssoAccountCreateBefore(
-        { userId: 'tmp-user', accountId: 'sub-123', providerId: 'sso-acme', idToken: 'id.token.jwt' },
+        { userId: 'new-user', accountId: 'sub-123', providerId: 'sso-acme', idToken: 'id.token.jwt' },
         OIDC_CALLBACK,
         deps
       );
     });
 
-    expect(outcome.thrown?.body?.code).toBe('sso-signup-pending');
-    expect(outcome.redirect).toBe('/signup/oauth?token=pending-1');
-    expect(calls.pending).toHaveLength(1);
-    expect(calls.pending[0].slice(0, 3)).toEqual(['sso:acme', 'sub-123', 'ada@acme.test']);
-    expect(discarded).toEqual([['tmp-user', marker]]);
-    expect(events).toEqual([
-      expect.objectContaining({ event_type: 'sign_up', outcome: 'success', provider: 'sso:acme', user_label: 'ada@acme.test' }),
-    ]);
+    expect(outcome.thrown).toBeNull();
+    expect(outcome.redirect).toBeNull(); // not /signup/oauth: the provider's workspace is theirs
+    expect(calls.pending).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(events).toEqual([]); // nothing is decided until the session
   });
 
   test('a SAML user needs no id token', async () => {
     const { store, calls } = makeStore();
     const verifyIdToken = jest.fn(async () => ({}));
-    const { deps } = makeDeps(store, { verifyIdToken });
+    const { deps, discarded } = makeDeps(store, { verifyIdToken });
     const outcome = await inRequest(async () => {
       await ssoUserCreateBefore({ email: 'ada@acme.test', name: 'Ada', emailVerified: false }, SAML_ACS, deps);
       await ssoAccountCreateBefore({ userId: 'tmp', accountId: 'nameid-1' }, SAML_ACS, deps);
     });
-    expect(outcome.redirect).toBe('/signup/oauth?token=pending-1');
-    expect(calls.pending[0][0]).toBe('sso:acme-saml');
+    expect(outcome.thrown).toBeNull();
+    expect(calls.pending).toEqual([]);
+    expect(discarded).toEqual([]);
     expect(verifyIdToken).not.toHaveBeenCalled();
+  });
+
+  test('is refused when the provider has no workspace to provision into', async () => {
+    const { store } = makeStore();
+    const { deps } = makeDeps(store);
+    const homeless: ResolvedSsoProviders = { providers: [{ ...OIDC, tenantId: null }], fingerprint: 'h' };
+    let thrown: { body?: { code?: string } } | null = null;
+    await runWithOauthRedirectOverride(() =>
+      runWithSsoRequest(homeless, async () => {
+        try {
+          await ssoUserCreateBefore({ email: 'ada@acme.test', emailVerified: true }, OIDC_CALLBACK, deps);
+        } catch (error) {
+          thrown = error as { body?: { code?: string } };
+        }
+      })
+    );
+    expect(thrown?.body?.code).toBe('sso-provider-not-found');
   });
 
   test.each([
@@ -389,6 +432,181 @@ describe('a known SSO identity', () => {
     const { deps } = makeDeps(store, { accountIdFor: async () => null });
     const outcome = await inRequest(() => ssoSessionCreateBefore({ userId: 'u-1' }, OIDC_CALLBACK, deps));
     expect(outcome.thrown?.body?.code).toBe('OAuthProfileIncomplete');
+  });
+});
+
+/* ── Just-in-time provisioning (EID-1.3) ──────────────────────────────────────────────────── */
+
+describe('just-in-time provisioning', () => {
+  /** Drive a first-time sign-in through all three hooks, as core would. */
+  async function firstSignIn(deps: SsoResolutionDeps, users: Map<string, ResolutionUser>) {
+    let marker = '';
+    const outcome = await inRequest(async () => {
+      const created = await ssoUserCreateBefore({ email: 'ada@acme.test', name: 'Ada', emailVerified: true }, OIDC_CALLBACK, deps);
+      marker = created?.data.password as string;
+      // Core inserts the user row, then asks to attach the account, then to create the session.
+      users.set('new-user', user({ id: 'new-user' }));
+      await ssoAccountCreateBefore({ userId: 'new-user', accountId: 'sub-123', idToken: 'jwt' }, OIDC_CALLBACK, deps);
+      await ssoSessionCreateBefore({ userId: 'new-user' }, OIDC_CALLBACK, deps);
+    });
+    return { outcome, marker };
+  }
+
+  test('a first-time user keeps their account, is linked, and is provisioned into the provider’s workspace', async () => {
+    const { store, calls, users } = makeStore();
+    const { deps, events, discarded, adopted, provisionCalls } = makeDeps(store, {
+      provisionMember: async (provider, userId) => {
+        provisionCalls.push([provider.id, userId]);
+        return provisionResult('provisioned');
+      },
+    });
+
+    const { outcome, marker } = await firstSignIn(deps, users);
+
+    expect(outcome.thrown).toBeNull();
+    expect(outcome.redirect).toBeNull(); // straight to the workspace: no wizard, no error
+    expect(adopted).toEqual([['new-user', marker]]);
+    expect(discarded).toEqual([]);
+    expect(calls.pending).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0][0]).toBe('new-user');
+    expect(provisionCalls).toEqual([['p-oidc', 'new-user']]);
+    expect(events).toEqual([
+      expect.objectContaining({ event_type: 'sign_up', outcome: 'success', provider: 'sso:acme', user_id: 'new-user' }),
+      expect.objectContaining({
+        event_type: 'sign_in',
+        outcome: 'success',
+        user_id: 'new-user',
+        detail: { protocol: 'oidc', provisioning: 'provisioned' },
+      }),
+    ]);
+  });
+
+  test('the account is linked before it is provisioned', async () => {
+    const { store, calls, users } = makeStore();
+    const linkedAtProvision: number[] = [];
+    const { deps } = makeDeps(store, {
+      provisionMember: async () => {
+        linkedAtProvision.push(calls.linkIdentity.length);
+        return provisionResult('provisioned');
+      },
+    });
+    await firstSignIn(deps, users);
+    expect(linkedAtProvision).toEqual([1]); // apiome-rest provisions only a holder of the identity
+  });
+
+  test('every sign-in asks, and an existing member is neither adopted nor redirected', async () => {
+    const { store } = makeStore({ users: [user()], identities: { 'sso:acme|sub-123': 'u-1' } });
+    const { deps, adopted, provisionCalls, events } = makeDeps(store);
+    const outcome = await inRequest(() => ssoSessionCreateBefore({ userId: 'u-1' }, OIDC_CALLBACK, deps));
+    expect(outcome.thrown).toBeNull();
+    expect(outcome.redirect).toBeNull();
+    expect(provisionCalls).toEqual([['p-oidc', 'u-1']]);
+    expect(adopted).toEqual([]);
+    expect(events).toEqual([
+      expect.objectContaining({ event_type: 'sign_in', detail: { protocol: 'oidc', provisioning: 'existing' } }),
+    ]);
+  });
+
+  test.each(['activated', 'suspended'] as const)('a membership that is %s signs in without a detour', async (kind) => {
+    const { store } = makeStore({ users: [user()], identities: { 'sso:acme|sub-123': 'u-1' } });
+    const { deps } = makeDeps(store, { provisionMember: async () => provisionResult(kind) });
+    const outcome = await inRequest(() => ssoSessionCreateBefore({ userId: 'u-1' }, OIDC_CALLBACK, deps));
+    expect(outcome.thrown).toBeNull();
+    expect(outcome.redirect).toBeNull();
+  });
+
+  test('a full workspace completes the sign-in on the out-of-seats page', async () => {
+    const { store, users } = makeStore();
+    const { deps, events, discarded } = makeDeps(store, { provisionMember: async () => provisionResult('seat-cap-blocked') });
+
+    const { outcome } = await firstSignIn(deps, users);
+
+    expect(outcome.thrown).toBeNull(); // the session is created
+    expect(outcome.redirect).toBe('/login/out-of-seats?workspace=Acme%20Corp');
+    expect(discarded).toEqual([]); // the account stays: signing in again later adds them
+    expect(events.at(-1)).toEqual(
+      expect.objectContaining({ outcome: 'success', detail: { protocol: 'oidc', provisioning: 'seat-cap-blocked' } })
+    );
+  });
+
+  test.each([
+    ['answers nothing', async () => null],
+    [
+      'throws',
+      async () => {
+        throw new Error('network');
+      },
+    ],
+  ])('when apiome-rest %s, someone who is not yet a member is refused — never sent to the wizard', async (_label, provisionMember) => {
+    const { store, users } = makeStore();
+    const { deps, events } = makeDeps(store, { provisionMember });
+
+    const { outcome } = await firstSignIn(deps, users);
+
+    expect(outcome.thrown?.body?.code).toBe('sso-provisioning-failed');
+    expect(outcome.redirect).toBe('/login?error=sso-provisioning-failed');
+    expect(events.at(-1)).toEqual(expect.objectContaining({ outcome: 'failure', error_code: 'sso-provisioning-failed' }));
+  });
+
+  test('when apiome-rest answers nothing, an existing member still signs in', async () => {
+    const { store } = makeStore({ users: [user()], identities: { 'sso:acme|sub-123': 'u-1' } });
+    const asked: [string, string][] = [];
+    const { deps, events } = makeDeps(store, {
+      provisionMember: async () => null,
+      hasMembership: async (userId, tenantId) => {
+        asked.push([userId, tenantId]);
+        return true;
+      },
+    });
+    const outcome = await inRequest(() => ssoSessionCreateBefore({ userId: 'u-1' }, OIDC_CALLBACK, deps));
+    expect(outcome.thrown).toBeNull();
+    expect(outcome.redirect).toBeNull();
+    expect(asked).toEqual([['u-1', 't-acme']]); // the provider's own workspace, no other
+    expect(events).toEqual([
+      expect.objectContaining({ outcome: 'success', detail: { protocol: 'oidc', provisioning: 'unanswered' } }),
+    ]);
+  });
+
+  test('a first-time user the engine refuses leaves no row behind and is never provisioned', async () => {
+    const { store, users } = makeStore();
+    const { deps, discarded, adopted, provisionCalls } = makeDeps(store, { accountIdFor: async () => null });
+
+    const { outcome, marker } = await firstSignIn(deps, users);
+
+    expect(outcome.thrown?.body?.code).toBe('OAuthProfileIncomplete');
+    expect(discarded).toEqual([['new-user', marker]]);
+    expect(adopted).toEqual([]);
+    expect(provisionCalls).toEqual([]);
+  });
+
+  test('the second-factor step takes the out-of-seats page as its destination, leaving its own redirect alone', async () => {
+    await runWithOauthRedirectOverride(async () => {
+      setOauthRedirectOverride('/login/out-of-seats?workspace=Acme%20Corp');
+      expect(takeOutOfSeatsRedirect()).toBe('/login/out-of-seats?workspace=Acme%20Corp');
+      // Withdrawn: the redirect to /login/2fa goes out as the challenge wrote it.
+      const challenge = { status: 302 } as unknown as Response;
+      expect(applyOauthRedirectOverride(challenge)).toBe(challenge); // returned untouched
+      expect(takeOutOfSeatsRedirect()).toBeNull();
+    });
+  });
+
+  test('a refusal is never taken as a second-factor destination', async () => {
+    await runWithOauthRedirectOverride(async () => {
+      expect(takeOutOfSeatsRedirect()).toBeNull(); // nothing published
+      setOauthRedirectOverride('/login?error=sso-provisioning-failed');
+      expect(takeOutOfSeatsRedirect()).toBeNull();
+      expect(getOauthRedirectOverride()).toBe('/login?error=sso-provisioning-failed');
+    });
+  });
+
+  test('a refused existing user is never removed', async () => {
+    const { store } = makeStore({ users: [user({ enabled: false })], identities: { 'sso:acme|sub-123': 'u-1' } });
+    const { deps, discarded, provisionCalls } = makeDeps(store);
+    const outcome = await inRequest(() => ssoSessionCreateBefore({ userId: 'u-1' }, OIDC_CALLBACK, deps));
+    expect(outcome.thrown?.body?.code).toBe('account-disabled');
+    expect(discarded).toEqual([]);
+    expect(provisionCalls).toEqual([]);
   });
 });
 

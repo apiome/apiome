@@ -12,7 +12,7 @@ been accepted yet — with their role, status and when they were last active. It
 see how many of the plan's **member seats** are taken. **Go to Workspace → Members**, or choose
 **Invite a teammate** on Home.
 
-<Screenshot id="members" alt="Members: one summary line — 9 members, active, pending, suspended, 9 of 10 seats used, Team plan — with a thin seat bar, then a roster of nine people with role, status, last active and joined columns" />
+<Screenshot id="members" alt="Members: one summary line — 9 members, active, pending, suspended, 9 of 10 seats used, Team plan — with a thin seat bar, then a roster of nine people with role, status, last active and joined columns; two show SSO · Northwind Okta under the joined date" />
 
 Every member can read the page and export it. Inviting and importing need `members:create`, changing a role or suspending
 needs `members:edit`, and offboarding needs `members:delete` — workspace administrators hold all
@@ -32,6 +32,10 @@ When every seat is taken the page warns **All member seats are in use** and **In
 not shown. Free a seat by cancelling an invitation or offboarding someone, or change the plan (see
 [Tenants](./tenants.mdx)).
 
+Colleagues who join by [single sign-on](./workspace-sso.mdx#who-becomes-a-member) take seats too.
+While the workspace is full a new colleague can sign in but is not added, and you are notified —
+see [When the workspace is out of seats](./workspace-sso.mdx#when-the-workspace-is-out-of-seats).
+
 ## Find people
 
 - **Filter by name or email…** narrows the roster as you type.
@@ -39,6 +43,9 @@ not shown. Free a seat by cancelling an invitation or offboarding someone, or ch
   When the workspace requires two-factor, a **Needs two-factor** chip is added (see
   [Two-factor compliance](#two-factor-compliance)).
 - **User**, **Status**, **Last active** and **Joined** sort; click the header again to reverse.
+- A member who joined by [single sign-on](./workspace-sso.mdx#who-becomes-a-member) shows **SSO ·**
+  and the identity provider's name under their **Joined** date — for example *SSO · Northwind Okta*.
+  Invited members show only the date.
 
 The header reads *9 members · 2 pending*, and the table foot counts every state — *9 people · 6
 active · 2 pending · 1 suspended*. Your own row is marked **(you)**, and none of its controls work:
@@ -139,6 +146,7 @@ workspace's [access audit](../reference/rest/access.md#list-audit-v1-access-tena
 
 - status, role and an **Admin** badge for workspace administrators;
 - **Membership** — role (changeable here too), status and since when, last active, joined,
+  **Provisioned by** (**Invitation**, or **SSO ·** and the identity provider that added them),
   **Two-factor** (**Enabled** or **Not enabled**) and the user id;
 - **Effective permissions** — the `resource:action` grants their role gives, with a link to that
   role;
@@ -148,7 +156,7 @@ The footer has **Offboard** (or **Cancel invite**), **Resend** for an invitation
 **Reinstate**, and **Audit trail**, which opens the full ledger. Owners also see **Reset
 two-factor** for a member who has two-factor on.
 
-<Screenshot id="members-drawer" alt="Sam Okafor's drawer: active Release manager with two-factor enabled, their effective permissions and recent access activity" />
+<Screenshot id="members-drawer" alt="Sam Okafor's drawer: active Release manager, provisioned by SSO · Northwind Okta, with two-factor enabled, their effective permissions and recent access activity" />
 
 ## Two-factor compliance
 

@@ -177,6 +177,9 @@ const ADDITIONAL: A11yRoute[] = [
         'sso-provider-configure.html',
         'sso-domain-verify.html',
         'login-sso-routed.html',
+        // EID-1.3 (#5013): where a sign-in lands when the workspace has no seat left
+        // (`tests/login-out-of-seats.test.tsx`).
+        'login-out-of-seats.html',
       ],
     },
   },

@@ -163,6 +163,12 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'error',
     text: 'An account with your email already exists but could not be linked to single sign-on. Sign in another way, or ask your administrator.',
   },
+  // EID-1.3 (#5013): the sign-in was good, but joining the provider's workspace got no answer.
+  'sso-provisioning-failed': {
+    type: 'error',
+    text: 'You signed in, but we could not add you to your workspace just now. Try again in a moment; if it keeps happening, ask your administrator.',
+    retry: true,
+  },
   SignupSessionExpired: {
     type: 'error',
     text: 'Your signup session expired. Please start again from Create account.',

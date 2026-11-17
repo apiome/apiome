@@ -75,7 +75,7 @@ function row(overrides: Partial<NotificationRow> = {}): NotificationRow {
 }
 
 describe('the type vocabulary', () => {
-  test('is the five COL-3.1 writes, the MFX-39.4 halted auto-export, the RDG-5.3 sunset alert and the seven CDG-2.3 owner findings, and nothing else passes the guard', () => {
+  test('is the five COL-3.1 writes, the MFX-39.4 halted auto-export, the RDG-5.3 sunset alert, the EID-1.3 seat-cap block and the seven CDG-2.3 owner findings, and nothing else passes the guard', () => {
     expect(NOTIFICATION_TYPES).toEqual([
       'mention',
       'review_requested',
@@ -84,6 +84,7 @@ describe('the type vocabulary', () => {
       'version_published',
       'export_auto_halted',
       'sunset_still_used',
+      'seat_cap_blocked_sso',
       'owner_finding',
       'owner_breaking_change',
       'owner_verification_drift',

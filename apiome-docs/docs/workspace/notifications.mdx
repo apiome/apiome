@@ -54,7 +54,8 @@ next fifty.
 
 - **Unread only** shows only what you have not read; its count is your unread total.
 - **All types** or one type — **Mentions**, **Review requests**, **Review decisions**, **Resolved
-  threads**, **Publishes**, **Halted auto-exports**, **Sunsets still in use**, and the seven
+  threads**, **Publishes**, **Halted auto-exports**, **Sunsets still in use**, **Sign-ins blocked
+  by the seat limit**, and the seven
   [owner finding](#owner-findings) types — each with its unread count. Click a selected type again to clear it.
 
 The two combine: *Unread only* with *Mentions* lists the mentions you still have to read.
@@ -85,6 +86,19 @@ consumers.
 - **Bound consumers only.** Anonymous traffic does not send it: nobody could be told to move.
   [Bind the consumers](../govern/runtime-usage.mdx#attribute-traffic-to-consumers) first.
 - The same warning reaches your push webhooks as a `sunset.still_used` event.
+
+## Sign-ins blocked by the seat limit
+
+When someone signs in through your workspace's [single sign-on](./workspace-sso.mdx) for the first
+time and every member seat is in use, they are not added to the workspace — and every **owner and
+administrator** gets a **Sign-ins blocked by the seat limit** notification. It reads
+*lena.fischer@northwind.io signed in through Northwind Okta but was not added: all 10 member seats
+are in use.* **Click it** to open [Members & seats](./members.mdx), where you can free a seat.
+
+- **Once a day per person.** If the same person tries again, you are not told again for 24 hours.
+  Every attempt is still in the access audit, as `member.provision_blocked`.
+- Once a seat is free, the person is added the next time they sign in. See
+  [When the workspace is out of seats](./workspace-sso.mdx#when-the-workspace-is-out-of-seats).
 
 ## Owner findings
 

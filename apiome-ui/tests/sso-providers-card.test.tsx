@@ -117,6 +117,9 @@ describe('SsoProvidersCard', () => {
     fireEvent.change(screen.getByLabelText('Issuer URL'), { target: { value: 'https://acme.okta.test' } });
     fireEvent.change(screen.getByLabelText('Client ID'), { target: { value: 'apiome' } });
     fireEvent.change(screen.getByLabelText('Client secret'), { target: { value: 'top-secret-value' } });
+    // EID-1.3: a provider always belongs to a workspace.
+    expect(screen.getByLabelText('Workspace ID')).toBeRequired();
+    fireEvent.change(screen.getByLabelText('Workspace ID'), { target: { value: '11111111-1111-4111-8111-111111111111' } });
     await act(async () => {
       fireEvent.click(screen.getByTestId('sso-add-submit'));
     });
@@ -127,6 +130,7 @@ describe('SsoProvidersCard', () => {
       protocol: 'oidc',
       slug: 'acme-okta',
       display_name: 'Acme Okta',
+      tenant_id: '11111111-1111-4111-8111-111111111111',
       issuer: 'https://acme.okta.test',
       client_id: 'apiome',
       client_secret: 'top-secret-value',
@@ -147,6 +151,7 @@ describe('SsoProvidersCard', () => {
     fireEvent.click(screen.getByLabelText('SAML 2.0'));
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Acme' } });
     fireEvent.change(screen.getByLabelText('IdP metadata URL'), { target: { value: 'https://idp.test/md' } });
+    fireEvent.change(screen.getByLabelText('Workspace ID'), { target: { value: '11111111-1111-4111-8111-111111111111' } });
     await act(async () => {
       fireEvent.click(screen.getByTestId('sso-add-submit'));
     });

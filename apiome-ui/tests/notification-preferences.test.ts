@@ -208,6 +208,7 @@ describe('applying the preference', () => {
       'version_published',
       'export_auto_halted',
       'sunset_still_used',
+      'seat_cap_blocked_sso',
       'owner_finding',
       'owner_breaking_change',
       'owner_verification_drift',

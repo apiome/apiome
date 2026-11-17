@@ -1,6 +1,6 @@
 ---
 title: "Sso"
-description: "REST endpoints tagged sso: 16 operations."
+description: "REST endpoints tagged sso: 17 operations."
 sidebar_position: 105
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.594.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.595.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `sso` · 16 operations
+Tag: `sso` · 17 operations
 
 ## `GET /v1/admin/sso/providers` {#list-sso-providers-v1-admin-sso-providers-get}
 
@@ -513,7 +513,57 @@ Operation id: `verify_tenant_sso_domain_v1_tenants__tenant_slug__sso_providers__
 | 422 | Refused with a stable `sso-*` code: `{error, message}`. | — |
 | 429 | `sso-verify-rate-limited`: three checks an hour per domain. | — |
 
+## `POST /v1/tenants/{tenant_slug}/sso/providers/{provider_id}/provision` {#provision-tenant-sso-member-v1-tenants-tenant-slug-sso-providers-provider-id-provision-post}
+
+**Provision a member on SSO sign-in (service-to-service)**
+
+Called by apiome-ui with the internal service token after a sign-in through this provider succeeded. Makes that person a member of the provider's workspace, idempotently on `(workspace, user)`, and answers `200` with `outcome`:
+
+- `provisioned` — first sign-in: an active membership with the provider's default role (`viewer` when none is set; never `owner`), recorded as `provisioned_by: sso:<slug>` and audited as `member.provisioned`, source `sso`;
+- `activated` — a pending invitation was accepted by signing in; the invited role is kept;
+- `existing` — already a member; nothing changes and the member keeps their role;
+- `suspended` — the membership is suspended; nothing changes;
+- `seat-cap-blocked` — every licensed member seat is in use. **No membership is created**; the block is audited as `member.provision_blocked` and every owner receives a `seat_cap_blocked_sso` notification (once per person per 24 hours).
+
+`{tenant}` is the workspace's id or slug and must be the provider's own workspace: a provider of one workspace cannot provision into another (`404`). Only an account that holds this provider's `sso:<slug>` identity and whose email is in one of the provider's verified domains is provisioned.
+
+Operation id: `provision_tenant_sso_member_v1_tenants__tenant_slug__sso_providers__provider_id__provision_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider_id` | path | string | yes | Path parameter identifying the provider id segment. |
+| `X-Internal-Service-Token` | header | string or null | no | Header parameter: X Internal Service Token. |
+
+**Request body** (required)
+
+Request body for provision a member on sso sign-in (service-to-service).
+
+- `application/json` — [`SsoProvisionRequest`](#schema-ssoprovisionrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for provision a member on sso sign-in (service-to-service). | `application/json` [`SsoProvisionResponse`](#schema-ssoprovisionresponse) |
+| 401 | No internal service token presented. | — |
+| 403 | Internal service token invalid; or `sso-identity-missing` / `sso-email-domain-mismatch`: this person did not sign in through this provider. | — |
+| 404 | `sso-provider-not-found` in this workspace, or `sso-user-not-found`. | — |
+| 409 | `sso-provider-disabled`: a disabled provider provisions nobody. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | Internal service path disabled (no INTERNAL_SERVICE_TOKEN). | — |
+
 ## Schemas used {#schemas-used}
+
+### `HTTPValidationError` {#schema-httpvalidationerror}
+
+Validation error response emitted when request data fails schema checks.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `detail` | array of `ValidationError` | no | Detail. |
 
 ### `SsoDomainCreateRequest` {#schema-ssodomaincreaterequest}
 
@@ -545,7 +595,7 @@ Secrets are write-only.
 | `protocol` | string | yes | `oidc` or `saml`. |
 | `slug` | string | yes | 2–28 lower-case letters, digits and hyphens. |
 | `display_name` | string | yes | Display Name. |
-| `tenant_id` | string or null | no | The workspace this IdP signs in to. |
+| `tenant_id` | string or null | no | The workspace this IdP signs in to and provisions members into. Required (`sso-tenant-required`). |
 | `preset` | string or null | no | Preset. |
 | `default_role_slug` | string or null | no | Default Role Slug. |
 | `issuer` | string or null | no | OIDC issuer URL (https). |
@@ -616,6 +666,28 @@ A provider as admins see it. Never carries a secret.
 | `updated_by` | string or null | no | Updated By. |
 | `created_at` | string (date-time) or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or null | no | Last update timestamp (ISO 8601). |
+
+### `SsoProvisionRequest` {#schema-ssoprovisionrequest}
+
+Body of the provision route: who just signed in through the provider.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `user_id` | string | yes | The signed-in account's id. |
+
+### `SsoProvisionResponse` {#schema-ssoprovisionresponse}
+
+What provisioning decided for one sign-in.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `outcome` | string | yes | `provisioned`, `activated`, `existing`, `suspended` or `seat-cap-blocked`. |
+| `tenant_id` | string | yes | Tenant that owns the resource. |
+| `tenant_slug` | string | yes | URL-safe tenant slug used in path parameters. |
+| `tenant_name` | string | yes | Tenant Name. |
+| `role_slug` | string or null | no | The member's role after the call, if they hold one. |
+| `role_name` | string or null | no | Role Name. |
+| `seat_limit` | integer or null | no | The workspace's licensed member seats; `null` when seat enforcement is off. |
 
 ### `TenantSsoProviderCreateRequest` {#schema-tenantssoprovidercreaterequest}
 

@@ -38,7 +38,7 @@ accepts any custom key:
 | Key | Limits |
 | --- | --- |
 | `max_tenants` | Tenant workspaces a person may own — checked when they create a workspace |
-| `max_users_per_tenant` | Members of a tenant on this plan — checked when someone is invited or a suspended member is reinstated; pending invitations hold a seat, suspended members do not |
+| `max_users_per_tenant` | Members of a tenant on this plan — checked when someone is invited, when a suspended member is reinstated, and when a first-time person joins by [single sign-on](../workspace/workspace-sso.mdx#when-the-workspace-is-out-of-seats); pending invitations hold a seat, suspended members do not |
 | `max_projects` | Catalog projects |
 | `max_versions` | Versions per project |
 | `max_ai_requests` | AI assistant requests; `0` is none and `-1` unlimited |
@@ -52,6 +52,10 @@ value. Upgrading an installation adds the `usage_*` keys to the built-in Free, P
 and keeps any value an operator already set.
 Operators can switch member-seat enforcement off without a redeploy by setting
 `APIOME_LICENSE_ENFORCEMENT_ENABLED=false` on the REST API; the tenant cap is always enforced.
+
+A person who signs in through a workspace's identity provider when its seats are all in use is not
+refused sign-in: they are simply not added to the workspace, they are told why, and the workspace's
+owners are notified. Nothing is added past the limit.
 
 Lowering a retention limit takes effect at the next usage sweep, even for a workspace that set its
 own longer value earlier: the purge always uses the smaller of the plan's limit and the workspace's

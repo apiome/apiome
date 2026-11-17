@@ -11817,6 +11817,12 @@ class Database:
           ``overdue``, and the member's deadline (``NULL`` while the policy is off). Both
           come from :mod:`app.two_factor_policy`'s shared SQL so the rule lives once.
 
+        * ``provisioned_by`` / ``provisioned_by_label`` — how the membership was created
+          (EID-1.3, #5013): ``sso:<slug>`` for a member provisioned on their first sign-in
+          through the workspace's identity provider, with that provider's display name as
+          the label (``NULL`` once the provider has been removed); both ``NULL`` for an
+          invited member.
+
         :param tenant_id: Canonical UUID string of the tenant.
         :returns: One row per non-deleted member, ordered by display name.
         """
@@ -11830,6 +11836,8 @@ class Database:
                    tu.updated_at AS member_since,
                    tu.created_at AS joined_at,
                    u.last_login_at AS last_active,
+                   tu.provisioned_by,
+                   sp.display_name AS provisioned_by_label,
                    COALESCE(u."twoFactorEnabled", FALSE) AS two_factor_enabled,
                    ({STATUS_SQL}) AS two_factor_status,
                    ({DUE_AT_SQL}) AS two_factor_due_at,
@@ -11844,6 +11852,8 @@ class Database:
             LEFT JOIN apiome.tenant_user_roles tur
                    ON tur.tenant_id = tu.tenant_id AND tur.user_id = tu.user_id
             LEFT JOIN apiome.roles r ON r.id = tur.role_id
+            LEFT JOIN apiome.sso_provider sp
+                   ON sp.tenant_id = tu.tenant_id AND tu.provisioned_by = 'sso:' || sp.slug
             WHERE tu.tenant_id = %s::uuid AND u.deleted_at IS NULL
             ORDER BY u.name ASC
             """.replace("{STATUS_SQL}", STATUS_SQL).replace("{DUE_AT_SQL}", DUE_AT_SQL),

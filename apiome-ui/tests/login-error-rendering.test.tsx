@@ -138,6 +138,8 @@ describe('retry affordance (OLO-3.2)', () => {
         'sso-discovery-failed',
         'sso-state-invalid',
         'sso-provider-not-found',
+        // EID-1.3: joining the workspace got no answer; the next sign-in asks again.
+        'sso-provisioning-failed',
       ].sort()
     );
     expect(terminal).toContain(AUTH_ERROR_CODES.ACCOUNT_DISABLED);

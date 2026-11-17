@@ -137,6 +137,8 @@ function member(fields: {
   member_since?: string;
   last_active?: string | null;
   two_factor_enabled?: boolean;
+  /** The SSO provider that provisioned the membership (EID-1.3); omitted for an invited member. */
+  provisioned_by?: { slug: string; name: string };
 }) {
   const role = DOCS_ROLES.find((entry) => entry.slug === fields.role);
   if (!role) throw new Error(`No docs role ${fields.role}`);
@@ -153,8 +155,13 @@ function member(fields: {
     role_name: role.name,
     role_slug: role.slug,
     is_admin: role.slug === 'owner' || role.slug === 'admin',
+    provisioned_by: fields.provisioned_by ? `sso:${fields.provisioned_by.slug}` : null,
+    provisioned_by_label: fields.provisioned_by?.name ?? null,
   };
 }
+
+/** Northwind's identity provider, which provisioned two of its members on their first sign-in. */
+const DOCS_SSO_PROVIDER = { slug: 'northwind-okta', name: 'Northwind Okta' };
 
 /** Northwind's nine seats: seven people, one suspended contractor, and two open invitations. */
 export const DOCS_MEMBERS = [
@@ -184,6 +191,7 @@ export const DOCS_MEMBERS = [
     joined_at: '2025-04-22T09:00:00Z',
     last_active: '2026-06-14T16:40:00Z',
     two_factor_enabled: true,
+    provisioned_by: DOCS_SSO_PROVIDER,
   }),
   member({
     user_id: 'u-elena',
@@ -201,6 +209,7 @@ export const DOCS_MEMBERS = [
     joined_at: '2025-09-15T08:45:00Z',
     last_active: '2026-06-03T10:00:00Z',
     two_factor_enabled: true,
+    provisioned_by: DOCS_SSO_PROVIDER,
   }),
   member({
     user_id: 'u-hana',

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.594.0
+  version: 1.595.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -93166,6 +93166,89 @@ paths:
           description: '`sso-domain-claimed`: another workspace has verified this domain.'
         '429':
           description: '`sso-verify-rate-limited`: three checks an hour per domain.'
+  /v1/tenants/{tenant_slug}/sso/providers/{provider_id}/provision:
+    post:
+      tags:
+      - sso
+      summary: Provision a member on SSO sign-in (service-to-service)
+      description: 'Called by apiome-ui with the internal service token after a sign-in through this provider succeeded. Makes that person a member of the provider''s workspace, idempotently on `(workspace, user)`, and answers `200` with `outcome`:
+
+
+        - `provisioned` — first sign-in: an active membership with the provider''s default role (`viewer` when none is set; never `owner`), recorded as `provisioned_by: sso:<slug>` and audited as `member.provisioned`, source `sso`;
+
+        - `activated` — a pending invitation was accepted by signing in; the invited role is kept;
+
+        - `existing` — already a member; nothing changes and the member keeps their role;
+
+        - `suspended` — the membership is suspended; nothing changes;
+
+        - `seat-cap-blocked` — every licensed member seat is in use. **No membership is created**; the block is audited as `member.provision_blocked` and every owner receives a `seat_cap_blocked_sso` notification (once per person per 24 hours).
+
+
+        `{tenant}` is the workspace''s id or slug and must be the provider''s own workspace: a provider of one workspace cannot provision into another (`404`). Only an account that holds this provider''s `sso:<slug>` identity and whose email is in one of the provider''s verified domains is provisioned.'
+      operationId: provision_tenant_sso_member_v1_tenants__tenant_slug__sso_providers__provider_id__provision_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Id
+          description: Provider Id schema.
+        description: Path parameter identifying the provider id segment.
+      - name: X-Internal-Service-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Provisionamemberon Ssosigninservicetoserv Xinternal Service Toke schema.
+          - type: 'null'
+            description: Provisionamemberon Ssosigninservicetoserv Xinternal Service Toke schema.
+          title: X-Internal-Service-Token
+          description: X-Internal-Service-Token schema.
+        description: 'Header parameter: X Internal Service Token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoProvisionRequest'
+              description: Request body for provisionamemberon ssosigninservicetoservrequest.
+        description: Request body for provision a member on sso sign-in (service-to-service).
+      responses:
+        '200':
+          description: Successful response for provision a member on sso sign-in (service-to-service).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SsoProvisionResponse'
+                description: Response payload for provisionamemberon ssosigninservicetoservresponse200.
+        '401':
+          description: No internal service token presented.
+        '403':
+          description: 'Internal service token invalid; or `sso-identity-missing` / `sso-email-domain-mismatch`: this person did not sign in through this provider.'
+        '404':
+          description: '`sso-provider-not-found` in this workspace, or `sso-user-not-found`.'
+        '409':
+          description: '`sso-provider-disabled`: a disabled provider provisions nobody.'
+        '503':
+          description: Internal service path disabled (no INTERNAL_SERVICE_TOKEN).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for provisionamemberon ssosigninservicetoservresponse422.
   /v1/internal/auth-events:
     post:
       tags:
@@ -171351,7 +171434,7 @@ components:
           - type: 'null'
             description: Request body for sso provider create.
           title: Tenant Id
-          description: The workspace this IdP signs in to.
+          description: The workspace this IdP signs in to and provisions members into. Required (`sso-tenant-required`).
         preset:
           anyOf:
           - type: string
@@ -171444,11 +171527,9 @@ components:
       description: 'Body of ``POST /v1/admin/sso/providers``.
 
 
-        OIDC needs ``issuer`` + ``client_id`` + ``client_secret``; SAML needs ``metadata_url``
-        or
+        OIDC needs ``issuer`` + ``client_id`` + ``client_secret``; SAML needs ``metadata_url`` or
 
-        ``metadata_xml`` plus ``email_source`` (and ``email_attribute`` when that
-        is ``attribute``).
+        ``metadata_xml`` plus ``email_source`` (and ``email_attribute`` when that is ``attribute``).
 
         Secrets are write-only.'
     SsoProviderListResponse:
@@ -171580,6 +171661,73 @@ components:
 
         ``metadata_xml`` re-reads the SAML metadata; sending ``client_id`` re-runs
         OIDC discovery.'
+    SsoProvisionRequest:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+          description: The signed-in account's id.
+          example: user_01h2xcejqtf3fz5y5j0v8k9m2p
+      additionalProperties: false
+      type: object
+      required:
+      - user_id
+      title: SsoProvisionRequest
+      description: 'Body of the provision route: who just signed in through the provider.'
+    SsoProvisionResponse:
+      properties:
+        outcome:
+          type: string
+          title: Outcome
+          description: '`provisioned`, `activated`, `existing`, `suspended` or `seat-cap-blocked`.'
+          example: example
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns the resource.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_slug:
+          type: string
+          title: Tenant Slug
+          description: URL-safe tenant slug used in path parameters.
+          example: acme
+        tenant_name:
+          type: string
+          title: Tenant Name
+          description: Tenant Name.
+          example: Example
+        role_slug:
+          anyOf:
+          - type: string
+            description: Response payload for sso provision.
+          - type: 'null'
+            description: Response payload for sso provision.
+          title: Role Slug
+          description: The member's role after the call, if they hold one.
+        role_name:
+          anyOf:
+          - type: string
+            description: Response payload for sso provision.
+          - type: 'null'
+            description: Response payload for sso provision.
+          title: Role Name
+          description: Role Name.
+        seat_limit:
+          anyOf:
+          - type: integer
+            description: Response payload for sso provision.
+          - type: 'null'
+            description: Response payload for sso provision.
+          title: Seat Limit
+          description: The workspace's licensed member seats; `null` when seat enforcement is off.
+      type: object
+      required:
+      - outcome
+      - tenant_id
+      - tenant_slug
+      - tenant_name
+      title: SsoProvisionResponse
+      description: What provisioning decided for one sign-in.
     SsoProviderView:
       properties:
         id:

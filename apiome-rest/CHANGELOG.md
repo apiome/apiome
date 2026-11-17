@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.737.0] - 2026-11-17
+
+### Added
+- **Tenant linking & just-in-time provisioning (EID-1.3, #5013)** — OpenAPI 1.595.0:
+  - `POST /v1/tenants/{t}/sso/providers/{id}/provision` — service-to-service (`X-Internal-Service-Token`; no session,
+    no API key). apiome-ui calls it after every sign-in through a workspace's identity provider, with `{user_id}`; it
+    is idempotent on `(workspace, user)` and always answers `200` with `outcome`:
+    - `provisioned` — first sign-in: an `active` membership with the provider's `default_role_slug` (`viewer` when it
+      is unset or the role is gone; never `owner`), `tenant_users.provisioned_by = sso:<slug>`, audited as
+      `member.provisioned`, source `sso`;
+    - `activated` — a pending invitation is accepted by signing in; the invited role is kept;
+    - `existing` — already a member: nothing changes and the member keeps their role (never demoted);
+    - `suspended` — nothing changes; reinstating stays an administrator's action;
+    - `seat-cap-blocked` — every `max_users_per_tenant` seat is in use: **no membership is created**, the block is
+      audited as `member.provision_blocked` (source `sso`, reason `license-seats-exhausted`) and every owner and tenant
+      administrator receives a `seat_cap_blocked_sso` notification — once per blocked person per 24 hours.
+    The workspace row is locked for the transaction, so two first sign-ins cannot both take the last seat; the
+    membership, role, audit row and notifications commit together. `APIOME_LICENSE_ENFORCEMENT_ENABLED=false` lifts
+    the cap here as it does for invitations (`seat_limit` is then `null`).
+  - No cross-workspace provisioning: `{t}` (the workspace's id or slug) must be the provider's own workspace, else
+    `404 sso-provider-not-found`. Only an account that holds the provider's `sso:<slug>` identity
+    (`403 sso-identity-missing`) with an email in one of its **verified** domains (`403 sso-email-domain-mismatch`) is
+    provisioned; a disabled provider provisions nobody (`409 sso-provider-disabled`); an unknown or deleted account is
+    `404 sso-user-not-found`.
+  - `GET /v1/access/{t}/members` rows gain `provisioned_by` (`sso:<slug>`, or `null` for an invited member) and
+    `provisioned_by_label` (the provider's display name; `null` once the provider is removed). The members CSV export's
+    `provenance` column now reports `sso:<slug>` for those members.
+  - New notification type `seat_cap_blocked_sso` (payload: `summary`, `link`, `user_id`, `user_email`, `provider_slug`,
+    `provider_name`, `seat_limit`).
+
+### Changed
+- **Every SSO provider belongs to a workspace.** `POST /v1/admin/sso/providers` now requires `tenant_id`
+  (`422 sso-tenant-required`), which must be a live workspace (`422 sso-tenant-not-found`); `PATCH` can move a provider
+  to another workspace but not detach it. apiome-db **V394** enforces it with a CHECK, **disables** (and keeps) any
+  provider registered earlier without a workspace, and such a provider accepts no change until it is given one. A
+  provider without a workspace is never returned by `GET /v1/internal/sso/providers/resolved`.
+- apiome-db **V394** also adds `tenant_users.provisioned_by` and widens `notifications_type_check`.
+
 ## [1.736.0] - 2026-11-17
 
 ### Added

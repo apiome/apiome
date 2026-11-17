@@ -197,10 +197,15 @@ function AddProviderForm({ onAdded, onCancel }: { onAdded: (view: AdminSsoProvid
         </Field>
       </div>
 
-      <Field id={`${ids}-tenant`} label="Workspace ID (optional)" hint="The workspace this IdP signs people in to.">
+      <Field
+        id={`${ids}-tenant`}
+        label="Workspace ID"
+        hint="The workspace this IdP signs people in to. First-time sign-ins become its members."
+      >
         <input
           id={`${ids}-tenant`}
           className={`${INPUT_CLASSES} font-mono`}
+          required
           value={draft.tenantId}
           placeholder="00000000-0000-0000-0000-000000000000"
           onChange={(e) => set('tenantId', e.target.value)}

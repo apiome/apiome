@@ -54,6 +54,7 @@ import {
   ssoCallbackAfterHandler,
   ssoSessionCreateBefore,
   ssoUserCreateBefore,
+  takeOutOfSeatsRedirect,
 } from './sso-resolution';
 import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 
@@ -314,7 +315,9 @@ function buildBetterAuthConfig(
       await ssoCallbackAfterHandler(ctx);
       // Second factor after a provider sign-in (TFA-1.1 #5655): the plugin only challenges password
       // sign-ins, so the OAuth callback is challenged here. Throws the redirect to `/login/2fa`.
-      await oauthTwoFactorChallengeHandler(ctx);
+      // An SSO sign-in that found no seat carries its out-of-seats page through the challenge
+      // rather than replacing it (EID-1.3 #5013).
+      await oauthTwoFactorChallengeHandler(ctx, takeOutOfSeatsRedirect);
     }),
   },
   // The account-resolution engine for enterprise SSO sign-ins (EID-1.1 #5011). The SSO plugin hands

@@ -1,5 +1,6 @@
 /**
- * Enterprise SSO sign-ins through the account-resolution engine (EID-1.1, #5011).
+ * Enterprise SSO sign-ins through the account-resolution engine (EID-1.1, #5011), and into the
+ * provider's workspace (EID-1.3, #5013).
  *
  * Better Auth's SSO plugin (`@better-auth/sso`) verifies the IdP's answer — the OIDC code exchange
  * and id token, or the SAML response's signature, audience, timestamps and replay — and then hands
@@ -12,13 +13,23 @@
  * | Core step | Hook | What runs |
  * | --- | --- | --- |
  * | new email → create user | `user.create.before` | the email's domain must be one the provider verified; the engine's pure decision for a new email (verified email, sign-up policy) — a refusal stops here, before any row is written |
- * | … then its account | `account.create.before` | OIDC id-token check; the engine's `signup` outcome: a pending sign-up for the onboarding wizard, exactly as the OAuth providers do, and the just-inserted user row is removed |
+ * | … then its account | `account.create.before` | domain + OIDC id-token check; a failed check removes the just-inserted user row |
  * | existing user, new SSO identity | `account.create.before` | domain + OIDC id-token check (the engine links at session time) |
- * | every admitted sign-in | `session.create.before` | `resolveOAuthSignIn('sso:<slug>', …)` — sign in a known identity or auto-link a verified email (writing the `external_auth_providers` binding), refusing disabled / unverified / suspended accounts and identities bound to someone else |
+ * | every admitted sign-in | `session.create.before` | `resolveOAuthSignIn('sso:<slug>', …)` — sign in a known identity or auto-link a verified email (writing the `external_auth_providers` binding), refusing disabled / unverified / suspended accounts and identities bound to someone else — then just-in-time provisioning into the provider's workspace |
  *
- * A refusal publishes the engine's redirect (`/login?error=<code>`, or the wizard) through the
- * per-request override the OAuth providers already use (`better-auth-oauth-providers.ts`) and
- * throws, so core aborts and the handler retargets the redirect.
+ * A refusal publishes the engine's redirect (`/login?error=<code>`) through the per-request
+ * override the OAuth providers already use (`better-auth-oauth-providers.ts`) and throws, so core
+ * aborts and the handler retargets the redirect.
+ *
+ * **Just-in-time provisioning (EID-1.3).** A provider belongs to a workspace, so a first-time
+ * person is not sent to the onboarding wizard to make a workspace of their own: the account core
+ * creates is kept (password-less — the SSO identity is its only way in), and once the engine has
+ * admitted the sign-in apiome-rest is asked to make them a member of the provider's workspace with
+ * its default role (`sso-provisioning.ts`). The call is made on every SSO sign-in and is
+ * idempotent; a member keeps their role. When every seat is taken the sign-in still completes, no
+ * membership is created, and the person lands on `/login/out-of-seats`. When apiome-rest cannot
+ * answer, someone who is already a member of the workspace signs in as usual and anyone else is
+ * refused with `sso-provisioning-failed` — never left to meet the wizard.
  *
  * **Trust.** OIDC: the id token is verified here against the provider's JWKS (issuer + audience)
  * and must carry `email_verified: true`; SAML: the email comes from the provider's configured source
@@ -57,6 +68,12 @@ import {
   type ResolvedSsoProviders,
 } from './sso-provider-resolver';
 import { postAuthEvent, type AuthEventInput } from './auth-event-writer';
+import {
+  provisionSsoMember,
+  SSO_OUT_OF_SEATS_PATH,
+  ssoOutOfSeatsPath,
+  type SsoProvisionResult,
+} from './sso-provisioning';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CommonJS pool singleton
 const connectionPool = require('../db/db') as {
@@ -88,6 +105,8 @@ export const SSO_ERROR_CODES = {
   EMAIL_DOMAIN_MISMATCH: 'sso-email-domain-mismatch',
   /** The account exists but could not be linked to this IdP. */
   ACCOUNT_NOT_LINKED: 'sso-account-not-linked',
+  /** The sign-in was good but the person could not be added to the provider's workspace. */
+  PROVISIONING_FAILED: 'sso-provisioning-failed',
 } as const;
 
 export type SsoErrorCode = (typeof SSO_ERROR_CODES)[keyof typeof SSO_ERROR_CODES];
@@ -141,8 +160,11 @@ export function ssoProviderIdFromContext(ctx: SsoHookContext | null | undefined)
 interface SsoRequestState {
   /** The routable set this request's auth instance was built from. */
   resolved: ResolvedSsoProviders;
-  /** Set by `user.create.before` when core is creating a brand-new user for this sign-in. */
-  newUser: { email: string; name: string; passwordMarker: string } | null;
+  /**
+   * Set by `user.create.before` when core is creating a brand-new user for this sign-in;
+   * `account.create.before` adds the id core gave the row.
+   */
+  newUser: { email: string; name: string; passwordMarker: string; userId: string | null } | null;
 }
 
 const ssoRequestStore = new AsyncLocalStorage<SsoRequestState>();
@@ -180,6 +202,15 @@ export interface SsoResolutionDeps {
   accountIdFor: (userId: string, pluginProviderId: string) => Promise<string | null>;
   /** Append an `auth_events` row (best-effort; never throws). */
   recordEvent: (event: SsoAuthEvent) => Promise<void>;
+  /**
+   * Keep the user row core just inserted (matched on id *and* marker): the throwaway password is
+   * cleared, leaving a password-less account whose SSO identity is its only sign-in method.
+   */
+  adoptNewUser: (userId: string, passwordMarker: string) => Promise<void>;
+  /** Ask apiome-rest to provision the user into the provider's workspace; null when unanswered. */
+  provisionMember: (provider: ResolvedSsoProvider, userId: string) => Promise<SsoProvisionResult | null>;
+  /** Whether the user already holds a live membership of a workspace. */
+  hasMembership: (userId: string, tenantId: string) => Promise<boolean>;
 }
 
 const jwksByUri = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
@@ -224,6 +255,17 @@ export const defaultSsoResolutionDeps: SsoResolutionDeps = {
     return typeof value === 'string' ? value : null;
   },
   recordEvent: postAuthEvent,
+  adoptNewUser: async (userId, passwordMarker) => {
+    await connectionPool.query(
+      "UPDATE apiome.users SET password = '', updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND password = $2",
+      [userId, passwordMarker]
+    );
+  },
+  provisionMember: (provider, userId) => provisionSsoMember(provider, userId),
+  hasMembership: async (userId, tenantId) => {
+    const { getMembershipTenantIdsForUser } = await import('./post-login-routing');
+    return (await getMembershipTenantIdsForUser(userId)).includes(tenantId);
+  },
 };
 
 /* ── Helpers ───────────────────────────────────────────────────────────────────────────────── */
@@ -318,8 +360,9 @@ type NewUserData = Record<string, unknown> & { email?: string; name?: string; em
  *
  * Refuses — before any row is written — an email outside the provider's verified domains, an
  * OIDC email the IdP did not mark verified, and an address the sign-up policy refuses. An admitted
- * new user is let through with a throwaway password (the column is NOT NULL) so that
- * `account.create.before`, which has the provider's account id, can turn it into a pending sign-up.
+ * new user is let through with a throwaway password (the column is NOT NULL), which marks the row
+ * as this request's own until the sign-in is admitted: a later refusal removes exactly that row,
+ * and an admitted sign-in clears the password (`session.create.before`).
  *
  * @param user The user core is about to insert.
  * @param ctx The endpoint context.
@@ -335,7 +378,10 @@ export async function ssoUserCreateBefore(
   if (!found) return undefined;
   const { provider } = found;
   const email = canonicalizeEmail(user.email);
-  if (!provider) return refuse(deps, null, ctx, SSO_ERROR_CODES.PROVIDER_NOT_FOUND, { email, eventType: 'sign_up' });
+  // A provider with no workspace has nowhere to provision into (EID-1.3); apiome-rest never routes one.
+  if (!provider || !provider.tenantId) {
+    return refuse(deps, null, ctx, SSO_ERROR_CODES.PROVIDER_NOT_FOUND, { email, eventType: 'sign_up' });
+  }
   if (!email) return refuse(deps, provider, ctx, AUTH_ERROR_CODES.EMAIL_REQUIRED, { eventType: 'sign_up' });
   if (!emailInProviderDomains(email, provider)) {
     return refuse(deps, provider, ctx, SSO_ERROR_CODES.EMAIL_DOMAIN_MISMATCH, { email, eventType: 'sign_up' });
@@ -360,7 +406,7 @@ export async function ssoUserCreateBefore(
   const passwordMarker = `sso-pending-${randomBytes(24).toString('hex')}`;
   const name = (typeof user.name === 'string' && user.name.trim()) || email.split('@')[0];
   const state = ssoRequestStore.getStore();
-  if (state) state.newUser = { email, name, passwordMarker };
+  if (state) state.newUser = { email, name, passwordMarker, userId: null };
   return { data: { ...user, email, name, emailVerified: true, password: passwordMarker } };
 }
 
@@ -376,13 +422,10 @@ type NewAccountData = Record<string, unknown> & {
 /**
  * `databaseHooks.account.create.before`: core is attaching an SSO identity to a user.
  *
- * For a **brand-new user** (flagged by {@link ssoUserCreateBefore}) the engine's `signup` outcome
- * runs exactly as for the OAuth providers: a pending sign-up row keyed on the provider's account id,
- * and a redirect to the onboarding wizard (`/signup/oauth?token=…`). The throwaway user row core
- * inserted a moment ago is removed and core is stopped, so the wizard creates the real account.
- *
- * For an **existing user** it checks the email's domain and, for OIDC, the id token; the engine
- * itself runs at session creation.
+ * It checks the email's domain and, for OIDC, the id token; the engine itself runs at session
+ * creation. For a **brand-new user** (flagged by {@link ssoUserCreateBefore}) a failed check removes
+ * the user row core inserted a moment ago, and a passed one records the row's id so that
+ * {@link ssoSessionCreateBefore} can keep it.
  *
  * @param account The account core is about to insert.
  * @param ctx The endpoint context.
@@ -421,30 +464,8 @@ export async function ssoAccountCreateBefore(
     throw error;
   }
 
-  if (!newUser) return undefined;
-
-  // Brand-new user: the engine's sign-up path — a pending sign-up and the onboarding wizard.
-  const accountId = typeof account.accountId === 'string' ? account.accountId : null;
-  await discard();
-  if (!accountId) return refuse(deps, provider, ctx, AUTH_ERROR_CODES.PROFILE_INCOMPLETE, { email, eventType: 'sign_up' });
-  const pending = await deps.store.createPendingSignup(
-    provider.identityKind,
-    accountId,
-    email,
-    { access_token: null, refresh_token: null, expires_at: null, providerAccountId: accountId },
-    { email, name: newUser.name, email_verified: true, sso_provider: provider.slug }
-  );
-  setOauthRedirectOverride(`/signup/oauth?token=${encodeURIComponent(pending.id)}`);
-  await deps.recordEvent({
-    event_type: 'sign_up',
-    outcome: 'success',
-    provider: provider.identityKind,
-    user_label: email,
-    ...clientDetails(ctx),
-    detail: { protocol: provider.protocol, pending_signup: true },
-  });
-  // Stop core: the wizard creates the account. The handler retargets the redirect.
-  throw new APIError('FOUND', { code: 'sso-signup-pending', message: 'sso-signup-pending' });
+  if (newUser) newUser.userId = userId;
+  return undefined;
 }
 
 /** A session row as `session.create.before` receives it. */
@@ -455,7 +476,10 @@ type NewSessionData = Record<string, unknown> & { userId?: string };
  *
  * Runs the full engine for the `sso:<slug>` identity — a known identity signs in (refusing a
  * disabled, unverified or suspended account); an existing account with no binding yet is
- * auto-linked (the `external_auth_providers` row is written) — and records the outcome.
+ * auto-linked (the `external_auth_providers` row is written) — then provisions the user into the
+ * provider's workspace (EID-1.3) and records the outcome.
+ *
+ * A brand-new user refused here is removed again; one admitted keeps their account, password-less.
  *
  * @param session The session core is about to create.
  * @param ctx The endpoint context.
@@ -471,18 +495,28 @@ export async function ssoSessionCreateBefore(
   if (!found) return undefined;
   const { id, provider } = found;
   const userId = typeof session.userId === 'string' ? session.userId : null;
-  if (!provider || !userId) return refuse(deps, provider, ctx, SSO_ERROR_CODES.PROVIDER_NOT_FOUND, { userId });
+  const pending = ssoRequestStore.getStore()?.newUser ?? null;
+  // The user row core created in this request, if this session is for it.
+  const newUser = pending && userId && pending.userId === userId ? pending : null;
+
+  /** Refuse, first removing the brand-new user row this request created (if any). */
+  const refuseSignIn = async (code: AuthErrorCode | SsoErrorCode, email?: string | null): Promise<never> => {
+    if (newUser && userId) await deps.discardNewUser(userId, newUser.passwordMarker).catch(() => undefined);
+    return refuse(deps, provider, ctx, code, { userId: newUser ? null : userId, email, eventType: newUser ? 'sign_up' : 'sign_in' });
+  };
+
+  if (!provider || !provider.tenantId || !userId) return refuseSignIn(SSO_ERROR_CODES.PROVIDER_NOT_FOUND);
 
   const user = await deps.store.getUserById(userId);
   const email = canonicalizeEmail(user?.email);
   const accountId = await deps.accountIdFor(userId, id);
-  if (!accountId) return refuse(deps, provider, ctx, AUTH_ERROR_CODES.PROFILE_INCOMPLETE, { userId, email });
+  if (!accountId) return refuseSignIn(AUTH_ERROR_CODES.PROFILE_INCOMPLETE, email);
 
   // The session core is creating is for `userId`; an apiome binding of this identity to anyone
   // else must refuse, never sign the other user in (the engine would adopt the bound user).
   const bound = await deps.store.getIdentity(provider.identityKind, accountId);
   if (bound.found && bound.userId && bound.userId !== userId) {
-    return refuse(deps, provider, ctx, AUTH_ERROR_CODES.IDENTITY_LINKED_ELSEWHERE, { userId, email });
+    return refuseSignIn(AUTH_ERROR_CODES.IDENTITY_LINKED_ELSEWHERE, email);
   }
 
   // The email was proven at account creation (domain + OIDC id token, or the SAML domain), so the
@@ -501,14 +535,48 @@ export async function ssoSessionCreateBefore(
   }
   if (result !== true) {
     if (typeof result === 'string' && !result.startsWith('/login?error=')) {
+      if (newUser) await deps.discardNewUser(userId, newUser.passwordMarker).catch(() => undefined);
       setOauthRedirectOverride(result);
       throw new APIError('FOUND', { code: 'sso-redirect', message: 'sso-redirect' });
     }
     const code = typeof result === 'string'
       ? (new URLSearchParams(result.split('?')[1] ?? '').get('error') as AuthErrorCode | null) ?? AUTH_ERROR_CODES.SIGN_IN_FAILED
       : AUTH_ERROR_CODES.SIGN_IN_FAILED;
-    return refuse(deps, provider, ctx, code, { userId, email });
+    return refuseSignIn(code, email);
   }
+
+  // Admitted. A brand-new account is kept from here on: password-less, its SSO identity linked.
+  if (newUser) {
+    await deps.adoptNewUser(userId, newUser.passwordMarker);
+    await deps.recordEvent({
+      event_type: 'sign_up',
+      outcome: 'success',
+      provider: provider.identityKind,
+      user_id: userId,
+      user_label: email,
+      ...clientDetails(ctx),
+      detail: { protocol: provider.protocol, just_in_time: true },
+    });
+  }
+
+  // Just-in-time provisioning into the provider's workspace (EID-1.3). Idempotent, so every
+  // sign-in asks; apiome-rest owns the role, the seat limit and the audit trail.
+  let provisioned: SsoProvisionResult | null = null;
+  try {
+    provisioned = await deps.provisionMember(provider, userId);
+  } catch (error) {
+    console.error('[ssoResolution] provisioning failed:', error instanceof Error ? error.name : 'unknown');
+  }
+  if (!provisioned) {
+    // No answer. Someone who is already a member has nothing to be provisioned and signs in as
+    // usual; anyone else is refused rather than left without a workspace (they may try again).
+    const member = await deps.hasMembership(userId, provider.tenantId).catch(() => false);
+    if (!member) return refuse(deps, provider, ctx, SSO_ERROR_CODES.PROVISIONING_FAILED, { userId, email });
+  } else if (provisioned.outcome === 'seat-cap-blocked') {
+    // The sign-in completes, but there is no membership: say so instead of the dashboard.
+    setOauthRedirectOverride(ssoOutOfSeatsPath(provisioned.tenantName));
+  }
+
   await deps.recordEvent({
     event_type: 'sign_in',
     outcome: 'success',
@@ -516,9 +584,27 @@ export async function ssoSessionCreateBefore(
     user_id: userId,
     user_label: email,
     ...clientDetails(ctx),
-    detail: { protocol: provider.protocol },
+    detail: { protocol: provider.protocol, provisioning: provisioned?.outcome ?? 'unanswered' },
   });
   return undefined;
+}
+
+/**
+ * The out-of-seats page this request published, withdrawn — for the second-factor step.
+ *
+ * A sign-in that found no seat is sent to `/login/out-of-seats` by overriding the callback's
+ * redirect. When the account has two-factor on, the callback is first redirected to `/login/2fa`
+ * (`two-factor-oauth-challenge.ts`) and that redirect must not be overridden: the challenge takes
+ * the page as its own destination instead, and the person reaches it once their code is accepted.
+ *
+ * @returns The out-of-seats path, or null when this request published none (any other override —
+ *   a refusal — is left in place).
+ */
+export function takeOutOfSeatsRedirect(): string | null {
+  const published = getOauthRedirectOverride();
+  if (!published || !published.startsWith(SSO_OUT_OF_SEATS_PATH)) return null;
+  setOauthRedirectOverride('');
+  return published;
 }
 
 /* ── Plugin-native failures ────────────────────────────────────────────────────────────────── */

@@ -40,7 +40,8 @@ again.
 1. **Click “Add identity provider”** on the **Single sign-on** card.
 2. Choose **OIDC** or **SAML 2.0**, and give it a **Name** (for example `Northwind Okta`). The **ID**
    fills in from the name; it appears in sign-in URLs and in the audit trail as `sso:<id>`.
-3. Optionally enter the **Workspace ID** the IdP's people belong to.
+3. Enter the **Workspace ID** the IdP's people belong to. It is required: people who sign in
+   through the provider for the first time become members of that workspace.
 4. For **OIDC**, enter the **Issuer URL** (for example `https://northwind.okta.com`), the **Client
    ID** and the **Client secret** from the app you registered at the IdP. Apiome reads the issuer's
    discovery document and checks it before saving.
@@ -91,8 +92,13 @@ Apiome applies the same rules to a single sign-on as to any other sign-in:
 - **A verified email.** For OIDC, the IdP must mark the email verified in the ID token; an
   unverified email is refused, never linked to an account.
 - **One email, one account.** If an Apiome account with that email already exists, single sign-on is
-  added to it, and the person keeps everything they had. A first-time person is sent to finish
-  setting up their account, under your [sign-up policy](./auth-providers.mdx#sign-up-policy).
+  added to it, and the person keeps everything they had. A first-time person gets an account,
+  under your [sign-up policy](./auth-providers.mdx#sign-up-policy), without being asked to create a
+  workspace.
+- **Straight into the provider's workspace.** Everyone who signs in through a provider becomes a
+  member of its workspace, with the provider's default role, the first time. Existing members keep
+  their role. When the workspace has no seat left the person signs in but is not added. See
+  [Who becomes a member](../workspace/workspace-sso.mdx#who-becomes-a-member).
 - **Disabled and suspended accounts stay out**, and an account with two-factor authentication still
   asks for its code.
 - **Every attempt is recorded** in the sign-in audit trail as `sso:<id>`, and so is every change on
@@ -118,6 +124,22 @@ The sign-in page explains each refusal. The codes appear in the address bar and 
 | `sso-binding-unsupported` | The IdP answered over HTTP-Artifact | Have the IdP send responses over HTTP-POST |
 | `sso-discovery-failed` | Apiome could not read the OIDC discovery document | Check the issuer is reachable |
 | `sso-account-not-linked` | An account with the email exists but could not be linked | Ask the person to sign in another way |
+| `sso-provisioning-failed` | The sign-in was good, but Apiome could not add the person to the workspace just then | Ask them to try again; check apiome-rest is reachable from apiome-ui |
+
+When you add or change a provider, the card can also refuse with:
+
+| Code | What it means | What to do |
+| --- | --- | --- |
+| `sso-tenant-required` | The provider has no **Workspace ID** | Enter the workspace's ID |
+| `sso-tenant-not-found` | No workspace has that ID | Copy the ID from **Tenants** in the admin console |
+
+### Providers added before workspaces were required
+
+Earlier versions let you add a provider with no workspace. Upgrading **disables** each of those
+providers — nobody can sign in through them — and keeps their settings, domains and secrets. To use
+one again, give it a workspace through the REST API
+([`PATCH /v1/admin/sso/providers/{id}`](../reference/rest/sso.md) with `tenant_id`), then
+**click “Enable”**. Until it has a workspace, no other change to it is accepted.
 
 ## For operators
 

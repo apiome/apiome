@@ -58,6 +58,7 @@ refusal is also written to `auth_events` with `provider = sso:<slug>`.
 | `sso-provider-not-found` | No enabled provider with a verified domain covers the request. | SSO hooks; plugin `invalid_provider` |
 | `sso-email-domain-mismatch` | The IdP asserted an email outside the domains verified for it. | `ssoUserCreateBefore`, `ssoAccountCreateBefore` |
 | `sso-account-not-linked` | An account with the email exists but Better Auth could not link it. | Plugin `account_not_linked` |
+| `sso-provisioning-failed` | The sign-in was admitted, but apiome-rest did not answer the just-in-time provisioning call and the person is not yet a member of the provider's workspace (EID-1.3). Retrying is safe. | `ssoSessionCreateBefore` |
 
 ## Pre-contract stable copy keys
 

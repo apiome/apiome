@@ -39,6 +39,7 @@ __all__ = [
     "TYPE_OWNER_VERIFICATION_DRIFT",
     "TYPE_REVIEW_DECISION",
     "TYPE_REVIEW_REQUESTED",
+    "TYPE_SEAT_CAP_BLOCKED_SSO",
     "TYPE_THREAD_RESOLVED",
     "TYPE_VERSION_PUBLISHED",
     "MarkReadRequest",
@@ -97,8 +98,13 @@ TYPE_EXPORT_AUTO_HALTED = "export_auto_halted"
 #: revision per week. Its payload carries its own ``summary`` and ``link``.
 TYPE_SUNSET_STILL_USED = "sunset_still_used"
 
+#: A person signed in through the workspace's identity provider but could not be given a membership
+#: because every licensed seat is taken (EID-1.3) — told to the workspace's owners, at most once per
+#: person per 24 hours. Its payload carries its own ``summary`` and ``link``.
+TYPE_SEAT_CAP_BLOCKED_SSO = "seat_cap_blocked_sso"
+
 #: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286, V359,
-#: V383).
+#: V383, V394).
 NOTIFICATION_TYPES = (
     TYPE_MENTION,
     TYPE_REVIEW_REQUESTED,
@@ -107,12 +113,14 @@ NOTIFICATION_TYPES = (
     TYPE_VERSION_PUBLISHED,
     TYPE_EXPORT_AUTO_HALTED,
     TYPE_SUNSET_STILL_USED,
+    TYPE_SEAT_CAP_BLOCKED_SSO,
     *OWNER_NOTIFICATION_TYPES,
 )
 
 NotificationType = Literal[
     "mention", "review_requested", "review_decision", "thread_resolved", "version_published",
-    "export_auto_halted", "sunset_still_used", "owner_finding", "owner_breaking_change", "owner_verification_drift",
+    "export_auto_halted", "sunset_still_used", "seat_cap_blocked_sso",
+    "owner_finding", "owner_breaking_change", "owner_verification_drift",
     "owner_gate_blocked", "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
 ]
 

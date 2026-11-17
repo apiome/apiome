@@ -27,6 +27,8 @@ import { Spinner } from '@/app/components/ui/Spinner';
 
 import {
   formatMemberDate,
+  MEMBER_PROVENANCE_INVITATION,
+  memberProvenanceLabel,
   formatMemberRelative,
   isPendingInvite,
   memberActivity,
@@ -53,7 +55,8 @@ import {
  * look" the roadmap asks for, and every field in it is real:
  *
  * * **Membership** reads the row (`joined_at`, `member_since`, `last_active`,
- *   `two_factor_enabled`), three of which this ticket added to the API.
+ *   `two_factor_enabled`), three of which this ticket added to the API, and where the
+ *   membership came from (`provisioned_by`, EID-1.3): single sign-on, or an invitation.
  * * **Effective permissions** are the assigned role's own grid, from `GET /api/access/roles` —
  *   not a fixture, and not a second opinion about what a role means.
  * * **Recent activity** is the tenant's access ledger, narrowed to rows this person is the
@@ -230,6 +233,9 @@ export default function MemberDetailDrawer({
                   </Fact>
                   <Fact label="Last active">{formatMemberRelative(member.last_active)}</Fact>
                   <Fact label="Joined">{formatMemberDate(member.joined_at)}</Fact>
+                  <Fact label="Provisioned by">
+                    {memberProvenanceLabel(member) ?? MEMBER_PROVENANCE_INVITATION}
+                  </Fact>
                   <Fact label="Two-factor">
                     {member.two_factor_enabled ? (
                       <Badge variant="ok">

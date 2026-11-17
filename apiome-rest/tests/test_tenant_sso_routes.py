@@ -169,7 +169,11 @@ class TestGate:
             if isinstance(route, APIRoute)
             for method in route.methods
         }
-        assert len(served) == len(_every_route()) == 8
+        # The owner routes, plus the one service-to-service route (EID-1.3), which has no session
+        # to gate by and is covered in test_sso_provisioning.py.
+        provision = ("POST", "/v1/tenants/{tenant_slug}/sso/providers/{provider_id}/provision")
+        assert provision in served
+        assert len(served - {provision}) == len(_every_route()) == 8
 
     @pytest.mark.parametrize("method,path,body", _every_route())
     def test_a_member_who_is_not_an_admin_is_refused(self, ws, method, path, body) -> None:
