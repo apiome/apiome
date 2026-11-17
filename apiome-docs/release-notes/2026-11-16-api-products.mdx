@@ -23,7 +23,16 @@ access (APX).
 - **In the dependency graph.** Each product is an `api_product` node with an `includes` edge per
   member, so the blast radius of a breaking change in a project lists the products that bundle it,
   with their owner team.
+- **Plans (APX-1.2).** A product's [plans](/ship/api-products#plans) are its tiers: an auth
+  strategy (API key, OAuth2 client credentials, mutual TLS or none), declared limits per second,
+  minute, hour, day or month (each count at least 1, each window once), manual or automatic
+  approval, the gateway environments they are provisioned to, a maximum key age and terms. A plan
+  whose environments cannot be provisioned yet is saved as **Declared only** with a notice, a member
+  whose security schemes do not fit the auth strategy is flagged, and an OpenAPI export of an included
+  version carries the plans as `x-apiome-plans` (other formats drop them, and the fidelity report
+  says so).
 
 With the API: `GET|POST /v1/tenants/{t}/products`, `GET|PATCH|DELETE …/products/{slug}`,
-`GET|POST …/products/{slug}/members` and `DELETE …/members/{id}` — see the
+`GET|POST …/products/{slug}/members`, `DELETE …/members/{id}`, `GET|POST …/products/{slug}/plans` and
+`GET|PATCH|DELETE …/plans/{plan}` — see the
 [REST reference](/reference/rest/api-products).

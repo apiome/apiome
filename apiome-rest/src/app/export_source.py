@@ -12,22 +12,33 @@ captured source back into a canonical model — the same model the artifact was 
 Every way this can fail (unknown artifact/version, a revision with no captured source, an
 unparseable source) is surfaced as an :class:`ExportSourceError` carrying an HTTP status the
 route maps straight through, so a caller never has to re-classify it.
+
+**API plans ride along (APX-1.2, #6099).** The authenticated loader puts the plans of every API
+product that includes the revision on the model's root ``extras`` (:data:`app.api_plans.PLANS_EXTRAS_KEY`),
+so the OpenAPI emitter writes them as ``x-apiome-plans`` and every other target's fidelity report
+lists them as dropped. A failure to read them never fails the export: the model is returned without.
+The public loader adds none — an anonymous reader sees no plans.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .api_plans import PLANS_EXTRAS_KEY
 from .canonical_model import CanonicalApi
 from .catalog_conversion import build_conversion_source
 from .conversion_job import ConversionError, ConversionSource
 from .database import db
 from .revision_deprecation import is_uuid_string
 
+_logger = logging.getLogger(__name__)
+
 __all__ = [
+    "attach_plans",
     "ExportSourceError",
     "ExportSource",
     "load_export_source",
@@ -255,6 +266,26 @@ def build_revision_source(
     return build_conversion_source(rebuilt, source_version_id=revision_id)
 
 
+def attach_plans(api: CanonicalApi, tenant_id: str, artifact_id: str, revision_id: str) -> None:
+    """Put the revision's API plans on ``api.extras`` (APX-1.2), or leave the model untouched.
+
+    Args:
+        api: The rebuilt canonical model (changed in place).
+        tenant_id: The revision's tenant.
+        artifact_id: The revision's project.
+        revision_id: The revision (``versions.id``).
+    """
+    from .api_plan_store import plans_for_revision
+
+    try:
+        plans = plans_for_revision(tenant_id, artifact_id, revision_id)
+    except Exception as exc:  # noqa: BLE001 — plans are additive; the export goes on without them
+        _logger.warning("could not read API plans for revision %s: %s", revision_id, exc)
+        return
+    if isinstance(plans, list) and plans:
+        api.extras[PLANS_EXTRAS_KEY] = plans
+
+
 def load_export_source(
     tenant_id: str, artifact_id: str, version: Optional[str] = None
 ) -> ExportSource:
@@ -312,6 +343,7 @@ def load_export_source(
             version_record_id=revision_id,
         ) from exc
 
+    attach_plans(source.api, tenant_id, str(artifact_id), revision_id)
     return ExportSource(
         api=source.api,
         artifact_id=str(artifact_id),

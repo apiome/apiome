@@ -27,3 +27,12 @@ export async function fetchConnectorGatewayConfigs(connectorId: string): Promise
   );
   return Array.isArray(body.gatewayConfigs) ? body.gatewayConfigs : [];
 }
+
+/** Every gateway config of the workspace (one per connector environment), by name. */
+export async function fetchGatewayConfigs(): Promise<GatewayConfig[]> {
+  const body = await readJson<{ gatewayConfigs?: GatewayConfig[] }>(
+    await fetch('/api/gateway-configs', { cache: 'no-store' }),
+    'Could not load the gateway environments',
+  );
+  return Array.isArray(body.gatewayConfigs) ? body.gatewayConfigs : [];
+}

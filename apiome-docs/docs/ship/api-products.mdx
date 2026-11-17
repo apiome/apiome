@@ -1,6 +1,6 @@
 ---
 title: API products
-description: Bundle projects, versions and MCP servers into one product consumers get access to.
+description: Bundle projects and MCP servers into products, and offer them in plans.
 sidebar_position: 4.2
 tags: [products, access, portal]
 ---
@@ -82,6 +82,73 @@ A product has one owner team. The **Owner team** picker appears in **Details** w
 in your workspace; otherwise set it with the REST API (`owner_team` on
 [the products endpoints](../reference/rest/api-products.md)).
 
+## Plans
+
+A **plan** is a tier of the product — *Sandbox*, *Standard*, *Partner* — and what it promises a
+consumer: how they authenticate, how many requests they may send, who approves a request and which
+gateway environments enforce it. Apiome records the plan; the gateway enforces it.
+
+<Screenshot id="api-plan-editor" alt="The Plans table with Declared only and auth-mismatch flags, and the plan editor open on Standard with its declared-only notice, auth warning and Plan fields" />
+
+The **Plans** table, under **Members**, shows each plan's **Auth**, its **Limits** (`100 / minute ·
+50,000 / day`), its **Approval**, its **Environments** and its **State**. **Declared only** marks a plan
+Apiome cannot provision yet, and **1 member does not match** marks an auth mismatch (see below).
+
+### Add a plan
+
+1. **Click “New plan”.** The plan editor opens under the table.
+2. Under **Plan**, enter a **Name** — for example *Standard*. Optionally enter a **Handle**
+   (`standard`); it is derived from the name when left empty and cannot be changed later. Add a
+   **Description** and pick a **State**.
+3. Under **Access**, choose the **Auth strategy**:
+
+   | Auth strategy | What a consumer uses | Settings |
+   | --- | --- | --- |
+   | **API key** | A key in a header | **Key header** — for example `X-API-Key` |
+   | **OAuth2 client credentials** | A client id and secret from your identity provider | **Identity provider config** and **Scopes** (`payments:read refunds:write`) |
+   | **Mutual TLS** | A client certificate | — |
+   | **None** | Nothing | — |
+
+   Then choose the **Approval** — **Manual** (a person approves each subscription request) or
+   **Automatic** — and optionally a **Maximum key age (days)**, for example `90`.
+4. Under **Limits**, enter how many **Requests** a consumer may send **Per** window: second, minute,
+   hour, day or month. **Click “Add limit”** for another window — for example `100` per minute and
+   `50000` per day. Each window takes one limit, and a count must be a whole number of at least 1.
+   Optionally set **Concurrency**, the requests in flight at once.
+5. Under **Environments**, tick the gateway environments the plan is provisioned to — for example
+   **Kong · prod-cp**. They are the environments your gateway connectors report under **Bring in → Connectors** (see
+   [gateway configs](../reference/rest/gateway-configs.md)).
+6. Under **Terms**, optionally enter a **Terms URL** (`https://example.com/terms`), a **Pricing
+   note** shown to consumers (*$49 a month*) and a **Billing reference** for your billing system. The
+   billing reference is internal: it is never exported or shown on the portal.
+7. **Click “Save plan”.** The plan joins the table and stays open in the editor with its notices.
+
+To change a plan, **click “Edit”** on its row, change the fields and **click “Save plan”**. To remove
+one, **click “Delete”** and confirm with **“Delete plan”**; its handle becomes free again.
+
+### Declared only
+
+Apiome provisions a plan onto a gateway through that gateway's connector. Until a connector can
+provision, a plan whose environments belong to it is saved as **Declared only**, with a notice in the
+editor — *Declared only: kong-prod-cp cannot be provisioned yet (its connector has no provisioning),
+so Apiome records the plan but changes nothing on the gateway.* A plan with no environment is declared
+only too. The plan, its limits and its terms are still recorded, exported and shown to consumers.
+
+### Auth must match the members
+
+A plan's auth strategy should match a security scheme that every member declares: an **API key** plan
+needs an `apiKey` scheme, **OAuth2 client credentials** an `oauth2` or `openIdConnect` scheme, and
+**Mutual TLS** a `mutualTLS` scheme. Each member whose current version declares none is listed in a
+warning in the editor — *Refunds API declares no API key scheme, so this plan's auth does not match
+it.* The plan is still saved; add the scheme to the member's spec, or choose another strategy. MCP
+servers are not checked.
+
+### Plans on export
+
+When you export a version that a product includes, an OpenAPI export carries the product's plans as
+the `x-apiome-plans` extension. Other formats have no equivalent, so the plans are dropped and the
+fidelity report says so — see [Understand export fidelity](./export-fidelity.md#api-plans).
+
 ## Products in the dependency graph
 
 Each product is a node of the dependency graph with an **Includes** edge to every member. When you
@@ -97,7 +164,10 @@ The projects and MCP servers it bundled are untouched, and its handle becomes fr
 ## Permissions and the API
 
 Products use the **Projects** permissions: **view** to read, **create** to create, **edit** to change
-details or members and **delete** to delete. Everything on this page is also available from
+details, members or plans and **delete** to delete. Everything on this page is also available from
 [the REST API](../reference/rest/api-products.md):
-`GET | POST /v1/tenants/{t}/products`, `GET | PATCH | DELETE /v1/tenants/{t}/products/{slug}` and
-`GET | POST /v1/tenants/{t}/products/{slug}/members` with `DELETE …/members/{id}`.
+`GET | POST /v1/tenants/{t}/products`, `GET | PATCH | DELETE /v1/tenants/{t}/products/{slug}`,
+`GET | POST /v1/tenants/{t}/products/{slug}/members` with `DELETE …/members/{id}`, and
+`GET | POST /v1/tenants/{t}/products/{slug}/plans` with `GET | PATCH | DELETE …/plans/{plan}`. A plan
+read returns `declared_only`, its `notices` (`api-plan-declared-only`) and its `warnings`
+(`api-plan-auth-mismatch`).

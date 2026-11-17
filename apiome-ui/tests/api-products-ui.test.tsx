@@ -7,7 +7,7 @@
  *   product** creating one and opening its editor.
  * * **Product editor**: details saved as a patch of what changed, members with the version each
  *   means today, **Portal** offered only when every member is published, **Add member**, **Remove**
- *   and **Delete product**; axe passes.
+ *   and **Delete product**; the **Plans** section lists the product's plans (APX-1.2); axe passes.
  *
  * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `api-products-list` and
  * `api-product-editor`.
@@ -51,6 +51,7 @@ import {
   type ProductMember,
 } from '../lib/api-products';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { GATEWAYS, PLANS } from './helpers/api-plans-fixtures';
 
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 const MEMBER_ID = '11111111-1111-4111-8111-111111111111';
@@ -149,6 +150,8 @@ beforeEach(() => {
     if (url === '/api/products/payments' && method === 'GET') return json(current);
     if (url === '/api/products/payments' && method === 'PATCH') return json({ ...current, ...body });
     if (url === '/api/products/payments' && method === 'DELETE') return json({ slug: 'payments' });
+    if (url === '/api/products/payments/plans' && method === 'GET') return json({ plans: PLANS, count: PLANS.length });
+    if (url === '/api/gateway-configs') return json({ gatewayConfigs: GATEWAYS });
     if (url === '/api/products/payments/members' && method === 'POST') {
       return json({ ...current, members: [...MEMBERS, member({ id: 'new', slug: body.ref, name: 'Ledger API' })] }, 201);
     }
@@ -287,6 +290,13 @@ describe('Product editor', () => {
     expect(calls.some((c) => c.method === 'DELETE' && c.url.endsWith(`/members/${MCP_MEMBER_ID}`))).toBe(true);
   });
 
+  it('lists the product’s plans', async () => {
+    await renderEditor();
+    const table = await screen.findByTestId('product-plans-table');
+    expect(within(table).getByText('Sandbox')).toBeInTheDocument();
+    expect(within(table).getByText('100 / minute · 50,000 / day')).toBeInTheDocument();
+  });
+
   it('deletes the product after a confirmation', async () => {
     await renderEditor();
     fireEvent.click(screen.getByTestId('product-delete'));
@@ -305,6 +315,7 @@ describe('Product editor', () => {
 
   it('passes axe and dumps the docs fixture', async () => {
     const { container } = await renderEditor();
+    await screen.findByTestId('product-plans-table');
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('api-product-editor', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
   });

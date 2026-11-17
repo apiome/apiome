@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.729.0] - 2026-11-16
+
+### Added
+- **API plans (APX-1.2, #6099)** — OpenAPI 1.589.0:
+  - apiome-db **V388**: `api_plans` — a tier of an API product, keyed by the composite `(product_id, tenant_id)`
+    so it stays in its product's tenant; `slug` unique among the product's live plans (soft delete);
+    `auth_strategy` `key_auth | oauth2_client_credentials | mtls | none` with `auth_config` (`header_name`;
+    `idp_config_id`, `scopes` — never a secret); `limits` `[{window, requests}]` with `window` `second | minute |
+    hour | day | month`; optional `concurrency`; `approval` `auto | manual`; `environments` (gateway config ids)
+    and `declared_only`; optional `credential_ttl_days` (1–3650); `terms_url` (http/https), `pricing_note`,
+    `billing_ref` (internal); `state` `draft | published | deprecated | retired`.
+  - `GET | POST /v1/tenants/{t}/products/{p}/plans` and `GET | PATCH | DELETE …/plans/{plan}`
+    (`projects:view | edit`). Limits validate: every count positive (422) and every window once
+    (`400 api-plan-invalid`). An auth setting on the wrong strategy is refused. `environments` are gateway config
+    slugs or ids (`422 api-plan-environment-not-found`). A plan with no environment, or one whose connector cannot
+    provision — every connector until APX-4.1 — is saved with `declared_only: true` and an
+    `api-plan-declared-only` notice. A member whose resolved version declares no security scheme for the plan's
+    strategy (`apiKey`; `oauth2` / `openIdConnect`; `mutualTLS`) is an `api-plan-auth-mismatch` warning on reads.
+    Every write is audited (`api_product.plan.create | update | delete`).
+  - Export: an authenticated export of a revision that an API product includes (a member resolves to it today)
+    carries the product's non-retired plans. OpenAPI writes them as the root `x-apiome-plans` extension in every
+    dialect (3.2, 3.1, 3.0, Swagger 2.0), without `billing_ref` or the IdP config id. Every other target's
+    fidelity report lists them as an `info` drop; OpenAPI's lists them as kept. Public (anonymous) exports carry no
+    plans.
+
 ## [1.728.0] - 2026-11-16
 
 ### Added

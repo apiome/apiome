@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.588.0
+  version: 1.589.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29213,6 +29213,392 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for removeamemberfroman apiproductresponse422.
+  /v1/tenants/{tenant_slug}/products/{product_slug}/plans:
+    get:
+      tags:
+      - api-products
+      summary: List an API product's plans
+      description: 'Every live plan of the product, oldest first, each with its environments
+        resolved to gateway configs, `declared_only` and its notices, and an `api-plan-auth-mismatch`
+        warning per member whose security schemes do not fit the plan''s auth strategy.
+
+
+        Requires `projects:view`.'
+      operationId: list_product_plans_v1_tenants__tenant_slug__products__product_slug__plans_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listan Apiproductsplansauthorization schema.
+          - type: 'null'
+            description: Listan Apiproductsplansauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listan Apiproductsplans Xapikey schema.
+          - type: 'null'
+            description: Listan Apiproductsplans Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list an api product's plans.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiPlanListResponse'
+                description: Response payload for listan apiproductsplansresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listan apiproductsplansresponse422.
+    post:
+      tags:
+      - api-products
+      summary: Create an API plan
+      description: 'Add a plan to the product. The `slug` is derived from `name` when
+        omitted and cannot be changed afterwards. `auth_strategy` is `key_auth` (default;
+        `auth_config.header_name`), `oauth2_client_credentials` (`auth_config.idp_config_id`,
+        `auth_config.scopes`), `mtls` or `none`. `limits` is `[{window, requests}]`
+        with `window` one of `second`, `minute`, `hour`, `day`, `month` — every count
+        positive, every window once. `approval` is `manual` (default) or `auto`. `environments`
+        are gateway config slugs or ids; a plan with none, or with one whose connector
+        cannot provision, is saved with `declared_only: true` and an `api-plan-declared-only`
+        notice. `billing_ref` is internal and never exported.
+
+
+        Audited as `api_product.plan.create`. Requires `projects:edit`.'
+      operationId: create_product_plan_v1_tenants__tenant_slug__products__product_slug__plans_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createan Apiplanauthorization schema.
+          - type: 'null'
+            description: Createan Apiplanauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createan Apiplan Xapikey schema.
+          - type: 'null'
+            description: Createan Apiplan Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiPlanInput'
+              description: Request body for createan apiplanrequest.
+        description: Request body for create an api plan.
+      responses:
+        '201':
+          description: Successful response for create an api plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiPlanRecord'
+                description: Response payload for createan apiplanresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for createan apiplanresponse422.
+  /v1/tenants/{tenant_slug}/products/{product_slug}/plans/{plan_slug}:
+    get:
+      tags:
+      - api-products
+      summary: Read an API plan
+      description: 'One live plan with its environments, `declared_only`, notices and
+        auth warnings.
+
+
+        Requires `projects:view`.'
+      operationId: read_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: plan_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Slug
+          description: Plan Slug schema.
+        description: Path parameter identifying the plan slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readan Apiplanauthorization schema.
+          - type: 'null'
+            description: Readan Apiplanauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readan Apiplan Xapikey schema.
+          - type: 'null'
+            description: Readan Apiplan Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read an api plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiPlanRecord'
+                description: Response payload for readan apiplanresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readan apiplanresponse422.
+    patch:
+      tags:
+      - api-products
+      summary: Update an API plan
+      description: 'Change any of a plan''s fields but its slug. Omitted fields are
+        left alone; `null` clears an optional one. `limits` and `environments` are replaced
+        as a whole; changing `environments` re-derives `declared_only`. Changing `auth_strategy`
+        without `auth_config` re-checks the stored config against the new strategy.
+
+
+        Audited as `api_product.plan.update`. Requires `projects:edit`.'
+      operationId: patch_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: plan_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Slug
+          description: Plan Slug schema.
+        description: Path parameter identifying the plan slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updatean Apiplanauthorization schema.
+          - type: 'null'
+            description: Updatean Apiplanauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updatean Apiplan Xapikey schema.
+          - type: 'null'
+            description: Updatean Apiplan Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiPlanPatch'
+              description: Request body for updatean apiplanrequest.
+        description: Request body for update an api plan.
+      responses:
+        '200':
+          description: Successful response for update an api plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiPlanRecord'
+                description: Response payload for updatean apiplanresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for updatean apiplanresponse422.
+    delete:
+      tags:
+      - api-products
+      summary: Delete an API plan
+      description: 'Soft-delete a plan; its slug is free again in this product.
+
+
+        Audited as `api_product.plan.delete`. Requires `projects:edit`.'
+      operationId: delete_product_plan_v1_tenants__tenant_slug__products__product_slug__plans__plan_slug__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: product_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Slug
+          description: Product Slug schema.
+        description: Path parameter identifying the product slug segment.
+      - name: plan_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Slug
+          description: Plan Slug schema.
+        description: Path parameter identifying the plan slug segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletean Apiplanauthorization schema.
+          - type: 'null'
+            description: Deletean Apiplanauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletean Apiplan Xapikey schema.
+          - type: 'null'
+            description: Deletean Apiplan Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for delete an api plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiPlanDeleteResponse'
+                description: Response payload for deletean apiplanresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deletean apiplanresponse422.
   /v1/tenants/{tenant_slug}/catalog-agents:
     get:
       tags:
@@ -96040,6 +96426,494 @@ components:
         are load-bearing (for example ``channels`` matter for ``EVENT`` but not for
 
         ``REST``) and drives browse/search facets.'
+    ApiPlanDeleteResponse:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: The deleted plan's slug (now free for reuse in this product).
+          example: pet-store
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      title: ApiPlanDeleteResponse
+      description: What a delete did.
+    ApiPlanInput:
+      properties:
+        slug:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Slug
+          description: URL-safe identifier.
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Description
+          description: Free-text description.
+        auth_strategy:
+          type: string
+          enum:
+          - key_auth
+          - oauth2_client_credentials
+          - mtls
+          - none
+          title: Auth Strategy
+          default: key_auth
+          description: Auth Strategy.
+          example: key_auth
+        auth_config:
+          $ref: '#/components/schemas/PlanAuthConfig'
+          description: Auth Config.
+        limits:
+          items:
+            $ref: '#/components/schemas/PlanLimit'
+          type: array
+          maxItems: 10
+          title: Limits
+          description: Limits.
+        concurrency:
+          anyOf:
+          - type: integer
+            maximum: 1000000.0
+            minimum: 1.0
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Concurrency
+          description: Concurrency.
+        approval:
+          type: string
+          enum:
+          - auto
+          - manual
+          title: Approval
+          default: manual
+          description: Approval.
+          example: manual
+        environments:
+          items:
+            type: string
+          type: array
+          maxItems: 20
+          title: Environments
+          description: Environments.
+        credential_ttl_days:
+          anyOf:
+          - type: integer
+            maximum: 3650.0
+            minimum: 1.0
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Credential Ttl Days
+          description: Credential Ttl Days.
+        terms_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Terms Url
+          description: Terms URL.
+        pricing_note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Pricing Note
+          description: Pricing Note.
+        billing_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: API Plan Input schema.
+          - type: 'null'
+            description: API Plan Input schema.
+          title: Billing Ref
+          description: Billing Ref.
+        state:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+          - retired
+          title: State
+          default: draft
+          description: State.
+          example: draft
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: ApiPlanInput
+      description: "A plan to create.\n\nAttributes:\n    slug: The handle; derived from\
+        \ ``name`` when omitted. Not editable afterwards.\n    name: The display name\
+        \ (``Standard``).\n    description: What the plan offers.\n    auth_strategy:\
+        \ How a consumer authenticates; ``key_auth`` by default.\n    auth_config: The\
+        \ strategy's settings.\n    limits: Declared request limits, at most one per window.\n\
+        \    concurrency: Optional cap on requests in flight.\n    approval: ``manual``\
+        \ (default) or ``auto``.\n    environments: Gateway config slugs or ids the plan\
+        \ is provisioned to.\n    credential_ttl_days: Optional maximum key age, in days.\n\
+        \    terms_url: The plan's terms (http or https).\n    pricing_note: A short note\
+        \ on price, shown to consumers.\n    billing_ref: An external billing id; internal\
+        \ only.\n    state: ``draft`` (default), ``published``, ``deprecated`` or ``retired``."
+    ApiPlanListResponse:
+      properties:
+        plans:
+          items:
+            $ref: '#/components/schemas/ApiPlanRecord'
+          type: array
+          title: Plans
+          description: The plans, oldest first.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many plans were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: ApiPlanListResponse
+      description: A product's live plans.
+    ApiPlanPatch:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Name
+          description: Human-readable name.
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Description
+          description: Free-text description.
+        auth_strategy:
+          anyOf:
+          - type: string
+            enum:
+            - key_auth
+            - oauth2_client_credentials
+            - mtls
+            - none
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Auth Strategy
+          description: Auth Strategy.
+        auth_config:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAuthConfig'
+          - type: 'null'
+            description: API Plan Patch schema.
+          description: Auth Config.
+        limits:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PlanLimit'
+            type: array
+            maxItems: 10
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Limits
+          description: Limits.
+        concurrency:
+          anyOf:
+          - type: integer
+            maximum: 1000000.0
+            minimum: 1.0
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Concurrency
+          description: Concurrency.
+        approval:
+          anyOf:
+          - type: string
+            enum:
+            - auto
+            - manual
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Approval
+          description: Approval.
+        environments:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            maxItems: 20
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Environments
+          description: Environments.
+        credential_ttl_days:
+          anyOf:
+          - type: integer
+            maximum: 3650.0
+            minimum: 1.0
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Credential Ttl Days
+          description: Credential Ttl Days.
+        terms_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Terms Url
+          description: Terms URL.
+        pricing_note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Pricing Note
+          description: Pricing Note.
+        billing_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: Billing Ref
+          description: Billing Ref.
+        state:
+          anyOf:
+          - type: string
+            enum:
+            - draft
+            - published
+            - deprecated
+            - retired
+            description: API Plan Patch schema.
+          - type: 'null'
+            description: API Plan Patch schema.
+          title: State
+          description: State.
+      additionalProperties: false
+      type: object
+      title: ApiPlanPatch
+      description: 'A partial update. Omitted fields are left alone; ``null`` clears an
+        optional field.
+
+
+        ``limits`` and ``environments`` are replaced as a whole. The slug is deliberately
+        absent: it is
+
+        the handle subscriptions name.'
+    ApiPlanRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        product:
+          type: string
+          title: Product
+          description: The product's slug.
+          example: example
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Description
+          description: Free-text description.
+        auth_strategy:
+          type: string
+          enum:
+          - key_auth
+          - oauth2_client_credentials
+          - mtls
+          - none
+          title: Auth Strategy
+          description: Auth Strategy.
+          example: key_auth
+        auth_config:
+          $ref: '#/components/schemas/PlanAuthConfig'
+          description: Auth Config.
+        limits:
+          items:
+            $ref: '#/components/schemas/PlanLimit'
+          type: array
+          title: Limits
+          description: Limits.
+          maxItems: 1000
+        concurrency:
+          anyOf:
+          - type: integer
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Concurrency
+          description: Concurrency.
+        approval:
+          type: string
+          enum:
+          - auto
+          - manual
+          title: Approval
+          description: Approval.
+          example: auto
+        environments:
+          items:
+            $ref: '#/components/schemas/PlanEnvironment'
+          type: array
+          title: Environments
+          description: Environments.
+          maxItems: 1000
+        declared_only:
+          type: boolean
+          title: Declared Only
+          description: 'True while no environment can be provisioned: the plan is recorded,
+            not pushed to a gateway.'
+          example: false
+        credential_ttl_days:
+          anyOf:
+          - type: integer
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Credential Ttl Days
+          description: Credential Ttl Days.
+        terms_url:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Terms Url
+          description: Terms URL.
+        pricing_note:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Pricing Note
+          description: Pricing Note.
+        billing_ref:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Billing Ref
+          description: Internal; never exported or shown on the portal.
+        state:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+          - retired
+          title: State
+          description: State.
+          example: draft
+        notices:
+          items:
+            $ref: '#/components/schemas/PlanNotice'
+          type: array
+          title: Notices
+          description: E.g. `api-plan-declared-only`.
+          maxItems: 1000
+        warnings:
+          items:
+            $ref: '#/components/schemas/PlanNotice'
+          type: array
+          title: Warnings
+          description: E.g. `api-plan-auth-mismatch`, one per member that does not match.
+          maxItems: 1000
+        created_by:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Created By
+          description: Created By.
+        created_at:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            description: API Plan schema.
+          - type: 'null'
+            description: API Plan schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - product
+      - slug
+      - name
+      - auth_strategy
+      - auth_config
+      - approval
+      - declared_only
+      - state
+      title: ApiPlanRecord
+      description: A stored plan.
     ApiProductDeleteResponse:
       properties:
         slug:
@@ -147630,6 +148504,154 @@ components:
       - pinLimit
       title: PinnedProjectsResponse
       description: Envelope for ``GET /v1/projects/{tenant_slug}/pinned`` (#513).
+    PlanAuthConfig:
+      properties:
+        header_name:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Plan Auth Config schema.
+          - type: 'null'
+            description: Plan Auth Config schema.
+          title: Header Name
+          description: Header Name.
+        idp_config_id:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Plan Auth Config schema.
+          - type: 'null'
+            description: Plan Auth Config schema.
+          title: Idp Config Id
+          description: Idp Config ID.
+        scopes:
+          items:
+            type: string
+          type: array
+          maxItems: 50
+          title: Scopes
+          description: Scopes.
+      additionalProperties: false
+      type: object
+      title: PlanAuthConfig
+      description: "How the strategy is configured. Names and ids only — never a secret.\n\
+        \nAttributes:\n    header_name: ``key_auth`` only: the header the key travels\
+        \ in (default ``apikey`` at the gateway).\n    idp_config_id: ``oauth2_client_credentials``\
+        \ only: the identity-provider configuration to use.\n    scopes: ``oauth2_client_credentials``\
+        \ only: the scopes a client of this plan is granted."
+    PlanEnvironment:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          anyOf:
+          - type: string
+            description: Plan Environment schema.
+          - type: 'null'
+            description: Plan Environment schema.
+          title: Slug
+          description: The gateway config's slug; `null` when it is gone.
+        name:
+          anyOf:
+          - type: string
+            description: Plan Environment schema.
+          - type: 'null'
+            description: Plan Environment schema.
+          title: Name
+          description: Human-readable name.
+        environment:
+          anyOf:
+          - type: string
+            description: Plan Environment schema.
+          - type: 'null'
+            description: Plan Environment schema.
+          title: Environment
+          description: The connector's environment (`prod-cp`).
+        connector_kind:
+          anyOf:
+          - type: string
+            description: Plan Environment schema.
+          - type: 'null'
+            description: Plan Environment schema.
+          title: Connector Kind
+          description: The connector's kind (`kong-admin`).
+        can_provision:
+          type: boolean
+          title: Can Provision
+          description: Whether the gateway config's connector can provision plans.
+          example: false
+        missing:
+          type: boolean
+          title: Missing
+          description: True when the gateway config was deleted.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - can_provision
+      title: PlanEnvironment
+      description: One gateway config a plan is provisioned to, as a read returns it.
+    PlanLimit:
+      properties:
+        window:
+          type: string
+          enum:
+          - second
+          - minute
+          - hour
+          - day
+          - month
+          title: Window
+          description: Window.
+          example: second
+        requests:
+          type: integer
+          maximum: 1000000000000.0
+          minimum: 1.0
+          title: Requests
+          description: Requests allowed per window; a positive whole number.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - window
+      - requests
+      title: PlanLimit
+      description: 'One declared request limit: ``requests`` per ``window``.'
+    PlanNotice:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: Code.
+          example: example
+        message:
+          type: string
+          title: Message
+          description: Message.
+          example: Example validation message.
+        member:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Plan Notice schema.
+          - type: 'null'
+            description: Plan Notice schema.
+          title: Member
+          description: '`{kind, ref, name}` of the member a warning concerns.'
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: PlanNotice
+      description: A notice or warning about a plan, with the member it concerns when
+        there is one.
     PlatformOverrideRequest:
       properties:
         tenant_id:
