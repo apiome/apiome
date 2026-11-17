@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -70,6 +70,11 @@
  *    `api.figma.com/v1/oauth/token`, `api.figma.com/v1/me`), scope `current_user:read`, HTTP Basic
  *    code exchange, PKCE on; the `/v1/me` email carries no verified claim (Better Auth `figma()`
  *    hard-codes `emailVerified: false`) → fail-closed link-first.
+ *  - **Linear (OLO-9.23):** fixed Linear endpoints (`linear.app/oauth/authorize`,
+ *    `api.linear.app/oauth/token`), scope `read`, client credentials in the exchange body, no
+ *    PKCE; the user comes from the GraphQL `viewer` query (`api.linear.app/graphql`), whose email
+ *    carries no verified claim (Better Auth `linear()` hard-codes `emailVerified: false`) →
+ *    fail-closed link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -570,6 +575,14 @@ const NOTION_API_VERSION = '2022-06-28';
 const FIGMA_AUTHORIZE_URL = 'https://www.figma.com/oauth';
 const FIGMA_TOKEN_URL = 'https://api.figma.com/v1/oauth/token';
 const FIGMA_USERINFO_URL = 'https://api.figma.com/v1/me';
+
+/** Linear OAuth 2.0: fixed endpoints, mirrored from Better Auth's `linear` provider (OLO-9.23). */
+const LINEAR_AUTHORIZE_URL = 'https://linear.app/oauth/authorize';
+const LINEAR_TOKEN_URL = 'https://api.linear.app/oauth/token';
+/** Linear has no REST userinfo endpoint: the signed-in user is the GraphQL `viewer`. */
+const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
+/** The `viewer` fields the normalizer maps — the identity subset of Better Auth's `linear()` query. */
+const LINEAR_VIEWER_QUERY = 'query { viewer { id name email avatarUrl } }';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1151,6 +1164,72 @@ async function normalizeFigma(
   };
 }
 
+/**
+ * Fetch the Linear `viewer` (OLO-9.23): POST the GraphQL query with the access token, matching
+ * Better Auth's `linear()` helper. Fail-soft to null on a transport or parse error, a non-2xx
+ * response, or a body without a `data.viewer` object (a GraphQL error answers 200 with `errors`).
+ *
+ * @param accessToken The Linear access token from the code exchange.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The `viewer` object, or null when Linear returned none.
+ */
+async function fetchLinearViewer(
+  accessToken: string,
+  fetchImpl: FetchLike
+): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetchImpl(LINEAR_GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'User-Agent': 'apiome',
+      },
+      body: JSON.stringify({ query: LINEAR_VIEWER_QUERY }),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data?: { viewer?: unknown } } | null;
+    const viewer = body && typeof body === 'object' ? body.data?.viewer : null;
+    return viewer && typeof viewer === 'object' ? (viewer as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalize a Linear sign-in (OLO-9.23): fetch the GraphQL `viewer` with the access token and map
+ * `id` / `email` / `name` / `avatarUrl` — the resource and mapping of Better Auth's `linear()`
+ * helper.
+ *
+ * Linear asserts **nothing** about whether that email is verified (Better Auth hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in a
+ * Linear body is dropped, not trusted — and `resolveOAuthEmailVerified` fail-closes to
+ * link-first: the address can neither join nor create an account. The identity is keyed on the
+ * user id; the mutable name is never the key. A failed fetch yields an empty profile (no account
+ * id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeLinear(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const viewer = accessToken ? await fetchLinearViewer(accessToken, fetchImpl) : null;
+  const profile: Record<string, unknown> = viewer ? { ...viewer } : {};
+  delete profile.email_verified;
+  return {
+    accountId: typeof profile.id === 'string' ? profile.id : '',
+    profile,
+    email: typeof profile.email === 'string' && profile.email ? profile.email : null,
+    name: typeof profile.name === 'string' && profile.name ? profile.name : null,
+    image: typeof profile.avatarUrl === 'string' && profile.avatarUrl ? profile.avatarUrl : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1196,6 +1275,7 @@ const NORMALIZERS: Record<
   salesforce: (tokens, env, fetchImpl) => normalizeSalesforce(tokens, env, fetchImpl),
   notion: (tokens, _env, fetchImpl) => normalizeNotion(tokens, fetchImpl),
   figma: (tokens, _env, fetchImpl) => normalizeFigma(tokens, fetchImpl),
+  linear: (tokens, _env, fetchImpl) => normalizeLinear(tokens, fetchImpl),
 };
 
 /**
@@ -1229,7 +1309,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
- *   discord | salesforce | notion | figma).
+ *   discord | salesforce | notion | figma | linear).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1670,6 +1750,26 @@ export function buildGenericOAuthConfig(
         scopes: ['current_user:read'],
         authentication: 'basic',
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'linear': {
+      return {
+        providerId: 'linear',
+        clientId: readEnvString(env, 'LINEAR_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'LINEAR_CLIENT_SECRET') ?? '',
+        // Fixed Linear OAuth 2.0 endpoints, mirrored from Better Auth's `linear()` helper — no
+        // issuer. `read` is the one scope the `viewer` query needs; the code exchange sends the
+        // client id and secret in the form body, and like the helper this confidential client
+        // sends no PKCE challenge (Better Auth enforces `state`). Linear has no REST userinfo
+        // endpoint, so `userInfoUrl` names the GraphQL endpoint the normalizer POSTs to. The
+        // viewer email carries no verified claim → fail-closed link-first (see normalizeLinear).
+        authorizationUrl: LINEAR_AUTHORIZE_URL,
+        tokenUrl: LINEAR_TOKEN_URL,
+        userInfoUrl: LINEAR_GRAPHQL_URL,
+        scopes: ['read'],
+        authentication: 'post',
+        pkce: false,
         getUserInfo,
       };
     }

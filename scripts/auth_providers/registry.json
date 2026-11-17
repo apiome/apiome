@@ -185,6 +185,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "FIGMA_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "FIGMA_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "linear",
+      "label": "Linear",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "LINEAR_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "LINEAR_CLIENT_SECRET" }
+      ]
     }
   ]
 }

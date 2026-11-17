@@ -120,6 +120,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   notion: { clientId: 'NOTION_CLIENT_ID', clientSecret: 'NOTION_CLIENT_SECRET' },
   // Figma (OLO-9.22, #5035): credentials-only; fixed endpoints, no issuer extra.
   figma: { clientId: 'FIGMA_CLIENT_ID', clientSecret: 'FIGMA_CLIENT_SECRET' },
+  // Linear (OLO-9.23, #5036): credentials-only; fixed endpoints, no issuer extra.
+  linear: { clientId: 'LINEAR_CLIENT_ID', clientSecret: 'LINEAR_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

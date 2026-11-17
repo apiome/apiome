@@ -1,0 +1,30 @@
+---
+slug: linear-sign-in
+title: Sign in with Linear
+description: "People can now link their Linear account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Linear account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Linear** is a new entry in **System settings → Add Provider**. It
+  needs the **Client ID** and **Client secret** of a Linear OAuth application — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Linear's side. The environment variables are `LINEAR_CLIENT_ID` and `LINEAR_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/linear`, added under the
+  application's **Callback URLs**.
+- **Scope.** Apiome asks for `read`, the narrowest scope Linear offers, and uses it only to read
+  the name, email address and picture of the person signing in. Apiome reads no issues, projects
+  or teams.
+- **Link first.** Linear does not say whether an email address is verified, so Apiome never uses
+  a Linear address to find or create an account. People sign in another way, link Linear from
+  **Linked accounts**, and can sign in with Linear after that. Signing up with Linear, or signing
+  in with it before linking, ends with *Your sign-in provider could not confirm that your email
+  address is verified…* — even when the address matches an existing account.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `linear` as an available provider, and
+  `PUT /v1/admin/auth-providers/linear` stores its credentials.

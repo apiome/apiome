@@ -132,6 +132,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * claim (link-first).
  * `figma` (OLO-9.22) is **not** listed: Figma's `/v1/me` returns an email with no verified claim
  * (link-first).
+ * `linear` (OLO-9.23) is **not** listed: Linear's `viewer` returns an email with no verified
+ * claim (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -214,6 +216,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'salesforce',
   'notion',
   'figma',
+  'linear',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.
