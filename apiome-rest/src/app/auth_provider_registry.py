@@ -127,7 +127,8 @@ class ProviderDescriptor:
 # ``linkedin`` is available (OLO-9.18, #5031) as credentials-only Sign In with LinkedIn (OIDC discovery, no issuer);
 # ``discord`` is available (OLO-9.19, #5032) as credentials-only Discord OAuth 2.0 (fixed endpoints, no issuer);
 # ``salesforce`` is available (OLO-9.20, #5033) as credentials-only Salesforce OIDC — its issuer is an
-# optional ``config`` extra (``SALESFORCE_ISSUER``, default login.salesforce.com), so not a required field.
+# optional ``config`` extra (``SALESFORCE_ISSUER``, default login.salesforce.com), so not a required field;
+# ``notion`` is available (OLO-9.21, #5034) as credentials-only Notion OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -238,6 +239,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Salesforce",
         STATUS_AVAILABLE,
         client_credential_fields("SALESFORCE_CLIENT_ID", "SALESFORCE_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "notion",
+        "Notion",
+        STATUS_AVAILABLE,
+        client_credential_fields("NOTION_CLIENT_ID", "NOTION_CLIENT_SECRET"),
     ),
 )
 

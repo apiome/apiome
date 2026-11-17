@@ -26,7 +26,8 @@
  * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google Workspace
  * (OLO-9.2), Okta (OLO-9.3), Cognito (OLO-9.4), Keycloak (OLO-9.5), generic OIDC (OLO-9.6),
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
- * (OLO-9.18), Discord (OLO-9.19), and Salesforce (OLO-9.20) followed exactly that path.
+ * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), and Notion (OLO-9.21) followed exactly
+ * that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -317,6 +318,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // sandbox), so it is not a required field. The `email_verified` claim is honored when true,
     // otherwise fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('SALESFORCE_CLIENT_ID', 'SALESFORCE_CLIENT_SECRET'),
+  },
+  {
+    id: 'notion',
+    label: 'Notion',
+    status: 'available',
+    // Notion (OLO-9.21, #5034): credentials only — fixed OAuth 2.0 endpoints, so no issuer. The
+    // owner user's email arrives with no verified claim → fail-closed link-first (Better Auth
+    // `notion()` hard-codes `emailVerified: false`) — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('NOTION_CLIENT_ID', 'NOTION_CLIENT_SECRET'),
   },
 ];
 

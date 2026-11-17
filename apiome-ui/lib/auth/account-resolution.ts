@@ -128,6 +128,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * profile as `email_verified` (`better-auth-oauth-providers.ts`); anything but `true` fail-closes.
  * `salesforce` (OLO-9.20) is trusted through the generic path: Salesforce OIDC carries a native
  * `email_verified` claim (id token or userinfo); absent or false fail-closes to link-first.
+ * `notion` (OLO-9.21) is **not** listed: Notion returns the owner user's email with no verified
+ * claim (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -208,6 +210,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'linkedin',
   'discord',
   'salesforce',
+  'notion',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

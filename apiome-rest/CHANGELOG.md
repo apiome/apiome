@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.743.0] - 2026-11-17
+
+### Added
+- **Notion sign-in (OLO-9.21, #5034)** — OpenAPI 1.596.5:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `notion` (label `Notion`, `available`), a
+    credentials-only provider: required fields `client_id` (`NOTION_CLIENT_ID`) and `client_secret`
+    (`NOTION_CLIENT_SECRET`), no issuer — Notion's OAuth 2.0 endpoints are fixed.
+    `GET /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/notion` and
+    the resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - Notion is a **link-first** provider: it returns an email address with no verified claim, so the sign-in
+    engine never matches or creates an account from it. That decision is made in `apiome-ui`; nothing in
+    the REST API changed for it.
+  - No migration: `notion` has been in the provider vocabulary CHECKs since V395. No request or response
+    shape changed.
+
 ## [1.742.0] - 2026-11-17
 
 ### Added
