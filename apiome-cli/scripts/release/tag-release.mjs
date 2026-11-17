@@ -2,9 +2,9 @@
 /**
  * Push the `cli-v<version>` tag for the version in `apiome-cli/package.json`, unless it exists.
  *
- * Run by `apiome-cli-release-pr.yml` on `main` when no changeset is pending — that is, after the
- * `Release: apiome-cli vX.Y.Z` pull request merged. The tag triggers the publish workflow (12.2).
- * Running it again is harmless: an existing tag is left alone.
+ * No workflow runs this: releases are published on GitHub, which creates the tag. Run it by hand
+ * on `main`, after the `Release: apiome-cli vX.Y.Z` pull request merged, to create the tag from a
+ * terminal instead. Running it again is harmless: an existing tag is left alone.
  *
  * Usage: node scripts/release/tag-release.mjs [--dry-run]
  */

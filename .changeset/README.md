@@ -11,10 +11,11 @@ npx changeset        # pick @apiome/cli, the bump (patch / minor / major) and wr
 Commit the `.changeset/<random-name>.md` file it writes. A docs-only or test-only pull request can
 skip it with the `no-cli-release` label instead.
 
-After merge, the **apiome-cli release PR** workflow
-(`.github/workflows/apiome-cli-release-pr.yml`) collects every changeset into a
-`Release: apiome-cli vX.Y.Z` pull request that bumps the version and updates
-`apiome-cli/CHANGELOG.md`. Merging that pull request pushes the `cli-vX.Y.Z` tag.
+To ship, a maintainer runs `yarn workspace @apiome/cli release:version` on a
+`changeset-release/<name>` branch — it collects every changeset, bumps the version and updates
+`apiome-cli/CHANGELOG.md` — and merges it as a `Release: apiome-cli vX.Y.Z` pull request. The
+release is then published on GitHub (**Releases → Draft a new release**), which creates the
+`cli-vX.Y.Z` tag.
 
 Other workspaces are not released with changesets (they are listed under `ignore` in
 `config.json`). The full guide is **Release the CLI** in the docs site

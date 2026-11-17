@@ -287,9 +287,9 @@ The version is managed by [changesets](https://github.com/changesets/changesets)
 |-------|-------|
 | Config (only `@apiome/cli` is released; other workspaces are `ignore`d) | `../.changeset/config.json` |
 | PR check (changeset or `no-cli-release` label) | `../.github/workflows/apiome-cli-changeset.yml` → `scripts/release/check-changeset.mjs` |
-| Bot PR `Release: apiome-cli vX.Y.Z`, then tag `cli-vX.Y.Z` | `../.github/workflows/apiome-cli-release-pr.yml` |
+| PR `Release: apiome-cli vX.Y.Z`, opened by a maintainer from a `changeset-release/<name>` branch after `release:version`; then a GitHub release that creates tag `cli-vX.Y.Z` | by hand — no workflow (see the user guide) |
 | `release:version` — `changeset version` (from the repo root) + `sync-version.mjs` (package.json → pyproject.toml / uv.lock, PEP 440 for `-rc.N`) | `scripts/release/` |
-| `release:tag` — push `cli-v<version>` if missing | `scripts/release/tag-release.mjs` |
+| `release:tag` — push `cli-v<version>` if missing (terminal alternative to creating the tag with the GitHub release) | `scripts/release/tag-release.mjs` |
 | Notes per release | `CHANGELOG.md` (written by changesets) |
 
 Pure helpers live in `scripts/release/lib.mjs` and are covered by `test/release.test.mjs`. Pre-releases: `npx changeset pre enter rc` / `npx changeset pre exit`. User guide: `apiome-docs/docs/admin/release-the-cli.md`.
