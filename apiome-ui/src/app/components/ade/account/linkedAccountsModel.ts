@@ -109,6 +109,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   salesforce: 'Salesforce org account sign-in',
   notion: 'Notion account sign-in',
   figma: 'Figma account sign-in',
+  linear: 'Linear account sign-in',
 };
 
 /**

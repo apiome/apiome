@@ -100,6 +100,8 @@ const ALL_ENABLED: Record<string, string> = {
   NOTION_CLIENT_SECRET: 'nt-secret',
   FIGMA_CLIENT_ID: 'fg-id',
   FIGMA_CLIENT_SECRET: 'fg-secret',
+  LINEAR_CLIENT_ID: 'ln-id',
+  LINEAR_CLIENT_SECRET: 'ln-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -214,6 +216,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'salesforce',
       'notion',
       'figma',
+      'linear',
     ]);
   });
 
@@ -240,6 +243,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'salesforce',
       'notion',
       'figma',
+      'linear',
     ]);
   });
 
@@ -302,6 +306,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const figma = buildGenericOAuthConfig('figma', ALL_ENABLED)!;
     expect(figma.clientId).toBe('fg-id');
     expect(figma.clientSecret).toBe('fg-secret');
+    const linear = buildGenericOAuthConfig('linear', ALL_ENABLED)!;
+    expect(linear.clientId).toBe('ln-id');
+    expect(linear.clientSecret).toBe('ln-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -592,6 +599,19 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['current_user:read']);
     expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(true);
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('linear: fixed Linear endpoints; read scope; body-credential exchange; no PKCE (OLO-9.23)', () => {
+    const cfg = buildGenericOAuthConfig('linear', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('linear');
+    expect(cfg.authorizationUrl).toBe('https://linear.app/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.linear.app/oauth/token');
+    expect(cfg.userInfoUrl).toBe('https://api.linear.app/graphql');
+    expect(cfg.scopes).toEqual(['read']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -3318,6 +3338,188 @@ describe('getUserInfo — Figma fail-closed link-first (OLO-9.22)', () => {
 
     const { result, override } = await runGetUserInfo(
       'figma',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+  });
+});
+
+/* ── getUserInfo: Linear fail-closed / link-first (OLO-9.23) ────────────────────────────────── */
+
+describe('getUserInfo — Linear fail-closed link-first (OLO-9.23)', () => {
+  /** A Linear user as the GraphQL `viewer` query returns it. */
+  const VIEWER = {
+    id: '2f6c1a5e-8b0d-4c3a-9e7f-1d2c3b4a5e6f',
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    avatarUrl: 'http://img/linear.png',
+  };
+
+  /**
+   * Serve `body` on the GraphQL endpoint (a failed response when null) and record each request.
+   * `body` is the whole response, so a test can return a GraphQL error or a missing viewer.
+   */
+  const linearGraphql = (body: unknown) => {
+    const requests: Array<{
+      url: string;
+      method?: string;
+      authorization: string;
+      contentType: string;
+      body?: string;
+    }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({
+        url,
+        method: init.method,
+        authorization: init.headers.Authorization,
+        contentType: init.headers['Content-Type'],
+        body: init.body,
+      });
+      if (url === 'https://api.linear.app/graphql' && body !== null) {
+        return { ok: true, json: async () => body };
+      }
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  /** Wrap a viewer in the GraphQL response envelope. */
+  const viewerBody = (viewer: Record<string, unknown>) => ({ data: { viewer } });
+
+  test('known identity signs in, keyed on the Linear user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = linearGraphql(viewerBody(VIEWER));
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: VIEWER.id,
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'http://img/linear.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      url: 'https://api.linear.app/graphql',
+      method: 'POST',
+      authorization: 'Bearer tok',
+      contentType: 'application/json',
+    });
+    const query = (JSON.parse(requests[0].body ?? '{}') as { query: string }).query;
+    expect(query).toContain('viewer');
+    for (const field of ['id', 'name', 'email', 'avatarUrl']) expect(query).toContain(field);
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = linearGraphql(viewerBody(VIEWER));
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = linearGraphql(viewerBody(VIEWER));
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+  });
+
+  test.each([true, 'true'])(
+    'an email_verified field in a Linear viewer (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = linearGraphql(viewerBody({ ...VIEWER, email_verified: emailVerified }));
+
+      const { result, override } = await runGetUserInfo(
+        'linear',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+    }
+  );
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = linearGraphql(viewerBody(VIEWER));
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'linear',
+      providerUserId: VIEWER.id,
+    });
+  });
+
+  test.each([undefined, '', 42])('email %p → email-required rejection', async (email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = linearGraphql(viewerBody({ ...VIEWER, email }));
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['a failed GraphQL request', null, 'tok'],
+    ['a GraphQL error with no data', { errors: [{ message: 'Authentication required' }] }, 'tok'],
+    ['a null viewer', { data: { viewer: null } }, 'tok'],
+    ['a viewer without an id', { data: { viewer: { ...VIEWER, id: '' } } }, 'tok'],
+    ['a missing access token', { data: { viewer: VIEWER } }, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = linearGraphql(body);
+
+    const { result, override } = await runGetUserInfo(
+      'linear',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

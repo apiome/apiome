@@ -81,6 +81,8 @@ const ALL_ENABLED_ENV = {
   NOTION_CLIENT_SECRET: 'nt-secret',
   FIGMA_CLIENT_ID: 'fg-id',
   FIGMA_CLIENT_SECRET: 'fg-secret',
+  LINEAR_CLIENT_ID: 'ln-id',
+  LINEAR_CLIENT_SECRET: 'ln-secret',
 };
 
 describe('providerEnvIssues', () => {

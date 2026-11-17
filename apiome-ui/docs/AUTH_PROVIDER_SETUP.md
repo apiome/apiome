@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -136,6 +136,8 @@ config is stored in the database need none of them set; see
 | `NOTION_CLIENT_SECRET` | Notion | To enable Notion | Notion public integration **OAuth Client Secret** |
 | `FIGMA_CLIENT_ID` | Figma | To enable Figma | Figma OAuth app **Client ID** |
 | `FIGMA_CLIENT_SECRET` | Figma | To enable Figma | Figma OAuth app **Client secret** |
+| `LINEAR_CLIENT_ID` | Linear | To enable Linear | Linear OAuth application **Client ID** |
+| `LINEAR_CLIENT_SECRET` | Linear | To enable Linear | Linear OAuth application **Client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -223,7 +225,7 @@ links an account.
 | `salesforce` | **trusted** | OLO-9.20 | yes | `email_verified` claim |
 | `notion` | **link-first** | OLO-9.21 | yes | Owner-user email from the token exchange, no verified claim |
 | `figma` | **link-first** | OLO-9.22 | yes | `/v1/me` email, no verified claim |
-| `linear` | **link-first** | OLO-9.23 | no | Viewer email, no verified claim |
+| `linear` | **link-first** | OLO-9.23 | yes | Viewer email, no verified claim |
 | `dropbox` | **trusted** | OLO-9.24 | no | `email_verified` on `get_current_account` |
 | `zoom` | **trusted** | OLO-9.25 | no | `verified` on `/v2/users/me` |
 | `huggingface` | **trusted** | OLO-9.26 | no | `email_verified` claim |
@@ -1094,6 +1096,58 @@ always fail-closes (**link-first**), and `figma` is not in `AUTO_LINK_TRUSTED_PR
 
 A `/v1/me` response with no email address surfaces `email-required`.
 
+## Linear (OLO-9.23)
+
+For product-engineering teams that track their work in Linear. Linear is a **link-first**
+provider: read [Email verified semantics](#linear-email-verified-semantics) below before turning
+it on, because nobody can *create* an Apiome account with it.
+
+1. In Linear, open **Settings → API → OAuth applications** and create a new application
+   ([linear.app/settings/api/applications/new](https://linear.app/settings/api/applications/new)).
+   You need to be an admin of the Linear workspace that owns the application.
+2. Under **Callback URLs**, add:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/linear`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/linear` for local dev)
+3. Turn on **Public** to let people from other Linear workspaces sign in; leave it off to serve
+   the owning workspace only.
+4. Save the application and copy its **Client ID** and **Client secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+LINEAR_CLIENT_ID=<Client ID>
+LINEAR_CLIENT_SECRET=<Client secret>
+```
+
+Linear's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`linear()` helper):
+
+- Authorize: `https://linear.app/oauth/authorize` with the scope `read` — the only scope Apiome
+  asks for. Linear has no narrower scope; Apiome uses the grant for one request, the `viewer`
+  query below, and reads no issues, projects or teams. No PKCE challenge is sent.
+- Token: `https://api.linear.app/oauth/token` — the client id and secret are sent in the form
+  body
+- User: Linear has no REST userinfo endpoint. Apiome POSTs the GraphQL query
+  `query { viewer { id name email avatarUrl } }` to `https://api.linear.app/graphql`
+
+The identity is keyed on the Linear user id (`viewer.id`, a UUID). The display name is `name`
+and the picture is `avatarUrl`; the mutable name is never the key.
+
+<a id="linear-email-verified-semantics"></a>
+**Email verified semantics:** the `viewer` carries the account's email address (`email`) but
+Linear does **not** assert a verified claim (Better Auth hard-codes `emailVerified: false`). The
+engine always fail-closes (**link-first**), and `linear` is not in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Linear card on **Linked accounts**.
+  The explicit link binds the Linear identity to their account whatever its email address.
+- **Subsequent sign-in** — once linked, **Sign in with Linear** signs that person in.
+- **Fresh sign-up, or a first sign-in without linking** — rejected with `unverified-email`, even
+  when the address matches an existing account. This is intended: the address is never used to
+  join or create an account.
+
+A `viewer` with no email address surfaces `email-required`. A GraphQL error, or a response with
+no `viewer`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1266,7 +1320,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion and Figma need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma and Linear need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 
