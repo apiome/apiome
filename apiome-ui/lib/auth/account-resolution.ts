@@ -140,6 +140,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `zoom` (OLO-9.25) is trusted on the `verified` flag of `/v2/users/me` (`1` = verified email),
  * normalized fail-closed to `email_verified` on the profile (`better-auth-oauth-providers.ts`);
  * anything but `1` fail-closes.
+ * `huggingface` (OLO-9.26) is trusted through the generic path: Sign in with Hugging Face (OIDC)
+ * carries a native `email_verified` claim on its userinfo resource; absent or false fail-closes
+ * to link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -167,6 +170,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'salesforce',
   'dropbox',
   'zoom',
+  'huggingface',
 ]);
 
 /**
@@ -227,6 +231,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'linear',
   'dropbox',
   'zoom',
+  'huggingface',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

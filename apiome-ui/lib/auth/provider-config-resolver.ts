@@ -126,6 +126,11 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   dropbox: { clientId: 'DROPBOX_CLIENT_ID', clientSecret: 'DROPBOX_CLIENT_SECRET' },
   // Zoom (OLO-9.25, #5038): credentials-only; fixed endpoints, no issuer extra.
   zoom: { clientId: 'ZOOM_CLIENT_ID', clientSecret: 'ZOOM_CLIENT_SECRET' },
+  // Hugging Face (OLO-9.26, #5039): credentials-only; fixed OIDC discovery document, no issuer extra.
+  huggingface: {
+    clientId: 'HUGGINGFACE_CLIENT_ID',
+    clientSecret: 'HUGGINGFACE_CLIENT_SECRET',
+  },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

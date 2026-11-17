@@ -212,6 +212,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "ZOOM_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "ZOOM_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "huggingface",
+      "label": "Hugging Face",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "HUGGINGFACE_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "HUGGINGFACE_CLIENT_SECRET" }
+      ]
     }
   ]
 }
