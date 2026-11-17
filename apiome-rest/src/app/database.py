@@ -4588,12 +4588,14 @@ class Database:
         required_coverage: List[Any],
         ci_outcomes: Dict[str, Any],
         content_fingerprint: str,
+        ladder: Optional[Dict[str, Any]] = None,
         actor_user_id: Optional[str] = None,
         actor_label: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Append one immutable policy pack version for a style guide (CLX-1.3, #4850).
 
-        Assigns the next monotonic ``version_number`` for the guide.
+        Assigns the next monotonic ``version_number`` for the guide. ``ladder`` is the frozen
+        ``{name, levels}`` maturity ladder (GVM-1.1, #5854); ``None`` stores SQL ``NULL``.
 
         Returns:
             The inserted policy version row, or ``None`` when inputs are invalid.
@@ -4606,7 +4608,7 @@ class Database:
             INSERT INTO apiome.style_guide_policy_versions (
                 guide_id, tenant_id, version_number, content_fingerprint,
                 rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                actor_user_id, actor_label
+                ladder, actor_user_id, actor_label
             )
             SELECT %s::uuid, %s::uuid,
                    COALESCE((
@@ -4615,10 +4617,10 @@ class Database:
                        WHERE pv.guide_id = %s::uuid
                    ), 0) + 1,
                    %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
-                   %s::uuid, %s
+                   %s::jsonb, %s::uuid, %s
             RETURNING id, guide_id, tenant_id, version_number, content_fingerprint,
                       rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                      actor_user_id, actor_label, created_at
+                      ladder, actor_user_id, actor_label, created_at
         """
         rows = self.execute_query(
             query,
@@ -4631,6 +4633,7 @@ class Database:
                 Json(axis_gates),
                 Json(required_coverage),
                 Json(ci_outcomes),
+                Json(ladder) if ladder is not None else None,
                 actor_user_id,
                 actor_label,
             ),
@@ -4646,7 +4649,7 @@ class Database:
         query = """
             SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
                    rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                   actor_user_id, actor_label, created_at
+                   ladder, actor_user_id, actor_label, created_at
             FROM apiome.style_guide_policy_versions
             WHERE guide_id = %s AND tenant_id = %s
             ORDER BY version_number DESC
@@ -4662,7 +4665,7 @@ class Database:
         query = """
             SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
                    rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                   actor_user_id, actor_label, created_at
+                   ladder, actor_user_id, actor_label, created_at
             FROM apiome.style_guide_policy_versions
             WHERE id = %s AND tenant_id = %s
         """
@@ -7711,13 +7714,90 @@ class Database:
         rows = self.execute_query(query, (tenant_id, project_id))
         return bool(rows)
 
+    # ---- Style-guide maturity ladders (GVM-1.1, #5854) ------------------------------
+
+    def get_style_guide_ladder(
+        self, guide_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return a guide's ladder row, or ``None`` when the guide has no ladder.
+
+        Args:
+            guide_id: The style guide. Non-UUID values return ``None``.
+            tenant_id: The tenant that must own the guide.
+
+        Returns:
+            ``{id, guide_id, tenant_id, name, levels, content_fingerprint, created_at,
+            updated_at}`` or ``None``.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        query = """
+            SELECT id, guide_id, tenant_id, name, levels, content_fingerprint,
+                   created_at, updated_at
+            FROM apiome.style_guide_ladders
+            WHERE guide_id = %s AND tenant_id = %s
+        """
+        rows = self.execute_query(query, (guide_id, tenant_id))
+        return rows[0] if rows else None
+
+    def upsert_style_guide_ladder(
+        self,
+        *,
+        guide_id: str,
+        tenant_id: str,
+        name: str,
+        levels: List[Dict[str, Any]],
+        content_fingerprint: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Create or replace a guide's ladder (one per guide, ``UNIQUE (guide_id)``).
+
+        The guide must belong to ``tenant_id``; the insert selects from ``style_guides`` so a
+        foreign guide id writes nothing.
+
+        Args:
+            guide_id: The style guide.
+            tenant_id: The tenant that must own the guide.
+            name: Ladder display name.
+            levels: Validated, ordered levels (:func:`app.style_guide_ladder.validate_ladder`).
+            content_fingerprint: SHA-256 of the canonical ``{name, levels}``.
+
+        Returns:
+            The stored ladder row, or ``None`` when the ids are invalid or the guide is not the
+            tenant's.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        query = """
+            INSERT INTO apiome.style_guide_ladders (
+                guide_id, tenant_id, name, levels, content_fingerprint
+            )
+            SELECT g.id, g.tenant_id, %s, %s::jsonb, %s
+            FROM apiome.style_guides g
+            WHERE g.id = %s AND g.tenant_id = %s
+            ON CONFLICT (guide_id) DO UPDATE
+               SET name = EXCLUDED.name,
+                   levels = EXCLUDED.levels,
+                   content_fingerprint = EXCLUDED.content_fingerprint,
+                   updated_at = CURRENT_TIMESTAMP
+            RETURNING id, guide_id, tenant_id, name, levels, content_fingerprint,
+                      created_at, updated_at
+        """
+        rows = self.execute_query(
+            query, (name, Json(levels), content_fingerprint, guide_id, tenant_id)
+        )
+        return rows[0] if rows else None
+
     # ---- Style-guide revisions (immutable edit history, GOV-1.6, #4432) -------------
 
     #: Columns every ``style_guide_revisions`` read returns, in one place so the list, single
     #: and lookup queries can never disagree about the row shape.
     _STYLE_GUIDE_REVISION_COLUMNS = """
         id, guide_id, tenant_id, revision_number, change_kind,
-        name, description, external_lint_profile, rules, policy,
+        name, description, external_lint_profile, rules, policy, ladder,
         content_fingerprint, snapshot_fingerprint,
         actor_user_id, actor_label, created_at
     """
@@ -7735,6 +7815,7 @@ class Database:
         policy: Dict[str, Any],
         content_fingerprint: str,
         snapshot_fingerprint: str,
+        ladder: Optional[Dict[str, Any]] = None,
         actor_user_id: Optional[str] = None,
         actor_label: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
@@ -7748,7 +7829,8 @@ class Database:
             guide_id: The guide this revision snapshots.
             tenant_id: The owning tenant.
             change_kind: What produced it — ``created`` | ``edited`` | ``rules_changed`` |
-                ``custom_rules_changed`` | ``policy_changed`` | ``imported``.
+                ``custom_rules_changed`` | ``policy_changed`` | ``imported`` |
+                ``ladder_changed``.
             name: Guide name at snapshot time.
             description: Guide description at snapshot time.
             external_lint_profile: CLX-2.2 profile at snapshot time.
@@ -7756,6 +7838,8 @@ class Database:
             policy: Frozen draft gates (``axisGates`` / ``requiredCoverage`` / ``ciOutcomes``).
             content_fingerprint: SHA-256 of the canonical rule rows (compiled-guide parity).
             snapshot_fingerprint: SHA-256 of the whole snapshot (no-op suppression).
+            ladder: Frozen ``{name, levels}`` maturity ladder (GVM-1.1, #5854), or ``None``
+                when the guide has no ladder (stored as SQL ``NULL``).
             actor_user_id: The acting user, when a user session made the change.
             actor_label: Human-readable actor label.
 
@@ -7774,7 +7858,7 @@ class Database:
         query = f"""
             INSERT INTO apiome.style_guide_revisions (
                 guide_id, tenant_id, revision_number, change_kind,
-                name, description, external_lint_profile, rules, policy,
+                name, description, external_lint_profile, rules, policy, ladder,
                 content_fingerprint, snapshot_fingerprint, actor_user_id, actor_label
             )
             SELECT %s::uuid, %s::uuid,
@@ -7783,7 +7867,7 @@ class Database:
                        FROM apiome.style_guide_revisions rev
                        WHERE rev.guide_id = %s::uuid
                    ), 0) + 1,
-                   %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
+                   %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
             RETURNING {self._STYLE_GUIDE_REVISION_COLUMNS}
         """
         rows = self.execute_query(
@@ -7798,6 +7882,7 @@ class Database:
                 external_lint_profile,
                 Json(rules),
                 Json(policy),
+                Json(ladder) if ladder is not None else None,
                 content_fingerprint,
                 snapshot_fingerprint,
                 actor,

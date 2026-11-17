@@ -1,0 +1,25 @@
+---
+slug: maturity-ladders
+title: Maturity ladders for style guides
+description: "Give a style guide ordered, cumulative levels such as Bronze, Silver and Gold."
+authors: [apiome]
+---
+
+A style guide can now hold a **maturity ladder**: ordered levels, such as Bronze, Silver and Gold,
+that its APIs climb. Each level lists what it adds to the levels below it — the worst severity a
+rule may still report, a floor on an axis grade or score, and the evidence it needs.
+
+{/* truncate */}
+
+- **Read and save it over REST.** `GET` and `PUT /v1/style-guides/{tenant}/{guide}/ladder`. Any
+  member can read a ladder; a workspace administrator saves it.
+- **Cumulative by rule.** A level that relaxes a lower one is refused with
+  `422 ladder-level-not-cumulative`, naming the level and the rule. An unknown rule id or axis is
+  refused with a pointer to the field.
+- **Frozen into history.** Each save is a `ladder_changed` revision of the guide and a new policy
+  version, both carrying the ladder, and an access-audit `style_guide.ladder_changed` event.
+- **A default to start from.** The built-in Apiome Recommended guide returns a read-only Bronze /
+  Silver / Gold `template`. It is not applied to your workspace.
+
+A ladder does not change lint results, publishing or gates yet. See
+[Maturity ladders](/govern/maturity-ladders).

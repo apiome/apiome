@@ -27,6 +27,11 @@ drives:
   (:mod:`app.style_guide_revisions`) that lint results pin to, readable at
   ``GET …/{guideId}/revisions`` and ``GET …/{guideId}/revisions/{revisionId}``; create, edit
   and assign additionally emit ``style_guide.*`` events into the tenant's access-audit ledger.
+* **Ladder** (GVM-1.1, #5854) — ``GET|PUT …/{guideId}/ladder``: the guide's ordered, cumulative
+  maturity ladder (:mod:`app.style_guide_ladder`). Saving it appends a ``ladder_changed``
+  revision, snapshots a new policy pack (both freeze the ladder) and audits
+  ``style_guide.ladder_changed``. The built-in guide has no ladder; its read returns the
+  default Bronze / Silver / Gold ladder as a read-only ``template``.
 
 Reads require tenant authentication; every mutation requires a **tenant administrator**
 user session — governance is the buyer-admin persona's surface, and API keys cannot
@@ -74,6 +79,8 @@ from .models import (
     StyleGuideImportRequest,
     StyleGuideImportResponse,
     StyleGuideImportSkippedRuleOut,
+    StyleGuideLadderModel,
+    StyleGuideLadderResponse,
     StyleGuideListResponse,
     StyleGuideOut,
     StyleGuidePolicySettingsOut,
@@ -89,6 +96,7 @@ from .models import (
     StyleGuideUpdateRequest,
     LintFindingOut,
     style_guide_ci_outcomes_from_raw,
+    style_guide_ladder_model_from_raw,
     style_guide_policy_version_out_from_row,
     style_guide_revision_detail_from_row,
     style_guide_revision_out_from_row,
@@ -104,6 +112,7 @@ from .style_guide_revisions import (
     AUDIT_CREATED,
     AUDIT_CUSTOM_RULES_UPDATED,
     AUDIT_DELETED,
+    AUDIT_LADDER_CHANGED,
     AUDIT_POLICY_UPDATED,
     AUDIT_RULES_UPDATED,
     AUDIT_UNASSIGNED,
@@ -111,11 +120,19 @@ from .style_guide_revisions import (
     CHANGE_CREATED,
     CHANGE_CUSTOM_RULES_CHANGED,
     CHANGE_EDITED,
+    CHANGE_LADDER_CHANGED,
     CHANGE_POLICY_CHANGED,
     CHANGE_RULES_CHANGED,
     audit_style_guide_event,
     ensure_guide_revision,
     record_guide_revision,
+)
+from .axis_score import AXIS_KEYS
+from .style_guide_ladder import (
+    LadderValidationError,
+    default_ladder_template,
+    ladder_content_fingerprint,
+    validate_ladder,
 )
 from .style_guide_transfer import (
     StyleGuideTransferError,
@@ -1207,3 +1224,127 @@ async def publish_style_guide_policy_version(
     if not row:
         raise HTTPException(status_code=404, detail="Style guide not found")
     return style_guide_policy_version_out_from_row(row)
+
+
+def _ladder_response(
+    guide: Dict[str, Any], row: Optional[Dict[str, Any]]
+) -> StyleGuideLadderResponse:
+    """Map a guide and its ladder row (or ``None``) onto the ladder response.
+
+    The built-in guide never carries a ladder of its own; its response adds the default
+    ladder as a read-only ``template`` instead.
+    """
+    builtin = guide.get("source") == "builtin"
+    ladder = style_guide_ladder_model_from_raw(row)
+    updated_at = row.get("updated_at") if ladder is not None and row else None
+    return StyleGuideLadderResponse(
+        guide_id=str(guide["id"]),
+        ladder=ladder,
+        content_fingerprint=(
+            str(row["content_fingerprint"]) if ladder is not None and row else None
+        ),
+        updated_at=(
+            updated_at.isoformat() if hasattr(updated_at, "isoformat") else updated_at
+        ),
+        read_only=builtin,
+        template=(
+            StyleGuideLadderModel.model_validate(default_ladder_template())
+            if builtin
+            else None
+        ),
+    )
+
+
+@router.get(
+    "/{tenant_slug}/{guide_id}/ladder",
+    response_model=StyleGuideLadderResponse,
+)
+async def get_style_guide_ladder(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideLadderResponse:
+    """Return the guide's maturity ladder, or ``ladder: null`` when it has none (GVM-1.1).
+
+    Readable by any tenant member. For the built-in Apiome Recommended guide the response
+    also carries the default Bronze / Silver / Gold ladder as a read-only ``template``.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    row = db.get_style_guide_ladder(str(guide["id"]), tenant_id)
+    return _ladder_response(guide, row)
+
+
+@router.put(
+    "/{tenant_slug}/{guide_id}/ladder",
+    response_model=StyleGuideLadderResponse,
+)
+async def put_style_guide_ladder(
+    tenant_slug: str,
+    guide_id: str,
+    body: StyleGuideLadderModel,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideLadderResponse:
+    """Create or replace the guide's maturity ladder (GVM-1.1, #5854). Tenant admin only.
+
+    The body is the complete ladder, levels lowest first. Refused with ``422`` and a
+    ``detail.code`` / ``detail.pointer`` when a level relaxes a lower one
+    (``ladder-level-not-cumulative``, naming the level and rule), a rule id is not in the
+    registry (``ladder-unknown-rule``), an axis is not an axis key (``ladder-unknown-axis``),
+    or the ladder is otherwise malformed. The built-in guide is read-only (``409``).
+
+    A successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both
+    freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
+    Saving an identical ladder changes nothing.
+    """
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    _reject_builtin(guide, "edited")
+
+    try:
+        ladder = validate_ladder(
+            body.model_dump(by_alias=True, exclude_none=True),
+            registered_rule_ids=builtin_rule_ids(),
+            axis_keys=AXIS_KEYS,
+        )
+    except LadderValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.as_detail()) from exc
+
+    fingerprint = ladder_content_fingerprint(ladder)
+    existing = db.get_style_guide_ladder(str(guide["id"]), tenant_id)
+    if existing and str(existing.get("content_fingerprint") or "") == fingerprint:
+        return _ladder_response(guide, existing)
+
+    _capture_before_edit(str(guide["id"]), tenant_id)
+    row = db.upsert_style_guide_ladder(
+        guide_id=str(guide["id"]),
+        tenant_id=tenant_id,
+        name=ladder["name"],
+        levels=ladder["levels"],
+        content_fingerprint=fingerprint,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Style guide not found")
+    actor = get_authenticated_user_id(auth_data)
+    snapshot_style_guide_policy(
+        str(guide["id"]),
+        tenant_id,
+        actor_user_id=actor,
+        actor_label=actor,
+    )
+    _record_edit(str(guide["id"]), tenant_id, CHANGE_LADDER_CHANGED, auth_data)
+    _audit(
+        auth_data,
+        tenant_id,
+        AUDIT_LADDER_CHANGED,
+        str(guide["id"]),
+        {
+            "name": guide["name"],
+            "ladderName": ladder["name"],
+            "levels": [level["key"] for level in ladder["levels"]],
+            "contentFingerprint": fingerprint,
+        },
+    )
+    return _ladder_response(guide, row)

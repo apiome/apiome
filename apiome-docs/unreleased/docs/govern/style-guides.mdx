@@ -147,6 +147,10 @@ The gates applied when lint results are judged against this guide:
 
 **Click “Save”.** Every save is an immutable policy version, listed under **Policy versions**.
 
+A guide can also carry a **maturity ladder** — ordered levels such as Bronze, Silver and Gold. The
+Policy tab does not show it yet: read and save it with `GET` / `PUT …/{id}/ladder`, as
+[Maturity ladders](./maturity-ladders.mdx) explains. Each ladder save is a policy version too.
+
 <Screenshot id="style-guide-policy" alt="A guide's Policy tab: minimum grade B, block breaking changes, two approvals from Release Manager" />
 
 #### Compatibility
@@ -199,7 +203,7 @@ suite digests**, a **Max evidence age**, the **Required target network class**, 
 ## With the CLI or the API
 
 - REST: `GET` / `POST /v1/style-guides/{tenant}`, `…/{id}/rules`, `…/{id}/custom-rules`,
-  `…/{id}/policy`, `PUT …/{id}/default`, `PUT …/{id}/assignments/projects/{project}`,
+  `…/{id}/policy`, `…/{id}/ladder`, `PUT …/{id}/default`, `PUT …/{id}/assignments/projects/{project}`,
   `GET …/{id}/export` and `POST /v1/style-guides/{tenant}/import`;
   `/v1/tenants/{tenant}/governance/quality-policy`, `…/quality-waivers` and
   `…/verification-policy` — see the [API reference](../reference/api-reference.md).

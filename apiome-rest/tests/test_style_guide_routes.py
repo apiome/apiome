@@ -1624,3 +1624,274 @@ def test_export_then_import_round_trips_the_rules():
         {k: _EXPORT_ROWS[0][k] for k in ("rule_id", "enabled", "severity")}
     ]
     assert custom.call_args[0][2][0]["custom_def"] == _EXPORT_ROWS[1]["custom_def"]
+
+
+# ---------------------------------------------------------------------------
+# Ladder (GVM-1.1, #5854)
+# ---------------------------------------------------------------------------
+
+_REAL_RULE = builtin_rule_descriptors()[0].rule_id
+
+
+def _ladder_body(*levels):
+    return {"name": "Maturity", "levels": list(levels)}
+
+
+def _bronze(severity="warning"):
+    return {
+        "key": "bronze",
+        "label": "Bronze",
+        "rules": [{"ruleId": _REAL_RULE, "maxSeverity": severity}],
+        "waiversSatisfy": True,
+    }
+
+
+def _ladder_row(levels, fingerprint="f" * 64):
+    return {
+        "id": "00000000-0000-0000-0000-0000000000d4",
+        "guide_id": GUIDE_ID,
+        "tenant_id": "t1",
+        "name": "Maturity",
+        "levels": levels,
+        "content_fingerprint": fingerprint,
+        "created_at": NOW,
+        "updated_at": NOW,
+    }
+
+
+def test_get_ladder_is_explicitly_null_for_a_guide_without_one():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_ladder", return_value=None):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/ladder")
+    assert r.status_code == 200
+    assert r.json() == {
+        "guideId": GUIDE_ID,
+        "ladder": None,
+        "contentFingerprint": None,
+        "updatedAt": None,
+        "readOnly": False,
+        "template": None,
+    }
+
+
+def test_get_ladder_returns_the_stored_ladder_to_any_member():
+    from app.axis_score import AXIS_KEYS
+    from app.style_guide_ladder import validate_ladder
+
+    stored = validate_ladder(
+        _ladder_body(_bronze()), registered_rule_ids=[_REAL_RULE], axis_keys=AXIS_KEYS
+    )
+    with patch(
+        "app.style_guide_routes.db.is_user_tenant_admin", return_value=False
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_ladder",
+        return_value=_ladder_row(stored["levels"]),
+    ):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/ladder")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ladder"]["levels"][0]["rules"] == [
+        {"ruleId": _REAL_RULE, "maxSeverity": "warning"}
+    ]
+    assert body["contentFingerprint"] == "f" * 64
+    assert body["updatedAt"].startswith("2026-07-11")
+
+
+def test_get_ladder_of_the_builtin_guide_serves_the_read_only_template():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_ladder", return_value=None):
+        r = client.get(f"/v1/style-guides/acme/{BUILTIN_ID}/ladder")
+    body = r.json()
+    assert body["ladder"] is None  # the template is not applied to the tenant
+    assert body["readOnly"] is True
+    assert [lv["key"] for lv in body["template"]["levels"]] == ["bronze", "silver", "gold"]
+    assert body["template"]["levels"][2]["evidence"] == ["review_approved"]
+
+
+def test_get_ladder_404s_for_an_unknown_guide():
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=None):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/ladder")
+    assert r.status_code == 404
+
+
+def test_put_ladder_stores_snapshots_records_and_audits(governance):
+    silver = {
+        "key": "silver",
+        "label": "Silver",
+        "axes": [{"axis": "quality", "minGrade": "B"}],
+        "waiversSatisfy": True,
+    }
+
+    def _upsert(**kwargs):
+        return _ladder_row(kwargs["levels"], kwargs["content_fingerprint"])
+
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_ladder", return_value=None
+    ), patch(
+        "app.style_guide_routes.db.upsert_style_guide_ladder", side_effect=_upsert
+    ) as upsert, patch(
+        "app.style_guide_routes.snapshot_style_guide_policy"
+    ) as snapshot:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder",
+            json=_ladder_body(_bronze(), silver),
+        )
+
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert [lv["key"] for lv in body["ladder"]["levels"]] == ["bronze", "silver"]
+    assert body["ladder"]["levels"][1]["axes"] == [{"axis": "quality", "minGrade": "B", "minScore": None}]
+    kwargs = upsert.call_args.kwargs
+    assert kwargs["name"] == "Maturity" and len(kwargs["content_fingerprint"]) == 64
+    snapshot.assert_called_once()
+    governance.ensure.assert_called_once()
+    assert governance.record.call_args.kwargs["change_kind"] == "ladder_changed"
+    audit = governance.audit.call_args.kwargs
+    assert audit["action"] == "style_guide.ladder_changed"
+    assert audit["detail"]["levels"] == ["bronze", "silver"]
+
+
+def test_put_ladder_with_an_unchanged_ladder_changes_nothing(governance):
+    from app.axis_score import AXIS_KEYS
+    from app.style_guide_ladder import ladder_content_fingerprint, validate_ladder
+
+    stored = validate_ladder(
+        _ladder_body(_bronze()), registered_rule_ids=[_REAL_RULE], axis_keys=AXIS_KEYS
+    )
+    row = _ladder_row(stored["levels"], ladder_content_fingerprint(stored))
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_ladder", return_value=row
+    ), patch(
+        "app.style_guide_routes.db.upsert_style_guide_ladder"
+    ) as upsert, patch(
+        "app.style_guide_routes.snapshot_style_guide_policy"
+    ) as snapshot:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder", json=_ladder_body(_bronze())
+        )
+    assert r.status_code == 200
+    upsert.assert_not_called()
+    snapshot.assert_not_called()
+    governance.record.assert_not_called()
+    governance.audit.assert_not_called()
+
+
+def test_put_ladder_refuses_a_relaxing_level_naming_the_level_and_rule():
+    relaxed = {**_bronze("error"), "key": "silver", "label": "Silver"}
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.upsert_style_guide_ladder") as upsert:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder",
+            json=_ladder_body(_bronze("warning"), relaxed),
+        )
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert detail["code"] == "ladder-level-not-cumulative"
+    assert detail["level"] == "silver"
+    assert detail["rule"] == _REAL_RULE
+    assert detail["pointer"] == "/levels/1/rules/0/maxSeverity"
+    upsert.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "level, code, pointer",
+    [
+        (
+            {"key": "bronze", "label": "B", "rules": [{"ruleId": "no.such-rule", "maxSeverity": "none"}]},
+            "ladder-unknown-rule",
+            "/levels/0/rules/0/ruleId",
+        ),
+        (
+            {"key": "bronze", "label": "B", "axes": [{"axis": "vibes", "minGrade": "A"}]},
+            "ladder-unknown-axis",
+            "/levels/0/axes/0/axis",
+        ),
+        (
+            {"key": "bronze", "label": "B", "axes": [{"axis": "quality"}]},
+            "ladder-axis-threshold-missing",
+            "/levels/0/axes/0",
+        ),
+    ],
+)
+def test_put_ladder_refuses_unknown_references_with_a_pointer(level, code, pointer):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/ladder", json=_ladder_body(level))
+    assert r.status_code == 422
+    assert (r.json()["detail"]["code"], r.json()["detail"]["pointer"]) == (code, pointer)
+
+
+def test_put_ladder_refuses_an_empty_ladder():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/ladder", json=_ladder_body())
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "ladder-empty"
+
+
+def test_put_ladder_rejects_an_unknown_severity_in_the_schema():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder",
+            json=_ladder_body(_bronze("fatal")),
+        )
+    assert r.status_code == 422
+
+
+def test_put_ladder_requires_a_tenant_admin():
+    with patch("app.style_guide_routes.db.is_user_tenant_admin", return_value=False):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/ladder", json=_ladder_body(_bronze())
+        )
+    assert r.status_code == 403
+
+
+def test_put_ladder_on_the_builtin_guide_is_read_only():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{BUILTIN_ID}/ladder", json=_ladder_body(_bronze())
+        )
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "STYLE_GUIDE_READ_ONLY"
+
+
+def test_get_revision_exposes_the_frozen_ladder_or_null():
+    base = {
+        "id": "00000000-0000-0000-0000-0000000000e5",
+        "guide_id": GUIDE_ID,
+        "revision_number": 2,
+        "change_kind": "ladder_changed",
+        "name": "Payments Guide",
+        "rules": [],
+        "policy": {},
+        "content_fingerprint": "c",
+        "snapshot_fingerprint": "s",
+        "created_at": NOW,
+    }
+    levels = [{"key": "bronze", "label": "Bronze", "rules": [], "axes": [], "evidence": [], "waiversSatisfy": False}]
+    for stored, expected in ((None, None), ({"name": "Maturity", "levels": levels}, "Maturity")):
+        with patch(
+            "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+        ), patch(
+            "app.style_guide_routes.db.get_style_guide_revision",
+            return_value={**base, "ladder": stored},
+        ):
+            r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/revisions/{base['id']}")
+        assert r.status_code == 200
+        ladder = r.json()["ladder"]
+        assert (ladder["name"] if ladder else None) == expected

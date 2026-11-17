@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.731.0] - 2026-11-16
+
+### Added
+- **Maturity ladders frozen into policy packs (GVM-1.1, #5854)** — OpenAPI 1.591.0:
+  - apiome-db **V390**: `style_guide_ladders` (one per guide: `guide_id` UNIQUE, `tenant_id`, `name`,
+    `levels JSONB` with a `jsonb_typeof(levels) = 'array'` CHECK, `content_fingerprint`), a nullable
+    `ladder JSONB` on `style_guide_revisions` and `style_guide_policy_versions`, and `ladder_changed` in
+    the revision `change_kind` CHECK.
+  - `GET|PUT /v1/style-guides/{tenant}/{guideId}/ladder` (any member reads, tenant administrator writes;
+    the built-in guide is `409 STYLE_GUIDE_READ_ONLY`). A level is `{key, label, rules[{ruleId,
+    maxSeverity: error|warning|info|none}], axes[{axis, minGrade?, minScore?}], evidence[review_approved|
+    verification_passing], waiversSatisfy}`. Validation (`app.style_guide_ladder`) refuses with `422
+    {code, message, pointer, level?, rule?}`: `ladder-level-not-cumulative` (a looser severity, a worse
+    grade, a lower score, or waivers turned back on), `ladder-unknown-rule` (not in the rule registry),
+    `ladder-unknown-axis`, `ladder-axis-threshold-missing`, `ladder-duplicate-*`, `ladder-empty`,
+    `ladder-invalid`.
+  - A save appends a `ladder_changed` revision and a policy version that both freeze `ladder` (their
+    snapshot / content fingerprints move), and audits `style_guide.ladder_changed`; an identical ladder
+    changes nothing. Revisions and packs of a guide without a ladder carry `ladder: null`, and their
+    fingerprints are unchanged from before ladders existed.
+  - The built-in guide's read returns `ladder: null` and the default Bronze / Silver / Gold ladder as a
+    read-only `template` (not applied to tenants). `StyleGuideRevisionDetailOut` and
+    `StyleGuidePolicyVersionOut` gain `ladder`.
+
 ## [1.730.0] - 2026-11-16
 
 ### Added

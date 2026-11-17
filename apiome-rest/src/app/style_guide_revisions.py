@@ -26,6 +26,10 @@ This module closes that gap on top of the V236 tables:
   it matches. The equality is exact, not heuristic: a revision's ``content_fingerprint`` is
   produced by :func:`~app.style_guide_engine.rules_content_fingerprint`, the same function
   that stamps a compiled guide's ``fingerprint``.
+* **Ladders** (GVM-1.1, #5854) — the guide's maturity ladder is frozen into every revision
+  beside the rules and gates (``ladder``, ``None`` when the guide has none), and saving it is
+  a ``ladder_changed`` revision. A guide without a ladder fingerprints exactly as it did
+  before ladders existed, so the upgrade appends no spurious revisions.
 * **Audit events** — :func:`audit_style_guide_event` writes the ``style_guide.*`` actions
   into the existing hash-chained ``apiome.access_audit`` ledger (the same ledger the RBAC
   and quality-policy surfaces use, readable through ``GET /v1/access/{tenantSlug}/audit``),
@@ -65,6 +69,7 @@ __all__ = [
     "CHANGE_EDITED",
     "CHANGE_IMPORTED",
     "CHANGE_KINDS",
+    "CHANGE_LADDER_CHANGED",
     "CHANGE_POLICY_CHANGED",
     "CHANGE_RULES_CHANGED",
     "audit_style_guide_event",
@@ -91,6 +96,8 @@ CHANGE_CUSTOM_RULES_CHANGED = "custom_rules_changed"
 CHANGE_POLICY_CHANGED = "policy_changed"
 #: Rules arrived from an external ruleset import (GOV-1.5).
 CHANGE_IMPORTED = "imported"
+#: The maturity ladder was saved (GVM-1.1, #5854).
+CHANGE_LADDER_CHANGED = "ladder_changed"
 
 #: Every accepted change kind, in the order they appear above.
 CHANGE_KINDS = (
@@ -100,6 +107,7 @@ CHANGE_KINDS = (
     CHANGE_CUSTOM_RULES_CHANGED,
     CHANGE_POLICY_CHANGED,
     CHANGE_IMPORTED,
+    CHANGE_LADDER_CHANGED,
 )
 
 # --- Audit actions ----------------------------------------------------------------------
@@ -116,6 +124,7 @@ AUDIT_CUSTOM_RULES_UPDATED = f"{AUDIT_PREFIX}custom_rules_updated"
 AUDIT_POLICY_UPDATED = f"{AUDIT_PREFIX}policy_updated"
 AUDIT_ASSIGNED = f"{AUDIT_PREFIX}assigned"
 AUDIT_UNASSIGNED = f"{AUDIT_PREFIX}unassigned"
+AUDIT_LADDER_CHANGED = f"{AUDIT_PREFIX}ladder_changed"
 
 
 # --- Snapshots --------------------------------------------------------------------------
@@ -127,20 +136,24 @@ def _canonical_json(value: Any) -> str:
 
 
 def guide_snapshot(
-    guide: Mapping[str, Any], rules: Sequence[Mapping[str, Any]]
+    guide: Mapping[str, Any],
+    rules: Sequence[Mapping[str, Any]],
+    ladder: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Project a live guide row plus its rule rows into the frozen revision snapshot.
+    """Project a live guide row plus its rule rows and ladder into the frozen revision snapshot.
 
     Args:
         guide: A ``style_guides`` row (``name`` / ``description`` / ``external_lint_profile``
             and the V169 draft gate columns).
         rules: The guide's ``style_guide_rules`` rows.
+        ladder: The guide's ``{name, levels}`` maturity ladder
+            (:func:`app.style_guide_ladder.ladder_from_row`), or ``None`` when it has none.
 
     Returns:
-        ``{"name", "description", "external_lint_profile", "rules", "policy"}`` — exactly the
-        columns :func:`record_guide_revision` stores, with the policy gates normalized to
-        their documented defaults so a ``NULL`` column and an explicitly-saved default are
-        the same snapshot (and therefore not a spurious revision).
+        ``{"name", "description", "external_lint_profile", "rules", "policy", "ladder"}`` —
+        exactly the columns :func:`record_guide_revision` stores, with the policy gates
+        normalized to their documented defaults so a ``NULL`` column and an explicitly-saved
+        default are the same snapshot (and therefore not a spurious revision).
     """
     return {
         "name": str(guide.get("name") or ""),
@@ -165,6 +178,7 @@ def guide_snapshot(
             # XPC-4.5 (#5749): the compatibility mode, transitivity and Protobuf category.
             **policy_from_guide(guide).as_settings(),
         },
+        "ladder": dict(ladder) if ladder is not None else None,
     }
 
 
@@ -175,22 +189,35 @@ def snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
     it can be compared against a compiled guide. This one covers identity and policy gates
     too: two revisions may share rule content (a rename changes nothing a linter sees) but
     still be different revisions.
+
+    A ``None`` ladder is left out of the hash, so a guide without a ladder keeps the
+    fingerprint it had before GVM-1.1 and the upgrade appends no revision for it.
     """
-    return hashlib.sha256(_canonical_json(snapshot).encode("utf-8")).hexdigest()
+    body = dict(snapshot)
+    if body.get("ladder") is None:
+        body.pop("ladder", None)
+    return hashlib.sha256(_canonical_json(body).encode("utf-8")).hexdigest()
 
 
 # --- Recording --------------------------------------------------------------------------
 
 
 def _load_guide_state(guide_id: str, tenant_id: str):
-    """Read the live guide row + rule rows, or ``(None, [])`` when the guide is gone."""
+    """Read the live guide row, rule rows and ladder.
+
+    Returns:
+        ``(guide, rules, ladder)``, or ``(None, [], None)`` when the guide is gone. ``ladder``
+        is the ``{name, levels}`` snapshot or ``None`` when the guide has no ladder.
+    """
     from .database import db  # Lazy: keeps this module importable without a DB layer.
+    from .style_guide_ladder import ladder_from_row
 
     guide = db.get_style_guide_by_id(guide_id, tenant_id)
     if not isinstance(guide, dict) or not guide.get("id"):
-        return None, []
+        return None, [], None
     rules = db.get_style_guide_rules(str(guide["id"]), tenant_id)
-    return guide, (rules if isinstance(rules, list) else [])
+    ladder = ladder_from_row(db.get_style_guide_ladder(str(guide["id"]), tenant_id))
+    return guide, (rules if isinstance(rules, list) else []), ladder
 
 
 def record_guide_revision(
@@ -222,10 +249,10 @@ def record_guide_revision(
     try:
         from .database import db
 
-        guide, rules = _load_guide_state(guide_id, tenant_id)
+        guide, rules, ladder = _load_guide_state(guide_id, tenant_id)
         if guide is None:
             return None
-        snapshot = guide_snapshot(guide, rules)
+        snapshot = guide_snapshot(guide, rules, ladder)
         snap_fp = snapshot_fingerprint(snapshot)
 
         latest = db.get_latest_style_guide_revision(str(guide["id"]), tenant_id)
@@ -243,6 +270,7 @@ def record_guide_revision(
             external_lint_profile=snapshot["external_lint_profile"],
             rules=snapshot["rules"],
             policy=snapshot["policy"],
+            ladder=snapshot["ladder"],
             content_fingerprint=rules_content_fingerprint(snapshot["rules"]),
             snapshot_fingerprint=snap_fp,
             actor_user_id=actor_user_id,
@@ -291,10 +319,10 @@ def ensure_guide_revision(
     try:
         from .database import db
 
-        guide, rules = _load_guide_state(guide_id, tenant_id)
+        guide, rules, ladder = _load_guide_state(guide_id, tenant_id)
         if guide is None:
             return None
-        snapshot = guide_snapshot(guide, rules)
+        snapshot = guide_snapshot(guide, rules, ladder)
         snap_fp = snapshot_fingerprint(snapshot)
 
         latest = db.get_latest_style_guide_revision(str(guide["id"]), tenant_id)
@@ -310,6 +338,7 @@ def ensure_guide_revision(
             external_lint_profile=snapshot["external_lint_profile"],
             rules=snapshot["rules"],
             policy=snapshot["policy"],
+            ladder=snapshot["ladder"],
             content_fingerprint=rules_content_fingerprint(snapshot["rules"]),
             snapshot_fingerprint=snap_fp,
             actor_user_id=actor_user_id,
