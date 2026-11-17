@@ -83,6 +83,8 @@ const ALL_ENABLED_ENV = {
   FIGMA_CLIENT_SECRET: 'fg-secret',
   LINEAR_CLIENT_ID: 'ln-id',
   LINEAR_CLIENT_SECRET: 'ln-secret',
+  DROPBOX_CLIENT_ID: 'db-id',
+  DROPBOX_CLIENT_SECRET: 'db-secret',
 };
 
 describe('providerEnvIssues', () => {

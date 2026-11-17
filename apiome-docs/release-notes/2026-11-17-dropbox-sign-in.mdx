@@ -1,0 +1,28 @@
+---
+slug: dropbox-sign-in
+title: Sign in with Dropbox
+description: "People can now sign in and link with their Dropbox account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Dropbox account, and link Dropbox beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Dropbox** is a new entry in **System settings → Add Provider**. It
+  needs the **App key** and **App secret** of a Dropbox app, entered as the **Client ID** and
+  **Client secret** — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Dropbox's side. The environment variables are `DROPBOX_CLIENT_ID` and `DROPBOX_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/dropbox`, added under
+  **OAuth 2 → Redirect URIs** on the app's **Settings** tab.
+- **Scope.** Apiome asks for **`account_info.read`** only, and uses it to read the name, email
+  address and picture of the person signing in. Apiome reads no files and keeps no Dropbox
+  token, so an **App folder** app is enough.
+- **Email addresses.** Dropbox is a **Trusted** provider: a sign-in joins the account with the
+  same address, or starts a new one, only when the Dropbox account's email address is verified.
+  An unverified address is refused. To use such an account, verify the address in Dropbox, or
+  sign in another way first and link Dropbox from **Linked accounts**.
+- **REST API.** `GET /v1/admin/auth-providers` lists `dropbox` as an available provider, and
+  `PUT /v1/admin/auth-providers/dropbox` stores its credentials.

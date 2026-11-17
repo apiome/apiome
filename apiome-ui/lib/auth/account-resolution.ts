@@ -134,6 +134,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * (link-first).
  * `linear` (OLO-9.23) is **not** listed: Linear's `viewer` returns an email with no verified
  * claim (link-first).
+ * `dropbox` (OLO-9.24) is trusted on the `email_verified` flag of `get_current_account`,
+ * re-stamped fail-closed onto the profile (`better-auth-oauth-providers.ts`); anything but `true`
+ * fail-closes.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -159,6 +162,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'linkedin',
   'discord',
   'salesforce',
+  'dropbox',
 ]);
 
 /**
@@ -217,6 +221,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'notion',
   'figma',
   'linear',
+  'dropbox',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

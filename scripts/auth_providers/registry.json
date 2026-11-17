@@ -194,6 +194,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "LINEAR_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "LINEAR_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "dropbox",
+      "label": "Dropbox",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "DROPBOX_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "DROPBOX_CLIENT_SECRET" }
+      ]
     }
   ]
 }
