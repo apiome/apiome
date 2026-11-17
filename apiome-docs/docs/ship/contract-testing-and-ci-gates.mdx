@@ -102,10 +102,11 @@ REST API and the CLI; the project **Consumers** screen is not yet available.
 Provider verification sends only `GET`, `HEAD` and `OPTIONS` requests unless the target allows
 changes, the run asks for them, and a fixture names the operation.
 
-The deploy gate combines the lint grade, the breaking-change status, broken consumers and how
-recently the deployment was verified. It always answers `200` with the verdict in the body, so a
-pipeline can tell a failing gate from a network error. A signal that nothing has produced yet is
-reported as `not_configured` and left out of the verdict.
+The deploy gate combines the lint grade, the breaking-change status, broken consumers, how
+recently the deployment was verified and the version's
+[maturity level](../govern/maturity-ladders.mdx#gate-publishing-on-a-level). It always answers
+`200` with the verdict in the body, so a pipeline can tell a failing gate from a network error. A
+signal that nothing has produced yet is reported as `not_configured` and left out of the verdict.
 
 ### Grant consent before security probes
 

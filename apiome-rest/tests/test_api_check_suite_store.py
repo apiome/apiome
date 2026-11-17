@@ -217,6 +217,7 @@ def test_an_unbound_draft_is_evaluated_and_recorded_without_a_provider(fake, pro
         "consumers",
         "contract",
         "sdk",
+        "maturity",
     ]
     assert detail.provider is None and detail.check is None
     assert detail.replayed is False

@@ -111,6 +111,31 @@ def gate_should_fail(gate: dict[str, Any]) -> bool:
     return not (isinstance(verdict, dict) and verdict.get("passed") is True)
 
 
+def maturity_gate_line(gate: dict[str, Any]) -> str | None:
+    """The GVM-1.3 maturity line of a lint gate payload, or ``None`` when there is no ladder.
+
+    Reads ``gate.maturityGate``: the level reached, the level required, the verdict, and whether
+    it counts toward the exit code (``ciOutcomes.failOnMaturityLevel``).
+    """
+    verdict = gate.get("gate") if isinstance(gate.get("gate"), dict) else {}
+    maturity = verdict.get("maturityGate")
+    if not isinstance(maturity, dict) or maturity.get("reason") == "maturity-no-ladder":
+        return None
+    level = maturity.get("levelLabel") or maturity.get("level") or "below the first level"
+    required = maturity.get("requiredLevelLabel") or maturity.get("requiredLevel")
+    if not required:
+        return f"Maturity level: {level} (no level required)"
+    status = str(maturity.get("status") or "unknown")
+    blockers = len(maturity.get("blockers") or [])
+    detail = f", {blockers} blocker{'s' if blockers != 1 else ''}" if status == "fail" else ""
+    counted = (
+        "counts toward the gate"
+        if maturity.get("counted")
+        else "reported only (failOnMaturityLevel is off)"
+    )
+    return f"Maturity level: {level} (required {required}) — {status}{detail}; {counted}"
+
+
 def emit_gate_output(*, json_mode: bool, gate: dict[str, Any]) -> None:
     """Render a lint gate payload: full JSON in json mode, else a human summary."""
     if json_mode:
@@ -133,8 +158,14 @@ def emit_gate_output(*, json_mode: bool, gate: dict[str, Any]) -> None:
         f"{counts.get('unwaivedErrors', 0)} unwaived errors, "
         f"{counts.get('waived', 0)} waived"
     )
+    maturity_line = maturity_gate_line(gate)
+    if maturity_line:
+        typer.echo(maturity_line)
     gate_results = verdict.get("gateResults")
     failed = failed_policy_gates(gate_results if isinstance(gate_results, dict) else {})
+    maturity = verdict.get("maturityGate")
+    if isinstance(maturity, dict) and maturity.get("passed") is False:
+        failed = sorted([*failed, "maturity"])
     if failed:
         typer.echo(f"Failed gates: {', '.join(failed)}")
     links = gate.get("links") if isinstance(gate.get("links"), dict) else {}

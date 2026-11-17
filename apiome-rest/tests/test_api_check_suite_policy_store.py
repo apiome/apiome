@@ -74,7 +74,14 @@ def test_saving_stores_the_canonical_body_and_its_fingerprint(fake):
     saved = store.save_policy(TENANT, body={"requiredForPublish": True})
     row = fake.suite_policies[(TENANT, None)]
     assert row["policy"]["requiredForPublish"] is True
-    assert set(row["policy"]["components"]) == {"lint", "breaking", "consumers", "contract", "sdk"}
+    assert set(row["policy"]["components"]) == {
+        "lint",
+        "breaking",
+        "consumers",
+        "contract",
+        "sdk",
+        "maturity",
+    }
     assert row["content_fingerprint"] == saved.content_fingerprint
 
 

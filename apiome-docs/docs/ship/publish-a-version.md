@@ -13,6 +13,10 @@ Publishing enforces server-side **publish gates** — it will refuse a version t
 - the reconstructed document is valid OpenAPI,
 - every class is documented (has a description),
 - there are no un-acknowledged breaking changes,
+- when the style guide has a [maturity ladder](../govern/maturity-ladders.mdx#gate-publishing-on-a-level)
+  and a **required publish level**, the version has reached that level — otherwise publish is
+  refused with the level reached, the level required and what blocks the next level
+  (see [The maturity level gate](#the-maturity-level-gate)),
 - when the workspace **requires an owner to publish**, the project has a confirmed
   [owner team](../reference/rest/owners.md) — otherwise publish is refused with reason
   `no-owner` (the `422` carries `reason: "no-owner"` and an `ownerGate` object).
@@ -48,6 +52,51 @@ Returns the version with `published = true`. To reverse it, see [Unpublish a ver
 Straight after the publish, Apiome writes a change report comparing this version with the previous
 published one. `changeReportBaselineMode` (`auto`, `initial` or `manual`) chooses what it is compared
 with — see [Publication change reports](./publication-change-reports.md).
+
+## The maturity level gate
+
+A style guide with a maturity ladder can set `requiredPublishLevel`, the level a version must reach
+before it publishes (for example `silver`). The gate runs after the style-guide error check and
+before the approval check. A guide without a ladder, or without a required level, never arms it.
+
+A version below the required level is refused with `422`. `detail.maturityGate` says what to fix:
+
+```json
+{
+  "detail": {
+    "message": "This version is at Bronze; Silver is required (1 blocker to the next level). Clear the blockers, lower the guide's required publish level, or force-publish with a reason.",
+    "maturityGate": {
+      "status": "blocked",
+      "blocked": true,
+      "ladderName": "Payments maturity",
+      "level": "bronze", "levelLabel": "Bronze",
+      "requiredLevel": "silver", "requiredLevelLabel": "Silver",
+      "blockers": [
+        {"levelKey": "silver", "kind": "axis", "axis": "quality", "minGrade": "B",
+         "reason": "below_threshold", "grade": "C", "score": 74, "count": 1, "sample": []}
+      ],
+      "reason": "maturity-below-required-level",
+      "policyVersionId": "…", "evaluationId": "…"
+    }
+  }
+}
+```
+
+`blockers` are the blockers of the version's **next** level, the same list
+[`GET …/lint/level`](../govern/maturity-ladders.mdx#read-a-level) returns.
+
+To publish anyway, **force-publish**: send `"skipPublishChecks": true` with a `forcePublishReason`.
+Every publish the gate judges is written to the version's audit trail as `version.maturity_gate`,
+with `action` set to:
+
+| `action` | When |
+| --- | --- |
+| `satisfied` | The version reached the required level. |
+| `forced` | A force-publish went past the gate. The row carries the reason and the level. |
+| `unavailable` | The level could not be read. The publish went ahead. |
+
+The gate never blocks on its own fault. When the level cannot be read, the publish goes ahead and
+the audit row says `unavailable`.
 
 ## Unpublish a version
 

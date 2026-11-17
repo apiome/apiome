@@ -44,6 +44,7 @@ from .deploy_gate import (
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
     SIGNAL_LINT,
+    SIGNAL_MATURITY,
     SIGNAL_VERIFICATION,
     STATUS_FAIL,
     STATUS_NOT_CONFIGURED,
@@ -55,6 +56,7 @@ from .deploy_gate import (
     evaluate_breaking,
     evaluate_consumers,
     evaluate_lint,
+    evaluate_maturity,
     evaluate_verification,
     unavailable_signal,
 )
@@ -240,6 +242,49 @@ def _lint_signal(
         score=int(score) if isinstance(score, (int, float)) else None,
         thresholds=thresholds,
         link=link,
+    )
+
+
+def _maturity_signal(
+    tenant_id: str,
+    project_id: str,
+    revision_id: str,
+    *,
+    thresholds: Any,
+    link: Optional[str],
+) -> GateSignal:
+    """Judge the revision's maturity level against ``minMaturityLevel`` (GVM-1.3, #5856).
+
+    Reads the level through :func:`app.lint_policy_service.judge_catalog_revision_maturity` —
+    the read the publish gate and the check suite's ``maturity`` component use — and falls
+    back to the guide's frozen ``requiredPublishLevel`` when the threshold names no level.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: The gated project.
+        revision_id: The gated revision.
+        thresholds: The maturity rung in force.
+        link: Path to the revision's level read.
+
+    Returns:
+        The judged signal.
+    """
+    from .lint_policy_service import judge_catalog_revision_maturity  # Lazy: flat import graph.
+
+    judgement, context = judge_catalog_revision_maturity(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version_record_id=revision_id,
+        required_level=thresholds.min_maturity_level,
+    )
+    return evaluate_maturity(
+        judgement=judgement,
+        link=link,
+        extra={
+            "minMaturityLevel": thresholds.min_maturity_level,
+            "policyVersionId": context.get("policyVersionId"),
+            "evaluationId": context.get("evaluationId"),
+        },
     )
 
 
@@ -727,6 +772,7 @@ def _links(tenant_slug: str, project_id: str, revision_id: str) -> Dict[str, str
         SIGNAL_BREAKING: f"/v1/versions/{tenant_slug}/{project_id}/{revision_id}/changelog",
         SIGNAL_CONSUMERS: f"/v1/tenants/{tenant_slug}/projects/{project_id}/consumers",
         SIGNAL_VERIFICATION: f"/v1/tenants/{tenant_slug}/verification-schedules",
+        SIGNAL_MATURITY: f"/v1/versions/{tenant_slug}/{project_id}/{revision_id}/lint/level",
     }
 
 
@@ -864,6 +910,17 @@ def build_project_gate(
             now=evaluated_at,
         ),
     )
+    maturity = _guarded(
+        SIGNAL_MATURITY,
+        links[SIGNAL_MATURITY],
+        lambda: _maturity_signal(
+            tenant_id,
+            project_id,
+            resolved_revision_id,
+            thresholds=thresholds.maturity,
+            link=links[SIGNAL_MATURITY],
+        ),
+    )
 
     version_ref = (
         f"{KIND_PROJECT}/{project.get('slug') or project_id}/{version_label}"
@@ -877,7 +934,7 @@ def build_project_gate(
         version_label=version_label,
         version_ref=version_ref,
         published_at=version.get("published_at"),
-        signals=[lint, breaking, consumers, verification],
+        signals=[lint, breaking, consumers, verification, maturity],
         policy=policy,
         evaluated_at=evaluated_at,
     )

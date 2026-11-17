@@ -3,7 +3,8 @@
 A CD pipeline asks one question — *can I promote this API version?* — and until now the answer
 lived in five places: the GOV lint grade on the revision, the CTG-3.1 breaking classification of
 the publish, the CTG-4.2 per-consumer verdicts, and the CTG-4.4 freshness of the last provider
-verification. Every team that wanted a gate wrote its own multi-call script, and every one of them
+verification. GVM-1.3 (#5856) adds a fifth, ``maturity``: the revision's ladder level against
+``minMaturityLevel``. Every team that wanted a gate wrote its own multi-call script, and every one of them
 decided the combination rules differently.
 
 This module is those rules, as a pure function. It knows nothing about the database, HTTP, or where
@@ -44,6 +45,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from .consumer_impact import ConsumerImpactReport
+from .maturity_gate import MaturityJudgement, is_level_key
 
 __all__ = [
     "BREAKING_SEVERITIES",
@@ -60,6 +62,7 @@ __all__ = [
     "SIGNAL_BREAKING",
     "SIGNAL_CONSUMERS",
     "SIGNAL_LINT",
+    "SIGNAL_MATURITY",
     "SIGNAL_VERIFICATION",
     "STATUS_FAIL",
     "STATUS_NOT_CONFIGURED",
@@ -74,12 +77,14 @@ __all__ = [
     "GateSignal",
     "GateThresholdError",
     "LintThresholds",
+    "MaturityThresholds",
     "VerificationThresholds",
     "build_gate_report",
     "canonical_thresholds_body",
     "evaluate_breaking",
     "evaluate_consumers",
     "evaluate_lint",
+    "evaluate_maturity",
     "evaluate_verification",
     "gate_summary",
     "overall_status",
@@ -103,13 +108,16 @@ SIGNAL_LINT = "lint"
 SIGNAL_BREAKING = "breaking"
 SIGNAL_CONSUMERS = "consumers"
 SIGNAL_VERIFICATION = "verification"
+SIGNAL_MATURITY = "maturity"
 
-#: The four signals, in the order they are reported. Fixed so a diff of two gate responses lines up.
+#: The signals, in the order they are reported. Fixed so a diff of two gate responses lines up;
+#: ``maturity`` (GVM-1.3) is appended so existing positions do not move.
 GATE_SIGNALS: Tuple[str, ...] = (
     SIGNAL_LINT,
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
     SIGNAL_VERIFICATION,
+    SIGNAL_MATURITY,
 )
 
 STATUS_PASS = "pass"
@@ -302,6 +310,24 @@ class VerificationThresholds(_CamelModel):
     )
 
 
+class MaturityThresholds(_CamelModel):
+    """Where the bar sits for the GVM-1.3 maturity level of the revision.
+
+    Attributes:
+        min_maturity_level: The ladder level key the revision must have reached; ``None`` uses
+            the style guide's ``requiredPublishLevel`` (and with neither the signal is
+            ``not_configured``). A key the revision's ladder does not have is ``unknown``.
+    """
+
+    min_maturity_level: Optional[str] = Field(
+        default=None,
+        description=(
+            "Ladder level key the revision must have reached (e.g. `silver`); `null` uses the "
+            "style guide's requiredPublishLevel."
+        ),
+    )
+
+
 class DeployGateThresholds(_CamelModel):
     """The complete ``ctg.gate-policy.v1`` body: one threshold group per signal."""
 
@@ -309,6 +335,7 @@ class DeployGateThresholds(_CamelModel):
     breaking: BreakingThresholds = Field(default_factory=BreakingThresholds)
     consumers: ConsumerThresholds = Field(default_factory=ConsumerThresholds)
     verification: VerificationThresholds = Field(default_factory=VerificationThresholds)
+    maturity: MaturityThresholds = Field(default_factory=MaturityThresholds)
 
 
 #: What a tenant that has configured nothing is judged against.
@@ -336,7 +363,10 @@ def thresholds_content_fingerprint(thresholds: DeployGateThresholds) -> str:
     """Return a stable ``sha256:`` digest of a threshold body.
 
     Echoed on every gate response so a pipeline can tell "the verdict changed because the API
-    changed" from "because somebody moved the bar".
+    changed" from "because somebody moved the bar". The ``maturity`` group (GVM-1.3) enters the
+    digest only when ``minMaturityLevel`` is set, so a policy that does not use it keeps the
+    fingerprint it had before the group existed — and the check-suite evaluations keyed on it
+    stay current.
 
     Args:
         thresholds: The thresholds to digest.
@@ -344,8 +374,11 @@ def thresholds_content_fingerprint(thresholds: DeployGateThresholds) -> str:
     Returns:
         ``"sha256:<hex>"``.
     """
+    body = canonical_thresholds_body(thresholds)
+    if not thresholds.maturity.min_maturity_level:
+        body.pop("maturity", None)
     blob = json.dumps(
-        canonical_thresholds_body(thresholds),
+        body,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
@@ -413,6 +446,13 @@ def _validate_thresholds(thresholds: DeployGateThresholds) -> List[str]:
             "warn rung beyond the fail rung can never fire."
         )
 
+    level = thresholds.maturity.min_maturity_level
+    if level is not None and not is_level_key(level):
+        errors.append(
+            "maturity.minMaturityLevel must be a ladder level key — lowercase letters, digits, "
+            f"`-` or `_` (got {level!r})."
+        )
+
     # The two consumer tolerances are deliberately not cross-checked: they count different things
     # (touched at all, versus broken), so `warnAboveAffected: 5` beside `failAboveBreaking: 0` is
     # a coherent policy, not a rung that can never fire.
@@ -469,7 +509,9 @@ class GateSignal(_CamelModel):
             second request.
     """
 
-    signal: str = Field(description="`lint` | `breaking` | `consumers` | `verification`.")
+    signal: str = Field(
+        description="`lint` | `breaking` | `consumers` | `verification` | `maturity`."
+    )
     status: str = Field(description="`pass` | `warn` | `fail` | `not_configured` | `unknown`.")
     satisfied: Optional[bool] = Field(
         default=None, description="Whether thresholds were met; null when not judged."
@@ -520,11 +562,11 @@ class DeployGateReport(_CamelModel):
         project_id / project_slug: The gated project.
         revision_id / version_label / version_ref / published_at: The gated published revision.
         evaluated_at: When the verdict was computed.
-        evaluated_signals: How many of the four took part. ``0`` means nothing could be judged and
+        evaluated_signals: How many of the signals took part. ``0`` means nothing could be judged and
             ``status`` is ``pass`` by the partial-inputs rule — branch on this, not on the status,
             if an unconfigured project must not read as a green light.
         counts: Signals per status.
-        signals: The four, always all of them, in :data:`GATE_SIGNALS` order.
+        signals: All of them, always, in :data:`GATE_SIGNALS` order.
         policy: The thresholds this verdict was judged under.
     """
 
@@ -1112,6 +1154,63 @@ def _evaluate_verification_freshness(
     )
 
 
+def evaluate_maturity(
+    *,
+    judgement: MaturityJudgement,
+    link: Optional[str] = None,
+    extra: Optional[Mapping[str, Any]] = None,
+) -> GateSignal:
+    """Turn a GVM-1.3 level judgement into the deploy gate's ``maturity`` signal.
+
+    The judgement comes from :func:`app.maturity_gate.judge_maturity` — the same evaluator the
+    publish gate and the check suite's ``maturity`` component use — so this is a translation,
+    not a second opinion: ``pass`` / ``fail`` as judged, ``not_configured`` without a ladder or
+    a required level, ``unknown`` when the level or the required key could not be judged. There
+    is no ``warn`` rung: a level is met or it is not.
+
+    Args:
+        judgement: The level judgement.
+        link: Path to the revision's level read.
+        extra: Facts to carry beside the judgement (the pack and evaluation ids).
+
+    Returns:
+        The judged signal.
+    """
+    payload = judgement.as_payload()
+    data: Dict[str, Any] = {
+        key: payload[key]
+        for key in (
+            "ladderName",
+            "level",
+            "levelLabel",
+            "levelIndex",
+            "requiredLevel",
+            "requiredLevelLabel",
+            "requiredLevelIndex",
+            "blockers",
+        )
+    }
+    data.update(dict(extra or {}))
+    if judgement.status in (STATUS_NOT_CONFIGURED, STATUS_UNKNOWN):
+        return unavailable_signal(
+            SIGNAL_MATURITY,
+            status=judgement.status,
+            reason=judgement.reason,
+            detail=judgement.message(),
+            link=link,
+            data=data,
+        )
+    return GateSignal(
+        signal=SIGNAL_MATURITY,
+        status=judgement.status,
+        satisfied=judgement.status == STATUS_PASS,
+        reason=judgement.reason,
+        detail=judgement.message(),
+        link=link,
+        data=data,
+    )
+
+
 def _humanize_seconds(seconds: int) -> str:
     """Render a duration the way a pipeline log should read it.
 
@@ -1159,8 +1258,8 @@ def status_counts(signals: Sequence[GateSignal]) -> Dict[str, int]:
 def overall_status(signals: Sequence[GateSignal]) -> str:
     """Return the worst *evaluated* status.
 
-    ``not_configured`` and ``unknown`` take no part: the endpoint has to ship before all four
-    sources exist everywhere, so a signal with nothing behind it must not fail the gate. When no
+    ``not_configured`` and ``unknown`` take no part: the endpoint has to ship before every
+    source exists everywhere, so a signal with nothing behind it must not fail the gate. When no
     signal was evaluated at all the verdict is ``pass`` — read ``evaluated_signals`` rather than
     the status if that must not be a green light.
 

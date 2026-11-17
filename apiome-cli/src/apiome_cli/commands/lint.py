@@ -29,6 +29,7 @@ from apiome_cli.output_lint import (
     emit_lint_command_output,
     gate_should_fail,
     lint_command_should_fail,
+    maturity_gate_line,
 )
 
 app = typer.Typer(
@@ -169,7 +170,8 @@ def gate(
 
     Exits non-zero ONLY when a configured policy gate failed (``gate.passed`` false in the
     verdict) — findings without policy failures, or failures of gates the pack disabled,
-    exit 0. The verdict is always fetched as JSON; a non-json ``--format`` additionally
+    exit 0. The maturity level line (GVM-1.3) is always printed when the guide has a ladder;
+    it changes the exit code only when the pack's ``failOnMaturityLevel`` toggle is on. The verdict is always fetched as JSON; a non-json ``--format`` additionally
     fetches that artifact and writes it to ``--output`` (or stdout, with the human summary
     moved to stderr so the artifact stays clean).
     """
@@ -225,6 +227,9 @@ def gate(
         verdict = gate_payload.get("gate") or {}
         status = "PASSED" if verdict.get("passed") is True else "FAILED"
         typer.echo(f"Lint gate: {status}", err=True)
+        maturity_line = maturity_gate_line(gate_payload)
+        if maturity_line:
+            typer.echo(maturity_line, err=True)
     else:
         emit_gate_output(json_mode=json_mode, gate=gate_payload)
         if output is not None:

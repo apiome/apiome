@@ -24,7 +24,7 @@ Subcommands: [`run`](#checks-run), [`show`](#checks-show).
 
 Evaluate the API change check suite for a version (POST …/check-suite).
 
-Re-running over unchanged inputs returns the same evaluation — the same evidence ids — and does not report to the provider again. Exit codes: 0 pass or skipped, 7 failed, 8 pending, 1 unreachable, 2 rejected (auth, unknown project/version/commit).
+Six components are judged: lint, breaking, consumers, contract, sdk and maturity (the version's ladder level against the deploy gate's minMaturityLevel or the style guide's required publish level; skipped when the guide has no ladder). Re-running over unchanged inputs returns the same evaluation — the same evidence ids — and does not report to the provider again. Exit codes: 0 pass or skipped, 7 failed, 8 pending, 1 unreachable, 2 rejected (auth, unknown project/version/commit).
 
 ```text
 apiome checks run [OPTIONS]

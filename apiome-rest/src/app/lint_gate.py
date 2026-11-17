@@ -18,6 +18,12 @@ into one machine-readable verdict a CI job can act on:
   every contributing evidence run, and carries fingerprints ONLY: raw configuration, raw
   artifacts, and protected source never enter the payload.
 
+Maturity (GVM-1.3, #5856) — the revision's level is judged against the pack's frozen
+``required_publish_level`` by :func:`app.maturity_gate.judge_maturity` and reported as
+``gate.maturityGate``. It folds into ``gate.passed`` only when ``ciOutcomes.failOnMaturityLevel``
+is on (off by default, so a pipeline's exit code does not change on upgrade); then a ``fail``
+fails the gate, while ``not_configured`` and ``unknown`` never do.
+
 Webhook side effects (``lint.regression.detected`` / ``lint.coverage.failed``) fire only from
 gate evaluation — a deliberate CI action — never from plain policy reads.
 """
@@ -40,6 +46,9 @@ from .lint_policy_service import (
     maturity_gate_result,
     resolve_policy_pack,
 )
+from .maturity_gate import STATUS_FAIL as MATURITY_FAIL
+from .maturity_gate import STATUS_PASS as MATURITY_PASS
+from .maturity_gate import judge_maturity, required_publish_level
 from .policy_evaluate import (
     PolicyEvaluation,
     default_ci_outcomes,
@@ -55,6 +64,7 @@ __all__ = [
     "GateEvaluation",
     "evaluate_lint_gate",
     "gate_payload",
+    "maturity_gate_verdict",
     "new_fingerprints_for_runs",
 ]
 
@@ -137,6 +147,8 @@ class GateEvaluation:
         new_fingerprints: Newly introduced fingerprints (sorted for determinism).
         regressions: New, error-severity, unwaived findings.
         scanners: Per-scanner provenance (fingerprints + evidence run ids only).
+        maturity_gate: The GVM-1.3 level judgement payload plus ``counted`` (whether
+            ``failOnMaturityLevel`` folded it into ``gate_passed``) and ``passed``.
     """
 
     subject_type: str
@@ -154,6 +166,37 @@ class GateEvaluation:
     new_fingerprints: List[str] = field(default_factory=list)
     regressions: List[Dict[str, Any]] = field(default_factory=list)
     scanners: List[Dict[str, Any]] = field(default_factory=list)
+    maturity_gate: Dict[str, Any] = field(default_factory=dict)
+
+
+def maturity_gate_verdict(
+    *,
+    pack: Mapping[str, Any],
+    maturity: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Judge the lint gate's level against the pack's required publish level (GVM-1.3).
+
+    Args:
+        pack: The pinned policy pack row (ladder, ``required_publish_level``, ``ci_outcomes``).
+        maturity: The evaluation's ``gate_results.maturity`` (``None`` without a ladder).
+
+    Returns:
+        The :class:`app.maturity_gate.MaturityJudgement` payload plus ``counted`` — whether
+        ``ciOutcomes.failOnMaturityLevel`` is on — and ``passed``: ``False`` only for a counted
+        ``fail``, ``True`` for a counted ``pass``, ``None`` otherwise (reported, not judged).
+    """
+    judgement = judge_maturity(
+        maturity,
+        ladder=ladder_from_row(pack.get("ladder")),
+        required_level=required_publish_level(pack),
+    )
+    counted = bool(default_ci_outcomes(pack.get("ci_outcomes")).get("failOnMaturityLevel"))
+    passed: Optional[bool] = None
+    if counted and judgement.status == MATURITY_FAIL:
+        passed = False
+    elif counted and judgement.status == MATURITY_PASS:
+        passed = True
+    return {**judgement.as_payload(), "counted": counted, "passed": passed}
 
 
 def _annotated_findings(
@@ -419,7 +462,8 @@ def evaluate_lint_gate(
             content_fingerprint=str(pack["content_fingerprint"]),
         )
         gate_evaluation = filtered
-    gate_passed = gate_evaluation.passed
+    maturity_gate = maturity_gate_verdict(pack=pack, maturity=maturity)
+    gate_passed = gate_evaluation.passed and maturity_gate["passed"] is not False
 
     annotated = _annotated_findings(
         evidence_rows,
@@ -450,6 +494,7 @@ def evaluate_lint_gate(
         new_fingerprints=sorted(new_fps),
         regressions=regressions,
         scanners=_scanner_provenance(evidence_rows),
+        maturity_gate=maturity_gate,
     )
 
     if notify:
@@ -664,6 +709,7 @@ def gate_payload(gate: GateEvaluation) -> Dict[str, Any]:
             "passed": gate.gate_passed,
             "newOnly": gate.new_only,
             "gateResults": dict(gate.gate_evaluation.gate_results),
+            "maturityGate": dict(gate.maturity_gate) or None,
         },
         "counts": counts,
         "newFingerprints": list(gate.new_fingerprints),

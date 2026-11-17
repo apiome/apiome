@@ -26,11 +26,14 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 #: Default required coverage when a guide has no draft / snapshot value (CLX-1.2 compatible).
 DEFAULT_REQUIRED_COVERAGE: Tuple[str, ...] = ("quality",)
 
-#: Default CI outcome toggles — all three acceptance gates enabled.
+#: Default CI outcome toggles — the three acceptance gates enabled. ``failOnMaturityLevel``
+#: (GVM-1.3, #5856) folds the required-publish-level judgement into the lint CI verdict; it is
+#: off by default so an existing pipeline keeps its exit code on upgrade.
 DEFAULT_CI_OUTCOMES: Mapping[str, bool] = {
     "failOnUnwaivedErrors": True,
     "failOnRequiredCoverage": True,
     "failOnAxisGates": True,
+    "failOnMaturityLevel": False,
 }
 
 #: Closed finding lifecycle vocabulary (matches V169 check constraint, widened by V175).
@@ -62,7 +65,8 @@ def default_ci_outcomes(raw: Optional[Mapping[str, Any]] = None) -> Dict[str, bo
         raw: Partial or full ``ci_outcomes`` mapping from a guide / pack, or ``None``.
 
     Returns:
-        A dict with ``failOnUnwaivedErrors``, ``failOnRequiredCoverage``, ``failOnAxisGates``.
+        A dict with ``failOnUnwaivedErrors``, ``failOnRequiredCoverage``, ``failOnAxisGates``
+        and ``failOnMaturityLevel``.
     """
     out = dict(DEFAULT_CI_OUTCOMES)
     if not raw:
@@ -75,6 +79,7 @@ def default_ci_outcomes(raw: Optional[Mapping[str, Any]] = None) -> Dict[str, bo
             "failOnUnwaivedErrors": "fail_on_unwaived_errors",
             "failOnRequiredCoverage": "fail_on_required_coverage",
             "failOnAxisGates": "fail_on_axis_gates",
+            "failOnMaturityLevel": "fail_on_maturity_level",
         }[key]
         if snake in raw:
             out[key] = bool(raw[snake])
@@ -140,6 +145,7 @@ def policy_content_fingerprint(
     required_coverage: Sequence[str],
     ci_outcomes: Mapping[str, Any],
     ladder: Optional[Mapping[str, Any]] = None,
+    required_publish_level: Optional[str] = None,
 ) -> str:
     """SHA-256 hex digest of a canonicalized policy pack body.
 
@@ -151,18 +157,27 @@ def policy_content_fingerprint(
         ladder: Frozen ``{name, levels}`` maturity ladder (GVM-1.1, #5854), or ``None``.
             Only a real ladder enters the body, so a guide without one keeps the fingerprint
             it had before ladders existed.
+        required_publish_level: Frozen level key the publish gate requires (GVM-1.3, #5856),
+            or ``None``. Like the ladder, it enters the body only when set; likewise the
+            ``failOnMaturityLevel`` toggle only when on, so packs that use neither keep the
+            fingerprint they had before level gates existed.
 
     Returns:
         Hex SHA-256 of the canonical JSON body.
     """
+    outcomes = default_ci_outcomes(ci_outcomes)
+    if not outcomes.get("failOnMaturityLevel"):
+        outcomes.pop("failOnMaturityLevel", None)
     body = {
         "rules_snapshot": list(rules_snapshot),
         "axis_gates": default_axis_gates(axis_gates),
         "required_coverage": list(required_coverage),
-        "ci_outcomes": default_ci_outcomes(ci_outcomes),
+        "ci_outcomes": outcomes,
     }
     if ladder is not None:
         body["ladder"] = dict(ladder)
+    if required_publish_level:
+        body["required_publish_level"] = str(required_publish_level)
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 

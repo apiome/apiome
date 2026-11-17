@@ -128,10 +128,12 @@ from .style_guide_revisions import (
     record_guide_revision,
 )
 from .axis_score import AXIS_KEYS
+from .maturity_gate import ladder_level_keys
 from .style_guide_ladder import (
     LadderValidationError,
     default_ladder_template,
     ladder_content_fingerprint,
+    ladder_from_row,
     validate_ladder,
 )
 from .style_guide_transfer import (
@@ -1045,7 +1047,44 @@ def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
         compatibility_mode=compat.mode,
         compatibility_transitive=compat.transitive,
         protobuf_breaking_category=compat.category,
+        required_publish_level=guide.get("required_publish_level") or None,
     )
+
+
+#: ``detail.code`` of a refused ``requiredPublishLevel`` (GVM-1.3, #5856).
+CODE_REQUIRED_LEVEL_UNKNOWN = "required-publish-level-unknown"
+#: ``detail.code`` of a ladder save that would drop the guide's required publish level.
+CODE_REQUIRED_LEVEL_REMOVED = "ladder-required-level-removed"
+
+
+def _validate_required_publish_level(
+    guide_id: str, tenant_id: str, level: Optional[str]
+) -> Optional[str]:
+    """Check a submitted ``requiredPublishLevel`` against the guide's ladder (GVM-1.3).
+
+    ``None`` (clear the gate) is always valid. Any other value must be the key of a level of
+    the guide's current ladder; the database has no CHECK for this because the ladder is JSON.
+
+    Raises:
+        HTTPException: 422 ``required-publish-level-unknown`` naming the valid keys.
+    """
+    if level is None:
+        return None
+    keys = ladder_level_keys(ladder_from_row(db.get_style_guide_ladder(guide_id, tenant_id)))
+    if level not in keys:
+        valid = ", ".join(keys) if keys else "none — this guide has no maturity ladder"
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": CODE_REQUIRED_LEVEL_UNKNOWN,
+                "message": (
+                    f"requiredPublishLevel {level!r} is not a level of this guide's ladder "
+                    f"(levels: {valid})."
+                ),
+                "pointer": "/requiredPublishLevel",
+            },
+        )
+    return level
 
 
 @router.get(
@@ -1085,8 +1124,10 @@ async def put_style_guide_policy_settings(
     dropped) and ``componentDeprecationNoticeDays``.
 
     ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the
-    stored role alone, sending ``null`` clears it. Every other field keeps the
-    omit-to-leave-unchanged rule the endpoint has always had.
+    stored role alone, sending ``null`` clears it. ``requiredPublishLevel`` (GVM-1.3, #5856)
+    follows the same rule and must name a level of the guide's ladder (``422
+    required-publish-level-unknown`` otherwise); it is frozen into the next policy pack.
+    Every other field keeps the omit-to-leave-unchanged rule the endpoint has always had.
     """
     _ = tenant_slug
     tenant_id = _require_tenant_admin(auth_data)
@@ -1099,6 +1140,7 @@ async def put_style_guide_policy_settings(
             "failOnUnwaivedErrors": body.ci_outcomes.fail_on_unwaived_errors,
             "failOnRequiredCoverage": body.ci_outcomes.fail_on_required_coverage,
             "failOnAxisGates": body.ci_outcomes.fail_on_axis_gates,
+            "failOnMaturityLevel": body.ci_outcomes.fail_on_maturity_level,
         }
 
     component_stages = None
@@ -1112,6 +1154,13 @@ async def put_style_guide_policy_settings(
                 detail={"code": "COMPONENT_APPROVAL_STAGES_INVALID", "errors": errors},
             )
         component_stages = [stage.as_payload() for stage in stages]
+
+    set_required_level = "required_publish_level" in body.model_fields_set
+    required_level = (
+        _validate_required_publish_level(str(guide["id"]), tenant_id, body.required_publish_level)
+        if set_required_level
+        else None
+    )
 
     _capture_before_edit(str(guide["id"]), tenant_id)
     updated = db.update_style_guide_policy_settings(
@@ -1139,6 +1188,8 @@ async def put_style_guide_policy_settings(
         compatibility_mode=body.compatibility_mode,
         compatibility_transitive=body.compatibility_transitive,
         protobuf_breaking_category=body.protobuf_breaking_category,
+        required_publish_level=required_level,
+        set_required_publish_level=set_required_level,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Style guide not found")
@@ -1296,7 +1347,9 @@ async def put_style_guide_ladder(
 
     A successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both
     freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
-    Saving an identical ladder changes nothing.
+    Saving an identical ladder changes nothing. A ladder without the guide's
+    ``requiredPublishLevel`` is refused (``422 ladder-required-level-removed``, GVM-1.3): clear
+    or change the required level first.
     """
     _ = tenant_slug
     tenant_id = _require_tenant_admin(auth_data)
@@ -1311,6 +1364,21 @@ async def put_style_guide_ladder(
         )
     except LadderValidationError as exc:
         raise HTTPException(status_code=422, detail=exc.as_detail()) from exc
+
+    required_level = guide.get("required_publish_level")
+    if required_level and required_level not in ladder_level_keys(ladder):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": CODE_REQUIRED_LEVEL_REMOVED,
+                "message": (
+                    f"The guide requires level {required_level!r} to publish, and this ladder "
+                    "has no such level. Clear or change requiredPublishLevel first."
+                ),
+                "pointer": "/levels",
+                "level": required_level,
+            },
+        )
 
     fingerprint = ladder_content_fingerprint(ladder)
     existing = db.get_style_guide_ladder(str(guide["id"]), tenant_id)

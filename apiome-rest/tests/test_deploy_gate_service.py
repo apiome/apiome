@@ -21,6 +21,7 @@ from app.deploy_gate import (
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
     SIGNAL_LINT,
+    SIGNAL_MATURITY,
     SIGNAL_VERIFICATION,
     STATUS_FAIL,
     STATUS_NOT_CONFIGURED,
@@ -35,6 +36,7 @@ from app.deploy_gate_service import (
     DeployGateError,
     build_project_gate,
 )
+from app.maturity_gate import judge_maturity
 from app.verification_schedule import VerificationScheduleRecord
 
 _TENANT = "11111111-1111-4111-8111-111111111111"
@@ -145,6 +147,7 @@ def _gate(
     consumers_permitted: bool = True,
     changelog_side_effect: Optional[Exception] = None,
     revision_id: Optional[str] = None,
+    maturity: Optional[Any] = None,
 ):
     """Run the service with every store patched.
 
@@ -196,7 +199,20 @@ def _gate(
     ), patch(
         "app.deploy_gate_service.consumer_impact_for_diff",
         return_value=consumers if consumers is not None else _consumer_report(),
-    ):
+    ), patch(
+        "app.lint_policy_service.judge_catalog_revision_maturity",
+        **(
+            {"side_effect": maturity}
+            if isinstance(maturity, Exception)
+            else {
+                "return_value": (
+                    maturity or judge_maturity(None, ladder=None, required_level=None),
+                    {"policyVersionId": "pack-1", "evaluationId": "eval-1"},
+                )
+            }
+        ),
+    ) as maturity_read:
+        _gate.maturity_read = maturity_read
         return build_project_gate(
             tenant_id=_TENANT,
             tenant_slug=_TENANT_SLUG,
@@ -502,3 +518,71 @@ def test_an_unreadable_report_never_takes_the_verification_signal_down():
     verification = _signal(report, SIGNAL_VERIFICATION)
     assert verification.status == STATUS_PASS
     assert verification.data["partial"] is False
+
+
+# ---------------------------------------------------------------------------------------------
+# maturity (GVM-1.3, #5856)
+# ---------------------------------------------------------------------------------------------
+
+_LADDER = {
+    "name": "Tiers",
+    "levels": [
+        {"key": "bronze", "label": "Bronze"},
+        {"key": "silver", "label": "Silver"},
+        {"key": "gold", "label": "Gold"},
+    ],
+}
+
+
+def _level(index: Optional[int], blockers: Optional[List[Dict[str, Any]]] = None):
+    keys = ["bronze", "silver", "gold"]
+    return {
+        "ladderName": "Tiers",
+        "level": keys[index] if index is not None else None,
+        "levelLabel": keys[index].title() if index is not None else None,
+        "levelIndex": index,
+        "blockers": blockers or [],
+    }
+
+
+def test_without_a_ladder_the_maturity_signal_is_not_configured_and_excluded():
+    report = _gate(changelog=_changelog_row())
+    maturity = _signal(report, SIGNAL_MATURITY)
+    assert maturity.status == STATUS_NOT_CONFIGURED
+    assert maturity.reason == "maturity-no-ladder"
+    assert maturity.link.endswith(f"/{_REVISION}/lint/level")
+    assert [s.signal for s in report.signals][-1] == SIGNAL_MATURITY
+
+
+def test_a_revision_below_min_maturity_level_fails_the_gate():
+    blocker = {"levelKey": "silver", "kind": "rule", "ruleId": "r1", "count": 2, "sample": []}
+    judgement = judge_maturity(_level(0, [blocker]), ladder=_LADDER, required_level="silver")
+    report = _gate(changelog=_changelog_row(), maturity=judgement)
+    maturity = _signal(report, SIGNAL_MATURITY)
+    assert maturity.status == STATUS_FAIL
+    assert maturity.satisfied is False
+    assert maturity.data["level"] == "bronze"
+    assert maturity.data["requiredLevel"] == "silver"
+    assert maturity.data["blockers"] == [blocker]
+    assert maturity.data["policyVersionId"] == "pack-1"
+    assert report.status == STATUS_FAIL
+
+
+def test_min_maturity_level_is_passed_to_the_shared_read():
+    from app.deploy_gate import DeployGatePolicyOut, thresholds_from_body
+
+    policy = DeployGatePolicyOut(
+        source="tenant", thresholds=thresholds_from_body({"maturity": {"minMaturityLevel": "gold"}})
+    )
+    with patch("app.deploy_gate_service.load_policy", return_value=policy):
+        _gate(changelog=_changelog_row())
+    assert _gate.maturity_read.call_args.kwargs["required_level"] == "gold"
+    assert _gate.maturity_read.call_args.kwargs["version_record_id"] == _REVISION
+
+
+def test_an_unreadable_maturity_level_costs_only_that_signal():
+    report = _gate(changelog=_changelog_row(), maturity=RuntimeError("db down"))
+    maturity = _signal(report, SIGNAL_MATURITY)
+    assert maturity.status == STATUS_UNKNOWN
+    assert maturity.reason == REASON_SIGNAL_UNAVAILABLE
+    assert _signal(report, SIGNAL_LINT).status == STATUS_PASS

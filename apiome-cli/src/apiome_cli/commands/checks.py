@@ -1,7 +1,8 @@
 """The API change check suite from the command line — GNC-3.1 (#4740).
 
 ``apiome checks run --project pets --version 2.0.0 --commit $GITHUB_SHA`` evaluates the suite on
-the server — lint, breaking changes, consumers, contract tests, SDK generation — records the one
+the server — lint, breaking changes, consumers, contract tests, SDK generation and, since GVM-1.3,
+the maturity level — records the one
 verdict, reports it on the pull request when the version is bound to a repository ref, and exits
 with the verdict: ``0`` pass or skipped, ``7`` failed, ``8`` pending. ``apiome checks show`` reads
 the latest evaluation (or one by ``--run``) without evaluating anything.
@@ -106,7 +107,9 @@ def run_checks(
 ) -> None:
     """Evaluate the API change check suite for a version (POST …/check-suite).
 
-    Re-running over unchanged inputs returns the same evaluation — the same evidence ids — and
+    Six components are judged: lint, breaking, consumers, contract, sdk and maturity (the
+    version's ladder level against the deploy gate's minMaturityLevel or the style guide's
+    required publish level; skipped when the guide has no ladder). Re-running over unchanged inputs returns the same evaluation — the same evidence ids — and
     does not report to the provider again. Exit codes: 0 pass or skipped, 7 failed, 8 pending,
     1 unreachable, 2 rejected (auth, unknown project/version/commit).
     """

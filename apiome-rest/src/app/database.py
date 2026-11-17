@@ -4490,6 +4490,8 @@ class Database:
         compatibility_mode: Optional[str] = None,
         compatibility_transitive: Optional[bool] = None,
         protobuf_breaking_category: Optional[str] = None,
+        required_publish_level: Optional[str] = None,
+        set_required_publish_level: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Update draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 
@@ -4523,6 +4525,10 @@ class Database:
             compatibility_transitive: XPC-4.5 transitivity, or ``None`` to leave unchanged.
             protobuf_breaking_category: XPC-4.5 buf breaking category — ``WIRE`` /
                 ``WIRE_JSON`` / ``PACKAGE`` / ``FILE`` — or ``None`` to leave unchanged.
+            required_publish_level: GVM-1.3 (#5856) level key a draft must reach before it
+                publishes (already validated against the guide's ladder), or ``None`` to clear
+                it. Only applied when ``set_required_publish_level`` is true.
+            set_required_publish_level: Whether ``required_publish_level`` is being written.
 
         Returns:
             The updated guide row (subset of columns), or ``None`` when no custom guide matched.
@@ -4547,6 +4553,10 @@ class Database:
                 compatibility_mode = COALESCE(%s, compatibility_mode),
                 compatibility_transitive = COALESCE(%s::boolean, compatibility_transitive),
                 protobuf_breaking_category = COALESCE(%s, protobuf_breaking_category),
+                required_publish_level = CASE
+                    WHEN %s::boolean THEN %s::text
+                    ELSE required_publish_level
+                END,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
             RETURNING id, name, description, source, is_default,
@@ -4555,7 +4565,7 @@ class Database:
                       required_reviewer_role, component_approval_stages,
                       component_deprecation_notice_days, compatibility_mode,
                       compatibility_transitive, protobuf_breaking_category,
-                      created_at, updated_at
+                      required_publish_level, created_at, updated_at
         """
         rows = self.execute_query(
             query,
@@ -4572,6 +4582,8 @@ class Database:
                 compatibility_mode,
                 compatibility_transitive,
                 protobuf_breaking_category,
+                bool(set_required_publish_level),
+                required_publish_level,
                 guide_id,
                 tenant_id,
             ),
@@ -4589,6 +4601,7 @@ class Database:
         ci_outcomes: Dict[str, Any],
         content_fingerprint: str,
         ladder: Optional[Dict[str, Any]] = None,
+        required_publish_level: Optional[str] = None,
         actor_user_id: Optional[str] = None,
         actor_label: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
@@ -4596,6 +4609,8 @@ class Database:
 
         Assigns the next monotonic ``version_number`` for the guide. ``ladder`` is the frozen
         ``{name, levels}`` maturity ladder (GVM-1.1, #5854); ``None`` stores SQL ``NULL``.
+        ``required_publish_level`` is the frozen level key the publish gate requires
+        (GVM-1.3, #5856); ``None`` means the level gate is not armed.
 
         Returns:
             The inserted policy version row, or ``None`` when inputs are invalid.
@@ -4608,7 +4623,7 @@ class Database:
             INSERT INTO apiome.style_guide_policy_versions (
                 guide_id, tenant_id, version_number, content_fingerprint,
                 rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                ladder, actor_user_id, actor_label
+                ladder, required_publish_level, actor_user_id, actor_label
             )
             SELECT %s::uuid, %s::uuid,
                    COALESCE((
@@ -4617,10 +4632,10 @@ class Database:
                        WHERE pv.guide_id = %s::uuid
                    ), 0) + 1,
                    %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
-                   %s::jsonb, %s::uuid, %s
+                   %s::jsonb, %s, %s::uuid, %s
             RETURNING id, guide_id, tenant_id, version_number, content_fingerprint,
                       rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                      ladder, actor_user_id, actor_label, created_at
+                      ladder, required_publish_level, actor_user_id, actor_label, created_at
         """
         rows = self.execute_query(
             query,
@@ -4634,6 +4649,7 @@ class Database:
                 Json(required_coverage),
                 Json(ci_outcomes),
                 Json(ladder) if ladder is not None else None,
+                required_publish_level,
                 actor_user_id,
                 actor_label,
             ),
@@ -4649,7 +4665,7 @@ class Database:
         query = """
             SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
                    rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                   ladder, actor_user_id, actor_label, created_at
+                   ladder, required_publish_level, actor_user_id, actor_label, created_at
             FROM apiome.style_guide_policy_versions
             WHERE guide_id = %s AND tenant_id = %s
             ORDER BY version_number DESC
@@ -4665,7 +4681,7 @@ class Database:
         query = """
             SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
                    rules_snapshot, axis_gates, required_coverage, ci_outcomes,
-                   ladder, actor_user_id, actor_label, created_at
+                   ladder, required_publish_level, actor_user_id, actor_label, created_at
             FROM apiome.style_guide_policy_versions
             WHERE id = %s AND tenant_id = %s
         """
@@ -7280,7 +7296,7 @@ class Database:
                    breaking_publish_policy, required_approvals, required_reviewer_role,
                    component_approval_stages, component_deprecation_notice_days,
                    compatibility_mode, compatibility_transitive, protobuf_breaking_category,
-                   external_lint_profile,
+                   external_lint_profile, required_publish_level,
                    created_at, updated_at
             FROM apiome.style_guides
             WHERE id = %s AND tenant_id = %s

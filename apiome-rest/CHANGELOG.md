@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.733.0] - 2026-11-16
+
+### Added
+- **Cumulative level gates (GVM-1.3, #5856)** — OpenAPI 1.593.0:
+  - apiome-db **V392**: `style_guides.required_publish_level` and `style_guide_policy_versions.required_publish_level`
+    (`TEXT NULL`, no CHECK). `PUT /v1/style-guides/{t}/{g}/policy` takes `requiredPublishLevel` (a level key of the
+    guide's ladder; `null` clears, omitted leaves it; else `422 required-publish-level-unknown`) and
+    `ciOutcomes.failOnMaturityLevel` (default `false`). Snapshots freeze the level into the pack
+    (`StyleGuidePolicyVersionOut.requiredPublishLevel`); it enters the pack fingerprint only when set, and the
+    toggle only when on, so existing packs keep their fingerprints. `PUT …/ladder` refuses a ladder without the
+    required level (`422 ladder-required-level-removed`).
+  - `app.maturity_gate.judge_maturity` (pure): a GVM-1.2 level result against a required level →
+    `pass | fail | not_configured | unknown` with the next level's blockers;
+    `app.lint_policy_service.judge_catalog_revision_maturity` is the one read behind every gate below.
+  - Publish (`app.maturity_publish_gate`): runs in `enforce_publish_prechecks` after the GOV error gate and before
+    the COL-2.3 approval gate; below the level → `422 {"detail": {"message", "maturityGate": {status, level,
+    requiredLevel, blockers, …}}}`. `skipPublishChecks` + `forcePublishReason` gets past it. Every judged publish
+    appends `version.maturity_gate` (`action` `satisfied | forced | unavailable`) to `workflow_audit`; faults degrade
+    to `unavailable` and never block; a guide without a ladder or level never arms it.
+  - Deploy gate: `DeployGateThresholds.maturity.minMaturityLevel` (`null` uses the guide's required level) and a
+    fifth signal `maturity` (`not_configured` without a ladder or level, `unknown` when unreadable). The group enters
+    the thresholds fingerprint only when set.
+  - API change check suite: a sixth component `maturity` (default `advisory`), judged by the deploy gate's
+    `evaluate_maturity`; `skipped` without a ladder, never `pass`. At its default it is left out of the policy
+    fingerprints, so existing evaluations stay current for the publish gate.
+  - Lint CI gate: `gate.maturityGate` (`counted`, `passed`); `gate.passed` folds in a `fail` only when
+    `failOnMaturityLevel` is on. SARIF run properties carry `apiome.maturity`, JUnit `apiome.maturity.*`
+    properties, and the Markdown summary a maturity row.
+
 ## [1.732.0] - 2026-11-16
 
 ### Added

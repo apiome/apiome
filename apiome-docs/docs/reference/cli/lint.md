@@ -51,7 +51,7 @@ apiome lint evidence [OPTIONS]
 
 Run the lint CI gate for a version (GET .../lint/gate) and emit an artifact.
 
-Exits non-zero ONLY when a configured policy gate failed (``gate.passed`` false in the verdict) — findings without policy failures, or failures of gates the pack disabled, exit 0. The verdict is always fetched as JSON; a non-json ``--format`` additionally fetches that artifact and writes it to ``--output`` (or stdout, with the human summary moved to stderr so the artifact stays clean).
+Exits non-zero ONLY when a configured policy gate failed (``gate.passed`` false in the verdict) — findings without policy failures, or failures of gates the pack disabled, exit 0. The maturity level line (GVM-1.3) is always printed when the guide has a ladder; it changes the exit code only when the pack's ``failOnMaturityLevel`` toggle is on. The verdict is always fetched as JSON; a non-json ``--format`` additionally fetches that artifact and writes it to ``--output`` (or stdout, with the human summary moved to stderr so the artifact stays clean).
 
 ```text
 apiome lint gate [OPTIONS]

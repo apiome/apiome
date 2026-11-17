@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.592.0",
+    "version": "1.593.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -13864,7 +13864,7 @@
           "deploy-gate"
         ],
         "summary": "Can I promote this API version?",
-        "description": "One aggregate verdict for a CD pipeline, composed of the four signals that already exist elsewhere in the platform:\n\n* **lint** \u2014 the GOV grade stored on the revision (never recomputed here);\n* **breaking** \u2014 the CTG-3.1 classification of the publish against its predecessor;\n* **consumers** \u2014 the CTG-4.2 per-consumer verdicts (\"breaks 2 of 7\");\n* **verification** \u2014 CTG-4.4 freshness, falling back to a manual CTG-4.3 report.\n\n**Partial inputs are the normal case.** A signal with nothing behind it reports `not_configured` and is excluded from the verdict rather than failing it; a signal that exists but could not be read reports `unknown` and is also excluded, counted apart. `evaluatedSignals` says how many actually took part \u2014 branch on that, not on `status`, if a project with nothing configured must not read as a green light.\n\n**The status is always 200.** The verdict lives in `status` (`pass` / `warn` / `fail`); the pipeline owns the exit code.\n\nBy default the gate judges the project's newest **published** revision. Pass `revisionId` to judge a specific one.\n\nRequires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`; without it that one signal reports `unknown`.",
+        "description": "One aggregate verdict for a CD pipeline, composed of five signals that already exist elsewhere in the platform:\n\n* **lint** \u2014 the GOV grade stored on the revision (never recomputed here);\n* **breaking** \u2014 the CTG-3.1 classification of the publish against its predecessor;\n* **consumers** \u2014 the CTG-4.2 per-consumer verdicts (\"breaks 2 of 7\");\n* **verification** \u2014 CTG-4.4 freshness, falling back to a manual CTG-4.3 report;\n* **maturity** \u2014 the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or the style guide's `requiredPublishLevel`); `not_configured` without a ladder.\n\n**Partial inputs are the normal case.** A signal with nothing behind it reports `not_configured` and is excluded from the verdict rather than failing it; a signal that exists but could not be read reports `unknown` and is also excluded, counted apart. `evaluatedSignals` says how many actually took part \u2014 branch on that, not on `status`, if a project with nothing configured must not read as a green light.\n\n**The status is always 200.** The verdict lives in `status` (`pass` / `warn` / `fail`); the pipeline owns the exit code.\n\nBy default the gate judges the project's newest **published** revision. Pass `revisionId` to judge a specific one.\n\nRequires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`; without it that one signal reports `unknown`.",
         "operationId": "get_project_deploy_gate_v1_projects__tenant_slug___project_ref__gate_get",
         "parameters": [
           {
@@ -58364,7 +58364,7 @@
           "style-guides"
         ],
         "summary": "Put Style Guide Policy Settings",
-        "description": "Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).\n\nAlso carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3\n(#4519) approval policy, both of which the publish flow reads through the same\nguide-resolution chain.\n\nDCW-3.4 (private-suite#2364) adds the component-library policy: ordered\n``componentApprovalStages`` (validated strictly \u2014 a bad stage is a 422, never silently\ndropped) and ``componentDeprecationNoticeDays``.\n\n``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the\nstored role alone, sending ``null`` clears it. Every other field keeps the\nomit-to-leave-unchanged rule the endpoint has always had.",
+        "description": "Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).\n\nAlso carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3\n(#4519) approval policy, both of which the publish flow reads through the same\nguide-resolution chain.\n\nDCW-3.4 (private-suite#2364) adds the component-library policy: ordered\n``componentApprovalStages`` (validated strictly \u2014 a bad stage is a 422, never silently\ndropped) and ``componentDeprecationNoticeDays``.\n\n``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the\nstored role alone, sending ``null`` clears it. ``requiredPublishLevel`` (GVM-1.3, #5856)\nfollows the same rule and must name a level of the guide's ladder (``422\nrequired-publish-level-unknown`` otherwise); it is frozen into the next policy pack.\nEvery other field keeps the omit-to-leave-unchanged rule the endpoint has always had.",
         "operationId": "put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put",
         "parameters": [
           {
@@ -58873,7 +58873,7 @@
           "style-guides"
         ],
         "summary": "Put Style Guide Ladder",
-        "description": "Create or replace the guide's maturity ladder (GVM-1.1, #5854). Tenant admin only.\n\nThe body is the complete ladder, levels lowest first. Refused with ``422`` and a\n``detail.code`` / ``detail.pointer`` when a level relaxes a lower one\n(``ladder-level-not-cumulative``, naming the level and rule), a rule id is not in the\nregistry (``ladder-unknown-rule``), an axis is not an axis key (``ladder-unknown-axis``),\nor the ladder is otherwise malformed. The built-in guide is read-only (``409``).\n\nA successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both\nfreeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.\nSaving an identical ladder changes nothing.",
+        "description": "Create or replace the guide's maturity ladder (GVM-1.1, #5854). Tenant admin only.\n\nThe body is the complete ladder, levels lowest first. Refused with ``422`` and a\n``detail.code`` / ``detail.pointer`` when a level relaxes a lower one\n(``ladder-level-not-cumulative``, naming the level and rule), a rule id is not in the\nregistry (``ladder-unknown-rule``), an axis is not an axis key (``ladder-unknown-axis``),\nor the ladder is otherwise malformed. The built-in guide is read-only (``409``).\n\nA successful save appends a ``ladder_changed`` revision, snapshots a new policy pack (both\nfreeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.\nSaving an identical ladder changes nothing. A ladder without the guide's\n``requiredPublishLevel`` is refused (``422 ladder-required-level-removed``, GVM-1.3): clear\nor change the required level first.",
         "operationId": "put_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_put",
         "parameters": [
           {
@@ -144956,7 +144956,7 @@
             },
             "type": "object",
             "title": "Components",
-            "description": "`required` | `advisory` | `off` for each of lint, breaking, consumers, contract and sdk."
+            "description": "`required` | `advisory` | `off` for each of lint, breaking, consumers, contract, sdk and maturity."
           },
           "requiredForPublish": {
             "type": "boolean",
@@ -144969,7 +144969,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "CheckSuitePolicy",
-        "description": "The ``gnc.check-suite-policy.v1`` body: what the suite requires.\n\nAttributes:\n    components: The requirement of every component \u2014 always all five after parsing.\n    required_for_publish: Whether publishing a version needs a passing (or skipped) suite\n        evaluation of exactly its current content under exactly this policy."
+        "description": "The ``gnc.check-suite-policy.v1`` body: what the suite requires.\n\nAttributes:\n    components: The requirement of every component \u2014 always all six after parsing.\n    required_for_publish: Whether publishing a version needs a passing (or skipped) suite\n        evaluation of exactly its current content under exactly this policy."
       },
       "CheckSuitePolicyOut": {
         "properties": {
@@ -155901,7 +155901,7 @@
           "policy"
         ],
         "title": "DeployGateReport",
-        "description": "The single aggregate verdict a CD pipeline reads.\n\nAttributes:\n    schema_version: :data:`DEPLOY_GATE_SCHEMA_VERSION`.\n    status: ``pass`` / ``warn`` / ``fail`` \u2014 the worst *evaluated* signal.\n    summary: One line a pipeline can print.\n    project_id / project_slug: The gated project.\n    revision_id / version_label / version_ref / published_at: The gated published revision.\n    evaluated_at: When the verdict was computed.\n    evaluated_signals: How many of the four took part. ``0`` means nothing could be judged and\n        ``status`` is ``pass`` by the partial-inputs rule \u2014 branch on this, not on the status,\n        if an unconfigured project must not read as a green light.\n    counts: Signals per status.\n    signals: The four, always all of them, in :data:`GATE_SIGNALS` order.\n    policy: The thresholds this verdict was judged under."
+        "description": "The single aggregate verdict a CD pipeline reads.\n\nAttributes:\n    schema_version: :data:`DEPLOY_GATE_SCHEMA_VERSION`.\n    status: ``pass`` / ``warn`` / ``fail`` \u2014 the worst *evaluated* signal.\n    summary: One line a pipeline can print.\n    project_id / project_slug: The gated project.\n    revision_id / version_label / version_ref / published_at: The gated published revision.\n    evaluated_at: When the verdict was computed.\n    evaluated_signals: How many of the signals took part. ``0`` means nothing could be judged and\n        ``status`` is ``pass`` by the partial-inputs rule \u2014 branch on this, not on the status,\n        if an unconfigured project must not read as a green light.\n    counts: Signals per status.\n    signals: All of them, always, in :data:`GATE_SIGNALS` order.\n    policy: The thresholds this verdict was judged under."
       },
       "DeployGateThresholds": {
         "properties": {
@@ -155920,6 +155920,10 @@
           "verification": {
             "$ref": "#/components/schemas/VerificationThresholds",
             "description": "Verification."
+          },
+          "maturity": {
+            "$ref": "#/components/schemas/MaturityThresholds",
+            "description": "Maturity."
           }
         },
         "additionalProperties": false,
@@ -169736,7 +169740,7 @@
           "signal": {
             "type": "string",
             "title": "Signal",
-            "description": "`lint` | `breaking` | `consumers` | `verification`.",
+            "description": "`lint` | `breaking` | `consumers` | `verification` | `maturity`.",
             "example": "example"
           },
           "status": {
@@ -179140,6 +179144,28 @@
         ],
         "title": "MatrixCellStatus",
         "description": "Outcome of one ``(source_format \u00d7 emit_target)`` matrix cell."
+      },
+      "MaturityThresholds": {
+        "properties": {
+          "minMaturityLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Maturity Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Maturity Thresholds schema."
+              }
+            ],
+            "title": "Minmaturitylevel",
+            "description": "Ladder level key the revision must have reached (e.g. `silver`); `null` uses the style guide's requiredPublishLevel."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MaturityThresholds",
+        "description": "Where the bar sits for the GVM-1.3 maturity level of the revision.\n\nAttributes:\n    min_maturity_level: The ladder level key the revision must have reached; ``None`` uses\n        the style guide's ``requiredPublishLevel`` (and with neither the signal is\n        ``not_configured``). A key the revision's ladder does not have is ``unknown``."
       },
       "McpAnnotationCoverageOut": {
         "properties": {
@@ -227908,6 +227934,13 @@
             "default": true,
             "description": "Fail On Axis Gates.",
             "example": false
+          },
+          "failOnMaturityLevel": {
+            "type": "boolean",
+            "title": "Failonmaturitylevel",
+            "description": "Fail the lint CI gate when the revision is below the guide's required publish level (GVM-1.3). Off by default, so existing pipelines keep their exit code.",
+            "default": false,
+            "example": false
           }
         },
         "type": "object",
@@ -228908,6 +228941,20 @@
             "description": "buf breaking category Protobuf changes are graded at (XPC-4.5): WIRE, WIRE_JSON (default), PACKAGE or FILE.",
             "default": "WIRE_JSON",
             "example": "WIRE_JSON"
+          },
+          "requiredPublishLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide policy settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide policy settings."
+              }
+            ],
+            "title": "Requiredpublishlevel",
+            "description": "Key of the maturity level a draft must reach before it publishes (GVM-1.3); a level of the guide's own ladder. null (default) means no level gate."
           }
         },
         "type": "object",
@@ -229100,6 +229147,21 @@
             "title": "Protobufbreakingcategory",
             "description": "buf breaking category for Protobuf changes (XPC-4.5); omit to leave unchanged."
           },
+          "requiredPublishLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Request body for style guide policy settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "title": "Requiredpublishlevel",
+            "description": "Maturity level key a draft must reach before it publishes (GVM-1.3); must be a level of the guide's ladder. Send null to clear it, omit to leave unchanged."
+          },
           "snapshot": {
             "type": "boolean",
             "title": "Snapshot",
@@ -229191,6 +229253,20 @@
               }
             ],
             "description": "The maturity ladder frozen into this pack (GVM-1.1); null when none."
+          },
+          "requiredPublishLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide policy version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide policy version."
+              }
+            ],
+            "title": "Requiredpublishlevel",
+            "description": "The level key the publish gate requires, frozen into this pack (GVM-1.3); null when no level gate is armed."
           },
           "actorUserId": {
             "anyOf": [

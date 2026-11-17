@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.592.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.593.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `deploy-gate` · 4 operations
 
@@ -17,12 +17,13 @@ Tag: `deploy-gate` · 4 operations
 
 **Can I promote this API version?**
 
-One aggregate verdict for a CD pipeline, composed of the four signals that already exist elsewhere in the platform:
+One aggregate verdict for a CD pipeline, composed of five signals that already exist elsewhere in the platform:
 
 * **lint** — the GOV grade stored on the revision (never recomputed here);
 * **breaking** — the CTG-3.1 classification of the publish against its predecessor;
 * **consumers** — the CTG-4.2 per-consumer verdicts ("breaks 2 of 7");
-* **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report.
+* **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report;
+* **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or the style guide's `requiredPublishLevel`); `not_configured` without a ladder.
 
 **Partial inputs are the normal case.** A signal with nothing behind it reports `not_configured` and is excluded from the verdict rather than failing it; a signal that exists but could not be read reports `unknown` and is also excluded, counted apart. `evaluatedSignals` says how many actually took part — branch on that, not on `status`, if a project with nothing configured must not read as a green light.
 
@@ -199,11 +200,11 @@ Attributes:
     project_id / project_slug: The gated project.
     revision_id / version_label / version_ref / published_at: The gated published revision.
     evaluated_at: When the verdict was computed.
-    evaluated_signals: How many of the four took part. ``0`` means nothing could be judged and
+    evaluated_signals: How many of the signals took part. ``0`` means nothing could be judged and
         ``status`` is ``pass`` by the partial-inputs rule — branch on this, not on the status,
         if an unconfigured project must not read as a green light.
     counts: Signals per status.
-    signals: The four, always all of them, in :data:`GATE_SIGNALS` order.
+    signals: All of them, always, in :data:`GATE_SIGNALS` order.
     policy: The thresholds this verdict was judged under.
 
 | Property | Type | Required | Description |

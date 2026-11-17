@@ -24,6 +24,12 @@ from .lint_evidence import (
     merged_findings_from_runs,
     normalize_native_finding,
 )
+from .maturity_gate import (
+    MaturityJudgement,
+    judge_maturity,
+    ladder_level_keys,
+    required_publish_level,
+)
 from .maturity_ladder import evaluate_ladder, no_ladder_result
 from .models import (
     LintEvidenceFindingOut,
@@ -84,12 +90,17 @@ def snapshot_style_guide_policy(
     ci_outcomes = default_ci_outcomes(guide.get("ci_outcomes"))
     # GVM-1.1 (#5854): the maturity ladder is frozen beside rules and gates.
     ladder = ladder_from_row(db.get_style_guide_ladder(guide_id, tenant_id))
+    # GVM-1.3 (#5856): so is the level the publish gate requires — only while the ladder has it.
+    required_level = guide.get("required_publish_level") or None
+    if required_level not in ladder_level_keys(ladder):
+        required_level = None
     fingerprint = policy_content_fingerprint(
         rules_snapshot=rules_snapshot,
         axis_gates=axis_gates,
         required_coverage=required_coverage,
         ci_outcomes=ci_outcomes,
         ladder=ladder,
+        required_publish_level=required_level,
     )
     return db.insert_style_guide_policy_version(
         guide_id=guide_id,
@@ -100,6 +111,7 @@ def snapshot_style_guide_policy(
         ci_outcomes=ci_outcomes,
         content_fingerprint=fingerprint,
         ladder=ladder,
+        required_publish_level=required_level,
         actor_user_id=actor_user_id,
         actor_label=actor_label,
     )
@@ -661,6 +673,63 @@ def evaluate_mcp_version_level(
     )
 
 
+def judge_catalog_revision_maturity(
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_record_id: str,
+    required_level: Optional[str] = None,
+) -> Tuple[MaturityJudgement, Dict[str, Optional[str]]]:
+    """Judge a catalog revision's maturity level against a required level (GVM-1.3, #5856).
+
+    The single read behind the publish gate, the deploy gate's ``maturity`` signal and the
+    check suite's ``maturity`` component: the revision's policy evaluation is recomputed
+    (stored-first, exactly like ``GET …/lint/level``) and its ``gate_results.maturity`` is
+    judged by :func:`app.maturity_gate.judge_maturity`.
+
+    Args:
+        tenant_id: The revision's tenant.
+        project_id: Its project (resolves the style guide and its latest policy pack).
+        version_record_id: The revision.
+        required_level: The level key to require; ``None`` uses the pack's frozen
+            ``required_publish_level``.
+
+    Returns:
+        ``(judgement, context)`` — ``context`` is ``{policyVersionId, evaluationId}``. A
+        project with no assignable guide, or a pack without a ladder, is ``not_configured``;
+        an evaluation that faults is ``unknown`` (``maturity-unreadable``), never a block.
+    """
+    context: Dict[str, Optional[str]] = {"policyVersionId": None, "evaluationId": None}
+    try:
+        pack = resolve_policy_pack(tenant_id, project_id=project_id)
+    except (ValueError, LookupError):
+        return judge_maturity(None, ladder=None, required_level=None), context
+    context["policyVersionId"] = str(pack.get("id") or "") or None
+    ladder = ladder_from_row(pack.get("ladder"))
+    required = required_level if required_level else required_publish_level(pack)
+    if ladder is None:
+        return judge_maturity(None, ladder=None, required_level=required), context
+    try:
+        policy = evaluate_catalog_revision_policy(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_record_id=version_record_id,
+            policy_version_id=context["policyVersionId"],
+        )
+    except Exception as exc:  # noqa: BLE001 - an unreadable level is unknown, not a 500
+        logger.warning(
+            "Could not evaluate the maturity level of revision %s", version_record_id,
+            exc_info=True,
+        )
+        return (
+            judge_maturity(None, ladder=ladder, required_level=required, detail=str(exc)),
+            context,
+        )
+    context["evaluationId"] = policy.evaluation.id
+    maturity = policy.evaluation.gate_results.get("maturity")
+    return judge_maturity(maturity, ladder=ladder, required_level=required), context
+
+
 __all__ = [
     "build_lint_policy_response",
     "ensure_latest_policy_pack",
@@ -668,6 +737,7 @@ __all__ = [
     "evaluate_catalog_revision_policy",
     "evaluate_mcp_version_level",
     "evaluate_mcp_version_policy",
+    "judge_catalog_revision_maturity",
     "ladder_evidence",
     "level_response",
     "maturity_gate_result",

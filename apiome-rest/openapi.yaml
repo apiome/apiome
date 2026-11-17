@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.592.0
+  version: 1.593.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -9968,8 +9968,8 @@ paths:
       - deploy-gate
       - deploy-gate
       summary: Can I promote this API version?
-      description: 'One aggregate verdict for a CD pipeline, composed of the four
-        signals that already exist elsewhere in the platform:
+      description: 'One aggregate verdict for a CD pipeline, composed of five signals
+        that already exist elsewhere in the platform:
 
 
         * **lint** — the GOV grade stored on the revision (never recomputed here);
@@ -9978,12 +9978,15 @@ paths:
 
         * **consumers** — the CTG-4.2 per-consumer verdicts ("breaks 2 of 7");
 
-        * **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report.
+        * **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report;
+
+        * **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel`
+        (or the style guide''s `requiredPublishLevel`); `not_configured` without a ladder.
 
 
         **Partial inputs are the normal case.** A signal with nothing behind it reports
-        `not_configured` and is excluded from the verdict rather than failing it;
-        a signal that exists but could not be read reports `unknown` and is also excluded,
+        `not_configured` and is excluded from the verdict rather than failing it; a
+        signal that exists but could not be read reports `unknown` and is also excluded,
         counted apart. `evaluatedSignals` says how many actually took part — branch
         on that, not on `status`, if a project with nothing configured must not read
         as a green light.
@@ -10040,8 +10043,8 @@ paths:
             description: Can Ipromotethis Apiversionauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -42880,8 +42883,7 @@ paths:
       tags:
       - style-guides
       summary: Get Style Guide Policy Settings
-      description: 'Return draft policy gate settings for a style guide (CLX-1.3,
-        #4850).'
+      description: 'Return draft policy gate settings for a style guide (CLX-1.3, #4850).'
       operationId: get_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_get
       parameters:
       - name: tenant_slug
@@ -42911,8 +42913,8 @@ paths:
             description: Get Style Guide Policy Settingsauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -42948,11 +42950,9 @@ paths:
         (CLX-1.3, #4850).
 
 
-        Also carries the CTG-3.4 (#4478) breaking-publish guardrail level and the
-        COL-2.3
+        Also carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3
 
-        (#4519) approval policy, both of which the publish flow reads through the
-        same
+        (#4519) approval policy, both of which the publish flow reads through the same
 
         guide-resolution chain.
 
@@ -42965,12 +42965,19 @@ paths:
         dropped) and ``componentDeprecationNoticeDays``.
 
 
-        ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it
-        leaves the
+        ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves
+        the
 
-        stored role alone, sending ``null`` clears it. Every other field keeps the
+        stored role alone, sending ``null`` clears it. ``requiredPublishLevel`` (GVM-1.3,
+        #5856)
 
-        omit-to-leave-unchanged rule the endpoint has always had.'
+        follows the same rule and must name a level of the guide''s ladder (``422
+
+        required-publish-level-unknown`` otherwise); it is frozen into the next policy
+        pack.
+
+        Every other field keeps the omit-to-leave-unchanged rule the endpoint has always
+        had.'
       operationId: put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put
       parameters:
       - name: tenant_slug
@@ -43000,8 +43007,8 @@ paths:
             description: Put Style Guide Policy Settingsauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -43335,7 +43342,12 @@ paths:
 
         freeze the ladder, so their fingerprints move) and audits ``style_guide.ladder_changed``.
 
-        Saving an identical ladder changes nothing.'
+        Saving an identical ladder changes nothing. A ladder without the guide''s
+
+        ``requiredPublishLevel`` is refused (``422 ladder-required-level-removed``,
+        GVM-1.3): clear
+
+        or change the required level first.'
       operationId: put_style_guide_ladder_v1_style_guides__tenant_slug___guide_id__ladder_put
       parameters:
       - name: tenant_slug
@@ -107007,8 +107019,8 @@ components:
             type: string
           type: object
           title: Components
-          description: '`required` | `advisory` | `off` for each of lint, breaking,
-            consumers, contract and sdk.'
+          description: '`required` | `advisory` | `off` for each of lint, breaking, consumers,
+            contract, sdk and maturity.'
         requiredForPublish:
           type: boolean
           title: Requiredforpublish
@@ -107020,10 +107032,10 @@ components:
       type: object
       title: CheckSuitePolicy
       description: "The ``gnc.check-suite-policy.v1`` body: what the suite requires.\n\
-        \nAttributes:\n    components: The requirement of every component — always\
-        \ all five after parsing.\n    required_for_publish: Whether publishing a\
-        \ version needs a passing (or skipped) suite\n        evaluation of exactly\
-        \ its current content under exactly this policy."
+        \nAttributes:\n    components: The requirement of every component — always all\
+        \ six after parsing.\n    required_for_publish: Whether publishing a version needs\
+        \ a passing (or skipped) suite\n        evaluation of exactly its current content\
+        \ under exactly this policy."
     CheckSuitePolicyOut:
       properties:
         schemaVersion:
@@ -115628,16 +115640,16 @@ components:
       title: DeployGateReport
       description: "The single aggregate verdict a CD pipeline reads.\n\nAttributes:\n\
         \    schema_version: :data:`DEPLOY_GATE_SCHEMA_VERSION`.\n    status: ``pass``\
-        \ / ``warn`` / ``fail`` — the worst *evaluated* signal.\n    summary: One\
-        \ line a pipeline can print.\n    project_id / project_slug: The gated project.\n\
-        \    revision_id / version_label / version_ref / published_at: The gated published\
+        \ / ``warn`` / ``fail`` — the worst *evaluated* signal.\n    summary: One line\
+        \ a pipeline can print.\n    project_id / project_slug: The gated project.\n \
+        \   revision_id / version_label / version_ref / published_at: The gated published\
         \ revision.\n    evaluated_at: When the verdict was computed.\n    evaluated_signals:\
-        \ How many of the four took part. ``0`` means nothing could be judged and\n\
-        \        ``status`` is ``pass`` by the partial-inputs rule — branch on this,\
-        \ not on the status,\n        if an unconfigured project must not read as\
-        \ a green light.\n    counts: Signals per status.\n    signals: The four,\
-        \ always all of them, in :data:`GATE_SIGNALS` order.\n    policy: The thresholds\
-        \ this verdict was judged under."
+        \ How many of the signals took part. ``0`` means nothing could be judged and\n\
+        \        ``status`` is ``pass`` by the partial-inputs rule — branch on this, not\
+        \ on the status,\n        if an unconfigured project must not read as a green\
+        \ light.\n    counts: Signals per status.\n    signals: All of them, always, in\
+        \ :data:`GATE_SIGNALS` order.\n    policy: The thresholds this verdict was judged\
+        \ under."
     DeployGateThresholds:
       properties:
         lint:
@@ -115652,11 +115664,14 @@ components:
         verification:
           $ref: '#/components/schemas/VerificationThresholds'
           description: Verification.
+        maturity:
+          $ref: '#/components/schemas/MaturityThresholds'
+          description: Maturity.
       additionalProperties: false
       type: object
       title: DeployGateThresholds
-      description: 'The complete ``ctg.gate-policy.v1`` body: one threshold group
-        per signal.'
+      description: 'The complete ``ctg.gate-policy.v1`` body: one threshold group per
+        signal.'
     DeprecationBody:
       properties:
         id:
@@ -126529,7 +126544,7 @@ components:
         signal:
           type: string
           title: Signal
-          description: '`lint` | `breaking` | `consumers` | `verification`.'
+          description: '`lint` | `breaking` | `consumers` | `verification` | `maturity`.'
           example: example
         status:
           type: string
@@ -126575,14 +126590,14 @@ components:
       - reason
       - detail
       title: GateSignal
-      description: "One of the four inputs, judged.\n\nAttributes:\n    signal: One\
-        \ of :data:`GATE_SIGNALS`.\n    status: One of :data:`GATE_STATUSES`.\n  \
-        \  satisfied: Whether the signal met its thresholds; ``None`` when it was\
-        \ not judged at all.\n    reason: Stable machine-readable code — branch on\
-        \ this, not on ``detail``.\n    detail: One human sentence saying what was\
-        \ observed and what the policy makes of it.\n    link: API path a reader follows\
-        \ for the underlying evidence.\n    data: The facts the judgment was made\
-        \ from, so the verdict is checkable without a\n        second request."
+      description: "One of the four inputs, judged.\n\nAttributes:\n    signal: One of\
+        \ :data:`GATE_SIGNALS`.\n    status: One of :data:`GATE_STATUSES`.\n    satisfied:\
+        \ Whether the signal met its thresholds; ``None`` when it was not judged at all.\n\
+        \    reason: Stable machine-readable code — branch on this, not on ``detail``.\n\
+        \    detail: One human sentence saying what was observed and what the policy makes\
+        \ of it.\n    link: API path a reader follows for the underlying evidence.\n \
+        \   data: The facts the judgment was made from, so the verdict is checkable without\
+        \ a\n        second request."
     GatewayAuth:
       properties:
         scheme:
@@ -133755,6 +133770,25 @@ components:
       - xfail
       title: MatrixCellStatus
       description: Outcome of one ``(source_format × emit_target)`` matrix cell.
+    MaturityThresholds:
+      properties:
+        minMaturityLevel:
+          anyOf:
+          - type: string
+            description: Maturity Thresholds schema.
+          - type: 'null'
+            description: Maturity Thresholds schema.
+          title: Minmaturitylevel
+          description: Ladder level key the revision must have reached (e.g. `silver`);
+            `null` uses the style guide's requiredPublishLevel.
+      additionalProperties: false
+      type: object
+      title: MaturityThresholds
+      description: "Where the bar sits for the GVM-1.3 maturity level of the revision.\n\
+        \nAttributes:\n    min_maturity_level: The ladder level key the revision must\
+        \ have reached; ``None`` uses\n        the style guide's ``requiredPublishLevel``\
+        \ (and with neither the signal is\n        ``not_configured``). A key the revision's\
+        \ ladder does not have is ``unknown``."
     McpAnnotationCoverageOut:
       properties:
         tool_count:
@@ -171389,6 +171423,14 @@ components:
           default: true
           description: Fail On Axis Gates.
           example: false
+        failOnMaturityLevel:
+          type: boolean
+          title: Failonmaturitylevel
+          description: Fail the lint CI gate when the revision is below the guide's required
+            publish level (GVM-1.3). Off by default, so existing pipelines keep their
+            exit code.
+          default: false
+          example: false
       type: object
       title: StyleGuideCiOutcomesOut
       description: 'CI outcome toggles on a policy pack / draft guide settings (CLX-1.3,
@@ -172116,8 +172158,7 @@ components:
           additionalProperties: true
           type: object
           title: Axisgates
-          description: 'Per-axis min grade/score floors, e.g. {quality: {minGrade:
-            B}}.'
+          description: 'Per-axis min grade/score floors, e.g. {quality: {minGrade: B}}.'
         requiredCoverage:
           items:
             type: string
@@ -172164,8 +172205,8 @@ components:
           type: array
           title: Componentapprovalstages
           description: Ordered approval stages a component-library revision must pass
-            before it can be published (DCW-3.4); empty (default) means no component
-            approval gate.
+            before it can be published (DCW-3.4); empty (default) means no component approval
+            gate.
           maxItems: 1000
         componentDeprecationNoticeDays:
           type: integer
@@ -172184,9 +172225,9 @@ components:
           - FULL
           - NONE
           title: Compatibilitymode
-          description: 'Compatibility mode classified diffs, compatibility checks,
-            the CI diff gate and the publish guardrail grade by when a request names
-            none (XPC-4.5): BACKWARD (default), FORWARD, FULL or NONE.'
+          description: 'Compatibility mode classified diffs, compatibility checks, the
+            CI diff gate and the publish guardrail grade by when a request names none
+            (XPC-4.5): BACKWARD (default), FORWARD, FULL or NONE.'
           default: BACKWARD
           example: BACKWARD
         compatibilityTransitive:
@@ -172208,6 +172249,16 @@ components:
             WIRE, WIRE_JSON (default), PACKAGE or FILE.'
           default: WIRE_JSON
           example: WIRE_JSON
+        requiredPublishLevel:
+          anyOf:
+          - type: string
+            description: Response payload for style guide policy settings.
+          - type: 'null'
+            description: Response payload for style guide policy settings.
+          title: Requiredpublishlevel
+          description: Key of the maturity level a draft must reach before it publishes
+            (GVM-1.3); a level of the guide's own ladder. null (default) means no level
+            gate.
       type: object
       required:
       - guideId
@@ -172261,8 +172312,8 @@ components:
           - type: 'null'
             description: Request body for style guide policy settings put.
           title: Requiredapprovals
-          description: Approvals required before publish (COL-2.3); 0 disables the
-            gate, omit to leave unchanged.
+          description: Approvals required before publish (COL-2.3); 0 disables the gate,
+            omit to leave unchanged.
         requiredReviewerRole:
           anyOf:
           - type: string
@@ -172282,8 +172333,8 @@ components:
           - type: 'null'
             description: Request body for style guide policy settings put.
           title: Componentapprovalstages
-          description: Ordered component-library approval stages (DCW-3.4), at most
-            5; send [] to turn the gate off, omit to leave unchanged.
+          description: Ordered component-library approval stages (DCW-3.4), at most 5;
+            send [] to turn the gate off, omit to leave unchanged.
         componentDeprecationNoticeDays:
           anyOf:
           - type: integer
@@ -172293,8 +172344,7 @@ components:
           - type: 'null'
             description: Request body for style guide policy settings put.
           title: Componentdeprecationnoticedays
-          description: Minimum deprecation notice in days (DCW-3.4); omit to leave
-            unchanged.
+          description: Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged.
         compatibilityMode:
           anyOf:
           - type: string
@@ -172315,8 +172365,8 @@ components:
           - type: 'null'
             description: Request body for style guide policy settings put.
           title: Compatibilitytransitive
-          description: Check every earlier revision, not only the base (XPC-4.5);
-            omit to leave unchanged.
+          description: Check every earlier revision, not only the base (XPC-4.5); omit
+            to leave unchanged.
         protobufBreakingCategory:
           anyOf:
           - type: string
@@ -172329,8 +172379,19 @@ components:
           - type: 'null'
             description: Request body for style guide policy settings put.
           title: Protobufbreakingcategory
-          description: buf breaking category for Protobuf changes (XPC-4.5); omit
-            to leave unchanged.
+          description: buf breaking category for Protobuf changes (XPC-4.5); omit to leave
+            unchanged.
+        requiredPublishLevel:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Requiredpublishlevel
+          description: Maturity level key a draft must reach before it publishes (GVM-1.3);
+            must be a level of the guide's ladder. Send null to clear it, omit to leave
+            unchanged.
         snapshot:
           type: boolean
           title: Snapshot
@@ -172403,6 +172464,15 @@ components:
             description: Response payload for style guide policy version.
           description: The maturity ladder frozen into this pack (GVM-1.1); null when
             none.
+        requiredPublishLevel:
+          anyOf:
+          - type: string
+            description: Response payload for style guide policy version.
+          - type: 'null'
+            description: Response payload for style guide policy version.
+          title: Requiredpublishlevel
+          description: The level key the publish gate requires, frozen into this pack
+            (GVM-1.3); null when no level gate is armed.
         actorUserId:
           anyOf:
           - type: string
