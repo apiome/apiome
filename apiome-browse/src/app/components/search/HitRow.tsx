@@ -17,6 +17,7 @@ import { MethodBadge } from './httpMethodTone';
 /** The icon tile tone per kind: what a visitor scans first. */
 const KIND_TONE: Record<HitKind, string> = {
   organization: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  product: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
   project: 'bg-blue-700/10 text-blue-800 dark:text-blue-300',
   version: 'bg-amber-400/15 text-amber-700 dark:text-amber-300',
   tag: 'bg-amber-400/15 text-amber-700 dark:text-amber-300',
@@ -58,6 +59,12 @@ function KindIcon({ kind }: { kind: HitKind }) {
       return (
         <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      );
+    case 'product':
+      return (
+        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
         </svg>
       );
     case 'version':

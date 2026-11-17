@@ -149,6 +149,31 @@ When you export a version that a product includes, an OpenAPI export carries the
 the `x-apiome-plans` extension. Other formats have no equivalent, so the plans are dropped and the
 fidelity report says so — see [Understand export fidelity](./export-fidelity.md#api-plans).
 
+## On the portal
+
+A product whose visibility is **Portal** and whose state is **Published** or **Deprecated** gets a
+page in the browse app at `/tenant/<org>/products/<product>`. Anyone can open it; nobody needs to
+sign in to read it. A **Draft** or **Retired** product, and a **Private** or **Workspace** one, is not
+found there.
+
+<Screenshot id="browse-product-page" alt="The Payments product page in Browse: three member APIs with their versions, and Partner, Sandbox and Standard plan cards, each with a Sign in to request access button" />
+
+- **What's included** lists the members. A project links to the version it resolves to — the newest
+  *public, published* version it covers, so a `2.x` member opens the newest public 2.x version. A
+  public MCP server links to its catalog page. A member with nothing public yet is listed without a
+  link, and a catalog item is listed by name only.
+- **Plans** shows one card per **Published** or **Deprecated** plan: the authentication (with the key
+  header or OAuth scopes), the limits, how a request is approved, the key lifetime, the pricing note
+  and a **Terms** link. Draft and retired plans are left out. The billing reference, the gateway
+  environments and the identity-provider configuration are never shown.
+- **Request access.** A reader who is not signed in sees **Sign in to request access**, which signs
+  them in to the portal ([Portal readers](./portal-readers.mdx)) and returns to the product. A
+  signed-in reader sees **Request access**, which stays disabled until requests from the portal open.
+
+The organization's page lists its portal products under **Products**, and the browse app's search
+finds them by name, handle and summary (`type:product`). See
+[Browse published specs](./browse-published-specs.md#api-products).
+
 ## Products in the dependency graph
 
 Each product is a node of the dependency graph with an **Includes** edge to every member. When you

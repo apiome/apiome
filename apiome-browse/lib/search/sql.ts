@@ -17,6 +17,7 @@
  */
 
 import { cardFactsJoinSql } from '../cardFacts';
+import { PORTAL_PRODUCT_ROW_GATES } from '../products/sql';
 import { HIT_KIND_WEIGHT, type HitKind } from './kinds';
 import type { SearchRequest } from './params';
 import { SEVERITY_RANK_BONUS } from './severity';
@@ -49,6 +50,25 @@ const METHOD_KINDS: readonly HitKind[] = ['operation'];
 
 /** Kinds that carry a changelog severity, and so can honour a `severity:` filter. */
 const SEVERITY_KINDS: readonly HitKind[] = ['change'];
+
+/**
+ * Kinds that are not versions of a project (API products, APX-1.3), and so cannot honour a filter
+ * that narrows by project, version, format, paradigm, tag or publish date.
+ */
+const UNVERSIONED_KINDS: readonly HitKind[] = ['product'];
+
+/** Whether a request narrows by something only a project version carries. */
+function hasVersionFilters(request: SearchRequest): boolean {
+  return (
+    request.projects.length > 0 ||
+    request.versions.length > 0 ||
+    request.formats.length > 0 ||
+    request.paradigms.length > 0 ||
+    request.tags.length > 0 ||
+    Boolean(request.after) ||
+    Boolean(request.before)
+  );
+}
 
 /**
  * A small parameter registry: every value becomes `$n`, and repeated values reuse their slot so
@@ -173,6 +193,30 @@ const organizationMember: MemberBuilder = ({ request, params }) => `
       FROM sv
       WHERE ${textPredicate(haystack('sv.tenant_name', 'sv.tenant_slug', 'sv.tenant_description'), request, params)}
       GROUP BY sv.tenant_pk, sv.tenant_slug, sv.tenant_name, sv.tenant_description`;
+
+/**
+ * API products on the portal (APX-1.3, #6100): one hit per `portal` product that is published or
+ * deprecated, in a tenant that has a version in scope (so the organization filter applies). The
+ * product slug rides in `anchor_key`, which `hitHref` turns into the product page link.
+ */
+const productMember: MemberBuilder = ({ request, params }) => `
+      SELECT 'product:' || ap.id::text AS hit_id,
+             'product' AS hit_type,
+             st.tenant_slug, st.tenant_name,
+             NULL::text AS project_slug, NULL::text AS project_name, NULL::text AS version_slug,
+             ap.updated_at AS published_at,
+             ap.name AS title,
+             LEFT(COALESCE(NULLIF(TRIM(ap.summary), ''), 'API product of ' || st.tenant_name), 400) AS snippet,
+             st.tenant_name || ' · API product' AS subtitle,
+             NULL::text AS method, NULL::text AS path, ap.slug AS anchor_key,
+             NULL::text AS source_format, NULL::text AS paradigm,
+             ${rankExpr('product', ['ap.name', 'ap.slug'], request, params)} AS rank,
+             ap.name AS name_key,
+             NULL::text AS severity
+      FROM apiome.api_products ap
+      JOIN (SELECT DISTINCT tenant_pk, tenant_slug, tenant_name FROM sv) st ON st.tenant_pk = ap.tenant_id
+      WHERE ${PORTAL_PRODUCT_ROW_GATES}
+        AND ${textPredicate(haystack('ap.name', 'ap.slug', 'ap.summary'), request, params)}`;
 
 const projectMember: MemberBuilder = ({ request, params }) => `
       SELECT 'project:' || sv.project_id::text AS hit_id,
@@ -423,6 +467,7 @@ const changeMember: MemberBuilder = ({ request, params }) => {
 
 const MEMBERS: Readonly<Record<HitKind, MemberBuilder>> = {
   organization: organizationMember,
+  product: productMember,
   project: projectMember,
   version: versionMember,
   tag: tagMember,
@@ -438,7 +483,8 @@ const MEMBERS: Readonly<Record<HitKind, MemberBuilder>> = {
 /**
  * The kinds a request can produce at all, regardless of the tab: a `method:` filter only means
  * something for operations, a `path:` filter only for path-attached rows, a `severity:` filter only
- * for changelog entries. Members outside this
+ * for changelog entries, and a project / version / format / paradigm / tag / date filter rules out
+ * API products. Members outside this
  * set are not even run, so their facet counts are an honest zero.
  */
 export function applicableKinds(request: SearchRequest): HitKind[] {
@@ -446,6 +492,7 @@ export function applicableKinds(request: SearchRequest): HitKind[] {
   if (request.methods.length > 0) kinds = kinds.filter((k) => METHOD_KINDS.includes(k));
   if (request.paths.length > 0) kinds = kinds.filter((k) => PATH_KINDS.includes(k));
   if (request.severities.length > 0) kinds = kinds.filter((k) => SEVERITY_KINDS.includes(k));
+  if (hasVersionFilters(request)) kinds = kinds.filter((k) => !UNVERSIONED_KINDS.includes(k));
   return [...kinds];
 }
 

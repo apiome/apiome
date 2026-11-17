@@ -11,6 +11,7 @@
 
 export const HIT_KINDS = [
   'organization',
+  'product',
   'project',
   'version',
   'tag',
@@ -28,6 +29,7 @@ export type HitKind = (typeof HIT_KINDS)[number];
 /** Singular / plural labels for each kind, as the chips and counts read them. */
 export const HIT_KIND_LABELS: Readonly<Record<HitKind, { one: string; many: string }>> = {
   organization: { one: 'Organization', many: 'Organizations' },
+  product: { one: 'API product', many: 'API products' },
   project: { one: 'Project', many: 'Projects' },
   version: { one: 'Version notes', many: 'Version notes' },
   tag: { one: 'Tag', many: 'Tags' },
@@ -49,6 +51,8 @@ export const HIT_KIND_LABELS: Readonly<Record<HitKind, { one: string; many: stri
 export const HIT_KIND_WEIGHT: Readonly<Record<HitKind, number>> = {
   project: 9,
   organization: 8,
+  // An API product (APX-1.3) is a destination like a project: what a consumer requests access to.
+  product: 8,
   operation: 8,
   schema: 7,
   tag: 5,
@@ -78,7 +82,7 @@ export const SCOPE_KINDS: Readonly<Record<SearchScope, readonly HitKind[]>> = {
   all: HIT_KINDS,
   operations: ['operation', 'parameter', 'request_body', 'response'],
   schemas: ['schema', 'property'],
-  catalog: ['organization', 'project', 'version', 'tag'],
+  catalog: ['organization', 'product', 'project', 'version', 'tag'],
   mcp: [],
 };
 
@@ -88,6 +92,8 @@ const KIND_ALIASES: Readonly<Record<string, HitKind>> = {
   tenant: 'organization',
   organisation: 'organization',
   api: 'project',
+  products: 'product',
+  apiproduct: 'product',
   notes: 'version',
   release: 'version',
   op: 'operation',

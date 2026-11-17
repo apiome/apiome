@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import type { BrowseFacetAxis, BrowseFacetSelection } from '../../../../lib/browseFacets';
 import {
@@ -28,6 +29,7 @@ import {
   type CardFacts,
   type ProjectSort,
 } from '../../../../lib/cardFacts';
+import { productHref, type PortalProductSummary } from '../../../../lib/products/portalProducts';
 
 interface Tenant {
   id: string;
@@ -56,6 +58,8 @@ interface Project extends Partial<CardFacts> {
 interface TenantClientProps {
   tenant: Tenant;
   projects: Project[];
+  /** The tenant's API products on the portal (APX-1.3, #6100); the section hides when empty. */
+  products?: PortalProductSummary[];
   tenantSlug: string;
 }
 
@@ -95,7 +99,7 @@ function projectFacetMeta(project: Project): { label: string; value?: string }[]
   return meta;
 }
 
-export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps) {
+export function TenantClient({ tenant, projects, products = [], tenantSlug }: TenantClientProps) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const [layout, setLayout] = useState<LayoutMode>(readLayoutPreference);
   const [query, setQuery] = useState('');
@@ -201,6 +205,8 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
             xRegistry
           </a>
         </div>
+
+        {products.length > 0 && <ProductsSection products={products} tenantSlug={tenantSlug} />}
 
         <section className="space-y-4">
           <header className="flex flex-wrap items-end justify-between gap-3">
@@ -446,6 +452,43 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
         </section>
       </div>
     </AppShell>
+  );
+}
+
+/**
+ * The tenant's API products (APX-1.3, #6100): one card per `portal` product, linking to its page.
+ */
+function ProductsSection({ products, tenantSlug }: { products: PortalProductSummary[]; tenantSlug: string }) {
+  return (
+    <section id="products" className="space-y-3" aria-labelledby="tenant-products-heading" data-testid="tenant-products">
+      <div>
+        <h2 id="tenant-products-heading" className="product-section-title">
+          Products
+        </h2>
+        <p className="product-section-hint">
+          Bundles of APIs you can request access to, each with its plans.
+        </p>
+      </div>
+      <ul className="product-cards">
+        {products.map((product) => (
+          <li key={product.slug}>
+            <Link href={productHref(tenantSlug, product.slug)} className="product-card" data-testid="tenant-product-card">
+              <span className="flex items-center justify-between gap-2">
+                <span className="product-card-name">{product.name}</span>
+                {product.state === 'deprecated' && (
+                  <span className="product-badge product-badge-warning">Deprecated</span>
+                )}
+              </span>
+              <span className="product-card-summary">{product.summary || 'An API product.'}</span>
+              <span className="product-card-facts">
+                {product.memberCount} {product.memberCount === 1 ? 'member' : 'members'} · {product.planCount}{' '}
+                {product.planCount === 1 ? 'plan' : 'plans'}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
