@@ -193,8 +193,9 @@ describe('resolveAccountDecision — targeted branches', () => {
   });
 
   test('a verified claim from an untrusted provider is treated as unverified', () => {
-    expect(AUTO_LINK_TRUSTED_PROVIDERS.has('bitbucket')).toBe(false);
-    expect(resolveAccountDecision({ ...base, provider: 'bitbucket', emailUser: OK_USER }))
+    // WeChat is link-only (no email), so it is the one live provider outside the trust set.
+    expect(AUTO_LINK_TRUSTED_PROVIDERS.has('wechat')).toBe(false);
+    expect(resolveAccountDecision({ ...base, provider: 'wechat', emailUser: OK_USER }))
       .toEqual({ action: 'reject', code: 'unverified-email' });
   });
 

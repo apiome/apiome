@@ -155,12 +155,16 @@ with neither set the line is left out, rather than linking to nothing.
 | VK | `vk` | client ID, client secret | — |
 | WeChat | `wechat` | client ID, client secret | — |
 | Atlassian | `atlassian` | client ID, client secret | — |
+| Bitbucket | `bitbucket` | client ID, client secret | — |
 
 **OIDC** is any conformant OpenID provider (Authentik, PingFederate, ZITADEL and others); one
 generic OIDC provider is supported per installation.
 
 **Atlassian** signs people in with the Atlassian account they use for Jira and Confluence. Its
 endpoints are fixed, so it needs only a client ID and a client secret.
+
+**Bitbucket** is Bitbucket Cloud. Its **client ID** is the OAuth consumer's **Key** and its
+**client secret** the consumer's **Secret**. Bitbucket Data Center is not supported.
 
 ## Register the OAuth application
 
@@ -194,6 +198,7 @@ URI:
 | OIDC | A confidential client with the authorization-code grant | The issuer must serve `<issuer>/.well-known/openid-configuration` and emit `email` and `email_verified` |
 | Auth0 | **Applications → Create Application → Regular Web Applications** | Issuer: `https://<tenant>.auth0.com`, or your custom domain |
 | Atlassian | [Developer console](https://developer.atlassian.com/console/myapps/): **Create → OAuth 2.0 integration** | Under **Permissions**, add the **User identity API** with the **`read:me`** and **`read:account`** scopes. Under **Authorization**, add **OAuth 2.0 (3LO)** with the callback URL. Set **Distribution** to **Sharing** so people outside your own Atlassian account can sign in. No issuer |
+| Bitbucket | Workspace **Settings → OAuth consumers → Add consumer** | Keep **This is a private consumer** ticked. Under **Permissions → Account**, tick **Email** and **Read** — without **Email**, sign-in fails with *email required*. People sign in with their **primary** Bitbucket address, which must be confirmed. No issuer |
 
 The full per-provider guide — including LINE, VK and WeChat, the environment variable matrix, boot
 validation and secret encryption — is
@@ -275,6 +280,7 @@ each extra setting. The client credentials are:
 | VK | `VK_CLIENT_ID` | `VK_CLIENT_SECRET` |
 | WeChat | `WECHAT_CLIENT_ID` | `WECHAT_CLIENT_SECRET` |
 | Atlassian | `ATLASSIAN_CLIENT_ID` | `ATLASSIAN_CLIENT_SECRET` |
+| Bitbucket | `BITBUCKET_CLIENT_ID` | `BITBUCKET_CLIENT_SECRET` |
 
 `apiome-ui/.env.example` lists them all with their extra settings — see
 [Operating Apiome](./operating-apiome.mdx).

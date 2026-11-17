@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.735.0] - 2026-11-17
+
+### Added
+- **Bitbucket sign-in (OLO-9.9, #4992)** — OpenAPI 1.593.2:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `bitbucket` (label `Bitbucket`, `available`), a
+    credentials-only provider: required fields `client_id` (`BITBUCKET_CLIENT_ID`, the OAuth consumer Key) and
+    `client_secret` (`BITBUCKET_CLIENT_SECRET`, the consumer Secret), no issuer. `GET /v1/admin/auth-providers`
+    lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/bitbucket` and the resolved-config endpoint accept
+    it like any other provider. The canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - No migration: `bitbucket` has been in the provider vocabulary CHECKs since V181. No request or response
+    shape changed.
+
 ## [1.734.0] - 2026-11-17
 
 ### Added

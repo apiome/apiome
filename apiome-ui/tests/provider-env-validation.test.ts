@@ -67,6 +67,8 @@ const ALL_ENABLED_ENV = {
   WECHAT_CLIENT_SECRET: 'wx-secret',
   ATLASSIAN_CLIENT_ID: 'atl-id',
   ATLASSIAN_CLIENT_SECRET: 'atl-secret',
+  BITBUCKET_CLIENT_ID: 'bb-key',
+  BITBUCKET_CLIENT_SECRET: 'bb-secret',
 };
 
 describe('providerEnvIssues', () => {

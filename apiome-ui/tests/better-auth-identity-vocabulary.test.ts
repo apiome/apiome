@@ -139,6 +139,7 @@ describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK',
       'auth0',
       'aws',
       'azure',
+      'bitbucket',
       'github',
       'gitlab',
       'google',
@@ -199,11 +200,11 @@ describe('identities persist under the correct slug on the Better Auth path', ()
   });
 
   test('a slug outside the linkable vocabulary is refused, never persisted', async () => {
-    // `bitbucket` is in the DB CHECK (forward-looking for OLO-9.9) but not yet linkable, so the
+    // `gcp` is in the DB CHECK but is not a sign-in provider, so the
     // adapter refuses it before any write — LINKABLE_PROVIDERS, not the CHECK, is the dispatch gate.
     const { store, calls } = makeStore({ identityUserId: OK_USER.id });
 
-    const result = await resolveBetterAuthOAuthSignIn('bitbucket', makeCtx(), null, store);
+    const result = await resolveBetterAuthOAuthSignIn('gcp', makeCtx(), null, store);
 
     expect(result).toBe('/login?error=provider-not-configured');
     expect(calls.recordIdentityLogin).toHaveLength(0);

@@ -245,7 +245,7 @@ describe('each contract code has an emission path forcing it', () => {
     // context (account-disabled / account-not-verified are forced above via resolveAccountDecision,
     // the engine-neutral account gate both the credential and OAuth paths run through).
     const { resolveBetterAuthOAuthSignIn } = await import('../lib/auth/better-auth-account-resolution');
-    expect(await resolveBetterAuthOAuthSignIn('bitbucket', {} as never)).toBe(
+    expect(await resolveBetterAuthOAuthSignIn('sourcehut', {} as never)).toBe(
       '/login?error=provider-not-configured'
     );
   });

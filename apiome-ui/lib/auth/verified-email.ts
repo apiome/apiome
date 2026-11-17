@@ -1,5 +1,5 @@
 /**
- * GitHub/GitLab verified-email parity (OLO-2.5, #4197).
+ * GitHub/GitLab/Bitbucket verified-email parity (OLO-2.5, #4197; Bitbucket OLO-9.9, #4992).
  *
  * The OLO-1.3 engine only trusts an email the provider *proved* is verified
  * (`resolveOAuthEmailVerified` reads `email_verified` off the raw OAuth profile). Neither
@@ -15,6 +15,9 @@
  *     email plus `confirmed_at` (set once the user completed email confirmation; GitLab only
  *     promotes confirmed addresses to primary). `email_verified` is true only when both are
  *     present.
+ *   - **Bitbucket** — the `/2.0/user` profile carries no email at all. With the `email` scope,
+ *     `/2.0/user/emails` lists every address with `is_primary`/`is_confirmed` flags. The primary
+ *     address is the sign-in email; `email_verified` is true only when that entry is confirmed.
  *
  * Everything fails closed: an unreachable emails API, a malformed body, or a missing signal
  * resolves to unverified, which the engine classifies under OLO-1.3 rule 4 (structured
@@ -204,6 +207,46 @@ export function resolveGitlabEmailVerified(profile: unknown): boolean {
     typeof confirmedAt === 'string' &&
     confirmedAt.trim().length > 0
   );
+}
+
+/** Bitbucket OAuth scopes: profile read plus the emails API (OLO-9.9). */
+export const BITBUCKET_OAUTH_SCOPE = 'account email';
+
+/** One entry of the Bitbucket `/2.0/user/emails` response (`values[]`). */
+export interface BitbucketEmailEntry {
+  email: string;
+  is_primary?: boolean;
+  is_confirmed?: boolean;
+  type?: string;
+}
+
+/**
+ * Decide the Bitbucket sign-in email and its verified status from the `/2.0/user/emails` response
+ * (a paginated envelope whose `values` array holds the entries):
+ *
+ *   - A primary entry → use its address; verified only when it is `is_confirmed: true` (an
+ *     unconfirmed primary still surfaces the address so the engine rejects it as UNVERIFIED_EMAIL
+ *     rather than "no email").
+ *   - No primary entry, or no usable list (API failure, malformed body) → no email, unverified.
+ *
+ * A non-primary address is never used, confirmed or not: the primary is the one Bitbucket itself
+ * treats as the account's address.
+ *
+ * @param body The parsed `/2.0/user/emails` response, or null when unavailable.
+ * @returns The address to use and whether Bitbucket proved it confirmed.
+ */
+export function resolveBitbucketVerifiedEmail(body: unknown): VerifiedEmailResolution {
+  const values = (body as { values?: unknown } | null | undefined)?.values;
+  const entries = Array.isArray(values) ? (values as Array<BitbucketEmailEntry | null>) : [];
+  const primary = entries.find(
+    (entry): entry is BitbucketEmailEntry =>
+      !!entry &&
+      entry.is_primary === true &&
+      typeof entry.email === 'string' &&
+      entry.email.trim().length > 0
+  );
+  if (!primary) return { email: null, emailVerified: false };
+  return { email: primary.email, emailVerified: primary.is_confirmed === true };
 }
 
 /**

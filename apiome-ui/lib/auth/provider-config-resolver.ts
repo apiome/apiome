@@ -105,6 +105,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   wechat: { clientId: 'WECHAT_CLIENT_ID', clientSecret: 'WECHAT_CLIENT_SECRET' },
   // Atlassian (OLO-9.8, #4991): credentials-only; fixed endpoints, no issuer extra.
   atlassian: { clientId: 'ATLASSIAN_CLIENT_ID', clientSecret: 'ATLASSIAN_CLIENT_SECRET' },
+  // Bitbucket (OLO-9.9, #4992): credentials-only; fixed endpoints, no issuer extra.
+  bitbucket: { clientId: 'BITBUCKET_CLIENT_ID', clientSecret: 'BITBUCKET_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

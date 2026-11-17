@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -46,6 +46,9 @@
  *  - **Atlassian (OLO-9.8):** fixed Atlassian endpoints (`auth.atlassian.com` / `api.atlassian.com/me`),
  *    `audience=api.atlassian.com`; PKCE on; `email_verified` from `/me` honored when present,
  *    otherwise fail-closed link-first.
+ *  - **Bitbucket (OLO-9.9):** fixed Bitbucket Cloud endpoints (`bitbucket.org/site/oauth2`,
+ *    `api.bitbucket.org/2.0/user`); the profile has no email, so `/2.0/user/emails` supplies the
+ *    primary address and its confirmed flag (the GitHub `/user/emails` pattern).
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -91,6 +94,7 @@ import {
 import { resolutionStore } from './resolution-store';
 import { enabledProviders, readEnvString } from './provider-registry';
 import {
+  BITBUCKET_OAUTH_SCOPE,
   GITHUB_OAUTH_SCOPE,
   GITLAB_OAUTH_SCOPE,
   githubApiBaseUrl,
@@ -98,6 +102,7 @@ import {
   resolveGithubVerifiedEmail,
   resolveGitlabEmailVerified,
   type GithubEmailEntry,
+  resolveBitbucketVerifiedEmail,
 } from './verified-email';
 import {
   assertGoogleHostedDomain,
@@ -505,6 +510,13 @@ const ATLASSIAN_USERINFO_URL = 'https://api.atlassian.com/me';
 /** The `audience` Atlassian's authorize endpoint requires for tokens that call `api.atlassian.com`. */
 const ATLASSIAN_AUDIENCE = 'api.atlassian.com';
 
+/** Bitbucket Cloud OAuth 2.0 endpoints and the 2.0 REST API user resources (OLO-9.9). */
+const BITBUCKET_AUTHORIZE_URL = 'https://bitbucket.org/site/oauth2/authorize';
+const BITBUCKET_TOKEN_URL = 'https://bitbucket.org/site/oauth2/access_token';
+const BITBUCKET_USERINFO_URL = 'https://api.bitbucket.org/2.0/user';
+/** The emails list, asked for at the API's largest page so the primary address is on page one. */
+const BITBUCKET_EMAILS_URL = 'https://api.bitbucket.org/2.0/user/emails?pagelen=100';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -747,6 +759,53 @@ async function normalizeAtlassian(
   };
 }
 
+/**
+ * Normalize a Bitbucket sign-in (OLO-9.9): fetch `/2.0/user`, then `/2.0/user/emails` — the profile
+ * itself carries no email — and stamp the primary address + `email_verified` (its confirmed flag)
+ * onto the profile before the resolution engine runs. The identity is keyed on the Bitbucket
+ * `uuid` (falling back to the Atlassian `account_id`); the mutable `username` is never the key.
+ * A failed fetch yields no account id / no email, which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeBitbucket(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const accessToken = tokens.accessToken ?? '';
+  const body = accessToken
+    ? await fetchJsonWithToken(BITBUCKET_USERINFO_URL, accessToken, fetchImpl)
+    : null;
+  const profile: Record<string, unknown> =
+    body && typeof body === 'object' ? { ...(body as object) } : {};
+  const emailsBody = accessToken
+    ? await fetchJsonWithToken(BITBUCKET_EMAILS_URL, accessToken, fetchImpl)
+    : null;
+
+  const resolution = resolveBitbucketVerifiedEmail(emailsBody);
+  profile.email = resolution.email;
+  profile.email_verified = resolution.emailVerified;
+
+  const links = profile.links as { avatar?: { href?: unknown } } | null | undefined;
+  const avatar = links?.avatar?.href;
+  return {
+    accountId:
+      (typeof profile.uuid === 'string' && profile.uuid) ||
+      (typeof profile.account_id === 'string' && profile.account_id) ||
+      '',
+    profile,
+    email: resolution.email,
+    name:
+      (typeof profile.display_name === 'string' && profile.display_name) ||
+      (typeof profile.nickname === 'string' && profile.nickname) ||
+      (typeof profile.username === 'string' && profile.username) ||
+      null,
+    image: typeof avatar === 'string' ? avatar : null,
+  };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -785,6 +844,7 @@ const NORMALIZERS: Record<
   vk: (tokens, env, fetchImpl) => normalizeVk(tokens, env, fetchImpl),
   wechat: (tokens, env, fetchImpl) => normalizeWechat(tokens, env, fetchImpl),
   atlassian: (tokens, _env, fetchImpl) => normalizeAtlassian(tokens, fetchImpl),
+  bitbucket: (tokens, _env, fetchImpl) => normalizeBitbucket(tokens, fetchImpl),
 };
 
 /**
@@ -817,7 +877,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * own account handling sees the identical verified signal the engine decided over.
  *
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
- *   oidc | auth0 | line | vk | wechat | atlassian).
+ *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1134,6 +1194,25 @@ export function buildGenericOAuthConfig(
         scopes: ['read:me', 'read:account'],
         pkce: true,
         authorizationUrlParams: { audience: ATLASSIAN_AUDIENCE, prompt: 'consent' },
+        getUserInfo,
+      };
+    }
+    case 'bitbucket': {
+      return {
+        providerId: 'bitbucket',
+        clientId: readEnvString(env, 'BITBUCKET_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'BITBUCKET_CLIENT_SECRET') ?? '',
+        // Fixed Bitbucket Cloud endpoints — no issuer. The `email` scope unlocks
+        // `/2.0/user/emails` (see normalizeBitbucket).
+        authorizationUrl: BITBUCKET_AUTHORIZE_URL,
+        tokenUrl: BITBUCKET_TOKEN_URL,
+        userInfoUrl: BITBUCKET_USERINFO_URL,
+        scopes: BITBUCKET_OAUTH_SCOPE.split(/\s+/).filter(Boolean),
+        // Bitbucket's documented code exchange authenticates the consumer with HTTP Basic
+        // (key:secret) and does not document PKCE; like GitHub, this confidential client relies
+        // on the secret and Better Auth's `state` check.
+        authentication: 'basic',
+        pkce: false,
         getUserInfo,
       };
     }

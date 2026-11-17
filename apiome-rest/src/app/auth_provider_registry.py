@@ -121,7 +121,8 @@ class ProviderDescriptor:
 # a tenant-issuer config field; ``line`` is available (OLO-9.41, #5054) as credentials-only LINE Login;
 # ``vk`` is available (OLO-9.42, #5055) as credentials-only VK ID (Russia / CIS country MVP);
 # ``wechat`` is available (OLO-9.43, #5056) as credentials-only WeChat Open Platform (China country MVP);
-# ``atlassian`` is available (OLO-9.8, #4991) as credentials-only Atlassian OAuth 2.0 (fixed endpoints, no issuer).
+# ``atlassian`` is available (OLO-9.8, #4991) as credentials-only Atlassian OAuth 2.0 (fixed endpoints, no issuer);
+# ``bitbucket`` is available (OLO-9.9, #4992) as credentials-only Bitbucket Cloud OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -202,6 +203,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Atlassian",
         STATUS_AVAILABLE,
         client_credential_fields("ATLASSIAN_CLIENT_ID", "ATLASSIAN_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "bitbucket",
+        "Bitbucket",
+        STATUS_AVAILABLE,
+        client_credential_fields("BITBUCKET_CLIENT_ID", "BITBUCKET_CLIENT_SECRET"),
     ),
 )
 

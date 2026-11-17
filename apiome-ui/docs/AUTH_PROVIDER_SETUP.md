@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -121,6 +121,8 @@ config is stored in the database need none of them set; see
 | `WECHAT_LANG` | WeChat | No (default `cn`) | QR page language: `cn` or `en` |
 | `ATLASSIAN_CLIENT_ID` | Atlassian | To enable Atlassian | OAuth 2.0 (3LO) integration **Client ID** |
 | `ATLASSIAN_CLIENT_SECRET` | Atlassian | To enable Atlassian | OAuth 2.0 (3LO) integration **Secret** |
+| `BITBUCKET_CLIENT_ID` | Bitbucket | To enable Bitbucket | OAuth consumer **Key** |
+| `BITBUCKET_CLIENT_SECRET` | Bitbucket | To enable Bitbucket | OAuth consumer **Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -678,6 +680,38 @@ The identity is keyed on the Atlassian `account_id`. **Email verified semantics:
 false the engine fail-closes (**link-first** — explicit link intent or an already-bound identity).
 A profile with no email surfaces `email-required` — an Atlassian account whose email visibility is
 restricted must link from **Linked accounts** first.
+
+## Bitbucket Cloud — OAuth consumer (OLO-9.9)
+
+1. In Bitbucket, open the workspace's **Settings → OAuth consumers** and choose **Add consumer**
+   (or open an existing one).
+2. Set the **Callback URL** to:
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/bitbucket`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/bitbucket` for local dev)
+3. Leave **This is a private consumer** ticked — Apiome holds the secret server-side.
+4. Under **Permissions → Account**, tick **Email** and **Read**.
+5. Save, then copy the consumer's **Key** and **Secret**.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+BITBUCKET_CLIENT_ID=<Key>
+BITBUCKET_CLIENT_SECRET=<Secret>
+```
+
+The sign-in flow uses fixed Bitbucket Cloud endpoints — there is no issuer to configure:
+
+- Authorize: `https://bitbucket.org/site/oauth2/authorize` with the `account email` scopes
+- Token: `https://bitbucket.org/site/oauth2/access_token`, the consumer authenticated with HTTP
+  Basic (`Key:Secret`); no PKCE (state is enforced)
+- User info: GET `https://api.bitbucket.org/2.0/user`, then GET
+  `https://api.bitbucket.org/2.0/user/emails` — the profile itself carries no email
+
+The identity is keyed on the Bitbucket user `uuid`. **Email verified semantics:** the sign-in
+email is the account's **primary** address, and it is verified only when Bitbucket marks that
+address **confirmed** (`is_confirmed`). An unconfirmed primary address fail-closes
+(`unverified-email`); a consumer without the **Email** permission, or an account with no primary
+address, surfaces `email-required`. Bitbucket Data Center is not covered — the endpoints are
+Bitbucket Cloud's.
 
 ## Secrets handling
 
