@@ -88,6 +88,10 @@ const ALL_ENABLED_ENV = {
   RAILWAY_CLIENT_SECRET: 'rw-secret',
   HUBSPOT_CLIENT_ID: 'hs-id',
   HUBSPOT_CLIENT_SECRET: 'hs-secret',
+  APPLE_CLIENT_ID: 'com.example.web',
+  APPLE_PRIVATE_KEY: 'ap-key',
+  APPLE_TEAM_ID: 'A1B2C3D4E5',
+  APPLE_KEY_ID: 'ABC123DEFG',
 };
 
 describe('registry vocabulary', () => {
@@ -120,6 +124,7 @@ describe('registry vocabulary', () => {
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
   });
 
@@ -151,6 +156,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('vercel')?.label).toBe('Vercel');
     expect(getProviderDescriptor('railway')?.label).toBe('Railway');
     expect(getProviderDescriptor('hubspot')?.label).toBe('HubSpot');
+    expect(getProviderDescriptor('apple')?.label).toBe('Apple');
   });
 
   it('pins each available provider env contract', () => {
@@ -265,9 +271,22 @@ describe('registry vocabulary', () => {
       'HUBSPOT_CLIENT_ID',
       'HUBSPOT_CLIENT_SECRET',
     ]);
+    // Apple (OLO-9.30): the sealed secret is the .p8 key; Team ID and Key ID are config extras.
+    expect(getProviderDescriptor('apple')?.requiredEnvKeys).toEqual([
+      'APPLE_CLIENT_ID',
+      'APPLE_PRIVATE_KEY',
+      'APPLE_TEAM_ID',
+      'APPLE_KEY_ID',
+    ]);
+    expect(getProviderDescriptor('apple')?.requiredFields).toEqual([
+      { field: 'client_id', kind: 'client_id', envKey: 'APPLE_CLIENT_ID' },
+      { field: 'private_key', kind: 'client_secret', envKey: 'APPLE_PRIVATE_KEY' },
+      { field: 'team_id', kind: 'config', envKey: 'APPLE_TEAM_ID' },
+      { field: 'key_id', kind: 'config', envKey: 'APPLE_KEY_ID' },
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.29, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.30, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -292,6 +311,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('vercel')?.status).toBe('available');
     expect(getProviderDescriptor('railway')?.status).toBe('available');
     expect(getProviderDescriptor('hubspot')?.status).toBe('available');
+    expect(getProviderDescriptor('apple')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -341,6 +361,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('vercel', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('railway', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('hubspot', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('apple', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -514,6 +535,17 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('hubspot', { HUBSPOT_CLIENT_ID: 'x', HUBSPOT_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('hubspot', { HUBSPOT_CLIENT_ID: 'x' })).toBe(false);
+    const apple = {
+      APPLE_CLIENT_ID: 'x',
+      APPLE_PRIVATE_KEY: 'k',
+      APPLE_TEAM_ID: 't',
+      APPLE_KEY_ID: 'i',
+    };
+    expect(isProviderEnabled('apple', apple)).toBe(true);
+    // Every one of the four is required: the JWT cannot be signed without any of them.
+    for (const key of Object.keys(apple)) {
+      expect(isProviderEnabled('apple', { ...apple, [key]: '' })).toBe(false);
+    }
   });
 
   it('never enables unknown ids', () => {
@@ -551,6 +583,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -585,6 +618,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
   });
 
@@ -617,6 +651,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
   });
 });
@@ -653,6 +688,7 @@ describe('providerSummaries', () => {
       { id: 'vercel', label: 'Vercel', status: 'available', enabled: false },
       { id: 'railway', label: 'Railway', status: 'available', enabled: false },
       { id: 'hubspot', label: 'HubSpot', status: 'available', enabled: false },
+      { id: 'apple', label: 'Apple', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

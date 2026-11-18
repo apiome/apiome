@@ -248,6 +248,17 @@
         { "field": "client_id", "kind": "client_id", "env_key": "HUBSPOT_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "HUBSPOT_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "apple",
+      "label": "Apple",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "APPLE_CLIENT_ID" },
+        { "field": "private_key", "kind": "client_secret", "env_key": "APPLE_PRIVATE_KEY" },
+        { "field": "team_id", "kind": "config", "env_key": "APPLE_TEAM_ID" },
+        { "field": "key_id", "kind": "config", "env_key": "APPLE_KEY_ID" }
+      ]
     }
   ]
 }

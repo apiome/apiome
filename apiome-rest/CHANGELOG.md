@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.752.0] - 2026-11-17
+
+### Added
+- **Sign in with Apple (OLO-9.30, #5043)** — OpenAPI 1.596.14:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `apple` (label `Apple`, `available`). Apple has no
+    static client secret, so its required fields are `client_id` (`APPLE_CLIENT_ID`, the Services ID),
+    `private_key` (`APPLE_PRIVATE_KEY`, kind `client_secret` — the `.p8` key is stored in the sealed,
+    write-only secret slot), and the `config` extras `team_id` (`APPLE_TEAM_ID`) and `key_id`
+    (`APPLE_KEY_ID`). Enabling Apple from the database names whichever of the four is missing in
+    `missing_fields`. `GET /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE
+    /v1/admin/auth-providers/apple` and the resolved-config endpoint accept it like any other provider.
+    The canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - The ES256 client-secret JWT is minted in `apiome-ui` for each code exchange; the REST API stores and
+    serves only the key. Apple is a **trusted** provider (`email_verified` id-token claim); that decision
+    is made in `apiome-ui`.
+  - No migration: `apple` has been in the provider vocabulary CHECKs since V395. No request or response
+    shape changed.
+
 ## [1.751.0] - 2026-11-17
 
 ### Added

@@ -136,6 +136,7 @@ const makeCtx = (): BetterAuthOAuthContext => ({
 describe('slug vocabulary parity: registry & resolution gates ⊆ the DB CHECK', () => {
   test('the enabled registry ids are exactly the live available providers', () => {
     expect([...ENABLED_IDS].sort()).toEqual([
+      'apple',
       'atlassian',
       'auth0',
       'aws',

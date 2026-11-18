@@ -244,6 +244,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   vercel: 'Vercel',
   railway: 'Railway',
   hubspot: 'HubSpot',
+  apple: 'Apple',
 };
 
 /**

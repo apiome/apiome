@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -106,6 +106,12 @@
  *    token-info resource `api.hubapi.com/oauth/v1/access-tokens/{token}`, whose `user` email
  *    carries no verified flag (Better Auth `hubspot()` hard-codes `emailVerified: false`) →
  *    fail-closed link-first.
+ *  - **Apple (OLO-9.30):** Sign in with Apple on the fixed `appleid.apple.com` endpoints, scopes
+ *    `name email`, `response_mode=form_post` (bridged POST → GET in `apple-sign-in.ts`), no PKCE;
+ *    a custom `getToken` mints the ES256 client-secret JWT from the `.p8` key for each exchange.
+ *    The id token's `email_verified` is re-stamped fail-closed (trusted when verified);
+ *    `is_private_email` relay addresses are kept on the profile; the name, sent on first consent
+ *    only, rides the bridged callback.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -174,6 +180,15 @@ import { oidcIssuerBaseUrl, oidcScopes } from './oidc-issuer';
 import { auth0IssuerBaseUrl } from './auth0-issuer';
 import { salesforceIssuerBaseUrl, salesforceUserInfoUrl } from './salesforce-issuer';
 import { entraAuthorityBaseUrl, entraIdProfile, type EntraIdProfile } from './entra-provider';
+import {
+  APPLE_AUTHORIZE_URL,
+  APPLE_ISSUER,
+  APPLE_SCOPES,
+  APPLE_TOKEN_URL,
+  appleCredentials,
+  createAppleClientSecret,
+  currentAppleFirstConsentName,
+} from './apple-sign-in';
 
 /* ── Request-scoped redirect override ──────────────────────────────────────────────────────── */
 
@@ -1639,6 +1654,125 @@ async function normalizeHubspot(
   return { accountId, profile, email, name: email, image: null };
 }
 
+/**
+ * Exchange an Apple authorization code for tokens (OLO-9.30): POST the code to Apple's token
+ * endpoint with a client secret minted for this exchange (`createAppleClientSecret` — an ES256 JWT
+ * signed with the `.p8` key), as a form body. A key that cannot be used is logged by its reason
+ * (never its material) and rethrown, so Better Auth aborts the callback.
+ *
+ * @param data Code-exchange inputs from Better Auth's generic-OAuth callback.
+ * @param env Environment carrying the four `APPLE_*` values.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @param nowSeconds Issue time of the client secret, in epoch seconds (injectable for tests).
+ * @returns The OAuth2 tokens, including Apple's `id_token`.
+ * @throws Error when the client secret cannot be minted or Apple refuses the exchange.
+ */
+export async function exchangeAppleAuthorizationCode(
+  data: { code: string; redirectURI: string; codeVerifier?: string; deviceId?: string },
+  env: Record<string, string | undefined> = process.env,
+  fetchImpl: FetchLike = fetch as unknown as FetchLike,
+  nowSeconds?: number
+): Promise<OAuth2Tokens> {
+  const credentials = appleCredentials(env);
+  let clientSecret: string;
+  try {
+    clientSecret = createAppleClientSecret(credentials, nowSeconds);
+  } catch (error) {
+    console.error(
+      '[betterAuthOAuthProviders] apple client secret could not be minted:',
+      error instanceof Error ? error.message : 'unknown error'
+    );
+    throw error;
+  }
+  const body = new URLSearchParams({
+    client_id: credentials.clientId,
+    client_secret: clientSecret,
+    code: data.code,
+    grant_type: 'authorization_code',
+    redirect_uri: data.redirectURI,
+  });
+  if (data.codeVerifier) body.set('code_verifier', data.codeVerifier);
+  const res = await fetchImpl(APPLE_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'apiome',
+    },
+    body: body.toString(),
+  });
+  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!res.ok || !json || typeof json !== 'object') {
+    const reason = json && typeof json.error === 'string' ? json.error : 'non-2xx response';
+    throw new Error(`Apple token exchange failed: ${reason}`);
+  }
+  const expiresIn = typeof json.expires_in === 'number' ? json.expires_in : undefined;
+  return {
+    tokenType: typeof json.token_type === 'string' ? json.token_type : 'Bearer',
+    accessToken: typeof json.access_token === 'string' ? json.access_token : undefined,
+    refreshToken: typeof json.refresh_token === 'string' ? json.refresh_token : undefined,
+    idToken: typeof json.id_token === 'string' ? json.id_token : undefined,
+    accessTokenExpiresAt:
+      typeof expiresIn === 'number' ? new Date(Date.now() + expiresIn * 1000) : undefined,
+  };
+}
+
+/**
+ * Read one of Apple's boolean claims, which Apple sends as a boolean or as `"true"`/`"false"`.
+ * Fail-closed: anything but `true` / `"true"` is false.
+ *
+ * @param value The raw claim.
+ * @returns True only for an explicit true.
+ */
+function appleClaimFlag(value: unknown): boolean {
+  return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true');
+}
+
+/**
+ * Normalize a Sign in with Apple sign-in (OLO-9.30): decode the id token from the code exchange
+ * and key the identity on `sub`, Apple's stable per-team user id.
+ *
+ * The id token comes straight from Apple's token endpoint (TLS, authenticated by the client
+ * secret); its `iss` must be Apple's issuer and its `aud` the configured Services ID, or there is
+ * no identity. `email_verified` is re-stamped fail-closed (true only when Apple sends `true` /
+ * `"true"`), so a verified Apple address is trusted and anything else is refused with
+ * `unverified-email`. `is_private_email` marks a Hide My Email relay address
+ * (`…@privaterelay.appleid.com`): it is kept on the profile so the linked identity records it, and
+ * it is still a verified, deliverable address — but it never matches an existing account's real
+ * address, so a person who already has an account links Apple from **Linked accounts** first.
+ *
+ * The name is never in the id token: Apple sends it once, on first consent, in the `form_post`
+ * `user` field, which `apple-sign-in.ts` carries to this request; on a repeat sign-in it is absent
+ * and the runner falls back to the bound account's name. The profile is built from these fields
+ * only, so no other id-token claim (`nonce`, `at_hash`, …) travels further.
+ *
+ * @param tokens The tokens from the code exchange (only `idToken` is read).
+ * @param env Environment carrying `APPLE_CLIENT_ID` (the expected audience).
+ * @returns The normalized profile for the resolution engine.
+ */
+function normalizeApple(
+  tokens: OAuth2Tokens,
+  env: Record<string, string | undefined>
+): NormalizedOAuthProfile {
+  const claims = decodeJwtClaims(tokens.idToken) ?? {};
+  const clientId = appleCredentials(env).clientId;
+  const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  const accountId = typeof claims.sub === 'string' ? claims.sub : '';
+  if (claims.iss !== APPLE_ISSUER || !clientId || !audience.includes(clientId) || !accountId) {
+    return { accountId: '', profile: {}, email: null, name: null, image: null };
+  }
+  const email = typeof claims.email === 'string' && claims.email ? claims.email : null;
+  const name = currentAppleFirstConsentName();
+  const profile: Record<string, unknown> = {
+    sub: accountId,
+    email_verified: appleClaimFlag(claims.email_verified),
+    is_private_email: appleClaimFlag(claims.is_private_email),
+  };
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  return { accountId, profile, email, name, image: null };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1691,6 +1825,7 @@ const NORMALIZERS: Record<
   vercel: (tokens, _env, fetchImpl) => normalizeVercel(tokens, fetchImpl),
   railway: (tokens, _env, fetchImpl) => normalizeRailway(tokens, fetchImpl),
   hubspot: (tokens, _env, fetchImpl) => normalizeHubspot(tokens, fetchImpl),
+  apple: (tokens, env) => normalizeApple(tokens, env),
 };
 
 /**
@@ -1725,7 +1860,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot).
+ *   railway | hubspot | apple).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -1791,13 +1926,16 @@ export function makeOAuthGetUserInfo(
       // Link-only providers (e.g. WeChat) share no email. Better Auth's generic callback requires
       // one to establish the session — prefer the bound apiome user's email so findOAuthUser
       // resolves to the existing account instead of fabricating an orphan.
+      // Apple sends the name on first consent only, so a repeat Apple sign-in takes the bound
+      // user's name too rather than falling back to the opaque account id.
       let email = normalized.email;
       let name = normalized.name;
-      if (!email && normalized.accountId) {
+      const needsBoundName = !name && provider === 'apple';
+      if ((!email || needsBoundName) && normalized.accountId) {
         const bound = await store.getIdentity(provider, normalized.accountId);
         if (bound.found && bound.userId) {
           const user = await store.getUserById(bound.userId);
-          if (user?.email) email = user.email;
+          if (!email && user?.email) email = user.email;
           if (!name && user?.name) name = user.name;
         }
       }
@@ -2305,10 +2443,51 @@ export function buildGenericOAuthConfig(
         getUserInfo,
       };
     }
+    case 'apple': {
+      const credentials = appleCredentials(env);
+      const config: GenericOAuthConfig = {
+        providerId: 'apple',
+        clientId: credentials.clientId,
+        // No static secret: getToken mints an ES256 JWT from the .p8 key for each exchange, so the
+        // key never leaves this process (a refresh, which Apiome never performs, would carry none).
+        clientSecret: '',
+        // Fixed Sign in with Apple endpoints on the appleid.apple.com issuer — no issuer to
+        // configure. Asking for `name email` obliges `response_mode=form_post`: Apple POSTs the
+        // callback, and `apple-sign-in.ts` bridges that POST to the GET this plugin serves. Like
+        // Better Auth's `apple()` helper, no PKCE challenge is sent (Better Auth enforces `state`).
+        authorizationUrl: APPLE_AUTHORIZE_URL,
+        tokenUrl: APPLE_TOKEN_URL,
+        scopes: [...APPLE_SCOPES],
+        responseMode: 'form_post',
+        authorizationUrlParams: { response_mode: 'form_post' },
+        pkce: false,
+        getToken: (data) =>
+          exchangeAppleAuthorizationCode(
+            data,
+            env,
+            runnerDeps.fetchImpl ?? (fetch as unknown as FetchLike)
+          ),
+        getUserInfo,
+      };
+      // The key, Team ID and Key ID shape every exchange but sit outside the standard fields, so
+      // they feed the signature separately: rotating any of them rebuilds the instance.
+      SIGNATURE_SECRET_MATERIAL.set(
+        config,
+        [credentials.teamId, credentials.keyId, credentials.privateKey].join('\n')
+      );
+      return config;
+    }
     default:
       return null;
   }
 }
+
+/**
+ * Secret material a provider's handshake depends on beyond the standard `clientSecret` (Apple's
+ * `.p8` key, Team ID and Key ID), keyed by the config it belongs to. {@link providerConfigSignature}
+ * folds a digest of it in, so a rotated key forces a rebuild without the plaintext entering the key.
+ */
+const SIGNATURE_SECRET_MATERIAL = new WeakMap<GenericOAuthConfig, string>();
 
 /**
  * Build the generic-OAuth config list for this deployment: one entry per **enabled** registry
@@ -2355,21 +2534,25 @@ export function buildGenericOAuthConfigs(
  * @returns A hex digest that is equal iff the two config lists are handshake-equivalent.
  */
 export function providerConfigSignature(configs: GenericOAuthConfig[]): string {
-  const material = configs.map((config) => ({
-    providerId: config.providerId,
-    clientId: config.clientId,
-    // Never place the plaintext secret in the signature; a per-secret digest is enough to detect a
-    // rotation. An unset secret hashes to a fixed marker so "no secret" differs from any real one.
-    clientSecretDigest:
-      typeof config.clientSecret === 'string' && config.clientSecret.length > 0
-        ? createHash('sha256').update(config.clientSecret).digest('hex')
-        : null,
-    authorizationUrl: config.authorizationUrl ?? null,
-    tokenUrl: config.tokenUrl ?? null,
-    userInfoUrl: config.userInfoUrl ?? null,
-    discoveryUrl: config.discoveryUrl ?? null,
-    scopes: config.scopes ?? null,
-    pkce: config.pkce ?? null,
-  }));
+  const material = configs.map((config) => {
+    const extraSecret = SIGNATURE_SECRET_MATERIAL.get(config);
+    return {
+      providerId: config.providerId,
+      clientId: config.clientId,
+      // Never place the plaintext secret in the signature; a per-secret digest is enough to detect a
+      // rotation. An unset secret hashes to a fixed marker so "no secret" differs from any real one.
+      clientSecretDigest:
+        typeof config.clientSecret === 'string' && config.clientSecret.length > 0
+          ? createHash('sha256').update(config.clientSecret).digest('hex')
+          : null,
+      authorizationUrl: config.authorizationUrl ?? null,
+      tokenUrl: config.tokenUrl ?? null,
+      userInfoUrl: config.userInfoUrl ?? null,
+      discoveryUrl: config.discoveryUrl ?? null,
+      scopes: config.scopes ?? null,
+      pkce: config.pkce ?? null,
+      extraSecretDigest: extraSecret ? createHash('sha256').update(extraSecret).digest('hex') : null,
+    };
+  });
   return createHash('sha256').update(JSON.stringify(material)).digest('hex');
 }

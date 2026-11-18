@@ -148,7 +148,7 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert resp.status_code == 200
     providers = resp.json()["providers"]
     ids = [p["provider_id"] for p in providers]
-    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot"]
+    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple"]
     # With no rows, every field falls back to env and nothing is enabled/stored.
     gh = providers[0]
     assert gh["enabled"] is None
@@ -271,6 +271,11 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert hubspot["status"] == "available"
     assert hubspot["required_fields"] == ["client_id", "client_secret"]
     assert hubspot["can_enable"] is False
+    apple = next(p for p in providers if p["provider_id"] == "apple")
+    assert apple["label"] == "Apple"
+    assert apple["status"] == "available"
+    assert apple["required_fields"] == ["client_id", "private_key", "team_id", "key_id"]
+    assert apple["can_enable"] is False
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):
@@ -367,6 +372,55 @@ def test_put_enable_okta_incomplete_names_issuer(admin_headers):
     assert detail["error"] == "provider_incomplete"
     assert detail["missing_fields"] == ["issuer"]
     mock_db.upsert_auth_provider_config.assert_not_called()
+
+
+def test_put_enable_apple_incomplete_names_key_fields(admin_headers):
+    """Enabling Apple without its private key, Team ID or Key ID names each one (OLO-9.30)."""
+    with patch("app.auth_provider_config_routes.db") as mock_db:
+        mock_db.get_auth_provider_config.return_value = _row(
+            provider_id="apple",
+            enabled=None,
+            client_id="com.example.web",
+            enc_key_id=None,  # no sealed private key yet
+            config={},
+        )
+        resp = client.put(
+            "/v1/admin/auth-providers/apple", json={"enabled": True}, headers=admin_headers
+        )
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert detail["error"] == "provider_incomplete"
+    assert detail["missing_fields"] == ["private_key", "team_id", "key_id"]
+    mock_db.upsert_auth_provider_config.assert_not_called()
+
+
+def test_put_enable_apple_with_sealed_key_and_extras_passes_completeness(admin_headers):
+    """The sealed secret (the .p8 key) plus both config extras satisfy Apple's completeness gate."""
+    with patch("app.auth_provider_config_routes.db") as mock_db:
+        mock_db.get_auth_provider_config.return_value = _row(
+            provider_id="apple",
+            enabled=None,
+            client_id="com.example.web",
+            enc_key_id="k1",
+            config={"APPLE_TEAM_ID": "A1B2C3D4E5", "APPLE_KEY_ID": "ABC123DEFG"},
+        )
+        mock_db.upsert_auth_provider_config.return_value = _row(
+            provider_id="apple",
+            enabled=True,
+            client_id="com.example.web",
+            enc_key_id="k1",
+            config={"APPLE_TEAM_ID": "A1B2C3D4E5", "APPLE_KEY_ID": "ABC123DEFG"},
+        )
+        resp = client.put(
+            "/v1/admin/auth-providers/apple", json={"enabled": True}, headers=admin_headers
+        )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["enabled"] is True
+    assert body["secret_set"] is True
+    # The extras are plain settings; the private key never appears in the response.
+    assert body["config"] == {"APPLE_TEAM_ID": "A1B2C3D4E5", "APPLE_KEY_ID": "ABC123DEFG"}
+    assert "PRIVATE KEY" not in resp.text
 
 
 def test_put_enable_aws_incomplete_names_issuer(admin_headers):

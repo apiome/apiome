@@ -137,6 +137,9 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   railway: { clientId: 'RAILWAY_CLIENT_ID', clientSecret: 'RAILWAY_CLIENT_SECRET' },
   // HubSpot (OLO-9.29, #5042): credentials-only; fixed endpoints, no issuer extra.
   hubspot: { clientId: 'HUBSPOT_CLIENT_ID', clientSecret: 'HUBSPOT_CLIENT_SECRET' },
+  // Apple (OLO-9.30, #5043): the sealed secret is the .p8 private key; the Team ID and Key ID are
+  // config extras that overlay via the extras loop below.
+  apple: { clientId: 'APPLE_CLIENT_ID', clientSecret: 'APPLE_PRIVATE_KEY' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

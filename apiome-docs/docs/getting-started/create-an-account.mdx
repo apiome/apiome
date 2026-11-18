@@ -8,7 +8,7 @@ tags: [sign-in, accounts, onboarding]
 <Route path="/signup" />
 
 You can create an Apiome account with a sign-in provider (GitHub, GitLab, Microsoft, Google, Atlassian,
-Bitbucket, Slack, LinkedIn, Discord, Salesforce, Dropbox, Zoom, Hugging Face or Vercel, when your installation offers them) or with an email address and a password. Either way, you then name
+Bitbucket, Slack, LinkedIn, Discord, Salesforce, Dropbox, Zoom, Hugging Face, Vercel or Apple, when your installation offers them) or with an email address and a password. Either way, you then name
 your first organization and land in the app.
 
 **Go to `/signup`**, or **click “Create one”** under the sign-in form. The page lists every sign-in
@@ -33,6 +33,11 @@ You cannot create an account with **Notion**, **Figma**, **Linear**, **Railway**
 your email address is verified, so signing up with one ends with *Your sign-in provider could not
 confirm that your email address is verified…*. Create your account another way, then link the
 provider on [Linked accounts](../workspace/linked-accounts.mdx) to sign in with it from then on.
+
+If you sign up with **Apple** and choose **Hide My Email**, your account is created under the
+private relay address Apple shares (such as `…@privaterelay.appleid.com`), which forwards to your
+inbox. Already have an Apiome account under your real address? Do not sign up with Apple — sign in
+to that account and link Apple on [Linked accounts](../workspace/linked-accounts.mdx) instead.
 
 ## With an email address
 

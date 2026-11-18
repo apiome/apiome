@@ -95,6 +95,10 @@ const ALL_ENABLED_ENV = {
   RAILWAY_CLIENT_SECRET: 'rw-secret',
   HUBSPOT_CLIENT_ID: 'hs-id',
   HUBSPOT_CLIENT_SECRET: 'hs-secret',
+  APPLE_CLIENT_ID: 'com.example.web',
+  APPLE_PRIVATE_KEY: 'ap-key',
+  APPLE_TEAM_ID: 'A1B2C3D4E5',
+  APPLE_KEY_ID: 'ABC123DEFG',
 };
 
 describe('providerEnvIssues', () => {

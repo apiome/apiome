@@ -36,6 +36,8 @@ jest.mock('../lib/auth/resolution-store', () => ({ resolutionStore: {} }));
 // explicit-link test injects its own `resolveLinkToUserId`.
 jest.mock('../lib/auth/oauth-link-intent', () => ({ checkLinkingIntent: async () => null }));
 
+import { generateKeyPairSync } from 'node:crypto';
+
 import { describe, test, expect } from '@jest/globals';
 
 import { AUTH_ERROR_CODES, type ResolutionStore, type ResolutionUser } from '../lib/auth/account-resolution';
@@ -48,11 +50,20 @@ import {
   githubOauthWebBaseUrl,
   makeOAuthGetUserInfo,
   runWithOauthRedirectOverride,
+  exchangeAppleAuthorizationCode,
+  providerConfigSignature,
   type FetchLike,
   type OAuthRunnerDeps,
 } from '../lib/auth/better-auth-oauth-providers';
+import { runWithAppleCallbackScope } from '../lib/auth/apple-sign-in';
 
 /* ── Fixtures & fakes ──────────────────────────────────────────────────────────────────────── */
+
+/** A Sign in with Apple `.p8`-style key (EC P-256, PKCS#8 PEM), generated per run. */
+const APPLE_KEY_PAIR = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+const APPLE_PRIVATE_KEY_PEM = APPLE_KEY_PAIR.privateKey
+  .export({ format: 'pem', type: 'pkcs8' })
+  .toString();
 
 const ALL_ENABLED: Record<string, string> = {
   GITHUB_ID: 'gh-id',
@@ -114,6 +125,10 @@ const ALL_ENABLED: Record<string, string> = {
   RAILWAY_CLIENT_SECRET: 'rw-secret',
   HUBSPOT_CLIENT_ID: 'hs-id',
   HUBSPOT_CLIENT_SECRET: 'hs-secret',
+  APPLE_CLIENT_ID: 'com.example.web',
+  APPLE_PRIVATE_KEY: APPLE_PRIVATE_KEY_PEM,
+  APPLE_TEAM_ID: 'A1B2C3D4E5',
+  APPLE_KEY_ID: 'ABC123DEFG',
 };
 
 const OK_USER: ResolutionUser = {
@@ -156,8 +171,8 @@ function makeStore(config: StoreConfig = {}) {
     async recordUserLogin(userId) {
       calls.recordUserLogin.push(userId);
     },
-    async createPendingSignup(provider, providerUserId, email) {
-      calls.createPendingSignup.push({ provider, providerUserId, email });
+    async createPendingSignup(provider, providerUserId, email, _account, profile) {
+      calls.createPendingSignup.push({ provider, providerUserId, email, profile });
       return { id: 'pending-1' };
     },
   };
@@ -235,6 +250,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
   });
 
@@ -268,6 +284,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'vercel',
       'railway',
       'hubspot',
+      'apple',
     ]);
   });
 
@@ -351,6 +368,10 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const hubspot = buildGenericOAuthConfig('hubspot', ALL_ENABLED)!;
     expect(hubspot.clientId).toBe('hs-id');
     expect(hubspot.clientSecret).toBe('hs-secret');
+    // Apple: the client id is the Services ID; the .p8 key never becomes a static client secret.
+    const apple = buildGenericOAuthConfig('apple', ALL_ENABLED)!;
+    expect(apple.clientId).toBe('com.example.web');
+    expect(apple.clientSecret).toBe('');
   });
 
   test('an unknown provider id yields null', () => {
@@ -747,6 +768,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('apple: fixed Apple endpoints; name email scopes; form_post; custom getToken; PKCE off (OLO-9.30)', () => {
+    const cfg = buildGenericOAuthConfig('apple', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('apple');
+    expect(cfg.authorizationUrl).toBe('https://appleid.apple.com/auth/authorize');
+    expect(cfg.tokenUrl).toBe('https://appleid.apple.com/auth/token');
+    // The id token carries every claim; Apple has no userinfo endpoint.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['name', 'email']);
+    // Requesting name or email obliges form_post (Apple rejects `query` with those scopes).
+    expect(cfg.responseMode).toBe('form_post');
+    expect(cfg.authorizationUrlParams).toEqual({ response_mode: 'form_post' });
+    expect(cfg.pkce).toBe(false);
+    expect(typeof cfg.getToken).toBe('function');
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -5162,5 +5199,355 @@ describe('getUserInfo — HubSpot fail-closed link-first (OLO-9.29)', () => {
     expect(calls.recordUserLogin).toEqual([]);
     expect(calls.linkIdentity).toHaveLength(0);
     expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── Sign in with Apple (OLO-9.30) ─────────────────────────────────────────────────────────── */
+
+describe('exchangeAppleAuthorizationCode — ES256 client secret minted per exchange (OLO-9.30)', () => {
+  /** Record every request and answer with `body` (a failed response when `ok` is false). */
+  const appleTokenEndpoint = (body: unknown, ok = true) => {
+    const requests: Array<{ url: string; method?: string; body?: string; contentType?: string }> =
+      [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({
+        url,
+        method: init.method,
+        body: init.body,
+        contentType: init.headers['Content-Type'],
+      });
+      return { ok, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('posts the code with a client-secret JWT signed by the .p8 key, and returns the id token', async () => {
+    const { fetchImpl, requests } = appleTokenEndpoint({
+      access_token: 'at',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      refresh_token: 'rt',
+      id_token: 'id.token.value',
+    });
+
+    const tokens = await exchangeAppleAuthorizationCode(
+      { code: 'the-code', redirectURI: 'https://app.example.com/api/auth/oauth2/callback/apple' },
+      ALL_ENABLED,
+      fetchImpl,
+      1_700_000_000
+    );
+
+    expect(tokens).toMatchObject({
+      tokenType: 'Bearer',
+      accessToken: 'at',
+      refreshToken: 'rt',
+      idToken: 'id.token.value',
+    });
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      url: 'https://appleid.apple.com/auth/token',
+      method: 'POST',
+      contentType: 'application/x-www-form-urlencoded',
+    });
+    const form = new URLSearchParams(requests[0].body);
+    expect(form.get('client_id')).toBe('com.example.web');
+    expect(form.get('code')).toBe('the-code');
+    expect(form.get('grant_type')).toBe('authorization_code');
+    expect(form.get('redirect_uri')).toBe('https://app.example.com/api/auth/oauth2/callback/apple');
+    // The private key itself never leaves the process.
+    expect(requests[0].body).not.toContain('PRIVATE KEY');
+
+    const [header, claims, signature] = (form.get('client_secret') ?? '').split('.');
+    expect(JSON.parse(Buffer.from(header, 'base64url').toString())).toEqual({
+      alg: 'ES256',
+      kid: 'ABC123DEFG',
+    });
+    expect(JSON.parse(Buffer.from(claims, 'base64url').toString())).toEqual({
+      iss: 'A1B2C3D4E5',
+      iat: 1_700_000_000,
+      exp: 1_700_000_300,
+      aud: 'https://appleid.apple.com',
+      sub: 'com.example.web',
+    });
+    const { verify } = await import('node:crypto');
+    expect(
+      verify(
+        'sha256',
+        Buffer.from(`${header}.${claims}`),
+        { key: APPLE_KEY_PAIR.publicKey, dsaEncoding: 'ieee-p1363' },
+        Buffer.from(signature, 'base64url')
+      )
+    ).toBe(true);
+  });
+
+  test('a refused exchange throws with Apple’s error code', async () => {
+    const { fetchImpl } = appleTokenEndpoint({ error: 'invalid_grant' }, false);
+    await expect(
+      exchangeAppleAuthorizationCode({ code: 'c', redirectURI: 'r' }, ALL_ENABLED, fetchImpl)
+    ).rejects.toThrow('Apple token exchange failed: invalid_grant');
+  });
+
+  test('an unusable key is never sent, and its material never reaches the log', async () => {
+    const { fetchImpl, requests } = appleTokenEndpoint({});
+    const errors: unknown[][] = [];
+    const original = console.error;
+    console.error = (...args: unknown[]) => {
+      errors.push(args);
+    };
+    try {
+      await expect(
+        exchangeAppleAuthorizationCode(
+          { code: 'c', redirectURI: 'r' },
+          { ...ALL_ENABLED, APPLE_PRIVATE_KEY: 'not-a-key!' },
+          fetchImpl
+        )
+      ).rejects.toThrow('APPLE_PRIVATE_KEY');
+    } finally {
+      console.error = original;
+    }
+    expect(requests).toHaveLength(0);
+    expect(JSON.stringify(errors)).not.toContain('not-a-key!');
+  });
+
+  test('the config getToken runs the exchange through the injected fetch', async () => {
+    const { fetchImpl, requests } = appleTokenEndpoint({ id_token: 'x.y.z' });
+    const cfg = buildGenericOAuthConfig('apple', ALL_ENABLED, { fetchImpl })!;
+    const tokens = await cfg.getToken!({ code: 'c', redirectURI: 'r' });
+    expect(tokens.idToken).toBe('x.y.z');
+    expect(requests[0].url).toBe('https://appleid.apple.com/auth/token');
+  });
+});
+
+describe('providerConfigSignature — Apple key rotation rebuilds the instance (OLO-9.30)', () => {
+  const signatureFor = (env: Record<string, string>) =>
+    providerConfigSignature([buildGenericOAuthConfig('apple', env)!]);
+
+  test('the same config signs the same; a new key, Key ID or Team ID signs differently', () => {
+    const base = signatureFor(ALL_ENABLED);
+    expect(signatureFor(ALL_ENABLED)).toBe(base);
+    const rotated = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
+      .privateKey.export({ format: 'pem', type: 'pkcs8' })
+      .toString();
+    expect(signatureFor({ ...ALL_ENABLED, APPLE_PRIVATE_KEY: rotated })).not.toBe(base);
+    expect(signatureFor({ ...ALL_ENABLED, APPLE_KEY_ID: 'ZZZ999ZZZZ' })).not.toBe(base);
+    expect(signatureFor({ ...ALL_ENABLED, APPLE_TEAM_ID: 'Z9Y8X7W6V5' })).not.toBe(base);
+  });
+
+  test('the signature never contains the private key', () => {
+    expect(signatureFor(ALL_ENABLED)).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe('getUserInfo — Sign in with Apple (OLO-9.30)', () => {
+  /** The claims of an Apple id token for the `name email` scopes (Apple sends strings). */
+  const CLAIMS = {
+    iss: 'https://appleid.apple.com',
+    aud: 'com.example.web',
+    sub: '001234.abcdef0123456789abcdef0123456789.0123',
+    email: 'ada@example.com',
+    email_verified: 'true',
+    is_private_email: 'false',
+    nonce_supported: true,
+  };
+  /** The same person behind Hide My Email: a verified relay address. */
+  const RELAY_CLAIMS = {
+    ...CLAIMS,
+    email: 'x7k2p9q4mz@privaterelay.appleid.com',
+    is_private_email: 'true',
+  };
+
+  /** The GET callback the form_post bridge produces, carrying the first-consent name. */
+  const firstConsentCallback = new Request(
+    'https://app.example.com/api/auth/oauth2/callback/apple?code=c&state=s&user=' +
+      encodeURIComponent(JSON.stringify({ name: { fullName: 'Ada Lovelace' } }))
+  );
+  /** A repeat sign-in's GET callback: no `user` field. */
+  const repeatCallback = new Request(
+    'https://app.example.com/api/auth/oauth2/callback/apple?code=c&state=s'
+  );
+
+  /** Run Apple's getUserInfo inside the callback scope of `request`. */
+  const runApple = (
+    request: Request,
+    claims: Record<string, unknown>,
+    deps: OAuthRunnerDeps
+  ) =>
+    runWithAppleCallbackScope(request, () =>
+      runGetUserInfo('apple', { idToken: idTokenFor(claims) }, { env: ALL_ENABLED, ...deps })
+    );
+
+  test('first consent on a new account routes to onboarding and keeps the name Apple sent once', async () => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runApple(firstConsentCallback, CLAIMS, { store });
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'apple',
+      providerUserId: CLAIMS.sub,
+      email: 'ada@example.com',
+      profile: {
+        sub: CLAIMS.sub,
+        email: 'ada@example.com',
+        email_verified: true,
+        is_private_email: false,
+        name: 'Ada Lovelace',
+      },
+    });
+    // Only the identity fields travel: no other id-token claim reaches the pending sign-up.
+    expect(calls.createPendingSignup[0].profile.nonce_supported).toBeUndefined();
+    expect(calls.createPendingSignup[0].profile.iss).toBeUndefined();
+  });
+
+  test('a relay-email account signs up with the relay address, flagged as private', async () => {
+    // The person's real address belongs to an existing account; the relay address never matches it.
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runApple(firstConsentCallback, RELAY_CLAIMS, { store });
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      email: 'x7k2p9q4mz@privaterelay.appleid.com',
+      profile: { is_private_email: true, email_verified: true },
+    });
+  });
+
+  test('linking Apple while signed in binds the relay identity to the session account', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+
+    const { override } = await runApple(firstConsentCallback, RELAY_CLAIMS, {
+      store,
+      resolveLinkToUserId: async () => OK_USER.id,
+    });
+
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: {
+        provider: 'apple',
+        providerUserId: RELAY_CLAIMS.sub,
+        email: 'x7k2p9q4mz@privaterelay.appleid.com',
+        emailVerified: true,
+        profileData: { name: 'Ada Lovelace', is_private_email: true },
+      },
+    });
+  });
+
+  test('repeat sign-in after first consent: no name from Apple, the bound account supplies it', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runApple(repeatCallback, CLAIMS, { store });
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: CLAIMS.sub,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada',
+      image: undefined,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('repeat sign-in with no email claim resolves through the bound identity', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { email: _email, email_verified: _verified, ...noEmail } = CLAIMS;
+
+    const { result, override } = await runApple(repeatCallback, noEmail, { store });
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, email: 'ada@example.com', name: 'Ada' });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('a verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runApple(repeatCallback, CLAIMS, { store });
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: true });
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'apple', providerUserId: CLAIMS.sub, emailVerified: true },
+    });
+  });
+
+  test('outside a callback scope there is no first-consent name', async () => {
+    const { store, calls } = makeStore();
+    await runGetUserInfo('apple', { idToken: idTokenFor(CLAIMS) }, { store, env: ALL_ENABLED });
+    expect(calls.createPendingSignup[0].profile.name).toBeUndefined();
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+    ['the number 1', 1],
+  ])(
+    'email_verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, claim) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+      const { result, override } = await runApple(
+        repeatCallback,
+        { ...CLAIMS, email_verified: claim },
+        { store }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('email_verified true (boolean) is trusted like "true"', async () => {
+    const { store, calls } = makeStore();
+    await runApple(repeatCallback, { ...CLAIMS, email_verified: true }, { store });
+    expect(calls.createPendingSignup).toHaveLength(1);
+  });
+
+  test.each([
+    ['another issuer', { ...CLAIMS, iss: 'https://evil.example.com' }],
+    ['another audience', { ...CLAIMS, aud: 'com.example.other' }],
+    ['no sub', { ...CLAIMS, sub: undefined }],
+    ['an undecodable id token', null],
+  ])('%s yields no identity', async (_label, claims) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+
+    const { result, override } = await runWithAppleCallbackScope(repeatCallback, () =>
+      runGetUserInfo(
+        'apple',
+        { idToken: claims ? idTokenFor(claims) : 'garbage' },
+        { store, env: ALL_ENABLED }
+      )
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an audience array that includes the Services ID is accepted', async () => {
+    const { store, calls } = makeStore();
+    await runApple(repeatCallback, { ...CLAIMS, aud: ['com.example.web'] }, { store });
+    expect(calls.createPendingSignup).toHaveLength(1);
   });
 });
