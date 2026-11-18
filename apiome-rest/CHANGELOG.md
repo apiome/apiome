@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.763.0] - 2026-11-17
+
+### Added
+- **Patreon sign-in (OLO-9.47, #5060)** — OpenAPI 1.596.25:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `patreon` (label `Patreon`, `available`), a credentials-only
+    provider: required fields `client_id` (`PATREON_CLIENT_ID`) and `client_secret` (`PATREON_CLIENT_SECRET`); its
+    endpoints are fixed, so there is no issuer extra. `GET /v1/admin/auth-providers` lists it last, and `PUT` /
+    `DELETE /v1/admin/auth-providers/patreon` and the resolved-config endpoint accept it like any other provider. The
+    canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - Patreon is a **trusted** provider: the API v2 identity resource's `is_email_verified` attribute is normalized to
+    `email_verified`, so a verified email joins or creates an account and anything but `true` fail-closes to
+    link-first. That decision is made in `apiome-ui`; nothing in the REST API changed for it.
+  - No migration: `patreon` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.762.0] - 2026-11-17
 
 ### Added

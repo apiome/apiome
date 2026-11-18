@@ -174,6 +174,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * native `email_verified` claim; absent or false fail-closes to link-first.
  * `polar` (OLO-9.46) is trusted through the generic path: Polar's OAuth userinfo carries a native
  * `email_verified` claim; absent or false fail-closes to link-first.
+ * `patreon` (OLO-9.47) is trusted through the generic path: the Patreon identity resource's
+ * `is_email_verified` attribute is normalized to `email_verified`; anything but true fail-closes to
+ * link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -207,6 +210,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'twitch',
   'paypal',
   'polar',
+  'patreon',
 ]);
 
 /**
@@ -282,6 +286,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'kick',
   'paypal',
   'polar',
+  'patreon',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

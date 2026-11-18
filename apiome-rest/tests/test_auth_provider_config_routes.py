@@ -148,7 +148,7 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert resp.status_code == 200
     providers = resp.json()["providers"]
     ids = [p["provider_id"] for p in providers]
-    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple", "facebook", "twitter", "reddit", "spotify", "twitch", "tiktok", "roblox", "kick", "paypal", "polar"]
+    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple", "facebook", "twitter", "reddit", "spotify", "twitch", "tiktok", "roblox", "kick", "paypal", "polar", "patreon"]
     # With no rows, every field falls back to env and nothing is enabled/stored.
     gh = providers[0]
     assert gh["enabled"] is None
@@ -326,6 +326,11 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert polar["status"] == "available"
     assert polar["required_fields"] == ["client_id", "client_secret"]
     assert polar["can_enable"] is False
+    patreon = next(p for p in providers if p["provider_id"] == "patreon")
+    assert patreon["label"] == "Patreon"
+    assert patreon["status"] == "available"
+    assert patreon["required_fields"] == ["client_id", "client_secret"]
+    assert patreon["can_enable"] is False
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):

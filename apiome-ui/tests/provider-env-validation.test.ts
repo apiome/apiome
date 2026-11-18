@@ -119,6 +119,8 @@ const ALL_ENABLED_ENV = {
   PAYPAL_CLIENT_SECRET: 'pp-secret',
   POLAR_CLIENT_ID: 'pl-id',
   POLAR_CLIENT_SECRET: 'pl-secret',
+  PATREON_CLIENT_ID: 'pt-id',
+  PATREON_CLIENT_SECRET: 'pt-secret',
 };
 
 describe('providerEnvIssues', () => {

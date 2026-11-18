@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar, Patreon), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -175,6 +175,8 @@ config is stored in the database need none of them set; see
 | `PAYPAL_ENVIRONMENT` | PayPal | No (default `live`) | `sandbox` for a sandbox app's credentials and test accounts; any other value is live |
 | `POLAR_CLIENT_ID` | Polar | To enable Polar | Polar OAuth app **Client ID** |
 | `POLAR_CLIENT_SECRET` | Polar | To enable Polar | Polar OAuth app **Client Secret** |
+| `PATREON_CLIENT_ID` | Patreon | To enable Patreon | Patreon OAuth client **Client ID** |
+| `PATREON_CLIENT_SECRET` | Patreon | To enable Patreon | Patreon OAuth client **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -283,7 +285,7 @@ links an account.
 | `yandex` | **link-first** (provisional) | OLO-9.44 | no | `default_email`; verified semantics confirmed at implementation |
 | `paypal` | **trusted** | OLO-9.45 | yes | `email_verified` claim |
 | `polar` | **trusted** | OLO-9.46 | yes | `email_verified` claim on the OAuth userinfo |
-| `patreon` | **trusted** | OLO-9.47 | no | `is_email_verified` on the identity resource |
+| `patreon` | **trusted** | OLO-9.47 | yes | `is_email_verified` on the identity resource |
 | `gumroad` | **link-first** | OLO-9.48 | no | User email, no verified claim |
 | `paybin` | **link-first** (provisional) | OLO-9.49 | no | Email semantics confirmed at implementation |
 
@@ -2208,6 +2210,51 @@ Polar, or signs in another way and links Polar from **Linked accounts**. A sign-
 at all surfaces `email-required`.
 
 A failed userinfo request, a response with no usable `sub`, or an id token without a `sub` yields
+no identity and the sign-in is refused.
+
+## Patreon (OLO-9.47)
+
+For creator communities that publish APIs and docs through Patreon. Apiome uses Patreon's OAuth
+2.0 authorization-code flow, and Patreon is a **trusted** provider: a verified Patreon email joins
+or creates an Apiome account.
+
+1. Signed in to Patreon, open the [developer portal](https://www.patreon.com/portal/registration/register-clients)
+   (**Clients & API Keys**) and choose **Create Client**.
+2. Fill in the app name, description and links, and add the callback under **Redirect URIs**
+   (Patreon requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/patreon`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/patreon` for local dev)
+3. Keep the **Client API Version** at **2** — Apiome reads the API v2 identity resource.
+4. Create the client and copy its **Client ID** and **Client Secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+PATREON_CLIENT_ID=<Client ID>
+PATREON_CLIENT_SECRET=<Client Secret>
+```
+
+Patreon's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`patreon()` helper):
+
+- Authorize: `https://www.patreon.com/oauth2/authorize` with the `identity[email]` scope (the
+  helper's default) — no PKCE challenge, `state` only. Apiome reads no campaigns, memberships,
+  pledges or posts.
+- Token: `https://www.patreon.com/api/oauth2/token` — the client ID and secret are sent in the
+  form body. Apiome keeps no Patreon token.
+- Identity: `https://www.patreon.com/api/oauth2/v2/identity?fields[user]=email,full_name,image_url,is_email_verified`
+  with the access token. Patreon issues no id token.
+
+The identity is keyed on `data.id`, the Patreon user ID; `full_name` is the display name and
+`image_url` the avatar.
+
+**Email verified semantics:** the identity resource reports `is_email_verified`; Apiome normalizes
+it to `email_verified` and honors it only when it is exactly `true`. When it is absent, false or
+not a boolean the engine fail-closes (**link-first** — explicit link intent or an already-bound
+identity), and a fresh sign-in is rejected with `unverified-email`. A person whose Patreon email
+address is unverified verifies it in Patreon, or signs in another way and links Patreon from
+**Linked accounts**. A sign-in with no email at all surfaces `email-required`.
+
+A failed identity request, a body without a `data` user, or a user without a usable `id` yields
 no identity and the sign-in is refused.
 
 ## Secrets handling

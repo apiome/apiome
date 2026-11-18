@@ -188,6 +188,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'notion',
       'oidc',
       'okta',
+      'patreon',
       'paypal',
       'polar',
       'railway',

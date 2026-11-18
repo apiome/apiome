@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar, patreon — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -178,6 +178,12 @@
  *    The claims come from `api.polar.sh/v1/oauth2/userinfo`, keyed on `sub` (or the helper's
  *    `id`) and bound to the id token's `sub`; Polar's native `email_verified` claim → **trusted**
  *    when true, fail-closed via `resolveOAuthEmailVerified` otherwise.
+ *  - **Patreon (OLO-9.47):** Patreon OAuth 2.0 on fixed endpoints mirrored from Better Auth's
+ *    `patreon` provider (`www.patreon.com/oauth2/authorize`, `www.patreon.com/api/oauth2/token`),
+ *    scope `identity[email]`, client credentials in the form body, no PKCE — as the helper does.
+ *    The claims come from the API v2 identity resource, keyed on `data.id`; its
+ *    `is_email_verified` attribute is normalized to `email_verified` → **trusted** only when
+ *    exactly true, fail-closed otherwise.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -797,6 +803,13 @@ const POLAR_AUTHORIZE_URL = 'https://polar.sh/oauth2/authorize';
 const POLAR_TOKEN_URL = 'https://api.polar.sh/v1/oauth2/token';
 /** The userinfo endpoint (`sub`, `name`, `email`, `email_verified`), as the helper reads it. */
 const POLAR_USER_INFO_URL = 'https://api.polar.sh/v1/oauth2/userinfo';
+
+/** Patreon OAuth 2.0: fixed endpoints, mirrored from Better Auth's `patreon` provider (OLO-9.47). */
+const PATREON_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
+const PATREON_TOKEN_URL = 'https://www.patreon.com/api/oauth2/token';
+/** The API v2 identity resource with the user fields the helper requests (incl. `is_email_verified`). */
+const PATREON_IDENTITY_URL =
+  'https://www.patreon.com/api/oauth2/v2/identity?fields[user]=email,full_name,image_url,is_email_verified';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2593,6 +2606,63 @@ async function normalizePolar(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Patreon identity body, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function patreonString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Patreon sign-in (OLO-9.47): fetch the API v2 identity resource with the access token
+ * — the resource and fields Better Auth's `patreon()` helper reads — and map its JSON:API body.
+ * The identity is keyed on `data.id`, the Patreon user id; `data.attributes.full_name` is the
+ * display name and `image_url` the avatar.
+ *
+ * Patreon reports whether the email address is verified as the boolean attribute
+ * `is_email_verified`. It is normalized onto the profile as `email_verified`, fail-closed — true
+ * only when the attribute is exactly `true` — so a missing, null or non-boolean value (the string
+ * `"true"`, the number `1`) is unverified and `resolveOAuthEmailVerified` refuses the address
+ * (`unverified-email`). Patreon issues no id token. A failed request, a body that is not a JSON:API
+ * user document or a user without a usable id yields an empty profile (no account id, no email),
+ * which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizePatreon(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(PATREON_IDENTITY_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const data = (body as Record<string, unknown>).data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return none;
+  const user = data as Record<string, unknown>;
+  const accountId = patreonString(user.id);
+  if (!accountId) return none;
+  const attributes =
+    user.attributes && typeof user.attributes === 'object' && !Array.isArray(user.attributes)
+      ? (user.attributes as Record<string, unknown>)
+      : {};
+  const email = patreonString(attributes.email) || null;
+  const name = patreonString(attributes.full_name) || null;
+  const image = patreonString(attributes.image_url) || null;
+  const profile: Record<string, unknown> = { id: accountId };
+  if (email) profile.email = email;
+  profile.email_verified = attributes.is_email_verified === true;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2656,6 +2726,7 @@ const NORMALIZERS: Record<
   kick: (tokens, _env, fetchImpl) => normalizeKick(tokens, fetchImpl),
   paypal: (tokens, env, fetchImpl) => normalizePaypal(tokens, env, fetchImpl),
   polar: (tokens, _env, fetchImpl) => normalizePolar(tokens, fetchImpl),
+  patreon: (tokens, _env, fetchImpl) => normalizePatreon(tokens, fetchImpl),
 };
 
 /**
@@ -2691,7 +2762,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
  *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
- *   roblox | kick | paypal | polar).
+ *   roblox | kick | paypal | polar | patreon).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3509,6 +3580,25 @@ export function buildGenericOAuthConfig(
         scopes: ['openid', 'profile', 'email'],
         authentication: 'post',
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'patreon': {
+      return {
+        providerId: 'patreon',
+        clientId: readEnvString(env, 'PATREON_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'PATREON_CLIENT_SECRET') ?? '',
+        // Fixed Patreon OAuth 2.0 endpoints, mirrored from Better Auth's `patreon()` helper — no
+        // issuer. Like the helper, the code exchange sends the client id and secret in the form
+        // body and no PKCE challenge is sent (Better Auth enforces `state`). `identity[email]` is
+        // the helper's default and the only scope Apiome asks for; Apiome reads no campaigns,
+        // memberships, pledges or posts. `is_email_verified` → trusted when true, fail-closed
+        // otherwise (see normalizePatreon).
+        authorizationUrl: PATREON_AUTHORIZE_URL,
+        tokenUrl: PATREON_TOKEN_URL,
+        scopes: ['identity[email]'],
+        authentication: 'post',
+        pkce: false,
         getUserInfo,
       };
     }
