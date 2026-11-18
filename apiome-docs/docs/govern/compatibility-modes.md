@@ -325,8 +325,10 @@ payload in AsyncAPI 2. Their findings are still graded, and they count toward th
 
 ## Choose a project's mode
 
-A project's mode is part of its style guide's policy. The Style guides screen is not yet available,
-so set the three settings over the REST API with
+A project's mode is part of its style guide's policy. **Go to Govern → Style guides**, open the
+guide, **choose the Policy tab** and set **Compatibility mode**, **Check every earlier version** and
+**Protobuf breaking category** under [Compatibility](./style-guides.mdx#compatibility), then
+**click “Save”**. Over the REST API, the same three settings are
 [`PUT /v1/style-guides/{tenant}/{guide}/policy`](../reference/rest/style-guides.md#put-style-guide-policy-settings-v1-style-guides-tenant-slug-guide-id-policy-put):
 
 ```http

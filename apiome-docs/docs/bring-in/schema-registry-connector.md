@@ -8,7 +8,7 @@ tags: [import, schema registry, confluent, karapace, apicurio, kafka, connector]
 A **schema registry connector** keeps a copy of a Confluent-compatible schema registry in Apiome:
 Confluent Platform or Cloud, Karapace, or Apicurio Registry's compatibility API
 (`https://<apicurio>/apis/ccompat/v7`). Each upstream subject becomes a subject in Apiome's
-[schema registry](../reference/rest/schema-registry.md) and a catalog item with one revision per
+[schema registry](../ship/schema-registry.mdx) and a catalog item with one revision per
 upstream version. A sync only reads: it never writes to the upstream registry. To register an
 Avro, JSON Schema or Protobuf export there, [push it through the connector](../ship/push-avro-to-a-schema-registry.md).
 
@@ -96,7 +96,7 @@ Each sync's summary carries a `crawl` block (`apiome connectors runs <id> --form
 
 ## Other registry crawls
 
-[Registry crawl](../reference/rest/connectors.md) connectors (xRegistry, A2A agent registries, FHIR
+[Registry crawl](./connectors.mdx#registry-crawl) connectors (xRegistry, A2A agent registries, FHIR
 `/metadata`) accept `requestsPerSecond`, `maxRequests`, `maxPages` and `maxBytes` too. They read
 the whole registry on each sync, without a checkpoint.
 

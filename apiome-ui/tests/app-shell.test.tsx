@@ -113,9 +113,8 @@ import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 /** Every rail destination the model describes, flattened. */
 const MODEL_ITEMS: PlatformNavItem[] = PLATFORM_NAV_GROUPS.flatMap((group) => group.items);
 
-/** Destinations open in this build, and those held back by the release gate. */
+/** Destinations open in this build (the release gate holds back no rail item since RC8). */
 const RELEASED_ITEMS = MODEL_ITEMS.filter((item) => isFeatureReleased(item.id));
-const UNRELEASED_ITEMS = MODEL_ITEMS.filter((item) => !isFeatureReleased(item.id));
 
 /** The headings the model asks for, in model order. */
 const GROUP_LABELS = PLATFORM_NAV_GROUPS.map((group) => group.label).filter(
@@ -261,17 +260,6 @@ describe('AppShell — navigation from the model', () => {
     }
     // `hidden: true` counts the rows of a folded group too (Workspace starts folded).
     expect(within(nav).getAllByRole('link', { hidden: true })).toHaveLength(RELEASED_ITEMS.length);
-  });
-
-  it('leaves an unreleased destination out of the rail entirely', async () => {
-    expect(UNRELEASED_ITEMS.length).toBeGreaterThan(0);
-    await renderShell({ tenant: true });
-
-    const nav = screen.getByRole('navigation', { name: 'Primary' });
-    for (const item of UNRELEASED_ITEMS) {
-      expect(within(nav).queryByTestId(`rail-nav-${item.id}`)).not.toBeInTheDocument();
-      expect(within(nav).queryByText(item.label)).not.toBeInTheDocument();
-    }
   });
 
   it('renders a heading for every labelled group, and none for the leading run', async () => {
@@ -973,8 +961,7 @@ describe('the docs fixtures', () => {
 
   /**
    * The two rail menus that gained rows in HIVE-12.2: the workspace switcher's Manage
-   * workspaces… and the user menu — whose Tools rows (Data browser · Migrations) stay out until
-   * those features are released. Folded groups keep the footer —
+   * workspaces… and the user menu. Folded groups keep the footer —
    * and the user menu that opens above it — inside a 900 px capture.
    */
   it('renders the workspace and user menus open (HIVE-12.2)', async () => {
@@ -999,8 +986,6 @@ describe('the docs fixtures', () => {
         expect(within(menu).getByTestId('manage-workspaces-entry')).toBeInTheDocument();
       } else {
         expect(within(menu).getByTestId('user-menu-admin-console')).toBeInTheDocument();
-        expect(within(menu).queryByTestId('user-menu-data-browser')).not.toBeInTheDocument();
-        expect(within(menu).queryByTestId('user-menu-migrations')).not.toBeInTheDocument();
       }
       writeA11yFixture(name, container.innerHTML);
       window.localStorage.removeItem(NAV_COLLAPSED_STORAGE_KEY);

@@ -1,0 +1,43 @@
+---
+slug: rc8-features-released
+title: The RC8 features are released
+description: "Ten held-back features and their guides are now open to everyone."
+authors: [apiome]
+---
+
+Ten features that were held back while Catalog and Projects were hardened are now part of the main
+build. Every member sees them in the sidebar and the command palette, with no preview flag to set,
+and their guide pages are back on this site.
+
+{/* truncate */}
+
+- **Bring in.** [Connectors](/bring-in/connectors) sync the APIs in your gateways and registries.
+  The Catalog counts everything by [kind](/bring-in/catalog#kinds), with
+  [Agents and models](/bring-in/agents-and-models) and components you
+  [migrate from Backstage or Compass](/bring-in/migrate-from-backstage-or-compass).
+- **Ship.** The [Schema registry](/ship/schema-registry) gives Avro, JSON Schema and Protobuf
+  schemas subjects, ids and versions. [SDK settings](/ship/sdk-settings) is the **SDK & branding**
+  tab of the Export studio, with the [Terraform provider](/ship/sdk-infrastructure-targets) and
+  [MCP server](/ship/sdk-mcp-server) kits.
+- **Govern.** [Style guides](/govern/style-guides) and their
+  [revisions](/govern/style-guide-revisions), the [Access audit](/govern/access-audit), the
+  [Dependency graph](/govern/dependency-graph), [Shadow APIs](/govern/shadow-apis) and
+  [Scorecards](/govern/scorecards).
+- **Workspace.** [Teams](/workspace/teams) own projects, catalog items and MCP servers.
+- **Projects.** A project's [Consumers](/build/projects#consumers) page registers who depends on
+  the API and attributes live traffic to them.
+- **Panels that belong to them are back.** The **Owner** column, filter and **Assign owner** on
+  Projects, Catalog and Published; the **Dependencies** tab on Versions, catalog items and MCP
+  servers; the **Subjects** tab and **Registry** chip in the Catalog; **Recent runs** on
+  Repositories; **Compass export** in the import wizard; the **Facts** checklist on a catalog
+  item; and the **Ownership** section of the tenant manage drawer.
+- **Settings you set over the REST API have their screens again.** The approval gate, the
+  compatibility mode and the import & export quality policy are on **Govern → Style guides**.
+- **Data browser and Migrations are removed.** The two unfinished tools at `/ade/database` and
+  `/ade/migration` are no longer part of Apiome: working with stored records belongs to Api-DB, a
+  separate product. Their addresses now answer *page not found*. Nothing else is held back.
+- **The Data API, migration plans and their CLI commands are removed too.** `/v1/data/…` and
+  `/v1/migration-plans/…` are no longer served, and `apiome data` and `apiome migrations` are gone
+  from the CLI. `apiome projects export` no longer writes a `migrations` section. Unpublishing a
+  version is no longer refused because the version has data records. **Freeze schema** on
+  [Versions](/build/versions) is unchanged.

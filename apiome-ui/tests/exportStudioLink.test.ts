@@ -137,8 +137,9 @@ describe('resolveStudioBack', () => {
   });
 
   it('never links back into a still-gated feature (E1-1, #6217)', () => {
-    // `connectors` is held back in this build: the gateway-config origin returns to Versions.
-    expect(resolveStudioBack('gateway-config')).toEqual({ href: '/ade/dashboard/versions', label: 'Versions' });
+    // Connectors is released (RC8): by default the gateway-config origin returns to it.
+    expect(resolveStudioBack('gateway-config')).toEqual({ href: '/ade/dashboard/connectors', label: 'Connectors' });
+    // Were it held back again, the origin would return to Versions.
     expect(resolveStudioBack('gateway-config', () => false)).toEqual({ href: '/ade/dashboard/versions', label: 'Versions' });
     expect(resolveStudioBack('catalog', () => false)).toEqual({ href: '/ade/dashboard/catalog', label: 'Catalog' });
   });

@@ -53,7 +53,7 @@ starting an import — and only shows you workspaces you belong to.
 
 The line above the matrix counts what is on — *23 of 75 cells on*.
 
-**Teams** (`teams`) controls [teams](../reference/rest/teams.md) and their members. The built-in **Owner** and
+**Teams** (`teams`) controls [teams](./teams.mdx) and their members. The built-in **Owner** and
 **Admin** roles hold all of it; **Editor** and **Viewer** can only view teams. Custom roles do not
 get it automatically — grant it on each custom role that should manage teams.
 
@@ -114,7 +114,7 @@ bar counts them — *2 unsaved changes* — with **Discard** to drop them.
 <Screenshot id="roles-draft" alt="The Release manager role with an Unsaved badge and two cells changed in the matrix" />
 
 Saving replaces the role's whole grid, and the change is recorded in the
-[access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get) with what was granted and revoked. Members holding the
+[Access audit](../govern/access-audit.mdx) with what was granted and revoked. Members holding the
 role get the new permissions straight away.
 
 ### Leaving with unsaved changes
@@ -172,5 +172,6 @@ There is no CLI command for roles.
 ## Where next
 
 - [Members & seats](./members.mdx)
-- [Teams API](../reference/rest/teams.md)
+- [Teams](./teams.mdx)
 - [API keys](./api-keys.mdx)
+- [Access audit](../govern/access-audit.mdx)

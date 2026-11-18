@@ -94,7 +94,7 @@ class Settings(BaseSettings):
         ),
     )
 
-    # Embedding (Ollama) for data_snapshot vectorization
+    # Embedding (Ollama)
     ollama_base_url: str = "http://localhost:11434"
 
     # Agent toolset description enrichment (AGX-1.3, #4531). The Ollama chat model that proposes

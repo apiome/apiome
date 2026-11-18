@@ -792,20 +792,6 @@ def primitives_import_review(tenant_slug: str) -> str:
     return f"{V1}/primitives/{tenant_slug}/import/review"
 
 
-def data_classes(tenant_slug: str) -> str:
-    """``GET ?project=&version=[&class=]`` resolves a version's classes to their frozen class schemas.
-
-    Answers each class's ``class_schema_id`` (what a data record is created against) and its JSON
-    Schema 2020-12 ``schema``; an unpublished version answers an empty ``classes`` list (#3255).
-    """
-    return f"{V1}/data/{tenant_slug}/classes"
-
-
-def data_records(tenant_slug: str) -> str:
-    """``POST {class_schema_id, data}`` creates a data record; answers ``{success, record_id}``."""
-    return f"{V1}/data/{tenant_slug}/records"
-
-
 def properties(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/properties/{tenant_slug}/{project_id}"
 
@@ -851,16 +837,6 @@ def version_tags(tenant_slug: str, project_id: str | UUID) -> str:
 def version_tag_record(tenant_slug: str, project_id: str | UUID, tag_id: str) -> str:
     """One version tag (DELETE removes it)."""
     return f"{version_tags(tenant_slug, project_id)}/{tag_id}"
-
-
-def project_migration_plans(tenant_slug: str, project_id: str | UUID) -> str:
-    """Every migration plan of a project, with its rules (CLI 3.6)."""
-    return f"{V1}/migration-plans/{tenant_slug}/projects/{project_id}"
-
-
-def migration_plan(tenant_slug: str, plan_id: str | UUID) -> str:
-    """One migration plan by id, with its project, versions and rules (CLI 11.3)."""
-    return f"{V1}/migration-plans/{tenant_slug}/{plan_id}"
 
 
 def paths(tenant_slug: str, version_record_id: str | UUID) -> str:

@@ -1,7 +1,7 @@
 ---
 title: "apiome sdk"
 description: "Generated SDK evidence: what each generated artifact covers and leaves out."
-sidebar_position: 37
+sidebar_position: 35
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

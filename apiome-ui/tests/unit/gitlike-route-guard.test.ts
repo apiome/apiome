@@ -80,11 +80,8 @@ describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
       ['/api/properties/proj-1', 'GET'],
       ['/api/paths/ver-1', 'GET'],
       ['/api/primitives', 'GET'],
-      ['/api/database/snapshot', 'GET'],
-      ['/api/database/snapshot/insert', 'POST'],
+      ['/api/database/versions/has-class-schema', 'GET'],
       ['/api/sso/github/repos', 'GET'],
-      ['/api/migration-plans', 'GET'],
-      ['/api/migration-plans/evaluate', 'POST'],
       ['/api/admin/stats', 'GET'],
       ['/api/ollama/models', 'GET'],
     ];

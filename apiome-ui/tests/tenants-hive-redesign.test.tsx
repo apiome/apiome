@@ -438,20 +438,6 @@ describe('the five sections', () => {
     }
   });
 
-  it('leaves Ownership out while ownership is held back with Teams (RC6)', async () => {
-    await renderPage();
-    const drawer = await openDrawer('Acme Corp');
-
-    expect(within(drawer).getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual([
-      expect.stringContaining('Members'),
-      'Security',
-      'License & plan',
-      'MCP settings',
-      'Per-key capabilities',
-      'Policy history',
-    ]);
-  });
-
   it('loads nothing but Members until another tab is opened', async () => {
     await renderPage();
     await openDrawer('Acme Corp');

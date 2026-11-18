@@ -1423,19 +1423,18 @@ history — archive it instead.
 ### Export a project
 
 `apiome projects export <slug-or-id>` writes the whole project — versions, classes with their
-properties, paths with their operations, the property library, tags and migration plans — as one
+properties, paths with their operations, the property library and tags — as one
 document ([format](https://github.com/apiome/apiome/blob/main/apiome-docs/docs/reference/cli-export-format.md)):
 
 ```bash
 apiome projects export payments-api --output ./backups/payments-api.json
 apiome projects export payments-api --format yaml --gzip > backup.yaml.gz
-apiome projects export payments-api --versions v2.0.0,v2.1.0 --exclude migrations
+apiome projects export payments-api --versions v2.0.0,v2.1.0 --exclude tags
 ```
 
 The output is deterministic by default (sorted keys, no timestamp): the same project state gives
 the same bytes, and the SHA-256 printed on stderr identifies it. Counts go to stderr, so stdout
-stays clean for pipes. JSON is written one version at a time; YAML is built in memory. `data` is
-not exportable yet (the API cannot list data records).
+stays clean for pipes. JSON is written one version at a time; YAML is built in memory.
 
 ### Fork a version into another project
 
@@ -1556,40 +1555,6 @@ apiome tags update payments-api stable --version 2.1.0 --description 'Promoted f
 
 `apiome tags delete <project> <tag>` deletes a tag after you type its name (`--yes` skips). Only
 the tag goes, never the version; an immutable tag exits **6**.
-
-### Migration plans
-
-`apiome migrations list --project <project>` lists a project's migration plans, newest first: plan
-id, FROM / TO version labels, how many classes and rules each maps, and when it was updated
-(`GET /v1/migration-plans/{tenant}/projects/{project}`). `--from` / `--to` take a version label
-(`2.0.0` or `v2.0.0`), revision id or version tag. The server records no status, breaking flag or
-author for a plan.
-
-```bash
-apiome migrations list --project payments-api               # first 50; --limit N or --all
-apiome migrations list --project payments-api --from v2.0.0 --to v2.1.0
-apiome migrations list --project payments-api --json        # [ {id, from_version, to_version, rule_count, ...} ]
-```
-
-`apiome migrations counts` counts every project's plans — PLANS, the distinct CLASSES they map, and
-RULES — most plans first, one plan-list request per project. `--project <project>` rolls up a single
-project in one request.
-
-```bash
-apiome migrations counts
-apiome migrations counts --project payments-api --json      # {projects: [...], total: {plans, rules}}
-```
-
-`apiome migrations show <plan-id>` prints one plan (`GET /v1/migration-plans/{tenant}/{plan_id}`): its
-project, FROM / TO versions, dates and every mapping (`Charge.legacy_status → Charge.status  (simple · rename)`;
-a rule with no output reads `(removed)`). `--scope mappings` prints only the mappings; `--json` prints the
-raw plan body. Plans store no notes, status, breaking flag or author.
-
-```bash
-apiome migrations show 3a910000-0000-4000-8000-00000000b41c
-apiome migrations show 3a910000-0000-4000-8000-00000000b41c --scope mappings
-apiome migrations show 3a910000-0000-4000-8000-00000000b41c --json
-```
 
 ### List a project's properties
 
@@ -1785,75 +1750,6 @@ apiome --json types list | apiome primitives import --update --yes
   is found before the import. `--continue-on-error` imports the other rows and exits **0**.
 - `--report <path>` writes the per-row JSON report (`rows[].row|name|status|message`, `summary`,
   `importId`, `dryRun`); `--json` prints it on stdout and moves the text to stderr.
-
-### Create a data record
-
-`apiome data create --class <project>/<version>/<Class>` adds one record to a class of a
-**published** version (`POST /v1/data/{tenant}/records`), after checking it against the class's
-frozen JSON Schema.
-
-```bash
-apiome data create --class billing/1.0.0/Charge --from-file charge.json
-echo '{"amount":1.0,"currency":"USD"}' | apiome data create --class billing/1.0.0/Charge --stdin
-apiome data create --class billing/1.0.0/Charge --field amount=:19.99 --field currency=USD --dry-run
-```
-
-- `--class` is resolved with `GET /v1/data/{tenant}/classes?project=&version=` (a leading `v` on
-  the version is fine; an exact class name wins, else a unique case-insensitive one). An unknown
-  project, version or class, or an unpublished version, exits **2**.
-- The record comes from `--from-file` (JSON or YAML), `--stdin`, or `--field key=value`
-  (`key=:<json>` parses the value as JSON); `--field` is applied on top of the file or stdin object.
-- A record that fails the schema exits **7** with one `field: message` line per problem; nothing is
-  sent. A schema with a `$ref` that cannot be resolved offline is not checked locally (a warning).
-- `--dry-run` validates only. `--json` (global or on the command) prints `record_id`, `project`,
-  `version`, `class`, `class_schema_id` and `data`.
-
-### List data records
-
-`apiome data list --class <project>/<version>/<Class>` (or a class schema id) pages through a
-class's records with `GET /v1/data/{tenant}/records`.
-
-```bash
-apiome data list --class billing/1.0.0/Charge --limit 20 --filter status=succeeded --sort -created_at
-apiome data list --class billing/1.0.0/Charge --next <cursor>
-apiome data list --class billing/1.0.0/Charge --all --ndjson > charges.ndjson
-apiome data list --class billing/1.0.0/Charge --include-deleted --columns amount,status
-```
-
-- `--filter key=value` (repeatable) compares a top-level data field as text; `--sort` takes
-  `created_at` (default), `updated_at`, `deleted_at`, `record_id` or a data field, `-field` descends.
-- The table shows `ID`, `CREATED` and each data field (or `--columns`); `--include-deleted` adds
-  soft-deleted records and a `DELETED_AT` column. The footer reads
-  `20 of 1,234 (use --next <cursor> or --all).`
-- `--next <cursor>` shows the following page (a cursor only fits the query it came from);
-  `--all` follows every page.
-- `--json` prints one JSON array, `--ndjson` one record per line; both stream, and the next cursor
-  (if any) goes to stderr.
-
-### Import data records
-
-`apiome data import <file> --class <project>/<version>/<Class>` bulk-loads NDJSON, a JSON array or
-CSV into a published class, streaming the file (constant memory) and sending parallel batches of
-`POST /v1/data/{tenant}/records` with a progress bar.
-
-```bash
-apiome data import ./charges.ndjson --class billing/1.0.0/Charge --batch 500
-apiome data import ./customers.csv --class crm/2.0.0/Customer --mapping 'first_name,last_name,email_addr=email'
-apiome data import - --class billing/1.0.0/Charge --ndjson < charges.ndjson
-apiome data import ./charges.json --class billing/1.0.0/Charge --dry-run --continue-on-error --report report.json
-```
-
-- The format is `--ndjson` / `--csv` / `--json` (input format), else the extension (`.ndjson` /
-  `.jsonl`, `.csv`, `.json`); stdin (`-`) needs the flag.
-- CSV: the header names the columns; `--mapping` keeps only the listed columns (`column=field`
-  renames). Cells are typed from the class schema (`number`, `integer`, `boolean`, `null`,
-  `object` / `array` as JSON); empty cells are left out.
-- Every row is validated locally first. `--batch` (default 100) rows per batch, `--concurrency`
-  (default 4, max 16) batches at once; 429 / 5xx are retried 3 times with back-off or `Retry-After`.
-- A failed row exits **7** and stops the import; `--continue-on-error` tries every row and exits
-  **0**. `--report <path>` writes `{"rows":[{row, status, record_id?, error?}], …, "failed_count"}`.
-  `--dry-run` validates only. The global `--json` prints the summary; the bar is hidden under
-  `--quiet`, the global `--json` and off a terminal.
 
 ### List resources
 

@@ -66,8 +66,9 @@ report's `ranking_fingerprint` is a stable hash of it — and the pre-flight emi
 no job, no artifact. The fidelity numbers it shows are the same ones the eventual job
 attaches to its result.
 
-Quality floors and waivers are configured per tenant in the import & export quality policy, set
-over the [REST API](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put);
+Quality floors and waivers are configured per tenant in the
+[import & export quality policy](../govern/style-guides.mdx#import--export-policy) on **Govern →
+Style guides** (or over the [REST API](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put));
 see [Import a specification](../bring-in/import-a-spec.md) for how the same policy gates intake.
 
 ## The projection map (graph + table)
@@ -445,6 +446,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
+- [Push a catalog item back to the gateway](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway) — the same report, before exporting to a gateway's own format
 - [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome export`](../reference/cli/export.md) — full `export` flag reference

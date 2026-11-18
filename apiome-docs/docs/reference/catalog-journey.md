@@ -14,15 +14,14 @@ change to one screen breaks the hand-off to the next. RC6-H1
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio | The route shows **Not available yet**, which proves the run sees released pages only |
-| 2 | Catalog → **Import to catalog** | A RAML spec pasted into **Clipboard Paste** is stored in the catalog |
-| 3 | Catalog | Filtering by the spec's title finds the item, and it opens |
-| 4 | Catalog item → **Convert to OpenAPI** | The conversion creates a new project, linked from the item |
-| 5 | Projects → **Edit project** | A new description is saved, and is still there after a reload |
-| 6 | Versions → **New version** | The new version appears in the table |
-| 7 | Version menu → **Publish** | The version shows **Published** |
-| 8 | Version menu → **Unpublish** | **Published** goes away |
-| 9 | Version menu → **Export** | The **Export** dialog produces a Protobuf file |
+| 1 | Catalog → **Import to catalog** | A RAML spec pasted into **Clipboard Paste** is stored in the catalog |
+| 2 | Catalog | Filtering by the spec's title finds the item, and it opens |
+| 3 | Catalog item → **Convert to OpenAPI** | The conversion creates a new project, linked from the item |
+| 4 | Projects → **Edit project** | A new description is saved, and is still there after a reload |
+| 5 | Versions → **New version** | The new version appears in the table |
+| 6 | Version menu → **Publish** | The version shows **Published** |
+| 7 | Version menu → **Unpublish** | **Published** goes away |
+| 8 | Version menu → **Export** | The **Export** dialog produces a Protobuf file |
 
 The test signs in through a mock GitHub provider; nothing else is mocked. Each run titles its spec
 with a timestamp, so runs against the same database never collide.
@@ -61,7 +60,7 @@ A second test in the same workflow walks the export path from import to download
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is released |
+| 1 | Export studio | The studio opens with no preview override |
 | 2 | Catalog → **Import to catalog** | Three RAML specs, titled per run, are stored in the catalog |
 | 3 | Catalog item → **Export** | Exporting to Avro and clicking **Download all files (.zip)** gives an archive with every `.avsc` file and `manifest.json` |
 | 4 | Item **⋯** → **Export to another format…** | In the Export studio, Protobuf is chosen, verified, generated, and **Download .zip** gives a `.proto` file |

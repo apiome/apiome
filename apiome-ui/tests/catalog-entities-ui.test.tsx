@@ -299,21 +299,6 @@ describe('the catalog home', () => {
     expect(screen.queryByTestId('catalog-register-agent')).not.toBeInTheDocument();
   });
 
-  it('while the other kinds are held back (RC6), reads no summary and stays the catalog-items list', async () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
-    try {
-      searchParams = new URLSearchParams('kind=all');
-      render(<CatalogClient />);
-      await waitFor(() => expect(calls.some((url) => url.startsWith('/api/catalog?') || url === '/api/catalog')).toBe(true));
-      expect(calls.some((url) => url.startsWith('/api/catalog/entities/summary'))).toBe(false);
-      expect(screen.queryByTestId('catalog-kinds')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('catalog-entity-list')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('catalog-import-reports')).not.toBeInTheDocument();
-    } finally {
-      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
-    }
-  });
-
   it('leaves the panel out when the summary cannot be read', async () => {
     summaryFails = true;
     searchParams = new URLSearchParams('kind=all');

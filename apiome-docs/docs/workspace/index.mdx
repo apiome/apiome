@@ -13,8 +13,10 @@ pages it holds: **click “Workspace”** to open it, and the sidebar remembers 
 
 **Running the workspace** — invite people and manage seats on [Members & seats](./members.mdx),
 decide what each role may do on [Roles & permissions](./roles.mdx), let your company sign in through
-its own identity provider on [Single sign-on](./workspace-sso.mdx), issue scoped keys for scripts,
-CI and agents on [API keys & agent keys](./api-keys.mdx), and set
+its own identity provider on [Single sign-on](./workspace-sso.mdx), group members into owning
+[Teams](./teams.mdx), issue scoped keys for scripts,
+CI and agents on [API keys & agent keys](./api-keys.mdx), set the schema registry's defaults and
+connect Kafka serializers on [Schema registry](../ship/schema-registry.mdx#registry-settings), and set
 a workspace's plan, limits and MCP policy in [Tenants & the manage drawer](./tenants.mdx).
 
 **Your account** — your password, two-factor sign-in and sessions on
@@ -26,8 +28,7 @@ a workspace's plan, limits and MCP policy in [Tenants & the manage drawer](./ten
 shortcut; [Keyboard](./keyboard.md) gives the keyboard path for every task and
 [Accessibility](./accessibility.md) the accessibility contract.
 
-Every change made on these screens is recorded in the workspace's access audit. The Access audit
-screen is not yet available; read the record over the [REST API](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get).
+Every change made on these screens is recorded in the [Access audit](../govern/access-audit.mdx).
 
 import DocCardList from '@theme/DocCardList';
 

@@ -130,21 +130,3 @@ describe('the bulk assign control', () => {
     expect(assigned).toEqual(['payments']);
   });
 });
-
-describe('while ownership is held back (RC6)', () => {
-  afterEach(() => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
-  });
-
-  test('the cell, the filter and the bulk control render nothing', () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    const { container } = render(
-      <>
-        <OwnerCell owner={SUGGESTED} kind="project" entityId="p-1" />
-        <OwnerFilter teams={TEAMS} value={null} onChange={() => undefined} />
-        <AssignOwnerControl teams={TEAMS} onAssign={async () => undefined} />
-      </>
-    );
-    expect(container).toBeEmptyDOMElement();
-  });
-});

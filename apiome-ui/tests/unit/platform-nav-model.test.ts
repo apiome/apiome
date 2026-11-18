@@ -10,7 +10,7 @@
  *   2. active-state resolution is unchanged from the pre-Hive sidebar, route by
  *      route, for every destination the model carries;
  *   3. workspace gating produces exactly the disabled set it produced before;
- *   4. no Tools route and no commercial-product route is hard-coded anywhere.
+ *   4. no Api-DB tool route and no commercial-product route is hard-coded anywhere.
  */
 import {
   DEFAULT_PLATFORM_NAV_ICON,
@@ -37,7 +37,6 @@ import {
 } from '../../lib/platform-nav';
 import { PLATFORM_NAV_ICONS, resolvePlatformNavIcon } from '../../lib/platform-nav-icons';
 import {
-  EMBEDDED_FEATURES,
   UNRELEASED_FEATURE_IDS,
   isFeatureReleased,
   parsePreviewFeatures,
@@ -130,8 +129,6 @@ describe('platform-nav model — shape', () => {
       'Linked accounts',
       'Tenants',
       'SDK settings',
-      'Data browser',
-      'Migrations',
     ]);
   });
 
@@ -167,23 +164,19 @@ describe('platform-nav model — shape', () => {
 });
 
 describe('platform-nav model — nothing commercial is hard-coded', () => {
-  /** The Tools routes, which HIVE-12.2 gave an off-rail home (the user menu). */
-  const TOOLS = ['/ade/database', '/ade/migration'];
+  /** The Api-DB tools' old routes: the Data browser and Migrations left this application. */
+  const API_DB_ROUTES = ['/ade/database', '/ade/migration'];
 
-  it('contains no studio route, and the Tools only off the rail', () => {
+  it('contains no studio route and no Api-DB tool', () => {
     for (const navItem of ALL_ITEMS) {
       expect(navItem.href.startsWith('/ade/studio')).toBe(false);
-    }
-    const railHrefs = PLATFORM_NAV_GROUPS.flatMap((group) => group.items).map((navItem) => navItem.href);
-    for (const prefix of TOOLS) {
-      expect(railHrefs.some((href) => href.startsWith(prefix))).toBe(false);
+      for (const prefix of API_DB_ROUTES) expect(navItem.href.startsWith(prefix)).toBe(false);
     }
   });
 
   it('routes every rail and account destination through /ade/dashboard', () => {
     for (const navItem of ALL_ITEMS) {
-      const isTool = TOOLS.some((prefix) => navItem.href.startsWith(prefix));
-      expect(isTool || navItem.href.startsWith('/ade/dashboard')).toBe(true);
+      expect(navItem.href.startsWith('/ade/dashboard')).toBe(true);
       expect(navItem.external).toBeUndefined();
     }
   });
@@ -232,9 +225,6 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/tenants', 'tenants'],
     ['/ade/dashboard/profile', 'profile'],
     ['/ade/dashboard/linked-accounts', 'linked-accounts'],
-    ['/ade/database', 'data-browser'],
-    ['/ade/database/tables', 'data-browser'],
-    ['/ade/migration', 'migrations'],
   ];
 
   it.each(ROUTES)('%s activates exactly one destination', (pathname, ownerId) => {
@@ -326,7 +316,7 @@ describe('platform-nav model — workspace gating', () => {
     expect(disabled.sort()).toEqual(GATED.filter((id) => isFeatureReleased(id)).sort());
   });
 
-  it('leaves Home, Tenants, the Tools and the account destinations reachable without a tenant', () => {
+  it('leaves Home, Tenants and the account destinations reachable without a tenant', () => {
     const enabled = getPlatformNavGroups({ currentTenantId: undefined })
       .flatMap((group) => group.items)
       .filter((navItem) => !navItem.disabled)
@@ -472,7 +462,7 @@ describe('platform-nav model — runtime injection', () => {
   });
 });
 
-describe('platform-nav model — release gate (MVP focus on Catalog and Projects)', () => {
+describe('platform-nav model — release gate', () => {
   const ORIGINAL = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
 
   afterEach(() => {
@@ -493,31 +483,28 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       .filter((id) => !shown.has(id));
   }
 
-  /** The unreleased ids that are rail or off-rail destinations (the rest are embedded features). */
-  const unreleasedDestinations = () => UNRELEASED_FEATURE_IDS.filter((id) => !(id in EMBEDDED_FEATURES));
-
-  it('holds back exactly the unreleased features, each a modelled destination or a named embedded feature', () => {
+  it('holds nothing back: every modelled destination is shown (RC8)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
-      'audit',
-      'catalog-entities',
-      'connectors',
-      'consumers',
-      'data-browser',
-      'dependency-graph',
-      'migrations',
-      'schema-registry',
+    expect(UNRELEASED_FEATURE_IDS).toEqual([]);
+    expect(hiddenWithTenant()).toEqual([]);
+  });
+
+  it('releases everything RC6 and the MVP focus had held back (RC8)', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    for (const id of [
       'sdk-settings',
-      'shadow-apis',
       'style-guides',
+      'audit',
+      'connectors',
+      'shadow-apis',
+      'dependency-graph',
       'teams',
-    ]);
-    for (const id of unreleasedDestinations()) expect(findPlatformNavItem(id)).toBeDefined();
-    for (const id of Object.keys(EMBEDDED_FEATURES)) {
-      expect(findPlatformNavItem(id)).toBeUndefined();
-      expect(UNRELEASED_FEATURE_IDS).toContain(id);
+      'schema-registry',
+      'catalog-entities',
+      'consumers',
+    ]) {
+      expect(isFeatureReleased(id)).toBe(true);
     }
-    expect(hiddenWithTenant().sort()).toEqual(unreleasedDestinations().sort());
   });
 
   it('keeps Catalog and Projects open', () => {
@@ -526,24 +513,8 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
     expect(isFeatureReleased('projects')).toBe(true);
   });
 
-  it('leaves an unreleased destination out rather than disabling it, with or without a workspace', () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    for (const tenant of [TENANT, null]) {
-      const ids = getPlatformNavGroups({ currentTenantId: tenant })
-        .flatMap((group) => group.items)
-        .map((navItem) => navItem.id);
-      expect(ids).not.toContain('audit');
-    }
-  });
-
-  it('re-opens listed features, or all of them, through the preview override', () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' style-guides , audit ';
-    expect(hiddenWithTenant().sort()).toEqual(
-      unreleasedDestinations()
-        .filter((id) => id !== 'style-guides' && id !== 'audit')
-        .sort()
-    );
-
+  it('reads the preview override only for an id the gate lists', () => {
+    expect(isFeatureReleased('audit', '')).toBe(true);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'ALL';
     expect(hiddenWithTenant()).toEqual([]);
   });
@@ -569,9 +540,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 15 released destinations in the rail (MCP servers, then Primitives & types, joined in RC8; Products in APX-1.1; Single sign-on in EID-1.2), 22 with every feature previewed', () => {
+  it('leaves all 22 modelled destinations in the rail now that RC8 released the rest; the preview override adds none', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(15);
+    expect(releasedRailCount()).toBe(22);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(22);
   });
@@ -583,8 +554,6 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     expect(PLATFORM_OFF_RAIL_ITEMS.map((navItem) => [navItem.id, navItem.home, navItem.section])).toEqual([
       ['tenants', 'workspace-switcher', 'Workspace'],
       ['sdk-settings', 'export-studio-tab', 'Ship'],
-      ['data-browser', 'user-menu', 'Tools'],
-      ['migrations', 'user-menu', 'Tools'],
     ]);
   });
 
@@ -597,34 +566,29 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     expect(isPlatformNavItemActive(item('export-studio'), '/ade/dashboard/export/studio')).toBe(true);
   });
 
-  it('keeps Tenants and the Tools ungated and SDK settings workspace-scoped', () => {
+  it('keeps Tenants ungated and SDK settings workspace-scoped', () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     const byId = new Map(
       getPlatformOffRailItems({ currentTenantId: null }).map((navItem) => [navItem.id, navItem])
     );
     expect(byId.get('tenants')?.disabled).toBe(false);
-    expect(byId.get('data-browser')?.disabled).toBe(false);
-    expect(byId.get('migrations')?.disabled).toBe(false);
     expect(byId.get('sdk-settings')).toMatchObject({
       disabled: true,
       disabledReason: platformNavGatedReason('SDK settings'),
     });
   });
 
-  it('drops an unreleased off-rail destination and filters by home', () => {
+  it('filters the off-rail destinations by home', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect(getPlatformOffRailItems({ currentTenantId: TENANT }).map((navItem) => navItem.id)).toEqual([
       'tenants',
+      'sdk-settings',
     ]);
-    expect(getPlatformOffRailItems({}, 'user-menu')).toEqual([]);
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
-    expect(getPlatformOffRailItems({}, 'user-menu').map((navItem) => navItem.label)).toEqual([
-      'Data browser',
-      'Migrations',
-    ]);
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect(getPlatformOffRailItems({}, 'workspace-switcher').map((navItem) => navItem.id)).toEqual([
       'tenants',
+    ]);
+    expect(getPlatformOffRailItems({}, 'export-studio-tab').map((navItem) => navItem.id)).toEqual([
+      'sdk-settings',
     ]);
   });
 
@@ -632,7 +596,6 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     expect(platformNavSectionLabel('catalog')).toBe('Bring in');
     expect(platformNavSectionLabel('sdk-settings')).toBe('Ship');
     expect(platformNavSectionLabel('tenants')).toBe('Workspace');
-    expect(platformNavSectionLabel('data-browser')).toBe('Tools');
     expect(platformNavSectionLabel('home')).toBeUndefined();
     expect(platformNavSectionLabel('nope')).toBeUndefined();
   });

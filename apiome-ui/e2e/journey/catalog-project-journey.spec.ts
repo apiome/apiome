@@ -9,9 +9,8 @@
  * notices when a change to one screen breaks the hand-off to the next.
  *
  * **Released surfaces only.** It runs under `playwright.catalog-journey.config.ts`, whose server
- * has no `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` override, and its first step proves it: a held-back
- * route must show the *Not available yet* gate. The OLO journey config (which turns every preview
- * on) ignores this file.
+ * has no `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` override. The OLO journey config (which turns every
+ * preview on) ignores this file.
  *
  * Every wait is on a `data-testid` or a role the step's screen draws when it is ready — no sleeps.
  * The run is self-contained and re-entrant: the persona comes from the seeded multi-tenant fixture,
@@ -137,14 +136,6 @@ test.afterAll(async () => {
 });
 
 test.describe('RC6-H1 — Catalog → Project journey', () => {
-  test('runs on released surfaces only (no preview override)', async ({ page }) => {
-    await login(page);
-    // Access audit is still held back (Export studio shipped in RC7, MCP servers in RC8). With no
-    // override its route draws the gate.
-    await page.goto('/ade/dashboard/audit');
-    await expect(page.getByTestId('unreleased-feature-gate')).toBeVisible({ timeout: 60_000 });
-  });
-
   test('imports a RAML spec into the Catalog through the import dialog', async ({ page }) => {
     await login(page);
     await page.goto('/ade/dashboard/catalog');

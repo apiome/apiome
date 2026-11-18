@@ -75,15 +75,14 @@ admin edit reaches the login path within a bounded wait instead of the 30s defau
 
 `catalog-project-journey.spec.ts` walks the path RC6 ships, one serial step per screen:
 
-1. a held-back route shows *Not available yet* (proves the run has no preview override);
-2. a RAML spec from the examples corpus, retitled per run, is pasted into the Catalog import dialog;
-3. its catalog item is opened from the Catalog list;
-4. **Convert to OpenAPI** creates a new project;
-5. the project's description is edited (and read back after a reload);
-6. a version is cut on the Versions page;
-7. it is published;
-8. it is unpublished;
-9. that version is exported to Protobuf through the in-place **Export** dialog, and the `.proto` in
+1. a RAML spec from the examples corpus, retitled per run, is pasted into the Catalog import dialog;
+2. its catalog item is opened from the Catalog list;
+3. **Convert to OpenAPI** creates a new project;
+4. the project's description is edited (and read back after a reload);
+5. a version is cut on the Versions page;
+6. it is published;
+7. it is unpublished;
+8. that version is exported to Protobuf through the in-place **Export** dialog, and the `.proto` in
    **Download .zip** passes `support/proto-check.ts` (a syntax line, balanced braces, every type
    declared or a scalar, unique field numbers — #6278).
 
@@ -109,7 +108,7 @@ share the self-hosted runner.
 
 `catalog-exporter-journey.spec.ts` walks the export path, one serial step per screen:
 
-1. the Export studio opens and **Connectors** is still gated (only `export-studio` is previewed);
+1. the Export studio opens (the run previews nothing);
 2. three RAML specs (retitled per run) are imported into the Catalog;
 3. the first item is exported to Avro through the **Export** dialog, and **Download all files
    (.zip)** yields every `.avsc` plus `manifest.json`;

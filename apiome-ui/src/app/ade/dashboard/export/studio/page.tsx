@@ -21,7 +21,6 @@ import {
 } from '../../../../components/ade/export-studio';
 import PageHeader from '../../../../components/shell/PageHeader';
 import { Page, PageBody } from '../../../../components/shell/pageChrome';
-import UnreleasedFeatureGate from '../../../../components/shell/UnreleasedFeatureGate';
 import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 import SdkCompatClient from '@/app/components/ade/export-studio/compat/SdkCompatClient';
 import DeliveryProfilesClient from '../../../../components/ade/export-studio/delivery/DeliveryProfilesClient';
@@ -85,20 +84,12 @@ function ExportStudioRouteContent() {
 
   const tab = exportStudioTabFromParams(searchParams);
   if (tab === 'sdk') {
-    return (
-      <UnreleasedFeatureGate feature="sdk-settings">
-        <SdkSettingsClient tabs={tabs} />
-      </UnreleasedFeatureGate>
-    );
+    return <SdkSettingsClient tabs={tabs} />;
   }
 
   // SGD-2.1 (#4735): `?tab=sdk-compat` — the generator compatibility manifest; source-free like SDK & branding.
   if (tab === 'sdk-compat') {
-    return (
-      <UnreleasedFeatureGate feature="sdk-settings">
-        <SdkCompatClient tabs={tabs} />
-      </UnreleasedFeatureGate>
-    );
+    return <SdkCompatClient tabs={tabs} />;
   }
 
   // MFX-38.4 (#4331): `?tab=delivery` — the workspace's delivery profiles. Like SDK & branding it

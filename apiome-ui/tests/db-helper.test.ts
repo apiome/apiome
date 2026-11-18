@@ -741,31 +741,7 @@ describe('Database Helper - Version Functions', () => {
     expect(parsed.success).toBe(true);
   });
 
-  test('unpublishVersion should unpublish version when no data records exist', async () => {
-    const { unpublishVersion } = await import('../lib/db/helper');
-
-    mockQuery
-      .mockResolvedValueOnce({ rowCount: 0 })
-      .mockResolvedValueOnce({ rowCount: 1 });
-
-    const result = await unpublishVersion('ver-1', 'user-1');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-    expect(mockQuery).toHaveBeenCalledTimes(2);
-    expect(mockQuery).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining('apiome.data_record'),
-      ['ver-1']
-    );
-    expect(mockQuery).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('UPDATE apiome.versions'),
-      ['ver-1', 'user-1']
-    );
-  });
-
-  test('unpublishVersion should return VERSION_HAS_DATA when version has data records', async () => {
+  test('unpublishVersion should unpublish the version in one statement', async () => {
     const { unpublishVersion } = await import('../lib/db/helper');
 
     mockQuery.mockResolvedValueOnce({ rowCount: 1 });
@@ -773,14 +749,11 @@ describe('Database Helper - Version Functions', () => {
     const result = await unpublishVersion('ver-1', 'user-1');
     const parsed = JSON.parse(result);
 
-    expect(parsed.success).toBe(false);
-    expect(parsed.code).toBe('VERSION_HAS_DATA');
-    expect(parsed.error).toContain('data records');
-    expect(parsed.error).toContain('cannot be unpublished');
+    expect(parsed.success).toBe(true);
     expect(mockQuery).toHaveBeenCalledTimes(1);
     expect(mockQuery).toHaveBeenCalledWith(
-      expect.stringContaining('apiome.data_record'),
-      ['ver-1']
+      expect.stringContaining('UPDATE apiome.versions'),
+      ['ver-1', 'user-1']
     );
   });
 

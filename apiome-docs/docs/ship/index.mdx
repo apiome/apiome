@@ -1,22 +1,19 @@
 ---
 title: Ship
-description: "Publish versions, plan sunsets, export specs and try mocks."
+description: "Publish versions, plan sunsets, export specs, generate SDKs and try mocks."
 sidebar_label: Ship
 sidebar_position: 1
 ---
 
 Ship is what happens after a version is ready: **publishing** it, planning its **sunset**, exporting
-it in another format and trying it against a **mock**.
+it in another format, generating an **SDK** and trying it against a **mock**.
 
 The usual order is [cut a version](./cut-a-version.md), [publish it](./publish-a-version.md) (each publish writes a
 [change report](./publication-change-reports.md) of what changed), then
 manage it on [Published](./published.mdx) and plan its end of life on the
 [Sunset timeline](./sunset-timeline.mdx). Bundle what consumers get access to — projects at a version or at
-latest, MCP servers and catalog items — into [API products](./api-products.mdx). Once a version is published you can
-[create data records](./create-data-records-from-the-cli.md) in its classes from the CLI,
-[import them in bulk](./import-data-records-from-the-cli.md) and
-[list them](./list-data-records-from-the-cli.md). From a terminal or CI job, [migration plans and version tags](./migration-plans-and-version-tags-from-the-cli.md)
-cover reading a project's migration rules and promoting a release by moving a tag. [Export to any format](./export-to-any-format.mdx) is the map
+latest, MCP servers and catalog items — into [API products](./api-products.mdx). From a terminal or CI job, [version tags](./version-tags-from-the-cli.md)
+cover promoting a release by moving a tag. [Export to any format](./export-to-any-format.mdx) is the map
 of everything export: where to start one, what survives, and where each part is described. [Export it](./export-a-spec.md) in another format, in place with [the Export dialog](./export-dialog.mdx) ([How an export runs](./export-jobs.mdx) explains
 the job behind every export, and [How an export is checked](./check-an-export.mdx) what makes it
 safe to download), or
@@ -32,7 +29,9 @@ guides behind the mock engine are under [Mock runtime](/reference/mock-runtime).
 can discover your imported MCP servers from the [MCP registry endpoint](./mcp-registry.mdx).
 xRegistry and CloudEvents tools can read your published schemas and events from the
 [xRegistry API](./serve-an-xregistry.md).
-The schema registry screens are not yet available.
+Avro, JSON Schema and Protobuf schemas get subjects, ids and versions in the
+[schema registry](./schema-registry.mdx). Name and brand the SDKs generated from your versions in
+[SDK settings](./sdk-settings.mdx).
 
 import DocCardList from '@theme/DocCardList';
 

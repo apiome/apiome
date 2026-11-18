@@ -193,13 +193,6 @@ describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
     );
   });
 
-  it('keeps the SDK settings release gate on the tab', () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
-    mockSearchParams.mockReturnValue(new URLSearchParams('tab=sdk'));
-    render(<ExportStudioPage />);
-    expect(screen.getByTestId('unreleased-feature-gate')).toBeInTheDocument();
-    expect(screen.queryByTestId('sdk-settings-stub')).not.toBeInTheDocument();
-  });
 });
 
 describe('Export Studio route — the SDK compatibility tab (SGD-2.1)', () => {

@@ -18,7 +18,7 @@ Publishing enforces server-side **publish gates** — it will refuse a version t
   refused with the level reached, the level required and what blocks the next level
   (see [The maturity level gate](#the-maturity-level-gate)),
 - when the workspace **requires an owner to publish**, the project has a confirmed
-  [owner team](../reference/rest/owners.md) — otherwise publish is refused with reason
+  [owner team](../workspace/teams.mdx#ownership) — otherwise publish is refused with reason
   `no-owner` (the `422` carries `reason: "no-owner"` and an `ownerGate` object).
 
 You choose a **visibility** when publishing: `public` (anyone can browse it) or `private` (only
@@ -33,9 +33,10 @@ in-scope API keys can reach it).
    only to a role that can publish (an **Editor** can't), and only to the version's creator or a
    workspace administrator; it never appears on a catalog item.
 3. If a gate fails, the UI reports which one — fix it (usually a missing description or an
-   unacknowledged breaking change) and publish again. When the owner gate would refuse the publish,
-   an **Owner team** card under **Publish gates** says **Blocked** — give the project a confirmed
-   owner over the [REST API](../reference/rest/owners.md), or force-publish with a reason.
+   unacknowledged breaking change) and publish again. The **Owner team** card under **Publish
+   gates** always says where the owner gate stands: **Off** (publishing does not require an owner),
+   **Met** (it names the owner team) or **Blocked** — [assign or confirm an owner](../workspace/teams.mdx#confirm-or-assign-an-owner)
+   on the project, or force-publish with a reason.
 4. Published versions are listed on [Published](./published.mdx) (`/ade/dashboard/published`).
 
 ## With the REST API
@@ -101,8 +102,7 @@ the audit row says `unavailable`.
 ## Unpublish a version
 
 Unpublishing returns a published version to **draft** — for a bad release, a publish to the wrong
-workspace, or a security regression. Only the version's creator or a tenant administrator can do it,
-and a version that already has data records cannot be unpublished. Unpublishing:
+workspace, or a security regression. Only the version's creator or a tenant administrator can do it. Unpublishing:
 
 - **hides** the version from `/v1/schema`, `/v1/swagger`, `/v1/arazzo` and `/v1/json`;
 - **moves its version tags** (such as `latest`) back to the project's next-most-recent published

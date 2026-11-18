@@ -1,24 +1,18 @@
 /* ==========================================================================
-   Feature release gate — the MVP focus on Catalog and Projects
+   Feature release gate
    --------------------------------------------------------------------------
-   Until Catalog and Projects are hardened for the MVP, the destinations below
-   stay in the code but out of reach: the rail, the command palette and the
-   `G`-jumps leave them out (through `getPlatformNavGroups()`), and their
-   routes render a "not available yet" page instead of the feature
-   (`UnreleasedFeatureGate`).
+   A destination listed below stays in the code but out of reach: the rail,
+   the command palette and the `G`-jumps leave it out (through
+   `getPlatformNavGroups()`), and every `isFeatureReleased()` check around the
+   places it is embedded hides it.
 
-   The ids are `PlatformNavItem.id`s, so the navigation model, the route gate
-   and the docs backup (`apiome-docs/unreleased/README.md`) all name a feature
-   the same way. Releasing one is: delete its id here, restore its docs pages.
-   Two ids name features with no rail item of their own, embedded in Catalog
-   and Projects: `catalog-entities` (agents, models, components, the
-   Backstage/Compass import reports and scorecard facts, CDG-5) and `consumers` (a project's
-   consumer contract registry, CTG-4.1).
+   The ids are `PlatformNavItem.id`s, so the navigation model and the docs
+   backup (`apiome-docs/unreleased/README.md`) name a feature the same way.
 
-   A gated feature is hidden where it is embedded too: `teams` takes the owner
-   column, filter and bulk action off Projects, Catalog and Published;
-   `dependency-graph` the Dependencies tabs; `schema-registry` the catalog
-   Subjects tab; `connectors` the refresh ledger on Repositories.
+   Nothing is held back today. RC8 released everything the MVP focus and RC6
+   had withheld, and the Data browser and Migrations tools left this
+   application: they belong to Api-DB, a separate product. To hold a feature
+   back, add its id here and gate its route.
 
    `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` re-opens gated features for a build —
    a comma-separated list of ids, or `all` — so developers, the docs screenshot
@@ -27,36 +21,7 @@
    ========================================================================== */
 
 /** Destinations that exist in the code but are not released (rail item ids). */
-export const UNRELEASED_FEATURE_IDS = [
-  'sdk-settings',
-  'style-guides',
-  'audit',
-  // RC6 scope (docs/RC6_OOE.md): Catalog Discovery Graph and contract-testing
-  // surfaces wait for the next release.
-  'connectors',
-  'shadow-apis',
-  'dependency-graph',
-  'teams',
-  'schema-registry',
-  'catalog-entities',
-  'consumers',
-  // The Tools in the user menu (HIVE-12.2): the data browser and the migrations canvas are
-  // not finished; both routes stay in the code, out of the menu, palette and jumps.
-  'data-browser',
-  'migrations',
-] as const;
-
-/** One of {@link UNRELEASED_FEATURE_IDS}. */
-export type UnreleasedFeatureId = (typeof UNRELEASED_FEATURE_IDS)[number];
-
-/**
- * The unreleased features that have no rail item, with the name and section a
- * gated route shows for them (a rail item's own label and group are used otherwise).
- */
-export const EMBEDDED_FEATURES: Readonly<Record<string, { label: string; section: string }>> = {
-  'catalog-entities': { label: 'Catalog entity kinds', section: 'Catalog' },
-  consumers: { label: 'Consumer contracts', section: 'Projects' },
-};
+export const UNRELEASED_FEATURE_IDS: readonly string[] = [];
 
 /** The build-time override that re-opens gated features (`all`, or a comma-separated id list). */
 export const PREVIEW_FEATURES_ENV = 'NEXT_PUBLIC_APIOME_PREVIEW_FEATURES';

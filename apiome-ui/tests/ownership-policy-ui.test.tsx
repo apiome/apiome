@@ -122,27 +122,6 @@ describe('the publish dialog’s owner gate', () => {
     expect(Boolean(screen.queryByText(/Publishing will be refused/))).toBe(status === 'blocked');
   });
 
-  test('while ownership is held back, only a blocked gate is shown', async () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    try {
-      gate = { status: 'disabled', message: 'The owner gate is off: publishing does not require an owner team.' };
-      const off = render(<OwnerGatePanel projectId="22222222-2222-4222-8222-222222222222" enabled />);
-      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-      expect(off.container).toBeEmptyDOMElement();
-      off.unmount();
-
-      gate = {
-        status: 'blocked',
-        message: 'This project has no confirmed owner team, and the workspace requires one to publish.',
-        reason: 'no-owner',
-      };
-      render(<OwnerGatePanel projectId="22222222-2222-4222-8222-222222222222" enabled />);
-      expect(await screen.findByTestId('owner-gate-status')).toHaveTextContent('Blocked');
-    } finally {
-      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
-    }
-  });
-
   test('reads nothing while the dialog is closed', () => {
     render(<OwnerGatePanel projectId="22222222-2222-4222-8222-222222222222" enabled={false} />);
     expect(global.fetch).not.toHaveBeenCalled();

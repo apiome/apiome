@@ -234,8 +234,6 @@ own feature components). The notes record what HIVE-10.4 changed there.
 | `/ade/dashboard/tenants` | ✓ | ✓ | ✓ | ✓ | "Not a member" empty description shortened. |
 | `/ade/dashboard/versions` | ✓ | ✓ | ✓ | ✓ | First-version empty description shortened. |
 | `/ade/dashboard/versions/sunset-timeline` | ✓ | ✓ | ✓ | ✓ |  |
-| `/ade/database` | ✓ | ✓ | ✓¹ | — | "No records found" → inline `EmptyState`; bare "Loading…" → `LoadingState`. |
-| `/ade/migration` | ✓ | ✓ | ✓¹ | — | "No records found" / "No records." → inline `EmptyState`; skeleton loading. |
 | `/ade` | — | — | ✓¹ | — | Launcher; data resolved on the server. Signed-out renders the brand hero. |
 | `/ade/reviews/[id]` | ✓ | ✓ | ✓ | ✓ | "Nothing published" compare empty shortened. |
 | `/ade/studio/code` | n/a | n/a | n/a | ✓ | Redirect only. |

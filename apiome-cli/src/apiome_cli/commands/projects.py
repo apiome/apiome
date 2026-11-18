@@ -420,8 +420,8 @@ def export_project(
     include: Optional[str] = typer.Option(
         None,
         "--include",
-        help="Sections to export, comma-separated: versions, classes, properties, paths, tags, "
-        "migrations (default: all of them).",
+        help="Sections to export, comma-separated: versions, classes, properties, paths, tags "
+        "(default: all of them).",
     ),
     exclude: Optional[str] = typer.Option(
         None, "--exclude", help="Sections to leave out, comma-separated."

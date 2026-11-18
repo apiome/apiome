@@ -326,12 +326,13 @@ describe('the page frame', () => {
     ).toBeInTheDocument();
   });
 
-  // The Owner column (CDG-2.4) waits for Teams (lib/feature-release.ts).
-  it('draws the six columns the mockup names, and no others', async () => {
+  // The Owner column (CDG-2.4) came with Teams in RC8.
+  it('draws the six columns the mockup names, with Owner after the project', async () => {
     await renderPublished();
     const headers = screen.getAllByRole('columnheader').map((cell) => cell.textContent?.trim());
     expect(headers).toEqual([
       'Project / Version',
+      'Owner',
       'Visibility',
       'Access URL',
       'Mock',
@@ -988,7 +989,8 @@ describe('sunset readiness on a deprecated row', () => {
   function installTimeline(ok = true): void {
     timelineCalls.length = 0;
     global.fetch = jest.fn(async (input: unknown) => {
-      timelineCalls.push(String(input));
+      // The owner filter reads the workspace's teams (released in RC8); only the timeline is counted.
+      if (!String(input).startsWith('/api/teams')) timelineCalls.push(String(input));
       return {
         ok,
         json: async () =>
