@@ -157,6 +157,9 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   roblox: { clientId: 'ROBLOX_CLIENT_ID', clientSecret: 'ROBLOX_CLIENT_SECRET' },
   // Kick (OLO-9.38, #5051): credentials-only; fixed OAuth 2.1 endpoints, no issuer extra.
   kick: { clientId: 'KICK_CLIENT_ID', clientSecret: 'KICK_CLIENT_SECRET' },
+  // PayPal (OLO-9.45, #5058): the optional environment (live / sandbox) lives in config JSONB
+  // and overlays via the extras loop below; credentials overlay env.
+  paypal: { clientId: 'PAYPAL_CLIENT_ID', clientSecret: 'PAYPAL_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

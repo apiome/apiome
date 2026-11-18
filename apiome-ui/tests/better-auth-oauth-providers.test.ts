@@ -146,6 +146,8 @@ const ALL_ENABLED: Record<string, string> = {
   ROBLOX_CLIENT_SECRET: 'roblox-secret',
   KICK_CLIENT_ID: 'kick-client-id',
   KICK_CLIENT_SECRET: 'kick-secret',
+  PAYPAL_CLIENT_ID: 'paypal-client-id',
+  PAYPAL_CLIENT_SECRET: 'paypal-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -276,6 +278,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
   });
 
@@ -318,6 +321,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
   });
 
@@ -429,6 +433,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const kick = buildGenericOAuthConfig('kick', ALL_ENABLED)!;
     expect(kick.clientId).toBe('kick-client-id');
     expect(kick.clientSecret).toBe('kick-secret');
+    const paypal = buildGenericOAuthConfig('paypal', ALL_ENABLED)!;
+    expect(paypal.clientId).toBe('paypal-client-id');
+    expect(paypal.clientSecret).toBe('paypal-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -971,6 +978,32 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('paypal: live OIDC discovery by default; OIDC scopes; Basic exchange; PKCE off (OLO-9.45)', () => {
+    const cfg = buildGenericOAuthConfig('paypal', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('paypal');
+    expect(cfg.discoveryUrl).toBe('https://www.paypal.com/.well-known/openid-configuration');
+    expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
+    // PayPal's token endpoint takes the client credentials as HTTP Basic only.
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(false);
+    // Discovery supplies the endpoints; the normalizer reads the Identity API userinfo itself.
+    expect(cfg.authorizationUrl).toBeUndefined();
+    expect(cfg.tokenUrl).toBeUndefined();
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test.each([
+    ['sandbox', 'sandbox', 'https://www.sandbox.paypal.com'],
+    ['mixed-case sandbox', '  SandBox ', 'https://www.sandbox.paypal.com'],
+    ['live', 'live', 'https://www.paypal.com'],
+    ['a blank value', '   ', 'https://www.paypal.com'],
+    ['an unknown value', 'staging', 'https://www.paypal.com'],
+  ])('paypal: PAYPAL_ENVIRONMENT %s selects the discovery issuer (OLO-9.45)', (_label, value, issuer) => {
+    const cfg = buildGenericOAuthConfig('paypal', { ...ALL_ENABLED, PAYPAL_ENVIRONMENT: value })!;
+    expect(cfg.discoveryUrl).toBe(`${issuer}/.well-known/openid-configuration`);
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -7367,6 +7400,251 @@ describe('getUserInfo — Kick fail-closed link-first (OLO-9.38)', () => {
     const { result, override } = await runGetUserInfo(
       'kick',
       { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: PayPal (OLO-9.45) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Log in with PayPal sign-in and linking (OLO-9.45)', () => {
+  const LIVE_USERINFO_URL =
+    'https://api-m.paypal.com/v1/identity/oauth2/userinfo?schema=paypalv1.1';
+  const SANDBOX_USERINFO_URL =
+    'https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo?schema=paypalv1.1';
+  /** PayPal's stable identity URL: the `user_id` (and the id token's `sub`). */
+  const USER_ID = 'https://www.paypal.com/webapps/auth/identity/user/mWq6_1sU85v5EG9yHdPxJRrhGHrnMJ-1PQKtX6pcsmA';
+  /** The Identity API userinfo body for the person signing in. */
+  const USERINFO = {
+    user_id: USER_ID,
+    sub: USER_ID,
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    email_verified: true,
+    picture: 'https://www.paypalobjects.com/ada.png',
+    payer_id: 'WDJJHEBZ4X2LY',
+  };
+  /** The id token PayPal issues alongside the access token. */
+  const ID_TOKEN = { iss: 'https://www.paypal.com', sub: USER_ID, aud: 'paypal-client-id' };
+
+  /** Serve `body` from `userInfoUrl` (a failed response when null); record each request. */
+  const paypalApi = (body: unknown, userInfoUrl = LIVE_USERINFO_URL) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      const served = url === userInfoUrl ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on user_id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = paypalApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: USER_ID,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'https://www.paypalobjects.com/ada.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: LIVE_USERINFO_URL, authorization: 'Bearer pp.tok' }]);
+  });
+
+  test('a verified email joins the existing account (auto-link)', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = paypalApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, email: 'ada@example.com', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'paypal', providerUserId: USER_ID },
+    });
+  });
+
+  test('a verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = paypalApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'paypal',
+      providerUserId: USER_ID,
+      email: 'ada@example.com',
+    });
+  });
+
+  test('PAYPAL_ENVIRONMENT=sandbox moves the userinfo call to the sandbox host', async () => {
+    const env = { ...ALL_ENABLED, PAYPAL_ENVIRONMENT: 'sandbox' };
+    const sandboxId = USER_ID.replace('www.paypal.com', 'www.sandbox.paypal.com');
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl, requests } = paypalApi(
+      { ...USERINFO, user_id: sandboxId, sub: sandboxId },
+      SANDBOX_USERINFO_URL
+    );
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor({ ...ID_TOKEN, sub: sandboxId }) },
+      { store, env, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: sandboxId, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(requests.map((r) => r.url)).toEqual([SANDBOX_USERINFO_URL]);
+  });
+
+  test('no id token: the userinfo body alone identifies the person', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { sub: _sub, ...withoutSub } = USERINFO;
+    const { fetchImpl } = paypalApi(withoutSub);
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, emailVerified: true });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+  ])('email_verified %s → fail-closed unverified, never linked', async (_label, claim) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = paypalApi({ ...USERINFO, email_verified: claim });
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an unverified email still signs in an already-linked identity', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = paypalApi({ ...USERINFO, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the PayPal account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = paypalApi({ ...USERINFO, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'paypal', providerUserId: USER_ID },
+    });
+  });
+
+  test('no email in userinfo → email-required rejection', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = paypalApi({ ...USERINFO, email: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken: 'pp.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['a failed request', null, 'pp.tok', ID_TOKEN],
+    ['an array body', [USERINFO], 'pp.tok', ID_TOKEN],
+    ['a body with no user_id', { ...USERINFO, user_id: undefined }, 'pp.tok', ID_TOKEN],
+    ['a blank user_id', { ...USERINFO, user_id: '  ' }, 'pp.tok', ID_TOKEN],
+    ['a body for another subject', { ...USERINFO, sub: `${USER_ID}-other` }, 'pp.tok', ID_TOKEN],
+    [
+      'a body for another user_id and no sub',
+      { ...USERINFO, sub: undefined, user_id: `${USER_ID}-other` },
+      'pp.tok',
+      ID_TOKEN,
+    ],
+    ['an id token without a sub', USERINFO, 'pp.tok', { iss: 'https://www.paypal.com' }],
+    ['a missing access token', USERINFO, '', ID_TOKEN],
+  ])('%s yields no identity', async (_label, body, accessToken, idClaims) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = paypalApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'paypal',
+      { accessToken, idToken: idTokenFor(idClaims) },
       { store, env: ALL_ENABLED, fetchImpl }
     );
 

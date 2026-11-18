@@ -90,6 +90,7 @@ describe('PROVIDER_EXTRA_FIELDS metadata', () => {
     ]);
     expect(PROVIDER_EXTRA_FIELDS.auth0.map((f) => f.envKey)).toEqual(['AUTH0_ISSUER']);
     expect(PROVIDER_EXTRA_FIELDS.salesforce.map((f) => f.envKey)).toEqual(['SALESFORCE_ISSUER']);
+    expect(PROVIDER_EXTRA_FIELDS.paypal.map((f) => f.envKey)).toEqual(['PAYPAL_ENVIRONMENT']);
   });
 });
 

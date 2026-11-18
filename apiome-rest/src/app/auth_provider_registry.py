@@ -149,7 +149,9 @@ class ProviderDescriptor:
 # ``tiktok`` is available (OLO-9.36, #5049) as credentials-only TikTok Login Kit (fixed endpoints, no issuer);
 # its ``client_id`` field is TikTok's "client key" (``TIKTOK_CLIENT_KEY``);
 # ``roblox`` is available (OLO-9.37, #5050) as credentials-only Roblox OIDC (fixed discovery document, no issuer);
-# ``kick`` is available (OLO-9.38, #5051) as credentials-only Kick OAuth 2.1 + PKCE (fixed endpoints, no issuer).
+# ``kick`` is available (OLO-9.38, #5051) as credentials-only Kick OAuth 2.1 + PKCE (fixed endpoints, no issuer);
+# ``paypal`` is available (OLO-9.45, #5058) as credentials-only Log in with PayPal (OIDC discovery) — its
+# environment is an optional ``config`` extra (``PAYPAL_ENVIRONMENT``, default live), so not a required field.
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -373,6 +375,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Kick",
         STATUS_AVAILABLE,
         client_credential_fields("KICK_CLIENT_ID", "KICK_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "paypal",
+        "PayPal",
+        STATUS_AVAILABLE,
+        client_credential_fields("PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"),
     ),
 )
 

@@ -309,6 +309,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'notion',
       'oidc',
       'okta',
+      'paypal',
       'railway',
       'reddit',
       'roblox',

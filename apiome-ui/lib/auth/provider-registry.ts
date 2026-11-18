@@ -30,7 +30,7 @@
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
  * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
  * X / Twitter (OLO-9.32), Reddit (OLO-9.33), Spotify (OLO-9.34), Twitch (OLO-9.35), TikTok
- * (OLO-9.36), Roblox (OLO-9.37), and Kick (OLO-9.38) followed exactly that path.
+ * (OLO-9.36), Roblox (OLO-9.37), Kick (OLO-9.38), and PayPal (OLO-9.45) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -494,6 +494,17 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // Kick Developer settings; fixed OAuth 2.1 endpoints, so no issuer. Kick returns an email with
     // no verified claim → link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('KICK_CLIENT_ID', 'KICK_CLIENT_SECRET'),
+  },
+  {
+    id: 'paypal',
+    label: 'PayPal',
+    status: 'available',
+    // PayPal (OLO-9.45, #5058): credentials only — the Client ID and Secret of a REST API app with
+    // Log in with PayPal enabled. The environment is an *optional* extra (`PAYPAL_ENVIRONMENT`,
+    // default live; `sandbox` for a sandbox app), so it is not a required field. The
+    // `email_verified` claim is honored when true, otherwise fail-closed link-first — see
+    // AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET'),
   },
 ];
 

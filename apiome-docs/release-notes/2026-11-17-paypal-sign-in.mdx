@@ -1,0 +1,31 @@
+---
+slug: paypal-sign-in
+title: Sign in with PayPal
+description: "People can now sign in, sign up and link with their PayPal account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome, create an account and link their PayPal account on
+[Linked accounts](/workspace/linked-accounts) with **Log in with PayPal**.
+
+{/* truncate */}
+
+- **For administrators.** **PayPal** is a new entry in **System settings → Add Provider**. It needs
+  the **Client ID** and **Secret** of a PayPal REST API app with **Log in with PayPal** turned on.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  PayPal's side. The environment variables are `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`.
+- **Sandbox.** The **Environment** setting (`PAYPAL_ENVIRONMENT`) is optional. Leave it empty for
+  live PayPal, or set it to `sandbox` when the credentials come from a **Sandbox** app, so people
+  sign in with PayPal sandbox test accounts. Any other value means live.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/paypal`, added as the app's
+  **Return URL**.
+- **Scopes.** Apiome asks for **openid**, **email** and **profile** — tick **Full name** and **Email**
+  in the app's Log in with PayPal settings. Apiome reads the name, email address and picture of the
+  person signing in; it reads no payments, addresses or account details and keeps no PayPal token.
+- **Trusted.** PayPal says whether the email address is verified. A verified address joins the
+  Apiome account with that address, or creates one; an unverified one ends with *Your sign-in
+  provider could not confirm that your email address is verified…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `paypal` as an available provider, and
+  `PUT /v1/admin/auth-providers/paypal` stores its credentials and environment.

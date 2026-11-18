@@ -108,6 +108,8 @@ const ALL_ENABLED_ENV = {
   ROBLOX_CLIENT_SECRET: 'rb-secret',
   KICK_CLIENT_ID: 'kk-id',
   KICK_CLIENT_SECRET: 'kk-secret',
+  PAYPAL_CLIENT_ID: 'pp-id',
+  PAYPAL_CLIENT_SECRET: 'pp-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -149,6 +151,7 @@ describe('registry vocabulary', () => {
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
   });
 
@@ -189,6 +192,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('tiktok')?.label).toBe('TikTok');
     expect(getProviderDescriptor('roblox')?.label).toBe('Roblox');
     expect(getProviderDescriptor('kick')?.label).toBe('Kick');
+    expect(getProviderDescriptor('paypal')?.label).toBe('PayPal');
   });
 
   it('pins each available provider env contract', () => {
@@ -348,9 +352,13 @@ describe('registry vocabulary', () => {
       'KICK_CLIENT_ID',
       'KICK_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('paypal')?.requiredEnvKeys).toEqual([
+      'PAYPAL_CLIENT_ID',
+      'PAYPAL_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/paypal/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43, 9.45); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -383,6 +391,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('tiktok')?.status).toBe('available');
     expect(getProviderDescriptor('roblox')?.status).toBe('available');
     expect(getProviderDescriptor('kick')?.status).toBe('available');
+    expect(getProviderDescriptor('paypal')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -440,6 +449,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('tiktok', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('roblox', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('kick', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('paypal', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -652,6 +662,12 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('kick', { KICK_CLIENT_ID: 'x', KICK_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('kick', { KICK_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('paypal', { PAYPAL_CLIENT_ID: 'x', PAYPAL_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('paypal', { PAYPAL_CLIENT_ID: 'x' })).toBe(false);
+    // The environment is an optional extra: setting it alone never enables PayPal.
+    expect(isProviderEnabled('paypal', { PAYPAL_ENVIRONMENT: 'sandbox' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -698,6 +714,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -741,6 +758,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
   });
 
@@ -782,6 +800,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'tiktok',
       'roblox',
       'kick',
+      'paypal',
     ]);
   });
 });
@@ -827,6 +846,7 @@ describe('providerSummaries', () => {
       { id: 'tiktok', label: 'TikTok', status: 'available', enabled: false },
       { id: 'roblox', label: 'Roblox', status: 'available', enabled: false },
       { id: 'kick', label: 'Kick', status: 'available', enabled: false },
+      { id: 'paypal', label: 'PayPal', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

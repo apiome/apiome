@@ -125,6 +125,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   tiktok: 'TikTok account sign-in',
   roblox: 'Roblox account sign-in',
   kick: 'Kick account sign-in',
+  paypal: 'PayPal account sign-in',
 };
 
 /**

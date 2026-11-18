@@ -120,6 +120,8 @@ export interface ProviderExtraField {
  *     (`SALESFORCE_ISSUER`).
  *   - Apple Team ID + Key ID (required — they sign the client-secret JWT): `apple-sign-in.ts`
  *     (`APPLE_TEAM_ID`, `APPLE_KEY_ID`). The `.p8` private key is the sealed secret, not an extra.
+ *   - PayPal environment (optional — `live` or `sandbox`): `paypal-environment.ts`
+ *     (`PAYPAL_ENVIRONMENT`).
  *
  * Providers without an entry (and coming-soon placeholders) simply render no extras.
  */
@@ -240,6 +242,14 @@ export const PROVIDER_EXTRA_FIELDS: Record<string, readonly ProviderExtraField[]
       label: 'Key ID',
       defaultValue: '(required)',
       help: 'The Key ID of the Sign in with Apple private key (.p8), e.g. ABC123DEFG.',
+    },
+  ],
+  paypal: [
+    {
+      envKey: 'PAYPAL_ENVIRONMENT',
+      label: 'Environment',
+      defaultValue: 'live',
+      help: 'Set to sandbox for a PayPal sandbox app and its test accounts; anything else is live.',
     },
   ],
 };
