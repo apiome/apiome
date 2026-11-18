@@ -1,0 +1,97 @@
+---
+title: Sign-in and identity overview
+description: Which sign-in providers Apiome supports, and when to use providers, SSO or 2FA.
+sidebar_position: 7.5
+tags: [admin, sign-in, sso, oauth, oidc, two-factor]
+---
+
+Apiome signs people in through **identity providers** they already use — forty-one of them,
+from GitHub, Okta, Google Workspace and Keycloak to any OpenID Connect server — as well as with an
+email and password. An operator turns each one on from configuration alone: a client ID, a client secret and,
+for some, an issuer, set on **System settings** or in `.env`. No code changes and no rebuild.
+
+This page is the map. It lists every provider by kind, says which sign-in feature fits which need,
+and names the screen where each is set up. The step-by-step setup is on
+[Sign-in providers](./auth-providers.mdx).
+
+<Legacy />
+
+<Screenshot id="admin-auth-provider-add" alt="The Add Provider dialog searched for o, listing Google, Keycloak, OIDC and Okta with their ids" />
+
+## Which feature do you need?
+
+Apiome has three sign-in features. They work together: an installation can offer GitHub sign-in to
+everyone, send one customer's staff to their own Okta, and ask for a second factor on top of both.
+
+| You want… | Use | Who sets it up | Where |
+| --- | --- | --- | --- |
+| Anyone with a GitHub, Google, Okta or other account to sign in | A **sign-in provider** — one app registration for the whole installation | An operator | **Admin console → System settings** ([Sign-in providers](./auth-providers.mdx)) |
+| One company's people to sign in through *their* identity provider, only for the email domains they own | **Single sign-on** — SAML 2.0 or OIDC, per workspace | A workspace owner or admin, or an operator | **Workspace → Single sign-on** ([Single sign-on](../workspace/workspace-sso.mdx)), or the **Single sign-on** card on **System settings** ([Single sign-on](./single-sign-on.mdx)) |
+| A code on top of the password or provider | **Two-factor authentication** — an authenticator app, an emailed code or a texted code | Each person, for their own account | **Profile → Security** ([Two-factor authentication](../workspace/profile.mdx#two-factor-authentication)) |
+
+A **sign-in provider** and **single sign-on** can both point at the same Okta or Entra ID. Choose a
+sign-in provider when the whole installation belongs to one organization; choose single sign-on
+when the installation serves several companies, each with its own identity provider.
+
+## The screens involved
+
+| Screen | Route | What happens there |
+| --- | --- | --- |
+| Sign-in page | `/login` | One button per enabled provider, the **Sign in with SSO** link and the email form — see [Sign in](../getting-started/sign-in.mdx) |
+| Sign-up page | `/signup` | The same buttons, when the [sign-up policy](./auth-providers.mdx#sign-up-policy) is **Open** |
+| Two-factor check | `/login/2fa` | The second step, for people with two-factor on |
+| Linked accounts | `/ade/dashboard/linked-accounts` | Each person links or unlinks providers on their account — see [Linked accounts](../workspace/linked-accounts.mdx) |
+| Profile | `/ade/dashboard/profile` | Two-factor, backup codes and the person's sign-in methods — see [Profile & security](../workspace/profile.mdx) |
+| Workspace single sign-on | `/ade/dashboard/sso` | A workspace connects its IdP and verifies its domains |
+| System settings | `/admin/dashboard/settings` | Operators add, edit, validate and remove providers, and set the sign-up policy |
+
+The sign-in page, sign-up page and **Linked accounts** list only the providers that are enabled —
+there is no separate step to show a new provider's button.
+
+## Supported providers
+
+Every provider below is available today. The ids are what you type in **Add Provider** and what
+the [REST API](./auth-providers.mdx#with-the-api) uses; the full table with required fields is under
+[The providers](./auth-providers.mdx#the-providers).
+
+| Kind | Providers |
+| --- | --- |
+| **Code hosts** | GitHub (`github`, including GitHub Enterprise Server), GitLab (`gitlab`, including self-managed), Bitbucket Cloud (`bitbucket`) |
+| **Workforce identity** | Microsoft Entra ID (`azure`), Google Workspace (`google`), Okta (`okta`), AWS Cognito (`aws`), Keycloak (`keycloak`), Auth0 (`auth0`), any OpenID Connect server (`oidc`) — Authentik, PingFederate, ZITADEL, OneLogin, JumpCloud and others |
+| **Developer and work tools** | Atlassian, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot |
+| **Consumer accounts** | Apple, Facebook, X (Twitter), Reddit, Spotify, Twitch, TikTok, Roblox, Kick |
+| **Regional** | LINE (Japan, Taiwan, Thailand), WeChat (China), VK (Russia and the CIS) |
+| **Payments and creators** | PayPal, Polar, Patreon, Gumroad, Paybin |
+
+Okta, AWS Cognito, Keycloak, Auth0 and OIDC need an **issuer** as well as the client ID and
+secret; Apple needs a private key, a Team ID and a Key ID instead of a secret. The rest need only a
+client ID and a client secret.
+
+### Regional providers by market
+
+When Apiome is hosted for a market outside the US, start with that market's first provider:
+
+| Market | First provider | Follow-up |
+| --- | --- | --- |
+| Japan, Taiwan, Thailand | LINE — available | — |
+| China | WeChat — available | — |
+| Russia and the CIS | VK — available | Yandex — not available yet (#5057) |
+| South Korea | Kakao — not available yet (#5052) | Naver — not available yet (#5053) |
+
+Until a market's provider ships, people there can use the [generic OIDC provider](./auth-providers.mdx#the-providers)
+if their identity provider speaks OpenID Connect, or the email form.
+
+## Not every provider can create an account
+
+A provider sign-in joins or creates an account only when the provider proves the email address is
+verified. Some providers send no such proof, and a few send no address at all. People sign in
+another way first, link those providers on **Linked accounts**, and use them from then on. The
+three classes, and which provider is in which, are under
+[How a provider's email is trusted](./auth-providers.mdx#how-a-providers-email-is-trusted).
+
+## Where next
+
+- [Sign-in providers](./auth-providers.mdx) — add, configure, validate and remove a provider
+- [Single sign-on](./single-sign-on.mdx) — a company's own SAML or OIDC identity provider
+- [Two-factor codes by email and text message](./auth-providers.mdx#two-factor-codes-by-email-and-text-message) — SendGrid and Twilio settings
+- [Sign in](../getting-started/sign-in.mdx) — what people see on the sign-in page
