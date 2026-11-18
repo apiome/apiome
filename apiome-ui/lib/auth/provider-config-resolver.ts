@@ -160,6 +160,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   // PayPal (OLO-9.45, #5058): the optional environment (live / sandbox) lives in config JSONB
   // and overlays via the extras loop below; credentials overlay env.
   paypal: { clientId: 'PAYPAL_CLIENT_ID', clientSecret: 'PAYPAL_CLIENT_SECRET' },
+  // Polar (OLO-9.46, #5059): credentials-only; fixed OAuth 2.0 / OIDC endpoints, no issuer extra.
+  polar: { clientId: 'POLAR_CLIENT_ID', clientSecret: 'POLAR_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

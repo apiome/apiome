@@ -148,6 +148,8 @@ const ALL_ENABLED: Record<string, string> = {
   KICK_CLIENT_SECRET: 'kick-secret',
   PAYPAL_CLIENT_ID: 'paypal-client-id',
   PAYPAL_CLIENT_SECRET: 'paypal-secret',
+  POLAR_CLIENT_ID: 'polar-client-id',
+  POLAR_CLIENT_SECRET: 'polar-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -279,6 +281,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
   });
 
@@ -322,6 +325,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
   });
 
@@ -436,6 +440,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const paypal = buildGenericOAuthConfig('paypal', ALL_ENABLED)!;
     expect(paypal.clientId).toBe('paypal-client-id');
     expect(paypal.clientSecret).toBe('paypal-secret');
+    const polar = buildGenericOAuthConfig('polar', ALL_ENABLED)!;
+    expect(polar.clientId).toBe('polar-client-id');
+    expect(polar.clientSecret).toBe('polar-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -974,6 +981,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['user:read']);
     expect(cfg.authentication).toBe('post');
     // Kick refuses an authorization without a PKCE challenge.
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('polar: fixed Polar OAuth endpoints; OIDC scopes; post exchange; PKCE on (OLO-9.46)', () => {
+    const cfg = buildGenericOAuthConfig('polar', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('polar');
+    expect(cfg.authorizationUrl).toBe('https://polar.sh/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.polar.sh/v1/oauth2/token');
+    // The normalizer reads /v1/oauth2/userinfo itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['openid', 'profile', 'email']);
+    expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
@@ -7644,6 +7666,246 @@ describe('getUserInfo — Log in with PayPal sign-in and linking (OLO-9.45)', ()
 
     const { result, override } = await runGetUserInfo(
       'paypal',
+      { accessToken, idToken: idTokenFor(idClaims) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Polar (OLO-9.46) ─────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Polar sign-in and linking (OLO-9.46)', () => {
+  const USERINFO_URL = 'https://api.polar.sh/v1/oauth2/userinfo';
+  /** Polar's user id: the userinfo `sub` (and the id token's `sub`). */
+  const USER_ID = '3f0c9b2e-6a41-4d7e-9c55-1b2a8e7d4f10';
+  /** The OAuth userinfo body for the person signing in. */
+  const USERINFO = {
+    sub: USER_ID,
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    email_verified: true,
+  };
+  /** The id token Polar issues alongside the access token. */
+  const ID_TOKEN = { iss: 'https://polar.sh', sub: USER_ID, aud: 'polar-client-id' };
+
+  /** Serve `body` from the userinfo endpoint (a failed response when null); record each request. */
+  const polarApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      const served = url === USERINFO_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on sub', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = polarApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: USER_ID,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+    });
+    expect(result?.image ?? null).toBeNull();
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: USERINFO_URL, authorization: 'Bearer polar.tok' }]);
+  });
+
+  test("the helper's profile shape (id, public_name, avatar_url) is read when sub is absent", async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = polarApi({
+      id: USER_ID,
+      username: 'ada',
+      public_name: 'Ada L.',
+      avatar_url: 'https://avatars.polar.example/ada.png',
+      email: 'ada@example.com',
+      email_verified: true,
+    });
+
+    const { result } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({
+      id: USER_ID,
+      name: 'Ada L.',
+      image: 'https://avatars.polar.example/ada.png',
+    });
+  });
+
+  test('a verified email joins the existing account (auto-link)', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = polarApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, email: 'ada@example.com', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'polar', providerUserId: USER_ID },
+    });
+  });
+
+  test('a verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = polarApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'polar',
+      providerUserId: USER_ID,
+      email: 'ada@example.com',
+    });
+  });
+
+  test('no id token: the userinfo body alone identifies the person', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = polarApi(USERINFO);
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, emailVerified: true });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+    ['the number 1', 1],
+  ])('email_verified %s → fail-closed unverified, never linked', async (_label, claim) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = polarApi({ ...USERINFO, email_verified: claim });
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an unverified email still signs in an already-linked identity', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = polarApi({ ...USERINFO, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Polar account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = polarApi({ ...USERINFO, email_verified: false });
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'polar', providerUserId: USER_ID },
+    });
+  });
+
+  test('no email in userinfo → email-required rejection', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = polarApi({ ...USERINFO, email: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
+      { accessToken: 'polar.tok', idToken: idTokenFor(ID_TOKEN) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['a failed request', null, 'polar.tok', ID_TOKEN],
+    ['an array body', [USERINFO], 'polar.tok', ID_TOKEN],
+    ['a body with no sub or id', { ...USERINFO, sub: undefined }, 'polar.tok', ID_TOKEN],
+    ['a blank sub', { ...USERINFO, sub: '  ' }, 'polar.tok', ID_TOKEN],
+    ['a non-string sub', { ...USERINFO, sub: 42 }, 'polar.tok', ID_TOKEN],
+    ['a body for another subject', { ...USERINFO, sub: `${USER_ID}-other` }, 'polar.tok', ID_TOKEN],
+    ['an id token without a sub', USERINFO, 'polar.tok', { iss: 'https://polar.sh' }],
+    ['a missing access token', USERINFO, '', ID_TOKEN],
+  ])('%s yields no identity', async (_label, body, accessToken, idClaims) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = polarApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'polar',
       { accessToken, idToken: idTokenFor(idClaims) },
       { store, env: ALL_ENABLED, fetchImpl }
     );

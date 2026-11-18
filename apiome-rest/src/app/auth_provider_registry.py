@@ -151,7 +151,8 @@ class ProviderDescriptor:
 # ``roblox`` is available (OLO-9.37, #5050) as credentials-only Roblox OIDC (fixed discovery document, no issuer);
 # ``kick`` is available (OLO-9.38, #5051) as credentials-only Kick OAuth 2.1 + PKCE (fixed endpoints, no issuer);
 # ``paypal`` is available (OLO-9.45, #5058) as credentials-only Log in with PayPal (OIDC discovery) — its
-# environment is an optional ``config`` extra (``PAYPAL_ENVIRONMENT``, default live), so not a required field.
+# environment is an optional ``config`` extra (``PAYPAL_ENVIRONMENT``, default live), so not a required field;
+# ``polar`` is available (OLO-9.46, #5059) as credentials-only Polar OAuth 2.0 / OIDC (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -381,6 +382,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "PayPal",
         STATUS_AVAILABLE,
         client_credential_fields("PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "polar",
+        "Polar",
+        STATUS_AVAILABLE,
+        client_credential_fields("POLAR_CLIENT_ID", "POLAR_CLIENT_SECRET"),
     ),
 )
 

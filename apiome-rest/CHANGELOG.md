@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.762.0] - 2026-11-17
+
+### Added
+- **Polar sign-in (OLO-9.46, #5059)** — OpenAPI 1.596.24:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `polar` (label `Polar`, `available`), a credentials-only
+    provider: required fields `client_id` (`POLAR_CLIENT_ID`) and `client_secret` (`POLAR_CLIENT_SECRET`); its
+    endpoints are fixed, so there is no issuer extra. `GET /v1/admin/auth-providers` lists it last, and `PUT` /
+    `DELETE /v1/admin/auth-providers/polar` and the resolved-config endpoint accept it like any other provider. The
+    canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - Polar is a **trusted** provider: its OAuth userinfo carries a native `email_verified` claim, so a verified email
+    joins or creates an account and an absent or false claim fail-closes to link-first. That decision is made in
+    `apiome-ui`; nothing in the REST API changed for it.
+  - No migration: `polar` has been in the provider vocabulary CHECKs since V395. No request or response shape changed.
+
 ## [1.761.0] - 2026-11-17
 
 ### Added

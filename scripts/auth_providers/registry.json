@@ -340,6 +340,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "PAYPAL_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "PAYPAL_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "polar",
+      "label": "Polar",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "POLAR_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "POLAR_CLIENT_SECRET" }
+      ]
     }
   ]
 }
