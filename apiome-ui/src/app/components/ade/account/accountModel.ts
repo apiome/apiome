@@ -251,6 +251,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   spotify: 'Spotify',
   twitch: 'Twitch',
   tiktok: 'TikTok',
+  roblox: 'Roblox',
 };
 
 /**

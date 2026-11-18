@@ -313,6 +313,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "TIKTOK_CLIENT_KEY" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "TIKTOK_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "roblox",
+      "label": "Roblox",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "ROBLOX_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "ROBLOX_CLIENT_SECRET" }
+      ]
     }
   ]
 }

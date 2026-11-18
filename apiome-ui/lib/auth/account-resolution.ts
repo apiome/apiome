@@ -166,6 +166,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * fail-closes to link-first.
  * `tiktok` (OLO-9.36) is **not** listed: TikTok's user info exposes no email address at all
  * (link-only).
+ * `roblox` (OLO-9.37) is **not** listed: Apiome asks Roblox for profile claims only, so there is
+ * no email claim (link-only).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -268,6 +270,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'spotify',
   'twitch',
   'tiktok',
+  'roblox',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

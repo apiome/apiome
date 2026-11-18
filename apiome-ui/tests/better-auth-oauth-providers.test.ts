@@ -142,6 +142,8 @@ const ALL_ENABLED: Record<string, string> = {
   TWITCH_CLIENT_SECRET: 'twitch-secret',
   TIKTOK_CLIENT_KEY: 'tiktok-client-key',
   TIKTOK_CLIENT_SECRET: 'tiktok-secret',
+  ROBLOX_CLIENT_ID: 'roblox-client-id',
+  ROBLOX_CLIENT_SECRET: 'roblox-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -270,6 +272,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'spotify',
       'twitch',
       'tiktok',
+      'roblox',
     ]);
   });
 
@@ -310,6 +313,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'spotify',
       'twitch',
       'tiktok',
+      'roblox',
     ]);
   });
 
@@ -415,6 +419,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const tiktok = buildGenericOAuthConfig('tiktok', ALL_ENABLED)!;
     expect(tiktok.clientId).toBe('tiktok-client-key');
     expect(tiktok.clientSecret).toBe('tiktok-secret');
+    const roblox = buildGenericOAuthConfig('roblox', ALL_ENABLED)!;
+    expect(roblox.clientId).toBe('roblox-client-id');
+    expect(roblox.clientSecret).toBe('roblox-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -924,6 +931,23 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toEqual({ client_key: 'tiktok-client-key' });
     expect(typeof cfg.getToken).toBe('function');
     expect(cfg.discoveryUrl).toBeUndefined();
+  });
+
+  test('roblox: fixed Roblox OIDC discovery; openid profile; select_account consent; post exchange; PKCE off (OLO-9.37)', () => {
+    const cfg = buildGenericOAuthConfig('roblox', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('roblox');
+    expect(cfg.discoveryUrl).toBe('https://apis.roblox.com/oauth/.well-known/openid-configuration');
+    // Discovery supplies the endpoints; the normalizer reads /oauth/v1/userinfo itself.
+    expect(cfg.authorizationUrl).toBeUndefined();
+    expect(cfg.tokenUrl).toBeUndefined();
+    expect(cfg.userInfoUrl).toBeUndefined();
+    // Profile claims only — never the `email` scope (link-only).
+    expect(cfg.scopes).toEqual(['openid', 'profile']);
+    expect(cfg.prompt).toBe('select_account consent');
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
+    expect(cfg.getToken).toBeUndefined();
+    expect(cfg.authorizationUrlParams).toBeUndefined();
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -6936,6 +6960,162 @@ describe('getUserInfo — TikTok link-only (OLO-9.36)', () => {
 
     const { result, override } = await runGetUserInfo(
       'tiktok',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Roblox (OLO-9.37) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Roblox link-only (OLO-9.37)', () => {
+  const USER_INFO_URL = 'https://apis.roblox.com/oauth/v1/userinfo';
+  /** The `/oauth/v1/userinfo` claims Roblox returns for `openid profile`. */
+  const CLAIMS = {
+    sub: '1516563360',
+    name: 'ada_builds',
+    nickname: 'Ada Lovelace',
+    preferred_username: 'ada_builds',
+    created_at: 1584682495,
+    profile: 'https://www.roblox.com/users/1516563360/profile',
+    picture: 'https://tr.rbxcdn.example/30DAY-AvatarHeadshot-ada/150/150/AvatarHeadshot/Png',
+  };
+
+  /** Serve `body` from userinfo (a failed response when null); record each request. */
+  const robloxApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const served = url === USER_INFO_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Roblox sub, with the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = robloxApi(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'roblox',
+      { accessToken: 'rbx.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: CLAIMS.sub,
+      email: OK_USER.email,
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: CLAIMS.picture,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: USER_INFO_URL, authorization: 'Bearer rbx.tok' }]);
+  });
+
+  test('explicit link intent links with no email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = robloxApi(CLAIMS);
+
+    const { result, override } = await runGetUserInfo(
+      'roblox',
+      { accessToken: 'rbx.tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'roblox',
+      providerUserId: CLAIMS.sub,
+    });
+    expect(calls.linkIdentity[0].identity.email ?? null).toBeNull();
+  });
+
+  test.each([
+    ['the plain profile', CLAIMS],
+    ['an email claim in the body', { ...CLAIMS, email: 'ada@example.com', email_verified: true }],
+    ['a username that looks like an address', { ...CLAIMS, preferred_username: 'ada@example.com' }],
+  ])('fresh sign-in with %s → email-required rejection (no email is ever read)', async (_label, body) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = robloxApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'roblox',
+      { accessToken: 'rbx.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(AUTH_ERROR_CODES.EMAIL_REQUIRED).toBe('OAuthEmailRequired');
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['a blank nickname falls back to the username', { nickname: ' ' }, 'ada_builds'],
+    ['no nickname or username falls back to name', { nickname: undefined, preferred_username: '' }, 'ada_builds'],
+  ])('%s', async (_label, patch, expected) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = robloxApi({ ...CLAIMS, ...patch });
+
+    const { result } = await runGetUserInfo(
+      'roblox',
+      { accessToken: 'rbx.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: CLAIMS.sub, name: expected });
+  });
+
+  test('a missing picture leaves the image out', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = robloxApi({ ...CLAIMS, picture: '' });
+
+    const { result } = await runGetUserInfo(
+      'roblox',
+      { accessToken: 'rbx.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: CLAIMS.sub });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'rbx.tok'],
+    ['a body with no sub', { ...CLAIMS, sub: undefined }, 'rbx.tok'],
+    ['an empty sub', { ...CLAIMS, sub: '  ' }, 'rbx.tok'],
+    ['a numeric sub', { ...CLAIMS, sub: 1516563360 }, 'rbx.tok'],
+    ['an array body', [CLAIMS], 'rbx.tok'],
+    ['a missing access token', CLAIMS, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = robloxApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'roblox',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

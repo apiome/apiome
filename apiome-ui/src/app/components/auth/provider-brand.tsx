@@ -11,7 +11,7 @@
  * Adding a provider: add its registry entry, then one `PROVIDER_BRANDS` entry here.
  */
 import { KeyRound } from 'lucide-react';
-import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFacebook, SiFigma, SiGithub, SiGitlab, SiGoogle, SiHubspot, SiHuggingface, SiKeycloak, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiRailway, SiReddit, SiSalesforce, SiSlack, SiSpotify, SiTiktok, SiTwitch, SiVercel, SiVk, SiWechat, SiX, SiZoom } from 'react-icons/si';
+import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFacebook, SiFigma, SiGithub, SiGitlab, SiGoogle, SiHubspot, SiHuggingface, SiKeycloak, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiRailway, SiReddit, SiRoblox, SiSalesforce, SiSlack, SiSpotify, SiTiktok, SiTwitch, SiVercel, SiVk, SiWechat, SiX, SiZoom } from 'react-icons/si';
 import { ICON_SIZE } from '../ui/iconSizes';
 
 /** Props every brand icon accepts (matches the `react-icons` component contract we use). */
@@ -103,6 +103,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   spotify: { Icon: SiSpotify, iconClassName: 'text-[#1DB954]' },
   twitch: { Icon: SiTwitch, iconClassName: 'text-[#9146FF]' },
   tiktok: { Icon: SiTiktok, iconClassName: 'text-slate-800 dark:text-slate-100' },
+  roblox: { Icon: SiRoblox, iconClassName: 'text-slate-800 dark:text-slate-100' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {
