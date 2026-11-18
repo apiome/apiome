@@ -1,6 +1,6 @@
 ---
 title: Profile & security
-description: Your name, password, two-factor authentication, backup codes and sign-in session.
+description: Your name, password, two-factor, text-message codes, backup codes and session.
 sidebar_position: 5
 tags: [account, profile, security, two-factor]
 ---
@@ -118,6 +118,10 @@ The **Security** card then shows:
 
 - **Sign-in methods** — **Authenticator app (TOTP)**, and **Email OTP** when your deployment can send
   email. An emailed code needs no set-up: you can ask for one at sign-in instead of using the app.
+  Once you [get codes by text message](#get-codes-by-text-message), the list says **Text message
+  code — sent to •••• 0123 at sign-in** instead of **Email OTP**.
+- **Text message code** — when your deployment can send texts: your phone number and where your
+  sign-in codes go. See [Get codes by text message](#get-codes-by-text-message).
 - **Backup codes** — how many are left (*8 remaining*).
 - **Trusted device** — whether this browser is trusted, which skips 2FA when you sign in here for
   30 days. You choose this at sign-in, with
@@ -126,6 +130,47 @@ The **Security** card then shows:
 - **Recovery** — if you lose your authenticator,
   [use a backup code at sign-in](../getting-started/sign-in.mdx#sign-in-without-your-device) or ask
   an admin, then make a new set of codes.
+
+### Get codes by text message
+
+When your deployment can send text messages, the **Security** card has a **Text message code**
+box. Your one-time sign-in codes can then be texted to your phone instead of emailed. It takes two
+steps: add a number, then choose text messages.
+
+**Add your phone number**
+
+1. **Click “Add phone number”** in the **Text message code** box.
+2. Enter your **Mobile number** with its country code, such as `+1 415 555 0123`, and
+   **click “Send code”**.
+3. Enter the six-digit **Verification code** from the text and **click “Verify”**. The code lasts
+   5 minutes; **“Resend code”** sends a new one.
+
+<Screenshot id="profile-2fa-sms-add" alt="The Add phone number dialog at step 2, with the six-digit verification code entered" />
+
+The box now says your number is verified and that codes still go to your email. A number can
+belong to one account only.
+
+**Send codes by text**
+
+1. **Click “Send codes by text”**.
+2. Enter your **Current password** — or [confirm it is you](#without-a-password) — and
+   **click “Save”**.
+
+<Screenshot id="profile-2fa-sms" alt="The Security card with sign-in codes texted to a number ending 0123" />
+
+The next time you sign in and ask for a code, it is texted to you — see
+[Pass the two-factor check](../getting-started/sign-in.mdx#pass-the-two-factor-check). Until you add
+and verify a number, **“Send codes by text”** is not offered.
+
+**Change or remove it**
+
+- **Click “Send codes by email”** (with your password) to have codes emailed again.
+- **Click “Change number”** to verify a different number. Your codes go back to email until you
+  choose text messages again, so that adding a number can never redirect your codes on its own.
+- **Click “Remove”** to delete the number. Your codes go to your email.
+
+Text messages can be intercepted if someone takes over your mobile number. Your authenticator app
+stays the stronger choice; a text is a convenience when the app is not to hand.
 
 ### Make new backup codes
 

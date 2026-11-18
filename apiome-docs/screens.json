@@ -31,6 +31,15 @@
       "data": "fixture:hive-a11y/login-out-of-seats.html"
     },
     {
+      "id": "sign-in-2fa-sms",
+      "route": "/login/2fa",
+      "waitFor": "[data-testid=\"two-factor-otp-sent\"]",
+      "data": "fixture:hive-a11y/sign-in-2fa-sms.html",
+      "sources": [
+        "apiome-ui/src/app/login/2fa"
+      ]
+    },
+    {
       "id": "signup",
       "route": "/signup",
       "waitFor": "[data-testid=\"signup-card\"]",
@@ -1117,6 +1126,31 @@
       "route": "/ade/dashboard/profile",
       "waitFor": "[data-testid=\"two-factor-backup-codes\"]",
       "data": "fixture:hive-a11y/profile-2fa-backup-codes.html"
+    },
+    {
+      "id": "profile-2fa-sms",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"two-factor-sms\"]",
+      "data": "fixture:hive-a11y/profile-2fa-sms.html",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 600
+      },
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/profile",
+        "apiome-ui/src/app/components/ade/account/SmsTwoFactorSettings.tsx"
+      ]
+    },
+    {
+      "id": "profile-2fa-sms-add",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"two-factor-sms-code\"]",
+      "data": "fixture:hive-a11y/profile-2fa-sms-add.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/account/SmsTwoFactorSettings.tsx"
+      ]
     },
     {
       "id": "linked-accounts",

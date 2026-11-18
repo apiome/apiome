@@ -3,6 +3,7 @@ import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { genericOAuth } from 'better-auth/plugins/generic-oauth';
 import { twoFactor } from 'better-auth/plugins/two-factor';
+import { phoneNumber } from 'better-auth/plugins/phone-number';
 import { customSession } from 'better-auth/plugins';
 import { sso } from '@better-auth/sso';
 import { augmentBetterAuthUser } from './better-auth-session-shape';
@@ -32,9 +33,13 @@ import { LINKABLE_PROVIDERS } from './account-resolution';
 import { appleFormPostRedirect, runWithAppleCallbackScope } from './apple-sign-in';
 import { resolveProviderEnv, type EnvMap } from './provider-config-resolver';
 import {
-  isTwoFactorEmailOtpConfigured,
-  sendTwoFactorEmailOtp,
-} from './send-two-factor-email-otp';
+  isTwoFactorOtpConfigured,
+  resetTwoFactorOtpChannel,
+  sendTwoFactorOtp,
+} from './two-factor-otp-dispatch';
+import { sendPhoneVerificationSms } from './send-two-factor-sms-otp';
+import { isE164PhoneNumber } from './phone-number-format';
+import { DISABLED_PHONE_NUMBER_PATHS, phoneNumberGuardHandler } from './phone-number-guard';
 import {
   LOCKOUT_DURATION_SECONDS,
   LOCKOUT_MAX_FAILED_ATTEMPTS,
@@ -108,6 +113,9 @@ export const DISABLED_AUTH_PATHS = [
   '/sso/providers',
   '/sso/request-domain-verification',
   '/sso/verify-domain',
+  // The phoneNumber plugin's sign-in-by-phone and reset-by-phone routes (OLO-9.51 #5071): a number
+  // is only ever a place to send two-factor codes, never a way in (`phone-number-guard.ts`).
+  ...DISABLED_PHONE_NUMBER_PATHS,
 ] as const;
 
 /**
@@ -206,9 +214,15 @@ function buildBetterAuthConfig(
   //     secret (`resolveBetterAuthSecret()` above). This is the OLO-10.10 resolution of design R11:
   //     use the plugin's built-in symmetric encryption rather than a bespoke OLO-8.3 envelope, so no
   //     new key-management surface is introduced (docs/BETTER_AUTH_MIGRATION.md §2.5 / R11).
-  //   - Email OTP (OLO-9.50 #5070): when SendGrid is configured (`SENDGRID_API_KEY` + `EMAIL_FROM`),
-  //     register `otpOptions.sendOTP`. Better Auth then includes `"otp"` in `twoFactorMethods` for
-  //     every `twoFactorEnabled` user at credential sign-in (server-level, not per-user enroll).
+  //   - Email OTP (OLO-9.50 #5070) / SMS OTP (OLO-9.51 #5071): when SendGrid or Twilio is
+  //     configured, register `otpOptions.sendOTP`. Better Auth then includes `"otp"` in
+  //     `twoFactorMethods` for every `twoFactorEnabled` user at sign-in (server-level), and
+  //     `sendTwoFactorOtp` routes each code to the user's inbox or — when they chose SMS and have a
+  //     verified number — to their phone (`two-factor-otp-dispatch.ts`).
+  //   - `phoneNumber` (OLO-9.51 #5071) stores that verified number ("phoneNumber" /
+  //     "phoneNumberVerified", V396). Its sign-in and reset routes are disabled and its two kept
+  //     routes are gated to the signed-in user's own account (`phone-number-guard.ts`); verifying a
+  //     new number puts the user's codes back on email until they choose SMS again.
   // Placed before `nextCookies()`, which must stay last (see above).
   // `customSession` (OLO-10.12 #5007) shapes every session read into the app contract the UI and the
   // ~106 API routes consume — `session.user.user_id` (= Better Auth's `user.id`) plus the validated
@@ -248,14 +262,28 @@ function buildBetterAuthConfig(
         maxFailedAttempts: LOCKOUT_MAX_FAILED_ATTEMPTS,
         durationSeconds: LOCKOUT_DURATION_SECONDS,
       },
-      ...(isTwoFactorEmailOtpConfigured()
+      ...(isTwoFactorOtpConfigured()
         ? {
             otpOptions: {
-              sendOTP: ({ user, otp }: { user: { email: string; name?: string | null }; otp: string }) =>
-                sendTwoFactorEmailOtp({ user, otp }),
+              sendOTP: ({
+                user,
+                otp,
+              }: {
+                user: { id: string; email: string; name?: string | null };
+                otp: string;
+              }) => sendTwoFactorOtp({ user, otp }),
             },
           }
         : {}),
+    }),
+    phoneNumber({
+      sendOTP: ({ phoneNumber: to, code }: { phoneNumber: string; code: string }) =>
+        sendPhoneVerificationSms({ phoneNumber: to, code }),
+      phoneNumberValidator: (value: string) => isE164PhoneNumber(value),
+      allowedAttempts: 3,
+      callbackOnVerification: async ({ user }: { user: { id: string } }) => {
+        await resetTwoFactorOtpChannel(user.id);
+      },
     }),
     oneTimeCodePlugin(),
     // Records each completed sign-in on `users.last_login_at`. It must stay after `twoFactor`, so a
@@ -309,6 +337,7 @@ function buildBetterAuthConfig(
       await credentialRateLimitBeforeHandler(ctx);
       await oauthResolutionHandler(ctx);
       await twoFactorReauthHandler(ctx);
+      await phoneNumberGuardHandler(ctx);
       await ssoArtifactBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {

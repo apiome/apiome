@@ -30,5 +30,9 @@ export function createAuthClient(): unknown {
       verifyTotp: async () => ({ data: null, error: null }),
       getTotpUri: async () => ({ data: null, error: null }),
     },
+    phoneNumber: {
+      sendOtp: async () => ({ data: null, error: null }),
+      verify: async () => ({ data: null, error: null }),
+    },
   };
 }

@@ -68,6 +68,10 @@ const LEDGER: Record<string, { check: string; exports: string[] }> = {
     check: "session: the session user's own requirement",
     exports: ['getMyTwoFactorRequirement'],
   },
+  'lib/auth/two-factor-sms-actions.ts': {
+    check: "session: the session user's own SMS two-factor settings (setTwoFactorOtpChannel also needs the password or a fresh sign-in)",
+    exports: ['getSmsTwoFactorStatus', 'setTwoFactorOtpChannel', 'removePhoneNumber'],
+  },
   'lib/db/admin-actions.ts': {
     check: 'requireSuperAdmin on every export',
     exports: ['getAllUsers', 'createUser', 'updateUser', 'deleteUser', 'getUserStats', 'getTenantStats', 'getTenantUsers', 'createTenant', 'updateTenant', 'deleteTenant', 'addUserToTenant', 'removeUserFromTenant', 'addTenantAdministrator', 'provisionSampleProject', 'removeTenantAdministrator', 'getUsersNotInTenant', 'getAllPropertyTemplates', 'getPropertyTemplateCategoriesAdmin', 'createPropertyTemplateAdmin', 'updatePropertyTemplateAdmin', 'deletePropertyTemplateAdmin', 'getAllLicenses', 'createLicense', 'updateLicense', 'deleteLicense', 'getAllFeatureFlags', 'createFeatureFlag', 'updateFeatureFlag', 'deleteFeatureFlag', 'getAllFeatureFlagGroups', 'createFeatureFlagGroup', 'updateFeatureFlagGroup', 'deleteFeatureFlagGroup', 'getAllUsersWithLicenses', 'getUserLicense', 'assignLicenseToUser', 'removeUserLicense', 'setUserFeatureFlag', 'removeUserFeatureFlag', 'togglePropertyTemplateStatus', 'getPropertyTemplateStats'],

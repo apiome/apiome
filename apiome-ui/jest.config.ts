@@ -48,6 +48,8 @@ const config: Config = {
     // The server instance reaches these two through the OAuth second-factor hook (TFA-1.1 #5655).
     '^better-auth/cookies$': '<rootDir>/tests/__mocks__/better-auth-cookies.ts',
     '^better-auth/crypto$': '<rootDir>/tests/__mocks__/better-auth-crypto.ts',
+    // SMS two-factor (OLO-9.51 #5071): the phoneNumber plugin the server instance registers.
+    '^better-auth/plugins/phone-number$': '<rootDir>/tests/__mocks__/better-auth-phone-number.ts',
     // Enterprise SSO (EID-1.1 #5011): the plugin and its client are ESM-only too.
     '^@better-auth/sso$': '<rootDir>/tests/__mocks__/better-auth-sso.ts',
     '^@better-auth/sso/client$': '<rootDir>/tests/__mocks__/better-auth-sso-client.ts',

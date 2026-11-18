@@ -120,6 +120,13 @@ jest.mock('@lib/auth/two-factor-profile-actions', () => ({
   dismissTwoFactorResetNotice: jest.fn(async () => ({ ok: true })),
 }));
 
+// SMS codes (OLO-9.51 #5071): off unless a test turns them on, so the Security card reads as before.
+jest.mock('@lib/auth/two-factor-sms-actions', () => ({
+  getSmsTwoFactorStatus: jest.fn(async () => null),
+  setTwoFactorOtpChannel: jest.fn(async () => ({ ok: true })),
+  removePhoneNumber: jest.fn(async () => ({ ok: true })),
+}));
+
 jest.mock('react-qr-code', () => ({
   __esModule: true,
   default: ({ value }: { value: string }) => <div data-testid="qr-mock">{value}</div>,
@@ -984,7 +991,11 @@ describe('the docs fixtures', () => {
     jest.Mock
   >;
 
+  /** The SMS status read (OLO-9.51 #5071), mocked at the top of the file. */
+  const smsActions = jest.requireMock('@lib/auth/two-factor-sms-actions') as Record<string, jest.Mock>;
+
   afterEach(() => {
+    smsActions.getSmsTwoFactorStatus.mockResolvedValue(null);
     twoFactorActions.getBackupCodeStatus.mockResolvedValue({ remaining: 6 });
     twoFactorActions.getTrustedDeviceStatus.mockResolvedValue({ trusted: false });
     twoFactorActions.getEmailOtpAvailability.mockResolvedValue({ available: false });
@@ -1037,5 +1048,39 @@ describe('the docs fixtures', () => {
     });
     expect(dialog).toHaveTextContent('Password requirements');
     writeA11yFixture('profile-change-password', liveMarkup(dialog));
+  });
+
+  it('renders the Security card with sign-in codes sent by text message (OLO-9.51)', async () => {
+    twoFactorActions.getBackupCodeStatus.mockResolvedValue({ remaining: 8 });
+    twoFactorActions.getTrustedDeviceStatus.mockResolvedValue({ trusted: true });
+    twoFactorActions.getEmailOtpAvailability.mockResolvedValue({ available: true });
+    smsActions.getSmsTwoFactorStatus.mockResolvedValue({
+      smsAvailable: true,
+      emailAvailable: true,
+      phoneNumber: '•••• 0123',
+      channel: 'sms',
+    });
+    sessionState.current = {
+      user: {
+        ...USER,
+        user_id: 'usr_5f2c81d0e7',
+        name: 'Priya Raman',
+        email: 'priya.raman@northwind.io',
+        current_tenant_id: 'ten_8b40c2',
+      },
+      expires: EXPIRES,
+    };
+
+    await renderProfile();
+    await waitFor(() =>
+      expect(screen.getByTestId('two-factor-sms-status')).toHaveTextContent(
+        'Sign-in codes are texted to •••• 0123.'
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('two-factor-trusted-status')).toHaveTextContent('This browser is trusted')
+    );
+    expect(screen.getByTestId('two-factor-method-sms-otp')).toBeInTheDocument();
+    writeA11yFixture('profile-2fa-sms', liveMarkup(screen.getByTestId('profile-security')));
   });
 });

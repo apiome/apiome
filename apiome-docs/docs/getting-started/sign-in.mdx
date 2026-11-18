@@ -67,7 +67,13 @@ single sign-on.
 1. With an authenticator app, enter the six-digit code from the app in **Authentication code**.
 2. With email, **click “Send email code”**, then enter the code from your inbox in **Email code**.
    The **Authenticator** and **Email code** tabs switch between the two when both are set up.
-3. **Click “Verify and continue”.**
+3. If you [get codes by text message](../workspace/profile.mdx#get-codes-by-text-message), the
+   second tab reads **Text message** and the page says *We will text a 6-digit code to •••• 0123.*
+   **Click “Send text code”**, then enter the code from the text in **Text message code**. A
+   number gets at most one text every 30 seconds.
+4. **Click “Verify and continue”.**
+
+<Screenshot id="sign-in-2fa-sms" alt="The two-factor check with the Text message tab: a code was texted to a number ending 0123" />
 
 **“Back to sign in”** returns to the first page without signing you in.
 
@@ -97,7 +103,7 @@ code; Apiome then shows a notice — *Your two-factor authentication was reset* 
 
 ### Too many wrong codes
 
-After 10 wrong codes in a row — from the authenticator, email or a backup code — two-factor
+After 10 wrong codes in a row — from the authenticator, email, a text message or a backup code — two-factor
 sign-in is locked for 15 minutes and the page says *Two-factor sign-in is locked for 15 minutes.*
 A correct code is refused too until the lock ends. Wait, then **click “Back to sign in”** and sign
 in again. A correct code resets the count.

@@ -3,6 +3,7 @@ import {
   twoFactorClient,
   customSessionClient,
   genericOAuthClient,
+  phoneNumberClient,
 } from 'better-auth/client/plugins';
 // Enterprise SSO (EID-1.1 #5011): adds `authClient.signIn.sso({ email, callbackURL })`.
 import { ssoClient } from '@better-auth/sso/client';
@@ -34,6 +35,10 @@ import { browserNavigate } from './browser-navigate';
  * `customSessionClient()` mirrors the server `customSession` plugin so `authClient.useSession()` typing
  * carries the injected `user_id`/`current_tenant_id` (OLO-10.12).
  *
+ * `phoneNumberClient()` (OLO-9.51 #5071) exposes `authClient.phoneNumber.sendOtp` / `.verify`, which
+ * Profile → Security uses to add a verified number for SMS two-factor codes. The server allows both
+ * only for the signed-in user's own account (`phone-number-guard.ts`).
+ *
  * `genericOAuthClient()` is the browser counterpart of the server `genericOAuth` plugin (OLO-10.7): it
  * exposes `authClient.signIn.oauth2({ providerId, callbackURL })`, the client entry point the OAuth
  * sign-in / account-link buttons call after the swap (OLO-10.12).
@@ -51,6 +56,7 @@ export const authClient = createAuthClient({
     }),
     customSessionClient<BetterAuthInstance>(),
     genericOAuthClient(),
+    phoneNumberClient(),
     ssoClient(),
   ],
 });

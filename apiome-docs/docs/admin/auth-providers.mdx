@@ -138,6 +138,39 @@ Terms of Service and Privacy Policy* — but only for the pages your installatio
 `APIOME_TERMS_URL` and `APIOME_PRIVACY_URL` in `apiome-ui/.env` to their `https://` addresses;
 with neither set the line is left out, rather than linking to nothing.
 
+## Two-factor codes by email and text message
+
+Anyone with [two-factor authentication](../workspace/profile.mdx#two-factor-authentication) can
+ask for a one-time sign-in code instead of using their authenticator app. The code is emailed when
+SendGrid is set (`SENDGRID_API_KEY` and `EMAIL_FROM`, as above). To let people get it **by text
+message** as well, set these in `apiome-ui/.env` and restart apiome-ui:
+
+| Variable | What it is |
+| --- | --- |
+| `TWILIO_ACCOUNT_SID` | Your Twilio **Account SID** (`AC…`) |
+| `TWILIO_AUTH_TOKEN` | The **Auth Token** for that account |
+| `TWILIO_FROM_NUMBER` | The Twilio number texts are sent from, with its country code, such as `+14155550100` |
+| `TWILIO_MESSAGING_SERVICE_SID` | Optional: a **Messaging Service SID** (`MG…`) to send through instead of `TWILIO_FROM_NUMBER` |
+
+You need the SID, the token and one of the two senders. With any of them missing, the **Text
+message code** box does not appear on **Profile**, and nobody's codes are texted.
+
+How it behaves:
+
+- **Each person chooses.** Codes go by email until someone
+  [adds and verifies a phone number](../workspace/profile.mdx#get-codes-by-text-message) and chooses
+  text messages; choosing asks for their password. A new number puts their codes back on email.
+- **A phone is never a way in.** It only receives two-factor codes. Signing in, resetting a password
+  and creating an account by phone are switched off.
+- **Texts are limited.** One number gets a text at most every 30 seconds and at most 5 an hour, on
+  top of the sign-in rate limits. The limit is kept per apiome-ui process, so several replicas each
+  allow that many.
+- **If texting stops working** — the variables are removed, or the person removes their number —
+  their codes go to their email again, so they can still sign in.
+
+Text messages can be intercepted when someone takes over a phone number (SIM swapping). An
+authenticator app stays the stronger choice; say so to people who handle sensitive data.
+
 ## The providers
 
 | Provider | Id | Required to enable | Extra settings |
