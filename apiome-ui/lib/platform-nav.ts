@@ -246,7 +246,7 @@ export const DEFAULT_PLATFORM_NAV_ICON = 'box';
  *
  * Deliberately absent, and not an oversight:
  *
- * - **Tenants, SDK settings and the Tools** (Data browser, Migrations) — they
+ * - **Tenants and SDK settings** — they
  *   live off the rail, in the menus beside the things they configure; see
  *   {@link PLATFORM_OFF_RAIL_ITEMS} (HIVE-12.2).
  * - **`/ade/studio*`** — a commercial product in another repository. It
@@ -480,7 +480,7 @@ export const PLATFORM_USER_MENU_ITEMS: readonly PlatformNavItem[] = [
 ];
 
 /** Where an off-rail destination is reached from, besides the command palette. */
-export type PlatformOffRailHome = 'workspace-switcher' | 'user-menu' | 'export-studio-tab';
+export type PlatformOffRailHome = 'workspace-switcher' | 'export-studio-tab';
 
 /** A destination that has a home outside the rail's groups (HIVE-12.2). */
 export interface PlatformOffRailItem extends PlatformNavItem {
@@ -507,8 +507,6 @@ export const PLATFORM_NAV_LEGACY_SDK_SETTINGS_HREF = `${DASHBOARD_HREF}/sdk-sett
  *   none.
  * - **SDK settings** — the **SDK & branding** tab of Export studio; both decide how a version
  *   leaves the platform (SDK-3.4, #4494). Gated with its own feature id.
- * - **Data browser** and **Migrations** — the Tools, rows of the user menu beside Admin
- *   console. Like their routes, they need only a signed-in user.
  *
  * Every one stays in the command palette's **Jump to** (under {@link PlatformOffRailItem.section})
  * and in the active-state and lookup tables below, so a route, a `G`-jump or a gate that names
@@ -531,24 +529,6 @@ export const PLATFORM_OFF_RAIL_ITEMS: readonly PlatformOffRailItem[] = [
     requiresTenant: true,
     section: 'Ship',
     home: 'export-studio-tab',
-  },
-  {
-    id: 'data-browser',
-    label: 'Data browser',
-    href: '/ade/database',
-    icon: 'database',
-    match: 'subtree',
-    section: 'Tools',
-    home: 'user-menu',
-  },
-  {
-    id: 'migrations',
-    label: 'Migrations',
-    href: '/ade/migration',
-    icon: 'git-compare-arrows',
-    match: 'subtree',
-    section: 'Tools',
-    home: 'user-menu',
   },
 ];
 

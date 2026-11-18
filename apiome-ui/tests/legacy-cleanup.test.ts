@@ -141,7 +141,7 @@ describe('legacy cleanup (HIVE-10.6, #5342)', () => {
 });
 
 describe('the sidebar kit carries no dead parts (HIVE-10.6, #5342)', () => {
-  /** The three sidebars that still compose the kit, until the deferred Tools redesign. */
+  /** The admin sidebar still composes the kit; the Api-DB tools that also did have left. */
   const consumers = APP_SOURCES.filter((file) => /\.tsx?$/.test(file))
     .map((file) => stripComments(readFileSync(file, 'utf8')))
     .join('\n');

@@ -2175,31 +2175,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   },
 ] as const;
 
-/**
- * Guides for features held back from the MVP (`lib/feature-release.ts`), kept here rather than
- * deleted so releasing a feature is moving its entry back into {@link GUIDE_ENTRIES}.
- *
- * Their pages are backed up under `apiome-docs/unreleased/` and are not on the docs site, so
- * nothing searches or links to these entries.
- */
-export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
-  {
-    id: 'data-browser',
-    title: 'Data browser',
-    summary: 'Browse, search, insert, edit, delete and restore the records stored against a version’s class schemas.',
-    page: 'apiome-docs/docs/admin/data-browser.mdx',
-    section: 'reference',
-    keywords: ['ade/database', 'snapshot', 'show deleted', 'json schema', 'tables', 'tools'],
-  },
-  {
-    id: 'migrations',
-    title: 'Migrations',
-    summary: 'Plan how a class’s records move between schema versions with rules, and preview each record before and after.',
-    page: 'apiome-docs/docs/admin/migrations.mdx',
-    section: 'reference',
-    keywords: ['ade/migration', 'migration plan', 'passthrough', 'sparksql', 'data quality', 'explorer'],
-  },
-];
 
 /** How many results the search shows at once. */
 export const GUIDE_RESULT_LIMIT = 8;

@@ -1,22 +1,18 @@
 /* ==========================================================================
    Feature release gate
    --------------------------------------------------------------------------
-   The destinations below stay in the code but out of reach: the rail, the
-   command palette and the `G`-jumps leave them out (through
-   `getPlatformNavGroups()`), and their routes render a "not available yet"
-   page instead of the feature (`UnreleasedFeatureGate`).
+   A destination listed below stays in the code but out of reach: the rail,
+   the command palette and the `G`-jumps leave it out (through
+   `getPlatformNavGroups()`), and every `isFeatureReleased()` check around the
+   places it is embedded hides it.
 
-   The ids are `PlatformNavItem.id`s, so the navigation model, the route gate
-   and the docs backup (`apiome-docs/unreleased/README.md`) all name a feature
-   the same way. Releasing one is: delete its id here, restore its docs pages.
+   The ids are `PlatformNavItem.id`s, so the navigation model and the docs
+   backup (`apiome-docs/unreleased/README.md`) name a feature the same way.
 
-   RC8 released everything the MVP focus and RC6 had held back — SDK settings,
-   Style guides, Access audit, Connectors, Shadow APIs, the Dependency graph,
-   Teams and ownership, the Schema registry, the catalog entity kinds
-   (`catalog-entities`) and consumer contracts (`consumers`). Their route
-   gates are gone. The `isFeatureReleased()` checks around the places those
-   features are embedded (owner columns, Dependencies and Subjects tabs, the
-   refresh ledger on Repositories) stay, and pass for any id not listed here.
+   Nothing is held back today. RC8 released everything the MVP focus and RC6
+   had withheld, and the Data browser and Migrations tools left this
+   application: they belong to Api-DB, a separate product. To hold a feature
+   back, add its id here and gate its route.
 
    `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` re-opens gated features for a build —
    a comma-separated list of ids, or `all` — so developers, the docs screenshot
@@ -25,15 +21,7 @@
    ========================================================================== */
 
 /** Destinations that exist in the code but are not released (rail item ids). */
-export const UNRELEASED_FEATURE_IDS = [
-  // The Tools in the user menu (HIVE-12.2): the data browser and the migrations canvas are
-  // not finished; both routes stay in the code, out of the menu, palette and jumps.
-  'data-browser',
-  'migrations',
-] as const;
-
-/** One of {@link UNRELEASED_FEATURE_IDS}. */
-export type UnreleasedFeatureId = (typeof UNRELEASED_FEATURE_IDS)[number];
+export const UNRELEASED_FEATURE_IDS: readonly string[] = [];
 
 /** The build-time override that re-opens gated features (`all`, or a comma-separated id list). */
 export const PREVIEW_FEATURES_ENV = 'NEXT_PUBLIC_APIOME_PREVIEW_FEATURES';

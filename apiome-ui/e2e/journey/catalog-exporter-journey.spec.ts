@@ -9,8 +9,7 @@
  *
  * **Preview override.** It runs under `playwright.catalog-exporter-journey.config.ts`, whose server
  * opens exactly `CATALOG_EXPORTER_PREVIEW` — `export-studio` while the studio is held back, nothing
- * once it ships. Its first step proves the studio is reachable and that the other held-back
- * features are still hidden.
+ * once it ships. Its first step proves the studio is reachable.
  *
  * Every wait is on a `data-testid` or a role the step's screen draws when it is ready — no sleeps.
  * Names carry a per-run suffix, so the items never collide with an earlier run's on a shared stack.
@@ -101,14 +100,10 @@ test.afterAll(async () => {
 });
 
 test.describe('X2 — Catalog Exporter journey', () => {
-  test('opens the Export studio and nothing else held back', async ({ page }) => {
+  test('opens the Export studio with no preview override', async ({ page }) => {
     await login(page);
     await page.goto('/ade/dashboard/export/studio');
     await expect(page.getByTestId('export-studio-unscoped')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId('unreleased-feature-gate')).toBeHidden();
-    // The Data browser tool stays held back: the run opens no preview feature.
-    await page.goto('/ade/database');
-    await expect(page.getByTestId('unreleased-feature-gate')).toBeVisible({ timeout: 60_000 });
   });
 
   test('imports three RAML specs into the Catalog', async ({ page }) => {
