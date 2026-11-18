@@ -10984,7 +10984,7 @@ class CopyClassToInlineSchemaRequest(BaseModel):
         from_attributes = True
 
 
-# ==================== Database Data Storage (class_schema, data_record, data_snapshot) ====================
+# ==================== Frozen class schemas (class_schema) ====================
 
 class FrozenClassSchemaModel(BaseModel):
     """Pydantic model for apiome.class_schema (frozen JSON Schema 2020-12 per class per version)."""
@@ -10993,34 +10993,6 @@ class FrozenClassSchemaModel(BaseModel):
     class_id: str
     schema: Dict[str, Any]
     created_at: Optional[Union[datetime, str]] = None
-    updated_at: Optional[Union[datetime, str]] = None
-
-    class Config:
-        from_attributes = True
-
-
-class DataRecordModel(BaseModel):
-    """Pydantic model for apiome.data_record (event log: created/updated/deleted/restored per logical record)."""
-    id: str
-    record_id: str
-    class_schema_id: str
-    action: Literal["created", "updated", "deleted", "restored"]
-    record_sequence: int
-    data: Optional[Dict[str, Any]] = None
-    tenant_id: str
-    created_at: Optional[Union[datetime, str]] = None
-    created_by: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class DataSnapshotModel(BaseModel):
-    """Pydantic model for apiome.data_snapshot (current state per logical record)."""
-    record_id: str
-    class_schema_id: str
-    data: Dict[str, Any]
-    tenant_id: str
     updated_at: Optional[Union[datetime, str]] = None
 
     class Config:

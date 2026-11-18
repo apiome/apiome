@@ -245,7 +245,7 @@ function keywordsFor(label: string, meta?: string): string[] {
  * **Jump to** — every destination the session can reach.
  *
  * The rail's groups first, in rail order, then the destinations that live off the rail
- * (`PLATFORM_OFF_RAIL_ITEMS`, HIVE-12.2 — Tenants, SDK settings, Data browser, Migrations,
+ * (`PLATFORM_OFF_RAIL_ITEMS`, HIVE-12.2 — Tenants and SDK settings,
  * each under the section it belongs with), then the account destinations the rail keeps in
  * its user menu (`PLATFORM_USER_MENU_ITEMS`): the palette is the one surface where those
  * lists are the same kind of thing, because a reader typing "profile" does not know which

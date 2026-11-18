@@ -1072,36 +1072,12 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['resolver', 'query'],
   },
   {
-    id: 'create-data-records-from-the-cli',
-    title: 'Create data records from the CLI',
-    summary: 'Add a record to a published class with apiome data create.',
-    page: 'apiome-docs/docs/ship/create-data-records-from-the-cli.md',
+    id: 'version-tags-from-the-cli',
+    title: 'Version tags from the CLI',
+    summary: 'List, create, move and delete version tags with apiome tags.',
+    page: 'apiome-docs/docs/ship/version-tags-from-the-cli.md',
     section: 'reference',
-    keywords: ['apiome data create', 'class'],
-  },
-  {
-    id: 'import-data-records-from-the-cli',
-    title: 'Import data records from the CLI',
-    summary: 'Bulk-load NDJSON, JSON or CSV records into a class with apiome data import.',
-    page: 'apiome-docs/docs/ship/import-data-records-from-the-cli.md',
-    section: 'reference',
-    keywords: ['ndjson', 'csv', 'bulk'],
-  },
-  {
-    id: 'list-data-records-from-the-cli',
-    title: 'List data records from the CLI',
-    summary: 'Page, filter and sort a published class\'s records with apiome data list.',
-    page: 'apiome-docs/docs/ship/list-data-records-from-the-cli.md',
-    section: 'reference',
-    keywords: ['filter', 'sort', 'page'],
-  },
-  {
-    id: 'migration-plans-and-version-tags-from-the-cli',
-    title: 'Migration plans and version tags from the CLI',
-    summary: 'Inspect migration plans and manage version tags with apiome migrations and apiome tags.',
-    page: 'apiome-docs/docs/ship/migration-plans-and-version-tags-from-the-cli.md',
-    section: 'reference',
-    keywords: ['apiome migrations', 'apiome tags'],
+    keywords: ['apiome tags', 'stable', 'latest', 'promote a release'],
   },
   {
     id: 'portal-readers',
@@ -2175,31 +2151,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   },
 ] as const;
 
-/**
- * Guides for features held back from the MVP (`lib/feature-release.ts`), kept here rather than
- * deleted so releasing a feature is moving its entry back into {@link GUIDE_ENTRIES}.
- *
- * Their pages are backed up under `apiome-docs/unreleased/` and are not on the docs site, so
- * nothing searches or links to these entries.
- */
-export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
-  {
-    id: 'data-browser',
-    title: 'Data browser',
-    summary: 'Browse, search, insert, edit, delete and restore the records stored against a version’s class schemas.',
-    page: 'apiome-docs/docs/admin/data-browser.mdx',
-    section: 'reference',
-    keywords: ['ade/database', 'snapshot', 'show deleted', 'json schema', 'tables', 'tools'],
-  },
-  {
-    id: 'migrations',
-    title: 'Migrations',
-    summary: 'Plan how a class’s records move between schema versions with rules, and preview each record before and after.',
-    page: 'apiome-docs/docs/admin/migrations.mdx',
-    section: 'reference',
-    keywords: ['ade/migration', 'migration plan', 'passthrough', 'sparksql', 'data quality', 'explorer'],
-  },
-];
 
 /** How many results the search shows at once. */
 export const GUIDE_RESULT_LIMIT = 8;

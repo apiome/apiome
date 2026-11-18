@@ -1,5 +1,5 @@
 """
-Embedding service for data_snapshot vectorization.
+Embedding service (Ollama).
 
 Calls Ollama /api/embed to produce vectors for semantic/LLM search.
 Uses the same model and dimensions as the UI (qwen3-embedding:4b, 2000 dims).
@@ -18,7 +18,7 @@ from .config import settings
 logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "qwen3-embedding:4b"
-EMBEDDING_DIMENSIONS = 2000  # pgvector HNSW max; must match data_snapshot.embedding vector(2000)
+EMBEDDING_DIMENSIONS = 2000  # pgvector HNSW max
 
 
 def get_embedding(text: str) -> Optional[List[float]]:
@@ -26,7 +26,7 @@ def get_embedding(text: str) -> Optional[List[float]]:
     Get a single embedding vector for the given text from Ollama.
 
     Args:
-        text: Input text (e.g. JSON string of record data)
+        text: Input text
 
     Returns:
         Embedding vector or None if Ollama is unavailable or errors
@@ -62,12 +62,3 @@ def get_embedding(text: str) -> Optional[List[float]]:
         return None
     return [float(x) for x in first]
 
-
-def embed_record_data(data: dict) -> Optional[List[float]]:
-    """
-    Generate embedding for record data (JSON-serialized).
-
-    Used by data record insert/update flows to persist embedding in data_snapshot.
-    """
-    text = json.dumps(data) if isinstance(data, dict) else "{}"
-    return get_embedding(text)

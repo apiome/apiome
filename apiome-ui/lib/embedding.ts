@@ -1,5 +1,5 @@
 /**
- * Fetch embedding vector from Ollama for use with data_snapshot vectorization.
+ * Fetch an embedding vector from Ollama.
  * Uses OLLAMA_BASE_URL and qwen3-embedding:4b; dimensions limited to 2000 for pgvector HNSW index.
  */
 

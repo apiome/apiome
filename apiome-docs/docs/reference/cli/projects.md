@@ -1,7 +1,7 @@
 ---
 title: "apiome projects"
 description: "List, fetch, update, delete and export tenant projects."
-sidebar_position: 30
+sidebar_position: 28
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
@@ -65,7 +65,7 @@ apiome projects export [OPTIONS] PROJECT_REF
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--output`, `-o` | path |  |  | Write to this file instead of stdout. |
-| `--include` | text |  |  | Sections to export, comma-separated: versions, classes, properties, paths, tags, migrations (default: all of them). |
+| `--include` | text |  |  | Sections to export, comma-separated: versions, classes, properties, paths, tags (default: all of them). |
 | `--exclude` | text |  |  | Sections to leave out, comma-separated. |
 | `--versions` | text |  |  | Only these versions, by label (e.g. v2.0.0,v2.1.0). |
 | `--format` | text | `json` |  | json (streamed) or yaml (built in memory). |

@@ -61,7 +61,6 @@ from .consumer_binding_routes import router as consumer_binding_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
-from .data_routes import router as data_router
 from .database import Database, db
 from .deploy_gate_routes import router as deploy_gate_router
 from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
@@ -112,7 +111,6 @@ from .mcp_probe_routes import router as mcp_probe_router
 from .mcp_saved_search_routes import router as mcp_saved_search_router
 from .mcp_tool_routes import router as mcp_tool_router
 from .mcp_trust_baseline_routes import router as mcp_trust_baseline_router
-from .migration_plans_routes import router as migration_plans_router
 from .mock_routes import data_router as mock_data_router
 from .mock_routes import router as mock_router
 from .notification_routes import router as notification_router
@@ -240,7 +238,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.596.27",
+    version="1.597.0",
 )
 
 
@@ -366,8 +364,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     headers = {settings.request_id_header: request_id} if request_id else None
     return JSONResponse(status_code=500, content=envelope, headers=headers)
 
-# Include routers (browse_public_router first for unauthenticated /v1/browse/* routes;
-# data_router next so /v1/data/* is matched before any generic patterns)
+# Include routers (browse_public_router first for unauthenticated /v1/browse/* routes)
 app.include_router(browse_public_router)
 app.include_router(browse_agentic_router)
 app.include_router(xregistry_router)
@@ -391,7 +388,6 @@ app.add_exception_handler(ConfluentRegistryError, confluent_error_handler)
 app.include_router(browse_export_router)
 app.include_router(snippet_browse_router)
 app.include_router(sdk_kit_router)
-app.include_router(data_router)
 # registry_audit_router before primitives_router so its literal /{tenant_slug}/audit route is
 # matched ahead of the primitives /{tenant_slug}/{primitive_id} catch-all (#3481).
 app.include_router(registry_audit_router)
@@ -547,7 +543,6 @@ app.include_router(workspace_property_router)
 app.include_router(workspace_custom_action_router)
 app.include_router(consumption_index_router)
 app.include_router(paths_router)
-app.include_router(migration_plans_router)
 app.include_router(version_tags_router)
 app.include_router(draft_lock_router)
 app.include_router(version_overlay_router)
@@ -747,11 +742,6 @@ async def startup_event():
     # required tool raises here and startup fails loudly, instead of the service coming up with
     # a shipped format silently unavailable.
     await enforce_toolchain_selfcheck(log=_startup_log)
-
-    # Log data API routes so we can confirm POST /v1/data/{tenant_slug}/records is registered
-    for route in app.routes:
-        if hasattr(route, "path") and "data" in route.path and hasattr(route, "methods"):
-            logging.getLogger("uvicorn.error").info("Registered data route: %s %s", list(route.methods), route.path)
 
     async def _webhook_delivery_sweep() -> None:
         log = logging.getLogger(__name__)

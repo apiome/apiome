@@ -102,8 +102,7 @@ the audit row says `unavailable`.
 ## Unpublish a version
 
 Unpublishing returns a published version to **draft** — for a bad release, a publish to the wrong
-workspace, or a security regression. Only the version's creator or a tenant administrator can do it,
-and a version that already has data records cannot be unpublished. Unpublishing:
+workspace, or a security regression. Only the version's creator or a tenant administrator can do it. Unpublishing:
 
 - **hides** the version from `/v1/schema`, `/v1/swagger`, `/v1/arazzo` and `/v1/json`;
 - **moves its version tags** (such as `latest`) back to the project's next-most-recent published

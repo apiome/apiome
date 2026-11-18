@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.766.0] - 2026-11-18
+
+### Removed
+- **Data API and migration plans — OpenAPI 1.597.0 (breaking):** these surfaces belong to Api-DB
+  (`apiome/api-db`), a separate product, and are no longer served by this API.
+  - `GET /v1/data/{tenant_slug}`, `GET /v1/data/{tenant_slug}/classes`,
+    `GET` / `POST /v1/data/{tenant_slug}/records`,
+    `GET` / `PATCH` / `DELETE /v1/data/{tenant_slug}/records/{record_id}` and
+    `POST /v1/data/{tenant_slug}/records/{record_id}/restore`, with the `DataRecordCreateBody` and
+    `DataRecordUpdateBody` schemas.
+  - `GET` / `PUT /v1/migration-plans/{tenant_slug}`, `GET /v1/migration-plans/{tenant_slug}/counts`,
+    `GET /v1/migration-plans/{tenant_slug}/projects/{project_id}` and
+    `GET /v1/migration-plans/{tenant_slug}/{plan_id}`.
+  - `POST /v1/versions/{tenant_slug}/{project_id}/{version_id}/unpublish` no longer answers
+    `409 VERSION_HAS_DATA`.
+  - The record and migration-plan methods of `app.database.Database`, `app.data_routes`,
+    `app.migration_plans_routes` and `embedding.embed_record_data` are deleted.
+  - No migration: the `data_record`, `data_snapshot`, `migration_plans`, `migration_plan_rules` and
+    `migration_rule_templates` tables are left in place. `class_schema` stays in use by
+    **Freeze schema**.
+
 ## [1.765.0] - 2026-11-17
 
 ### Added

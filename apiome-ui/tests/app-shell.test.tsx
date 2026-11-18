@@ -961,8 +961,7 @@ describe('the docs fixtures', () => {
 
   /**
    * The two rail menus that gained rows in HIVE-12.2: the workspace switcher's Manage
-   * workspaces… and the user menu — whose Tools rows (Data browser · Migrations) stay out until
-   * those features are released. Folded groups keep the footer —
+   * workspaces… and the user menu. Folded groups keep the footer —
    * and the user menu that opens above it — inside a 900 px capture.
    */
   it('renders the workspace and user menus open (HIVE-12.2)', async () => {
@@ -987,8 +986,6 @@ describe('the docs fixtures', () => {
         expect(within(menu).getByTestId('manage-workspaces-entry')).toBeInTheDocument();
       } else {
         expect(within(menu).getByTestId('user-menu-admin-console')).toBeInTheDocument();
-        expect(within(menu).queryByTestId('user-menu-data-browser')).not.toBeInTheDocument();
-        expect(within(menu).queryByTestId('user-menu-migrations')).not.toBeInTheDocument();
       }
       writeA11yFixture(name, container.innerHTML);
       window.localStorage.removeItem(NAV_COLLAPSED_STORAGE_KEY);

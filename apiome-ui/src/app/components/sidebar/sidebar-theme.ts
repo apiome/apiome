@@ -27,8 +27,6 @@ export interface SidebarDensityTokens {
   sectionPadding: string;
   /** Gap between stacked rows. */
   rowGap: string;
-  /** Search/filter input padding. */
-  inputPaddingY: string;
 }
 
 const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
@@ -39,7 +37,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     headerHeight: 'h-11',
     sectionPadding: 'px-2 py-2',
     rowGap: 'gap-0.5',
-    inputPaddingY: 'py-1',
   },
   standard: {
     rowPaddingY: 'py-1.5',
@@ -48,7 +45,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     headerHeight: 'h-12',
     sectionPadding: 'px-3 py-3',
     rowGap: 'gap-1',
-    inputPaddingY: 'py-1.5',
   },
   comfortable: {
     rowPaddingY: 'py-2.5',
@@ -57,7 +53,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     headerHeight: 'h-14',
     sectionPadding: 'px-3 py-3.5',
     rowGap: 'gap-1.5',
-    inputPaddingY: 'py-2',
   },
 };
 
@@ -147,18 +142,12 @@ export const sidebarTheme = {
     'text-slate-900 dark:text-slate-100',
   textSecondary:
     'text-slate-500 dark:text-slate-400',
-  textTertiary:
-    'text-slate-400 dark:text-slate-500',
   hover:
     'hover:bg-slate-100 dark:hover:bg-slate-900',
   rowSelected:
     'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300',
-  rowSelectedRing:
-    'ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800/60',
   iconBadge:
     'bg-indigo-50 dark:bg-indigo-950/50 ring-1 ring-indigo-100 dark:ring-indigo-900/60 text-indigo-600 dark:text-indigo-400',
-  inputBase:
-    'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none',
   sectionLabel:
     'text-2xs font-semibold tracking-[0.08em] uppercase text-slate-400 dark:text-slate-500',
 } as const;

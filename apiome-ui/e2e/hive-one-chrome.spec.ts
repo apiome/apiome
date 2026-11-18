@@ -22,7 +22,7 @@ import { testUsers } from './fixtures/test-fixtures';
  */
 
 /** Every `/ade` route that must draw the rail. */
-const RAIL_ROUTES = ['/ade/dashboard', '/ade/dashboard/projects', '/ade/database', '/ade/migration'];
+const RAIL_ROUTES = ['/ade/dashboard', '/ade/dashboard/projects', '/ade/dashboard/catalog'];
 
 /**
  * Sign in with the seeded test user.
@@ -88,10 +88,10 @@ test.describe('one chrome on every /ade route', () => {
   });
 
   test('a shell route starts its content at the top, reserving no bar', async ({ page }) => {
-    // The half of the retirement a source scan cannot see. Tools used to clear a 48px bar
+    // The half of the retirement a source scan cannot see. Pages used to clear a 48px bar
     // with `margin-top` and `calc(100vh - 48px)`; if either came back, or if a bar returned
     // without them, the page column would no longer start at the top of the viewport.
-    for (const route of ['/ade/database', '/ade/migration']) {
+    for (const route of ['/ade/dashboard/projects', '/ade/dashboard/catalog']) {
       await page.goto(route);
       await page.waitForLoadState('networkidle');
 
@@ -134,20 +134,6 @@ test.describe('destinations that live off the rail', () => {
     await page.getByTestId('rail-workspace').click();
     await page.getByTestId('manage-workspaces-entry').click();
     await page.waitForURL(/\/ade\/dashboard\/tenants$/);
-  });
-
-  test('the user menu opens the Data browser and Migrations in two clicks', async ({ page }) => {
-    for (const [row, path] of [
-      ['user-menu-data-browser', /\/ade\/database/],
-      ['user-menu-migrations', /\/ade\/migration/],
-    ] as const) {
-      await page.goto('/ade/dashboard');
-      await page.waitForLoadState('networkidle');
-      await page.getByTestId('rail-user').click();
-      await page.getByTestId(row).click();
-      await page.waitForURL(path);
-      await expect(page.getByTestId('app-rail')).toHaveCount(1);
-    }
   });
 
   test('⌘K still jumps to Tenants', async ({ page }) => {
