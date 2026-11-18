@@ -135,6 +135,8 @@ const ALL_ENABLED: Record<string, string> = {
   TWITTER_CLIENT_SECRET: 'x-secret',
   REDDIT_CLIENT_ID: 'reddit-client-id',
   REDDIT_CLIENT_SECRET: 'reddit-secret',
+  SPOTIFY_CLIENT_ID: 'spotify-client-id',
+  SPOTIFY_CLIENT_SECRET: 'spotify-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -260,6 +262,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'facebook',
       'twitter',
       'reddit',
+      'spotify',
     ]);
   });
 
@@ -297,6 +300,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'facebook',
       'twitter',
       'reddit',
+      'spotify',
     ]);
   });
 
@@ -393,6 +397,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const reddit = buildGenericOAuthConfig('reddit', ALL_ENABLED)!;
     expect(reddit.clientId).toBe('reddit-client-id');
     expect(reddit.clientSecret).toBe('reddit-secret');
+    const spotify = buildGenericOAuthConfig('spotify', ALL_ENABLED)!;
+    expect(spotify.clientId).toBe('spotify-client-id');
+    expect(spotify.clientSecret).toBe('spotify-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -851,6 +858,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.pkce).toBe(false);
     // No refresh token: Apiome keeps no Reddit token.
     expect(cfg.authorizationUrlParams).toEqual({ duration: 'temporary' });
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('spotify: fixed Spotify OAuth 2.0 endpoints; user-read-email scope; post exchange; PKCE on (OLO-9.34)', () => {
+    const cfg = buildGenericOAuthConfig('spotify', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('spotify');
+    expect(cfg.authorizationUrl).toBe('https://accounts.spotify.com/authorize');
+    expect(cfg.tokenUrl).toBe('https://accounts.spotify.com/api/token');
+    // The normalizer reads /v1/me itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['user-read-email']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -6190,6 +6212,221 @@ describe('getUserInfo — Reddit link-only (OLO-9.33)', () => {
 
     const { result, override } = await runGetUserInfo(
       'reddit',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Spotify (OLO-9.34) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Spotify fail-closed link-first (OLO-9.34)', () => {
+  const ME_URL = 'https://api.spotify.com/v1/me';
+  /** The `/v1/me` body for the person signing in. */
+  const ME = {
+    id: 'ada.lovelace',
+    display_name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    images: [
+      { url: 'https://i.scdn.example/ada-640.jpg', height: 640, width: 640 },
+      { url: 'https://i.scdn.example/ada-64.jpg', height: 64, width: 64 },
+    ],
+    country: 'GB',
+    product: 'premium',
+  };
+
+  /** Serve `meBody` from `/v1/me` (a failed response when null); record each request. */
+  const spotifyApi = (meBody: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const body = url === ME_URL ? meBody : null;
+      return body === null ? { ok: false, json: async () => null } : { ok: true, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Spotify user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = spotifyApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: 'ada.lovelace',
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      // The first image, as Better Auth's helper reads it.
+      image: 'https://i.scdn.example/ada-640.jpg',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: ME_URL, authorization: 'Bearer tok' }]);
+  });
+
+  test('known identity signs in with no email, taking the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = spotifyApi({ ...ME, email: undefined });
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: 'ada.lovelace', email: OK_USER.email, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = spotifyApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'spotify',
+      providerUserId: 'ada.lovelace',
+      email: 'ada@example.com',
+    });
+  });
+
+  test('fresh sign-up attempt with an email → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = spotifyApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = spotifyApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in a Spotify body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = spotifyApi({ ...ME, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'spotify',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test.each([
+    ['no email field', { ...ME, email: undefined }],
+    ['an empty email', { ...ME, email: '' }],
+    ['a non-string email', { ...ME, email: 42 }],
+  ])('fresh sign-in with %s → email-required rejection', async (_label, meBody) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = spotifyApi(meBody);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['no images', { ...ME, images: [] }],
+    ['a missing images field', { ...ME, images: undefined }],
+    ['an image with no url', { ...ME, images: [{ height: 64 }] }],
+    ['a null image', { ...ME, images: [null] }],
+  ])('%s leaves the image out', async (_label, meBody) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = spotifyApi(meBody);
+
+    const { result } = await runGetUserInfo(
+      'spotify',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: 'ada.lovelace', name: 'Ada Lovelace' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'tok'],
+    ['a body with no id', { ...ME, id: undefined }, 'tok'],
+    ['an empty id', { ...ME, id: '  ' }, 'tok'],
+    ['a numeric id', { ...ME, id: 1234 }, 'tok'],
+    ['an array body', [ME], 'tok'],
+    ['a missing access token', ME, ''],
+  ])('%s yields no identity', async (_label, meBody, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = spotifyApi(meBody);
+
+    const { result, override } = await runGetUserInfo(
+      'spotify',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

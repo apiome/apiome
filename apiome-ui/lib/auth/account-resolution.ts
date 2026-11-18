@@ -159,6 +159,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * scope, often not at all, and with no verified claim Apiome relies on (link-first).
  * `reddit` (OLO-9.33) is **not** listed: Reddit exposes `has_verified_email` but no email
  * address at all (link-only).
+ * `spotify` (OLO-9.34) is **not** listed: Spotify's `/v1/me` email is documented as unverified
+ * (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -257,6 +259,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'facebook',
   'twitter',
   'reddit',
+  'spotify',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

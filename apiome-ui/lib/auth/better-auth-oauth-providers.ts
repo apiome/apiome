@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -131,6 +131,12 @@
  *    `oauth.reddit.com/api/v1/me`. Reddit exposes `has_verified_email` but **no email address**
  *    → link-only: an explicit link and the subsequent sign-in work, and a fresh sign-in is
  *    refused with `OAuthEmailRequired`.
+ *  - **Spotify (OLO-9.34):** Spotify OAuth 2.0 on fixed endpoints mirrored from Better Auth's
+ *    `spotify` provider (`accounts.spotify.com/authorize`, `accounts.spotify.com/api/token`),
+ *    scope `user-read-email`, client credentials in the form body, PKCE on; the claims come from
+ *    `api.spotify.com/v1/me`, whose email Spotify documents as **unverified** (Better Auth
+ *    `spotify()` hard-codes `emailVerified: false`) → fail-closed link-first: an explicit link
+ *    and the subsequent sign-in work, and the email never joins or creates an account.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -707,6 +713,12 @@ const REDDIT_AUTHORIZE_URL = 'https://www.reddit.com/api/v1/authorize';
 const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
 /** The authenticated account (`id`, `name`, `icon_img`, `has_verified_email`), as the helper reads it. */
 const REDDIT_ME_URL = 'https://oauth.reddit.com/api/v1/me';
+
+/** Spotify OAuth 2.0: fixed endpoints, mirrored from Better Auth's `spotify` provider (OLO-9.34). */
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
+const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
+/** The current user's profile (`id`, `display_name`, `email`, `images`), as the helper reads it. */
+const SPOTIFY_ME_URL = 'https://api.spotify.com/v1/me';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2038,6 +2050,67 @@ async function normalizeReddit(
   return { accountId, profile, email: null, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Spotify Web API response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function spotifyString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Read the first image URL of a Spotify profile's `images` array, as Better Auth's helper does.
+ *
+ * @param images The raw `images` field (an array of `{ url, height, width }` objects).
+ * @returns The first image's URL, or null when there is none.
+ */
+function spotifyImage(images: unknown): string | null {
+  if (!Array.isArray(images) || images.length === 0) return null;
+  const first = images[0] as { url?: unknown } | null;
+  return spotifyString(first?.url) || null;
+}
+
+/**
+ * Normalize a Spotify sign-in (OLO-9.34): fetch `api.spotify.com/v1/me` with the access token and
+ * map `id` / `display_name` / `email` / `images[0].url` — the resource and fields Better Auth's
+ * `spotify()` helper reads. The identity is keyed on `id`, the Spotify user ID, which never
+ * changes; `display_name` may be missing.
+ *
+ * Spotify documents the `/v1/me` email as **unverified** (the helper hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in the
+ * body is dropped rather than trusted — and `resolveOAuthEmailVerified` fail-closes to
+ * **link-first**: the address can neither join nor create an account, an already-linked identity
+ * signs in, and an explicit link binds it. A failed request, or a body without a string `id`,
+ * yields an empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeSpotify(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(SPOTIFY_ME_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const me = body as Record<string, unknown>;
+  const accountId = spotifyString(me.id);
+  if (!accountId) return none;
+  const email = spotifyString(me.email) || null;
+  const name = spotifyString(me.display_name) || null;
+  const image = spotifyImage(me.images);
+  const profile: Record<string, unknown> = { id: accountId };
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2094,6 +2167,7 @@ const NORMALIZERS: Record<
   facebook: (tokens, env, fetchImpl) => normalizeFacebook(tokens, env, fetchImpl),
   twitter: (tokens, _env, fetchImpl) => normalizeTwitter(tokens, fetchImpl),
   reddit: (tokens, _env, fetchImpl) => normalizeReddit(tokens, fetchImpl),
+  spotify: (tokens, _env, fetchImpl) => normalizeSpotify(tokens, fetchImpl),
 };
 
 /**
@@ -2128,7 +2202,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook | twitter | reddit).
+ *   railway | hubspot | apple | facebook | twitter | reddit | spotify).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2804,6 +2878,25 @@ export function buildGenericOAuthConfig(
         authentication: 'basic',
         pkce: false,
         authorizationUrlParams: { duration: 'temporary' },
+        getUserInfo,
+      };
+    }
+    case 'spotify': {
+      return {
+        providerId: 'spotify',
+        clientId: readEnvString(env, 'SPOTIFY_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'SPOTIFY_CLIENT_SECRET') ?? '',
+        // Fixed Spotify OAuth 2.0 endpoints, mirrored from Better Auth's `spotify()` helper — no
+        // issuer. Like the helper, the code exchange sends the client id and secret in the form
+        // body and a PKCE challenge (`S256`) is sent. `user-read-email` is the helper's default
+        // and the only scope Apiome asks for; `/v1/me` needs none for the id, name and picture.
+        // Apiome reads no playlists, library, listening history or playback. The email is
+        // documented as unverified → fail-closed link-first (see normalizeSpotify).
+        authorizationUrl: SPOTIFY_AUTHORIZE_URL,
+        tokenUrl: SPOTIFY_TOKEN_URL,
+        scopes: ['user-read-email'],
+        authentication: 'post',
+        pkce: true,
         getUserInfo,
       };
     }

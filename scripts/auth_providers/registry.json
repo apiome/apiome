@@ -286,6 +286,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "REDDIT_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "REDDIT_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "spotify",
+      "label": "Spotify",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "SPOTIFY_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "SPOTIFY_CLIENT_SECRET" }
+      ]
     }
   ]
 }
