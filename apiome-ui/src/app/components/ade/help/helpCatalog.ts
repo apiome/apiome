@@ -1993,6 +1993,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['entitlement', 'flag package', 'override', 'preview'],
   },
   {
+    id: 'sign-in-overview',
+    title: 'Sign-in and identity overview',
+    summary: 'Every supported sign-in provider, and when to use providers, single sign-on or 2FA.',
+    page: 'apiome-docs/docs/admin/sign-in-overview.mdx',
+    section: 'reference',
+    keywords: ['provider catalog', 'sso', 'two-factor', 'oauth', 'oidc', 'regional', 'login'],
+  },
+  {
     id: 'auth-providers',
     title: 'Sign-in providers',
     summary: 'Configure OAuth and OIDC sign-in — GitHub, Microsoft, Google, Okta and more — from the admin console.',
