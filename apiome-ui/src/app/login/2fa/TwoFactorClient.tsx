@@ -3,7 +3,16 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { ArrowLeft, KeyRound, LifeBuoy, Mail, RefreshCw, Send, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  KeyRound,
+  LifeBuoy,
+  Mail,
+  MessageSquare,
+  RefreshCw,
+  Send,
+  ShieldCheck,
+} from 'lucide-react';
 import { authClient } from '@lib/auth/auth-client';
 import {
   peekTwoFactorMethods,
@@ -12,6 +21,7 @@ import {
   TWO_FACTOR_DEFAULT_CALLBACK,
   type TwoFactorMethod,
 } from '@lib/auth/two-factor-callback';
+import type { OtpDeliveryHint, TwoFactorOtpChannel } from '@lib/auth/two-factor-otp-dispatch';
 import { browserNavigate } from '@lib/auth/browser-navigate';
 import {
   TRUST_DEVICE_DAYS,
@@ -67,23 +77,63 @@ interface MethodCopy {
   rejected: string;
 }
 
-const METHOD_COPY: Readonly<Record<TwoFactorMethod, MethodCopy>> = {
-  totp: {
-    tab: 'Authenticator',
-    heading: 'Two-factor authentication',
-    fieldId: 'totp-code',
-    fieldLabel: 'Authentication code',
-    incomplete: 'Enter the 6-digit code from your authenticator app.',
-    rejected: 'That code was not accepted. Check your authenticator app and try again.',
-  },
-  otp: {
+/** Everything about the one-time-code method that depends on where the code is sent. */
+interface OtpChannelCopy extends MethodCopy {
+  /** The description before the first send; `{to}` is the masked number. */
+  beforeSend: string;
+  /** The description once a code is on its way. */
+  afterSend: string;
+  /** The send button, before and after the first send. */
+  send: string;
+  resend: string;
+  /** The status line once a code has been sent. */
+  sent: string;
+  /** Shown when the send request fails without a message of its own. */
+  sendFailed: string;
+}
+
+/**
+ * The one-time-code method's copy per delivery channel (OLO-9.50 email, OLO-9.51 SMS). The
+ * `data-testid`s stay the same for both: it is one Better Auth method, only its words differ.
+ */
+const OTP_CHANNEL_COPY: Readonly<Record<TwoFactorOtpChannel, OtpChannelCopy>> = {
+  email: {
     tab: 'Email code',
     heading: 'Check your email',
     fieldId: 'email-otp-code',
     fieldLabel: 'Email code',
     incomplete: 'Enter the 6-digit code from your email.',
     rejected: 'That code was not accepted. Request a new email code and try again.',
+    beforeSend: 'We will email a 6-digit code to the address on your account.',
+    afterSend: 'Enter the 6-digit code we emailed you.',
+    send: 'Send email code',
+    resend: 'Resend email code',
+    sent: 'Email code sent. Check your inbox.',
+    sendFailed: 'Could not send the email code. Try again.',
   },
+  sms: {
+    tab: 'Text message',
+    heading: 'Check your phone',
+    fieldId: 'sms-otp-code',
+    fieldLabel: 'Text message code',
+    incomplete: 'Enter the 6-digit code from the text message.',
+    rejected: 'That code was not accepted. Request a new text code and try again.',
+    beforeSend: 'We will text a 6-digit code to {to}.',
+    afterSend: 'Enter the 6-digit code we texted to {to}.',
+    send: 'Send text code',
+    resend: 'Resend text code',
+    sent: 'Text code sent. Check your phone.',
+    sendFailed: 'Could not send the text code. Try again.',
+  },
+};
+
+const TOTP_COPY: MethodCopy = {
+  tab: 'Authenticator',
+  heading: 'Two-factor authentication',
+  fieldId: 'totp-code',
+  fieldLabel: 'Authentication code',
+  incomplete: 'Enter the 6-digit code from your authenticator app.',
+  rejected: 'That code was not accepted. Check your authenticator app and try again.',
 };
 
 /**
@@ -101,12 +151,9 @@ const BACKUP_COPY = {
   rejected: 'That backup code was not accepted. Each code works once — check it and try another.',
 } as const;
 
-/** The description under the heading — the only line that also depends on progress. */
+/** The authenticator method's description under the heading. */
 const TOTP_DESCRIPTION =
   'Enter the 6-digit code from Authy, Google Authenticator, or another TOTP app.';
-const OTP_DESCRIPTION_BEFORE_SEND =
-  'We will email a 6-digit code to the address on your account.';
-const OTP_DESCRIPTION_AFTER_SEND = 'Enter the 6-digit code we emailed you.';
 
 interface TwoFactorClientProps {
   /** Validated by the page (resolveCallbackUrl) before being passed in. */
@@ -118,11 +165,21 @@ interface TwoFactorClientProps {
    * a password sign-in, which stores them in `sessionStorage` instead.
    */
   methods?: TwoFactorMethod[];
+  /**
+   * Where this challenge's one-time code goes (OLO-9.51 #5071), read by the page from the pending
+   * challenge cookie. `null`/absent → the email wording of #5070. When `available` is false the
+   * code method is hidden: Better Auth offers it to everyone, but this user's channel cannot send.
+   */
+  otpDelivery?: OtpDeliveryHint | null;
 }
 
 /**
- * Second-factor verification after password sign-in (OLO-9.13 #5014 + OLO-9.50 #5070,
- * re-skinned by HIVE-4.2 #5296).
+ * Second-factor verification after password sign-in (OLO-9.13 #5014 + OLO-9.50 #5070 +
+ * OLO-9.51 #5071, re-skinned by HIVE-4.2 #5296).
+ *
+ * The one-time-code method speaks for the user's delivery channel: an emailed code by default,
+ * or a text to their verified number (`•••• 0123`) when they chose SMS. It is one Better Auth
+ * method either way (`sendOtp` / `verifyOtp`); only the words and the icon change.
  *
  * Authority: `docs/mockups/auth/two-factor.html`, `docs/mockups/DESIGN.md` §2 and §7.
  *
@@ -148,13 +205,22 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
   callbackUrl = TWO_FACTOR_DEFAULT_CALLBACK,
   error,
   methods: offeredMethods,
+  otpDelivery,
 }) => {
   // What the server named for this challenge wins over what an earlier, abandoned sign-in may
-  // have left in `sessionStorage`.
-  const methods = useMemo(
-    () => (offeredMethods && offeredMethods.length > 0 ? offeredMethods : peekTwoFactorMethods()),
-    [offeredMethods]
-  );
+  // have left in `sessionStorage`. A code method whose channel cannot deliver is dropped.
+  const methods = useMemo(() => {
+    const offered =
+      offeredMethods && offeredMethods.length > 0 ? offeredMethods : peekTwoFactorMethods();
+    if (otpDelivery?.available !== false) return offered;
+    const withoutOtp = offered.filter((method) => method !== 'otp');
+    return withoutOtp.length > 0 ? withoutOtp : (['totp'] as TwoFactorMethod[]);
+  }, [offeredMethods, otpDelivery]);
+  const otpCopy = OTP_CHANNEL_COPY[otpDelivery?.channel === 'sms' ? 'sms' : 'email'];
+  /** Fill the masked number into an SMS sentence. */
+  const withDestination = (text: string) => text.replace('{to}', otpDelivery?.destination || 'your phone');
+  const methodCopy = (method: TwoFactorMethod): MethodCopy => (method === 'otp' ? otpCopy : TOTP_COPY);
+  const OtpIcon = otpDelivery?.channel === 'sms' ? MessageSquare : Mail;
   const [activeMethod, setActiveMethod] = useState<TwoFactorMethod>(() =>
     methods.includes('totp') ? 'totp' : methods[0] ?? 'totp'
   );
@@ -185,7 +251,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
 
   const queryError = getAuthErrorCopy(error);
   const showMethodSwitcher = methods.includes('totp') && methods.includes('otp');
-  const copy = METHOD_COPY[activeMethod];
+  const copy = methodCopy(activeMethod);
   const bannerText = localError ?? queryError?.text;
 
   /** The challenge is spent: drop what was stored for it and leave for the callback. */
@@ -290,19 +356,19 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
     }
   };
 
-  /** Ask Better Auth to mail a fresh code. Also the "resend" path — same request. */
+  /** Ask Better Auth to send a fresh code (email or text). Also the "resend" path — same request. */
   const handleSendOtp = async () => {
     setIsSendingOtp(true);
     setLocalError(null);
     try {
       const res = await authClient.twoFactor.sendOtp({});
       if (res?.error) {
-        setLocalError(res.error.message || 'Could not send the email code. Try again.');
+        setLocalError(res.error.message || otpCopy.sendFailed);
         return;
       }
       setOtpSent(true);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Could not send the email code.');
+      setLocalError(err instanceof Error ? err.message : otpCopy.sendFailed);
     } finally {
       setIsSendingOtp(false);
     }
@@ -329,8 +395,8 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
     ? BACKUP_COPY.description
     : activeMethod === 'otp'
       ? otpSent
-        ? OTP_DESCRIPTION_AFTER_SEND
-        : OTP_DESCRIPTION_BEFORE_SEND
+        ? withDestination(otpCopy.afterSend)
+        : withDestination(otpCopy.beforeSend)
       : TOTP_DESCRIPTION;
 
   /**
@@ -412,7 +478,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
    * @returns The form.
    */
   const renderForm = (method: TwoFactorMethod) => {
-    const form = METHOD_COPY[method];
+    const form = methodCopy(method);
     const isComplete = code.length === CODE_LENGTH;
 
     return (
@@ -434,7 +500,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
             ) : (
               <Send aria-hidden="true" />
             )}
-            {isSendingOtp ? 'Sending…' : otpSent ? 'Resend email code' : 'Send email code'}
+            {isSendingOtp ? 'Sending…' : otpSent ? otpCopy.resend : otpCopy.send}
           </Button>
         )}
 
@@ -444,7 +510,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
           label={form.fieldLabel}
           icon={
             method === 'otp' ? (
-              <Mail size={ICON_SIZE.dense} aria-hidden="true" />
+              <OtpIcon size={ICON_SIZE.dense} aria-hidden="true" />
             ) : (
               <KeyRound size={ICON_SIZE.dense} aria-hidden="true" />
             )
@@ -493,7 +559,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
 
       <Card data-testid="two-factor-card" className="auth-card">
         <span className="auth-icon" aria-hidden="true">
-          {useBackupCode ? <LifeBuoy /> : activeMethod === 'otp' ? <Mail /> : <ShieldCheck />}
+          {useBackupCode ? <LifeBuoy /> : activeMethod === 'otp' ? <OtpIcon /> : <ShieldCheck />}
         </span>
         <h1 className="auth-title mt-4">{useBackupCode ? BACKUP_COPY.heading : copy.heading}</h1>
         <p className="auth-sub mt-1">{description}</p>
@@ -522,7 +588,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
             data-testid="two-factor-otp-sent"
             className="mt-4"
           >
-            Email code sent. Check your inbox.
+            {otpCopy.sent}
           </Alert>
         )}
 
@@ -543,11 +609,11 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
                   data-testid={`two-factor-method-${method}`}
                 >
                   {method === 'otp' ? (
-                    <Mail aria-hidden="true" />
+                    <OtpIcon aria-hidden="true" />
                   ) : (
                     <ShieldCheck aria-hidden="true" />
                   )}
-                  {METHOD_COPY[method].tab}
+                  {methodCopy(method).tab}
                 </TabsPrimitive.Trigger>
               ))}
             </TabsPrimitive.List>

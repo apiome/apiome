@@ -6963,6 +6963,14 @@ button.tfa-reset-notice__close > svg {
   overflow-wrap: anywhere;
 }
 
+/* A box with more than one action (the SMS box: choose, change, remove — OLO-9.51)
+   wraps its buttons rather than overflowing the 12 rem column. */
+.acct-mfa__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* ---- Sign-in methods ----------------------------------------------------- */
 .acct-prose {
   font-size: var(--fs-sm);

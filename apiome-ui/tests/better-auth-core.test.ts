@@ -49,6 +49,7 @@ jest.mock('better-auth/client/plugins', () => ({
   twoFactorClient: mockTwoFactorClient,
   customSessionClient: mockCustomSessionClient,
   genericOAuthClient: mockGenericOAuthClient,
+  phoneNumberClient: jest.fn(() => ({ id: 'phone-number-client' })),
 }));
 // `better-auth/plugins/generic-oauth` is ESM-only and is registered by auth.ts for the OLO-10.7 OAuth
 // providers; stub the plugin factory so the instance loads (the provider construction itself is
@@ -130,7 +131,8 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(mockOneTimeCodePlugin).toHaveBeenCalledTimes(1);
     expect(mockCustomSession).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(7);
+    // Plus the OLO-9.51 phoneNumber plugin (verified numbers for SMS two-factor codes).
+    expect(config.plugins).toHaveLength(8);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
     // The last-sign-in recorder must follow twoFactor: plugin after-hooks run in array order, and
     // twoFactor clears the new session when it issues a challenge (`last-sign-in.ts`).
@@ -341,6 +343,48 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(typeof opts.otpOptions?.sendOTP).toBe('function');
   });
 
+  it('registers otpOptions.sendOTP when only Twilio is configured (OLO-9.51)', async () => {
+    process.env.BETTER_AUTH_SECRET = 'test-secret';
+    delete process.env.SENDGRID_API_KEY;
+    delete process.env.EMAIL_FROM;
+    process.env.TWILIO_ACCOUNT_SID = 'AC1';
+    process.env.TWILIO_AUTH_TOKEN = 'token';
+    process.env.TWILIO_FROM_NUMBER = '+15005550006';
+    try {
+      await import('@lib/auth/auth');
+      const opts = mockTwoFactor.mock.calls[0][0] as { otpOptions?: { sendOTP?: unknown } };
+      expect(typeof opts.otpOptions?.sendOTP).toBe('function');
+    } finally {
+      delete process.env.TWILIO_ACCOUNT_SID;
+      delete process.env.TWILIO_AUTH_TOKEN;
+      delete process.env.TWILIO_FROM_NUMBER;
+    }
+  });
+
+  it('registers the phoneNumber plugin locked to own-account verification (OLO-9.51)', async () => {
+    process.env.BETTER_AUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    const config = mockBetterAuth.mock.calls[0][0];
+    const plugin = config.plugins.find((p: { id?: string }) => p?.id === 'phone-number');
+    expect(plugin).toBeDefined();
+    expect(plugin.options.allowedAttempts).toBe(3);
+    expect(plugin.options.phoneNumberValidator('+14155550123')).toBe(true);
+    expect(plugin.options.phoneNumberValidator('4155550123')).toBe(false);
+    expect(typeof plugin.options.sendOTP).toBe('function');
+    expect(typeof plugin.options.callbackOnVerification).toBe('function');
+    // No sign-in or password reset by phone, and no sign-up on verification.
+    expect(plugin.options.signUpOnVerification).toBeUndefined();
+    expect(config.disabledPaths).toEqual(
+      expect.arrayContaining([
+        '/sign-in/phone-number',
+        '/phone-number/request-password-reset',
+        '/phone-number/reset-password',
+      ])
+    );
+  });
+
   it('registers the one-time-code sign-in plugin before nextCookies (OLO-10.13)', async () => {
     process.env.BETTER_AUTH_SECRET = 'test-secret';
 
@@ -421,6 +465,7 @@ describe('lib/auth/auth-client.ts (Better Auth browser client)', () => {
         { id: 'two-factor-client' },
         { id: 'custom-session-client' },
         { id: 'generic-oauth-client' },
+        { id: 'phone-number-client' },
         { id: 'sso-client' },
       ],
     });

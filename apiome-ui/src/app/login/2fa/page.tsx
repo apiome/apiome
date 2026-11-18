@@ -1,5 +1,6 @@
 import { resolveCallbackUrl } from '@lib/auth/cookie-options';
 import { normalizeTwoFactorMethods } from '@lib/auth/two-factor-callback';
+import { getPendingOtpDelivery } from '@lib/auth/two-factor-pending-delivery';
 import TwoFactorClient from '@/app/login/2fa/TwoFactorClient';
 
 /**
@@ -13,6 +14,10 @@ import TwoFactorClient from '@/app/login/2fa/TwoFactorClient';
  * untrusted: the callback is checked against the allowlist and the methods reduced to the two the
  * screen knows. Naming a method here only decides which form is drawn — the server still decides
  * whether a code is accepted.
+ *
+ * Where the one-time code goes — email, or a text to the user's verified number (OLO-9.51 #5071)
+ * — is read here from the pending challenge cookie (`getPendingOtpDelivery`), so the code tab can
+ * say which before anything is sent. `null` (unreadable) keeps the email wording.
  */
 export default async function TwoFactorLoginPage({
   searchParams,
@@ -25,6 +30,14 @@ export default async function TwoFactorLoginPage({
     typeof params.methods === 'string' && params.methods
       ? normalizeTwoFactorMethods(params.methods.split(','))
       : undefined;
+  const otpDelivery = await getPendingOtpDelivery();
 
-  return <TwoFactorClient callbackUrl={callbackUrl} error={params.error} methods={methods} />;
+  return (
+    <TwoFactorClient
+      callbackUrl={callbackUrl}
+      error={params.error}
+      methods={methods}
+      otpDelivery={otpDelivery}
+    />
+  );
 }

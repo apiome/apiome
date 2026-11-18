@@ -7,7 +7,9 @@
  * Password-gated enable (QR + confirm + one-time backup reveal) and disable, plus self-service
  * management when enrolled: remaining backup-code count, password-gated regenerate, forget-this-
  * device (per-browser trust cookie), recovery guidance, and Email OTP availability when SendGrid
- * is configured (server-level OTP — no separate enroll).
+ * is configured (server-level OTP — no separate enroll). When Twilio is configured, the
+ * {@link SmsTwoFactorSettings} box adds a verified phone number and moves sign-in codes from email
+ * to text messages (OLO-9.51 #5071).
  *
  * ## What HIVE-4.7 changed, and what it did not
  *
@@ -41,6 +43,7 @@ import {
   Check,
   KeyRound,
   Mail,
+  MessageSquare,
   MonitorSmartphone,
   RefreshCw,
   ShieldCheck,
@@ -56,6 +59,7 @@ import {
   getTrustedDeviceStatus,
   revokeThisTrustedDevice,
 } from '@lib/auth/two-factor-profile-actions';
+import { getSmsTwoFactorStatus, type SmsTwoFactorStatus } from '@lib/auth/two-factor-sms-actions';
 import {
   Dialog,
   DialogContent,
@@ -79,6 +83,7 @@ import {
   withIdentityStep,
 } from '@/app/components/ade/account/TwoFactorEnrollDialog';
 import { TwoFactorReauthNotice } from '@/app/components/ade/account/TwoFactorReauthNotice';
+import { SmsTwoFactorSettings } from '@/app/components/ade/account/SmsTwoFactorSettings';
 import { useTwoFactorReauth } from '@/app/components/ade/account/useTwoFactorReauth';
 import { REAUTH_REQUIRED_CODE, TRUST_DEVICE_DAYS } from '@lib/auth/two-factor-policy';
 import { cn } from '@lib/utils';
@@ -126,6 +131,8 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   const [trusted, setTrusted] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [emailOtpAvailable, setEmailOtpAvailable] = useState(false);
+  /** SMS codes (OLO-9.51 #5071); `null` until loaded, while off, or when the lookup fails. */
+  const [smsStatus, setSmsStatus] = useState<SmsTwoFactorStatus | null>(null);
   /** How this account confirms it is them (TFA-1.1 #5655) — shared with the enrolment dialog. */
   const reauthState = useTwoFactorReauth();
   const { reauth, passwordless, needsReauth, markStale } = reauthState;
@@ -163,22 +170,27 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       setRemaining(null);
       setTrusted(false);
       setEmailOtpAvailable(false);
+      setSmsStatus(null);
       return;
     }
     setStatusLoading(true);
     try {
-      const [codes, device, emailOtp] = await Promise.all([
+      const [codes, device, emailOtp, sms] = await Promise.all([
         getBackupCodeStatus(),
         getTrustedDeviceStatus(),
         getEmailOtpAvailability(),
+        // A failed SMS lookup hides the SMS box; it must not blank the rest of the panel.
+        getSmsTwoFactorStatus().catch(() => null),
       ]);
       setRemaining(codes.remaining);
       setTrusted(device.trusted);
       setEmailOtpAvailable(emailOtp.available);
+      setSmsStatus(sms);
     } catch {
       setRemaining(null);
       setTrusted(false);
       setEmailOtpAvailable(false);
+      setSmsStatus(null);
     } finally {
       setStatusLoading(false);
     }
@@ -285,6 +297,14 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       <TwoFactorReauthNotice reauth={reauth} busy={busy} onReauth={handleReauth} />
     );
 
+  /** Codes are texted: the reader chose SMS and still has a verified number. */
+  const codesBySms = Boolean(smsStatus?.smsAvailable && smsStatus.phoneNumber && smsStatus.channel === 'sms');
+
+  /** Reload only the SMS box's status after it changes something. */
+  const refreshSmsStatus = async () => {
+    setSmsStatus(await getSmsTwoFactorStatus().catch(() => null));
+  };
+
   const handleForgetDevice = async () => {
     setBusy(true);
     setError('');
@@ -341,17 +361,23 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                 <Check size={ICON_SIZE.dense} className="text-ok" aria-hidden />
                 Authenticator app (TOTP)
               </li>
-              {emailOtpAvailable && (
+              {emailOtpAvailable && !codesBySms && (
                 <li data-testid="two-factor-method-email-otp">
                   <Check size={ICON_SIZE.dense} className="text-ok" aria-hidden />
                   Email OTP — available at sign-in (no separate enrollment)
+                </li>
+              )}
+              {codesBySms && (
+                <li data-testid="two-factor-method-sms-otp">
+                  <MessageSquare size={ICON_SIZE.dense} aria-hidden />
+                  Text message code — sent to {smsStatus?.phoneNumber} at sign-in
                 </li>
               )}
             </ul>
           </Card>
 
           <div className="acct-mfa">
-            {emailOtpAvailable && (
+            {emailOtpAvailable && !codesBySms && (
               <div className="acct-mfa__box" data-testid="two-factor-email-otp-info">
                 <div className="acct-mfa__title">
                   <Mail size={ICON_SIZE.dense} aria-hidden />
@@ -362,6 +388,15 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                   instead of (or in addition to) using your authenticator app.
                 </p>
               </div>
+            )}
+
+            {smsStatus?.smsAvailable && (
+              <SmsTwoFactorSettings
+                status={smsStatus}
+                onChanged={refreshSmsStatus}
+                reauth={reauthState}
+                onReauth={handleReauth}
+              />
             )}
 
             <div className="acct-mfa__box">

@@ -1,0 +1,28 @@
+---
+slug: two-factor-text-message-codes
+title: Two-factor codes by text message
+description: "Two-factor sign-in codes can now be texted to a verified phone number."
+authors: [apiome]
+---
+
+People with two-factor authentication can now have their one-time sign-in code texted to their
+phone instead of emailed, once they have verified the number on
+[Profile](/workspace/profile#get-codes-by-text-message).
+
+{/* truncate */}
+
+- **For people.** On **Profile → Security**, the new **Text message code** box: **Add phone
+  number**, enter the code we text you, then **Send codes by text** with your password. At sign-in
+  the code tab reads **Text message** and the page names the number as *•••• 0123* —
+  [Pass the two-factor check](/getting-started/sign-in#pass-the-two-factor-check).
+- **Verified numbers only.** Text messages cannot be chosen until a number is verified. A new
+  number puts codes back on email until text messages are chosen again; **Remove** deletes the
+  number and codes go to email.
+- **Never a way in.** A phone number only receives two-factor codes: signing in, resetting a
+  password and creating an account by phone are switched off.
+- **For administrators.** Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM_NUMBER`
+  (or `TWILIO_MESSAGING_SERVICE_SID`) in `apiome-ui/.env`. Without them nothing changes. One
+  number gets at most one text every 30 seconds and five an hour —
+  [Two-factor codes by email and text message](/admin/auth-providers#two-factor-codes-by-email-and-text-message).
+- **Email codes and authenticator apps** work exactly as before for everyone who does not choose
+  text messages.

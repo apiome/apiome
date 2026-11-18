@@ -85,6 +85,10 @@ config is stored in the database need none of them set; see
 | `BETTER_AUTH_SECRET` | all | Yes | Shared signing secret for the Better Auth session and the downstream REST JWT (`openssl rand -base64 32`) |
 | `SENDGRID_API_KEY` | 2FA email OTP | To enable email OTP | SendGrid API key used by `otpOptions.sendOTP` (OLO-9.50) |
 | `EMAIL_FROM` | 2FA email OTP | To enable email OTP | Verified SendGrid sender (`addr@domain` or `Name <addr@domain>`) |
+| `TWILIO_ACCOUNT_SID` | 2FA SMS OTP | To enable SMS OTP | Twilio Account SID (OLO-9.51) |
+| `TWILIO_AUTH_TOKEN` | 2FA SMS OTP | To enable SMS OTP | Twilio Auth Token |
+| `TWILIO_FROM_NUMBER` | 2FA SMS OTP | This or the next | Sending number, E.164 |
+| `TWILIO_MESSAGING_SERVICE_SID` | 2FA SMS OTP | This or the previous | Twilio Messaging Service SID (preferred when both are set) |
 | `GITHUB_ID` | GitHub | To enable GitHub | OAuth app **Client ID** |
 | `GITHUB_SECRET` | GitHub | To enable GitHub | OAuth app **Client secret** |
 | `GITLAB_CLIENT_ID` | GitLab | To enable GitLab | Application **Application ID** |
@@ -2552,3 +2556,26 @@ level when both env vars are set.
 | `EMAIL_FROM` | To enable email OTP | Verified sender address |
 
 Unset either variable → credential 2FA stays TOTP-only (`twoFactorMethods` will not include `otp`).
+
+## Two-factor SMS OTP (OLO-9.51)
+
+Users can have their one-time sign-in code **texted** instead of emailed. It is per user: they add
+and verify a phone number on **Profile → Security** (Better Auth `phoneNumber` plugin), then choose
+**Send codes by text** with their password. Codes go by email for everyone else.
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `TWILIO_ACCOUNT_SID` | To enable SMS OTP | Twilio Account SID (`AC…`) |
+| `TWILIO_AUTH_TOKEN` | To enable SMS OTP | Twilio Auth Token |
+| `TWILIO_FROM_NUMBER` | One sender required | Sending number in E.164 (`+14155550100`) |
+| `TWILIO_MESSAGING_SERVICE_SID` | One sender required | Messaging Service SID (`MG…`), used instead of the number when set |
+
+- With SMS set and SendGrid not, `otpOptions.sendOTP` is still registered; `/login/2fa` hides the
+  code tab for users whose codes would go by email.
+- A phone number is never a sign-in method: `/sign-in/phone-number` and the phone password-reset
+  routes are disabled, and `/phone-number/send-otp` / `/phone-number/verify` need a session and
+  `updatePhoneNumber: true` (`lib/auth/phone-number-guard.ts`).
+- **Rate limits:** one text per number every 30 s and at most 5 per hour, per apiome-ui process
+  (`lib/auth/send-two-factor-sms-otp.ts`), on top of Better Auth's own limits (`/two-factor/*`
+  3 per 10 s, `/phone-number/*` 10 per minute, per IP, in production).
+- Removing the variables, or a user removing their number, sends that user's codes to email again.

@@ -12,3 +12,12 @@ export const TRUST_DEVICE_COOKIE_NAMES = [
   TRUST_DEVICE_COOKIE_BASE,
   `__Secure-${TRUST_DEVICE_COOKIE_BASE}`,
 ] as const;
+
+/** Unprefixed Better Auth pending-challenge cookie name (`createAuthCookie('two_factor')`, OLO-9.51). */
+export const TWO_FACTOR_COOKIE_BASE = 'better-auth.two_factor';
+
+/** Cookie names that may hold the pending two-factor challenge (dev vs `__Secure-` prefix). */
+export const TWO_FACTOR_COOKIE_NAMES = [
+  TWO_FACTOR_COOKIE_BASE,
+  `__Secure-${TWO_FACTOR_COOKIE_BASE}`,
+] as const;

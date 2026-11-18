@@ -1,5 +1,5 @@
 /**
- * Login 2FA step UI tests (OLO-9.13 #5014 + OLO-9.50 #5070).
+ * Login 2FA step UI tests (OLO-9.13 #5014 + OLO-9.50 #5070 + OLO-9.51 #5071).
  *
  * The flow contract, which HIVE-4.2 (#5296) re-skinned without moving: both methods, the
  * switcher, the stored callback, and every error string. `two-factor-hive-redesign.test.tsx`
@@ -14,6 +14,7 @@ import {
   TWO_FACTOR_CALLBACK_STORAGE_KEY,
   TWO_FACTOR_METHODS_STORAGE_KEY,
 } from '@lib/auth/two-factor-callback';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const mockVerifyTotp = jest.fn();
 const mockVerifyOtp = jest.fn();
@@ -151,5 +152,94 @@ describe('TwoFactorClient', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByTestId('two-factor-otp-code')).toHaveValue('');
     expect(mockVerifyTotp).not.toHaveBeenCalled();
+  });
+
+  describe('SMS delivery (OLO-9.51 #5071)', () => {
+    const SMS = { channel: 'sms' as const, destination: '•••• 0123', available: true };
+
+    it('names the masked number and texts the code through the same OTP method', async () => {
+      window.sessionStorage.setItem(TWO_FACTOR_METHODS_STORAGE_KEY, JSON.stringify(['otp']));
+      mockSendOtp.mockResolvedValue({ data: { status: true }, error: null });
+      mockVerifyOtp.mockResolvedValue({ data: { token: 'ok' }, error: null });
+
+      render(<TwoFactorClient callbackUrl="/ade" otpDelivery={SMS} />);
+
+      expect(screen.getByRole('heading', { name: 'Check your phone' })).toBeInTheDocument();
+      expect(screen.getByText('We will text a 6-digit code to •••• 0123.')).toBeInTheDocument();
+      expect(screen.getByTestId('two-factor-send-otp')).toHaveTextContent('Send text code');
+
+      fireEvent.click(screen.getByTestId('two-factor-send-otp'));
+      expect(await screen.findByTestId('two-factor-otp-sent')).toHaveTextContent(
+        'Text code sent. Check your phone.'
+      );
+      expect(screen.getByText('Enter the 6-digit code we texted to •••• 0123.')).toBeInTheDocument();
+      expect(screen.getByTestId('two-factor-send-otp')).toHaveTextContent('Resend text code');
+
+      fireEvent.change(screen.getByLabelText('Text message code'), { target: { value: '112233' } });
+      fireEvent.click(screen.getByTestId('two-factor-otp-submit'));
+      await waitFor(() => {
+        expect(mockVerifyOtp).toHaveBeenCalledWith({ code: '112233', trustDevice: false });
+        expect(mockBrowserNavigate).toHaveBeenCalledWith('/ade');
+      });
+    });
+
+    /**
+     * The docs site's Sign in page shows the texted-code step from this dump:
+     * `A11Y_FIXTURE_DUMP=1 npx jest tests/login-two-factor.test.tsx -t "docs fixture"`.
+     */
+    it('renders the docs fixture of the Text message tab after a send', async () => {
+      mockSendOtp.mockResolvedValue({ data: { status: true }, error: null });
+      const user = userEvent.setup();
+      const { container } = render(
+        <TwoFactorClient callbackUrl="/ade" methods={['totp', 'otp']} otpDelivery={SMS} />
+      );
+      await user.click(screen.getByTestId('two-factor-method-otp'));
+      fireEvent.click(screen.getByTestId('two-factor-send-otp'));
+      await screen.findByTestId('two-factor-otp-sent');
+      fireEvent.change(screen.getByLabelText('Text message code'), { target: { value: '482913' } });
+      writeA11yFixture('sign-in-2fa-sms', liveMarkup(container.firstElementChild as Element));
+    });
+
+    it('labels the switcher tab "Text message"', () => {
+      render(<TwoFactorClient callbackUrl="/ade" methods={['totp', 'otp']} otpDelivery={SMS} />);
+      expect(screen.getByTestId('two-factor-method-otp')).toHaveTextContent('Text message');
+    });
+
+    it('shows the SMS fallback sentence when the send fails without a message', async () => {
+      window.sessionStorage.setItem(TWO_FACTOR_METHODS_STORAGE_KEY, JSON.stringify(['otp']));
+      mockSendOtp.mockResolvedValue({ data: null, error: {} });
+
+      render(<TwoFactorClient callbackUrl="/ade" otpDelivery={SMS} />);
+      fireEvent.click(screen.getByTestId('two-factor-send-otp'));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Could not send the text code. Try again.'
+      );
+    });
+
+    it('keeps the email wording when the delivery is unknown or email', () => {
+      render(
+        <TwoFactorClient
+          callbackUrl="/ade"
+          methods={['otp']}
+          otpDelivery={{ channel: 'email', destination: '', available: true }}
+        />
+      );
+      expect(screen.getByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
+      expect(screen.getByTestId('two-factor-send-otp')).toHaveTextContent('Send email code');
+    });
+
+    it('hides the code method when this user\'s channel cannot deliver', () => {
+      render(
+        <TwoFactorClient
+          callbackUrl="/ade"
+          methods={['totp', 'otp']}
+          otpDelivery={{ channel: 'email', destination: '', available: false }}
+        />
+      );
+      expect(screen.queryByTestId('two-factor-method-switcher')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('two-factor-send-otp')).not.toBeInTheDocument();
+      expect(screen.getByTestId('two-factor-submit')).toBeInTheDocument();
+    });
   });
 });

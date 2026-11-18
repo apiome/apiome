@@ -312,6 +312,19 @@ Plus `user.twoFactorEnabled boolean` (§2.1). Registered via `twoFactor()` on th
 > `twoFactorMethods` for every `twoFactorEnabled` user (server-level — not a separate per-user
 > enroll). `/login/2fa` offers Authenticator and/or email send/verify from that list; Profile
 > Security surfaces Email OTP when SendGrid is configured. Unset either env → TOTP-only.
+>
+> **✅ SMS OTP implemented (OLO-9.51 #5071).** The same single `otpOptions.sendOTP` now routes per
+> user (`lib/auth/two-factor-otp-dispatch.ts`): SMS via Twilio when `users.two_factor_otp_channel =
+> 'sms'` and the user has a verified `"phoneNumber"`, email otherwise; it is registered when SendGrid
+> *or* Twilio (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` or
+> `TWILIO_MESSAGING_SERVICE_SID`) is configured. Numbers are stored by Better Auth's `phoneNumber`
+> plugin (V396: `users."phoneNumber"` / `"phoneNumberVerified"` / `two_factor_otp_channel`), narrowed
+> to own-account verification: `/sign-in/phone-number` and the phone password-reset routes are
+> disabled, and `phone-number-guard.ts` requires a session, Twilio, an E.164 number and
+> `updatePhoneNumber: true` (verify without it would create a session by phone). Choosing SMS asks
+> for the password (or a fresh sign-in when passwordless); verifying a new number resets the channel
+> to email. Texts are throttled per number (30 s, 5 an hour, per process). `/login/2fa` reads the
+> pending `two_factor` cookie to word the code tab for email or SMS (`two-factor-pending-delivery.ts`).
 
 ### 2.6 Tables that stay as-is
 

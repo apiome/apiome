@@ -1,6 +1,6 @@
 /**
  * Profile TwoFactorSettings enrollment / disable / self-service UI
- * (OLO-9.13 #5014 + OLO-9.15 #5015 + OLO-9.50 #5070).
+ * (OLO-9.13 #5014 + OLO-9.15 #5015 + OLO-9.50 #5070 + OLO-9.51 #5071).
  */
 
 import React from 'react';
@@ -22,6 +22,7 @@ const mockGetBackupCodeStatus = jest.fn(async () => ({ remaining: null as number
 const mockGetTrustedDeviceStatus = jest.fn(async () => ({ trusted: false }));
 const mockRevokeThisTrustedDevice = jest.fn(async () => ({ ok: true }));
 const mockGetEmailOtpAvailability = jest.fn(async () => ({ available: false }));
+const mockGetSmsTwoFactorStatus = jest.fn(async () => null as unknown);
 const mockDismissTwoFactorResetNotice = jest.fn(async () => ({ ok: true }));
 // An account with a password — the dialogs ask for it, as they always have. The passwordless
 // paths (TFA-1.1 #5655) are covered by two-factor-settings-passwordless.test.tsx.
@@ -56,6 +57,12 @@ jest.mock('@lib/auth/two-factor-profile-actions', () => ({
   dismissTwoFactorResetNotice: (...args: unknown[]) => mockDismissTwoFactorResetNotice(...args),
 }));
 
+jest.mock('@lib/auth/two-factor-sms-actions', () => ({
+  getSmsTwoFactorStatus: (...args: unknown[]) => mockGetSmsTwoFactorStatus(...args),
+  setTwoFactorOtpChannel: jest.fn(),
+  removePhoneNumber: jest.fn(),
+}));
+
 jest.mock('react-qr-code', () => ({
   __esModule: true,
   default: ({ value }: { value: string }) => <div data-testid="qr-mock">{value}</div>,
@@ -68,6 +75,7 @@ describe('TwoFactorSettings', () => {
     mockGetTrustedDeviceStatus.mockResolvedValue({ trusted: false });
     mockRevokeThisTrustedDevice.mockResolvedValue({ ok: true });
     mockGetEmailOtpAvailability.mockResolvedValue({ available: false });
+    mockGetSmsTwoFactorStatus.mockResolvedValue(null);
     mockUseAuthSession.mockReturnValue({
       data: {
         user: {
@@ -234,6 +242,62 @@ describe('TwoFactorSettings', () => {
     });
   });
 
+  describe('text-message codes (OLO-9.51 #5071)', () => {
+    const enabledSession = () =>
+      mockUseAuthSession.mockReturnValue({
+        data: {
+          user: { user_id: 'u1', email: 'a@b.co', twoFactorEnabled: true },
+          expires: '',
+          twoFactorElevated: true,
+        },
+        update: mockUpdate,
+      });
+
+    it('shows no SMS box when the server cannot send texts', async () => {
+      enabledSession();
+      mockGetSmsTwoFactorStatus.mockResolvedValue({
+        smsAvailable: false,
+        emailAvailable: true,
+        phoneNumber: null,
+        channel: 'email',
+      });
+      render(<TwoFactorSettings />);
+      await waitFor(() => expect(mockGetSmsTwoFactorStatus).toHaveBeenCalled());
+      expect(screen.queryByTestId('two-factor-sms')).not.toBeInTheDocument();
+    });
+
+    it('offers to add a phone number when Twilio is configured', async () => {
+      enabledSession();
+      mockGetEmailOtpAvailability.mockResolvedValue({ available: true });
+      mockGetSmsTwoFactorStatus.mockResolvedValue({
+        smsAvailable: true,
+        emailAvailable: true,
+        phoneNumber: null,
+        channel: 'email',
+      });
+      render(<TwoFactorSettings />);
+      expect(await screen.findByTestId('two-factor-sms-add')).toHaveTextContent('Add phone number');
+      expect(screen.queryByTestId('two-factor-sms-use')).not.toBeInTheDocument();
+      // Email codes still apply.
+      expect(screen.getByTestId('two-factor-method-email-otp')).toBeInTheDocument();
+    });
+
+    it('lists text-message codes in place of email codes once SMS is chosen', async () => {
+      enabledSession();
+      mockGetEmailOtpAvailability.mockResolvedValue({ available: true });
+      mockGetSmsTwoFactorStatus.mockResolvedValue({
+        smsAvailable: true,
+        emailAvailable: true,
+        phoneNumber: '•••• 0123',
+        channel: 'sms',
+      });
+      render(<TwoFactorSettings />);
+      expect(await screen.findByTestId('two-factor-method-sms-otp')).toHaveTextContent('•••• 0123');
+      expect(screen.queryByTestId('two-factor-method-email-otp')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('two-factor-email-otp-info')).not.toBeInTheDocument();
+    });
+  });
+
   describe('the turn-on reminder (TFA-1.4 #5658)', () => {
     beforeEach(() => window.localStorage.clear());
 
@@ -316,6 +380,7 @@ describe('the docs fixtures', () => {
     mockGetBackupCodeStatus.mockResolvedValue({ remaining: null });
     mockGetTrustedDeviceStatus.mockResolvedValue({ trusted: false });
     mockGetEmailOtpAvailability.mockResolvedValue({ available: false });
+    mockGetSmsTwoFactorStatus.mockResolvedValue(null);
     mockUseAuthSession.mockReturnValue({
       data: {
         user: { user_id: 'usr_5f2c81d0e7', email: 'priya.raman@northwind.io', twoFactorEnabled: false },

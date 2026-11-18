@@ -12,52 +12,13 @@
  */
 
 import { cookies, headers } from 'next/headers';
-import { constantTimeEqual, makeSignature } from 'better-auth/crypto';
+import { readFirstCookie, unsignBetterAuthCookie } from './better-auth-signed-cookie';
 import { getSharedCookieDomain } from './cookie-options';
 import { resolveBetterAuthSecret } from './better-auth-session';
 import {
   TRUST_DEVICE_COOKIE_NAMES,
 } from './two-factor-trust-cookie';
 import { isTwoFactorEmailOtpConfigured } from './send-two-factor-email-otp';
-
-/**
- * Read the Better Auth trust-device cookie value from the request cookie jar, if present.
- *
- * @param store Next.js cookie store.
- * @returns Raw cookie value, or `null` when neither name is set.
- */
-function readTrustDeviceCookieValue(store: {
-  get: (name: string) => { value: string } | undefined;
-}): string | null {
-  for (const name of TRUST_DEVICE_COOKIE_NAMES) {
-    const value = store.get(name)?.value;
-    if (value) return value;
-  }
-  return null;
-}
-
-/**
- * Verify a Better Auth signed cookie and return the unsigned payload (`token!trustIdentifier`).
- *
- * Mirrors `better-call`'s `getSignedCookie` signature check so we can extract the trust identifier
- * without an endpoint context.
- *
- * @param raw Cookie value from the jar (URI-decoded).
- * @param secret Better Auth signing secret.
- * @returns Unsigned payload, or `null` when missing/invalid.
- */
-async function unsignTrustDeviceCookie(
-  raw: string,
-  secret: string
-): Promise<string | null> {
-  const signatureStartPos = raw.lastIndexOf('.');
-  if (signatureStartPos < 1) return null;
-  const signedValue = raw.substring(0, signatureStartPos);
-  const signature = raw.substring(signatureStartPos + 1);
-  if (signature.length !== 44 || !signature.endsWith('=')) return null;
-  const expected = await makeSignature(signedValue, secret);
-  return constantTimeEqual(signature, expected) ? signedValue : null;
-}
 
 /**
  * Expire both trust-device cookie name variants (host-only and shared-domain when configured).
@@ -129,7 +90,7 @@ export async function getBackupCodeStatus(): Promise<{ remaining: number | null 
  */
 export async function getTrustedDeviceStatus(): Promise<{ trusted: boolean }> {
   const store = await cookies();
-  return { trusted: Boolean(readTrustDeviceCookieValue(store)) };
+  return { trusted: Boolean(readFirstCookie(store, TRUST_DEVICE_COOKIE_NAMES)) };
 }
 
 /**
@@ -149,12 +110,12 @@ export async function revokeThisTrustedDevice(): Promise<{ ok: boolean }> {
   }
 
   const store = await cookies();
-  const raw = readTrustDeviceCookieValue(store);
+  const raw = readFirstCookie(store, TRUST_DEVICE_COOKIE_NAMES);
   const secret = resolveBetterAuthSecret();
 
   if (raw && secret) {
     try {
-      const unsigned = await unsignTrustDeviceCookie(raw, secret);
+      const unsigned = await unsignBetterAuthCookie(raw, secret);
       const trustId = unsigned?.split('!')[1];
       if (trustId) {
         const { auth } = await import('./auth');

@@ -14,3 +14,4 @@ export const twoFactorClient = (
 ): { id: string } => ({ id: 'two-factor-client' });
 export const customSessionClient = (): { id: string } => ({ id: 'custom-session-client' });
 export const genericOAuthClient = (): { id: string } => ({ id: 'generic-oauth-client' });
+export const phoneNumberClient = (): { id: string } => ({ id: 'phone-number-client' });
