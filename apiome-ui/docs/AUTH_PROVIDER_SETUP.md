@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -162,6 +162,8 @@ config is stored in the database need none of them set; see
 | `REDDIT_CLIENT_SECRET` | Reddit | To enable Reddit | Reddit web app **secret** |
 | `SPOTIFY_CLIENT_ID` | Spotify | To enable Spotify | Spotify app **Client ID** |
 | `SPOTIFY_CLIENT_SECRET` | Spotify | To enable Spotify | Spotify app **Client secret** |
+| `TWITCH_CLIENT_ID` | Twitch | To enable Twitch | Twitch application **Client ID** |
+| `TWITCH_CLIENT_SECRET` | Twitch | To enable Twitch | Twitch application **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -261,7 +263,7 @@ links an account.
 | `twitter` | **link-first** | OLO-9.32 | yes | Email needs elevated API access and carries no verified claim |
 | `reddit` | **link-only** | OLO-9.33 | yes | No email address (`has_verified_email` alone names no address) |
 | `spotify` | **link-first** | OLO-9.34 | yes | `/v1/me` email is documented as unverified |
-| `twitch` | **trusted** | OLO-9.35 | no | `email_verified` claim with the `user:read:email` scope |
+| `twitch` | **trusted** | OLO-9.35 | yes | `email_verified` claim with the `user:read:email` scope |
 | `tiktok` | **link-only** | OLO-9.36 | no | No email in user info |
 | `roblox` | **link-only** | OLO-9.37 | no | Profile claims only, no email claim |
 | `kick` | **link-first** (provisional) | OLO-9.38 | no | Email availability and verified semantics confirmed at implementation |
@@ -1863,6 +1865,59 @@ field in the body is dropped). The engine fail-closes (**link-first**), and `spo
 A failed profile request, or a profile with no string `id`, yields no identity and the sign-in is
 refused.
 
+## Twitch (OLO-9.35)
+
+For the developer-streaming communities on Twitch. Apiome uses Twitch's OpenID Connect
+authorization-code flow.
+
+1. Signed in to Twitch (the account needs two-factor authentication turned on), open the
+   [Twitch Developer Console](https://dev.twitch.tv/console/apps) and choose **Register Your
+   Application**.
+2. Give it a **Name** and pick a **Category** (for example **Website Integration**).
+3. Add the callback under **OAuth Redirect URLs** (Twitch requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/twitch`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/twitch` for local dev — Twitch accepts
+     `http` only for `localhost`)
+4. Set **Client Type** to **Confidential** — a **Public** client has no secret, and Apiome needs
+   one. Choose **Create**.
+5. Choose **Manage** on the new application. The **Client ID** is shown there; choose **New
+   Secret** for the **Client Secret** (Twitch shows it once).
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+TWITCH_CLIENT_ID=<Client ID>
+TWITCH_CLIENT_SECRET=<Client Secret>
+```
+
+Twitch is one fixed OpenID Connect issuer, so there is no issuer to configure. The endpoints come
+from Twitch's discovery document (the scopes and claims request mirror Better Auth's `twitch()`
+helper):
+
+- Discovery: `https://id.twitch.tv/oauth2/.well-known/openid-configuration`
+- Authorize: `https://id.twitch.tv/oauth2/authorize` with the `openid user:read:email` scopes and a
+  `claims` request for `email`, `email_verified`, `preferred_username` and `picture` in the id
+  token — Twitch leaves them out unless they are asked for. Twitch documents no PKCE support, so
+  no challenge is sent.
+- Token: `https://id.twitch.tv/oauth2/token` — the client ID and secret are sent in the form body.
+  Apiome keeps no Twitch token.
+
+The claims come from the id token, which must be issued by `https://id.twitch.tv/oauth2` to this
+application (`aud` includes `TWITCH_CLIENT_ID`). The identity is keyed on the `sub` claim, the
+Twitch user ID; `preferred_username` is the name and `picture` the picture. The login name can
+change and is never the key. Apiome reads no streams, follows, chat or subscriptions.
+
+**Email verified semantics:** the `email_verified` claim is honored only when it is `true`. Twitch
+is a **trusted** provider and `twitch` is in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Verified address** — signs in the linked account, joins the account with the same address,
+  or starts a new account.
+- **Unverified address** (the claim is absent or false) — rejected with `unverified-email` unless
+  the person is linking Twitch explicitly or the identity is already bound (**link-first**).
+
+A sign-in with no `email` claim surfaces `email-required`. A missing or unparseable id token, one
+from another issuer or for another application, or one with no string `sub` yields no identity
+and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -2035,7 +2090,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit and Spotify need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify and Twitch need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

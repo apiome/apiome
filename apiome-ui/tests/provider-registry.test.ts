@@ -100,6 +100,8 @@ const ALL_ENABLED_ENV = {
   REDDIT_CLIENT_SECRET: 'rd-secret',
   SPOTIFY_CLIENT_ID: 'sp-id',
   SPOTIFY_CLIENT_SECRET: 'sp-secret',
+  TWITCH_CLIENT_ID: 'tw-id',
+  TWITCH_CLIENT_SECRET: 'tw-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -137,6 +139,7 @@ describe('registry vocabulary', () => {
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
   });
 
@@ -173,6 +176,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('twitter')?.label).toBe('X (Twitter)');
     expect(getProviderDescriptor('reddit')?.label).toBe('Reddit');
     expect(getProviderDescriptor('spotify')?.label).toBe('Spotify');
+    expect(getProviderDescriptor('twitch')?.label).toBe('Twitch');
   });
 
   it('pins each available provider env contract', () => {
@@ -315,6 +319,10 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('spotify')?.requiredEnvKeys).toEqual([
       'SPOTIFY_CLIENT_ID',
       'SPOTIFY_CLIENT_SECRET',
+    ]);
+    expect(getProviderDescriptor('twitch')?.requiredEnvKeys).toEqual([
+      'TWITCH_CLIENT_ID',
+      'TWITCH_CLIENT_SECRET',
     ]);
   });
 
@@ -644,6 +652,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -683,6 +692,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
   });
 
@@ -720,6 +730,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
   });
 });
@@ -761,6 +772,7 @@ describe('providerSummaries', () => {
       { id: 'twitter', label: 'X (Twitter)', status: 'available', enabled: false },
       { id: 'reddit', label: 'Reddit', status: 'available', enabled: false },
       { id: 'spotify', label: 'Spotify', status: 'available', enabled: false },
+      { id: 'twitch', label: 'Twitch', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

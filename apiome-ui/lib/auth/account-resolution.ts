@@ -161,6 +161,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * address at all (link-only).
  * `spotify` (OLO-9.34) is **not** listed: Spotify's `/v1/me` email is documented as unverified
  * (link-first).
+ * `twitch` (OLO-9.35) is listed: Twitch's id token carries a native `email_verified` claim with the
+ * `user:read:email` scope (requested through the OIDC `claims` parameter); absent or false
+ * fail-closes to link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -191,6 +194,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'huggingface',
   'vercel',
   'apple',
+  'twitch',
 ]);
 
 /**
@@ -260,6 +264,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'twitter',
   'reddit',
   'spotify',
+  'twitch',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

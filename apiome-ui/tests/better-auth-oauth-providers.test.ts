@@ -137,6 +137,8 @@ const ALL_ENABLED: Record<string, string> = {
   REDDIT_CLIENT_SECRET: 'reddit-secret',
   SPOTIFY_CLIENT_ID: 'spotify-client-id',
   SPOTIFY_CLIENT_SECRET: 'spotify-secret',
+  TWITCH_CLIENT_ID: 'twitch-client-id',
+  TWITCH_CLIENT_SECRET: 'twitch-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -263,6 +265,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
   });
 
@@ -301,6 +304,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'twitter',
       'reddit',
       'spotify',
+      'twitch',
     ]);
   });
 
@@ -400,6 +404,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const spotify = buildGenericOAuthConfig('spotify', ALL_ENABLED)!;
     expect(spotify.clientId).toBe('spotify-client-id');
     expect(spotify.clientSecret).toBe('spotify-secret');
+    const twitch = buildGenericOAuthConfig('twitch', ALL_ENABLED)!;
+    expect(twitch.clientId).toBe('twitch-client-id');
+    expect(twitch.clientSecret).toBe('twitch-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -875,6 +882,25 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('twitch: fixed Twitch OIDC discovery; openid user:read:email; claims request; post exchange; PKCE off (OLO-9.35)', () => {
+    const cfg = buildGenericOAuthConfig('twitch', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('twitch');
+    expect(cfg.discoveryUrl).toBe('https://id.twitch.tv/oauth2/.well-known/openid-configuration');
+    // Discovery supplies the endpoints; the normalizer reads the id token itself.
+    expect(cfg.authorizationUrl).toBeUndefined();
+    expect(cfg.tokenUrl).toBeUndefined();
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['openid', 'user:read:email']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
+    expect(cfg.getToken).toBeUndefined();
+    const params = cfg.authorizationUrlParams as Record<string, string>;
+    expect(Object.keys(params)).toEqual(['claims']);
+    expect(JSON.parse(params.claims)).toEqual({
+      id_token: { email: null, email_verified: null, preferred_username: null, picture: null },
+    });
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -6430,6 +6456,238 @@ describe('getUserInfo — Spotify fail-closed link-first (OLO-9.34)', () => {
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Twitch (OLO-9.35) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Twitch sign-in and linking (OLO-9.35)', () => {
+  /** The id-token claims Twitch returns for `openid user:read:email` and the claims request. */
+  const CLAIMS = {
+    iss: 'https://id.twitch.tv/oauth2',
+    aud: 'twitch-client-id',
+    azp: 'twitch-client-id',
+    sub: '713936733',
+    exp: 1_900_000_000,
+    iat: 1_800_000_000,
+    preferred_username: 'ada_streams',
+    picture: 'https://static-cdn.jtvnw.example/ada-300x300.png',
+    email: 'ada@example.com',
+    email_verified: true,
+  };
+
+  /** The code-exchange tokens carrying `claims` as the id token. */
+  const tokensFor = (claims: Record<string, unknown>) => ({
+    accessToken: 'tok',
+    idToken: idTokenFor(claims),
+  });
+
+  /** A fetch stub that records every request; the Twitch normalizer must make none. */
+  const noNetwork = () => {
+    const requests: string[] = [];
+    const fetchImpl: FetchLike = async (url) => {
+      requests.push(url);
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Twitch sub', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = noNetwork();
+
+    const { result, override } = await runGetUserInfo('twitch', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: CLAIMS.sub,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'ada_streams',
+      image: 'https://static-cdn.jtvnw.example/ada-300x300.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runGetUserInfo('twitch', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'twitch', providerUserId: CLAIMS.sub },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo('twitch', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'twitch',
+      providerUserId: CLAIMS.sub,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+    ['the number 1', 1],
+  ])(
+    'email_verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, claim) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const claims: Record<string, unknown> = { ...CLAIMS, email_verified: claim };
+      if (claim === undefined) delete claims.email_verified;
+
+      const { result, override } = await runGetUserInfo('twitch', tokensFor(claims), {
+        store,
+        env: ALL_ENABLED,
+      });
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('unverified email on an already-linked identity still signs in', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'twitch',
+      tokensFor({ ...CLAIMS, email_verified: false }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Twitch account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'twitch',
+      tokensFor({ ...CLAIMS, email_verified: false }),
+      { store, env: ALL_ENABLED, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'twitch', providerUserId: CLAIMS.sub, email: 'ada@example.com' },
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['empty', ''],
+    ['not a string', 42],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo(
+      'twitch',
+      tokensFor({ ...CLAIMS, email }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an audience list that includes the client id is accepted', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'twitch',
+      tokensFor({ ...CLAIMS, aud: ['other-app', 'twitch-client-id'] }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('a user without a picture or username signs in with neither', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const claims: Record<string, unknown> = { ...CLAIMS };
+    delete claims.picture;
+    delete claims.preferred_username;
+
+    const { result } = await runGetUserInfo('twitch', tokensFor(claims), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(result).toMatchObject({ id: CLAIMS.sub, email: 'ada@example.com' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['no id token', { accessToken: 'tok' }, ALL_ENABLED],
+    ['an unparseable id token', { accessToken: 'tok', idToken: 'not-a-jwt' }, ALL_ENABLED],
+    ['another issuer', tokensFor({ ...CLAIMS, iss: 'https://evil.example' }), ALL_ENABLED],
+    ['another audience', tokensFor({ ...CLAIMS, aud: 'other-app' }), ALL_ENABLED],
+    ['no audience', tokensFor({ ...CLAIMS, aud: undefined }), ALL_ENABLED],
+    ['no configured client id', tokensFor(CLAIMS), { ...ALL_ENABLED, TWITCH_CLIENT_ID: '' }],
+    ['no sub', tokensFor({ ...CLAIMS, sub: undefined }), ALL_ENABLED],
+    ['an empty sub', tokensFor({ ...CLAIMS, sub: '  ' }), ALL_ENABLED],
+    ['a numeric sub', tokensFor({ ...CLAIMS, sub: 713936733 }), ALL_ENABLED],
+  ])('%s yields no identity', async (_label, tokens, env) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo('twitch', tokens, { store, env });
 
     expect(result).toBeNull();
     expect(override).not.toBeNull();

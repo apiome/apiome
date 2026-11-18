@@ -121,6 +121,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   twitter: 'X account sign-in',
   reddit: 'Reddit account sign-in',
   spotify: 'Spotify account sign-in',
+  twitch: 'Twitch account sign-in',
 };
 
 /**

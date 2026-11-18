@@ -148,6 +148,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   reddit: { clientId: 'REDDIT_CLIENT_ID', clientSecret: 'REDDIT_CLIENT_SECRET' },
   // Spotify (OLO-9.34, #5047): credentials-only; fixed endpoints, no issuer extra.
   spotify: { clientId: 'SPOTIFY_CLIENT_ID', clientSecret: 'SPOTIFY_CLIENT_SECRET' },
+  // Twitch (OLO-9.35, #5048): credentials-only; fixed OIDC discovery document, no issuer extra.
+  twitch: { clientId: 'TWITCH_CLIENT_ID', clientSecret: 'TWITCH_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */
