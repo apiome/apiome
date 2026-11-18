@@ -150,6 +150,9 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   spotify: { clientId: 'SPOTIFY_CLIENT_ID', clientSecret: 'SPOTIFY_CLIENT_SECRET' },
   // Twitch (OLO-9.35, #5048): credentials-only; fixed OIDC discovery document, no issuer extra.
   twitch: { clientId: 'TWITCH_CLIENT_ID', clientSecret: 'TWITCH_CLIENT_SECRET' },
+  // TikTok (OLO-9.36, #5049): credentials-only; the client ID is TikTok's "client key", fixed
+  // endpoints, no issuer extra.
+  tiktok: { clientId: 'TIKTOK_CLIENT_KEY', clientSecret: 'TIKTOK_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

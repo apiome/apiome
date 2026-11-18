@@ -102,6 +102,8 @@ const ALL_ENABLED_ENV = {
   SPOTIFY_CLIENT_SECRET: 'sp-secret',
   TWITCH_CLIENT_ID: 'tw-id',
   TWITCH_CLIENT_SECRET: 'tw-secret',
+  TIKTOK_CLIENT_KEY: 'tt-key',
+  TIKTOK_CLIENT_SECRET: 'tt-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -140,6 +142,7 @@ describe('registry vocabulary', () => {
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
   });
 
@@ -177,6 +180,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('reddit')?.label).toBe('Reddit');
     expect(getProviderDescriptor('spotify')?.label).toBe('Spotify');
     expect(getProviderDescriptor('twitch')?.label).toBe('Twitch');
+    expect(getProviderDescriptor('tiktok')?.label).toBe('TikTok');
   });
 
   it('pins each available provider env contract', () => {
@@ -324,9 +328,13 @@ describe('registry vocabulary', () => {
       'TWITCH_CLIENT_ID',
       'TWITCH_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('tiktok')?.requiredEnvKeys).toEqual([
+      'TIKTOK_CLIENT_KEY',
+      'TIKTOK_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -356,6 +364,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('twitter')?.status).toBe('available');
     expect(getProviderDescriptor('reddit')?.status).toBe('available');
     expect(getProviderDescriptor('spotify')?.status).toBe('available');
+    expect(getProviderDescriptor('tiktok')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -410,6 +419,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('twitter', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('reddit', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('spotify', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('tiktok', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -610,6 +620,10 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('spotify', { SPOTIFY_CLIENT_ID: 'x', SPOTIFY_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('spotify', { SPOTIFY_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('tiktok', { TIKTOK_CLIENT_KEY: 'x', TIKTOK_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('tiktok', { TIKTOK_CLIENT_KEY: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -653,6 +667,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -693,6 +708,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
   });
 
@@ -731,6 +747,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
   });
 });
@@ -773,6 +790,7 @@ describe('providerSummaries', () => {
       { id: 'reddit', label: 'Reddit', status: 'available', enabled: false },
       { id: 'spotify', label: 'Spotify', status: 'available', enabled: false },
       { id: 'twitch', label: 'Twitch', status: 'available', enabled: false },
+      { id: 'tiktok', label: 'TikTok', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

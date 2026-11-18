@@ -1,0 +1,30 @@
+---
+slug: tiktok-sign-in
+title: Sign in with TikTok
+description: "People can now link their TikTok account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their TikTok account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **TikTok** is a new entry in **System settings → Add Provider**. It needs
+  the **Client key** and **Client secret** of a TikTok for Developers app with Login Kit — no
+  issuer. TikTok calls its client ID a *client key*; enter it in the **client ID** field.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  TikTok's side. The environment variables are `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/tiktok`, added as a Login Kit
+  **Redirect URI**.
+- **Scopes.** Apiome asks for **user.info.profile** only and uses it to read the display name,
+  username and avatar of the person signing in. Apiome reads no videos, followers, likes or
+  messages and keeps no TikTok token.
+- **Link only.** TikTok never shares an email address, so Apiome can never use TikTok to find or
+  create an account. People sign in another way, link TikTok from **Linked accounts**, and can sign
+  in with TikTok after that. Before linking, a TikTok sign-in ends with *…did not share an email
+  address…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `tiktok` as an available provider, and
+  `PUT /v1/admin/auth-providers/tiktok` stores its credentials.

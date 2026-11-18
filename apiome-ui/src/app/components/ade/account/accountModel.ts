@@ -250,6 +250,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   reddit: 'Reddit',
   spotify: 'Spotify',
   twitch: 'Twitch',
+  tiktok: 'TikTok',
 };
 
 /**

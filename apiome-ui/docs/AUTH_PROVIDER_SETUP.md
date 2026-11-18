@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -164,6 +164,8 @@ config is stored in the database need none of them set; see
 | `SPOTIFY_CLIENT_SECRET` | Spotify | To enable Spotify | Spotify app **Client secret** |
 | `TWITCH_CLIENT_ID` | Twitch | To enable Twitch | Twitch application **Client ID** |
 | `TWITCH_CLIENT_SECRET` | Twitch | To enable Twitch | Twitch application **Client Secret** |
+| `TIKTOK_CLIENT_KEY` | TikTok | To enable TikTok | TikTok app **Client key** (TikTok's name for the client ID) |
+| `TIKTOK_CLIENT_SECRET` | TikTok | To enable TikTok | TikTok app **Client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -264,7 +266,7 @@ links an account.
 | `reddit` | **link-only** | OLO-9.33 | yes | No email address (`has_verified_email` alone names no address) |
 | `spotify` | **link-first** | OLO-9.34 | yes | `/v1/me` email is documented as unverified |
 | `twitch` | **trusted** | OLO-9.35 | yes | `email_verified` claim with the `user:read:email` scope |
-| `tiktok` | **link-only** | OLO-9.36 | no | No email in user info |
+| `tiktok` | **link-only** | OLO-9.36 | yes | No email in user info |
 | `roblox` | **link-only** | OLO-9.37 | no | Profile claims only, no email claim |
 | `kick` | **link-first** (provisional) | OLO-9.38 | no | Email availability and verified semantics confirmed at implementation |
 | `kakao` | **trusted** | OLO-9.39 | no | `is_email_valid` and `is_email_verified` on `kakao_account`, both true |
@@ -1918,6 +1920,68 @@ A sign-in with no `email` claim surfaces `email-required`. A missing or unparsea
 from another issuer or for another application, or one with no string `sub` yields no identity
 and the sign-in is refused.
 
+## TikTok (OLO-9.36)
+
+For the developer and creator communities on TikTok. Apiome uses TikTok Login Kit's OAuth 2.0
+authorization-code flow. TikTok is a **link-only** provider: it shares **no email address at
+all**, so read [Email semantics](#tiktok-email-semantics) below before turning it on — nobody can
+*create* an Apiome account with it.
+
+1. Signed in to [TikTok for Developers](https://developers.tiktok.com/apps), choose **Connect an
+   app** (or **Manage apps → Connect an app**) and create an app.
+2. Under **Platforms** choose **Web** and fill in the **Website URL**, **Terms of Service URL**
+   and **Privacy Policy URL** TikTok asks for.
+3. Under **Products** add **Login Kit**, and under **Login Kit → Redirect URI** add the callback
+   (TikTok requires an exact match and an `https` address):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/tiktok`
+4. Under **Scopes** keep **user.info.profile** (with **user.info.basic**, which Login Kit always
+   includes). Apiome asks for nothing else.
+5. Submit the app for review. Until TikTok approves it, only the accounts you add under
+   **Sandbox → Target users** can sign in.
+6. The **Client key** and **Client secret** are on the app's **App details** page. TikTok calls
+   the client ID a *client key*, so Apiome's env var is `TIKTOK_CLIENT_KEY`. Set the env vars (or
+   save them on the admin console's **Auth providers** page, where the key goes in the **client
+   ID** field):
+
+```bash
+TIKTOK_CLIENT_KEY=<Client key>
+TIKTOK_CLIENT_SECRET=<Client secret>
+```
+
+TikTok's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`tiktok()` helper):
+
+- Authorize: `https://www.tiktok.com/v2/auth/authorize` with the `user.info.profile` scope (the
+  helper's default) and the client key as the `client_key` parameter. No PKCE challenge is sent;
+  Better Auth enforces `state`.
+- Token: `https://open.tiktokapis.com/v2/oauth/token/` — a form-encoded POST carrying
+  `client_key` and `client_secret`. TikTok does not accept the standard `client_id`, so Apiome
+  runs this exchange itself rather than through the generic OAuth plugin. Apiome keeps no TikTok
+  token.
+- Profile: `https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_large_url,display_name,username`,
+  with the access token as a bearer token.
+
+The identity is keyed on `open_id`, the person's stable id within this TikTok app.
+`display_name` is the name (the `username` when there is none), and `avatar_large_url` the
+picture. Apiome reads no videos, followers, likes or messages.
+
+<a id="tiktok-email-semantics"></a>
+**Email semantics:** TikTok's user-info API returns no email address. Better Auth's helper puts
+the `username` in the email slot when there is no email; Apiome never does — the profile carries
+no `email` and no `email_verified`, and an `email` field in the response is ignored. The engine
+always fail-closes (**link-only**), and `tiktok` is not in `AUTO_LINK_TRUSTED_PROVIDERS`
+(OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the TikTok card on **Linked accounts**. The
+  explicit link binds the TikTok identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with TikTok** signs that person in (the
+  account's own address is used).
+- **Fresh sign-in or sign-up** — rejected with `email-required` (`OAuthEmailRequired`).
+
+A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed profile request,
+a response whose `error.code` is not `ok`, or a user with no string `open_id` yields no identity
+and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -2090,7 +2154,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify and Twitch need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch and TikTok need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

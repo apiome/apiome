@@ -304,6 +304,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "TWITCH_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "TWITCH_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "tiktok",
+      "label": "TikTok",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "TIKTOK_CLIENT_KEY" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "TIKTOK_CLIENT_SECRET" }
+      ]
     }
   ]
 }
