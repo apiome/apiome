@@ -1,0 +1,30 @@
+---
+slug: twitch-sign-in
+title: Sign in with Twitch
+description: "People can now sign in and link with their Twitch account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome with their Twitch account, and link Twitch beside any other
+provider on [Linked accounts](/workspace/linked-accounts).
+
+{/* truncate */}
+
+- **For administrators.** **Twitch** is a new entry in **System settings → Add Provider**. It
+  needs the Client ID and Client Secret of a **Confidential** application registered in the Twitch
+  Developer Console — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Twitch's side. The environment variables are `TWITCH_CLIENT_ID` and `TWITCH_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/twitch`, added under the
+  application's **OAuth Redirect URLs**. Twitch requires an exact match.
+- **Scopes.** Apiome asks for **openid** and **user:read:email** only and uses them to read the
+  username, email address and picture of the person signing in. Apiome reads no streams, follows,
+  chat or subscriptions and keeps no Twitch token.
+- **Email addresses.** Twitch is a **Trusted** provider: a sign-in joins the account with the same
+  address, or starts a new one, only when Twitch reports the email address as verified. An
+  unverified address is refused. To use such an account, verify the address in Twitch, or sign in
+  another way first and link Twitch from **Linked accounts**.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `twitch` as an available provider, and
+  `PUT /v1/admin/auth-providers/twitch` stores its credentials.

@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.757.0] - 2026-11-17
+
+### Added
+- **Twitch sign-in (OLO-9.35, #5048)** — OpenAPI 1.596.19:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `twitch` (label `Twitch`, `available`), a credentials-only
+    provider: required fields `client_id` (`TWITCH_CLIENT_ID`, the Twitch application's Client ID) and
+    `client_secret` (`TWITCH_CLIENT_SECRET`, its Client Secret), no issuer — Twitch's OpenID Connect discovery
+    document is fixed. `GET /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE
+    /v1/admin/auth-providers/twitch` and the resolved-config endpoint accept it like any other provider. The
+    canonical snapshot `scripts/auth_providers/registry.json` carries the same entry.
+  - Twitch is a **trusted** provider: its id token carries a native `email_verified` claim with the
+    `user:read:email` scope, so a verified address signs in, auto-links or starts a sign-up, and an unverified one
+    is refused unless the person links Twitch explicitly. That decision is made in `apiome-ui`; nothing in the REST
+    API changed for it.
+  - No migration: `twitch` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.756.0] - 2026-11-17
 
 ### Added

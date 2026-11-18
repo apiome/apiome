@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -137,6 +137,12 @@
  *    `api.spotify.com/v1/me`, whose email Spotify documents as **unverified** (Better Auth
  *    `spotify()` hard-codes `emailVerified: false`) → fail-closed link-first: an explicit link
  *    and the subsequent sign-in work, and the email never joins or creates an account.
+ *  - **Twitch (OLO-9.35):** Twitch OIDC over Twitch's fixed discovery document
+ *    (`id.twitch.tv/oauth2/.well-known/openid-configuration`), scopes `openid user:read:email`,
+ *    a `claims` request for `email` / `email_verified` / `preferred_username` / `picture` in the
+ *    id token (as Better Auth's `twitch` provider asks), client credentials in the form body, PKCE
+ *    off; the claims come from the id token, whose issuer and audience are checked, and the
+ *    native `email_verified` claim is fail-closed via `resolveOAuthEmailVerified` → trusted.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -719,6 +725,18 @@ const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 /** The current user's profile (`id`, `display_name`, `email`, `images`), as the helper reads it. */
 const SPOTIFY_ME_URL = 'https://api.spotify.com/v1/me';
+
+/** Twitch OIDC: the fixed discovery document and the issuer its id tokens carry (OLO-9.35). */
+const TWITCH_DISCOVERY_URL = 'https://id.twitch.tv/oauth2/.well-known/openid-configuration';
+const TWITCH_ISSUER = 'https://id.twitch.tv/oauth2';
+/**
+ * The OIDC `claims` request Twitch needs before it puts the email in the id token: Twitch's id
+ * token carries only `sub` / `preferred_username` and the standard claims unless the authorize
+ * request names the others. The same set Better Auth's `twitch` provider requests.
+ */
+const TWITCH_ID_TOKEN_CLAIMS = JSON.stringify({
+  id_token: { email: null, email_verified: null, preferred_username: null, picture: null },
+});
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2111,6 +2129,57 @@ async function normalizeSpotify(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string claim from a Twitch id token, trimmed; anything else is ''.
+ *
+ * @param value The raw claim value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function twitchString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Twitch sign-in (OLO-9.35): decode the id token from the code exchange and map
+ * `sub` / `email` / `preferred_username` / `picture` — the claims Better Auth's `twitch()` helper
+ * reads. The identity is keyed on `sub`, the Twitch user id; the login name can change and is
+ * never the key.
+ *
+ * The token must be issued by Twitch (`iss` = `https://id.twitch.tv/oauth2`) to this app (`aud`
+ * includes `TWITCH_CLIENT_ID`); a token that fails either check, an absent or unparseable token,
+ * or one without a string `sub` yields an empty profile (no account id, no email), which the
+ * engine refuses. `email_verified` passes through untouched, so `resolveOAuthEmailVerified`
+ * honors it only when Twitch sends it as true — Twitch is **trusted** on that claim; an absent or
+ * false claim fail-closes to link-first (`unverified-email`).
+ *
+ * @param tokens The tokens from the code exchange (only `idToken` is read).
+ * @param env Environment carrying `TWITCH_CLIENT_ID` (the expected audience).
+ * @returns The normalized profile for the resolution engine.
+ */
+function normalizeTwitch(
+  tokens: OAuth2Tokens,
+  env: Record<string, string | undefined>
+): NormalizedOAuthProfile {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const claims = decodeJwtClaims(tokens.idToken);
+  if (!claims) return none;
+  const clientId = readEnvString(env, 'TWITCH_CLIENT_ID') ?? '';
+  const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  const accountId = twitchString(claims.sub);
+  if (claims.iss !== TWITCH_ISSUER || !clientId || !audience.includes(clientId) || !accountId) {
+    return none;
+  }
+  const email = twitchString(claims.email) || null;
+  const name = twitchString(claims.preferred_username) || null;
+  const image = twitchString(claims.picture) || null;
+  const profile: Record<string, unknown> = { sub: accountId };
+  if ('email_verified' in claims) profile.email_verified = claims.email_verified;
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2168,6 +2237,7 @@ const NORMALIZERS: Record<
   twitter: (tokens, _env, fetchImpl) => normalizeTwitter(tokens, fetchImpl),
   reddit: (tokens, _env, fetchImpl) => normalizeReddit(tokens, fetchImpl),
   spotify: (tokens, _env, fetchImpl) => normalizeSpotify(tokens, fetchImpl),
+  twitch: (tokens, env) => normalizeTwitch(tokens, env),
 };
 
 /**
@@ -2202,7 +2272,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook | twitter | reddit | spotify).
+ *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2897,6 +2967,26 @@ export function buildGenericOAuthConfig(
         scopes: ['user-read-email'],
         authentication: 'post',
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'twitch': {
+      return {
+        providerId: 'twitch',
+        clientId: readEnvString(env, 'TWITCH_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'TWITCH_CLIENT_SECRET') ?? '',
+        // Twitch OIDC on one fixed issuer — no issuer to configure; discovery supplies the
+        // authorize/token endpoints. Like Better Auth's `twitch()` helper it asks for `openid`
+        // and `user:read:email` (the scope Twitch needs before it shares the email) and names
+        // the id-token claims it wants in a `claims` request. Twitch's token endpoint takes the
+        // client id and secret in the form body, and Twitch documents no PKCE support, so no
+        // challenge is sent (the helper sends none either). Apiome reads no streams, follows, chat or
+        // subscriptions. Trusted on `email_verified` (see normalizeTwitch).
+        discoveryUrl: TWITCH_DISCOVERY_URL,
+        scopes: ['openid', 'user:read:email'],
+        authorizationUrlParams: { claims: TWITCH_ID_TOKEN_CLAIMS },
+        authentication: 'post',
+        pkce: false,
         getUserInfo,
       };
     }
