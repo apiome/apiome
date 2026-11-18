@@ -180,6 +180,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `gumroad` (OLO-9.48) is **not** listed: Gumroad's `/v2/user` returns the user's email with no
  * verified claim (Better Auth's `gumroad()` helper hard-codes `emailVerified: false`), so it is
  * link-first.
+ * `paybin` (OLO-9.49) is trusted through the generic path: the Paybin id token carries a native
+ * `email_verified` claim (Better Auth's `paybin()` helper maps `email_verified || false`); absent or
+ * false fail-closes to link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -214,6 +217,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'paypal',
   'polar',
   'patreon',
+  'paybin',
 ]);
 
 /**
@@ -291,6 +295,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'polar',
   'patreon',
   'gumroad',
+  'paybin',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

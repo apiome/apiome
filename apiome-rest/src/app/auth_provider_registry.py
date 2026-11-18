@@ -154,7 +154,8 @@ class ProviderDescriptor:
 # environment is an optional ``config`` extra (``PAYPAL_ENVIRONMENT``, default live), so not a required field;
 # ``polar`` is available (OLO-9.46, #5059) as credentials-only Polar OAuth 2.0 / OIDC (fixed endpoints, no issuer);
 # ``patreon`` is available (OLO-9.47, #5060) as credentials-only Patreon OAuth 2.0 (fixed endpoints, no issuer);
-# ``gumroad`` is available (OLO-9.48, #5061) as credentials-only Gumroad OAuth 2.0 (fixed endpoints, no issuer).
+# ``gumroad`` is available (OLO-9.48, #5061) as credentials-only Gumroad OAuth 2.0 (fixed endpoints, no issuer);
+# ``paybin`` is available (OLO-9.49, #5062) as credentials-only Paybin OIDC (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -402,6 +403,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Gumroad",
         STATUS_AVAILABLE,
         client_credential_fields("GUMROAD_CLIENT_ID", "GUMROAD_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "paybin",
+        "Paybin",
+        STATUS_AVAILABLE,
+        client_credential_fields("PAYBIN_CLIENT_ID", "PAYBIN_CLIENT_SECRET"),
     ),
 )
 

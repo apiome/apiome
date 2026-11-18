@@ -283,10 +283,9 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
     evidence: '`/v2/user` email, no verified claim',
   },
   paybin: {
-    trustClass: 'link-first',
+    trustClass: 'trusted',
     ticket: 'OLO-9.49',
-    evidence: 'Email semantics confirmed at implementation',
-    provisional: true,
+    evidence: '`email_verified` claim on the id token',
   },
 };
 

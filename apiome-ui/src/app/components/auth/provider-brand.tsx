@@ -10,7 +10,7 @@
  *
  * Adding a provider: add its registry entry, then one `PROVIDER_BRANDS` entry here.
  */
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Wallet } from 'lucide-react';
 import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFacebook, SiFigma, SiGithub, SiGitlab, SiGoogle, SiGumroad, SiHubspot, SiHuggingface, SiKeycloak, SiKick, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiPatreon, SiPaypal, SiRailway, SiReddit, SiRoblox, SiSalesforce, SiSlack, SiSpotify, SiTiktok, SiTwitch, SiVercel, SiVk, SiWechat, SiX, SiZoom } from 'react-icons/si';
 import { ICON_SIZE } from '../ui/iconSizes';
 
@@ -140,6 +140,8 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   polar: { Icon: PolarIcon, iconClassName: 'text-slate-800 dark:text-slate-100' },
   patreon: { Icon: SiPatreon, iconClassName: 'text-[#FF424D]' },
   gumroad: { Icon: SiGumroad, iconClassName: 'text-[#FF90E8]' },
+  // Simple Icons ships no Paybin mark, so Paybin uses a neutral wallet glyph (OLO-9.49).
+  paybin: { Icon: Wallet, iconClassName: 'text-slate-800 dark:text-slate-100' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {

@@ -311,6 +311,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'oidc',
       'okta',
       'patreon',
+      'paybin',
       'paypal',
       'polar',
       'railway',

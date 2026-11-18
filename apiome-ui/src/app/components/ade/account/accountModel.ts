@@ -257,6 +257,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   polar: 'Polar',
   patreon: 'Patreon',
   gumroad: 'Gumroad',
+  paybin: 'Paybin',
 };
 
 /**

@@ -123,6 +123,8 @@ const ALL_ENABLED_ENV = {
   PATREON_CLIENT_SECRET: 'pt-secret',
   GUMROAD_CLIENT_ID: 'gr-id',
   GUMROAD_CLIENT_SECRET: 'gr-secret',
+  PAYBIN_CLIENT_ID: 'pb-id',
+  PAYBIN_CLIENT_SECRET: 'pb-secret',
 };
 
 describe('providerEnvIssues', () => {

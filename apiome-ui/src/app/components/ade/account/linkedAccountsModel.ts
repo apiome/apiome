@@ -129,6 +129,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   polar: 'Polar account sign-in',
   patreon: 'Patreon account sign-in',
   gumroad: 'Gumroad account sign-in',
+  paybin: 'Paybin account sign-in',
 };
 
 /**

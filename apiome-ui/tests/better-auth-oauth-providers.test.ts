@@ -154,6 +154,8 @@ const ALL_ENABLED: Record<string, string> = {
   PATREON_CLIENT_SECRET: 'patreon-secret',
   GUMROAD_CLIENT_ID: 'gumroad-client-id',
   GUMROAD_CLIENT_SECRET: 'gumroad-secret',
+  PAYBIN_CLIENT_ID: 'paybin-client-id',
+  PAYBIN_CLIENT_SECRET: 'paybin-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -288,6 +290,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'polar',
       'patreon',
       'gumroad',
+      'paybin',
     ]);
   });
 
@@ -334,6 +337,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'polar',
       'patreon',
       'gumroad',
+      'paybin',
     ]);
   });
 
@@ -457,6 +461,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const gumroad = buildGenericOAuthConfig('gumroad', ALL_ENABLED)!;
     expect(gumroad.clientId).toBe('gumroad-client-id');
     expect(gumroad.clientSecret).toBe('gumroad-secret');
+    const paybin = buildGenericOAuthConfig('paybin', ALL_ENABLED)!;
+    expect(paybin.clientId).toBe('paybin-client-id');
+    expect(paybin.clientSecret).toBe('paybin-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -1041,6 +1048,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['view_profile']);
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(false);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('paybin: fixed Paybin OIDC endpoints; openid email profile; post exchange; PKCE on (OLO-9.49)', () => {
+    const cfg = buildGenericOAuthConfig('paybin', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('paybin');
+    expect(cfg.authorizationUrl).toBe('https://idp.paybin.io/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://idp.paybin.io/oauth2/token');
+    // The normalizer reads the id token; there is no userinfo call.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['openid', 'email', 'profile']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
@@ -8386,6 +8408,279 @@ describe('getUserInfo — Gumroad fail-closed link-first (OLO-9.48)', () => {
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Paybin (OLO-9.49) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Paybin sign-in and linking (OLO-9.49)', () => {
+  /** The id-token claims Paybin returns for `openid email profile`. */
+  const CLAIMS = {
+    iss: 'https://idp.paybin.io',
+    aud: 'paybin-client-id',
+    sub: 'pb-user-7f3a',
+    exp: 1_900_000_000,
+    iat: 1_800_000_000,
+    name: 'Ada Lovelace',
+    preferred_username: 'ada',
+    given_name: 'Ada',
+    family_name: 'Lovelace',
+    picture: 'https://cdn.paybin.example/ada.png',
+    email: 'ada@example.com',
+    email_verified: true,
+  };
+
+  /** The code-exchange tokens carrying `claims` as the id token. */
+  const tokensFor = (claims: Record<string, unknown>) => ({
+    accessToken: 'tok',
+    idToken: idTokenFor(claims),
+  });
+
+  /** A fetch stub that records every request; the Paybin normalizer must make none. */
+  const noNetwork = () => {
+    const requests: string[] = [];
+    const fetchImpl: FetchLike = async (url) => {
+      requests.push(url);
+      return { ok: false, json: async () => null };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on the Paybin sub', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = noNetwork();
+
+    const { result, override } = await runGetUserInfo('paybin', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+      fetchImpl,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toEqual({
+      id: CLAIMS.sub,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'https://cdn.paybin.example/ada.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([]);
+  });
+
+  test('verified email auto-links the existing account with the same address', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+
+    const { result, override } = await runGetUserInfo('paybin', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'paybin', providerUserId: CLAIMS.sub },
+    });
+  });
+
+  test('verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo('paybin', tokensFor(CLAIMS), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'paybin',
+      providerUserId: CLAIMS.sub,
+      email: 'ada@example.com',
+    });
+  });
+
+  test('an issuer with a trailing slash is accepted', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'paybin',
+      tokensFor({ ...CLAIMS, iss: 'https://idp.paybin.io/' }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "false"', 'false'],
+    ['null', null],
+    ['the number 1', 1],
+  ])(
+    'email_verified %s → rejected with unverified-email, never linked or signed up',
+    async (_label, claim) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const claims: Record<string, unknown> = { ...CLAIMS, email_verified: claim };
+      if (claim === undefined) delete claims.email_verified;
+
+      const { result, override } = await runGetUserInfo('paybin', tokensFor(claims), {
+        store,
+        env: ALL_ENABLED,
+      });
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('unverified email on an already-linked identity still signs in', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'paybin',
+      tokensFor({ ...CLAIMS, email_verified: false }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Paybin account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+
+    const { result, override } = await runGetUserInfo(
+      'paybin',
+      tokensFor({ ...CLAIMS, email_verified: false }),
+      { store, env: ALL_ENABLED, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'paybin', providerUserId: CLAIMS.sub, email: 'ada@example.com' },
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['empty', ''],
+    ['not a string', 42],
+  ])('email %s → email-required rejection', async (_label, email) => {
+    const { store, calls } = makeStore();
+
+    const { result, override } = await runGetUserInfo(
+      'paybin',
+      tokensFor({ ...CLAIMS, email }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an audience list that includes the client id is accepted', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo(
+      'paybin',
+      tokensFor({ ...CLAIMS, aud: ['other-app', 'paybin-client-id'] }),
+      { store, env: ALL_ENABLED }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: CLAIMS.sub });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test.each([
+    ['preferred_username when name is absent', { name: undefined }, 'ada'],
+    [
+      'given_name + family_name when name and preferred_username are absent',
+      { name: undefined, preferred_username: undefined },
+      'Ada Lovelace',
+    ],
+  ])('the display name falls back to %s', async (_label, overrides, expected) => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+
+    const { result } = await runGetUserInfo('paybin', tokensFor({ ...CLAIMS, ...overrides }), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(result).toMatchObject({ id: CLAIMS.sub, name: expected });
+  });
+
+  test('a user without a picture signs in without an image', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const claims: Record<string, unknown> = { ...CLAIMS };
+    delete claims.picture;
+
+    const { result } = await runGetUserInfo('paybin', tokensFor(claims), {
+      store,
+      env: ALL_ENABLED,
+    });
+
+    expect(result).toMatchObject({ id: CLAIMS.sub, email: 'ada@example.com' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['no id token', { accessToken: 'tok' }, ALL_ENABLED],
+    ['an unparseable id token', { accessToken: 'tok', idToken: 'not-a-jwt' }, ALL_ENABLED],
+    ['another issuer', tokensFor({ ...CLAIMS, iss: 'https://evil.example' }), ALL_ENABLED],
+    ['a look-alike issuer', tokensFor({ ...CLAIMS, iss: 'https://idp.paybin.io.evil.example' }), ALL_ENABLED],
+    ['no issuer', tokensFor({ ...CLAIMS, iss: undefined }), ALL_ENABLED],
+    ['another audience', tokensFor({ ...CLAIMS, aud: 'other-app' }), ALL_ENABLED],
+    ['no audience', tokensFor({ ...CLAIMS, aud: undefined }), ALL_ENABLED],
+    ['no configured client id', tokensFor(CLAIMS), { ...ALL_ENABLED, PAYBIN_CLIENT_ID: '' }],
+    ['no sub', tokensFor({ ...CLAIMS, sub: undefined }), ALL_ENABLED],
+    ['an empty sub', tokensFor({ ...CLAIMS, sub: '  ' }), ALL_ENABLED],
+    ['a numeric sub', tokensFor({ ...CLAIMS, sub: 42 }), ALL_ENABLED],
+  ])('%s yields no identity', async (_label, tokens, env) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+
+    const { result, override } = await runGetUserInfo('paybin', tokens, { store, env });
 
     expect(result).toBeNull();
     expect(override).not.toBeNull();
