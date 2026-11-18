@@ -113,6 +113,8 @@ const ALL_ENABLED_ENV = {
   TIKTOK_CLIENT_SECRET: 'tt-secret',
   ROBLOX_CLIENT_ID: 'rb-id',
   ROBLOX_CLIENT_SECRET: 'rb-secret',
+  KICK_CLIENT_ID: 'kk-id',
+  KICK_CLIENT_SECRET: 'kk-secret',
 };
 
 describe('providerEnvIssues', () => {

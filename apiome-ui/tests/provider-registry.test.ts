@@ -106,6 +106,8 @@ const ALL_ENABLED_ENV = {
   TIKTOK_CLIENT_SECRET: 'tt-secret',
   ROBLOX_CLIENT_ID: 'rb-id',
   ROBLOX_CLIENT_SECRET: 'rb-secret',
+  KICK_CLIENT_ID: 'kk-id',
+  KICK_CLIENT_SECRET: 'kk-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -146,6 +148,7 @@ describe('registry vocabulary', () => {
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
   });
 
@@ -185,6 +188,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('twitch')?.label).toBe('Twitch');
     expect(getProviderDescriptor('tiktok')?.label).toBe('TikTok');
     expect(getProviderDescriptor('roblox')?.label).toBe('Roblox');
+    expect(getProviderDescriptor('kick')?.label).toBe('Kick');
   });
 
   it('pins each available provider env contract', () => {
@@ -340,9 +344,13 @@ describe('registry vocabulary', () => {
       'ROBLOX_CLIENT_ID',
       'ROBLOX_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('kick')?.requiredEnvKeys).toEqual([
+      'KICK_CLIENT_ID',
+      'KICK_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36, 9.37, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -374,6 +382,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('spotify')?.status).toBe('available');
     expect(getProviderDescriptor('tiktok')?.status).toBe('available');
     expect(getProviderDescriptor('roblox')?.status).toBe('available');
+    expect(getProviderDescriptor('kick')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -430,6 +439,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('spotify', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('tiktok', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('roblox', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('kick', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -638,6 +648,10 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('roblox', { ROBLOX_CLIENT_ID: 'x', ROBLOX_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('roblox', { ROBLOX_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('kick', { KICK_CLIENT_ID: 'x', KICK_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('kick', { KICK_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -683,6 +697,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -725,6 +740,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
   });
 
@@ -765,6 +781,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
   });
 });
@@ -809,6 +826,7 @@ describe('providerSummaries', () => {
       { id: 'twitch', label: 'Twitch', status: 'available', enabled: false },
       { id: 'tiktok', label: 'TikTok', status: 'available', enabled: false },
       { id: 'roblox', label: 'Roblox', status: 'available', enabled: false },
+      { id: 'kick', label: 'Kick', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);
