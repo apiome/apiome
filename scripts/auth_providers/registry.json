@@ -322,6 +322,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "ROBLOX_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "ROBLOX_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "kick",
+      "label": "Kick",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "KICK_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "KICK_CLIENT_SECRET" }
+      ]
     }
   ]
 }

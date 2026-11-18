@@ -302,6 +302,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'hubspot',
       'huggingface',
       'keycloak',
+      'kick',
       'line',
       'linear',
       'linkedin',

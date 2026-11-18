@@ -144,6 +144,8 @@ const ALL_ENABLED: Record<string, string> = {
   TIKTOK_CLIENT_SECRET: 'tiktok-secret',
   ROBLOX_CLIENT_ID: 'roblox-client-id',
   ROBLOX_CLIENT_SECRET: 'roblox-secret',
+  KICK_CLIENT_ID: 'kick-client-id',
+  KICK_CLIENT_SECRET: 'kick-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -273,6 +275,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
   });
 
@@ -314,6 +317,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'twitch',
       'tiktok',
       'roblox',
+      'kick',
     ]);
   });
 
@@ -422,6 +426,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const roblox = buildGenericOAuthConfig('roblox', ALL_ENABLED)!;
     expect(roblox.clientId).toBe('roblox-client-id');
     expect(roblox.clientSecret).toBe('roblox-secret');
+    const kick = buildGenericOAuthConfig('kick', ALL_ENABLED)!;
+    expect(kick.clientId).toBe('kick-client-id');
+    expect(kick.clientSecret).toBe('kick-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -948,6 +955,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.pkce).toBe(false);
     expect(cfg.getToken).toBeUndefined();
     expect(cfg.authorizationUrlParams).toBeUndefined();
+  });
+
+  test('kick: fixed Kick OAuth 2.1 endpoints; user:read scope; post exchange; PKCE on (OLO-9.38)', () => {
+    const cfg = buildGenericOAuthConfig('kick', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('kick');
+    expect(cfg.authorizationUrl).toBe('https://id.kick.com/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://id.kick.com/oauth/token');
+    // The normalizer reads /public/v1/users itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['user:read']);
+    expect(cfg.authentication).toBe('post');
+    // Kick refuses an authorization without a PKCE challenge.
+    expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -7116,6 +7139,233 @@ describe('getUserInfo — Roblox link-only (OLO-9.37)', () => {
 
     const { result, override } = await runGetUserInfo(
       'roblox',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Kick (OLO-9.38) ──────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Kick fail-closed link-first (OLO-9.38)', () => {
+  const USERS_URL = 'https://api.kick.com/public/v1/users';
+  /** The authorizing user, as `data[0]` of `/public/v1/users`. */
+  const USER = {
+    user_id: 4377088,
+    name: 'ada_streams',
+    email: 'ada@example.com',
+    profile_picture: 'https://files.kick.example/images/user/4377088/profile_image/ada.webp',
+  };
+  /** The `/public/v1/users` body for the person signing in. */
+  const OK_BODY = { data: [USER], message: 'OK' };
+
+  /** Serve `body` from `/public/v1/users` (a failed response when null); record each request. */
+  const kickApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const served = url === USERS_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Kick user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = kickApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: '4377088',
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'ada_streams',
+      image: USER.profile_picture,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: USERS_URL, authorization: 'Bearer kick.tok' }]);
+  });
+
+  test('a string user_id is accepted as the account id', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = kickApi({ data: [{ ...USER, user_id: ' 4377088 ' }] });
+
+    const { result } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: '4377088' });
+  });
+
+  test('known identity signs in with no email, taking the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = kickApi({ data: [{ ...USER, email: undefined }] });
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: '4377088', email: OK_USER.email, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = kickApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'kick',
+      providerUserId: '4377088',
+      email: 'ada@example.com',
+    });
+  });
+
+  test('fresh sign-up attempt with an email → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = kickApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = kickApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in a Kick body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = kickApi({ data: [{ ...USER, email_verified: emailVerified }] });
+
+      const { result, override } = await runGetUserInfo(
+        'kick',
+        { accessToken: 'kick.tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test.each([
+    ['no email field', { ...USER, email: undefined }],
+    ['an empty email', { ...USER, email: '' }],
+    ['a non-string email', { ...USER, email: 42 }],
+  ])('fresh sign-in with %s → email-required rejection', async (_label, user) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = kickApi({ data: [user] });
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('a missing profile picture leaves the image out', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = kickApi({ data: [{ ...USER, profile_picture: '' }] });
+
+    const { result } = await runGetUserInfo(
+      'kick',
+      { accessToken: 'kick.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: '4377088', name: 'ada_streams' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'kick.tok'],
+    ['a body with no data', { message: 'OK' }, 'kick.tok'],
+    ['an empty data array', { data: [] }, 'kick.tok'],
+    ['a null first entry', { data: [null] }, 'kick.tok'],
+    ['a user with no user_id', { data: [{ ...USER, user_id: undefined }] }, 'kick.tok'],
+    ['an empty user_id', { data: [{ ...USER, user_id: '  ' }] }, 'kick.tok'],
+    ['a fractional user_id', { data: [{ ...USER, user_id: 1.5 }] }, 'kick.tok'],
+    ['a negative user_id', { data: [{ ...USER, user_id: -1 }] }, 'kick.tok'],
+    ['a boolean user_id', { data: [{ ...USER, user_id: true }] }, 'kick.tok'],
+    ['an array body', [OK_BODY], 'kick.tok'],
+    ['a missing access token', OK_BODY, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = kickApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'kick',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

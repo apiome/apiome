@@ -1,0 +1,29 @@
+---
+slug: kick-sign-in
+title: Sign in with Kick
+description: "People can now link their Kick account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Kick account on [Linked accounts](/workspace/linked-accounts) and sign in
+to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Kick** is a new entry in **System settings → Add Provider**. It needs
+  the **Client ID** and **Client Secret** of an app created under **Settings → Developer** on Kick —
+  no issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to
+  set on Kick's side. The environment variables are `KICK_CLIENT_ID` and `KICK_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/kick`, added as the app's
+  **Redirect URL**.
+- **Scopes.** Apiome asks for **user:read** only and uses it to read the username, email address
+  and profile picture of the person signing in. Apiome reads no channels, chat, streams, followers
+  or subscriptions and keeps no Kick token.
+- **Link first.** Kick does not say whether the email address it shares is verified, so Apiome never
+  uses it to find or create an account. People sign in another way, link Kick from **Linked
+  accounts**, and can sign in with Kick after that. Before linking, a Kick sign-in ends with *Your
+  sign-in provider could not confirm that your email address is verified…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `kick` as an available provider, and
+  `PUT /v1/admin/auth-providers/kick` stores its credentials.

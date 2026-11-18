@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -168,6 +168,8 @@ config is stored in the database need none of them set; see
 | `TIKTOK_CLIENT_SECRET` | TikTok | To enable TikTok | TikTok app **Client secret** |
 | `ROBLOX_CLIENT_ID` | Roblox | To enable Roblox | Roblox OAuth 2.0 app **Client ID** |
 | `ROBLOX_CLIENT_SECRET` | Roblox | To enable Roblox | Roblox OAuth 2.0 app **Client secret** |
+| `KICK_CLIENT_ID` | Kick | To enable Kick | Kick app **Client ID** |
+| `KICK_CLIENT_SECRET` | Kick | To enable Kick | Kick app **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -270,7 +272,7 @@ links an account.
 | `twitch` | **trusted** | OLO-9.35 | yes | `email_verified` claim with the `user:read:email` scope |
 | `tiktok` | **link-only** | OLO-9.36 | yes | No email in user info |
 | `roblox` | **link-only** | OLO-9.37 | yes | Profile claims only, no email claim |
-| `kick` | **link-first** (provisional) | OLO-9.38 | no | Email availability and verified semantics confirmed at implementation |
+| `kick` | **link-first** | OLO-9.38 | yes | `/public/v1/users` email, no verified claim |
 | `kakao` | **trusted** | OLO-9.39 | no | `is_email_valid` and `is_email_verified` on `kakao_account`, both true |
 | `naver` | **link-first** (provisional) | OLO-9.40 | no | `/v1/nid/me` email; verified semantics confirmed at implementation |
 | `yandex` | **link-first** (provisional) | OLO-9.44 | no | `default_email`; verified semantics confirmed at implementation |
@@ -2040,6 +2042,58 @@ ignored. The engine always fail-closes (**link-only**), and `roblox` is not in
 A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed userinfo request,
 or a response with no string `sub`, yields no identity and the sign-in is refused.
 
+## Kick (OLO-9.38)
+
+For the streaming communities on Kick. Apiome uses Kick's OAuth 2.1 authorization-code flow with
+PKCE. Kick is a **link-first** provider: it returns an email address with **no verified claim**,
+so read [Email semantics](#kick-email-semantics) below before turning it on — nobody can *create*
+an Apiome account with it.
+
+1. Signed in to Kick, open **Settings → Developer** and choose **Create new** app.
+2. Give the app an **Application name** and **Description**.
+3. Add the callback as the **Redirect URL** (Kick requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/kick`
+4. Under **Scopes** tick **Read user information (including email address)** (`user:read`) only —
+   Apiome asks for nothing else.
+5. Create the app. The **Client ID** and **Client Secret** are shown on the app's page.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+KICK_CLIENT_ID=<Client ID>
+KICK_CLIENT_SECRET=<Client Secret>
+```
+
+Kick's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's `kick()`
+helper):
+
+- Authorize: `https://id.kick.com/oauth/authorize` with the `user:read` scope (the helper's
+  default) and a PKCE `S256` challenge — Kick refuses an authorization without one. Apiome reads
+  no channels, chat, streams, followers or subscriptions.
+- Token: `https://id.kick.com/oauth/token` — the client ID and secret are sent in the form body.
+  Apiome keeps no Kick token.
+- Profile: `https://api.kick.com/public/v1/users` with no `id` query (so Kick returns the
+  authorizing user alone), with the access token as a bearer token.
+
+The identity is keyed on `user_id` (the first entry of `data`), the Kick user ID; the username
+(`name`) can change and is never the key. `name` is the display name and `profile_picture` the
+avatar.
+
+<a id="kick-email-semantics"></a>
+**Email semantics:** Kick's `/public/v1/users` returns the account's `email` with no claim that it
+is verified, and Better Auth's helper hard-codes `emailVerified: false`. Apiome never trusts it:
+the profile carries no `email_verified` (any such field in the body is dropped). The engine
+fail-closes (**link-first**), and `kick` is not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Kick card on **Linked accounts**. The
+  explicit link binds the Kick identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with Kick** signs that person in.
+- **Fresh sign-in or sign-up** — rejected with `unverified-email`, even when the email matches an
+  existing account; with no email, `email-required` (`OAuthEmailRequired`).
+
+A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed profile request,
+a response with no `data` entry, or a user with no integer (or string) `user_id` yields no
+identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -2212,7 +2266,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok and Roblox need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox and Kick need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

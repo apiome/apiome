@@ -181,6 +181,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'hubspot',
       'huggingface',
       'keycloak',
+      'kick',
       'line',
       'linear',
       'linkedin',

@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -158,6 +158,12 @@
  *    only profile claims are asked for, so there is **no email claim** → link-only: an explicit
  *    link and the subsequent sign-in work, and a fresh sign-in is refused with
  *    `OAuthEmailRequired`.
+ *  - **Kick (OLO-9.38):** Kick OAuth 2.1 on fixed endpoints mirrored from Better Auth's `kick`
+ *    provider (`id.kick.com/oauth/authorize`, `id.kick.com/oauth/token`), scope `user:read`,
+ *    client credentials in the form body, PKCE on (Kick requires it). The claims come from
+ *    `api.kick.com/public/v1/users`, which returns an email with **no verified claim** (Better
+ *    Auth `kick()` hard-codes `emailVerified: false`) → fail-closed link-first: an explicit link
+ *    and the subsequent sign-in work, and the email never joins or creates an account.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -764,6 +770,12 @@ const TIKTOK_USER_INFO_URL =
 const ROBLOX_DISCOVERY_URL = 'https://apis.roblox.com/oauth/.well-known/openid-configuration';
 /** The OIDC userinfo endpoint (`sub`, `name`, `nickname`, `preferred_username`, `picture`), as the helper reads it. */
 const ROBLOX_USER_INFO_URL = 'https://apis.roblox.com/oauth/v1/userinfo';
+
+/** Kick OAuth 2.1: fixed endpoints, mirrored from Better Auth's `kick` provider (OLO-9.38). */
+const KICK_AUTHORIZE_URL = 'https://id.kick.com/oauth/authorize';
+const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
+/** The authorized user (`data[0]`: `user_id`, `name`, `email`, `profile_picture`), as the helper reads it. */
+const KICK_USERS_URL = 'https://api.kick.com/public/v1/users';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2370,6 +2382,76 @@ async function normalizeRoblox(
   return { accountId, profile, email: null, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Kick public API response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function kickString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Read a Kick `user_id` as the stable account id. Kick's public API returns it as an integer;
+ * a non-empty string is accepted too. Anything else — a fraction, a negative or unsafe number,
+ * a boolean, an object — is no id.
+ *
+ * @param value The raw `user_id` field.
+ * @returns The user id as a decimal string, or '' when it is not a usable id.
+ */
+function kickUserId(value: unknown): string {
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) && value >= 0 ? String(value) : '';
+  }
+  return kickString(value);
+}
+
+/**
+ * Normalize a Kick sign-in (OLO-9.38): fetch `api.kick.com/public/v1/users` with the access token
+ * (no `id` query, so Kick returns the authorizing user alone) and map the first `data` entry's
+ * `user_id` / `name` / `email` / `profile_picture` — the resource and fields Better Auth's
+ * `kick()` helper reads. The identity is keyed on `user_id`, the Kick user id; the username
+ * (`name`) can change and is never the key.
+ *
+ * Kick returns the email with **no verified claim** (the helper hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in the
+ * body is dropped rather than trusted — and `resolveOAuthEmailVerified` fail-closes to
+ * **link-first**: the address can neither join nor create an account, an already-linked identity
+ * signs in, and an explicit link binds it. A failed request, a body without a `data` array, or a
+ * first entry without a usable `user_id` yields an empty profile (no account id, no email), which
+ * the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeKick(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(KICK_USERS_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const data = (body as { data?: unknown }).data;
+  if (!Array.isArray(data) || data.length === 0) return none;
+  const first = data[0];
+  if (!first || typeof first !== 'object' || Array.isArray(first)) return none;
+  const user = first as Record<string, unknown>;
+  const accountId = kickUserId(user.user_id);
+  if (!accountId) return none;
+  const email = kickString(user.email) || null;
+  const name = kickString(user.name) || null;
+  const image = kickString(user.profile_picture) || null;
+  const profile: Record<string, unknown> = { user_id: accountId };
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2430,6 +2512,7 @@ const NORMALIZERS: Record<
   twitch: (tokens, env) => normalizeTwitch(tokens, env),
   tiktok: (tokens, _env, fetchImpl) => normalizeTiktok(tokens, fetchImpl),
   roblox: (tokens, _env, fetchImpl) => normalizeRoblox(tokens, fetchImpl),
+  kick: (tokens, _env, fetchImpl) => normalizeKick(tokens, fetchImpl),
 };
 
 /**
@@ -2465,7 +2548,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
  *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
- *   roblox).
+ *   roblox | kick).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3228,6 +3311,25 @@ export function buildGenericOAuthConfig(
         prompt: 'select_account consent',
         authentication: 'post',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'kick': {
+      return {
+        providerId: 'kick',
+        clientId: readEnvString(env, 'KICK_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'KICK_CLIENT_SECRET') ?? '',
+        // Fixed Kick OAuth 2.1 endpoints, mirrored from Better Auth's `kick()` helper — no issuer.
+        // Like the helper, the code exchange sends the client id and secret in the form body and
+        // a PKCE challenge (`S256`) is sent; Kick refuses an authorization without one.
+        // `user:read` is the helper's default and the only scope Apiome asks for. Apiome reads no
+        // channels, chat, streams, followers or subscriptions. The email carries no verified
+        // claim → fail-closed link-first (see normalizeKick).
+        authorizationUrl: KICK_AUTHORIZE_URL,
+        tokenUrl: KICK_TOKEN_URL,
+        scopes: ['user:read'],
+        authentication: 'post',
+        pkce: true,
         getUserInfo,
       };
     }

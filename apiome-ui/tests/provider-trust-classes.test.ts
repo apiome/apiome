@@ -139,7 +139,6 @@ describe('the trust-class table covers the whole catalog', () => {
       ([, entry]) => entry.provisional
     );
     expect(provisional.map(([slug]) => slug).sort()).toEqual([
-      'kick',
       'naver',
       'paybin',
       'polar',

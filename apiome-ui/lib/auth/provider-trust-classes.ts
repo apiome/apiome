@@ -239,8 +239,7 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
   kick: {
     trustClass: 'link-first',
     ticket: 'OLO-9.38',
-    evidence: 'Email availability and verified semantics confirmed at implementation',
-    provisional: true,
+    evidence: '`/public/v1/users` email, no verified claim',
   },
 
   // ── Wave 3 — regional identity providers (OLO-9.39–9.44) ──────────────────────────────────────

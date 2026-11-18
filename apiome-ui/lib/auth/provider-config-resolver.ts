@@ -155,6 +155,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   tiktok: { clientId: 'TIKTOK_CLIENT_KEY', clientSecret: 'TIKTOK_CLIENT_SECRET' },
   // Roblox (OLO-9.37, #5050): credentials-only; fixed OIDC discovery document, no issuer extra.
   roblox: { clientId: 'ROBLOX_CLIENT_ID', clientSecret: 'ROBLOX_CLIENT_SECRET' },
+  // Kick (OLO-9.38, #5051): credentials-only; fixed OAuth 2.1 endpoints, no issuer extra.
+  kick: { clientId: 'KICK_CLIENT_ID', clientSecret: 'KICK_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */
