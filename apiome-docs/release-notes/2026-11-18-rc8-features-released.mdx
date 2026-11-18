@@ -36,3 +36,8 @@ and their guide pages are back on this site.
 - **Data browser and Migrations are removed.** The two unfinished tools at `/ade/database` and
   `/ade/migration` are no longer part of Apiome: working with stored records belongs to Api-DB, a
   separate product. Their addresses now answer *page not found*. Nothing else is held back.
+- **The Data API, migration plans and their CLI commands are removed too.** `/v1/data/…` and
+  `/v1/migration-plans/…` are no longer served, and `apiome data` and `apiome migrations` are gone
+  from the CLI. `apiome projects export` no longer writes a `migrations` section. Unpublishing a
+  version is no longer refused because the version has data records. **Freeze schema** on
+  [Versions](/build/versions) is unchanged.

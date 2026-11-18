@@ -190,7 +190,6 @@ def _post(
             patch("app.versions_routes.notify_version_unpublished") as notify,
         ):
             mock_db.get_version_by_id.return_value = _existing()
-            mock_db.version_has_data_records.return_value = False
             mock_db.is_user_tenant_admin.return_value = is_admin
             mock_db.get_versions_for_project.return_value = (
                 versions if versions is not None else [_V1, _V2, _V3]
@@ -286,7 +285,6 @@ def test_a_dry_run_by_someone_who_may_not_unpublish_is_refused() -> None:
             patch("app.versions_routes.count_active_subscriptions", return_value=0),
         ):
             mock_db.get_version_by_id.return_value = _existing(creator_id="someone-else")
-            mock_db.version_has_data_records.return_value = False
             mock_db.is_user_tenant_admin.return_value = False
             mock_db.get_versions_for_project.return_value = [_V3]
             mock_db.list_version_tags_for_project.return_value = []

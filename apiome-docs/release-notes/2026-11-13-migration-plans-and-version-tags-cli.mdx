@@ -7,9 +7,11 @@ authors: [apiome]
 
 Migration plans and version tags are complete in the CLI: `apiome migrations` reads a project's
 migration plans and `apiome tags` manages the named pointers (`stable`, `latest`, `prod`) that
-follow its versions. The new
-[Migration plans and version tags from the CLI](/ship/migration-plans-and-version-tags-from-the-cli)
-page is the map.
+follow its versions. The [Version tags from the CLI](/ship/version-tags-from-the-cli) page is the
+map for tags.
+
+*Update, 2026-11-18: `apiome migrations` was removed. Migration plans belong to Api-DB, a separate
+product.*
 
 {/* truncate */}
 
@@ -27,4 +29,4 @@ page is the map.
   name and never touches the version. Immutable tags can never be moved or deleted.
 
 Every command takes `--json`. The full options are in the
-[`apiome migrations`](/reference/cli/migrations) and [`apiome tags`](/reference/cli/tags) references.
+[`apiome tags`](/reference/cli/tags) reference.

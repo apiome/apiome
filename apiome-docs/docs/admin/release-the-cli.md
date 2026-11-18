@@ -42,7 +42,7 @@ The file looks like this, and you can edit it until the pull request merges:
 "@apiome/cli": minor
 ---
 
-`apiome data list` takes `--columns` to pick the fields it prints.
+`apiome tags list` takes `--columns` to pick the fields it prints.
 ```
 
 Several pull requests can each add a changeset; they are released together, at the highest bump

@@ -9,8 +9,7 @@ class and version tags and a migration plan, these pin the issue's acceptance cr
   (:class:`~apiome_cli.project_export.ExportWriter`), and nothing reaches stdout when the export
   fails before its first section;
 * summary counts and the SHA-256 go to stderr, so stdout carries only the document;
-* ``--include`` / ``--exclude`` / ``--versions`` select what is exported; ``data`` is refused
-  (the API cannot list data records yet).
+* ``--include`` / ``--exclude`` / ``--versions`` select what is exported.
 
 The export → import round trip waits for the future import command.
 """
@@ -70,16 +69,6 @@ _VERSION_TAGS = [
     {"id": "vt1", "name": "stable", "version_id": _V1},
     {"id": "vt2", "name": "latest", "version_id": _V2},
 ]
-_PLANS = {
-    "plans": [
-        {
-            "id": "mp1",
-            "from_version_id": _V1,
-            "to_version_id": _V2,
-            "rules": [{"class_name": "Order", "source_property": "id", "rule": {"ruleType": "simple"}}],
-        }
-    ]
-}
 
 
 def _mock_api(httpx_mock, *, reusable: bool = True) -> None:
@@ -91,7 +80,6 @@ def _mock_api(httpx_mock, *, reusable: bool = True) -> None:
         f"{_HOST}/properties/acme-corp/{_P}": _PROPERTIES,
         f"{_HOST}/project-tags/acme-corp/{_P}": _CLASS_TAGS,
         f"{_HOST}/version-tags/acme-corp/{_P}": _VERSION_TAGS,
-        f"{_HOST}/migration-plans/acme-corp/projects/{_P}": _PLANS,
         f"{_HOST}/paths/acme-corp/{_V2}/{_PATH}/full": _PATH_FULL,
     }
     for version_id in (_V1, _V2):
@@ -128,7 +116,6 @@ def test_export_holds_every_section_and_is_canonical_json(httpx_mock) -> None:
     assert document["versions"][1]["paths"][0]["operations"] == [{"operation": "get"}, {"operation": "post"}]
     assert document["properties"] == _PROPERTIES
     assert document["tags"] == {"classTags": _CLASS_TAGS, "versionTags": _VERSION_TAGS}
-    assert document["migrations"] == _PLANS["plans"]
     assert "exportedAt" not in document
 
 
@@ -142,7 +129,7 @@ def test_summary_goes_to_stderr_with_the_document_sha(httpx_mock) -> None:
     _mock_api(httpx_mock)
     result = _export()
     sha = hashlib.sha256(result.stdout_bytes).hexdigest()
-    assert "✔ Exported 2 versions, 3 classes, 2 properties, 1 path, 3 tags, 1 migration plan" in result.stderr
+    assert "✔ Exported 2 versions, 3 classes, 2 properties, 1 path, 3 tags" in result.stderr
     assert f"deterministic SHA-256: {sha}" in result.stderr
     assert "Exported" not in result.stdout
 
@@ -194,7 +181,7 @@ def test_include_and_exclude_select_sections(httpx_mock) -> None:
     document = json.loads(_export("--include", "versions,classes", "--exclude", "classes").stdout_bytes)
     assert document["sections"] == ["versions"]
     assert "classes" not in document["versions"][0]
-    assert "tags" not in document and "migrations" not in document
+    assert "tags" not in document
 
 
 def test_versions_filter_matches_labels_with_or_without_v(httpx_mock) -> None:
@@ -202,9 +189,8 @@ def test_versions_filter_matches_labels_with_or_without_v(httpx_mock) -> None:
     document = json.loads(_export("--versions", "v2.0.0").stdout_bytes)
     assert [v["version"]["version_id"] for v in document["versions"]] == ["2.0.0"]
     assert document["versionsFilter"] == ["2.0.0"]
-    # Tags and plans that point outside the selection are left out.
+    # Tags that point outside the selection are left out.
     assert [t["name"] for t in document["tags"]["versionTags"]] == ["latest"]
-    assert document["migrations"] == []
 
 
 def test_an_unknown_version_writes_nothing(httpx_mock) -> None:
@@ -218,12 +204,11 @@ def test_an_unknown_version_writes_nothing(httpx_mock) -> None:
 @pytest.mark.parametrize(
     "args,fragment",
     [
-        (["--include", "data"], "cannot be exported yet"),
         (["--include", "bogus"], "Unknown section"),
         (["--include", "classes"], "include 'versions' too"),
         (["--format", "xml"], "--format must be json or yaml"),
     ],
-    ids=["data", "unknown-section", "classes-without-versions", "bad-format"],
+    ids=["unknown-section", "classes-without-versions", "bad-format"],
 )
 def test_bad_options_are_usage_errors_before_any_request(httpx_mock, args, fragment) -> None:
     result = _export(*args)
@@ -261,12 +246,13 @@ def test_an_empty_writer_still_writes_a_valid_object() -> None:
 
 def test_section_rules() -> None:
     assert resolve_sections(None, None) == DEFAULT_SECTIONS
-    assert resolve_sections(None, "migrations,tags") == ("versions", "classes", "properties", "paths")
+    assert resolve_sections(None, "tags") == ("versions", "classes", "properties", "paths")
     assert resolve_sections("Properties, Tags", None) == ("properties", "tags")
-    with pytest.raises(ExportError, match="cannot be exported yet"):
+    # The Api-DB sections are gone: naming one is an unknown section.
+    with pytest.raises(ExportError, match="Unknown section"):
         resolve_sections("versions,data", None)
-    # `--exclude data` is accepted (it is the default anyway).
-    assert resolve_sections(None, "data") == DEFAULT_SECTIONS
+    with pytest.raises(ExportError, match="Unknown section"):
+        resolve_sections(None, "migrations")
 
 
 def test_version_selection_orders_oldest_first() -> None:

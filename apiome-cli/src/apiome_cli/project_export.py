@@ -36,23 +36,15 @@ ALL_SECTIONS: tuple[str, ...] = (
     "properties",
     "paths",
     "tags",
-    "migrations",
-    "data",
 )
 
-#: Sections exported when ``--include`` is not given: all but ``data``.
-DEFAULT_SECTIONS: tuple[str, ...] = tuple(s for s in ALL_SECTIONS if s != "data")
+#: Sections exported when ``--include`` is not given: all of them.
+DEFAULT_SECTIONS: tuple[str, ...] = ALL_SECTIONS
 
 #: Sections that live inside each version, so they need ``versions``.
 VERSION_SCOPED: tuple[str, ...] = ("classes", "paths")
 
 #: Why ``data`` cannot be exported yet — shown when it is asked for.
-DATA_UNAVAILABLE = (
-    "The 'data' section cannot be exported yet: the API has no way to list a project's data "
-    "records. Leave it out (it is excluded by default)."
-)
-
-
 class ExportError(ValueError):
     """An option the export refuses, with a message for stderr (exit 2)."""
 
@@ -83,8 +75,6 @@ def resolve_sections(include: Optional[str], exclude: Optional[str]) -> tuple[st
             f"Unknown section(s): {', '.join(unknown)}. Choose from: {', '.join(ALL_SECTIONS)}."
         )
     selected = tuple(s for s in ALL_SECTIONS if s in wanted and s not in removed)
-    if "data" in selected:
-        raise ExportError(DATA_UNAVAILABLE)
     if "versions" not in selected and any(s in selected for s in VERSION_SCOPED):
         raise ExportError("'classes' and 'paths' live inside versions; include 'versions' too.")
     return selected
@@ -145,7 +135,6 @@ class ExportCounts:
     paths: int = 0
     operations: int = 0
     tags: int = 0
-    migrations: int = 0
 
     def summary(self) -> str:
         """``Exported 8 versions, 24 classes, …`` — every count, singular or plural."""
@@ -160,7 +149,6 @@ class ExportCounts:
                 n(self.properties, "property", "properties"),
                 n(self.paths, "path", "paths"),
                 n(self.tags, "tag", "tags"),
-                n(self.migrations, "migration plan", "migration plans"),
             ]
         )
 
@@ -313,21 +301,6 @@ def iter_export(fetch: Fetch, plan: ExportPlan) -> Iterable[tuple[str, str, Any]
             return {"classTags": class_tags, "versionTags": version_tags}
 
         members["tags"] = tags
-    if "migrations" in plan.sections:
-
-        def migrations() -> Any:
-            plans = (fetch(api_paths.project_migration_plans(plan.tenant_slug, plan.project_id))
-                     or {}).get("plans") or []
-            if plan.versions_filter:
-                plans = [
-                    p for p in plans
-                    if str(p.get("from_version_id")) in exported_ids
-                    and str(p.get("to_version_id")) in exported_ids
-                ]
-            plan.counts.migrations = len(plans)
-            return plans
-
-        members["migrations"] = migrations
 
     keys = list(members)
     if "versions" in plan.sections:

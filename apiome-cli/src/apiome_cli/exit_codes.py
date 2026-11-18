@@ -148,6 +148,28 @@ EXIT_PRIMITIVE_MISSING = 7
 #: Another per-command use of 7.
 EXIT_PRIMITIVE_IMPORT_FAILED = 7
 
+#: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
+#: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
+#: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can
+#: gate on the verdict itself.
+EXIT_CHECK_FAILED = 7
+
+#: ``apiome properties create`` (CLI 6.3): the new property is **invalid** — a field-level
+#: problem such as an unknown primitive or an example its schema rejects; one line per field on
+#: stderr, nothing was created. Another per-command use of 7.
+EXIT_PROPERTY_INVALID = 7
+
+#: ``apiome properties copy`` (CLI 6.6): a property to copy has a ``$ref`` to a **primitive the
+#: tenant does not have**; each property and reference is listed and nothing was copied. Import the
+#: primitives first. Another per-command use of 7.
+EXIT_PRIMITIVE_MISSING = 7
+
+#: ``apiome primitives import`` (CLI 5.6): at least one **row failed** — it is not a valid
+#: primitive, or the server refused it; each failed row is listed. Without
+#: ``--continue-on-error`` nothing was written when the failure was found before the import.
+#: Another per-command use of 7.
+EXIT_PRIMITIVE_IMPORT_FAILED = 7
+
 #: ``apiome data create`` (CLI 10.3): the record does **not satisfy its class schema** — checked
 #: locally against the class's frozen JSON Schema before anything is sent; one ``field: message``
 #: line per problem on stderr, nothing was created. Another per-command use of 7.
