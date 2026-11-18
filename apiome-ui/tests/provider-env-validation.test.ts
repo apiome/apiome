@@ -121,6 +121,8 @@ const ALL_ENABLED_ENV = {
   POLAR_CLIENT_SECRET: 'pl-secret',
   PATREON_CLIENT_ID: 'pt-id',
   PATREON_CLIENT_SECRET: 'pt-secret',
+  GUMROAD_CLIENT_ID: 'gr-id',
+  GUMROAD_CLIENT_SECRET: 'gr-secret',
 };
 
 describe('providerEnvIssues', () => {

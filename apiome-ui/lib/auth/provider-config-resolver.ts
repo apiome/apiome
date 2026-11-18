@@ -164,6 +164,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   polar: { clientId: 'POLAR_CLIENT_ID', clientSecret: 'POLAR_CLIENT_SECRET' },
   // Patreon (OLO-9.47, #5060): credentials-only; fixed OAuth 2.0 endpoints, no issuer extra.
   patreon: { clientId: 'PATREON_CLIENT_ID', clientSecret: 'PATREON_CLIENT_SECRET' },
+  // Gumroad (OLO-9.48, #5061): credentials-only; fixed OAuth 2.0 endpoints, no issuer extra.
+  gumroad: { clientId: 'GUMROAD_CLIENT_ID', clientSecret: 'GUMROAD_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

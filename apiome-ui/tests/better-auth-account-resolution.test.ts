@@ -299,6 +299,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'github',
       'gitlab',
       'google',
+      'gumroad',
       'hubspot',
       'huggingface',
       'keycloak',

@@ -177,6 +177,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `patreon` (OLO-9.47) is trusted through the generic path: the Patreon identity resource's
  * `is_email_verified` attribute is normalized to `email_verified`; anything but true fail-closes to
  * link-first.
+ * `gumroad` (OLO-9.48) is **not** listed: Gumroad's `/v2/user` returns the user's email with no
+ * verified claim (Better Auth's `gumroad()` helper hard-codes `emailVerified: false`), so it is
+ * link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -287,6 +290,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'paypal',
   'polar',
   'patreon',
+  'gumroad',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.
