@@ -28,8 +28,8 @@
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
- * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), and Apple (OLO-9.30) followed exactly that
- * path.
+ * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), and Facebook (OLO-9.31)
+ * followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -417,6 +417,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
       { field: 'team_id', kind: 'config', envKey: 'APPLE_TEAM_ID' },
       { field: 'key_id', kind: 'config', envKey: 'APPLE_KEY_ID' },
     ],
+  },
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    status: 'available',
+    // Facebook Login (OLO-9.31, #5044): credentials only — the App ID and App secret of a Meta
+    // app; fixed Graph endpoints, so no issuer. The Graph email carries no verified claim →
+    // fail-closed link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET'),
   },
 ];
 

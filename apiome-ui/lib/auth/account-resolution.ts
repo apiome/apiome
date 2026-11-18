@@ -153,6 +153,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `apple` (OLO-9.30) is listed: Apple's id token carries `email_verified`, re-stamped fail-closed.
  * A Hide My Email relay address (`is_private_email`) is verified too, but never matches an
  * existing account's real address, so it creates a new account unless Apple is linked first.
+ * `facebook` (OLO-9.31) is **not** listed: Graph `/me` returns the person's email with no verified
+ * claim (link-first).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -248,6 +250,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'railway',
   'hubspot',
   'apple',
+  'facebook',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

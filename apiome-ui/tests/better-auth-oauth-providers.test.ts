@@ -129,6 +129,8 @@ const ALL_ENABLED: Record<string, string> = {
   APPLE_PRIVATE_KEY: APPLE_PRIVATE_KEY_PEM,
   APPLE_TEAM_ID: 'A1B2C3D4E5',
   APPLE_KEY_ID: 'ABC123DEFG',
+  FACEBOOK_CLIENT_ID: 'fb-app-id',
+  FACEBOOK_CLIENT_SECRET: 'fb-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -251,6 +253,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
   });
 
@@ -285,6 +288,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
   });
 
@@ -372,6 +376,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const apple = buildGenericOAuthConfig('apple', ALL_ENABLED)!;
     expect(apple.clientId).toBe('com.example.web');
     expect(apple.clientSecret).toBe('');
+    const facebook = buildGenericOAuthConfig('facebook', ALL_ENABLED)!;
+    expect(facebook.clientId).toBe('fb-app-id');
+    expect(facebook.clientSecret).toBe('fb-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -784,6 +791,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authorizationUrlParams).toEqual({ response_mode: 'form_post' });
     expect(cfg.pkce).toBe(false);
     expect(typeof cfg.getToken).toBe('function');
+  });
+
+  test('facebook: fixed Graph v24.0 endpoints; email public_profile; post exchange; PKCE off (OLO-9.31)', () => {
+    const cfg = buildGenericOAuthConfig('facebook', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('facebook');
+    expect(cfg.authorizationUrl).toBe('https://www.facebook.com/v24.0/dialog/oauth');
+    expect(cfg.tokenUrl).toBe('https://graph.facebook.com/v24.0/oauth/access_token');
+    // The normalizer inspects the token with debug_token before reading /me.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    // The helper's default scopes only: Apiome reads no pages, posts or friends.
+    expect(cfg.scopes).toEqual(['email', 'public_profile']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -5549,5 +5572,204 @@ describe('getUserInfo — Sign in with Apple (OLO-9.30)', () => {
     const { store, calls } = makeStore();
     await runApple(repeatCallback, { ...CLAIMS, aud: ['com.example.web'] }, { store });
     expect(calls.createPendingSignup).toHaveLength(1);
+  });
+});
+
+/* ── getUserInfo: Facebook (OLO-9.31) ──────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Facebook fail-closed link-first (OLO-9.31)', () => {
+  /** The `debug_token` body Graph returns for a valid user token issued to this app. */
+  const DEBUG_TOKEN = { data: { app_id: 'fb-app-id', is_valid: true, user_id: '10158' } };
+  /** The Graph `/me?fields=id,name,email,picture` body for that user. */
+  const ME = {
+    id: '10158',
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    picture: {
+      data: { height: 50, width: 50, is_silhouette: false, url: 'https://graph.example/ada.jpg' },
+    },
+  };
+  const ME_URL = 'https://graph.facebook.com/me?fields=id,name,email,picture';
+
+  /**
+   * Serve `debugBody` from `debug_token` and `meBody` from `/me` (a failed response when null);
+   * record each request.
+   */
+  const facebookGraph = (debugBody: unknown, meBody: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const body = url.startsWith('https://graph.facebook.com/debug_token?')
+        ? debugBody
+        : url === ME_URL
+          ? meBody
+          : null;
+      return body === null ? { ok: false, json: async () => null } : { ok: true, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Facebook user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = facebookGraph(DEBUG_TOKEN, ME);
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: '10158',
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'https://graph.example/ada.jpg',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // debug_token first (app access token, no bearer header), then /me with the user token.
+    expect(requests).toHaveLength(2);
+    const debug = new URL(requests[0].url);
+    expect(debug.origin + debug.pathname).toBe('https://graph.facebook.com/debug_token');
+    expect(debug.searchParams.get('input_token')).toBe('tok');
+    expect(debug.searchParams.get('access_token')).toBe('fb-app-id|fb-secret');
+    expect(requests[0].authorization).toBeUndefined();
+    expect(requests[1]).toEqual({ url: ME_URL, authorization: 'Bearer tok' });
+  });
+
+  test('fresh sign-up attempt → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = facebookGraph(DEBUG_TOKEN, ME);
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = facebookGraph(DEBUG_TOKEN, ME);
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in a /me body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = facebookGraph(DEBUG_TOKEN, { ...ME, email_verified: emailVerified });
+
+      const { result, override } = await runGetUserInfo(
+        'facebook',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = facebookGraph(DEBUG_TOKEN, ME);
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'facebook',
+      providerUserId: '10158',
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([undefined, null, '', 42])('email %p → email-required rejection', async (email) => {
+    const { store } = makeStore();
+    const { fetchImpl } = facebookGraph(DEBUG_TOKEN, { ...ME, email });
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+  });
+
+  test.each([
+    ['a failed debug_token request', null, ME, ALL_ENABLED, 'tok'],
+    ['a token issued to another app', { data: { ...DEBUG_TOKEN.data, app_id: 'other-app' } }, ME, ALL_ENABLED, 'tok'],
+    ['an invalid token', { data: { ...DEBUG_TOKEN.data, is_valid: false } }, ME, ALL_ENABLED, 'tok'],
+    ['a truthy non-boolean is_valid', { data: { ...DEBUG_TOKEN.data, is_valid: 'true' } }, ME, ALL_ENABLED, 'tok'],
+    ['a token tied to no user', { data: { ...DEBUG_TOKEN.data, user_id: undefined } }, ME, ALL_ENABLED, 'tok'],
+    ['a debug_token body with no data', {}, ME, ALL_ENABLED, 'tok'],
+    ['a /me id that is not the token user', DEBUG_TOKEN, { ...ME, id: '99999' }, ALL_ENABLED, 'tok'],
+    ['a /me body with no id', DEBUG_TOKEN, { ...ME, id: undefined }, ALL_ENABLED, 'tok'],
+    ['a numeric /me id', DEBUG_TOKEN, { ...ME, id: 10158 }, ALL_ENABLED, 'tok'],
+    ['a failed /me request', DEBUG_TOKEN, null, ALL_ENABLED, 'tok'],
+    ['an array /me body', DEBUG_TOKEN, [ME], ALL_ENABLED, 'tok'],
+    ['no app secret to inspect the token with', DEBUG_TOKEN, ME, { ...ALL_ENABLED, FACEBOOK_CLIENT_SECRET: '' }, 'tok'],
+    ['a missing access token', DEBUG_TOKEN, ME, ALL_ENABLED, ''],
+  ])('%s yields no identity', async (_label, debugBody, meBody, env, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = facebookGraph(debugBody, meBody);
+
+    const { result, override } = await runGetUserInfo(
+      'facebook',
+      { accessToken },
+      { store, env, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an unproven token never reaches /me', async () => {
+    const { store } = makeStore();
+    const { fetchImpl, requests } = facebookGraph(
+      { data: { ...DEBUG_TOKEN.data, app_id: 'other-app' } },
+      ME
+    );
+
+    await runGetUserInfo('facebook', { accessToken: 'tok' }, { store, env: ALL_ENABLED, fetchImpl });
+
+    expect(requests.map((r) => r.url.split('?')[0])).toEqual(['https://graph.facebook.com/debug_token']);
   });
 });

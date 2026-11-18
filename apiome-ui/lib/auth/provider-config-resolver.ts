@@ -140,6 +140,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   // Apple (OLO-9.30, #5043): the sealed secret is the .p8 private key; the Team ID and Key ID are
   // config extras that overlay via the extras loop below.
   apple: { clientId: 'APPLE_CLIENT_ID', clientSecret: 'APPLE_PRIVATE_KEY' },
+  // Facebook (OLO-9.31, #5044): credentials-only; fixed endpoints, no issuer extra.
+  facebook: { clientId: 'FACEBOOK_CLIENT_ID', clientSecret: 'FACEBOOK_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

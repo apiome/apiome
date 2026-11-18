@@ -294,6 +294,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'bitbucket',
       'discord',
       'dropbox',
+      'facebook',
       'figma',
       'github',
       'gitlab',

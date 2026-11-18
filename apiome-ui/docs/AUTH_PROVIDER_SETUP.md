@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -154,6 +154,8 @@ config is stored in the database need none of them set; see
 | `APPLE_PRIVATE_KEY` | Apple | To enable Apple | The Sign in with Apple private key — the whole `.p8` file (stored as the sealed secret) |
 | `APPLE_TEAM_ID` | Apple | To enable Apple | The 10-character Apple Developer **Team ID** |
 | `APPLE_KEY_ID` | Apple | To enable Apple | The **Key ID** of the `.p8` private key |
+| `FACEBOOK_CLIENT_ID` | Facebook | To enable Facebook | Meta app **App ID** |
+| `FACEBOOK_CLIENT_SECRET` | Facebook | To enable Facebook | Meta app **App secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -249,7 +251,7 @@ links an account.
 | `railway` | **link-first** | OLO-9.28 | yes | `/oauth/me` email, no documented verified claim |
 | `hubspot` | **link-first** | OLO-9.29 | yes | Token-info email, no verified claim |
 | `apple` | **trusted** | OLO-9.30 | yes | `email_verified` id-token claim; Hide My Email relay addresses (`is_private_email`) are verified too |
-| `facebook` | **link-first** | OLO-9.31 | no | Graph email, no verified claim |
+| `facebook` | **link-first** | OLO-9.31 | yes | Graph email, no verified claim |
 | `twitter` | **link-first** | OLO-9.32 | no | Email needs elevated API access and carries no verified claim |
 | `reddit` | **link-only** | OLO-9.33 | no | No email address (`has_verified_email` alone names no address) |
 | `spotify` | **link-first** | OLO-9.34 | no | `/v1/me` email is documented as unverified |
@@ -1612,6 +1614,71 @@ identity. What it means for linking:
   certain email domains, `privaterelay.appleid.com` is not one of them, so relay addresses cannot
   create accounts; linking still works.
 
+## Facebook — Facebook Login (OLO-9.31)
+
+For the many people whose main consumer identity is Facebook. Apiome uses Facebook Login's OAuth
+2.0 web flow. Facebook is a **link-first** provider: read
+[Email verified semantics](#facebook-email-verified-semantics) below before turning it on, because
+nobody can *create* an Apiome account with it.
+
+1. In [Meta for Developers](https://developers.facebook.com/apps/), create an app with the
+   **Authenticate and request data from users with Facebook Login** use case. Give it a name people
+   will recognize — Facebook shows it on the consent screen.
+2. Under **Facebook Login → Settings**, add the callback to **Valid OAuth Redirect URIs**
+   (Facebook requires an exact match and HTTPS):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/facebook`
+     (`http://localhost` callbacks work only while the app is in development mode)
+3. Keep the **`email`** and **`public_profile`** permissions — the only ones Apiome asks for.
+4. Under **App settings → Advanced**, leave **Require App Secret** off: Apiome reads the profile
+   with the person's access token and sends no `appsecret_proof`.
+5. Copy the **App ID** and **App secret** from **App settings → Basic**.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+FACEBOOK_CLIENT_ID=<App ID>
+FACEBOOK_CLIENT_SECRET=<App secret>
+```
+
+7. Until the app is switched to **Live**, only people with a role on it (administrators,
+   developers, testers) can sign in.
+
+Facebook's endpoints are fixed (Graph API v24.0), so there is no issuer to configure (mirroring
+Better Auth's `facebook()` helper):
+
+- Authorize: `https://www.facebook.com/v24.0/dialog/oauth` with the `email public_profile` scopes.
+  Apiome keeps no Facebook token and reads no pages, posts, friends or other Facebook data.
+- Token: `https://graph.facebook.com/v24.0/oauth/access_token` — the App ID and App secret are sent
+  in the form body. No PKCE challenge is sent (like the helper; Better Auth enforces `state`).
+- Token check: `https://graph.facebook.com/debug_token`, authenticated with the app access token
+  `<App ID>|<App secret>`. Graph `/me` answers for a token minted to *any* Facebook app, so —
+  as the helper does — the token must be valid, issued to this App ID, and tied to a user before
+  Apiome reads the profile.
+- Profile: `https://graph.facebook.com/me?fields=id,name,email,picture`, with the access token as
+  a bearer token. Its `id` must be the user the token check named.
+
+The identity is keyed on `id`, the person's app-scoped Facebook user id: it stays the same for this
+app, but is different for each Meta app, so replacing the app (rather than rotating its secret)
+creates new identities and people link Facebook again. `name` is the display name and
+`picture.data.url` the avatar.
+
+<a id="facebook-email-verified-semantics"></a>
+**Email verified semantics:** Graph returns the person's email address (`email`), but **no**
+verified claim. Any `email_verified` field in a response is dropped rather than trusted (Better
+Auth's helper would honor one). The engine always fail-closes (**link-first**), and `facebook` is
+not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Facebook card on **Linked accounts**.
+  The explicit link binds the Facebook identity to their account whatever its email address.
+- **Subsequent sign-in** — once linked, **Sign in with Facebook** signs that person in.
+- **Fresh sign-up, or a first sign-in without linking** — rejected with `unverified-email`, even
+  when the address matches an existing account. This is intended: the address is never used to
+  join or create an account. Revisit only with a documented policy decision.
+
+A sign-in with no `email` — the person declined the `email` permission, or their Facebook account
+has only a phone number — surfaces `email-required`. A token that fails the check, a failed `/me`
+request, or a `/me` `id` that is not the token's user yields no identity and the sign-in is
+refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1784,7 +1851,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot and Apple need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple and Facebook need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

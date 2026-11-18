@@ -259,6 +259,15 @@
         { "field": "team_id", "kind": "config", "env_key": "APPLE_TEAM_ID" },
         { "field": "key_id", "kind": "config", "env_key": "APPLE_KEY_ID" }
       ]
+    },
+    {
+      "id": "facebook",
+      "label": "Facebook",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "FACEBOOK_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "FACEBOOK_CLIENT_SECRET" }
+      ]
     }
   ]
 }

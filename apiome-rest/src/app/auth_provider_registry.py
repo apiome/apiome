@@ -140,7 +140,8 @@ class ProviderDescriptor:
 # ``hubspot`` is available (OLO-9.29, #5042) as credentials-only HubSpot OAuth (fixed endpoints, no issuer);
 # ``apple`` is available (OLO-9.30, #5043) as Sign in with Apple: the client id is the Services ID, the
 # sealed secret slot holds the ``.p8`` private key (``private_key``), and the Team ID and Key ID are
-# ``config`` extras (``team_id``, ``key_id``) — the client secret is an ES256 JWT minted per exchange.
+# ``config`` extras (``team_id``, ``key_id``) — the client secret is an ES256 JWT minted per exchange;
+# ``facebook`` is available (OLO-9.31, #5044) as credentials-only Facebook Login (fixed Graph endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -316,6 +317,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
             RequiredField("team_id", FIELD_KIND_CONFIG, "APPLE_TEAM_ID"),
             RequiredField("key_id", FIELD_KIND_CONFIG, "APPLE_KEY_ID"),
         ),
+    ),
+    ProviderDescriptor(
+        "facebook",
+        "Facebook",
+        STATUS_AVAILABLE,
+        client_credential_fields("FACEBOOK_CLIENT_ID", "FACEBOOK_CLIENT_SECRET"),
     ),
 )
 
