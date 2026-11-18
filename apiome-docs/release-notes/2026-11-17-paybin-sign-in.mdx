@@ -1,0 +1,29 @@
+---
+slug: paybin-sign-in
+title: Sign in with Paybin
+description: "People can now sign in, sign up and link with their Paybin account."
+authors: [apiome]
+---
+
+People can now sign in to Apiome, create an account and link their Paybin account on
+[Linked accounts](/workspace/linked-accounts) with **Continue with Paybin**.
+
+{/* truncate */}
+
+- **For administrators.** **Paybin** is a new entry in **System settings → Add Provider**. It needs
+  the **client ID** and **client secret** of an OAuth client registered with Paybin's identity
+  provider (`idp.paybin.io`); there is no issuer to set.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Paybin's side. The environment variables are `PAYBIN_CLIENT_ID` and `PAYBIN_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/paybin`, set as the client's
+  **redirect URI**.
+- **Scopes.** Apiome asks for **openid**, **email** and **profile** only. It reads the name, email
+  address and picture of the person signing in from Paybin's id token; it reads no wallets,
+  payments or balances and keeps no Paybin token.
+- **Trusted.** Paybin's id token says whether the email address is verified. A verified address
+  joins the Apiome account with that address, or creates one; an unverified one ends with *Your
+  sign-in provider could not confirm that your email address is verified…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `paybin` as an available provider, and
+  `PUT /v1/admin/auth-providers/paybin` stores its credentials.

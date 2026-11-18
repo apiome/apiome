@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar, patreon, gumroad — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar, patreon, gumroad, paybin — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -191,6 +191,12 @@
  *    verified claim** (Better Auth `gumroad()` hard-codes `emailVerified: false`) → fail-closed
  *    link-first: an explicit link and the subsequent sign-in work, the email never joins or
  *    creates an account.
+ *  - **Paybin (OLO-9.49):** Paybin OIDC on fixed endpoints mirrored from Better Auth's `paybin`
+ *    provider (`idp.paybin.io/oauth2/authorize`, `idp.paybin.io/oauth2/token`), scopes
+ *    `openid email profile`, client credentials in the form body, PKCE (`S256`) — as the helper
+ *    does. The claims come from the id token, which must name the Paybin issuer and this client as
+ *    its audience, keyed on `sub`; its native `email_verified` claim → **trusted** only when true,
+ *    fail-closed otherwise.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -823,6 +829,11 @@ const GUMROAD_AUTHORIZE_URL = 'https://gumroad.com/oauth/authorize';
 const GUMROAD_TOKEN_URL = 'https://api.gumroad.com/oauth/token';
 /** The user resource (`success`, `user.user_id` / `name` / `email` / `profile_url`), as the helper reads it. */
 const GUMROAD_USER_URL = 'https://api.gumroad.com/v2/user';
+
+/** Paybin OIDC: fixed endpoints, mirrored from Better Auth's `paybin` provider (OLO-9.49). */
+const PAYBIN_ISSUER = 'https://idp.paybin.io';
+const PAYBIN_AUTHORIZE_URL = `${PAYBIN_ISSUER}/oauth2/authorize`;
+const PAYBIN_TOKEN_URL = `${PAYBIN_ISSUER}/oauth2/token`;
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2729,6 +2740,64 @@ async function normalizeGumroad(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string claim from a Paybin id token, trimmed; anything else is ''.
+ *
+ * @param value The raw claim value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function paybinString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Paybin sign-in (OLO-9.49): decode the id token from the code exchange — the claims
+ * Better Auth's `paybin()` helper reads (Paybin has no userinfo call in the helper). The token must
+ * name the Paybin issuer (`https://idp.paybin.io`, a trailing slash tolerated) and this client as
+ * an audience, and carry a usable `sub`, which keys the identity. The name is `name`, else
+ * `preferred_username`, else `given_name` + `family_name`; `picture` is the avatar.
+ *
+ * `email_verified` passes through untouched, so `resolveOAuthEmailVerified` treats the address as
+ * verified only when Paybin sends the claim as true (the helper's `email_verified || false`);
+ * absent or false fail-closes to link-first. A missing or unreadable id token, a foreign issuer or
+ * audience, or a token without a `sub` yields an empty profile (no account id, no email), which the
+ * engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `idToken` is read).
+ * @param env Environment to read `PAYBIN_CLIENT_ID` from (the expected audience).
+ * @returns The normalized profile for the resolution engine.
+ */
+function normalizePaybin(
+  tokens: OAuth2Tokens,
+  env: Record<string, string | undefined>
+): NormalizedOAuthProfile {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const claims = decodeJwtClaims(tokens.idToken);
+  if (!claims) return none;
+  const clientId = readEnvString(env, 'PAYBIN_CLIENT_ID') ?? '';
+  const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  const issuer = paybinString(claims.iss).replace(/\/$/, '');
+  const accountId = paybinString(claims.sub);
+  if (issuer !== PAYBIN_ISSUER || !clientId || !audience.includes(clientId) || !accountId) {
+    return none;
+  }
+  const email = paybinString(claims.email) || null;
+  const fullName = [paybinString(claims.given_name), paybinString(claims.family_name)]
+    .filter(Boolean)
+    .join(' ');
+  const name =
+    paybinString(claims.name) || paybinString(claims.preferred_username) || fullName || null;
+  const image = paybinString(claims.picture) || null;
+  const profile: Record<string, unknown> = { sub: accountId };
+  if (email) {
+    profile.email = email;
+    if ('email_verified' in claims) profile.email_verified = claims.email_verified;
+  }
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2794,6 +2863,7 @@ const NORMALIZERS: Record<
   polar: (tokens, _env, fetchImpl) => normalizePolar(tokens, fetchImpl),
   patreon: (tokens, _env, fetchImpl) => normalizePatreon(tokens, fetchImpl),
   gumroad: (tokens, _env, fetchImpl) => normalizeGumroad(tokens, fetchImpl),
+  paybin: (tokens, env) => normalizePaybin(tokens, env),
 };
 
 /**
@@ -2829,7 +2899,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
  *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
- *   roblox | kick | paypal | polar | patreon | gumroad).
+ *   roblox | kick | paypal | polar | patreon | gumroad | paybin).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3685,6 +3755,25 @@ export function buildGenericOAuthConfig(
         scopes: ['view_profile'],
         authentication: 'post',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'paybin': {
+      return {
+        providerId: 'paybin',
+        clientId: readEnvString(env, 'PAYBIN_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'PAYBIN_CLIENT_SECRET') ?? '',
+        // Fixed Paybin OIDC endpoints, mirrored from Better Auth's `paybin()` helper on its default
+        // issuer — no issuer to configure. Like the helper, the code exchange sends the client id
+        // and secret in the form body and a PKCE challenge (`S256`) is sent (the helper requires
+        // one). The scopes are the helper's default OIDC trio; Apiome reads no wallets, payments
+        // or balances. The id token's `email_verified` claim → trusted when true, fail-closed
+        // otherwise (see normalizePaybin).
+        authorizationUrl: PAYBIN_AUTHORIZE_URL,
+        tokenUrl: PAYBIN_TOKEN_URL,
+        scopes: ['openid', 'email', 'profile'],
+        authentication: 'post',
+        pkce: true,
         getUserInfo,
       };
     }

@@ -31,7 +31,7 @@
  * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
  * X / Twitter (OLO-9.32), Reddit (OLO-9.33), Spotify (OLO-9.34), Twitch (OLO-9.35), TikTok
  * (OLO-9.36), Roblox (OLO-9.37), Kick (OLO-9.38), PayPal (OLO-9.45), Polar (OLO-9.46), Patreon
- * (OLO-9.47), and Gumroad (OLO-9.48) followed exactly that path.
+ * (OLO-9.47), Gumroad (OLO-9.48), and Paybin (OLO-9.49) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -536,6 +536,16 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // issuer. Gumroad returns the user's email with no verified claim → link-first — see
     // AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('GUMROAD_CLIENT_ID', 'GUMROAD_CLIENT_SECRET'),
+  },
+  {
+    id: 'paybin',
+    label: 'Paybin',
+    status: 'available',
+    // Paybin (OLO-9.49, #5062): credentials only — the client ID and client secret of an OAuth
+    // client registered with Paybin; fixed OIDC endpoints on idp.paybin.io, so no issuer. The id
+    // token's `email_verified` claim → trusted when true, fail-closed otherwise — see
+    // AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('PAYBIN_CLIENT_ID', 'PAYBIN_CLIENT_SECRET'),
   },
 ];
 

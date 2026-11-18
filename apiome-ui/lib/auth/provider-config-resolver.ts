@@ -166,6 +166,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   patreon: { clientId: 'PATREON_CLIENT_ID', clientSecret: 'PATREON_CLIENT_SECRET' },
   // Gumroad (OLO-9.48, #5061): credentials-only; fixed OAuth 2.0 endpoints, no issuer extra.
   gumroad: { clientId: 'GUMROAD_CLIENT_ID', clientSecret: 'GUMROAD_CLIENT_SECRET' },
+  // Paybin (OLO-9.49, #5062): credentials-only; fixed OIDC endpoints, no issuer extra.
+  paybin: { clientId: 'PAYBIN_CLIENT_ID', clientSecret: 'PAYBIN_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar, Patreon, Gumroad), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar, Patreon, Gumroad, Paybin), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -179,6 +179,8 @@ config is stored in the database need none of them set; see
 | `PATREON_CLIENT_SECRET` | Patreon | To enable Patreon | Patreon OAuth client **Client Secret** |
 | `GUMROAD_CLIENT_ID` | Gumroad | To enable Gumroad | Gumroad OAuth application **Application ID** |
 | `GUMROAD_CLIENT_SECRET` | Gumroad | To enable Gumroad | Gumroad OAuth application **Application Secret** |
+| `PAYBIN_CLIENT_ID` | Paybin | To enable Paybin | Paybin OAuth client **client ID** |
+| `PAYBIN_CLIENT_SECRET` | Paybin | To enable Paybin | Paybin OAuth client **client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -289,7 +291,7 @@ links an account.
 | `polar` | **trusted** | OLO-9.46 | yes | `email_verified` claim on the OAuth userinfo |
 | `patreon` | **trusted** | OLO-9.47 | yes | `is_email_verified` on the identity resource |
 | `gumroad` | **link-first** | OLO-9.48 | yes | `/v2/user` email, no verified claim |
-| `paybin` | **link-first** (provisional) | OLO-9.49 | no | Email semantics confirmed at implementation |
+| `paybin` | **trusted** | OLO-9.49 | yes | `email_verified` claim on the id token |
 
 ## Boot-time validation
 
@@ -2311,6 +2313,52 @@ fail-closes (**link-first**), and `gumroad` is not in `AUTO_LINK_TRUSTED_PROVIDE
 A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed profile request, a
 body whose `success` is not `true`, a body without a `user` object, or a user with no string
 `user_id` yields no identity and the sign-in is refused.
+
+## Paybin (OLO-9.49)
+
+For merchants and teams who already use Paybin. Apiome uses the OpenID Connect
+authorization-code flow with PKCE of Paybin's identity provider (`idp.paybin.io`), and Paybin is a
+**trusted** provider: a Paybin email that the id token reports as verified joins or creates an
+Apiome account.
+
+1. Register an OAuth client with Paybin's identity provider and set its redirect URI to the
+   callback (an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/paybin`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/paybin` for local dev)
+2. Allow the **openid**, **email** and **profile** scopes and the authorization-code grant, and
+   keep the client confidential (it has a client secret).
+3. Copy the client's **client ID** and **client secret**.
+4. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+PAYBIN_CLIENT_ID=<client ID>
+PAYBIN_CLIENT_SECRET=<client secret>
+```
+
+Paybin's endpoints are fixed on Better Auth's default issuer, so there is no issuer to configure
+(mirroring Better Auth's `paybin()` helper):
+
+- Authorize: `https://idp.paybin.io/oauth2/authorize` with the `openid email profile` scopes (the
+  helper's default) and a PKCE `S256` challenge — the helper requires one. Apiome reads no
+  wallets, payments or balances.
+- Token: `https://idp.paybin.io/oauth2/token` — the client ID and secret are sent in the form
+  body. Apiome keeps no Paybin token.
+- Profile: the id token from the token response, as the helper reads it; there is no userinfo
+  call. The token must name `https://idp.paybin.io` as its issuer (`iss`) and the client ID as an
+  audience (`aud`).
+
+The identity is keyed on `sub`, the Paybin user ID. `name` (else `preferred_username`, else
+`given_name` + `family_name`) is the display name and `picture` the avatar.
+
+**Email verified semantics:** the id token carries the standard OIDC `email_verified` claim; it is
+honored when true (the helper's `email_verified || false`). When it is absent or false the engine
+fail-closes (**link-first** — explicit link intent or an already-bound identity), and a fresh
+sign-in is rejected with `unverified-email`. A person whose Paybin address is unverified verifies
+it with Paybin, or signs in another way and links Paybin from **Linked accounts**. A sign-in with
+no email at all surfaces `email-required`.
+
+A missing or unreadable id token, a token from another issuer or for another client, or a token
+without a `sub` yields no identity and the sign-in is refused.
 
 ## Secrets handling
 
