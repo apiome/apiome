@@ -1,0 +1,30 @@
+---
+slug: roblox-sign-in
+title: Sign in with Roblox
+description: "People can now link their Roblox account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Roblox account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Roblox** is a new entry in **System settings → Add Provider**. It needs
+  the **Client ID** and **Client secret** of an OAuth 2.0 App on the Roblox Creator Dashboard — no
+  issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to
+  set on Roblox's side. The environment variables are `ROBLOX_CLIENT_ID` and
+  `ROBLOX_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/roblox`, added under the app's
+  **Redirect URLs**.
+- **Scopes.** Apiome asks for **openid** and **profile** only and uses them to read the display
+  name, username and avatar of the person signing in. Apiome reads no experiences, groups,
+  inventory or Robux and keeps no Roblox token.
+- **Link only.** Apiome reads no email address from Roblox, so it can never use Roblox to find or
+  create an account. People sign in another way, link Roblox from **Linked accounts**, and can sign
+  in with Roblox after that. Before linking, a Roblox sign-in ends with *…did not share an email
+  address…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `roblox` as an available provider, and
+  `PUT /v1/admin/auth-providers/roblox` stores its credentials.

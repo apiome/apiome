@@ -147,7 +147,8 @@ class ProviderDescriptor:
 # ``spotify`` is available (OLO-9.34, #5047) as credentials-only Spotify OAuth 2.0 + PKCE (fixed endpoints, no issuer);
 # ``twitch`` is available (OLO-9.35, #5048) as credentials-only Twitch OIDC (fixed discovery document, no issuer);
 # ``tiktok`` is available (OLO-9.36, #5049) as credentials-only TikTok Login Kit (fixed endpoints, no issuer);
-# its ``client_id`` field is TikTok's "client key" (``TIKTOK_CLIENT_KEY``).
+# its ``client_id`` field is TikTok's "client key" (``TIKTOK_CLIENT_KEY``);
+# ``roblox`` is available (OLO-9.37, #5050) as credentials-only Roblox OIDC (fixed discovery document, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -359,6 +360,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "TikTok",
         STATUS_AVAILABLE,
         client_credential_fields("TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "roblox",
+        "Roblox",
+        STATUS_AVAILABLE,
+        client_credential_fields("ROBLOX_CLIENT_ID", "ROBLOX_CLIENT_SECRET"),
     ),
 )
 

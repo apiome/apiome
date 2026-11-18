@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -150,6 +150,13 @@
  *    performs the form-body `client_key` / `client_secret` exchange. The claims come from
  *    `open.tiktokapis.com/v2/user/info/`, which exposes **no email address** → link-only: an
  *    explicit link and the subsequent sign-in work, and a fresh sign-in is refused with
+ *    `OAuthEmailRequired`.
+ *  - **Roblox (OLO-9.37):** Roblox OIDC over Roblox's fixed discovery document
+ *    (`apis.roblox.com/oauth/.well-known/openid-configuration`), scopes `openid profile`,
+ *    `prompt=select_account consent`, client credentials in the form body, PKCE off — as Better
+ *    Auth's `roblox` provider does. The claims come from `apis.roblox.com/oauth/v1/userinfo`;
+ *    only profile claims are asked for, so there is **no email claim** → link-only: an explicit
+ *    link and the subsequent sign-in work, and a fresh sign-in is refused with
  *    `OAuthEmailRequired`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
@@ -752,6 +759,11 @@ const TIKTOK_TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 /** The authenticated user (`open_id`, `display_name`, `username`, `avatar_large_url`), as the helper reads it. */
 const TIKTOK_USER_INFO_URL =
   'https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_large_url,display_name,username';
+
+/** Roblox OIDC: the fixed discovery document (OLO-9.37). */
+const ROBLOX_DISCOVERY_URL = 'https://apis.roblox.com/oauth/.well-known/openid-configuration';
+/** The OIDC userinfo endpoint (`sub`, `name`, `nickname`, `preferred_username`, `picture`), as the helper reads it. */
+const ROBLOX_USER_INFO_URL = 'https://apis.roblox.com/oauth/v1/userinfo';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2306,6 +2318,58 @@ async function normalizeTiktok(
   return { accountId, profile, email: null, name, image };
 }
 
+/**
+ * Read a non-empty string claim from a Roblox userinfo response, trimmed; anything else is ''.
+ *
+ * @param value The raw claim value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function robloxString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Roblox sign-in (OLO-9.37): fetch `apis.roblox.com/oauth/v1/userinfo` with the access
+ * token and map `sub` / `nickname` / `preferred_username` / `picture` — the claims Better Auth's
+ * `roblox()` helper reads. The identity is keyed on `sub`, the Roblox user id; the username can
+ * change and is never the key. The name is the display name (`nickname`), else the username
+ * (`preferred_username`), else `name`.
+ *
+ * Apiome asks for profile claims only, so there is **no email claim**: the email is always null
+ * and the engine fail-closes to **link-only** — an already-linked identity signs in, an explicit
+ * link binds it, and anything else is refused with `OAuthEmailRequired`. Unlike the helper, which
+ * puts the `preferred_username` in the email slot, the username is never used as an address, and
+ * an `email` claim in the body is ignored. A failed request or a body without a string `sub`
+ * yields an empty profile (no account id), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeRoblox(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(ROBLOX_USER_INFO_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const claims = body as Record<string, unknown>;
+  const accountId = robloxString(claims.sub);
+  if (!accountId) return none;
+  const name =
+    robloxString(claims.nickname) ||
+    robloxString(claims.preferred_username) ||
+    robloxString(claims.name) ||
+    null;
+  const image = robloxString(claims.picture) || null;
+  const profile: Record<string, unknown> = { sub: accountId };
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email: null, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2365,6 +2429,7 @@ const NORMALIZERS: Record<
   spotify: (tokens, _env, fetchImpl) => normalizeSpotify(tokens, fetchImpl),
   twitch: (tokens, env) => normalizeTwitch(tokens, env),
   tiktok: (tokens, _env, fetchImpl) => normalizeTiktok(tokens, fetchImpl),
+  roblox: (tokens, _env, fetchImpl) => normalizeRoblox(tokens, fetchImpl),
 };
 
 /**
@@ -2399,7 +2464,8 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok).
+ *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
+ *   roblox).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3143,6 +3209,25 @@ export function buildGenericOAuthConfig(
             env,
             runnerDeps.fetchImpl ?? (fetch as unknown as FetchLike)
           ),
+        getUserInfo,
+      };
+    }
+    case 'roblox': {
+      return {
+        providerId: 'roblox',
+        clientId: readEnvString(env, 'ROBLOX_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'ROBLOX_CLIENT_SECRET') ?? '',
+        // Roblox OIDC on one fixed issuer — no issuer to configure; discovery supplies the
+        // authorize/token endpoints. Like Better Auth's `roblox()` helper it asks for `openid` and
+        // `profile` only (never `email`), prompts with `select_account consent`, sends the client
+        // id and secret in the form body and sends no PKCE challenge (Better Auth enforces
+        // `state`). Apiome reads no experiences, groups, inventory or Robux. No email claim →
+        // link-only (see normalizeRoblox).
+        discoveryUrl: ROBLOX_DISCOVERY_URL,
+        scopes: ['openid', 'profile'],
+        prompt: 'select_account consent',
+        authentication: 'post',
+        pkce: false,
         getUserInfo,
       };
     }

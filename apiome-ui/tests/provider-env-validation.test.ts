@@ -111,6 +111,8 @@ const ALL_ENABLED_ENV = {
   TWITCH_CLIENT_SECRET: 'tw-secret',
   TIKTOK_CLIENT_KEY: 'tt-key',
   TIKTOK_CLIENT_SECRET: 'tt-secret',
+  ROBLOX_CLIENT_ID: 'rb-id',
+  ROBLOX_CLIENT_SECRET: 'rb-secret',
 };
 
 describe('providerEnvIssues', () => {

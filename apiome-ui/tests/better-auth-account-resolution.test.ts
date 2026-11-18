@@ -310,6 +310,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'okta',
       'railway',
       'reddit',
+      'roblox',
       'salesforce',
       'slack',
       'spotify',

@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -166,6 +166,8 @@ config is stored in the database need none of them set; see
 | `TWITCH_CLIENT_SECRET` | Twitch | To enable Twitch | Twitch application **Client Secret** |
 | `TIKTOK_CLIENT_KEY` | TikTok | To enable TikTok | TikTok app **Client key** (TikTok's name for the client ID) |
 | `TIKTOK_CLIENT_SECRET` | TikTok | To enable TikTok | TikTok app **Client secret** |
+| `ROBLOX_CLIENT_ID` | Roblox | To enable Roblox | Roblox OAuth 2.0 app **Client ID** |
+| `ROBLOX_CLIENT_SECRET` | Roblox | To enable Roblox | Roblox OAuth 2.0 app **Client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -267,7 +269,7 @@ links an account.
 | `spotify` | **link-first** | OLO-9.34 | yes | `/v1/me` email is documented as unverified |
 | `twitch` | **trusted** | OLO-9.35 | yes | `email_verified` claim with the `user:read:email` scope |
 | `tiktok` | **link-only** | OLO-9.36 | yes | No email in user info |
-| `roblox` | **link-only** | OLO-9.37 | no | Profile claims only, no email claim |
+| `roblox` | **link-only** | OLO-9.37 | yes | Profile claims only, no email claim |
 | `kick` | **link-first** (provisional) | OLO-9.38 | no | Email availability and verified semantics confirmed at implementation |
 | `kakao` | **trusted** | OLO-9.39 | no | `is_email_valid` and `is_email_verified` on `kakao_account`, both true |
 | `naver` | **link-first** (provisional) | OLO-9.40 | no | `/v1/nid/me` email; verified semantics confirmed at implementation |
@@ -1982,6 +1984,62 @@ A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed 
 a response whose `error.code` is not `ok`, or a user with no string `open_id` yields no identity
 and the sign-in is refused.
 
+## Roblox (OLO-9.37)
+
+For the creator communities on Roblox. Apiome uses Roblox's OpenID Connect authorization-code
+flow. Roblox is a **link-only** provider: Apiome asks for **profile claims only**, so there is no
+email address, and nobody can *create* an Apiome account with it — read
+[Email semantics](#roblox-email-semantics) below before turning it on.
+
+1. Signed in to the [Roblox Creator Dashboard](https://create.roblox.com/dashboard/credentials),
+   open **Credentials → OAuth 2.0 Apps** and choose **Create OAuth App**.
+2. Give the app a **Name** (and the description, entry link and privacy and terms links Roblox
+   asks for).
+3. Under **Redirect URLs** add the callback (Roblox requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/roblox`
+4. Under **Permissions** add the **openid** and **profile** scopes. Apiome asks for nothing else —
+   not **email**.
+5. Save the app. The **Client ID** is on the app's page; generate the **Client secret** there
+   (Roblox shows it once).
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+ROBLOX_CLIENT_ID=<Client ID>
+ROBLOX_CLIENT_SECRET=<Client secret>
+```
+
+Roblox is one fixed OpenID Connect issuer (`https://apis.roblox.com/oauth/`), so there is no
+issuer to configure. The endpoints come from Roblox's discovery document (the scopes, prompt and
+exchange mirror Better Auth's `roblox()` helper):
+
+- Discovery: `https://apis.roblox.com/oauth/.well-known/openid-configuration`
+- Authorize: `https://apis.roblox.com/oauth/v1/authorize` with the `openid profile` scopes and
+  `prompt=select_account consent`. No PKCE challenge is sent; Better Auth enforces `state`.
+- Token: `https://apis.roblox.com/oauth/v1/token` — the client ID and secret are sent in the form
+  body. Apiome keeps no Roblox token.
+- Profile: `https://apis.roblox.com/oauth/v1/userinfo`, with the access token as a bearer token.
+
+The identity is keyed on the `sub` claim, the Roblox user ID; the username can change and is
+never the key. `nickname` (the display name) is the name — `preferred_username`, then `name`,
+when there is none — and `picture` the avatar headshot. Apiome reads no experiences, groups,
+inventory or Robux.
+
+<a id="roblox-email-semantics"></a>
+**Email semantics:** Apiome does not ask for the `email` scope, so Roblox returns no email
+address. Better Auth's helper puts the `preferred_username` in the email slot; Apiome never does —
+the profile carries no `email` and no `email_verified`, and an `email` claim in the response is
+ignored. The engine always fail-closes (**link-only**), and `roblox` is not in
+`AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Roblox card on **Linked accounts**. The
+  explicit link binds the Roblox identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with Roblox** signs that person in (the
+  account's own address is used).
+- **Fresh sign-in or sign-up** — rejected with `email-required` (`OAuthEmailRequired`).
+
+A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed userinfo request,
+or a response with no string `sub`, yields no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -2154,7 +2212,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch and TikTok need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok and Roblox need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

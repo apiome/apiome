@@ -123,6 +123,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   spotify: 'Spotify account sign-in',
   twitch: 'Twitch account sign-in',
   tiktok: 'TikTok account sign-in',
+  roblox: 'Roblox account sign-in',
 };
 
 /**
