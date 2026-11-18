@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -170,6 +170,9 @@ config is stored in the database need none of them set; see
 | `ROBLOX_CLIENT_SECRET` | Roblox | To enable Roblox | Roblox OAuth 2.0 app **Client secret** |
 | `KICK_CLIENT_ID` | Kick | To enable Kick | Kick app **Client ID** |
 | `KICK_CLIENT_SECRET` | Kick | To enable Kick | Kick app **Client Secret** |
+| `PAYPAL_CLIENT_ID` | PayPal | To enable PayPal | PayPal REST API app **Client ID** |
+| `PAYPAL_CLIENT_SECRET` | PayPal | To enable PayPal | PayPal REST API app **Secret** |
+| `PAYPAL_ENVIRONMENT` | PayPal | No (default `live`) | `sandbox` for a sandbox app's credentials and test accounts; any other value is live |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -276,7 +279,7 @@ links an account.
 | `kakao` | **trusted** | OLO-9.39 | no | `is_email_valid` and `is_email_verified` on `kakao_account`, both true |
 | `naver` | **link-first** (provisional) | OLO-9.40 | no | `/v1/nid/me` email; verified semantics confirmed at implementation |
 | `yandex` | **link-first** (provisional) | OLO-9.44 | no | `default_email`; verified semantics confirmed at implementation |
-| `paypal` | **trusted** | OLO-9.45 | no | `email_verified` claim |
+| `paypal` | **trusted** | OLO-9.45 | yes | `email_verified` claim |
 | `polar` | **link-first** (provisional) | OLO-9.46 | no | Email and verified semantics confirmed at implementation |
 | `patreon` | **trusted** | OLO-9.47 | no | `is_email_verified` on the identity resource |
 | `gumroad` | **link-first** | OLO-9.48 | no | User email, no verified claim |
@@ -2094,6 +2097,69 @@ A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed 
 a response with no `data` entry, or a user with no integer (or string) `user_id` yields no
 identity and the sign-in is refused.
 
+## PayPal — Log in with PayPal (OLO-9.45)
+
+For people who already have a PayPal account — useful where Apiome meets commerce workflows.
+Log in with PayPal is an OpenID Connect identity, and PayPal is a **trusted** provider: a
+verified PayPal email joins or creates an Apiome account.
+
+1. Sign in to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/) and open
+   **Apps & Credentials**. Pick **Sandbox** or **Live** at the top — the two have separate apps
+   and credentials.
+2. Choose **Create App** (type **Merchant**), or open an existing REST API app.
+3. Under **Features**, tick **Log in with PayPal** and open **Advanced Settings**:
+   - **Return URL:** `{BETTER_AUTH_URL}/api/auth/oauth2/callback/paypal`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/paypal` for local dev)
+   - **Information requested from customers:** tick **Full name** and **Email** — Apiome asks for
+     the `openid email profile` scopes, and PayPal refuses a scope the app does not have.
+   - Fill in the **privacy policy** and **user agreement** URLs PayPal asks for, then **Save**.
+4. Copy the app's **Client ID** and **Secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+PAYPAL_CLIENT_ID=<Client ID>
+PAYPAL_CLIENT_SECRET=<Secret>
+# Optional — only for an app created under Sandbox:
+# PAYPAL_ENVIRONMENT=sandbox
+```
+
+**The environment is optional.** Unset, sign-in goes through PayPal's live hosts. Set
+`PAYPAL_ENVIRONMENT=sandbox` when the Client ID and Secret come from a **Sandbox** app; people
+then sign in with PayPal sandbox test accounts. The value is trimmed and case-insensitive, and
+anything other than `sandbox` means live — a typo never quietly points production at test
+accounts (it fails at PayPal instead, because a sandbox app's credentials are unknown there). The
+same value can be set from **Admin → System Configuration** (the **Environment** field on the
+PayPal card, stored under `config.PAYPAL_ENVIRONMENT` and overlaid onto the env var per OLO-8.5 /
+OLO-10.8). Because it is optional it is never reported as missing by boot validation or by the
+admin **Validate** action: the client id and secret alone enable the provider.
+
+| Environment | Discovery | Userinfo |
+| --- | --- | --- |
+| live (default) | `https://www.paypal.com/.well-known/openid-configuration` | `https://api-m.paypal.com/v1/identity/oauth2/userinfo?schema=paypalv1.1` |
+| `sandbox` | `https://www.sandbox.paypal.com/.well-known/openid-configuration` | `https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo?schema=paypalv1.1` |
+
+The sign-in flow discovers its authorize and token endpoints from the discovery document and
+requests the `openid email profile` scopes. As in Better Auth's `paypal()` helper, the code
+exchange sends the client ID and secret as an HTTP **Basic** header (PayPal's token endpoint
+requires it) and no PKCE verifier; Better Auth enforces `state`. Apiome then reads the Identity
+API userinfo with the access token. When PayPal returned an id token, the userinfo answer must be
+for the same person — its `sub` (or `user_id`) has to equal the id token's `sub` — or it is
+discarded and the sign-in is refused. Apiome reads no payments, addresses or account details and
+keeps no PayPal token.
+
+The identity is keyed on `user_id` — the person's PayPal identity URL
+(`https://www.paypal.com/webapps/auth/identity/user/…`), which never changes. `name` is the
+display name and `picture` the avatar.
+
+**Email verified semantics:** PayPal reports `email_verified`; it is honored when true. When it
+is absent or false the engine fail-closes (**link-first** — explicit link intent or an
+already-bound identity), and a fresh sign-in is rejected with `unverified-email`. A person whose
+PayPal email address is unconfirmed confirms it in PayPal, or signs in another way and links
+PayPal from **Linked accounts**. A sign-in with no email at all surfaces `email-required`.
+
+A failed userinfo request, a response with no `user_id`, or an id token without a `sub` yields
+no identity and the sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -2266,7 +2332,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox and Kick need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox and Kick need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920) — and PayPal picks its issuer from the optional `PAYPAL_ENVIRONMENT` — see [PayPal](#paypal--log-in-with-paypal-olo-945).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

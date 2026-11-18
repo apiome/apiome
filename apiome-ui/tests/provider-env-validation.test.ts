@@ -115,6 +115,8 @@ const ALL_ENABLED_ENV = {
   ROBLOX_CLIENT_SECRET: 'rb-secret',
   KICK_CLIENT_ID: 'kk-id',
   KICK_CLIENT_SECRET: 'kk-secret',
+  PAYPAL_CLIENT_ID: 'pp-id',
+  PAYPAL_CLIENT_SECRET: 'pp-secret',
 };
 
 describe('providerEnvIssues', () => {

@@ -253,6 +253,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   tiktok: 'TikTok',
   roblox: 'Roblox',
   kick: 'Kick',
+  paypal: 'PayPal',
 };
 
 /**
