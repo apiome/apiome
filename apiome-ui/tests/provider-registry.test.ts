@@ -110,6 +110,8 @@ const ALL_ENABLED_ENV = {
   KICK_CLIENT_SECRET: 'kk-secret',
   PAYPAL_CLIENT_ID: 'pp-id',
   PAYPAL_CLIENT_SECRET: 'pp-secret',
+  POLAR_CLIENT_ID: 'pl-id',
+  POLAR_CLIENT_SECRET: 'pl-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -152,6 +154,7 @@ describe('registry vocabulary', () => {
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
   });
 
@@ -193,6 +196,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('roblox')?.label).toBe('Roblox');
     expect(getProviderDescriptor('kick')?.label).toBe('Kick');
     expect(getProviderDescriptor('paypal')?.label).toBe('PayPal');
+    expect(getProviderDescriptor('polar')?.label).toBe('Polar');
   });
 
   it('pins each available provider env contract', () => {
@@ -356,9 +360,13 @@ describe('registry vocabulary', () => {
       'PAYPAL_CLIENT_ID',
       'PAYPAL_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('polar')?.requiredEnvKeys).toEqual([
+      'POLAR_CLIENT_ID',
+      'POLAR_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/paypal/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43, 9.45); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/paypal/polar/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43, 9.45, 9.46); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -392,6 +400,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('roblox')?.status).toBe('available');
     expect(getProviderDescriptor('kick')?.status).toBe('available');
     expect(getProviderDescriptor('paypal')?.status).toBe('available');
+    expect(getProviderDescriptor('polar')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -450,6 +459,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('roblox', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('kick', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('paypal', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('polar', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -668,6 +678,10 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('paypal', { PAYPAL_CLIENT_ID: 'x' })).toBe(false);
     // The environment is an optional extra: setting it alone never enables PayPal.
     expect(isProviderEnabled('paypal', { PAYPAL_ENVIRONMENT: 'sandbox' })).toBe(false);
+    expect(
+      isProviderEnabled('polar', { POLAR_CLIENT_ID: 'x', POLAR_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('polar', { POLAR_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -715,6 +729,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -759,6 +774,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
   });
 
@@ -801,6 +817,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'roblox',
       'kick',
       'paypal',
+      'polar',
     ]);
   });
 });
@@ -847,6 +864,7 @@ describe('providerSummaries', () => {
       { id: 'roblox', label: 'Roblox', status: 'available', enabled: false },
       { id: 'kick', label: 'Kick', status: 'available', enabled: false },
       { id: 'paypal', label: 'PayPal', status: 'available', enabled: false },
+      { id: 'polar', label: 'Polar', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

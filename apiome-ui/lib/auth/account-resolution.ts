@@ -172,6 +172,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * claim (Better Auth's `kick()` helper hard-codes `emailVerified: false`), so it is link-first.
  * `paypal` (OLO-9.45) is trusted through the generic path: Log in with PayPal's userinfo carries a
  * native `email_verified` claim; absent or false fail-closes to link-first.
+ * `polar` (OLO-9.46) is trusted through the generic path: Polar's OAuth userinfo carries a native
+ * `email_verified` claim; absent or false fail-closes to link-first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -204,6 +206,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'apple',
   'twitch',
   'paypal',
+  'polar',
 ]);
 
 /**
@@ -278,6 +281,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'roblox',
   'kick',
   'paypal',
+  'polar',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

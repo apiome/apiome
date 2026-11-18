@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -173,6 +173,8 @@ config is stored in the database need none of them set; see
 | `PAYPAL_CLIENT_ID` | PayPal | To enable PayPal | PayPal REST API app **Client ID** |
 | `PAYPAL_CLIENT_SECRET` | PayPal | To enable PayPal | PayPal REST API app **Secret** |
 | `PAYPAL_ENVIRONMENT` | PayPal | No (default `live`) | `sandbox` for a sandbox app's credentials and test accounts; any other value is live |
+| `POLAR_CLIENT_ID` | Polar | To enable Polar | Polar OAuth app **Client ID** |
+| `POLAR_CLIENT_SECRET` | Polar | To enable Polar | Polar OAuth app **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -280,7 +282,7 @@ links an account.
 | `naver` | **link-first** (provisional) | OLO-9.40 | no | `/v1/nid/me` email; verified semantics confirmed at implementation |
 | `yandex` | **link-first** (provisional) | OLO-9.44 | no | `default_email`; verified semantics confirmed at implementation |
 | `paypal` | **trusted** | OLO-9.45 | yes | `email_verified` claim |
-| `polar` | **link-first** (provisional) | OLO-9.46 | no | Email and verified semantics confirmed at implementation |
+| `polar` | **trusted** | OLO-9.46 | yes | `email_verified` claim on the OAuth userinfo |
 | `patreon` | **trusted** | OLO-9.47 | no | `is_email_verified` on the identity resource |
 | `gumroad` | **link-first** | OLO-9.48 | no | User email, no verified claim |
 | `paybin` | **link-first** (provisional) | OLO-9.49 | no | Email semantics confirmed at implementation |
@@ -2158,6 +2160,54 @@ PayPal email address is unconfirmed confirms it in PayPal, or signs in another w
 PayPal from **Linked accounts**. A sign-in with no email at all surfaces `email-required`.
 
 A failed userinfo request, a response with no `user_id`, or an id token without a `sub` yields
+no identity and the sign-in is refused.
+
+## Polar (OLO-9.46)
+
+For open-source and API creators who sell through Polar. Apiome uses Polar's OAuth 2.0 / OpenID
+Connect authorization-code flow with PKCE, and Polar is a **trusted** provider: a verified Polar
+email joins or creates an Apiome account.
+
+1. Signed in to [Polar](https://polar.sh), open **Settings → Developers** and choose **New OAuth
+   App** (an OAuth app belongs to your user, not to an organization).
+2. Name the app and add the callback as a **Redirect URI** (Polar requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/polar`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/polar` for local dev)
+3. Keep the client type **Confidential** and tick the **openid**, **profile** and **email**
+   scopes — Polar refuses a scope the app does not have.
+4. Create the app and copy its **Client ID** and **Client Secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+POLAR_CLIENT_ID=<Client ID>
+POLAR_CLIENT_SECRET=<Client Secret>
+```
+
+Polar's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`polar()` helper):
+
+- Authorize: `https://polar.sh/oauth2/authorize` with the `openid profile email` scopes (the
+  helper's default) and a PKCE `S256` challenge. Apiome reads no organizations, products,
+  orders, subscriptions or customers.
+- Token: `https://api.polar.sh/v1/oauth2/token` — the client ID and secret are sent in the form
+  body. Apiome keeps no Polar token.
+- Userinfo: `https://api.polar.sh/v1/oauth2/userinfo` with the access token. When Polar returned
+  an id token, the userinfo answer must be for the same person — its `sub` has to equal the id
+  token's `sub` — or it is discarded and the sign-in is refused.
+
+The identity is keyed on `sub`, the Polar user ID (Better Auth's profile calls the same value
+`id`, which is read when `sub` is absent); the username can change and is never the key. `name`
+(else `public_name` / `username`) is the display name and `picture` (else `avatar_url`) the
+avatar.
+
+**Email verified semantics:** Polar's userinfo reports `email_verified`; it is honored when true
+(the helper's `email_verified ?? false`). When it is absent or false the engine fail-closes
+(**link-first** — explicit link intent or an already-bound identity), and a fresh sign-in is
+rejected with `unverified-email`. A person whose Polar email address is unverified verifies it in
+Polar, or signs in another way and links Polar from **Linked accounts**. A sign-in with no email
+at all surfaces `email-required`.
+
+A failed userinfo request, a response with no usable `sub`, or an id token without a `sub` yields
 no identity and the sign-in is refused.
 
 ## Secrets handling

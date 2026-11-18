@@ -117,6 +117,8 @@ const ALL_ENABLED_ENV = {
   KICK_CLIENT_SECRET: 'kk-secret',
   PAYPAL_CLIENT_ID: 'pp-id',
   PAYPAL_CLIENT_SECRET: 'pp-secret',
+  POLAR_CLIENT_ID: 'pl-id',
+  POLAR_CLIENT_SECRET: 'pl-secret',
 };
 
 describe('providerEnvIssues', () => {

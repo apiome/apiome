@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -172,6 +172,12 @@
  *    (`api-m[.sandbox].paypal.com/v1/identity/oauth2/userinfo?schema=paypalv1.1`), bound to the
  *    id token's `sub`; PayPal's native `email_verified` claim → **trusted** when true, fail-closed
  *    via `resolveOAuthEmailVerified` otherwise (`paypal-environment.ts`).
+ *  - **Polar (OLO-9.46):** Polar OAuth 2.0 / OIDC on fixed endpoints mirrored from Better Auth's
+ *    `polar` provider (`polar.sh/oauth2/authorize`, `api.polar.sh/v1/oauth2/token`), scopes
+ *    `openid profile email`, client credentials in the form body, PKCE on — as the helper does.
+ *    The claims come from `api.polar.sh/v1/oauth2/userinfo`, keyed on `sub` (or the helper's
+ *    `id`) and bound to the id token's `sub`; Polar's native `email_verified` claim → **trusted**
+ *    when true, fail-closed via `resolveOAuthEmailVerified` otherwise.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -785,6 +791,12 @@ const KICK_AUTHORIZE_URL = 'https://id.kick.com/oauth/authorize';
 const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
 /** The authorized user (`data[0]`: `user_id`, `name`, `email`, `profile_picture`), as the helper reads it. */
 const KICK_USERS_URL = 'https://api.kick.com/public/v1/users';
+
+/** Polar OAuth 2.0 / OIDC: fixed endpoints, mirrored from Better Auth's `polar` provider (OLO-9.46). */
+const POLAR_AUTHORIZE_URL = 'https://polar.sh/oauth2/authorize';
+const POLAR_TOKEN_URL = 'https://api.polar.sh/v1/oauth2/token';
+/** The userinfo endpoint (`sub`, `name`, `email`, `email_verified`), as the helper reads it. */
+const POLAR_USER_INFO_URL = 'https://api.polar.sh/v1/oauth2/userinfo';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2521,6 +2533,66 @@ async function normalizePaypal(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Polar userinfo body, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function polarString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Polar sign-in (OLO-9.46): fetch `api.polar.sh/v1/oauth2/userinfo` with the access
+ * token — the resource Better Auth's `polar()` helper reads — and map its claims. The identity is
+ * keyed on `sub`, the Polar user id the OIDC userinfo returns; Better Auth's `PolarProfile` names
+ * the same id `id`, so `id` is read when `sub` is absent. The name is `name`, else the helper's
+ * `public_name` / `username`; the image is `picture`, else the helper's `avatar_url`.
+ *
+ * When the code exchange returned an id token, the userinfo body must describe the same person:
+ * its account id has to equal the id token's `sub` (OIDC Core §5.3.2). A mismatched body, an id
+ * token without a readable `sub`, a failed request or a body without a usable id yields an empty
+ * profile (no account id, no email), which the engine refuses.
+ *
+ * `email_verified` passes through untouched, so `resolveOAuthEmailVerified` treats the address as
+ * verified only when Polar sends the claim as true (the helper's `email_verified ?? false`); absent
+ * or false fail-closes to link-first.
+ *
+ * @param tokens The tokens from the code exchange (`accessToken` and `idToken` are read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizePolar(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(POLAR_USER_INFO_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const info = body as Record<string, unknown>;
+  const accountId = polarString(info.sub) || polarString(info.id);
+  if (!accountId) return none;
+  if (tokens.idToken) {
+    const idTokenSub = polarString(decodeJwtClaims(tokens.idToken)?.sub);
+    if (!idTokenSub || accountId !== idTokenSub) return none;
+  }
+  const email = polarString(info.email) || null;
+  const name =
+    polarString(info.name) || polarString(info.public_name) || polarString(info.username) || null;
+  const image = polarString(info.picture) || polarString(info.avatar_url) || null;
+  const profile: Record<string, unknown> = { sub: accountId };
+  if (email) {
+    profile.email = email;
+    if (info.email_verified !== undefined) profile.email_verified = info.email_verified;
+  }
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2583,6 +2655,7 @@ const NORMALIZERS: Record<
   roblox: (tokens, _env, fetchImpl) => normalizeRoblox(tokens, fetchImpl),
   kick: (tokens, _env, fetchImpl) => normalizeKick(tokens, fetchImpl),
   paypal: (tokens, env, fetchImpl) => normalizePaypal(tokens, env, fetchImpl),
+  polar: (tokens, _env, fetchImpl) => normalizePolar(tokens, fetchImpl),
 };
 
 /**
@@ -2618,7 +2691,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
  *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
- *   roblox | kick | paypal).
+ *   roblox | kick | paypal | polar).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3418,6 +3491,24 @@ export function buildGenericOAuthConfig(
         scopes: ['openid', 'email', 'profile'],
         authentication: 'basic',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'polar': {
+      return {
+        providerId: 'polar',
+        clientId: readEnvString(env, 'POLAR_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'POLAR_CLIENT_SECRET') ?? '',
+        // Fixed Polar OAuth 2.0 / OIDC endpoints, mirrored from Better Auth's `polar()` helper — no
+        // issuer. Like the helper, the code exchange sends the client id and secret in the form
+        // body and a PKCE challenge (`S256`) is sent. The scopes are the helper's default OIDC
+        // trio; Apiome reads no organizations, products, orders or subscriptions. Polar's
+        // `email_verified` claim → trusted when true, fail-closed otherwise (see normalizePolar).
+        authorizationUrl: POLAR_AUTHORIZE_URL,
+        tokenUrl: POLAR_TOKEN_URL,
+        scopes: ['openid', 'profile', 'email'],
+        authentication: 'post',
+        pkce: true,
         getUserInfo,
       };
     }

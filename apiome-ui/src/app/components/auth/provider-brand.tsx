@@ -58,6 +58,37 @@ export function MicrosoftIcon({ size = ICON_SIZE.dense, className }: BrandIconPr
   );
 }
 
+/**
+ * The Polar mark: a circle with two nested meridian ellipses.
+ *
+ * Simple Icons ships no Polar mark (`SiPolars` is the unrelated Polars dataframe library), so it
+ * is inlined. It strokes with `currentColor`, so the color comes from the brand's class.
+ *
+ * @param size Rendered width/height as a CSS length (defaults to the §3.5 dense size).
+ * @param className Optional extra classes on the root svg (carries the stroke color).
+ * @returns The Polar mark as an inline svg.
+ */
+export function PolarIcon({ size = ICON_SIZE.dense, className }: BrandIconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      role="img"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="10.5" />
+      <ellipse cx="12" cy="12" rx="5.5" ry="10.5" />
+      <ellipse cx="12" cy="12" rx="1.5" ry="10.5" />
+    </svg>
+  );
+}
+
 /** A provider's visual identity: its icon component and the color classes to render it with. */
 export interface ProviderBrand {
   /** Icon component accepting `size` and `className`. */
@@ -106,6 +137,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   roblox: { Icon: SiRoblox, iconClassName: 'text-slate-800 dark:text-slate-100' },
   kick: { Icon: SiKick, iconClassName: 'text-[#53FC18]' },
   paypal: { Icon: SiPaypal, iconClassName: 'text-[#003087] dark:text-[#009CDE]' },
+  polar: { Icon: PolarIcon, iconClassName: 'text-slate-800 dark:text-slate-100' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {

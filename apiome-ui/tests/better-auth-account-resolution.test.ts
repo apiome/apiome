@@ -310,6 +310,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'oidc',
       'okta',
       'paypal',
+      'polar',
       'railway',
       'reddit',
       'roblox',

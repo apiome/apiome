@@ -268,10 +268,9 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
     evidence: '`email_verified` claim',
   },
   polar: {
-    trustClass: 'link-first',
+    trustClass: 'trusted',
     ticket: 'OLO-9.46',
-    evidence: 'Email and verified semantics confirmed at implementation',
-    provisional: true,
+    evidence: '`email_verified` claim on the OAuth userinfo',
   },
   patreon: {
     trustClass: 'trusted',
