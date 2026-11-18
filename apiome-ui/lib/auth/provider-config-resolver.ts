@@ -162,6 +162,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   paypal: { clientId: 'PAYPAL_CLIENT_ID', clientSecret: 'PAYPAL_CLIENT_SECRET' },
   // Polar (OLO-9.46, #5059): credentials-only; fixed OAuth 2.0 / OIDC endpoints, no issuer extra.
   polar: { clientId: 'POLAR_CLIENT_ID', clientSecret: 'POLAR_CLIENT_SECRET' },
+  // Patreon (OLO-9.47, #5060): credentials-only; fixed OAuth 2.0 endpoints, no issuer extra.
+  patreon: { clientId: 'PATREON_CLIENT_ID', clientSecret: 'PATREON_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

@@ -30,8 +30,8 @@
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
  * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
  * X / Twitter (OLO-9.32), Reddit (OLO-9.33), Spotify (OLO-9.34), Twitch (OLO-9.35), TikTok
- * (OLO-9.36), Roblox (OLO-9.37), Kick (OLO-9.38), PayPal (OLO-9.45), and Polar (OLO-9.46) followed
- * exactly that path.
+ * (OLO-9.36), Roblox (OLO-9.37), Kick (OLO-9.38), PayPal (OLO-9.45), Polar (OLO-9.46), and Patreon
+ * (OLO-9.47) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -516,6 +516,16 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // `email_verified` claim is honored when true, otherwise fail-closed link-first — see
     // AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('POLAR_CLIENT_ID', 'POLAR_CLIENT_SECRET'),
+  },
+  {
+    id: 'patreon',
+    label: 'Patreon',
+    status: 'available',
+    // Patreon (OLO-9.47, #5060): credentials only — the Client ID and Client Secret of an OAuth
+    // client registered on the Patreon developer portal; fixed endpoints, so no issuer. The
+    // identity resource's `is_email_verified` is honored when true, otherwise fail-closed
+    // link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'),
   },
 ];
 

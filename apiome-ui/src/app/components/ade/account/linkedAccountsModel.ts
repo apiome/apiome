@@ -127,6 +127,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   kick: 'Kick account sign-in',
   paypal: 'PayPal account sign-in',
   polar: 'Polar account sign-in',
+  patreon: 'Patreon account sign-in',
 };
 
 /**

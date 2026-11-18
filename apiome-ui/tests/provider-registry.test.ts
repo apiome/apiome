@@ -112,6 +112,8 @@ const ALL_ENABLED_ENV = {
   PAYPAL_CLIENT_SECRET: 'pp-secret',
   POLAR_CLIENT_ID: 'pl-id',
   POLAR_CLIENT_SECRET: 'pl-secret',
+  PATREON_CLIENT_ID: 'pt-id',
+  PATREON_CLIENT_SECRET: 'pt-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -155,6 +157,7 @@ describe('registry vocabulary', () => {
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
   });
 
@@ -197,6 +200,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('kick')?.label).toBe('Kick');
     expect(getProviderDescriptor('paypal')?.label).toBe('PayPal');
     expect(getProviderDescriptor('polar')?.label).toBe('Polar');
+    expect(getProviderDescriptor('patreon')?.label).toBe('Patreon');
   });
 
   it('pins each available provider env contract', () => {
@@ -364,9 +368,13 @@ describe('registry vocabulary', () => {
       'POLAR_CLIENT_ID',
       'POLAR_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('patreon')?.requiredEnvKeys).toEqual([
+      'PATREON_CLIENT_ID',
+      'PATREON_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/paypal/polar/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43, 9.45, 9.46); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/spotify/tiktok/roblox/kick/paypal/polar/patreon/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.34, 9.36–9.38, 9.41–9.43, 9.45–9.47); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -401,6 +409,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('kick')?.status).toBe('available');
     expect(getProviderDescriptor('paypal')?.status).toBe('available');
     expect(getProviderDescriptor('polar')?.status).toBe('available');
+    expect(getProviderDescriptor('patreon')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -460,6 +469,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('kick', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('paypal', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('polar', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('patreon', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -682,6 +692,10 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('polar', { POLAR_CLIENT_ID: 'x', POLAR_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('polar', { POLAR_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('patreon', { PATREON_CLIENT_ID: 'x', PATREON_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('patreon', { PATREON_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -730,6 +744,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -775,6 +790,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
   });
 
@@ -818,6 +834,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
   });
 });
@@ -865,6 +882,7 @@ describe('providerSummaries', () => {
       { id: 'kick', label: 'Kick', status: 'available', enabled: false },
       { id: 'paypal', label: 'PayPal', status: 'available', enabled: false },
       { id: 'polar', label: 'Polar', status: 'available', enabled: false },
+      { id: 'patreon', label: 'Patreon', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

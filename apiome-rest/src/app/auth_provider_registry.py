@@ -152,7 +152,8 @@ class ProviderDescriptor:
 # ``kick`` is available (OLO-9.38, #5051) as credentials-only Kick OAuth 2.1 + PKCE (fixed endpoints, no issuer);
 # ``paypal`` is available (OLO-9.45, #5058) as credentials-only Log in with PayPal (OIDC discovery) — its
 # environment is an optional ``config`` extra (``PAYPAL_ENVIRONMENT``, default live), so not a required field;
-# ``polar`` is available (OLO-9.46, #5059) as credentials-only Polar OAuth 2.0 / OIDC (fixed endpoints, no issuer).
+# ``polar`` is available (OLO-9.46, #5059) as credentials-only Polar OAuth 2.0 / OIDC (fixed endpoints, no issuer);
+# ``patreon`` is available (OLO-9.47, #5060) as credentials-only Patreon OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -388,6 +389,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Polar",
         STATUS_AVAILABLE,
         client_credential_fields("POLAR_CLIENT_ID", "POLAR_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "patreon",
+        "Patreon",
+        STATUS_AVAILABLE,
+        client_credential_fields("PATREON_CLIENT_ID", "PATREON_CLIENT_SECRET"),
     ),
 )
 

@@ -150,6 +150,8 @@ const ALL_ENABLED: Record<string, string> = {
   PAYPAL_CLIENT_SECRET: 'paypal-secret',
   POLAR_CLIENT_ID: 'polar-client-id',
   POLAR_CLIENT_SECRET: 'polar-secret',
+  PATREON_CLIENT_ID: 'patreon-client-id',
+  PATREON_CLIENT_SECRET: 'patreon-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -282,6 +284,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
   });
 
@@ -326,6 +329,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'kick',
       'paypal',
       'polar',
+      'patreon',
     ]);
   });
 
@@ -443,6 +447,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const polar = buildGenericOAuthConfig('polar', ALL_ENABLED)!;
     expect(polar.clientId).toBe('polar-client-id');
     expect(polar.clientSecret).toBe('polar-secret');
+    const patreon = buildGenericOAuthConfig('patreon', ALL_ENABLED)!;
+    expect(patreon.clientId).toBe('patreon-client-id');
+    expect(patreon.clientSecret).toBe('patreon-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -997,6 +1004,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['openid', 'profile', 'email']);
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(true);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('patreon: fixed Patreon OAuth endpoints; identity[email] scope; post exchange; PKCE off (OLO-9.47)', () => {
+    const cfg = buildGenericOAuthConfig('patreon', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('patreon');
+    expect(cfg.authorizationUrl).toBe('https://www.patreon.com/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://www.patreon.com/api/oauth2/token');
+    // The normalizer reads the API v2 identity resource itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['identity[email]']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
@@ -7907,6 +7929,205 @@ describe('getUserInfo — Polar sign-in and linking (OLO-9.46)', () => {
     const { result, override } = await runGetUserInfo(
       'polar',
       { accessToken, idToken: idTokenFor(idClaims) },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Patreon (OLO-9.47) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Patreon sign-in and linking (OLO-9.47)', () => {
+  const IDENTITY_URL =
+    'https://www.patreon.com/api/oauth2/v2/identity?fields[user]=email,full_name,image_url,is_email_verified';
+  /** Patreon's user id: the identity resource's `data.id`. */
+  const USER_ID = '81234567';
+  /** The user attributes the identity resource returns for the person signing in. */
+  const ATTRIBUTES = {
+    email: 'ada@example.com',
+    full_name: 'Ada Lovelace',
+    image_url: 'https://c8.patreon.example/ada.png',
+    is_email_verified: true,
+  };
+  /** Build the JSON:API identity document for a user id and attributes. */
+  const identity = (attributes: Record<string, unknown>, id: unknown = USER_ID) => ({
+    data: { id, type: 'user', attributes },
+    links: { self: `https://www.patreon.com/api/oauth2/v2/user/${USER_ID}` },
+  });
+
+  /** Serve `body` from the identity endpoint (a failed response when null); record each request. */
+  const patreonApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      const served = url === IDENTITY_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('verified email on a known identity signs in, keyed on data.id', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = patreonApi(identity(ATTRIBUTES));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: USER_ID,
+      email: 'ada@example.com',
+      emailVerified: true,
+      name: 'Ada Lovelace',
+      image: 'https://c8.patreon.example/ada.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: IDENTITY_URL, authorization: 'Bearer patreon.tok' }]);
+  });
+
+  test('a verified email joins the existing account (auto-link)', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = patreonApi(identity(ATTRIBUTES));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, email: 'ada@example.com', emailVerified: true });
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'patreon', providerUserId: USER_ID },
+    });
+  });
+
+  test('a verified email on a new account routes to onboarding', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = patreonApi(identity(ATTRIBUTES));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/signup/oauth?token=pending-1');
+    expect(calls.createPendingSignup[0]).toMatchObject({
+      provider: 'patreon',
+      providerUserId: USER_ID,
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['absent', undefined],
+    ['false', false],
+    ['the string "true"', 'true'],
+    ['null', null],
+    ['the number 1', 1],
+  ])('is_email_verified %s → fail-closed unverified, never linked', async (_label, claim) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = patreonApi(identity({ ...ATTRIBUTES, is_email_verified: claim }));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('an unverified email still signs in an already-linked identity', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = patreonApi(identity({ ...ATTRIBUTES, is_email_verified: false }));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER_ID, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links the Patreon account despite an unverified email', async () => {
+    const { store, calls } = makeStore({ usersById: { [OK_USER.id]: OK_USER } });
+    const { fetchImpl } = patreonApi(identity({ ...ATTRIBUTES, is_email_verified: false }));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => OK_USER.id }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toContain('/ade/dashboard/linked-accounts');
+    expect(calls.linkIdentity).toHaveLength(1);
+    expect(calls.linkIdentity[0]).toMatchObject({
+      userId: OK_USER.id,
+      identity: { provider: 'patreon', providerUserId: USER_ID },
+    });
+  });
+
+  test('no email in the identity → email-required rejection', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = patreonApi(identity({ ...ATTRIBUTES, email: undefined }));
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken: 'patreon.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['a failed request', null, 'patreon.tok'],
+    ['an array body', [identity(ATTRIBUTES)], 'patreon.tok'],
+    ['a body with no data', { links: {} }, 'patreon.tok'],
+    ['an array data member', { data: [identity(ATTRIBUTES).data] }, 'patreon.tok'],
+    ['a user with no id', { data: { type: 'user', attributes: ATTRIBUTES } }, 'patreon.tok'],
+    ['a blank id', identity(ATTRIBUTES, '  '), 'patreon.tok'],
+    ['a non-string id', identity(ATTRIBUTES, 42), 'patreon.tok'],
+    ['a missing access token', identity(ATTRIBUTES), ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = patreonApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'patreon',
+      { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );
 
