@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -125,6 +125,12 @@
  *    come from `api.x.com/2/users/me`. The email (`confirmed_email`) is often missing and Apiome
  *    does not trust it → fail-closed link-first; with no email, an explicit link and the
  *    subsequent sign-in still work, and a fresh sign-in is refused with `OAuthEmailRequired`.
+ *  - **Reddit (OLO-9.33):** Reddit OAuth 2.0 on fixed endpoints mirrored from Better Auth's
+ *    `reddit` provider (`www.reddit.com/api/v1/authorize`, `www.reddit.com/api/v1/access_token`),
+ *    scope `identity`, HTTP Basic client authentication, no PKCE; the claims come from
+ *    `oauth.reddit.com/api/v1/me`. Reddit exposes `has_verified_email` but **no email address**
+ *    → link-only: an explicit link and the subsequent sign-in work, and a fresh sign-in is
+ *    refused with `OAuthEmailRequired`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -695,6 +701,12 @@ const TWITTER_PROFILE_URL = 'https://api.x.com/2/users/me?user.fields=profile_im
  * it only with the `users.email` scope, so a refusal here must not cost the identity.
  */
 const TWITTER_EMAIL_URL = 'https://api.x.com/2/users/me?user.fields=confirmed_email';
+
+/** Reddit OAuth 2.0: fixed endpoints, mirrored from Better Auth's `reddit` provider (OLO-9.33). */
+const REDDIT_AUTHORIZE_URL = 'https://www.reddit.com/api/v1/authorize';
+const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
+/** The authenticated account (`id`, `name`, `icon_img`, `has_verified_email`), as the helper reads it. */
+const REDDIT_ME_URL = 'https://oauth.reddit.com/api/v1/me';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1978,6 +1990,54 @@ async function normalizeTwitter(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Reddit API response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function redditString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Reddit sign-in (OLO-9.33): fetch `oauth.reddit.com/api/v1/me` with the access token
+ * and map `id` / `name` / `icon_img` — the resource Better Auth's `reddit()` helper reads. The
+ * identity is keyed on `id`, Reddit's base-36 account id, which never changes; `name` is the
+ * username. The avatar's query string is dropped, as the helper does (Reddit HTML-escapes it).
+ *
+ * Reddit exposes **no email address** — `has_verified_email` only says whether the account has
+ * one — so the email is always null and the engine fail-closes to **link-only**: an already-linked
+ * identity signs in, an explicit link binds it, and anything else is refused with
+ * `OAuthEmailRequired`. Unlike the helper, which puts `oauth_client_id` in the email slot and
+ * `has_verified_email` in `emailVerified`, neither is ever used: the profile carries no `email`
+ * and no `email_verified`. A failed request, or a body without a string `id`, yields an empty
+ * profile (no account id), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeReddit(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(REDDIT_ME_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const me = body as Record<string, unknown>;
+  const accountId = redditString(me.id);
+  if (!accountId) return none;
+  const name = redditString(me.name) || null;
+  const image = redditString(me.icon_img).split('?')[0] || null;
+  const profile: Record<string, unknown> = { id: accountId };
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email: null, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2033,6 +2093,7 @@ const NORMALIZERS: Record<
   apple: (tokens, env) => normalizeApple(tokens, env),
   facebook: (tokens, env, fetchImpl) => normalizeFacebook(tokens, env, fetchImpl),
   twitter: (tokens, _env, fetchImpl) => normalizeTwitter(tokens, fetchImpl),
+  reddit: (tokens, _env, fetchImpl) => normalizeReddit(tokens, fetchImpl),
 };
 
 /**
@@ -2067,7 +2128,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook | twitter).
+ *   railway | hubspot | apple | facebook | twitter | reddit).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2722,6 +2783,27 @@ export function buildGenericOAuthConfig(
         scopes: ['users.read', 'tweet.read', 'users.email'],
         authentication: 'basic',
         pkce: true,
+        getUserInfo,
+      };
+    }
+    case 'reddit': {
+      return {
+        providerId: 'reddit',
+        clientId: readEnvString(env, 'REDDIT_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'REDDIT_CLIENT_SECRET') ?? '',
+        // Fixed Reddit OAuth 2.0 endpoints, mirrored from Better Auth's `reddit()` helper — no
+        // issuer. The app must be a **web app** (confidential client). Like the helper, the code
+        // exchange sends the client id and secret as HTTP Basic, and no PKCE challenge is sent
+        // (Better Auth enforces `state`). `identity` is the helper's default and the only scope
+        // `/api/v1/me` needs; Apiome reads no posts, comments, subreddits or messages.
+        // `duration=temporary` asks for no refresh token — Apiome keeps no Reddit token. Reddit
+        // exposes no email address → link-only (see normalizeReddit).
+        authorizationUrl: REDDIT_AUTHORIZE_URL,
+        tokenUrl: REDDIT_TOKEN_URL,
+        scopes: ['identity'],
+        authentication: 'basic',
+        pkce: false,
+        authorizationUrlParams: { duration: 'temporary' },
         getUserInfo,
       };
     }

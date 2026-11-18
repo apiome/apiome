@@ -103,6 +103,8 @@ const ALL_ENABLED_ENV = {
   FACEBOOK_CLIENT_SECRET: 'fb-secret',
   TWITTER_CLIENT_ID: 'x-id',
   TWITTER_CLIENT_SECRET: 'x-secret',
+  REDDIT_CLIENT_ID: 'rd-id',
+  REDDIT_CLIENT_SECRET: 'rd-secret',
 };
 
 describe('providerEnvIssues', () => {

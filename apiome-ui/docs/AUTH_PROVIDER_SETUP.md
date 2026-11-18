@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -158,6 +158,8 @@ config is stored in the database need none of them set; see
 | `FACEBOOK_CLIENT_SECRET` | Facebook | To enable Facebook | Meta app **App secret** |
 | `TWITTER_CLIENT_ID` | X / Twitter | To enable X | X app OAuth 2.0 **Client ID** |
 | `TWITTER_CLIENT_SECRET` | X / Twitter | To enable X | X app OAuth 2.0 **Client Secret** |
+| `REDDIT_CLIENT_ID` | Reddit | To enable Reddit | Reddit web app **client ID** (under the app name) |
+| `REDDIT_CLIENT_SECRET` | Reddit | To enable Reddit | Reddit web app **secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -255,7 +257,7 @@ links an account.
 | `apple` | **trusted** | OLO-9.30 | yes | `email_verified` id-token claim; Hide My Email relay addresses (`is_private_email`) are verified too |
 | `facebook` | **link-first** | OLO-9.31 | yes | Graph email, no verified claim |
 | `twitter` | **link-first** | OLO-9.32 | yes | Email needs elevated API access and carries no verified claim |
-| `reddit` | **link-only** | OLO-9.33 | no | No email address (`has_verified_email` alone names no address) |
+| `reddit` | **link-only** | OLO-9.33 | yes | No email address (`has_verified_email` alone names no address) |
 | `spotify` | **link-first** | OLO-9.34 | no | `/v1/me` email is documented as unverified |
 | `twitch` | **trusted** | OLO-9.35 | no | `email_verified` claim with the `user:read:email` scope |
 | `tiktok` | **link-only** | OLO-9.36 | no | No email in user info |
@@ -1746,6 +1748,61 @@ helper, the `@username` is never used in place of a missing email. The engine al
 A failed profile request, or a profile with no string `data.id`, yields no identity and the
 sign-in is refused.
 
+## Reddit (OLO-9.33)
+
+For the developer communities on Reddit. Apiome uses Reddit's OAuth 2.0 authorization-code flow.
+Reddit is a **link-only** provider: it shares **no email address at all**, so read
+[Email semantics](#reddit-email-semantics) below before turning it on — nobody can *create* an
+Apiome account with it.
+
+1. Signed in to Reddit, open [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) and choose
+   **create another app…** (or **are you a developer? create an app…**).
+2. Give it a **name**, choose **web app** — a confidential client, which has a secret. An
+   **installed app** has none, and Apiome cannot use it.
+3. Set **redirect uri** to the callback (Reddit requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/reddit`
+4. Choose **create app**. The **client ID** is the string under the app's name (below
+   **web app**); the **secret** is labeled **secret**.
+5. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+REDDIT_CLIENT_ID=<client ID>
+REDDIT_CLIENT_SECRET=<secret>
+```
+
+Reddit's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`reddit()` helper):
+
+- Authorize: `https://www.reddit.com/api/v1/authorize` with the `identity` scope (the helper's
+  default and the only one `/api/v1/me` needs) and `duration=temporary`, so Reddit issues no
+  refresh token — Apiome keeps no Reddit token and reads no posts, comments, subreddits or
+  messages. No PKCE challenge is sent; Better Auth enforces `state`.
+- Token: `https://www.reddit.com/api/v1/access_token` — the client ID and secret are sent as HTTP
+  Basic.
+- Profile: `https://oauth.reddit.com/api/v1/me`, with the access token as a bearer token and
+  Apiome's `User-Agent` (Reddit refuses requests without one).
+
+The identity is keyed on `id`, Reddit's base-36 account id, which never changes. `name` is the
+username, and `icon_img` the avatar (its HTML-escaped query string dropped, as the helper does).
+
+<a id="reddit-email-semantics"></a>
+**Email semantics:** Reddit's API exposes `has_verified_email` — whether the account *has* a
+verified address — but never the address itself. Apiome therefore never has an email for a
+Reddit sign-in. Better Auth's helper puts `oauth_client_id` in the email slot and
+`has_verified_email` in `emailVerified`; Apiome uses neither: the profile carries no `email` and no
+`email_verified`. The engine always fail-closes (**link-only**), and `reddit` is not in
+`AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Reddit card on **Linked accounts**. The
+  explicit link binds the Reddit identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with Reddit** signs that person in (the
+  account's own address is used).
+- **Fresh sign-in or sign-up** — rejected with `email-required` (`OAuthEmailRequired`), whatever
+  `has_verified_email` says.
+
+A failed profile request, or a profile with no string `id`, yields no identity and the sign-in is
+refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1918,7 +1975,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook and X / Twitter need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter and Reddit need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

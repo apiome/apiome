@@ -119,6 +119,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   apple: 'Apple Account sign-in',
   facebook: 'Facebook account sign-in',
   twitter: 'X account sign-in',
+  reddit: 'Reddit account sign-in',
 };
 
 /**

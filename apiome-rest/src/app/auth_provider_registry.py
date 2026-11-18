@@ -142,7 +142,8 @@ class ProviderDescriptor:
 # sealed secret slot holds the ``.p8`` private key (``private_key``), and the Team ID and Key ID are
 # ``config`` extras (``team_id``, ``key_id``) — the client secret is an ES256 JWT minted per exchange;
 # ``facebook`` is available (OLO-9.31, #5044) as credentials-only Facebook Login (fixed Graph endpoints, no issuer);
-# ``twitter`` is available (OLO-9.32, #5045) as credentials-only X OAuth 2.0 + PKCE (fixed endpoints, no issuer).
+# ``twitter`` is available (OLO-9.32, #5045) as credentials-only X OAuth 2.0 + PKCE (fixed endpoints, no issuer);
+# ``reddit`` is available (OLO-9.33, #5046) as credentials-only Reddit OAuth 2.0 (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -330,6 +331,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "X (Twitter)",
         STATUS_AVAILABLE,
         client_credential_fields("TWITTER_CLIENT_ID", "TWITTER_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "reddit",
+        "Reddit",
+        STATUS_AVAILABLE,
+        client_credential_fields("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"),
     ),
 )
 

@@ -133,6 +133,8 @@ const ALL_ENABLED: Record<string, string> = {
   FACEBOOK_CLIENT_SECRET: 'fb-secret',
   TWITTER_CLIENT_ID: 'x-client-id',
   TWITTER_CLIENT_SECRET: 'x-secret',
+  REDDIT_CLIENT_ID: 'reddit-client-id',
+  REDDIT_CLIENT_SECRET: 'reddit-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -257,6 +259,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
   });
 
@@ -293,6 +296,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
   });
 
@@ -386,6 +390,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const twitter = buildGenericOAuthConfig('twitter', ALL_ENABLED)!;
     expect(twitter.clientId).toBe('x-client-id');
     expect(twitter.clientSecret).toBe('x-secret');
+    const reddit = buildGenericOAuthConfig('reddit', ALL_ENABLED)!;
+    expect(reddit.clientId).toBe('reddit-client-id');
+    expect(reddit.clientSecret).toBe('reddit-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -828,6 +835,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.authentication).toBe('basic');
     expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('reddit: fixed Reddit OAuth 2.0 endpoints; identity scope; basic exchange; PKCE off (OLO-9.33)', () => {
+    const cfg = buildGenericOAuthConfig('reddit', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('reddit');
+    expect(cfg.authorizationUrl).toBe('https://www.reddit.com/api/v1/authorize');
+    expect(cfg.tokenUrl).toBe('https://www.reddit.com/api/v1/access_token');
+    // The normalizer reads /api/v1/me itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['identity']);
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(false);
+    // No refresh token: Apiome keeps no Reddit token.
+    expect(cfg.authorizationUrlParams).toEqual({ duration: 'temporary' });
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
   });
@@ -6035,5 +6058,146 @@ describe('getUserInfo — X / Twitter fail-closed link-first (OLO-9.32)', () => 
     expect(calls.createPendingSignup).toHaveLength(0);
     // Without an identity the email resource is never asked.
     expect(requests.map((r) => r.url)).not.toContain(EMAIL_URL);
+  });
+});
+
+/* ── getUserInfo: Reddit (OLO-9.33) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Reddit link-only (OLO-9.33)', () => {
+  const ME_URL = 'https://oauth.reddit.com/api/v1/me';
+  /** The `/api/v1/me` body for the person signing in. */
+  const ME = {
+    id: '1w72',
+    name: 'ada_lovelace',
+    icon_img: 'https://styles.redditmedia.example/avatar.png?width=256&amp;s=abc',
+    has_verified_email: true,
+    oauth_client_id: 'reddit-client-id',
+  };
+
+  /** Serve `meBody` from `/api/v1/me` (a failed response when null); record each request. */
+  const redditApi = (meBody: unknown) => {
+    const requests: Array<{ url: string; authorization?: string; userAgent?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({
+        url,
+        authorization: init.headers.Authorization,
+        userAgent: init.headers['User-Agent'],
+      });
+      const body = url === ME_URL ? meBody : null;
+      return body === null ? { ok: false, json: async () => null } : { ok: true, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Reddit account id, with the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = redditApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'reddit',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: '1w72',
+      email: OK_USER.email,
+      emailVerified: false,
+      name: 'ada_lovelace',
+      // The HTML-escaped query string is dropped, as Better Auth's helper does.
+      image: 'https://styles.redditmedia.example/avatar.png',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    // Reddit rejects requests without a User-Agent; the shared fetch helper always sends one.
+    expect(requests).toEqual([{ url: ME_URL, authorization: 'Bearer tok', userAgent: 'apiome' }]);
+  });
+
+  test('explicit link intent links with no email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = redditApi(ME);
+
+    const { result, override } = await runGetUserInfo(
+      'reddit',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'reddit',
+      providerUserId: '1w72',
+    });
+    expect(calls.linkIdentity[0].identity.email ?? null).toBeNull();
+  });
+
+  test.each([
+    ['has_verified_email true', ME],
+    ['has_verified_email false', { ...ME, has_verified_email: false }],
+    ['an email field in the body', { ...ME, email: 'ada@example.com', email_verified: true }],
+  ])('fresh sign-in with %s → email-required rejection (no email is ever read)', async (_label, meBody) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = redditApi(meBody);
+
+    const { result, override } = await runGetUserInfo(
+      'reddit',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(AUTH_ERROR_CODES.EMAIL_REQUIRED).toBe('OAuthEmailRequired');
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('a missing avatar leaves the image out', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = redditApi({ ...ME, icon_img: '' });
+
+    const { result } = await runGetUserInfo(
+      'reddit',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: '1w72', name: 'ada_lovelace' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'tok'],
+    ['a body with no id', { ...ME, id: undefined }, 'tok'],
+    ['an empty id', { ...ME, id: '  ' }, 'tok'],
+    ['a numeric id', { ...ME, id: 1234 }, 'tok'],
+    ['an array body', [ME], 'tok'],
+    ['a missing access token', ME, ''],
+  ])('%s yields no identity', async (_label, meBody, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = redditApi(meBody);
+
+    const { result, override } = await runGetUserInfo(
+      'reddit',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
   });
 });

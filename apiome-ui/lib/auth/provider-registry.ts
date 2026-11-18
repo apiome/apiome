@@ -28,8 +28,8 @@
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
- * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31), and
- * X / Twitter (OLO-9.32) followed exactly that path.
+ * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
+ * X / Twitter (OLO-9.32), and Reddit (OLO-9.33) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -436,6 +436,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // `users.email` scope, is often missing and carries no verified claim → fail-closed
     // link-first — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET'),
+  },
+  {
+    id: 'reddit',
+    label: 'Reddit',
+    status: 'available',
+    // Reddit (OLO-9.33, #5046): credentials only — the client ID and secret of a **web app** on
+    // reddit.com/prefs/apps; fixed endpoints, so no issuer. Reddit exposes no email address
+    // (`has_verified_email` alone names none) → link-only — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET'),
   },
 ];
 

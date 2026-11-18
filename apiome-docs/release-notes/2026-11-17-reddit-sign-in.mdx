@@ -1,0 +1,29 @@
+---
+slug: reddit-sign-in
+title: Sign in with Reddit
+description: "People can now link their Reddit account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Reddit account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Reddit** is a new entry in **System settings → Add Provider**. It needs
+  the client ID and secret of a **web app** created at reddit.com/prefs/apps — no issuer.
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to set on
+  Reddit's side. The environment variables are `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/reddit`, set as the app's
+  **redirect uri**.
+- **Scopes.** Apiome asks for **identity** only and uses it to read the username and avatar of the
+  person signing in. Apiome reads no posts, comments, subreddits or messages and keeps no Reddit
+  token.
+- **Link only.** Reddit never shares an email address, so Apiome can never use Reddit to find or
+  create an account. People sign in another way, link Reddit from **Linked accounts**, and can sign
+  in with Reddit after that. Before linking, a Reddit sign-in ends with *…did not share an email
+  address…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `reddit` as an available provider, and
+  `PUT /v1/admin/auth-providers/reddit` stores its credentials.
