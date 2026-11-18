@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar, patreon — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok, roblox, kick, paypal, polar, patreon, gumroad — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -184,6 +184,13 @@
  *    The claims come from the API v2 identity resource, keyed on `data.id`; its
  *    `is_email_verified` attribute is normalized to `email_verified` → **trusted** only when
  *    exactly true, fail-closed otherwise.
+ *  - **Gumroad (OLO-9.48):** Gumroad OAuth 2.0 on fixed endpoints mirrored from Better Auth's
+ *    `gumroad` provider (`gumroad.com/oauth/authorize`, `api.gumroad.com/oauth/token`), scope
+ *    `view_profile`, client credentials in the form body, no PKCE — as the helper does. The claims
+ *    come from `api.gumroad.com/v2/user`, keyed on `user.user_id`; the user's email carries **no
+ *    verified claim** (Better Auth `gumroad()` hard-codes `emailVerified: false`) → fail-closed
+ *    link-first: an explicit link and the subsequent sign-in work, the email never joins or
+ *    creates an account.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -810,6 +817,12 @@ const PATREON_TOKEN_URL = 'https://www.patreon.com/api/oauth2/token';
 /** The API v2 identity resource with the user fields the helper requests (incl. `is_email_verified`). */
 const PATREON_IDENTITY_URL =
   'https://www.patreon.com/api/oauth2/v2/identity?fields[user]=email,full_name,image_url,is_email_verified';
+
+/** Gumroad OAuth 2.0: fixed endpoints, mirrored from Better Auth's `gumroad` provider (OLO-9.48). */
+const GUMROAD_AUTHORIZE_URL = 'https://gumroad.com/oauth/authorize';
+const GUMROAD_TOKEN_URL = 'https://api.gumroad.com/oauth/token';
+/** The user resource (`success`, `user.user_id` / `name` / `email` / `profile_url`), as the helper reads it. */
+const GUMROAD_USER_URL = 'https://api.gumroad.com/v2/user';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -2663,6 +2676,59 @@ async function normalizePatreon(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string field from a Gumroad user body, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function gumroadString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a Gumroad sign-in (OLO-9.48): fetch `api.gumroad.com/v2/user` with the access token —
+ * the resource Better Auth's `gumroad()` helper reads — and map its `user` object. The identity is
+ * keyed on `user.user_id`, the Gumroad user id; `name` is the display name and `profile_url` the
+ * avatar, as the helper maps them.
+ *
+ * Gumroad returns the user's email with **no verified claim** (the helper hard-codes
+ * `emailVerified: false`), so the profile never carries `email_verified` — any such field in the
+ * body is dropped rather than trusted — and `resolveOAuthEmailVerified` fail-closes to
+ * **link-first**: the address can neither join nor create an account, an already-linked identity
+ * signs in, and an explicit link binds it. A failed request, a body whose `success` is not exactly
+ * `true`, a body without a `user` object, or a user without a usable `user_id` yields an empty
+ * profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeGumroad(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(GUMROAD_USER_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const { success, user: rawUser } = body as { success?: unknown; user?: unknown };
+  if (success !== true) return none;
+  if (!rawUser || typeof rawUser !== 'object' || Array.isArray(rawUser)) return none;
+  const user = rawUser as Record<string, unknown>;
+  const accountId = gumroadString(user.user_id);
+  if (!accountId) return none;
+  const email = gumroadString(user.email) || null;
+  const name = gumroadString(user.name) || null;
+  const image = gumroadString(user.profile_url) || null;
+  const profile: Record<string, unknown> = { user_id: accountId };
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2727,6 +2793,7 @@ const NORMALIZERS: Record<
   paypal: (tokens, env, fetchImpl) => normalizePaypal(tokens, env, fetchImpl),
   polar: (tokens, _env, fetchImpl) => normalizePolar(tokens, fetchImpl),
   patreon: (tokens, _env, fetchImpl) => normalizePatreon(tokens, fetchImpl),
+  gumroad: (tokens, _env, fetchImpl) => normalizeGumroad(tokens, fetchImpl),
 };
 
 /**
@@ -2762,7 +2829,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
  *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok |
- *   roblox | kick | paypal | polar | patreon).
+ *   roblox | kick | paypal | polar | patreon | gumroad).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -3597,6 +3664,25 @@ export function buildGenericOAuthConfig(
         authorizationUrl: PATREON_AUTHORIZE_URL,
         tokenUrl: PATREON_TOKEN_URL,
         scopes: ['identity[email]'],
+        authentication: 'post',
+        pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'gumroad': {
+      return {
+        providerId: 'gumroad',
+        clientId: readEnvString(env, 'GUMROAD_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'GUMROAD_CLIENT_SECRET') ?? '',
+        // Fixed Gumroad OAuth 2.0 endpoints, mirrored from Better Auth's `gumroad()` helper — no
+        // issuer. Like the helper, the code exchange sends the client id and secret in the form
+        // body and no PKCE challenge is sent (Better Auth enforces `state`). `view_profile` is the
+        // helper's default and the only scope Apiome asks for; Apiome reads no products, sales,
+        // subscribers or payouts. The email carries no verified claim → fail-closed link-first
+        // (see normalizeGumroad).
+        authorizationUrl: GUMROAD_AUTHORIZE_URL,
+        tokenUrl: GUMROAD_TOKEN_URL,
+        scopes: ['view_profile'],
         authentication: 'post',
         pkce: false,
         getUserInfo,

@@ -358,6 +358,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "PATREON_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "PATREON_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "gumroad",
+      "label": "Gumroad",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "GUMROAD_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "GUMROAD_CLIENT_SECRET" }
+      ]
     }
   ]
 }

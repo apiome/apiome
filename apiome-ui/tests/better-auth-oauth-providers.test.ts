@@ -152,6 +152,8 @@ const ALL_ENABLED: Record<string, string> = {
   POLAR_CLIENT_SECRET: 'polar-secret',
   PATREON_CLIENT_ID: 'patreon-client-id',
   PATREON_CLIENT_SECRET: 'patreon-secret',
+  GUMROAD_CLIENT_ID: 'gumroad-client-id',
+  GUMROAD_CLIENT_SECRET: 'gumroad-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -285,6 +287,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'paypal',
       'polar',
       'patreon',
+      'gumroad',
     ]);
   });
 
@@ -330,6 +333,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'paypal',
       'polar',
       'patreon',
+      'gumroad',
     ]);
   });
 
@@ -450,6 +454,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const patreon = buildGenericOAuthConfig('patreon', ALL_ENABLED)!;
     expect(patreon.clientId).toBe('patreon-client-id');
     expect(patreon.clientSecret).toBe('patreon-secret');
+    const gumroad = buildGenericOAuthConfig('gumroad', ALL_ENABLED)!;
+    expect(gumroad.clientId).toBe('gumroad-client-id');
+    expect(gumroad.clientSecret).toBe('gumroad-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -1017,6 +1024,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     // The normalizer reads the API v2 identity resource itself.
     expect(cfg.userInfoUrl).toBeUndefined();
     expect(cfg.scopes).toEqual(['identity[email]']);
+    expect(cfg.authentication).toBe('post');
+    expect(cfg.pkce).toBe(false);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('gumroad: fixed Gumroad OAuth endpoints; view_profile scope; post exchange; PKCE off (OLO-9.48)', () => {
+    const cfg = buildGenericOAuthConfig('gumroad', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('gumroad');
+    expect(cfg.authorizationUrl).toBe('https://gumroad.com/oauth/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.gumroad.com/oauth/token');
+    // The normalizer reads the `/v2/user` resource itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['view_profile']);
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(false);
     expect(cfg.authorizationUrlParams).toBeUndefined();
@@ -8127,6 +8149,240 @@ describe('getUserInfo — Patreon sign-in and linking (OLO-9.47)', () => {
 
     const { result, override } = await runGetUserInfo(
       'patreon',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── getUserInfo: Gumroad (OLO-9.48) ───────────────────────────────────────────────────────── */
+
+describe('getUserInfo — Gumroad fail-closed link-first (OLO-9.48)', () => {
+  const USER_URL = 'https://api.gumroad.com/v2/user';
+  /** The authorizing user, as the `user` object of `/v2/user`. */
+  const USER = {
+    user_id: 'G_-mnBf9b1j9A7a4ub4nFQ==',
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    bio: 'Analytical engines and API docs',
+    twitter_handle: null,
+    url: 'https://ada.gumroad.example',
+    profile_url: 'https://public-files.gumroad.example/ada.png',
+  };
+  /** The `/v2/user` body for the person signing in. */
+  const OK_BODY = { success: true, user: USER };
+
+  /** Serve `body` from `/v2/user` (a failed response when null); record each request. */
+  const gumroadApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init?.headers?.Authorization });
+      const served = url === USER_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the Gumroad user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = gumroadApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: USER.user_id,
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: USER.profile_url,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: USER_URL, authorization: 'Bearer gr.tok' }]);
+  });
+
+  test('a padded user_id is trimmed to the account id', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = gumroadApi({ success: true, user: { ...USER, user_id: ` ${USER.user_id} ` } });
+
+    const { result } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: USER.user_id });
+  });
+
+  test('known identity signs in with no email, taking the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = gumroadApi({ success: true, user: { ...USER, email: undefined } });
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: USER.user_id, email: OK_USER.email, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = gumroadApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'gumroad',
+      providerUserId: USER.user_id,
+      email: 'ada@example.com',
+    });
+  });
+
+  test('fresh sign-up attempt with an email → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = gumroadApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = gumroadApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['email_verified', true],
+    ['email_verified', 'true'],
+    ['email_verified', 1],
+    ['verified', true],
+    ['emailVerified', true],
+  ])('a %s field (%p) in a Gumroad body is dropped, never trusted', async (field, value) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = gumroadApi({ success: true, user: { ...USER, [field]: value } });
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([
+    ['no email field', { ...USER, email: undefined }],
+    ['an empty email', { ...USER, email: '' }],
+    ['a non-string email', { ...USER, email: 42 }],
+  ])('fresh sign-in with %s → email-required rejection', async (_label, user) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = gumroadApi({ success: true, user });
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('a missing name and profile_url leave the name and image out', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = gumroadApi({ success: true, user: { ...USER, name: '', profile_url: null } });
+
+    const { result } = await runGetUserInfo(
+      'gumroad',
+      { accessToken: 'gr.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: USER.user_id });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'gr.tok'],
+    ['success false', { success: false, user: USER }, 'gr.tok'],
+    ['success missing', { user: USER }, 'gr.tok'],
+    ['success as a string', { success: 'true', user: USER }, 'gr.tok'],
+    ['a body with no user', { success: true }, 'gr.tok'],
+    ['a null user', { success: true, user: null }, 'gr.tok'],
+    ['an array user', { success: true, user: [USER] }, 'gr.tok'],
+    ['a user with no user_id', { success: true, user: { ...USER, user_id: undefined } }, 'gr.tok'],
+    ['an empty user_id', { success: true, user: { ...USER, user_id: '  ' } }, 'gr.tok'],
+    ['a numeric user_id', { success: true, user: { ...USER, user_id: 42 } }, 'gr.tok'],
+    ['an array body', [OK_BODY], 'gr.tok'],
+    ['a missing access token', OK_BODY, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl } = gumroadApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'gumroad',
       { accessToken },
       { store, env: ALL_ENABLED, fetchImpl }
     );

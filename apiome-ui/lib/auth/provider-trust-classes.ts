@@ -280,7 +280,7 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
   gumroad: {
     trustClass: 'link-first',
     ticket: 'OLO-9.48',
-    evidence: 'User email, no verified claim',
+    evidence: '`/v2/user` email, no verified claim',
   },
   paybin: {
     trustClass: 'link-first',

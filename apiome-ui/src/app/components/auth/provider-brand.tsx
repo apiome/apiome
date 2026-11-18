@@ -11,7 +11,7 @@
  * Adding a provider: add its registry entry, then one `PROVIDER_BRANDS` entry here.
  */
 import { KeyRound } from 'lucide-react';
-import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFacebook, SiFigma, SiGithub, SiGitlab, SiGoogle, SiHubspot, SiHuggingface, SiKeycloak, SiKick, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiPatreon, SiPaypal, SiRailway, SiReddit, SiRoblox, SiSalesforce, SiSlack, SiSpotify, SiTiktok, SiTwitch, SiVercel, SiVk, SiWechat, SiX, SiZoom } from 'react-icons/si';
+import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFacebook, SiFigma, SiGithub, SiGitlab, SiGoogle, SiGumroad, SiHubspot, SiHuggingface, SiKeycloak, SiKick, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiPatreon, SiPaypal, SiRailway, SiReddit, SiRoblox, SiSalesforce, SiSlack, SiSpotify, SiTiktok, SiTwitch, SiVercel, SiVk, SiWechat, SiX, SiZoom } from 'react-icons/si';
 import { ICON_SIZE } from '../ui/iconSizes';
 
 /** Props every brand icon accepts (matches the `react-icons` component contract we use). */
@@ -139,6 +139,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   paypal: { Icon: SiPaypal, iconClassName: 'text-[#003087] dark:text-[#009CDE]' },
   polar: { Icon: PolarIcon, iconClassName: 'text-slate-800 dark:text-slate-100' },
   patreon: { Icon: SiPatreon, iconClassName: 'text-[#FF424D]' },
+  gumroad: { Icon: SiGumroad, iconClassName: 'text-[#FF90E8]' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {

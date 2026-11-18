@@ -128,6 +128,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   paypal: 'PayPal account sign-in',
   polar: 'Polar account sign-in',
   patreon: 'Patreon account sign-in',
+  gumroad: 'Gumroad account sign-in',
 };
 
 /**

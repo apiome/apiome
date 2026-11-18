@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar, Patreon), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify, Twitch, TikTok, Roblox, Kick, PayPal, Polar, Patreon, Gumroad), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -177,6 +177,8 @@ config is stored in the database need none of them set; see
 | `POLAR_CLIENT_SECRET` | Polar | To enable Polar | Polar OAuth app **Client Secret** |
 | `PATREON_CLIENT_ID` | Patreon | To enable Patreon | Patreon OAuth client **Client ID** |
 | `PATREON_CLIENT_SECRET` | Patreon | To enable Patreon | Patreon OAuth client **Client Secret** |
+| `GUMROAD_CLIENT_ID` | Gumroad | To enable Gumroad | Gumroad OAuth application **Application ID** |
+| `GUMROAD_CLIENT_SECRET` | Gumroad | To enable Gumroad | Gumroad OAuth application **Application Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -286,7 +288,7 @@ links an account.
 | `paypal` | **trusted** | OLO-9.45 | yes | `email_verified` claim |
 | `polar` | **trusted** | OLO-9.46 | yes | `email_verified` claim on the OAuth userinfo |
 | `patreon` | **trusted** | OLO-9.47 | yes | `is_email_verified` on the identity resource |
-| `gumroad` | **link-first** | OLO-9.48 | no | User email, no verified claim |
+| `gumroad` | **link-first** | OLO-9.48 | yes | `/v2/user` email, no verified claim |
 | `paybin` | **link-first** (provisional) | OLO-9.49 | no | Email semantics confirmed at implementation |
 
 ## Boot-time validation
@@ -2256,6 +2258,59 @@ address is unverified verifies it in Patreon, or signs in another way and links 
 
 A failed identity request, a body without a `data` user, or a user without a usable `id` yields
 no identity and the sign-in is refused.
+
+## Gumroad (OLO-9.48)
+
+For creators who sell API products, docs and templates on Gumroad. Apiome uses Gumroad's OAuth 2.0
+authorization-code flow. Gumroad is a **link-first** provider: it returns the user's email address
+with **no verified claim**, so read [Email semantics](#gumroad-email-semantics) below before
+turning it on — nobody can *create* an Apiome account with it.
+
+1. Signed in to Gumroad, open **Settings → Advanced** and, under **Applications**, create an
+   application.
+2. Give it an **Application name** (and, optionally, an icon) and set the **Redirect URI** to the
+   callback (Gumroad requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/gumroad`
+     (e.g. `http://localhost:3000/api/auth/oauth2/callback/gumroad` for local dev)
+3. Create the application and copy its **Application ID** and **Application Secret**. Do not use
+   the **access token** Gumroad can generate on the same page — Apiome needs no token of its own.
+4. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+GUMROAD_CLIENT_ID=<Application ID>
+GUMROAD_CLIENT_SECRET=<Application Secret>
+```
+
+Gumroad's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`gumroad()` helper):
+
+- Authorize: `https://gumroad.com/oauth/authorize` with the `view_profile` scope (the helper's
+  default) — no PKCE challenge, `state` only. Apiome asks for no `edit_products`, `view_sales`,
+  `mark_sales_as_shipped` or `refund_sales` scope and reads no products, sales, subscribers or
+  payouts.
+- Token: `https://api.gumroad.com/oauth/token` — the client ID and secret are sent in the form
+  body. Apiome keeps no Gumroad token.
+- Profile: `https://api.gumroad.com/v2/user` with the access token as a bearer token. Gumroad
+  issues no id token.
+
+The identity is keyed on `user.user_id`, the Gumroad user ID; `name` is the display name and
+`profile_url` the avatar.
+
+<a id="gumroad-email-semantics"></a>
+**Email semantics:** Gumroad's `/v2/user` returns the account's `email` with no claim that it is
+verified, and Better Auth's helper hard-codes `emailVerified: false`. Apiome never trusts it: the
+profile carries no `email_verified` (any such field in the body is dropped). The engine
+fail-closes (**link-first**), and `gumroad` is not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Gumroad card on **Linked accounts**.
+  The explicit link binds the Gumroad identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with Gumroad** signs that person in.
+- **Fresh sign-in or sign-up** — rejected with `unverified-email`, even when the email matches an
+  existing account; with no email, `email-required` (`OAuthEmailRequired`).
+
+A failed token exchange ends the sign-in at Better Auth's OAuth error. A failed profile request, a
+body whose `success` is not `true`, a body without a `user` object, or a user with no string
+`user_id` yields no identity and the sign-in is refused.
 
 ## Secrets handling
 
