@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -156,6 +156,8 @@ config is stored in the database need none of them set; see
 | `APPLE_KEY_ID` | Apple | To enable Apple | The **Key ID** of the `.p8` private key |
 | `FACEBOOK_CLIENT_ID` | Facebook | To enable Facebook | Meta app **App ID** |
 | `FACEBOOK_CLIENT_SECRET` | Facebook | To enable Facebook | Meta app **App secret** |
+| `TWITTER_CLIENT_ID` | X / Twitter | To enable X | X app OAuth 2.0 **Client ID** |
+| `TWITTER_CLIENT_SECRET` | X / Twitter | To enable X | X app OAuth 2.0 **Client Secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -252,7 +254,7 @@ links an account.
 | `hubspot` | **link-first** | OLO-9.29 | yes | Token-info email, no verified claim |
 | `apple` | **trusted** | OLO-9.30 | yes | `email_verified` id-token claim; Hide My Email relay addresses (`is_private_email`) are verified too |
 | `facebook` | **link-first** | OLO-9.31 | yes | Graph email, no verified claim |
-| `twitter` | **link-first** | OLO-9.32 | no | Email needs elevated API access and carries no verified claim |
+| `twitter` | **link-first** | OLO-9.32 | yes | Email needs elevated API access and carries no verified claim |
 | `reddit` | **link-only** | OLO-9.33 | no | No email address (`has_verified_email` alone names no address) |
 | `spotify` | **link-first** | OLO-9.34 | no | `/v1/me` email is documented as unverified |
 | `twitch` | **trusted** | OLO-9.35 | no | `email_verified` claim with the `user:read:email` scope |
@@ -1679,6 +1681,71 @@ has only a phone number — surfaces `email-required`. A token that fails the ch
 request, or a `/me` `id` that is not the token's user yields no identity and the sign-in is
 refused.
 
+## X / Twitter — X OAuth 2.0 (OLO-9.32)
+
+For the developer-adjacent audience that lives on X. Apiome uses X's OAuth 2.0 authorization-code
+flow with PKCE. X is a **link-first** provider, and often shares **no email address at all**: read
+[Email semantics](#twitter-email-semantics) below before turning it on, because nobody can
+*create* an Apiome account with it.
+
+1. In the [X Developer Portal](https://developer.x.com/en/portal/dashboard), open your app (or
+   create one in a project) and choose **User authentication settings → Set up**.
+2. Turn on **OAuth 2.0** and choose **Web App, Automated App or Bot** as the type of app — a
+   confidential client, which has a client secret. A **Native App** has none, and Apiome cannot
+   use it.
+3. Add the callback under **Callback URI / Redirect URL** (X requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/twitter`
+4. Fill in **Website URL**. To receive email addresses, turn on **Request email from users**, which
+   also needs a **Privacy policy** and **Terms of service** URL.
+5. Save, then copy the OAuth 2.0 **Client ID** and **Client Secret** that X shows (also under
+   **Keys and tokens → OAuth 2.0 Client ID and Client Secret**). These are not the OAuth 1.0a
+   API key and secret.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+TWITTER_CLIENT_ID=<OAuth 2.0 Client ID>
+TWITTER_CLIENT_SECRET=<OAuth 2.0 Client Secret>
+```
+
+X's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's `twitter()`
+helper):
+
+- Authorize: `https://x.com/i/oauth2/authorize` with the `users.read tweet.read users.email`
+  scopes and a PKCE (`S256`) challenge, which X requires. The helper's `offline.access` is not
+  asked for: Apiome keeps no X token and posts or reads no posts, followers or messages.
+  (`tweet.read` is asked for only because X requires it to read the signed-in user.)
+- Token: `https://api.x.com/2/oauth2/token` — the Client ID and Client Secret are sent as HTTP
+  Basic.
+- Profile: `https://api.x.com/2/users/me?user.fields=profile_image_url`, with the access token as a
+  bearer token. Its `data.id` keys the identity.
+- Email: `https://api.x.com/2/users/me?user.fields=confirmed_email`, a second request as the helper
+  makes. A failed request, or one that answers for a different `data.id`, only leaves the email out.
+
+The identity is keyed on `data.id`, the numeric X user id, which stays the same when the person
+changes their `@username`. `data.name` is the display name (the `@username` when it is empty) and
+`data.profile_image_url` the avatar.
+
+<a id="twitter-email-semantics"></a>
+**Email semantics:** X returns `confirmed_email` only when **Request email from users** is on and
+the person granted `users.email` — so it is **often missing**. When it is present, Apiome does not
+treat it as verified: the profile never carries `email_verified` (Better Auth's helper marks a
+`confirmed_email` as verified; Apiome does not), and any field of that name is dropped. Unlike the
+helper, the `@username` is never used in place of a missing email. The engine always fail-closes
+(**link-first**), and `twitter` is not in `AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the X card on **Linked accounts**. The
+  explicit link binds the X identity to their account, with or without an email address.
+- **Subsequent sign-in** — once linked, **Continue with X (Twitter)** signs that person in, with or
+  without an email address (the account's own address is used).
+- **Fresh sign-in with no email** — rejected with `email-required` (`OAuthEmailRequired`).
+- **Fresh sign-up, or a first sign-in without linking, with an email** — rejected with
+  `unverified-email`, even when the address matches an existing account. This is intended: the
+  address is never used to join or create an account. Revisit only with a documented policy
+  decision.
+
+A failed profile request, or a profile with no string `data.id`, yields no identity and the
+sign-in is refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1851,7 +1918,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple and Facebook need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook and X / Twitter need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

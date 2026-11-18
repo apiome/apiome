@@ -246,6 +246,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   hubspot: 'HubSpot',
   apple: 'Apple',
   facebook: 'Facebook',
+  twitter: 'X (Twitter)',
 };
 
 /**

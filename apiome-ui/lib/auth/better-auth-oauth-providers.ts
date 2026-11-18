@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -119,6 +119,12 @@
  *    `graph.facebook.com/debug_token`, then the claims come from Graph
  *    `/me?fields=id,name,email,picture`, whose email carries no verified flag → fail-closed
  *    link-first.
+ *  - **X / Twitter (OLO-9.32):** X OAuth 2.0 on fixed endpoints mirrored from Better Auth's
+ *    `twitter` provider (`x.com/i/oauth2/authorize`, `api.x.com/2/oauth2/token`), scopes
+ *    `users.read tweet.read users.email`, HTTP Basic client authentication, PKCE on; the claims
+ *    come from `api.x.com/2/users/me`. The email (`confirmed_email`) is often missing and Apiome
+ *    does not trust it → fail-closed link-first; with no email, an explicit link and the
+ *    subsequent sign-in still work, and a fresh sign-in is refused with `OAuthEmailRequired`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -678,6 +684,17 @@ const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token'
 const FACEBOOK_DEBUG_TOKEN_URL = 'https://graph.facebook.com/debug_token';
 /** Graph profile resource with the helper's default field list. */
 const FACEBOOK_PROFILE_URL = 'https://graph.facebook.com/me?fields=id,name,email,picture';
+
+/** X / Twitter OAuth 2.0: fixed endpoints, mirrored from Better Auth's `twitter` provider (OLO-9.32). */
+const TWITTER_AUTHORIZE_URL = 'https://x.com/i/oauth2/authorize';
+const TWITTER_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
+/** The authenticated user (`id`, `name`, `username`) plus the avatar, as the helper reads it. */
+const TWITTER_PROFILE_URL = 'https://api.x.com/2/users/me?user.fields=profile_image_url';
+/**
+ * The authenticated user's email, requested apart from the profile as the helper does: X answers
+ * it only with the `users.email` scope, so a refusal here must not cost the identity.
+ */
+const TWITTER_EMAIL_URL = 'https://api.x.com/2/users/me?user.fields=confirmed_email';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1887,6 +1904,80 @@ async function normalizeFacebook(
   return { accountId: tokenUserId, profile, email, name, image };
 }
 
+/**
+ * Read the `data` object of an X API v2 `/2/users/me` response.
+ *
+ * @param body The parsed JSON body, or null after a failed request.
+ * @returns The `data` object, or null when the body has none.
+ */
+function twitterUserData(body: unknown): Record<string, unknown> | null {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const data = (body as { data?: unknown }).data;
+  return data && typeof data === 'object' && !Array.isArray(data)
+    ? (data as Record<string, unknown>)
+    : null;
+}
+
+/**
+ * Read a non-empty string field from an X API response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function twitterString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize an X / Twitter sign-in (OLO-9.32): fetch `/2/users/me?user.fields=profile_image_url`
+ * with the access token and map `data.id` / `data.name` / `data.profile_image_url`, then fetch
+ * `/2/users/me?user.fields=confirmed_email` for the email — the two resources of Better Auth's
+ * `twitter()` helper. The identity is keyed on `data.id`, the numeric X user id rendered as a
+ * string, which stays the same when the person changes their `@username`.
+ *
+ * X shares the email only when the app has **Request email from users** turned on and the
+ * `users.email` scope was granted, so it is often missing; the second request failing, or
+ * answering for a different user, leaves the email out rather than refusing the identity. Apiome
+ * does **not** trust that email: the profile never carries `email_verified` (the helper marks a
+ * `confirmed_email` as verified; Apiome does not), so `resolveOAuthEmailVerified` fail-closes to
+ * link-first. Unlike the helper, the `@username` is never used in place of a missing email — with
+ * no email, the engine signs in an already-linked identity, links on an explicit link, and refuses
+ * anything else with `OAuthEmailRequired`. A failed profile request, or a body without a string
+ * `data.id`, yields an empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeTwitter(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const user = twitterUserData(await fetchJsonWithToken(TWITTER_PROFILE_URL, accessToken, fetchImpl));
+  const accountId = twitterString(user?.id);
+  if (!user || !accountId) return none;
+  const emailData = twitterUserData(
+    await fetchJsonWithToken(TWITTER_EMAIL_URL, accessToken, fetchImpl)
+  );
+  // Take the email only from a response about the same user the profile named.
+  const email =
+    emailData && twitterString(emailData.id) === accountId
+      ? twitterString(emailData.confirmed_email) || null
+      : null;
+  const username = twitterString(user.username) || null;
+  const name = twitterString(user.name) || username;
+  const image = twitterString(user.profile_image_url) || null;
+  const profile: Record<string, unknown> = { id: accountId };
+  if (username) profile.username = username;
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1941,6 +2032,7 @@ const NORMALIZERS: Record<
   hubspot: (tokens, _env, fetchImpl) => normalizeHubspot(tokens, fetchImpl),
   apple: (tokens, env) => normalizeApple(tokens, env),
   facebook: (tokens, env, fetchImpl) => normalizeFacebook(tokens, env, fetchImpl),
+  twitter: (tokens, _env, fetchImpl) => normalizeTwitter(tokens, fetchImpl),
 };
 
 /**
@@ -1975,7 +2067,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook).
+ *   railway | hubspot | apple | facebook | twitter).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2609,6 +2701,27 @@ export function buildGenericOAuthConfig(
         scopes: ['email', 'public_profile'],
         authentication: 'post',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'twitter': {
+      return {
+        providerId: 'twitter',
+        clientId: readEnvString(env, 'TWITTER_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'TWITTER_CLIENT_SECRET') ?? '',
+        // Fixed X OAuth 2.0 endpoints, mirrored from Better Auth's `twitter()` helper — no issuer.
+        // The app must be a Web App (confidential client). Like the helper, the code exchange
+        // sends the client id and secret as HTTP Basic, and a PKCE challenge (`S256`) is sent — X
+        // requires PKCE on every authorization. Scopes are the helper's defaults minus
+        // `offline.access`: Apiome needs no refresh token. `users.read` and `tweet.read` are both
+        // required by `/2/users/me`; `users.email` asks for the email. The normalizer reads two
+        // resources (profile, then email), so no `userInfoUrl` is set. The email is often missing
+        // and is never trusted → fail-closed link-first (see normalizeTwitter).
+        authorizationUrl: TWITTER_AUTHORIZE_URL,
+        tokenUrl: TWITTER_TOKEN_URL,
+        scopes: ['users.read', 'tweet.read', 'users.email'],
+        authentication: 'basic',
+        pkce: true,
         getUserInfo,
       };
     }

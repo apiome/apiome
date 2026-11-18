@@ -190,6 +190,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'railway',
       'salesforce',
       'slack',
+      'twitter',
       'vercel',
       'vk',
       'wechat',
