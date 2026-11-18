@@ -14,7 +14,7 @@ change to one screen breaks the hand-off to the next. RC6-H1
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio | The route shows **Not available yet**, which proves the run sees released pages only |
+| 1 | Data browser (`/ade/database`) | The route shows **Not available yet**, which proves the run sees released pages only |
 | 2 | Catalog → **Import to catalog** | A RAML spec pasted into **Clipboard Paste** is stored in the catalog |
 | 3 | Catalog | Filtering by the spec's title finds the item, and it opens |
 | 4 | Catalog item → **Convert to OpenAPI** | The conversion creates a new project, linked from the item |
@@ -61,7 +61,7 @@ A second test in the same workflow walks the export path from import to download
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is released |
+| 1 | Export studio, Data browser | The studio opens; the **Data browser** tool still shows **Not available yet**, so the run previews nothing |
 | 2 | Catalog → **Import to catalog** | Three RAML specs, titled per run, are stored in the catalog |
 | 3 | Catalog item → **Export** | Exporting to Avro and clicking **Download all files (.zip)** gives an archive with every `.avsc` file and `manifest.json` |
 | 4 | Item **⋯** → **Export to another format…** | In the Export studio, Protobuf is chosen, verified, generated, and **Download .zip** gives a `.proto` file |

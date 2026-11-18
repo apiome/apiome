@@ -6,13 +6,10 @@ each one comes back unchanged when its feature ships.
 
 ## Why
 
-The MVP is narrowed to **Catalog** and **Projects**. Until those are hardened, apiome-ui leaves six
-rail destinations out of the navigation and gates their routes (`apiome-ui/lib/feature-release.ts`,
-`UNRELEASED_FEATURE_IDS`). RC6 (`docs/RC6_OOE.md`) holds back more: the Catalog Discovery Graph
-surfaces — Connectors, Shadow APIs, the Dependency graph, Teams and ownership, the Schema registry,
-and the agent, model and component kinds with their Backstage/Compass import reports and scorecards
-— and a project's consumer contracts. Two of those ids have no rail item of their own:
-`catalog-entities` and `consumers`; they gate routes and panels inside Catalog and Projects. A guide page for a screen nobody can open would send readers to a dead
+Two **Tools** in the user menu — the **Data browser** (`/ade/database`) and the **Migrations**
+canvas (`/ade/migration`) — are not finished. apiome-ui leaves them out of the menu, the command
+palette and the jumps, and gates their routes (`apiome-ui/lib/feature-release.ts`,
+`UNRELEASED_FEATURE_IDS`). A guide page for a screen nobody can open would send readers to a dead
 end, and the docs gate rejects `draft: true` and `unlisted: true` (orphan-page rule), so the pages
 moved out of `docs/` instead.
 
@@ -26,76 +23,51 @@ do not point any of them at `unreleased/`.
 
 | Page | Feature | Original path | Rail item id |
 | --- | --- | --- | --- |
-| Style guides | Style guides | `docs/govern/style-guides.mdx` | `style-guides` |
-| Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
-| Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
-| SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
-| Terraform provider | SDK settings (the Get SDK kit) | `docs/ship/sdk-infrastructure-targets.mdx` | `sdk-settings` |
-| MCP server | SDK settings (the Get SDK kit) | `docs/ship/sdk-mcp-server.mdx` | `sdk-settings` |
-| Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
-| Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
-| Dependency graph | Dependency graph (and the Dependencies tabs) | `docs/govern/dependency-graph.mdx` | `dependency-graph` |
-| Teams | Teams and ownership | `docs/workspace/teams.mdx` | `teams` |
-| Schema registry | Schema registry (and the catalog Subjects tab) | `docs/ship/schema-registry.mdx` | `schema-registry` |
-| Agents and models | Catalog entity kinds | `docs/bring-in/agents-and-models.mdx` | `catalog-entities` (no rail item) |
-| Migrate from Backstage or Compass | Catalog entity kinds (import reports) | `docs/bring-in/migrate-from-backstage-or-compass.mdx` | `catalog-entities` (no rail item) |
-| Scorecards | Catalog entity kinds (catalog facts) | `docs/govern/scorecards.mdx` | `catalog-entities` (no rail item) |
 | Data browser | Data browser (user-menu tool, `/ade/database`) | `docs/admin/data-browser.mdx` | `data-browser` (off-rail) |
 | Migrations | Migrations (user-menu tool, `/ade/migration`) | `docs/admin/migrations.mdx` | `migrations` (off-rail) |
 
 Each page sits at `unreleased/<original path>`.
 
-**Export studio** (`export-studio`) is restored: its page, fragments, screenshots and help entry are
-back on the site (X7, [#6228](https://github.com/apiome/apiome/issues/6228)), without the gateway
-push-back and SDK & branding parts, which wait for `connectors` and `sdk-settings`. Its id stays in
-`UNRELEASED_FEATURE_IDS` until the last E1 issue closes; removing it (step 5 below) is all that is
-left.
-
-**Fragments** — sections cut from pages that stayed on the site, each with a comment saying where it
-goes back:
-
-| Fragment | Goes back into | Rail item id |
-| --- | --- | --- |
-| `fragments/bring-in/mcp-servers.dependencies.mdx` | `docs/bring-in/mcp-servers.mdx` — the **Dependencies** row of the endpoint tabs table | `dependency-graph` |
-| `fragments/build/projects.consumers.mdx` | `docs/build/projects.mdx` — the **Consumers** menu row and section, the **Owner** section, and the `projects-table` alt text | `consumers`, `teams` |
-| `fragments/build/versions.dependencies.mdx` | `docs/build/versions.mdx` — the **Dependencies** section, before **Conversion** | `dependency-graph` |
-| `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams`, `connectors` |
-| `fragments/bring-in/import-wizard.compass-export.mdx` | `docs/bring-in/import-wizard.mdx` — the Compass source in the table and step 1, and the **Compass export** section | `catalog-entities` |
-| `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — **Recent runs**, the connector sentences, the **Backstage files** section and the `repositories` alt text | `connectors`, `dependency-graph`, `catalog-entities` |
-| `fragments/ship/published.owner.mdx` | `docs/ship/published.mdx` — the **Owner** column row and the owner filter sentence | `teams` |
-| `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
+**Fragments** — sections cut from pages that stayed on the site live under `unreleased/fragments/`,
+each with a comment saying where it goes back. There are none at the moment.
 
 **Screenshots** — `unreleased/screens.json` holds the manifest entries (same `{"screens": [...]}`
 shape as `../screens.json`) and `unreleased/static/img/screens/` their light and dark images:
 
 | Rail item id | Screenshot ids |
 | --- | --- |
-| `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-import-dialog`, `style-guides-import-result`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
-| `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
-| `sdk-settings` | `sdk-settings` |
-| `connectors` | `connectors`, `connector-add`, `connector-detail`, `connector-runs`, `gateway-config-entity`, `export-studio-gateway`, `connector-add-schema-registry`, `connector-add-mcp-registry`, `connector-add-registry` |
-| `shadow-apis` | `shadow-apis`, `shadow-apis-link` |
-| `dependency-graph` | `dependency-graph`, `dependencies-tab`, `dependencies-runtime`, `blast-radius` |
-| `teams` | `teams`, `team-detail`, `ownership-drift`, `catalog-owner-filter`, `tenant-ownership-policy` |
-| `schema-registry` | `catalog-item-subjects`, `registry-settings`, `schema-registry-subjects` |
-| `catalog-entities` | `agent-entity`, `model-entity`, `backstage-import-report`, `scorecard-kind`, `entity-facts`, `catalog-kinds`, `import-wizard-compass` |
-| `consumers` | `project-consumers-bindings` |
 | `data-browser` | `data-browser`, `data-browser-deleted`, `data-browser-record`, `data-browser-insert`, `data-browser-schema` |
 | `migrations` | `migrations`, `migrations-explorer`, `migrations-rule-dialog` |
 
 **Not withdrawn**, on purpose: the MCP rule catalogs (`docs/govern/mcp-*-rules.md`, generated by
 `apiome-rest/scripts/generate_lint_rule_docs.py`, linked from the generated MCP reference and
-returned as `docs_page` by the REST rule endpoints), `getting-started/connect-an-mcp-host.mdx`,
-`reference/mcp-quickstart.md`, `ship/export-fidelity.md` (it explains the Export dialog's fidelity
-step too) and everything under `docs/reference/` — the REST, CLI and MCP surfaces still exist.
+returned as `docs_page` by the REST rule endpoints) and everything under `docs/reference/` — the
+REST, CLI and MCP surfaces exist whether or not a screen is released.
+
+## Restored
+
+**Export studio** (`export-studio`) came back in RC7 (X7,
+[#6228](https://github.com/apiome/apiome/issues/6228)): its page, fragments, screenshots and help
+entry.
+
+**MCP servers** (`mcp`, with Agent access) is restored in RC8: its two pages, the import-wizard
+fragment, its 14 screenshots and its help entries are back on the site, the route gate is gone, and
+the legacy-docs `MCP` rule points at `bring-in/mcp-servers` again.
 
 **Primitives & types** (`primitives`) is restored in RC8 (#3482): its page, its 12 screenshots and
 its help entry are back on the site, the route gate is gone, and the legacy-docs `PRIMITIVE` rule
 points at `build/primitives-and-types` again.
 
-**MCP servers** (`mcp`, with Agent access) is restored in RC8: its two pages, the import-wizard
-fragment, its 14 screenshots and its help entries are back on the site, the route gate is gone, and
-the legacy-docs `MCP` rule points at `bring-in/mcp-servers` again.
+**Everything else the MVP focus and RC6 held back** is restored in RC8 (2026-11-18): **SDK
+settings** (`sdk-settings`, with the Terraform provider and MCP server kit pages), **Style guides**
+(`style-guides`, with style-guide revisions), **Access audit** (`audit`), **Connectors**
+(`connectors`), **Shadow APIs** (`shadow-apis`), the **Dependency graph** (`dependency-graph`),
+**Teams** and ownership (`teams`), the **Schema registry** (`schema-registry`), the catalog entity
+kinds (`catalog-entities`: Agents and models, Migrate from Backstage or Compass, Scorecards) and
+consumer contracts (`consumers`). Their 14 pages, all eight fragments, their 49 screenshots and
+manifest entries, and the links the withdrawals took out are back on the site. The Access audit
+page was merged with the REST-only page written while the screen was withheld. The Export studio
+page describes the **SDK & branding** tab and gateway push-back again.
 
 ## Restore a feature
 

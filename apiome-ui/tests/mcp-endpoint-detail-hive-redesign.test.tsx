@@ -515,6 +515,7 @@ describe('the tab strip', () => {
       'Lint & score',
       'Test',
       'Credentials',
+      'Dependencies',
       'Settings',
       'Trust posture',
     ]);

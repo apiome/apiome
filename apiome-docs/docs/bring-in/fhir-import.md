@@ -84,7 +84,7 @@ To import every profile a server declares as well, add a `registry` connector wh
 the `fhir-metadata` crawl, with `"includeProfiles": true` — for example
 `apiome connectors add --kind registry --name lab-fhir --base-url https://fhir.example.com/r4 --scope '{"protocol": "fhir-metadata", "includeProfiles": true}'`
 (see [`apiome connectors`](../reference/cli/connectors.md) and the
-[Connectors API](../reference/rest/connectors.md)).
+[Connectors](./connectors.mdx#registry-crawl)).
 
 ## Lint
 

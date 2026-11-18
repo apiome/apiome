@@ -10,8 +10,8 @@ that the APIs scored against a style guide climb. Each style guide has at most o
 level answers the question "what level is this API at?" with requirements a team can see and
 meet, instead of a single grade.
 
-The Style guides screen is not yet available, so a ladder is read and saved through the REST API
-(see [With the API](#with-the-api)). Saving a ladder records it in the guide's history and its
+A guide's **Policy** tab on [Style guides](./style-guides.mdx#policy) does not show the ladder yet,
+so a ladder is read and saved through the REST API (see [With the API](#with-the-api)). Saving a ladder records it in the guide's history and its
 policy pack. From then on every policy evaluation of a version or MCP server version reports its
 level — read it with [`GET …/lint/level`](#read-a-level). Set a **required publish level** and
 the level also gates publishing, the deploy gate, the API change check suite and the lint CI gate

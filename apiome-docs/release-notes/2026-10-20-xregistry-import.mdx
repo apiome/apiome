@@ -15,7 +15,7 @@ project's catalog of schemas, message definitions and endpoints — as event-dri
   each endpoint a service with its broker URIs — publish for a producer, subscribe for a consumer.
 - **Versions and diffs.** Re-importing an unchanged registry is the same version; a new release
   reports added and removed messages, changed schemas and new endpoints.
-- **Live registries too.** The [xRegistry registry crawl](/reference/rest/connectors) now
+- **Live registries too.** The [xRegistry registry crawl](/bring-in/connectors#registry-crawl) now
   imports each message group and endpoint as well as each schema, and the new `include` scope picks
   which of the three to crawl.
 - **From the CLI.** `apiome import xregistry ./registry.xreg.json`.

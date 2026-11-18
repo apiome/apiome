@@ -114,7 +114,10 @@ to go back to choosing one card.
 **Kong Declarative Config**, **Gateway API HTTPRoute**, Envoy, Istio, Traefik, AWS API Gateway,
 Azure API Management and Apigee write a gateway's own configuration and sit under **REST & HTTP**.
 Most of them carry routes but no request or response schemas, so schemas are reported as dropped.
-See [Export to an API gateway](./export-to-a-gateway.md) for what each one writes.
+See [Export to an API gateway](./export-to-a-gateway.md) for what each one writes. An API a
+[connector](../bring-in/connectors.mdx) imported from a gateway has **Push back** on its
+environment page, which opens the studio on that gateway's format — see
+[Push a catalog item back to the gateway](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway).
 
 ## 3. Options
 
@@ -554,6 +557,12 @@ screen's empty and error states — see [Run exports at scale](./run-exports-at-
 **Recent export jobs**, under every step, lists earlier jobs with their state, target and progress. For
 every export in the workspace, with who ran it and how much it lost, see [Export history](#export-history).
 
+## SDK & branding
+
+The **SDK & branding** tab names and brands the SDK packages generated from your versions — the npm,
+PyPI and Go names, the licence header and the user agent — for the workspace and per project, and
+turns the public **Get SDK** download on or off. See [SDK settings](./sdk-settings.mdx).
+
 ## SDK compatibility
 
 The **SDK compatibility** tab shows whether each generated SDK artifact faithfully represents a
@@ -674,3 +683,4 @@ Every step, the source picker, the target grid and the bulk dialog are checked b
 - [Export catalog items](./export-catalog-items.mdx) — the dialog, the studio, bulk export and the
   CLI side by side, with every target's fidelity tier
 - [Understand export fidelity](./export-fidelity.md)
+- [SDK settings](./sdk-settings.mdx)

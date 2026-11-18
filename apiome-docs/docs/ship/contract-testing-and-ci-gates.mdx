@@ -83,13 +83,15 @@ previous published one without bumping the major version? Its level is a style-g
 | `block` | The publish is refused unless it is force-published with a reason. |
 
 A version label that is not semver gets a warning but is never blocked. Set the level with
-`breakingPublishPolicy` on the [style-guide policy](../reference/rest/style-guides.md); the Style
-guides screen is not yet available.
+**Breaking-change publishes** on a guide's [Policy tab](../govern/style-guides.mdx#policy)
+(`breakingPublishPolicy` on the [style-guide policy](../reference/rest/style-guides.md) over the
+REST API).
 
 ## Check a live deployment (v2)
 
 These checks go past the spec to the people and services that use it. They are available over the
-REST API and the CLI; the project **Consumers** screen is not yet available.
+REST API and the CLI, and a project's [**Consumers**](../build/projects.mdx#consumers) page registers
+consumers and imports Pact files.
 
 | You want to… | Use | Details |
 | --- | --- | --- |

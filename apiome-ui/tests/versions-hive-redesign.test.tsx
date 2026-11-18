@@ -764,11 +764,6 @@ describe('the header', () => {
     await screen.findByTestId('versions-table');
   });
 
-  it('leaves the Dependencies tab out while the dependency graph is held back (RC6)', async () => {
-    await renderVersions();
-    expect(screen.queryByTestId('versions-tab-dependencies')).not.toBeInTheDocument();
-  });
-
   it('opens the project\'s Dependencies tab (CDG-3.4)', async () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph';
     try {

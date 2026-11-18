@@ -397,8 +397,8 @@ describe('the two views draw one list', () => {
     expect(rowPill!.classList.contains(hue!)).toBe(true);
   });
 
-  // The Owner column (CDG-2.4) waits for Teams (lib/feature-release.ts); catalog-owners.test.tsx covers it.
-  it('draws the table’s nine columns in the mockup’s order', async () => {
+  // The Owner column (CDG-2.4) came with Teams in RC8; catalog-owners.test.tsx covers its cells.
+  it('draws the table’s ten columns: the mockup’s nine, with Owner after Source', async () => {
     await renderCatalog();
     await screen.findByText('Ledger Graph');
     await showTable();
@@ -411,6 +411,7 @@ describe('the two views draw one list', () => {
       'Format',
       'Protocol',
       'Source',
+      'Owner',
       'Quality',
       'Grade',
       'Status',

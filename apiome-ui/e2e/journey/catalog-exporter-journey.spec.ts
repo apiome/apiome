@@ -106,8 +106,8 @@ test.describe('X2 — Catalog Exporter journey', () => {
     await page.goto('/ade/dashboard/export/studio');
     await expect(page.getByTestId('export-studio-unscoped')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('unreleased-feature-gate')).toBeHidden();
-    // Connectors stays held back: only the studio is released.
-    await page.goto('/ade/dashboard/connectors');
+    // The Data browser tool stays held back: the run opens no preview feature.
+    await page.goto('/ade/database');
     await expect(page.getByTestId('unreleased-feature-gate')).toBeVisible({ timeout: 60_000 });
   });
 

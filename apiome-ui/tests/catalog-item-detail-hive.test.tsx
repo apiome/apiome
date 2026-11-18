@@ -309,18 +309,6 @@ describe('the nine panes', () => {
     expect(screen.getByTestId('catalog-detail-pane-versions')).not.toBeVisible();
   });
 
-  it('leaves Dependencies and Subjects out while their features are held back (RC6)', async () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    try {
-      await renderDetail();
-      expect(screen.getAllByRole('tab')).toHaveLength(8);
-      expect(screen.queryByTestId('catalog-detail-tab-dependencies')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('catalog-detail-tab-subjects')).not.toBeInTheDocument();
-    } finally {
-      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph,schema-registry';
-    }
-  });
-
   it('adds a Subjects tab to a schema item only (CDG-4.5)', async () => {
     expect(screen.queryByTestId('catalog-detail-tab-subjects')).not.toBeInTheDocument();
     await renderDetail({ ...ITEM, sourceFormat: 'avro' });
@@ -680,7 +668,7 @@ describe('the states', () => {
  * fails quietly in the browser.
  */
 describe('the browser fixtures', () => {
-  // The docs draw the released page: no Dependencies or Subjects tab while those are held back.
+  // The docs draw the released page, read from the release gate alone: no preview override.
   beforeAll(() => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });

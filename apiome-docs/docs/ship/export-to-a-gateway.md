@@ -41,7 +41,7 @@ not what it carries, so schemas are declared losses.
 
 From a gateway config imported by a connector, **click “Push back”** on one of its APIs to export
 it to that gateway's own format: Kong for a Kong connector, **AWS API Gateway**, **Azure API
-Management** or **Apigee API proxy** for theirs (see the [Connectors API](../reference/rest/connectors.md)).
+Management** or **Apigee API proxy** for theirs (see [Connectors](../bring-in/connectors.mdx)).
 
 With the API, use the target key with `POST /v1/export/{tenant}/preview` and the export job
 endpoints — see [Export a specification](./export-a-spec.md).

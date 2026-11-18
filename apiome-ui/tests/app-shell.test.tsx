@@ -113,9 +113,8 @@ import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 /** Every rail destination the model describes, flattened. */
 const MODEL_ITEMS: PlatformNavItem[] = PLATFORM_NAV_GROUPS.flatMap((group) => group.items);
 
-/** Destinations open in this build, and those held back by the release gate. */
+/** Destinations open in this build (the release gate holds back no rail item since RC8). */
 const RELEASED_ITEMS = MODEL_ITEMS.filter((item) => isFeatureReleased(item.id));
-const UNRELEASED_ITEMS = MODEL_ITEMS.filter((item) => !isFeatureReleased(item.id));
 
 /** The headings the model asks for, in model order. */
 const GROUP_LABELS = PLATFORM_NAV_GROUPS.map((group) => group.label).filter(
@@ -261,17 +260,6 @@ describe('AppShell — navigation from the model', () => {
     }
     // `hidden: true` counts the rows of a folded group too (Workspace starts folded).
     expect(within(nav).getAllByRole('link', { hidden: true })).toHaveLength(RELEASED_ITEMS.length);
-  });
-
-  it('leaves an unreleased destination out of the rail entirely', async () => {
-    expect(UNRELEASED_ITEMS.length).toBeGreaterThan(0);
-    await renderShell({ tenant: true });
-
-    const nav = screen.getByRole('navigation', { name: 'Primary' });
-    for (const item of UNRELEASED_ITEMS) {
-      expect(within(nav).queryByTestId(`rail-nav-${item.id}`)).not.toBeInTheDocument();
-      expect(within(nav).queryByText(item.label)).not.toBeInTheDocument();
-    }
   });
 
   it('renders a heading for every labelled group, and none for the leading run', async () => {

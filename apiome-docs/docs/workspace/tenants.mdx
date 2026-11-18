@@ -53,8 +53,8 @@ the side; the header shows the slug, the member count and whether it is your cur
 
 <Screenshot id="tenants-drawer-members" alt="Manage Northwind, Members section: five members with their Admin and Member roles, and Add member" />
 
-**Security**, **License & plan**, **MCP settings**, **Per-key capabilities** and **Policy history**
-read the *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
+**Security**, **License & plan**, **MCP settings**, **Per-key capabilities**, **Ownership** and
+**Policy history** read the *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
 select it first. **Members** works for every tenant you administer. A section keeps its state while
 you look at another, so an unsaved MCP draft survives a glance at the history (the tab shows a dot
 while changes are unsaved).
@@ -102,7 +102,7 @@ Two-factor protects the whole account, so a person in several workspaces enrols 
 earliest deadline. Members who sign in with GitHub, GitLab, Microsoft or Google can comply too. API
 keys are not affected. Turning the requirement off and on again restarts every grace period; changing
 only the grace period does not. Every change is recorded in the
-[access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get) as `two_factor_policy.update`. Only tenant administrators can change it.
+[Access audit](../govern/access-audit.mdx) as `two_factor_policy.update`. Only tenant administrators can change it.
 
 ### License & plan
 
@@ -161,6 +161,27 @@ beside **MCP API key**, confirm with **Regenerate**, and copy the new secret fro
 regenerated** — the old secret is refused from its next call. MCP keys are also listed, created,
 regenerated and revoked on **Workspace → API keys**, beside the REST keys — see [MCP
 keys](./api-keys.mdx#mcp-keys).
+
+### Ownership
+
+Two settings for entities that have no confirmed [owner team](./teams.mdx#ownership):
+
+<Screenshot id="tenant-ownership-policy" alt="The Ownership section: Platform as the catch-all team and Require an owner to publish switched on" />
+
+- **Catch-all team** — findings on anything without a confirmed owner also go to this team's
+  members and its chat channel (they are still listed in the **Unowned findings** report). Choose
+  **None — the Unowned findings report only** to turn it off. If the chosen team is later deleted,
+  the section warns that unowned findings reach nobody.
+- **Require an owner to publish** — a project with no confirmed owner team cannot publish a version
+  (reason `no-owner`) unless it is force-published with a reason. The publish dialog shows this gate
+  whether it is on or off.
+
+1. Choose the **Catch-all team** and switch **Require an owner to publish** on or off.
+2. **Click “Save changes”.** The change is recorded in the access audit as
+   `ownership_policy.update`.
+
+Changing these needs `teams:edit` (Owner and Admin); anyone with `teams:view` sees them read-only,
+and the [Teams](./teams.mdx) page shows them too.
 
 ### Policy history
 

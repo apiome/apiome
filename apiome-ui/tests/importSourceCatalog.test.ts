@@ -420,11 +420,6 @@ describe('baseIntakeTiles (MFI-26.1, MFI-29.3)', () => {
     expect(baseIntakeTiles(withoutUrl).map((t) => t.method)).toEqual(['file', 'paste', 'git', 'compass']);
   });
 
-  it('leaves the Compass tile out while catalog entity kinds are held back (RC6)', () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(baseIntakeTiles(baseImportSourceCards()).map((t) => t.method)).toEqual(['file', 'url', 'paste', 'git']);
-  });
-
   it('keeps the Compass tile out of every other import surface (CDG-5.5)', () => {
     expect(baseImportSourceCards().map((c) => c.key)).not.toContain('compass');
   });

@@ -75,7 +75,8 @@ admin edit reaches the login path within a bounded wait instead of the 30s defau
 
 `catalog-project-journey.spec.ts` walks the path RC6 ships, one serial step per screen:
 
-1. a held-back route shows *Not available yet* (proves the run has no preview override);
+1. a held-back route (the Data browser tool) shows *Not available yet* (proves the run has no
+   preview override);
 2. a RAML spec from the examples corpus, retitled per run, is pasted into the Catalog import dialog;
 3. its catalog item is opened from the Catalog list;
 4. **Convert to OpenAPI** creates a new project;
@@ -109,7 +110,7 @@ share the self-hosted runner.
 
 `catalog-exporter-journey.spec.ts` walks the export path, one serial step per screen:
 
-1. the Export studio opens and **Connectors** is still gated (only `export-studio` is previewed);
+1. the Export studio opens and the **Data browser** tool is still gated (the run previews nothing);
 2. three RAML specs (retitled per run) are imported into the Catalog;
 3. the first item is exported to Avro through the **Export** dialog, and **Download all files
    (.zip)** yields every `.avsc` plus `manifest.json`;
