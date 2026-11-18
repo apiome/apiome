@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.755.0] - 2026-11-17
+
+### Added
+- **Reddit sign-in (OLO-9.33, #5046)** — OpenAPI 1.596.17:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `reddit` (label `Reddit`, `available`), a credentials-only
+    provider: required fields `client_id` (`REDDIT_CLIENT_ID`, the Reddit web app's client ID) and `client_secret`
+    (`REDDIT_CLIENT_SECRET`, its secret), no issuer — Reddit's OAuth 2.0 endpoints are fixed. `GET
+    /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/reddit` and the
+    resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - Reddit is a **link-only** provider: its API exposes `has_verified_email` but no email address, so an explicit
+    link and the subsequent sign-in work and a fresh sign-in is refused with `OAuthEmailRequired`. That decision is
+    made in `apiome-ui`; nothing in the REST API changed for it.
+  - No migration: `reddit` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.754.0] - 2026-11-17
 
 ### Added

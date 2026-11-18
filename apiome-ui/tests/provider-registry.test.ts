@@ -96,6 +96,8 @@ const ALL_ENABLED_ENV = {
   FACEBOOK_CLIENT_SECRET: 'fb-secret',
   TWITTER_CLIENT_ID: 'x-id',
   TWITTER_CLIENT_SECRET: 'x-secret',
+  REDDIT_CLIENT_ID: 'rd-id',
+  REDDIT_CLIENT_SECRET: 'rd-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -131,6 +133,7 @@ describe('registry vocabulary', () => {
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
   });
 
@@ -165,6 +168,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('apple')?.label).toBe('Apple');
     expect(getProviderDescriptor('facebook')?.label).toBe('Facebook');
     expect(getProviderDescriptor('twitter')?.label).toBe('X (Twitter)');
+    expect(getProviderDescriptor('reddit')?.label).toBe('Reddit');
   });
 
   it('pins each available provider env contract', () => {
@@ -300,9 +304,13 @@ describe('registry vocabulary', () => {
       'TWITTER_CLIENT_ID',
       'TWITTER_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('reddit')?.requiredEnvKeys).toEqual([
+      'REDDIT_CLIENT_ID',
+      'REDDIT_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.32, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/twitter/reddit/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.33, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -330,6 +338,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('apple')?.status).toBe('available');
     expect(getProviderDescriptor('facebook')?.status).toBe('available');
     expect(getProviderDescriptor('twitter')?.status).toBe('available');
+    expect(getProviderDescriptor('reddit')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -382,6 +391,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('apple', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('facebook', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('twitter', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('reddit', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -574,6 +584,10 @@ describe('isProviderEnabled', () => {
       isProviderEnabled('twitter', { TWITTER_CLIENT_ID: 'x', TWITTER_CLIENT_SECRET: 'y' })
     ).toBe(true);
     expect(isProviderEnabled('twitter', { TWITTER_CLIENT_ID: 'x' })).toBe(false);
+    expect(
+      isProviderEnabled('reddit', { REDDIT_CLIENT_ID: 'x', REDDIT_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('reddit', { REDDIT_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -614,6 +628,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -651,6 +666,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
   });
 
@@ -686,6 +702,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'apple',
       'facebook',
       'twitter',
+      'reddit',
     ]);
   });
 });
@@ -725,6 +742,7 @@ describe('providerSummaries', () => {
       { id: 'apple', label: 'Apple', status: 'available', enabled: false },
       { id: 'facebook', label: 'Facebook', status: 'available', enabled: false },
       { id: 'twitter', label: 'X (Twitter)', status: 'available', enabled: false },
+      { id: 'reddit', label: 'Reddit', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

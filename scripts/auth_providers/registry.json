@@ -277,6 +277,15 @@
         { "field": "client_id", "kind": "client_id", "env_key": "TWITTER_CLIENT_ID" },
         { "field": "client_secret", "kind": "client_secret", "env_key": "TWITTER_CLIENT_SECRET" }
       ]
+    },
+    {
+      "id": "reddit",
+      "label": "Reddit",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "REDDIT_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "REDDIT_CLIENT_SECRET" }
+      ]
     }
   ]
 }
