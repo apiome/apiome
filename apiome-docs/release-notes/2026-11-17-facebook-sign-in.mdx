@@ -1,0 +1,32 @@
+---
+slug: facebook-sign-in
+title: Sign in with Facebook
+description: "People can now link their Facebook account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their Facebook account on [Linked accounts](/workspace/linked-accounts) and sign
+in to Apiome with it from then on.
+
+{/* truncate */}
+
+- **For administrators.** **Facebook** is a new entry in **System settings → Add Provider**. It
+  needs the App ID and App secret of an app in Meta for Developers with the Facebook Login use case
+  — no issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what
+  to set on Facebook's side. The environment variables are `FACEBOOK_CLIENT_ID` and
+  `FACEBOOK_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/facebook`, added to the app's
+  **Valid OAuth Redirect URIs**.
+- **Scopes.** Apiome asks for the **email** and **public_profile** permissions only, and uses them
+  to read the name, email address and picture of the person signing in. Apiome reads no pages,
+  posts or friends and keeps no Facebook token. Before reading the profile, Apiome checks that the
+  access token was issued to your app.
+- **Link first.** Facebook does not say whether an email address is verified, so Apiome never uses
+  a Facebook address to find or create an account. People sign in another way, link Facebook from
+  **Linked accounts**, and can sign in with Facebook after that. Signing up with Facebook, or
+  signing in with it before linking, ends with *Your sign-in provider could not confirm that your
+  email address is verified…* — even when the address matches an existing account.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `facebook` as an available provider, and
+  `PUT /v1/admin/auth-providers/facebook` stores its credentials.

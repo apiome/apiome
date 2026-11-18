@@ -99,6 +99,8 @@ const ALL_ENABLED_ENV = {
   APPLE_PRIVATE_KEY: 'ap-key',
   APPLE_TEAM_ID: 'A1B2C3D4E5',
   APPLE_KEY_ID: 'ABC123DEFG',
+  FACEBOOK_CLIENT_ID: 'fb-id',
+  FACEBOOK_CLIENT_SECRET: 'fb-secret',
 };
 
 describe('providerEnvIssues', () => {

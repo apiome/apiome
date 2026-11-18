@@ -92,6 +92,8 @@ const ALL_ENABLED_ENV = {
   APPLE_PRIVATE_KEY: 'ap-key',
   APPLE_TEAM_ID: 'A1B2C3D4E5',
   APPLE_KEY_ID: 'ABC123DEFG',
+  FACEBOOK_CLIENT_ID: 'fb-id',
+  FACEBOOK_CLIENT_SECRET: 'fb-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -125,6 +127,7 @@ describe('registry vocabulary', () => {
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
   });
 
@@ -157,6 +160,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('railway')?.label).toBe('Railway');
     expect(getProviderDescriptor('hubspot')?.label).toBe('HubSpot');
     expect(getProviderDescriptor('apple')?.label).toBe('Apple');
+    expect(getProviderDescriptor('facebook')?.label).toBe('Facebook');
   });
 
   it('pins each available provider env contract', () => {
@@ -284,9 +288,13 @@ describe('registry vocabulary', () => {
       { field: 'team_id', kind: 'config', envKey: 'APPLE_TEAM_ID' },
       { field: 'key_id', kind: 'config', envKey: 'APPLE_KEY_ID' },
     ]);
+    expect(getProviderDescriptor('facebook')?.requiredEnvKeys).toEqual([
+      'FACEBOOK_CLIENT_ID',
+      'FACEBOOK_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.30, 9.41–9.43); no coming-soon placeholders remain', () => {
+  it('marks google/okta/aws/keycloak/oidc/auth0/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple/facebook/line/vk/wechat available (OLO-9.2–9.9, 9.17–9.31, 9.41–9.43); no coming-soon placeholders remain', () => {
     expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('okta')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('available');
@@ -312,6 +320,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('railway')?.status).toBe('available');
     expect(getProviderDescriptor('hubspot')?.status).toBe('available');
     expect(getProviderDescriptor('apple')?.status).toBe('available');
+    expect(getProviderDescriptor('facebook')?.status).toBe('available');
     expect(PROVIDER_REGISTRY.every((p) => p.status === 'available')).toBe(true);
   });
 
@@ -362,6 +371,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('railway', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('hubspot', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('apple', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('facebook', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -546,6 +556,10 @@ describe('isProviderEnabled', () => {
     for (const key of Object.keys(apple)) {
       expect(isProviderEnabled('apple', { ...apple, [key]: '' })).toBe(false);
     }
+    expect(
+      isProviderEnabled('facebook', { FACEBOOK_CLIENT_ID: 'x', FACEBOOK_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('facebook', { FACEBOOK_CLIENT_ID: 'x' })).toBe(false);
   });
 
   it('never enables unknown ids', () => {
@@ -584,6 +598,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
@@ -619,6 +634,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
   });
 
@@ -652,6 +668,7 @@ describe('acceptance: env alone adds/removes providers everywhere', () => {
       'railway',
       'hubspot',
       'apple',
+      'facebook',
     ]);
   });
 });
@@ -689,6 +706,7 @@ describe('providerSummaries', () => {
       { id: 'railway', label: 'Railway', status: 'available', enabled: false },
       { id: 'hubspot', label: 'HubSpot', status: 'available', enabled: false },
       { id: 'apple', label: 'Apple', status: 'available', enabled: false },
+      { id: 'facebook', label: 'Facebook', status: 'available', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.
     expect(JSON.parse(JSON.stringify(summaries))).toEqual(summaries);

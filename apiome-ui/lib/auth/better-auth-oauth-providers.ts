@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -112,6 +112,13 @@
  *    The id token's `email_verified` is re-stamped fail-closed (trusted when verified);
  *    `is_private_email` relay addresses are kept on the profile; the name, sent on first consent
  *    only, rides the bridged callback.
+ *  - **Facebook (OLO-9.31):** Facebook Login on fixed endpoints mirrored from Better Auth's
+ *    `facebook` provider (`www.facebook.com/v24.0/dialog/oauth`,
+ *    `graph.facebook.com/v24.0/oauth/access_token`), scopes `email public_profile`, client
+ *    credentials in the form body, PKCE off; the access token is checked against the app with
+ *    `graph.facebook.com/debug_token`, then the claims come from Graph
+ *    `/me?fields=id,name,email,picture`, whose email carries no verified flag → fail-closed
+ *    link-first.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -663,6 +670,14 @@ const HUBSPOT_AUTHORIZE_URL = 'https://app.hubspot.com/oauth/authorize';
 const HUBSPOT_TOKEN_URL = 'https://api.hubapi.com/oauth/v1/token';
 /** HubSpot has no userinfo endpoint: the token-info resource takes the access token in its path. */
 const HUBSPOT_TOKEN_INFO_URL = 'https://api.hubapi.com/oauth/v1/access-tokens';
+
+/** Facebook Login: fixed Graph v24.0 endpoints, mirrored from Better Auth's `facebook` provider (OLO-9.31). */
+const FACEBOOK_AUTHORIZE_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
+const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token';
+/** Graph token inspection: proves an access token was issued to this app, and for which user. */
+const FACEBOOK_DEBUG_TOKEN_URL = 'https://graph.facebook.com/debug_token';
+/** Graph profile resource with the helper's default field list. */
+const FACEBOOK_PROFILE_URL = 'https://graph.facebook.com/me?fields=id,name,email,picture';
 
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
@@ -1773,6 +1788,105 @@ function normalizeApple(
   return { accountId, profile, email, name, image: null };
 }
 
+/**
+ * Read a non-empty string field from a Graph response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function facebookString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Check a Facebook access token with Graph's `debug_token` (OLO-9.31), as Better Auth's
+ * `facebook()` helper does before it trusts `/me`: Graph `/me` answers for a token minted to *any*
+ * Facebook app, so the token must be valid, issued to this app (`app_id` = the configured client
+ * id) and tied to a user. The inspection is authenticated with the app access token
+ * `<client id>|<client secret>`, which Graph takes as the `access_token` query parameter. Fail-soft
+ * to '' on missing credentials, a transport or parse error, a non-2xx response, or any failed
+ * check.
+ *
+ * @param accessToken The user access token from the code exchange.
+ * @param env Environment carrying `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET`.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The Facebook user id the token belongs to, or '' when it is not proven.
+ */
+async function verifyFacebookAccessToken(
+  accessToken: string,
+  env: Record<string, string | undefined>,
+  fetchImpl: FetchLike
+): Promise<string> {
+  const clientId = readEnvString(env, 'FACEBOOK_CLIENT_ID') ?? '';
+  const clientSecret = readEnvString(env, 'FACEBOOK_CLIENT_SECRET') ?? '';
+  if (!clientId || !clientSecret) return '';
+  const query = new URLSearchParams({
+    input_token: accessToken,
+    access_token: `${clientId}|${clientSecret}`,
+  });
+  try {
+    const res = await fetchImpl(`${FACEBOOK_DEBUG_TOKEN_URL}?${query.toString()}`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'apiome' },
+    });
+    if (!res.ok) return '';
+    const body = (await res.json()) as { data?: Record<string, unknown> } | null;
+    const data = body && typeof body === 'object' ? body.data : null;
+    if (!data || typeof data !== 'object') return '';
+    if (data.is_valid !== true || facebookString(data.app_id) !== clientId) return '';
+    return facebookString(data.user_id);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Normalize a Facebook Login sign-in (OLO-9.31): prove the access token belongs to this app with
+ * {@link verifyFacebookAccessToken}, then fetch Graph `/me?fields=id,name,email,picture` with it and
+ * map `id` / `name` / `email` / `picture.data.url` — the resources and mapping of Better Auth's
+ * `facebook()` helper. The `/me` `id` must be the user the token was issued for, or there is no
+ * identity. The identity is keyed on that id, the app-scoped Facebook user id.
+ *
+ * Graph asserts **nothing** about whether that email is verified — `email` arrives only when the
+ * person granted the `email` permission and has an address on file, and no verified flag comes
+ * with it — so the profile never carries `email_verified` (the helper would honor one; Apiome
+ * drops it rather than trust it) and `resolveOAuthEmailVerified` fail-closes to link-first: the
+ * address can neither join nor create an account. The profile is built from those fields only.
+ * A failed or unproven token, a failed `/me` request, or a body whose `id` is not the token's user
+ * yields an empty profile (no account id, no email), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param env Environment carrying the Facebook app's client id and secret.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeFacebook(
+  tokens: OAuth2Tokens,
+  env: Record<string, string | undefined>,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const tokenUserId = await verifyFacebookAccessToken(accessToken, env, fetchImpl);
+  if (!tokenUserId) return none;
+  const body = await fetchJsonWithToken(FACEBOOK_PROFILE_URL, accessToken, fetchImpl);
+  const me =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  // Bind the inspected token to the profile it returned, exactly as the helper does.
+  if (facebookString(me.id) !== tokenUserId) return none;
+  const email = facebookString(me.email) || null;
+  const name = facebookString(me.name) || null;
+  const picture = me.picture as { data?: { url?: unknown } } | undefined;
+  const image = facebookString(picture?.data?.url) || null;
+  const profile: Record<string, unknown> = { id: tokenUserId };
+  if (email) profile.email = email;
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId: tokenUserId, profile, email, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -1826,6 +1940,7 @@ const NORMALIZERS: Record<
   railway: (tokens, _env, fetchImpl) => normalizeRailway(tokens, fetchImpl),
   hubspot: (tokens, _env, fetchImpl) => normalizeHubspot(tokens, fetchImpl),
   apple: (tokens, env) => normalizeApple(tokens, env),
+  facebook: (tokens, env, fetchImpl) => normalizeFacebook(tokens, env, fetchImpl),
 };
 
 /**
@@ -1860,7 +1975,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple).
+ *   railway | hubspot | apple | facebook).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2476,6 +2591,26 @@ export function buildGenericOAuthConfig(
         [credentials.teamId, credentials.keyId, credentials.privateKey].join('\n')
       );
       return config;
+    }
+    case 'facebook': {
+      return {
+        providerId: 'facebook',
+        clientId: readEnvString(env, 'FACEBOOK_CLIENT_ID') ?? '',
+        clientSecret: readEnvString(env, 'FACEBOOK_CLIENT_SECRET') ?? '',
+        // Fixed Facebook Login endpoints (Graph v24.0), mirrored from Better Auth's `facebook()`
+        // helper — no issuer. `email public_profile` are the helper's default scopes; Apiome reads
+        // no pages, posts or friends. Like the helper, the code exchange sends the client id and
+        // secret in the form body and this confidential client sends no PKCE challenge (Better
+        // Auth enforces `state`). The normalizer checks the token with `debug_token` (which needs
+        // the app secret) before reading `/me`, so no `userInfoUrl` is set. The Graph email carries
+        // no verified claim → fail-closed link-first (see normalizeFacebook).
+        authorizationUrl: FACEBOOK_AUTHORIZE_URL,
+        tokenUrl: FACEBOOK_TOKEN_URL,
+        scopes: ['email', 'public_profile'],
+        authentication: 'post',
+        pkce: false,
+        getUserInfo,
+      };
     }
     default:
       return null;

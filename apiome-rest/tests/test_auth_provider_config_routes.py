@@ -148,7 +148,7 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert resp.status_code == 200
     providers = resp.json()["providers"]
     ids = [p["provider_id"] for p in providers]
-    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple"]
+    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple", "facebook"]
     # With no rows, every field falls back to env and nothing is enabled/stored.
     gh = providers[0]
     assert gh["enabled"] is None
@@ -276,6 +276,11 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert apple["status"] == "available"
     assert apple["required_fields"] == ["client_id", "private_key", "team_id", "key_id"]
     assert apple["can_enable"] is False
+    facebook = next(p for p in providers if p["provider_id"] == "facebook")
+    assert facebook["label"] == "Facebook"
+    assert facebook["status"] == "available"
+    assert facebook["required_fields"] == ["client_id", "client_secret"]
+    assert facebook["can_enable"] is False
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):
