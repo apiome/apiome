@@ -109,6 +109,8 @@ const ALL_ENABLED_ENV = {
   SPOTIFY_CLIENT_SECRET: 'sp-secret',
   TWITCH_CLIENT_ID: 'tw-id',
   TWITCH_CLIENT_SECRET: 'tw-secret',
+  TIKTOK_CLIENT_KEY: 'tt-key',
+  TIKTOK_CLIENT_SECRET: 'tt-secret',
 };
 
 describe('providerEnvIssues', () => {

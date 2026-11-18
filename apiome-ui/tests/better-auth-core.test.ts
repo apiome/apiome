@@ -192,6 +192,7 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       'salesforce',
       'slack',
       'spotify',
+      'tiktok',
       'twitch',
       'twitter',
       'vercel',

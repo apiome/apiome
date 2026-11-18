@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.758.0] - 2026-11-17
+
+### Added
+- **TikTok sign-in (OLO-9.36, #5049)** — OpenAPI 1.596.20:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `tiktok` (label `TikTok`, `available`), a credentials-only
+    provider: required fields `client_id` (`TIKTOK_CLIENT_KEY` — TikTok calls the client ID a "client key") and
+    `client_secret` (`TIKTOK_CLIENT_SECRET`), no issuer — TikTok Login Kit's endpoints are fixed. `GET
+    /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/tiktok` and the
+    resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - TikTok is a **link-only** provider: its user-info API exposes no email address, so an explicit link and the
+    subsequent sign-in work and a fresh sign-in is refused with `OAuthEmailRequired`. That decision, and the
+    `client_key` authorize parameter and token exchange, are made in `apiome-ui`; nothing in the REST API changed
+    for them.
+  - No migration: `tiktok` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.757.0] - 2026-11-17
 
 ### Added

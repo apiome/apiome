@@ -164,6 +164,8 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * `twitch` (OLO-9.35) is listed: Twitch's id token carries a native `email_verified` claim with the
  * `user:read:email` scope (requested through the OIDC `claims` parameter); absent or false
  * fail-closes to link-first.
+ * `tiktok` (OLO-9.36) is **not** listed: TikTok's user info exposes no email address at all
+ * (link-only).
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -265,6 +267,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'reddit',
   'spotify',
   'twitch',
+  'tiktok',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

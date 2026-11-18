@@ -29,8 +29,8 @@
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
  * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
- * X / Twitter (OLO-9.32), Reddit (OLO-9.33), Spotify (OLO-9.34), and Twitch (OLO-9.35) followed
- * exactly that path.
+ * X / Twitter (OLO-9.32), Reddit (OLO-9.33), Spotify (OLO-9.34), Twitch (OLO-9.35), and TikTok
+ * (OLO-9.36) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -465,6 +465,16 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // document, so no issuer. The `email_verified` claim → trusted when verified, refused
     // otherwise — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET'),
+  },
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    status: 'available',
+    // TikTok (OLO-9.36, #5049): credentials only — the Client key and Client secret of an app on
+    // TikTok for Developers (TikTok calls the client ID a "client key"); fixed endpoints, so no
+    // issuer. TikTok's user info exposes no email address → link-only — see
+    // AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET'),
   },
 ];
 

@@ -2,7 +2,7 @@
  * Better Auth OAuth provider construction (OLO-10.7, #5002).
  *
  * Re-expresses the live sign-in providers — github, gitlab, azure, google, okta, aws, keycloak,
- * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
+ * oidc, auth0, line, vk, wechat, atlassian, bitbucket, slack, linkedin, discord, salesforce, notion, figma, linear, dropbox, zoom, huggingface, vercel, railway, hubspot, apple, facebook, twitter, reddit, spotify, twitch, tiktok — on Better Auth's **generic OAuth2/OIDC** plugin, the Better Auth analogue of the
  * NextAuth factory map in `nextauth-oauth-providers.ts`. Every provider is driven from the shared
  * provider registry (`provider-registry.ts`) exactly as the NextAuth path is, so the registry stays
  * the single source of the enabled set and the mirror tests (`provider-registry-mirror.test.ts`,
@@ -143,6 +143,14 @@
  *    id token (as Better Auth's `twitch` provider asks), client credentials in the form body, PKCE
  *    off; the claims come from the id token, whose issuer and audience are checked, and the
  *    native `email_verified` claim is fail-closed via `resolveOAuthEmailVerified` → trusted.
+ *  - **TikTok (OLO-9.36):** TikTok Login Kit on fixed endpoints mirrored from Better Auth's
+ *    `tiktok` provider (`www.tiktok.com/v2/auth/authorize`, `open.tiktokapis.com/v2/oauth/token/`),
+ *    scope `user.info.profile`, PKCE off. TikTok names its client credential `client_key`, not
+ *    `client_id`: the authorize request carries it as an extra parameter and a custom `getToken`
+ *    performs the form-body `client_key` / `client_secret` exchange. The claims come from
+ *    `open.tiktokapis.com/v2/user/info/`, which exposes **no email address** → link-only: an
+ *    explicit link and the subsequent sign-in work, and a fresh sign-in is refused with
+ *    `OAuthEmailRequired`.
  *  - **nOAuth hardening (OLO-1.4):** azure id-token claims (`oid`/`upn`/`xms_edov`/…) pass through
  *    untouched so the engine's `resolveEntraEmailVerified` still rejects a forged token.
  *  - **The account-resolution decision (OLO-1.x):** every callback runs through
@@ -738,6 +746,13 @@ const TWITCH_ID_TOKEN_CLAIMS = JSON.stringify({
   id_token: { email: null, email_verified: null, preferred_username: null, picture: null },
 });
 
+/** TikTok Login Kit: fixed endpoints, mirrored from Better Auth's `tiktok` provider (OLO-9.36). */
+const TIKTOK_AUTHORIZE_URL = 'https://www.tiktok.com/v2/auth/authorize';
+const TIKTOK_TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
+/** The authenticated user (`open_id`, `display_name`, `username`, `avatar_large_url`), as the helper reads it. */
+const TIKTOK_USER_INFO_URL =
+  'https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_large_url,display_name,username';
+
 /**
  * Normalize a LINE sign-in (OLO-9.41): prefer id-token claims (email arrives only when the
  * channel has approved email permission and the `email` scope was granted); fall back to the
@@ -882,6 +897,63 @@ export async function exchangeWechatAuthorizationCode(
       openid: typeof body.openid === 'string' ? body.openid : undefined,
       unionid: typeof body.unionid === 'string' ? body.unionid : undefined,
     },
+  };
+}
+
+/**
+ * Exchange a TikTok authorization code for tokens (OLO-9.36), matching Better Auth's `tiktok()`
+ * helper: a form-encoded POST to `open.tiktokapis.com/v2/oauth/token/` carrying `client_key` (not
+ * `client_id`), `client_secret`, `code`, `grant_type` and `redirect_uri`. The generic plugin's own
+ * exchange always sends `client_id`, which TikTok does not accept, hence this custom `getToken`.
+ * TikTok reports a failed exchange either as a non-2xx response or as an `error` field in a 200
+ * body; both throw, so the callback ends in Better Auth's OAuth error redirect.
+ *
+ * @param data Code-exchange inputs from Better Auth's generic-OAuth callback.
+ * @param env Environment carrying `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns OAuth2 tokens (access token, optional refresh token, expiry and scopes).
+ */
+export async function exchangeTiktokAuthorizationCode(
+  data: { code: string; redirectURI: string; codeVerifier?: string; deviceId?: string },
+  env: Record<string, string | undefined> = process.env,
+  fetchImpl: FetchLike = fetch as unknown as FetchLike
+): Promise<OAuth2Tokens> {
+  const body = new URLSearchParams({
+    client_key: readEnvString(env, 'TIKTOK_CLIENT_KEY') ?? '',
+    client_secret: readEnvString(env, 'TIKTOK_CLIENT_SECRET') ?? '',
+    code: data.code,
+    grant_type: 'authorization_code',
+    redirect_uri: data.redirectURI,
+  }).toString();
+  const res = await fetchImpl(TIKTOK_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+      'User-Agent': 'apiome',
+    },
+    body,
+  });
+  if (!res.ok) {
+    throw new Error('TikTok token exchange failed with a non-2xx response');
+  }
+  const json = (await res.json()) as Record<string, unknown> | null;
+  if (!json || typeof json !== 'object' || json.error != null) {
+    const description =
+      json && typeof json.error_description === 'string' ? json.error_description : 'unknown error';
+    throw new Error(`TikTok token exchange failed: ${description}`);
+  }
+  const accessToken = typeof json.access_token === 'string' ? json.access_token : undefined;
+  const refreshToken = typeof json.refresh_token === 'string' ? json.refresh_token : undefined;
+  const expiresIn = typeof json.expires_in === 'number' ? json.expires_in : undefined;
+  const scopeStr = typeof json.scope === 'string' ? json.scope : '';
+  return {
+    tokenType: 'Bearer',
+    accessToken,
+    refreshToken,
+    accessTokenExpiresAt:
+      typeof expiresIn === 'number' ? new Date(Date.now() + expiresIn * 1000) : undefined,
+    scopes: scopeStr ? scopeStr.split(',') : undefined,
   };
 }
 
@@ -2180,6 +2252,60 @@ function normalizeTwitch(
   return { accountId, profile, email, name, image };
 }
 
+/**
+ * Read a non-empty string field from a TikTok API response, trimmed; anything else is ''.
+ *
+ * @param value The raw field value.
+ * @returns The trimmed string, or '' when the value is not a non-empty string.
+ */
+function tiktokString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Normalize a TikTok sign-in (OLO-9.36): fetch `open.tiktokapis.com/v2/user/info/` with the access
+ * token and map `open_id` / `display_name` / `username` / `avatar_large_url` from `data.user` — the
+ * fields Better Auth's `tiktok()` helper requests. The identity is keyed on `open_id`, the user's
+ * stable id within this TikTok app; the name is the display name, else the username.
+ *
+ * TikTok exposes **no email address**, so the email is always null and the engine fail-closes to
+ * **link-only**: an already-linked identity signs in, an explicit link binds it, and anything else
+ * is refused with `OAuthEmailRequired`. Unlike the helper, which puts the `username` in the email
+ * slot when there is no email, the username is never used as an address, and an `email` field in
+ * the body is ignored. A failed request, a body whose `error.code` is not `ok`, or a user without a
+ * string `open_id` yields an empty profile (no account id), which the engine refuses.
+ *
+ * @param tokens The tokens from the code exchange (only `accessToken` is read).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The normalized profile for the resolution engine.
+ */
+async function normalizeTiktok(
+  tokens: OAuth2Tokens,
+  fetchImpl: FetchLike
+): Promise<NormalizedOAuthProfile> {
+  const none: NormalizedOAuthProfile = { accountId: '', profile: {}, email: null, name: null, image: null };
+  const accessToken = tokens.accessToken ?? '';
+  if (!accessToken) return none;
+  const body = await fetchJsonWithToken(TIKTOK_USER_INFO_URL, accessToken, fetchImpl);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return none;
+  const { data, error } = body as { data?: unknown; error?: unknown };
+  if (error && typeof error === 'object' && (error as Record<string, unknown>).code !== 'ok') {
+    return none;
+  }
+  const user =
+    data && typeof data === 'object' ? (data as Record<string, unknown>).user : undefined;
+  if (!user || typeof user !== 'object' || Array.isArray(user)) return none;
+  const fields = user as Record<string, unknown>;
+  const accountId = tiktokString(fields.open_id);
+  if (!accountId) return none;
+  const name = tiktokString(fields.display_name) || tiktokString(fields.username) || null;
+  const image = tiktokString(fields.avatar_large_url) || null;
+  const profile: Record<string, unknown> = { open_id: accountId };
+  if (name) profile.name = name;
+  if (image) profile.picture = image;
+  return { accountId, profile, email: null, name, image };
+}
+
 /* ── getUserInfo runner: normalize → resolve → admit or override ────────────────────────────── */
 
 /**
@@ -2238,6 +2364,7 @@ const NORMALIZERS: Record<
   reddit: (tokens, _env, fetchImpl) => normalizeReddit(tokens, fetchImpl),
   spotify: (tokens, _env, fetchImpl) => normalizeSpotify(tokens, fetchImpl),
   twitch: (tokens, env) => normalizeTwitch(tokens, env),
+  tiktok: (tokens, _env, fetchImpl) => normalizeTiktok(tokens, fetchImpl),
 };
 
 /**
@@ -2272,7 +2399,7 @@ export async function resolveLinkIntentUserId(provider: string): Promise<string 
  * @param provider The provider slug (github | gitlab | azure | google | okta | aws | keycloak |
  *   oidc | auth0 | line | vk | wechat | atlassian | bitbucket | slack | linkedin |
  *   discord | salesforce | notion | figma | linear | dropbox | zoom | huggingface | vercel |
- *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch).
+ *   railway | hubspot | apple | facebook | twitter | reddit | spotify | twitch | tiktok).
  * @param deps Injectable dependencies (store, fetch, link-intent resolver, env).
  * @returns A `getUserInfo` function returning the Better Auth user info on admit, or null otherwise.
  */
@@ -2987,6 +3114,35 @@ export function buildGenericOAuthConfig(
         authorizationUrlParams: { claims: TWITCH_ID_TOKEN_CLAIMS },
         authentication: 'post',
         pkce: false,
+        getUserInfo,
+      };
+    }
+    case 'tiktok': {
+      const clientKey = readEnvString(env, 'TIKTOK_CLIENT_KEY') ?? '';
+      return {
+        providerId: 'tiktok',
+        clientId: clientKey,
+        clientSecret: readEnvString(env, 'TIKTOK_CLIENT_SECRET') ?? '',
+        // Fixed TikTok Login Kit endpoints, mirrored from Better Auth's `tiktok()` helper — no
+        // issuer. TikTok names the client credential `client_key`: it is sent on the authorize
+        // request through authorizationUrlParams (the generic plugin's `client_id` is ignored by
+        // TikTok), and the custom getToken performs the form-body `client_key` / `client_secret`
+        // exchange. `user.info.profile` is the helper's default and the only scope the user-info
+        // fields need (one scope, so TikTok's comma separator never matters); Apiome reads no
+        // videos, followers, likes or messages. Like the helper, no PKCE challenge is sent
+        // (Better Auth enforces `state`). TikTok exposes no email address → link-only (see
+        // normalizeTiktok).
+        authorizationUrl: TIKTOK_AUTHORIZE_URL,
+        tokenUrl: TIKTOK_TOKEN_URL,
+        scopes: ['user.info.profile'],
+        pkce: false,
+        authorizationUrlParams: { client_key: clientKey },
+        getToken: (data) =>
+          exchangeTiktokAuthorizationCode(
+            data,
+            env,
+            runnerDeps.fetchImpl ?? (fetch as unknown as FetchLike)
+          ),
         getUserInfo,
       };
     }

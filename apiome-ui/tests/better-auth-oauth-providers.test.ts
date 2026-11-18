@@ -51,6 +51,7 @@ import {
   makeOAuthGetUserInfo,
   runWithOauthRedirectOverride,
   exchangeAppleAuthorizationCode,
+  exchangeTiktokAuthorizationCode,
   providerConfigSignature,
   type FetchLike,
   type OAuthRunnerDeps,
@@ -139,6 +140,8 @@ const ALL_ENABLED: Record<string, string> = {
   SPOTIFY_CLIENT_SECRET: 'spotify-secret',
   TWITCH_CLIENT_ID: 'twitch-client-id',
   TWITCH_CLIENT_SECRET: 'twitch-secret',
+  TIKTOK_CLIENT_KEY: 'tiktok-client-key',
+  TIKTOK_CLIENT_SECRET: 'tiktok-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -266,6 +269,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
   });
 
@@ -305,6 +309,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'reddit',
       'spotify',
       'twitch',
+      'tiktok',
     ]);
   });
 
@@ -407,6 +412,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const twitch = buildGenericOAuthConfig('twitch', ALL_ENABLED)!;
     expect(twitch.clientId).toBe('twitch-client-id');
     expect(twitch.clientSecret).toBe('twitch-secret');
+    const tiktok = buildGenericOAuthConfig('tiktok', ALL_ENABLED)!;
+    expect(tiktok.clientId).toBe('tiktok-client-key');
+    expect(tiktok.clientSecret).toBe('tiktok-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -901,6 +909,21 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(JSON.parse(params.claims)).toEqual({
       id_token: { email: null, email_verified: null, preferred_username: null, picture: null },
     });
+  });
+
+  test('tiktok: fixed Login Kit endpoints; user.info.profile; client_key param; custom getToken; PKCE off (OLO-9.36)', () => {
+    const cfg = buildGenericOAuthConfig('tiktok', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('tiktok');
+    expect(cfg.authorizationUrl).toBe('https://www.tiktok.com/v2/auth/authorize');
+    expect(cfg.tokenUrl).toBe('https://open.tiktokapis.com/v2/oauth/token/');
+    // The normalizer reads /v2/user/info/ itself.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    expect(cfg.scopes).toEqual(['user.info.profile']);
+    expect(cfg.pkce).toBe(false);
+    // TikTok names the client credential `client_key`, not `client_id`.
+    expect(cfg.authorizationUrlParams).toEqual({ client_key: 'tiktok-client-key' });
+    expect(typeof cfg.getToken).toBe('function');
+    expect(cfg.discoveryUrl).toBeUndefined();
   });
 
   test('wechat: QR Website App endpoints; custom getToken; PKCE off (OLO-9.43)', () => {
@@ -6688,6 +6711,234 @@ describe('getUserInfo — Twitch sign-in and linking (OLO-9.35)', () => {
     });
 
     const { result, override } = await runGetUserInfo('twitch', tokens, { store, env });
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+});
+
+/* ── TikTok token exchange (OLO-9.36) ──────────────────────────────────────────────────────── */
+
+describe('exchangeTiktokAuthorizationCode — client_key form exchange (OLO-9.36)', () => {
+  const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
+
+  /** Serve `body` from the token endpoint (`ok` controls the status); record each request. */
+  const tiktokTokenEndpoint = (body: unknown, ok = true) => {
+    const requests: Array<{ url: string; method?: string; headers: Record<string, string>; body?: string }> =
+      [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, method: init.method, headers: init.headers, body: init.body });
+      return { ok, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('posts client_key, client_secret, code, grant_type and redirect_uri as a form body', async () => {
+    const { fetchImpl, requests } = tiktokTokenEndpoint({
+      access_token: 'act.tok',
+      refresh_token: 'rft.tok',
+      expires_in: 86400,
+      open_id: 'open-1',
+      scope: 'user.info.basic,user.info.profile',
+      token_type: 'Bearer',
+    });
+
+    const tokens = await exchangeTiktokAuthorizationCode(
+      { code: 'the-code', redirectURI: 'https://app.example/api/auth/oauth2/callback/tiktok' },
+      ALL_ENABLED,
+      fetchImpl
+    );
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0].url).toBe(TOKEN_URL);
+    expect(requests[0].method).toBe('POST');
+    expect(requests[0].headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    const form = new URLSearchParams(requests[0].body);
+    expect(Object.fromEntries(form)).toEqual({
+      client_key: 'tiktok-client-key',
+      client_secret: 'tiktok-secret',
+      code: 'the-code',
+      grant_type: 'authorization_code',
+      redirect_uri: 'https://app.example/api/auth/oauth2/callback/tiktok',
+    });
+    // TikTok does not accept `client_id`; it must never be sent.
+    expect(form.has('client_id')).toBe(false);
+    expect(tokens.accessToken).toBe('act.tok');
+    expect(tokens.refreshToken).toBe('rft.tok');
+    expect(tokens.scopes).toEqual(['user.info.basic', 'user.info.profile']);
+    expect(tokens.accessTokenExpiresAt).toBeInstanceOf(Date);
+  });
+
+  test('a non-2xx response throws', async () => {
+    const { fetchImpl } = tiktokTokenEndpoint({ error: 'invalid_grant' }, false);
+    await expect(
+      exchangeTiktokAuthorizationCode({ code: 'c', redirectURI: 'r' }, ALL_ENABLED, fetchImpl)
+    ).rejects.toThrow('non-2xx');
+  });
+
+  test('an error field in a 200 body throws with its description', async () => {
+    const { fetchImpl } = tiktokTokenEndpoint({
+      error: 'invalid_grant',
+      error_description: 'Authorization code is expired.',
+      log_id: 'log-1',
+    });
+    await expect(
+      exchangeTiktokAuthorizationCode({ code: 'c', redirectURI: 'r' }, ALL_ENABLED, fetchImpl)
+    ).rejects.toThrow('Authorization code is expired.');
+  });
+
+  test('a null body throws', async () => {
+    const { fetchImpl } = tiktokTokenEndpoint(null);
+    await expect(
+      exchangeTiktokAuthorizationCode({ code: 'c', redirectURI: 'r' }, ALL_ENABLED, fetchImpl)
+    ).rejects.toThrow('TikTok token exchange failed');
+  });
+
+  test('the config getToken runs the exchange through the injected fetch', async () => {
+    const { fetchImpl, requests } = tiktokTokenEndpoint({ access_token: 'act.tok' });
+    const cfg = buildGenericOAuthConfig('tiktok', ALL_ENABLED, { fetchImpl })!;
+    const tokens = await cfg.getToken!({ code: 'c', redirectURI: 'r' });
+    expect(tokens.accessToken).toBe('act.tok');
+    expect(requests[0].url).toBe(TOKEN_URL);
+  });
+});
+
+/* ── getUserInfo: TikTok (OLO-9.36) ────────────────────────────────────────────────────────── */
+
+describe('getUserInfo — TikTok link-only (OLO-9.36)', () => {
+  const USER_INFO_URL =
+    'https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_large_url,display_name,username';
+  /** The `/v2/user/info/` user for the person signing in. */
+  const USER = {
+    open_id: '-000Bb8Y_tiktok-open-id',
+    display_name: 'Ada Lovelace',
+    username: 'ada.lovelace',
+    avatar_large_url: 'https://p16-sign.tiktokcdn.example/avatar~c5_1080x1080.jpeg',
+  };
+  /** The full response envelope TikTok returns on success. */
+  const OK_BODY = { data: { user: USER }, error: { code: 'ok', message: '', log_id: 'log-1' } };
+
+  /** Serve `body` from `/v2/user/info/` (a failed response when null); record each request. */
+  const tiktokApi = (body: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const served = url === USER_INFO_URL ? body : null;
+      return served === null ? { ok: false, json: async () => null } : { ok: true, json: async () => served };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the TikTok open_id, with the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = tiktokApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'tiktok',
+      { accessToken: 'act.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: USER.open_id,
+      email: OK_USER.email,
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: USER.avatar_large_url,
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([{ url: USER_INFO_URL, authorization: 'Bearer act.tok' }]);
+  });
+
+  test('explicit link intent links with no email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = tiktokApi(OK_BODY);
+
+    const { result, override } = await runGetUserInfo(
+      'tiktok',
+      { accessToken: 'act.tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'tiktok',
+      providerUserId: USER.open_id,
+    });
+    expect(calls.linkIdentity[0].identity.email ?? null).toBeNull();
+  });
+
+  test.each([
+    ['the plain profile', OK_BODY],
+    ['an email field in the body', { ...OK_BODY, data: { user: { ...USER, email: 'ada@example.com' } } }],
+    ['a username that looks like an address', { ...OK_BODY, data: { user: { ...USER, username: 'ada@example.com' } } }],
+  ])('fresh sign-in with %s → email-required rejection (no email is ever read)', async (_label, body) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = tiktokApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'tiktok',
+      { accessToken: 'act.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(AUTH_ERROR_CODES.EMAIL_REQUIRED).toBe('OAuthEmailRequired');
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('a missing display name falls back to the username; a missing avatar leaves the image out', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = tiktokApi({
+      data: { user: { ...USER, display_name: ' ', avatar_large_url: '' } },
+    });
+
+    const { result } = await runGetUserInfo(
+      'tiktok',
+      { accessToken: 'act.tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ id: USER.open_id, name: 'ada.lovelace' });
+    expect(result?.image ?? null).toBeNull();
+  });
+
+  test.each([
+    ['a failed request', null, 'act.tok'],
+    ['an error code other than ok', { ...OK_BODY, error: { code: 'access_token_invalid' } }, 'act.tok'],
+    ['a body with no data', { error: { code: 'ok' } }, 'act.tok'],
+    ['a body with no user', { data: {} }, 'act.tok'],
+    ['a user with no open_id', { data: { user: { ...USER, open_id: undefined } } }, 'act.tok'],
+    ['an empty open_id', { data: { user: { ...USER, open_id: '  ' } } }, 'act.tok'],
+    ['a numeric open_id', { data: { user: { ...USER, open_id: 1234 } } }, 'act.tok'],
+    ['an array body', [OK_BODY], 'act.tok'],
+    ['a missing access token', OK_BODY, ''],
+  ])('%s yields no identity', async (_label, body, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = tiktokApi(body);
+
+    const { result, override } = await runGetUserInfo(
+      'tiktok',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
 
     expect(result).toBeNull();
     expect(override).not.toBeNull();
