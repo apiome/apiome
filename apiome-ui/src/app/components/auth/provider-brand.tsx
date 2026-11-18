@@ -11,7 +11,7 @@
  * Adding a provider: add its registry entry, then one `PROVIDER_BRANDS` entry here.
  */
 import { KeyRound } from 'lucide-react';
-import { SiAmazon, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFigma, SiGithub, SiGitlab, SiGoogle, SiHubspot, SiHuggingface, SiKeycloak, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiRailway, SiSalesforce, SiSlack, SiVercel, SiVk, SiWechat, SiZoom } from 'react-icons/si';
+import { SiAmazon, SiApple, SiAtlassian, SiAuth0, SiBitbucket, SiDiscord, SiDropbox, SiFigma, SiGithub, SiGitlab, SiGoogle, SiHubspot, SiHuggingface, SiKeycloak, SiLine, SiLinear, SiLinkedin, SiNotion, SiOkta, SiRailway, SiSalesforce, SiSlack, SiVercel, SiVk, SiWechat, SiZoom } from 'react-icons/si';
 import { ICON_SIZE } from '../ui/iconSizes';
 
 /** Props every brand icon accepts (matches the `react-icons` component contract we use). */
@@ -96,6 +96,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   vercel: { Icon: SiVercel, iconClassName: 'text-slate-800 dark:text-slate-100' },
   railway: { Icon: SiRailway, iconClassName: 'text-slate-800 dark:text-slate-100' },
   hubspot: { Icon: SiHubspot, iconClassName: 'text-[#FF7A59]' },
+  apple: { Icon: SiApple, iconClassName: 'text-slate-800 dark:text-slate-100' },
 };
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {

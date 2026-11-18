@@ -29,11 +29,11 @@ _SNAPSHOT_PATH = (
 
 def test_registry_ids_and_order_match_ui_and_v196():
     """Slugs and display order mirror PROVIDER_REGISTRY (UI) and the V196 CHECK list."""
-    assert known_provider_ids() == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot"]
+    assert known_provider_ids() == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple"]
 
 
 def test_available_vs_coming_soon_status():
-    """github/gitlab/azure/google/okta/aws/keycloak/oidc/auth0/line/vk/wechat/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot are available; no coming-soon placeholders remain."""
+    """github/gitlab/azure/google/okta/aws/keycloak/oidc/auth0/line/vk/wechat/atlassian/bitbucket/slack/linkedin/discord/salesforce/notion/figma/linear/dropbox/zoom/huggingface/vercel/railway/hubspot/apple are available; no coming-soon placeholders remain."""
     status = {p.id: p.status for p in PROVIDER_REGISTRY}
     assert status["github"] == STATUS_AVAILABLE
     assert status["gitlab"] == STATUS_AVAILABLE
@@ -62,19 +62,39 @@ def test_available_vs_coming_soon_status():
     assert status["vercel"] == STATUS_AVAILABLE
     assert status["railway"] == STATUS_AVAILABLE
     assert status["hubspot"] == STATUS_AVAILABLE
+    assert status["apple"] == STATUS_AVAILABLE
     assert all(p.status == STATUS_AVAILABLE for p in PROVIDER_REGISTRY)
 
 
 def test_available_providers_require_client_id_and_secret():
-    """Most available providers require client_id + client_secret; issuer-based providers add issuer."""
+    """Most available providers require client_id + client_secret; issuer-based providers add issuer.
+
+    Apple (OLO-9.30) names its sealed secret ``private_key`` (the ``.p8`` key the client-secret JWT
+    is signed with) and adds the Team ID and Key ID as ``config`` extras.
+    """
     for provider in PROVIDER_REGISTRY:
         if provider.status == STATUS_COMING_SOON:
             assert provider.required_fields == ()
             continue
         names = provider.required_field_names()
-        assert names[0:2] == ["client_id", "client_secret"]
         kinds = [f.kind for f in provider.required_fields]
         assert kinds[0:2] == [FIELD_KIND_CLIENT_ID, FIELD_KIND_CLIENT_SECRET]
+        if provider.id == "apple":
+            assert names == ["client_id", "private_key", "team_id", "key_id"]
+            assert kinds == [
+                FIELD_KIND_CLIENT_ID,
+                FIELD_KIND_CLIENT_SECRET,
+                FIELD_KIND_CONFIG,
+                FIELD_KIND_CONFIG,
+            ]
+            assert [f.env_key for f in provider.required_fields] == [
+                "APPLE_CLIENT_ID",
+                "APPLE_PRIVATE_KEY",
+                "APPLE_TEAM_ID",
+                "APPLE_KEY_ID",
+            ]
+            continue
+        assert names[0:2] == ["client_id", "client_secret"]
         if provider.id in ("okta", "aws", "keycloak", "oidc", "auth0"):
             assert names == ["client_id", "client_secret", "issuer"]
             assert kinds == [FIELD_KIND_CLIENT_ID, FIELD_KIND_CLIENT_SECRET, FIELD_KIND_CONFIG]
@@ -125,6 +145,7 @@ def test_lookup_known_and_unknown():
     assert get_provider_descriptor("vercel").label == "Vercel"
     assert get_provider_descriptor("railway").label == "Railway"
     assert get_provider_descriptor("hubspot").label == "HubSpot"
+    assert get_provider_descriptor("apple").label == "Apple"
     assert get_provider_descriptor("not-a-provider") is None
 
 

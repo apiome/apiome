@@ -118,6 +118,8 @@ export interface ProviderExtraField {
  *   - Auth0 tenant issuer (required): `auth0-issuer.ts` (`AUTH0_ISSUER`).
  *   - Salesforce issuer (optional — My Domain or sandbox): `salesforce-issuer.ts`
  *     (`SALESFORCE_ISSUER`).
+ *   - Apple Team ID + Key ID (required — they sign the client-secret JWT): `apple-sign-in.ts`
+ *     (`APPLE_TEAM_ID`, `APPLE_KEY_ID`). The `.p8` private key is the sealed secret, not an extra.
  *
  * Providers without an entry (and coming-soon placeholders) simply render no extras.
  */
@@ -226,7 +228,61 @@ export const PROVIDER_EXTRA_FIELDS: Record<string, readonly ProviderExtraField[]
       help: 'Change for a My Domain (https://acme.my.salesforce.com) or a sandbox (https://test.salesforce.com).',
     },
   ],
+  apple: [
+    {
+      envKey: 'APPLE_TEAM_ID',
+      label: 'Team ID',
+      defaultValue: '(required)',
+      help: 'The 10-character Team ID of the Apple Developer account, e.g. A1B2C3D4E5.',
+    },
+    {
+      envKey: 'APPLE_KEY_ID',
+      label: 'Key ID',
+      defaultValue: '(required)',
+      help: 'The Key ID of the Sign in with Apple private key (.p8), e.g. ABC123DEFG.',
+    },
+  ],
 };
+
+/** How a provider card names its two credential inputs. */
+export interface ProviderCredentialLabels {
+  /** Label of the client-id input. */
+  clientId: string;
+  /** Label of the write-only secret input. */
+  clientSecret: string;
+  /** Placeholder of the secret input when no secret is stored. */
+  secretPlaceholder: string;
+}
+
+/** The labels every OAuth provider uses: a client ID and a client secret. */
+const DEFAULT_CREDENTIAL_LABELS: ProviderCredentialLabels = {
+  clientId: 'Client ID',
+  clientSecret: 'Client secret',
+  secretPlaceholder: 'Enter client secret',
+};
+
+/**
+ * Providers whose credentials are not a client ID and client secret by name. Apple (OLO-9.30)
+ * calls its client ID a Services ID, and its sealed secret is the `.p8` private key the client
+ * secret is signed with.
+ */
+const PROVIDER_CREDENTIAL_LABELS: Record<string, ProviderCredentialLabels> = {
+  apple: {
+    clientId: 'Services ID',
+    clientSecret: 'Private key (.p8)',
+    secretPlaceholder: 'Paste the whole .p8 file',
+  },
+};
+
+/**
+ * The labels a provider card shows for its credential inputs.
+ *
+ * @param providerId The provider slug.
+ * @returns The provider's labels, or the client ID / client secret defaults.
+ */
+export function providerCredentialLabels(providerId: string): ProviderCredentialLabels {
+  return PROVIDER_CREDENTIAL_LABELS[providerId] ?? DEFAULT_CREDENTIAL_LABELS;
+}
 
 /**
  * A card's local, uncommitted edits. Every property is optional: **absent means "the admin has

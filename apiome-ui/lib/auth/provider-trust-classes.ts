@@ -198,7 +198,8 @@ export const PROVIDER_TRUST_CLASSES: Readonly<Record<string, ProviderTrustEntry>
   apple: {
     trustClass: 'trusted',
     ticket: 'OLO-9.30',
-    evidence: '`email_verified` claim; private-relay addresses are handled in the provider ticket',
+    evidence:
+      '`email_verified` id-token claim; Hide My Email relay addresses (`is_private_email`) are verified too',
   },
   facebook: {
     trustClass: 'link-first',

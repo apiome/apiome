@@ -28,7 +28,8 @@
  * Auth0 (OLO-9.7), Atlassian (OLO-9.8), Bitbucket (OLO-9.9), Slack (OLO-9.17), LinkedIn
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
- * (OLO-9.27), Railway (OLO-9.28), and HubSpot (OLO-9.29) followed exactly that path.
+ * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), and Apple (OLO-9.30) followed exactly that
+ * path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -400,6 +401,22 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // issuer. The token-info email carries no verified claim → fail-closed link-first — see
     // AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('HUBSPOT_CLIENT_ID', 'HUBSPOT_CLIENT_SECRET'),
+  },
+  {
+    id: 'apple',
+    label: 'Apple',
+    status: 'available',
+    // Sign in with Apple (OLO-9.30, #5043): the client id is the Services ID; there is no static
+    // client secret — the `.p8` private key fills the sealed, write-only secret slot
+    // (APPLE_PRIVATE_KEY) and each code exchange signs an ES256 client-secret JWT with it, whose
+    // Team ID and Key ID are config extras (APPLE_TEAM_ID, APPLE_KEY_ID). Fixed endpoints, no
+    // issuer. The `email_verified` claim → trusted when verified — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: [
+      { field: 'client_id', kind: 'client_id', envKey: 'APPLE_CLIENT_ID' },
+      { field: 'private_key', kind: 'client_secret', envKey: 'APPLE_PRIVATE_KEY' },
+      { field: 'team_id', kind: 'config', envKey: 'APPLE_TEAM_ID' },
+      { field: 'key_id', kind: 'config', envKey: 'APPLE_KEY_ID' },
+    ],
   },
 ];
 

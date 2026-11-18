@@ -29,6 +29,7 @@ import {
   runWithOauthRedirectOverride,
 } from './better-auth-oauth-providers';
 import { LINKABLE_PROVIDERS } from './account-resolution';
+import { appleFormPostRedirect, runWithAppleCallbackScope } from './apple-sign-in';
 import { resolveProviderEnv, type EnvMap } from './provider-config-resolver';
 import {
   isTwoFactorEmailOtpConfigured,
@@ -478,14 +479,25 @@ async function resolveRequestAuth(baseEnv: EnvMap = process.env, now: number = D
  * (`better-auth-oauth-providers.ts`). For an admitted sign-in no override is set and the response is
  * returned untouched.
  *
+ * Apple's callback arrives as a cross-site `form_post` (OLO-9.30): that POST is answered with a
+ * same-path `303` GET before Better Auth sees it (`apple-sign-in.ts`), and the GET runs in a scope
+ * that carries Apple's first-consent name to its normalizer.
+ *
  * @param request The incoming request from the Next.js App Router route.
  * @returns The Better Auth response, with an OAuth redirect retargeted when the engine rejected.
  */
-export function betterAuthHandler(request: Request): Promise<Response> {
+export async function betterAuthHandler(request: Request): Promise<Response> {
+  // Sign in with Apple (OLO-9.30) answers with a cross-site form_post; the generic callback serves
+  // GET only, so the POST is bridged to a same-path GET before Better Auth sees it.
+  const appleRedirect = await appleFormPostRedirect(request);
+  if (appleRedirect) return appleRedirect;
   return runWithOauthRedirectOverride(async () => {
     const { instance, ssoProviders } = await resolveRequestAuth();
-    // The SSO hooks read this request's routable set (EID-1.1 #5011) from the scope.
-    const response = await runWithSsoRequest(ssoProviders, () => instance.handler(request));
+    // The SSO hooks read this request's routable set (EID-1.1 #5011) from the scope; the Apple
+    // normalizer reads the first-consent name the bridged callback carries.
+    const response = await runWithSsoRequest(ssoProviders, () =>
+      runWithAppleCallbackScope(request, () => instance.handler(request))
+    );
     return applyOauthRedirectOverride(response);
   });
 }

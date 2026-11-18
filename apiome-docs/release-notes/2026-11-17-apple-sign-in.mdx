@@ -1,0 +1,34 @@
+---
+slug: apple-sign-in
+title: Sign in with Apple
+description: "People can now sign in, sign up and link with their Apple Account."
+authors: [apiome]
+---
+
+People can now sign in, sign up and link with their Apple Account — including people who hide their
+email address behind an Apple relay address.
+
+{/* truncate */}
+
+- **For administrators.** **Apple** is a new entry in **System settings → Add Provider**. Apple has
+  no client secret: it needs a **Services ID** (the client ID), the **private key** (`.p8` file) of
+  a Sign in with Apple key, that key's **Key ID** and your Apple Developer **Team ID**. The card
+  labels them **Services ID**, **Private key (.p8)**, **Team ID** and **Key ID**; the private key is
+  stored encrypted and never shown again. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side)
+  lists what to set on Apple's side. The environment variables are `APPLE_CLIENT_ID`,
+  `APPLE_PRIVATE_KEY`, `APPLE_TEAM_ID` and `APPLE_KEY_ID`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/apple`, added under the Services
+  ID's **Return URLs**. Apple accepts only `https` on a real domain.
+- **Nothing to renew.** Apiome signs a new five-minute client secret with the private key for every
+  sign-in. To rotate, save a new key and Key ID, then revoke the old key —
+  [Rotate Apple's private key](/admin/auth-providers#rotate-apples-private-key).
+- **Trusted.** A verified Apple address signs in to, links or creates an account; an unverified one
+  is refused.
+- **Hide My Email.** A private relay address (`…@privaterelay.appleid.com`) is verified and works,
+  but never matches an existing account. People who already have an account sign in the usual way
+  and link Apple from **Linked accounts** first —
+  [Apple and Hide My Email](/admin/auth-providers#apple-and-hide-my-email).
+- **Name.** Apple shares the person's name only the first time they allow Apiome; Apiome stores it
+  then.
+- **REST API.** `GET /v1/admin/auth-providers` lists `apple` with the required fields `client_id`,
+  `private_key`, `team_id` and `key_id`, and `PUT /v1/admin/auth-providers/apple` stores them.

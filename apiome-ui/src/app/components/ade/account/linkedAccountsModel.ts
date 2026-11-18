@@ -116,6 +116,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   vercel: 'Vercel account sign-in',
   railway: 'Railway account sign-in',
   hubspot: 'HubSpot account sign-in',
+  apple: 'Apple Account sign-in',
 };
 
 /**

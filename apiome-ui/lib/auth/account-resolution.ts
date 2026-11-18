@@ -150,6 +150,9 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * no documented verified claim (link-first).
  * `hubspot` (OLO-9.29) is **not** listed: HubSpot's token-info resource returns the authorizing
  * user's email with no verified claim (link-first).
+ * `apple` (OLO-9.30) is listed: Apple's id token carries `email_verified`, re-stamped fail-closed.
+ * A Hide My Email relay address (`is_private_email`) is verified too, but never matches an
+ * existing account's real address, so it creates a new account unless Apple is linked first.
  *
  * **Trust-gate rule (OLO-9.16, #5029).** A provider is listed here only when it *proves* a verified
  * email — its recorded trust class in `provider-trust-classes.ts` is `trusted`. `link-first`
@@ -179,6 +182,7 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'zoom',
   'huggingface',
   'vercel',
+  'apple',
 ]);
 
 /**
@@ -243,6 +247,7 @@ export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
   'vercel',
   'railway',
   'hubspot',
+  'apple',
 ]);
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.
@@ -653,6 +658,8 @@ export function extractIdentityDetails(
       avatar_url: profile.avatar_url || profile.image_url || profile.image || profile.picture || null,
       profile_url: profile.html_url || profile.web_url || profile.url || null,
       ...(provider === 'azure' ? azureRevalidationClaims(profile) : {}),
+      // Apple (OLO-9.30): record whether the address is a Hide My Email relay address.
+      ...(provider === 'apple' ? { is_private_email: profile.is_private_email === true } : {}),
     },
   };
 }

@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -150,6 +150,10 @@ config is stored in the database need none of them set; see
 | `RAILWAY_CLIENT_SECRET` | Railway | To enable Railway | Railway OAuth app client secret |
 | `HUBSPOT_CLIENT_ID` | HubSpot | To enable HubSpot | HubSpot app **Client ID** |
 | `HUBSPOT_CLIENT_SECRET` | HubSpot | To enable HubSpot | HubSpot app **Client secret** |
+| `APPLE_CLIENT_ID` | Apple | To enable Apple | The **Services ID** identifier (e.g. `com.example.apiome.web`) |
+| `APPLE_PRIVATE_KEY` | Apple | To enable Apple | The Sign in with Apple private key — the whole `.p8` file (stored as the sealed secret) |
+| `APPLE_TEAM_ID` | Apple | To enable Apple | The 10-character Apple Developer **Team ID** |
+| `APPLE_KEY_ID` | Apple | To enable Apple | The **Key ID** of the `.p8` private key |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -244,7 +248,7 @@ links an account.
 | `vercel` | **trusted** | OLO-9.27 | yes | `email_verified` on `/login/oauth/userinfo` |
 | `railway` | **link-first** | OLO-9.28 | yes | `/oauth/me` email, no documented verified claim |
 | `hubspot` | **link-first** | OLO-9.29 | yes | Token-info email, no verified claim |
-| `apple` | **trusted** | OLO-9.30 | no | `email_verified` claim; private-relay addresses are handled in the provider ticket |
+| `apple` | **trusted** | OLO-9.30 | yes | `email_verified` id-token claim; Hide My Email relay addresses (`is_private_email`) are verified too |
 | `facebook` | **link-first** | OLO-9.31 | no | Graph email, no verified claim |
 | `twitter` | **link-first** | OLO-9.32 | no | Email needs elevated API access and carries no verified claim |
 | `reddit` | **link-only** | OLO-9.33 | no | No email address (`has_verified_email` alone names no address) |
@@ -1495,6 +1499,119 @@ response is dropped rather than trusted. The engine always fail-closes (**link-f
 A sign-in with no `user` email surfaces `email-required`. A failed token-info request, or a
 response with no usable user id, yields no identity and the sign-in is refused.
 
+## Sign in with Apple (OLO-9.30)
+
+For individual developers on Apple hardware, and the most-requested consumer sign-in. Apiome uses
+Sign in with Apple on the web (OpenID Connect on the `https://appleid.apple.com` issuer). Apple is a
+**trusted** provider: a verified Apple email signs in, links or creates an account. Read
+[Hide My Email relay addresses](#apple-relay-addresses) before turning it on.
+
+Unlike every other provider, Apple has **no static client secret**. You give Apiome a private key,
+and Apiome signs a short-lived client secret (an ES256 JWT) with it for each sign-in.
+
+1. In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/) of an
+   Apple Developer Program account, open **Identifiers**, select your App ID (create one if you
+   have none) and turn on **Sign in with Apple**.
+2. Create a **Services ID** (Identifiers → **+** → **Services IDs**). Its identifier — for example
+   `com.example.apiome.web` — is the client ID. Turn on **Sign in with Apple** for it, choose
+   **Configure**, pick the App ID as the primary App ID, and add:
+   - **Domains and Subdomains**: the host of `BETTER_AUTH_URL` (e.g. `apiome.example.com`)
+   - **Return URLs**: `{BETTER_AUTH_URL}/api/auth/oauth2/callback/apple`
+     (e.g. `https://apiome.example.com/api/auth/oauth2/callback/apple`)
+
+   Apple accepts only `https` return URLs on a real domain — not `localhost` or an IP address — so
+   test locally through an HTTPS tunnel whose host you register here.
+3. Create a key (Keys → **+**), turn on **Sign in with Apple**, configure it with the same primary
+   App ID, and register it. **Download the `.p8` file** — Apple offers it only once — and note the
+   **Key ID** shown on the key.
+4. Note your **Team ID** (top right of the developer account, or **Membership details**).
+5. Set the env vars (or save them on the admin console's **Auth providers** page, where the
+   **Services ID**, **Private key (.p8)**, **Team ID** and **Key ID** fields map to them):
+
+```bash
+APPLE_CLIENT_ID=com.example.apiome.web
+APPLE_TEAM_ID=A1B2C3D4E5
+APPLE_KEY_ID=ABC123DEFG
+# The whole .p8 file. In a .env file keep it on one line with \n for the line breaks:
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMG…\n-----END PRIVATE KEY-----"
+```
+
+The private key is stored as the provider's **sealed, write-only secret** — encrypted at rest and
+never shown again, like every other client secret. The Team ID and Key ID are ordinary settings.
+Paste the `.p8` file as it is: the single-line admin field drops its line breaks, and Apiome reads
+the key either way (with or without the `BEGIN`/`END` lines). A key that is not an EC P-256 private
+key is refused at sign-in, and the reason — never the key — is logged.
+
+Apple's endpoints are fixed, so there is no issuer to configure:
+
+- Authorize: `https://appleid.apple.com/auth/authorize` with the scopes `name email` and
+  `response_mode=form_post` (Apple requires `form_post` whenever it is asked for the name or
+  email). No PKCE challenge is sent (like Better Auth's `apple()` helper; Better Auth enforces
+  `state`).
+- Callback: Apple **POSTs** the result to the return URL. Apiome answers that POST with a `303`
+  redirect to the same URL as a GET, which Better Auth then completes; the browser's follow-up GET
+  carries the sign-in's state cookie, which a cross-site POST cannot.
+- Token: `https://appleid.apple.com/auth/token` — the code is exchanged with a client secret
+  minted for this one exchange.
+
+<a id="apple-client-secret"></a>
+**The client-secret JWT, and rotating it:** for every code exchange Apiome signs a new JWT with the
+`.p8` key — header `{"alg":"ES256","kid":"<Key ID>"}`, claims `iss` = Team ID, `sub` = Services ID,
+`aud` = `https://appleid.apple.com`, `iat` = now and `exp` = now + 5 minutes. Apple allows up to six
+months, but nothing is cached, so **there is no client secret to expire or rotate**. What you
+rotate is the key:
+
+1. Create a new Sign in with Apple key in the developer account and download its `.p8` file.
+2. Save the new **Private key (.p8)** and **Key ID** together (admin console, or the two env vars
+   and a restart). The next sign-in signs with the new key — saving any of the Team ID, Key ID or
+   key rebuilds the sign-in configuration on the next request.
+3. Revoke the old key in the developer account. Apple allows two active Sign in with Apple keys
+   per team, so the old one keeps working until you revoke it, and nobody is signed out.
+
+Revoke a key at once if its `.p8` file may have leaked, then save the new one.
+
+**Identity and profile:** the identity is keyed on the id token's `sub`, Apple's stable user id for
+your team. Apiome checks that the id token's `iss` is `https://appleid.apple.com` and its `aud` is
+the Services ID, or it refuses the sign-in. The email comes only from the id token. Apple sends the
+person's **name only once** — in the `user` field of the first authorization — and never in the
+id token. Apiome reads just the first and last name from that field (never its email, which is
+not signed) and stores it then: on the new account, on the pending sign-up, or on the linked
+identity. Later sign-ins carry no name, so the account keeps the one stored at first consent. If the first consent was lost (for example, the sign-in was
+abandoned after Apple's screen), the person can remove Apiome under **Sign in with Apple** in their
+Apple Account settings and sign in again to send the name once more.
+
+**Email verified semantics:** the id token carries `email_verified`, which Apple sends as `true` or
+the string `"true"`; anything else is unverified (fail-closed). `apple` is in
+`AUTO_LINK_TRUSTED_PROVIDERS`, so:
+
+- a verified address matching an existing account **auto-links** that account;
+- a verified address with no account **creates one** (subject to the sign-up policy);
+- an unverified address is rejected with `unverified-email`;
+- once bound, later sign-ins resolve through the identity (`sub`), even if Apple's id token omits
+  the email.
+
+<a id="apple-relay-addresses"></a>
+**Hide My Email relay addresses:** a person may choose **Hide My Email**, and Apple then shares a
+private relay address such as `x7k2p9q4mz@privaterelay.appleid.com` (the id token's
+`is_private_email` is `true`). The relay address is verified and forwards to the person's real
+inbox, so Apiome treats it like any verified address, and records `is_private_email` on the linked
+identity. What it means for linking:
+
+- **It never matches an existing account.** A person who already has an Apiome account under their
+  real address and signs in with Apple using Hide My Email gets a **new** account under the relay
+  address, not their existing one. To use Apple with an existing account, sign in the usual way
+  first and choose **Link** on the Apple card on **Linked accounts**; from then on **Sign in with
+  Apple** signs that account in, whichever address Apple shares.
+- **It is per app.** The same Apple Account gets a different relay address for each Services ID's
+  team, so changing team creates new identities.
+- **Mail to it must come from a registered domain.** Apple's relay delivers only mail from domains
+  you register under **Sign in with Apple for Email Communication** in the developer account (with
+  SPF set up). Register the domain Apiome sends invitations and notifications from, or that mail to
+  relay addresses is dropped.
+- **A sign-up domain allowlist refuses it.** If the sign-up policy restricts new accounts to
+  certain email domains, `privaterelay.appleid.com` is not one of them, so relay addresses cannot
+  create accounts; linking still works.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1667,7 +1784,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway and HubSpot need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot and Apple need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

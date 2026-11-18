@@ -137,7 +137,10 @@ class ProviderDescriptor:
 # no issuer);
 # ``vercel`` is available (OLO-9.27, #5040) as credentials-only Sign in with Vercel (fixed endpoints, no issuer);
 # ``railway`` is available (OLO-9.28, #5041) as credentials-only Login with Railway (fixed endpoints, no issuer);
-# ``hubspot`` is available (OLO-9.29, #5042) as credentials-only HubSpot OAuth (fixed endpoints, no issuer).
+# ``hubspot`` is available (OLO-9.29, #5042) as credentials-only HubSpot OAuth (fixed endpoints, no issuer);
+# ``apple`` is available (OLO-9.30, #5043) as Sign in with Apple: the client id is the Services ID, the
+# sealed secret slot holds the ``.p8`` private key (``private_key``), and the Team ID and Key ID are
+# ``config`` extras (``team_id``, ``key_id``) — the client secret is an ES256 JWT minted per exchange.
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -302,6 +305,17 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "HubSpot",
         STATUS_AVAILABLE,
         client_credential_fields("HUBSPOT_CLIENT_ID", "HUBSPOT_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "apple",
+        "Apple",
+        STATUS_AVAILABLE,
+        (
+            RequiredField("client_id", FIELD_KIND_CLIENT_ID, "APPLE_CLIENT_ID"),
+            RequiredField("private_key", FIELD_KIND_CLIENT_SECRET, "APPLE_PRIVATE_KEY"),
+            RequiredField("team_id", FIELD_KIND_CONFIG, "APPLE_TEAM_ID"),
+            RequiredField("key_id", FIELD_KIND_CONFIG, "APPLE_KEY_ID"),
+        ),
     ),
 )
 

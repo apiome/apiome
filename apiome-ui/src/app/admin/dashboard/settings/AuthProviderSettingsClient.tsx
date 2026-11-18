@@ -47,6 +47,7 @@ import {
   AdminProviderConfigView,
   AdminProviderListResponse,
   PROVIDER_EXTRA_FIELDS,
+  providerCredentialLabels,
   buildProviderUpdatePayload,
   extractRestErrorMessage,
 } from '@lib/auth/admin-provider-config';
@@ -261,6 +262,7 @@ function AddProviderModal({
       : null;
   const dirty = payload !== null;
   const extraFields = selected ? (PROVIDER_EXTRA_FIELDS[selected.provider_id] ?? []) : [];
+  const credentialLabels = providerCredentialLabels(selected?.provider_id ?? '');
 
   const handleSave = async () => {
     if (!selected || !payload || saving) return;
@@ -494,7 +496,7 @@ function AddProviderModal({
                       htmlFor="add-provider-client-id"
                       className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
                     >
-                      Client ID
+                      {credentialLabels.clientId}
                     </label>
                     <input
                       id="add-provider-client-id"
@@ -518,7 +520,7 @@ function AddProviderModal({
                       htmlFor="add-provider-client-secret"
                       className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
                     >
-                      Client secret
+                      {credentialLabels.clientSecret}
                     </label>
                     <input
                       id="add-provider-client-secret"
@@ -526,7 +528,7 @@ function AddProviderModal({
                       autoComplete="new-password"
                       spellCheck={false}
                       className={`${INPUT_CLASSES} max-w-md flex-1`}
-                      placeholder="Enter client secret"
+                      placeholder={credentialLabels.secretPlaceholder}
                       value={secretInput}
                       disabled={saving}
                       onChange={(event) => {
@@ -676,6 +678,7 @@ function ProviderCard({
 }) {
   const brand = getProviderBrand(view.provider_id);
   const extraFields = PROVIDER_EXTRA_FIELDS[view.provider_id] ?? [];
+  const credentialLabels = providerCredentialLabels(view.provider_id);
   const comingSoon = view.status !== 'available';
 
   const [enablement, setEnablement] = useState<EnablementChoice>(() =>
@@ -1050,7 +1053,7 @@ function ProviderCard({
               htmlFor={`${view.provider_id}-client-id`}
               className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Client ID
+              {credentialLabels.clientId}
             </label>
             <input
               id={`${view.provider_id}-client-id`}
@@ -1075,7 +1078,7 @@ function ProviderCard({
               htmlFor={`${view.provider_id}-client-secret`}
               className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Client secret
+              {credentialLabels.clientSecret}
             </label>
             <input
               id={`${view.provider_id}-client-secret`}
@@ -1086,7 +1089,7 @@ function ProviderCard({
               placeholder={
                 view.secret_set
                   ? 'Secret is set — type a new value to replace it'
-                  : 'Enter client secret'
+                  : credentialLabels.secretPlaceholder
               }
               value={secretInput}
               disabled={saving || clearSecret}
