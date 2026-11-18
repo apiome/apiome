@@ -29,7 +29,7 @@
  * (OLO-9.18), Discord (OLO-9.19), Salesforce (OLO-9.20), Notion (OLO-9.21), Figma (OLO-9.22),
  * Linear (OLO-9.23), Dropbox (OLO-9.24), Zoom (OLO-9.25), Hugging Face (OLO-9.26), Vercel
  * (OLO-9.27), Railway (OLO-9.28), HubSpot (OLO-9.29), Apple (OLO-9.30), Facebook (OLO-9.31),
- * X / Twitter (OLO-9.32), and Reddit (OLO-9.33) followed exactly that path.
+ * X / Twitter (OLO-9.32), Reddit (OLO-9.33), and Spotify (OLO-9.34) followed exactly that path.
  *
  * This module is intentionally free of React and auth-engine imports so both server code
  * (routes, server components) and client components can import it.
@@ -445,6 +445,15 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
     // reddit.com/prefs/apps; fixed endpoints, so no issuer. Reddit exposes no email address
     // (`has_verified_email` alone names none) → link-only — see AUTH_PROVIDER_SETUP.md.
     requiredFields: clientCredentialFields('REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET'),
+  },
+  {
+    id: 'spotify',
+    label: 'Spotify',
+    status: 'available',
+    // Spotify (OLO-9.34, #5047): credentials only — the Client ID and Client secret of an app in
+    // the Spotify Developer Dashboard; fixed endpoints, so no issuer. The `/v1/me` email is
+    // documented as unverified → link-first — see AUTH_PROVIDER_SETUP.md.
+    requiredFields: clientCredentialFields('SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET'),
   },
 ];
 

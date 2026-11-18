@@ -248,6 +248,7 @@ const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   facebook: 'Facebook',
   twitter: 'X (Twitter)',
   reddit: 'Reddit',
+  spotify: 'Spotify',
 };
 
 /**

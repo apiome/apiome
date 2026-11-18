@@ -312,6 +312,7 @@ describe('resolveBetterAuthOAuthSignIn — decision tree', () => {
       'reddit',
       'salesforce',
       'slack',
+      'spotify',
       'twitter',
       'vercel',
       'vk',

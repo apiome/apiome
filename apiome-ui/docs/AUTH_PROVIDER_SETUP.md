@@ -1,7 +1,7 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit), which
+Microsoft Entra ID, Google Workspace, Okta, Amazon Cognito, Keycloak, generic OIDC, Auth0, LINE, VK, WeChat, Atlassian, Bitbucket, Slack, LinkedIn, Discord, Salesforce, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit, Spotify), which
 settings each provider needs, where those settings can live, and how boot-time validation reacts
 when a provider is misconfigured.
 
@@ -160,6 +160,8 @@ config is stored in the database need none of them set; see
 | `TWITTER_CLIENT_SECRET` | X / Twitter | To enable X | X app OAuth 2.0 **Client Secret** |
 | `REDDIT_CLIENT_ID` | Reddit | To enable Reddit | Reddit web app **client ID** (under the app name) |
 | `REDDIT_CLIENT_SECRET` | Reddit | To enable Reddit | Reddit web app **secret** |
+| `SPOTIFY_CLIENT_ID` | Spotify | To enable Spotify | Spotify app **Client ID** |
+| `SPOTIFY_CLIENT_SECRET` | Spotify | To enable Spotify | Spotify app **Client secret** |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -258,7 +260,7 @@ links an account.
 | `facebook` | **link-first** | OLO-9.31 | yes | Graph email, no verified claim |
 | `twitter` | **link-first** | OLO-9.32 | yes | Email needs elevated API access and carries no verified claim |
 | `reddit` | **link-only** | OLO-9.33 | yes | No email address (`has_verified_email` alone names no address) |
-| `spotify` | **link-first** | OLO-9.34 | no | `/v1/me` email is documented as unverified |
+| `spotify` | **link-first** | OLO-9.34 | yes | `/v1/me` email is documented as unverified |
 | `twitch` | **trusted** | OLO-9.35 | no | `email_verified` claim with the `user:read:email` scope |
 | `tiktok` | **link-only** | OLO-9.36 | no | No email in user info |
 | `roblox` | **link-only** | OLO-9.37 | no | Profile claims only, no email claim |
@@ -1803,6 +1805,64 @@ Reddit sign-in. Better Auth's helper puts `oauth_client_id` in the email slot an
 A failed profile request, or a profile with no string `id`, yields no identity and the sign-in is
 refused.
 
+## Spotify (OLO-9.34)
+
+For the developer communities on Spotify. Apiome uses Spotify's OAuth 2.0 authorization-code flow
+with PKCE. Spotify is a **link-first** provider: it documents the `/v1/me` email as
+**unverified**, so read [Email semantics](#spotify-email-semantics) below before turning it on —
+nobody can *create* an Apiome account with it.
+
+1. Signed in to Spotify, open the
+   [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and choose
+   **Create app**.
+2. Give it an **App name** and **App description**, and under **Which API/SDKs are you planning
+   to use?** tick **Web API**.
+3. Add the callback under **Redirect URIs** (Spotify requires an exact match):
+   - `{BETTER_AUTH_URL}/api/auth/oauth2/callback/spotify`
+
+   Spotify accepts only `https` redirect URIs, except loopback addresses such as
+   `http://127.0.0.1:3000/…` — `localhost` itself is refused.
+4. Accept the terms and choose **Save**. On the app's **Settings** page the **Client ID** is shown;
+   choose **View client secret** for the **Client secret**.
+5. Until the app has an extended quota, only people added under **User Management** (up to 25)
+   can sign in with it.
+6. Set the env vars (or save them on the admin console's **Auth providers** page):
+
+```bash
+SPOTIFY_CLIENT_ID=<Client ID>
+SPOTIFY_CLIENT_SECRET=<Client secret>
+```
+
+Spotify's endpoints are fixed, so there is no issuer to configure (mirroring Better Auth's
+`spotify()` helper):
+
+- Authorize: `https://accounts.spotify.com/authorize` with the `user-read-email` scope (the
+  helper's default) and a PKCE `S256` challenge. Apiome reads no playlists, library, listening
+  history or playback.
+- Token: `https://accounts.spotify.com/api/token` — the client ID and secret are sent in the form
+  body. Apiome keeps no Spotify token.
+- Profile: `https://api.spotify.com/v1/me`, with the access token as a bearer token.
+
+The identity is keyed on `id`, the Spotify user ID, which never changes. `display_name` is the
+name (it may be missing), and the first entry of `images` the picture.
+
+<a id="spotify-email-semantics"></a>
+**Email semantics:** Spotify's Web API reference documents the `/v1/me` `email` as *unverified* —
+Spotify does not check that the person owns it — and Better Auth's helper hard-codes
+`emailVerified: false`. Apiome never trusts it: the profile carries no `email_verified` (any such
+field in the body is dropped). The engine fail-closes (**link-first**), and `spotify` is not in
+`AUTO_LINK_TRUSTED_PROVIDERS` (OLO-9.16):
+
+- **Linking** — a signed-in person chooses **Link** on the Spotify card on **Linked accounts**.
+  The explicit link binds the Spotify identity to their account.
+- **Subsequent sign-in** — once linked, **Continue with Spotify** signs that person in.
+- **Fresh sign-in or sign-up** — rejected with `unverified-email`, even
+  when the email matches an existing account; with no email, `email-required`
+  (`OAuthEmailRequired`).
+
+A failed profile request, or a profile with no string `id`, yields no identity and the sign-in is
+refused.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -1975,7 +2035,7 @@ mock server via base-URL override env vars:
 [Auth0](#auth0--regular-web-application-olo-97),
 [LINE](#line-login-olo-941--japan--taiwan--thailand-country-mvp),
 [VK](#vk-id-olo-942--russia--cis-country-mvp), and
-[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter and Reddit need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
+[WeChat](#wechat-open-platform-olo-943--china-country-mvp) sections. (Atlassian, Bitbucket, Slack, LinkedIn, Discord, Notion, Figma, Linear, Dropbox, Zoom, Hugging Face, Vercel, Railway, HubSpot, Apple, Facebook, X / Twitter, Reddit and Spotify need no issuer; Salesforce's `SALESFORCE_ISSUER` is optional — see [Salesforce](#salesforce--oidc-olo-920).) Pointing any of them
 at a mock issuer for the e2e journey is fine in test; never point a real deployment's issuer at a
 non-provider host.
 

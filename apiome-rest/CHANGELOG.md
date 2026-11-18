@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.756.0] - 2026-11-17
+
+### Added
+- **Spotify sign-in (OLO-9.34, #5047)** — OpenAPI 1.596.18:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `spotify` (label `Spotify`, `available`), a credentials-only
+    provider: required fields `client_id` (`SPOTIFY_CLIENT_ID`, the Spotify app's Client ID) and `client_secret`
+    (`SPOTIFY_CLIENT_SECRET`, its Client secret), no issuer — Spotify's OAuth 2.0 endpoints are fixed. `GET
+    /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/spotify` and the
+    resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - Spotify is a **link-first** provider: its `/v1/me` email is documented as unverified, so an explicit link and the
+    subsequent sign-in work and the email never joins or creates an account. That decision is made in `apiome-ui`;
+    nothing in the REST API changed for it.
+  - No migration: `spotify` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.755.0] - 2026-11-17
 
 ### Added

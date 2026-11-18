@@ -143,7 +143,8 @@ class ProviderDescriptor:
 # ``config`` extras (``team_id``, ``key_id``) — the client secret is an ES256 JWT minted per exchange;
 # ``facebook`` is available (OLO-9.31, #5044) as credentials-only Facebook Login (fixed Graph endpoints, no issuer);
 # ``twitter`` is available (OLO-9.32, #5045) as credentials-only X OAuth 2.0 + PKCE (fixed endpoints, no issuer);
-# ``reddit`` is available (OLO-9.33, #5046) as credentials-only Reddit OAuth 2.0 (fixed endpoints, no issuer).
+# ``reddit`` is available (OLO-9.33, #5046) as credentials-only Reddit OAuth 2.0 (fixed endpoints, no issuer);
+# ``spotify`` is available (OLO-9.34, #5047) as credentials-only Spotify OAuth 2.0 + PKCE (fixed endpoints, no issuer).
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
     ProviderDescriptor(
         "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
@@ -337,6 +338,12 @@ PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
         "Reddit",
         STATUS_AVAILABLE,
         client_credential_fields("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "spotify",
+        "Spotify",
+        STATUS_AVAILABLE,
+        client_credential_fields("SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET"),
     ),
 )
 

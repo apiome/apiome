@@ -148,7 +148,7 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert resp.status_code == 200
     providers = resp.json()["providers"]
     ids = [p["provider_id"] for p in providers]
-    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple", "facebook", "twitter", "reddit"]
+    assert ids == ["github", "gitlab", "azure", "google", "okta", "aws", "keycloak", "oidc", "auth0", "line", "vk", "wechat", "atlassian", "bitbucket", "slack", "linkedin", "discord", "salesforce", "notion", "figma", "linear", "dropbox", "zoom", "huggingface", "vercel", "railway", "hubspot", "apple", "facebook", "twitter", "reddit", "spotify"]
     # With no rows, every field falls back to env and nothing is enabled/stored.
     gh = providers[0]
     assert gh["enabled"] is None
@@ -291,6 +291,11 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert reddit["status"] == "available"
     assert reddit["required_fields"] == ["client_id", "client_secret"]
     assert reddit["can_enable"] is False
+    spotify = next(p for p in providers if p["provider_id"] == "spotify")
+    assert spotify["label"] == "Spotify"
+    assert spotify["status"] == "available"
+    assert spotify["required_fields"] == ["client_id", "client_secret"]
+    assert spotify["can_enable"] is False
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):

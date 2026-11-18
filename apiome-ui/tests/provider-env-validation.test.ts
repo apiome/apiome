@@ -105,6 +105,8 @@ const ALL_ENABLED_ENV = {
   TWITTER_CLIENT_SECRET: 'x-secret',
   REDDIT_CLIENT_ID: 'rd-id',
   REDDIT_CLIENT_SECRET: 'rd-secret',
+  SPOTIFY_CLIENT_ID: 'sp-id',
+  SPOTIFY_CLIENT_SECRET: 'sp-secret',
 };
 
 describe('providerEnvIssues', () => {
