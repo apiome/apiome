@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.754.0] - 2026-11-17
+
+### Added
+- **X / Twitter sign-in (OLO-9.32, #5045)** — OpenAPI 1.596.16:
+  - `app.auth_provider_registry.PROVIDER_REGISTRY` gains `twitter` (label `X (Twitter)`, `available`), a
+    credentials-only provider: required fields `client_id` (`TWITTER_CLIENT_ID`, the X OAuth 2.0 Client ID) and
+    `client_secret` (`TWITTER_CLIENT_SECRET`, the OAuth 2.0 Client Secret), no issuer — X's OAuth 2.0 endpoints are
+    fixed. `GET /v1/admin/auth-providers` lists it last, and `PUT` / `DELETE /v1/admin/auth-providers/twitter` and
+    the resolved-config endpoint accept it like any other provider. The canonical snapshot
+    `scripts/auth_providers/registry.json` carries the same entry.
+  - X is a **link-first** provider: its email (`confirmed_email`) is often missing and is never trusted, so the
+    sign-in engine never uses an X address to join or create an account; with no email, an explicit link and the
+    subsequent sign-in still work and a fresh sign-in is refused with `OAuthEmailRequired`. That decision is made
+    in `apiome-ui`; nothing in the REST API changed for it.
+  - No migration: `twitter` has been in the provider vocabulary CHECKs since V395. No request or response shape
+    changed.
+
 ## [1.753.0] - 2026-11-17
 
 ### Added

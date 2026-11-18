@@ -142,6 +142,8 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   apple: { clientId: 'APPLE_CLIENT_ID', clientSecret: 'APPLE_PRIVATE_KEY' },
   // Facebook (OLO-9.31, #5044): credentials-only; fixed endpoints, no issuer extra.
   facebook: { clientId: 'FACEBOOK_CLIENT_ID', clientSecret: 'FACEBOOK_CLIENT_SECRET' },
+  // X / Twitter (OLO-9.32, #5045): credentials-only; fixed endpoints, no issuer extra.
+  twitter: { clientId: 'TWITTER_CLIENT_ID', clientSecret: 'TWITTER_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

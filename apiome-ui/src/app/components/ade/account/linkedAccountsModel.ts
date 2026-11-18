@@ -118,6 +118,7 @@ export const PROVIDER_TAGLINES: Readonly<Record<string, string>> = {
   hubspot: 'HubSpot account sign-in',
   apple: 'Apple Account sign-in',
   facebook: 'Facebook account sign-in',
+  twitter: 'X account sign-in',
 };
 
 /**

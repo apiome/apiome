@@ -1,0 +1,31 @@
+---
+slug: x-twitter-sign-in
+title: Sign in with X (Twitter)
+description: "People can now link their X account and sign in with it."
+authors: [apiome]
+---
+
+People can now link their X (Twitter) account on [Linked accounts](/workspace/linked-accounts) and
+sign in to Apiome with it from then on — with or without an email address on the X side.
+
+{/* truncate */}
+
+- **For administrators.** **X (Twitter)** is a new entry in **System settings → Add Provider**. It
+  needs the OAuth 2.0 Client ID and Client Secret of a Web App in the X Developer Portal — no
+  issuer. [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side) lists what to
+  set on X's side. The environment variables are `TWITTER_CLIENT_ID` and `TWITTER_CLIENT_SECRET`.
+- **Callback URL.** `<BETTER_AUTH_URL>/api/auth/oauth2/callback/twitter`, added to the app's
+  **Callback URI / Redirect URL**.
+- **Scopes.** Apiome asks for **users.read**, **tweet.read** and **users.email** only, with PKCE,
+  and uses them to read the name, email address and picture of the person signing in. Apiome reads
+  and posts no posts, followers or messages and keeps no X token.
+- **Link first.** X shares an email address only when the app has **Request email from users**
+  turned on, and often not at all; Apiome never uses an X address to find or create an account.
+  People sign in another way, link X from **Linked accounts**, and can sign in with X after that,
+  even when X shares no address. Before linking, an X sign-in ends with *Your sign-in provider
+  could not confirm that your email address is verified…* — or, when X shares no address, with
+  *…did not share an email address…*.
+  [How a provider's email is trusted](/admin/auth-providers#how-a-providers-email-is-trusted)
+  explains the classes.
+- **REST API.** `GET /v1/admin/auth-providers` lists `twitter` as an available provider, and
+  `PUT /v1/admin/auth-providers/twitter` stores its credentials.

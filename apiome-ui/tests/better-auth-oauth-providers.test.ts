@@ -131,6 +131,8 @@ const ALL_ENABLED: Record<string, string> = {
   APPLE_KEY_ID: 'ABC123DEFG',
   FACEBOOK_CLIENT_ID: 'fb-app-id',
   FACEBOOK_CLIENT_SECRET: 'fb-secret',
+  TWITTER_CLIENT_ID: 'x-client-id',
+  TWITTER_CLIENT_SECRET: 'x-secret',
 };
 
 const OK_USER: ResolutionUser = {
@@ -254,6 +256,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'hubspot',
       'apple',
       'facebook',
+      'twitter',
     ]);
   });
 
@@ -289,6 +292,7 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
       'hubspot',
       'apple',
       'facebook',
+      'twitter',
     ]);
   });
 
@@ -379,6 +383,9 @@ describe('buildGenericOAuthConfigs — registry is the single source of the enab
     const facebook = buildGenericOAuthConfig('facebook', ALL_ENABLED)!;
     expect(facebook.clientId).toBe('fb-app-id');
     expect(facebook.clientSecret).toBe('fb-secret');
+    const twitter = buildGenericOAuthConfig('twitter', ALL_ENABLED)!;
+    expect(twitter.clientId).toBe('x-client-id');
+    expect(twitter.clientSecret).toBe('x-secret');
   });
 
   test('an unknown provider id yields null', () => {
@@ -804,6 +811,22 @@ describe('endpoint & issuer overrides (OLO-7.4)', () => {
     expect(cfg.scopes).toEqual(['email', 'public_profile']);
     expect(cfg.authentication).toBe('post');
     expect(cfg.pkce).toBe(false);
+    expect(cfg.authorizationUrlParams).toBeUndefined();
+    expect(cfg.discoveryUrl).toBeUndefined();
+    expect(cfg.getToken).toBeUndefined();
+  });
+
+  test('twitter: fixed X OAuth 2.0 endpoints; read + email scopes; basic exchange; PKCE on (OLO-9.32)', () => {
+    const cfg = buildGenericOAuthConfig('twitter', ALL_ENABLED)!;
+    expect(cfg.providerId).toBe('twitter');
+    expect(cfg.authorizationUrl).toBe('https://x.com/i/oauth2/authorize');
+    expect(cfg.tokenUrl).toBe('https://api.x.com/2/oauth2/token');
+    // The normalizer reads the profile and the email as two requests.
+    expect(cfg.userInfoUrl).toBeUndefined();
+    // The helper's defaults minus offline.access: Apiome keeps no refresh token.
+    expect(cfg.scopes).toEqual(['users.read', 'tweet.read', 'users.email']);
+    expect(cfg.authentication).toBe('basic');
+    expect(cfg.pkce).toBe(true);
     expect(cfg.authorizationUrlParams).toBeUndefined();
     expect(cfg.discoveryUrl).toBeUndefined();
     expect(cfg.getToken).toBeUndefined();
@@ -5771,5 +5794,246 @@ describe('getUserInfo — Facebook fail-closed link-first (OLO-9.31)', () => {
     await runGetUserInfo('facebook', { accessToken: 'tok' }, { store, env: ALL_ENABLED, fetchImpl });
 
     expect(requests.map((r) => r.url.split('?')[0])).toEqual(['https://graph.facebook.com/debug_token']);
+  });
+});
+
+/* ── getUserInfo: X / Twitter (OLO-9.32) ───────────────────────────────────────────────────── */
+
+describe('getUserInfo — X / Twitter fail-closed link-first (OLO-9.32)', () => {
+  const PROFILE_URL = 'https://api.x.com/2/users/me?user.fields=profile_image_url';
+  const EMAIL_URL = 'https://api.x.com/2/users/me?user.fields=confirmed_email';
+  /** The `/2/users/me?user.fields=profile_image_url` body for the person signing in. */
+  const PROFILE = {
+    data: {
+      id: '2244994945',
+      name: 'Ada Lovelace',
+      username: 'ada',
+      profile_image_url: 'https://pbs.example/ada_normal.jpg',
+    },
+  };
+  /** The `/2/users/me?user.fields=confirmed_email` body for the same person. */
+  const EMAIL = {
+    data: { id: '2244994945', name: 'Ada Lovelace', username: 'ada', confirmed_email: 'ada@example.com' },
+  };
+
+  /**
+   * Serve `profileBody` from the profile resource and `emailBody` from the email resource (a
+   * failed response when null); record each request.
+   */
+  const xApi = (profileBody: unknown, emailBody: unknown) => {
+    const requests: Array<{ url: string; authorization?: string }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      requests.push({ url, authorization: init.headers.Authorization });
+      const body = url === PROFILE_URL ? profileBody : url === EMAIL_URL ? emailBody : null;
+      return body === null ? { ok: false, json: async () => null } : { ok: true, json: async () => body };
+    };
+    return { fetchImpl, requests };
+  };
+
+  test('known identity signs in, keyed on the X user id (subsequent sign-in)', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl, requests } = xApi(PROFILE, EMAIL);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({
+      id: '2244994945',
+      email: 'ada@example.com',
+      emailVerified: false,
+      name: 'Ada Lovelace',
+      image: 'https://pbs.example/ada_normal.jpg',
+    });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+    expect(requests).toEqual([
+      { url: PROFILE_URL, authorization: 'Bearer tok' },
+      { url: EMAIL_URL, authorization: 'Bearer tok' },
+    ]);
+  });
+
+  test('known identity signs in with no email, taking the bound user email', async () => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = xApi(PROFILE, null);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(override).toBeNull();
+    expect(result).toMatchObject({ id: '2244994945', email: OK_USER.email, emailVerified: false });
+    expect(calls.recordUserLogin).toEqual([OK_USER.id]);
+  });
+
+  test('explicit link intent links with no email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = xApi(PROFILE, null);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].userId).toBe('session-user');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'twitter',
+      providerUserId: '2244994945',
+    });
+  });
+
+  test('explicit link intent links despite the unverified email', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = xApi(PROFILE, EMAIL);
+
+    const { override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl, resolveLinkToUserId: async () => 'session-user' }
+    );
+
+    expect(override).toBe('/ade/dashboard/linked-accounts?linked=true');
+    expect(calls.linkIdentity[0].identity).toMatchObject({
+      provider: 'twitter',
+      providerUserId: '2244994945',
+      email: 'ada@example.com',
+    });
+  });
+
+  test.each([
+    ['a failed email request', null],
+    ['no confirmed_email', { data: { ...EMAIL.data, confirmed_email: undefined } }],
+    ['an empty confirmed_email', { data: { ...EMAIL.data, confirmed_email: '' } }],
+    ['a non-string confirmed_email', { data: { ...EMAIL.data, confirmed_email: 42 } }],
+    ['an email body about another user', { data: { ...EMAIL.data, id: '99999' } }],
+    ['an email body with no data', {}],
+  ])('fresh sign-in with %s → email-required rejection (no username fallback)', async (_label, emailBody) => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = xApi(PROFILE, emailBody);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.EMAIL_REQUIRED}`);
+    expect(AUTH_ERROR_CODES.EMAIL_REQUIRED).toBe('OAuthEmailRequired');
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('fresh sign-up attempt with an email → rejected with the structured unverified code', async () => {
+    const { store, calls } = makeStore();
+    const { fetchImpl } = xApi(PROFILE, EMAIL);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test('email matching an existing account never auto-links', async () => {
+    const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+    const { fetchImpl } = xApi(PROFILE, EMAIL);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+  });
+
+  test.each([true, 'true', 1])(
+    'an email_verified field in an X body (%p) is dropped, never trusted',
+    async (emailVerified) => {
+      const { store, calls } = makeStore({ usersByEmail: { 'ada@example.com': OK_USER } });
+      const { fetchImpl } = xApi(
+        { data: { ...PROFILE.data, email_verified: emailVerified } },
+        { data: { ...EMAIL.data, email_verified: emailVerified } }
+      );
+
+      const { result, override } = await runGetUserInfo(
+        'twitter',
+        { accessToken: 'tok' },
+        { store, env: ALL_ENABLED, fetchImpl }
+      );
+
+      expect(result).toBeNull();
+      expect(override).toBe(`/login?error=${AUTH_ERROR_CODES.UNVERIFIED_EMAIL}`);
+      expect(calls.linkIdentity).toHaveLength(0);
+      expect(calls.createPendingSignup).toHaveLength(0);
+    }
+  );
+
+  test('a missing display name falls back to the @username', async () => {
+    const { store } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+    });
+    const { fetchImpl } = xApi({ data: { ...PROFILE.data, name: '' } }, EMAIL);
+
+    const { result } = await runGetUserInfo(
+      'twitter',
+      { accessToken: 'tok' },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toMatchObject({ name: 'ada' });
+  });
+
+  test.each([
+    ['a failed profile request', null, 'tok'],
+    ['a profile body with no data', {}, 'tok'],
+    ['a profile body with no id', { data: { ...PROFILE.data, id: undefined } }, 'tok'],
+    ['a numeric id', { data: { ...PROFILE.data, id: 2244994945 } }, 'tok'],
+    ['an array profile body', [PROFILE], 'tok'],
+    ['a missing access token', PROFILE, ''],
+  ])('%s yields no identity', async (_label, profileBody, accessToken) => {
+    const { store, calls } = makeStore({
+      identityUserId: OK_USER.id,
+      usersById: { [OK_USER.id]: OK_USER },
+      usersByEmail: { 'ada@example.com': OK_USER },
+    });
+    const { fetchImpl, requests } = xApi(profileBody, EMAIL);
+
+    const { result, override } = await runGetUserInfo(
+      'twitter',
+      { accessToken },
+      { store, env: ALL_ENABLED, fetchImpl }
+    );
+
+    expect(result).toBeNull();
+    expect(override).not.toBeNull();
+    expect(calls.recordUserLogin).toEqual([]);
+    expect(calls.linkIdentity).toHaveLength(0);
+    expect(calls.createPendingSignup).toHaveLength(0);
+    // Without an identity the email resource is never asked.
+    expect(requests.map((r) => r.url)).not.toContain(EMAIL_URL);
   });
 });

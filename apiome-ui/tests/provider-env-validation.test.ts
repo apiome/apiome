@@ -101,6 +101,8 @@ const ALL_ENABLED_ENV = {
   APPLE_KEY_ID: 'ABC123DEFG',
   FACEBOOK_CLIENT_ID: 'fb-id',
   FACEBOOK_CLIENT_SECRET: 'fb-secret',
+  TWITTER_CLIENT_ID: 'x-id',
+  TWITTER_CLIENT_SECRET: 'x-secret',
 };
 
 describe('providerEnvIssues', () => {
