@@ -101,11 +101,14 @@ describe('parseRecentlyShipped', () => {
     expect(parseRecentlyShipped('- **Orphan** — outside any section')).toEqual([]);
   });
 
-  it('reads three titled entries out of the shipped public/WHATS_NEW.md', () => {
+  it('reads titled entries out of the shipped public/WHATS_NEW.md', () => {
     const shipped = fs.readFileSync(path.join(__dirname, '..', 'public', 'WHATS_NEW.md'), 'utf8');
     const entries = parseRecentlyShipped(shipped);
 
-    expect(entries).toHaveLength(RECENTLY_SHIPPED_LIMIT);
+    // A release candidate's notes start again when it opens (RC9 opened with one entry), so the
+    // card shows between one entry and its limit.
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+    expect(entries.length).toBeLessThanOrEqual(RECENTLY_SHIPPED_LIMIT);
     for (const entry of entries) {
       expect(entry.title.length).toBeGreaterThan(0);
       expect(entry.title).not.toMatch(/\*\*|`/);
