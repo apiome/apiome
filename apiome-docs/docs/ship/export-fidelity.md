@@ -349,8 +349,7 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | OpenAPI 3.x, JSON Schema | Extensions emitted and re-imported (`retained`). |
 | AsyncAPI 3 | Extension-capable; emitter support tracked (`emitter_unsupported` until it lands). |
 | GraphQL SDL, SQL DDL, Proto3, Avro, Thrift | No vendor-extension mechanism — annotations are skipped (`dropped` / `destination_unsupported`). |
-| Diagram/code exports (Mermaid, PlantUML, GraphML, DOT) | No extension slot — skipped (`destination_unsupported`). |
-| PNG / JPEG / SVG / PDF canvas images | Notes render as drawn; the Export Wizard's **Include notes** overlay toggle includes or excludes them. |
+| Diagrams (Mermaid, PlantUML, GraphML, DOT) and canvas images (PNG, JPEG, SVG, PDF) | Not available: the canvas can't be exported as a diagram or an image. See [Not yet available](./export-to-any-format.mdx#not-yet-available). |
 
 ## API plans (`x-apiome-plans`) {#api-plans}
 

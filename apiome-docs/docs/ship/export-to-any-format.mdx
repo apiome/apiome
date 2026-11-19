@@ -53,6 +53,29 @@ own rules, and handed to you or delivered.
 | Follow jobs, audit the history, use presets and auto-export | [Run exports at scale](./run-exports-at-scale.mdx) |
 | Look up one format's options and what it writes | [Export a spec](./export-a-spec.md) |
 
+## Specs, API clients, diagrams and documents
+
+An export doesn't have to be another specification. The same version can go out as the OpenAPI document
+itself, a collection an API client opens, a diagram for a design document, or a PDF for readers outside
+your team.
+
+| You want… | What you get | Where | Details |
+| --- | --- | --- | --- |
+| The specification itself | An OpenAPI 3.1 document (or 3.2, 3.0, Swagger 2.0), JSON or YAML | **Export** dialog, **Export studio**, Browse, CLI, MCP, API | [OpenAPI 3.2, 3.1, 3.0 and Swagger 2.0](./export-a-spec.md#openapi-32-31-30-and-swagger-20) |
+| A collection to send requests from | A Postman collection, or a Bruno, Insomnia, Hoppscotch or Thunder Client one | **Export** dialog, **Export studio**, CLI, API | [Export to an API client](./export-to-an-api-client.md) |
+| A diagram of what an export keeps | The mapping graph, fidelity overlay, treemap, ERD, service map and channel topology | **Export studio** › **6. Review & Generate** | [Visualize an export](./visualize-an-export.mdx) |
+| A diagram of a conversion to OpenAPI | The projection graph; **Copy Mermaid** copies it as Mermaid flowchart text, and its download button saves `conversion-projection.mmd` | Catalog item › **Convert to OpenAPI** | [The projection graph](../bring-in/convert-to-openapi.md#the-projection-graph) |
+| A migration guide for consumers | Markdown or PDF: **“Download Markdown”** or **“Download PDF”** | **Versions** › **Compare** › **Migration guide** | [Compare](../build/version-dialogs.mdx#compare) |
+| An approved change report | A PDF, once the report is **Approved** | **Versions** › **Change report** tab › **“Download PDF”** | [Review, approve and export a change report](../build/versions.mdx#review-approve-and-export-a-change-report) |
+
+### Not yet available
+
+- **PlantUML.** No export writes PlantUML. For a diagram as text, use **Copy Mermaid** on the projection
+  graph.
+- **Canvas images and PDFs.** The schema canvas can't be saved as a PNG, SVG, JPG or PDF, or as a
+  Mermaid, PlantUML, Graphviz DOT or GraphML diagram. To share a version's structure, export the
+  specification, or use the pictures in the **Export studio**.
+
 ## How the pieces fit
 
 - **One engine, every surface.** The dialog, the studio, Browse, the CLI, MCP and the API all start the
