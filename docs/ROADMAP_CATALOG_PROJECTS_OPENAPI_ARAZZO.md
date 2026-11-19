@@ -35,7 +35,7 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 | #6654 | MFX-38.1 follow-up: GitLab/Bitbucket/Azure DevOps export git delivery | Import/export |
 | #6706 | Catalog import and export demo script | Cleanup |
 
-Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Quality; unblocked by COA-1.7), #5804 (Overlays as SDK input). Decision needed: the Version Archaeology epic #1023 and Diff 0.247–0.251 (evolution timeline, change attribution, cross-project comparison, merge assistant) are Projects improvements that were moved to the Diff project on 2026-11-19; RC9 can take them.
+Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Quality; unblocked by COA-1.7), #5804 (Overlays as SDK input). Not adopted: the Version Archaeology epic #1023 was moved to private-suite (private-suite#3112); private-suite items are out of scope for RC9.
 
 ## 4. Epics
 

@@ -47,13 +47,11 @@ five features (#6894). Anything RC8 does not close moves here.
 
 ## 4. Decisions needed
 
-1. **Version Archaeology (#1023) and Diff 0.247–0.251** (schema evolution timeline, change attribution,
-   cross-project comparison, merge assistant) are Projects improvements, moved to the Diff project today. Take them
-   into RC9?
+1. **Version Archaeology (#1023)** — decided: not in RC9. Moved to private-suite (now private-suite#3112); private-suite items are out of scope for RC9.
 2. **Arazzo execution (COA-1.7)** — decided: promoted into the main run (with COA-1.6, 2.6 and 2.8); all Arazzo/OpenAPI work for
    Catalog and Projects is high priority.
-3. **Order against RC10.** RC9 is named first, but the Pact work in RC10 was due to start today; the two share no
-   code, so they can run in parallel if you choose.
+3. **Order against RC10** — decided: sequential, not parallel. RC10 (Contracts/PactFlow) starts only after RC9 is complete,
+   to keep the release controlled.
 
 ## 5. Issue numbers
 
