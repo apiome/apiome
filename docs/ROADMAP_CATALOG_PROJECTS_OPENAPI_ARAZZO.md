@@ -21,7 +21,7 @@ Sources: OpenAPI Initiative newsletters (Feb and Jun 2026), the Arazzo specifica
 
 ## 2. MVP definition
 
-A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files it calls, see it as steps and a graph, and export it as the right version; (2) trust that no OpenAPI 3.0/3.1/3.2 construct is silently lost, with every version validated; (3) author and see the 3.2 additions in Projects; (4) manage Overlays in the UI; (5) export bundled, dereferenced or split specs; and (6) read docs that match the code. **V2:** workflow execution, change classification for Arazzo, the upgrade assistant, `$ref` hygiene, new validators.
+A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files it calls, see it as steps and a graph, and export it as the right version; (2) trust that no OpenAPI 3.0/3.1/3.2 construct is silently lost, with every version validated; (3) author and see the 3.2 additions in Projects; (4) manage Overlays in the UI; (5) export bundled, dereferenced or split specs; and (6) read docs that match the code. Arazzo workflow execution, Arazzo change classification, the upgrade assistant and `$ref` hygiene are in scope too (all Arazzo/OpenAPI work for Catalog and Projects is high priority). **V2:** only the new export validators.
 
 ## 3. Existing issues adopted (not duplicated)
 
@@ -57,8 +57,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 | COA-1.3 · [#7039](https://github.com/apiome/apiome/issues/7039) | Arazzo workflow viewer in Projects and Catalog | See an Arazzo workflow as steps, inputs, outputs and success/failure paths — not just as a file | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
 | COA-1.4 · [#7040](https://github.com/apiome/apiome/issues/7040) | Arazzo round-trip and conformance corpus | Burn down the Arazzo cells in the round-trip xfail matrix and add an official-fixture corpus | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-1.5 · [#7041](https://github.com/apiome/apiome/issues/7041) | Arazzo workflow records: REST, CLI and docs | Read workflows and steps through the API and `apiome`, and make the docs match what is stored | `enhancement`, `rest`, `cli`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-docs |
-| COA-1.6 · [#7042](https://github.com/apiome/apiome/issues/7042) | Arazzo change reports and breaking-change depth | Classify changes to inputs, success criteria, parameters and sources — not only step removal and reorder | `enhancement`, `rest`, `diff`, `v2` | Y | N | M | apiome-rest |
-| COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli`, `v2` | N | N | L | apiome-rest, apiome-cli |
+| COA-1.6 · [#7042](https://github.com/apiome/apiome/issues/7042) | Arazzo change reports and breaking-change depth | Classify changes to inputs, success criteria, parameters and sources — not only step removal and reorder | `enhancement`, `rest`, `diff` | Y | N | M | apiome-rest |
+| COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli` | N | N | L | apiome-rest, apiome-cli |
 
 **COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs**
 - **Problem:** apiome-rest reads 1.0.x and 1.1.x (`arazzo_spec.py`, vendored schemas for both), but `apiome-cli/.../import_/arazzo.py` validates 1.0 only, the legacy generator behind `/v1/arazzo/{tenant}/{project}/{version}` and the UI generator (`apiome-ui/src/app/utils/arazzo.ts`, `templates/arazzo/arazzo-spec.hbs`) emit 1.0.1, and `apiome-rest/docs/ARAZZO_ENDPOINTS.md` and several docs pages say "Arazzo 1.0".
@@ -166,9 +166,9 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 | COA-2.3 · [#7046](https://github.com/apiome/apiome/issues/7046) | JSON Schema dialect handling per document | Honour `jsonSchemaDialect` / `$schema`, and the 3.0 vs 3.1+ schema differences, in import and emit | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-2.4 · [#7047](https://github.com/apiome/apiome/issues/7047) | Bundle and dereference options | Import and export a spec as bundled, dereferenced or split into files | `enhancement`, `rest`, `cli`, `ui`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui |
 | COA-2.5 · [#7048](https://github.com/apiome/apiome/issues/7048) | OpenAPI 3.2 in Projects: QUERY, additionalOperations, tags, streaming | Author and view the 3.2 additions in the Projects editor and viewers | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
-| COA-2.6 · [#7049](https://github.com/apiome/apiome/issues/7049) | Spec upgrade assistant (2.0 → 3.0 → 3.1 → 3.2) | Upgrade a project or catalog item to a newer OpenAPI version with a reviewed change list | `enhancement`, `rest`, `ui`, `cli`, `v2` | Y | N | M | apiome-rest, apiome-ui, apiome-cli |
+| COA-2.6 · [#7049](https://github.com/apiome/apiome/issues/7049) | Spec upgrade assistant (2.0 → 3.0 → 3.1 → 3.2) | Upgrade a project or catalog item to a newer OpenAPI version with a reviewed change list | `enhancement`, `rest`, `ui`, `cli` | Y | N | M | apiome-rest, apiome-ui, apiome-cli |
 | COA-2.7 · [#7050](https://github.com/apiome/apiome/issues/7050) | Overlay manager in Versions | List, preview, apply and export Overlay 1.0–1.2 documents (incl. `copy` and reusable actions) from the UI | `enhancement`, `ui`, `rest`, `mvp` | Y | Y | M | apiome-ui, apiome-rest |
-| COA-2.8 · [#7051](https://github.com/apiome/apiome/issues/7051) | `$ref` hygiene: refresh, cycles and external-ref policy in the UI | See which external `$ref`s a spec depends on, refresh them, and see cycles | `enhancement`, `ui`, `rest`, `v2` | Y | N | M | apiome-ui, apiome-rest |
+| COA-2.8 · [#7051](https://github.com/apiome/apiome/issues/7051) | `$ref` hygiene: refresh, cycles and external-ref policy in the UI | See which external `$ref`s a spec depends on, refresh them, and see cycles | `enhancement`, `ui`, `rest` | Y | N | M | apiome-ui, apiome-rest |
 
 **COA-2.1 · #7044 OpenAPI construct losslessness audit**
 - **Problem:** The canonical model and normaliser are broad, but a grep did not confirm handling of `webhooks`, `callbacks`, `links`, `discriminator`, `x-` extensions, `$self`, `jsonSchemaDialect`, `$dynamicRef`, `itemSchema` and streaming media types; a silent drop is the worst failure for the core format.
@@ -391,8 +391,10 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 1. **Quick wins and the truth pass (parallel):** COA-1.1 · COA-2.2 · COA-4.1 · COA-3.5 · COA-3.6.
 2. **Foundations:** COA-2.1 (construct audit) · COA-1.5 (workflow records) · COA-1.2 (Arazzo filesets) · COA-4.3 (usability audit).
 3. **Fidelity and options:** COA-1.4 · COA-2.3 · COA-2.4 · COA-2.7 · COA-4.2 · #5879 · #5880.
-4. **Surfaces and burn-down:** COA-1.3 · COA-2.5 · COA-3.1 · COA-3.2 · COA-3.3 · governance epics #5875 and #5868 (+ #5869–#5872).
-5. **Demos and delivery:** COA-4.4 · #6706 · #6654.
-6. **V2:** COA-1.6 · COA-2.6 · COA-2.8 · COA-3.4 · COA-1.7.
+4. **Surfaces:** COA-1.3 · COA-2.5.
+5. **Arazzo/OpenAPI completion:** COA-1.6 · COA-1.7 · COA-2.6 · COA-2.8 (promoted from V2 — Arazzo and OpenAPI work is high priority).
+6. **Burn-down and governance:** COA-3.1 · COA-3.2 · COA-3.3 · #5875 · #5868 (+ #5869–#5874).
+7. **Demos and delivery:** COA-4.4 · #6706 · #6654.
+8. **V2:** COA-3.4.
 
 Each issue follows AGENTS.md: OpenAPI version bump for REST changes, package bumps, docs in the same PR with regenerated screenshots, a release note, and `yarn docs:check`.

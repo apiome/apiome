@@ -37,8 +37,8 @@ execution, by *Rank*) and the **RC9** milestone on `apiome/apiome`. The roadmap 
 ## 2. Execution order
 
 1 quick wins (COA-1.1, 2.2, 4.1, 3.5, 3.6) → 2 foundations (2.1, 1.5, 1.2, 4.3) → 3 fidelity and options (1.4, 2.3,
-2.4, 2.7, 4.2, #5879, #5880) → 4 surfaces and burn-down (1.3, 2.5, 3.1–3.3, governance epics) → 5 demos and delivery
-(4.4, #6706, #6654) → V2 (1.6, 2.6, 2.8, 3.4, 1.7). The project's *Rank* field carries this order.
+2.4, 2.7, 4.2, #5879, #5880) → 4 surfaces (1.3, 2.5) → 5 Arazzo/OpenAPI completion (1.6, 1.7, 2.6, 2.8) → 6 burn-down and governance (3.1–3.3,
+#5875, #5868–#5874) → 7 demos and delivery (4.4, #6706, #6654) → V2 (3.4 only). The project's *Rank* field carries this order.
 
 ## 3. Carry-over from RC8
 
@@ -50,8 +50,8 @@ five features (#6894). Anything RC8 does not close moves here.
 1. **Version Archaeology (#1023) and Diff 0.247–0.251** (schema evolution timeline, change attribution,
    cross-project comparison, merge assistant) are Projects improvements, moved to the Diff project today. Take them
    into RC9?
-2. **Arazzo execution (COA-1.7)** is V2 here; promote it if the competitive pressure from Specmatic matters more
-   than the viewer (COA-1.3).
+2. **Arazzo execution (COA-1.7)** — decided: promoted into the main run (with COA-1.6, 2.6 and 2.8); all Arazzo/OpenAPI work for
+   Catalog and Projects is high priority.
 3. **Order against RC10.** RC9 is named first, but the Pact work in RC10 was due to start today; the two share no
    code, so they can run in parallel if you choose.
 
