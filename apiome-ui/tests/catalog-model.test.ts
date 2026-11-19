@@ -238,8 +238,8 @@ describe('quick filters', () => {
     }
   });
 
-  it('offers Catalog connector as a source now that connectors are released (RC8)', () => {
-    expect(catalogSourceOptions().map((option) => option.value)).toContain('connector');
+  it('leaves Catalog connector out of the sources while connectors are held back (RC8)', () => {
+    expect(catalogSourceOptions().map((option) => option.value)).not.toContain('connector');
   });
 
   it('narrows by format family, collapsing gRPC and Protobuf into one', () => {

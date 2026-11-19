@@ -15,6 +15,11 @@ the reason each ticket is in. Project fields:
 A ticket listed in both §3.1 and §4 is filed under §4 (*Proposed close*) until RC8 decides. #6274 stays in RC7.
 No milestone exists yet; §8 lists the milestone moves.
 
+> **Update 2026-11-19 — RC8 is scoped to Catalog and Projects.** Connectors, Products, Shadow APIs, the Dependency
+> graph and the Schema registry are held back again ([#6894](https://github.com/apiome/apiome/issues/6894)) and
+> released one at a time through the *Enable* projects (127–131). The §6 "Other features" items moved to their own
+> feature projects; the board keeps Catalog/Projects work, Export & Interoperability, and the sign-in items.
+
 ---
 
 ## 0. What is in RC8

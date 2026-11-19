@@ -17,7 +17,30 @@ and `static/`; `yarn docs:check` (`scripts/check-docs.mjs`) reads `docs/`, `rele
 `screens.json`; and `scripts/check-loose-docs.sh` skips all of `apiome-docs/`. Keep it that way —
 do not point any of them at `unreleased/`.
 
-## What is here
+## What is held back now (RC8)
+
+RC8 is about **Catalog and Projects**. Five features were released too early and are withheld again; each
+is released on its own when its **Enable project** is complete (completion checklist, documentation and a
+demo-video script are in the project). The gate ids live in `UNRELEASED_FEATURE_IDS`
+(`apiome-ui/lib/feature-release.ts`, which also names each project in `ENABLE_PROJECTS`).
+
+| Page | Feature | Original path | Gate id | Enable project |
+| --- | --- | --- | --- | --- |
+| Dependency graph | Dependency graph (and the Dependencies tabs, Blast radius) | `docs/govern/dependency-graph.mdx` | `dependency-graph` | [127](https://github.com/orgs/apiome/projects/127) |
+| Schema registry | Schema registry (and the catalog Subjects tab) | `docs/ship/schema-registry.mdx` | `schema-registry` | [128](https://github.com/orgs/apiome/projects/128) |
+| Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` | [129](https://github.com/orgs/apiome/projects/129) |
+| Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` | [130](https://github.com/orgs/apiome/projects/130) |
+| API products | Products and plans | `docs/ship/api-products.mdx` | `products` | [131](https://github.com/orgs/apiome/projects/131) |
+
+Each page sits at `unreleased/<original path>`; its 22 screenshots and manifest entries are in
+`unreleased/static/img/screens/` and `unreleased/screens.json`. Links to these pages from pages that
+stayed on the site point at the REST reference (`reference/rest/connectors.md`, `graph.md`,
+`schema-registry.md`, `api-products.md`) or are plain text (Shadow APIs); step 6 of *Restore a feature*
+points them back. The REST, CLI and MCP surfaces of all five stay released.
+
+Rollout order: Dependency graph, Schema registry, Connectors, Shadow APIs (needs Connectors), Products.
+
+## What was held back earlier
 
 Nothing. No feature is held back, so there are no pages, fragments or screenshots in this folder.
 

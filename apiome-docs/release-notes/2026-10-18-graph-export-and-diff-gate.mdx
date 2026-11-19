@@ -12,7 +12,7 @@ a line on every breaking change in the contract gate.
 
 - **The PR comment names who is affected.** The [diff-action](/reference/ci/diff-action) comment
   now says, under each breaking change, "affects 4 consumers across 2 teams (mobile, payments);
-  2 verification runs invalidated", from the change's [blast radius](/govern/dependency-graph#in-the-diff-gate-and-the-pr-comment).
+  2 verification runs invalidated", from the change's [blast radius](/reference/rest/graph).
   It is on by default. Set `blast-radius: false` to turn it off. The gate's pass or fail does not change.
 - **The same line on the command line.** Run `apiome diff ./openapi.yaml --against payments@latest --blast-radius`,
   or send `"blastRadius": true` to `POST /v1/diff/{tenant}/classified`.

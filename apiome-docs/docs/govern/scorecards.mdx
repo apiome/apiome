@@ -38,11 +38,11 @@ ladders are available.
 | `owner.present` | The entity has a confirmed owner team that has not been deleted | The owner and the [team](../workspace/teams.mdx) |
 | `owner.contactable` | That team has an on-call or chat link (not applicable without an owner) | The team |
 | `consumers.declared` | At least one consumer is registered for the API — for an agent, it consumes at least one API | The consumers |
-| `dependencies.declared` | At least one [declared dependency](./dependency-graph.mdx#declare-dependencies) | The dependencies |
+| `dependencies.declared` | At least one [declared dependency](/reference/rest/graph) | The dependencies |
 | `refresh.fresh` | The entity's source last refreshed successfully within **twice** its cadence: the repository or connector it was imported from, an MCP server's discovery, a connector's syncs, a gateway environment's sync. Not applicable when nothing refreshes it; not assessed when the source is paused. The detail also gives the last revision's date. | The repository, connector or server |
-| `deployment.known` | The API is deployed on at least one gateway environment — for a gateway environment, it serves at least one API | The [graph](./dependency-graph.mdx) |
-| `shadow.none` | The [shadow-API report](./shadow-apis.mdx) for the connector (or the environment) lists none; not assessed while its inventory is stale | Shadow APIs |
-| `registry.level-set` | Every [schema-registry subject](../ship/schema-registry.mdx) the catalog item backs has its own compatibility level | The item's **Subjects** tab |
+| `deployment.known` | The API is deployed on at least one gateway environment — for a gateway environment, it serves at least one API | The [graph](/reference/rest/graph) |
+| `shadow.none` | The shadow-API report for the connector (or the environment) lists none; not assessed while its inventory is stale | Shadow APIs |
+| `registry.level-set` | Every [schema-registry subject](/reference/rest/schema-registry) the catalog item backs has its own compatibility level | The item's **Subjects** tab |
 | `mcp.baseline-approved` | The MCP server has an approved trust baseline | The MCP server |
 | `agent.readiness` | Not assessed yet — agent readiness scoring is still to come | — |
 
@@ -66,8 +66,7 @@ Teams carry no facts.
 | Entity | Where |
 | --- | --- |
 | Catalog item | **Overview** tab — see [An item's page](../bring-in/catalog.mdx#facts) |
-| Project | **Dependencies** tab, under the graph |
-| MCP server | **Dependencies** tab, under the graph |
+| Project, MCP server | Through the REST API (`GET …/facts`); the **Dependencies** tab is not available yet |
 | Connector | **Facts** tab |
 | Gateway config, agent | **Overview** tab |
 | Model | On the page |

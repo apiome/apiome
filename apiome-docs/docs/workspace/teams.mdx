@@ -82,7 +82,7 @@ A suggestion only becomes the owner when someone confirms it, and the access aud
 
 | Source | Evidence | Becomes a suggestion for |
 | --- | --- | --- |
-| `gateway_tag` | A Kong tag `owner:payments`, or an AWS API Gateway tag `apiome:owner` = `payments` (see [Connectors](../bring-in/connectors.mdx)) | The catalog item the connector synced |
+| `gateway_tag` | A Kong tag `owner:payments`, or an AWS API Gateway tag `apiome:owner` = `payments` (see [Connectors](/reference/rest/connectors)) | The catalog item the connector synced |
 | `codeowners` | A CODEOWNERS rule naming `@your-org/payments` for the spec's path — the file in `.github/`, the repository root or `docs/`, last matching rule wins | The project or catalog item imported from that path |
 | `spec_extension` | `x-apiome-owner: payments` at the root of the document, or `info.contact.name: payments` | The project or catalog item the import wrote |
 
