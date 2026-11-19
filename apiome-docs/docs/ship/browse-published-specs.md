@@ -24,7 +24,7 @@ now; private versions for readers are coming next.
 
 ## API products {#api-products}
 
-An organization's page lists its [API products](./api-products.mdx) under **Products** — bundles of
+An organization's page lists its [API products](/reference/rest/api-products) under **Products** — bundles of
 APIs you can request access to. Only products made visible on the **Portal** and **Published** (or
 **Deprecated**) appear.
 
@@ -41,7 +41,7 @@ APIs you can request access to. Only products made visible on the **Portal** and
    disabled until requests from the portal open, so contact the API team in the meantime.
 
 A screenshot and the rules for what the page shows are in
-[API products › On the portal](./api-products.mdx#on-the-portal).
+[API products › On the portal](/reference/rest/api-products).
 
 ## What a card tells you {#what-a-card-tells-you}
 

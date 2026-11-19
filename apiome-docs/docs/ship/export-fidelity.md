@@ -354,8 +354,8 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 
 ## API plans (`x-apiome-plans`) {#api-plans}
 
-A version that an [API product](./api-products.mdx) includes carries the product's
-[plans](./api-products.mdx#plans) into its exports — every plan but the retired ones.
+A version that an [API product](/reference/rest/api-products) includes carries the product's
+[plans](/reference/rest/api-products) into its exports — every plan but the retired ones.
 
 | Target | What happens to the plans |
 | --- | --- |
@@ -446,7 +446,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
-- [Push a catalog item back to the gateway](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway) — the same report, before exporting to a gateway's own format
+- [Push a catalog item back to the gateway](/reference/rest/connectors) — the same report, before exporting to a gateway's own format
 - [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome export`](../reference/cli/export.md) — full `export` flag reference

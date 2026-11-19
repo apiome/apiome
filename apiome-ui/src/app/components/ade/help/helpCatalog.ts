@@ -1008,14 +1008,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['visibility', 'public', 'private', 'access url', 'api key', 'hosted mock', 'scenarios'],
   },
   {
-    id: 'api-products',
-    title: 'API products',
-    summary: 'Bundle projects, versions, MCP servers and catalog items into one thing consumers get access to.',
-    page: 'apiome-docs/docs/ship/api-products.mdx',
-    section: 'reference',
-    keywords: ['bundle', 'members', 'latest', 'portal', 'visibility', 'owner team', 'apx'],
-  },
-  {
     id: 'sunset-timeline',
     title: 'Sunset timeline',
     summary: 'When each deprecated version reaches end of life, how to schedule it, and the CSV export.',
@@ -2078,44 +2070,12 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['ledger', 'hash chain', 'csv', 'role changes', 'permissions', 'soc 2', 'reader', 'sign-in', 'history'],
   },
   {
-    id: 'connectors',
-    title: 'Connectors',
-    summary: 'Register API gateways and registries whose APIs sync into the catalog.',
-    page: 'apiome-docs/docs/bring-in/connectors.mdx',
-    section: 'reference',
-    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials', 'environment', 'gateway config', 'push back'],
-  },
-  {
-    id: 'shadow-apis',
-    title: 'Shadow APIs',
-    summary: 'Find APIs your gateways serve that the catalog does not describe, and link, import or ignore them.',
-    page: 'apiome-docs/docs/govern/shadow-apis.mdx',
-    section: 'reference',
-    keywords: ['undeployed', 'drift', 'possible match', 'connector', 'gateway', 'ignore'],
-  },
-  {
-    id: 'dependency-graph',
-    title: 'Dependency graph',
-    summary: 'How Apiome records which APIs, consumers and sources depend on each other.',
-    page: 'apiome-docs/docs/govern/dependency-graph.mdx',
-    section: 'reference',
-    keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships', 'depends on', 'backstage', 'blast radius', 'runtime calls', 'suggested consumers'],
-  },
-  {
     id: 'teams',
     title: 'Teams',
     summary: 'Named groups of members with owner links, the owners of catalog entities.',
     page: 'apiome-docs/docs/workspace/teams.mdx',
     section: 'reference',
     keywords: ['owner', 'ownership', 'on-call', 'chat channel', 'lead', 'reassign', 'group'],
-  },
-  {
-    id: 'schema-registry',
-    title: 'Schema registry',
-    summary: 'Register Avro, JSON Schema and Protobuf schemas under subjects; connect Kafka serializers.',
-    page: 'apiome-docs/docs/ship/schema-registry.mdx',
-    section: 'reference',
-    keywords: ['subject', 'confluent', 'kafka', 'avro', 'protobuf', 'serializer', 'compatibility', 'registry settings', 'apiome registry'],
   },
   {
     id: 'agents-and-models',
@@ -2151,6 +2111,55 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   },
 ] as const;
 
+/**
+ * Guides for features that are not released (`UNRELEASED_FEATURE_IDS` in `lib/feature-release.ts`).
+ *
+ * Their pages sit in `apiome-docs/unreleased/`, off the site, so the guide search must not offer
+ * them. Releasing a feature moves its entries back into {@link GUIDE_ENTRIES} (step 4 of
+ * "Restore a feature" in `apiome-docs/unreleased/README.md`).
+ */
+export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
+  {
+    id: 'api-products',
+    title: 'API products',
+    summary: 'Bundle projects, versions, MCP servers and catalog items into one thing consumers get access to.',
+    page: 'apiome-docs/unreleased/docs/ship/api-products.mdx',
+    section: 'reference',
+    keywords: ['bundle', 'members', 'latest', 'portal', 'visibility', 'owner team', 'apx'],
+  },
+  {
+    id: 'connectors',
+    title: 'Connectors',
+    summary: 'Register API gateways and registries whose APIs sync into the catalog.',
+    page: 'apiome-docs/unreleased/docs/bring-in/connectors.mdx',
+    section: 'reference',
+    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials', 'environment', 'gateway config', 'push back'],
+  },
+  {
+    id: 'shadow-apis',
+    title: 'Shadow APIs',
+    summary: 'Find APIs your gateways serve that the catalog does not describe, and link, import or ignore them.',
+    page: 'apiome-docs/unreleased/docs/govern/shadow-apis.mdx',
+    section: 'reference',
+    keywords: ['undeployed', 'drift', 'possible match', 'connector', 'gateway', 'ignore'],
+  },
+  {
+    id: 'dependency-graph',
+    title: 'Dependency graph',
+    summary: 'How Apiome records which APIs, consumers and sources depend on each other.',
+    page: 'apiome-docs/unreleased/docs/govern/dependency-graph.mdx',
+    section: 'reference',
+    keywords: ['edges', 'consumes', 'impact', 'provenance', 'stale', 'relationships', 'depends on', 'backstage', 'blast radius', 'runtime calls', 'suggested consumers'],
+  },
+  {
+    id: 'schema-registry',
+    title: 'Schema registry',
+    summary: 'Register Avro, JSON Schema and Protobuf schemas under subjects; connect Kafka serializers.',
+    page: 'apiome-docs/unreleased/docs/ship/schema-registry.mdx',
+    section: 'reference',
+    keywords: ['subject', 'confluent', 'kafka', 'avro', 'protobuf', 'serializer', 'compatibility', 'registry settings', 'apiome registry'],
+  },
+] as const;
 
 /** How many results the search shows at once. */
 export const GUIDE_RESULT_LIMIT = 8;

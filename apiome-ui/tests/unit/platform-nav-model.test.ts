@@ -38,6 +38,7 @@ import {
 import { PLATFORM_NAV_ICONS, resolvePlatformNavIcon } from '../../lib/platform-nav-icons';
 import {
   UNRELEASED_FEATURE_IDS,
+  ENABLE_PROJECTS,
   isFeatureReleased,
   parsePreviewFeatures,
 } from '../../lib/feature-release';
@@ -483,28 +484,26 @@ describe('platform-nav model — release gate', () => {
       .filter((id) => !shown.has(id));
   }
 
-  it('holds nothing back: every modelled destination is shown (RC8)', () => {
+  const HELD_BACK = ['dependency-graph', 'schema-registry', 'connectors', 'shadow-apis', 'products'];
+
+  it('holds back exactly the five features RC8 releases one at a time', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(UNRELEASED_FEATURE_IDS).toEqual([]);
-    expect(hiddenWithTenant()).toEqual([]);
+    expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([...HELD_BACK].sort());
+    expect(hiddenWithTenant().sort()).toEqual([...HELD_BACK].sort());
   });
 
-  it('releases everything RC6 and the MVP focus had held back (RC8)', () => {
+  it('names an Enable project for every held-back feature', () => {
+    for (const id of UNRELEASED_FEATURE_IDS) {
+      expect(ENABLE_PROJECTS[id].url).toMatch(/^https:\/\/github\.com\/orgs\/apiome\/projects\/\d+$/);
+    }
+  });
+
+  it('keeps everything else RC6 and the MVP focus had held back released (RC8)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    for (const id of [
-      'sdk-settings',
-      'style-guides',
-      'audit',
-      'connectors',
-      'shadow-apis',
-      'dependency-graph',
-      'teams',
-      'schema-registry',
-      'catalog-entities',
-      'consumers',
-    ]) {
+    for (const id of ['sdk-settings', 'style-guides', 'audit', 'teams', 'catalog-entities', 'consumers']) {
       expect(isFeatureReleased(id)).toBe(true);
     }
+    for (const id of HELD_BACK) expect(isFeatureReleased(id)).toBe(false);
   });
 
   it('keeps Catalog and Projects open', () => {
@@ -517,6 +516,9 @@ describe('platform-nav model — release gate', () => {
     expect(isFeatureReleased('audit', '')).toBe(true);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'ALL';
     expect(hiddenWithTenant()).toEqual([]);
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'connectors';
+    expect(isFeatureReleased('connectors')).toBe(true);
+    expect(isFeatureReleased('shadow-apis')).toBe(false);
   });
 
   it('parses the override, dropping blanks', () => {
@@ -540,9 +542,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves all 22 modelled destinations in the rail now that RC8 released the rest; the preview override adds none', () => {
+  it('leaves 17 of the 22 modelled destinations in the rail while five features are held back; the preview override restores them', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(22);
+    expect(releasedRailCount()).toBe(17);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(22);
   });

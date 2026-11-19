@@ -306,7 +306,7 @@ workspace's [registry endpoint](../ship/mcp-registry.mdx).
 
 <Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked to re-sync hourly" />
 
-Apiome registers an [MCP registry connector](./connectors.mdx#mcp-registry) for the registry and runs
+Apiome registers an [MCP registry connector](/reference/rest/connectors) for the registry and runs
 its first sync. Each server with a reachable `streamable-http` or `sse` remote is added here,
 discovered, linted and graded. The dialog then shows:
 - how many servers the registry listed;
@@ -325,7 +325,7 @@ discovered, linted and graded. The dialog then shows:
 
 A registry URL that resolves to a private address, or a registry that refuses the request, imports
 nothing: the dialog shows the reason and creates no connector. Every sync is recorded with its counts on
-the connector's **Runs** tab. Change its cadence, or sync it again, under **Bring in → Connectors**.
+the connector's **Runs** tab. Change its cadence, or sync it again, over the [REST API](../reference/rest/connectors.md).
 
 ## An endpoint's page
 
@@ -342,7 +342,6 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 | **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
 | **Test** | Run one of the server's tools and see what it returns — see [Test a tool](#test-a-tool) |
 | **Credentials** | The stored credential, masked; set, replace or clear it; **Connect with OAuth** — see [Manage credentials](#manage-credentials) |
-| **Dependencies** | What the server is built from and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
 | **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
 | **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
 
@@ -600,10 +599,9 @@ latency. Pick the servers and **click “Compare”**.
 
 ## Servers from a registry
 
-An [MCP registry connector](./connectors.mdx#mcp-registry) keeps servers from an upstream
+An [MCP registry connector](/reference/rest/connectors) keeps servers from an upstream
 registry — the official registry, Azure API Center, a Kong registry or another Apiome workspace — in
-your catalog. [Import from a registry](#import-from-a-registry) creates one for you; manage it on
-**Bring in → Connectors**, or over the
+your catalog. [Import from a registry](#import-from-a-registry) creates one for you; manage it over the
 [REST API](../reference/rest/connectors.md#create-connector-v1-tenants-tenant-slug-connectors-post)
 with the `mcp-registry` kind.
 
