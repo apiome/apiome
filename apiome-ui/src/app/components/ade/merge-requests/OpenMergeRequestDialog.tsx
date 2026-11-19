@@ -232,10 +232,10 @@ export function OpenMergeRequestDialog({
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving} title={saving ? 'Opening the merge request…' : undefined}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={saving} data-testid="open-mr-submit">
+          <Button onClick={submit} disabled={saving} title={saving ? 'Opening the merge request…' : undefined} data-testid="open-mr-submit">
             {saving ? 'Opening…' : 'Open merge request'}
           </Button>
         </DialogFooter>

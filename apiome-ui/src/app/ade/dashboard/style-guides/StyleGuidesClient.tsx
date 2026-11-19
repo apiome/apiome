@@ -394,7 +394,7 @@ export default function StyleGuidesClient() {
                 <Button
                   variant="outline"
                   data-testid="style-guides-start-recommended"
-                  disabled={busy}
+                  disabled={busy} title={busy ? 'Wait for the current change to finish' : undefined}
                   onClick={() => openCreate('recommended', recommended.id)}
                 >
                   <Sparkles aria-hidden />
@@ -404,7 +404,7 @@ export default function StyleGuidesClient() {
               <Button
                 variant="outline"
                 data-testid="style-guides-import"
-                disabled={busy}
+                disabled={busy} title={busy ? 'Wait for the current change to finish' : undefined}
                 onClick={() => setOverlay('import')}
               >
                 <Upload aria-hidden />
@@ -413,7 +413,7 @@ export default function StyleGuidesClient() {
               <Button
                 kbd="N"
                 data-testid="style-guides-create"
-                disabled={busy}
+                disabled={busy} title={busy ? 'Wait for the current change to finish' : undefined}
                 onClick={() => openCreate('new', null)}
               >
                 <Plus aria-hidden />

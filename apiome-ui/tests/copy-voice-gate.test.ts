@@ -20,7 +20,8 @@
  *
  *   3. **No dead controls** (HIVE-13.2, #5615): a disabled button carries its reason — a
  *      `title` or an `aria-describedby` — and "Coming soon" is never the text of a button.
- *      The first is a ratchet ({@link DISABLED_WITHOUT_REASON_BASELINE}); the second is a
+ *      The first is a ratchet ({@link DISABLED_WITHOUT_REASON_BASELINE}) everywhere, and a hard
+ *      zero on the released screens ({@link REASON_REQUIRED_SCREENS}, #6263); the second is a
  *      hard rule, held on rendered pages as well by `tests/page-header-gate.test.tsx`.
  *
  * The runtime half — that `ErrorState`, `ErrorBanner`, `AlertDialog` and `toast.error`
@@ -78,7 +79,43 @@ const SONNER_ALLOWED = new Set([
  * must equal the source exactly: a new reason-less disabled button fails, and a page that
  * gives its buttons reasons lowers this number in the same change.
  */
-const DISABLED_WITHOUT_REASON_BASELINE = 466;
+const DISABLED_WITHOUT_REASON_BASELINE = 281;
+
+/**
+ * The released screens that may hold **no** reason-less disabled button (#6263).
+ *
+ * RC6 shipped with "allow-lists only shrink"; #6263 retired the offenders on the screens the
+ * MVP launch released — Versions and its dialogs, Catalog, Projects, the import wizard and its
+ * source panels, and the Export dialog and studio — and this list keeps them at zero. A path
+ * matches when it starts with one of these prefixes (or, for a pattern, when the pattern
+ * matches). Grow the list as other screens are brought in; never shrink it.
+ */
+const REASON_REQUIRED_SCREENS: readonly (string | RegExp)[] = [
+  'src/app/ade/dashboard/versions/',
+  'src/app/ade/dashboard/catalog/',
+  'src/app/ade/dashboard/projects/',
+  'src/app/components/ade/versions/',
+  'src/app/components/ade/version-dialogs/',
+  'src/app/components/ade/catalog/',
+  'src/app/components/ade/projects/',
+  'src/app/components/ade/import/',
+  'src/app/components/ade/dashboard/catalog/',
+  'src/app/components/ade/dashboard/export/',
+  /^src\/app\/components\/ade\/dashboard\/[A-Za-z]*Import[A-Za-z]*\.tsx:/,
+];
+
+/**
+ * Whether an offender's `path:line` sits on a screen in {@link REASON_REQUIRED_SCREENS}.
+ *
+ * @param where The offender, as `disabledWithoutReason()` reports it (`/`-separated).
+ * @returns True when the screen must have no reason-less disabled button.
+ */
+function onReasonRequiredScreen(where: string): boolean {
+  const path = where.split(sep).join('/');
+  return REASON_REQUIRED_SCREENS.some((screen) =>
+    typeof screen === 'string' ? path.startsWith(screen) : screen.test(path)
+  );
+}
 
 /** Attributes that give a disabled button its reason. */
 const DISABLED_REASON_ATTRIBUTES: ReadonlySet<string> = new Set(['title', 'aria-describedby']);
@@ -422,6 +459,19 @@ describe('the source passes the §10 voice check', () => {
     // Give the button a `title` (or `aria-describedby`) that says why it is unavailable. If
     // you gave existing buttons their reasons, lower DISABLED_WITHOUT_REASON_BASELINE to match.
     expect(disabledWithoutReason()).toHaveLength(DISABLED_WITHOUT_REASON_BASELINE);
+  });
+
+  it('leaves no disabled button without a reason on a released screen (#6263)', () => {
+    // These screens are held at zero, not ratcheted: add a `title` (or `aria-describedby`)
+    // that says why the button is unavailable and what to do about it.
+    expect(disabledWithoutReason().filter(onReasonRequiredScreen)).toEqual([]);
+  });
+
+  it('knows which paths are released screens', () => {
+    expect(onReasonRequiredScreen('src/app/ade/dashboard/versions/page.tsx:10')).toBe(true);
+    expect(onReasonRequiredScreen('src/app/components/ade/dashboard/GitImportPanel.tsx:3')).toBe(true);
+    expect(onReasonRequiredScreen('src/app/components/ade/dashboard/MockScenarioEditor.tsx:3')).toBe(false);
+    expect(onReasonRequiredScreen('src/app/admin/dashboard/settings/page.tsx:1')).toBe(false);
   });
 
   it('never makes "Coming soon" the text of a button (HIVE-13.2)', () => {

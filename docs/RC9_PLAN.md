@@ -42,7 +42,7 @@ execution, by *Rank*) and the **RC9** milestone on `apiome/apiome`. The roadmap 
 
 ## 3. Carry-over from RC8
 
-RC8 keeps Catalog/Projects work, Export & Interoperability (#3494), #6263 (first-row budgets) and the withdrawal of
+RC8 keeps Catalog/Projects work, Export & Interoperability (#3494), #6263 (first-row budgets, ✅ done 2026-11-19) and the withdrawal of
 five features (#6894). Anything RC8 does not close moves here.
 
 ## 4. Decisions needed

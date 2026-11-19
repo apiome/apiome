@@ -78,6 +78,7 @@ const CATALOG_PRELUDES = [
   '.cat-deleted-switch label',
   '.cat-chip-glyph',
   '.cat-filter',
+  '.cat-search-wrap',
   '.cat-search',
   '.cat-filter[data-active]',
   '.cat-facet__trigger[data-active]',
@@ -472,13 +473,16 @@ describe('density and font-scale independence', () => {
     }
   });
 
-  it('sizes the toolbar’s three quick filters in rem, not the mockup’s 116–136px', () => {
-    expect(declaration('.cat-filter', 'inline-size')).toBe('9.5rem');
+  it('sizes the toolbar’s quick filters in rem — the mockup’s 136px — so Domain and Tag fit the row (#6263)', () => {
+    expect(declaration('.cat-filter', 'inline-size')).toBe('8.5rem');
     expect(declaration('.cat-filter', 'block-size')).toBe('var(--control-h-sm)');
   });
 
-  it('sizes the search box in rem, wide enough for its placeholder (MFI-27.2)', () => {
-    expect(declaration('.cat-search', 'inline-size')).toBe('21rem');
+  it('lets the search box take what the filter row leaves, up to its placeholder’s width (MFI-27.2, #6263)', () => {
+    // The basis is the minimum: a wrapping row breaks on the basis before anything shrinks.
+    expect(declaration('.cat-search-wrap', 'flex')).toBe('1 1 14rem');
+    expect(declaration('.cat-search-wrap', 'max-inline-size')).toBe('21rem');
+    expect(declaration('.cat-search', 'inline-size')).toBe('100%');
   });
 });
 

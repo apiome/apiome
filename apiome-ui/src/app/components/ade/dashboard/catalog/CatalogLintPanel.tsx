@@ -867,6 +867,7 @@ export function CatalogLintPanel({
             type="button"
             data-testid="catalog-detail-quality-history"
             onClick={onOpenQualityHistory}
+            title={!qualityAvailable ? 'No quality score has been recorded for this item yet.' : undefined}
             disabled={!qualityAvailable}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:text-fg disabled:hover:bg-white"
           >
@@ -1234,6 +1235,7 @@ export function CatalogLintPanel({
                 type="button"
                 className="rounded-lg px-3 py-1.5 text-sm text-fg hover:bg-subtle"
                 onClick={() => setWaiveTarget(null)}
+                title={waiveSaving ? 'Wait for the waiver to save.' : undefined}
                 disabled={waiveSaving}
               >
                 Cancel
@@ -1242,6 +1244,7 @@ export function CatalogLintPanel({
                 type="button"
                 className="rounded-lg bg-warn-soft px-3 py-1.5 text-sm font-medium text-warn-fg hover:bg-warn-soft disabled:opacity-50"
                 onClick={() => void submitWaive()}
+                title={waiveSaving ? 'Wait for the waiver to save.' : !waiveRationale.trim() ? 'Give a rationale for the waiver.' : !waiveExpiry ? 'Choose when the waiver expires.' : undefined}
                 disabled={waiveSaving || !waiveRationale.trim() || !waiveExpiry}
               >
                 {waiveSaving ? 'Saving…' : 'Save waiver'}

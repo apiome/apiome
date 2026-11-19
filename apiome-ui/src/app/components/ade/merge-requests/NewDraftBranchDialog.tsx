@@ -146,10 +146,10 @@ export function NewDraftBranchDialog({ open, onOpenChange, projectId, branches, 
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving} title={saving ? 'Creating the draft branch…' : undefined}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={saving} data-testid="draft-branch-create">
+          <Button onClick={submit} disabled={saving} title={saving ? 'Creating the draft branch…' : undefined} data-testid="draft-branch-create">
             {saving ? 'Creating…' : 'Create branch'}
           </Button>
         </DialogFooter>

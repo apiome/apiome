@@ -73,6 +73,11 @@ export interface McpCatalogToolbarProps {
   facets: McpCatalogFacet[];
   filters: McpCatalogFilters;
   onFiltersChange: (filters: McpCatalogFilters) => void;
+  /**
+   * The Owner filter, drawn first among the controls (#6263). It used to stand on a row of its
+   * own under the card, which pushed the first host past the page's first-row ceiling.
+   */
+  ownerFilter?: React.ReactNode;
 }
 
 /** Toggle one value within a facet's selection array, returning a new filters object. */
@@ -151,6 +156,7 @@ export function McpCatalogToolbar({
   facets,
   filters,
   onFiltersChange,
+  ownerFilter,
 }: McpCatalogToolbarProps): React.ReactElement {
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const activeFilters = mcpCatalogActiveFilterCount(filters);
@@ -170,6 +176,7 @@ export function McpCatalogToolbar({
         </div>
 
         <div className="mcp-toolbar__controls">
+          {ownerFilter}
           {hasFacets ? (
             <Button
               type="button"

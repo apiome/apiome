@@ -97,6 +97,7 @@ function RepositoryRow({
             type="button"
             variant="outline"
             size="sm"
+            title={!repository.eligible ? (repository.reason ?? 'This repository does not accept pull requests back') : busy ? 'Rendering the version…' : undefined}
             disabled={!repository.eligible || busy}
             onClick={() => onRun(true)}
             data-testid="pr-back-preview"
@@ -107,6 +108,7 @@ function RepositoryRow({
             type="button"
             variant="primary"
             size="sm"
+            title={!repository.eligible ? (repository.reason ?? 'This repository does not accept pull requests back') : busy ? 'Rendering the version…' : undefined}
             disabled={!repository.eligible || busy}
             onClick={() => onRun(false)}
             data-testid="pr-back-open"

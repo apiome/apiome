@@ -426,7 +426,7 @@ function PublicationChangeReportCard({
           Publication change report
           {gitlike.marked ? <GitlikeFlag enabled={gitlike.enabled} /> : null}
         </span>
-        <Button variant="ghost" size="sm" onClick={onRefreshPreview} disabled={previewLoading}>
+        <Button variant="ghost" size="sm" onClick={onRefreshPreview} title={previewLoading ? 'Loading the preview…' : undefined} disabled={previewLoading}>
           <RefreshCw aria-hidden />
           {previewLoading ? 'Loading preview…' : 'Refresh preview'}
         </Button>

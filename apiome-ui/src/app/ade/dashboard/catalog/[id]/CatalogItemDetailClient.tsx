@@ -700,43 +700,47 @@ export function CatalogItemDetailClient({
                 />
               </HeaderOrb>
             </div>
-            {actions.convert.shown ? (
-              <Button
-                variant="primary"
-                onClick={() => setConvertOpen(true)}
-                data-testid="catalog-detail-convert"
-              >
-                <GitMerge aria-hidden />
-                {actions.convert.label}
-              </Button>
-            ) : null}
-            {actions.export.shown ? (
-              <Button
-                variant="outline"
-                onClick={handleExport}
-                title={CATALOG_EXPORT_VS_CONVERT_COPY}
-                data-testid="catalog-detail-export"
-              >
-                <FileOutput aria-hidden />
-                Export
-              </Button>
-            ) : null}
-            <Button variant="outline" onClick={showSourceTab} data-testid="catalog-detail-view-code">
-              <Code2 aria-hidden />
-              View code
-            </Button>
-            {designerPreviewHref && !item.deleted_at ? (
-              <Button variant="outline" asChild>
-                <a
-                  href={designerPreviewHref}
-                  title="View this item in the Designer, read-only"
-                  data-testid="catalog-detail-open-designer"
+            {/* The CTAs stack as the mockup draws them — the primary above, the rest under it —
+                so the cluster stays narrow and the description and pills keep their width (#6263). */}
+            <div className="cid-ctas">
+              {actions.convert.shown ? (
+                <Button
+                  variant="primary"
+                  onClick={() => setConvertOpen(true)}
+                  data-testid="catalog-detail-convert"
                 >
-                  <Layers aria-hidden />
-                  Open in Designer
-                </a>
+                  <GitMerge aria-hidden />
+                  {actions.convert.label}
+                </Button>
+              ) : null}
+              {actions.export.shown ? (
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  title={CATALOG_EXPORT_VS_CONVERT_COPY}
+                  data-testid="catalog-detail-export"
+                >
+                  <FileOutput aria-hidden />
+                  Export
+                </Button>
+              ) : null}
+              <Button variant="outline" onClick={showSourceTab} data-testid="catalog-detail-view-code">
+                <Code2 aria-hidden />
+                View code
               </Button>
-            ) : null}
+              {designerPreviewHref && !item.deleted_at ? (
+                <Button variant="outline" asChild>
+                  <a
+                    href={designerPreviewHref}
+                    title="View this item in the Designer, read-only"
+                    data-testid="catalog-detail-open-designer"
+                  >
+                    <Layers aria-hidden />
+                    Open in Designer
+                  </a>
+                </Button>
+              ) : null}
+            </div>
           </>
         }
         tabs={

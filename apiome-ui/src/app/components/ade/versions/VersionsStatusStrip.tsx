@@ -20,7 +20,10 @@
  * - **Server ahead** (`FEATURE_GITLIKE` only) — the project's head moved after this reader's
  *   last push; *Pull* and *Open merge*.
  *
- * Any of them may be absent; with none the strip is not rendered. Which chip is open is the
+ * Any of them may be absent; with none the strip is not rendered. The strip paints closed
+ * (#6263): each chip already says what it is about (`v2.2.0 deprecated · sunset 30 Sep`), and
+ * its detail row — copy and actions — opens on a click, so no status pushes the first revision
+ * row below the Versions budget. Which chip is open is the
  * reader's choice, remembered per project for the session under
  * `hive.versions.status.<projectId>` ({@link VERSIONS_STATUS_STORAGE_PREFIX}).
  */
@@ -211,6 +214,7 @@ export function versionsStatusItems({
             type="button"
             variant="outline"
             size="sm"
+            title={serverAhead.pullLoading ? 'Pulling…' : serverAhead.pullDisabled ? 'Pull is not available right now' : undefined}
             disabled={serverAhead.pullDisabled || serverAhead.pullLoading}
             onClick={serverAhead.onPull}
           >
@@ -242,6 +246,7 @@ export default function VersionsStatusStrip({ projectId, ...input }: VersionsSta
       items={items}
       storageKey={projectId ?? undefined}
       storagePrefix={VERSIONS_STATUS_STORAGE_PREFIX}
+      defaultOpen="none"
     />
   );
 }

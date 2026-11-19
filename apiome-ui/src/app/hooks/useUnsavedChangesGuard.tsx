@@ -276,7 +276,7 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): Uns
           <Button
             type="button"
             variant={onSave ? 'outline' : 'danger'}
-            disabled={saving}
+            disabled={saving} title={saving ? 'Saving your changes…' : undefined}
             onClick={discard}
             data-testid="unsaved-changes-discard"
           >
@@ -286,7 +286,7 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): Uns
             <Button
               type="button"
               variant="primary"
-              disabled={saving}
+              disabled={saving} title={saving ? 'Saving your changes…' : undefined}
               onClick={() => void save()}
               data-testid="unsaved-changes-save"
             >

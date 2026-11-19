@@ -439,10 +439,10 @@ export function CommitRevisionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={submitting ? 'Wait for the commit to finish' : undefined} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting || !shortMessage.trim()}>
+          <Button onClick={handleSubmit} title={submitting ? 'Committing…' : !shortMessage.trim() ? 'Enter a commit message first' : undefined} disabled={submitting || !shortMessage.trim()}>
             {submitting ? 'Committing…' : 'Commit'}
           </Button>
         </DialogFooter>

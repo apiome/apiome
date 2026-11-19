@@ -157,6 +157,7 @@ export function GenerateProgress({
             variant="outline"
             data-testid="generate-cancel"
             onClick={onCancel}
+            title={submitting ? 'Wait for the request to finish.' : undefined}
             disabled={submitting}
           >
             <Ban aria-hidden />
@@ -168,7 +169,7 @@ export function GenerateProgress({
       {state === 'canceled' && (
         <div className="xstd-notice" data-testid="generate-canceled">
           <span className="xstd-notice__grow">The export was canceled. You can start it again.</span>
-          <Button data-testid="generate-canceled-retry" onClick={onRetry} disabled={submitting}>
+          <Button data-testid="generate-canceled-retry" onClick={onRetry} title={submitting ? 'Wait for the request to finish.' : undefined} disabled={submitting}>
             <RefreshCw aria-hidden />
             Generate again
           </Button>
@@ -363,7 +364,7 @@ function FailureSurface({
       <div className="flex flex-wrap justify-end gap-2">
         {/* Secondary retry only when the taxonomy says the same request may succeed (IXH-6.4). */}
         {failure.action !== 'retry' && failure.retriable && (
-          <Button variant="outline" data-testid="generate-failure-retry" onClick={onRetry} disabled={submitting}>
+          <Button variant="outline" data-testid="generate-failure-retry" onClick={onRetry} title={submitting ? 'Wait for the request to finish.' : undefined} disabled={submitting}>
             <RefreshCw aria-hidden />
             Retry export
           </Button>
@@ -372,6 +373,7 @@ function FailureSurface({
           <Button
             data-testid="generate-failure-action"
             onClick={() => runRecovery(failure.action)}
+            title={submitting ? 'Wait for the request to finish.' : failure.action === 'retry' && !failure.retriable ? 'This failure cannot be retried.' : undefined}
             disabled={submitting || (failure.action === 'retry' && !failure.retriable)}
           >
             {recoveryIcon(failure.action)}

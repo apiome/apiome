@@ -714,6 +714,7 @@ export function CatalogImportPreviewPanel({
               <Button
                 variant="outline"
                 onClick={() => void loadRemainingPages()}
+                title={loadingMore ? 'Wait for the remaining entities to load.' : undefined}
                 disabled={loadingMore}
                 data-testid="import-preview-load-all"
               >

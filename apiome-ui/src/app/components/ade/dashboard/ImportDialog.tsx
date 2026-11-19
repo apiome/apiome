@@ -897,6 +897,13 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                   variant={urlTest.tested ? 'success' : 'outline'}
                   onClick={() => void urlImportRef.current?.testUrl()}
                   disabled={urlTest.disabled}
+                  title={
+                    urlImportFooter.isTesting
+                      ? 'Testing the URL…'
+                      : urlTest.disabled
+                        ? 'Enter a valid URL first'
+                        : undefined
+                  }
                 >
                   {urlTest.label}
                 </Button>

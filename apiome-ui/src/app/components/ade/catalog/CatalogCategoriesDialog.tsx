@@ -244,11 +244,12 @@ export function CatalogCategoriesDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
+          <Button variant="outline" title={saving ? 'Wait for the categories to save.' : undefined} disabled={saving} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             variant="primary"
+            title={saving ? 'Wait for the categories to save.' : undefined}
             disabled={saving}
             onClick={() => void handleSave()}
             data-testid="catalog-categories-save"

@@ -315,6 +315,7 @@ export default function SunsetTimelinePage() {
             <Button
               variant="outline"
               onClick={exportCsv}
+              title={entries.length === 0 ? 'No revisions to export' : undefined}
               disabled={entries.length === 0}
               data-testid="sunset-export"
             >

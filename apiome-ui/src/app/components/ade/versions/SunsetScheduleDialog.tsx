@@ -153,10 +153,10 @@ export default function SunsetScheduleDialog({
         </div>
 
         <DialogFooter className="ver-dialog__footer">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={busy ? 'Wait for the schedule to save' : undefined} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={busy || !sunsetLocal.trim()} data-testid="sunset-schedule-submit">
+          <Button onClick={onSubmit} title={busy ? 'Saving…' : !sunsetLocal.trim() ? 'Choose a sunset date first' : undefined} disabled={busy || !sunsetLocal.trim()} data-testid="sunset-schedule-submit">
             {busy ? 'Saving…' : 'Save'}
           </Button>
         </DialogFooter>

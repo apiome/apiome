@@ -54,6 +54,10 @@ function detectSyntax(text: string): SyntaxType {
   return 'unknown';
 }
 
+
+/** Why the File and URL tabs are inert here (DESIGN.md §10, #6263). */
+const CLIPBOARD_ONLY_REASON = 'This panel imports from the clipboard only';
+
 export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
   onSpecificationReady
 }) => {
@@ -169,6 +173,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={CLIPBOARD_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           📁 File
@@ -178,6 +183,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={CLIPBOARD_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           🔗 URL

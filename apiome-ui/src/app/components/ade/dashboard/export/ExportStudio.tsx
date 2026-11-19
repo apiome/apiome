@@ -1885,19 +1885,19 @@ export function ExportStudio({
 
         {/* Step navigation (MFX-41.1): Back / Continue, with Generate + downloads on the last step. */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button variant="outline" onClick={goBack} disabled={stepIndex === 0}>
+          <Button variant="outline" onClick={goBack} title={stepIndex === 0 ? 'This is the first step.' : undefined} disabled={stepIndex === 0}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Back
           </Button>
           <div className="flex flex-wrap gap-2">
             {step === 'source' && (
-              <Button onClick={goNext} disabled={!canAdvance}>
+              <Button onClick={goNext} title={!canAdvance ? 'Wait for the source to load.' : undefined} disabled={!canAdvance}>
                 <FileOutput className="h-4 w-4" aria-hidden />
                 Choose target
               </Button>
             )}
             {(step === 'target' || step === 'options' || step === 'overlays') && (
-              <Button onClick={goNext} disabled={!canAdvance}>
+              <Button onClick={goNext} title={!canAdvance ? (step === 'target' ? 'Choose a target to continue.' : 'Fix the options marked above to continue.') : undefined} disabled={!canAdvance}>
                 Continue
               </Button>
             )}
@@ -1918,6 +1918,7 @@ export function ExportStudio({
               <Button
                 data-testid="export-studio-generate"
                 onClick={handleGenerate}
+                title={submitting ? 'Wait for the export to start.' : undefined}
                 disabled={submitting}
               >
                 <Sparkles className="h-4 w-4" aria-hidden />

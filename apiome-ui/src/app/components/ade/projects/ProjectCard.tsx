@@ -292,6 +292,7 @@ export default function ProjectCard({
             <Button
               variant="outline"
               size="sm"
+              title={busy ? 'Wait for the current action to finish' : undefined}
               disabled={busy}
               onClick={() => onRestore(project)}
               data-testid={`project-card-restore-${project.id}`}
@@ -304,6 +305,7 @@ export default function ProjectCard({
             <Button
               variant="danger-soft"
               size="sm"
+              title={busy ? 'Wait for the current action to finish' : undefined}
               disabled={busy}
               onClick={() => onPermanentDelete(project)}
               data-testid={`project-card-permanent-delete-${project.id}`}

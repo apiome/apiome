@@ -345,9 +345,11 @@ describe('the page', () => {
     await renderCatalog();
     await screen.findByText('Ledger Graph');
     const card = screen.getByTestId('catalog-cards');
-    const filterRow = within(card).getByTestId('catalog-toolbar');
-    expect(within(filterRow).getByTestId('catalog-view-table')).toBeInTheDocument();
-    expect(within(card).getByTestId('catalog-views')).toBeInTheDocument();
+    // #6263: the view switch closes the views row (chips · sort · group · view), as the mockup
+    // draws it, so the filter row stays one line.
+    const viewsRow = within(card).getByTestId('catalog-views');
+    expect(within(viewsRow).getByTestId('catalog-view-table')).toBeInTheDocument();
+    expect(within(within(card).getByTestId('catalog-toolbar')).queryByTestId('catalog-view-table')).toBeNull();
     expect(within(card).getAllByTestId('catalog-card')).toHaveLength(3);
 
     await showTable();
@@ -901,6 +903,22 @@ describe('categories (MFI-6.3)', () => {
     fireEvent.click(screen.getByRole('option', { name: 'ledger' }));
     await waitFor(() => expect(screen.queryByText('Orders RPC')).not.toBeInTheDocument());
     expect(screen.getByText('Ledger Graph')).toBeInTheDocument();
+  });
+
+  it('hides the Domain and Tag filters while no item is categorized (#6263)', async () => {
+    const plain = ALL_ROWS.map((row) => ({ ...(row as object), domain: null, tags: [] }));
+    await renderCatalog(plain);
+    await screen.findByText('Ledger Graph');
+    expect(screen.queryByTestId('catalog-filter-domain')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-filter-tag')).not.toBeInTheDocument();
+  });
+
+  it('shows only the category filter the catalog uses', async () => {
+    const tagged = ALL_ROWS.map((row, index) => ({ ...(row as object), domain: null, tags: index === 0 ? ['ledger'] : [] }));
+    await renderCatalog(tagged);
+    await screen.findByText('Ledger Graph');
+    expect(screen.queryByTestId('catalog-filter-domain')).not.toBeInTheDocument();
+    expect(screen.getByTestId('catalog-filter-tag')).toBeInTheDocument();
   });
 
   it('hides the Convention filter while no item declares a convention', async () => {

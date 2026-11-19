@@ -189,6 +189,7 @@ export function CatalogEntityList({ kind, team, kinds, action }: CatalogEntityLi
               <Button
                 variant="outline"
                 size="sm"
+                title={loading ? 'Wait for the next page to load.' : undefined}
                 disabled={loading}
                 onClick={() => void load(nextCursor)}
                 data-testid="catalog-entity-more"

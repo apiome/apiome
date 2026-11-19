@@ -515,6 +515,7 @@ export function ConversionPreviewDialog({
                     <button
                       type="button"
                       onClick={() => void recompute({ ...defaults, servers: serversText.split(',') })}
+                      title={recomputing ? 'Wait for the preview to recompute.' : undefined}
                       disabled={recomputing}
                       data-testid="conversion-defaults-recompute"
                       className="rounded-md border border-accent px-2 py-1 text-xs font-medium text-accent-fg hover:bg-accent-soft disabled:opacity-50"
@@ -629,12 +630,13 @@ export function ConversionPreviewDialog({
                 </p>
               )}
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={committing}>
+                <Button variant="outline" onClick={() => onOpenChange(false)} title={committing ? 'Wait for the conversion to finish.' : undefined} disabled={committing}>
                   Cancel
                 </Button>
                 <Button
                   variant="default"
                   onClick={handleConvert}
+                  title={committing ? 'Wait for the conversion to finish.' : loading || recomputing || !report ? 'Wait for the preview to finish.' : ackNeeded && !acknowledged ? 'Acknowledge the fidelity warning to convert.' : undefined}
                   disabled={convertDisabled}
                   data-testid="conversion-convert-btn"
                 >

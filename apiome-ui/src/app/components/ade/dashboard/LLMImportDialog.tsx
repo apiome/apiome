@@ -559,6 +559,15 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
             <Button
               onClick={handleSendMessage}
               disabled={isLoading || !input.trim() || !selectedModel}
+              title={
+                isLoading
+                  ? 'Waiting for the reply…'
+                  : !selectedModel
+                    ? 'Choose a model first'
+                    : !input.trim()
+                      ? 'Type a message first'
+                      : undefined
+              }
               className="px-4 py-2 bg-ink hover:bg-[color-mix(in_srgb,var(--ink)_88%,black)] text-ink-fg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isLoading ? (

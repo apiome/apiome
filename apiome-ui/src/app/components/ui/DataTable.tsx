@@ -870,6 +870,11 @@ export interface DataTableSearchProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** The field's accessible name — required, since the magnifier is decorative. */
   'aria-label': string;
+  /**
+   * Classes for the wrapper — the element the toolbar lays out. `className` styles the input
+   * inside it; a toolbar that lets the box grow or shrink with the row sizes the wrapper.
+   */
+  containerClassName?: string;
 }
 
 /**
@@ -879,8 +884,8 @@ export interface DataTableSearchProps
  * for what it is; the icon is `aria-hidden`, because "search" is already in the role.
  */
 const DataTableSearch = React.forwardRef<HTMLInputElement, DataTableSearchProps>(
-  ({ className, ...props }, ref) => (
-    <div className="relative flex items-center">
+  ({ className, containerClassName, ...props }, ref) => (
+    <div className={cn('relative flex items-center', containerClassName)}>
       <Search
         className="pointer-events-none absolute left-2.5 size-[var(--icon-button)] text-fg-muted"
         aria-hidden

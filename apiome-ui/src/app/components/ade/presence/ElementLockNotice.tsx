@@ -88,7 +88,7 @@ export function ElementLockNotice(props: ElementLockNoticeProps) {
           type="button"
           variant="soft"
           size="sm"
-          disabled={!canForceTakeover(lock, selfUserId, now)}
+          disabled={!canForceTakeover(lock, selfUserId, now)} title={!canForceTakeover(lock, selfUserId, now) ? 'Available once the holder has had time to answer your request' : undefined}
           onClick={() => onTakeOver(elementKey)}
         >
           Take over

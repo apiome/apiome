@@ -156,10 +156,10 @@ export function VersionTagDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={saving ? 'Wait for the tag to be saved' : undefined} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={saving || !name.trim() || !revision?.id}>
+          <Button onClick={handleSubmit} title={saving ? 'Saving…' : !name.trim() ? 'Enter a tag name first' : !revision?.id ? 'Choose a revision first' : undefined} disabled={saving || !name.trim() || !revision?.id}>
             {saving ? 'Saving…' : 'Create tag'}
           </Button>
         </DialogFooter>

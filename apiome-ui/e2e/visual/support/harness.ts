@@ -42,6 +42,11 @@ export interface OpenOptions {
   theme?: string | null;
   /** The width the app's page region should be given, from the mockup measurement. */
   scopeWidth?: number;
+  /**
+   * A control to click in the mockup once it has loaded, so it draws the same view as the
+   * fixture (see {@link ParityRoute.mockupView}). Ignored on the app side.
+   */
+  mockupView?: string;
 }
 
 /**
@@ -115,6 +120,10 @@ export async function openMockup(
   await page.goto(`file://${path.join(MOCKUP_ROOT, mockup)}`);
   // `hive.js` renders the shell, so the page is only settled once it has run.
   await page.waitForFunction(() => document.querySelector('main.page') !== null);
+  if (options.mockupView) {
+    // `hive.js` wires the mockup's own tabs; clicking one is how a reader would switch view.
+    await page.locator(options.mockupView).first().click();
+  }
   await pinAppearance(page, options.theme);
 }
 
@@ -260,7 +269,7 @@ export async function measureParity(
     capture?: boolean;
   } = {}
 ): Promise<ParityMeasurement> {
-  await openMockup(page, route.mockup, { theme: options.theme });
+  await openMockup(page, route.mockup, { theme: options.theme, mockupView: route.mockupView });
   const mockup = await collectSide(page, 'mockup');
   const mockupShot = options.capture ? await captureScope(page, 'mockup') : null;
 

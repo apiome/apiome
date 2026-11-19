@@ -367,6 +367,7 @@ export default function ProjectsTable({
                     variant="ghost"
                     size="sm"
                     className="px-1.5"
+                    title={busy ? 'Wait for the current action to finish' : undefined}
                     disabled={busy}
                     aria-label={`Actions for ${project.name}`}
                     data-testid={`projects-menu-${project.id}`}

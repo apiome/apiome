@@ -32,7 +32,7 @@ for (const { name, route, file } of TABLES) {
   test(`${name} keeps its first row within the route's budget`, async ({ page }) => {
     const entry = parityRoute(route);
     if (!entry.firstRow) throw new Error(`visual-parity: route "${route}" carries no first-row budget`);
-    await openMockup(page, entry.mockup, { theme: null });
+    await openMockup(page, entry.mockup, { theme: null, mockupView: entry.mockupView });
     const width = (await collectSide(page, 'mockup')).scope.width;
 
     const verdict = await judgeFixtureFirstRow(page, { kind: 'fixture', dir: DIR, file }, entry.firstRow, width);
@@ -52,7 +52,7 @@ for (const { name, route, file } of TABLES) {
 test('the Catalog cards with 1,000 items keep their first card where three items put it', async ({ page }) => {
   const entry = parityRoute('catalog');
   if (!entry.firstRow) throw new Error('visual-parity: route "catalog" carries no first-row budget');
-  await openMockup(page, entry.mockup, { theme: null });
+  await openMockup(page, entry.mockup, { theme: null, mockupView: entry.mockupView });
   const width = (await collectSide(page, 'mockup')).scope.width;
   const budget: FirstRowBudget = { ...entry.firstRow, selector: '.page-body [data-testid="catalog-card"]' };
 

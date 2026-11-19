@@ -318,6 +318,7 @@ export function CatalogBulkConvertDialog({
           </p>
           <Button
             variant="outline"
+            title={busy ? 'Wait for the conversion to finish.' : undefined}
             disabled={busy}
             onClick={() => handleOpenChange(false)}
             data-testid="catalog-bulk-convert-close"
@@ -326,6 +327,7 @@ export function CatalogBulkConvertDialog({
           </Button>
           <Button
             variant="primary"
+            title={gate.canConvert ? undefined : (gate.reason ?? undefined)}
             disabled={!gate.canConvert}
             onClick={() => void handleConvert()}
             data-testid="catalog-bulk-convert-submit"

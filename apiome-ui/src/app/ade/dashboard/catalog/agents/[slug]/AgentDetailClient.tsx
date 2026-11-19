@@ -125,13 +125,14 @@ export default function AgentDetailClient({ slug }: AgentDetailClientProps) {
             <>
               <Button
                 variant="outline"
+                title={busy ? 'Wait for the current change to finish.' : undefined}
                 disabled={busy}
                 onClick={() => void act(() => updateAgent(agent.slug, { status: retired ? 'active' : 'retired' }))}
                 data-testid="agent-retire"
               >
                 {retired ? 'Reactivate' : 'Retire'}
               </Button>
-              <Button variant="danger-soft" disabled={busy} onClick={() => void remove()} data-testid="agent-delete">
+              <Button variant="danger-soft" title={busy ? 'Wait for the current change to finish.' : undefined} disabled={busy} onClick={() => void remove()} data-testid="agent-delete">
                 Delete
               </Button>
             </>
@@ -250,7 +251,7 @@ function KeysSection({
         <h2 id="agt-keys" className="agt-section__title">
           Agent keys
         </h2>
-        <Button size="sm" variant="outline" onClick={onLink} disabled={busy} data-testid="agent-link-key">
+        <Button size="sm" variant="outline" onClick={onLink} title={busy ? 'Wait for the current change to finish.' : undefined} disabled={busy} data-testid="agent-link-key">
           Link key
         </Button>
       </div>
@@ -287,7 +288,7 @@ function KeysSection({
                   </td>
                   <td className="agt-num">{key.enabledTools}</td>
                   <td>
-                    <Button size="sm" variant="ghost" onClick={() => onUnlink(key.id)} disabled={busy} data-testid={`agent-unlink-${key.id}`}>
+                    <Button size="sm" variant="ghost" onClick={() => onUnlink(key.id)} title={busy ? 'Wait for the current change to finish.' : undefined} disabled={busy} data-testid={`agent-unlink-${key.id}`}>
                       Unlink
                     </Button>
                   </td>
@@ -434,6 +435,7 @@ function LinkKeyDialog({
             Cancel
           </Button>
           <Button
+            title={!keyId ? 'Choose a key to link.' : undefined}
             disabled={!keyId}
             onClick={() => {
               void onLink(keyId).then(() => onOpenChange(false));

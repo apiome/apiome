@@ -28,6 +28,14 @@ or `sources/catalog.html`. The round-2 proposals (`docs/mockups/proposals/versio
 pass and folded into those page mockups by HIVE-13.4 (#5617). They stay in the ledger as
 `adopted` records of the change, and no route is compared against them.
 
+### When the mockup opens on another view
+
+Some mockups open on a different view from the one the route's fixture draws. `sources/catalog.html`
+opens on **Cards**, but the Catalog fixture is the table a returning reader sees. Comparing a table
+with cards would score the choice of view, not the page. So the route's `mockupView` names the
+mockup control to click first. Catalog uses `[data-tabs="views"] [data-target="table"]`, and the
+harness then measures the mockup's own Table view.
+
 ## The first-row budget
 
 `PROPOSALS.md` found that
@@ -38,8 +46,8 @@ budget stops it from coming back. The harness mounts each page at 1440 × 900 (c
 
 | Page kind | Budget | Example |
 | --- | ---: | --- |
-| List page | **360 px** | Published (216 px), Catalog after HIVE-11.6 (344 px) |
-| Detail page | **560 px** | Repository detail (443 px) |
+| List page | **360 px** | Published (216 px), Catalog (352 px) |
+| Detail page | **560 px** | Repository detail (443 px), Catalog item |
 | Versions | **700 px** | Versions keeps its status strip and artifacts card |
 
 Analytics pages are **exempt**, because their figures and charts are the data. Forms and wizards
@@ -56,6 +64,19 @@ An allowance works like a ratchet:
 - when the page comes back within budget, the check **fails** until you delete the allowance.
   That way an old allowance cannot hide a new regression.
 
+Released pages carry no allowance. #6263 brought Catalog, Versions and Catalog item back within
+their budgets and deleted their allowances. Only three MCP pages still have one, until their quiet
+pass (#7064) lands:
+
+| Route | Budget | Ceiling | What stands above the data |
+| --- | ---: | ---: | --- |
+| `mcp-servers` | 360 px | 470 px | Saved-search and collection strips, totals, the shadowed-names alert |
+| `mcp-endpoint` | 560 px | 600 px | A four-tile stat grid and the notes card |
+| `mcp-capabilities` | 360 px | 420 px | The preset tiles |
+
+A ceiling only ever goes down. When a change brings a page closer to its budget, lower the
+ceiling to the next multiple of ten above the new measurement.
+
 ### Reading the result
 
 The report in `visual-parity-report/<theme>/index.html`, and the CI job summary, show a
@@ -63,8 +84,8 @@ The report in `visual-parity-report/<theme>/index.html`, and the CI job summary,
 
 | Cell | Meaning |
 | --- | --- |
-| `344 / 360 px` | the row starts at 344 px; the budget is 360 px |
-| `382 / 360 px (allowed 390)` | over budget, but inside its allowance |
+| `352 / 360 px` | the row starts at 352 px; the budget is 360 px |
+| `467 / 360 px (allowed 470)` | over budget, but inside its allowance |
 | `no match / 360 px` | the selector matched nothing (this fails) |
 | `—` | the route is exempt |
 

@@ -91,6 +91,36 @@ describe('resolveOpenStatus', () => {
   it('falls back to severity when the chosen status is gone', () => {
     expect(resolveOpenStatus(ITEMS, 'resolved-long-ago')).toBe('sunset');
   });
+
+  it('opens nothing without a choice when the default is "none" (#6263), but still honours a choice', () => {
+    expect(resolveOpenStatus(ITEMS, undefined, 'none')).toBeNull();
+    expect(resolveOpenStatus(ITEMS, 'resolved-long-ago', 'none')).toBeNull();
+    expect(resolveOpenStatus(ITEMS, 'compat', 'none')).toBe('compat');
+    expect(resolveOpenStatus(ITEMS, null, 'none')).toBeNull();
+  });
+});
+
+describe('StatusStrip — defaultOpen="none" (#6263)', () => {
+  it('paints one row of closed chips and opens a detail on a click', () => {
+    const { container } = render(<StatusStrip aria-label="Project status" items={ITEMS} defaultOpen="none" />);
+    for (const label of [/deprecated/, /Compatible/, /What’s new/]) {
+      expect(chip(label)).toHaveAttribute('aria-expanded', 'false');
+    }
+    expect(details(container)[0]).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: /Collapse/ })).not.toBeInTheDocument();
+    fireEvent.click(chip(/deprecated/));
+    expect(chip(/deprecated/)).toHaveAttribute('aria-expanded', 'true');
+    expect(details(container)[0]).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Sunset timeline' })).toBeInTheDocument();
+  });
+
+  it('keeps a single status closed too', () => {
+    const { container } = render(
+      <StatusStrip aria-label="Project status" items={[ITEMS[2]]} defaultOpen="none" />
+    );
+    expect(chip(/deprecated/)).toHaveAttribute('aria-expanded', 'false');
+    expect(details(container)[0]).not.toBeVisible();
+  });
 });
 
 describe('StatusStrip — rendering', () => {

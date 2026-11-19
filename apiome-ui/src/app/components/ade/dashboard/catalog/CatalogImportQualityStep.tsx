@@ -921,7 +921,7 @@ export function CatalogImportQualityStep({
           </label>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={onBack} disabled={loading}>
+          <Button variant="outline" onClick={onBack} title={loading ? 'Wait for the pre-flight check to finish.' : undefined} disabled={loading}>
             Back
           </Button>
           {gate.canRetry && (
@@ -934,6 +934,7 @@ export function CatalogImportQualityStep({
             <Button
               variant="outline"
               onClick={handleImportAnyway}
+              title={waiving ? 'Wait for the waiver to be recorded.' : undefined}
               disabled={waiving}
               data-testid="import-quality-override"
             >

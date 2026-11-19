@@ -45,6 +45,12 @@ export interface ParityRoute {
   route: string;
   /** Where the app side comes from. */
   subject: ParitySubject;
+  /**
+   * A selector for the mockup control that switches it to the view the fixture draws, when the
+   * mockup opens on a different one (Catalog opens on Cards; its parity fixture is the table).
+   * Comparing a table against cards scores the view choice, not the page (#6263).
+   */
+  mockupView?: string;
   /** The roadmap ticket that redesigned the route. */
   roadmapRef: string;
   /**
@@ -205,11 +211,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     // The facelift (PROPOSALS_FACELIFT.md §8, "timeline") made the timeline the default view, so
     // `timeline.html` draws its revisions as `.vt__row` entries rather than DataTable rows; the
     // table view (the at-size fixture) still uses the DataTable row. Either is the first revision.
-    firstRow: firstRowBudget('versions', `${FIRST_DATA_ROW}, .page-body .vt__row[data-row-id]`, {
-      ceilingPx: 740,
-      reason:
-        'at the build/versions.html page width the first revision row lands at 715 px (timeline) and 738 px (300-revision table): the facts card carries both of the mockup\'s links (Published surface, Export studio) since the latest version is selected by default, and the facelift\'s display title adds 7 px',
-    }),
+    firstRow: firstRowBudget('versions', `${FIRST_DATA_ROW}, .page-body .vt__row[data-row-id]`),
   },
   {
     // HIVE-11.8 (#5604) re-dumped `registry.html` with the quiet pass applied: the five-tile
@@ -235,16 +237,14 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
   {
     id: 'catalog',
     // HIVE-13.4 (#5617) folded `proposals/catalog-quiet.html` into `sources/catalog.html`: facts
-    // line, header ghost link, one card for the list. The table fixture is a returning reader's page.
+    // line, header ghost link, one card for the list. The table fixture is a returning reader's page,
+    // so the mockup is switched to its own Table view before it is measured.
     mockup: 'sources/catalog.html',
     route: '/ade/dashboard/catalog',
     subject: { kind: 'fixture', dir: 'hive-catalog', file: 'table.html' },
+    mockupView: '[data-tabs="views"] [data-target="table"]',
     roadmapRef: 'HIVE-11.6',
-    firstRow: firstRowBudget('list', FIRST_DATA_ROW, {
-      ceilingPx: 390,
-      reason:
-        'HIVE-11.6 brought the first row to 344 px; #3755 (categorization) then added a second toolbar row inside the card',
-    }),
+    firstRow: firstRowBudget('list'),
   },
   {
     id: 'catalog-item',
@@ -307,9 +307,9 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     roadmapRef: 'HIVE-7.7',
     // The catalog groups servers by host; the first host section is the first row of data.
     firstRow: firstRowBudget('list', '.page-body section[data-testid^="mcp-host-"]', {
-      ceilingPx: 520,
+      ceilingPx: 470,
       reason:
-        'no quiet pass yet: toolbar, owner filter, saved-search and collection strips, totals and the shadowed-names alert stand above the first host',
+        'no quiet pass yet: the saved-search and collection strips, totals and the shadowed-names alert stand above the first host (467 px; #6263 moved the Owner filter into the toolbar card, from 521 px)',
     }),
   },
   {

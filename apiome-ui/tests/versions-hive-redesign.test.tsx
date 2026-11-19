@@ -831,7 +831,7 @@ const statusChips = () => screen.findByRole('group', { name: 'Project status' })
 const statusDetail = () => document.querySelector('.status-strip__detail') as HTMLElement;
 
 describe('the status strip and the overview', () => {
-  it('folds the compatibility, what’s-new and deprecation statuses into one strip, the most severe open', async () => {
+  it('folds the compatibility, what’s-new and deprecation statuses into one strip, closed until a chip is clicked', async () => {
     await renderVersions();
     const chips = await statusChips();
     const compat = within(chips).getByRole('button', { name: /Compatible/ });
@@ -843,9 +843,13 @@ describe('the status strip and the overview', () => {
     // No stacked banners any more.
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    // `warn` outranks `accent` and `ok`, so the deprecation detail is open on first paint.
-    expect(deprecated).toHaveAttribute('aria-expanded', 'true');
+    // #6263: nothing is open on first paint, so the strip is one row and the first revision
+    // stays inside the Versions first-row budget. The deprecation detail opens on a click.
+    expect(deprecated).toHaveAttribute('aria-expanded', 'false');
     expect(compat).toHaveAttribute('aria-expanded', 'false');
+    expect(statusDetail()).not.toBeVisible();
+    fireEvent.click(deprecated);
+    expect(deprecated).toHaveAttribute('aria-expanded', 'true');
     const detail = statusDetail();
     expect(detail).toBeVisible();
     expect(detail).toHaveTextContent('v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.');

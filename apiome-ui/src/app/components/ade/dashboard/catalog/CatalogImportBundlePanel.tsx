@@ -706,6 +706,7 @@ export function CatalogImportBundlePanel({
               <Button
                 variant="outline"
                 onClick={() => void loadRemainingPages()}
+                title={loadingMore ? 'Wait for the remaining files to load.' : undefined}
                 disabled={loadingMore}
                 data-testid="bundle-load-all"
               >

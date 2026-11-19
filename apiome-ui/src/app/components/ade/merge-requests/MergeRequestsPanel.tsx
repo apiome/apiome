@@ -174,13 +174,13 @@ export function MergeRequestsPanel({ projectId, branches, onBranchesChanged }: M
           <Button
             variant="outline"
             onClick={() => setDraftDialogOpen(true)}
-            disabled={branches.length === 0}
+            disabled={branches.length === 0} title={branches.length === 0 ? 'This project has no branch to start a draft from yet' : undefined}
             data-testid="mr-new-draft"
           >
             <GitBranchPlus aria-hidden />
             New draft branch
           </Button>
-          <Button onClick={() => setOpenDialog({})} disabled={availableDrafts.length === 0} data-testid="mr-open">
+          <Button onClick={() => setOpenDialog({})} disabled={availableDrafts.length === 0} title={availableDrafts.length === 0 ? 'Start a draft branch first; it has no open merge request yet' : undefined} data-testid="mr-open">
             <GitPullRequestArrow aria-hidden />
             Open merge request
           </Button>
