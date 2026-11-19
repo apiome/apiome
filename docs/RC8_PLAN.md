@@ -128,7 +128,7 @@ confirm over MCP — should carry the RC7 loss report categories), [#4341](https
 ### 3.6 Other export-adjacent
 
 [#1735](https://github.com/apiome/apiome/issues/1735) (score report PDF: the jsPDF helper exists, no UI entry point), [#1747](https://github.com/apiome/apiome/issues/1747) (rule-set export; import
-is done), [#3494](https://github.com/apiome/apiome/issues/3494) (legacy export epic; [#795](https://github.com/apiome/apiome/issues/795) is resolved by [#4313](https://github.com/apiome/apiome/issues/4313)), [#6163](https://github.com/apiome/apiome/issues/6163) (connector push-back emits
+is done), ~~[#3494](https://github.com/apiome/apiome/issues/3494)~~ (legacy export epic — ✅ **done** 2026-11-19: its plan was the MFX roadmap, umbrella #3813, and the export overview now covers OpenAPI, Postman, diagrams and PDFs; [#795](https://github.com/apiome/apiome/issues/795) is resolved by [#4313](https://github.com/apiome/apiome/issues/4313)), [#6163](https://github.com/apiome/apiome/issues/6163) (connector push-back emits
 references; gated by `connectors`).
 
 ---
