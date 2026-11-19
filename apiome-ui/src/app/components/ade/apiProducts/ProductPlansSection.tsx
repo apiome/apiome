@@ -669,10 +669,10 @@ function MigratePlanDialog({
               <Button variant="ghost" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button variant="soft" onClick={() => void run(true)} disabled={busy || !target} data-testid="plan-migrate-preview">
+              <Button variant="soft" onClick={() => void run(true)} disabled={busy || !target} title={busy ? 'Working…' : !target ? 'Choose a plan to move subscribers to' : undefined} data-testid="plan-migrate-preview">
                 Preview
               </Button>
-              <Button onClick={() => void run(false)} disabled={busy || !target} data-testid="plan-migrate-confirm">
+              <Button onClick={() => void run(false)} disabled={busy || !target} title={busy ? 'Working…' : !target ? 'Choose a plan to move subscribers to' : undefined} data-testid="plan-migrate-confirm">
                 {busy ? 'Migrating…' : 'Migrate'}
               </Button>
             </>
@@ -748,7 +748,7 @@ function LimitsSection({
           type="button"
           variant="soft"
           size="sm"
-          disabled={free.length === 0}
+          disabled={free.length === 0} title={free.length === 0 ? 'Every rate-limit window already has a limit' : undefined}
           onClick={() => onChange([...draft.limits, { window: free[0], requests: '' }])}
           data-testid="plan-add-limit"
         >
@@ -880,7 +880,7 @@ function DeletePlanDialog({
           <Button variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={() => void remove()} disabled={busy} data-testid="plan-delete-confirm">
+          <Button variant="danger" onClick={() => void remove()} disabled={busy} title={busy ? 'Deleting the plan…' : undefined} data-testid="plan-delete-confirm">
             {busy ? 'Deleting…' : 'Delete plan'}
           </Button>
         </DialogFooter>

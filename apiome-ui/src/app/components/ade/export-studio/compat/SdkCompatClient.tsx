@@ -138,7 +138,7 @@ export default function SdkCompatClient({ tabs }: SdkCompatClientProps) {
       <PageHeader
         breadcrumb={[{ label: 'Home', href: '/ade/dashboard' }, { label: 'Ship' }, { label: 'Export studio' }]}
         title="Export studio"
-        description="Whether each generated SDK artifact faithfully represents a version — and what to change when it does not."
+        description="Whether each generated SDK artifact matches its version, and what to change if not."
         tabs={tabs}
       />
       <PageBody>

@@ -1030,6 +1030,7 @@ export function CatalogFormatDetailPanel({
               type="button"
               data-testid="catalog-format-detail-collapse-all"
               onClick={() => setExpandedIds(new Set<string>())}
+              title={filtering ? 'Clear the filter to collapse the tree.' : !anythingExpanded ? 'Nothing is expanded.' : undefined}
               disabled={!anythingExpanded || filtering}
               className="shrink-0 rounded-lg border border-border bg-surface px-2.5 py-1 text-2xs font-medium text-fg transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
             >

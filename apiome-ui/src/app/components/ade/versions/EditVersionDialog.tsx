@@ -194,10 +194,10 @@ export default function EditVersionDialog({
         </div>
 
         <DialogFooter className="ver-dialog__footer">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={busy ? 'Wait for your changes to save' : undefined} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={busy} data-testid="edit-version-submit">
+          <Button onClick={onSubmit} title={busy ? 'Saving…' : undefined} disabled={busy} data-testid="edit-version-submit">
             {busy ? 'Saving…' : 'Save changes'}
           </Button>
         </DialogFooter>

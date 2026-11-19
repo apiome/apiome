@@ -40,12 +40,15 @@ import { Skeleton } from './Skeleton';
  * ### Behaviour
  *
  * - The most severe chip opens on first paint (`danger` > `warn` > `accent` > `ok`; the first
- *   of equals wins) — see {@link severestStatusId}.
+ *   of equals wins) — see {@link severestStatusId}. A page that has to keep its first row of
+ *   data high (Versions, #6263) passes `defaultOpen="none"`: the strip paints as one row of
+ *   chips, each still carrying its label and detail, and a click opens its detail row.
  * - Clicking a closed chip opens it; clicking the open chip, pressing **Collapse**, or pressing
  *   Escape while focus is inside the strip hides the detail row.
  * - The reader's choice (a chip, or "none") is remembered per `storageKey` in `sessionStorage`
  *   — for this tab's session only, never across devices — see {@link readStoredStatus}.
- * - One status: its chip renders already open and there is no Collapse button. Zero statuses:
+ * - One status: its chip renders already open (unless `defaultOpen="none"`) and there is no
+ *   Collapse button. Zero statuses:
  *   nothing renders. `loading`: one skeleton chip.
  *
  * ### Accessibility
@@ -125,7 +128,15 @@ export interface StatusStripProps {
   caption?: string;
   /** Extra classes for the card. */
   className?: string;
+  /**
+   * What is open before the reader chooses: the most severe chip (`severest`, the default) or
+   * nothing (`none`). A stored choice always wins over this.
+   */
+  defaultOpen?: StatusStripDefaultOpen;
 }
+
+/** What a {@link StatusStrip} opens on first paint, before the reader chooses. */
+export type StatusStripDefaultOpen = 'severest' | 'none';
 
 /**
  * The id of the most severe item — the one that opens on first paint.
@@ -202,15 +213,17 @@ export function writeStoredStatus(
  *
  * @param items The strip's statuses.
  * @param choice `undefined` for "no choice yet", `null` for "collapsed", else an item id.
+ * @param defaultOpen What opens without a choice: the most severe item, or nothing.
  * @returns The open item's id, or `null` when collapsed.
  */
 export function resolveOpenStatus(
   items: readonly Pick<StatusStripItem, 'id' | 'tone'>[],
-  choice: string | null | undefined
+  choice: string | null | undefined,
+  defaultOpen: StatusStripDefaultOpen = 'severest'
 ): string | null {
   if (choice === null) return null;
   if (choice !== undefined && items.some((item) => item.id === choice)) return choice;
-  return severestStatusId(items);
+  return defaultOpen === 'none' ? null : severestStatusId(items);
 }
 
 /**
@@ -227,6 +240,7 @@ export function StatusStrip({
   loading = false,
   caption = 'Status',
   className,
+  defaultOpen = 'severest',
 }: StatusStripProps) {
   const detailId = React.useId();
   // `undefined` until the reader chooses (or a stored choice is read after mount, so the
@@ -238,7 +252,7 @@ export function StatusStrip({
     if (storageKey) setChoice(readStoredStatus(storageKey, storagePrefix));
   }, [storageKey, storagePrefix]);
 
-  const open = resolveOpenStatus(items, choice);
+  const open = resolveOpenStatus(items, choice, defaultOpen);
 
   /**
    * Records a choice and remembers it for the session.

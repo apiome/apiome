@@ -175,7 +175,7 @@ reads whole.
 | A | A stranger on a clean stack signs up with email and password, verifies, and onboards into their own workspace with no admin involved; `closed` stops every path |
 | B | A new user is offered Authy during onboarding, an OAuth-only user can enrol, a lost phone is recoverable by backup code or admin reset, a tenant can require 2FA, and #2553 is closed |
 | D | `curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh` installs the CLI and `apiome login` signs a new account in |
-| E | HIVE-11.7, 11.9, 11.11, 13.2 and 13.3 are closed, and the HIVE-13.2/13.3 gates run over every released page, with allow-lists that only shrink (decided 2026-10-24 for the MVP launch; retiring the remaining Catalog/Versions allowances and released-screen offenders is [#6263](https://github.com/apiome/apiome/issues/6263), RC7) |
+| E | HIVE-11.7, 11.9, 11.11, 13.2 and 13.3 are closed, and the HIVE-13.2/13.3 gates run over every released page without allow-listed exceptions (restored by [#6263](https://github.com/apiome/apiome/issues/6263) on 2026-11-19; the MVP launch shipped on "allow-lists only shrink", decided 2026-10-24) |
 | H | Every check in §2.3 is green |
 
 ## 5. Not in RC6

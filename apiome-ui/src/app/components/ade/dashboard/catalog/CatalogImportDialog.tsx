@@ -1100,7 +1100,7 @@ export function CatalogImportDialog({
                         placeholder="https://api.example.com/schema.graphql"
                       />
                     </FormField>
-                    <Button onClick={handleUrlFetch} disabled={state === 'fetching-url'}>
+                    <Button onClick={handleUrlFetch} title={state === 'fetching-url' ? 'Fetching the URL — wait for it to finish.' : undefined} disabled={state === 'fetching-url'}>
                       {state === 'fetching-url' ? <Spinner aria-hidden /> : <Link2 aria-hidden />}
                       Fetch and detect
                     </Button>
@@ -1164,7 +1164,7 @@ export function CatalogImportDialog({
                       Private repositories are read with your linked account credentials. Leave the
                       path empty to consider the whole repository.
                     </p>
-                    <Button onClick={handleGitFetch} disabled={state === 'fetching-git'}>
+                    <Button onClick={handleGitFetch} title={state === 'fetching-git' ? 'Fetching the repository — wait for it to finish.' : undefined} disabled={state === 'fetching-git'}>
                       {state === 'fetching-git' ? <Spinner aria-hidden /> : <GitBranch aria-hidden />}
                       Fetch and detect
                     </Button>

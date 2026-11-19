@@ -88,6 +88,10 @@ function formatRecentOpenedAt(ts: number): string {
   }
 }
 
+
+/** Why the panel's controls wait while GitHub is being read (DESIGN.md §10, #6263). */
+const GIT_LOADING_REASON = 'Wait for GitHub to finish loading';
+
 export const GitImportPanel: React.FC<GitImportPanelProps> = ({
   userId,
   onSpecificationFetched
@@ -728,6 +732,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     size="sm"
                     onClick={() => void handleOpenSaved(b)}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className="shrink-0"
                   >
                     Open
@@ -736,6 +741,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     type="button"
                     onClick={() => handleRemoveSaved(b.id)}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className="p-2 rounded-lg border border-border text-fg-muted hover:bg-inset disabled:opacity-50"
                     aria-label={`Remove saved repository ${b.repoFullName}`}
                   >
@@ -758,6 +764,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
             variant="outline"
             onClick={handleSaveBookmark}
             disabled={isLoading}
+            title={isLoading ? GIT_LOADING_REASON : undefined}
             className="shrink-0"
           >
             <BookmarkPlus className="h-4 w-4 mr-2" aria-hidden />
@@ -793,6 +800,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                 variant="default"
                 onClick={() => void handleLoadRepoFromUrl()}
                 disabled={isLoading || !repoUrlInput.trim()}
+                title={isLoading ? GIT_LOADING_REASON : !repoUrlInput.trim() ? 'Enter a repository URL first' : undefined}
                 className="shrink-0"
               >
                 Load repository
@@ -893,6 +901,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     variant="outline"
                     onClick={() => void handleOpenSpecPath()}
                     disabled={isLoading || !specPathInput.trim()}
+                    title={isLoading ? GIT_LOADING_REASON : !specPathInput.trim() ? 'Enter a file path first' : undefined}
                     className="shrink-0"
                   >
                     Open file
@@ -925,6 +934,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                   key={account.id}
                   onClick={() => !isLoading && handleSelectAccount(account)}
                   disabled={isLoading}
+                  title={isLoading ? GIT_LOADING_REASON : undefined}
                   className={`w-full px-3 py-2 flex items-center gap-2 border-b border-border transition-colors ${
                     isSelected
                       ? 'bg-accent-soft text-accent-fg'
@@ -967,6 +977,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     aria-selected={repositoryListTab === 'all'}
                     onClick={() => setRepositoryListTab('all')}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className={tabTriggerClass({
                       active: repositoryListTab === 'all',
                       disabled: isLoading,
@@ -981,6 +992,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     aria-selected={repositoryListTab === 'history'}
                     onClick={() => setRepositoryListTab('history')}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className={tabTriggerClass({
                       active: repositoryListTab === 'history',
                       disabled: isLoading,
@@ -1044,6 +1056,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                       type="button"
                       onClick={() => !isLoading && void handleOpenRecentFromHistory(entry)}
                       disabled={isLoading}
+                      title={isLoading ? GIT_LOADING_REASON : undefined}
                       className={`w-full px-3 py-2 border-b border-border text-left transition-colors hover:bg-subtle text-fg ${
                         isLoading ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
                       }`}
@@ -1090,6 +1103,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     key={repo.id}
                     onClick={() => !isLoading && handleSelectRepo(repo)}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className={`w-full px-3 py-2 border-b border-border text-left transition-colors ${
                       isSelected
                         ? 'bg-accent-soft text-accent-fg'
@@ -1133,6 +1147,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                   handleNavigateToPath(parentPath);
                 }}
                 disabled={isLoading}
+                title={isLoading ? GIT_LOADING_REASON : undefined}
                 className="p-1 rounded hover:bg-inset transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 text-fg-muted" />
@@ -1171,6 +1186,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                       handleNavigateToPath(parentPath);
                     }}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className={`w-full px-3 py-2 border-b border-border flex items-center gap-2 text-left transition-colors hover:bg-subtle ${
                       isLoading ? 'cursor-not-allowed' : 'cursor-pointer'
                     }`}
@@ -1196,6 +1212,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     key={idx}
                     onClick={() => !isLoading && handleSelectFile(file)}
                     disabled={isLoading}
+                    title={isLoading ? GIT_LOADING_REASON : undefined}
                     className={`w-full px-3 py-2 border-b border-border flex items-center gap-2 text-left transition-colors hover:bg-subtle ${
                       isLoading ? 'cursor-not-allowed' : 'cursor-pointer'
                     }`}

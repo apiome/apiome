@@ -187,11 +187,11 @@ export default function SpecViewerDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button variant="outline" onClick={() => void handleCopy()} disabled={loading || Boolean(error)} data-testid="spec-viewer-copy">
+          <Button variant="outline" onClick={() => void handleCopy()} title={loading ? 'Loading the spec…' : error ? 'The spec could not be loaded' : undefined} disabled={loading || Boolean(error)} data-testid="spec-viewer-copy">
             <Copy aria-hidden />
             Copy
           </Button>
-          <Button onClick={handleDownload} disabled={loading || Boolean(error)} data-testid="spec-viewer-download">
+          <Button onClick={handleDownload} title={loading ? 'Loading the spec…' : error ? 'The spec could not be loaded' : undefined} disabled={loading || Boolean(error)} data-testid="spec-viewer-download">
             <Download aria-hidden />
             Download
             <span className="ver-spec__filename mono">{fileName}</span>

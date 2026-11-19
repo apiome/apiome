@@ -38,10 +38,12 @@ const TextField = ({ label, value, onChange, fullWidth, sx, margin, helperText, 
     {helperText && <p className="text-xs text-slate-500 mt-1">{helperText}</p>}
   </div>
 );
-const Button = ({ onClick, children, variant, disabled, startIcon, fullWidth, ...rest }: any) => (
-  <button type="button" onClick={onClick} disabled={disabled} className={`px-4 py-2 rounded-lg ${variant === 'contained' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'border border-slate-300 hover:bg-slate-50'} disabled:opacity-50 ${fullWidth ? 'w-full' : ''}`} {...rest}>{startIcon}{children}</button>
+/** Why the dialog's buttons wait while a spec is read or imported (DESIGN.md §10, #6263). */
+const OPENAPI_LOADING_REASON = 'Wait for the current step to finish';
+const Button = ({ onClick, children, variant, disabled, title, startIcon, fullWidth, ...rest }: any) => (
+  <button type="button" onClick={onClick} disabled={disabled} title={title} className={`px-4 py-2 rounded-lg ${variant === 'contained' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'border border-slate-300 hover:bg-slate-50'} disabled:opacity-50 ${fullWidth ? 'w-full' : ''}`} {...rest}>{startIcon}{children}</button>
 );
-const IconButton = ({ onClick, size, children, disabled, sx, ...rest }: any) => <button type="button" onClick={onClick} disabled={disabled} style={{ padding: size === 'small' ? 4 : 8, background: 'none', border: 'none', cursor: 'pointer', ...sxToStyle(sx) }} {...rest}>{children}</button>;
+const IconButton = ({ onClick, size, children, disabled, title, sx, ...rest }: any) => <button type="button" onClick={onClick} disabled={disabled} title={title} style={{ padding: size === 'small' ? 4 : 8, background: 'none', border: 'none', cursor: 'pointer', ...sxToStyle(sx) }} {...rest}>{children}</button>;
 const Chip = ({ label, size, icon, variant, sx, ...rest }: any) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 16, fontSize: 'var(--fs-xs)', ...sxToStyle(sx) }} {...rest}>{icon}{label}</span>;
 const FormControlLabel = ({ control, label, ...rest }: any) => <label className="flex items-center gap-2 cursor-pointer" {...rest}>{control}{label}</label>;
 const Checkbox = ({ checked, onChange, disabled, ...rest }: any) => <input type="checkbox" checked={checked} onChange={(e) => onChange?.(e, e.target.checked)} disabled={disabled} {...rest} />;
@@ -609,6 +611,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                   className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                   onClick={handleUrlImport}
                   disabled={!urlInput.trim() || isLoading}
+                  title={isLoading ? OPENAPI_LOADING_REASON : !urlInput.trim() ? 'Enter a URL first' : undefined}
                 >
                   {isLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Link2 size={ICON_SIZE.button} />}
                   {isLoading ? 'Fetching...' : 'Import from URL'}
@@ -1319,7 +1322,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
           </div>
 
           <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
-            <Button onClick={handleClose} disabled={isLoading}>Cancel</Button>
+            <Button onClick={handleClose} disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>Cancel</Button>
             {step === 'upload' && (
               <Button
                 onClick={() => {
@@ -1328,26 +1331,37 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                 }}
                 variant="contained"
                 disabled={(importMethod === 'file' && !file) || (importMethod === 'url' && !urlInput.trim()) || (importMethod === 'sso') || isLoading}
+                title={
+                  isLoading
+                    ? OPENAPI_LOADING_REASON
+                    : importMethod === 'sso'
+                      ? 'Import from a file or a URL'
+                      : importMethod === 'file' && !file
+                        ? 'Choose a file first'
+                        : importMethod === 'url' && !urlInput.trim()
+                          ? 'Enter a URL first'
+                          : undefined
+                }
               >
                 {isLoading ? 'Loading...' : importMethod === 'file' ? 'Next' : 'Import'}
               </Button>
             )}
             {step === 'review' && (
               <>
-                <Button onClick={() => setStep('upload')} disabled={isLoading}>Back</Button>
-                <Button onClick={() => setStep('summary')} variant="contained" disabled={(classes.filter(c => c.selected).length === 0 && parsedPaths.length === 0 && parsedSecuritySchemes.length === 0) || isLoading}>Next</Button>
+                <Button onClick={() => setStep('upload')} disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>Back</Button>
+                <Button onClick={() => setStep('summary')} variant="contained" disabled={(classes.filter(c => c.selected).length === 0 && parsedPaths.length === 0 && parsedSecuritySchemes.length === 0) || isLoading} title={isLoading ? OPENAPI_LOADING_REASON : classes.filter(c => c.selected).length === 0 && parsedPaths.length === 0 && parsedSecuritySchemes.length === 0 ? 'Select at least one class, path or security scheme' : undefined}>Next</Button>
               </>
             )}
             {step === 'summary' && (
               <>
-                <Button onClick={() => setStep('review')} disabled={isLoading}>Back</Button>
-                <Button onClick={() => setStep('details')} variant="contained" disabled={isLoading}>Continue to Project Details</Button>
+                <Button onClick={() => setStep('review')} disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>Back</Button>
+                <Button onClick={() => setStep('details')} variant="contained" disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>Continue to Project Details</Button>
               </>
             )}
             {step === 'details' && (
               <>
-                <Button onClick={() => setStep('summary')} disabled={isLoading}>Back</Button>
-                <Button onClick={handleImport} variant="contained" disabled={isLoading}>{isLoading ? 'Importing...' : 'Import Project'}</Button>
+                <Button onClick={() => setStep('summary')} disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>Back</Button>
+                <Button onClick={handleImport} variant="contained" disabled={isLoading} title={isLoading ? OPENAPI_LOADING_REASON : undefined}>{isLoading ? 'Importing...' : 'Import Project'}</Button>
               </>
             )}
           </div>

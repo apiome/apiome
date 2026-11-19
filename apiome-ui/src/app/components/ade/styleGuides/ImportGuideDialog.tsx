@@ -258,11 +258,11 @@ export default function ImportGuideDialog({ open, onOpenChange, onSubmit }: Impo
             </Button>
           ) : (
             <>
-              <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+              <Button variant="outline" disabled={busy} title={busy ? 'Importing the guide…' : undefined} onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button
-                disabled={busy}
+                disabled={busy} title={busy ? 'Importing the guide…' : undefined}
                 data-testid="style-guide-import-submit"
                 onClick={() => void submit()}
               >

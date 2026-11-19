@@ -595,6 +595,7 @@ export function ConversionProjectionGraphPanel({
               <button
                 type="button"
                 onClick={loadMore}
+                title={loading ? 'Wait for the next page to load.' : undefined}
                 disabled={loading}
                 data-testid="conversion-projection-load-more"
                 className="font-medium underline underline-offset-2 disabled:opacity-50"
@@ -646,6 +647,7 @@ export function ConversionProjectionGraphPanel({
                       type="button"
                       data-testid="conversion-projection-zoom-out"
                       aria-label="Zoom out"
+                      title={zoom <= MIN_ZOOM ? 'Already at the smallest zoom.' : undefined}
                       disabled={zoom <= MIN_ZOOM}
                       onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP))}
                       className="rounded-md border border-border p-1 text-fg-muted hover:bg-subtle disabled:opacity-40"
@@ -656,6 +658,7 @@ export function ConversionProjectionGraphPanel({
                       type="button"
                       data-testid="conversion-projection-zoom-in"
                       aria-label="Zoom in"
+                      title={zoom >= MAX_ZOOM ? 'Already at the largest zoom.' : undefined}
                       disabled={zoom >= MAX_ZOOM}
                       onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP))}
                       className="rounded-md border border-border p-1 text-fg-muted hover:bg-subtle disabled:opacity-40"

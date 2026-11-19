@@ -402,10 +402,10 @@ export default function NewVersionDialog({
         </div>
 
         <DialogFooter className="ver-dialog__footer">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={busy ? 'Wait for the version to be created' : undefined} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={busy || !canSubmit} data-testid="new-version-submit">
+          <Button onClick={onSubmit} title={busy ? 'Creating…' : !canSubmit ? 'Fill in the required fields first' : undefined} disabled={busy || !canSubmit} data-testid="new-version-submit">
             {busy ? 'Creating…' : 'Create version'}
           </Button>
         </DialogFooter>

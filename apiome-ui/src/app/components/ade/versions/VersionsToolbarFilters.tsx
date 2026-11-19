@@ -217,6 +217,7 @@ export function VersionsDateFilter({ value, onChange, now }: VersionsDateFilterP
             <Button
               variant="primary"
               size="sm"
+              title={!valid ? 'Fix the date range first' : undefined}
               disabled={!valid}
               data-testid="versions-date-filter-apply"
               onClick={() => apply(draft)}

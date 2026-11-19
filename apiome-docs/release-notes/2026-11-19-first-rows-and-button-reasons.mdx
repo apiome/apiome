@@ -1,0 +1,28 @@
+---
+slug: first-rows-and-button-reasons
+title: Data higher on the page, and every unavailable button says why
+description: "Catalog, Versions and Catalog item meet their first-row budgets again."
+authors: [apiome]
+---
+
+The released pages are back inside their first-row budgets, with no allowances left to excuse
+them. Every unavailable button on those pages now says why it is unavailable.
+
+{/* truncate */}
+
+- **Versions.** The status row starts closed, so the versions come straight after it. Each chip
+  still names its version and date, such as *v2.2.0 deprecated · sunset 30 Sep*. **Click a chip**
+  to open its detail and its actions. The tab strip stays on one line, and scrolls when the window
+  is too narrow for it. See [Versions](/build/versions).
+- **Catalog.** The filters fit one row. **Cards** and **Table** moved to the end of the chips row,
+  where the mockup draws them. **Domain** and **Tag** appear once an item carries one, and the
+  search box narrows to make room for them. See [Catalog](/bring-in/catalog#find-an-item).
+- **Catalog item.** **Re-convert to OpenAPI project** sits above **Export** and **View code**, so
+  the description and the pills take fewer lines.
+- **MCP servers.** The **Owner** filter is now part of the toolbar card, not a row of its own.
+- **Unavailable buttons.** Hover a disabled button on Versions and its dialogs, Catalog, Projects,
+  the import wizard or Export to see why it is unavailable, and what to do about it. A test now
+  keeps these screens at zero buttons without a reason.
+
+For contributors, [Visual parity and first-row budgets](/reference/visual-parity) lists the
+allowances that remain. They are all on MCP pages that have not had their quiet pass yet.

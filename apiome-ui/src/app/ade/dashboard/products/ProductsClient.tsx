@@ -238,7 +238,7 @@ export function NewProductDialog({ open, onOpenChange }: { open: boolean; onOpen
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim() || saving} data-testid="product-new-create">
+            <Button type="submit" disabled={!name.trim() || saving} title={saving ? 'Creating the product…' : !name.trim() ? 'Enter a name first' : undefined} data-testid="product-new-create">
               {saving ? 'Creating…' : 'Create product'}
             </Button>
           </DialogFooter>

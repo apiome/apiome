@@ -403,16 +403,18 @@ export default function McpCatalogClient() {
                   facets={facets}
                   filters={filters}
                   onFiltersChange={setFilters}
+                  ownerFilter={
+                    <div className="mcp-owner-filter">
+                      <OwnerFilter
+                        teams={teams}
+                        loading={teamsLoading}
+                        value={teamFilter}
+                        onChange={setTeamFilter}
+                        testId="mcp-owner-filter"
+                      />
+                    </div>
+                  }
                 />
-                <div className="mcp-owner-filter">
-                  <OwnerFilter
-                    teams={teams}
-                    loading={teamsLoading}
-                    value={teamFilter}
-                    onChange={setTeamFilter}
-                    testId="mcp-owner-filter"
-                  />
-                </div>
 
                 <div className="mcp-strips">
                   <McpSavedSearchesPanel

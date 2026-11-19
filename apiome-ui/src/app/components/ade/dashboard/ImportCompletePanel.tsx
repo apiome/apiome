@@ -96,6 +96,10 @@ interface ImportSummary {
   verification?: VerificationResult;
 }
 
+
+/** The reason on the placeholder actions the panel marks as coming soon (DESIGN.md §10, #6263). */
+const NOT_AVAILABLE_YET = 'Not available yet';
+
 export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps) {
   const router = useRouter();
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -581,7 +585,12 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
                 View on Canvas
               </Button>
             ) : (
-              <Button variant="outline" disabled className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                disabled
+                title={isDryRun ? 'A preview creates no project to open' : 'No project was created to open'}
+                className="flex items-center gap-2"
+              >
                 <Palette className="h-4 w-4" />
                 View on Canvas
               </Button>
@@ -592,12 +601,13 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
                 className="flex items-center gap-2 text-warn hover:bg-warn-soft"
                 onClick={handleRollbackCompleted}
                 disabled={isRollingBack}
+                title={isRollingBack ? 'Undoing the import…' : undefined}
               >
                 <Undo2 className={`h-4 w-4 ${isRollingBack ? 'animate-pulse' : ''}`} />
                 {isRollingBack ? 'Rolling back...' : 'Undo import'}
               </Button>
             )}
-            <Button variant="outline" disabled className="flex items-center gap-2 opacity-50">
+            <Button variant="outline" disabled title={NOT_AVAILABLE_YET} className="flex items-center gap-2 opacity-50">
               <FileText className="h-4 w-4" />
               Generate Docs
             </Button>
@@ -611,11 +621,11 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             </Button>
           </div>
           <div className="flex flex-wrap justify-center gap-4 opacity-50">
-            <Button variant="outline" disabled className="flex items-center gap-2">
+            <Button variant="outline" disabled title={NOT_AVAILABLE_YET} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Import Another
             </Button>
-            <Button variant="outline" disabled className="flex items-center gap-2">
+            <Button variant="outline" disabled title={NOT_AVAILABLE_YET} className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Schedule Re-import
             </Button>

@@ -528,6 +528,7 @@ export function ExportManifestPanel({
               <Button
                 variant="outline"
                 onClick={onLoadMore}
+                title={loading ? 'Wait for the next entities to load.' : undefined}
                 disabled={loading}
                 data-testid="export-manifest-load-all"
               >

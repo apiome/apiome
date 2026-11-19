@@ -408,7 +408,7 @@ function MembersSection({ product, onChanged }: { product: ApiProduct; onChanged
                       variant="ghost"
                       size="sm"
                       onClick={() => void remove(member)}
-                      disabled={removing === member.id}
+                      disabled={removing === member.id} title={removing === member.id ? 'Removing this member…' : undefined}
                       aria-label={`Remove ${memberName(member)}`}
                     >
                       Remove
@@ -504,7 +504,7 @@ function AddMemberForm({ product, onAdded }: { product: ApiProduct; onAdded: (pr
         />
       </FormField>
       <div className="apx-add__submit">
-        <Button type="submit" variant="soft" disabled={adding} data-testid="product-add-member-submit">
+        <Button type="submit" variant="soft" disabled={adding} title={adding ? 'Adding the member…' : undefined} data-testid="product-add-member-submit">
           <Plus aria-hidden />
           {adding ? 'Adding…' : 'Add member'}
         </Button>
@@ -572,7 +572,7 @@ function DeleteSection({ product }: { product: ApiProduct }) {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={() => void remove()} disabled={deleting} data-testid="product-delete-confirm">
+            <Button variant="danger" onClick={() => void remove()} disabled={deleting} title={deleting ? 'Deleting the product…' : undefined} data-testid="product-delete-confirm">
               {deleting ? 'Deleting…' : 'Delete product'}
             </Button>
           </DialogFooter>

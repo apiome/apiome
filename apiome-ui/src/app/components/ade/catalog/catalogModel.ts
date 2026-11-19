@@ -448,6 +448,24 @@ export function catalogConventionOptions(
   ];
 }
 
+/**
+ * Whether a category quick filter (Domain, Tag, Convention) earns its place in the toolbar.
+ *
+ * A category select lists only the values the catalog uses, plus "Any" and "None". With no value
+ * in use the two are the same list, so the select would filter nothing — it is left out, and the
+ * toolbar keeps to one row (#6263). A filter the reader has set always stays, so it can be cleared.
+ *
+ * @param options The select's options, as `catalogDomainOptions` and its siblings build them.
+ * @param selected The filter's current value.
+ * @returns True when the select should be drawn.
+ */
+export function catalogCategoryFilterShown(
+  options: readonly CatalogFilterOption[],
+  selected: string = CATALOG_FILTER_ANY
+): boolean {
+  return options.length > 2 || selected !== CATALOG_FILTER_ANY;
+}
+
 /** One entry of a quick-filter select. */
 export interface CatalogFilterOption {
   /** The `<option>` value — an id, or {@link CATALOG_FILTER_ANY}. */

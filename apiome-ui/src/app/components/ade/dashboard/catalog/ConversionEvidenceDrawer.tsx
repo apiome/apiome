@@ -400,6 +400,7 @@ function SafeDefaultForm({
         <button
           type="button"
           data-testid="conversion-projection-safe-default-apply"
+          title={recomputing ? 'Wait for the preview to recompute.' : !dirty ? 'Change the default first.' : undefined}
           disabled={recomputing || !dirty}
           onClick={() => onApply(applySafeDefault(currentDefaults, remediation.field, draft))}
           className="flex items-center gap-1 rounded-md border border-accent px-2 py-1 text-2xs font-medium text-accent-fg hover:bg-accent-soft disabled:opacity-50"
@@ -410,6 +411,7 @@ function SafeDefaultForm({
         <button
           type="button"
           data-testid="conversion-projection-safe-default-cancel"
+          title={recomputing ? 'Wait for the preview to recompute.' : !dirty ? 'Nothing to cancel — the default is unchanged.' : undefined}
           disabled={recomputing || !dirty}
           onClick={() => setDraft(applied)}
           className="rounded-md border border-border px-2 py-1 text-2xs font-medium text-fg-muted hover:bg-subtle disabled:opacity-50"

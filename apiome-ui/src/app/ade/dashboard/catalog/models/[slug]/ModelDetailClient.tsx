@@ -115,7 +115,7 @@ export default function ModelDetailClient({ slug }: ModelDetailClientProps) {
         description="A model agents run on: where it is hosted and how it handles data."
         actions={
           model ? (
-            <Button variant="danger-soft" disabled={busy} onClick={() => void remove()} data-testid="model-delete">
+            <Button variant="danger-soft" title={busy ? 'Wait for the current change to finish.' : undefined} disabled={busy} onClick={() => void remove()} data-testid="model-delete">
               Delete
             </Button>
           ) : null
@@ -199,6 +199,7 @@ export default function ModelDetailClient({ slug }: ModelDetailClientProps) {
                 <Button
                   size="sm"
                   variant="outline"
+                  title={busy ? 'Wait for the current change to finish.' : deprecatedOn === dateInputValue(model.deprecatedAt) ? 'Pick a different date to save.' : undefined}
                   disabled={busy || deprecatedOn === dateInputValue(model.deprecatedAt)}
                   onClick={() => void saveDeprecation(deprecatedOn)}
                   data-testid="model-deprecated-save"
@@ -206,7 +207,7 @@ export default function ModelDetailClient({ slug }: ModelDetailClientProps) {
                   Save date
                 </Button>
                 {model.deprecatedAt ? (
-                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => void saveDeprecation('')} data-testid="model-deprecated-clear">
+                  <Button size="sm" variant="ghost" title={busy ? 'Wait for the current change to finish.' : undefined} disabled={busy} onClick={() => void saveDeprecation('')} data-testid="model-deprecated-clear">
                     Clear
                   </Button>
                 ) : null}

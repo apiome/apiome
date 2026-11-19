@@ -127,7 +127,7 @@ export function MergeRequestActionsCard({ detail, busy, error, onAction }: Merge
                 overrideReady ? { override_published_immutability: true, override_reason: reason.trim() } : undefined
               )
             }
-            disabled={!canMerge || busy !== null}
+            disabled={!canMerge || busy !== null} title={busy !== null ? 'Wait for the current action to finish' : !canMerge ? 'Not ready to merge — resolve the checks above first' : undefined}
             data-testid="mr-merge"
           >
             <GitMerge aria-hidden />
@@ -136,7 +136,7 @@ export function MergeRequestActionsCard({ detail, busy, error, onAction }: Merge
           <Button
             variant="outline"
             onClick={() => onAction('check')}
-            disabled={busy !== null}
+            disabled={busy !== null} title={busy !== null ? 'Wait for the current action to finish' : undefined}
             data-testid="mr-check"
           >
             <RefreshCw aria-hidden />
@@ -146,13 +146,13 @@ export function MergeRequestActionsCard({ detail, busy, error, onAction }: Merge
             <Button
               variant="outline"
               onClick={() => onAction('review')}
-              disabled={busy !== null}
+              disabled={busy !== null} title={busy !== null ? 'Wait for the current action to finish' : undefined}
               data-testid="mr-review-tip"
             >
               {busy === 'review' ? 'Requesting…' : 'Request review of the current tip'}
             </Button>
           ) : null}
-          <Button variant="ghost" onClick={() => onAction('close')} disabled={busy !== null} data-testid="mr-close">
+          <Button variant="ghost" onClick={() => onAction('close')} disabled={busy !== null} title={busy !== null ? 'Wait for the current action to finish' : undefined} data-testid="mr-close">
             <XCircle aria-hidden />
             {busy === 'close' ? 'Closing…' : 'Close merge request'}
           </Button>

@@ -28,6 +28,7 @@ import {
   catalogDomainLabel,
   catalogDomainOptions,
   catalogTagOptions,
+  catalogCategoryFilterShown,
   catalogConventionOptions,
   CATALOG_CONVENTION_LABELS,
   CATALOG_MAX_TAG_LENGTH,
@@ -792,5 +793,27 @@ describe('conventions (MFI-19.6)', () => {
     delete legacy.convention;
     expect(isCatalogNarrowed('', 'all', legacy)).toBe(false);
     expect(matchesCatalogFilters(ARTICLES, legacy)).toBe(true);
+  });
+});
+
+describe('catalogCategoryFilterShown (#6263)', () => {
+  const ANY = 'any';
+  const bare = [
+    { value: ANY, label: 'All domains' },
+    { value: 'uncategorized', label: 'No domain' },
+  ];
+  const used = [bare[0], { value: 'finance', label: 'Finance' }, bare[1]];
+
+  it('hides a category select whose only options are Any and None', () => {
+    expect(catalogCategoryFilterShown(bare)).toBe(false);
+    expect(catalogCategoryFilterShown(bare, ANY)).toBe(false);
+  });
+
+  it('shows it once the catalog uses a value', () => {
+    expect(catalogCategoryFilterShown(used)).toBe(true);
+  });
+
+  it('keeps a select the reader has set, so it can be cleared', () => {
+    expect(catalogCategoryFilterShown(bare, 'uncategorized')).toBe(true);
   });
 });

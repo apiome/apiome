@@ -172,6 +172,7 @@ export function CatalogRelatedArtifactsPanel({
                   type="button"
                   variant="ghost"
                   size="sm"
+                  title={busyId === artifact.projectId ? 'Wait for the unlink to finish.' : undefined}
                   disabled={busyId === artifact.projectId}
                   onClick={() => void unlinkProject(artifact.projectId)}
                   data-testid={`unlink-related-${artifact.projectId}`}
@@ -197,6 +198,7 @@ export function CatalogRelatedArtifactsPanel({
             size="sm"
             className="rart__suggest"
             onClick={() => void loadSuggestions()}
+            title={loadingSuggestions ? 'Wait for the suggestions to load.' : undefined}
             disabled={loadingSuggestions}
             data-testid="catalog-load-suggestions"
           >
@@ -231,6 +233,7 @@ export function CatalogRelatedArtifactsPanel({
                     type="button"
                     variant="outline"
                     size="sm"
+                    title={busyId === suggestion.projectId ? 'Wait for the link to finish.' : undefined}
                     disabled={busyId === suggestion.projectId}
                     onClick={() => void linkProject(suggestion.projectId)}
                     data-testid={`link-suggestion-${suggestion.projectId}`}

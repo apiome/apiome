@@ -13,6 +13,10 @@ interface PostmanImportPanelProps {
   onSpecificationFetched: (content: string, filename: string, metadata?: FileMetadataPreview) => void;
 }
 
+
+/** Why the other source tabs are inert here (DESIGN.md §10, #6263). */
+const POSTMAN_ONLY_REASON = 'This panel imports from Postman only';
+
 export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
   onSpecificationFetched
 }) => {
@@ -131,19 +135,19 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
     <div className="space-y-6">
       {/* Source Tabs */}
       <div role="tablist" aria-label="Import source" className={TAB_LIST_CLASS}>
-        <button type="button" role="tab" aria-selected={false} disabled className={tabTriggerClass({ disabled: true })}>
+        <button type="button" role="tab" aria-selected={false} disabled title={POSTMAN_ONLY_REASON} className={tabTriggerClass({ disabled: true })}>
           📁 File
         </button>
-        <button type="button" role="tab" aria-selected={false} disabled className={tabTriggerClass({ disabled: true })}>
+        <button type="button" role="tab" aria-selected={false} disabled title={POSTMAN_ONLY_REASON} className={tabTriggerClass({ disabled: true })}>
           🔗 URL
         </button>
-        <button type="button" role="tab" aria-selected={false} disabled className={tabTriggerClass({ disabled: true })}>
+        <button type="button" role="tab" aria-selected={false} disabled title={POSTMAN_ONLY_REASON} className={tabTriggerClass({ disabled: true })}>
           📋 Clipboard
         </button>
-        <button type="button" role="tab" aria-selected={false} disabled className={tabTriggerClass({ disabled: true })}>
+        <button type="button" role="tab" aria-selected={false} disabled title={POSTMAN_ONLY_REASON} className={tabTriggerClass({ disabled: true })}>
           🐙 Git
         </button>
-        <button type="button" role="tab" aria-selected={false} disabled className={tabTriggerClass({ disabled: true })}>
+        <button type="button" role="tab" aria-selected={false} disabled title={POSTMAN_ONLY_REASON} className={tabTriggerClass({ disabled: true })}>
           ☁️ SwaggerHub
         </button>
         <button type="button" role="tab" aria-selected className={tabTriggerClass({ active: true })}>
@@ -270,6 +274,13 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
         <Button
           onClick={handleConvert}
           disabled={!canConvert}
+          title={
+            isConverting
+              ? 'Converting the collection…'
+              : !canConvert
+                ? 'Choose a collection file or paste one first'
+                : undefined
+          }
           className="flex items-center gap-2"
         >
           {isConverting ? (

@@ -480,7 +480,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
                           size="sm"
                           className="gd-stage-row__remove"
                           aria-label={`Remove stage ${index + 1}`}
-                          disabled={disabled}
+                          disabled={disabled} title={readOnly ? 'You can view this policy but not change it' : state.saving ? 'Saving…' : undefined}
                           onClick={() => state.removeComponentStage(index)}
                         >
                           <Trash2 aria-hidden />
@@ -504,7 +504,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={disabled || componentStages.length >= MAX_COMPONENT_APPROVAL_STAGES}
+                    disabled={disabled || componentStages.length >= MAX_COMPONENT_APPROVAL_STAGES} title={readOnly ? 'You can view this policy but not change it' : state.saving ? 'Saving…' : componentStages.length >= MAX_COMPONENT_APPROVAL_STAGES ? `At most ${MAX_COMPONENT_APPROVAL_STAGES} approval stages` : undefined}
                     onClick={state.addComponentStage}
                     data-testid="component-stage-add"
                   >
@@ -573,7 +573,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
           <span className="hive-quiet">Saving creates an immutable policy version.</span>
           {!readOnly && (
             <Button
-              disabled={state.saving || !state.dirty || stageProblems.length > 0}
+              disabled={state.saving || !state.dirty || stageProblems.length > 0} title={state.saving ? 'Saving…' : !state.dirty ? 'No changes to save' : stageProblems.length > 0 ? 'Fix the approval stages above first' : undefined}
               onClick={() => void state.save()}
               data-testid="guide-policy-save"
             >

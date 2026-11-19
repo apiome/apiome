@@ -81,6 +81,7 @@ const DETAIL_PRELUDES = [
   '.cid-idline',
   '.cid-meta',
   '.cid-orbs',
+  '.cid-ctas',
   '.cid-orb',
   '.cid-orb__label',
   'button.cid-orb',

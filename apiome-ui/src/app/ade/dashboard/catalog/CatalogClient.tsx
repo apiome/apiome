@@ -111,6 +111,7 @@ import {
   CatalogTable,
   EMPTY_CATALOG_FILTERS,
   catalogBulkFailureTitle,
+  catalogCategoryFilterShown,
   catalogDomainOptions,
   catalogTagOptions,
   catalogConventionOptions,
@@ -448,6 +449,11 @@ export default function CatalogClient() {
     () => catalogConventionOptions(items, filters.convention),
     [items, filters.convention]
   );
+  const domainOptions = React.useMemo(
+    () => catalogDomainOptions(items, filters.domain),
+    [items, filters.domain]
+  );
+  const tagOptions = React.useMemo(() => catalogTagOptions(items, filters.tag), [items, filters.tag]);
 
   /** The chip counts, over the rows the search and the four quick filters left. */
   const counts = React.useMemo(
@@ -822,6 +828,7 @@ export default function CatalogClient() {
           placeholder="Search name, slug, format, protocol…  ( / )"
           aria-label="Filter catalog"
           className="cat-search"
+          containerClassName="cat-search-wrap"
           data-testid="catalog-search"
         />
         <CatalogFormatFacet
@@ -850,24 +857,29 @@ export default function CatalogClient() {
           options={CATALOG_GRADE_OPTIONS}
           onChange={(grade) => setFilters((current) => ({ ...current, grade }))}
         />
-        {/* MFI-6.3: the manual categories. Their menus list only what the catalog uses. */}
-        <CatalogQuickFilter
-          label="Domain"
-          testId="catalog-filter-domain"
-          value={filters.domain}
-          options={catalogDomainOptions(items, filters.domain)}
-          onChange={(domain) => setFilters((current) => ({ ...current, domain }))}
-        />
-        <CatalogQuickFilter
-          label="Tag"
-          testId="catalog-filter-tag"
-          value={filters.tag}
-          options={catalogTagOptions(items, filters.tag)}
-          onChange={(tag) => setFilters((current) => ({ ...current, tag }))}
-        />
+        {/* MFI-6.3: the manual categories. Their menus list only what the catalog uses, so each
+            is drawn once an item carries one (or one is chosen) — #6263 keeps the row to one line. */}
+        {catalogCategoryFilterShown(domainOptions, filters.domain) ? (
+          <CatalogQuickFilter
+            label="Domain"
+            testId="catalog-filter-domain"
+            value={filters.domain}
+            options={domainOptions}
+            onChange={(domain) => setFilters((current) => ({ ...current, domain }))}
+          />
+        ) : null}
+        {catalogCategoryFilterShown(tagOptions, filters.tag) ? (
+          <CatalogQuickFilter
+            label="Tag"
+            testId="catalog-filter-tag"
+            value={filters.tag}
+            options={tagOptions}
+            onChange={(tag) => setFilters((current) => ({ ...current, tag }))}
+          />
+        ) : null}
         {/* MFI-19.6: the REST hypermedia conventions an item's media types declare. Shown only
             once an item declares one (or one is chosen), so a catalog without any keeps its row. */}
-        {conventionOptions.length > 2 || (filters.convention ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY ? (
+        {catalogCategoryFilterShown(conventionOptions, filters.convention) ? (
           <CatalogQuickFilter
             label="Convention"
             testId="catalog-filter-convention"
@@ -876,24 +888,6 @@ export default function CatalogClient() {
             onChange={(convention) => setFilters((current) => ({ ...current, convention }))}
           />
         ) : null}
-
-        {/* The view switch closes the filter row, as the quiet-pass mockup draws it. */}
-        <DataTableToolbarSpacer />
-        <Segmented
-          value={view}
-          onValueChange={(next) => setView(next as CatalogViewMode)}
-          size="sm"
-          aria-label="List view"
-        >
-          <SegmentedItem value="cards" data-testid="catalog-view-cards">
-            <LayoutGrid aria-hidden />
-            Cards
-          </SegmentedItem>
-          <SegmentedItem value="table" data-testid="catalog-view-table">
-            <List aria-hidden />
-            Table
-          </SegmentedItem>
-        </Segmented>
       </DataTableToolbar>
 
       {/* Row two — which of them, in what order, drawn how. */}
@@ -997,6 +991,24 @@ export default function CatalogClient() {
             </SegmentedItem>
           </Segmented>
         ) : null}
+
+        {/* The view switch closes the views row, as sources/catalog.html draws it (#6263): on
+            the filter row it wrapped the row onto a second line. */}
+        <Segmented
+          value={view}
+          onValueChange={(next) => setView(next as CatalogViewMode)}
+          size="sm"
+          aria-label="List view"
+        >
+          <SegmentedItem value="cards" data-testid="catalog-view-cards">
+            <LayoutGrid aria-hidden />
+            Cards
+          </SegmentedItem>
+          <SegmentedItem value="table" data-testid="catalog-view-table">
+            <List aria-hidden />
+            Table
+          </SegmentedItem>
+        </Segmented>
       </DataTableToolbar>
     </>
   );

@@ -11,6 +11,10 @@ interface SwaggerHubImportPanelProps {
   onSpecificationFetched: (content: string, filename: string, metadata?: FileMetadataPreview) => void;
 }
 
+
+/** Why the other source tabs are inert here (DESIGN.md §10, #6263). */
+const SWAGGERHUB_ONLY_REASON = 'This panel imports from SwaggerHub only';
+
 export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
   onSpecificationFetched
 }) => {
@@ -123,6 +127,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={SWAGGERHUB_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           📁 File
@@ -132,6 +137,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={SWAGGERHUB_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           🔗 URL
@@ -141,6 +147,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={SWAGGERHUB_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           📋 Clipboard
@@ -150,6 +157,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
           role="tab"
           aria-selected={false}
           disabled
+          title={SWAGGERHUB_ONLY_REASON}
           className={tabTriggerClass({ disabled: true })}
         >
           🐙 Git
@@ -324,6 +332,13 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
         <Button
           onClick={handleTestConnection}
           disabled={!canTest || isFetching}
+          title={
+            isFetching
+              ? 'Testing the connection…'
+              : !canTest
+                ? 'Enter a valid owner and API name first'
+                : undefined
+          }
           className="flex items-center gap-2"
         >
           {isFetching ? (

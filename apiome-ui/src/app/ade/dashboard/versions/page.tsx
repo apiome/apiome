@@ -75,7 +75,7 @@ import { activeTableFilterCount } from '../../../components/ui/dataTableUrlState
 import { useDataTableUrlState } from '../../../components/ui/useDataTableUrlState';
 import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
-import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
+import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabListClass, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
 import { MergeRequestsPanel } from '../../../components/ade/merge-requests/MergeRequestsPanel';
 import { PresenceAvatars } from '../../../components/ade/presence/PresenceAvatars';
@@ -3540,9 +3540,16 @@ const Versions = () => {
 
   /* A hand-built strip on the shared tab classes rather than `ui/Tabs`: Radix's `Tabs.Root`
      is one element that would have to wrap the header *and* the body, and `.page` is a flex
-     column whose two children are exactly those two. The ids and copy are the screen's own. */
+     column whose two children are exactly those two. The ids and copy are the screen's own.
+     The strip never wraps (#6263): a second row of tabs pushed the first revision past the
+     Versions first-row budget, so tabs that do not fit scroll sideways instead. */
   const headerTabs = selectedProjectId ? (
-    <div role="tablist" aria-label="Versions main view" className={TAB_LIST_CLASS} data-testid="versions-main-tab">
+    <div
+      role="tablist"
+      aria-label="Versions main view"
+      className={tabListClass('underline', { scroll: true })}
+      data-testid="versions-main-tab"
+    >
       <button
         type="button"
         role="tab"
@@ -4130,13 +4137,13 @@ const Versions = () => {
                 description="Create the first version, or import a spec into this project."
                 data-testid="versions-empty"
                 action={
-                  <Button onClick={handleNewVersionClick} disabled={!selectedProjectId}>
+                  <Button onClick={handleNewVersionClick} title={!selectedProjectId ? 'Choose a project first' : undefined} disabled={!selectedProjectId}>
                     <GitFork aria-hidden />
                     New version
                   </Button>
                 }
                 secondaryAction={
-                  <Button variant="outline" onClick={() => setShowImportDialog(true)} disabled={!currentUserId}>
+                  <Button variant="outline" onClick={() => setShowImportDialog(true)} title={!currentUserId ? 'Sign in to import a version' : undefined} disabled={!currentUserId}>
                     <Upload aria-hidden />
                     Import
                   </Button>
@@ -4622,7 +4629,7 @@ const Versions = () => {
                   />
                 ) : null}
                 <div className="vdlg-compare__picker-cta">
-                  <Button onClick={handleCompareVersions} disabled={!compareVersion1Id || !compareVersion2Id || isLoadingComparison}>
+                  <Button onClick={handleCompareVersions} title={isLoadingComparison ? 'Comparing…' : !compareVersion1Id || !compareVersion2Id ? 'Choose both versions to compare' : undefined} disabled={!compareVersion1Id || !compareVersion2Id || isLoadingComparison}>
                     <GitCompareArrows aria-hidden />
                     {isLoadingComparison ? 'Comparing…' : 'Compare versions'}
                   </Button>
@@ -5142,6 +5149,7 @@ const Versions = () => {
                               toast.error('Copy failed');
                             }
                           }}
+                          title={!breakingChangesMarkdown ? 'No breaking changes to copy yet' : undefined}
                           disabled={!breakingChangesMarkdown}
                         >
                           Copy
@@ -5151,6 +5159,7 @@ const Versions = () => {
                           variant="default"
                           size="sm"
                           onClick={appendBreakingDocToCompareTargetChangelog}
+                          title={!breakingChangesMarkdown ? 'No breaking changes to append yet' : undefined}
                           disabled={!breakingChangesMarkdown}
                         >
                           Append to compare-to changelog
@@ -5188,6 +5197,7 @@ const Versions = () => {
                               toast.error('Copy failed');
                             }
                           }}
+                          title={!migrationGuideMarkdown ? 'No migration guide to copy yet' : undefined}
                           disabled={!migrationGuideMarkdown}
                         >
                           Copy
@@ -5197,6 +5207,7 @@ const Versions = () => {
                           variant="default"
                           className="text-xs h-8"
                           onClick={appendMigrationGuideToCompareTargetChangelog}
+                          title={!migrationGuideMarkdown ? 'No migration guide to append yet' : undefined}
                           disabled={!migrationGuideMarkdown}
                         >
                           Append to compare-to changelog
@@ -5206,6 +5217,7 @@ const Versions = () => {
                           variant="outline"
                           className="text-xs h-8"
                           onClick={downloadMigrationGuideMarkdownFile}
+                          title={!migrationGuideMarkdown ? 'No migration guide to download yet' : undefined}
                           disabled={!migrationGuideMarkdown}
                         >
                           Download Markdown
@@ -5226,6 +5238,7 @@ const Versions = () => {
                             });
                             toast.success('PDF downloaded');
                           }}
+                          title={!migrationGuideMarkdown ? 'No migration guide to download yet' : undefined}
                           disabled={!migrationGuideMarkdown}
                         >
                           Download PDF
@@ -5390,10 +5403,10 @@ const Versions = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForkDialog(false)} disabled={forkSaving}>
+            <Button variant="outline" onClick={() => setShowForkDialog(false)} title={forkSaving ? 'Wait for the fork to be created' : undefined} disabled={forkSaving}>
               Cancel
             </Button>
-            <Button onClick={handleForkSubmit} disabled={forkSaving || !forkTargetProjectId}>
+            <Button onClick={handleForkSubmit} title={forkSaving ? 'Creating…' : !forkTargetProjectId ? 'Choose a target project first' : undefined} disabled={forkSaving || !forkTargetProjectId}>
               {forkSaving ? 'Creating…' : 'Create fork'}
             </Button>
           </DialogFooter>
@@ -5421,10 +5434,10 @@ const Versions = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBranchDialog(false)} disabled={branchSaving}>
+            <Button variant="outline" onClick={() => setShowBranchDialog(false)} title={branchSaving ? 'Wait for the branch to be saved' : undefined} disabled={branchSaving}>
               Cancel
             </Button>
-            <Button onClick={handleCreateBranchSubmit} disabled={branchSaving || !branchNameInput.trim()}>
+            <Button onClick={handleCreateBranchSubmit} title={branchSaving ? 'Saving…' : !branchNameInput.trim() ? 'Enter a branch name first' : undefined} disabled={branchSaving || !branchNameInput.trim()}>
               {branchSaving ? 'Saving…' : 'Create branch'}
             </Button>
           </DialogFooter>
@@ -5487,10 +5500,10 @@ const Versions = () => {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTagDialog(false)} disabled={tagSaving}>
+            <Button variant="outline" onClick={() => setShowTagDialog(false)} title={tagSaving ? 'Wait for the tag to be saved' : undefined} disabled={tagSaving}>
               Cancel
             </Button>
-            <Button onClick={handleCreateTagSubmit} disabled={tagSaving || !tagNameInput.trim()}>
+            <Button onClick={handleCreateTagSubmit} title={tagSaving ? 'Saving…' : !tagNameInput.trim() ? 'Enter a tag name first' : undefined} disabled={tagSaving || !tagNameInput.trim()}>
               {tagSaving ? 'Saving…' : 'Create tag'}
             </Button>
           </DialogFooter>
@@ -5648,14 +5661,15 @@ const Versions = () => {
             )}
           </div>
           <DialogFooter className="gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setShowMergeDialog(false)} disabled={mergePreviewLoading || mergeApplyLoading}>
+            <Button variant="outline" onClick={() => setShowMergeDialog(false)} title={mergePreviewLoading || mergeApplyLoading ? 'Wait for the merge to finish' : undefined} disabled={mergePreviewLoading || mergeApplyLoading}>
               Close
             </Button>
-            <Button variant="secondary" onClick={runMergePreview} disabled={mergePreviewLoading || mergeApplyLoading || !mergeSourceBranch || !mergeTargetBranch}>
+            <Button variant="secondary" onClick={runMergePreview} title={mergePreviewLoading || mergeApplyLoading ? 'Wait for the merge to finish' : !mergeSourceBranch || !mergeTargetBranch ? 'Choose a source and a target branch first' : undefined} disabled={mergePreviewLoading || mergeApplyLoading || !mergeSourceBranch || !mergeTargetBranch}>
               {mergePreviewLoading ? 'Previewing…' : 'Preview merge'}
             </Button>
             <Button
               onClick={runMergeApply}
+              title={mergeApplyLoading || mergePreviewLoading || mergeCompatLoading ? 'Wait for the preview to finish' : !mergeSourceBranch || !mergeTargetBranch ? 'Choose a source and a target branch first' : !mergePreviewMatchesBranches ? 'Preview this merge first' : mergeHasEngineConflicts ? 'Resolve the merge conflicts first' : mergeCompat?.mergeBlockedByCompatGate === true ? 'The compatibility gate blocks this merge; an admin can override it with a reason' : undefined}
               disabled={
                 mergeApplyLoading ||
                 mergePreviewLoading ||
@@ -5799,6 +5813,7 @@ const Versions = () => {
             <Button
               variant="outline"
               onClick={() => setShowRollbackDialog(false)}
+              title={rollbackPreviewLoading || rollbackApplyLoading ? 'Wait for the rollback to finish' : undefined}
               disabled={rollbackPreviewLoading || rollbackApplyLoading}
             >
               Close
@@ -5806,12 +5821,14 @@ const Versions = () => {
             <Button
               variant="secondary"
               onClick={() => void runRollbackPreview()}
+              title={rollbackPreviewLoading || rollbackApplyLoading ? 'Wait for the rollback to finish' : !rollbackBranchName || !rollbackTargetVersion ? 'Choose a branch and a target version first' : undefined}
               disabled={rollbackPreviewLoading || rollbackApplyLoading || !rollbackBranchName || !rollbackTargetVersion}
             >
               {rollbackPreviewLoading ? 'Previewing…' : 'Preview impact'}
             </Button>
             <Button
               onClick={() => setShowRollbackConfirmAlert(true)}
+              title={rollbackApplyLoading || rollbackPreviewLoading ? 'Wait for the preview to finish' : !rollbackPreview?.branchTipRevisionId ? 'Preview the impact first' : rollbackPreview.rollbackBlockedByCompatGate === true ? 'The compatibility gate blocks this rollback' : Boolean(rollbackPreview.compatOverall) && rollbackPreview.compatOverall !== 'safe' && !rollbackSkipCompat ? 'The rollback is not compatible; tick skip compatibility to apply it anyway' : undefined}
               disabled={
                 rollbackApplyLoading ||
                 rollbackPreviewLoading ||
@@ -5864,6 +5881,7 @@ const Versions = () => {
             <AlertDialogCancel disabled={rollbackApplyLoading}>Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
+              title={rollbackApplyLoading ? 'Rolling back…' : !rollbackPreview?.branchTipRevisionId ? 'Preview the impact first' : undefined}
               disabled={rollbackApplyLoading || !rollbackPreview?.branchTipRevisionId}
               onClick={() => void runRollbackApply()}
             >

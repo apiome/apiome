@@ -124,7 +124,7 @@ export function ReviewSuggestionsPanel({ reviewId, viewerId, writable }: ReviewS
         <EmptyState
           icon={<Lightbulb aria-hidden="true" />}
           title="No suggestions yet"
-          description="Reviewers can suggest a concrete change to a class or property; the author applies it in one click."
+          description="Reviewers suggest a change to a class or property; the author applies it."
         />
       ) : (
         <ol className="sugg-list">
@@ -151,14 +151,14 @@ export function ReviewSuggestionsPanel({ reviewId, viewerId, writable }: ReviewS
                     {actions.apply ? (
                       <Button
                         size="sm"
-                        disabled={!actions.applyEnabled || busy === s.id}
+                        disabled={!actions.applyEnabled || busy === s.id} title={busy === s.id ? 'Saving your decision…' : !actions.applyEnabled ? 'This suggestion cannot be applied to the current revision' : undefined}
                         onClick={() => void decide(s, 'apply')}
                       >
                         Apply
                       </Button>
                     ) : null}
                     {actions.reject ? (
-                      <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => void decide(s, 'reject')}>
+                      <Button size="sm" variant="ghost" disabled={busy === s.id} title={busy === s.id ? 'Saving your decision…' : undefined} onClick={() => void decide(s, 'reject')}>
                         {actions.rejectLabel}
                       </Button>
                     ) : null}
@@ -289,7 +289,7 @@ function SuggestForm({ targets, endpoint, onCreated }: SuggestFormProps) {
       <Textarea id="sugg-note" value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={5000} />
       {error ? <Alert variant="danger">{error}</Alert> : null}
       <div className="sugg-form__actions">
-        <Button type="submit" size="sm" disabled={saving}>
+        <Button type="submit" size="sm" disabled={saving} title={saving ? 'Saving the suggestion…' : undefined}>
           Suggest
         </Button>
       </div>

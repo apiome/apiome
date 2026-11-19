@@ -120,6 +120,12 @@ export default function ImportExecutionPanel({
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [isCommitting, setIsCommitting] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
+  /** Why Accept and Reject are unavailable while either is running (DESIGN.md §10, #6263). */
+  const busyReason = isCommitting
+    ? 'Committing the import…'
+    : isRollingBack
+      ? 'Rolling back the import…'
+      : undefined;
   const [isRetrying, setIsRetrying] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
   const [logExpanded, setLogExpanded] = useState(false);
@@ -327,11 +333,21 @@ export default function ImportExecutionPanel({
         <div className="mt-4 flex flex-wrap gap-2">
           {state === 'pending-approval' ? (
             <>
-              <Button variant="success" onClick={onAccept} disabled={isCommitting || isRollingBack}>
+              <Button
+                variant="success"
+                onClick={onAccept}
+                disabled={isCommitting || isRollingBack}
+                title={busyReason}
+              >
                 <CheckCircle2 aria-hidden />
                 {isCommitting ? 'Committing...' : 'Accept & commit'}
               </Button>
-              <Button variant="danger-soft" onClick={onReject} disabled={isCommitting || isRollingBack}>
+              <Button
+                variant="danger-soft"
+                onClick={onReject}
+                disabled={isCommitting || isRollingBack}
+                title={busyReason}
+              >
                 <XCircle aria-hidden />
                 {isRollingBack ? 'Rolling back...' : 'Reject & rollback'}
               </Button>
@@ -339,12 +355,22 @@ export default function ImportExecutionPanel({
           ) : state === 'failed' || state === 'canceled' ? (
             <>
               {onRetry && (
-                <Button variant="primary" onClick={onRetryClick} disabled={isRetrying}>
+                <Button
+                  variant="primary"
+                  onClick={onRetryClick}
+                  disabled={isRetrying}
+                  title={isRetrying ? 'A retry is starting' : undefined}
+                >
                   <RotateCw className={isRetrying ? 'animate-spin' : undefined} aria-hidden />
                   {isRetrying ? 'Starting retry...' : 'Retry import'}
                 </Button>
               )}
-              <Button variant="outline" onClick={onCancel} disabled={isRetrying}>
+              <Button
+                variant="outline"
+                onClick={onCancel}
+                disabled={isRetrying}
+                title={isRetrying ? 'A retry is starting' : undefined}
+              >
                 Cancel import
               </Button>
             </>

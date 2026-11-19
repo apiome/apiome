@@ -328,6 +328,7 @@ export function ProjectionGraphPanel({
                     type="button"
                     data-testid="projection-zoom-out"
                     aria-label="Zoom out"
+                    title={zoom <= MIN_ZOOM ? 'Already at the smallest zoom.' : undefined}
                     disabled={zoom <= MIN_ZOOM}
                     onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP))}
                     className="vdlg-icon-button"
@@ -338,6 +339,7 @@ export function ProjectionGraphPanel({
                     type="button"
                     data-testid="projection-zoom-in"
                     aria-label="Zoom in"
+                    title={zoom >= MAX_ZOOM ? 'Already at the largest zoom.' : undefined}
                     disabled={zoom >= MAX_ZOOM}
                     onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP))}
                     className="vdlg-icon-button"

@@ -439,6 +439,7 @@ export function VersionChangeReportPanel({
           variant="secondary"
           data-testid="change-report-refresh"
           onClick={() => void loadReport()}
+          title={loading ? 'Loading the change report…' : undefined}
           disabled={loading}
         >
           {loading ? <Loader2 className="animate-spin" aria-hidden /> : null}
@@ -495,6 +496,7 @@ export function VersionChangeReportPanel({
                   size="sm"
                   data-testid="change-report-regenerate"
                   onClick={() => void handleRegenerate()}
+                  title={regenerating ? 'Regenerating the report…' : saving ? 'Wait for your edits to save' : undefined}
                   disabled={regenerating || saving}
                 >
                   {regenerating ? <Loader2 className="animate-spin" aria-hidden /> : <RefreshCw aria-hidden />}
@@ -622,6 +624,7 @@ export function VersionChangeReportPanel({
                 <Button
                   type="button"
                   onClick={() => void handleSaveEdits()}
+                  title={saving ? 'Saving…' : undefined}
                   disabled={saving}
                   data-testid="change-report-save"
                 >
@@ -631,6 +634,7 @@ export function VersionChangeReportPanel({
                   type="button"
                   variant="secondary"
                   onClick={() => void handleClearEdits()}
+                  title={saving ? 'Wait for your edits to save' : undefined}
                   disabled={saving}
                   data-testid="change-report-clear-edits"
                 >
@@ -684,7 +688,7 @@ export function VersionChangeReportPanel({
                 <Label htmlFor="tpl-f">Footnote template</Label>
                 <Textarea id="tpl-f" value={tplFoot} onChange={(e) => setTplFoot(e.target.value)} rows={4} className="vdlg-textarea vdlg-textarea--mono" />
               </div>
-              <Button type="button" onClick={() => void handleCreateTemplate()} disabled={tplCreating}>
+              <Button type="button" onClick={() => void handleCreateTemplate()} title={tplCreating ? 'Creating the template version…' : undefined} disabled={tplCreating}>
                 {tplCreating ? 'Creating…' : 'Create template version'}
               </Button>
             </TabsContent>

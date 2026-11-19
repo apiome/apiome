@@ -22881,21 +22881,31 @@ html[data-motion='reduce'] .prm-spin {
 }
 
 /* ---- The toolbar's quick filters ----------------------------------------
-   Three `Select`s over three different vocabularies. `rem` rather than the
-   mockup's 136/116px, and one width for all three: a row of selects that are
-   almost but not quite the same width reads as a mistake. */
+   Up to six `Select`s over different vocabularies. `rem` rather than the
+   mockup's 136/116px, and one width for all of them: a row of selects that are
+   almost but not quite the same width reads as a mistake. 8.5rem is the
+   mockup's 136px, so a categorized catalog's Domain and Tag still fit on the
+   filter row (#6263). */
 .cat-filter {
-  inline-size: 9.5rem;
+  inline-size: 8.5rem;
   block-size: var(--control-h-sm);
   font-size: var(--fs-xs);
 }
 
 /* The search box names what it matches — "Search name, slug, format,
    protocol…  ( / )" (MFI-27.2) — so it is wider than the toolbar default and the
-   `/` hint is not cut off. Still `max-inline-size: 100%` from the component, so a
-   narrow viewport shrinks it; the toolbar wraps before it overflows. */
+   `/` hint is not cut off. Its wrapper takes what the filter row leaves, from
+   14rem up to that width (#6263): the Domain and Tag selects of a categorized
+   catalog narrow it rather than push the row onto a second line. The basis is
+   the minimum because a wrapping row breaks on each item's basis before it
+   shrinks anything. */
+.cat-search-wrap {
+  flex: 1 1 14rem;
+  max-inline-size: 21rem;
+}
+
 .cat-search {
-  inline-size: 21rem;
+  inline-size: 100%;
 }
 
 /* A filter that is narrowing the list must not look like one that is not. The
@@ -24369,6 +24379,18 @@ html[data-motion='reduce'] .prm-spin {
   align-self: flex-start;
   gap: var(--space-4);
   margin-inline-end: var(--space-3);
+}
+
+/* The header's CTAs (#6263): the primary on its own line and the outline buttons under it, as
+   sources/catalog-item.html draws them. One row of four buttons squeezed the description into
+   three lines and the pills into four, pushing the Overview past the detail budget. */
+.cid-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  max-inline-size: 18rem;
 }
 
 .cid-orb {

@@ -526,6 +526,7 @@ export function MergeBranchesDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            title={previewLoading || applyLoading ? 'Wait for the merge to finish' : undefined}
             disabled={previewLoading || applyLoading}
           >
             Close
@@ -533,11 +534,12 @@ export function MergeBranchesDialog({
           <Button
             variant="secondary"
             onClick={runPreview}
+            title={previewLoading || applyLoading ? 'Wait for the merge to finish' : !sourceBranch || !targetBranch ? 'Choose a source and a target branch first' : undefined}
             disabled={previewLoading || applyLoading || !sourceBranch || !targetBranch}
           >
             {previewLoading ? 'Previewing…' : 'Preview merge'}
           </Button>
-          <Button onClick={runApply} disabled={applyDisabled}>
+          <Button onClick={runApply} title={applyLoading || previewLoading || compatLoading ? 'Wait for the preview to finish' : !sourceBranch || !targetBranch ? 'Choose a source and a target branch first' : !previewMatchesSelection ? 'Preview this merge first' : hasEngineConflicts ? 'Resolve the merge conflicts first' : applyDisabled ? 'The compatibility gate blocks this merge; an admin can override it with a reason' : undefined} disabled={applyDisabled}>
             {applyLoading ? 'Merging…' : 'Apply merge'}
           </Button>
         </DialogFooter>

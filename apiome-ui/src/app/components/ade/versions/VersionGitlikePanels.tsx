@@ -26,6 +26,7 @@ import { cn } from '@lib/utils';
 
 import { GitlikeFlag } from './GitlikeFlag';
 import {
+  GITLIKE_FLAG_TITLE,
   isVersionBranchNonDeletable,
   type GitlikeAffordance,
   type VersionBranchRow,
@@ -114,6 +115,7 @@ export default function VersionGitlikePanels({
                     <Button
                       variant="ghost"
                       size="sm"
+                      title={!gitlike.enabled ? GITLIKE_FLAG_TITLE : undefined}
                       disabled={!gitlike.enabled}
                       onClick={() => onToggleTagProtection(tag.id, !tag.protected)}
                     >
@@ -125,6 +127,7 @@ export default function VersionGitlikePanels({
                       variant="ghost"
                       size="sm"
                       className="ver-gitlike__remove"
+                      title={!gitlike.enabled ? GITLIKE_FLAG_TITLE : undefined}
                       disabled={!gitlike.enabled}
                       onClick={() => onDeleteTag(tag.id)}
                     >
@@ -173,6 +176,7 @@ export default function VersionGitlikePanels({
                     <Button
                       variant="ghost"
                       size="sm"
+                      title={!gitlike.enabled ? GITLIKE_FLAG_TITLE : undefined}
                       disabled={!gitlike.enabled}
                       onClick={() => onToggleBranchProtection(branch.id, !branch.protected)}
                     >
@@ -184,6 +188,7 @@ export default function VersionGitlikePanels({
                       variant="ghost"
                       size="sm"
                       className="ver-gitlike__remove"
+                      title={!gitlike.enabled ? GITLIKE_FLAG_TITLE : undefined}
                       disabled={!gitlike.enabled}
                       onClick={() => onDeleteBranch(branch.id)}
                     >

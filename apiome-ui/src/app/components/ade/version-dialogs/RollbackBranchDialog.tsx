@@ -309,6 +309,7 @@ export function RollbackBranchDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            title={previewLoading || applyLoading ? 'Wait for the rollback to finish' : undefined}
             disabled={previewLoading || applyLoading}
           >
             Close
@@ -316,6 +317,7 @@ export function RollbackBranchDialog({
           <Button
             variant="secondary"
             onClick={runPreview}
+            title={previewLoading || applyLoading ? 'Wait for the rollback to finish' : branches.length === 0 ? 'This project has no named branches' : !branchName || !targetRevision?.id ? 'Choose a branch and a target revision first' : undefined}
             disabled={
               previewLoading ||
               applyLoading ||
@@ -326,7 +328,7 @@ export function RollbackBranchDialog({
           >
             {previewLoading ? 'Previewing…' : 'Preview rollback'}
           </Button>
-          <Button onClick={runApply} disabled={applyDisabled}>
+          <Button onClick={runApply} title={applyLoading || previewLoading ? 'Wait for the preview to finish' : !preview?.branchTipRevisionId ? 'Preview the rollback first' : preview.rollbackBlockedByCompatGate === true ? 'The compatibility gate blocks this rollback' : applyDisabled ? 'The rollback is not compatible; tick skip compatibility to apply it anyway' : undefined} disabled={applyDisabled}>
             {applyLoading ? 'Rolling back…' : 'Apply rollback'}
           </Button>
         </DialogFooter>

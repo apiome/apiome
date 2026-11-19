@@ -123,9 +123,21 @@ describe('versionsStatusItems', () => {
 });
 
 describe('VersionsStatusStrip', () => {
-  it('opens the first warn status and keeps the deprecation copy and actions verbatim', () => {
+  it('paints closed, so no detail row stands above the first revision (#6263)', () => {
+    render(<VersionsStatusStrip projectId="p1" {...input()} />);
+    const group = screen.getByRole('group', { name: 'Project status' });
+    for (const chip of within(group).getAllByRole('button')) {
+      expect(chip).toHaveAttribute('aria-expanded', 'false');
+    }
+    expect(document.querySelector('.status-strip__detail')).not.toBeVisible();
+    // The chip itself still says what the status is about.
+    expect(within(group).getByRole('button', { name: /v2\.2\.0 deprecated/ })).toHaveTextContent('sunset');
+  });
+
+  it('opens the deprecation chip on a click and keeps its copy and actions verbatim', () => {
     render(<VersionsStatusStrip projectId="p1" {...input({ serverAhead: null })} />);
     const group = screen.getByRole('group', { name: 'Project status' });
+    fireEvent.click(within(group).getByRole('button', { name: /v2\.2\.0 deprecated/ }));
     expect(within(group).getByRole('button', { name: /v2\.2\.0 deprecated/ })).toHaveAttribute('aria-expanded', 'true');
     const detail = document.querySelector('.status-strip__detail') as HTMLElement;
     expect(detail).toHaveTextContent(
@@ -141,7 +153,9 @@ describe('VersionsStatusStrip', () => {
   it('draws the server-ahead chip with Pull and Open merge, and the API detail', () => {
     const props = input({ compatibility: null, whatsNew: null, deprecation: null });
     render(<VersionsStatusStrip projectId="p1" {...props} />);
-    // One status: the chip renders already open and there is no Collapse button.
+    // One status: closed on first paint like the rest (#6263); a click opens it, and there is
+    // no Collapse button.
+    fireEvent.click(screen.getByRole('button', { name: /Server ahead/ }));
     expect(screen.getByRole('button', { name: /Server ahead/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.queryByRole('button', { name: /Collapse/ })).not.toBeInTheDocument();
     const detail = document.querySelector('.status-strip__detail') as HTMLElement;
@@ -156,6 +170,7 @@ describe('VersionsStatusStrip', () => {
   it('shows Pulling… and disables Pull while a pull runs', () => {
     const props = input({ compatibility: null, whatsNew: null, deprecation: null });
     render(<VersionsStatusStrip projectId="p1" {...props} serverAhead={{ ...props.serverAhead!, pullLoading: true }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Server ahead/ }));
     expect(screen.getByRole('button', { name: 'Pulling…' })).toBeDisabled();
   });
 

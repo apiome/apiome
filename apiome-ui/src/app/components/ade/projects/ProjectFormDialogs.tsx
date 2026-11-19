@@ -201,10 +201,11 @@ export function ProjectCreateDialog({
           <span className="prj-dialog__footnote">
             You can change everything later in project settings.
           </span>
-          <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+          <Button variant="outline" title={busy ? 'Wait for the project to be saved' : undefined} disabled={busy} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
+            title={busy ? 'Creating…' : tab === 'ai' ? 'Use the AI tab’s own action to create the project' : undefined}
             disabled={busy || tab === 'ai'}
             onClick={onSubmit}
             data-testid="projects-create-submit"
@@ -298,7 +299,7 @@ export function ProjectEditDialog({
         </div>
 
         <DialogFooter className="prj-dialog__footer">
-          <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+          <Button variant="outline" title={busy ? 'Wait for the project to be saved' : undefined} disabled={busy} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button

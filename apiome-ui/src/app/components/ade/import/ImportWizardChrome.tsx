@@ -150,6 +150,18 @@ export interface ImportWizardFooterProps {
  * @param props See {@link ImportWizardFooterProps}.
  * @returns The footer row.
  */
+/**
+ * Why each footer slot can be disabled, drawn as its `title` (DESIGN.md §10, #6263). The
+ * footer model only ever disables Back and Cancel while an import or a store is running, and the
+ * forward actions until the step has what it needs.
+ */
+export const IMPORT_FOOTER_DISABLED_REASON = {
+  back: 'Wait for the import to finish before going back',
+  cancel: 'Wait for the import to finish',
+  keepAnyway: 'Wait for the import to finish',
+  primary: 'Complete this step to continue',
+} as const;
+
 export function ImportWizardFooter({
   footer,
   onBack,
@@ -162,23 +174,43 @@ export function ImportWizardFooter({
     <div className="imp-wizard__foot">
       <div className="imp-wizard__foot-lead">
         {footer.back ? (
-          <Button variant="outline" onClick={onBack} disabled={footer.back.disabled}>
+          <Button
+            variant="outline"
+            onClick={onBack}
+            disabled={footer.back.disabled}
+            title={footer.back.disabled ? IMPORT_FOOTER_DISABLED_REASON.back : undefined}
+          >
             {footer.back.label}
           </Button>
         ) : null}
       </div>
       <div className="imp-wizard__foot-trail">
-        <Button variant="outline" onClick={onCancel} disabled={footer.cancel.disabled}>
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          disabled={footer.cancel.disabled}
+          title={footer.cancel.disabled ? IMPORT_FOOTER_DISABLED_REASON.cancel : undefined}
+        >
           {footer.cancel.label}
         </Button>
         {extra}
         {footer.keepAnyway && onKeepAnyway ? (
-          <Button variant="honey" onClick={onKeepAnyway} disabled={footer.keepAnyway.disabled}>
+          <Button
+            variant="honey"
+            onClick={onKeepAnyway}
+            disabled={footer.keepAnyway.disabled}
+            title={footer.keepAnyway.disabled ? IMPORT_FOOTER_DISABLED_REASON.keepAnyway : undefined}
+          >
             {footer.keepAnyway.label}
           </Button>
         ) : null}
         {footer.primary ? (
-          <Button variant="primary" onClick={onPrimary} disabled={footer.primary.disabled}>
+          <Button
+            variant="primary"
+            onClick={onPrimary}
+            disabled={footer.primary.disabled}
+            title={footer.primary.disabled ? IMPORT_FOOTER_DISABLED_REASON.primary : undefined}
+          >
             {footer.primary.label}
           </Button>
         ) : null}

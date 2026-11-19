@@ -153,6 +153,7 @@ function OperationRow({
       <Button
         size="sm"
         variant="outline"
+        title={disabled ? 'Start the mock to send requests.' : undefined}
         disabled={disabled}
         data-testid={`mock-send-${key}`}
         aria-label={`Send ${operation.method} ${buildRequestPath(operation.path, values)} to the mock`}
@@ -218,7 +219,7 @@ export function MockTestDrivePanel({
         <SectionHeading targetLabel={targetLabel} />
         <div className="xstd-mock__prompt" data-testid="mock-unavailable">
           <p className="hive-quiet">{availability.reason}</p>
-          <Button size="sm" variant="outline" disabled data-testid="mock-start">
+          <Button size="sm" variant="outline" title={availability.reason} disabled data-testid="mock-start">
             <Play className="h-3.5 w-3.5" aria-hidden />
             Start mock
           </Button>
@@ -243,6 +244,7 @@ export function MockTestDrivePanel({
             <Button
               size="sm"
               variant="ghost"
+              title={busy ? 'Wait for the mock to respond.' : undefined}
               disabled={busy}
               onClick={() => void restart()}
               data-testid="mock-restart"
@@ -253,6 +255,7 @@ export function MockTestDrivePanel({
             <Button
               size="sm"
               variant="ghost"
+              title={busy ? 'Wait for the mock to respond.' : undefined}
               disabled={busy}
               onClick={() => void stop()}
               data-testid="mock-stop"
@@ -284,6 +287,7 @@ export function MockTestDrivePanel({
           <Button
             size="sm"
             variant="outline"
+            title={busy ? 'Wait for the mock to start.' : undefined}
             disabled={busy}
             onClick={() => void start()}
             data-testid="mock-start"

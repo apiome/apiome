@@ -759,7 +759,7 @@ export function ExportDialog({
 
         <div className="mt-4 flex shrink-0 justify-between gap-2 border-t border-border pt-3">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={exporting}>
+            <Button variant="outline" onClick={handleClose} title={exporting ? 'Wait for the export to finish.' : undefined} disabled={exporting}>
               {emitted ? 'Close' : 'Cancel'}
             </Button>
             {!emitted && isFeatureReleased('export-studio') && (
@@ -786,6 +786,7 @@ export function ExportDialog({
             {step === 'source' && (
               <Button
                 onClick={() => setStep('target')}
+                title={loading || !response ? 'Wait for the source to load.' : undefined}
                 disabled={loading || !response}
                 data-testid="export-dialog-choose-target"
               >
@@ -796,6 +797,7 @@ export function ExportDialog({
             {step === 'target' && (
               <Button
                 onClick={() => setStep(multiMode ? 'export' : 'fidelity')}
+                title={multiMode ? (multiKeys.length < 2 ? 'Choose at least two targets.' : undefined) : !selected ? 'Choose a target.' : undefined}
                 disabled={multiMode ? multiKeys.length < 2 : !selected}
                 data-testid="export-dialog-continue"
               >

@@ -307,6 +307,7 @@ export default function CatalogCard({
             <Button
               variant="outline"
               size="sm"
+              title={busy ? 'Wait for the current change to finish.' : undefined}
               disabled={busy}
               onClick={() => onRestore(item)}
               data-testid={`catalog-card-restore-${item.id}`}
@@ -319,6 +320,7 @@ export default function CatalogCard({
             <Button
               variant="danger-soft"
               size="sm"
+              title={busy ? 'Wait for the current change to finish.' : undefined}
               disabled={busy}
               onClick={() => onPermanentDelete(item)}
               data-testid={`catalog-card-permanent-delete-${item.id}`}
@@ -479,6 +481,7 @@ export function CatalogRowMenu({
           variant="ghost"
           size="sm"
           className="px-1.5"
+          title={busy ? 'Wait for the current change to finish.' : undefined}
           disabled={busy}
           aria-label={`Actions for ${item.name}`}
           data-testid={testId}

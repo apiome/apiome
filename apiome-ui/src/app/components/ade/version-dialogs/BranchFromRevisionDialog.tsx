@@ -121,10 +121,10 @@ export function BranchFromRevisionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} title={saving ? 'Wait for the branch to be saved' : undefined} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={saving || !name.trim() || !revision?.id}>
+          <Button onClick={handleSubmit} title={saving ? 'Saving…' : !name.trim() ? 'Enter a branch name first' : !revision?.id ? 'Choose a revision first' : undefined} disabled={saving || !name.trim() || !revision?.id}>
             {saving ? 'Saving…' : 'Create branch'}
           </Button>
         </DialogFooter>
