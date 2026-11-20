@@ -1,9 +1,11 @@
 {
-  "rule": "structure.schema-example-keyword",
+  "kind": "fix",
+  "id": "fix/structure.duplicate-tag",
+  "rule": "structure.duplicate-tag",
   "options": {},
   "finding": {
-    "path": "components.schemas.Pet.properties.name",
-    "message": "Schema uses example, which OpenAPI 3.1 deprecates; use an examples array."
+    "path": "tags.1",
+    "message": "Tag 'pets' is declared more than once."
   },
   "before": {
     "openapi": "3.1.0",
@@ -16,6 +18,9 @@
       {
         "name": "pets",
         "description": "Everything about pets."
+      },
+      {
+        "name": "pets"
       }
     ],
     "paths": {
@@ -50,7 +55,9 @@
             "name": {
               "type": "string",
               "description": "Its name.",
-              "example": "Rex"
+              "examples": [
+                "Rex"
+              ]
             }
           }
         }
@@ -59,17 +66,14 @@
   },
   "plan": [
     {
-      "op": "add",
-      "path": "/components/schemas/Pet/properties/name/examples",
-      "value": [
-        "Rex"
-      ]
-    },
-    {
       "op": "remove",
-      "path": "/components/schemas/Pet/properties/name/example"
+      "path": "/tags/1"
     }
   ],
+  "classification": {
+    "maxSeverity": "docs-only",
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {

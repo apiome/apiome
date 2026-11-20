@@ -1,9 +1,11 @@
 {
-  "rule": "structure.server-url-scheme-case",
+  "kind": "fix",
+  "id": "fix/structure.unused-component",
+  "rule": "structure.unused-component",
   "options": {},
   "finding": {
-    "path": "servers.0",
-    "message": "Server URL 'HTTPS://api.example.com/v1' has a scheme that is not lower case."
+    "path": "components.schemas.Orphan",
+    "message": "Component 'Orphan' in components.schemas is never referenced."
   },
   "before": {
     "openapi": "3.1.0",
@@ -55,22 +57,24 @@
               ]
             }
           }
+        },
+        "Orphan": {
+          "type": "string",
+          "description": "Referenced by nothing."
         }
       }
-    },
-    "servers": [
-      {
-        "url": "HTTPS://api.example.com/v1"
-      }
-    ]
+    }
   },
   "plan": [
     {
-      "op": "replace",
-      "path": "/servers/0/url",
-      "value": "https://api.example.com/v1"
+      "op": "remove",
+      "path": "/components/schemas/Orphan"
     }
   ],
+  "classification": {
+    "maxSeverity": "docs-only",
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -123,11 +127,6 @@
           }
         }
       }
-    },
-    "servers": [
-      {
-        "url": "https://api.example.com/v1"
-      }
-    ]
+    }
   }
 }

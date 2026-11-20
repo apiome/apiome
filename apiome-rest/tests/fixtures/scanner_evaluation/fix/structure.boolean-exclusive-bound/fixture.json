@@ -1,9 +1,11 @@
 {
-  "rule": "naming.tag-case-mismatch",
+  "kind": "fix",
+  "id": "fix/structure.boolean-exclusive-bound",
+  "rule": "structure.boolean-exclusive-bound",
   "options": {},
   "finding": {
-    "path": "paths./pets.get.tags.0",
-    "message": "Tag 'Pets' is declared as 'pets'."
+    "path": "components.schemas.Pet.properties.age",
+    "message": "Schema uses a boolean exclusiveMinimum; OpenAPI 3.1 expects a number."
   },
   "before": {
     "openapi": "3.1.0",
@@ -23,7 +25,7 @@
         "get": {
           "operationId": "listPets",
           "tags": [
-            "Pets"
+            "pets"
           ],
           "summary": "List pets",
           "responses": {
@@ -53,6 +55,15 @@
               "examples": [
                 "Rex"
               ]
+            },
+            "age": {
+              "type": "integer",
+              "description": "Age in years.",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "examples": [
+                3
+              ]
             }
           }
         }
@@ -62,10 +73,18 @@
   "plan": [
     {
       "op": "replace",
-      "path": "/paths/~1pets/get/tags/0",
-      "value": "pets"
+      "path": "/components/schemas/Pet/properties/age/exclusiveMinimum",
+      "value": 0
+    },
+    {
+      "op": "remove",
+      "path": "/components/schemas/Pet/properties/age/minimum"
     }
   ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -113,6 +132,14 @@
               "description": "Its name.",
               "examples": [
                 "Rex"
+              ]
+            },
+            "age": {
+              "type": "integer",
+              "description": "Age in years.",
+              "exclusiveMinimum": 0,
+              "examples": [
+                3
               ]
             }
           }

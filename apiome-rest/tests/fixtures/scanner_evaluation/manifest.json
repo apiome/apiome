@@ -868,6 +868,110 @@
       "expected_blocking_rule_ids": [
         "oncrpc.enum-values-unique"
       ]
+    },
+    {
+      "id": "fix/naming.operation-id-camel-case",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "naming.operation-id-camel-case"
+      ]
+    },
+    {
+      "id": "fix/naming.schema-pascal-case",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "naming.schema-pascal-case"
+      ]
+    },
+    {
+      "id": "fix/naming.tag-case-mismatch",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "naming.tag-case-mismatch"
+      ]
+    },
+    {
+      "id": "fix/structure.boolean-exclusive-bound",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.boolean-exclusive-bound"
+      ]
+    },
+    {
+      "id": "fix/structure.duplicate-tag",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.duplicate-tag"
+      ]
+    },
+    {
+      "id": "fix/structure.empty-required",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.empty-required"
+      ]
+    },
+    {
+      "id": "fix/structure.nullable-keyword",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.nullable-keyword"
+      ]
+    },
+    {
+      "id": "fix/structure.operation-missing-operation-id",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.operation-missing-operation-id"
+      ]
+    },
+    {
+      "id": "fix/structure.operation-missing-tags",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.operation-missing-tags"
+      ]
+    },
+    {
+      "id": "fix/structure.schema-example-keyword",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.schema-example-keyword"
+      ]
+    },
+    {
+      "id": "fix/structure.server-url-scheme-case",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.server-url-scheme-case"
+      ]
+    },
+    {
+      "id": "fix/structure.server-url-trailing-slash",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.server-url-trailing-slash"
+      ]
+    },
+    {
+      "id": "fix/structure.unused-component",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "structure.unused-component"
+      ]
     }
   ]
 }

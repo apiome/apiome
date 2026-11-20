@@ -176,7 +176,7 @@ def test_post_plan_for_a_document() -> None:
 
 
 def test_post_plan_accepts_yaml_and_formats() -> None:
-    fixture = Path(__file__).parent / "fixtures" / "lint_fix" / "structure.unused-component.json"
+    fixture = Path(__file__).parent / "fixtures" / "scanner_evaluation" / "fix" / "structure.unused-component" / "fixture.json"
     yaml_text = yaml.safe_dump(json.loads(fixture.read_text(encoding="utf-8"))["before"], sort_keys=False)
     with patch("app.lint_fix_routes.resolve_style_guide", return_value=builtin_fallback_guide()):
         response = client.post("/v1/lint/fixes/plan", json={"document": yaml_text, "format": "patch"})

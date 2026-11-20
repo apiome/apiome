@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.785.0] - 2026-11-20
+
+### Added
+- **Fix corpus and regression gates (GVM-3.5, #5873):** the scanner-evaluation corpus gains a `fix`
+  fixture kind. Every fixable rule has a one-defect fixture (`before`, expected `plan`, expected
+  `after`, expected classification) under `tests/fixtures/scanner_evaluation/fix/`, moved from
+  `tests/fixtures/lint_fix/`. CI gates: the rule is clean after the fix; no other finding changes;
+  plan and apply are byte-stable twice; the classified diff is non-breaking (the four fixes the
+  classifier reads as breaking are pinned with a reason and withheld by the plan); a fixable rule
+  without a fixture fails `test_every_fixable_rule_has_a_fixture`. The corpus README's fixable table
+  regenerates with `scripts/generate_fix_corpus_readme.py`. No REST change; OpenAPI is unchanged.
+
 ## [1.784.0] - 2026-11-20
 
 ### Added

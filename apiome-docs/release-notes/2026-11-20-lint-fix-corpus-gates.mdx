@@ -1,0 +1,22 @@
+---
+slug: lint-fix-corpus-gates
+title: "Every auto-fix is regression-tested"
+description: "Each fixable lint rule has a fixture and five CI gates that keep a fix inside its finding."
+authors: [apiome]
+---
+
+A fix that quietly changes something other than its finding is worse than no fix. Every fixable
+lint rule now has a one-defect fixture in the scanner-evaluation corpus, and CI holds each fix to
+five guarantees.
+
+{/* truncate */}
+
+- **Clean after the fix:** the rule no longer reports, and the document is exactly the expected one.
+- **Nothing else changes:** every other finding is the same before and after.
+- **Byte-stable:** planning and applying twice changes nothing.
+- **Non-breaking:** the [classified diff](/reference/rest/classified-diff) of the fix is not
+  breaking. The few fixes the classifier reads as breaking stay withheld by the plan.
+- **No fix without a fixture:** a new fixable rule cannot ship without one.
+
+Nothing changes in the product or the API. See
+[What every fix is tested against](/build/auto-fix#what-every-fix-is-tested-against).

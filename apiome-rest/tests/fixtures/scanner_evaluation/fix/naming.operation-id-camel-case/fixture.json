@@ -1,9 +1,11 @@
 {
-  "rule": "structure.nullable-keyword",
+  "kind": "fix",
+  "id": "fix/naming.operation-id-camel-case",
+  "rule": "naming.operation-id-camel-case",
   "options": {},
   "finding": {
-    "path": "components.schemas.Pet.properties.name",
-    "message": "Schema uses nullable, which OpenAPI 3.1 removed; declare null in type instead."
+    "path": "paths./pets.get.operationId",
+    "message": "operationId 'List_pets' is not camelCase."
   },
   "before": {
     "openapi": "3.1.0",
@@ -21,7 +23,7 @@
     "paths": {
       "/pets": {
         "get": {
-          "operationId": "listPets",
+          "operationId": "List_pets",
           "tags": [
             "pets"
           ],
@@ -52,8 +54,7 @@
               "description": "Its name.",
               "examples": [
                 "Rex"
-              ],
-              "nullable": true
+              ]
             }
           }
         }
@@ -63,17 +64,14 @@
   "plan": [
     {
       "op": "replace",
-      "path": "/components/schemas/Pet/properties/name/type",
-      "value": [
-        "string",
-        "null"
-      ]
-    },
-    {
-      "op": "remove",
-      "path": "/components/schemas/Pet/properties/name/nullable"
+      "path": "/paths/~1pets/get/operationId",
+      "value": "listPets"
     }
   ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -117,10 +115,7 @@
           "description": "A pet.",
           "properties": {
             "name": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": "string",
               "description": "Its name.",
               "examples": [
                 "Rex"
