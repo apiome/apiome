@@ -181,7 +181,6 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-2.3 · [#7046](https://github.com/apiome/apiome/issues/7046) | JSON Schema dialect handling per document | Honour `jsonSchemaDialect` / `$schema`, and the 3.0 vs 3.1+ schema differences, in import and emit | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-2.4 · [#7047](https://github.com/apiome/apiome/issues/7047) | Bundle and dereference options | Import and export a spec as bundled, dereferenced or split into files | `enhancement`, `rest`, `cli`, `ui`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui |
 | COA-2.5 · [#7048](https://github.com/apiome/apiome/issues/7048) | OpenAPI 3.2 in Projects: QUERY, additionalOperations, tags, streaming | Author and view the 3.2 additions in the Projects editor and viewers | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
 | COA-2.6 · [#7049](https://github.com/apiome/apiome/issues/7049) | Spec upgrade assistant (2.0 → 3.0 → 3.1 → 3.2) | Upgrade a project or catalog item to a newer OpenAPI version with a reviewed change list | `enhancement`, `rest`, `ui`, `cli`, `v2` | Y | N | M | apiome-rest, apiome-ui, apiome-cli |
@@ -215,6 +214,7 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Documentation:** `ship/export-a-spec.md`; screenshots: n/a (no UI change)
 
 **COA-2.3 · #7046 JSON Schema dialect handling per document**
+- **Shipped:** REST 1.776.0 / OpenAPI 1.604.3. New `app.openapi_schema_dialect` reads the document dialect (`jsonSchemaDialect`, 3.1/3.2 defaults, the 3.0 schema subset) and per-schema `$schema`; import keeps it as `schemaDialect` in the preservation bag and `CanonicalSchemaProjection.source_dialect` reports it. Every 3.0 ⇄ 2020-12 rewrite is recorded — inferred provenance per rewritten object (`record_schema_rewrites`), losses for `openapi-30-nullable-ref` and `openapi-30-schema-dialect`; the 3.0 downgrade folds `anyOf: [X, {type: null}]` back to `nullable`. Tests cover `$dynamicRef`/`$anchor` and the 3.0 → 3.1 → 3.2 → 3.0 corpus chain (the only residue is a default `exclusiveMinimum: false`, recorded on the upgrade hop). Docs: `ship/export-fidelity.md` (**Schema dialects**); release note `json-schema-dialect-per-document`.
 - **Problem:** `canonical_json_schema.py` records a dialect that is always draft 2020-12; OpenAPI 3.0 uses a draft-04-like subset (`nullable`, boolean `exclusiveMinimum`) and 3.1/3.2 allow a declared dialect.
 - **Solution/Scope:**
 - Read and preserve the declared dialect; convert `nullable`/`exclusiveMinimum` forms on upgrade/downgrade with a loss entry where lossy.

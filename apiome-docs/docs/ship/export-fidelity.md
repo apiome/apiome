@@ -183,10 +183,25 @@ version, measured on the OpenAPI Initiative's own test documents.
 | You export | To | What the report says |
 | --- | --- | --- |
 | An item imported from OpenAPI | The **same** OpenAPI version | Nothing is lost. |
-| An item imported from OpenAPI 3.0 | **OpenAPI 3.1** or **3.2** | Nothing is lost. Schemas are rewritten into JSON Schema 2020-12 (`nullable: true` becomes a `"null"` type). |
-| An item imported from OpenAPI 3.1 or 3.2 | **OpenAPI 3.0** | Each construct 3.0 cannot hold is **dropped** and listed: `webhooks`, `jsonSchemaDialect`, `$dynamicRef`, keywords beside a `$ref`, and the 3.2-only constructs. |
+| An item imported from OpenAPI 3.0 | **OpenAPI 3.1** or **3.2** | Nothing is lost. Schemas are rewritten into JSON Schema 2020-12 (`nullable: true` becomes a `"null"` type), and each rewritten schema is listed. A `nullable` beside a `$ref` is listed as a loss, because 3.0 ignored it. |
+| An item imported from OpenAPI 3.1 or 3.2 | **OpenAPI 3.0** | Each construct 3.0 cannot hold is **dropped** and listed: `webhooks`, `jsonSchemaDialect`, `$dynamicRef`, `$anchor`, keywords beside a `$ref`, and the 3.2-only constructs. A declared dialect other than the OpenAPI default (draft-07, say) is named in the report. |
 | An item imported from OpenAPI 3.2 | **OpenAPI 3.1** | Each 3.2-only construct is **dropped** and listed: `$self`, `itemSchema`, `in: querystring` parameters, server `name`, response `summary`, tag `parent` and `kind`. |
 | An item imported from OpenAPI | **Swagger 2.0** | The file is built from the canonical model, and the report says the OpenAPI 3.x constructs are not written. |
+
+### Schema dialects {#schema-dialects}
+
+OpenAPI 3.0 schemas use their own subset of JSON Schema: `nullable: true` instead of a `"null"`
+type, and `exclusiveMinimum: true` beside `minimum` instead of a number. OpenAPI 3.1 and 3.2
+schemas are JSON Schema 2020-12. A 3.1 or 3.2 document can choose another dialect with
+`jsonSchemaDialect`, and one schema can choose its own with `$schema`.
+
+- **Import** keeps the dialect each schema was written in. The JSON Schema Apiome builds for
+  validation names it.
+- **Export across versions** rewrites schemas between the two forms. Each rewritten schema is
+  listed, and each rewrite that changes meaning is listed as a loss.
+- **Round trip:** a 3.0 document exported as 3.1, then 3.2, then 3.0 again comes back as it was.
+  Every change on the way is listed. A default flag such as `exclusiveMinimum: false` is not
+  written back.
 
 An operation or schema edited after import is exported from its current version. The fields
 Apiome has no other place for are still written, and the report lists the edited operation or
