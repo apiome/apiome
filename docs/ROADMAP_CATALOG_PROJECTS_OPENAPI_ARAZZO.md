@@ -181,7 +181,6 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-2.7 · [#7050](https://github.com/apiome/apiome/issues/7050) | Overlay manager in Versions | List, preview, apply and export Overlay 1.0–1.2 documents (incl. `copy` and reusable actions) from the UI | `enhancement`, `ui`, `rest`, `mvp` | Y | Y | M | apiome-ui, apiome-rest |
 | COA-2.8 · [#7051](https://github.com/apiome/apiome/issues/7051) | `$ref` hygiene: refresh, cycles and external-ref policy in the UI | See which external `$ref`s a spec depends on, refresh them, and see cycles | `enhancement`, `ui`, `rest`, `v2` | Y | N | M | apiome-ui, apiome-rest |
 
 **✅ COA-2.1 · #7044 OpenAPI construct losslessness audit — Complete**
@@ -260,7 +259,8 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Technical Stack:** apiome-rest, apiome-ui, apiome-cli
 - **Documentation:** `build/` upgrade page; screenshots: n/a (no UI change)
 
-**COA-2.7 · #7050 Overlay manager in Versions**
+**✅ COA-2.7 · #7050 Overlay manager in Versions — Complete**
+- **Shipped:** REST 1.780.0 / OpenAPI 1.607.0 · UI 0.673.8 · docs 0.487.0. Engine: `apply_overlays` records an `OverlayActionOutcome` per action (kind incl. reusable `ref`, matches, changes, `applied` / `unmatched` / `invalid`), kept out of the fingerprinted `report()`; `ExportOverlayReport.actions` carries them on every export / verify / preview. New `app.version_overlay_diff` builds before / after rows from the ledger with every writer (`changed_by`). REST `POST …/overlays/preview` (draft appended or in place of `replace_overlay_id`, nothing written; also on published revisions) and `POST …/overlays/apply` (409 `overlay-chain-empty` / `overlay-no-changes` / `version-exists`; import quality gate; imports the rendered document as a new version; `version.overlays.applied` audit); GET preview gains `diff`. The import-as-a-version steps moved to `app.openapi_version_import`, shared with the spec upgrade assistant. UI: Versions → **Overlays** gains **New overlay** / pencil **Edit** (editor with **Update**, **Remove**, **Copy**, **Reusable** actions, a **JSON** view, a draft **Preview** with per-action match badges and a before / after table), an **Actions and matches** table and the before / after table on the chain preview, **Apply as version** and **Export with overlays** (Export Studio deep link). Acceptance: `tests/test_version_overlay_manager.py::test_acceptance_create_preview_apply` (update + remove + copy → preview diff → save → apply) and `apiome-ui/tests/overlay-manager.test.tsx`. Docs: new `build/overlay-manager.mdx` (named so its help-catalog id does not collide with `bring-in/overlays.md`), `build/versions.mdx`, `bring-in/overlays.md`, REST reference; screenshots `overlays-list`, `overlay-preview` (and `version-overlays` recaptured); release note `overlay-manager`; What's new line.
 - **Problem:** Overlay 1.0–1.2 is applied in `openapi_overlay.py` with provenance, stored overlays and export-with-overlay exist, but a user cannot manage them in the app (UI surface unconfirmed).
 - **Solution/Scope:**
 - Versions → **Overlays**: stored overlays, an action list with per-target match counts, a before/after diff preview, apply as a version, export with overlay.

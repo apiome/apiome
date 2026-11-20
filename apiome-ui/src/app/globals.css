@@ -43207,6 +43207,89 @@ tr[data-selected="true"] > td:first-child {
   gap: var(--space-2);
 }
 
+/* ---- Overlay manager (COA-2.7, #7050) -------------------------------------
+   The Overlays tab's editor dialog (name / version / title, the action rows, the JSON view) and
+   the preview tables' captions and before / after cells. Tokens only. */
+.vovl-caption {
+  caption-side: top;
+  padding-block-end: var(--space-1);
+  text-align: start;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.vovl-diff__before {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.vovl-diff__after {
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.vovl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.vovl-editor__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+}
+
+.vovl-editor__mode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vovl-editor__mode-label {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.vovl-editor__json {
+  font-size: var(--fs-xs);
+}
+
+.vovl-editor__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vovl-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.vovl-action__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vovl-action__grow {
+  flex: 1 1 auto;
+}
+
+.vovl-error {
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
 /* ---- Workspace → Single sign-on (EID-1.2, #5012) ---------------------------
    `/ade/dashboard/sso`: the provider list reuses the Teams table (`.tm-table`); these rules draw
    the add dialog's form, the provider drawer and the DNS challenge of its Domains tab. Tokens

@@ -1,5 +1,7 @@
 /**
- * Stored overlay chain transport and model — GVM-4.3 (#5878).
+ * Stored overlay chain transport and model — GVM-4.3 (#5878); overlay manager additions — COA-2.7
+ * (#7050): draft previews, replace, apply as a version, per-action match counts and before / after
+ * rows.
  *
  * Thin `fetch` wrappers over `/api/versions/{v}/overlays*`, which forward to apiome-rest for the
  * session's tenant. Every function resolves with parsed data or throws a
@@ -64,13 +66,77 @@ export interface VersionOverlayChain {
   render: VersionOverlayRender | null;
 }
 
+/** What one overlay action did (REST `ExportOverlayActionRow`, `report.actions`). */
+export interface OverlayActionOutcome {
+  /** The overlay's label: `stored:<name>` or `draft:<name>`. */
+  overlay: string;
+  /** 0-based index of the action in the overlay's `actions`. */
+  action_index: number;
+  /** The JSONPath target (empty when the action had none). */
+  target: string;
+  /** `update`, `remove`, `copy` or `unknown`. */
+  kind: string;
+  /** The reusable action it references (`components.actions.<name>`), if any. */
+  ref?: string | null;
+  /** Nodes the target matched. */
+  matches: number;
+  /** Values the action changed. */
+  changes: number;
+  /** `applied`, `unmatched` or `invalid`. */
+  status: 'applied' | 'unmatched' | 'invalid' | string;
+}
+
+/** One action that changed a value (the per-value provenance of a diff row). */
+export interface OverlayChangedBy {
+  overlay: string | null;
+  action_index: number | null;
+  target: string | null;
+  kind: string;
+}
+
+/** A value the chain changed, before and after (REST `VersionOverlayDiffRow`). */
+export interface OverlayDiffRow {
+  pointer: string;
+  kind: string;
+  before: unknown;
+  before_present: boolean;
+  after: unknown;
+  after_present: boolean;
+  changed_by: OverlayChangedBy[];
+}
+
 /** The chain preview (REST `VersionOverlayPreviewOut`). */
 export interface VersionOverlayPreview {
   version_record_id: string;
   source_fingerprint: string;
   resolved_fingerprint: string;
   document: Record<string, unknown>;
-  report: ExportOverlayReport | null;
+  report: (ExportOverlayReport & { actions?: OverlayActionOutcome[] }) | null;
+  /** Before / after rows (absent from replies older than COA-2.7). */
+  diff?: OverlayDiffRow[];
+  /** The draft's label in `report`, when a draft was previewed. */
+  draft?: string | null;
+}
+
+/** An unsaved overlay to preview. */
+export interface VersionOverlayDraft {
+  name: string;
+  document: Record<string, unknown>;
+}
+
+/** What `POST …/overlays/apply` created (REST `VersionOverlayApplyOut`). */
+export interface VersionOverlayApplyResult {
+  project_id: string;
+  version_record_id: string;
+  version_label: string;
+  source_version_record_id: string;
+  overlay_count: number;
+  change_count: number;
+}
+
+/** The label the stored chain gives an overlay in reports (`stored:<name>`). */
+export function storedOverlayLabel(name: string): string {
+  return `stored:${name}`;
 }
 
 /** The body of an add or replace. */
@@ -107,7 +173,7 @@ export class VersionOverlaysError extends Error {
  *
  * @param projectId The revision's project.
  * @param versionId The revision.
- * @param suffix `''`, `'/preview'` or `'/<id>'`.
+ * @param suffix `''`, `'/preview'`, `'/apply'` or `'/<id>'`.
  */
 export function overlaysUrl(projectId: string, versionId: string, suffix = ''): string {
   return `/api/versions/${encodeURIComponent(versionId)}/overlays${suffix}?projectId=${encodeURIComponent(projectId)}`;
@@ -160,6 +226,60 @@ export async function fetchVersionOverlayPreview(
   versionId: string
 ): Promise<VersionOverlayPreview> {
   return (await call(overlaysUrl(projectId, versionId, '/preview'))) as VersionOverlayPreview;
+}
+
+/**
+ * Render the chain with an unsaved draft: appended (a new overlay) or in a stored overlay's place
+ * (an edit, `replaceOverlayId`). Nothing is written.
+ *
+ * @param projectId The revision's project.
+ * @param versionId The revision.
+ * @param draft The unsaved overlay.
+ * @param replaceOverlayId The stored overlay the draft stands in for, when editing.
+ * @returns The preview, with `draft` naming the draft's label in the report.
+ */
+export async function previewVersionOverlayDraft(
+  projectId: string,
+  versionId: string,
+  draft: VersionOverlayDraft,
+  replaceOverlayId?: string | null
+): Promise<VersionOverlayPreview> {
+  const body: Record<string, unknown> = { draft };
+  if (replaceOverlayId) body.replace_overlay_id = replaceOverlayId;
+  return (await call(overlaysUrl(projectId, versionId, '/preview'), { method: 'POST', body })) as VersionOverlayPreview;
+}
+
+/**
+ * Import the revision with its chain applied as a new version of the same project.
+ *
+ * @param projectId The revision's project.
+ * @param versionId The revision whose chain is applied.
+ * @param versionLabel The new version's label; blank lets Apiome pick a date/time label.
+ * @returns The new version.
+ */
+export async function applyVersionOverlays(
+  projectId: string,
+  versionId: string,
+  versionLabel?: string | null
+): Promise<VersionOverlayApplyResult> {
+  const label = (versionLabel ?? '').trim();
+  return (await call(overlaysUrl(projectId, versionId, '/apply'), {
+    method: 'POST',
+    body: label ? { version_label: label } : {},
+  })) as VersionOverlayApplyResult;
+}
+
+/** Replace one overlay of a draft revision's chain (it keeps its position and gets a new id). */
+export async function replaceVersionOverlay(
+  projectId: string,
+  versionId: string,
+  overlayId: string,
+  body: VersionOverlayWrite
+): Promise<StoredVersionOverlay> {
+  return (await call(overlaysUrl(projectId, versionId, `/${encodeURIComponent(overlayId)}`), {
+    method: 'PUT',
+    body,
+  })) as StoredVersionOverlay;
 }
 
 /** Add an overlay to a draft revision's chain. */

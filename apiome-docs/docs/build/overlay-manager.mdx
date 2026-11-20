@@ -1,0 +1,141 @@
+---
+title: Manage overlays in Versions
+description: Write, preview, apply and export OpenAPI Overlays from a version's Overlays tab.
+sidebar_position: 3.3
+tags: [openapi, overlay, versions]
+---
+
+<Route path="/ade/dashboard/versions" />
+
+The **Overlays** tab on **Versions** is the overlay manager. A version's overlays are a stored,
+ordered chain of [OpenAPI Overlay](../bring-in/overlays.md) 1.0, 1.1 and 1.2 documents. They change
+what the version **exports and publishes** (public descriptions, a partner's servers, `x-`
+extensions) and leave the version itself unchanged. In the tab you can:
+
+- write an overlay in the app, with **Update**, **Remove**, **Copy** and **Reusable** actions;
+- preview it, with the number of values each action's target matches and every change before and
+  after;
+- **apply** the chain as a new version, or **export** the version with the chain applied.
+
+Overlays modify OpenAPI documents, so the tab works on versions imported from OpenAPI or Swagger.
+
+<Screenshot id="overlays-list" alt="The Overlays tab: one stored overlay with New overlay, Upload overlay, Preview, Apply as version and Export with overlays, then the preview's action table with a match count per action and the before and after table" />
+
+## The chain
+
+1. Open **Versions**, pick the project and **click the “Overlays” tab**.
+2. Pick the **Revision**. Each overlay is listed in the order it applies, with its number of actions,
+   its `sha256:` fingerprint and where it came from: **Uploaded**, **Export Studio**,
+   **Agent enrichment** or **Lint fix**.
+3. On a draft revision:
+   - **Click “New overlay”** to write one (see below);
+   - **click “Upload overlay”** to add overlay files (`.yaml`, `.yml` or `.json`, up to 1 MB each);
+   - **click the pencil** on a row to edit that overlay;
+   - **click ×** on a row to remove it.
+
+A revision holds at most 10 overlays. A published revision's chain is read-only: you can still
+preview it, apply it as a version and export with it, but you cannot change it.
+
+## Write an overlay
+
+**Click “New overlay”** (or the pencil on a stored overlay) to open the editor.
+
+1. Enter a **Name** (how the chain lists it) and a **Title** (the document's `info.title`).
+2. Choose the **Overlay version**. New overlays start at **1.1.0**, the first version with `copy`.
+3. For each action, choose what it does and enter a JSONPath **Target**, which selects the values to
+   change:
+
+   | Action | What it does | Needs |
+   | --- | --- | --- |
+   | **Update** | Merges the **Value (JSON)** into each match. Objects merge, and any other value replaces. | 1.0 |
+   | **Remove** | Removes every match. | 1.0 |
+   | **Copy** | Merges the value at **Copy from** into each match. **Copy from** must select exactly one value. | 1.1 |
+   | **Reusable** | Runs an action the overlay declares under `components.actions`, on this target. | 1.2 |
+
+   **Click “Add action”** for another one. The arrows reorder actions, and the bin deletes one.
+   Actions apply top to bottom.
+4. **Click “Preview”.** Apiome renders the revision with its chain and this unsaved overlay. When you
+   edit an overlay, it previews in that overlay's place. A new overlay previews after the chain.
+   - Each action shows how many values its target matched: **1 match**, **3 matches**,
+     **No match** (the target selects nothing, so the action changes nothing) or **Not applied**
+     (the action was refused, and the message under it says why).
+   - **Before and after** lists every value the preview changes: its JSON Pointer, the value in the
+     revision, the value after the overlays (**—** when there is none), and the overlay action
+     that changed it.
+5. **Click “Save overlay”.** Nothing is stored before this. Saving an edit replaces the overlay in
+   place, at the same position.
+
+If you change a field after previewing, the editor says **Edited since this preview**. Preview
+again to see the current changes.
+
+**Edit as → JSON** shows the whole Overlay document. Use it for anything the form does not cover,
+such as `extends`, `components.actions` (the reusable actions) or `x-` extensions. The form keeps
+those keys when you switch back.
+
+<Screenshot id="overlay-preview" alt="The New overlay editor after Preview: Update, Remove and Copy actions each showing 1 match, then the before and after table naming the action that changed each value" />
+
+### Example
+
+This overlay retitles the API for partners, drops the internal server and copies the partner
+defaults onto one operation:
+
+| # | Action | Target | Value / Copy from |
+| --- | --- | --- | --- |
+| 1 | **Update** | `$.info` | `{"title": "Pets for Partners"}` |
+| 2 | **Remove** | `$.servers[0]` | |
+| 3 | **Copy** | `$.paths['/pets'].get` | `$['x-partner-defaults']` |
+
+## Preview the chain
+
+**Click “Preview”** under the chain to render the whole chain the way an export does. It shows:
+
+- the source and resolved fingerprints;
+- **Actions and matches**: every action of every overlay, with its match count;
+- **Before and after**: every changed value, with the action that changed it (its provenance). When
+  several actions change one value, they are listed in order and the last one wins;
+- any findings, such as `overlay.unmatched-target`, and the full change ledger.
+
+## Apply as a version
+
+Overlays normally apply only at export and publish. To make their changes part of a version:
+
+1. **Click “Apply as version”.**
+2. Enter a **New version label**, or leave it empty for a date and time label. A label the
+   project already uses is refused.
+3. **Click “Apply as version”** in the dialog.
+
+Apiome imports the rendered document, exactly what **Preview** shows, as a new version of the
+project. It runs the workspace's import quality gate first, as an upload would. The revision you
+applied from keeps its overlays. The new version starts with an empty chain, because the changes
+are now part of its source. Apply is refused when the chain is empty or changes nothing.
+
+You need permission to import into the project and to edit it.
+
+## Export with overlays
+
+**Click “Export with overlays”** to open [Export studio](../ship/export-studio.mdx) on this
+revision. Every export of the revision applies its chain, unless you switch **Apply stored overlays**
+off in the Studio's **Overlays** step.
+
+## REST API
+
+| Call | What it does |
+| --- | --- |
+| `GET …/overlays` | The chain. |
+| `POST …/overlays` · `PUT …/overlays/{id}` · `DELETE …/overlays/{id}` | Add, replace or remove an overlay (draft revisions only). |
+| `GET …/overlays/preview` | Render the chain. `report.actions` has a match count per action, and `diff` has the before and after rows. |
+| `POST …/overlays/preview` | Render with an unsaved `draft` overlay, appended or in place of `replace_overlay_id`. Nothing is written. |
+| `POST …/overlays/apply` | Import the rendered document as a new version (`version_label` optional). |
+
+The prefix is `/v1/versions/{tenant_slug}/{project_id}/{version_record_id}`. See the
+[versions reference](/reference/rest/versions#apply-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-apply-post).
+Refusals carry a `code`:
+
+| Code | When |
+| --- | --- |
+| `overlay-version-published` (409) | A write on a published revision. |
+| `overlay-chain-full` (409) | The chain already holds 10 overlays. |
+| `overlay-chain-empty` (409) | Apply on a revision with no overlays. |
+| `overlay-no-changes` (409) | Apply when the chain changes nothing. |
+| `version-exists` (409) | The new version label is taken. |
+| `overlay-apply-import-failed` (422) | The rendered document could not be imported. |

@@ -25,9 +25,7 @@ from pasted text needs ``projects:view``; apply needs ``imports:create`` and ``p
 from __future__ import annotations
 
 import asyncio
-import base64
 import logging
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -39,6 +37,13 @@ from .export_source import ExportSourceError, _is_decomposed_openapi, _reconstru
 from .import_ingestion import IngestionError, parse_document
 from .intake_resource_guard import IntakeLimitError
 from .openapi_upgrade import UpgradeError, UpgradePlan, plan_upgrade
+from .openapi_version_import import (
+    choose_version_label,
+    document_bytes,
+    enforce_openapi_quality_gate,
+    existing_version_labels,
+    import_openapi_as_version,
+)
 from .permissions import Action, Resource, enforce_permission
 
 logger = logging.getLogger(__name__)
@@ -244,18 +249,12 @@ async def plan_openapi_upgrade(
 
 def _existing_labels(project_id: str, tenant_id: str) -> List[str]:
     """Every version label the project already uses."""
-    return [
-        str(row.get("version_id"))
-        for row in db.get_versions_for_project(project_id, tenant_id)
-        if row.get("version_id")
-    ]
+    return existing_version_labels(project_id, tenant_id)
 
 
 def upgraded_bytes(plan: UpgradePlan) -> bytes:
     """The upgraded document as the JSON bytes the import receives."""
-    import json
-
-    return json.dumps(plan.document, indent=2, ensure_ascii=False).encode("utf-8")
+    return document_bytes(plan.document)
 
 
 async def _enforce_quality_gate(
@@ -266,23 +265,14 @@ async def _enforce_quality_gate(
     Raises:
         HTTPException: 409 ``QUALITY_POLICY_BLOCKED`` when the policy refuses the document.
     """
-    from .models import SpecImportOptions, SpecImportProjectTarget, SpecImportStartMetadata, SpecImportVersionTarget
-    from .spec_import_routes import _enforce_quality_gate as enforce
-
-    metadata = SpecImportStartMetadata(
-        source_kind="openapi",
-        project=SpecImportProjectTarget(project_id=project_id),
-        version=SpecImportVersionTarget(version_id=label),
-        options=SpecImportOptions(input_kind="file"),
-    )
-    await enforce(
+    await enforce_openapi_quality_gate(
         tenant_id=tenant_id,
         tenant_slug=tenant_slug,
         user_id=user_id,
+        project_id=project_id,
+        label=label,
         raw=raw,
-        metadata=metadata,
         filename="openapi-upgrade.json",
-        content_type="application/json",
     )
 
 
@@ -298,43 +288,23 @@ def _import_upgraded(
 ) -> str:
     """Import the upgraded document onto the project as a new version; return its id (blocking).
 
-    The import keeps the options the source version's upload recorded (when it recorded any), so a
-    catalog item's next re-upload replays the same importer.
-
     Raises:
         HTTPException: 422 ``upgrade-import-failed`` when the pipeline does not complete.
     """
-    from .catalog_upload_reconcile import stored_upload_spec
-    from .import_source import get_import_source
-    from .import_source_pipeline import run_adapter_import_job
-
-    project = db.get_project_by_id(project_id, tenant_id) or {}
-    spec = stored_upload_spec(meta.get("format_metadata"))
-    options = dict(spec["options"]) if spec and spec.get("sourceKind") == "openapi" else {}
-    slug = project.get("slug") or meta.get("project_slug") or "spec"
-    payload = {
-        "tenant_id": tenant_id,
-        "user_id": actor_id,
-        "filename": f"{slug}-openapi-{plan.target_version}.json",
-        "document_base64": base64.standard_b64encode(raw).decode("ascii"),
-        "rest_job_id": f"openapi-upgrade-{project_id}",
-        "metadata": {
-            "source_kind": "openapi",
-            "project": {"name": project.get("name"), "slug": slug},
-            "version": {
-                "version_id": label,
-                "description": f"Upgraded from OpenAPI {plan.source_version} to {plan.target_version}.",
-            },
-            "options": {**options, "input_kind": "file"},
-            "existing_project_id": project_id,
-        },
-    }
-    adapter = get_import_source("openapi")
-    final = asyncio.run(run_adapter_import_job(adapter, payload))
-    if final.state != "completed" or final.result is None or not final.result.version_record_id:
-        reason = final.error.message if final.error is not None else f"the import ended {final.state}"
-        raise _refuse(422, "upgrade-import-failed", f"The upgraded document could not be imported: {reason}")
-    return str(final.result.version_record_id)
+    return import_openapi_as_version(
+        tenant_id=tenant_id,
+        actor_id=actor_id,
+        project_id=project_id,
+        format_metadata=meta.get("format_metadata"),
+        fallback_slug=meta.get("project_slug"),
+        label=label,
+        raw=raw,
+        filename_suffix=f"-openapi-{plan.target_version}.json",
+        description=f"Upgraded from OpenAPI {plan.source_version} to {plan.target_version}.",
+        rest_job_id=f"openapi-upgrade-{project_id}",
+        failure_code="upgrade-import-failed",
+        failure_message="The upgraded document could not be imported",
+    )
 
 
 @router.post("/{tenant_slug}/apply", response_model=UpgradeApplyResponse, summary="Apply a reviewed OpenAPI upgrade")
@@ -365,12 +335,8 @@ async def apply_openapi_upgrade(
             409, "plan-stale", "The version changed since the plan was made. Review the new plan and apply it."
         )
 
-    from .versioning import mint_version_tag
-
     existing = await asyncio.to_thread(_existing_labels, body.project_id, tenant_id)
-    label = (body.version_label or "").strip() or mint_version_tag(datetime.now(timezone.utc), existing)
-    if label in existing:
-        raise _refuse(409, "version-exists", f"Version {label!r} already exists; choose another label.")
+    label = choose_version_label(body.version_label, existing)
     raw = upgraded_bytes(plan)
     await _enforce_quality_gate(
         tenant_id=tenant_id,

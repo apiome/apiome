@@ -73,6 +73,10 @@ __all__ = [
     "MAX_MATCHES_PER_ACTION",
     "MAX_PROVENANCE_RECORDS",
     "OVERLAY_EXTRA_KEY",
+    "ACTION_APPLIED",
+    "ACTION_INVALID",
+    "ACTION_UNMATCHED",
+    "OverlayActionOutcome",
     "OverlayApplication",
     "OverlayFinding",
     "OVERLAY_READ_VERSIONS",
@@ -238,6 +242,52 @@ class OverlayFinding:
         }
 
 
+#: :attr:`OverlayActionOutcome.status` values (COA-2.7).
+ACTION_APPLIED = "applied"
+ACTION_UNMATCHED = "unmatched"
+ACTION_INVALID = "invalid"
+
+
+@dataclass(frozen=True)
+class OverlayActionOutcome:
+    """What one overlay action did — the per-target match count the overlay manager lists (COA-2.7).
+
+    Attributes:
+        overlay: Label of the overlay the action came from.
+        action_index: 0-based index of the action inside that overlay's ``actions``.
+        target: The action's ``target`` expression (empty when it had none).
+        kind: ``update``, ``remove``, ``copy`` or ``unknown`` (an action too malformed to classify).
+        ref: The reusable action it references (``components.actions.<name>``), or ``None``.
+        matches: Nodes the target selected when the action ran (before the
+            :data:`MAX_MATCHES_PER_ACTION` cap); ``0`` for an action that was not evaluated.
+        changes: Provenance records the action produced (values it changed).
+        status: :data:`ACTION_APPLIED`, :data:`ACTION_UNMATCHED` (a valid target that selected
+            nothing) or :data:`ACTION_INVALID` (refused; its finding says why).
+    """
+
+    overlay: str
+    action_index: int
+    target: str
+    kind: str
+    ref: Optional[str]
+    matches: int
+    changes: int
+    status: str
+
+    def as_dict(self) -> Dict[str, Any]:
+        """Serialize for the export overlay report."""
+        return {
+            "overlay": self.overlay,
+            "action_index": self.action_index,
+            "target": self.target,
+            "kind": self.kind,
+            "ref": self.ref,
+            "matches": self.matches,
+            "changes": self.changes,
+            "status": self.status,
+        }
+
+
 @dataclass
 class OverlayApplication:
     """The outcome of applying an overlay chain to a base document.
@@ -252,6 +302,8 @@ class OverlayApplication:
         provenance_total: Total number of changes observed (including dropped ones).
         revisions: ``overlay label → revision`` (``1.1``) each overlay was applied with; the report
             lists only those other than ``1.0``.
+        actions: One :class:`OverlayActionOutcome` per action, in application order (COA-2.7). Not
+            part of :meth:`report`, whose shape the canonical model's fingerprint depends on.
     """
 
     document: Dict[str, Any]
@@ -262,6 +314,7 @@ class OverlayApplication:
     provenance_total: int = 0
 
     revisions: Dict[str, str] = field(default_factory=dict)
+    actions: List[OverlayActionOutcome] = field(default_factory=list)
 
     def report(self) -> Dict[str, Any]:
         """Build the deterministic ``overlay`` extras block the adapter publishes."""
@@ -399,8 +452,20 @@ def apply_overlays(
             if unresolved is not None:
                 result.findings.append(unresolved)
         for index, action in enumerate(actions):
-            _apply_action(
-                result, label, index, _expand_action(label, overlay, revision, index, action, result), revision
+            expanded = _expand_action(label, overlay, revision, index, action, result)
+            changes_before = len(result.provenance)
+            status, matches = _apply_action(result, label, index, expanded, revision)
+            result.actions.append(
+                OverlayActionOutcome(
+                    overlay=label,
+                    action_index=index,
+                    target=_action_target(expanded if expanded is not None else action),
+                    kind=_action_kind(expanded),
+                    ref=_action_ref(action),
+                    matches=matches,
+                    changes=len(result.provenance) - changes_before,
+                    status=status,
+                )
             )
         result.applied.append(label)
 
@@ -805,11 +870,18 @@ def _check_action(
     return target, remove, has_copy and not remove
 
 
-def _apply_action(result: OverlayApplication, overlay: str, index: int, action: Any, revision: str = "1.0") -> None:
-    """Apply one Overlay action with ``revision``'s semantics, recording provenance and findings."""
+def _apply_action(
+    result: OverlayApplication, overlay: str, index: int, action: Any, revision: str = "1.0"
+) -> Tuple[str, int]:
+    """Apply one Overlay action with ``revision``'s semantics, recording provenance and findings.
+
+    Returns:
+        ``(status, matches)`` — one of the ``ACTION_*`` statuses and how many nodes the target
+        selected (``0`` when it was not evaluated).
+    """
     checked = _check_action(result, overlay, index, action, revision)
     if checked is None:
-        return
+        return ACTION_INVALID, 0
     target, remove, uses_copy = checked
 
     def _finding(code: str, message: str) -> None:
@@ -824,14 +896,15 @@ def _apply_action(result: OverlayApplication, overlay: str, index: int, action: 
             FINDING_TARGET_EXPRESSION_INVALID,
             f"Target {target!r} of overlay {overlay!r} could not be evaluated: {exc}.",
         )
-        return
+        return ACTION_INVALID, 0
     if not matches:
         _finding(
             FINDING_UNMATCHED_TARGET,
             f"Target {target!r} of overlay {overlay!r} (action #{index}) matched "
             "nothing in the document; the action was not applied.",
         )
-        return
+        return ACTION_UNMATCHED, 0
+    selected = len(matches)
     if len(matches) > MAX_MATCHES_PER_ACTION:
         _finding(
             FINDING_ACTION_INVALID,
@@ -851,7 +924,7 @@ def _apply_action(result: OverlayApplication, overlay: str, index: int, action: 
 
     if remove:
         _remove_matches(matches, _record, _legacy_finding, target, overlay)
-        return
+        return ACTION_APPLIED, selected
 
     if uses_copy:
         source = action["copy"]
@@ -862,14 +935,14 @@ def _apply_action(result: OverlayApplication, overlay: str, index: int, action: 
                 FINDING_TARGET_EXPRESSION_INVALID,
                 f"Copy source {source!r} of overlay {overlay!r} could not be evaluated: {exc}.",
             )
-            return
+            return ACTION_INVALID, selected
         if len(sources) != 1:
             _finding(
                 FINDING_ACTION_INVALID,
                 f"Copy source {source!r} of overlay {overlay!r} (action #{index}) selected {len(sources)} nodes; "
                 "`copy` must select exactly one.",
             )
-            return
+            return ACTION_INVALID, selected
         payload = copy.deepcopy(sources[0].value)
     else:
         payload = action.get("update")
@@ -882,9 +955,41 @@ def _apply_action(result: OverlayApplication, overlay: str, index: int, action: 
                 f"Target {target!r} of overlay {overlay!r} selected a mix of {', '.join(sorted(shapes))} nodes; "
                 f"Overlay {revision} requires them to be all objects, all arrays or all primitives.",
             )
-            return
+            return ACTION_INVALID, selected
     for datum in matches:
         _update_match(datum, payload, _record, _legacy_finding, target, overlay, revision)
+    return ACTION_APPLIED, selected
+
+
+def _action_target(action: Any) -> str:
+    """The action's ``target`` expression, or ``""`` when it has none."""
+    target = action.get("target") if isinstance(action, Mapping) else None
+    return target if isinstance(target, str) else ""
+
+
+def _action_kind(action: Any) -> str:
+    """Classify an (expanded) action the way the overlay manager labels it.
+
+    ``remove`` wins over ``copy``, which wins over ``update`` — the precedence the specification
+    gives; ``unknown`` for an action that is not an object or declares none of them.
+    """
+    if not isinstance(action, Mapping):
+        return "unknown"
+    if action.get("remove") is True:
+        return "remove"
+    if "copy" in action:
+        return "copy"
+    if "update" in action:
+        return "update"
+    return "unknown"
+
+
+def _action_ref(action: Any) -> Optional[str]:
+    """The reusable action an action references (``$ref: '#/components/actions/<name>'``), else ``None``."""
+    ref = action.get("$ref") if isinstance(action, Mapping) else None
+    if isinstance(ref, str) and ref.startswith(_COMPONENT_ACTION_PREFIX):
+        return ref[len(_COMPONENT_ACTION_PREFIX) :].replace("~1", "/").replace("~0", "~") or None
+    return None
 
 
 def _shape(value: Any) -> str:
