@@ -533,7 +533,7 @@ def audit_document(name: str, document: Dict[str, Any]) -> DocumentAudit:
         round_trip_lossless=diff(model, reimported).is_empty(),
         losses=losses,
     )
-    if version in ("3.1", "3.2"):
+    if version in ("3.0", "3.1", "3.2"):
         from .openapi_validator import validate_openapi_document
 
         # Only errors the export introduced count: the bundled meta-schema can be stricter
