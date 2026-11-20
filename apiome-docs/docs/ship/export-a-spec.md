@@ -139,6 +139,12 @@ version. On the target card and in the options, a badge says what that choice do
 - **3.0** and **2.0** are downgrades of the 3.1 document. They report the same losses, plus what
   their version cannot express.
 
+Every version is checked against its own official schema before you download it, and when you
+import a document: the OpenAPI 3.2, 3.1 (including 3.1.0, 3.1.1 and 3.1.2) and 3.0 schemas, and the
+Swagger 2.0 schema. A fault comes back with its location, such as `paths//pets/get/responses/200`.
+A document whose version has no schema to check against is reported as **not validated**, never as
+valid.
+
 The fidelity report is computed for the version you pick, so changing **openapi_version** updates
 it. From the CLI, run `apiome export openapi-3.1 <item> --out openapi.json --option openapi_version=3.2`.
 

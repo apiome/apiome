@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.775.0] - 2026-11-20
+
+### Added
+- **Every OpenAPI version is validated against its meta-schema — OpenAPI 1.604.2 (COA-2.2, #7045):**
+  `openapi_validator.py` bundled the 3.1 and 3.2 meta-schemas only, so 3.0 and Swagger 2.0
+  documents were never schema-validated and the 3.1.2 patch release had no explicit coverage.
+  - Vendored the official OpenAPI 3.0 (`oas/3.0/schema/2021-09-28`) and Swagger 2.0 schemas
+    (JSON Schema draft-04, checked with `Draft4Validator`); `validate_openapi_document` selects the
+    schema from the declared `swagger` / `openapi` version. Invalid 3.0 and 2.0 documents fail with
+    located errors; the 3.1.0 / 3.1.1 / 3.1.2 patch releases are covered by tests.
+  - `has_meta_schema` and `validation_status` (`validated` / `invalid` / `not_validated`): a
+    document no meta-schema covers is *not validated*, never reported valid (the RC7 rule).
+  - The export round-trip now schema-checks the 3.0 and 2.0 downgrades (`schemaChecked` is true
+    for them); the construct audit checks 3.0 too.
+
 ## [1.774.0] - 2026-11-20
 
 ### Fixed

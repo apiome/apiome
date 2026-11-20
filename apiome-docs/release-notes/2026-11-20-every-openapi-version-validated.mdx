@@ -1,0 +1,21 @@
+---
+slug: every-openapi-version-validated
+title: "Every OpenAPI version is validated"
+description: "OpenAPI 3.0 and Swagger 2.0 documents are now checked against their official schemas."
+authors: [apiome]
+---
+
+OpenAPI 3.0 and Swagger 2.0 documents are now checked against their own official schemas, the same
+way 3.1 and 3.2 already were.
+
+{/* truncate */}
+
+- **Added:** an invalid 3.0 or 2.0 document is refused with the location of each fault, on import
+  and before an export is offered. A valid one passes.
+- **3.1.x:** 3.1.0, 3.1.1 and 3.1.2 are each covered by the 3.1 schema and by tests.
+- **Not validated:** a document whose version has no schema to check against is reported as
+  *not validated*, never as valid.
+- **Exports:** the OpenAPI 3.0 and Swagger 2.0 downgrades are now checked against their schema
+  as well as re-imported.
+
+See [Export a spec](/ship/export-a-spec#openapi-32-31-30-and-swagger-20).

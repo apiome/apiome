@@ -181,7 +181,6 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-2.2 · [#7045](https://github.com/apiome/apiome/issues/7045) | Validate every OpenAPI version against its meta-schema | Add 3.0 and 2.0 meta-schema validation and 3.1.2 conformance; never report "valid" without having validated | `enhancement`, `rest`, `mvp` | Y | Y | S | apiome-rest |
 | COA-2.3 · [#7046](https://github.com/apiome/apiome/issues/7046) | JSON Schema dialect handling per document | Honour `jsonSchemaDialect` / `$schema`, and the 3.0 vs 3.1+ schema differences, in import and emit | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-2.4 · [#7047](https://github.com/apiome/apiome/issues/7047) | Bundle and dereference options | Import and export a spec as bundled, dereferenced or split into files | `enhancement`, `rest`, `cli`, `ui`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui |
 | COA-2.5 · [#7048](https://github.com/apiome/apiome/issues/7048) | OpenAPI 3.2 in Projects: QUERY, additionalOperations, tags, streaming | Author and view the 3.2 additions in the Projects editor and viewers | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
@@ -204,6 +203,7 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Documentation:** `ship/export-fidelity.md`, new `reference/openapi-construct-matrix.md`; screenshots: n/a (no UI change)
 
 **COA-2.2 · #7045 Validate every OpenAPI version against its meta-schema**
+- **Shipped:** REST 1.775.0 / OpenAPI 1.604.2. Vendored the official OpenAPI 3.0 (`oas/3.0/schema/2021-09-28`) and Swagger 2.0 schemas (draft-04, `Draft4Validator`); `validate_openapi_document` picks the schema from the declared `swagger` / `openapi` version, and 3.1.0 / 3.1.1 / 3.1.2 are covered explicitly. New `has_meta_schema` / `validation_status` (`validated` / `invalid` / `not_validated`) so a document no schema covers is never reported valid. The export round-trip now schema-checks the 3.0 and 2.0 downgrades and the construct audit checks 3.0. Docs: `ship/export-a-spec.md`; release note `every-openapi-version-validated`. The COA-2.1 follow-up (bundled 3.1 meta-schema rejecting a path-item `$ref` and `x-` keys in a Callback Object) is not part of this ticket.
 - **Problem:** `openapi_validator.py` bundles the 3.1 and 3.2 meta-schemas only; 3.0 and Swagger 2.0 documents are not schema-validated, and the 3.1.2 patch release has no explicit coverage.
 - **Solution/Scope:**
 - Vendor the official 3.0 and 2.0 schemas; validate on import and before export for each emitted version.

@@ -48,7 +48,7 @@ from .emitter import EmitResult, Loss
 from .import_source import ImportSourceError
 from .openapi_emitter import OpenApiEmitOptions, OpenApiEmitter
 from .openapi_import_source import OpenApiImportSource
-from .openapi_validator import validate_openapi_document
+from .openapi_validator import has_meta_schema, validate_openapi_document
 
 __all__ = [
     "RoundTripStatus",
@@ -97,8 +97,9 @@ class RoundTripReport(BaseModel):
     )
     schema_checked: bool = Field(
         description="Whether OpenAPI meta-schema validation was applicable and run "
-        "(true for OpenAPI 3.1 / 3.2, which ship a bundled meta-schema; false for a "
-        "3.0 or Swagger 2.0 downgrade — their validation is the re-import parse alone).",
+        "(true for Swagger 2.0 and OpenAPI 3.0 / 3.1 / 3.2, which each ship a bundled "
+        "meta-schema; false — \"not validated\" — only when the document declares no "
+        "recognizable version).",
     )
     schema_errors: List[Dict[str, str]] = Field(
         default_factory=list,
@@ -192,21 +193,14 @@ def _document_version(document: Dict[str, Any]) -> str:
 
 
 def _has_bundled_meta_schema(document: Dict[str, Any]) -> bool:
-    """Whether a bundled OpenAPI meta-schema genuinely covers ``document``.
+    """Whether a bundled meta-schema genuinely covers ``document``.
 
-    Only OpenAPI **3.1** and **3.2** ship a meta-schema
-    (:mod:`app.openapi_validator`). A 3.0 downgrade uses draft-4 spellings the
-    validator would (incorrectly) judge against the 3.1 meta-schema — boolean
-    ``exclusiveMinimum``, ``nullable`` — so it is *not* meta-schema-checked here; nor
-    is a Swagger 2.0 downgrade (``swagger: "2.0"``, no OpenAPI meta-schema at all).
-    For both older dialects the re-import parse through their own normalizer is the
-    validation, matching the MFX-9.1 "re-imports cleanly through its own normalizer"
-    round-trip guarantee.
+    Since COA-2.2 (#7045) Swagger 2.0, OpenAPI 3.0, 3.1 and 3.2 each ship a
+    meta-schema (:mod:`app.openapi_validator`), so every emitted dialect is
+    schema-checked. A document with no recognizable version is *not validated* and
+    reported as such (``schema_checked`` false), never as valid.
     """
-    version = document.get("openapi")
-    return isinstance(version, str) and (
-        version.startswith("3.1") or version.startswith("3.2")
-    )
+    return has_meta_schema(document)
 
 
 def round_trip_openapi(

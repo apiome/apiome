@@ -8,6 +8,7 @@ structural faults the emitter must avoid.
 import pytest
 
 from app.openapi_validator import (
+    OPENAPI_30_META_SCHEMA_ID,
     OPENAPI_31_META_SCHEMA_ID,
     OPENAPI_32_META_SCHEMA_ID,
     OpenApiValidationError,
@@ -108,3 +109,136 @@ def test_assert_raises_with_error_payload() -> None:
         assert_valid_openapi_document({"openapi": "3.1.0"})
     assert excinfo.value.errors  # non-empty structured errors
     assert isinstance(excinfo.value.errors[0]["message"], str)
+
+
+# ---------------------------------------------------------------------------
+# COA-2.2 (#7045) — 3.0, Swagger 2.0 and 3.1.x patch coverage
+# ---------------------------------------------------------------------------
+
+from app.openapi_validator import (
+    OPENAPI_30_META_SCHEMA_ID,  # noqa: E402
+    INVALID,
+    NOT_VALIDATED,
+    VALIDATED,
+    has_meta_schema,
+    load_openapi_30_meta_schema,
+    load_swagger_20_meta_schema,
+    validation_status,
+)
+
+
+def _doc_30() -> dict:
+    return {
+        "openapi": "3.0.3",
+        "info": {"title": "Pets", "version": "1.0.0"},
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "Pet": {
+                    "type": "object",
+                    "properties": {
+                        # 3.0 spellings: nullable + boolean exclusiveMinimum.
+                        "age": {"type": "integer", "minimum": 0, "exclusiveMinimum": True},
+                        "nick": {"type": "string", "nullable": True},
+                    },
+                }
+            }
+        },
+    }
+
+
+def _doc_20() -> dict:
+    return {
+        "swagger": "2.0",
+        "info": {"title": "Pets", "version": "1.0.0"},
+        "paths": {"/pets": {"get": {"responses": {"200": {"description": "ok"}}}}},
+    }
+
+
+def test_valid_30_document_passes_with_draft4_spellings() -> None:
+    assert validate_openapi_document(_doc_30()) == []
+    assert validation_status(_doc_30()) == VALIDATED
+
+
+@pytest.mark.parametrize("version", ["3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4"])
+def test_every_30_patch_release_is_covered(version: str) -> None:
+    doc = _doc_30()
+    doc["openapi"] = version
+    assert has_meta_schema(doc)
+    assert validate_openapi_document(doc) == []
+
+
+def test_invalid_30_document_fails_with_located_errors() -> None:
+    doc = _doc_30()
+    del doc["paths"]["/pets"]["get"]["responses"]["200"]["description"]
+    doc["components"]["schemas"]["Pet"]["properties"]["age"]["type"] = "bogus"
+    errors = validate_openapi_document(doc)
+    paths = {e["path"] for e in errors}
+    assert "paths//pets/get/responses/200" in paths
+    # The 3.0 meta-schema is a Schema|Reference union, so the fault is located at the
+    # schema object that matched neither branch.
+    assert "components/schemas/Pet" in paths
+    assert validation_status(doc) == INVALID
+
+
+def test_30_is_not_judged_against_the_31_meta_schema() -> None:
+    # ``paths`` is required in 3.0 but optional in 3.1: the same document differs by
+    # the meta-schema selected from its declared version.
+    doc = _doc_30()
+    del doc["paths"]
+    assert validate_openapi_document(doc) != []
+    doc["openapi"] = "3.1.0"
+    assert validate_openapi_document(doc) == []
+
+
+def test_valid_20_document_passes() -> None:
+    assert validate_openapi_document(_doc_20()) == []
+    assert validation_status(_doc_20()) == VALIDATED
+
+
+def test_invalid_20_document_fails_with_located_errors() -> None:
+    doc = _doc_20()
+    doc["paths"]["/pets"]["get"]["responses"]["200"] = {}
+    doc["info"].pop("version")
+    errors = validate_openapi_document(doc)
+    paths = {e["path"] for e in errors}
+    assert "info" in paths
+    assert "paths//pets/get/responses/200" in paths
+    assert validation_status(doc) == INVALID
+
+
+def test_20_marker_must_be_exactly_two_point_zero() -> None:
+    doc = _doc_20()
+    doc["swagger"] = "1.2"
+    assert not has_meta_schema(doc)
+    assert validation_status(doc) == NOT_VALIDATED
+
+
+@pytest.mark.parametrize("version", ["3.1.0", "3.1.1", "3.1.2"])
+def test_every_31_patch_release_validates_against_the_31_meta_schema(version: str) -> None:
+    doc = _valid_doc()
+    doc["openapi"] = version
+    assert validate_openapi_document(doc) == []
+    assert validation_status(doc) == VALIDATED
+    del doc["info"]
+    assert validation_status(doc) == INVALID
+
+
+@pytest.mark.parametrize(
+    "document",
+    [{"openapi": "4.0.0", "info": {}, "paths": {}}, {"info": {}}, {"openapi": 3.1}, [], "text"],
+)
+def test_a_document_without_a_covered_version_is_not_validated_never_valid(document) -> None:
+    assert not has_meta_schema(document)
+    assert validation_status(document) == NOT_VALIDATED
+
+
+def test_vendored_schemas_load_and_identify_themselves() -> None:
+    assert load_openapi_30_meta_schema()["id"] == OPENAPI_30_META_SCHEMA_ID
+    assert load_swagger_20_meta_schema()["required"] == ["swagger", "info", "paths"]

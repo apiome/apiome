@@ -341,14 +341,14 @@ def test_cross_paradigm_source_round_trips_lossy_without_divergence() -> None:
     "version,expected_marker",
     [("3.0", "3.0.3"), ("2.0", "2.0")],
 )
-def test_downgrade_reimports_without_meta_schema_check(version, expected_marker) -> None:
+def test_downgrade_reimports_and_is_meta_schema_checked(version, expected_marker) -> None:
     report = round_trip_openapi(
         _normal_form_model(), opts=OpenApiEmitOptions(openapi_version=version)
     )
 
-    # Neither dialect has a bundled meta-schema, so meta-schema validation is skipped
-    # and the re-import through the dialect's own normalizer is the validation.
-    assert not report.schema_checked
+    # COA-2.2 (#7045): both dialects now ship a bundled meta-schema, so the emitted
+    # downgrade is meta-schema-checked as well as re-imported.
+    assert report.schema_checked
     assert report.schema_errors == []
     assert report.reimported
     assert report.valid
