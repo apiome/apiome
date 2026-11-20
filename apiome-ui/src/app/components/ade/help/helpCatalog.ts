@@ -98,6 +98,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['endpoint', 'route', 'get', 'post', 'parameter', 'response', 'request body'],
   },
   {
+    id: 'openapi',
+    title: 'OpenAPI in Apiome',
+    summary: 'OpenAPI 3.2, 3.1, 3.0 and Swagger 2.0: import, validate, upgrade, overlay and export.',
+    page: 'apiome-docs/docs/build/openapi.mdx',
+    section: 'reference',
+    keywords: ['fidelity', 'lifecycle', 'overview', 'lossless', 'meta-schema', '$ref'],
+  },
+  {
     id: 'openapi-3-2-in-projects',
     title: 'OpenAPI 3.2 in projects',
     summary:
