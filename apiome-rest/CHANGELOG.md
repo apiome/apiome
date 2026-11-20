@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.782.0] - 2026-11-20
+
+### Added
+- **Fix capability on the lint rule SPI — OpenAPI 1.609.0 (GVM-3.1, #5869):** a lint rule
+  reported a path and a message and nothing else, so every finding was repaired by hand. A rule
+  can now carry a deterministic fix, with no model involved.
+  - `GET /v1/lint/rules` publishes the fix capability of every rule: `fixable`, and for a fixable
+    rule `fixClass` (`structural` / `removal` / `fill-in` / `rename`), `wireVisible`, `fixScope`
+    (`finding` / `document`), `fixDefault` and a one-line `fixSummary`. `fixOwner` says who
+    repairs a rule's findings: `engine`, `agent` (every `documentation` and `security` rule and
+    the `examples` pack, whose repair invents meaning) or `human`.
+  - `app.lint_engine.LintRule` gains `fix`, `fix_class`, `wire_visible`, `fix_summary`,
+    `fix_scope` and `fix_default`. A fix yields RFC 6902 operations for one finding;
+    `LintRule.plan_fix` refuses any operation outside the finding's JSON Pointer subtree unless
+    the rule declared the `document` scope (`app.lint_fix`).
+  - Thirteen OpenAPI rules are fixable. Twelve are new and run **on demand only**: they are in
+    the catalog but not in the default lint, so no stored report, score, grade or report
+    fingerprint changes. They cover the 3.0 → 3.1 syntax moves (`nullable`, schema `example`,
+    boolean `exclusiveMinimum` / `exclusiveMaximum`), server URL trailing slash and scheme case,
+    unused components, `required: []`, duplicate tags, a missing `operationId` (from a template,
+    default `{method}{Path}`), missing `tags` (off by default), and `operationId` and tag casing.
+    The existing `naming.schema-pascal-case` gains a rename fix that is wire-visible and off by
+    default.
+  - Each fixable rule has a fixture under `tests/fixtures/lint_fix/` with its expected plan and
+    post-fix document; a fixable rule without one fails the build.
+
+### Changed
+- apiome-db **V399** re-seeds the built-in "Apiome Recommended" style guide with the twelve new
+  rule ids, so the seed matches the catalog.
+
 ## [1.781.0] - 2026-11-20
 
 ### Added

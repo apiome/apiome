@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.608.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.609.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `lint` · 13 operations
 
@@ -187,6 +187,11 @@ payload is deterministic. The catalog is the same for every tenant — style gui
 Every rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)
 and, for ``security``-category rules, the ``weight`` the security score applies to its
 severity penalty (ASP-1.3, #5921) — the weights are public, not a server secret.
+
+Every rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and for a
+fixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,
+``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs
+the rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.
 
 Operation id: `list_lint_rules_v1_lint_rules_get`
 

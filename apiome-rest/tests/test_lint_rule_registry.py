@@ -28,6 +28,7 @@ from app.lint_rule_registry import (
     docs_anchor_for,
 )
 from app.intake_lint_rules import INTAKE_RULES
+from app.openapi_fix_rules import openapi_fix_rules
 from app.overlay_lint_rules import OVERLAY_RULES
 from app.schema_lint import OPENAPI_RULES, RULE_CATALOGUE, lint_openapi_spec
 
@@ -51,6 +52,8 @@ def _all_engine_rule_ids() -> set:
     """
     # The OpenAPI Overlay pack (GVM-4.1) is emitted while overlays are applied, like intake rules.
     ids = set(OPENAPI_RULES) | set(INTAKE_RULES) | set(OVERLAY_RULES)
+    # The fixable OpenAPI rules (GVM-3.1) run on demand, when a fix is asked for.
+    ids.update(rule.rule_id for rule in openapi_fix_rules())
     # Every pack the engine runs for all formats — the common pack and the IXH-5.4
     # example-conformance pack — taken from the engine itself rather than listed here.
     for pack in unconditional_rule_packs():
@@ -234,3 +237,65 @@ def test_pack_rules_carry_their_owasp_ids_into_the_registry():
             ),
             "security",
         )
+
+
+# ---------------------------------------------------------------------------
+# Fix capability (GVM-3.1, #5869)
+# ---------------------------------------------------------------------------
+
+
+def test_descriptors_publish_the_fix_capability_of_their_rule():
+    by_id = {d.rule_id: d for d in builtin_rule_descriptors()}
+    for rule in openapi_fix_rules():
+        descriptor = by_id[rule.rule_id]
+        assert descriptor.pack == "openapi"
+        assert descriptor.fixable is True
+        assert descriptor.fix_owner == "engine"
+        assert (
+            descriptor.fix_class,
+            descriptor.wire_visible,
+            descriptor.fix_summary,
+            descriptor.fix_scope,
+            descriptor.fix_default,
+        ) == (rule.fix_class, rule.wire_visible, rule.fix_summary, rule.fix_scope, rule.fix_default)
+        payload = descriptor.as_dict()
+        assert payload["fixable"] is True and payload["fix_class"] == rule.fix_class
+        assert payload["wire_visible"] is rule.wire_visible and payload["fix_owner"] == "engine"
+
+
+def test_a_rule_without_a_fix_publishes_no_fix_metadata():
+    for descriptor in builtin_rule_descriptors():
+        if descriptor.fixable:
+            continue
+        assert (
+            descriptor.fix_class,
+            descriptor.wire_visible,
+            descriptor.fix_summary,
+            descriptor.fix_scope,
+            descriptor.fix_default,
+        ) == (None, None, None, None, None)
+        assert descriptor.fix_owner in {"agent", "human"}
+
+
+def test_rules_that_invent_meaning_belong_to_the_agent_and_are_never_fixable():
+    by_id = {d.rule_id: d for d in builtin_rule_descriptors()}
+    # Descriptions, examples and security findings are the agent's, per the issue.
+    for rule_id in (
+        "documentation.schema-missing-description",
+        "documentation.property-missing-example",
+        "examples.non-conforming-example",
+    ):
+        assert by_id[rule_id].fix_owner == "agent"
+        assert by_id[rule_id].fixable is False
+    for descriptor in by_id.values():
+        if descriptor.category in {"documentation", "security"}:
+            assert descriptor.fix_owner == "agent", descriptor.rule_id
+
+
+def test_the_existing_pascal_case_rule_keeps_its_identity_and_gains_a_fix():
+    descriptor = {d.rule_id: d for d in builtin_rule_descriptors()}["naming.schema-pascal-case"]
+    category, severity, rationale = OPENAPI_RULES["naming.schema-pascal-case"]
+    assert (descriptor.category, descriptor.default_severity, descriptor.rationale) == (category, severity, rationale)
+    assert descriptor.fixable and descriptor.fix_class == "rename"
+    assert descriptor.wire_visible is True and descriptor.fix_default is False
+    assert descriptor.fix_scope == "document"

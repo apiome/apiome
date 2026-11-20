@@ -35,6 +35,8 @@ Which packs run depends on the item:
 A style guide can change a rule's severity or turn a pack off; see
 [Style guides govern every lint run](./lint-and-quality.md#style-guides-govern-every-lint-run).
 
+Some rules can also repair what they find. See [Auto-fix](./auto-fix.md).
+
 ## Linters a format's community uses
 
 Some formats have a linter their community trusts. Where Apiome bundles it, it runs beside the

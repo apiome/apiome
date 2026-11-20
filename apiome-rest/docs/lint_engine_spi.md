@@ -37,11 +37,52 @@ A **rule** (`LintRule`) is a stable id + group + severity bound to a pure `check
 | `category`   | The rule's group (`documentation` / `naming` / `structure` / …)                  |
 | `severity`   | `error` / `warning` / `info` — drives the score penalty                          |
 | `check`      | Pure generator yielding `(path, message)` for each defect over a `CanonicalApi`  |
+| `fix`        | Optional deterministic fix for one finding — see [Fixes](#fixes-gvm-31-5869)       |
 
 A **rule pack** (`RulePack`) is an ordered list of rules. The engine runs each rule, turns
 every `(path, message)` into a `LintFinding` tagged with the rule's `rule_id` / `category` /
 `severity`, and the finding `id` is the same stable `path|rule|message` hash the OpenAPI linter
 uses — so a defect has one durable id no matter which pack reported it.
+
+## Fixes (GVM-3.1, #5869)
+
+A rule may carry a deterministic **fix**. It is declared on the `LintRule` itself:
+
+| Field         | Meaning                                                                         |
+|---------------|---------------------------------------------------------------------------------|
+| `fix`         | `fix(document, finding, options) -> Iterable[PatchOp]` — RFC 6902 operations that repair one finding; yield nothing when the finding has no deterministic repair |
+| `fix_class`   | `structural` / `removal` / `fill-in` / `rename` (required with `fix`)            |
+| `wire_visible`| Whether the fix changes what clients see on the wire or in generated code       |
+| `fix_summary` | One line saying what the fix does (required with `fix`)                         |
+| `fix_scope`   | `finding` (default) or `document` — what the operations may touch               |
+| `fix_default` | `False` for a fix that must be opted into by rule id (`FixOptions.opt_in`)      |
+
+```python
+from app.lint_fix import FixOptions, PatchOp, apply_fix_ops
+
+ops = rule.plan_fix(document, finding, FixOptions())   # () when there is nothing to plan
+fixed = apply_fix_ops(document, ops)                   # a patched copy
+```
+
+- **The engine bounds every fix.** `plan_fix` resolves the finding's dotted path to a JSON
+  Pointer against the document (`pointer_for_path`) and raises `FixScopeError` for any
+  operation — including the `from` of a `move` — outside that pointer's subtree. A rule whose
+  repair cannot fit (a component rename rewrites `$ref`s everywhere) declares
+  `fix_scope="document"`, which the catalogue publishes as `fixScope`.
+- **A half-declared fix fails at import.** A `fix` without a class or summary, fix metadata
+  without a `fix`, or a fix on a `documentation` / `security` rule raises `ValueError` when the
+  rule is built. Those categories are repaired by the agent (`fixOwner: agent`), never by a fix.
+- **Options come from the caller.** `FixOptions` carries the `operationId` template and the
+  opt-in rule ids. Style guides hold no per-rule options yet; the plan endpoint (GVM-3.2) is
+  where a guide's choices are read and passed in.
+- **Every fixable rule needs a fixture.** `tests/fixtures/lint_fix/<rule id>.json` holds a
+  one-defect document, the expected plan and the expected result. `tests/test_openapi_fix_rules.py`
+  fails for a fixable rule without one, and checks that the fix leaves the rule clean, changes
+  no other finding and is byte-stable when run twice.
+
+The first fixable rules are the OpenAPI ones in [`openapi_fix_rules.py`](../src/app/openapi_fix_rules.py).
+Twelve of them run **on demand** (`lint_openapi_fixable`), not in `lint_openapi_spec`, so adding
+them changed no stored score.
 
 ## The common pack (`CommonRulePack`)
 
