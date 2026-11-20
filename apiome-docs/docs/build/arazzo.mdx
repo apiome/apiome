@@ -1,0 +1,94 @@
+---
+title: Arazzo in Apiome
+description: "Import, read, check, compare, export and run Arazzo 1.0 and 1.1 workflows."
+sidebar_position: 1.34
+tags: [arazzo, workflows, overview]
+---
+
+An [Arazzo](https://spec.openapis.org/arazzo/latest.html) document describes **workflows**:
+sequences of API calls, each step calling an operation of an OpenAPI (or, in Arazzo 1.1, AsyncAPI)
+description, with the inputs a workflow takes, the outputs it returns, and what happens when a step
+succeeds or fails. Apiome treats Arazzo **1.0.x** and **1.1.x** as first-class: you can bring a
+workflow in with the API files it calls, read it as a flow, check that every step points at a real
+operation, compare two revisions, export it back, and run it against a deployment or a mock.
+
+Each part has its own page. This page shows how they fit together.
+
+## When to use it
+
+- **You document how an API is meant to be used, not only what it offers.** A checkout, an
+  onboarding or an adopt-a-pet flow lives next to the APIs it calls, with its steps resolved to their
+  operations.
+- **A workflow must keep working as its APIs change.** A change to a workflow's inputs, outputs,
+  criteria or sources is graded like any other breaking change, and a stored workflow can be run in
+  CI against a mock or a staging deployment.
+- **Agents or partners follow your workflows.** The steps, their success criteria and their outputs
+  are readable from the UI, the CLI and the REST API.
+
+## The lifecycle at a glance
+
+| You want to… | Where | Details |
+| --- | --- | --- |
+| **Bring in** a workflow with the OpenAPI and AsyncAPI files it calls | **Import** dialog, or `apiome import arazzo <archive or folder>` | [Import an Arazzo workflow with its API files](../bring-in/import-a-spec.md#import-an-arazzo-workflow-with-its-api-files) |
+| **Read** its steps, inputs, outputs and success and failure paths | The **Workflows** tab of a catalog item or project; `apiome arazzo list` and `apiome arazzo show` | [Arazzo workflows](./arazzo-workflows.mdx) |
+| **Check** that every step resolved and every source was found | `apiome arazzo validate`, or `apiome arazzo validate FILE` for a local document | [Arazzo workflow records](../reference/arazzo-workflow-records.md) |
+| **Compare** two revisions and see what breaks a workflow's callers | `apiome diff`, the diff GitHub Action, the publish check and catalog change reports | [Arazzo workflow changes](../ship/api-changelog.mdx#arazzo-workflow-changes) |
+| **Export** it back, or start workflows for an API you already have | **Export** dialog → **REST & HTTP** → **Arazzo** | [Arazzo from any source](../ship/export-a-spec.md#arazzo-from-any-source), [Arazzo exports](../ship/export-fidelity.md#arazzo) |
+| **Run** it, step by step, against a deployment or a mock | `apiome arazzo run <workflowId> --target <target>` | [Run a workflow against a target](./arazzo-workflows.mdx#run-a-workflow-against-a-target) |
+
+## Arazzo 1.0 and 1.1
+
+Every surface accepts both lines and keeps the version a document declares:
+
+- **Import and validation** check a document against the JSON Schema for its own version, 1.0.x or
+  1.1.x, so a 1.1 document is not judged by 1.0 rules.
+- **Arazzo 1.1 additions** come in and go back out unchanged: AsyncAPI source descriptions, steps
+  that wait on an event channel (`channelPath`, with `action`, `correlationId` and `timeout`),
+  workflow-level `parameters`, `querystring` parameters and `$self`.
+- **Export** writes 1.0 or 1.1 as you choose. A workflow with AsyncAPI sources needs 1.1, because
+  1.0 cannot express them; asking for 1.0 is refused rather than silently dropping the sources.
+- **Round trips are tested** against the OpenAPI Initiative's own examples and files from Redocly,
+  Spectral and Specmatic; the fidelity report on the **Arazzo** card names any difference.
+
+## How the pieces fit
+
+1. **Import stores the workflow as records.** Each workflow and each of its steps is stored on the
+   revision, and each step's `operationId` or `operationRef` is matched to the operation it calls —
+   in the same archive or repository selection, in a spec already in the catalog, or fetched from
+   its URL. A step that matches nothing is kept as written and marked **unresolved**, with the
+   reason; so is a source description nothing could find.
+2. **Every read uses those records.** The **Workflows** tab, `apiome arazzo list|show|validate`
+   and the `GET /v1/workflows/…` routes all read the same workflows, steps and resolution states.
+3. **Changes are graded by workflow rules.** Comparing two revisions grades each change by what a
+   workflow's callers depend on: a newly required input or a removed output is **Breaking**, a
+   changed success criterion is flagged for review, an added optional input is **Safe**. A change
+   no rule covers is reported as breaking.
+4. **A run sends the steps in order.** `apiome arazzo run` builds each request from the inputs and
+   earlier steps' outputs, judges each step's success criteria with expected and actual values, and
+   follows `goto`, `retry` and `end`. It sends only `GET`, `HEAD` and `OPTIONS` steps unless the
+   target allows writes, the run opts in, and a fixture names the operation. Every run is recorded
+   as verification evidence.
+
+## From the command line
+
+```bash
+apiome import arazzo ./checkout.zip --dry-run                       # what would come in
+apiome import arazzo ./checkout/ --root checkout.arazzo.yaml
+apiome arazzo list --catalog <item-uuid>                            # workflows and resolution
+apiome arazzo show checkout --catalog <item-uuid>
+apiome arazzo validate checkout.arazzo.yaml                         # local schema check
+apiome arazzo validate --catalog <item-uuid>                        # exit 7 when a step did not resolve
+apiome arazzo run checkout --catalog <item-uuid> --target checkout-mock --input cartId=42
+```
+
+See [`apiome arazzo`](../reference/cli/arazzo.md) and
+[`apiome import arazzo`](../reference/cli/import.md#import-arazzo) in the CLI reference, and
+[Arazzo workflows](../reference/rest/arazzo-workflows.md) in the REST reference.
+
+## Where next
+
+- [Arazzo workflows](./arazzo-workflows.mdx) — the **Workflows** tab, the step graph, and running a
+  workflow
+- [Import an Arazzo workflow with its API files](../bring-in/import-a-spec.md#import-an-arazzo-workflow-with-its-api-files)
+- [Arazzo workflow changes](../ship/api-changelog.mdx#arazzo-workflow-changes)
+- [Contract testing and CI gates](../ship/contract-testing-and-ci-gates.mdx#check-a-live-deployment-v2)

@@ -1,0 +1,26 @@
+---
+slug: arazzo-complete-current-visible
+title: "Arazzo: complete, current and visible"
+description: "Arazzo 1.0 and 1.1 workflows, from import to a run against a target."
+authors: [apiome]
+---
+
+Arazzo workflows are now first-class in Apiome, for both Arazzo 1.0 and 1.1. A new
+[Arazzo in Apiome](/build/arazzo) page shows the whole lifecycle in one place.
+
+{/* truncate */}
+
+- **Current:** the CLI, the generators, the **Import** dialog and the docs accept Arazzo 1.1,
+  including AsyncAPI sources and event-channel steps, and check each document against the schema
+  for the version it declares.
+- **Complete:** import a workflow together with the OpenAPI and AsyncAPI files it calls; every
+  source not found is listed with its reason. Exports round-trip losslessly, checked against the
+  OpenAPI Initiative's examples and files from Redocly, Spectral and Specmatic.
+- **Visible:** the **Workflows** tab shows each workflow as steps, inputs, outputs and a step
+  graph; `apiome arazzo list`, `show` and `validate` read the same records.
+- **Graded:** `apiome diff`, the diff Action, the publish check and catalog change reports grade
+  workflow changes by what callers depend on.
+- **Runnable:** `apiome arazzo run` executes a workflow step by step against a mock or a
+  deployment, reporting each success criterion with its expected and actual value.
+
+See [Arazzo in Apiome](/build/arazzo).

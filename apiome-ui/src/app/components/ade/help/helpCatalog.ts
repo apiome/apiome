@@ -911,6 +911,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['timeline', 'mock', 'test bench', 'discussion', 'repository', 'changelog'],
   },
   {
+    id: 'arazzo',
+    title: 'Arazzo in Apiome',
+    summary: 'Import, read, check, compare, export and run Arazzo 1.0 and 1.1 workflows.',
+    page: 'apiome-docs/docs/build/arazzo.mdx',
+    section: 'reference',
+    keywords: ['workflows', 'lifecycle', 'overview', 'validate', 'run', 'AsyncAPI sources'],
+  },
+  {
     id: 'arazzo-workflows',
     title: 'Arazzo workflows',
     summary: "Read an Arazzo workflow's steps and paths, then run it against a target.",
