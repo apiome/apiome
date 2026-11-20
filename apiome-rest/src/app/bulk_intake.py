@@ -43,6 +43,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
+from .arazzo_source_resolution import source_description_urls
 from .archive_intake import ArchiveIntakeError, resolve_fileset_root
 from .format_detection import FormatDetection
 from .import_routing import PUBLISHABLE_FORMATS
@@ -204,6 +205,8 @@ def _candidate_targets(text: str) -> Iterable[str]:
             yield target
     for match in _XML_LOCATION_RE.finditer(text):
         yield match.group(1)
+    # COA-1.2: an Arazzo workflow names the descriptions it calls in sourceDescriptions[].url.
+    yield from source_description_urls(text)
 
 
 def _resolve_target(source_path: str, target: str, members: Mapping[str, str]) -> Optional[str]:

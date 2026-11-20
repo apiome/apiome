@@ -174,6 +174,41 @@ def emit_import_sources(
     )
 
 
+def format_arazzo_sources(report: Any) -> list[str]:
+    """Render the job summary's ``arazzo_sources`` block as indented lines (COA-1.2).
+
+    Args:
+        report: The ``arazzo_sources`` summary block, or anything else (rendered as nothing).
+
+    Returns:
+        A count line naming where the resolved sources came from, then one line per
+        unresolved source with its stable reason code. Empty when there is no block.
+    """
+    if not isinstance(report, dict):
+        return []
+    resolved = report.get("resolved") if isinstance(report.get("resolved"), int) else 0
+    unresolved = report.get("unresolved") if isinstance(report.get("unresolved"), int) else 0
+    by_tier = report.get("by_tier") if isinstance(report.get("by_tier"), dict) else {}
+    tiers = ", ".join(
+        f"{count} {tier}" for tier, count in by_tier.items() if isinstance(count, int) and count
+    )
+    line = f"  Arazzo sources: {resolved} resolved"
+    if tiers:
+        line += f" ({tiers})"
+    line += f", {unresolved} unresolved"
+    lines = [line]
+    for source in report.get("unresolved_sources") or []:
+        if not isinstance(source, dict):
+            continue
+        name = source.get("name") or "(unnamed)"
+        url = source.get("url") or ""
+        target = f" {url}" if url else ""
+        lines.append(f"    - {name}{target}: {source.get('reason') or 'unresolved'}")
+    if report.get("truncated"):
+        lines.append("    (list truncated; run with --json for the full report)")
+    return lines
+
+
 def emit_adapter_import_summary(
     payload: dict[str, Any],
     *,
@@ -237,6 +272,9 @@ def emit_adapter_import_summary(
             typer.echo(f"  Lint score: {score}{grade_label}")
         if isinstance(findings, int):
             typer.echo(f"  Lint findings: {findings}")
+
+    for line in format_arazzo_sources(payload.get("arazzo_sources")):
+        typer.echo(line)
 
     if payload.get("persisted") is False:
         typer.echo("  Note: preview only — no catalog version was written.")

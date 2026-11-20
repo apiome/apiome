@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.598.0
+  version: 1.599.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -169425,9 +169425,8 @@ components:
         skip_duplicate_versions:
           type: boolean
           title: Skip Duplicate Versions
-          description: When true, if the target catalog version line already exists
-            in the project, complete successfully without re-importing (idempotent
-            no-op).
+          description: When true, if the target catalog version line already exists in
+            the project, complete successfully without re-importing (idempotent no-op).
           default: false
           example: false
         input_kind:
@@ -169443,10 +169442,10 @@ components:
           - type: 'null'
             description: Spec Import Options schema.
           title: Input Kind
-          description: How the source document reached the importer — file upload,
-            a fetched URL, or pasted text (MFI-26.2). Recorded verbatim on the catalog
-            revision's format metadata as 'inputKind' so the source-material badge
-            reflects the intake method; defaults to 'file' when omitted.
+          description: How the source document reached the importer — file upload, a fetched
+            URL, or pasted text (MFI-26.2). Recorded verbatim on the catalog revision's
+            format metadata as 'inputKind' so the source-material badge reflects the intake
+            method; defaults to 'file' when omitted.
         import_target:
           anyOf:
           - type: string
@@ -169461,10 +169460,10 @@ components:
           description: 'Explicit destination for a JSON Schema import when the MFI-26.7
             prompt asked the user (MFI-26.8): ''catalog'' (the default) stores a non-publishable,
             schemas-only catalog item kept verbatim for later conversion, while ''types''/''project''
-            import the schema as a **current** type/schema into the type registry.
-            Consulted only for JSON Schema sources — OpenAPI/Swagger/Arazzo always
-            create publishable Projects and every other format always routes to the
-            catalog, regardless of this value.'
+            import the schema as a **current** type/schema into the type registry. Consulted
+            only for JSON Schema sources — OpenAPI/Swagger/Arazzo always create publishable
+            Projects and every other format always routes to the catalog, regardless of
+            this value.'
         archive_root:
           anyOf:
           - type: string
@@ -169473,20 +169472,21 @@ components:
             description: Spec Import Options schema.
           title: Archive Root
           description: When the uploaded document is a .zip/.tar.gz archive, the module-relative
-            path of the root document inside the archive (MFI-29.1). Required when
-            auto-detection is ambiguous; optional when a single root candidate is
-            found.
+            path of the root document inside the archive (MFI-29.1). Required when auto-detection
+            is ambiguous; optional when a single root candidate is found.
         resolve_remote_refs:
           type: boolean
           title: Resolve Remote Refs
           description: Opt into SSRF-guarded remote `$ref` resolution for this import
-            (MFI-29.4). When true, external `$ref` URLs in the source document are
-            fetched through the SSRF guard under per-import budgets (max references,
-            depth, bytes, timeout) and inlined before the model is built, so the imported
-            revision covers them. When false (the default) nothing is fetched and
-            every external reference is reported as a lint finding instead. Honored
-            only by sources whose descriptor reports `supports_remote_refs` (AsyncAPI,
-            JSON Schema).
+            (MFI-29.4). When true, external `$ref` URLs in the source document are fetched
+            through the SSRF guard under per-import budgets (max references, depth, bytes,
+            timeout) and inlined before the model is built, so the imported revision covers
+            them. When false (the default) nothing is fetched and every external reference
+            is reported as a lint finding instead. Honored only by sources whose descriptor
+            reports `supports_remote_refs` (AsyncAPI, JSON Schema). For an Arazzo workflow
+            it also lets an absolute `sourceDescriptions[].url` that neither the fileset
+            nor the catalog holds be fetched the same way (COA-1.2); either way every
+            unresolved source is listed in the job summary's `arazzo_sources` block.
           default: false
           example: false
         git_source:
@@ -169494,11 +169494,10 @@ components:
           - $ref: '#/components/schemas/SpecImportGitSource'
           - type: 'null'
             description: Spec Import Options schema.
-          description: 'Repository provenance for a git-sourced import (MFI-29.3):
-            the payload returned by ``POST /v1/tenants/{tenant}/import/git/fileset``,
-            echoed back unchanged. Recorded on the created revision''s format metadata
-            (repo URL, ref, commit, path) and marks the intake kind as ''git'' rather
-            than ''archive''.'
+          description: 'Repository provenance for a git-sourced import (MFI-29.3): the
+            payload returned by ``POST /v1/tenants/{tenant}/import/git/fileset``, echoed
+            back unchanged. Recorded on the created revision''s format metadata (repo
+            URL, ref, commit, path) and marks the intake kind as ''git'' rather than ''archive''.'
         har_hosts:
           anyOf:
           - items:
@@ -169508,11 +169507,11 @@ components:
           - type: 'null'
             description: Spec Import Options schema.
           title: Har Hosts
-          description: 'HAR imports only (MFI-32.2): the host(s) to import from a
-            capture that called several (`api.example.com`, or `host:port`). Each
-            host is normally its own catalog item, so import the same capture once
-            per host. Omitted, the host with the most API calls is imported; a host
-            the capture has no API calls to is refused with the list of hosts it has.'
+          description: 'HAR imports only (MFI-32.2): the host(s) to import from a capture
+            that called several (`api.example.com`, or `host:port`). Each host is normally
+            its own catalog item, so import the same capture once per host. Omitted, the
+            host with the most API calls is imported; a host the capture has no API calls
+            to is refused with the list of hosts it has.'
         har_include:
           anyOf:
           - items:
@@ -169523,8 +169522,8 @@ components:
             description: Spec Import Options schema.
           title: Har Include
           description: 'HAR imports only (MFI-32.2): `host/path` glob patterns (`api.example.com/v1/*`,
-            `*/config.js`) kept even when the noise filter would leave them out as
-            a page asset, analytics call or CORS preflight.'
+            `*/config.js`) kept even when the noise filter would leave them out as a page
+            asset, analytics call or CORS preflight.'
         har_exclude:
           anyOf:
           - items:
@@ -169539,10 +169538,10 @@ components:
         har_keep_noise:
           type: boolean
           title: Har Keep Noise
-          description: 'HAR imports only (MFI-32.2): turn the built-in noise filter
-            off, so page assets, analytics calls and CORS preflights are imported
-            too. Non-HTTP entries (`data:`, WebSocket) are always left out; host selection
-            and patterns still apply.'
+          description: 'HAR imports only (MFI-32.2): turn the built-in noise filter off,
+            so page assets, analytics calls and CORS preflights are imported too. Non-HTTP
+            entries (`data:`, WebSocket) are always left out; host selection and patterns
+            still apply.'
           default: false
           example: false
       additionalProperties: false

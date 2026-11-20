@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.598.0",
+    "version": "1.599.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -225345,7 +225345,7 @@
           "resolve_remote_refs": {
             "type": "boolean",
             "title": "Resolve Remote Refs",
-            "description": "Opt into SSRF-guarded remote `$ref` resolution for this import (MFI-29.4). When true, external `$ref` URLs in the source document are fetched through the SSRF guard under per-import budgets (max references, depth, bytes, timeout) and inlined before the model is built, so the imported revision covers them. When false (the default) nothing is fetched and every external reference is reported as a lint finding instead. Honored only by sources whose descriptor reports `supports_remote_refs` (AsyncAPI, JSON Schema).",
+            "description": "Opt into SSRF-guarded remote `$ref` resolution for this import (MFI-29.4). When true, external `$ref` URLs in the source document are fetched through the SSRF guard under per-import budgets (max references, depth, bytes, timeout) and inlined before the model is built, so the imported revision covers them. When false (the default) nothing is fetched and every external reference is reported as a lint finding instead. Honored only by sources whose descriptor reports `supports_remote_refs` (AsyncAPI, JSON Schema). For an Arazzo workflow it also lets an absolute `sourceDescriptions[].url` that neither the fileset nor the catalog holds be fetched the same way (COA-1.2); either way every unresolved source is listed in the job summary's `arazzo_sources` block.",
             "default": false,
             "example": false
           },

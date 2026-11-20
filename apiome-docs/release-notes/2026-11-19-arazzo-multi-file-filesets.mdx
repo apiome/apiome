@@ -1,0 +1,25 @@
+---
+slug: arazzo-multi-file-filesets
+title: Arazzo workflows with their API files
+description: "Import an Arazzo workflow and the OpenAPI files it calls as one set."
+authors: [apiome]
+---
+
+An Arazzo workflow now imports together with the OpenAPI and AsyncAPI files its
+`sourceDescriptions` name. Before this release, a zip of a workflow and its API files was rejected
+as ambiguous, so the workflow could only be checked against APIs already in the catalog.
+
+{/* truncate */}
+
+- **Archives, folders and repositories:** the workflow is picked as the root of the set, because
+  the API files it calls are its sources, not rival roots. `apiome import arazzo ./adopt-a-pet.zip`
+  (or a folder) sends the whole set. Ticking a workflow in a repository's files also fetches the
+  files it names.
+- **Fileset, then catalog, then remote:** each source is found in the archive first, then among
+  the specs you already imported (same repository and branch, or the same URL), then fetched
+  through the SSRF guard. The fetch happens only when the import opts in to remote resolution.
+- **Nothing dropped silently:** the import report lists every unresolved source with a reason
+  code such as `not-in-fileset` or `resolution-disabled`, and the catalog item stores the same
+  list.
+
+See [Import an Arazzo workflow with its API files](/bring-in/import-a-spec#import-an-arazzo-workflow-with-its-api-files).

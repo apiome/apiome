@@ -495,6 +495,13 @@ apiome import arazzo ./checkout.yaml --publish public
 apiome --json import arazzo ./checkout.yaml
 ```
 
+Import a workflow together with the OpenAPI/AsyncAPI files its `sourceDescriptions` name by passing a `.zip`/`.tar.gz` archive or a directory. The server picks the workflow as the root (use `--root` to name it), resolves each relative source from the set, then from the catalog, and lists every source it could not resolve with a reason code:
+
+```bash
+apiome import arazzo ./adopt-a-pet.zip --dry-run
+apiome import arazzo ./adopt-a-pet/ --root flow.arazzo.yaml
+```
+
 Use `import openapi` for OpenAPI API descriptions and `import json-schema` for standalone JSON Schema files.
 
 ### OpenAPI/Arazzo path workflow (import → inspect → export)
