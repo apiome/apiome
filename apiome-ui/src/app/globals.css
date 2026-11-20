@@ -43266,3 +43266,539 @@ tr[data-selected="true"] > td:first-child {
   color: var(--fg);
   font-size: var(--fs-sm);
 }
+
+/* ============================================================================================
+   Arazzo workflow viewer (COA-1.3, #7039) — the Workflows tab on Arazzo catalog items and on
+   projects whose HEAD revision holds workflows. `ArazzoWorkflowsPanel`, `ArazzoStepGraph` and
+   `ArazzoStepDrawer`. Tokens only; the graph canvas reuses the revision graph's `.vdlg-flow`.
+   ============================================================================================ */
+
+/* List beside detail; the detail's large grow factor keeps them side by side until the detail
+   would drop below 30rem, then the list wraps above it — no breakpoint needed. */
+.awf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.awf-list {
+  flex: 1 1 14rem;
+  max-width: 18rem;
+}
+
+.awf-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.awf-count {
+  color: var(--fg-subtle);
+  font-weight: 500;
+}
+
+.awf-subheading {
+  margin-block: var(--space-4) var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.awf-muted {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---- the workflow list ---- */
+
+.awf-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.awf-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.awf-list__item:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.awf-list__item:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.awf-list__item[aria-current='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.awf-list__id {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.awf-list__summary {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.awf-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-subtle);
+}
+
+/* ---- the selected workflow ---- */
+
+.awf-detail {
+  flex: 999 1 30rem;
+  min-width: 0;
+}
+
+.awf-detail__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.awf-detail__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.awf-detail__icon {
+  width: var(--icon-button);
+  height: var(--icon-button);
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+
+.awf-detail__summary {
+  color: var(--fg);
+}
+
+.awf-sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.awf-sources__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.awf-sources__name {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.awf-sources__url {
+  overflow-wrap: anywhere;
+}
+
+.awf-io {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.awf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.awf-table th {
+  padding: var(--space-1) var(--space-2);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-weight: 600;
+  text-align: start;
+}
+
+.awf-table td {
+  padding: var(--space-1) var(--space-2);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* ---- the step list ---- */
+
+.awf-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.awf-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  text-align: start;
+  cursor: pointer;
+}
+
+.awf-steps__item:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.awf-steps__item:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.awf-steps__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.awf-steps__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.awf-steps__id {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.awf-steps__target {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ---- the step graph (SVG; geometry from layoutStepGraph) ---- */
+
+.awf-graph {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.awf-graph__canvas {
+  overflow-x: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-canvas);
+}
+
+.awf-graph__svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.awf-graph__box {
+  fill: var(--bg-surface);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.awf-graph__label {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.awf-graph__detail {
+  fill: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+.awf-graph__retry {
+  fill: var(--warn-fg);
+  font-weight: 600;
+}
+
+.awf-graph__node[role='button'] {
+  cursor: pointer;
+  outline: none;
+}
+
+.awf-graph__node[role='button']:hover .awf-graph__box {
+  stroke: var(--accent);
+}
+
+.awf-graph__node[role='button']:focus-visible .awf-graph__box {
+  stroke: var(--border-focus);
+  stroke-width: 3;
+}
+
+.awf-graph__node[data-kind='start'] .awf-graph__box {
+  fill: var(--bg-subtle);
+}
+
+.awf-graph__node[data-kind='end'] .awf-graph__box {
+  fill: var(--ok-soft);
+  stroke: var(--ok);
+}
+
+.awf-graph__node[data-kind='end'] .awf-graph__label {
+  fill: var(--ok-fg);
+}
+
+.awf-graph__node[data-kind='failed'] .awf-graph__box {
+  fill: var(--danger-soft);
+  stroke: var(--danger);
+}
+
+.awf-graph__node[data-kind='failed'] .awf-graph__label {
+  fill: var(--danger-fg);
+}
+
+.awf-graph__node[data-kind='workflow'] .awf-graph__box {
+  fill: var(--info-soft);
+  stroke: var(--info);
+  stroke-dasharray: 5 3;
+}
+
+.awf-graph__node[data-kind='reference'] .awf-graph__box {
+  fill: var(--bg-subtle);
+  stroke-dasharray: 5 3;
+}
+
+.awf-graph__node[data-unresolved='true'] .awf-graph__box {
+  stroke: var(--warn);
+  stroke-width: 2;
+}
+
+.awf-graph__edge {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.awf-graph__edge--next {
+  stroke: var(--fg-subtle);
+}
+
+.awf-graph__edge--success {
+  stroke: var(--ok);
+}
+
+.awf-graph__edge--failure {
+  stroke: var(--danger);
+  stroke-dasharray: 5 4;
+}
+
+.awf-graph__edge--retry {
+  stroke: var(--warn);
+  stroke-dasharray: 2 3;
+}
+
+.awf-graph__arrow--next path {
+  fill: var(--fg-subtle);
+}
+
+.awf-graph__arrow--success path {
+  fill: var(--ok);
+}
+
+.awf-graph__arrow--failure path {
+  fill: var(--danger);
+}
+
+.awf-graph__arrow--retry path {
+  fill: var(--warn);
+}
+
+.awf-graph__edge-label rect {
+  fill: var(--bg-surface);
+  stroke: var(--border);
+}
+
+.awf-graph__edge-label text {
+  fill: var(--fg-muted);
+}
+
+.awf-graph__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.awf-graph__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.awf-graph__legend li::before {
+  content: '';
+  display: inline-block;
+  width: 1.25rem;
+  border-block-start: 2px solid var(--fg-subtle);
+}
+
+.awf-graph__legend li[data-kind='success']::before {
+  border-color: var(--ok);
+}
+
+.awf-graph__legend li[data-kind='failure']::before {
+  border-block-start-style: dashed;
+  border-color: var(--danger);
+}
+
+.awf-graph__legend li[data-kind='retry']::before {
+  border-block-start-style: dotted;
+  border-color: var(--warn);
+}
+
+/* ---- the step drawer ---- */
+
+.awf-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.awf-drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.awf-drawer__heading {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.awf-drawer__subheading {
+  margin-block-start: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.awf-drawer__muted {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.awf-drawer__summary {
+  color: var(--fg);
+}
+
+.awf-drawer__route {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  overflow-wrap: anywhere;
+}
+
+.awf-drawer__ref {
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.awf-drawer__code {
+  max-height: 16rem;
+  overflow: auto;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  font-size: var(--fs-xs);
+}
+
+.awf-drawer__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.awf-drawer__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.awf-drawer__name {
+  font-weight: 600;
+}
+
+.awf-drawer__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.awf-drawer__facts dt {
+  color: var(--fg-muted);
+}
+
+.awf-drawer__facts dd {
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.awf-drawer__operation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

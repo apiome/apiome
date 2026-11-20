@@ -224,6 +224,7 @@ from .project_timeline_routes import router as project_timeline_router
 from .version_tags_routes import router as version_tags_router
 from .versions_routes import router as versions_router
 from .workflow_audit_routes import router as workflow_audit_router
+from .arazzo_workflow_routes import router as arazzo_workflow_router
 from .workspace_custom_action_routes import router as workspace_custom_action_router
 from .workspace_property_routes import router as workspace_property_router
 from .workspace_summary_routes import router as workspace_summary_router
@@ -239,7 +240,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.599.0",
+    version="1.600.0",
 )
 
 
@@ -525,6 +526,8 @@ app.include_router(revision_graph_router)
 # #2594: project activity timeline; same reason (literal /timeline segment).
 app.include_router(project_timeline_router)
 app.include_router(workflow_audit_router)
+# COA-1.3 (#7039): the Arazzo workflow viewer's reads under /v1/workflows.
+app.include_router(arazzo_workflow_router)
 # version_changelog_router before versions_router so its literal
 # /{tenant_slug}/{project_id}/changelogs route wins over the versions
 # /{tenant_slug}/{project_id}/{version_record_id} parameter route (CTG-3.2, #4476).

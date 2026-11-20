@@ -15972,6 +15972,150 @@ class Database:
 
         return _load(self, tenant_id=tenant_id, version_id=version_id)
 
+    def get_arazzo_source_context(
+        self, *, tenant_id: str, version_id: str
+    ) -> Dict[str, Any]:
+        """Read what the Arazzo viewer needs to say whether a revision's sources resolved (COA-1.3).
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            version_id: The ``versions.id`` to read.
+
+        Returns:
+            ``{"source_descriptions": list, "report": dict | None}`` — the document's declared
+            ``sourceDescriptions`` (from the live canonical artifact's root ``extras``) and the
+            COA-1.2 resolution report recorded on the revision (``format_metadata.arazzoSources``,
+            ``None`` for a revision imported before that report existed).
+        """
+        rows = self.execute_query(
+            """
+            SELECT v.format_metadata -> 'arazzoSources' AS report,
+                   a.extras -> 'sourceDescriptions' AS source_descriptions
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            LEFT JOIN apiome.api_artifacts a
+                   ON a.version_id = v.id AND a.tenant_id = p.tenant_id AND a.deleted_at IS NULL
+            WHERE v.id = %s::uuid AND p.tenant_id = %s::uuid
+            LIMIT 1
+            """,
+            (version_id, tenant_id),
+        )
+        row = rows[0] if rows else {}
+
+        def _decoded(value: Any) -> Any:
+            # psycopg returns jsonb already parsed; a text-mode driver hands back a string.
+            if isinstance(value, str):
+                try:
+                    return json.loads(value)
+                except ValueError:
+                    return None
+            return value
+
+        report = _decoded(row.get("report"))
+        sources = _decoded(row.get("source_descriptions"))
+        return {
+            "source_descriptions": sources if isinstance(sources, list) else [],
+            "report": report if isinstance(report, dict) else None,
+        }
+
+    #: Columns that identify a path operation for the Arazzo workflow viewer (COA-1.3).
+    _ARAZZO_OPERATION_SUMMARY_SQL = """
+        SELECT po.id::text AS path_operation_id,
+               po.operation AS method,
+               vp.id::text AS path_id,
+               vp.pathname AS path,
+               pod.summary AS summary,
+               pod.description AS description,
+               pod.operation_id AS operation_id,
+               v.id::text AS version_id,
+               v.version_id AS version_label,
+               p.id::text AS project_id,
+               p.name AS project_name,
+               p.publishable AS project_publishable
+        FROM apiome.path_operation po
+        JOIN apiome.version_path vp ON vp.id = po.version_path_id
+        JOIN apiome.versions v ON v.id = vp.version_id
+        JOIN apiome.projects p ON p.id = v.project_id
+        LEFT JOIN apiome.path_operation_description pod ON pod.path_operation_id = po.id
+        WHERE p.tenant_id = %s::uuid AND p.deleted_at IS NULL AND v.deleted_at IS NULL
+    """
+
+    def get_arazzo_step_operations(
+        self, *, tenant_id: str, path_operation_ids: Sequence[str]
+    ) -> Dict[str, Dict[str, Any]]:
+        """Summarize the operations Arazzo steps resolved to (COA-1.3 / #7039).
+
+        Args:
+            tenant_id: Owning tenant UUID; operations of other tenants are never returned.
+            path_operation_ids: ``api_workflow_steps.resolved_path_operation_id`` values.
+
+        Returns:
+            ``{path_operation_id: summary}`` where each summary carries ``method``, ``path``,
+            ``path_id``, ``summary``, ``description``, ``operation_id``, ``version_id``,
+            ``version_label``, ``project_id``, ``project_name`` and ``project_publishable``.
+            Ids that no longer exist (or belong to a deleted project) are simply absent.
+        """
+        ids = sorted({str(value) for value in path_operation_ids if value})
+        if not ids:
+            return {}
+        rows = self.execute_query(
+            self._ARAZZO_OPERATION_SUMMARY_SQL + " AND po.id = ANY(%s::uuid[])",
+            (tenant_id, ids),
+        )
+        return {str(row["path_operation_id"]): dict(row) for row in rows or []}
+
+    def get_arazzo_operation_detail(
+        self, *, tenant_id: str, path_operation_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one path operation for the Arazzo step drawer (COA-1.3 / #7039).
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            path_operation_id: The ``path_operation.id`` a step resolved to.
+
+        Returns:
+            The operation summary (see :meth:`get_arazzo_step_operations`) plus ``parameters``
+            (``name``, ``in_location``, ``description``, ordered by location then name) and
+            ``responses`` (``status_code``, ``description``, ordered by status code), or ``None``
+            when the operation does not exist in this tenant.
+        """
+        rows = self.execute_query(
+            self._ARAZZO_OPERATION_SUMMARY_SQL + " AND po.id = %s::uuid",
+            (tenant_id, path_operation_id),
+        )
+        if not rows:
+            return None
+        detail = dict(rows[0])
+        detail["parameters"] = [
+            dict(row)
+            for row in self.execute_query(
+                """
+                SELECT spp.name, spp.in_location, spp.description
+                FROM apiome.path_operation_parameter_link link
+                JOIN apiome.shared_path_parameter spp ON spp.id = link.shared_path_parameter_id
+                WHERE link.path_operation_id = %s::uuid
+                ORDER BY spp.in_location, spp.name
+                """,
+                (path_operation_id,),
+            )
+            or []
+        ]
+        detail["responses"] = [
+            dict(row)
+            for row in self.execute_query(
+                """
+                SELECT spr.status_code, spr.description
+                FROM apiome.path_operation_response_link link
+                JOIN apiome.shared_path_response spr ON spr.id = link.shared_path_response_id
+                WHERE link.path_operation_id = %s::uuid
+                ORDER BY spr.status_code
+                """,
+                (path_operation_id,),
+            )
+            or []
+        ]
+        return detail
+
     def create_version_push_transaction(
         self,
         project_id: str,

@@ -353,7 +353,8 @@ export function catalogConvertedStrip(
 
 /**
  * The nine panes, in the order the mockup's tab row draws them, then Dependencies (CDG-3.4), then
- * Subjects (CDG-4.5) — which only schema items (Avro, JSON Schema, Protobuf) show.
+ * Subjects (CDG-4.5) — which only schema items (Avro, JSON Schema, Protobuf) show — then Workflows
+ * (COA-1.3), which only Arazzo items show.
  */
 export const CATALOG_DETAIL_TAB_IDS = [
   'overview',
@@ -366,6 +367,7 @@ export const CATALOG_DETAIL_TAB_IDS = [
   'versions',
   'dependencies',
   'subjects',
+  'workflows',
 ] as const;
 
 export type CatalogDetailTabId = (typeof CATALOG_DETAIL_TAB_IDS)[number];
@@ -395,6 +397,7 @@ const TAB_META: Readonly<Record<CatalogDetailTabId, { label: string; icon: strin
   versions: { label: 'Versions', icon: 'versions' },
   dependencies: { label: 'Dependencies', icon: 'dependencies' },
   subjects: { label: 'Subjects', icon: 'subjects' },
+  workflows: { label: 'Workflows', icon: 'workflows' },
 };
 
 /** The counts a caller can hand the tab row; each is `null` until its pane has loaded. */
@@ -404,6 +407,8 @@ export interface CatalogDetailTabCounts {
   versions?: number | null;
   /** How many schema-registry subjects the item backs (CDG-4.5). */
   subjects?: number | null;
+  /** How many Arazzo workflows the item's latest revision holds (COA-1.3). */
+  workflows?: number | null;
 }
 
 /** Which optional panes an item has. */
@@ -412,13 +417,15 @@ export interface CatalogDetailTabOptions {
   subjects?: boolean;
   /** Show **Dependencies** — on unless `false` (held back with the dependency graph). */
   dependencies?: boolean;
+  /** Show **Workflows** — true for Arazzo items (COA-1.3, #7039). */
+  workflows?: boolean;
 }
 
 /**
  * The tabs, with the counts the mockup shows (and the Subjects count).
  *
- * **Subjects** is listed only when `options.subjects` is set; **Dependencies** is left out when
- * `options.dependencies` is `false`.
+ * **Subjects** is listed only when `options.subjects` is set, **Workflows** only when
+ * `options.workflows` is set; **Dependencies** is left out when `options.dependencies` is `false`.
  *
  * A count of `0` is still a count — "Conversions 0" is a fact the reader can act on, and the
  * mockup's empty-state copy says as much — but a count that has not *loaded* is `null` and
@@ -435,6 +442,7 @@ export function catalogDetailTabs(
   const ids = CATALOG_DETAIL_TAB_IDS.filter(
     (id) =>
       (id !== 'subjects' || options.subjects === true) &&
+      (id !== 'workflows' || options.workflows === true) &&
       (id !== 'dependencies' || options.dependencies !== false),
   );
   return ids.map((id) => {
@@ -443,6 +451,7 @@ export function catalogDetailTabs(
       : id === 'lint' ? counts.lint
       : id === 'versions' ? counts.versions
       : id === 'subjects' ? counts.subjects
+      : id === 'workflows' ? counts.workflows
       : null;
     return {
       id,

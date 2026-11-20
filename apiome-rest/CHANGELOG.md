@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.769.0] - 2026-11-19
+
+### Added
+- **Arazzo workflow viewer reads — OpenAPI 1.600.0 (COA-1.3, #7039):** the workflows REPO-3.4
+  persists (`api_workflows` / `api_workflow_steps`, V225) are readable for the UI's new
+  **Workflows** tab. New `arazzo-workflows` tag, router `app.arazzo_workflow_routes`:
+  - `GET /v1/workflows/{tenant_slug}/versions/{version_id}` — a revision's workflows in
+    declaration order, each with its `inputs` / `outputs`, ordered steps (target kind, raw
+    `operationRef` / `operationId`, `resolution_status` / `resolution_reason`, parameters, success
+    criteria, `on_success` / `on_failure` actions, outputs) and, for a resolved step, the
+    `operation` it calls (method, route, owning project and revision, `project_publishable`).
+  - `GET /v1/workflows/{tenant_slug}/catalog/{item_id}` — the same for a catalog item's latest
+    revision (`version_id: null` and no workflows when it has none).
+  - `GET /v1/workflows/{tenant_slug}/operations/{path_operation_id}` — one operation a step
+    calls, with its linked parameters and declared responses, for the step drawer.
+  - Each workflow lists the source descriptions its steps point into, with a status: `resolved`
+    (and the tier) or `missing` (and the reason) from the COA-1.2 report on the revision's
+    `format_metadata.arazzoSources`, or `unknown` for a revision imported before that report.
+  - All three are tenant-scoped; a malformed id is a 400, an id outside the tenant a 404. The
+    mapping is the pure `app.arazzo_workflow_view`; the reads are
+    `Database.get_arazzo_source_context`, `get_arazzo_step_operations` and
+    `get_arazzo_operation_detail`.
+
 ## [1.768.0] - 2026-11-19
 
 ### Added

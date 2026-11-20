@@ -18053,3 +18053,122 @@ def mcp_collection_out_from_row(
         updated_at=row["updated_at"],
         members=members,
     )
+
+
+# ==================== Arazzo workflow viewer (COA-1.3, #7039) ====================
+
+
+class ArazzoStepOperationOut(BaseModel):
+    """The internal path operation an Arazzo step resolved to, so the viewer can open it."""
+
+    path_operation_id: str = Field(..., description="`path_operation.id` the step targets")
+    method: str = Field(..., description="Upper-case HTTP method")
+    path: str = Field(..., description="Route template, e.g. `/pets/{petId}`")
+    path_id: str = Field(..., description="`version_path.id` holding the route")
+    summary: Optional[str] = None
+    description: Optional[str] = None
+    operation_id: Optional[str] = Field(None, description="The operation's `operationId`, if any")
+    version_id: str = Field(..., description="Revision (`versions.id`) holding the operation")
+    version_label: Optional[str] = Field(None, description="Display version string of that revision")
+    project_id: str = Field(..., description="Project or catalog item holding the operation")
+    project_name: Optional[str] = None
+    project_publishable: bool = Field(
+        False, description="True for a Project, false for a catalog item"
+    )
+
+
+class ArazzoOperationParameterOut(BaseModel):
+    """A parameter of the operation shown in the step drawer."""
+
+    name: str
+    in_location: Optional[str] = Field(None, description="`path`, `query`, `header` or `cookie`")
+    description: Optional[str] = None
+
+
+class ArazzoOperationResponseOut(BaseModel):
+    """A declared response of the operation shown in the step drawer."""
+
+    status_code: str
+    description: Optional[str] = None
+
+
+class ArazzoOperationDetailOut(ArazzoStepOperationOut):
+    """One path operation with its parameters and responses (the step drawer)."""
+
+    parameters: List[ArazzoOperationParameterOut] = Field(default_factory=list)
+    responses: List[ArazzoOperationResponseOut] = Field(default_factory=list)
+
+
+class ArazzoSourceDescriptionOut(BaseModel):
+    """A declared `sourceDescriptions` entry and whether the import resolved it."""
+
+    name: str
+    url: Optional[str] = None
+    type: Optional[str] = Field(None, description="`openapi`, `asyncapi` or `arazzo`")
+    status: Literal["resolved", "missing", "unknown"] = Field(
+        ...,
+        description="`unknown` when the revision was imported before source resolution was recorded",
+    )
+    tier: Optional[str] = Field(None, description="`fileset`, `catalog` or `remote` when resolved")
+    reason: Optional[str] = Field(None, description="Stable reason code when missing")
+    detail: Optional[str] = None
+
+
+class ArazzoWorkflowStepOut(BaseModel):
+    """One step of a workflow, in source order, with what it calls and where it goes next."""
+
+    step_id: str
+    order_index: int
+    description: Optional[str] = None
+    target_kind: Literal["operation", "workflow", "none"] = Field(
+        ..., description="Whether the step calls an operation, another workflow, or nothing"
+    )
+    target_workflow_id: Optional[str] = Field(None, description="Called `workflowId`, if any")
+    operation_ref: Optional[str] = Field(None, description="Raw `operationRef` / `operationPath`")
+    operation_id: Optional[str] = Field(None, description="Raw `operationId`")
+    resolution_status: str = Field(
+        ..., description="`resolved`, `unresolved`, `not_applicable` or `parse_error`"
+    )
+    resolution_reason: Optional[str] = None
+    operation: Optional[ArazzoStepOperationOut] = Field(
+        None, description="The resolved operation; null when unresolved or since deleted"
+    )
+    source_names: List[str] = Field(
+        default_factory=list, description="Declared sources the step's target points into"
+    )
+    parameters: List[Any] = Field(default_factory=list)
+    request_body: Optional[Any] = None
+    success_criteria: List[Any] = Field(default_factory=list)
+    on_success: List[Any] = Field(default_factory=list, description="`onSuccess` actions, verbatim")
+    on_failure: List[Any] = Field(default_factory=list, description="`onFailure` actions, verbatim")
+    outputs: Dict[str, Any] = Field(default_factory=dict)
+    depends_on: List[Any] = Field(default_factory=list)
+
+
+class ArazzoWorkflowOut(BaseModel):
+    """One persisted Arazzo workflow with its inputs, outputs, sources and steps."""
+
+    workflow_id: str
+    summary: Optional[str] = None
+    description: Optional[str] = None
+    ordinal: int = 0
+    inputs: Dict[str, Any] = Field(default_factory=dict, description="Workflow `inputs` JSON Schema")
+    outputs: Dict[str, Any] = Field(default_factory=dict, description="Workflow `outputs` map")
+    depends_on: List[Any] = Field(default_factory=list)
+    success_actions: List[Any] = Field(default_factory=list)
+    failure_actions: List[Any] = Field(default_factory=list)
+    sources: List[ArazzoSourceDescriptionOut] = Field(default_factory=list)
+    steps: List[ArazzoWorkflowStepOut] = Field(default_factory=list)
+
+
+class ArazzoWorkflowsResponse(BaseModel):
+    """The Arazzo workflows persisted for one revision."""
+
+    version_id: Optional[str] = Field(
+        None, description="The revision read; null for a catalog item with no revisions"
+    )
+    project_id: Optional[str] = None
+    sources: List[ArazzoSourceDescriptionOut] = Field(
+        default_factory=list, description="Every source the document declares"
+    )
+    workflows: List[ArazzoWorkflowOut] = Field(default_factory=list)

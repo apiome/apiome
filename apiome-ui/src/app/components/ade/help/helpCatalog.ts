@@ -911,6 +911,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['timeline', 'mock', 'test bench', 'discussion', 'repository', 'changelog'],
   },
   {
+    id: 'arazzo-workflows',
+    title: 'Arazzo workflows',
+    summary: 'Read an Arazzo workflow as steps, inputs, outputs and success and failure paths.',
+    page: 'apiome-docs/docs/build/arazzo-workflows.mdx',
+    section: 'reference',
+    keywords: ['steps', 'step graph', 'sourceDescriptions', 'operationRef', 'goto', 'retry'],
+  },
+  {
     id: 'postman-import',
     title: 'Import a Postman collection',
     summary: 'Catalog a Postman Collection v2.0 or v2.1 and its environments as one REST API.',

@@ -633,6 +633,38 @@
       "data": "fixture:hive-catalog-item/inspector-x12.html"
     },
     {
+      "id": "arazzo-workflows",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/tab-workflows.html",
+      "scrollTo": "#awf-sources-title",
+      "sources": [
+        "apiome-ui/src/app/components/ade/workflows",
+        "apiome-ui/src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient.tsx"
+      ]
+    },
+    {
+      "id": "arazzo-workflow-graph",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/tab-workflows.html",
+      "scrollTo": "#awf-graph-heading",
+      "sources": [
+        "apiome-ui/src/app/components/ade/workflows",
+        "apiome-ui/src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient.tsx"
+      ]
+    },
+    {
+      "id": "arazzo-workflow-step",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/tab-workflows-step.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/workflows",
+        "apiome-ui/src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient.tsx"
+      ]
+    },
+    {
       "id": "catalog-item-copybook",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",
