@@ -65,7 +65,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring | 8 |
 | COA-EPIC-3 | Import and export fidelity | 6 |
 | COA-EPIC-4 | Catalog and Projects cleanup | 4 |
-| COA-EPIC-5 | Document store: originals and rendered documents in object storage | 14 |
+| COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
 
 ### COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible
 
@@ -456,6 +456,7 @@ flowchart LR
 | COA-5.12 · [#7088](https://github.com/apiome/apiome/issues/7088) | Local MinIO and deployment examples | MinIO in `docker-compose.yml`, prod env example and `get-apiome` prompts for the store | `enhancement`, `devops` | Y | S | deploy, docker-compose |
 | COA-5.13 · [#7089](https://github.com/apiome/apiome/issues/7089) | UI reads revision documents from REST, not its own generator | Versions view/compare, Catalog diff and MR/review spec views fetch cached documents from REST; retire the Next.js `buildOpenApiSpecForVersion` path after a parity audit | `enhancement`, `ui`, `rest`, `performance` | N | L | apiome-ui, apiome-rest |
 | COA-5.14 · [#7090](https://github.com/apiome/apiome/issues/7090) | Every REST feature reads revision documents through the store | Lint, mock, Swagger UI, merge/rollback, publish, change reports, PR-back, reviews, source workspace, contracts, blast radius, governance, sync and export use the rendered-document service; an architecture test forbids direct generation | `enhancement`, `rest`, `performance` | Y | L | apiome-rest |
+| COA-5.15 · [#7092](https://github.com/apiome/apiome/issues/7092) | Per-tenant bring-your-own buckets | A tenant can point its originals and rendered documents at its own S3-compatible bucket, using a sealed tenant storage credential; the platform store stays the default | `enhancement`, `rest`, `ui`, `security` | Y | L | apiome-rest, apiome-ui, apiome-db |
 
 **COA-5.1 · #7077 Document store SPI with S3, filesystem and database backends**
 - **Problem:** Apiome has no general object storage. Originals sit in Postgres `TEXT`/JSONB, frozen schemas and export artifacts in `BYTEA`, and the export artifact store's object backend is a stub (`ExportArtifactStoreNotConfigured`). Large documents bloat rows, backups and queries, and no file I/O (streaming, Range, presigned URLs) can be applied to them.
@@ -579,7 +580,7 @@ flowchart LR
 - `GET /v1/ops/document-store` (platform admin): backend, bucket, prefix, region, encryption, object count/bytes, last integrity run; `POST …/test` writes, reads and deletes a probe object.
 - `/health` reports the store as a dependency.
 - Platform-admin UI page showing the same, with "Test connection".
-- Per-tenant bring-your-own buckets (via the credential vault) are not part of this issue.
+- Per-tenant bring-your-own buckets are COA-5.15 (#7092).
 - **Acceptance Criteria:**
 - Misconfiguration fails fast at startup with a redacted, actionable message, or degrades to `db` only if `APIOME_DOCUMENT_STORE_FALLBACK=db` is set.
 - **Parallelism/Dependencies:** After COA-5.1.
@@ -652,13 +653,33 @@ flowchart LR
 - **Technical Stack:** Python (apiome-rest), pytest.
 - **Documentation:** `build/lint-and-quality.md`, `ship/mock-try-out.mdx`, `build/version-control.mdx` (merge/rollback), `getting-started/versions-and-publishing.mdx`; screenshots: n/a (no UI change); REST reference regenerated (OpenAPI version bump); release note.
 
+**COA-5.15 · #7092 Per-tenant bring-your-own buckets**
+- **Problem:** COA-5.1 gives the whole install one store. Enterprise tenants often need their API documents in a bucket they own, for data residency, their own KMS keys, retention rules or audit, and a shared SaaS install cannot meet that with one platform bucket.
+- **Solution/Scope:**
+- Tenant setting: `document_store` = `platform` (default) or `tenant`, with a stored credential, bucket, prefix, region, endpoint, addressing style and SSE / KMS key id. Credentials reuse the sealed tenant storage credentials already used for export delivery (`POST /v1/export/{tenant}/storage-credentials`, `mcp_credential_crypto`); when the credential vault (CVT-EPIC-1, #6130) lands they move with every other sealed credential.
+- A store router resolves the backend per tenant on every `put` / `get` / `presign`; `document_objects.backend` and `storage_key` record where each object lives, so platform and tenant objects can coexist during a move.
+- REST: `GET` / `PUT /v1/tenants/{tenant}/document-store`, and `POST …/document-store/test` (write, read, delete a probe object; checks the bucket policy allows Apiome's key layout).
+- Switching: moving to or from a tenant bucket runs COA-5.8's copy-and-verify job scoped to the tenant; reads keep working from the old location until each object verifies; old copies are deleted only after an explicit confirm.
+- Failure handling: an unreachable or revoked tenant bucket answers `503 tenant-document-store-unavailable` with the reason (never a secret); rendered documents fall back to rendering uncached; originals report unavailable; the tenant's admins get a notification and the ops health check lists the tenant.
+- Controls: a platform setting `APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS` (default off); a new permission `document_store:manage` for tenant admins; endpoints pass the SSRF guard; every change is audited.
+- UI: a **Document storage** section in tenant settings (choose platform or own bucket, pick or add a credential, test, start a move and watch its progress); the platform-admin screen from COA-5.9 lists which tenants use their own bucket.
+- COA-5.10's lifecycle (reference counts, GC, integrity runs, tenant deletion) works per backend; tenant deletion never deletes a tenant-owned bucket, only Apiome's prefix in it.
+- **Acceptance Criteria:**
+- With two tenants on different MinIO buckets, neither tenant's objects appear in the other's bucket or the platform bucket (test).
+- A move from platform to tenant bucket and back leaves every object verified and no request failing during the move.
+- Revoking the tenant credential produces the `503`, the notification and the health entry, and diffs still answer (uncached).
+- Secrets never appear in responses, logs or audit rows (redaction test).
+- **Parallelism/Dependencies:** After COA-5.1, COA-5.8, COA-5.9 and COA-5.10.
+- **Technical Stack:** FastAPI, boto3, SQL migration (tenant document-store settings), Next.js.
+- **Documentation:** `admin/document-store.mdx` (tenant buckets), `admin/admin-tenants.mdx`, `reference/rest/tenants.md`; screenshots: `tenant-document-storage` (light + dark, 1440 × 900); REST reference regenerated (OpenAPI version bump); release note.
+
 ## 5. Work to be done, in order
 
 1. **Quick wins and the truth pass (parallel):** COA-1.1 · COA-2.2 · COA-4.1 · COA-3.5 · COA-3.6.
 2. **Foundations:** COA-2.1 (construct audit) · COA-1.5 (workflow records) · COA-1.2 (Arazzo filesets) · COA-4.3 (usability audit).
 3. **Fidelity and options:** COA-1.4 · COA-2.3 · COA-2.4 · COA-2.7 · COA-4.2 · #5879 · #5880.
 4. **Surfaces and burn-down:** COA-1.3 · COA-2.5 · COA-3.1 · COA-3.2 · COA-3.3 · governance epics #5875 and #5868 (+ #5869–#5872).
-5. **Document store (COA-EPIC-5), alongside 2–4:** COA-5.11 baseline · COA-5.1 + COA-5.2 → COA-5.3 · COA-5.9 · COA-5.12 → COA-5.4 · COA-5.5 · COA-5.7 → COA-5.6 · COA-5.13 · COA-5.14 · COA-5.8 · COA-5.10 → COA-5.11 gate. COA-5.13's parity audit can start in phase 2.
+5. **Document store (COA-EPIC-5), alongside 2–4:** COA-5.11 baseline · COA-5.1 + COA-5.2 → COA-5.3 · COA-5.9 · COA-5.12 → COA-5.4 · COA-5.5 · COA-5.7 → COA-5.6 · COA-5.13 · COA-5.14 · COA-5.8 · COA-5.10 → COA-5.15 → COA-5.11 gate. COA-5.13's parity audit can start in phase 2.
 6. **Demos and delivery:** COA-4.4 · #6706 · #6654.
 7. **V2:** COA-1.6 · COA-2.6 · COA-2.8 · COA-3.4 · COA-1.7.
 
