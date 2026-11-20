@@ -520,6 +520,7 @@ describe('versionRowMenuItems', () => {
     expect(ids(HEAD_DRAFT)).toEqual([
       'view',
       'export',
+      'upgradeOpenapi',
       'heatmap',
       'compareWithCurrent',
       'relationshipGraph',
@@ -562,6 +563,11 @@ describe('versionRowMenuItems', () => {
       )
     ).not.toContain('publish');
     expect(versionRowQuickActions(HEAD_DRAFT, { ...CONTEXT, can: viewer })).toEqual([]);
+  });
+
+  it('offers Upgrade OpenAPI version only to a role that may create versions (COA-2.6)', () => {
+    expect(ids(HEAD_DRAFT)).toContain('upgradeOpenapi');
+    expect(ids(HEAD_DRAFT, { can: (permission: string) => permission !== 'versions:create' })).not.toContain('upgradeOpenapi');
   });
 
   it('withholds Publish for a catalog item (not publishable)', () => {
@@ -619,7 +625,7 @@ describe('versionRowMenuItems', () => {
 
   it('production + flag off: the git-like items — Delete included — are gone, as before', () => {
     const list = ids(HEAD_DRAFT, { gitlike: gitlikeAffordance(false, true) });
-    expect(list).toEqual(['view', 'export', 'heatmap', 'scheduleSunset', 'edit', 'publish']);
+    expect(list).toEqual(['view', 'export', 'upgradeOpenapi', 'heatmap', 'scheduleSunset', 'edit', 'publish']);
   });
 
   it('non-production + flag off: the git-like items are listed, marked, inert, and say why', () => {

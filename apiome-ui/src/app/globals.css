@@ -25281,6 +25281,143 @@ button.cid-entity__head {
   margin-inline-end: var(--space-3);
 }
 
+/* ---- Upgrade OpenAPI version (COA-2.6, #7049) --------------------------------
+   The dialog opened from a version's row menu or a catalog item's header menu:
+   the target picker, the plan (headline, per-rule table, changes by hop) and
+   the label field. The error strip reuses `.cid-refresh__error`, the quiet
+   lines `.cid-note`. Tokens only. */
+.oau-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.oau-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.oau-target__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.oau-status,
+.oau-done {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.oau-done {
+  color: var(--fg);
+}
+
+.oau-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.oau-plan__headline {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.oau-plan .cid-note {
+  margin-block-start: 0;
+}
+
+.oau-caption {
+  padding-block-end: var(--space-1);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-align: start;
+}
+
+.oau-rules {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.oau-rules th,
+.oau-rules td {
+  padding: var(--space-1) var(--space-2);
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.oau-rules th {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.oau-rules th.oau-rules__count,
+.oau-rules td.oau-rules__count {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.oau-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.oau-hop {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.oau-hop__summary {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.oau-changes {
+  display: flex;
+  flex-direction: column;
+  max-block-size: calc(var(--space-12) * 6);
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-3);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.oau-change {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+  border-block-start: 1px solid var(--border);
+}
+
+.oau-change__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
 /* ---- Drift (MFI-31.3, #4400) ------------------------------------------------
    The banner above the panes, "What changed" on the Versions pane, and the
    workspace's Drift alerts dialog. The severity tint is the Alert / Badge

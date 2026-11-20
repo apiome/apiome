@@ -68,7 +68,9 @@ import {
   ShieldCheck,
   Tags,
   Workflow,
+  ArrowUpCircle,
 } from 'lucide-react';
+import { OpenapiUpgradeDialog } from '@/app/components/ade/openapi-upgrade/OpenapiUpgradeDialog';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { CatalogSubjectsPanel } from '@/app/components/ade/schemaRegistry/CatalogSubjectsPanel';
@@ -491,6 +493,14 @@ export function CatalogItemDetailClient({
     [load, setUpload],
   );
 
+  /* COA-2.6: the Upgrade OpenAPI version dialog, mounted with a fresh key per open. */
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeKey, setUpgradeKey] = useState(0);
+  const openUpgrade = useCallback(() => {
+    setUpgradeKey((key) => key + 1);
+    setUpgradeOpen(true);
+  }, []);
+
   /** After a conversion (MFI-23.11), reload so the back-link appears and Convert relabels. */
   const handleConverted = useCallback(() => {
     void load();
@@ -678,15 +688,29 @@ export function CatalogItemDetailClient({
           </div>
         }
         overflow={
-          actions.exportStudio.shown
+          actions.exportStudio.shown || actions.upgradeOpenapi.shown
             ? {
                 items: [
-                  {
-                    id: 'export-studio',
-                    label: 'Export to another format…',
-                    icon: PanelsTopLeft,
-                    onSelect: handleExportStudio,
-                  },
+                  ...(actions.exportStudio.shown
+                    ? [
+                        {
+                          id: 'export-studio',
+                          label: 'Export to another format…',
+                          icon: PanelsTopLeft,
+                          onSelect: handleExportStudio,
+                        },
+                      ]
+                    : []),
+                  ...(actions.upgradeOpenapi.shown
+                    ? [
+                        {
+                          id: 'upgrade-openapi',
+                          label: 'Upgrade OpenAPI version…',
+                          icon: ArrowUpCircle,
+                          onSelect: openUpgrade,
+                        },
+                      ]
+                    : []),
                 ],
               }
             : undefined
@@ -1087,6 +1111,16 @@ export function CatalogItemDetailClient({
           upload={upload}
           onOpenChange={setReuploadOpen}
           onReuploaded={handleReuploaded}
+        />
+      ) : null}
+
+      {upgradeOpen && actions.upgradeOpenapi.shown ? (
+        <OpenapiUpgradeDialog
+          key={upgradeKey}
+          open
+          onOpenChange={setUpgradeOpen}
+          projectId={item.id}
+          onApplied={() => void load()}
         />
       ) : null}
 

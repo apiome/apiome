@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.779.0] - 2026-11-20
+
+### Added
+- **OpenAPI spec upgrade assistant — OpenAPI 1.606.0 (COA-2.6, #7049):** a Swagger 2.0 or
+  OpenAPI 3.0 document had a downgrade path but no guided upgrade.
+  - `POST /v1/openapi-upgrade/{tenant_slug}/plan` plans an upgrade to `3.0`, `3.1` or `3.2`
+    without writing anything. The source is a pasted document (`document_text`, JSON or YAML) or
+    a project / catalog item version (`project_id` + `version`, default the latest; its
+    captured source, or the rebuilt document of a decomposed OpenAPI import). The plan lists
+    every change (hop, rule, pointer, before / after, a `review` flag where the meaning may
+    change), a count per rule, the upgraded document and a `plan_digest`.
+  - `POST /v1/openapi-upgrade/{tenant_slug}/apply` re-plans the version, refuses a changed
+    source (409 `plan-stale`), a version already at the target (409 `nothing-to-upgrade`) and a
+    taken label (409 `version-exists`), runs the tenant's import quality gate, and imports the
+    upgraded document as a new version of the same project or catalog item (an
+    `openapi.upgrade.applied` audit row).
+  - Pure `app.openapi_upgrade` (+ `openapi_upgrade_rules`, `openapi_upgrade_swagger2`): 2.0 →
+    3.0 (servers, components, `$ref`s, body / formData → `requestBody`, response `content` and
+    examples, `collectionFormat` → `style`/`explode`, `x-nullable`, `discriminator`, `type:
+    file`, security schemes; `x-` extensions kept), 3.0 → 3.1 (`nullable` → type arrays /
+    `anyOf`, numeric exclusive bounds, `example` → `examples`), 3.1 → 3.2 (version string).
+    26 rules. Tests check that every changed object is listed, that the upgraded documents pass
+    their meta-schema, and that a downgrade of the result matches the original on the
+    construct corpus (3.0 and 3.1 documents, and the Swagger 2.0 petstore).
+
 ## [1.778.0] - 2026-11-20
 
 ### Added

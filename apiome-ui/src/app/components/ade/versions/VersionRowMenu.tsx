@@ -30,6 +30,7 @@
 import * as React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  ArrowUpCircle,
   Ellipsis,
   Eye,
   FileOutput,
@@ -65,6 +66,7 @@ import {
 const ACTION_ICON: Readonly<Record<VersionRowMenuAction, React.ComponentType<{ className?: string }>>> = {
   view: Eye,
   export: FileOutput,
+  upgradeOpenapi: ArrowUpCircle,
   heatmap: Flame,
   compareWithCurrent: GitCompareArrows,
   relationshipGraph: Network,

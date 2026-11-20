@@ -1,0 +1,136 @@
+---
+title: Upgrade a spec to a newer OpenAPI version
+description: Plan, review and apply a Swagger 2.0 or OpenAPI 3.x upgrade as a version.
+sidebar_position: 3.2
+tags: [openapi, swagger, upgrade, versions]
+---
+
+<Route path="/ade/dashboard/versions" />
+
+The upgrade assistant takes a Swagger 2.0, OpenAPI 3.0 or OpenAPI 3.1 document to a newer
+version — **OpenAPI 3.0**, **3.1** or **3.2** — and shows every change it makes before anything is
+written. You review the plan, then apply it: the upgraded document becomes a **new version** of the
+same project or catalog item. The version you upgraded from stays as it is.
+
+It runs one step (a *hop*) at a time, so a Swagger 2.0 document going to 3.2 passes through all
+three:
+
+| Hop | What changes |
+| --- | --- |
+| **2.0 → 3.0** | The structure: `host` / `basePath` / `schemes` become `servers`; `definitions`, reusable parameters and responses and `securityDefinitions` move under `components`; `body` and `formData` parameters become a `requestBody`; response schemas and examples move under `content`; inline parameter types move into a `schema`; `collectionFormat` becomes `style` / `explode`. Every `x-` extension is kept. |
+| **3.0 → 3.1** | The schemas move to JSON Schema 2020-12: `nullable` becomes a `type` array (or `anyOf` with `null`), boolean `exclusiveMinimum` / `exclusiveMaximum` become numbers, and `example` becomes `examples`. |
+| **3.1 → 3.2** | The version string. Every 3.1 document is already a valid 3.2 document. |
+
+To go the other way, export the version at the older version instead (see
+[Export a spec](/ship/export-a-spec)).
+
+## Upgrade a version in the app
+
+1. Open **Versions** and find the version.
+2. Open its row menu and choose **Upgrade OpenAPI version…**. (For a catalog item that holds an
+   OpenAPI or Swagger file, open the item and choose **Upgrade OpenAPI version…** from the header
+   menu.)
+3. Choose the **Target version**. The dialog plans the upgrade straight away, and again each time
+   you pick another target. Targets older than the version are not offered.
+4. Read the plan:
+   - The headline names the source and target versions, how many changes there are, and how many
+     are marked to review.
+   - **Changes by rule** counts the changes of each kind.
+   - Each hop lists its changes, each with the JSON Pointer of the object it touched. A change
+     marked **Review** may change what the document means — read it before you apply.
+5. Optionally type a **New version label**, such as `2.0.0`. Leave it empty for a date and time
+   label. A label the project already uses is refused.
+6. Select **Apply as new version**. The dialog says which version it created, and the list shows it.
+
+<Screenshot id="openapi-upgrade-plan" alt="The Upgrade OpenAPI version dialog for version 1.4.0: OpenAPI 3.2 is chosen as the target, the headline reads Swagger 2.0 (2.0) to OpenAPI 3.2.0, 6 changes, 1 to review, a Changes by rule table lists four rules, and the 2.0 to 3.0 hop lists its changes with one marked Review, above the New version label field and the Apply as new version button" />
+
+**Where the plan starts.** A version imported from a file is upgraded from that file. A version
+that keeps no imported file (an OpenAPI import Apiome stores as classes and paths) is upgraded from
+the document Apiome generates for it, which is OpenAPI 3.1 — so the only upgrade it has is to 3.2.
+A version imported from several files (an archive) cannot be upgraded directly: export it as one
+bundled document and upgrade that file with the CLI.
+
+**If the version changes after you review.** Applying sends the plan's digest. If the version's
+document no longer plans the same way, the upgrade is refused with *The version changed since the
+plan was made* — close the dialog and open it again to review the new plan.
+
+The new version goes through the same import as an upload, including your workspace's import
+quality policy. A policy that blocks the document blocks the upgrade too.
+
+## Upgrade from the CLI
+
+Plan a local file and write the upgraded document:
+
+```bash
+apiome upgrade petstore-swagger.yaml --to 3.2 --output petstore.yaml
+```
+
+The plan is printed — a count per rule, then every change. Add `--summary` for the counts only, or
+`--json` for the plan as JSON. A `.yaml` or `.yml` output is written as YAML, anything else as
+JSON; `--output -` writes to standard output (the plan then goes to standard error).
+
+Plan a project's version, then apply it as a new version:
+
+```bash
+apiome upgrade --project payments-api --version 1.4.0 --to 3.2
+apiome upgrade --project payments-api --version 1.4.0 --to 3.2 --apply --version-label 2.0.0
+```
+
+Without `--apply` nothing is written. See [`apiome upgrade`](/reference/cli/upgrade).
+
+## Upgrade with the REST API
+
+- `POST /v1/openapi-upgrade/{tenant_slug}/plan` with `{"target": "3.2", "document_text": "…"}` or
+  `{"target": "3.2", "project_id": "…", "version": "1.4.0"}` returns the plan: `changes` (each
+  with `hop`, `rule`, `pointer`, `summary`, `before`, `after`, `review`), `rules` (the count per
+  rule), `document` (the upgraded document) and `plan_digest`.
+- `POST /v1/openapi-upgrade/{tenant_slug}/apply` with `{"target", "project_id", "version",
+  "plan_digest", "version_label"}` creates the version. It answers 409 `plan-stale`,
+  `nothing-to-upgrade` or `version-exists` when it cannot.
+
+See the [OpenAPI upgrade reference](/reference/rest/openapi-upgrade). Planning a version needs
+**imports: view**; applying needs **imports: create** and **projects: edit**.
+
+## Every rule
+
+Each change in a plan names one of these rules.
+
+| Rule | Hop | What it does |
+| --- | --- | --- |
+| `openapi-version` | every hop | The `swagger` / `openapi` field names the new version. |
+| `servers-from-host` | 2.0→3.0 | `host`, `basePath` and `schemes` become one `servers` entry per scheme. |
+| `operation-schemes-to-servers` | 2.0→3.0 | An operation's own `schemes` become that operation's `servers`. |
+| `global-media-types` | 2.0→3.0 | Document-level `consumes` / `produces` are folded into each request body and response `content`. |
+| `definition-to-component-schema` | 2.0→3.0 | Each entry of `definitions` moves to `components.schemas`. |
+| `parameter-to-component` | 2.0→3.0 | Each reusable non-body parameter moves to `components.parameters`. |
+| `body-parameter-inlined` | 2.0→3.0 | A reusable `body` or `formData` parameter has no 3.0 component; each operation that used it gets it inlined in its `requestBody`. |
+| `response-to-component` | 2.0→3.0 | Each reusable response moves to `components.responses`. |
+| `security-definition-to-scheme` | 2.0→3.0 | Each security definition moves to `components.securitySchemes` (`basic` → `http`/`basic`, OAuth 2 `flow` → `flows`). |
+| `ref-rewritten` | 2.0→3.0 | A `#/definitions/`, `#/parameters/` or `#/responses/` reference points at its `#/components/…` home. |
+| `parameter-type-to-schema` | 2.0→3.0 | A parameter's or header's inline `type`, `format`, `items`, `enum` … keywords move into a `schema`. |
+| `collection-format-to-style` | 2.0→3.0 | An array parameter's `collectionFormat` (default `csv`) becomes the matching `style` and `explode`. |
+| `body-to-request-body` | 2.0→3.0 | The `in: body` parameter becomes `requestBody`, one `content` entry per `consumes` media type. |
+| `form-data-to-request-body` | 2.0→3.0 | `in: formData` parameters become one object schema under a form `requestBody`. |
+| `response-schema-to-content` | 2.0→3.0 | A response's `schema` moves under `content`, one entry per `produces` media type. |
+| `response-examples-to-content` | 2.0→3.0 | A response's `examples` map (media type → value) becomes each media type's `example`. |
+| `file-to-binary` | 2.0→3.0 | `type: file` becomes `type: string, format: binary`. |
+| `x-nullable-to-nullable` | 2.0→3.0 | The common `x-nullable` extension becomes the 3.0 `nullable` keyword. |
+| `discriminator-to-object` | 2.0→3.0 | A Swagger `discriminator` property name becomes `discriminator: {propertyName}`. |
+| `nullable-to-type-array` | 3.0→3.1 | `nullable: true` adds `"null"` to `type` (and `null` to `enum`). |
+| `nullable-to-any-of` | 3.0→3.1 | `nullable: true` on a schema with no `type` wraps it in `anyOf: [<schema>, {type: "null"}]`. |
+| `nullable-ref` | 3.0→3.1 | OpenAPI 3.0 ignored `nullable` next to `$ref`; the 3.1 form makes the reference accept `null` too. Review it. |
+| `nullable-false-removed` | 3.0→3.1 | `nullable: false` is the default and has no 3.1 keyword; it is removed. |
+| `exclusive-bound-numeric` | 3.0→3.1 | `exclusiveMinimum: true` + `minimum: n` becomes `exclusiveMinimum: n` (same for maximum). |
+| `exclusive-flag-removed` | 3.0→3.1 | A boolean `exclusiveMinimum` / `exclusiveMaximum` with no effect (false, or no bound) is removed. |
+| `example-to-examples` | 3.0→3.1 | A schema's `example` becomes a one-item `examples` array (the JSON Schema 2020-12 keyword). |
+
+## What is checked
+
+- **Every change is listed.** For the 3.0 → 3.1 and 3.1 → 3.2 hops, the tests compare each hop's
+  input and output and fail if any changed object has no entry in the plan.
+- **The upgrade reverses.** On the OpenAPI construct corpus, upgrading each 3.0 document to 3.1 or
+  3.2 and exporting the result at 3.0 gives back the original document. The only difference is a
+  keyword that had no effect (`exclusiveMinimum: false`, `nullable: false`), and the plan lists
+  each one it removes. The same holds for 3.1 documents taken to 3.2, and for a Swagger 2.0
+  document taken to 3.x and exported at 2.0.
+- **The result is valid.** Every upgraded corpus document passes its version's meta-schema.
