@@ -1,0 +1,132 @@
+# Derived corpus fixture (COA-1.4, #7040), copied unchanged below this header from
+# https://github.com/specmatic/specmatic-arazzo-auth/blob/5f275c7965cdd549f328415eadd183f3d7370acd/spec/arazzo/PlaceOrder.arazzo.yaml
+# Copyright (c) 2026 Specmatic. MIT License: https://github.com/specmatic/specmatic-arazzo-auth/blob/main/LICENSE
+arazzo: 1.1.0
+info:
+  title: Arazzo Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: LocationApi
+    url: ../openapi/location.yaml
+    type: openapi
+  - name: ProductsApi
+    url: ../openapi/products.yaml
+    type: openapi
+  - name: OrdersApi
+    url: ../openapi/orders.yaml
+    type: openapi
+  - name: InventoryApi
+    url: ../openapi/inventory.yaml
+    type: openapi
+workflows:
+  - workflowId: PlaceOrder
+    inputs:
+      required:
+        - createOrder
+        - getLocation
+      type: object
+      properties:
+        createOrder:
+          required:
+            - requestId
+          type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+        getLocation:
+          required:
+            - userEmail
+          type: object
+          properties:
+            userEmail:
+              type: string
+              format: email
+    steps:
+      - stepId: getLocation
+        operationId: $sourceDescriptions.LocationApi.getLocation
+        parameters:
+          - name: userEmail
+            in: query
+            value: $inputs.getLocation.userEmail
+          - name: Authorization
+            in: header
+            value: $specmatic.auth
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          locationCode: '$response.body#/locationCode'
+          userId: '$response.body#/userId'
+      - stepId: getProducts
+        operationId: $sourceDescriptions.ProductsApi.getProducts
+        parameters:
+          - name: locationCode
+            in: query
+            value: $steps.getLocation.outputs.locationCode
+          - name: Authorization
+            in: header
+            value: $specmatic.auth
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          - name: IsArrayEmpty
+            type: end
+            criteria:
+              - condition: '$response.body#/0 == null'
+        outputs:
+          name: '$response.body#/0/name'
+          price: '$response.body#/0/price'
+          productId: '$response.body#/0/productId'
+          inventory: '$response.body#/0/inventory'
+      - stepId: createOrder
+        operationId: $sourceDescriptions.OrdersApi.createOrder
+        parameters:
+          - name: requestId
+            in: header
+            value: $inputs.createOrder.requestId
+          - name: Authorization
+            in: header
+            value: $specmatic.auth
+        requestBody:
+          contentType: application/json
+          payload:
+            userId: $steps.getLocation.outputs.userId
+            productId: $steps.getProducts.outputs.productId
+            inventory: $steps.getProducts.outputs.inventory
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          orderId: '$response.body#/orderId'
+      - stepId: reserveInventory
+        operationId: $sourceDescriptions.InventoryApi.reserveInventory
+        parameters:
+          - name: orderId
+            in: query
+            value: $steps.createOrder.outputs.orderId
+          - name: Authorization
+            in: header
+            value: $specmatic.auth
+        successCriteria:
+          - condition: $statusCode == 200
+      - stepId: getOrderDetail
+        operationId: $sourceDescriptions.OrdersApi.getOrderDetail
+        parameters:
+          - name: orderId
+            in: path
+            value: $steps.createOrder.outputs.orderId
+          - name: Authorization
+            in: header
+            value: $specmatic.auth
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          orderId: '$response.body#/orderId'
+          status: '$response.body#/status'
+    outputs:
+      userLocationCode: $steps.getLocation.outputs.locationCode
+      productName: $steps.getProducts.outputs.name
+      productPrice: $steps.getProducts.outputs.price
+      productId: $steps.getProducts.outputs.productId
+      productInventory: $steps.getProducts.outputs.inventory
+      orderId: $steps.getOrderDetail.outputs.orderId
+      orderStatus: $steps.getOrderDetail.outputs.status

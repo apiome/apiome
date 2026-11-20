@@ -1,0 +1,445 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "asyncSources": [
+        "AsyncOrderApi"
+      ],
+      "sourceDescriptions": [
+        {
+          "name": "LocationApi",
+          "type": "openapi",
+          "url": "./workflow/openapi/location.yaml"
+        },
+        {
+          "name": "ProductApi",
+          "type": "openapi",
+          "url": "./workflow/openapi/product.yaml"
+        },
+        {
+          "name": "AsyncOrderApi",
+          "type": "asyncapi",
+          "url": "./workflow/asyncapi/order.yaml"
+        },
+        {
+          "name": "WarehouseApi",
+          "type": "openapi",
+          "url": "./workflow/openapi/warehouse.yaml"
+        },
+        {
+          "name": "OrderApi",
+          "type": "openapi",
+          "url": "./workflow/openapi/order.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "AsyncOrderApi": "asyncapi",
+        "LocationApi": "openapi",
+        "OrderApi": "openapi",
+        "ProductApi": "openapi",
+        "WarehouseApi": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Arazzo Workflow",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "inputs": {
+            "properties": {
+              "createOrderSend": {
+                "properties": {
+                  "requestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "requestId"
+                ],
+                "type": "object"
+              },
+              "getUserLocation": {
+                "properties": {
+                  "userEmail": {
+                    "format": "email",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userEmail"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "createOrderSend",
+              "getUserLocation"
+            ],
+            "type": "object"
+          },
+          "stepOrder": [
+            "getUserLocation",
+            "getProducts",
+            "createOrderSend",
+            "createOrderReceive",
+            "reserveInventory",
+            "orderAccepted",
+            "outForDelivery",
+            "getOrderDetails"
+          ],
+          "workflowId": "OrderId",
+          "workflowIndex": 0
+        },
+        "key": "OrderId",
+        "name": "OrderId",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "action": "receive",
+              "asyncStep": true,
+              "correlationId": "$steps.createOrderSend.outputs.requestId",
+              "operationId": "$sourceDescriptions.AsyncOrderApi.createOrder",
+              "outputs": {
+                "orderId": "$message.payload.orderId"
+              },
+              "sourceDescription": "AsyncOrderApi",
+              "sourceType": "asyncapi",
+              "stepId": "createOrderReceive",
+              "stepIndex": 3,
+              "timeout": 6000
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#createOrderReceive",
+            "kind": "one_way",
+            "messages": [],
+            "name": "createOrderReceive",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "action": "send",
+              "asyncStep": true,
+              "operationId": "$sourceDescriptions.AsyncOrderApi.createOrder",
+              "outputs": {
+                "requestId": "$message.header.requestId"
+              },
+              "parameters": [
+                {
+                  "in": "header",
+                  "name": "requestId",
+                  "value": "$inputs.createOrderSend.requestId"
+                }
+              ],
+              "requestBody": {
+                "payload": {
+                  "inventory": "$steps.getProducts.outputs.inventory",
+                  "productId": "$steps.getProducts.outputs.productId",
+                  "userId": "$steps.getUserLocation.outputs.userId"
+                }
+              },
+              "sourceDescription": "AsyncOrderApi",
+              "sourceType": "asyncapi",
+              "stepId": "createOrderSend",
+              "stepIndex": 2
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#createOrderSend",
+            "kind": "one_way",
+            "messages": [],
+            "name": "createOrderSend",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "dependsOn": [
+                "createOrderReceive"
+              ],
+              "operationId": "$sourceDescriptions.OrderApi.getOrderDetails",
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "orderId",
+                  "value": "$steps.createOrderReceive.outputs.orderId"
+                }
+              ],
+              "sourceDescription": "OrderApi",
+              "sourceType": "openapi",
+              "stepId": "getOrderDetails",
+              "stepIndex": 7,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#getOrderDetails",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getOrderDetails",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "onSuccess": [
+                {
+                  "criteria": [
+                    {
+                      "condition": "$response.body#/0 == null"
+                    }
+                  ],
+                  "name": "IsArrayEmpty",
+                  "type": "end"
+                }
+              ],
+              "operationId": "$sourceDescriptions.ProductApi.getProducts",
+              "outputs": {
+                "inventory": "$response.body#/0/inventory",
+                "productId": "$response.body#/0/productId"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "locationCode",
+                  "value": "$steps.getUserLocation.outputs.locationCode"
+                }
+              ],
+              "sourceDescription": "ProductApi",
+              "sourceType": "openapi",
+              "stepId": "getProducts",
+              "stepIndex": 1,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#getProducts",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getProducts",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.LocationApi.getUserLocation",
+              "outputs": {
+                "locationCode": "$response.body#/locationCode",
+                "userId": "$response.body#/userId"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "userEmail",
+                  "value": "$inputs.getUserLocation.userEmail"
+                }
+              ],
+              "sourceDescription": "LocationApi",
+              "sourceType": "openapi",
+              "stepId": "getUserLocation",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#getUserLocation",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getUserLocation",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "action": "receive",
+              "asyncStep": true,
+              "correlationId": "$steps.createOrderSend.outputs.requestId",
+              "operationId": "$sourceDescriptions.AsyncOrderApi.orderAccepted",
+              "sourceDescription": "AsyncOrderApi",
+              "sourceType": "asyncapi",
+              "stepId": "orderAccepted",
+              "stepIndex": 5,
+              "timeout": 6000
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#orderAccepted",
+            "kind": "one_way",
+            "messages": [],
+            "name": "orderAccepted",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "action": "send",
+              "asyncStep": true,
+              "dependsOn": [
+                "createOrderReceive"
+              ],
+              "operationId": "$sourceDescriptions.AsyncOrderApi.outForDelivery",
+              "parameters": [
+                {
+                  "in": "header",
+                  "name": "requestId",
+                  "value": "$steps.createOrderSend.outputs.requestId"
+                }
+              ],
+              "requestBody": {
+                "payload": {
+                  "orderId": "$steps.createOrderReceive.outputs.orderId"
+                }
+              },
+              "sourceDescription": "AsyncOrderApi",
+              "sourceType": "asyncapi",
+              "stepId": "outForDelivery",
+              "stepIndex": 6
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#outForDelivery",
+            "kind": "one_way",
+            "messages": [],
+            "name": "outForDelivery",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "dependsOn": [
+                "createOrderReceive"
+              ],
+              "operationId": "$sourceDescriptions.WarehouseApi.reserveInventory",
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "orderId",
+                  "value": "$steps.createOrderReceive.outputs.orderId"
+                }
+              ],
+              "sourceDescription": "WarehouseApi",
+              "sourceType": "openapi",
+              "stepId": "reserveInventory",
+              "stepIndex": 4,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OrderId#reserveInventory",
+            "kind": "one_way",
+            "messages": [],
+            "name": "reserveInventory",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "OrderId"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Arazzo Workflow",
+    "types": [],
+    "version": "1.1.0"
+  },
+  "corpus_path": "arazzo-1.1/13-oai-openapi-and-asyncapi.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 8,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:3a843faab225b5f0141f70d59ef594fb2000823982a10fe89de79ec1f7969aea",
+  "lint": {
+    "findings": 14,
+    "grade": "F",
+    "report_fingerprint": "ca19ea5c54c8fbf547805adb38c1fb76c97c9de4ac8d714bb2838438f0ffde57",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 13
+    }
+  },
+  "snapshot_version": 1
+}

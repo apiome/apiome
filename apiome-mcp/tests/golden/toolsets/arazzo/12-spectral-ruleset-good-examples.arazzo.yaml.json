@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getResource",
+      "operation": "someWorkflow#get-step"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createResource",
+      "operation": "someWorkflow#post-step"
+    }
+  ]
+}

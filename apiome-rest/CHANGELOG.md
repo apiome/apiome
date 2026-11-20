@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.770.0] - 2026-11-19
+
+### Fixed
+- **Arazzo round-trip and conformance corpus — OpenAPI 1.601.0 (COA-1.4, #7040):** no endpoint
+  changes; the version moves with the import, export and fidelity changes below.
+  - Arazzo 1.1 import: a step whose only target is `channelPath` (an AsyncAPI channel) is accepted
+    instead of being rejected as naming nothing to invoke, and is classified asynchronous
+    (`app.arazzo_spec`, `STEP_TARGET_FIELDS`). The step fields `channelPath`, `action`,
+    `correlationId` and `timeout`, workflow-level `parameters` and the document's `$self` are kept
+    in the canonical model and written back when a stored revision is exported; `$self` has no 1.0
+    spelling, so a 1.0 export leaves it out and records the loss. A workflow with only a `summary`
+    no longer gains a copy of it as `description`.
+  - Arazzo export fidelity: for a non-Arazzo source the report now predicts the keys a re-import
+    gives (`{workflowId}#{stepId}`): an operation whose key changes is `drop` under the old key and
+    `synth` under the new one, a step id two operations share is reported as not written, each
+    service becomes a workflow (`approx`) or is not written (`drop`), and agents and skills are
+    `drop`. The writer and the report share `planned_steps`, so they cannot disagree.
+  - Round-trip reconcile (`app.roundtrip_matrix.reconcile`) pairs differences with findings by
+    maximum bipartite matching instead of first fit, so a changed service no longer takes the only
+    `drop` a removed type of the same key needs; the lookup is indexed and the search iterative, so
+    a large model reconciles in linear-logarithmic time without deep recursion.
+  - Round-trip matrix: the Arazzo strict xfails fall from 166 to 29. 56 cells now pass (every
+    source → Arazzo cell that has operations), 81 deliberate export refusals are recorded as
+    `unsupported` with their reason (`tests/roundtrip_unsupported.py`, checked to still refuse),
+    and each remaining xfail names its ticket (COA-3.1 #7052 or COA-3.3 #7054).
+  - Conformance corpus: 14 Arazzo documents from the OpenAPI Initiative (1.0.0 examples, 1.1.0
+    schema fixtures), Redocly, Spectral and Specmatic join the corpus as `derived` entries, with
+    canonical goldens and `tests/test_arazzo_conformance_corpus.py` (schema, import, rebuild equals
+    source, lossless round trip) for 1.0 and 1.1, including `$components` references, runtime
+    expressions, `querystring` parameters and `channelPath`.
+
 ## [1.769.0] - 2026-11-19
 
 ### Added

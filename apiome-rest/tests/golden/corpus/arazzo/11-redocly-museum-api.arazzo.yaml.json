@@ -1,0 +1,359 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": "Use the Museum API with Arazzo as an example of describing multi-step workflows. Built with love by Redocly.",
+    "extras": {
+      "arazzo": "1.0.0",
+      "sourceDescriptions": [
+        {
+          "name": "museum-api",
+          "type": "openapi",
+          "url": "../openapi.yaml",
+          "x-serverUrl": "http://localhost:4000/_mock/openapi"
+        },
+        {
+          "name": "tickets-from-museum-api",
+          "type": "arazzo",
+          "url": "museum-tickets.arazzo.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "museum-api": "openapi",
+        "tickets-from-museum-api": "arazzo"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Redocly Museum API Test Workflow",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "This workflow demonstrates how to list, create, update, and delete special events at the museum.",
+        "extras": {
+          "parameters": [
+            {
+              "in": "header",
+              "name": "Authorization",
+              "value": "Basic Og=="
+            }
+          ],
+          "stepOrder": [
+            "list-events",
+            "create-event",
+            "get-event-by-id",
+            "update-event",
+            "delete-event"
+          ],
+          "workflowId": "events-crud",
+          "workflowIndex": 1
+        },
+        "key": "events-crud",
+        "name": "events-crud",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Create a new special event.",
+            "extras": {
+              "operationPath": "$sourceDescriptions.museum-api#/paths/~1special-events/post",
+              "outputs": {
+                "createdEventId": "$response.body#/eventId",
+                "name": "$response.body#/name"
+              },
+              "requestBody": {
+                "payload": {
+                  "dates": [
+                    "2023-09-05",
+                    "2023-09-08"
+                  ],
+                  "eventDescription": "Join us as we review and classify a rare collection of 20 thingamabobs, gadgets, gizmos, whoosits, and whatsits, kindly donated by Ariel.",
+                  "location": "Under the seaaa 🦀 🎶 🌊.",
+                  "name": "Mermaid Treasure Identification and Analysis",
+                  "price": 0
+                }
+              },
+              "stepId": "create-event",
+              "stepIndex": 1,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 201"
+                },
+                {
+                  "condition": "$.name == 'Mermaid Treasure Identification and Analysis'",
+                  "context": "$response.body",
+                  "type": "jsonpath"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "events-crud#create-event",
+            "kind": "one_way",
+            "messages": [],
+            "name": "create-event",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "events-crud"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Delete the event that was updated in the previous step.",
+            "extras": {
+              "operationPath": "$sourceDescriptions.museum-api#/paths/~1special-events~1{eventId}/delete",
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "eventId",
+                  "value": "$steps.update-event.outputs.updatedEventId"
+                }
+              ],
+              "stepId": "delete-event",
+              "stepIndex": 4,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 204"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "events-crud#delete-event",
+            "kind": "one_way",
+            "messages": [],
+            "name": "delete-event",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "events-crud"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get the details of the event that was created in the previous step.",
+            "extras": {
+              "operationPath": "$sourceDescriptions.museum-api#/paths/~1special-events~1{eventId}/get",
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "eventId",
+                  "value": "$steps.create-event.outputs.createdEventId"
+                }
+              ],
+              "stepId": "get-event-by-id",
+              "stepIndex": 2,
+              "successCriteria": [
+                {
+                  "condition": "^200$",
+                  "context": "$statusCode",
+                  "type": "regex"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "events-crud#get-event-by-id",
+            "kind": "one_way",
+            "messages": [],
+            "name": "get-event-by-id",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "events-crud"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Request the list of events.",
+            "extras": {
+              "operationPath": "$sourceDescriptions.museum-api#/paths/~1special-events/get",
+              "outputs": {
+                "events": "$response.body"
+              },
+              "stepId": "list-events",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "events-crud#list-events",
+            "kind": "one_way",
+            "messages": [],
+            "name": "list-events",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "events-crud"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Update the created event with new details.",
+            "extras": {
+              "operationPath": "$sourceDescriptions.museum-api#/paths/~1special-events~1{eventId}/patch",
+              "outputs": {
+                "updatedEventId": "$response.body#/eventId"
+              },
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "eventId",
+                  "value": "$steps.create-event.outputs.createdEventId"
+                }
+              ],
+              "requestBody": {
+                "payload": {
+                  "dates": [
+                    "2023-09-05",
+                    "2023-09-08"
+                  ],
+                  "location": "Under the seaaa 🦀 🎶 🌊.",
+                  "name": "Orca Identification and Analysis",
+                  "price": 0
+                }
+              },
+              "stepId": "update-event",
+              "stepIndex": 3,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                },
+                {
+                  "condition": "$.name == 'Orca Identification and Analysis'",
+                  "context": "$response.body",
+                  "type": "jsonpath"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "events-crud#update-event",
+            "kind": "one_way",
+            "messages": [],
+            "name": "update-event",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "events-crud"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "This workflow demonstrates how to get the museum opening hours and buy tickets.",
+        "extras": {
+          "parameters": [
+            {
+              "in": "header",
+              "name": "Authorization",
+              "value": "Basic Og=="
+            }
+          ],
+          "stepOrder": [
+            "get-museum-hours",
+            "buy-ticket"
+          ],
+          "workflowId": "get-museum-hours",
+          "workflowIndex": 0
+        },
+        "key": "get-museum-hours",
+        "name": "get-museum-hours",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Buy a ticket for the museum by calling an external workflow from another Arazzo file.",
+            "extras": {
+              "outputs": {
+                "ticketId": "$outputs.ticketId"
+              },
+              "stepId": "buy-ticket",
+              "stepIndex": 1,
+              "workflowId": "$sourceDescriptions.tickets-from-museum-api.workflows.get-museum-tickets"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "get-museum-hours#buy-ticket",
+            "kind": "one_way",
+            "messages": [],
+            "name": "buy-ticket",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "get-museum-hours"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get museum hours by resolving request details with getMuseumHours operationId from openapi.yaml description.",
+            "extras": {
+              "operationId": "museum-api.getMuseumHours",
+              "outputs": {
+                "schedule": "$response.body"
+              },
+              "stepId": "get-museum-hours",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "get-museum-hours#get-museum-hours",
+            "kind": "one_way",
+            "messages": [],
+            "name": "get-museum-hours",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "get-museum-hours"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Redocly Museum API Test Workflow",
+    "types": [],
+    "version": "1.0.1"
+  },
+  "corpus_path": "arazzo/11-redocly-museum-api.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 7,
+    "servers": 0,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:150071afcfbd96e86750b90d998528eeca4ddcb4c2579e6556d1870914e99583",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "1e9bdf7e6c40cb287d1ced804fe131c913802f7f5fae8893c83c2d8f353b49e8",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

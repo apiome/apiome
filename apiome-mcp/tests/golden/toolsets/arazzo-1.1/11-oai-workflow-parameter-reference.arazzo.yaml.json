@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_userAPI_listUsers",
+      "operation": "childWorkflow#childStep"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "nestedWorkflow",
+      "operation": "parentWorkflow#nestedWorkflow"
+    }
+  ]
+}

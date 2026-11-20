@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1538 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1552 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -22,8 +22,8 @@ The corpus holds **1538 files** across **110 format directories**. Every file ha
 | --- | --- | --- | --- | --- |
 | `api-blueprint/` | API Blueprint | rest | `FORMAT: 1A` metadata line | 11 |
 | `apigee/` | Apigee proxy bundle | rest | zip with `apiproxy/` members and an `APIProxy` manifest, or a `ProxyEndpoint`/`TargetEndpoint` root | 15 |
-| `arazzo/` | Arazzo workflows | rest | top-level `arazzo:` version | 11 |
-| `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
+| `arazzo/` | Arazzo workflows | rest | top-level `arazzo:` version | 16 |
+| `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 23 |
 | `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
 | `azure-apim/` | Azure API Management | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
 | `bruno/` | Bruno collections | rest | `bruno.json` with `"type": "collection"` beside `.bru` files (`meta {` + a method block such as `get {`) | 16 |
@@ -283,6 +283,11 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | --- | --- | --- | --- | --- |
 | `06-pet-coupons-real-world.yaml` | real-world | `arazzo` ≥ 0.95 | valid | `pet-coupons`, `workflows`, `steps`, `success-criteria`, `outputs`, `inputs` |
 | `07-spec-grammar-stress.yaml` | stress | `arazzo` ≥ 0.95 | valid | `spec-grammar-stress`, `workflows`, `success-criteria`, `components`, `operationRef`, `dependsOn` |
+| `08-oai-login-and-retrieve-pets.arazzo.yaml` | real-world | `arazzo` ≥ 0.95 | valid | `oai-example`, `operationPath`, `inputs`, `outputs`, `step-outputs` |
+| `09-oai-extended-parameters.arazzo.yaml` ⚠ | stress | `arazzo` ≥ 0.95 | valid | `oai-example`, `workflow-parameters`, `cookie-parameters`, `runtime-expression` |
+| `10-oai-fapi-par.arazzo.yaml` | real-world | `arazzo` ≥ 0.95 | valid | `oai-example`, `components`, `inputs`, `requestBody`, `replacements` |
+| `11-redocly-museum-api.arazzo.yaml` ⚠ | real-world | `arazzo` ≥ 0.95 | valid | `redocly`, `arazzo-source`, `workflow-parameters`, `x-extensions` |
+| `12-spectral-ruleset-good-examples.arazzo.yaml` | stress | `arazzo` ≥ 0.95 | valid | `spectral`, `workflow-parameters`, `regex`, `runtime-expression` |
 | `edge-cases.yaml` | stress | `arazzo` ≥ 0.95 | valid | `edge-cases`, `workflows`, `steps`, `success-criteria`, `source-descriptions`, `outputs`, `parameters` |
 | `mixed-scenarios.yaml` | composition | `arazzo` ≥ 0.95 | valid | `mixed-scenarios`, `workflows`, `steps`, `success-criteria`, `source-descriptions`, `outputs`, `parameters` |
 | `negative/02-semantic-root-not-a-mapping.yaml` ⚠ | — | `arazzo` (no guarantee) | invalid | `negative`, `semantic`, `root-not-a-mapping` |
@@ -292,6 +297,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/property-conflicts.yaml` ⚠ | — | `arazzo` (no guarantee) | invalid | `property-conflicts`, `workflows`, `steps`, `success-criteria`, `source-descriptions`, `outputs`, `parameters` |
 | `property-reuse.yaml` | typical | `arazzo` ≥ 0.95 | valid | `property-reuse`, `workflows`, `steps`, `success-criteria`, `source-descriptions`, `outputs`, `parameters` |
 | `simple-workflow.yaml` | minimal | `arazzo` ≥ 0.95 | valid | `simple-workflow`, `workflows`, `steps`, `success-criteria`, `source-descriptions`, `outputs`, `parameters` |
+
+> ⚠ **`09-oai-extended-parameters.arazzo.yaml`** — Workflow-level `parameters`: COA-1.4 (#7040) taught the normalizer and the rebuild path to keep them.
+
+> ⚠ **`11-redocly-museum-api.arazzo.yaml`** — Declares an `arazzo`-type source description (museum-tickets.arazzo.yaml) that is not vendored; a single-file import leaves it unresolved.
 
 > ⚠ **`negative/02-semantic-root-not-a-mapping.yaml`** — The shared ingestion loader rejects top-level YAML sequences at the parse phase, so the code is INPUT_MALFORMED rather than a normalize-phase INPUT_SEMANTIC_INVALID.
 
@@ -313,6 +322,15 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `06-sourced-set/inventory.openapi.yaml` ⚠ | multi-file (member) | `openapi-3.1` (no guarantee) | valid | `multi-file`, `openapi-source` |
 | `06-sourced-set/workflow.arazzo.yaml` | multi-file (root) | `arazzo` ≥ 0.95 | valid | `multi-file`, `relative-source-url`, `workflows` |
 | `07-version-1.0-baseline.yaml` ⚠ | typical | `arazzo` ≥ 0.95 | valid | `version-1.0`, `no-upgrade`, `workflows` |
+| `08-oai-querystring-runtime-expression.arazzo.yaml` | stress | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `querystring`, `runtime-expression` |
+| `09-oai-static-querystring.arazzo.yaml` | stress | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `querystring` |
+| `10-oai-components-parameter-reference.arazzo.yaml` | composition | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `components`, `components-reference` |
+| `11-oai-workflow-parameter-reference.arazzo.yaml` | composition | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `components`, `components-reference`, `workflow-parameters` |
+| `12-oai-channel-path.arazzo.yaml` ⚠ | stress | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `channelPath`, `action`, `correlationId`, `asyncapi-source` |
+| `13-oai-openapi-and-asyncapi.arazzo.yaml` | real-world | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `asyncapi-source`, `mixed-sync-async`, `correlationId`, `timeout` |
+| `14-oai-payload-replacement-selector.arazzo.yaml` | stress | `arazzo` ≥ 0.95 | valid | `oai-schema-fixture`, `replacements`, `selector`, `jsonpath` |
+| `15-redocly-cafe-workflows.arazzo.yaml` | real-world | `arazzo` ≥ 0.95 | valid | `redocly`, `self-uri`, `querystring`, `channelPath`, `selector`, `timeout` |
+| `16-specmatic-place-order.arazzo.yaml` ⚠ | real-world | `arazzo` ≥ 0.95 | valid | `specmatic`, `multi-source`, `inputs`, `outputs` |
 | `negative/01-syntactic-unclosed-flow-sequence.yaml` | — | `arazzo` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-flow-sequence` |
 | `negative/02-semantic-step-without-operation.yaml` | — | `arazzo` (no guarantee) | invalid | `negative`, `semantic`, `step-without-operation` |
 | `negative/03-truncated-mid-workflow.yaml` | — | `arazzo` (no guarantee) | invalid | `negative`, `truncated`, `mid-quoted-scalar` |
@@ -323,6 +341,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`06-sourced-set/inventory.openapi.yaml`** — Fileset member: the OpenAPI document the workflow's sourceDescriptions resolve to; detected as OpenAPI on its own.
 
 > ⚠ **`07-version-1.0-baseline.yaml`** — A 1.0.1 document kept beside the 1.1 ladder so FMT-3.1 can assert that a 1.0 source still emits as 1.0.
+
+> ⚠ **`12-oai-channel-path.arazzo.yaml`** — A step whose only target is `channelPath`; before COA-1.4 (#7040) the importer rejected it as naming nothing to invoke.
+
+> ⚠ **`16-specmatic-place-order.arazzo.yaml`** — Its four OpenAPI source descriptions (../openapi/*.yaml) are not vendored; a single-file import leaves them unresolved.
 
 > ⚠ **`negative/04-wrong-format-asyncapi.yaml`** — An AsyncAPI 3 document — plausible neighbour now that 1.1 reads AsyncAPI sources, and exactly the confusion detection must not make.
 
@@ -2865,7 +2887,27 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
+| `derived` | 14 | `Apache-2.0`, `MIT` |
 | `hand-authored` | 1538 | `Apache-2.0` |
+
+### Third-party and captured files
+
+| File | Origin | Source | License | Upstream / anonymization |
+| --- | --- | --- | --- | --- |
+| `arazzo-1.1/08-oai-querystring-runtime-expression.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/parameter-with-querystring-and-runtime-expr.arazzo.yaml |
+| `arazzo-1.1/09-oai-static-querystring.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/parameter-with-static-querystring.arazzo.yaml |
+| `arazzo-1.1/10-oai-components-parameter-reference.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/openapi-parameter-reusable-reference.arazzo.yaml |
+| `arazzo-1.1/11-oai-workflow-parameter-reference.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/workflow-parameter-reusable-reference.arazzo.yaml |
+| `arazzo-1.1/12-oai-channel-path.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/async-with-channel-path.arazzo.yaml |
+| `arazzo-1.1/13-oai-openapi-and-asyncapi.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/openapi-and-asyncapi.arazzo.yaml |
+| `arazzo-1.1/14-oai-payload-replacement-selector.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/payload-replacement-using-selector.arazzo.yaml |
+| `arazzo-1.1/15-redocly-cafe-workflows.arazzo.yaml` | derived | Redocly/redocly-cli | `MIT` | https://github.com/Redocly/redocly-cli/blob/88ba389effbe49366f90a36b8b17532fbbf76a78/tests/e2e/lint/arazzo-1-1-valid-description/cafe-workflows.yaml |
+| `arazzo-1.1/16-specmatic-place-order.arazzo.yaml` | derived | specmatic/specmatic-arazzo-auth | `MIT` | https://github.com/specmatic/specmatic-arazzo-auth/blob/5f275c7965cdd549f328415eadd183f3d7370acd/spec/arazzo/PlaceOrder.arazzo.yaml |
+| `arazzo/08-oai-login-and-retrieve-pets.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/LoginAndRetrievePets.arazzo.yaml |
+| `arazzo/09-oai-extended-parameters.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/ExtendedParametersExample.arazzo.yaml |
+| `arazzo/10-oai-fapi-par.arazzo.yaml` | derived | OAI/Arazzo-Specification | `Apache-2.0` | https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/FAPI-PAR.arazzo.yaml |
+| `arazzo/11-redocly-museum-api.arazzo.yaml` | derived | Redocly/museum-openapi-example | `MIT` | https://github.com/Redocly/museum-openapi-example/blob/2770b2b2e59832d245c7b0eb0badf6568d7efb53/arazzo/museum-api.arazzo.yaml |
+| `arazzo/12-spectral-ruleset-good-examples.arazzo.yaml` | derived | stoplightio/spectral | `Apache-2.0` | https://github.com/stoplightio/spectral/blob/d5a566f13d831bed76c69c2efe3de7b7a111d6d0/docs/reference/arazzo-rules.md |
 
 ## Trying an import
 

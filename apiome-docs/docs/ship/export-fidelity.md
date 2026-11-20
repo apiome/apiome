@@ -170,6 +170,28 @@ predicted drop that did not happen. See
 [Measured loss from the API](./export-studio.mdx#measured-loss-from-the-api) for the `measurement`
 the REST API returns.
 
+## Arazzo exports {#arazzo}
+
+Arazzo describes workflows, not APIs, so its report says what a workflow can and cannot hold. When
+you read an Arazzo file back, each step is named `<workflow>#<step>`, for example
+`orders#POST /orders`. The report predicts those names, so every difference a round trip finds is
+listed in the report.
+
+| You export | To | What the report says |
+| --- | --- | --- |
+| An item imported from Arazzo 1.0 or 1.1 | **Arazzo** | `lossless`. Workflows, steps, inputs, outputs, `components`, workflow `parameters` and the 1.1 fields (`$self`, and `channelPath`, `action`, `correlationId` and `timeout` on steps) are written back as read. Choosing **Arazzo Version** `1.0.1` for a 1.1 item drops `$self`, and the report says so. |
+| A REST, RPC, GraphQL or agent item | **Arazzo** | `lossy`. Each operation becomes a step (**approximated**). Its own key is **dropped** and the step's key is **synthesized**. Each service becomes a workflow (**approximated**). Types, channels, agents and skills are **dropped**. Two operations of one service that would share a step id can't both be written, so the first is **dropped**. |
+| A set of types or an event API | **Arazzo** | Not offered. There is no operation to sequence, and the card says so. |
+| An item imported from Arazzo | A gateway, API client, API Blueprint or Google Discovery | Not offered. These targets need an HTTP method and path, and a workflow step has neither. |
+| An item imported from Arazzo | Arrow, COBOL copybook, FIX Orchestra, Kafka Connect, ODCS, SQL DDL or xRegistry | Not offered. These targets need a record type or an event, and an Arazzo item has neither. (The COBOL copybook card is offered, but the export stops with that reason.) |
+| An item imported from Arazzo | EDI X12, FIX, HL7 v2, IDoc, ISO 20022, ISO 8583 or z/OS Connect | Not offered. These targets need details that only an import of that same format records. |
+| An item imported from Arazzo | Any other target, such as OpenAPI, Protobuf or GraphQL | `lossy`. The steps become the target's operations. Some of these targets rename the steps in ways the report does not predict yet, so a round trip can still show unexplained differences. That work is tracked in [#7052](https://github.com/apiome/apiome/issues/7052) and [#7054](https://github.com/apiome/apiome/issues/7054). |
+
+Apiome checks Arazzo import and export against documents it didn't write. These include the OpenAPI
+Initiative's 1.0.0 examples and 1.1.0 schema fixtures, and Arazzo files from Redocly, Spectral and
+Specmatic. Each must pass the official schema, import, and export back unchanged. The set covers
+`$components` references, runtime expressions, `querystring` parameters and `channelPath` steps.
+
 ## Destination documentation links
 
 When (and only when) the cause is a genuine `destination_unsupported` specification

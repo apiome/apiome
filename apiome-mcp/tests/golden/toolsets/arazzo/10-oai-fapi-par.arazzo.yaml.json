@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "OIDC Authorization code request",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_auth-api_Authorization",
+      "operation": "OIDC-PAR-AuthzCode#AuthzCodeStep"
+    },
+    {
+      "description": "Pushed Authorization Request",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_auth-api_PAR",
+      "operation": "OIDC-PAR-AuthzCode#PARStep"
+    },
+    {
+      "description": "Get token from the OIDC Token endpoint",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_auth-api_Token",
+      "operation": "OIDC-PAR-AuthzCode#TokenStep"
+    }
+  ]
+}

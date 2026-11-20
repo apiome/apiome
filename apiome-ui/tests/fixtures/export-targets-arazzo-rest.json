@@ -59,11 +59,11 @@
       "fidelity": {
         "tier": "lossy",
         "preserved_percent": 0,
-        "total": 10,
+        "total": 21,
         "preserved": 0,
-        "dropped": 2,
-        "approximated": 6,
-        "synthesized": 2
+        "dropped": 7,
+        "approximated": 7,
+        "synthesized": 7
       }
     }
   ]

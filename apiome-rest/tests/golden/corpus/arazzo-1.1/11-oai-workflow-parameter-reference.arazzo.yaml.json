@@ -1,0 +1,155 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "components": {
+        "parameters": {
+          "userId": {
+            "name": "userId",
+            "value": 10
+          }
+        }
+      },
+      "sourceDescriptions": [
+        {
+          "name": "userAPI",
+          "type": "openapi",
+          "url": "https://users.com/openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "userAPI": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Workflow step parameter using reusable reference",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "inputs": {
+            "properties": {
+              "userId": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "stepOrder": [
+            "childStep"
+          ],
+          "workflowId": "childWorkflow",
+          "workflowIndex": 1
+        },
+        "key": "childWorkflow",
+        "name": "childWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.userAPI.listUsers",
+              "sourceDescription": "userAPI",
+              "sourceType": "openapi",
+              "stepId": "childStep",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "childWorkflow#childStep",
+            "kind": "one_way",
+            "messages": [],
+            "name": "childStep",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "childWorkflow"
+            ]
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {
+          "stepOrder": [
+            "nestedWorkflow"
+          ],
+          "workflowId": "parentWorkflow",
+          "workflowIndex": 0
+        },
+        "key": "parentWorkflow",
+        "name": "parentWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "parameters": [
+                {
+                  "reference": "$components.parameters.userId",
+                  "value": 11
+                }
+              ],
+              "stepId": "nestedWorkflow",
+              "stepIndex": 0,
+              "workflowId": "childWorkflow"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "parentWorkflow#nestedWorkflow",
+            "kind": "one_way",
+            "messages": [],
+            "name": "nestedWorkflow",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "parentWorkflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Workflow step parameter using reusable reference",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/11-oai-workflow-parameter-reference.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 2,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:95243ed079589555e24af3a69a33d009a525080bd454142b23a06211df4aa5e4",
+  "lint": {
+    "findings": 6,
+    "grade": "C",
+    "report_fingerprint": "b9dcccd138c85749bfa5eefb921fdd69713e456d1a0e8e6bdb5d306662579489",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

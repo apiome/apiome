@@ -1,0 +1,32 @@
+---
+slug: arazzo-round-trip-and-conformance
+title: Arazzo exports that explain themselves
+description: "Arazzo fidelity reports predict every round-trip difference; official fixtures check import and export."
+authors: [apiome]
+---
+
+Exporting an API to Arazzo, or an Arazzo workflow to another format, now gives a fidelity report
+that matches what a round trip finds. Arazzo import and export are also checked against documents
+Apiome didn't write: the OpenAPI Initiative's examples, and Arazzo files from Redocly, Spectral and
+Specmatic.
+
+{/* truncate */}
+
+- **Arazzo 1.1 event steps import:** a step that waits on an AsyncAPI channel with `channelPath`
+  used to be rejected as "names nothing to invoke". It now imports as an asynchronous step. Its
+  `action`, `correlationId` and `timeout` are kept, along with workflow-level `parameters` and the
+  document's `$self`, so the workflow exports back unchanged. See
+  [Import an Arazzo workflow with its API files](/bring-in/import-a-spec#import-an-arazzo-workflow-with-its-api-files).
+- **Exports to Arazzo:** when you read the file back, each step is named `<workflow>#<step>`, and
+  the report now says so. The operation's own key is **dropped**, the step's key is
+  **synthesized**, and each service becomes a workflow. A REST, RPC, GraphQL or agent API now
+  exports to Arazzo with every difference listed in the report. See
+  [What is written to Arazzo](/ship/export-a-spec#what-is-written-to-arazzo).
+- **What can't be exported:** an Arazzo workflow has no HTTP method or path, no types and no events.
+  Gateway, API client, data and industry-message targets refuse it with the reason. The table is in
+  [Arazzo exports](/ship/export-fidelity#arazzo).
+- **Tested against official fixtures:** 14 Arazzo 1.0 and 1.1 documents, from the OpenAPI
+  Initiative, Redocly, Spectral and Specmatic, must pass the official schema, import, and export
+  back unchanged. They cover `$components` references, runtime expressions, `querystring`
+  parameters and `channelPath` steps.
+- **REST:** no endpoint changes (REST API 1.770.0, OpenAPI 1.601.0).

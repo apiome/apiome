@@ -73,63 +73,7 @@
         "removed"
       ]
     ],
-    "unexplained": [
-      [
-        "operation",
-        "DELETE /pets/{petId}",
-        "removed"
-      ],
-      [
-        "operation",
-        "GET /pets",
-        "removed"
-      ],
-      [
-        "operation",
-        "GET /pets/{petId}",
-        "removed"
-      ],
-      [
-        "operation",
-        "POST /pets",
-        "removed"
-      ],
-      [
-        "operation",
-        "PUT /pets/{petId}",
-        "removed"
-      ],
-      [
-        "operation",
-        "default#createPet",
-        "added"
-      ],
-      [
-        "operation",
-        "default#deletePet",
-        "added"
-      ],
-      [
-        "operation",
-        "default#getPetById",
-        "added"
-      ],
-      [
-        "operation",
-        "default#listPets",
-        "added"
-      ],
-      [
-        "operation",
-        "default#updatePet",
-        "added"
-      ],
-      [
-        "service",
-        "default",
-        "changed"
-      ]
-    ],
+    "unexplained": [],
     "overclaims": []
   },
   "06-union-types.graphql": {
@@ -251,38 +195,7 @@
         "removed"
       ]
     ],
-    "unexplained": [
-      [
-        "operation",
-        "Query#paymentMethods",
-        "added"
-      ],
-      [
-        "operation",
-        "Query#search",
-        "added"
-      ],
-      [
-        "operation",
-        "Query#timeline",
-        "added"
-      ],
-      [
-        "operation",
-        "Query.paymentMethods",
-        "removed"
-      ],
-      [
-        "operation",
-        "Query.search",
-        "removed"
-      ],
-      [
-        "operation",
-        "Query.timeline",
-        "removed"
-      ]
-    ],
+    "unexplained": [],
     "overclaims": []
   },
   "01-user-service.thrift": {
@@ -349,38 +262,7 @@
         "removed"
       ]
     ],
-    "unexplained": [
-      [
-        "operation",
-        "com.example.user.UserService#createUser",
-        "added"
-      ],
-      [
-        "operation",
-        "com.example.user.UserService#deleteUser",
-        "added"
-      ],
-      [
-        "operation",
-        "com.example.user.UserService#getUser",
-        "added"
-      ],
-      [
-        "operation",
-        "com.example.user.UserService.createUser",
-        "removed"
-      ],
-      [
-        "operation",
-        "com.example.user.UserService.deleteUser",
-        "removed"
-      ],
-      [
-        "operation",
-        "com.example.user.UserService.getUser",
-        "removed"
-      ]
-    ],
+    "unexplained": [],
     "overclaims": []
   },
   "02-order-service.wsdl": {
@@ -472,38 +354,7 @@
         "removed"
       ]
     ],
-    "unexplained": [
-      [
-        "operation",
-        "http://example.com/orders.OrderPort#CancelOrder",
-        "added"
-      ],
-      [
-        "operation",
-        "http://example.com/orders.OrderPort#CreateOrder",
-        "added"
-      ],
-      [
-        "operation",
-        "http://example.com/orders.OrderPort#GetOrder",
-        "added"
-      ],
-      [
-        "operation",
-        "http://example.com/orders.OrderPort.CancelOrder",
-        "removed"
-      ],
-      [
-        "operation",
-        "http://example.com/orders.OrderPort.CreateOrder",
-        "removed"
-      ],
-      [
-        "operation",
-        "http://example.com/orders.OrderPort.GetOrder",
-        "removed"
-      ]
-    ],
+    "unexplained": [],
     "overclaims": []
   },
   "01-simple-api.raml": {
@@ -560,43 +411,7 @@
         "removed"
       ]
     ],
-    "unexplained": [
-      [
-        "operation",
-        "Bookstore API#GET /books",
-        "added"
-      ],
-      [
-        "operation",
-        "Bookstore API#GET /books/{bookId}",
-        "added"
-      ],
-      [
-        "operation",
-        "Bookstore API#POST /books",
-        "added"
-      ],
-      [
-        "operation",
-        "GET /books",
-        "removed"
-      ],
-      [
-        "operation",
-        "GET /books/{bookId}",
-        "removed"
-      ],
-      [
-        "operation",
-        "POST /books",
-        "removed"
-      ],
-      [
-        "service",
-        "Bookstore API",
-        "changed"
-      ]
-    ],
+    "unexplained": [],
     "overclaims": []
   }
 }

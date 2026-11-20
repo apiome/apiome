@@ -1,0 +1,20 @@
+# Derived corpus fixture (COA-1.4, #7040), copied unchanged below this header from
+# https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/parameter-with-static-querystring.arazzo.yaml
+# OpenAPI Initiative. Licensed under the Apache License 2.0: https://github.com/OAI/Arazzo-Specification/blob/main/LICENSE
+arazzo: "1.1.0"
+info:
+  title: Querystring Test
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://api.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: testQuerystring
+    steps:
+      - stepId: search
+        operationId: $sourceDescriptions.api.searchItems
+        parameters:
+          - name: q
+            in: querystring
+            value: "filter=active&sort=desc"

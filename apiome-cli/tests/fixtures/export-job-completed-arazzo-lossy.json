@@ -27,11 +27,11 @@
       "summary": {
         "tier": "lossy",
         "preserved_percent": 0,
-        "total": 10,
+        "total": 21,
         "preserved": 0,
-        "dropped": 2,
-        "approximated": 6,
-        "synthesized": 2
+        "dropped": 7,
+        "approximated": 7,
+        "synthesized": 7
       },
       "report": {
         "items": [
@@ -65,10 +65,24 @@
           },
           {
             "construct": "DELETE /pets/{petId}",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Arazzo writes 'DELETE /pets/{petId}' as a workflow step; a re-import keys it 'default#deletePet', so the source key does not survive",
+            "target_mapping": "DELETE /pets/{petId} \u2192 default#deletePet"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
             "kind": "approx",
             "severity": "warn",
             "message": "Arazzo writes 'DELETE /pets/{petId}' as a workflow step that calls it by id; its parameters, request and response schemas stay in the source description and are not written",
             "target_mapping": "operation \u2192 workflow step"
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Arazzo writes 'GET /pets' as a workflow step; a re-import keys it 'default#listPets', so the source key does not survive",
+            "target_mapping": "GET /pets \u2192 default#listPets"
           },
           {
             "construct": "GET /pets",
@@ -79,6 +93,13 @@
           },
           {
             "construct": "GET /pets/{petId}",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Arazzo writes 'GET /pets/{petId}' as a workflow step; a re-import keys it 'default#getPetById', so the source key does not survive",
+            "target_mapping": "GET /pets/{petId} \u2192 default#getPetById"
+          },
+          {
+            "construct": "GET /pets/{petId}",
             "kind": "approx",
             "severity": "warn",
             "message": "Arazzo writes 'GET /pets/{petId}' as a workflow step that calls it by id; its parameters, request and response schemas stay in the source description and are not written",
@@ -86,10 +107,24 @@
           },
           {
             "construct": "POST /pets",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Arazzo writes 'POST /pets' as a workflow step; a re-import keys it 'default#createPet', so the source key does not survive",
+            "target_mapping": "POST /pets \u2192 default#createPet"
+          },
+          {
+            "construct": "POST /pets",
             "kind": "approx",
             "severity": "warn",
             "message": "Arazzo writes 'POST /pets' as a workflow step that calls it by id; its parameters, request and response schemas stay in the source description and are not written",
             "target_mapping": "operation \u2192 workflow step"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Arazzo writes 'PUT /pets/{petId}' as a workflow step; a re-import keys it 'default#updatePet', so the source key does not survive",
+            "target_mapping": "PUT /pets/{petId} \u2192 default#updatePet"
           },
           {
             "construct": "PUT /pets/{petId}",
@@ -104,16 +139,58 @@
             "severity": "info",
             "message": "Arazzo has no type declarations; type 'Pet' is not written",
             "target_mapping": "type \u2192 dropped"
+          },
+          {
+            "construct": "default",
+            "kind": "approx",
+            "severity": "info",
+            "message": "Arazzo writes service 'default' as workflow 'default'; only its name, description and steps are kept",
+            "target_mapping": "service \u2192 workflow"
+          },
+          {
+            "construct": "default#createPet",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Arazzo: the step written for 'POST /pets' re-imports as 'default#createPet' ({workflowId}#{stepId})",
+            "target_mapping": "POST /pets \u2192 default#createPet"
+          },
+          {
+            "construct": "default#deletePet",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Arazzo: the step written for 'DELETE /pets/{petId}' re-imports as 'default#deletePet' ({workflowId}#{stepId})",
+            "target_mapping": "DELETE /pets/{petId} \u2192 default#deletePet"
+          },
+          {
+            "construct": "default#getPetById",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Arazzo: the step written for 'GET /pets/{petId}' re-imports as 'default#getPetById' ({workflowId}#{stepId})",
+            "target_mapping": "GET /pets/{petId} \u2192 default#getPetById"
+          },
+          {
+            "construct": "default#listPets",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Arazzo: the step written for 'GET /pets' re-imports as 'default#listPets' ({workflowId}#{stepId})",
+            "target_mapping": "GET /pets \u2192 default#listPets"
+          },
+          {
+            "construct": "default#updatePet",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Arazzo: the step written for 'PUT /pets/{petId}' re-imports as 'default#updatePet' ({workflowId}#{stepId})",
+            "target_mapping": "PUT /pets/{petId} \u2192 default#updatePet"
           }
         ],
         "kind_counts": {
-          "drop": 2,
-          "approx": 6,
-          "synth": 2,
+          "drop": 7,
+          "approx": 7,
+          "synth": 7,
           "ok": 0
         },
         "severity_counts": {
-          "info": 3,
+          "info": 14,
           "warn": 7,
           "critical": 0
         }
@@ -123,12 +200,12 @@
         "severity": "warn",
         "requires_ack": false,
         "target_format": "Arazzo",
-        "dropped": 2,
-        "approximated": 6,
-        "synthesized": 2,
-        "affected": 10,
+        "dropped": 7,
+        "approximated": 7,
+        "synthesized": 7,
+        "affected": 21,
         "headline": "Fidelity notice \u2014 exporting to Arazzo may lose detail.",
-        "message": "Exporting to Arazzo may lose some fidelity. The destination format can't represent everything in this API, so 10 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+        "message": "Exporting to Arazzo may lose some fidelity. The destination format can't represent everything in this API, so 21 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
       }
     },
     "files": [

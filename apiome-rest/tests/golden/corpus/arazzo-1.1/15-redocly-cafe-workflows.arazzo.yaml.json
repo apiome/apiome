@@ -1,0 +1,430 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": "Workflows for cafe operators built on the Cafe API and the account service.",
+    "extras": {
+      "arazzo": "1.1.0",
+      "asyncSources": [
+        "account-events"
+      ],
+      "infoSummary": "Place an order and react to new customer signups.",
+      "self": "https://cafe.cloud.redocly.com/workflows/cafe.arazzo.yaml",
+      "sourceDescriptions": [
+        {
+          "name": "cafe-api",
+          "type": "openapi",
+          "url": "../../../../resources/cafe.yaml"
+        },
+        {
+          "name": "account-events",
+          "type": "asyncapi",
+          "url": "../../../../resources/asyncapi3.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "account-events": "asyncapi",
+        "cafe-api": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Redocly Cafe ordering workflows",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "Wait for a specific customer's signup event from the account service.",
+        "extras": {
+          "inputs": {
+            "properties": {
+              "email": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "email"
+            ],
+            "type": "object"
+          },
+          "outputs": {
+            "newCustomerEmail": "$steps.await-signup.outputs.email"
+          },
+          "stepOrder": [
+            "await-signup"
+          ],
+          "summary": "Wait for a specific customer's signup event from the account service.",
+          "workflowId": "await-customer-signup",
+          "workflowIndex": 2
+        },
+        "key": "await-customer-signup",
+        "name": "await-customer-signup",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Receive the signup event that matches the expected email.",
+            "extras": {
+              "action": "receive",
+              "asyncStep": true,
+              "channelPath": "$sourceDescriptions.account-events#/channels/customerSignedUp",
+              "correlationId": "$inputs.email",
+              "outputs": {
+                "customerName": {
+                  "context": "$message.payload",
+                  "selector": "$.customerName",
+                  "type": "jsonpath"
+                },
+                "email": {
+                  "context": "$message.payload",
+                  "selector": "/email",
+                  "type": {
+                    "type": "jsonpointer",
+                    "version": "rfc6901"
+                  }
+                }
+              },
+              "sourceDescription": "account-events",
+              "sourceType": "asyncapi",
+              "stepId": "await-signup",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$.email",
+                  "context": "$message.payload",
+                  "type": {
+                    "type": "jsonpath",
+                    "version": "rfc9535"
+                  }
+                }
+              ],
+              "timeout": 10000
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "await-customer-signup#await-signup",
+            "kind": "one_way",
+            "messages": [],
+            "name": "await-signup",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "await-customer-signup"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Load an order so the customer can be notified about it.",
+        "extras": {
+          "inputs": {
+            "properties": {
+              "orderId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "orderId"
+            ],
+            "type": "object"
+          },
+          "stepOrder": [
+            "load-order"
+          ],
+          "summary": "Load an order so the customer can be notified about it.",
+          "workflowId": "notify-customer",
+          "workflowIndex": 1
+        },
+        "key": "notify-customer",
+        "name": "notify-customer",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Load the order that the notification refers to.",
+            "extras": {
+              "operationId": "cafe-api.getOrderById",
+              "outputs": {
+                "customerName": "$response.body#/customerName"
+              },
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "orderId",
+                  "value": "$inputs.orderId"
+                }
+              ],
+              "stepId": "load-order",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "notify-customer#load-order",
+            "kind": "one_way",
+            "messages": [],
+            "name": "load-order",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "notify-customer"
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Order the first available beverage and confirm it was placed.",
+        "extras": {
+          "inputs": {
+            "properties": {
+              "customerName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "customerName"
+            ],
+            "type": "object"
+          },
+          "outputs": {
+            "placedOrderId": "$steps.create-order.outputs.orderId"
+          },
+          "stepOrder": [
+            "find-beverage",
+            "create-order",
+            "confirm-order"
+          ],
+          "summary": "Order the first available beverage and confirm it was placed.",
+          "workflowId": "place-order",
+          "workflowIndex": 0
+        },
+        "key": "place-order",
+        "name": "place-order",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Fetch the order and confirm it was placed.",
+            "extras": {
+              "dependsOn": [
+                "create-order"
+              ],
+              "onFailure": [
+                {
+                  "name": "retry-confirmation",
+                  "parameters": [
+                    {
+                      "name": "orderId",
+                      "value": "$steps.create-order.outputs.orderId"
+                    }
+                  ],
+                  "retryAfter": 2,
+                  "retryLimit": 3,
+                  "type": "retry",
+                  "workflowId": "notify-customer"
+                }
+              ],
+              "onSuccess": [
+                {
+                  "name": "notify-customer",
+                  "parameters": [
+                    {
+                      "name": "orderId",
+                      "value": "$steps.create-order.outputs.orderId"
+                    }
+                  ],
+                  "type": "goto",
+                  "workflowId": "notify-customer"
+                }
+              ],
+              "operationId": "cafe-api.getOrderById",
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "orderId",
+                  "value": "$steps.create-order.outputs.orderId"
+                }
+              ],
+              "stepId": "confirm-order",
+              "stepIndex": 2,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                },
+                {
+                  "condition": "$[?(@.status == 'placed')]",
+                  "context": "$response.body",
+                  "type": {
+                    "type": "jsonpath",
+                    "version": "rfc9535"
+                  }
+                }
+              ],
+              "timeout": 5000
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "place-order#confirm-order",
+            "kind": "one_way",
+            "messages": [],
+            "name": "confirm-order",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "place-order"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Place an order for the selected beverage.",
+            "extras": {
+              "dependsOn": [
+                "find-beverage"
+              ],
+              "operationId": "cafe-api.createOrder",
+              "outputs": {
+                "orderId": "$response.body#/id"
+              },
+              "requestBody": {
+                "contentType": "application/json",
+                "payload": {
+                  "customerName": "",
+                  "orderItems": [
+                    {
+                      "menuItemId": "",
+                      "quantity": 1
+                    }
+                  ]
+                },
+                "replacements": [
+                  {
+                    "target": "/orderItems/0/menuItemId",
+                    "targetSelectorType": "jsonpointer",
+                    "value": "$steps.find-beverage.outputs.beverageId"
+                  },
+                  {
+                    "target": "$.customerName",
+                    "targetSelectorType": {
+                      "type": "jsonpath",
+                      "version": "rfc9535"
+                    },
+                    "value": {
+                      "context": "$inputs",
+                      "selector": "$.customerName",
+                      "type": "jsonpath"
+                    }
+                  }
+                ]
+              },
+              "stepId": "create-order",
+              "stepIndex": 1,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 201"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "place-order#create-order",
+            "kind": "one_way",
+            "messages": [],
+            "name": "create-order",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "place-order"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List the beverages on the menu and capture the first item.",
+            "extras": {
+              "operationId": "cafe-api.listMenuItems",
+              "outputs": {
+                "beverageId": {
+                  "context": "$response.body",
+                  "selector": "$.items[0].id",
+                  "type": "jsonpath"
+                }
+              },
+              "parameters": [
+                {
+                  "in": "querystring",
+                  "name": "query",
+                  "value": "filter=category:beverage&limit=5"
+                }
+              ],
+              "stepId": "find-beverage",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                },
+                {
+                  "condition": "$.items[?(@.category == 'beverage')]",
+                  "context": "$response.body",
+                  "type": {
+                    "type": "jsonpath",
+                    "version": "rfc9535"
+                  }
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "place-order#find-beverage",
+            "kind": "one_way",
+            "messages": [],
+            "name": "find-beverage",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "place-order"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Redocly Cafe ordering workflows",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/15-redocly-cafe-workflows.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 3,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:9bb9c8c0d7b2e549e01047509abe4d63ccbdd255bf0d21960e477b42033bb95c",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "49cbb6ebd88eedff99144345944fb23e92b8b8af8235805d8f7ba541a6d40757",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

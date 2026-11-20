@@ -3871,14 +3871,20 @@ A published project version also serves an Arazzo document of its own, generated
 #### What is written to Arazzo {#what-is-written-to-arazzo}
 
 - **An item imported from Arazzo** is written back as it was read, with its own workflows, steps,
-  inputs and outputs.
+  inputs, outputs and workflow-level `parameters`. Arazzo 1.1's `$self` and its event-step fields
+  (`channelPath`, `action`, `correlationId`, `timeout`) are written back too. `$self` exists only
+  from 1.1, so an **Arazzo Version** of `1.0.1` leaves it out and the report says so.
 - **Any other item** gets one workflow per service. The workflow's steps call that service's
   operations by id, in the order they are declared. The source declares no such workflow, so the
   report marks it **synthesized**. When an operation has no id of its own, the step uses the
   operation's key (`POST /orders`), and the report marks that synthesized too.
 - **Each operation** becomes a step and is marked **approximated**. Its parameters, request and
-  response schemas stay in the source description and are not written.
-- **Types, servers and event channels** are not written. Types and channels are marked **dropped**.
+  response schemas stay in the source description and are not written. When the file is read back,
+  the step is named `<workflow>#<step>` (`orders#POST /orders`). The report marks the operation's
+  own key **dropped** and the step's key **synthesized**. If two operations of one service would
+  get the same step id, only the second is written, and the report marks the first **dropped**.
+- **Types, servers, event channels, agents and skills** are not written. All but servers are marked
+  **dropped**. A service with no operation to sequence gets no workflow and is marked **dropped**.
 - **A source description** is required by Arazzo. When the item names none, the document gets one
   entry named after the API, pointing at a placeholder such as `./shop-orders.openapi.yaml`.
   **Replace that URL** with the address of the real API description before you run the workflow.

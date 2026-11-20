@@ -1,0 +1,69 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_AsyncOrderApi_createOrder",
+      "operation": "OrderId#createOrderReceive"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_AsyncOrderApi_createOrder_2",
+      "operation": "OrderId#createOrderSend"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_OrderApi_getOrderDetails",
+      "operation": "OrderId#getOrderDetails"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_ProductApi_getProducts",
+      "operation": "OrderId#getProducts"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_LocationApi_getUserLocation",
+      "operation": "OrderId#getUserLocation"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_AsyncOrderApi_orderAccepted",
+      "operation": "OrderId#orderAccepted"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_AsyncOrderApi_outForDelivery",
+      "operation": "OrderId#outForDelivery"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_WarehouseApi_reserveInventory",
+      "operation": "OrderId#reserveInventory"
+    }
+  ]
+}

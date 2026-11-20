@@ -1,0 +1,149 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": "## Overview\n\nThis workflow guides the process of applying for a loan at checkout using a \"Buy Now, Pay Later\" (BNPL) platform. It orchestrates a series of API interactions to ensure a seamless and efficient loan application process, integrating multiple services across different API providers.\n\n### Key Features\n- **Multi-step Loan Application:** The workflow includes multiple steps to check product eligibility, retrieve terms and conditions, create customer profiles, initiate the loan, and finalize the payment plan.\n- **Dynamic Decision Making:** Based on the API responses, the workflow adapts the flow, for example, skipping customer creation if the customer is already registered or ending the workflow if no eligible products are found.\n- **User-Centric:** The workflow handles both existing and new customers, providing a flexible approach to customer onboarding and loan authorization.\n",
+    "extras": {
+      "arazzo": "1.0.0",
+      "sourceDescriptions": [
+        {
+          "name": "BnplApi",
+          "type": "openapi",
+          "url": "https://raw.githubusercontent.com/OAI/Arazzo-Specification/main/examples/1.0.0/bnpl-openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "BnplApi": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "BNPL Workflow Description",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "parameters": [
+            {
+              "in": "cookie",
+              "name": "workflowLevelParamOne",
+              "value": "someValue"
+            },
+            {
+              "in": "header",
+              "name": "workflowLevelParamTwo",
+              "value": "someValue"
+            }
+          ],
+          "stepOrder": [
+            "post-step",
+            "get-step"
+          ],
+          "workflowId": "someWorkflow",
+          "workflowIndex": 0
+        },
+        "key": "someWorkflow",
+        "name": "someWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "getResource",
+              "stepId": "get-step",
+              "stepIndex": 1
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "someWorkflow#get-step",
+            "kind": "one_way",
+            "messages": [],
+            "name": "get-step",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "someWorkflow"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "createResource",
+              "parameters": [
+                {
+                  "in": "cookie",
+                  "name": "foo",
+                  "value": "some_value"
+                },
+                {
+                  "in": "query",
+                  "name": "username",
+                  "value": "$inputs.username"
+                }
+              ],
+              "stepId": "post-step",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "^200$",
+                  "context": "$statusCode",
+                  "type": "regex"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "someWorkflow#post-step",
+            "kind": "one_way",
+            "messages": [],
+            "name": "post-step",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "someWorkflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "BNPL Workflow Description",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo/12-spectral-ruleset-good-examples.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:3ae9af38d8bb4a483142a11d6a7a99744a683b5781fa71a9309edfec79865fc1",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "66667c92862d92ea74c65793319f155a56cddb2d48498eae5604abddce73c0ec",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,112 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "sourceDescriptions": [
+        {
+          "name": "ordersAPI",
+          "type": "openapi",
+          "url": "https://example.com/orders.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "ordersAPI": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Payload Replacement",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "stepOrder": [
+            "submitOrder"
+          ],
+          "workflowId": "replaceWorkflow",
+          "workflowIndex": 0
+        },
+        "key": "replaceWorkflow",
+        "name": "replaceWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "createOrder",
+              "requestBody": {
+                "contentType": "application/json",
+                "replacements": [
+                  {
+                    "target": "/order/items/0/id",
+                    "value": {
+                      "context": "$steps.previous.outputs",
+                      "selector": "$.itemId",
+                      "type": {
+                        "type": "jsonpath",
+                        "version": "rfc9535"
+                      }
+                    }
+                  }
+                ]
+              },
+              "stepId": "submitOrder",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "replaceWorkflow#submitOrder",
+            "kind": "one_way",
+            "messages": [],
+            "name": "submitOrder",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "replaceWorkflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Payload Replacement",
+    "types": [],
+    "version": "1.2.0"
+  },
+  "corpus_path": "arazzo-1.1/14-oai-payload-replacement-selector.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:e65017cb91986bc8f12b2376ee701b3b1ebe35bd9846ccbb683ff33e9039f4fd",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "12e94d73303007903b309fe3e93748f891e14aa7f18ee220cf2adff86c15f596",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

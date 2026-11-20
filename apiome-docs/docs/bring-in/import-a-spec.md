@@ -486,6 +486,13 @@ Each source is looked up in this order, and the first match wins:
 A resolved source's document is used to check the steps that call it, so a step naming an
 operation the API does not have is reported by the `arazzo.dangling-operation-id` lint rule.
 
+In an Arazzo 1.1 workflow, a step can wait on an event channel instead of calling an operation. It
+names the channel with `channelPath`, for example
+`$sourceDescriptions.account-events#/channels/customerSignedUp`. The catalog importer takes that as
+the step's target and records the step as asynchronous. It keeps the step's `action`,
+`correlationId` and `timeout`, and the workflow's `parameters` and the document's `$self`, so the
+workflow exports back unchanged.
+
 **Nothing is dropped silently.** Every source no tier resolves is listed in
 `arazzo_sources.unresolved_sources` with a reason code. It is also raised as an
 `ARAZZO_SOURCES_UNRESOLVED` warning on the job and stored on the catalog item's

@@ -1,0 +1,68 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create a new special event.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "create-event",
+      "operation": "events-crud#create-event"
+    },
+    {
+      "description": "Delete the event that was updated in the previous step.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "delete-event",
+      "operation": "events-crud#delete-event"
+    },
+    {
+      "description": "Get the details of the event that was created in the previous step.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get-event-by-id",
+      "operation": "events-crud#get-event-by-id"
+    },
+    {
+      "description": "Request the list of events.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list-events",
+      "operation": "events-crud#list-events"
+    },
+    {
+      "description": "Update the created event with new details.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "update-event",
+      "operation": "events-crud#update-event"
+    },
+    {
+      "description": "Buy a ticket for the museum by calling an external workflow from another Arazzo file.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "buy-ticket",
+      "operation": "get-museum-hours#buy-ticket"
+    },
+    {
+      "description": "Get museum hours by resolving request details with getMuseumHours operationId from openapi.yaml description.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "museum-api_getMuseumHours",
+      "operation": "get-museum-hours#get-museum-hours"
+    }
+  ]
+}

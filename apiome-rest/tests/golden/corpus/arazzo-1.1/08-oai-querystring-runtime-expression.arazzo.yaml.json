@@ -1,0 +1,113 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "sourceDescriptions": [
+        {
+          "name": "api",
+          "type": "openapi",
+          "url": "https://api.example.com/openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "api": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Querystring Runtime Expression Test",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "inputs": {
+            "properties": {
+              "filter": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "stepOrder": [
+            "search"
+          ],
+          "workflowId": "testQuerystringExpr",
+          "workflowIndex": 0
+        },
+        "key": "testQuerystringExpr",
+        "name": "testQuerystringExpr",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.api.searchItems",
+              "parameters": [
+                {
+                  "in": "querystring",
+                  "name": "q",
+                  "value": "filter={$inputs.filter}&limit=20"
+                }
+              ],
+              "sourceDescription": "api",
+              "sourceType": "openapi",
+              "stepId": "search",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "testQuerystringExpr#search",
+            "kind": "one_way",
+            "messages": [],
+            "name": "search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "testQuerystringExpr"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Querystring Runtime Expression Test",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/08-oai-querystring-runtime-expression.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:c6e7155348253c7c8b4ee57835ba93c2065929915a40371b9f4963e9bf94c4e9",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "0b7638d8af4b3ed617310c004c20c40c928c74b4e24a4e0b7428cc91268f62e1",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

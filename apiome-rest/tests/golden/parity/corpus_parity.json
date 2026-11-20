@@ -253,11 +253,11 @@
         "arazzo-1.1"
       ],
       "fixtures": {
-        "valid": 14,
+        "valid": 28,
         "negative": 11,
         "adversarial": 0,
         "scale": 0,
-        "total": 25
+        "total": 39
       },
       "rungs": [
         "composition",
@@ -268,7 +268,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 13,
+      "goldens": 27,
       "golden_directories": [
         "arazzo",
         "arazzo-1.1"

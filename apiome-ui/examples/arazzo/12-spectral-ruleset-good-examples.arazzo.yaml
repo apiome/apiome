@@ -1,0 +1,50 @@
+# Derived corpus fixture (COA-1.4, #7040), assembled from the "Good Example" fragments of Spectral's
+# Arazzo ruleset reference:
+# https://github.com/stoplightio/spectral/blob/d5a566f13d831bed76c69c2efe3de7b7a111d6d0/docs/reference/arazzo-rules.md
+# Copyright Stoplight. Licensed under the Apache License 2.0:
+# https://github.com/stoplightio/spectral/blob/develop/LICENSE
+# info: arazzo-info-description; sourceDescriptions: arazzo-source-descriptions-type; the workflow:
+# arazzo-workflow-stepId-unique; the `username` parameter: arazzo-step-parameters-validation; the
+# criterion: arazzo-step-success-criteria-validation. Only the fragments' placement is Apiome's.
+arazzo: 1.0.0
+info:
+  title: BNPL Workflow Description
+  version: 1.0.0
+  description: |
+    ## Overview
+
+    This workflow guides the process of applying for a loan at checkout using a "Buy Now, Pay Later" (BNPL) platform. It orchestrates a series of API interactions to ensure a seamless and efficient loan application process, integrating multiple services across different API providers.
+
+    ### Key Features
+    - **Multi-step Loan Application:** The workflow includes multiple steps to check product eligibility, retrieve terms and conditions, create customer profiles, initiate the loan, and finalize the payment plan.
+    - **Dynamic Decision Making:** Based on the API responses, the workflow adapts the flow, for example, skipping customer creation if the customer is already registered or ending the workflow if no eligible products are found.
+    - **User-Centric:** The workflow handles both existing and new customers, providing a flexible approach to customer onboarding and loan authorization.
+sourceDescriptions:
+  - name: BnplApi
+    url: https://raw.githubusercontent.com/OAI/Arazzo-Specification/main/examples/1.0.0/bnpl-openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: someWorkflow
+    parameters:
+      - in: cookie
+        name: workflowLevelParamOne
+        value: someValue
+      - in: header
+        name: workflowLevelParamTwo
+        value: someValue
+    steps:
+      - stepId: post-step
+        parameters:
+          - in: cookie
+            name: foo
+            value: some_value
+          - name: username
+            in: query
+            value: $inputs.username
+        operationId: createResource
+        successCriteria:
+          - context: $statusCode
+            condition: "^200$"
+            type: regex
+      - stepId: get-step
+        operationId: getResource

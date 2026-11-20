@@ -1,0 +1,113 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "components": {
+        "parameters": {
+          "limit": {
+            "in": "query",
+            "name": "limit",
+            "value": 10
+          }
+        }
+      },
+      "sourceDescriptions": [
+        {
+          "name": "userAPI",
+          "type": "openapi",
+          "url": "https://users.com/openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "userAPI": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "OpenAPI step parameter can use reusable reference",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "stepOrder": [
+            "getUsers"
+          ],
+          "workflowId": "openapiWorkflow",
+          "workflowIndex": 0
+        },
+        "key": "openapiWorkflow",
+        "name": "openapiWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.userAPI.listUsers",
+              "parameters": [
+                {
+                  "reference": "$components.parameters.limit",
+                  "value": 20
+                }
+              ],
+              "sourceDescription": "userAPI",
+              "sourceType": "openapi",
+              "stepId": "getUsers",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "openapiWorkflow#getUsers",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getUsers",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "openapiWorkflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "OpenAPI step parameter can use reusable reference",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/10-oai-components-parameter-reference.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:a8266956c64325254d9def6f5605be9dd3430e86771434b674d8eeaafb9b7d83",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "ac42869d5e860e50b615368cd7818a2c9a9f727dd7184d1ca130784014e5c431",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}
