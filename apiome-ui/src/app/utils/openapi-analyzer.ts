@@ -377,10 +377,10 @@ function detectFormat(doc: any): FormatDetectionResult {
     };
   }
 
-  // Arazzo 1.0.x - supported for import (#299)
+  // Arazzo 1.0.x (#299) and 1.1.x (#5426, #7037) - supported for import
   if (doc.arazzo) {
-    const version = doc.arazzo;
-    const supported = version.startsWith('1.0');
+    const version = String(doc.arazzo);
+    const supported = /^1\.[01](\.|$)/.test(version);
     return {
       format: 'arazzo',
       version,

@@ -4,7 +4,8 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, 
 
 | File | Purpose |
 |------|---------|
-| `checkout.arazzo.yaml` | Minimal Arazzo 1.0 import example |
+| `checkout.arazzo.yaml` | Minimal Arazzo 1.0.x import example |
+| `order-to-cash-1.1.arazzo.yaml` | Arazzo 1.1.0 document with an AsyncAPI source (version-aware validation) |
 | `payments-openapi.json` | Minimal OpenAPI 3.1 import example |
 | `reconstructed-openapi.json` | Example browse spec export payload |
 | `streetlights-asyncapi-2.6.yaml` | Minimal AsyncAPI 2.6 event API import example |

@@ -7,7 +7,7 @@ REST API for serving OpenAPI and Arazzo specifications from the Apiome database.
 The Apiome REST API provides HTTP endpoints to retrieve schema specifications in multiple formats:
 
 - **OpenAPI 3.1.0** - Standard API schema definitions
-- **Arazzo 1.0.1** - Workflow specifications for API operations
+- **Arazzo 1.0.x / 1.1.x** - Workflow specifications for API operations
 - **Swagger UI** - Interactive API documentation
 
 ## Features
@@ -186,7 +186,7 @@ curl http://localhost:8000/v1/schema/my-tenant/my-project/1.0.0/User
 ```
 GET /v1/arazzo/{tenant-slug}/{project-slug}/{version-slug}
 ```
-Returns the complete Arazzo 1.0.1 workflow specification for all classes in a version.
+Returns the complete Arazzo workflow specification for all classes in a version (`arazzo: 1.0.1` by default; `?arazzo_version=1.1.0` writes 1.1).
 
 **Example:**
 ```bash
@@ -197,7 +197,7 @@ curl http://localhost:8000/v1/arazzo/my-tenant/my-project/1.0.0
 ```
 GET /v1/arazzo/{tenant-slug}/{project-slug}/{version-slug}/{class-name}
 ```
-Returns the Arazzo 1.0.1 workflow specification for a single class.
+Returns the Arazzo workflow specification for a single class (`arazzo: 1.0.1` by default; `?arazzo_version=1.1.0` writes 1.1).
 
 **Example:**
 ```bash
@@ -327,7 +327,7 @@ curl -H "X-API-Key: your-api-key-here" \
 }
 ```
 
-### Arazzo 1.0.1 Response
+### Arazzo Response (default 1.0.1)
 ```json
 {
   "arazzo": "1.0.1",
@@ -427,7 +427,7 @@ ruff check src/
 
 - **[Arazzo Endpoints](docs/ARAZZO_ENDPOINTS.md)** - Detailed Arazzo endpoint documentation
 - **[OpenAPI Specification](https://spec.openapis.org/oas/latest.html)** - OpenAPI 3.1.0 spec
-- **[Arazzo Specification](https://spec.openapis.org/arazzo/latest.html)** - Arazzo 1.0.1 spec
+- **[Arazzo Specification](https://spec.openapis.org/arazzo/latest.html)** - Arazzo 1.0.x and 1.1.x spec
 
 ## Technology Stack
 

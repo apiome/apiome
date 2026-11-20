@@ -331,7 +331,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'typespec', label: 'TypeSpec', icon: FileCode, tone: 'cyan', dataType: 'rest', origin: 'cloud', importable: true, aliases: ['tsp', 'cadl'], description: 'Microsoft TypeSpec API definition.' },
 
   // ---- Workflows ----
-  { id: 'arazzo', label: 'Arazzo', icon: Workflow, tone: 'violet', dataType: 'workflow', origin: 'web', importable: true, aliases: ['workflows'], description: 'Arazzo API workflow description.' },
+  { id: 'arazzo', label: 'Arazzo', icon: Workflow, tone: 'violet', dataType: 'workflow', origin: 'web', importable: true, aliases: ['workflows'], description: 'Arazzo 1.0.x / 1.1.x API workflow description.' },
 
   // ---- Agent ----
   { id: 'llm-tools', label: 'LLM Tools', icon: Bot, tone: 'amber', dataType: 'tools', origin: 'ai', importable: true, aliases: ['llmtools', 'function-calling', 'openai-tools', 'anthropic-tools'], description: 'OpenAI / Anthropic / bare LLM tool or function-calling schema bundle.' },

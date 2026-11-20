@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.597.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.598.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 ## `GET /` {#root-get}
 
@@ -39,9 +39,13 @@ Args:
     x_api_key: Optional API key for private versions (header)
     api_key: Optional API key for private versions (query, for links)
     accept: Accept header for content negotiation
+    arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` …); ``None`` for the default
 
 Returns:
-    Arazzo 1.0.1 specification in JSON or YAML format
+    Arazzo 1.0.x / 1.1.x specification in JSON or YAML format
+
+Raises:
+    HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version
 
 Operation id: `get_version_arazzo_spec_v1_arazzo__tenant_slug___project_slug___version_slug__get`
 
@@ -53,6 +57,7 @@ Operation id: `get_version_arazzo_spec_v1_arazzo__tenant_slug___project_slug___v
 | `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
 | `version_slug` | path | string | yes | Semantic version label or version slug (for example ``1.0.0``). |
 | `api_key` | query | string or null | no | API key for private versions (alternative to X-API-Key header) |
+| `arazzo_version` | query | string or null | no | Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema. |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 | `accept` | header | string or null | no | Requested response content type (``Accept`` header). |
 
@@ -77,9 +82,13 @@ Args:
     class_name: The name of the class
     x_api_key: Optional API key for private versions
     accept: Accept header for content negotiation
+    arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` …); ``None`` for the default
 
 Returns:
-    Arazzo 1.0.1 specification for the class in JSON or YAML format
+    Arazzo 1.0.x / 1.1.x specification for the class in JSON or YAML format
+
+Raises:
+    HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version
 
 Operation id: `get_class_arazzo_spec_v1_arazzo__tenant_slug___project_slug___version_slug___class_name__get`
 
@@ -91,6 +100,7 @@ Operation id: `get_class_arazzo_spec_v1_arazzo__tenant_slug___project_slug___ver
 | `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
 | `version_slug` | path | string | yes | Semantic version label or version slug (for example ``1.0.0``). |
 | `class_name` | path | string | yes | Class name within the version. |
+| `arazzo_version` | query | string or null | no | Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema. |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 | `accept` | header | string or null | no | Requested response content type (``Accept`` header). |
 

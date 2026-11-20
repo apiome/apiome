@@ -370,7 +370,7 @@ def wrong_importer_message(
         )
     if attempted in ("openapi", "swagger") and detected is DocumentKind.arazzo:
         return (
-            "This file looks like an Arazzo 1.0 workflow document. "
+            "This file looks like an Arazzo workflow document. "
             "Use: apiome import arazzo <path>"
         )
     if attempted == "arazzo" and detected is DocumentKind.openapi:
@@ -390,7 +390,7 @@ def wrong_importer_message(
         )
     if attempted in ("json-schema", "json-schema-type") and detected is DocumentKind.arazzo:
         return (
-            "This file looks like an Arazzo 1.0 workflow document. "
+            "This file looks like an Arazzo workflow document. "
             "Use: apiome import arazzo <path>"
         )
     return (

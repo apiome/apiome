@@ -483,7 +483,7 @@ apiome import openapi ./openapi.yaml --publish private
 
 ### Import Arazzo
 
-Import an [Arazzo 1.0](https://spec.openapis.org/arazzo/latest.html) workflow document (validated locally before upload):
+Import an [Arazzo](https://spec.openapis.org/arazzo/latest.html) 1.0.x or 1.1.x workflow document (validated locally against the schema for the version it declares before upload):
 
 ```bash
 apiome import arazzo ./checkout.arazzo.yaml

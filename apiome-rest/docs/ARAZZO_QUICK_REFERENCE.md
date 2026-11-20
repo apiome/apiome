@@ -20,6 +20,14 @@ curl -H "Accept: application/yaml" \
   http://localhost:8000/v1/arazzo/my-tenant/my-project/1.0.0
 ```
 
+### Get All Workflows as Arazzo 1.1
+```bash
+curl -H "Accept: application/yaml" \
+  "http://localhost:8000/v1/arazzo/my-tenant/my-project/1.0.0?arazzo_version=1.1.0"
+```
+
+The default is `1.0.1`; `arazzo_version` takes any 1.0.x or 1.1.x version (anything else is `400`).
+
 ### Get Single Class Workflow (JSON)
 ```bash
 curl http://localhost:8000/v1/arazzo/my-tenant/my-project/1.0.0/User

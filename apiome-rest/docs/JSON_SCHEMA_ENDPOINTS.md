@@ -253,7 +253,7 @@ JSON Schema specifications work alongside OpenAPI and Arazzo specs:
 | Use Case | Endpoint |
 |----------|----------|
 | API documentation | `/v1/schema` (OpenAPI 3.1.0) |
-| API workflows | `/v1/arazzo` (Arazzo 1.0.1) |
+| API workflows | `/v1/arazzo` (Arazzo 1.0.x / 1.1.x; default 1.0.1) |
 | JSON data validation | `/v1/json` (JSON Schema 2020-12) |
 | Interactive docs | `/v1/swagger` (Swagger UI) |
 

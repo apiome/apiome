@@ -118,7 +118,7 @@ apiome import agents-manifest [OPTIONS] [INPUT]
 
 ## apiome import arazzo {#import-arazzo}
 
-Import an Arazzo 1.0 workflow document from a file, URL, or stdin.
+Import an Arazzo 1.0.x or 1.1.x workflow document from a file, URL, or stdin.
 
 ```text
 apiome import arazzo [OPTIONS] PATH

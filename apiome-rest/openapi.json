@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.597.0",
+    "version": "1.598.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -127362,7 +127362,7 @@
     "/v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}": {
       "get": {
         "summary": "Get Version Arazzo Spec",
-        "description": "Get the complete Arazzo workflow specification for all classes in a version.\nUses content negotiation to determine response format (JSON or YAML).\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    x_api_key: Optional API key for private versions (header)\n    api_key: Optional API key for private versions (query, for links)\n    accept: Accept header for content negotiation\n\nReturns:\n    Arazzo 1.0.1 specification in JSON or YAML format",
+        "description": "Get the complete Arazzo workflow specification for all classes in a version.\nUses content negotiation to determine response format (JSON or YAML).\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    x_api_key: Optional API key for private versions (header)\n    api_key: Optional API key for private versions (query, for links)\n    accept: Accept header for content negotiation\n    arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` \u2026); ``None`` for the default\n\nReturns:\n    Arazzo 1.0.x / 1.1.x specification in JSON or YAML format\n\nRaises:\n    HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version",
         "operationId": "get_version_arazzo_spec_v1_arazzo__tenant_slug___project_slug___version_slug__get",
         "parameters": [
           {
@@ -127417,6 +127417,26 @@
               "title": "Api Key"
             },
             "description": "API key for private versions (alternative to X-API-Key header)"
+          },
+          {
+            "name": "arazzo_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Arazzo Specarazzoversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Arazzo Specarazzoversion schema."
+                }
+              ],
+              "description": "Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema.",
+              "title": "Arazzo Version"
+            },
+            "description": "Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema."
           },
           {
             "name": "X-API-Key",
@@ -127487,7 +127507,7 @@
     "/v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}/{class_name}": {
       "get": {
         "summary": "Get Class Arazzo Spec",
-        "description": "Get the Arazzo workflow specification for a single class.\nUses content negotiation to determine response format (JSON or YAML).\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    class_name: The name of the class\n    x_api_key: Optional API key for private versions\n    accept: Accept header for content negotiation\n\nReturns:\n    Arazzo 1.0.1 specification for the class in JSON or YAML format",
+        "description": "Get the Arazzo workflow specification for a single class.\nUses content negotiation to determine response format (JSON or YAML).\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    class_name: The name of the class\n    x_api_key: Optional API key for private versions\n    accept: Accept header for content negotiation\n    arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` \u2026); ``None`` for the default\n\nReturns:\n    Arazzo 1.0.x / 1.1.x specification for the class in JSON or YAML format\n\nRaises:\n    HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version",
         "operationId": "get_class_arazzo_spec_v1_arazzo__tenant_slug___project_slug___version_slug___class_name__get",
         "parameters": [
           {
@@ -127533,6 +127553,26 @@
               "description": "Class Name schema."
             },
             "description": "Class name within the version."
+          },
+          {
+            "name": "arazzo_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Class Arazzo Specarazzoversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Class Arazzo Specarazzoversion schema."
+                }
+              ],
+              "description": "Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema.",
+              "title": "Arazzo Version"
+            },
+            "description": "Arazzo specification version to write: any 1.0.x or 1.1.x version, for example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated document's only source description is the version's OpenAPI schema."
           },
           {
             "name": "X-API-Key",

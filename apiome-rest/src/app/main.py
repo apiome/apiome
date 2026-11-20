@@ -20,6 +20,7 @@ from .agent_invocation_export_routes import router as agent_invocation_export_ro
 from .agent_usage_routes import router as agent_usage_router
 from .api_check_suite_routes import router as api_check_suite_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
+from .arazzo_spec import ArazzoVersionError
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
 from .internal_auth_event_routes import router as internal_auth_event_router
@@ -238,7 +239,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.597.0",
+    version="1.598.0",
 )
 
 
@@ -1837,7 +1838,15 @@ async def get_version_arazzo_spec(
     version_slug: str,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     api_key: Optional[str] = Query(None, description="API key for private versions (alternative to X-API-Key header)"),
-    accept: Optional[str] = Header(None)
+    accept: Optional[str] = Header(None),
+    arazzo_version: Optional[str] = Query(
+        None,
+        description=(
+            "Arazzo specification version to write: any 1.0.x or 1.1.x version, for "
+            "example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated "
+            "document's only source description is the version's OpenAPI schema."
+        ),
+    ),
 ) -> Response:
     """
     Get the complete Arazzo workflow specification for all classes in a version.
@@ -1850,9 +1859,13 @@ async def get_version_arazzo_spec(
         x_api_key: Optional API key for private versions (header)
         api_key: Optional API key for private versions (query, for links)
         accept: Accept header for content negotiation
+        arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` …); ``None`` for the default
 
     Returns:
-        Arazzo 1.0.1 specification in JSON or YAML format
+        Arazzo 1.0.x / 1.1.x specification in JSON or YAML format
+
+    Raises:
+        HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version
     """
     # Get version information
     version = db.get_version_by_slugs(tenant_slug, project_slug, version_slug)
@@ -1877,13 +1890,17 @@ async def get_version_arazzo_spec(
     classes = db.get_classes_for_version(version['id'])
 
     # Generate Arazzo specification
-    arazzo_spec = generate_arazzo_spec(
-        tenant_slug,
-        project_slug,
-        version_slug,
-        classes,
-        version.get('project_description')
-    )
+    try:
+        arazzo_spec = generate_arazzo_spec(
+            tenant_slug,
+            project_slug,
+            version_slug,
+            classes,
+            version.get('project_description'),
+            arazzo_version=arazzo_version,
+        )
+    except ArazzoVersionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Determine response format based on Accept header
     accept_header = (accept or "").lower()
@@ -1911,7 +1928,15 @@ async def get_class_arazzo_spec(
     version_slug: str,
     class_name: str,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    accept: Optional[str] = Header(None)
+    accept: Optional[str] = Header(None),
+    arazzo_version: Optional[str] = Query(
+        None,
+        description=(
+            "Arazzo specification version to write: any 1.0.x or 1.1.x version, for "
+            "example `1.0.1` or `1.1.0`. Defaults to 1.0.1, because the generated "
+            "document's only source description is the version's OpenAPI schema."
+        ),
+    ),
 ) -> Response:
     """
     Get the Arazzo workflow specification for a single class.
@@ -1924,9 +1949,13 @@ async def get_class_arazzo_spec(
         class_name: The name of the class
         x_api_key: Optional API key for private versions
         accept: Accept header for content negotiation
+        arazzo_version: Arazzo version to write (``1.0.1`` / ``1.1.0`` …); ``None`` for the default
 
     Returns:
-        Arazzo 1.0.1 specification for the class in JSON or YAML format
+        Arazzo 1.0.x / 1.1.x specification for the class in JSON or YAML format
+
+    Raises:
+        HTTPException: 400 when ``arazzo_version`` is not a supported Arazzo version
     """
     # Get version information
     version = db.get_version_by_slugs(tenant_slug, project_slug, version_slug)
@@ -1957,12 +1986,16 @@ async def get_class_arazzo_spec(
         )
 
     # Generate Arazzo specification for this class
-    arazzo_spec = generate_class_arazzo_spec(
-        tenant_slug,
-        project_slug,
-        version_slug,
-        class_data
-    )
+    try:
+        arazzo_spec = generate_class_arazzo_spec(
+            tenant_slug,
+            project_slug,
+            version_slug,
+            class_data,
+            arazzo_version=arazzo_version,
+        )
+    except ArazzoVersionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Determine response format based on Accept header
     accept_header = (accept or "").lower()

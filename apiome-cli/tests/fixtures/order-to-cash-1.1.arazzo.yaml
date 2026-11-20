@@ -1,0 +1,28 @@
+arazzo: 1.1.0
+info:
+  title: Order to cash
+  summary: Place an order over REST, then wait for the async settlement event.
+  version: 1.0.0
+sourceDescriptions:
+  - name: orders
+    url: https://api.example.com/orders/openapi.yaml
+    type: openapi
+  - name: orderEvents
+    url: https://events.example.com/orders/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: orderToCash
+    summary: Place an order and observe its settlement.
+    steps:
+      - stepId: placeOrder
+        operationId: $sourceDescriptions.orders.createOrder
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          orderId: $response.body#/id
+      - stepId: awaitSettlement
+        operationId: $sourceDescriptions.orderEvents.receivePaymentSettled
+        successCriteria:
+          - context: $message.payload
+            condition: $.orderId == $steps.placeOrder.outputs.orderId
+            type: jsonpath
