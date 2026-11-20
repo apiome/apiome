@@ -16,8 +16,10 @@ of #5426 directly:
 from __future__ import annotations
 
 import copy
+import io
+import zipfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
 import yaml
@@ -37,6 +39,7 @@ from app.arazzo_spec import (
     validate_arazzo_semantics,
     validate_arazzo_version,
 )
+from app.archive_intake import unpack_archive
 from app.fileset import IntakeFileset
 from app.import_source import DetectionInput, ImportSourceError
 
@@ -62,11 +65,23 @@ def _emit(model, **options: Any) -> Dict[str, Any]:
     return yaml.safe_load(text)
 
 
+def _archived(members: Dict[str, str], *, root: Optional[str] = None) -> IntakeFileset:
+    """Build a fileset the way intake does: zip the members and run ``unpack_archive`` (COA-1.2)."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, text in members.items():
+            archive.writestr(name, text)
+    unpacked = unpack_archive(buffer.getvalue(), source_label="set.zip", root_path=root)
+    return IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
+
+
 def _sourced_fileset() -> IntakeFileset:
     """The multi-file corpus set: a workflow plus the OpenAPI file it points at."""
     directory = EXAMPLES / "06-sourced-set"
     members = {path.name: path.read_text(encoding="utf-8") for path in sorted(directory.iterdir())}
-    return IntakeFileset.from_members(members, root="workflow.arazzo.yaml")
+    fileset = _archived(members)
+    assert fileset.root == "workflow.arazzo.yaml"
+    return fileset
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +391,7 @@ def test_fileset_resolution_lets_lint_check_the_operation_id(
         "$sourceDescriptions.inventory.noSuchOperation"
     )
     members["workflow.arazzo.yaml"] = yaml.safe_dump(workflow)
-    broken = IntakeFileset.from_members(members, root="workflow.arazzo.yaml")
+    broken = _archived(members)
 
     clean_report = adapter.lint(adapter.normalize(adapter.parse_fileset(_sourced_fileset())))
     broken_report = adapter.lint(adapter.normalize(adapter.parse_fileset(broken)))
@@ -389,7 +404,7 @@ def test_fileset_without_an_arazzo_member_is_a_format_mismatch(
     adapter: ArazzoImportSource,
 ) -> None:
     members = {"inventory.openapi.yaml": (EXAMPLES / "06-sourced-set" / "inventory.openapi.yaml").read_text()}
-    fileset = IntakeFileset.from_members(members, root="inventory.openapi.yaml")
+    fileset = _archived(members)
     with pytest.raises(ImportSourceError) as excinfo:
         adapter.parse_fileset(fileset)
     assert excinfo.value.code == "FORMAT_MISMATCH"
@@ -400,7 +415,7 @@ def test_fileset_with_two_workflows_is_semantically_invalid(
 ) -> None:
     members = dict(_sourced_fileset().members)
     members["second.arazzo.yaml"] = members["workflow.arazzo.yaml"]
-    fileset = IntakeFileset.from_members(members, root="workflow.arazzo.yaml")
+    fileset = _archived(members, root="workflow.arazzo.yaml")
     with pytest.raises(ImportSourceError) as excinfo:
         adapter.parse_fileset(fileset)
     assert excinfo.value.code == "INPUT_SEMANTIC_INVALID"
@@ -410,7 +425,7 @@ def test_fileset_ignores_a_non_document_member(adapter: ArazzoImportSource) -> N
     """A README riding along in the set must not fail the import."""
     members = dict(_sourced_fileset().members)
     members["README.md"] = "# Not a document\n\n- just prose: [and a link](x)\n"
-    fileset = IntakeFileset.from_members(members, root="workflow.arazzo.yaml")
+    fileset = _archived(members)
     document = adapter.parse_fileset(fileset)
     assert [entry["name"] for entry in document.resolved_sources] == ["inventory"]
 

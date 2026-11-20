@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Dict, List, Mapping, Optional, Tuple
 
+from .arazzo_source_resolution import member_candidates, source_description_urls
 from .config import settings
 from .fileset import resolve_relative_reference
 from .format_detection import FormatDetection, detect_format
@@ -71,6 +72,11 @@ _ROOT_CANDIDATE_SUFFIXES: Tuple[str, ...] = (
     ".tsp",
     # MFI-13.3: a WSDL split across files (`wsdl:import`, `xs:import`).
     ".wsdl",
+    # COA-1.2: an Arazzo workflow shipped with the OpenAPI/AsyncAPI files its
+    # `sourceDescriptions` name (already covered by .yaml/.json; listed for intent).
+    ".arazzo.yaml",
+    ".arazzo.yml",
+    ".arazzo.json",
 )
 
 
@@ -140,7 +146,7 @@ class RootCandidate:
         path: Module-relative member path.
         format: Detected format key, when detection recognised one.
         confidence: Detection confidence, before the entrypoint boost.
-        score: Ranking score — ``confidence`` plus the proto entrypoint boost. The
+        score: Ranking score — ``confidence`` plus the entrypoint boost. The
             list :func:`rank_root_candidates` returns is sorted by this, descending.
     """
 
@@ -635,8 +641,9 @@ _RELATIVE_REFERENCE_RE = re.compile(
 
 
 def _member_import_boost(path: str, text: str, members: Mapping[str, str]) -> float:
-    """Prefer entrypoints: proto files that define services and import siblings, and any file
-    that references sibling files by relative path (a TypeSpec, Thrift or RAML root)."""
+    """Prefer entrypoints: proto files that define services and import siblings, any file
+    that references sibling files by relative path (a TypeSpec, Thrift or RAML root), and an
+    Arazzo workflow whose ``sourceDescriptions`` name siblings (COA-1.2)."""
     boost = 0.0
     if "service " in text:
         boost += 0.25
@@ -649,7 +656,32 @@ def _member_import_boost(path: str, text: str, members: Mapping[str, str]) -> fl
         resolved = resolve_relative_reference(path, target)
         if resolved is not None and resolved in members and resolved != path:
             boost += 0.05
+    # COA-1.2: an Arazzo workflow whose sourceDescriptions name siblings is the entrypoint
+    # of the set, the way a proto file that defines services is.
+    sources = _arazzo_source_members(path, text, members)
+    if sources:
+        boost += 0.25 + 0.05 * len(sources)
     return boost
+
+
+def _arazzo_source_members(path: str, text: str, members: Mapping[str, str]) -> Tuple[str, ...]:
+    """The members an Arazzo document's ``sourceDescriptions[].url`` values name (COA-1.2).
+
+    Args:
+        path: The candidate member's path.
+        text: Its decoded text (a document with no ``arazzo:`` marker names nothing).
+        members: Every member, keyed by path.
+
+    Returns:
+        The referenced member paths, deduplicated, in order of appearance.
+    """
+    found: List[str] = []
+    for url in source_description_urls(text):
+        for candidate in member_candidates(url, path):
+            if candidate != path and candidate in members and candidate not in found:
+                found.append(candidate)
+                break
+    return tuple(found)
 
 
 def rank_root_candidates(
@@ -768,7 +800,14 @@ def resolve_fileset_root(
         return root, detection, ()
 
     first = candidates[0]
-    second = candidates[1]
+    # COA-1.2: the documents the leader itself references (an Arazzo workflow's source
+    # descriptions) are its dependencies, not rival roots, so they never make it ambiguous.
+    dependencies = set(_arazzo_source_members(first, members[first], members))
+    rivals = [candidate for candidate in candidates[1:] if candidate not in dependencies]
+    if not rivals:
+        detection = detect_format(_member_detection_input(members, binary_members, first))
+        return first, detection, tuple(candidates[1:5])
+    second = rivals[0]
     det_first = detect_format(_member_detection_input(members, binary_members, first))
     det_second = detect_format(_member_detection_input(members, binary_members, second))
     if (

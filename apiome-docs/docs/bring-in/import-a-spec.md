@@ -447,6 +447,61 @@ The full result (every source, every step's resolution and every issue) is retur
 import job's summary as `arazzoResolution`. Workflows and their steps are not stored as their own
 records yet.
 
+## Import an Arazzo workflow with its API files
+
+To bring in a workflow and the OpenAPI or AsyncAPI files it calls in one import, ship them
+together. This uses the catalog Arazzo importer (registry key `arazzo`).
+
+1. **Put the files in one archive.** Zip (or tar) the workflow and every description its
+   `sourceDescriptions` point at, keeping the relative paths the `url`s use. For example,
+   `flow.arazzo.yaml` with `url: ./pets.yaml` and `url: apis/users.openapi.json` needs
+   `pets.yaml` next to it and `users.openapi.json` in an `apis/` folder.
+2. **Import the archive.** With the CLI, pass the archive or the folder itself:
+
+   ```bash
+   apiome import arazzo ./adopt-a-pet.zip --dry-run
+   apiome import arazzo ./adopt-a-pet/ --root flow.arazzo.yaml
+   ```
+
+   With the REST API, send the archive bytes to `POST /v1/tenants/{tenant_slug}/imports` with
+   `"filename": "adopt-a-pet.zip"` and `metadata.source_kind` set to `arazzo`. A repository
+   import works the same way: ticking the workflow in a repository's files also fetches the files
+   its `sourceDescriptions` name.
+3. **Check the import report.** The finished job's summary has an `arazzo_sources` block, and the
+   CLI prints it as `Arazzo sources: 2 resolved (2 fileset), 0 unresolved`.
+
+The workflow is picked as the archive's root, because the API files it calls are its sources, not
+competing roots. Use `--root` (or `metadata.options.archive_root`) when the archive also holds an API file
+the workflow does not call. In that case the import can't tell which file you meant.
+
+Each source is looked up in this order, and the first match wins:
+
+| Order | Tier | What matches |
+| --- | --- | --- |
+| 1 | `fileset` | A relative `url` names a file in the archive, relative to the workflow's folder or to the archive root. |
+| 2 | `catalog` | A spec you already imported: from the same repository and branch at that path, or from exactly that URL. |
+| 3 | `remote` | An absolute `https://` URL, fetched through the SSRF guard. Only when the import sets `metadata.options.resolve_remote_refs` to `true` and the deployment allows remote resolution. |
+
+A resolved source's document is used to check the steps that call it, so a step naming an
+operation the API does not have is reported by the `arazzo.dangling-operation-id` lint rule.
+
+**Nothing is dropped silently.** Every source no tier resolves is listed in
+`arazzo_sources.unresolved_sources` with a reason code. It is also raised as an
+`ARAZZO_SOURCES_UNRESOLVED` warning on the job and stored on the catalog item's
+`format_metadata.arazzoSources`.
+
+| Reason | Meaning |
+| --- | --- |
+| `not-in-fileset` | A relative `url` names no file in the archive and no catalog spec. |
+| `relative-without-fileset` | A single-file import has a relative `url` and no catalog spec. Upload the archive instead. |
+| `unparseable-member` | The file the `url` names is in the archive but is not valid JSON or YAML. |
+| `invalid-source-description` | The entry has no `name` or no `url`. |
+| `resolution-disabled` | An absolute URL, not in the catalog, and remote resolution is off for this import. |
+| `blocked-by-ssrf-guard` | The URL points at a private address or uses a refused scheme such as `file:`. |
+| `fetch-failed` | The fetch failed (timeout, connection error, or an error status). |
+| `unparseable-document` | The fetched document is not valid JSON or YAML. |
+| `budget-exhausted-refs`, `budget-exhausted-bytes`, `budget-exhausted-time` | The import's remote-fetch budget ran out. |
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

@@ -219,6 +219,8 @@ class ImportRunArtifacts:
         remote_refs: The MFI-29.4 remote ``$ref`` resolution outcome, when the adapter's
             format can carry external references and the intake had any. Typed loosely to
             keep the resolver module off this module's import path.
+        arazzo_sources: The COA-1.2 Arazzo source-description resolution outcome, for an
+            Arazzo import whose document declares sources.
         analysis: The CPDO-1.2 native payload analysis produced after parse. Carries observed
             values as the analyzer saw them — the redaction policy is applied by the store on
             the way in, so a caller reading this out-parameter is reading pre-policy material
@@ -233,6 +235,7 @@ class ImportRunArtifacts:
     style_guide: Optional[Any] = None
     scrub_report: Optional[Dict[str, Any]] = None
     remote_refs: Optional[Any] = None
+    arazzo_sources: Optional[Any] = None
     analysis: Optional[PayloadAnalysisDocument] = None
 
 
@@ -686,6 +689,132 @@ def _emit_remote_ref_events(state: "_AdapterRunState", outcome: Any) -> None:
             "from them.",
             level="warn",
             context={"blocked": len(blocked), "urls": sorted({ref.url for ref in blocked})[:10]},
+        )
+
+
+def _arazzo_catalog_lookup(
+    tenant_id: str, git_source: Optional[Dict[str, Any]]
+) -> Callable[[str, Tuple[str, ...]], Optional[Dict[str, Any]]]:
+    """Build the catalog tier of Arazzo source resolution for one import (COA-1.2).
+
+    Args:
+        tenant_id: The importing tenant.
+        git_source: The import's ``options.git_source`` provenance, when the workflow came
+            from a repository — it is what makes a relative source path name a catalog spec.
+
+    Returns:
+        A :data:`app.arazzo_source_resolution.CatalogSourceLookup` over the tenant's specs.
+    """
+
+    def lookup(url: str, candidate_paths: Tuple[str, ...]) -> Optional[Dict[str, Any]]:
+        from .database import db
+
+        return db.find_arazzo_source_in_catalog(
+            tenant_id=tenant_id,
+            url=url,
+            candidate_paths=candidate_paths,
+            repo_url=(git_source or {}).get("repo_url"),
+            branch=(git_source or {}).get("ref"),
+        )
+
+    return lookup
+
+
+def resolve_import_arazzo_sources(
+    adapter: ImportSource,
+    native_ast: Any,
+    payload: Dict[str, Any],
+    options: Dict[str, Any],
+) -> Tuple[Any, Optional[Any]]:
+    """Resolve an Arazzo import's ``sourceDescriptions`` past the fileset (COA-1.2).
+
+    The fileset tier already ran inside :meth:`ArazzoImportSource.parse_fileset`. This runs
+    the other two, in order: the tenant's **catalog** (skipped for a dry run with no tenant),
+    then a **remote** fetch through the SSRF-guarded fetcher — the latter only under the same
+    opt-in and kill switch as remote ``$ref`` resolution (``options['resolve_remote_refs']``
+    and ``remote_ref_resolution_allowed``). Fetched documents join ``resolved_sources`` so the
+    lint pack checks steps against them.
+
+    Args:
+        adapter: The resolved adapter; anything but the Arazzo adapter is left alone.
+        native_ast: The parsed document (a :class:`SourcedArazzoDocument` for a fileset).
+        payload: The worker payload (``tenant_id``).
+        options: The request's importer options.
+
+    Returns:
+        ``(native_ast, outcome)``: the document to normalize — wrapped in a
+        :class:`SourcedArazzoDocument` when the remote tier fetched something for a single
+        file — and the :class:`~app.arazzo_source_resolution.ArazzoSourceOutcome`, or
+        ``(native_ast, None)`` when the import is not an Arazzo document with sources.
+    """
+    if adapter.key != "arazzo" or not isinstance(native_ast, dict):
+        return native_ast, None
+    if not isinstance(native_ast.get("sourceDescriptions"), list):
+        return native_ast, None
+
+    from .arazzo_import_source import SourcedArazzoDocument
+    from .arazzo_source_resolution import resolve_remaining_sources
+    from .remote_ref_resolver import fetch_remote_documents
+
+    tenant_id = payload.get("tenant_id")
+    git_source = options.get("git_source")
+    catalog_lookup = (
+        _arazzo_catalog_lookup(
+            str(tenant_id), git_source if isinstance(git_source, dict) else None
+        )
+        if isinstance(tenant_id, str) and tenant_id
+        else None
+    )
+    remote_enabled = bool(options.get("resolve_remote_refs")) and bool(
+        settings.remote_ref_resolution_allowed
+    )
+    outcome = resolve_remaining_sources(
+        native_ast,
+        root_path=getattr(native_ast, "root_path", "") or "",
+        fileset_resolved=getattr(native_ast, "resolved_sources", None) or [],
+        pending=getattr(native_ast, "pending_sources", None),
+        catalog_lookup=catalog_lookup,
+        remote_fetcher=(lambda urls: fetch_remote_documents(urls)) if remote_enabled else None,
+    )
+    if outcome.remote_documents:
+        if not isinstance(native_ast, SourcedArazzoDocument):
+            sourced = SourcedArazzoDocument(native_ast)
+            sourced.resolved_sources = []
+            sourced.pending_sources = []
+            native_ast = sourced
+        native_ast.resolved_sources = list(native_ast.resolved_sources) + list(
+            outcome.remote_documents
+        )
+    return native_ast, outcome
+
+
+def _emit_arazzo_source_events(state: "_AdapterRunState", outcome: Any) -> None:
+    """Record where an Arazzo import's sources came from, as job events (COA-1.2).
+
+    Args:
+        state: The run's event accumulator.
+        outcome: The :class:`~app.arazzo_source_resolution.ArazzoSourceOutcome`.
+    """
+    report = outcome.report()
+    if outcome.resolved:
+        tiers = ", ".join(
+            f"{count} from the {tier}" for tier, count in report["by_tier"].items() if count
+        )
+        state.event(
+            "ARAZZO_SOURCES_RESOLVED",
+            f"Resolved {len(outcome.resolved)} Arazzo source description(s) ({tiers}).",
+            context={"resolved": len(outcome.resolved), "by_tier": report["by_tier"]},
+        )
+    if outcome.unresolved:
+        reasons = sorted({source.reason for source in outcome.unresolved})
+        names = ", ".join(source.name or "(unnamed)" for source in outcome.unresolved[:10])
+        state.event(
+            "ARAZZO_SOURCES_UNRESOLVED",
+            f"{len(outcome.unresolved)} Arazzo source description(s) were not resolved "
+            f"({names}: {', '.join(reasons)}); steps that call them are not checked against "
+            "their API.",
+            level="warn",
+            context={"unresolved": len(outcome.unresolved), "reasons": reasons},
         )
 
 
@@ -1269,6 +1398,7 @@ def persist_adapter_import(
     routing: ImportRoutingDecision,
     scrub_resolution: Optional[ScrubResolution] = None,
     fingerprint: Optional[str] = None,
+    arazzo_sources_report: Optional[Dict[str, Any]] = None,
 ) -> Optional[SpecImportJobResult]:
     """Persist a non-dry-run adapter import as its routed artifact (canonical→catalog hook, MFI-23.7).
 
@@ -1295,6 +1425,9 @@ def persist_adapter_import(
         fingerprint: The adapter's revision fingerprint (the ``VERSION_FINGERPRINT`` phase),
             recorded on ``format_metadata.fingerprint`` for the catalog Provenance tab
             (MFI-25.8). ``None`` records nothing.
+        arazzo_sources_report: Where an Arazzo workflow's sources were resolved from, and
+            which were not (COA-1.2), recorded on ``format_metadata.arazzoSources`` so the
+            stored item — not only the job summary — says what it could not resolve.
 
     Returns:
         The produced identifiers, or ``None`` when there is no tenant to write under.
@@ -1372,6 +1505,8 @@ def persist_adapter_import(
     # MFI-32.5: the scrub report (types and sites, never values) travels with the catalog item, so its
     # Provenance pane can say what intake redacted and under which policy — not just the job summary.
     format_metadata["secretScrub"] = scrub_report
+    if arazzo_sources_report is not None:
+        format_metadata["arazzoSources"] = arazzo_sources_report
     withheld = source_retention_withheld(model)
     if withheld is not None:
         format_metadata.pop("sourceEncoding", None)
@@ -1739,6 +1874,7 @@ def _build_summary(
     scrub_report: Optional[Dict[str, Any]] = None,
     remote_ref_report: Optional[Dict[str, Any]] = None,
     analysis_report: Optional[Dict[str, Any]] = None,
+    arazzo_sources_report: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Assemble the completed-job summary for an adapter import.
 
@@ -1758,7 +1894,9 @@ def _build_summary(
     carried external ``$ref``\\s (MFI-29.4), a ``remote_refs`` block reports what was inlined
     and what was not, with the reason for each. An ``analysis`` block (CPDO-1.2) reports the native
     payload analysis: its status, the analyzer that produced it, how much of the source it covered,
-    and whether it was stored against the revision.
+    and whether it was stored against the revision. For an Arazzo workflow (COA-1.2), an
+    ``arazzo_sources`` block reports where each ``sourceDescriptions`` entry was resolved from
+    (fileset, catalog or remote) and lists every unresolved one with its reason code.
     """
     summary: Dict[str, Any] = {
         "source": adapter.key,
@@ -1801,6 +1939,8 @@ def _build_summary(
         summary["remote_refs"] = remote_ref_report
     if analysis_report is not None:
         summary["analysis"] = analysis_report
+    if arazzo_sources_report is not None:
+        summary["arazzo_sources"] = arazzo_sources_report
     return summary
 
 
@@ -1985,6 +2125,14 @@ async def run_adapter_import_job(
         _emit_remote_ref_events(state, remote_refs.outcome)
         if artifacts is not None:
             artifacts.remote_refs = remote_refs.outcome
+    # COA-1.2: an Arazzo workflow's sources the fileset did not hold — catalog, then remote.
+    native_ast, arazzo_sources = resolve_import_arazzo_sources(
+        adapter, native_ast, payload, options if isinstance(options, dict) else {}
+    )
+    if arazzo_sources is not None:
+        _emit_arazzo_source_events(state, arazzo_sources)
+        if artifacts is not None:
+            artifacts.arazzo_sources = arazzo_sources
     state.event("PARSE_OK", "Parsed source into the format's native representation.")
 
     # --- analyze (CPDO-1.2) ----------------------------------------------------
@@ -2206,6 +2354,9 @@ async def run_adapter_import_job(
                     routing,
                     scrub_resolution,
                     fingerprint,
+                    arazzo_sources_report=(
+                        arazzo_sources.report() if arazzo_sources is not None else None
+                    ),
                 )
             _phase_timing("persist", phase_started)
         except Exception as exc:  # noqa: BLE001 - surface a persistence fault as a failed job
@@ -2368,6 +2519,7 @@ async def run_adapter_import_job(
         scrub_report=scrub_report,
         remote_ref_report=remote_refs.outcome.report() if remote_refs is not None else None,
         analysis_report=analysis_summary_block(analysis, stored=analysis_stored),
+        arazzo_sources_report=arazzo_sources.report() if arazzo_sources is not None else None,
     )
     if options.get("dry_run"):
         state.event("DRY_RUN", "Dry run: the normalized model was not persisted.")

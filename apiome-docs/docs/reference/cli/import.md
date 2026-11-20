@@ -118,7 +118,7 @@ apiome import agents-manifest [OPTIONS] [INPUT]
 
 ## apiome import arazzo {#import-arazzo}
 
-Import an Arazzo 1.0.x or 1.1.x workflow document from a file, URL, or stdin.
+Import an Arazzo 1.0.x or 1.1.x workflow from a file, URL, stdin, archive, or directory.
 
 ```text
 apiome import arazzo [OPTIONS] PATH
@@ -128,12 +128,13 @@ apiome import arazzo [OPTIONS] PATH
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `PATH` | text | yes | Arazzo document path (``.json``, ``.yaml``, ``.yml``), ``http``/``https`` URL, or ``-`` for stdin. |
+| `PATH` | text | yes | Arazzo document path (``.json``, ``.yaml``, ``.yml``), ``http``/``https`` URL, or ``-`` for stdin. A ``.zip``/``.tar.gz`` archive or a directory imports the workflow together with the OpenAPI/AsyncAPI files its ``sourceDescriptions`` name (COA-1.2). |
 
 **Options**
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
+| `--root` | text |  |  | Workflow document inside a .zip/.tar.gz archive or a directory, when the server cannot tell it from the API files it calls (COA-1.2). |
 | `--dry-run` | flag |  |  | Validate and plan the import without persisting changes. |
 | `--project-name` | text |  |  | Override project name derived from the configured project-name field. |
 | `--project-name-field` | text |  |  | Dot path or JSON Pointer for the field used as the project name (for example ``info.summary`` or ``#/info/summary``). Stored as ``info.x-apiome-project-name-field`` when omitted from the document. |

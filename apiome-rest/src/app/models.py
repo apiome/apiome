@@ -1506,7 +1506,10 @@ class SpecImportOptions(BaseModel):
             "before the model is built, so the imported revision covers them. When false (the "
             "default) nothing is fetched and every external reference is reported as a lint "
             "finding instead. Honored only by sources whose descriptor reports "
-            "`supports_remote_refs` (AsyncAPI, JSON Schema)."
+            "`supports_remote_refs` (AsyncAPI, JSON Schema). For an Arazzo workflow it also "
+            "lets an absolute `sourceDescriptions[].url` that neither the fileset nor the "
+            "catalog holds be fetched the same way (COA-1.2); either way every unresolved "
+            "source is listed in the job summary's `arazzo_sources` block."
         ),
     )
     git_source: Optional[SpecImportGitSource] = Field(

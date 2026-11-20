@@ -100,6 +100,7 @@ __all__ = [
     "REASON_UNPARSEABLE",
     "ExternalRef",
     "FetchObserver",
+    "FetchedDocument",
     "RefGate",
     "RemoteRefBudget",
     "RemoteRefCache",
@@ -107,6 +108,7 @@ __all__ = [
     "ResolvedRef",
     "UnresolvedRef",
     "default_cache",
+    "fetch_remote_documents",
     "resolve_remote_refs",
     "scan_external_refs",
 ]
@@ -1169,3 +1171,100 @@ def resolve_remote_refs(
         cache_hits=run.cache_hits,
         changed_documents=tuple(changed),
     )
+
+
+# ---------------------------------------------------------------------------
+# Whole-document fetches (COA-1.2)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class FetchedDocument:
+    """The outcome of fetching one whole document by URL (COA-1.2).
+
+    Attributes:
+        url: The URL that was requested.
+        document: The parsed document, or ``None`` when the fetch did not succeed.
+        digest: SHA-256 of the fetched bytes (the cache's content address), when fetched.
+        bytes_fetched: Size of the fetched document, ``0`` for a cache hit or a failure.
+        from_cache: Whether the document came from the cache instead of the network.
+        reason: One of the ``REASON_*`` constants when the fetch failed, else ``None``.
+        detail: Human-readable detail for a failure.
+    """
+
+    url: str
+    document: Any = None
+    digest: Optional[str] = None
+    bytes_fetched: int = 0
+    from_cache: bool = False
+    reason: Optional[str] = None
+    detail: str = ""
+
+
+def fetch_remote_documents(
+    urls: Sequence[str],
+    *,
+    budget: Optional[RemoteRefBudget] = None,
+    cache: Optional[RemoteRefCache] = None,
+    fetcher: Optional[RefFetcher] = None,
+    gate: Optional[RefGate] = None,
+) -> Dict[str, FetchedDocument]:
+    """Fetch whole documents by URL under the same guard, budgets and cache as ``$ref``\\s.
+
+    An Arazzo ``sourceDescriptions[].url`` names a whole document rather than a node inside
+    one, so it does not go through :func:`resolve_remote_refs`; it shares that function's
+    guarantees instead. Every URL passes :func:`app.ssrf_guard.validate_url_policy` and the
+    guarded client, the run is bounded by one :class:`RemoteRefBudget` (the reference count
+    is the number of documents fetched), and the content-addressed cache is consulted
+    first. Never raises: a URL that cannot be fetched comes back with its reason.
+
+    Args:
+        urls: Absolute URLs to fetch; duplicates are fetched once.
+        budget: Ceilings for this run; defaults to :meth:`RemoteRefBudget.from_settings`.
+        cache: Document cache; defaults to the process-wide :func:`default_cache`.
+        fetcher: Fetch callable ``(url, *, max_bytes, timeout) -> bytes``; defaults to the
+            SSRF-guarded HTTP fetcher.
+        gate: Optional per-URL policy gate (:data:`RefGate`), consulted first.
+
+    Returns:
+        One :class:`FetchedDocument` per distinct URL, keyed by URL.
+    """
+    effective_budget = budget or RemoteRefBudget.from_settings()
+    run = _Run(
+        budget=effective_budget,
+        cache=cache if cache is not None else default_cache(),
+        fetcher=fetcher or _http_fetch,
+        deadline=time.monotonic() + effective_budget.total_timeout_seconds,
+        gate=gate,
+    )
+    outcomes: Dict[str, FetchedDocument] = {}
+    for url in dict.fromkeys(urls):
+        try:
+            run.check_budgets()
+            digest, document, fetched, from_cache = run.document_for(url)
+        except _FetchError as failure:
+            outcomes[url] = FetchedDocument(url=url, reason=failure.reason, detail=failure.detail)
+            continue
+        except SSRFError as exc:
+            outcomes[url] = FetchedDocument(url=url, reason=REASON_BLOCKED, detail=str(exc))
+            continue
+        except Exception as exc:  # noqa: BLE001 - a fetch fault must never fail an import
+            logger.warning("remote document fetch failed for %s", url, exc_info=True)
+            outcomes[url] = FetchedDocument(
+                url=url, reason=REASON_FETCH_FAILED, detail=f"{type(exc).__name__}: {exc}"
+            )
+            continue
+        # Counted against ``max_refs`` exactly as an inlined reference is.
+        run.resolved.append(
+            ResolvedRef(
+                location=url, url=url, digest=digest, bytes_fetched=fetched, from_cache=from_cache
+            )
+        )
+        outcomes[url] = FetchedDocument(
+            url=url,
+            document=document,
+            digest=digest,
+            bytes_fetched=fetched,
+            from_cache=from_cache,
+        )
+    return outcomes

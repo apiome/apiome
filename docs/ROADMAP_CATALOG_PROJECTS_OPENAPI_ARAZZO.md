@@ -52,7 +52,6 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-1.2 · [#7038](https://github.com/apiome/apiome/issues/7038) | Arazzo multi-file filesets | An Arazzo file plus the OpenAPI/AsyncAPI files its `sourceDescriptions` name import together | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest, apiome-cli |
 | COA-1.3 · [#7039](https://github.com/apiome/apiome/issues/7039) | Arazzo workflow viewer in Projects and Catalog | See an Arazzo workflow as steps, inputs, outputs and success/failure paths — not just as a file | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
 | COA-1.4 · [#7040](https://github.com/apiome/apiome/issues/7040) | Arazzo round-trip and conformance corpus | Burn down the Arazzo cells in the round-trip xfail matrix and add an official-fixture corpus | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-1.5 · [#7041](https://github.com/apiome/apiome/issues/7041) | Arazzo workflow records: REST, CLI and docs | Read workflows and steps through the API and `apiome`, and make the docs match what is stored | `enhancement`, `rest`, `cli`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-docs |
@@ -75,7 +74,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 - **Technical Stack:** apiome-rest, apiome-cli, apiome-ui, apiome-docs
 - **Documentation:** `bring-in/import-a-spec.md`, `ship/export-a-spec.md`, `reference/` pages for the Arazzo endpoint and CLI; screenshots: n/a (no UI change)
 
-**COA-1.2 · #7038 Arazzo multi-file filesets**
+**✅ COA-1.2 · #7038 Arazzo multi-file filesets — Complete**
+- **Shipped:** REST 1.768.0 / OpenAPI 1.599.0: archive, bulk and repository intake rank an Arazzo workflow whose `sourceDescriptions` name sibling members as the root (its sources are dependencies, not rival roots; `.arazzo.*` added to `_ROOT_CANDIDATE_SUFFIXES`; the bulk/git reference closure follows source URLs). New `app.arazzo_source_resolution` resolves each source fileset → catalog (`Database.find_arazzo_source_in_catalog`: same repo/branch path, or same URL) → remote (`remote_ref_resolver.fetch_remote_documents`, SSRF-guarded, under `resolve_remote_refs` + the kill switch). The job summary's `arazzo_sources` block, `ARAZZO_SOURCES_*` events and `format_metadata.arazzoSources` list every unresolved source with a stable reason code. CLI 0.149.0: `apiome import arazzo <archive|directory> [--root]` imports the set through the adapter and prints the source report. Tests build filesets through `unpack_archive` (`tests/test_arazzo_multi_file_filesets.py`, `test_arazzo_1_1.py`). Docs: `bring-in/import-a-spec.md` (Import an Arazzo workflow with its API files), CLI/REST reference, release note `arazzo-multi-file-filesets`.
 - **Problem:** FORMAT_SUPPORT_MATRIX §3: 39 of 43 adapters take multi-file filesets; Arazzo, JSON Schema, JTD and samples do not, so an Arazzo workflow cannot be imported with the descriptions it calls unless they are already in the catalog.
 - **Solution/Scope:**
 - Accept an Arazzo root plus referenced local files in the fileset path, the archive intake (`archive_intake._ROOT_CANDIDATE_SUFFIXES`) and repository imports.

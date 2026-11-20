@@ -58,6 +58,7 @@ from apiome_cli.import_.bulk import (
     emit_bulk_results,
     emit_plan_drift,
     emit_skipped_files,
+    is_archive_path,
     load_bulk_payload,
     merge_bulk_results,
     parse_overrides,
@@ -1048,7 +1049,18 @@ def import_arazzo(
         ...,
         help=(
             "Arazzo document path (``.json``, ``.yaml``, ``.yml``), "
-            "``http``/``https`` URL, or ``-`` for stdin."
+            "``http``/``https`` URL, or ``-`` for stdin. A ``.zip``/``.tar.gz`` archive "
+            "or a directory imports the workflow together with the OpenAPI/AsyncAPI files "
+            "its ``sourceDescriptions`` name (COA-1.2)."
+        ),
+    ),
+    archive_root: str | None = typer.Option(
+        None,
+        "--root",
+        metavar="PATH",
+        help=(
+            "Workflow document inside a .zip/.tar.gz archive or a directory, when the "
+            "server cannot tell it from the API files it calls (COA-1.2)."
         ),
     ),
     dry_run: bool = typer.Option(
@@ -1113,10 +1125,11 @@ def import_arazzo(
         help="Seconds between ``GET /imports/{job_id}`` polls when waiting.",
     ),
 ) -> None:
-    """Import an Arazzo 1.0.x or 1.1.x workflow document from a file, URL, or stdin."""
+    """Import an Arazzo 1.0.x or 1.1.x workflow from a file, URL, stdin, archive, or directory."""
     _run_arazzo_import(
         ctx,
         path=path,
+        archive_root=archive_root,
         dry_run=dry_run,
         project_name=project_name,
         project_name_field=project_name_field,
@@ -1148,10 +1161,52 @@ def _run_arazzo_import(
     visibility: str | None,
     wait: bool,
     poll_interval: float,
+    archive_root: str | None = None,
 ) -> None:
+    """Run ``apiome import arazzo``.
+
+    An archive or a directory is a *fileset*: the workflow plus the description files its
+    ``sourceDescriptions`` name. It goes through the registry's Arazzo adapter (the same
+    async job as ``apiome import <format>``), which resolves each source from the fileset,
+    then the catalog, then — when the import opts in — a guarded remote fetch, and the
+    summary lists every source it could not resolve (COA-1.2). A single document still has
+    no ``/v1`` import route.
+
+    Args:
+        ctx: The Typer context.
+        path: Document path, URL, ``-``, archive, or directory.
+        dry_run: Validate and plan without persisting.
+        project_name: Unused for a fileset (the adapter names the item from ``info``).
+        project_name_field: Unused for a fileset.
+        version: Unused for a fileset.
+        project_id: Unused for a fileset.
+        project_slug: Unused for a fileset.
+        version_id: Unused for a fileset.
+        version_slug: Unused for a fileset.
+        publish: Unused for a fileset.
+        visibility: Unused for a fileset.
+        wait: Poll the job until it completes.
+        poll_interval: Seconds between polls.
+        archive_root: The workflow's path inside the archive or directory, if given.
+    """
+    if is_local_file_source(path) and (is_archive_path(path) or Path(path).is_dir()):
+        _run_generic_adapter_import(
+            ctx,
+            source_format="arazzo",
+            source=path,
+            file_path=None,
+            url=None,
+            archive_root=archive_root,
+            dry_run=dry_run,
+            import_timeout_override=None,
+            wait=wait,
+            poll_interval=poll_interval,
+        )
+        return
     del (
         ctx,
         path,
+        archive_root,
         dry_run,
         project_name,
         project_name_field,

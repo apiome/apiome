@@ -15853,6 +15853,94 @@ class Database:
             _logger.warning("Arazzo operation index unavailable: %s", exc)
             return []
 
+    def find_arazzo_source_in_catalog(
+        self,
+        *,
+        tenant_id: str,
+        url: str,
+        candidate_paths: Sequence[str] = (),
+        repo_url: Optional[str] = None,
+        branch: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Find a spec the tenant already imported that an Arazzo source names (COA-1.2).
+
+        The catalog tier of Arazzo ``sourceDescriptions`` resolution, consulted after the
+        fileset and before any remote fetch. Two lineages identify an imported spec
+        unambiguously, so only those match:
+
+        * a **relative** source on a repository import matches the spec imported from the
+          same repository and branch at one of ``candidate_paths``;
+        * an **absolute** source matches the spec imported from exactly that URL
+          (``url_import_specs``).
+
+        Arazzo imports themselves are never a match — a source is an API description.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            url: The source's declared ``url``.
+            candidate_paths: Repository paths a relative ``url`` could name, most specific first.
+            repo_url: Clone URL from the import's git provenance, if any.
+            branch: Branch/ref the workflow was read at, if any.
+
+        Returns:
+            ``{"project_id", "version_id", "path"}`` for the match (``version_id`` is ``None``
+            when the lineage has not recorded one), or ``None``. ``None`` on a database fault
+            too — the tier is best-effort, and its miss is reported as unresolved.
+        """
+        try:
+            if candidate_paths:
+                if not (repo_url and branch):
+                    return None
+                from .repository_validation import normalize_clone_url_for_dedup
+
+                try:
+                    normalized_repo = normalize_clone_url_for_dedup(repo_url)
+                except ValueError:
+                    return None
+                rows = self.execute_query(
+                    """
+                    SELECT ris.project_id, ris.path
+                    FROM apiome.repository_import_spec ris
+                    JOIN apiome.tenant_repositories tr ON tr.id = ris.repository_id
+                    JOIN apiome.projects p ON p.id = ris.project_id AND p.deleted_at IS NULL
+                    WHERE ris.tenant_id = %s::uuid
+                      AND ris.branch = %s
+                      AND tr.clone_url_normalized = %s
+                      AND ris.path = ANY(%s)
+                      AND ris.source_kind <> 'arazzo'
+                    """,
+                    (tenant_id, branch, normalized_repo, list(candidate_paths)),
+                )
+                by_path = {row["path"]: row for row in rows or []}
+                for path in candidate_paths:
+                    if path in by_path:
+                        row = by_path[path]
+                        return {"project_id": str(row["project_id"]), "version_id": None, "path": path}
+                return None
+            rows = self.execute_query(
+                """
+                SELECT s.project_id, s.last_version_id
+                FROM apiome.url_import_specs s
+                JOIN apiome.projects p ON p.id = s.project_id AND p.deleted_at IS NULL
+                WHERE s.tenant_id = %s::uuid AND s.url = %s AND s.source_kind <> 'arazzo'
+                ORDER BY s.updated_at DESC, s.id
+                LIMIT 1
+                """,
+                (tenant_id, url),
+            )
+        except Exception as exc:  # pragma: no cover - defensive; the tier is best-effort
+            _logger.warning("Arazzo source catalog lookup unavailable: %s", exc)
+            return None
+        if not rows:
+            return None
+        row = rows[0]
+        version_id = row.get("last_version_id")
+        return {
+            "project_id": str(row["project_id"]),
+            "version_id": str(version_id) if version_id is not None else None,
+            "path": None,
+        }
+
     def persist_arazzo_workflows(
         self,
         *,

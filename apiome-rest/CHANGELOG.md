@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.768.0] - 2026-11-19
+
+### Added
+- **Arazzo multi-file filesets — OpenAPI 1.599.0 (COA-1.2, #7038):** an Arazzo workflow imports
+  together with the OpenAPI/AsyncAPI files its `sourceDescriptions` name.
+  - Archive, bulk and repository intake: a workflow whose `sourceDescriptions[].url` values name
+    sibling members is ranked as the fileset root, and those members are its dependencies rather
+    than rival roots, so a zip of `flow.arazzo.yaml` and two OpenAPI files no longer fails as
+    "ambiguous". `.arazzo.yaml` / `.arazzo.yml` / `.arazzo.json` join
+    `archive_intake._ROOT_CANDIDATE_SUFFIXES`; the bulk/git reference scan
+    (`bulk_intake.member_references`, used by the BLK-1.5 ticked-files closure) follows the
+    workflow's source URLs.
+  - New `app.arazzo_source_resolution`: each source is resolved from the **fileset**, then the
+    tenant's **catalog** (`Database.find_arazzo_source_in_catalog`: the spec imported from the same
+    repository and branch at that path, or from exactly that URL), then **remote** through the new
+    SSRF-guarded `remote_ref_resolver.fetch_remote_documents` (same guard, budgets and cache as
+    remote `$ref`s; only under `options.resolve_remote_refs` and `remote_ref_resolution_allowed`).
+    Fetched documents join `resolvedSources`, so the lint pack checks steps against them.
+  - The import report: the job summary carries an `arazzo_sources` block (`resolved`,
+    `unresolved`, `by_tier`, `sources[]`, `unresolved_sources[]` with stable reason codes
+    `not-in-fileset`, `relative-without-fileset`, `unparseable-member`,
+    `invalid-source-description`, or a remote-fetch reason such as `resolution-disabled` /
+    `blocked-by-ssrf-guard` / `fetch-failed`), plus `ARAZZO_SOURCES_RESOLVED` /
+    `ARAZZO_SOURCES_UNRESOLVED` events; the stored revision records the same block on
+    `format_metadata.arazzoSources`.
+
+### Changed
+- `SpecImportOptions.resolve_remote_refs` documents that it also governs Arazzo remote sources.
+
 ## [1.767.0] - 2026-11-19
 
 ### Added

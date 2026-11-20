@@ -813,3 +813,31 @@ def test_records_the_refresh_source_descriptor(monkeypatch) -> None:
     assert (meta["inputKind"], meta["refreshTrigger"], meta["refreshAdapter"]) == ("discovery", "sweep", "graphql")
     assert meta["sourceLabel"] == "https://api.example.com/graphql"
     assert (meta["sourceContent"], meta["fingerprint"]) == ("x", "sha256:f")
+
+
+def test_records_the_arazzo_source_report_on_the_revision(monkeypatch) -> None:
+    """COA-1.2: unresolved Arazzo sources are stored with the item, not only in the job summary."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    report = {
+        "resolved": 1,
+        "unresolved": 1,
+        "unresolved_sources": [{"name": "billing", "url": "./billing.yaml", "reason": "not-in-fileset"}],
+    }
+    persist_adapter_import(
+        _payload(),
+        _model(),
+        _text_intake('syntax = "proto3";'),
+        _catalog_routing(),
+        arazzo_sources_report=report,
+    )
+
+    assert fake.source_format_call["format_metadata"]["arazzoSources"] == report
+
+
+def test_records_no_arazzo_source_report_when_there_is_none(monkeypatch) -> None:
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
+
+    assert "arazzoSources" not in fake.source_format_call["format_metadata"]

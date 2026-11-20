@@ -6,7 +6,8 @@ behind the multi-format SPI. It wraps the shared pipeline rather than reimplemen
 * **parse** reuses :func:`app.import_ingestion.parse_document` (JSON or YAML);
 * **parse_fileset** resolves a workflow's relative ``sourceDescriptions[].url`` values
   against its sibling members, so a workflow shipped next to the API documents it calls
-  imports as one set (FMT-3.1);
+  imports as one set (FMT-3.1); the pipeline then tries the catalog and remote tiers for
+  the rest (COA-1.2, :mod:`app.arazzo_source_resolution`);
 * **normalize** delegates to :class:`app.arazzo_normalizer.ArazzoNormalizer`;
 * **lint** delegates to the Arazzo lint pack (:func:`app.arazzo_lint.lint_arazzo_result`);
 * **fingerprint** / **diff** use the canonical-model defaults from :mod:`app.import_source`.
@@ -31,11 +32,11 @@ problem. The supported range (1.0.x and 1.1.x, see :mod:`app.arazzo_spec`) is en
 
 from __future__ import annotations
 
-from posixpath import dirname, normpath
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from . import arazzo_normalizer  # noqa: F401
 from .arazzo_lint import lint_arazzo_result
+from .arazzo_source_resolution import resolve_fileset_sources
 from .arazzo_spec import (
     ArazzoSemanticError,
     ArazzoVersionError,
@@ -57,9 +58,6 @@ from .import_source import (
 )
 
 __all__ = ["ArazzoImportSource", "SourcedArazzoDocument"]
-
-#: Fileset members that are documents the workflow's sources could resolve to.
-_DOCUMENT_SUFFIXES = (".yaml", ".yml", ".json")
 
 #: The YAML scanner phrase that means the document ends *inside a token* — a quoted
 #: scalar cut off mid-write, which is what a truncated upload looks like. Deliberately
@@ -108,9 +106,16 @@ class SourcedArazzoDocument(dict):
         resolved_sources: One entry per ``sourceDescriptions`` entry whose ``url``
             pointed at a member of the same set, each carrying the member ``path`` and
             its parsed ``content`` (read with ``getattr(doc, "resolved_sources", None)``).
+            The pipeline appends the documents the remote tier fetched (COA-1.2).
+        pending_sources: One entry per source the set did not hold — ``name``, ``url``,
+            ``type`` and the fileset ``reason`` — for the pipeline's catalog and remote
+            tiers (:func:`app.arazzo_source_resolution.resolve_remaining_sources`).
+        root_path: The workflow's member path inside the set.
     """
 
     resolved_sources: List[Dict[str, Any]]
+    pending_sources: List[Dict[str, Any]]
+    root_path: str = ""
 
 
 class ArazzoImportSource(ImportSource, register=True):
@@ -171,7 +176,9 @@ class ArazzoImportSource(ImportSource, register=True):
 
         Members that are neither the root nor parseable JSON/YAML are ignored rather than
         rejected: a set may legitimately carry a README or a licence file alongside the
-        documents, and the workflow is what defines the import.
+        documents, and the workflow is what defines the import. A source the set does not
+        hold is recorded in ``pending_sources`` with its reason, so the pipeline can try the
+        catalog and remote tiers and report what is still unresolved (COA-1.2).
 
         Args:
             fileset: The root document plus its sibling members.
@@ -188,12 +195,14 @@ class ArazzoImportSource(ImportSource, register=True):
                 :func:`_ingestion_error`).
         """
         documents: Dict[str, Any] = {}
+        unparseable: List[str] = []
         for path in sorted(fileset.members):
             try:
                 documents[path] = parse_document(fileset.members[path], source_label=path)
             except IngestionError as exc:
                 if path == fileset.root:
                     raise _ingestion_error(exc, fileset.members[path]) from exc
+                unparseable.append(path)
                 continue
 
         roots = [
@@ -217,9 +226,10 @@ class ArazzoImportSource(ImportSource, register=True):
 
         root_path = roots[0]
         resolved = SourcedArazzoDocument(documents[root_path])
-        resolved.resolved_sources = _resolve_source_members(
-            documents[root_path], root_path, documents
+        resolved.resolved_sources, resolved.pending_sources = resolve_fileset_sources(
+            documents[root_path], root_path, documents, unparseable=unparseable
         )
+        resolved.root_path = root_path
         return resolved
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
@@ -270,69 +280,3 @@ class ArazzoImportSource(ImportSource, register=True):
     def lint(self, model: CanonicalApi) -> LintReport:
         """Lint via the Arazzo rule pack registered for ``arazzo`` artifacts."""
         return LintReport.from_lint_result(lint_arazzo_result(model))
-
-
-def _member_candidates(url: str, root_path: str) -> Tuple[str, ...]:
-    """Fileset member paths a ``sourceDescriptions[].url`` could name.
-
-    Args:
-        url: The declared source URL.
-        root_path: The workflow member's own path inside the set.
-
-    Returns:
-        Candidate member paths, most specific first: the URL resolved relative to the
-        workflow's own directory, then relative to the set root. Absolute URLs (with a
-        scheme) yield nothing — they name something outside the set.
-    """
-    candidate = url.strip()
-    if not candidate or "://" in candidate or candidate.startswith("#"):
-        return ()
-    candidate = candidate.split("#", 1)[0].lstrip("/")
-    if not candidate:
-        return ()
-    directory = dirname(root_path)
-    resolved = normpath(f"{directory}/{candidate}") if directory else normpath(candidate)
-    return tuple(dict.fromkeys((resolved, normpath(candidate))))
-
-
-def _resolve_source_members(
-    document: Dict[str, Any], root_path: str, documents: Dict[str, Any]
-) -> List[Dict[str, Any]]:
-    """Match each relative ``sourceDescriptions[].url`` to a parsed fileset member.
-
-    Args:
-        document: The parsed Arazzo workflow document.
-        root_path: The workflow member's path inside the set.
-        documents: Every parseable member, keyed by path.
-
-    Returns:
-        One entry per resolved source, each with its ``name``, declared ``type``, the
-        member ``path`` it resolved to, and that member's parsed ``content``. Sources
-        that name a remote URL, or a path no member provides, are simply absent.
-    """
-    source_descriptions = document.get("sourceDescriptions")
-    if not isinstance(source_descriptions, list):
-        return []
-    resolved: List[Dict[str, Any]] = []
-    for entry in source_descriptions:
-        if not isinstance(entry, dict):
-            continue
-        name = entry.get("name")
-        url = entry.get("url")
-        if not isinstance(name, str) or not name.strip() or not isinstance(url, str):
-            continue
-        for candidate in _member_candidates(url, root_path):
-            if candidate == root_path or candidate not in documents:
-                continue
-            if not candidate.lower().endswith(_DOCUMENT_SUFFIXES):
-                continue
-            record: Dict[str, Any] = {
-                "name": name,
-                "path": candidate,
-                "content": documents[candidate],
-            }
-            if isinstance(entry.get("type"), str):
-                record["type"] = entry["type"]
-            resolved.append(record)
-            break
-    return resolved
