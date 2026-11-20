@@ -1,0 +1,305 @@
+{
+  "component-parameter-changed": [
+    {
+      "pointer": "/unattributed/~1components~1parameters~1invoiceId",
+      "kind": "unattributed",
+      "rule_id": "arazzo.parameter-changed",
+      "severity": "dangerous",
+      "rationale": "parameter component 'invoiceId' changed"
+    }
+  ],
+  "depends-on-changed": [
+    {
+      "pointer": "/operation/adopt-pet#pay",
+      "kind": "modified",
+      "rule_id": "arazzo.depends-on-changed",
+      "severity": "dangerous",
+      "rationale": "step 'adopt-pet#pay' dependsOn changed"
+    }
+  ],
+  "docs-changed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.docs-changed",
+      "severity": "safe",
+      "rationale": "workflow 'adopt-pet' summary changed"
+    }
+  ],
+  "failure-actions-changed": [
+    {
+      "pointer": "/operation/adopt-pet#adopt",
+      "kind": "modified",
+      "rule_id": "arazzo.failure-actions-changed",
+      "severity": "dangerous",
+      "rationale": "onFailure action 'retry-adopt' changed"
+    }
+  ],
+  "input-added": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.input-added",
+      "severity": "safe",
+      "rationale": "optional input 'color' was added"
+    }
+  ],
+  "input-removed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.input-removed",
+      "severity": "dangerous",
+      "rationale": "input 'maxPrice' was removed"
+    }
+  ],
+  "input-required-added": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.input-required-added",
+      "severity": "breaking",
+      "rationale": "input 'maxPrice' is now required"
+    }
+  ],
+  "input-required-removed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.input-required-removed",
+      "severity": "safe",
+      "rationale": "input 'petType' is no longer required"
+    }
+  ],
+  "input-type-changed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.input-type-changed",
+      "severity": "breaking",
+      "rationale": "input 'maxPrice' changed type from 'number' to 'integer'"
+    }
+  ],
+  "inputs-changed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.inputs-changed",
+      "severity": "dangerous",
+      "rationale": "input 'petType' changed its schema"
+    }
+  ],
+  "output-added": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.output-added",
+      "severity": "safe",
+      "rationale": "output 'petId' was added"
+    }
+  ],
+  "output-changed": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.output-changed",
+      "severity": "dangerous",
+      "rationale": "output 'adoptionId' changed from '$steps.adopt.outputs.adoptionId' to '$steps.adopt.outputs.id'"
+    }
+  ],
+  "output-removed": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.output-removed",
+      "severity": "breaking",
+      "rationale": "output 'petId' was removed"
+    }
+  ],
+  "parameter-added": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.parameter-added",
+      "severity": "dangerous",
+      "rationale": "parameter 'query:sort' was added"
+    }
+  ],
+  "parameter-changed": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.parameter-changed",
+      "severity": "dangerous",
+      "rationale": "parameter 'query:limit' changed"
+    }
+  ],
+  "parameter-removed": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.parameter-removed",
+      "severity": "dangerous",
+      "rationale": "parameter 'query:limit' was removed"
+    }
+  ],
+  "position-changed": [
+    {
+      "pointer": "/service/a-first",
+      "kind": "added",
+      "rule_id": "added-entity",
+      "severity": "safe",
+      "rationale": "service 'a-first' was added; existing callers are unaffected"
+    },
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.position-changed",
+      "severity": "safe",
+      "rationale": "workflow 'adopt-pet' only moved position"
+    },
+    {
+      "pointer": "/service/check-order",
+      "kind": "modified",
+      "rule_id": "arazzo.position-changed",
+      "severity": "safe",
+      "rationale": "workflow 'check-order' only moved position"
+    },
+    {
+      "pointer": "/operation/a-first#ping",
+      "kind": "added",
+      "rule_id": "added-entity",
+      "severity": "safe",
+      "rationale": "operation 'a-first#ping' was added; existing callers are unaffected"
+    }
+  ],
+  "referenced-input-required-added": [
+    {
+      "pointer": "/unattributed/~1workflows~1check-order~1inputs~1properties~1invoiceId",
+      "kind": "unattributed",
+      "rule_id": "arazzo.input-required-added",
+      "severity": "breaking",
+      "rationale": "input 'invoiceId' is now required"
+    }
+  ],
+  "request-body-changed": [
+    {
+      "pointer": "/operation/adopt-pet#adopt",
+      "kind": "modified",
+      "rule_id": "arazzo.request-body-changed",
+      "severity": "dangerous",
+      "rationale": "step 'adopt-pet#adopt' requestBody changed"
+    }
+  ],
+  "source-added": [
+    {
+      "pointer": "/unattributed/~1sourceDescriptions~1shipping",
+      "kind": "unattributed",
+      "rule_id": "arazzo.source-added",
+      "severity": "safe",
+      "rationale": "source description 'shipping' was added"
+    }
+  ],
+  "source-changed": [
+    {
+      "pointer": "/unattributed/~1sourceDescriptions~1petstore",
+      "kind": "unattributed",
+      "rule_id": "arazzo.source-changed",
+      "severity": "dangerous",
+      "rationale": "source description 'petstore' changed url"
+    }
+  ],
+  "source-removed": [
+    {
+      "pointer": "/unattributed/~1sourceDescriptions~1billing",
+      "kind": "unattributed",
+      "rule_id": "arazzo.source-removed",
+      "severity": "breaking",
+      "rationale": "source description 'billing' was removed"
+    }
+  ],
+  "step-order-shifted": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.step-order-shifted",
+      "severity": "safe",
+      "rationale": "workflow 'adopt-pet' added or removed a step; the other steps keep their order"
+    },
+    {
+      "pointer": "/operation/adopt-pet#notify",
+      "kind": "added",
+      "rule_id": "added-entity",
+      "severity": "safe",
+      "rationale": "operation 'adopt-pet#notify' was added; existing callers are unaffected"
+    }
+  ],
+  "step-reorder": [
+    {
+      "pointer": "/service/adopt-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.step-reorder",
+      "severity": "dangerous",
+      "rationale": "workflow 'adopt-pet' step order changed; execution sequence may differ"
+    },
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.position-changed",
+      "severity": "safe",
+      "rationale": "step 'adopt-pet#find-pet' only moved position"
+    },
+    {
+      "pointer": "/operation/adopt-pet#pay",
+      "kind": "modified",
+      "rule_id": "arazzo.position-changed",
+      "severity": "safe",
+      "rationale": "step 'adopt-pet#pay' only moved position"
+    }
+  ],
+  "step-target-changed": [
+    {
+      "pointer": "/operation/adopt-pet#adopt",
+      "kind": "modified",
+      "rule_id": "arazzo.step-target-changed",
+      "severity": "breaking",
+      "rationale": "step 'adopt-pet#adopt' now calls {'operationId': 'petstore.reservePet'} instead of {'operationId': 'petstore.adoptPet'}"
+    }
+  ],
+  "success-actions-changed": [
+    {
+      "pointer": "/operation/adopt-pet#pay",
+      "kind": "modified",
+      "rule_id": "arazzo.success-actions-changed",
+      "severity": "dangerous",
+      "rationale": "onSuccess action 'done' changed"
+    }
+  ],
+  "success-criteria-added": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "arazzo.success-criteria-added",
+      "severity": "dangerous",
+      "rationale": "success criterion '$response.body#/0/id != null' was added"
+    }
+  ],
+  "success-criteria-removed": [
+    {
+      "pointer": "/operation/adopt-pet#adopt",
+      "kind": "modified",
+      "rule_id": "arazzo.success-criteria-removed",
+      "severity": "dangerous",
+      "rationale": "success criterion '$statusCode == 201' was removed"
+    }
+  ],
+  "unclassified-fail-safe": [
+    {
+      "pointer": "/operation/adopt-pet#find-pet",
+      "kind": "modified",
+      "rule_id": "ctg.unclassified",
+      "severity": "breaking",
+      "rationale": "step 'adopt-pet#find-pet' changed 'timeout': no Arazzo rule classifies this change, so it is graded breaking (fail-safe)"
+    }
+  ]
+}

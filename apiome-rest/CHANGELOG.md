@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.772.0] - 2026-11-19
+
+### Added
+- **Arazzo change reports and breaking-change depth — OpenAPI 1.603.0 (COA-1.6, #7042):** no
+  endpoint shape changes; Arazzo revisions are graded by workflow rules.
+  - `app.arazzo_change_rules`: 26 rules (`arazzo.*`) registered in the CTG classifier registry, for
+    workflow inputs (required added, type changed, removed, schema changed, added, made optional —
+    compared after following a `$ref` to `components.inputs`), workflow and step outputs,
+    parameters (workflow, step and `components.parameters`), success criteria, `onSuccess` /
+    `onFailure` / `successActions` / `failureActions`, a step's target, `dependsOn`, request body,
+    step order (a reorder is dangerous, a shift from an added or removed step is safe) and source
+    descriptions (removed is breaking). A change no rule claims is breaking under
+    `ctg.unclassified` (fail-safe).
+  - `ArazzoBreakingChangeClassifier` grades a modified workflow or step by those rules (the worst
+    rule wins; the rationale lists each one) and reports source-description, component and
+    referenced-input changes as unattributed findings.
+  - `BreakingChangeClassifier.grades_classified_diff`: Arazzo opts in, so
+    `POST /v1/diff/{tenant_slug}/classified` (`apiome diff`, the diff Action), the breaking publish
+    guardrail and catalog revision change reports grade Arazzo revisions with these rules instead
+    of their OpenAPI projection, with each change's `rationale`.
+
 ## [1.771.0] - 2026-11-19
 
 ### Added

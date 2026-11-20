@@ -52,7 +52,6 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-1.6 · [#7042](https://github.com/apiome/apiome/issues/7042) | Arazzo change reports and breaking-change depth | Classify changes to inputs, success criteria, parameters and sources — not only step removal and reorder | `enhancement`, `rest`, `diff`, `v2` | Y | N | M | apiome-rest |
 | COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli`, `v2` | N | N | L | apiome-rest, apiome-cli |
 
 **✅ COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs — Complete**
@@ -131,7 +130,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 - **Technical Stack:** apiome-rest, apiome-cli, apiome-docs
 - **Documentation:** `bring-in/import-a-spec.md`, new `reference/rest/arazzo.md`, CLI reference; screenshots: n/a (no UI change)
 
-**COA-1.6 · #7042 Arazzo change reports and breaking-change depth**
+**✅ COA-1.6 · #7042 Arazzo change reports and breaking-change depth — Complete**
+- **Shipped:** REST 1.772.0 / OpenAPI 1.603.0 (no endpoint shape change). New pure `app/arazzo_change_rules.py`: 26 `arazzo.*` rules registered in the CTG classifier registry (`change_taxonomy_rules`) — workflow inputs (required added, type changed, removed, schema changed, added, made optional; compared after resolving `$ref` to `components.inputs`), workflow/step outputs, parameters (workflow, step, `components.parameters`), success criteria (multiset), `onSuccess`/`onFailure`/`successActions`/`failureActions`, step target, `dependsOn`, request body, step order (reorder dangerous, shift from an added/removed step safe; previously every insertion read as a reorder), position-only moves, source descriptions (removed breaking, changed dangerous, added safe) and docs-only edits. A kind no rule claims is breaking under `ctg.unclassified` (fail-safe). `ArazzoBreakingChangeClassifier` grades modified workflows/steps by the worst rule (rationale lists each) and reports source/component/referenced-input changes as unattributed findings. New `BreakingChangeClassifier.grades_classified_diff` (Arazzo opts in) puts Arazzo on the canonical path of `POST /v1/diff/{t}/classified` (`apiome diff`, diff Action), the publish guardrail and catalog revision change reports (`catalog_revision_change_report._classify`). 29 golden fixture pairs in `tests/fixtures/arazzo_breaking/` (+ `expected.json`, `APIOME_REGEN_ARAZZO_BREAKING=1`), `tests/test_arazzo_breaking_change.py`. Docs: `ship/api-changelog.mdx` (new **Arazzo workflow changes** rule table, test-checked); release note `arazzo-change-reports`.
 - **Problem:** `arazzo_breaking_change.py` (61 lines) recognises step removal as breaking and reorder as dangerous; nothing else is classified, so a changed input schema or removed `sourceDescription` is silent.
 - **Solution/Scope:**
 - Add rules to the CTG classifier registry for workflow input/output schema, parameter, success/failure criteria, `onSuccess`/`onFailure` and source description changes.

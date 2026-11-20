@@ -115,16 +115,17 @@ class GradedChange:
 
 
 def is_mode_graded_format(format_key: Optional[str]) -> bool:
-    """Whether ``format_key`` has a classifier that grades by mode or by Protobuf category.
+    """Whether ``format_key`` is graded canonically: by mode, by Protobuf category, or by opt-in.
 
     Args:
         format_key: A canonical format key (``avro``, ``protobuf``, ``asyncapi-3``, …) or ``None``.
 
     Returns:
-        ``True`` for the XPC-4.1–4.4 formats; ``False`` for everything else, including OpenAPI.
+        ``True`` for the XPC-4.1–4.4 formats and for a classifier that sets
+        ``grades_classified_diff`` (Arazzo, COA-1.6); ``False`` for everything else, including OpenAPI.
     """
     cls = get_breaking_change_classifier(str(format_key or ""))
-    return cls is not None and (_is_mode_aware(cls) or _is_category_aware(cls))
+    return cls is not None and (_is_mode_aware(cls) or _is_category_aware(cls) or cls.grades_classified_diff)
 
 
 def _is_mode_aware(cls: type[BreakingChangeClassifier]) -> bool:
