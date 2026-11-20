@@ -38,12 +38,26 @@ export interface ParsedClass {
   schema?: any; // Original schema structure (may include allOf/anyOf/oneOf)
 }
 
+/**
+ * A parsed Parameter Object. `contentMediaType` is set when the parameter declares `content`
+ * instead of `schema` (always so for an OpenAPI 3.2 `in: querystring` parameter, #7048); `schema` is
+ * then that media type's schema.
+ */
+export interface ParsedParameter {
+  name: string;
+  in: string;
+  required?: boolean;
+  description?: string;
+  schema?: Record<string, unknown>;
+  contentMediaType?: string;
+}
+
 /** Parsed OpenAPI path item: path pattern + operations (#425) */
 export interface ParsedPath {
   path: string;
   summary?: string;
   description?: string;
-  parameters?: Array<{ name: string; in: string; required?: boolean; description?: string; schema?: Record<string, unknown> }>;
+  parameters?: ParsedParameter[];
   operations: ParsedOperation[];
   /** Method tokens declared more than once on the path item; only the first was imported (OA4). */
   duplicateMethods?: string[];
@@ -76,7 +90,7 @@ export interface ParsedOperation {
   description?: string;
   tags?: string[];
   deprecated?: boolean;
-  parameters: Array<{ name: string; in: string; required?: boolean; description?: string; schema?: Record<string, unknown> }>;
+  parameters: ParsedParameter[];
   requestBody?: {
     required?: boolean;
     description?: string;
@@ -665,6 +679,33 @@ function normalizeContentSchema(mediaType: string, mediaObj: any): ParsedMediaTy
 }
 
 /**
+ * Read one Parameter Object.
+ *
+ * A parameter with `content` (one media type) and no `schema` keeps that media type and its
+ * schema, so an OpenAPI 3.2 `in: querystring` parameter round-trips (#7048).
+ *
+ * @param p - the Parameter Object.
+ * @returns the parsed parameter; `in` is lower-cased, defaulting to `query`.
+ */
+function parseParameterObject(p: any): ParsedParameter {
+  const parsed: ParsedParameter = {
+    name: p?.name || '',
+    in: (p?.in || 'query').toLowerCase(),
+    required: p?.required === true,
+    description: p?.description,
+    schema: p?.schema,
+  };
+  if (!p?.schema && p?.content && typeof p.content === 'object') {
+    const [mediaType, mediaObj] = Object.entries<any>(p.content)[0] ?? [];
+    if (mediaType) {
+      parsed.contentMediaType = mediaType;
+      if (mediaObj?.schema && typeof mediaObj.schema === 'object') parsed.schema = mediaObj.schema;
+    }
+  }
+  return parsed;
+}
+
+/**
  * Extract paths from OpenAPI spec.paths (OpenAPI 3.1 pathing - #425).
  * Exported for use by import-helper when importing OpenAPI via startImport.
  */
@@ -684,13 +725,7 @@ export function extractPaths(spec: any): ParsedPath[] {
     if (!pathItem || typeof pathItem !== 'object') continue;
 
     const pathParams = Array.isArray(pathItem.parameters)
-      ? pathItem.parameters.map((p: any) => ({
-          name: p.name || '',
-          in: (p.in || 'query').toLowerCase(),
-          required: p.required === true,
-          description: p.description,
-          schema: p.schema,
-        }))
+      ? pathItem.parameters.map(parseParameterObject)
       : [];
 
     const operations: ParsedOperation[] = [];
@@ -700,13 +735,7 @@ export function extractPaths(spec: any): ParsedPath[] {
     for (const { method, normalizedMethod, source, operation: op } of walk.operations) {
 
       const opParams = Array.isArray(op.parameters)
-        ? op.parameters.map((p: any) => ({
-            name: p.name || '',
-            in: (p.in || 'query').toLowerCase(),
-            required: p.required === true,
-            description: p.description,
-            schema: p.schema,
-          }))
+        ? op.parameters.map(parseParameterObject)
         : [];
 
       const allParams = [...pathParams];

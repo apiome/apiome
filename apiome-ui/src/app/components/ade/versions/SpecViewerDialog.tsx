@@ -35,6 +35,8 @@ import { isFeatureReleased } from '@lib/feature-release';
 import { VersionDialogHead } from './VersionDialogChrome';
 import { versionLabel, type Version } from './versionsModel';
 import { SPEC_FORMATS, renderSpec, specDownloadName, type SpecFormat } from './specRendering';
+import Openapi32ConstructsPanel from './Openapi32ConstructsPanel';
+import { specOpenapiVersion } from './openapi32Constructs';
 
 // The renderings moved to `specRendering.ts` so the review page's Spec tab (COL-2.2) shares them;
 // they stay exported from here for this module's existing importers.
@@ -95,6 +97,8 @@ export default function SpecViewerDialog({
 }: SpecViewerDialogProps) {
   const monaco = useHiveMonacoTheme();
   const fileName = specDownloadName(projectSlug, version?.version_id, format);
+  // The title names the version the document declares (3.2.0 by default, #7048), not a fixed one.
+  const openapiVersion = React.useMemo(() => (loading || error ? null : specOpenapiVersion(spec)), [spec, loading, error]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(renderSpec(spec, format));
@@ -120,7 +124,7 @@ export default function SpecViewerDialog({
         <VersionDialogHead
           icon={<FileJson2 />}
           tone="ok"
-          title="OpenAPI 3.1.0 specification"
+          title={openapiVersion ? `OpenAPI ${openapiVersion} specification` : 'OpenAPI specification'}
           description={
             version ? `${projectName ?? 'Project'} — ${versionLabel(version)}` : 'Specification'
           }
@@ -140,6 +144,8 @@ export default function SpecViewerDialog({
               </SegmentedItem>
             ))}
           </Segmented>
+
+          {!loading && !error ? <Openapi32ConstructsPanel spec={spec} /> : null}
 
           <div className="ver-spec__editor" data-testid="spec-viewer-editor">
             {loading ? (

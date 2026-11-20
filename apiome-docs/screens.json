@@ -342,6 +342,31 @@
       "data": "fixture:hive-versions/sunset.html"
     },
     {
+      "id": "openapi32-operations",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/spec-viewer-oas32.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/SpecViewerDialog.tsx",
+        "apiome-ui/src/app/components/ade/versions/Openapi32ConstructsPanel.tsx",
+        "apiome-ui/src/app/components/ade/versions/openapi32Constructs.ts",
+        "apiome-ui/tests/openapi32-constructs-panel.test.tsx"
+      ]
+    },
+    {
+      "id": "openapi32-tags",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/spec-viewer-oas32-tags.html",
+      "scrollTo": "[data-testid=\"oas32-tags\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/SpecViewerDialog.tsx",
+        "apiome-ui/src/app/components/ade/versions/Openapi32ConstructsPanel.tsx",
+        "apiome-ui/src/app/components/ade/versions/openapi32Constructs.ts",
+        "apiome-ui/tests/openapi32-constructs-panel.test.tsx"
+      ]
+    },
+    {
       "id": "version-compare-cards",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

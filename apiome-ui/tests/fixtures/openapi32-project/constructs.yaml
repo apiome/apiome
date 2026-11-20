@@ -1,0 +1,85 @@
+# OpenAPI 3.2.0 project with every construct COA-2.5 (#7048) authors and shows:
+# QUERY, a custom method (additionalOperations), a tag hierarchy, streaming media types
+# (itemSchema) on a response and a request body, and an `in: querystring` parameter.
+openapi: 3.2.0
+info:
+  title: Orders API
+  version: 1.0.0
+tags:
+  - name: orders
+    summary: Orders
+    description: Everything about orders
+    kind: nav
+  - name: order-search
+    summary: Search
+    parent: orders
+    kind: nav
+  - name: beta
+    kind: badge
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      parameters:
+        - name: filter
+          in: querystring
+          description: The whole query string, as one form-encoded object
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      responses:
+        "200":
+          description: Orders as JSON Lines
+          content:
+            application/jsonl:
+              itemSchema:
+                $ref: '#/components/schemas/Order'
+    query:
+      operationId: searchOrders
+      tags: [order-search, beta]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderQuery'
+      responses:
+        "200":
+          description: Matching orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+    additionalOperations:
+      REPORT:
+        operationId: reportOrders
+        tags: [orders]
+        requestBody:
+          content:
+            application/jsonl:
+              itemSchema:
+                $ref: '#/components/schemas/OrderQuery'
+        responses:
+          "200":
+            description: Events
+            content:
+              text/event-stream:
+                itemSchema:
+                  $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+    OrderQuery:
+      type: object
+      properties:
+        status:
+          type: string

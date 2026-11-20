@@ -98,6 +98,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['endpoint', 'route', 'get', 'post', 'parameter', 'response', 'request body'],
   },
   {
+    id: 'openapi-3-2-in-projects',
+    title: 'OpenAPI 3.2 in projects',
+    summary:
+      'QUERY and custom methods, the tag hierarchy, streaming media types and querystring parameters — how a project keeps, shows and writes them.',
+    page: 'apiome-docs/docs/build/openapi-3-2-in-projects.mdx',
+    section: 'reference',
+    keywords: ['additionalOperations', 'itemSchema', 'jsonl', 'server-sent events', 'parent', 'kind', 'view spec'],
+  },
+  {
     id: 'lint-and-quality',
     title: 'Lint & check quality',
     summary:

@@ -317,6 +317,14 @@ const VERSION_PRELUDES = [
   '.ver-spec__editor',
   '.ver-spec__loading',
   '.ver-spec__filename',
+  // The OpenAPI 3.2 constructs above the spec viewer's code (#7048).
+  '.ver-oas32',
+  '.ver-oas32__title',
+  '.ver-oas32__groups',
+  '.ver-oas32__group-title',
+  '.ver-oas32__list',
+  '.ver-oas32__item',
+  '.ver-oas32__meta',
 ] as const;
 
 /**

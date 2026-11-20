@@ -36,6 +36,11 @@ All path routes are scoped by tenant **and** version id.
 Operations, parameters, request bodies, and responses hang off a path under
 `/v1/paths/{tenant_slug}/{version_id}/{path_id}/…` (e.g. `…/operations`).
 
+An operation's method can be a fixed verb (`GET` … `TRACE`), `QUERY` or a custom method token
+such as `REPORT`. A parameter's `in_location` can be `querystring`, and a content type can be the
+`itemSchema` of a stream (`item_schema: true`). These are OpenAPI 3.2 constructs. How each is
+written to 3.2 and 3.1 documents is on [OpenAPI 3.2 in projects](./openapi-3-2-in-projects.mdx).
+
 ```http
 PUT /v1/paths/{tenant_slug}/{version_id}/{path_id}
 X-API-Key: <your-api-key>
@@ -119,5 +124,6 @@ the operations shown. `--json` prints the API's full path object
 
 ## Related
 
+- [OpenAPI 3.2 in projects](./openapi-3-2-in-projects.mdx) — QUERY and custom methods, the tag hierarchy, streams and `querystring`
 - [Cut a version](../ship/cut-a-version.md) — paths are authored on the revision you cut
 - [Lint and check quality](./lint-and-quality.md) — undocumented operations show up as findings

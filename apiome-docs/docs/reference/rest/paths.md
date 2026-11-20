@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.604.4**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.605.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `paths` · 33 operations
 
@@ -1121,6 +1121,7 @@ Request model for adding a content type to a request body.
 | `inline_schema` | object or null | no | Inline Schema. |
 | `encoding` | object or null | no | Encoding. |
 | `examples` | array of object or null | no | Examples. |
+| `item_schema` | boolean | no | The schema describes each element of a stream (JSON Lines, JSON text sequence, Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048). |
 
 ### `ResponseContentTypeRequest` {#schema-responsecontenttyperequest}
 
@@ -1132,10 +1133,16 @@ Request model for adding a content type to a response.
 | `class_id` | string or null | no | Class identifier the resource is attached to. |
 | `inline_schema` | object or null | no | Inline Schema. |
 | `examples` | array of object or null | no | Examples. |
+| `item_schema` | boolean | no | The schema describes each element of a stream (JSON Lines, JSON text sequence, Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048). |
 
 ### `SharedParameterCreateRequest` {#schema-sharedparametercreaterequest}
 
 Request model for creating a shared parameter.
+
+``in_location`` is ``path``, ``query``, ``header``, ``cookie`` or ``querystring`` (#7048). A
+``querystring`` parameter is written with ``content`` — the media type in
+``data.contentMediaType`` (default ``application/x-www-form-urlencoded``) and the rest of
+``data`` as its schema — and only to OpenAPI 3.2 documents.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |

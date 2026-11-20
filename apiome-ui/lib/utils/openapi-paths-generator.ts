@@ -1,9 +1,14 @@
 /**
  * OpenAPI Paths Generator
  *
- * Generates OpenAPI 3.1.0 paths section from database records.
+ * Generates the OpenAPI paths section from database records.
  * Handles request bodies with both class references and inline schemas,
  * parameters, and responses.
+ *
+ * The target version (`PathsGeneratorOptions.openapiVersion`) decides how the OpenAPI 3.2
+ * constructs are written (COA-2.5, #7048; see ./openapi-32-authoring.ts): native `query` /
+ * `additionalOperations`, `itemSchema` and `in: querystring` for 3.2; the `x-apiome-*` stashes
+ * (and no `querystring` parameter) for anything older. With no version the generator writes 3.1.
  */
 
 import {
@@ -16,6 +21,12 @@ import {
   buildRequestBodyForOpenAPI,
   type InlineSchema,
 } from './inline-schema-utils';
+import {
+  DEFAULT_QUERYSTRING_MEDIA_TYPE,
+  QUERYSTRING_LOCATION,
+  applyItemSchemaKeys,
+  isOpenApi32,
+} from './openapi-32-authoring';
 
 // =============================================================================
 // TYPES
@@ -44,10 +55,13 @@ export interface PathOperationDescription {
   securityDescription?: string;
 }
 
+/** Where a parameter is sent; `querystring` (the whole query string) is OpenAPI 3.2 only. */
+export type PathParameterLocation = 'path' | 'query' | 'header' | 'cookie' | 'querystring';
+
 export interface PathParameter {
   id: string;
   name: string;
-  in_location: 'path' | 'query' | 'header' | 'cookie';
+  in_location: PathParameterLocation;
   summary?: string;
   description?: string;
   data: Record<string, unknown>;
@@ -61,6 +75,8 @@ export interface ContentTypeInfo {
   inline_schema?: InlineSchema | null;
   encoding?: Record<string, unknown> | null;
   examples?: unknown[] | null;
+  /** True when the schema is the OpenAPI 3.2 `itemSchema` of a stream (#7048). */
+  item_schema?: boolean | null;
 }
 
 export interface RequestBodyInfo {
@@ -105,6 +121,12 @@ export interface PathsGeneratorOptions {
   includeExamples?: boolean;
   includeDescriptions?: boolean;
   baseUrl?: string;
+  /**
+   * Target OpenAPI version (`3.2.0`, `3.1.0`). 3.2 writes `query` / `additionalOperations`,
+   * `itemSchema` and `querystring` parameters natively; anything else (and the default) writes
+   * 3.1 (#7048).
+   */
+  openapiVersion?: string;
 }
 
 // =============================================================================
@@ -116,6 +138,10 @@ export interface PathsGeneratorOptions {
  */
 export function buildParameterForOpenAPI(param: PathParameter): Record<string, unknown> {
   const data = param.data || {};
+
+  if (param.in_location === QUERYSTRING_LOCATION) {
+    return buildQuerystringParameter(param);
+  }
 
   const result: Record<string, unknown> = {
     name: param.name,
@@ -224,6 +250,60 @@ export function buildParameterForOpenAPI(param: PathParameter): Record<string, u
   return result;
 }
 
+/** Keys of a querystring parameter's `data` that are not part of its schema. */
+const QUERYSTRING_NON_SCHEMA_KEYS = [
+  'required',
+  'deprecated',
+  'contentMediaType',
+  'schemaMode',
+  'inlineSchema',
+  'example',
+  'examples',
+  'style',
+  'explode',
+  'allowReserved',
+  'allowEmptyValue',
+  'id',
+  'parent_id',
+] as const;
+
+/**
+ * Build an OpenAPI 3.2 `in: querystring` Parameter Object.
+ *
+ * The whole query string is one value, so the parameter carries `content` (one media type, from
+ * `data.contentMediaType`, default `application/x-www-form-urlencoded`) instead of `schema`, and
+ * has no `style` / `explode` / `allowReserved`.
+ *
+ * @param param - the stored parameter (`in_location` is `querystring`).
+ * @returns the Parameter Object.
+ */
+function buildQuerystringParameter(param: PathParameter): Record<string, unknown> {
+  const data = param.data || {};
+  const result: Record<string, unknown> = { name: param.name, in: QUERYSTRING_LOCATION };
+  if (param.summary) result.summary = param.summary;
+  if (param.description) result.description = param.description;
+  if (data.required === true) result.required = true;
+  if (data.deprecated) result.deprecated = true;
+
+  let schema: Record<string, unknown>;
+  if (data.schemaMode === 'inline' && data.inlineSchema && typeof data.inlineSchema === 'object') {
+    schema = { ...(data.inlineSchema as Record<string, unknown>) };
+  } else {
+    const rest: Record<string, unknown> = { ...data };
+    for (const key of QUERYSTRING_NON_SCHEMA_KEYS) delete rest[key];
+    schema = Object.keys(rest).length > 0 ? rest : { type: 'object' };
+  }
+  const mediaType =
+    typeof data.contentMediaType === 'string' && data.contentMediaType.trim()
+      ? data.contentMediaType.trim()
+      : DEFAULT_QUERYSTRING_MEDIA_TYPE;
+  const mediaObject: Record<string, unknown> = { schema };
+  if (data.example !== undefined) mediaObject.example = data.example;
+  if (data.examples !== undefined) mediaObject.examples = data.examples;
+  result.content = { [mediaType]: mediaObject };
+  return result;
+}
+
 // =============================================================================
 // RESPONSE GENERATION
 // =============================================================================
@@ -312,7 +392,10 @@ function extractSchemaFromResponseData(data: Record<string, unknown>): Record<st
 /**
  * Build OpenAPI response object from database response record
  */
-export function buildResponseForOpenAPI(response: ResponseInfo): Record<string, unknown> {
+export function buildResponseForOpenAPI(
+  response: ResponseInfo,
+  options: PathsGeneratorOptions = {}
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   // Add description (required for OpenAPI)
@@ -360,7 +443,7 @@ export function buildResponseForOpenAPI(response: ResponseInfo): Record<string, 
     }
 
     if (Object.keys(content).length > 0) {
-      result.content = content;
+      result.content = applyItemSchemaKeys(content, response.content_types, isOpenApi32(options.openapiVersion));
     }
   }
 
@@ -457,14 +540,19 @@ export function buildOperationForOpenAPI(
     }
   }
 
-  // Add parameters
-  if (operation.parameters && operation.parameters.length > 0) {
-    result.parameters = operation.parameters.map(buildParameterForOpenAPI);
+  const is32 = isOpenApi32(options.openapiVersion);
+
+  // Add parameters (a 3.2 `querystring` parameter has no 3.1 form and is left out of older targets)
+  const parameters = (operation.parameters || []).filter(
+    (param) => is32 || param.in_location !== QUERYSTRING_LOCATION
+  );
+  if (parameters.length > 0) {
+    result.parameters = parameters.map(buildParameterForOpenAPI);
   }
 
-  // Add request body (for POST, PUT, PATCH)
-  if (operation.requestBody && ['POST', 'PUT', 'PATCH'].includes(operation.operation.toUpperCase())) {
-    result.requestBody = buildRequestBodyForOpenAPI({
+  // Add request body (POST, PUT, PATCH, and QUERY / custom methods, which may carry one)
+  if (operation.requestBody && methodTakesRequestBody(operation.operation)) {
+    const requestBody = buildRequestBodyForOpenAPI({
       description: operation.requestBody.description,
       required: operation.requestBody.required,
       content_types: operation.requestBody.content_types.map(ct => ({
@@ -476,13 +564,15 @@ export function buildOperationForOpenAPI(
         examples: (ct.examples as unknown[]) || undefined,
       })),
     });
+    applyItemSchemaKeys(requestBody.content as Record<string, unknown>, operation.requestBody.content_types, is32);
+    result.requestBody = requestBody;
   }
 
   // Add responses
   const responses: Record<string, unknown> = {};
   if (operation.responses && operation.responses.length > 0) {
     for (const response of operation.responses) {
-      responses[response.status_code] = buildResponseForOpenAPI(response);
+      responses[response.status_code] = buildResponseForOpenAPI(response, options);
     }
   } else {
     // Default response if none specified (OPTIONS: typical CORS preflight is 204 No Content)
@@ -499,6 +589,21 @@ export function buildOperationForOpenAPI(
   result.responses = responses;
 
   return result;
+}
+
+/**
+ * Whether a stored request body is written for an operation of this method.
+ *
+ * GET, HEAD, DELETE, OPTIONS and TRACE never carry one here (as before); POST, PUT, PATCH do, and so
+ * do QUERY (a safe method whose request body is the query) and any custom method (#7048).
+ *
+ * @param method - the stored method token.
+ * @returns true when the request body is written.
+ */
+export function methodTakesRequestBody(method: string): boolean {
+  const upper = method.trim().toUpperCase();
+  if (['POST', 'PUT', 'PATCH'].includes(upper)) return true;
+  return !(FIXED_HTTP_METHODS as readonly string[]).includes(upper.toLowerCase());
 }
 
 // =============================================================================
@@ -529,7 +634,12 @@ export function buildPathItemForOpenAPI(
     if ((FIXED_HTTP_METHODS as readonly string[]).includes(method)) {
       result[method] = built;
     } else {
-      addNonFixedOperation(result, operation.httpMethod ?? operation.operation, built);
+      addNonFixedOperation(
+        result,
+        operation.httpMethod ?? operation.operation,
+        built,
+        isOpenApi32(options.openapiVersion)
+      );
     }
   }
 
@@ -537,27 +647,35 @@ export function buildPathItemForOpenAPI(
 }
 
 /**
- * Place an operation whose method is outside the OpenAPI 3.1 fixed verbs (an imported
- * OpenAPI 3.2 `QUERY` or `additionalOperations` method, OA4 #3501) on a 3.1 path item.
+ * Place an operation whose method is outside the fixed verbs (`QUERY` or a custom method such as
+ * `REPORT`) on a path item.
  *
- * A 3.1 Path Item allows only the fixed verbs and `x-` extensions, so the operation is
- * written to the same extensions the OA2 normalization layer reads back:
- * `x-apiome-query-operation` for QUERY, else `x-apiome-additional-operations[token]`.
- * The importer walks both, so the operation and its method token round-trip.
+ * OpenAPI 3.2 has fields for both: `query`, and the `additionalOperations` map keyed by the method
+ * token as sent on the wire (#7048). A 3.1 Path Item allows only the fixed verbs and `x-`
+ * extensions, so there the operation is written to the extensions the OA2 normalization layer
+ * reads back: `x-apiome-query-operation` for QUERY, else `x-apiome-additional-operations[token]`
+ * (OA4, #3501). The importer walks all four, so the operation and its token round-trip.
  *
  * @param pathItem - the path item being built (mutated).
  * @param token - the method token, as originally declared where known.
  * @param operation - the built Operation Object.
+ * @param is32 - whether the target is OpenAPI 3.2.
  */
-function addNonFixedOperation(pathItem: Record<string, unknown>, token: string, operation: Record<string, unknown>): void {
+function addNonFixedOperation(
+  pathItem: Record<string, unknown>,
+  token: string,
+  operation: Record<string, unknown>,
+  is32: boolean
+): void {
   if (token.toUpperCase() === 'QUERY') {
-    pathItem[STASHED_QUERY_OPERATION_EXTENSION] = operation;
+    pathItem[is32 ? 'query' : STASHED_QUERY_OPERATION_EXTENSION] = operation;
     return;
   }
-  const existing = pathItem[STASHED_ADDITIONAL_OPERATIONS_EXTENSION];
+  const mapKey = is32 ? 'additionalOperations' : STASHED_ADDITIONAL_OPERATIONS_EXTENSION;
+  const existing = pathItem[mapKey];
   const map = (existing && typeof existing === 'object' ? existing : {}) as Record<string, unknown>;
   map[token] = operation;
-  pathItem[STASHED_ADDITIONAL_OPERATIONS_EXTENSION] = map;
+  pathItem[mapKey] = map;
 }
 
 /**
@@ -685,6 +803,7 @@ export function transformContentType(ct: Record<string, unknown>): ContentTypeIn
     inline_schema: parseInlineSchema(ct.inline_schema),
     encoding: ct.encoding ? (typeof ct.encoding === 'string' ? JSON.parse(ct.encoding) : ct.encoding) as Record<string, unknown> : null,
     examples: ct.examples ? (typeof ct.examples === 'string' ? JSON.parse(ct.examples) : ct.examples) as unknown[] : null,
+    item_schema: ct.item_schema === true,
   };
 }
 
@@ -731,7 +850,7 @@ export function transformParameter(param: Record<string, unknown>): PathParamete
   return {
     id: param.id as string,
     name: param.name as string,
-    in_location: param.in_location as 'path' | 'query' | 'header' | 'cookie',
+    in_location: param.in_location as PathParameterLocation,
     summary: param.summary as string | undefined,
     description: param.description as string | undefined,
     data: param.data ? (typeof param.data === 'string' ? JSON.parse(param.data) : param.data) as Record<string, unknown> : {},

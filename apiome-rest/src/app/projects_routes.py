@@ -27,6 +27,16 @@ from .models import (
     ProjectViewRecord,
     RecentlyViewedProject,
     RecentlyViewedProjectsResponse,
+    OpenApiTagObject,
+    ProjectOpenApiTagsOut,
+    ProjectOpenApiTagsUpdateRequest,
+)
+from .openapi_project_tags import (
+    TAG_TAXONOMY_METADATA_KEY,
+    normalize_tag,
+    read_stored_tags,
+    stored_taxonomy,
+    validate_tags,
 )
 from .auth import validate_authentication, get_authenticated_user_id
 from .permissions import enforce_permission, Resource, Action
@@ -956,3 +966,100 @@ async def restore_project(
             detail="Project was restored but could not be reloaded",
         )
     return ProjectSchema(**project)
+
+
+def _project_metadata_dict(project: Dict[str, Any]) -> Dict[str, Any]:
+    """A project row's ``metadata`` as a dict (it may arrive as JSON text)."""
+    raw = project.get("metadata")
+    if isinstance(raw, str):
+        import json
+
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            raw = None
+    return dict(raw) if isinstance(raw, dict) else {}
+
+
+def _tags_out(project_id: str, tags: List[Dict[str, Any]]) -> ProjectOpenApiTagsOut:
+    """The tag-list response for stored (normalized) tags."""
+    return ProjectOpenApiTagsOut(
+        project_id=str(project_id),
+        tags=[OpenApiTagObject.model_validate(tag) for tag in tags],
+    )
+
+
+@router.get("/{tenant_slug}/{project_id}/openapi-tags", response_model=ProjectOpenApiTagsOut)
+async def get_project_openapi_tags(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ProjectOpenApiTagsOut:
+    """List the project's OpenAPI tags, with the OpenAPI 3.2 ``summary`` / ``parent`` / ``kind``.
+
+    The list an OpenAPI import kept (project metadata ``x-apiome-tag-taxonomy``), in document
+    order; the generated document's top-level ``tags`` are written from it (#7048).
+
+    Raises:
+        HTTPException: 404 when the project is not in the tenant.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    project = db.get_project_by_id(project_id, auth_data["tenant_id"])
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    return _tags_out(project_id, read_stored_tags(_project_metadata_dict(project)))
+
+
+@router.put("/{tenant_slug}/{project_id}/openapi-tags", response_model=ProjectOpenApiTagsOut)
+async def replace_project_openapi_tags(
+    tenant_slug: str,
+    project_id: str,
+    request: ProjectOpenApiTagsUpdateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ProjectOpenApiTagsOut:
+    """Replace the project's OpenAPI tag list (the tag hierarchy editor's save, #7048).
+
+    The list replaces the stored one; an empty list clears it. Every other metadata key is kept.
+
+    Raises:
+        HTTPException: 404 when the project is not in the tenant; 422 ``invalid_tags`` listing each
+            problem (a repeated name, a ``parent`` that is the tag itself, names no listed tag or
+            closes a cycle); 409 ``update_conflict`` when the project changed while saving.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    project = db.get_project_by_id(project_id, auth_data["tenant_id"])
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    tags = [normalize_tag(tag.model_dump(by_alias=True, exclude_none=True)) for tag in request.tags]
+    errors = validate_tags(tags)
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid_tags", "message": "The tag list is not valid.", "errors": errors},
+        )
+
+    metadata = _project_metadata_dict(project)
+    if tags:
+        metadata[TAG_TAXONOMY_METADATA_KEY] = stored_taxonomy(tags)
+    else:
+        metadata.pop(TAG_TAXONOMY_METADATA_KEY, None)
+
+    try:
+        updated = db.update_project(
+            project_id,
+            auth_data["tenant_id"],
+            {"metadata": metadata},
+            expected_updated_at=project.get("updated_at"),
+        )
+    except ProjectUpdateConflict:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "update_conflict",
+                "message": "The project changed while the tags were saved; re-read them and retry.",
+            },
+        )
+    if not updated:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    return _tags_out(project_id, read_stored_tags(_project_metadata_dict(updated)))

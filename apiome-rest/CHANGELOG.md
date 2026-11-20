@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.778.0] - 2026-11-20
+
+### Added
+- **OpenAPI 3.2 in Projects — OpenAPI 1.605.0 (COA-2.5, #7048):** a project's paths could
+  carry the `QUERY` method and custom methods, but the authoring API, the generated document and
+  the viewers had no way to hold or show the tag hierarchy, streaming media types or
+  `in: querystring` parameters.
+  - `GET` / `PUT /v1/projects/{tenant_slug}/{project_id}/openapi-tags` read and replace the
+    project's OpenAPI tag list (`name`, `summary`, `description`, `parent`, `kind`,
+    `externalDocs`), kept on project metadata under `x-apiome-tag-taxonomy` (the list an OpenAPI
+    import already fills). `PUT` refuses a repeated name, a `parent` that is the tag itself or is
+    not listed, and a `parent` cycle (422 `invalid_tags`, one message each), and a concurrent
+    project change (409 `update_conflict`). New `app.openapi_project_tags`.
+  - Request- and response-body content types take `item_schema` (default `false`): the stored
+    class or inline schema is then the OpenAPI 3.2 `itemSchema` of a stream. New column
+    `item_schema` on `shared_path_request_body_content` / `shared_path_response_content` (V397),
+    copied with a version's paths.
+  - Shared parameters accept `in_location: "querystring"` (V397 widens the CHECK); its schema is
+    written under `content` (`data.contentMediaType`, default
+    `application/x-www-form-urlencoded`).
+  - `generate_openapi_spec(..., openapi_version="3.2.0")` writes `query` / `additionalOperations`,
+    `itemSchema`, `in: querystring` and the tags' `summary` / `parent` / `kind` natively. The
+    default 3.1 document stays valid 3.1: QUERY and custom methods move to the
+    `x-apiome-query-operation` / `x-apiome-additional-operations` stashes (they were written as
+    `query` / `report` keys before), element schemas to `x-apiome-item-schema`, and querystring
+    parameters and the 3.2 tag fields are left out. The tag list is written as `tags`; it is no
+    longer copied into `info` or `x-metadata`.
+
+### Changed
+- An operation's method must be an HTTP method token (RFC 9110 `tchar`s, at most 50
+  characters): `GET`, `QUERY`, `REPORT`. A blank method or one with spaces or `/` is now a 422.
+- A shared parameter's `in_location` must be `path`, `query`, `header`, `cookie` or
+  `querystring` (422 otherwise; it was a database error).
+- QUERY and custom-method operations keep their request body in the generated document, as
+  POST, PUT and PATCH do.
+
 ## [1.777.0] - 2026-11-20
 
 ### Added

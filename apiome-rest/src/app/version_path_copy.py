@@ -69,7 +69,7 @@ CHILD_TABLES: Tuple[ChildTable, ...] = (
     ChildTable(
         "shared_path_request_body_content", "shared_request_body_content",
         ("shared_path_request_body_id", "shared_request_body"),
-        ("media_type", "inline_schema", "encoding", "examples"),
+        ("media_type", "inline_schema", "encoding", "examples", "item_schema"),
         class_columns=("class_id",),
     ),
     ChildTable(
@@ -80,7 +80,7 @@ CHILD_TABLES: Tuple[ChildTable, ...] = (
     ChildTable(
         "shared_path_response_content", "shared_response_content",
         ("shared_path_response_id", "shared_response"),
-        ("media_type", "inline_schema", "examples"),
+        ("media_type", "inline_schema", "examples", "item_schema"),
         class_columns=("class_id",),
     ),
     ChildTable("path_operation", "operation", ("version_path_id", "path"), ("operation", "metadata")),

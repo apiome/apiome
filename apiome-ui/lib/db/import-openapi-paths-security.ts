@@ -5,7 +5,8 @@
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const connectionPool = require('./db');
-import type { ParsedPath, ParsedOperation, ParsedSecurityScheme } from '../../src/app/utils/openapi-import';
+import type { ParsedPath, ParsedOperation, ParsedParameter, ParsedSecurityScheme } from '../../src/app/utils/openapi-import';
+import type { PathParameterLocation } from '../utils/openapi-paths-generator';
 import { buildStoredInlineSchema } from '../utils/inline-schema-utils';
 
 function getRefSchemaName(ref: string | undefined): string | null {
@@ -29,6 +30,23 @@ export function buildPathOperationMetadata(
   if (op.httpMethod) metadata.httpMethod = op.httpMethod;
   if (op.methodSource) metadata.methodSource = op.methodSource;
   return Object.keys(metadata).length > 0 ? metadata : null;
+}
+
+/**
+ * Build the `shared_path_parameter.data` for an imported parameter.
+ *
+ * @param p - the parsed parameter.
+ * @returns its schema (default `{ type: 'string' }`), with `required: true` when required and the
+ *   `content` media type (`contentMediaType`) of a parameter declared with `content`, such as an
+ *   OpenAPI 3.2 `in: querystring` parameter (#7048).
+ */
+export function buildParameterData(
+  p: Pick<ParsedParameter, 'schema' | 'required' | 'contentMediaType'>
+): Record<string, unknown> {
+  const base: Record<string, unknown> = p.schema && typeof p.schema === 'object' ? { ...p.schema } : { type: 'string' };
+  if (p.required === true) base.required = true;
+  if (p.contentMediaType) base.contentMediaType = p.contentMediaType;
+  return base;
 }
 
 /**
@@ -103,14 +121,10 @@ export async function importOpenAPIPathsAndSecurity(
       const versionPathId = pathRes.rows[0].id;
 
       const paramIdsByKey = new Map<string, string>();
-      const buildParamData = (p: { schema?: Record<string, unknown>; required?: boolean }) => {
-        const base = p.schema && typeof p.schema === 'object' ? { ...p.schema } : { type: 'string' };
-        if (p.required === true) (base as Record<string, unknown>).required = true;
-        return base;
-      };
+      const buildParamData = buildParameterData;
       if (pathItem.parameters?.length) {
         for (const p of pathItem.parameters) {
-          const inLoc = (p.in || 'query') as 'path' | 'query' | 'header' | 'cookie';
+          const inLoc = (p.in || 'query') as PathParameterLocation;
           const key = `${p.name}:${inLoc}`;
           const data = buildParamData(p);
           const pr = await client.query(
@@ -152,7 +166,7 @@ export async function importOpenAPIPathsAndSecurity(
 
         const allParams = op.parameters || [];
         for (const p of allParams) {
-          const inLoc = (p.in || 'query') as 'path' | 'query' | 'header' | 'cookie';
+          const inLoc = (p.in || 'query') as PathParameterLocation;
           const key = `${p.name}:${inLoc}`;
           let paramId = paramIdsByKey.get(key);
           if (!paramId) {
@@ -201,13 +215,14 @@ export async function importOpenAPIPathsAndSecurity(
             if (classId || inlineSchema) {
               await client.query(
                 `INSERT INTO apiome.shared_path_request_body_content 
-                 (shared_path_request_body_id, media_type, class_id, inline_schema)
-                 VALUES ($1, $2, $3, $4)`,
+                 (shared_path_request_body_id, media_type, class_id, inline_schema, item_schema)
+                 VALUES ($1, $2, $3, $4, $5)`,
                 [
                   requestBodyId,
                   mediaType,
                   classId,
                   inlineSchema ? JSON.stringify(inlineSchema) : null,
+                  Boolean(content.streamKind),
                 ]
               );
             }
@@ -277,13 +292,14 @@ export async function importOpenAPIPathsAndSecurity(
               );
               if (existingContent.rows.length === 0) {
                 await client.query(
-                  `INSERT INTO apiome.shared_path_response_content (shared_path_response_id, media_type, class_id, inline_schema)
-                   VALUES ($1, $2, $3, $4)`,
+                  `INSERT INTO apiome.shared_path_response_content (shared_path_response_id, media_type, class_id, inline_schema, item_schema)
+                   VALUES ($1, $2, $3, $4, $5)`,
                   [
                     responseId,
                     mediaType,
                     ctClassId,
                     ctClassId ? null : JSON.stringify(ctInlineSchema),
+                    Boolean(mediaObj?.streamKind),
                   ]
                 );
               }

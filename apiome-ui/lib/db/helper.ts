@@ -3,6 +3,7 @@ import { validatePassword } from '@lib/auth/password-policy';
 import { generateOpenApiSpec } from '@/app/utils/openapi';
 import { STUDIO_EXPORT_OPENAPI_VERSION } from '@/app/utils/openapi-versions';
 import { generatePathsForOpenAPI, type PathInfo } from '../utils/openapi-paths-generator';
+import { buildDocumentTags, isOpenApi32, metadataWithoutTags, readStoredTags } from '../utils/openapi-32-authoring';
 import { loadPathsForOpenAPIExport } from './helper-paths-export';
 import {
   getSecuritySchemesForVersion,
@@ -6249,11 +6250,16 @@ export type BuildOpenApiSpecForVersionOptions = {
    * version's default canvas layout for the session user.
    */
   includeCanvasAnnotations?: boolean;
+  /**
+   * The project's metadata: `info` fields, plus the tag list kept under `x-apiome-tag-taxonomy`,
+   * which is written as the document's `tags` (with `summary` / `parent` / `kind` for 3.2, #7048).
+   */
   metadata?: {
     summary?: string;
     termsOfService?: string;
     contact?: { name?: string; url?: string; email?: string };
     license?: { name?: string; identifier?: string; url?: string };
+    [key: string]: unknown;
   };
 };
 
@@ -6271,6 +6277,8 @@ export async function buildOpenApiSpecForVersion(
 ): Promise<BuildOpenApiSpecForVersionResult> {
   const classesRaw = await getClassesWithPropertiesAndTags(versionId);
   const classesWithProperties = JSON.parse(classesRaw);
+  const openapiVersion = options.openapiVersion ?? STUDIO_EXPORT_OPENAPI_VERSION;
+  const is32 = isOpenApi32(openapiVersion);
 
   let pathsObject: Record<string, unknown> = {};
   try {
@@ -6281,7 +6289,7 @@ export async function buildOpenApiSpecForVersion(
       error?: string;
     };
     if (pathsData.success && pathsData.paths && pathsData.paths.length > 0) {
-      pathsObject = generatePathsForOpenAPI(pathsData.paths) as Record<string, unknown>;
+      pathsObject = generatePathsForOpenAPI(pathsData.paths, { openapiVersion }) as Record<string, unknown>;
     } else if (pathsData.success) {
       console.warn('[buildOpenApiSpecForVersion] Paths loaded successfully but array is empty');
     } else {
@@ -6341,15 +6349,15 @@ export async function buildOpenApiSpecForVersion(
       projectName: options.projectName ?? undefined,
       version: options.versionLabel ?? '1.0.0',
       description: options.description ?? undefined,
-      openapiVersion: options.openapiVersion ?? STUDIO_EXPORT_OPENAPI_VERSION,
+      openapiVersion,
       servers: servers.length > 0 ? servers : undefined,
-      tags: [],
+      tags: buildDocumentTags(readStoredTags(options.metadata), is32),
       security: hasSecuritySchemes
         ? Object.keys(securitySchemes).map((name) => ({ [name]: [] }))
         : undefined,
       externalDocs: undefined,
       canvasAnnotations: canvasAnnotations as any,
-      metadata: options.metadata,
+      metadata: metadataWithoutTags(options.metadata),
     },
     pathsObject,
     hasSecuritySchemes ? securitySchemes : undefined

@@ -1,0 +1,29 @@
+---
+slug: openapi-32-in-projects
+title: "OpenAPI 3.2 in Projects: QUERY, custom methods, tags and streams"
+description: "Projects keep and show QUERY, custom methods, tag trees, streams and querystring parameters."
+authors: [apiome]
+---
+
+A project now keeps the OpenAPI 3.2 additions to its paths: QUERY and custom methods, a tag
+hierarchy, streaming media types and `in: querystring` parameters. **View spec** lists them.
+
+{/* truncate */}
+
+- **QUERY and custom methods:** an operation can be `QUERY` or any method token, such as
+  `REPORT`. The OpenAPI 3.2 document writes them as `query` and under `additionalOperations`, and
+  keeps their request bodies.
+- **Tag hierarchy:** a project's tags keep their `summary`, `parent` and `kind`. Read and replace
+  the list with `GET` / `PUT /v1/projects/{tenant}/{project}/openapi-tags`. A repeated name, an
+  unknown parent or a parent cycle is refused.
+- **Streaming media types:** a content type marked `item_schema` describes each element of a
+  stream (JSON Lines, JSON text sequences, Server-Sent Events). It is written as `itemSchema`.
+- **`in: querystring`:** a parameter can be the whole query string, written with `content`.
+- **Shown where you read the spec:** the spec viewer is titled with the version the document
+  declares. **OpenAPI 3.2.0 constructs** above the code lists each one, and version diffs show
+  them as lines of the 3.2 document.
+- **Nothing 3.2 in a 3.1 document:** a 3.1 target keeps QUERY and custom methods on
+  `x-apiome-*` extensions, which import back. It leaves out querystring parameters and the 3.2
+  tag fields.
+
+See [OpenAPI 3.2 in projects](/build/openapi-3-2-in-projects).
