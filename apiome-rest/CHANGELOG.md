@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.767.0] - 2026-11-19
+
+### Added
+- **Arazzo version option on the generated workflow endpoints — OpenAPI 1.598.0 (COA-1.1, #7037):**
+  `GET /v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}` and
+  `GET /v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}/{class_name}` take an optional
+  `arazzo_version` query parameter (any 1.0.x or 1.1.x version, for example `1.1.0`). The default
+  stays `1.0.1`; any other value answers `400` and names the supported versions.
+  - `app.arazzo_generator.generate_arazzo_spec` / `generate_class_arazzo_spec` take
+    `arazzo_version` and `source_descriptions` keyword arguments, and the new
+    `resolve_generator_arazzo_version` applies the export target's rule: an explicit version wins;
+    otherwise `1.1.0` when a source description is AsyncAPI and `1.0.1` when none is; a 1.0.x
+    request for an AsyncAPI-bearing document is rejected rather than downgraded.
+  - The generated `info.description` names the version actually written.
+
+### Changed
+- `docs/ARAZZO_ENDPOINTS.md`, `docs/ARAZZO_QUICK_REFERENCE.md`, `docs/JSON_SCHEMA_ENDPOINTS.md` and
+  the README describe Arazzo 1.0.x and 1.1.x instead of "Arazzo 1.0.1" only.
+
 ## [1.766.0] - 2026-11-18
 
 ### Removed

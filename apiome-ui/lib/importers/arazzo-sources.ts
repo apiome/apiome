@@ -24,8 +24,25 @@ import { listPathItemOperations } from '../../src/app/utils/openapi-path-operati
 /** Source types the Projects importer can resolve steps against. */
 export const RECOGNIZED_SOURCE_TYPES = ['openapi', 'arazzo'] as const;
 
+/**
+ * The AsyncAPI source type, valid from Arazzo 1.1 (#7037). It is registered and matched to its
+ * bundle document, but its steps are not resolved here — the server-side importer resolves them.
+ */
+export const ASYNCAPI_SOURCE_TYPE = 'asyncapi';
+
 /** A recognized source type. */
-export type ArazzoSourceType = (typeof RECOGNIZED_SOURCE_TYPES)[number];
+export type ArazzoSourceType = (typeof RECOGNIZED_SOURCE_TYPES)[number] | typeof ASYNCAPI_SOURCE_TYPE;
+
+/**
+ * Whether a document's `arazzo` marker is 1.1 or later, where `type: asyncapi` exists.
+ *
+ * @param version - the document's `arazzo` value.
+ * @returns true for `1.1.x` and later 1.x versions.
+ */
+export function arazzoAllowsAsyncSources(version: unknown): boolean {
+  const match = /^(\d+)\.(\d+)/.exec(String(version ?? '').trim());
+  return !!match && Number(match[1]) === 1 && Number(match[2]) >= 1;
+}
 
 /** Stable codes for {@link ArazzoResolutionIssue}. */
 export type ArazzoResolutionIssueCode =
@@ -67,7 +84,7 @@ export interface ArazzoSourceRecord {
   status: 'resolved' | 'not-in-bundle' | 'unsupported-type' | 'type-mismatch';
   /** The bundle member path it matched, when resolved. */
   path?: string;
-  /** The kind of the matched document (`openapi` / `arazzo`), when matched. */
+  /** The kind of the matched document (`openapi` / `arazzo` / `asyncapi`), when matched. */
   documentKind?: ArazzoSourceType;
 }
 
@@ -91,7 +108,8 @@ export interface ArazzoStepResolution {
   /**
    * - `resolved` — {@link operation} is set;
    * - `unresolved` — kept raw, with a `STEP_REFERENCE_UNRESOLVED` issue;
-   * - `not-applicable` — the step calls a workflow or names no target.
+   * - `not-applicable` — the step calls a workflow, names no target, or calls an AsyncAPI
+   *   source (resolved server-side, not here).
    */
   status: 'resolved' | 'unresolved' | 'not-applicable';
   /** The source the reference resolved in, or the one it named. */
@@ -172,6 +190,7 @@ function documentKind(doc: unknown): ArazzoSourceType | undefined {
   const d = doc as Record<string, unknown>;
   if (d.arazzo !== undefined) return 'arazzo';
   if (d.openapi !== undefined || d.swagger !== undefined) return 'openapi';
+  if (d.asyncapi !== undefined) return ASYNCAPI_SOURCE_TYPE;
   return undefined;
 }
 
@@ -230,7 +249,8 @@ export function resolveArazzoSources(input: ResolveArazzoSourcesInput): ArazzoRe
   const issues: ArazzoResolutionIssue[] = [];
   const indexes = new Map<string, OperationIndex>();
 
-  // 1. Register and validate each source.
+  // 1. Register and validate each source. `asyncapi` is a recognized type only from Arazzo 1.1.
+  const allowsAsync = arazzoAllowsAsyncSources(document?.arazzo);
   const declared = Array.isArray(document?.sourceDescriptions) ? document.sourceDescriptions : [];
   declared.forEach((entry: any, position: number) => {
     const name = text(entry?.name);
@@ -252,12 +272,15 @@ export function resolveArazzoSources(input: ResolveArazzoSourcesInput): ArazzoRe
     const record: ArazzoSourceRecord = { name, url, status: 'not-in-bundle', ...(type ? { type } : {}) };
     sources.push(record);
 
-    if (type && !(RECOGNIZED_SOURCE_TYPES as readonly string[]).includes(type)) {
+    const asyncType = type === ASYNCAPI_SOURCE_TYPE;
+    if (type && !(RECOGNIZED_SOURCE_TYPES as readonly string[]).includes(type) && !(asyncType && allowsAsync)) {
       record.status = 'unsupported-type';
       issues.push({
         code: 'SOURCE_TYPE_UNSUPPORTED',
         source: name,
-        message: `Source "${name}" has type "${type}"; only openapi and arazzo sources are resolved.`,
+        message: asyncType
+          ? `Source "${name}" has type "asyncapi", which needs Arazzo 1.1 or later; this document declares ${String(document?.arazzo)}.`
+          : `Source "${name}" has type "${type}"; only openapi and arazzo sources${allowsAsync ? ' (and asyncapi in Arazzo 1.1)' : ''} are resolved.`,
       });
       return;
     }
@@ -281,7 +304,7 @@ export function resolveArazzoSources(input: ResolveArazzoSourcesInput): ArazzoRe
       issues.push({
         code: 'SOURCE_TYPE_MISMATCH',
         source: name,
-        message: `Source "${name}" matched ${memberPath}, which is ${kind ? `an ${kind} document` : 'not an OpenAPI or Arazzo document'}${type ? `, not ${type}` : ''}.`,
+        message: `Source "${name}" matched ${memberPath}, which is ${kind ? `an ${kind} document` : 'not an OpenAPI, AsyncAPI or Arazzo document'}${type ? `, not ${type}` : ''}.`,
       });
       return;
     }
@@ -347,6 +370,16 @@ function resolveStep(step: any, ctx: StepContext): ArazzoStepResolution {
 /** Result fields of a step resolution. */
 type ResolutionFields = Pick<ArazzoStepResolution, 'status' | 'sourceName' | 'operation' | 'reason'>;
 
+/**
+ * Whether a declared source is an accepted AsyncAPI source (declared `type: asyncapi` in a 1.1
+ * document, or matched to an AsyncAPI document). A rejected 1.0 `asyncapi` source is not.
+ */
+function isAsyncSource(name: string, ctx: StepContext): boolean {
+  const source = ctx.sources.find((s) => s.name === name);
+  if (!source || source.status === 'unsupported-type') return false;
+  return source.type === ASYNCAPI_SOURCE_TYPE || source.documentKind === ASYNCAPI_SOURCE_TYPE;
+}
+
 /** Why a named source cannot be searched, or undefined when it can. */
 function sourceProblem(name: string, ctx: StepContext): string | undefined {
   const source = ctx.sources.find((s) => s.name === name);
@@ -377,6 +410,9 @@ function resolveOperationId(reference: string, ctx: StepContext): ResolutionFiel
   }
 
   if (sourceName) {
+    if (isAsyncSource(sourceName, ctx)) {
+      return { status: 'not-applicable', sourceName, reason: 'AsyncAPI operations are resolved by the server-side importer' };
+    }
     const problem = sourceProblem(sourceName, ctx);
     if (problem) return { status: 'unresolved', sourceName, reason: problem };
     const operation = ctx.indexes.get(sourceName)!.byId.get(id);

@@ -1,6 +1,6 @@
 /**
  * Arazzo document importer (#299).
- * Imports Arazzo 1.0.1 workflow documents by extracting classes from
+ * Imports Arazzo 1.0.x and 1.1.x workflow documents by extracting classes from
  * components.schemas (when present) or inferring schemas from workflow steps, and
  * resolves `sourceDescriptions` / step references against the import bundle (AZ2,
  * #3505; see ./arazzo-sources.ts).

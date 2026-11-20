@@ -4159,6 +4159,10 @@ The version must be published. An unknown or unpublished version, or a private o
 key, exits 2; set `APIOME_API_KEY` for private versions. No tenant configuration is needed — the
 tenant is in the argument.
 
+The generated Arazzo document declares `arazzo: 1.0.1`, because its only source description is the
+version's OpenAPI schema. To get Arazzo 1.1 instead, call the REST route with
+`?arazzo_version=1.1.0` (any 1.0.x or 1.1.x version is accepted; see the next section).
+
 ## With the REST API
 
 ```http
@@ -4171,7 +4175,7 @@ Other representations of the same version:
 | Format | Route |
 |---|---|
 | OpenAPI | `GET /v1/schema/{tenant}/{project}/{version}` |
-| Arazzo | `GET /v1/arazzo/{tenant}/{project}/{version}` (one class: append `/{class}`) |
+| Arazzo | `GET /v1/arazzo/{tenant}/{project}/{version}` (one class: append `/{class}`). Writes `arazzo: 1.0.1`; add `?arazzo_version=1.1.0` (or any 1.0.x / 1.1.x version) to choose. Any other version returns `400`. |
 | JSON Schema | `GET /v1/json/{tenant}/{project}/{version}` (one class: append `/{class}`) |
 
 For private versions, pass an in-scope API key via the `X-API-Key` header (or the `api_key` query

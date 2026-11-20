@@ -406,10 +406,15 @@ workflows:
         operationPath: '{$sourceDescriptions.petstore.url}#/paths/~1pets~1{petId}/get'
 ```
 
+The **Import** dialog reads Arazzo **1.0.x** and **1.1.x** documents. The analysis step names the
+version the document declares (for example **Arazzo 1.1.0**); any other version, such as
+`arazzo: 2.0.0`, shows as **unsupported version** and is not imported.
+
 When an Arazzo document goes through the Projects importer (an Arazzo file in the **Import**
 dialog, or an Arazzo file imported from a repository), the import checks every source and step:
 
-- **Each source is validated.** Its `type` must be `openapi` or `arazzo`. Its `url` must match a
+- **Each source is validated.** Its `type` must be `openapi` or `arazzo`, or `asyncapi` in a
+  document that declares Arazzo 1.1 or later. Its `url` must match a
   document supplied with the import, either relative to the workflow's folder or to the root of
   the set. Every source that fails one of these checks is reported with a code.
 - **Each step is resolved.** An `operationId` can be bare (`getPet`), name its source
@@ -420,6 +425,10 @@ dialog, or an Arazzo file imported from a repository), the import checks every s
 - **Nothing is dropped.** A step that does not resolve keeps its reference as written, and the
   import shows a warning with the reason. A step that calls another workflow (`workflowId`) is
   recorded and not resolved.
+- **AsyncAPI steps are left to the server.** In an Arazzo 1.1 document, a step that calls an
+  `asyncapi` source (for example `$sourceDescriptions.orderEvents.receivePaymentSettled`) is
+  recorded with its reference and no warning; the server-side Arazzo importer links it to the event
+  it waits for.
 
 The **Import** dialog and repository-file imports send only the workflow document today. Until
 they send the source documents too, every source is reported as **not in the import bundle**,
@@ -429,7 +438,7 @@ and steps keep their raw references with a warning.
 | --- | --- |
 | `SOURCE_INVALID` | A `sourceDescriptions` entry has no `name` or no `url`. |
 | `SOURCE_DUPLICATE` | Two entries share a name; the first is kept. |
-| `SOURCE_TYPE_UNSUPPORTED` | The `type` is not `openapi` or `arazzo`. |
+| `SOURCE_TYPE_UNSUPPORTED` | The `type` is not `openapi` or `arazzo` (or `asyncapi` in an Arazzo 1.1 document). An `asyncapi` source in a 1.0 document names the version it needs: change `arazzo:` to `1.1.0`. |
 | `SOURCE_NOT_IN_BUNDLE` | No document supplied with the import matches the `url`. |
 | `SOURCE_TYPE_MISMATCH` | The matched document is not the declared type. |
 | `STEP_REFERENCE_UNRESOLVED` | A step's `operationId` or `operationPath` did not resolve. |

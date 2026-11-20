@@ -14,7 +14,7 @@ _The Contracts and PactFlow release is **RC10**: [`RC10_PLAN.md`](RC10_PLAN.md).
 | Spec | Current | Apiome today |
 | --- | --- | --- |
 | OpenAPI | **3.2.0** (3.1.2 patch, 3.0.4) | Import/emit 2.0, 3.0, 3.1, 3.2; 3.1/3.2 meta-schema validation; 3.2 `query`, `additionalOperations`, tag hierarchy modelled |
-| Arazzo | **1.1.0** (May 2026; AsyncAPI sources, `querystring`) | Read/normalise/lint/emit 1.0.x and 1.1.x in apiome-rest; CLI, legacy generator, UI generator and docs still 1.0 |
+| Arazzo | **1.1.0** (May 2026; AsyncAPI sources, `querystring`) | Read/normalise/lint/emit 1.0.x and 1.1.x in apiome-rest, the CLI, the legacy and UI generators and the docs (COA-1.1) |
 | Overlay | **1.1.0** (`copy`, RFC 9535), 1.2 in progress | Applies 1.0–1.2 with provenance; stored overlays; lint rules; no UI manager |
 
 Sources: OpenAPI Initiative newsletters (Feb and Jun 2026), the Arazzo specification page and Redocly's Arazzo 1.1 release post. Competitive notes (from the Oct 2026 market analysis): OpenAPI 3.2 is a lead for Apiome (Spectral added 3.2 on 1 Oct 2026); Specmatic charges for Arazzo testing; Redocly/vacuum/Spectral lint Arazzo and Overlay; lint `--fix` and governance scorecards are the catch-up items (adopted below).
@@ -52,7 +52,6 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-1.1 · [#7037](https://github.com/apiome/apiome/issues/7037) | Arazzo 1.1 consistency sweep: CLI, generator, UI and docs | Every Arazzo surface reads and writes the same versions (1.0.x and 1.1.x) and says so | `enhancement`, `rest`, `cli`, `ui`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-ui, apiome-docs |
 | COA-1.2 · [#7038](https://github.com/apiome/apiome/issues/7038) | Arazzo multi-file filesets | An Arazzo file plus the OpenAPI/AsyncAPI files its `sourceDescriptions` name import together | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest, apiome-cli |
 | COA-1.3 · [#7039](https://github.com/apiome/apiome/issues/7039) | Arazzo workflow viewer in Projects and Catalog | See an Arazzo workflow as steps, inputs, outputs and success/failure paths — not just as a file | `enhancement`, `ui`, `mvp` | N | Y | L | apiome-ui, apiome-rest |
 | COA-1.4 · [#7040](https://github.com/apiome/apiome/issues/7040) | Arazzo round-trip and conformance corpus | Burn down the Arazzo cells in the round-trip xfail matrix and add an official-fixture corpus | `enhancement`, `rest`, `mvp` | Y | Y | M | apiome-rest |
@@ -60,7 +59,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 | COA-1.6 · [#7042](https://github.com/apiome/apiome/issues/7042) | Arazzo change reports and breaking-change depth | Classify changes to inputs, success criteria, parameters and sources — not only step removal and reorder | `enhancement`, `rest`, `diff`, `v2` | Y | N | M | apiome-rest |
 | COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli`, `v2` | N | N | L | apiome-rest, apiome-cli |
 
-**COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs**
+**✅ COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs — Complete**
+- **Shipped:** CLI 0.148.0 vendors the Arazzo 1.1 schema (`import_/schemas/arazzo/1.1/2026-04-15.json`) and validates each document against the schema for the version it declares (`arazzo_version_line`; other versions fail at `/arazzo`). REST 1.767.0 / OpenAPI 1.598.0: `GET /v1/arazzo/...` (and the per-class route) take `arazzo_version` (default `1.0.1`; `400` otherwise); `arazzo_generator.resolve_generator_arazzo_version` applies the export target's rule (`1.1.0` for AsyncAPI sources, a 1.0 request for one is rejected). UI 0.671.0: `generateArazzoSpec` takes `arazzoVersion` / `sourceDescriptions` (`resolveArazzoVersion`); the import analyzer accepts 1.1.x; the Projects importer accepts `asyncapi` sources in a 1.1 document and leaves their steps to the server. Docs: `bring-in/import-a-spec.md`, `ship/export-a-spec.md`, regenerated REST/CLI reference, `ARAZZO_ENDPOINTS.md`, release note `arazzo-1-1-consistency`.
 - **Problem:** apiome-rest reads 1.0.x and 1.1.x (`arazzo_spec.py`, vendored schemas for both), but `apiome-cli/.../import_/arazzo.py` validates 1.0 only, the legacy generator behind `/v1/arazzo/{tenant}/{project}/{version}` and the UI generator (`apiome-ui/src/app/utils/arazzo.ts`, `templates/arazzo/arazzo-spec.hbs`) emit 1.0.1, and `apiome-rest/docs/ARAZZO_ENDPOINTS.md` and several docs pages say "Arazzo 1.0".
 - **Solution/Scope:**
 - Vendor the 1.1 schema into the CLI and validate against the version the document declares.

@@ -1,17 +1,21 @@
-"""Arazzo 1.0 document parsing and structural validation.
+"""Arazzo 1.0.x / 1.1.x document parsing and structural validation.
 
 Supports loading Arazzo workflow documents from:
 - Local files with ``.yaml``, ``.yml``, or ``.json`` extensions.
 - HTTP or HTTPS URLs (format from path suffix or ``Content-Type``).
 - Standard input when the path argument is ``-``.
 
-Structural validation uses the vendored Arazzo 1.0 JSON Schema (Draft 2020-12).
+Structural validation uses the vendored Arazzo JSON Schema (Draft 2020-12) for the
+version the document declares in its top-level ``arazzo`` field: the 1.0 schema
+(iteration 2025-10-15) for ``1.0.x`` and the 1.1 schema (iteration 2026-04-15) for
+``1.1.x``. Any other version is rejected with a message naming the supported lines.
 Callers should map :class:`ArazzoStructureError` to CLI exit code 2 (``EXIT_USAGE``).
 """
 
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 from functools import lru_cache
 from importlib import resources
@@ -61,12 +65,73 @@ def _pointer_from_absolute_path(path: Sequence[Any]) -> str:
     return "/" + "/".join(_escape_json_pointer_token(str(segment)) for segment in path)
 
 
-@lru_cache(maxsize=1)
-def _arazzo_schema() -> dict[str, Any]:
-    """Load the vendored Arazzo 1.0 JSON Schema (iteration 2025-10-15)."""
+#: Vendored schema per supported ``(major, minor)`` line: ``(directory, iteration file)``.
+#: Mirrors the REST importer's ``SUPPORTED_ARAZZO_VERSIONS`` (``apiome-rest/src/app/arazzo_spec.py``).
+_ARAZZO_SCHEMAS: dict[tuple[int, int], tuple[str, str]] = {
+    (1, 0): ("1.0", "2025-10-15.json"),
+    (1, 1): ("1.1", "2026-04-15.json"),
+}
+
+#: A ``major.minor`` prefix, with any remaining patch/pre-release suffix ignored.
+_VERSION = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)(?:[.\-+].*)?$")
+
+
+def supported_arazzo_versions() -> tuple[str, ...]:
+    """Return the Arazzo version lines this CLI validates, e.g. ``("1.0.x", "1.1.x")``."""
+    return tuple(f"{major}.{minor}.x" for major, minor in sorted(_ARAZZO_SCHEMAS))
+
+
+def arazzo_version_line(doc: dict[str, Any]) -> tuple[int, int]:
+    """Return the supported ``(major, minor)`` line *doc* declares.
+
+    Args:
+        doc: Parsed top-level Arazzo document mapping.
+
+    Returns:
+        The ``(major, minor)`` pair from the ``arazzo`` field; the patch component is
+        ignored because Arazzo's compatibility contract is per minor version.
+
+    Raises:
+        ArazzoStructureError: When ``arazzo`` is missing, not a ``major.minor[.patch]``
+            string, or names a version line with no vendored schema.
+    """
+    supported = ", ".join(supported_arazzo_versions())
+    raw = doc.get("arazzo")
+    if not isinstance(raw, str) or not raw.strip():
+        raise ArazzoStructureError(
+            f"Missing or invalid 'arazzo' version; supported versions are {supported}.",
+            pointer="/arazzo" if "arazzo" in doc else "/",
+        )
+    match = _VERSION.match(raw.strip())
+    if match is None:
+        raise ArazzoStructureError(
+            f"'{raw}' is not a recognizable Arazzo version "
+            f"(expected major.minor.patch, for example 1.1.0); supported versions are {supported}.",
+            pointer="/arazzo",
+        )
+    line = (int(match.group("major")), int(match.group("minor")))
+    if line not in _ARAZZO_SCHEMAS:
+        raise ArazzoStructureError(
+            f"Arazzo {raw} is not supported; supported versions are {supported}.",
+            pointer="/arazzo",
+        )
+    return line
+
+
+@lru_cache(maxsize=len(_ARAZZO_SCHEMAS))
+def _arazzo_schema(line: tuple[int, int]) -> dict[str, Any]:
+    """Load the vendored Arazzo JSON Schema for one supported version line.
+
+    Args:
+        line: A ``(major, minor)`` key of :data:`_ARAZZO_SCHEMAS`.
+
+    Returns:
+        The parsed JSON Schema document.
+    """
+    directory, filename = _ARAZZO_SCHEMAS[line]
     schema_path = (
         resources.files("apiome_cli.import_.schemas.arazzo")
-        .joinpath("1.0", "2025-10-15.json")
+        .joinpath(directory, filename)
     )
     with schema_path.open(encoding="utf-8") as handle:
         loaded = json.load(handle)
@@ -75,10 +140,14 @@ def _arazzo_schema() -> dict[str, Any]:
     return loaded
 
 
-@lru_cache(maxsize=1)
-def _arazzo_validator() -> Draft202012Validator:
-    """Return a cached validator for the vendored Arazzo 1.0 schema."""
-    return Draft202012Validator(_arazzo_schema())
+@lru_cache(maxsize=len(_ARAZZO_SCHEMAS))
+def _arazzo_validator(line: tuple[int, int]) -> Draft202012Validator:
+    """Return a cached validator for the vendored schema of one version line.
+
+    Args:
+        line: A ``(major, minor)`` key of :data:`_ARAZZO_SCHEMAS`.
+    """
+    return Draft202012Validator(_arazzo_schema(line))
 
 
 def load_arazzo_file(
@@ -116,16 +185,22 @@ def load_arazzo_file(
 
 
 def validate_arazzo_structure(doc: dict[str, Any]) -> None:
-    """Validate *doc* against the vendored Arazzo 1.0 JSON Schema.
+    """Validate *doc* against the vendored schema for the version it declares.
+
+    A ``1.0.x`` document is checked against the Arazzo 1.0 schema and a ``1.1.x``
+    document against the Arazzo 1.1 schema, so 1.1-only constructs (for example an
+    ``asyncapi`` source description) pass only in a document that declares 1.1.
 
     Args:
         doc: Parsed top-level Arazzo document mapping.
 
     Raises:
-        ArazzoStructureError: When the document fails schema validation.
+        ArazzoStructureError: When the version is missing or unsupported, or the
+            document fails schema validation.
     """
+    line = arazzo_version_line(doc)
     try:
-        _arazzo_validator().validate(doc)
+        _arazzo_validator(line).validate(doc)
     except JsonSchemaValidationError as exc:
         raise ArazzoStructureError(
             exc.message,

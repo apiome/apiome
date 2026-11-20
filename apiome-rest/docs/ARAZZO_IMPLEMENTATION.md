@@ -4,7 +4,7 @@
 Added Arazzo 1.0.1 workflow specification endpoints to the Apiome REST API, providing the same endpoint patterns as the existing OpenAPI endpoints.
 
 **Date Implemented:** December 7, 2024  
-**Arazzo Version:** 1.0.1  
+**Arazzo Version:** 1.0.1 at implementation; 1.0.x and 1.1.x since COA-1.1 (#7037)  
 **Implementation Status:** ✅ Complete
 
 ---
@@ -369,7 +369,7 @@ Same authentication, authorization, and content negotiation as OpenAPI endpoints
 
 ## Standards Compliance
 
-✅ **Arazzo 1.0.1** - Fully compliant with official specification  
+✅ **Arazzo 1.0.x / 1.1.x** - Writes 1.0.1 by default; `arazzo_version` selects any 1.0.x or 1.1.x version (COA-1.1, #7037)  
 ✅ **OpenAPI 3.1.0** - References valid OpenAPI schemas  
 ✅ **RESTful** - Follows REST principles  
 ✅ **Content Negotiation** - RFC 7231 compliant  

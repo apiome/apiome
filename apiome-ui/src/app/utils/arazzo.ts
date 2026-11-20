@@ -1,18 +1,78 @@
 /**
  * Arazzo Specification Generator Utilities
  *
- * Generates Arazzo v1.0.1 workflow specifications from class definitions.
+ * Generates Arazzo 1.0.x or 1.1.x workflow specifications from class definitions.
  * Arazzo is a specification for describing sequences of API calls and their dependencies.
  * Uses Handlebars templates for flexible generation.
+ *
+ * The written version follows the REST generator and emitter (apiome-rest `arazzo_generator.py`):
+ * an explicit `arazzoVersion` wins; otherwise `1.1.0` when a source description is AsyncAPI (only
+ * Arazzo 1.1 can express one) and `1.0.1` for an all-OpenAPI document.
  */
 
 import { renderTemplate, clearTemplateCache } from './template-loader';
 
+/** Version written for an all-OpenAPI document with no requested version (the 1.0 line's final patch). */
+export const ARAZZO_VERSION_1_0 = '1.0.1';
+
+/** Version written for a document with an AsyncAPI source description and no requested version. */
+export const ARAZZO_VERSION_1_1 = '1.1.0';
+
+/** `major.minor` lines the generator writes, matching the REST importer's supported versions. */
+export const SUPPORTED_ARAZZO_LINES: readonly string[] = ['1.0', '1.1'];
+
+/** One `sourceDescriptions` entry of a generated document. */
+export interface ArazzoSourceDescription {
+  name: string;
+  /** `openapi`, `asyncapi` (Arazzo 1.1 and later) or `arazzo`. */
+  type: string;
+  url: string;
+  description?: string;
+}
+
+/** A full `major.minor.patch[-pre]` version, the form the Arazzo schemas require of `arazzo`. */
+const FULL_VERSION = /^(\d+)\.(\d+)\.\d+(-.+)?$/;
+
 /**
- * Generates a complete Arazzo v1.0.1 specification from class definitions
+ * Choose the `arazzo` version a generated document declares.
+ * @param arazzoVersion - The requested version (`1.0.1`, `1.1.0` …), or undefined / blank for the default
+ * @param sourceDescriptions - The document's source descriptions
+ * @returns The requested version, trimmed; otherwise `1.1.0` when any source is `asyncapi`, else `1.0.1`
+ * @throws Error when the requested version is not a full 1.0.x / 1.1.x version, or is 1.0.x while a
+ *   source description is AsyncAPI (which Arazzo 1.0 cannot express)
+ */
+export function resolveArazzoVersion(
+  arazzoVersion: string | undefined,
+  sourceDescriptions: ArazzoSourceDescription[]
+): string {
+  const hasAsyncSources = sourceDescriptions.some((source) => source?.type === 'asyncapi');
+  const requested = arazzoVersion?.trim();
+  if (!requested) {
+    return hasAsyncSources ? ARAZZO_VERSION_1_1 : ARAZZO_VERSION_1_0;
+  }
+
+  const match = FULL_VERSION.exec(requested);
+  const line = match ? `${match[1]}.${match[2]}` : null;
+  if (!line || !SUPPORTED_ARAZZO_LINES.includes(line)) {
+    throw new Error(
+      `Arazzo ${requested} is not supported; use a 1.0.x or 1.1.x version such as 1.0.1 or 1.1.0.`
+    );
+  }
+  if (hasAsyncSources && line === '1.0') {
+    throw new Error(`Arazzo ${requested} cannot describe an AsyncAPI source; use 1.1.0 or later.`);
+  }
+  return requested;
+}
+
+/**
+ * Generates a complete Arazzo specification from class definitions
  * @param classes - Array of class data objects with properties
  * @param options - Optional metadata for the spec
+ * @param options.arazzoVersion - Arazzo version to write (`1.0.1`, `1.1.0` …); defaults per {@link resolveArazzoVersion}
+ * @param options.sourceDescriptions - Source descriptions to declare instead of the default `./openapi.json`
+ *   OpenAPI source; an `asyncapi` entry makes `1.1.0` the default
  * @returns Arazzo document as a JSON string
+ * @throws Error when `arazzoVersion` is unsupported or cannot describe the source descriptions
  */
 export async function generateArazzoSpec(
   classes: any[],
@@ -20,6 +80,8 @@ export async function generateArazzoSpec(
     projectName?: string;
     version?: string;
     description?: string;
+    arazzoVersion?: string;
+    sourceDescriptions?: ArazzoSourceDescription[];
     metadata?: {
       summary?: string;
       termsOfService?: string;
@@ -40,6 +102,17 @@ export async function generateArazzoSpec(
   if (!classes || !Array.isArray(classes)) {
     throw new Error('Classes parameter must be an array');
   }
+
+  // Prepare source descriptions and the version that can express them
+  const sourceDescriptions: ArazzoSourceDescription[] = options?.sourceDescriptions ?? [
+    {
+      name: 'openapi-source',
+      type: 'openapi',
+      url: './openapi.json',
+      description: 'OpenAPI specification containing schema definitions'
+    }
+  ];
+  const arazzoVersion = resolveArazzoVersion(options?.arazzoVersion, sourceDescriptions);
 
   console.log('Generating Arazzo spec for', classes.length, 'classes');
 
@@ -149,7 +222,7 @@ export async function generateArazzoSpec(
   const info: any = {
     title: options?.projectName ? `${options.projectName} Workflows` : 'API Workflows',
     version: options?.version || '1.0.0',
-    description: options?.description || 'Generated Arazzo 1.0.1 workflow specification from Apiome Studio'
+    description: options?.description || `Generated Arazzo ${arazzoVersion} workflow specification from Apiome Studio`
   };
 
   // Add optional metadata fields to info
@@ -171,19 +244,9 @@ export async function generateArazzoSpec(
     }
   }
 
-  // Prepare source descriptions
-  const sourceDescriptions = [
-    {
-      name: 'openapi-source',
-      type: 'openapi',
-      url: './openapi.json',
-      description: 'OpenAPI specification containing schema definitions'
-    }
-  ];
-
   // Prepare template data
   const templateData = {
-    arazzo: '1.0.1',
+    arazzo: arazzoVersion,
     info,
     sourceDescriptions,
     workflows,

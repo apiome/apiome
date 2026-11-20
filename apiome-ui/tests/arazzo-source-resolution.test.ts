@@ -294,3 +294,63 @@ describe('arazzoImporter.normalize — resolution on the import result', () => {
     expect(result.warnings).toContain('No components.schemas and no workflow steps with request bodies to import.');
   });
 });
+
+describe('Arazzo 1.1 AsyncAPI sources (COA-1.1, #7037)', () => {
+  /** An AsyncAPI 3 source document in the bundle. */
+  const EVENTS = { asyncapi: '3.0.0', info: { title: 'Events', version: '1' }, channels: {}, operations: {} };
+  const ASYNC_BUNDLE: Record<string, unknown> = { ...BUNDLE, 'flows/events.yaml': EVENTS };
+
+  /** A 1.1 document calling the pets API and an event stream. */
+  function arazzo11(sourceDescriptions: any[], steps: any[]): any {
+    return { ...arazzo(sourceDescriptions, steps), arazzo: '1.1.0' };
+  }
+
+  const MIXED = [
+    { name: 'petstore', type: 'openapi', url: '../specs/petstore.yaml' },
+    { name: 'events', type: 'asyncapi', url: './events.yaml' },
+  ];
+
+  it('accepts an asyncapi source in a 1.1 document and records its kind', () => {
+    const { sources, issues } = resolveArazzoSources({
+      document: arazzo11(MIXED, []),
+      sourceDocuments: ASYNC_BUNDLE,
+      documentPath: 'flows/adopt.arazzo.yaml',
+    });
+    expect(sources[1]).toMatchObject({ name: 'events', status: 'resolved', path: 'flows/events.yaml', documentKind: 'asyncapi' });
+    expect(issues).toEqual([]);
+  });
+
+  it('reports an out-of-bundle asyncapi source as missing, not unsupported', () => {
+    const { sources, issues } = resolve(arazzo11([{ name: 'events', type: 'asyncapi', url: 'https://x.test/a.yaml' }], []));
+    expect(sources[0].status).toBe('not-in-bundle');
+    expect(issues.map((i) => i.code)).toEqual(['SOURCE_NOT_IN_BUNDLE']);
+  });
+
+  it('leaves async steps to the server and still resolves the sync ones', () => {
+    const { steps, issues } = resolveArazzoSources({
+      document: arazzo11(MIXED, [
+        { stepId: 'pet', operationId: '$sourceDescriptions.petstore.getPet' },
+        { stepId: 'adopted', operationId: '$sourceDescriptions.events.receivePetAdopted' },
+      ]),
+      sourceDocuments: ASYNC_BUNDLE,
+      documentPath: 'flows/adopt.arazzo.yaml',
+    });
+    expect(steps.map((s) => [s.stepId, s.status, s.sourceName])).toEqual([
+      ['pet', 'resolved', 'petstore'],
+      ['adopted', 'not-applicable', 'events'],
+    ]);
+    expect(issues).toEqual([]);
+  });
+
+  it('still rejects an asyncapi source in a 1.0 document, naming the version it needs', () => {
+    const { sources, steps, issues } = resolve(
+      arazzo([{ name: 'events', type: 'asyncapi', url: 'events.yaml' }], [
+        { stepId: 'adopted', operationId: '$sourceDescriptions.events.receivePetAdopted' },
+      ])
+    );
+    expect(sources[0].status).toBe('unsupported-type');
+    expect(issues[0]).toMatchObject({ code: 'SOURCE_TYPE_UNSUPPORTED', source: 'events' });
+    expect(issues[0].message).toContain('needs Arazzo 1.1 or later; this document declares 1.0.1');
+    expect(steps[0].status).toBe('unresolved');
+  });
+});

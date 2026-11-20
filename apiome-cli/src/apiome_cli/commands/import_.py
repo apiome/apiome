@@ -1113,7 +1113,7 @@ def import_arazzo(
         help="Seconds between ``GET /imports/{job_id}`` polls when waiting.",
     ),
 ) -> None:
-    """Import an Arazzo 1.0 workflow document from a file, URL, or stdin."""
+    """Import an Arazzo 1.0.x or 1.1.x workflow document from a file, URL, or stdin."""
     _run_arazzo_import(
         ctx,
         path=path,

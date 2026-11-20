@@ -1,0 +1,28 @@
+---
+slug: arazzo-1-1-consistency
+title: Arazzo 1.1 everywhere
+description: "The CLI, the import dialog and both generators now read and write Arazzo 1.1."
+authors: [apiome]
+---
+
+Every Arazzo surface now reads and writes the same versions, **1.0.x** and **1.1.x**, and says so.
+Before this release, only the server-side importer and the export target knew about Arazzo 1.1.
+
+{/* truncate */}
+
+- **Import dialog:** an `arazzo: 1.1.0` document is no longer shown as an **unsupported version**.
+  In a 1.1 document, an `asyncapi` source description is accepted too, and the steps that call it
+  are left to the server-side importer with no warning. See
+  [Arazzo sources in a Projects import](/bring-in/import-a-spec#arazzo-sources-in-a-projects-import).
+- **CLI:** local Arazzo validation checks each document against the official schema for the version
+  it declares: the 1.0 schema for 1.0.x, the 1.1 schema for 1.1.x. An AsyncAPI source passes in a
+  1.1 document and is still caught in a 1.0 one. Any other version is rejected, and the message
+  names the versions that are supported.
+- **Generated workflows:** `GET /v1/arazzo/{tenant}/{project}/{version}` (and its per-class route)
+  take `?arazzo_version=1.1.0`, or any other 1.0.x or 1.1.x version. The default is still `1.0.1`,
+  and any other value returns `400`. See
+  [Download Arazzo or JSON Schema by slug](/ship/export-a-spec#download-arazzo-or-json-schema-by-slug).
+- **Studio generator:** the in-app Arazzo generator takes the same version option. Like the export
+  target, it writes `1.1.0` by default when a source is AsyncAPI, and it refuses to write 1.0 for one
+  rather than downgrade it.
+- **Docs:** the claims that Apiome supports only "Arazzo 1.0" have been corrected.
