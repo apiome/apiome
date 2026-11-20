@@ -134,6 +134,8 @@ OPERATION_ROUTE_EXTRAS: Tuple[str, ...] = (
     "security",
     "plugins",
     "backends",
+    # The OpenAPI source preservation bag (COA-2.1) is not a route attribute.
+    "openapiSource",
 )
 
 #: Upstream used for a service whose model records none. A gateway service must

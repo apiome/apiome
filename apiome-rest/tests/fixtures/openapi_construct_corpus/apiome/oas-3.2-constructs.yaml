@@ -1,0 +1,280 @@
+# Apiome construct fixture — OpenAPI 3.2 (COA-2.1, #7044).
+# One document that carries every construct the 3.2 column of the construct matrix tracks.
+openapi: 3.2.0
+$self: https://example.com/apis/construct-audit/openapi.yaml
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+info:
+  title: Construct audit (3.2)
+  summary: Every OpenAPI 3.2 construct the losslessness audit tracks.
+  version: 1.0.0
+  termsOfService: https://example.com/terms
+  contact:
+    name: API team
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://api.example.com/v1
+    name: production
+    description: Production
+    x-region: eu
+tags:
+  - name: catalog
+    summary: Catalog
+    description: The product catalog.
+    kind: nav
+  - name: search
+    summary: Search
+    parent: catalog
+    kind: nav
+    externalDocs:
+      url: https://example.com/docs/search
+  - name: internal
+    kind: audience
+externalDocs:
+  url: https://example.com/docs
+security:
+  - oauth: [catalog:read]
+x-document-owner: platform
+paths:
+  /products:
+    summary: Products
+    description: The product collection.
+    parameters:
+      - name: X-Tenant
+        in: header
+        schema:
+          type: string
+    get:
+      operationId: listProducts
+      tags: [catalog]
+      deprecated: false
+      responses:
+        '200':
+          summary: A page of products
+          description: A page of products.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+            application/jsonl:
+              itemSchema:
+                $ref: '#/components/schemas/Product'
+            text/event-stream:
+              itemSchema:
+                type: object
+                required: [data]
+                properties:
+                  event:
+                    type: string
+                  data:
+                    type: string
+                    contentMediaType: application/json
+                    contentSchema:
+                      $ref: '#/components/schemas/Product'
+          links:
+            First:
+              operationId: getProduct
+              parameters:
+                id: $response.body#/0/id
+    query:
+      operationId: searchProducts
+      tags: [search]
+      summary: Search with a query body
+      x-cost: high
+      parameters:
+        - name: filter
+          in: querystring
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  q:
+                    type: string
+              encoding:
+                q:
+                  allowReserved: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Search'
+            examples:
+              shoes:
+                summary: Shoes
+                dataValue:
+                  q: shoes
+                serializedValue: '{"q":"shoes"}'
+      responses:
+        '200':
+          description: Matching products.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    additionalOperations:
+      PURGE:
+        operationId: purgeProducts
+        tags: [internal]
+        responses:
+          '204':
+            description: Purged.
+      LINK:
+        operationId: linkProducts
+        callbacks:
+          linked:
+            '{$request.body#/notify}':
+              post:
+                responses:
+                  '204':
+                    description: Notified.
+        responses:
+          '204':
+            description: Linked.
+  /products/{id}:
+    $ref: '#/components/pathItems/Product'
+  /uploads:
+    post:
+      operationId: uploadBatch
+      requestBody:
+        content:
+          multipart/mixed:
+            itemSchema:
+              $ref: '#/components/schemas/Product'
+            prefixEncoding:
+              - contentType: application/json
+            itemEncoding:
+              contentType: application/octet-stream
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                manifest:
+                  type: object
+                files:
+                  type: array
+                  items:
+                    type: string
+                    contentMediaType: application/octet-stream
+            encoding:
+              manifest:
+                contentType: application/json
+      responses:
+        '202':
+          description: Accepted.
+webhooks:
+  productChanged:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Received.
+components:
+  schemas:
+    Product:
+      type: object
+      required: [id, kind]
+      discriminator:
+        propertyName: kind
+        mapping:
+          physical: '#/components/schemas/PhysicalProduct'
+        defaultMapping: '#/components/schemas/PhysicalProduct'
+      properties:
+        id:
+          type: string
+          readOnly: true
+        kind:
+          type: string
+        price:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+        tags:
+          type: [array, 'null']
+          items:
+            type: string
+        related:
+          $ref: '#/components/schemas/Tree'
+          description: Related products.
+      xml:
+        name: product
+        nodeType: element
+    PhysicalProduct:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            weight:
+              type: number
+              minimum: 0
+    Tree:
+      $dynamicAnchor: tree
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            $dynamicRef: '#tree'
+    Search:
+      type: object
+      properties:
+        q:
+          type: string
+          minLength: 1
+        limit:
+          const: 50
+      oneOf:
+        - required: [q]
+        - not:
+            required: [q]
+  pathItems:
+    Product:
+      get:
+        operationId: getProduct
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: One product.
+  mediaTypes:
+    ProductStream:
+      itemSchema:
+        $ref: '#/components/schemas/Product'
+  responses:
+    NotFound:
+      summary: Not found
+      description: No such product.
+  examples:
+    Shoe:
+      dataValue:
+        id: shoe-1
+        kind: physical
+  securitySchemes:
+    oauth:
+      type: oauth2
+      oauth2MetadataUrl: https://auth.example.com/.well-known/oauth-authorization-server
+      flows:
+        deviceAuthorization:
+          deviceAuthorizationUrl: https://auth.example.com/device
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            catalog:read: Read the catalog
+    legacyKey:
+      type: apiKey
+      in: query
+      name: key
+      deprecated: true

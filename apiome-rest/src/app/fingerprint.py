@@ -155,7 +155,11 @@ def canonical_payload(api: CanonicalApi) -> Dict[str, Any]:
         A JSON-serializable dict: the structural contract of the artifact, free of
         documentation and declaration-order noise.
     """
-    payload = _scrub(normalize_ordering(api).model_dump())
+    # The OpenAPI source preservation bag (COA-2.1) is a verbatim copy of the source — the
+    # same information as ``raw`` — so it is left out at every level, as ``raw`` is.
+    from .openapi_source_preservation import strip_source_extra  # local: avoids an import cycle
+
+    payload = _scrub(strip_source_extra(normalize_ordering(api).model_dump()))
     extras = payload.get("extras")
     if isinstance(extras, dict) and UNHASHED_EXTRAS.intersection(extras):
         payload["extras"] = {k: v for k, v in extras.items() if k not in UNHASHED_EXTRAS}

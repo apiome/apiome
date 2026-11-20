@@ -73,6 +73,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .openapi_source_preservation import without_source_extra
 from .scalar_aliases import scalar_kind
 
 __all__ = ["REST_ONLY_WARNING", "RamlEmitOptions", "RamlEmitter", "RamlFidelityRulePack", "raml_scalar"]
@@ -508,7 +509,7 @@ def _operation_notes(
         if param.deprecated:
             notes.append(Note("deprecated-dropped", f"RAML has no deprecation flag; parameter {param.name!r} is not "
                               "marked deprecated"))
-        if not raml_source and param.extras:
+        if not raml_source and without_source_extra(param.extras):
             notes.append(Note("parameter-details-dropped", f"source-specific details of parameter {param.name!r} "
                               f"({', '.join(sorted(param.extras))}) are not written"))
         notes.extend(
@@ -550,9 +551,10 @@ def _operation_notes(
     if raml_source and reuse:
         notes.append(Note("reuse-flattened", "the resource type and traits are written merged into the method",
                           dropped=False))
-    elif not raml_source and operation.extras:
+    elif not raml_source and without_source_extra(operation.extras):
         notes.append(Note("operation-details-dropped",
-                          f"source-specific details ({', '.join(sorted(operation.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(operation.extras)))}) "
+                          "are not written"))
     return notes
 
 
@@ -580,9 +582,10 @@ def _type_notes(type_: Type, names: RamlNames) -> List[Note]:
     if type_.kind is TypeKind.RECORD and any(f.field_number is None for f in type_.fields):
         notes.append(Note("field-numbers-positional", "RAML has no field numbers; the properties keep their order "
                           "and read back numbered by position", dropped=False))
-    if not names.raml_source and type_.extras:
+    if not names.raml_source and without_source_extra(type_.extras):
         notes.append(Note("type-details-dropped",
-                          f"source-specific details ({', '.join(sorted(type_.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(type_.extras)))}) "
+                          "are not written"))
     if type_.kind is TypeKind.ENUM:
         positional = all(value.value in (None, index, value.name) for index, value in enumerate(type_.enum_values))
         if not positional:
@@ -665,9 +668,10 @@ def _document_notes(api: CanonicalApi) -> List[Note]:
         )
     if api.servers and (api.servers[0].name or api.servers[0].description):
         notes.append(Note("server-details-dropped", "RAML's baseUri has no name or description"))
-    if api.extras:
+    if without_source_extra(api.extras):
         notes.append(Note("document-details-dropped",
-                          f"source-specific details ({', '.join(sorted(api.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(api.extras)))}) "
+                          "are not written"))
     if not notes:
         notes.append(Note("document-rewritten", "the document is written as RAML 1.0 (title, version, "
                           "description and baseUri)", dropped=False))

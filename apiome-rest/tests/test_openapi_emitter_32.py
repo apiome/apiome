@@ -86,12 +86,15 @@ def test_query_and_additional_operations_are_written_natively() -> None:
 
 
 def test_the_tag_hierarchy_is_written_natively() -> None:
+    # COA-2.1: an imported document's Tag Objects come back as written — in source order, with
+    # their description and externalDocs as well as the 3.2 parent / summary / kind.
     tags = _emit(_imported("tag-tree.yaml"), "3.2").document["tags"]
     by_name = {tag["name"]: tag for tag in tags}
-    assert [tag["name"] for tag in tags] == sorted(by_name)
+    assert [tag["name"] for tag in tags] == ["billing", "invoices", "invoice-lines", "refunds", "internal"]
     assert by_name["invoice-lines"] == {"name": "invoice-lines", "parent": "invoices", "kind": "nav"}
     assert by_name["invoices"] == {"name": "invoices", "summary": "Invoices", "parent": "billing"}
     assert by_name["internal"] == {"name": "internal", "kind": "audience"}
+    assert by_name["billing"]["externalDocs"] == {"url": "https://example.com/docs/billing"}
 
 
 @pytest.mark.parametrize("name", ["query-and-additional.yaml", "tag-tree.yaml"])
@@ -138,7 +141,14 @@ def test_below_32_the_methods_are_stashed_and_the_hierarchy_dropped_as_losses(ve
     assert "openapi-3.2-http-method" in {loss.subject for loss in search.losses}
     billing = _emit(_imported("tag-tree.yaml"), version)
     assert "openapi-3.2-tag-hierarchy" in {loss.subject for loss in billing.losses}
-    assert "tags" not in billing.document
+    if version == "2.0":
+        assert "tags" not in billing.document
+        return
+    # COA-2.1: the tags themselves are 3.0 / 3.1 data and are kept; only the 3.2 fields go.
+    tags = billing.document["tags"]
+    assert [tag["name"] for tag in tags] == ["billing", "invoices", "invoice-lines", "refunds", "internal"]
+    assert not [tag for tag in tags if {"parent", "summary", "kind"} & set(tag)]
+    assert tags[0]["description"] == "Everything about money."
 
 
 def test_31_keeps_the_methods_on_extensions() -> None:

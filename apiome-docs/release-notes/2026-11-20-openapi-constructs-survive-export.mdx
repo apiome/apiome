@@ -1,0 +1,27 @@
+---
+slug: openapi-constructs-survive-export
+title: "Every OpenAPI construct survives import and export"
+description: "OpenAPI 3.0, 3.1 and 3.2 documents now export back as they were imported."
+authors: [apiome]
+---
+
+Import an OpenAPI 3.0, 3.1 or 3.2 document and export it as OpenAPI at the same version: it now
+comes back as it was read. A new [OpenAPI construct matrix](/reference/openapi-construct-matrix)
+shows the result for each construct and version.
+
+{/* truncate */}
+
+- **Fixed:** an export to OpenAPI used to drop callbacks, links, webhooks, `discriminator`,
+  `allOf`, examples, `x-` extensions, `externalDocs`, security requirements, reusable components,
+  `$self`, `jsonSchemaDialect`, `$dynamicRef`, `itemSchema` and `in: querystring` parameters.
+  The export's loss report didn't mention them. Each is now written back.
+- **Measured:** the matrix comes from a test that imports and exports the OpenAPI Initiative's
+  own 3.0, 3.1 and 3.2 test and example documents. The test fails on any loss the report does not
+  mention.
+- **Across versions:** exporting a 3.0 document as 3.1 or 3.2 rewrites its schemas into JSON
+  Schema 2020-12 with nothing lost. Exporting to an older version lists each construct that
+  version cannot hold.
+- **Edited after import:** an operation or schema you changed is exported from its current
+  version, and the loss report names it.
+
+See [Understand export fidelity](/ship/export-fidelity#openapi).

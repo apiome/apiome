@@ -31,7 +31,8 @@ can carry raw source excerpts. That question was checked here and does not apply
 canonical snapshot is derived wholly from a corpus fixture already committed under
 ``apiome-ui/examples/``, and no normalizer emits ``source_location``/``native_id``
 extras for any corpus entry. If one starts to, revisit this — the snapshot would then
-duplicate source text into a second location.
+duplicate source text into a second location. (The OpenAPI normalizer's ``openapiSource``
+extra does carry source objects, so :func:`canonical_payload` leaves it out.)
 """
 
 from __future__ import annotations
@@ -54,6 +55,7 @@ from app.import_source import (
     canonical_diff,
     canonical_fingerprint,
 )
+from app.openapi_source_preservation import strip_source_extra
 
 __all__ = [
     "GOLDEN_ROOT",
@@ -145,7 +147,10 @@ def canonical_payload(model: CanonicalApi) -> Dict[str, Any]:
 
     Excludes only the ``raw`` fidelity bag — the native AST, which is source
     re-serialization rather than normalized identity, and the one field
-    :func:`app.import_source.canonical_fingerprint` also excludes. Everything else,
+    :func:`app.import_source.canonical_fingerprint` also excludes — and its OpenAPI
+    twin, the ``openapiSource`` preservation extra (COA-2.1), a verbatim copy of the
+    source objects that the fingerprint excludes for the same reason (and that would
+    otherwise duplicate source text here, see *On redaction*). Everything else,
     ``extras`` included, is contract: a normalizer that stops emitting an extras key
     has changed what downstream consumers see.
 
@@ -155,7 +160,7 @@ def canonical_payload(model: CanonicalApi) -> Dict[str, Any]:
     Returns:
         The JSON-mode dump, ready to serialize.
     """
-    return model.model_dump(mode="json", exclude={"raw"})
+    return strip_source_extra(model.model_dump(mode="json", exclude={"raw"}))
 
 
 def build_snapshot(run: CorpusRun) -> Dict[str, Any]:

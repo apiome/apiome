@@ -55,6 +55,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .openapi_source_preservation import without_source_extra
 from .wadl_normalizer import explicit_method_id
 from .xsd_schema import (
     TNS_PREFIX,
@@ -185,10 +186,10 @@ class WadlFidelityRulePack(CapabilityRulePack):
                 "is dropped",
                 target_mapping="non-HTTP operation → dropped",
             )
-        if operation.extras:
+        if without_source_extra(operation.extras):
             return FidelityVerdict.approx(
                 message="WADL carries an operation's HTTP surface only; its source-specific details "
-                f"({', '.join(sorted(operation.extras))}) are not written",
+                f"({', '.join(sorted(without_source_extra(operation.extras)))}) are not written",
                 severity=LossinessSeverity.INFO,
                 target_mapping="operation details → dropped",
             )
@@ -526,11 +527,11 @@ class _WadlWriter:
             response_el = ET.SubElement(method_el, ET.QName(_WADL_NS, "response"), attributes)
             self._append_representation(response_el, message)
 
-        if operation.extras:
+        if without_source_extra(operation.extras):
             self.losses.record(
                 LossKind.NA, "operation-details-dropped",
                 f"WADL carries the HTTP surface only; {operation.key!r} loses its source-specific details "
-                f"({', '.join(sorted(operation.extras))}).",
+                f"({', '.join(sorted(without_source_extra(operation.extras)))}).",
                 pointer=operation.key,
             )
         self.tracker.record(operation.key, Provenance.SOURCE)
@@ -619,8 +620,9 @@ def _document_details_not_carried(api: CanonicalApi) -> List[str]:
         details.append(f"the version {api.version!r} is not written")
     if api.description:
         details.append("the document description is not written")
-    if api.extras:
-        details.append(f"source-specific details ({', '.join(sorted(api.extras))}) are not written")
+    extras = without_source_extra(api.extras)
+    if extras:
+        details.append(f"source-specific details ({', '.join(sorted(extras))}) are not written")
     return details
 
 
