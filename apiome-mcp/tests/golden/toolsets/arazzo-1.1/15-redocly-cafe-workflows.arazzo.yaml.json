@@ -1,0 +1,50 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Receive the signup event that matches the expected email.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "await-signup",
+      "operation": "await-customer-signup#await-signup"
+    },
+    {
+      "description": "Load the order that the notification refers to.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cafe-api_getOrderById",
+      "operation": "notify-customer#load-order"
+    },
+    {
+      "description": "Fetch the order and confirm it was placed.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cafe-api_getOrderById_2",
+      "operation": "place-order#confirm-order"
+    },
+    {
+      "description": "Place an order for the selected beverage.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cafe-api_createOrder",
+      "operation": "place-order#create-order"
+    },
+    {
+      "description": "List the beverages on the menu and capture the first item.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cafe-api_listMenuItems",
+      "operation": "place-order#find-beverage"
+    }
+  ]
+}

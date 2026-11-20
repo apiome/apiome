@@ -18,7 +18,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `agents-manifest` | Agentic-web Site Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `apiblueprint` | API Blueprint | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `apiblueprint` |
 | `apigee` | Apigee proxy bundle | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `apigee` |
-| `arazzo` | Arazzo | rest | 14 | 11 | 0 | 0 | 25 | 6/6 | 13 | `arazzo` |
+| `arazzo` | Arazzo | rest | 28 | 11 | 0 | 0 | 39 | 6/6 | 27 | `arazzo` |
 | `arrow` | Apache Arrow | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | `arrow` |
 | `asn1` | ASN.1 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `asn1` |
 | `asyncapi` | AsyncAPI | event | 9 | 5 | 0 | 0 | 14 | 6/6 | 7 | `asyncapi` |

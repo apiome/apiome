@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_animals_getRandomAnimal",
+      "operation": "animal-workflow#get-step"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_animals_postAnimal",
+      "operation": "animal-workflow#post-step"
+    }
+  ]
+}

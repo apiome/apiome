@@ -108,7 +108,7 @@ class ArazzoNormalizer(Normalizer, register=True):
             descriptions verbatim, the declared source types and the AsyncAPI ones
             among them (1.1), plus the document-level constructs the canonical model
             has no column for (``components``, ``info.summary``) so an export can
-            rebuild them.
+            rebuild them, and the 1.1 ``$self`` URI.
         """
         extras: Dict[str, Any] = {
             "arazzo": source.get("arazzo"),
@@ -131,6 +131,11 @@ class ArazzoNormalizer(Normalizer, register=True):
         if isinstance(summary, str) and summary:
             # `info.summary` is distinct from `info.description`, which maps onto the model.
             extras["infoSummary"] = summary
+        self_uri = source.get("$self")
+        if isinstance(self_uri, str) and self_uri:
+            # Arazzo 1.1's `$self`: the document's own URI, the base relative references resolve
+            # against (COA-1.4, #7040).
+            extras["self"] = self_uri
         return extras
 
     def _services(self, source: Dict[str, Any]) -> List[Service]:
@@ -177,6 +182,10 @@ class ArazzoNormalizer(Normalizer, register=True):
             }
             if isinstance(workflow.get("inputs"), dict):
                 service_extras["inputs"] = workflow["inputs"]
+            if isinstance(workflow.get("parameters"), list) and workflow["parameters"]:
+                # Workflow-level parameters apply to every step; the OAI
+                # ExtendedParametersExample and Redocly's museum workflows use them (COA-1.4, #7040).
+                service_extras["parameters"] = workflow["parameters"]
             # Workflow-level attributes the Service model has no column for. They are carried
             # verbatim so REPO-3.4 (#2773) can persist them as `api_workflows` columns without
             # re-reading the source document.
@@ -233,6 +242,12 @@ class ArazzoNormalizer(Normalizer, register=True):
             # Arazzo 1.0.0's third target spelling (a pointer into a sourceDescription's
             # document), used by the official LoginAndRetrievePets bundle.
             extras["operationPath"] = step["operationPath"]
+        # Arazzo 1.1's AsyncAPI step fields: the channel pointer (a step target of its own),
+        # the send/receive intent, the correlation id and the step timeout. Without them a
+        # rebuilt export loses the async half of the workflow (COA-1.4, #7040).
+        for key in ("channelPath", "action", "correlationId", "timeout"):
+            if step.get(key) is not None:
+                extras[key] = step[key]
         if step.get("dependsOn"):
             extras["dependsOn"] = step["dependsOn"]
         if step.get("successCriteria") is not None:

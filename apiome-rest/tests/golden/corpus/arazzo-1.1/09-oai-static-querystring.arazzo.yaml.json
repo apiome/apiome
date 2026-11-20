@@ -1,0 +1,105 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "sourceDescriptions": [
+        {
+          "name": "api",
+          "type": "openapi",
+          "url": "https://api.example.com/openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "api": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Querystring Test",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "stepOrder": [
+            "search"
+          ],
+          "workflowId": "testQuerystring",
+          "workflowIndex": 0
+        },
+        "key": "testQuerystring",
+        "name": "testQuerystring",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.api.searchItems",
+              "parameters": [
+                {
+                  "in": "querystring",
+                  "name": "q",
+                  "value": "filter=active&sort=desc"
+                }
+              ],
+              "sourceDescription": "api",
+              "sourceType": "openapi",
+              "stepId": "search",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "testQuerystring#search",
+            "kind": "one_way",
+            "messages": [],
+            "name": "search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "testQuerystring"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Querystring Test",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/09-oai-static-querystring.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:90c5ad791197f932fd9b85de6b053a63310be6cbe3b039d3676713b2d2b18ed1",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "37e087e69fa49963bf84580303d3ac76debf1b9bb7c0696d8e26700a44b6af61",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

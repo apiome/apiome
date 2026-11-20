@@ -1,0 +1,375 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "sourceDescriptions": [
+        {
+          "name": "LocationApi",
+          "type": "openapi",
+          "url": "../openapi/location.yaml"
+        },
+        {
+          "name": "ProductsApi",
+          "type": "openapi",
+          "url": "../openapi/products.yaml"
+        },
+        {
+          "name": "OrdersApi",
+          "type": "openapi",
+          "url": "../openapi/orders.yaml"
+        },
+        {
+          "name": "InventoryApi",
+          "type": "openapi",
+          "url": "../openapi/inventory.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "InventoryApi": "openapi",
+        "LocationApi": "openapi",
+        "OrdersApi": "openapi",
+        "ProductsApi": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Arazzo Workflow",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "inputs": {
+            "properties": {
+              "createOrder": {
+                "properties": {
+                  "requestId": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "requestId"
+                ],
+                "type": "object"
+              },
+              "getLocation": {
+                "properties": {
+                  "userEmail": {
+                    "format": "email",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userEmail"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "createOrder",
+              "getLocation"
+            ],
+            "type": "object"
+          },
+          "outputs": {
+            "orderId": "$steps.getOrderDetail.outputs.orderId",
+            "orderStatus": "$steps.getOrderDetail.outputs.status",
+            "productId": "$steps.getProducts.outputs.productId",
+            "productInventory": "$steps.getProducts.outputs.inventory",
+            "productName": "$steps.getProducts.outputs.name",
+            "productPrice": "$steps.getProducts.outputs.price",
+            "userLocationCode": "$steps.getLocation.outputs.locationCode"
+          },
+          "stepOrder": [
+            "getLocation",
+            "getProducts",
+            "createOrder",
+            "reserveInventory",
+            "getOrderDetail"
+          ],
+          "workflowId": "PlaceOrder",
+          "workflowIndex": 0
+        },
+        "key": "PlaceOrder",
+        "name": "PlaceOrder",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.OrdersApi.createOrder",
+              "outputs": {
+                "orderId": "$response.body#/orderId"
+              },
+              "parameters": [
+                {
+                  "in": "header",
+                  "name": "requestId",
+                  "value": "$inputs.createOrder.requestId"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$specmatic.auth"
+                }
+              ],
+              "requestBody": {
+                "contentType": "application/json",
+                "payload": {
+                  "inventory": "$steps.getProducts.outputs.inventory",
+                  "productId": "$steps.getProducts.outputs.productId",
+                  "userId": "$steps.getLocation.outputs.userId"
+                }
+              },
+              "sourceDescription": "OrdersApi",
+              "sourceType": "openapi",
+              "stepId": "createOrder",
+              "stepIndex": 2,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 201"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "PlaceOrder#createOrder",
+            "kind": "one_way",
+            "messages": [],
+            "name": "createOrder",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "PlaceOrder"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.LocationApi.getLocation",
+              "outputs": {
+                "locationCode": "$response.body#/locationCode",
+                "userId": "$response.body#/userId"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "userEmail",
+                  "value": "$inputs.getLocation.userEmail"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$specmatic.auth"
+                }
+              ],
+              "sourceDescription": "LocationApi",
+              "sourceType": "openapi",
+              "stepId": "getLocation",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "PlaceOrder#getLocation",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getLocation",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "PlaceOrder"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.OrdersApi.getOrderDetail",
+              "outputs": {
+                "orderId": "$response.body#/orderId",
+                "status": "$response.body#/status"
+              },
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "orderId",
+                  "value": "$steps.createOrder.outputs.orderId"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$specmatic.auth"
+                }
+              ],
+              "sourceDescription": "OrdersApi",
+              "sourceType": "openapi",
+              "stepId": "getOrderDetail",
+              "stepIndex": 4,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "PlaceOrder#getOrderDetail",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getOrderDetail",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "PlaceOrder"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "onSuccess": [
+                {
+                  "criteria": [
+                    {
+                      "condition": "$response.body#/0 == null"
+                    }
+                  ],
+                  "name": "IsArrayEmpty",
+                  "type": "end"
+                }
+              ],
+              "operationId": "$sourceDescriptions.ProductsApi.getProducts",
+              "outputs": {
+                "inventory": "$response.body#/0/inventory",
+                "name": "$response.body#/0/name",
+                "price": "$response.body#/0/price",
+                "productId": "$response.body#/0/productId"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "locationCode",
+                  "value": "$steps.getLocation.outputs.locationCode"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$specmatic.auth"
+                }
+              ],
+              "sourceDescription": "ProductsApi",
+              "sourceType": "openapi",
+              "stepId": "getProducts",
+              "stepIndex": 1,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "PlaceOrder#getProducts",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getProducts",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "PlaceOrder"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.InventoryApi.reserveInventory",
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "orderId",
+                  "value": "$steps.createOrder.outputs.orderId"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$specmatic.auth"
+                }
+              ],
+              "sourceDescription": "InventoryApi",
+              "sourceType": "openapi",
+              "stepId": "reserveInventory",
+              "stepIndex": 3,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "PlaceOrder#reserveInventory",
+            "kind": "one_way",
+            "messages": [],
+            "name": "reserveInventory",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "PlaceOrder"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Arazzo Workflow",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/16-specmatic-place-order.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:d0472141115a0f18b0ecf74e59f8f3b0664f7464baa189fa83e80f0db729fbc5",
+  "lint": {
+    "findings": 7,
+    "grade": "C",
+    "report_fingerprint": "c8540be0437d2eb9f136adafd9be0adce4f4473c46a1e8b9c0b9dfbd1379e2fe",
+    "score": 75,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

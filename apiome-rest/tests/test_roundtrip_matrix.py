@@ -21,6 +21,7 @@ Regenerate the artifact with
 from __future__ import annotations
 
 import json
+import re
 from typing import List
 
 import pytest
@@ -29,6 +30,8 @@ from corpus_loader import Rung
 from corpus_roundtrip import (
     ARTIFACT_PATH,
     KNOWN_ROUNDTRIP_XFAILS,
+    KNOWN_UNSUPPORTED_CELLS,
+    _import_entry,
     build_and_run_matrix,
     pick_representative,
     representatives_by_format,
@@ -66,6 +69,7 @@ from app.roundtrip_matrix import (
     normalize_format_key,
     production_emit_targets,
     reconcile,
+    run_roundtrip,
 )
 from app.toolchain_selfcheck import missing_required_tools
 
@@ -190,6 +194,90 @@ def test_reconcile_nested_ok_under_removed_is_overclaim() -> None:
     assert result.matched
     assert any(o.construct_key == "User.email" for o in result.overclaims)
     assert not result.ok
+
+
+def test_reconcile_matches_a_service_and_type_that_share_a_key() -> None:
+    """A CHANGED service must not take the only DROP a REMOVED type of the same key needs (#7040).
+
+    FHIR and OPC UA name a service and a type alike; a greedy first-fit join gave the service the
+    type's DROP and left the type unexplained. The maximum matching seats each on its own finding.
+    """
+    result = reconcile(
+        _diff(
+            CanonicalDiffEntry(entity="service", key="Patient", change=DiffChangeKind.CHANGED),
+            CanonicalDiffEntry(entity="type", key="Patient", change=DiffChangeKind.REMOVED),
+        ),
+        _report(
+            _loss("Patient", LossinessKind.DROP),
+            _loss("Patient", LossinessKind.APPROX),
+        ),
+    )
+    assert result.ok
+    by_entity = {m.entry.entity: m.finding.kind for m in result.matched}
+    assert by_entity == {"service": LossinessKind.APPROX, "type": LossinessKind.DROP}
+
+
+def test_reconcile_reseats_an_earlier_match_to_explain_a_later_entry() -> None:
+    """An augmenting path moves an earlier entry to another finding when that frees one."""
+    result = reconcile(
+        _diff(
+            # Sorted first, and both findings relate to it.
+            CanonicalDiffEntry(entity="operation", key="A", change=DiffChangeKind.CHANGED),
+            # Only the nested DROP relates to this one.
+            CanonicalDiffEntry(entity="type", key="A.b", change=DiffChangeKind.REMOVED),
+        ),
+        _report(
+            _loss("A.b", LossinessKind.DROP),
+            _loss("A", LossinessKind.APPROX),
+        ),
+    )
+    assert result.ok
+    assert len(result.matched) == 2
+
+
+def test_reconcile_uses_each_finding_once() -> None:
+    """One DROP cannot explain two removals."""
+    result = reconcile(
+        _diff(
+            CanonicalDiffEntry(entity="service", key="User", change=DiffChangeKind.REMOVED),
+            CanonicalDiffEntry(entity="type", key="User", change=DiffChangeKind.REMOVED),
+        ),
+        _report(_loss("User", LossinessKind.DROP)),
+    )
+    assert not result.ok
+    assert len(result.matched) == 1
+    assert len(result.unexplained) == 1
+
+
+def test_reconcile_root_matches_only_root_constructs() -> None:
+    """The root ('') entry is explained by a '' or 'root' construct, never by an arbitrary key."""
+    root_change = CanonicalDiffEntry(entity="root", key="", change=DiffChangeKind.CHANGED)
+    assert not reconcile(_diff(root_change), _report(_loss("User", LossinessKind.APPROX))).ok
+    assert reconcile(_diff(root_change), _report(_loss("root", LossinessKind.APPROX))).ok
+    assert reconcile(_diff(root_change), _report(_loss("", LossinessKind.APPROX))).ok
+
+
+def test_reconcile_prefix_lookup_does_not_match_a_sibling_key() -> None:
+    """``Users`` is not nested under ``User``: only an exact key or a ``key.`` prefix relates."""
+    result = reconcile(
+        _diff(CanonicalDiffEntry(entity="type", key="User", change=DiffChangeKind.REMOVED)),
+        _report(_loss("Users", LossinessKind.DROP), _loss("User-x", LossinessKind.DROP)),
+    )
+    assert not result.ok
+
+
+def test_reconcile_handles_a_long_augmenting_chain() -> None:
+    """A chain far longer than the interpreter's recursion limit still matches fully."""
+    size = 3000
+    # Entry i relates to findings i and i+1 (via the nested key); the greedy choice takes finding i
+    # for every entry, and the last one needs the whole chain re-seated by one augmenting path.
+    entries = [
+        CanonicalDiffEntry(entity="type", key=f"K{i:05d}", change=DiffChangeKind.CHANGED) for i in range(size)
+    ]
+    items = [_loss(f"K{i:05d}.x", LossinessKind.APPROX) for i in range(size)]
+    result = reconcile(_diff(*entries), _report(*items))
+    assert result.ok
+    assert len(result.matched) == size
 
 
 def test_import_adapter_for_emit_aliases() -> None:
@@ -403,3 +491,73 @@ def test_xfail_map_entries_refer_to_real_cells(roundtrip_matrix: RoundTripMatrix
     index = roundtrip_matrix.cell_map()
     orphan = [key for key in KNOWN_ROUNDTRIP_XFAILS if key not in index]
     assert not orphan, f"xfail entries with no cell: {orphan}"
+
+
+# ---------------------------------------------------------------------------
+# COA-1.4 (#7040): the Arazzo cells — deliberate refusals and the xfail ratchet
+# ---------------------------------------------------------------------------
+
+#: How many strict xfails involve Arazzo after COA-1.4. The number only goes down: a fix deletes
+#: its entry and lowers this, and a new Arazzo xfail fails here (the issue's "none is added").
+ARAZZO_XFAIL_CEILING = 29
+
+
+def _arazzo_cells(cells) -> List[tuple]:
+    return sorted(key for key in cells if "arazzo" in key)
+
+
+def test_arazzo_xfails_only_shrink() -> None:
+    """The Arazzo row and column hold at most :data:`ARAZZO_XFAIL_CEILING` strict xfails."""
+    arazzo = _arazzo_cells(KNOWN_ROUNDTRIP_XFAILS)
+    assert len(arazzo) <= ARAZZO_XFAIL_CEILING, (
+        f"{len(arazzo)} Arazzo xfails exceed the COA-1.4 ceiling of {ARAZZO_XFAIL_CEILING}: fix the cell "
+        "or explain the loss in the fidelity report instead of listing it"
+    )
+
+
+def test_every_arazzo_xfail_names_a_ticket() -> None:
+    """Each remaining Arazzo xfail says which ticket owns it (``#<number>``)."""
+    unnamed = [
+        key for key in _arazzo_cells(KNOWN_ROUNDTRIP_XFAILS) if not re.search(r"#\d+", KNOWN_ROUNDTRIP_XFAILS[key])
+    ]
+    assert not unnamed, f"Arazzo xfails without a ticket: {unnamed}"
+
+
+def test_deliberate_unsupported_cells_are_not_also_xfails() -> None:
+    """A cell is either a deliberate refusal or a strict xfail, never both."""
+    assert not set(KNOWN_UNSUPPORTED_CELLS) & set(KNOWN_ROUNDTRIP_XFAILS)
+    assert all(re.search(r"#\d+", reason) for reason in KNOWN_UNSUPPORTED_CELLS.values())
+
+
+def test_deliberate_unsupported_cells_appear_unsupported(roundtrip_matrix: RoundTripMatrix) -> None:
+    """The matrix records each deliberate refusal as ``unsupported`` with its documented reason."""
+    index = roundtrip_matrix.cell_map()
+    for key, reason in KNOWN_UNSUPPORTED_CELLS.items():
+        cell = index.get(key)
+        assert cell is not None, f"deliberate cell {key} is not in the matrix"
+        assert cell.status is MatrixCellStatus.UNSUPPORTED
+        assert cell.reason == reason
+
+
+@pytest.mark.parametrize(
+    "source_format,emit_key",
+    sorted(KNOWN_UNSUPPORTED_CELLS),
+    ids=[f"{src}->{emit}" for src, emit in sorted(KNOWN_UNSUPPORTED_CELLS)],
+)
+def test_deliberate_unsupported_cell_is_still_refused(source_format: str, emit_key: str) -> None:
+    """Each deliberate cell's export really is refused, so the list cannot hide a runnable cell.
+
+    The cell is run outside the matrix's unsupported short-circuit: it must fail at the emit step
+    (the emitter's precondition), not pass and not fail later. A target that learns to export the
+    source fails here until its entry leaves :mod:`roundtrip_unsupported`.
+    """
+    entry = representatives_by_format(
+        [e for e in valid_entries() if e.format == source_format]
+    ).get(source_format)
+    if entry is None:
+        pytest.skip(f"no runnable {source_format} representative here (known bugs or missing tools)")
+    target = next(t for t in production_emit_targets() if t.descriptor.key == emit_key)
+    model = _import_entry(entry)
+    cell = run_roundtrip(model, target, source_format=source_format, corpus_path=entry.path)
+    assert cell.status is MatrixCellStatus.FAIL, f"{source_format}->{emit_key} now {cell.status.value}"
+    assert (cell.reason or "").startswith("Emit failed:"), cell.reason

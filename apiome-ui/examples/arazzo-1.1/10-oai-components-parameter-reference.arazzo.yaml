@@ -1,0 +1,25 @@
+# Derived corpus fixture (COA-1.4, #7040), copied unchanged below this header from
+# https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/openapi-parameter-reusable-reference.arazzo.yaml
+# OpenAPI Initiative. Licensed under the Apache License 2.0: https://github.com/OAI/Arazzo-Specification/blob/main/LICENSE
+arazzo: 1.1.0
+info:
+  title: OpenAPI step parameter can use reusable reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      value: 10
+workflows:
+  - workflowId: openapiWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: $sourceDescriptions.userAPI.listUsers
+        parameters:
+          - reference: $components.parameters.limit
+            value: 20

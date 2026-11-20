@@ -64,12 +64,15 @@ SOURCE_TYPE_OPENAPI = "openapi"
 SOURCE_TYPE_ASYNCAPI = "asyncapi"
 SOURCE_TYPE_ARAZZO = "arazzo"
 
-#: Every field a step may use to name what it invokes, in resolution order. ``request`` is
-#: Apiome Studio's older spelling, still present in the shipped 1.0 corpus.
+#: Every field a step may use to name what it invokes, in resolution order. ``channelPath``
+#: is Arazzo 1.1's pointer to an AsyncAPI channel (COA-1.4, #7040). ``request`` is Apiome
+#: Studio's older spelling, still present in the shipped 1.0 corpus, and stays last so error
+#: messages can leave it out.
 STEP_TARGET_FIELDS: Tuple[str, ...] = (
     "operationId",
     "operationRef",
     "operationPath",
+    "channelPath",
     "workflowId",
     "request",
 )
@@ -84,6 +87,11 @@ _SOURCE_EXPRESSION = re.compile(
 _SOURCE_PATH_EXPRESSION = re.compile(
     r"^\{\$sourceDescriptions\.(?P<source>[A-Za-z0-9_-]+)\.url\}"
 )
+
+#: ``$sourceDescriptions.<name>#/channels/...`` — the unbraced ``channelPath`` spelling
+#: (COA-1.4, #7040); the braced ``{$sourceDescriptions.<name>.url}`` form uses
+#: :data:`_SOURCE_PATH_EXPRESSION`.
+_SOURCE_CHANNEL_EXPRESSION = re.compile(r"^\$sourceDescriptions\.(?P<source>[A-Za-z0-9_-]+)#")
 
 #: ``#/sourceDescriptions/<name-or-index>`` — the ``operationRef`` pointer form.
 _SOURCE_POINTER = re.compile(r"^#/sourceDescriptions/(?P<token>[^/]+)")
@@ -246,8 +254,8 @@ class StepTarget:
 
     Attributes:
         kind: Which field named the target — ``operationId``, ``operationRef``,
-            ``operationPath``, ``workflowId`` or ``request`` (the Apiome Studio
-            spelling).
+            ``operationPath``, ``channelPath`` (Arazzo 1.1), ``workflowId`` or ``request``
+            (the Apiome Studio spelling).
         source_name: The ``sourceDescriptions`` entry the target lives in, when the
             step names one; ``None`` for a bare ``operationId`` or a sibling workflow.
         operation_id: The operation identifier within that source, when the step
@@ -311,6 +319,19 @@ def resolve_step_target(
             source_name=match.group("source") if match is not None else None,
         )
 
+    channel_path = step.get("channelPath")
+    if isinstance(channel_path, str) and channel_path.strip():
+        # Arazzo 1.1: a pointer to an AsyncAPI channel. Both the braced `.url}` and the bare
+        # `$sourceDescriptions.<name>#` spellings name the source; a bare channel name (the
+        # OAI schema accepts any string) names none (COA-1.4, #7040).
+        match = _SOURCE_PATH_EXPRESSION.match(channel_path.strip()) or _SOURCE_CHANNEL_EXPRESSION.match(
+            channel_path.strip()
+        )
+        return StepTarget(
+            kind="channelPath",
+            source_name=match.group("source") if match is not None else None,
+        )
+
     workflow_id = step.get("workflowId")
     if isinstance(workflow_id, str) and workflow_id.strip():
         return StepTarget(kind="workflowId")
@@ -352,10 +373,12 @@ def step_is_async(
 ) -> bool:
     """Whether a step waits on a message rather than calling an HTTP operation.
 
-    Two independent signals, either of which is enough: the step targets a
-    ``sourceDescriptions`` entry declared ``type: asyncapi``, or it reads a
-    ``$message.*`` runtime expression in its criteria or outputs. The second is what
-    makes the classification survive a document whose source types are omitted.
+    Three independent signals, any of which is enough: the step names an AsyncAPI channel
+    (``channelPath``, Arazzo 1.1), it targets a ``sourceDescriptions`` entry declared
+    ``type: asyncapi``, or it reads a ``$message.*`` runtime expression in its criteria or
+    outputs. The first and last are what make the classification survive a document whose
+    source types are omitted. ``action`` alone is not a signal: the OAI schema lets an
+    OpenAPI step carry one.
 
     Args:
         step: One workflow step mapping.
@@ -365,6 +388,8 @@ def step_is_async(
     Returns:
         ``True`` when the step has asynchronous semantics.
     """
+    if target is not None and target.kind == "channelPath":
+        return True
     if target is not None and target.source_name and source_types:
         if source_types.get(target.source_name) == SOURCE_TYPE_ASYNCAPI:
             return True
@@ -388,7 +413,7 @@ def validate_arazzo_semantics(document: Mapping[str, Any]) -> None:
 
     Raises:
         ArazzoSemanticError: When a step names no ``operationId``, ``operationRef``,
-            ``operationPath``, ``workflowId`` or ``request``.
+            ``operationPath``, ``channelPath``, ``workflowId`` or ``request``.
     """
     workflows = document.get("workflows")
     if not isinstance(workflows, list):

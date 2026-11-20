@@ -2126,6 +2126,215 @@
       "rung": "typical"
     },
     {
+      "path": "arazzo-1.1/08-oai-querystring-runtime-expression.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "querystring",
+        "runtime-expression"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture parameter-with-querystring-and-runtime-expr.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/parameter-with-querystring-and-runtime-expr.arazzo.yaml",
+      "rung": "stress"
+    },
+    {
+      "path": "arazzo-1.1/09-oai-static-querystring.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "querystring"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture parameter-with-static-querystring.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/parameter-with-static-querystring.arazzo.yaml",
+      "rung": "stress"
+    },
+    {
+      "path": "arazzo-1.1/10-oai-components-parameter-reference.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "components",
+        "components-reference"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture openapi-parameter-reusable-reference.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/openapi-parameter-reusable-reference.arazzo.yaml",
+      "rung": "composition"
+    },
+    {
+      "path": "arazzo-1.1/11-oai-workflow-parameter-reference.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "components",
+        "components-reference",
+        "workflow-parameters"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture workflow-parameter-reusable-reference.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/workflow-parameter-reusable-reference.arazzo.yaml",
+      "rung": "composition"
+    },
+    {
+      "path": "arazzo-1.1/12-oai-channel-path.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "channelPath",
+        "action",
+        "correlationId",
+        "asyncapi-source"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture async-with-channel-path.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/async-with-channel-path.arazzo.yaml",
+      "rung": "stress",
+      "notes": "A step whose only target is `channelPath`; before COA-1.4 (#7040) the importer rejected it as naming nothing to invoke."
+    },
+    {
+      "path": "arazzo-1.1/13-oai-openapi-and-asyncapi.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "asyncapi-source",
+        "mixed-sync-async",
+        "correlationId",
+        "timeout"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture openapi-and-asyncapi.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/openapi-and-asyncapi.arazzo.yaml",
+      "rung": "real-world"
+    },
+    {
+      "path": "arazzo-1.1/14-oai-payload-replacement-selector.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-schema-fixture",
+        "replacements",
+        "selector",
+        "jsonpath"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's Arazzo schema pass fixture payload-replacement-using-selector.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/payload-replacement-using-selector.arazzo.yaml",
+      "rung": "stress"
+    },
+    {
+      "path": "arazzo-1.1/15-redocly-cafe-workflows.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "redocly",
+        "self-uri",
+        "querystring",
+        "channelPath",
+        "selector",
+        "timeout"
+      ],
+      "expected_outcome": "imports",
+      "source": "Redocly/redocly-cli",
+      "license": "MIT",
+      "provenance": "Copied unchanged (below an attribution header) from Redocly CLI's arazzo-1-1-valid-description lint fixture.",
+      "origin": "derived",
+      "source_url": "https://github.com/Redocly/redocly-cli/blob/88ba389effbe49366f90a36b8b17532fbbf76a78/tests/e2e/lint/arazzo-1-1-valid-description/cafe-workflows.yaml",
+      "rung": "real-world"
+    },
+    {
+      "path": "arazzo-1.1/16-specmatic-place-order.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "specmatic",
+        "multi-source",
+        "inputs",
+        "outputs"
+      ],
+      "expected_outcome": "imports",
+      "source": "specmatic/specmatic-arazzo-auth",
+      "license": "MIT",
+      "provenance": "Copied unchanged (below an attribution header) from Specmatic's specmatic-arazzo-auth PlaceOrder workflow.",
+      "origin": "derived",
+      "source_url": "https://github.com/specmatic/specmatic-arazzo-auth/blob/5f275c7965cdd549f328415eadd183f3d7370acd/spec/arazzo/PlaceOrder.arazzo.yaml",
+      "rung": "real-world",
+      "notes": "Its four OpenAPI source descriptions (../openapi/*.yaml) are not vendored; a single-file import leaves them unresolved."
+    },
+    {
       "path": "arazzo-1.1/negative/01-syntactic-unclosed-flow-sequence.yaml",
       "format": "arazzo",
       "adapter_key": "arazzo",
@@ -2296,6 +2505,125 @@
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "arazzo/08-oai-login-and-retrieve-pets.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-example",
+        "operationPath",
+        "inputs",
+        "outputs",
+        "step-outputs"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's LoginAndRetrievePets Arazzo 1.0.0 example.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/LoginAndRetrievePets.arazzo.yaml",
+      "rung": "real-world"
+    },
+    {
+      "path": "arazzo/09-oai-extended-parameters.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-example",
+        "workflow-parameters",
+        "cookie-parameters",
+        "runtime-expression"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's ExtendedParametersExample Arazzo 1.0.0 example.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/ExtendedParametersExample.arazzo.yaml",
+      "rung": "stress",
+      "notes": "Workflow-level `parameters`: COA-1.4 (#7040) taught the normalizer and the rebuild path to keep them."
+    },
+    {
+      "path": "arazzo/10-oai-fapi-par.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "oai-example",
+        "components",
+        "inputs",
+        "requestBody",
+        "replacements"
+      ],
+      "expected_outcome": "imports",
+      "source": "OAI/Arazzo-Specification",
+      "license": "Apache-2.0",
+      "provenance": "Copied unchanged (below an attribution header) from the OpenAPI Initiative's FAPI-PAR Arazzo 1.0.0 example.",
+      "origin": "derived",
+      "source_url": "https://github.com/OAI/Arazzo-Specification/blob/8dd37731bed005b79b4c2f0fd389ee5b3ec068f8/examples/1.0.0/FAPI-PAR.arazzo.yaml",
+      "rung": "real-world"
+    },
+    {
+      "path": "arazzo/11-redocly-museum-api.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "redocly",
+        "arazzo-source",
+        "workflow-parameters",
+        "x-extensions"
+      ],
+      "expected_outcome": "imports",
+      "source": "Redocly/museum-openapi-example",
+      "license": "MIT",
+      "provenance": "Copied unchanged (below an attribution header) from Redocly's museum-openapi-example Arazzo 1.0.0 workflows.",
+      "origin": "derived",
+      "source_url": "https://github.com/Redocly/museum-openapi-example/blob/2770b2b2e59832d245c7b0eb0badf6568d7efb53/arazzo/museum-api.arazzo.yaml",
+      "rung": "real-world",
+      "notes": "Declares an `arazzo`-type source description (museum-tickets.arazzo.yaml) that is not vendored; a single-file import leaves it unresolved."
+    },
+    {
+      "path": "arazzo/12-spectral-ruleset-good-examples.arazzo.yaml",
+      "format": "arazzo",
+      "adapter_key": "arazzo",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "arazzo",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "spectral",
+        "workflow-parameters",
+        "regex",
+        "runtime-expression"
+      ],
+      "expected_outcome": "imports",
+      "source": "stoplightio/spectral",
+      "license": "Apache-2.0",
+      "provenance": "Assembled from the Good Example fragments of Spectral's Arazzo ruleset reference; only their placement in one document is Apiome's.",
+      "origin": "derived",
+      "source_url": "https://github.com/stoplightio/spectral/blob/d5a566f13d831bed76c69c2efe3de7b7a111d6d0/docs/reference/arazzo-rules.md",
       "rung": "stress"
     },
     {

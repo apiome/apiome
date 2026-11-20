@@ -26,6 +26,7 @@ can reuse the same reconcile path.
 
 from __future__ import annotations
 
+import bisect
 import json
 from enum import Enum
 from pathlib import Path
@@ -343,6 +344,89 @@ def _allowed_kinds(change: DiffChangeKind) -> frozenset[LossinessKind]:
     return frozenset({LossinessKind.APPROX, LossinessKind.DROP, LossinessKind.SYNTH})
 
 
+def _candidate_findings(diff: CanonicalDiff, report: LossinessReport) -> List[List[int]]:
+    """For each diff entry, the indices of the findings that could explain it, in report order.
+
+    A finding can explain an entry when its kind is allowed for the change
+    (:func:`_allowed_kinds`) and its construct concerns the entry's key
+    (:func:`construct_relates_to`). Construct keys are looked up through a sorted index — the
+    exact key plus the ``key.`` prefix range — so a large model is not compared all-pairs.
+
+    Args:
+        diff: The empirical difference.
+        report: The fidelity report.
+
+    Returns:
+        One list of finding indices per entry of ``diff.entries``.
+    """
+    ordered = sorted(range(len(report.items)), key=lambda index: report.items[index].construct_key)
+    keys = [report.items[index].construct_key for index in ordered]
+    candidates: List[List[int]] = []
+    for entry in diff.entries:
+        if entry.key == "":
+            related = [index for index, item in enumerate(report.items) if item.construct_key in ("", "root")]
+        else:
+            exact = ordered[bisect.bisect_left(keys, entry.key):bisect.bisect_right(keys, entry.key)]
+            prefix = entry.key + "."
+            nested_low = bisect.bisect_left(keys, prefix)
+            nested_high = bisect.bisect_left(keys, prefix + "\U0010ffff", nested_low)
+            related = sorted({*exact, *ordered[nested_low:nested_high]})
+        allowed = _allowed_kinds(entry.change)
+        candidates.append([index for index in related if report.items[index].kind in allowed])
+    return candidates
+
+
+def _match_findings(diff: CanonicalDiff, report: LossinessReport) -> Dict[int, int]:
+    """Pair diff entries with findings so that as many entries as possible are explained.
+
+    Each finding explains at most one difference. A greedy first-fit pass can strand an entry —
+    a ``CHANGED`` service that takes the only ``DROP`` a ``REMOVED`` type of the same key could
+    use — so this is a maximum bipartite matching (Kuhn's augmenting paths, searched iteratively
+    so a long chain cannot exhaust the interpreter stack): an entry stays unexplained only when no
+    assignment of findings explains it (COA-1.4, #7040).
+
+    Args:
+        diff: The empirical difference.
+        report: The fidelity report.
+
+    Returns:
+        ``{diff entry index: finding index}`` for every explained entry.
+    """
+    candidates = _candidate_findings(diff, report)
+    owner: Dict[int, int] = {}  # finding index → entry index
+    for root in range(len(candidates)):
+        if not candidates[root]:
+            continue
+        seen: set[int] = set()
+        # Depth-first search for an augmenting path; each frame is (entry, next candidate position).
+        stack: List[List[int]] = [[root, 0]]
+        via: Dict[int, int] = {}  # entry index → the finding it would take on the path
+        found = False
+        while stack and not found:
+            frame = stack[-1]
+            entry_index, position = frame
+            options = candidates[entry_index]
+            if position >= len(options):
+                stack.pop()
+                continue
+            frame[1] += 1
+            finding_index = options[position]
+            if finding_index in seen:
+                continue
+            seen.add(finding_index)
+            via[entry_index] = finding_index
+            holder = owner.get(finding_index)
+            if holder is None:
+                found = True
+            else:
+                stack.append([holder, 0])
+        if found:
+            # Flip the path: every entry on the stack takes the finding it reached for.
+            for entry_index, _ in stack:
+                owner[via[entry_index]] = entry_index
+    return {entry_index: finding_index for finding_index, entry_index in owner.items()}
+
+
 def reconcile(diff: CanonicalDiff, report: LossinessReport) -> ReconciliationResult:
     """Join every empirical difference to a fidelity finding that explains it.
 
@@ -359,27 +443,15 @@ def reconcile(diff: CanonicalDiff, report: LossinessReport) -> ReconciliationRes
       ``CHANGED`` entity (report claimed preservation; reality disagrees), or
       whose construct is nested under a ``REMOVED`` entity.
     """
+    explained_by = _match_findings(diff, report)
     matched: List[MatchedDiff] = []
     unexplained: List[CanonicalDiffEntry] = []
-    used_finding_ids: set[int] = set()
-
-    for entry in diff.entries:
-        allowed = _allowed_kinds(entry.change)
-        explanation: Optional[LossItem] = None
-        for item in report.items:
-            if id(item) in used_finding_ids:
-                continue
-            if item.kind not in allowed:
-                continue
-            if not construct_relates_to(item.construct_key, entry.key):
-                continue
-            explanation = item
-            used_finding_ids.add(id(item))
-            break
-        if explanation is None:
+    for entry_index, entry in enumerate(diff.entries):
+        finding_index = explained_by.get(entry_index)
+        if finding_index is None:
             unexplained.append(entry)
         else:
-            matched.append(MatchedDiff(entry=entry, finding=explanation))
+            matched.append(MatchedDiff(entry=entry, finding=report.items[finding_index]))
 
     removed_or_changed = {
         e.key for e in diff.entries if e.change in (DiffChangeKind.REMOVED, DiffChangeKind.CHANGED)

@@ -23,6 +23,7 @@ from corpus_adapter_support import (
     valid_entries,
 )
 from corpus_loader import CorpusEntry, Rung
+from roundtrip_unsupported import DELIBERATE_UNSUPPORTED_CELLS
 from roundtrip_xfails import KNOWN_ROUNDTRIP_XFAILS as _GENERATED_XFAILS
 
 from app.canonical_model import CanonicalApi
@@ -70,7 +71,9 @@ KNOWN_ROUNDTRIP_XFAILS = dict(_GENERATED_XFAILS)
 #: ``(source_format, emit_key) → reason`` for cells that are intentionally
 #: unsupported beyond the automatic "no re-import adapter" / "emitter
 #: unavailable" gates (e.g. a known paradigm mismatch we choose not to run).
-KNOWN_UNSUPPORTED_CELLS: Dict[Tuple[str, str], str] = {}
+#: The deliberate export refusals of :mod:`roundtrip_unsupported` (COA-1.4, #7040);
+#: ``tests/test_roundtrip_matrix.py`` checks each is still refused.
+KNOWN_UNSUPPORTED_CELLS: Dict[Tuple[str, str], str] = dict(DELIBERATE_UNSUPPORTED_CELLS)
 
 
 def updating_matrix(request: object | None = None) -> bool:

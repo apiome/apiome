@@ -1,0 +1,26 @@
+# Derived corpus fixture (COA-1.4, #7040), copied unchanged below this header from
+# https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/payload-replacement-using-selector.arazzo.yaml
+# OpenAPI Initiative. Licensed under the Apache License 2.0: https://github.com/OAI/Arazzo-Specification/blob/main/LICENSE
+arazzo: 1.1.0
+info:
+  title: Payload Replacement
+  version: 1.2.0
+sourceDescriptions:
+  - name: ordersAPI
+    url: https://example.com/orders.yaml
+    type: openapi
+workflows:
+  - workflowId: replaceWorkflow
+    steps:
+      - stepId: submitOrder
+        operationId: createOrder
+        requestBody:
+          contentType: application/json
+          replacements:
+            - target: /order/items/0/id
+              value:
+                context: $steps.previous.outputs
+                selector: $.itemId
+                type:
+                  type: jsonpath
+                  version: rfc9535

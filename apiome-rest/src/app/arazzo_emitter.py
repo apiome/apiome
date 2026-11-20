@@ -28,7 +28,7 @@ round-trips the result.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 from pydantic import Field
@@ -45,7 +45,15 @@ from .arazzo_spec import (
     supports_async_sources,
     validate_arazzo_version,
 )
-from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Operation, OperationKind, Type
+from .canonical_model import (
+    ApiParadigm,
+    CanonicalApi,
+    CanonicalField,
+    Operation,
+    OperationKind,
+    Service,
+    Type,
+)
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -60,7 +68,8 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .import_source import DetectionInput
-from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity, LossItem
+from .normalizer import Keys
 
 __all__ = [
     "ArazzoEmitOptions",
@@ -68,6 +77,8 @@ __all__ = [
     "ArazzoFidelityRulePack",
     "DEFAULT_INFO_VERSION",
     "is_workflow_source",
+    "planned_steps",
+    "reimported_step_keys",
     "synthesized_source_description",
     "validate_arazzo_document",
 ]
@@ -138,6 +149,58 @@ def _names_step_target(operation: Operation) -> bool:
     return any(key in operation.extras for key in STEP_TARGET_FIELDS)
 
 
+def planned_steps(service: Service) -> List[Tuple[str, Operation]]:
+    """The steps a rebuilt document writes for one service, in order (COA-1.4, #7040).
+
+    The single source of truth for both the writer and the fidelity pack, so the report predicts
+    the document the writer produces. A step's id is the operation's ``stepId`` extra (an Arazzo
+    import) or its name; event operations are never steps; when two operations share a step id
+    the later one wins, because a workflow's step ids are unique. The order is the service's
+    recorded ``stepOrder`` when it has one, otherwise declaration order.
+
+    Args:
+        service: A canonical service (one workflow).
+
+    Returns:
+        ``(step id, operation)`` pairs, in the order the steps are written.
+    """
+    operations_by_step: Dict[str, Operation] = {}
+    for operation in service.operations:
+        if operation.kind in _EVENT_OPERATION_KINDS:
+            continue
+        step_id = operation.extras.get("stepId") or operation.name
+        if isinstance(step_id, str) and step_id:
+            operations_by_step[step_id] = operation
+    step_order = service.extras.get("stepOrder")
+    ordered = list(step_order) if isinstance(step_order, list) else list(operations_by_step)
+    planned: List[Tuple[str, Operation]] = []
+    for step_id in ordered:
+        if isinstance(step_id, str) and step_id and step_id in operations_by_step:
+            planned.append((step_id, operations_by_step[step_id]))
+    return planned
+
+
+def reimported_step_keys(api: CanonicalApi) -> Dict[str, str]:
+    """Map each operation a rebuilt document writes to the key its re-import gives it (COA-1.4, #7040).
+
+    The Arazzo importer keys a step ``{workflowId}#{stepId}`` (:meth:`app.normalizer.Keys.workflow_step`),
+    and the writer names each workflow after its service key, so the key is known before the export
+    runs. An operation absent from the map is not written (an event operation, or a step id another
+    operation of the same service also uses).
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        ``{source operation key: re-imported operation key}``.
+    """
+    keys: Dict[str, str] = {}
+    for service in api.services:
+        for step_id, operation in planned_steps(service):
+            keys[operation.key] = Keys.workflow_step(service.key, step_id)
+    return keys
+
+
 def _workflow_services(api: CanonicalApi) -> List[str]:
     """The services a rebuilt document turns into workflows (those with at least one step)."""
     return [svc.name or svc.key for svc in api.services if any(op.kind not in _EVENT_OPERATION_KINDS
@@ -156,15 +219,86 @@ class ArazzoFidelityRulePack(CapabilityRulePack):
     * each operation becomes a step that calls it by id: ``APPROX`` (its parameters, bodies and
       responses stay in the source description), plus ``SYNTH`` when the step's ``operationId`` is
       made up from the operation key; event operations and channels are ``DROP``;
-    * every type declaration is ``DROP`` (Arazzo has no type vocabulary), its fields with it.
+    * every type declaration is ``DROP`` (Arazzo has no type vocabulary), its fields with it;
+    * the re-import's own keys are predicted (COA-1.4, #7040): an Arazzo re-import keys a step
+      ``{workflowId}#{stepId}``, so an operation whose source key differs is ``DROP`` under its old
+      key and ``SYNTH`` under the new one (:func:`reimported_step_keys`); an operation the writer
+      cannot place (a duplicate step id) is ``DROP``; each service becomes a workflow that keeps only
+      its name, description and steps (``APPROX``), or — with no step — is not written (``DROP``);
+      agents and skills have no Arazzo form (``DROP``).
     """
 
     target_label = "Arazzo"
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Note whether the source is a workflow source, then run the drive loop."""
+        """Note whether the source is a workflow source, run the drive loop, then add agent losses."""
         self._workflows_source = _is_arazzo_source(api)
-        return super().evaluate(api)
+        self._step_keys = {} if self._workflows_source else reimported_step_keys(api)
+        report = super().evaluate(api)
+        if self._workflows_source or not api.agents:
+            return report
+        return LossinessReport(items=[*report.items, *self._agent_items(api)])
+
+    @staticmethod
+    def _agent_items(api: CanonicalApi) -> List[LossItem]:
+        """``DROP`` for each agent descriptor and skill: Arazzo describes workflows, not agents."""
+        items: List[LossItem] = []
+        for agent in api.agents:
+            items.append(LossItem(
+                construct_key=agent.key,
+                kind=LossinessKind.DROP,
+                severity=LossinessSeverity.WARN,
+                message=f"Arazzo has no agent descriptor; agent {agent.key!r} is not written",
+                target_mapping="agent → dropped",
+            ))
+            for skill in agent.skills:
+                items.append(LossItem(
+                    construct_key=skill.key,
+                    kind=LossinessKind.DROP,
+                    severity=LossinessSeverity.INFO,
+                    message=(
+                        f"Arazzo has no agent skills; skill {skill.key!r} is not written "
+                        "(the operation behind it becomes a workflow step)"
+                    ),
+                    target_mapping="skill → dropped",
+                ))
+        return items
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """A non-workflow source's service becomes a workflow (``APPROX``), or is not written (``DROP``)."""
+        if getattr(self, "_workflows_source", True):
+            return []
+        if not planned_steps(service):
+            return [FidelityVerdict.drop(
+                message=f"Arazzo: service {service.key!r} has no operation to sequence, so no workflow is written",
+                severity=LossinessSeverity.WARN,
+                target_mapping="service → not written",
+            )]
+        return [FidelityVerdict.approx(
+            message=(
+                f"Arazzo writes service {service.key!r} as workflow {service.key!r}; only its name, description "
+                "and steps are kept"
+            ),
+            severity=LossinessSeverity.INFO,
+            target_mapping="service → workflow",
+        )]
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The step keys a re-import gives operations whose source key differs (``SYNTH``)."""
+        if getattr(self, "_workflows_source", True):
+            return []
+        return [
+            (new_key, FidelityVerdict.synth(
+                message=(
+                    f"Arazzo: the step written for {old_key!r} re-imports as {new_key!r} "
+                    "({workflowId}#{stepId})"
+                ),
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{old_key} → {new_key}",
+            ))
+            for old_key, new_key in sorted(self._step_keys.items())
+            if new_key != old_key
+        ]
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """The workflows-only warning, the synthesized workflows, or the near-empty document."""
@@ -223,13 +357,33 @@ class ArazzoFidelityRulePack(CapabilityRulePack):
         verdict = super().operation_verdict(operation)
         if verdict.kind is not LossinessKind.OK or getattr(self, "_workflows_source", True):
             return [verdict]
-        verdicts = [FidelityVerdict.approx(
+        new_key = self._step_keys.get(operation.key)
+        if new_key is None:
+            return [FidelityVerdict.drop(
+                message=(
+                    f"Arazzo: another operation of the same service writes the step id of {operation.key!r}; "
+                    "step ids are unique within a workflow, so it is not written"
+                ),
+                severity=LossinessSeverity.WARN,
+                target_mapping="operation → not written (duplicate step id)",
+            )]
+        verdicts: List[FidelityVerdict] = []
+        if new_key != operation.key:
+            verdicts.append(FidelityVerdict.drop(
+                message=(
+                    f"Arazzo writes {operation.key!r} as a workflow step; a re-import keys it {new_key!r}, so the "
+                    "source key does not survive"
+                ),
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{operation.key} → {new_key}",
+            ))
+        verdicts.append(FidelityVerdict.approx(
             message=(
                 f"Arazzo writes {operation.key!r} as a workflow step that calls it by id; its parameters, request "
                 "and response schemas stay in the source description and are not written"
             ),
             target_mapping="operation → workflow step",
-        )]
+        ))
         if not _names_step_target(operation):
             verdicts.append(FidelityVerdict.synth(
                 message=(
@@ -242,7 +396,8 @@ class ArazzoFidelityRulePack(CapabilityRulePack):
         return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        """The first of :meth:`operation_verdicts` (the step itself, or the capability ``DROP``)."""
+        """The first of :meth:`operation_verdicts`: the capability or placement ``DROP``, the re-key
+        ``DROP`` when the step's key changes, otherwise the step itself (``APPROX``)."""
         return self.operation_verdicts(operation)[0]
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
@@ -529,11 +684,22 @@ class _ArazzoWriter:
         if self._api.description:
             info["description"] = self._api.description
 
-        document: Dict[str, Any] = {
-            "arazzo": self.version,
-            "info": info,
-            "workflows": self._workflows_from_services(),
-        }
+        document: Dict[str, Any] = {"arazzo": self.version}
+        self_uri = self._api.extras.get("self")
+        if isinstance(self_uri, str) and self_uri:
+            # Arazzo 1.1's `$self` (COA-1.4, #7040); it has no 1.0 spelling, so a 1.0 target
+            # leaves it out and records the loss.
+            if parse_arazzo_version(self.version) >= (1, 1):
+                document["$self"] = self_uri
+            else:
+                self.losses.record(
+                    LossKind.NA,
+                    "self-needs-1-1",
+                    f"Arazzo {self.version} has no `$self`; the document URI {self_uri!r} is not written.",
+                    pointer="$self",
+                )
+        document["info"] = info
+        document["workflows"] = self._workflows_from_services()
         source_descriptions = self._api.extras.get("sourceDescriptions")
         if isinstance(source_descriptions, list) and source_descriptions:
             document["sourceDescriptions"] = source_descriptions
@@ -577,11 +743,16 @@ class _ArazzoWriter:
             summary = service.extras.get("summary")
             if isinstance(summary, str) and summary:
                 workflow["summary"] = summary
-            if service.description:
+            # The normalizer falls back to `summary` for the Service description, so a workflow
+            # with only a summary would otherwise gain a copy of it as `description` (COA-1.4, #7040).
+            if service.description and service.description != summary:
                 workflow["description"] = service.description
             inputs = service.extras.get("inputs")
             if isinstance(inputs, dict):
                 workflow["inputs"] = inputs
+            parameters = service.extras.get("parameters")
+            if isinstance(parameters, list) and parameters:
+                workflow["parameters"] = parameters
             depends_on = service.extras.get("dependsOn")
             if isinstance(depends_on, list) and depends_on:
                 workflow["dependsOn"] = depends_on
@@ -593,29 +764,9 @@ class _ArazzoWriter:
             if isinstance(outputs, dict) and outputs:
                 workflow["outputs"] = outputs
 
-            step_order = service.extras.get("stepOrder")
-            operations_by_step: Dict[str, Any] = {}
-            for operation in service.operations:
-                if operation.kind in _EVENT_OPERATION_KINDS:
-                    continue
-                step_id = operation.extras.get("stepId") or operation.name
-                if isinstance(step_id, str) and step_id:
-                    operations_by_step[step_id] = operation
-
-            ordered_step_ids = (
-                list(step_order)
-                if isinstance(step_order, list)
-                else list(operations_by_step.keys())
-            )
             steps: List[Dict[str, Any]] = []
-            for step_id in ordered_step_ids:
-                if not isinstance(step_id, str) or not step_id:
-                    continue
-                operation = operations_by_step.get(step_id)
-                if operation is None:
-                    continue
-                step = self._step_from_operation(operation, step_id)
-                steps.append(step)
+            for step_id, operation in planned_steps(service):
+                steps.append(self._step_from_operation(operation, step_id))
                 self.tracker.record(operation.key, Provenance.SOURCE)
             if not steps and not _is_arazzo_source(self._api):
                 # A synthesized workflow with no step (a service of event operations only) is not a
@@ -645,6 +796,11 @@ class _ArazzoWriter:
             # carried by the normalizer, so emitting them keeps the round trip lossless
             # (REPO-3.4, #2773).
             "operationPath",
+            # Arazzo 1.1's AsyncAPI step fields (COA-1.4, #7040).
+            "channelPath",
+            "action",
+            "correlationId",
+            "timeout",
             "workflowId",
             "dependsOn",
             "successCriteria",

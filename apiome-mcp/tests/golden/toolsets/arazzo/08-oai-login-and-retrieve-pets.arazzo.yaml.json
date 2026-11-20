@@ -1,0 +1,23 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "retrieve a pet by status from the GET pets endpoint",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getPetStep",
+      "operation": "loginUserRetrievePet#getPetStep"
+    },
+    {
+      "description": "This step demonstrates the user login step",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_petStoreDescription_loginUser",
+      "operation": "loginUserRetrievePet#loginStep"
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.0.0",
+      "sourceDescriptions": [
+        {
+          "name": "animals",
+          "type": "openapi",
+          "url": "./animals.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "animals": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Public Zoo API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "parameters": [
+            {
+              "in": "cookie",
+              "name": "workflowLevelParamOne",
+              "value": "someValue"
+            },
+            {
+              "in": "header",
+              "name": "workflowLevelParamTwo",
+              "value": "someValue"
+            }
+          ],
+          "stepOrder": [
+            "post-step",
+            "get-step"
+          ],
+          "workflowId": "animal-workflow",
+          "workflowIndex": 0
+        },
+        "key": "animal-workflow",
+        "name": "animal-workflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.animals.getRandomAnimal",
+              "sourceDescription": "animals",
+              "sourceType": "openapi",
+              "stepId": "get-step",
+              "stepIndex": 1
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "animal-workflow#get-step",
+            "kind": "one_way",
+            "messages": [],
+            "name": "get-step",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "animal-workflow"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "operationId": "$sourceDescriptions.animals.postAnimal",
+              "parameters": [
+                {
+                  "in": "cookie",
+                  "name": "authentication",
+                  "value": "SUPER_SECRET"
+                }
+              ],
+              "sourceDescription": "animals",
+              "sourceType": "openapi",
+              "stepId": "post-step",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "animal-workflow#post-step",
+            "kind": "one_way",
+            "messages": [],
+            "name": "post-step",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "animal-workflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Public Zoo API",
+    "types": [],
+    "version": "1.0"
+  },
+  "corpus_path": "arazzo/09-oai-extended-parameters.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:c52bc874d6a6f680e2faa5fbdbab1656680c3f102fc8fb7d8009628cdf4a6278",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "cfe9b3f234cc5eb207a46861301cc1d3756745a2f00e1c25eb6547c70e73bcca",
+    "score": 83,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

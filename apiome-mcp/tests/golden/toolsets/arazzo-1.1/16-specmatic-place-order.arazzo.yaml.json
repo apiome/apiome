@@ -1,0 +1,45 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_OrdersApi_createOrder",
+      "operation": "PlaceOrder#createOrder"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_LocationApi_getLocation",
+      "operation": "PlaceOrder#getLocation"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_OrdersApi_getOrderDetail",
+      "operation": "PlaceOrder#getOrderDetail"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_ProductsApi_getProducts",
+      "operation": "PlaceOrder#getProducts"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_InventoryApi_reserveInventory",
+      "operation": "PlaceOrder#reserveInventory"
+    }
+  ]
+}

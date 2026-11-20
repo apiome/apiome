@@ -1,0 +1,18 @@
+# Derived corpus fixture (COA-1.4, #7040), copied unchanged below this header from
+# https://github.com/OAI/Arazzo-Specification/blob/620ec8ca28e5041d39259fc185c05f2ba356de05/tests/schema/pass/async-with-channel-path.arazzo.yaml
+# OpenAPI Initiative. Licensed under the Apache License 2.0: https://github.com/OAI/Arazzo-Specification/blob/main/LICENSE
+arazzo: 1.1.0
+info:
+  title: Minimal Arazzo Example for AsyncAPI
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: step1
+        channelPath: createUser
+        action: receive
+        correlationId: id123

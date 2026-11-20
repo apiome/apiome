@@ -8,7 +8,10 @@ report as the capability rules make it, and for any other (non-workflow) source:
 * marks the workflows synthesized from services (``SYNTH``), or a source with nothing to sequence as
   a near-empty document (``DROP``);
 * writes each operation as a step (``APPROX``), with a ``SYNTH`` when its ``operationId`` is made up;
-* drops type declarations and channels.
+* drops type declarations and channels;
+* predicts the re-import's own keys (COA-1.4, #7040): a step is keyed ``{workflowId}#{stepId}``, so an
+  operation whose key changes is ``DROP`` under the old key and ``SYNTH`` under the new one, a service
+  becomes a workflow (``APPROX``) or is not written (``DROP``), and agents and skills are dropped.
 
 The writer records the same losses, and every corpus export still re-imports as Arazzo.
 """
@@ -19,9 +22,13 @@ from pathlib import Path
 from typing import Dict, List
 
 import pytest
+import yaml
 
 from app.arazzo_emitter import WORKFLOWS_ONLY_WARNING, ArazzoEmitter, validate_arazzo_document
+from app.arazzo_roundtrip import round_trip_arazzo
 from app.canonical_model import (
+    AgentDescriptor,
+    AgentSkill,
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
@@ -143,8 +150,9 @@ def test_a_source_with_nothing_to_sequence_is_reported_near_empty_and_refused(op
 
 def test_each_operation_becomes_a_step_and_a_made_up_target_is_synthesized() -> None:
     api = _rest_api()
-    assert _kinds(api, "GET /orders") == {LossinessKind.APPROX}  # it names its own operationId
-    assert _kinds(api, "POST /orders") == {LossinessKind.APPROX, LossinessKind.SYNTH}
+    # Both become steps; the re-import keys them `orders#…`, so each also loses its source key (#7040).
+    assert _kinds(api, "GET /orders") == {LossinessKind.APPROX, LossinessKind.DROP}  # names its operationId
+    assert _kinds(api, "POST /orders") == {LossinessKind.APPROX, LossinessKind.DROP, LossinessKind.SYNTH}
     step = next(i for i in _items(api)["POST /orders"] if i.kind is LossinessKind.SYNTH)
     assert "operationId is the canonical operation key" in step.message
 
@@ -154,7 +162,81 @@ def test_event_operations_and_channels_are_dropped() -> None:
                _op("orderPlaced", kind=OperationKind.PUBLISH, channel_ref="orders"),
                channels=[Channel(key="orders", name="orders", address="orders")])
     assert _kinds(api, "orderPlaced") == {LossinessKind.DROP}
-    assert _kinds(api, "orders") == {LossinessKind.DROP}
+    # The channel shares its key with the service, which becomes a workflow (APPROX, #7040).
+    channel = [i for i in _items(api)["orders"] if i.target_mapping == "channel → dropped"]
+    assert [i.kind for i in channel] == [LossinessKind.DROP]
+
+
+# ===========================================================================
+# The re-import's own keys are predicted — COA-1.4 (#7040)
+# ===========================================================================
+
+
+def test_a_rekeyed_operation_is_dropped_under_its_old_key_and_synthesized_under_the_new() -> None:
+    """The Arazzo importer keys a step `{workflowId}#{stepId}`; the report names both keys."""
+    items = _items(_rest_api())
+    drop = next(i for i in items["GET /orders"] if i.kind is LossinessKind.DROP)
+    assert drop.target_mapping == "GET /orders → orders#GET /orders"
+    [synth] = items["orders#GET /orders"]
+    assert synth.kind is LossinessKind.SYNTH and "re-imports as 'orders#GET /orders'" in synth.message
+
+
+def test_an_operation_whose_key_survives_is_not_dropped() -> None:
+    """An Arazzo-shaped key (`service#step`) re-imports unchanged, so only the step APPROX is reported."""
+    api = _api(_op("orders#list", extras={"stepId": "list", "operationId": "listOrders"}))
+    assert _kinds(api, "orders#list") == {LossinessKind.APPROX}
+
+
+def test_an_operation_that_shares_a_step_id_is_reported_as_not_written() -> None:
+    """Step ids are unique in a workflow; the writer keeps the later operation, and the report agrees."""
+    first = _op("GET /a", extras={"stepId": "same"})
+    second = _op("GET /b", extras={"stepId": "same"})
+    api = _api(first, second)
+    assert _kinds(api, "GET /a") == {LossinessKind.DROP}
+    assert "duplicate step id" in _items(api)["GET /a"][0].target_mapping
+    assert LossinessKind.APPROX in _kinds(api, "GET /b")
+    document = yaml.safe_load(ArazzoEmitter().emit(api).files[0].content)
+    assert [step["operationId"] for step in document["workflows"][0]["steps"]] == ["GET /b"]
+
+
+def test_a_service_becomes_a_workflow_and_a_service_with_no_step_is_not_written() -> None:
+    events = Service(key="events", name="Events", operations=[
+        _op("orderPlaced", kind=OperationKind.PUBLISH, channel_ref="orders")])
+    api = _rest_api()
+    api = api.model_copy(update={"services": [*api.services, events]})
+    assert _kinds(api, "orders") == {LossinessKind.APPROX}
+    assert _kinds(api, "events") == {LossinessKind.DROP}
+
+
+def test_agents_and_skills_are_dropped() -> None:
+    agent = AgentDescriptor(key="Concierge", name="Concierge", protocol="a2a", skills=[
+        AgentSkill(key="Concierge.search", name="search", id="search")])
+    api = _rest_api().model_copy(update={"agents": [agent]})
+    assert _kinds(api, "Concierge") == {LossinessKind.DROP}
+    assert _kinds(api, "Concierge.search") == {LossinessKind.DROP}
+
+
+def test_an_arazzo_source_gets_no_rekey_or_agent_findings() -> None:
+    api = _rest_api().model_copy(update={"format": "arazzo"})
+    items = _items(api)
+    assert "orders#GET /orders" not in items
+    assert "orders" not in items
+
+
+@pytest.mark.parametrize(
+    ("path", "fmt"),
+    [
+        ("openapi/30-openapi-3.0-petstore.yaml", "openapi"),
+        ("graphql/06-union-types.graphql", "graphql"),
+        ("raml/01-simple-api.raml", "raml"),
+    ],
+)
+def test_corpus_exports_round_trip_with_every_difference_explained(path: str, fmt: str) -> None:
+    """Export → re-import → diff: every difference matches a finding, and none over-claims (#7040)."""
+    api = _corpus_api(_EXAMPLES / path, fmt)
+    report = round_trip_arazzo(api)
+    assert report.reimported
+    assert report.unexplained == [] and report.overclaims == []
 
 
 def test_types_are_dropped_with_their_fields() -> None:

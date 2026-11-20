@@ -1,0 +1,180 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": "This workflow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.\n",
+    "extras": {
+      "arazzo": "1.0.0",
+      "infoSummary": "This workflow showcases how to purchase a pet through a sequence of API calls",
+      "sourceDescriptions": [
+        {
+          "name": "petStoreDescription",
+          "type": "openapi",
+          "url": "https://raw.githubusercontent.com/swagger-api/swagger-petstore/master/src/main/resources/openapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "petStoreDescription": "openapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "A pet purchasing workflow",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "This procedure lays out the steps to login a user and then retrieve pets",
+        "extras": {
+          "inputs": {
+            "properties": {
+              "password": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "outputs": {
+            "available": "$steps.getPetStep.outputs.availablePets"
+          },
+          "stepOrder": [
+            "loginStep",
+            "getPetStep"
+          ],
+          "summary": "Login User and then retrieve pets",
+          "workflowId": "loginUserRetrievePet",
+          "workflowIndex": 0
+        },
+        "key": "loginUserRetrievePet",
+        "name": "loginUserRetrievePet",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "retrieve a pet by status from the GET pets endpoint",
+            "extras": {
+              "operationPath": "{$sourceDescriptions.petStoreDescription.url}#/paths/~1pet~1findByStatus",
+              "outputs": {
+                "availablePets": "$response.body"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "status",
+                  "value": "available"
+                },
+                {
+                  "in": "header",
+                  "name": "Authorization",
+                  "value": "$steps.loginStep.outputs.sessionToken"
+                }
+              ],
+              "sourceDescription": "petStoreDescription",
+              "sourceType": "openapi",
+              "stepId": "getPetStep",
+              "stepIndex": 1,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "loginUserRetrievePet#getPetStep",
+            "kind": "one_way",
+            "messages": [],
+            "name": "getPetStep",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "loginUserRetrievePet"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "This step demonstrates the user login step",
+            "extras": {
+              "operationId": "$sourceDescriptions.petStoreDescription.loginUser",
+              "outputs": {
+                "rateLimit": "$response.header.X-Rate-Limit",
+                "sessionToken": "$response.body",
+                "tokenExpires": "$response.header.X-Expires-After"
+              },
+              "parameters": [
+                {
+                  "in": "query",
+                  "name": "username",
+                  "value": "$inputs.username"
+                },
+                {
+                  "in": "query",
+                  "name": "password",
+                  "value": "$inputs.password"
+                }
+              ],
+              "sourceDescription": "petStoreDescription",
+              "sourceType": "openapi",
+              "stepId": "loginStep",
+              "stepIndex": 0,
+              "successCriteria": [
+                {
+                  "condition": "$statusCode == 200"
+                }
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "loginUserRetrievePet#loginStep",
+            "kind": "one_way",
+            "messages": [],
+            "name": "loginStep",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "loginUserRetrievePet"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "A pet purchasing workflow",
+    "types": [],
+    "version": "1.0.1"
+  },
+  "corpus_path": "arazzo/08-oai-login-and-retrieve-pets.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:d08a6037cf76f06cdd992f6d90da7a7b4ab9fad65cb88355c5a369d15129685a",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

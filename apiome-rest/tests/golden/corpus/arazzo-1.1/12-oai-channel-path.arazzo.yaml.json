@@ -1,0 +1,102 @@
+{
+  "adapter": "arazzo",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "arazzo": "1.1.0",
+      "asyncSources": [
+        "exampleAPI"
+      ],
+      "sourceDescriptions": [
+        {
+          "name": "exampleAPI",
+          "type": "asyncapi",
+          "url": "https://example.com/asyncapi.yaml"
+        }
+      ],
+      "sourceTypes": {
+        "exampleAPI": "asyncapi"
+      }
+    },
+    "format": "arazzo",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Minimal Arazzo Example for AsyncAPI",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "stepOrder": [
+            "step1"
+          ],
+          "workflowId": "basicWorkflow",
+          "workflowIndex": 0
+        },
+        "key": "basicWorkflow",
+        "name": "basicWorkflow",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "action": "receive",
+              "asyncStep": true,
+              "channelPath": "createUser",
+              "correlationId": "id123",
+              "stepId": "step1",
+              "stepIndex": 0
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "basicWorkflow#step1",
+            "kind": "one_way",
+            "messages": [],
+            "name": "step1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "basicWorkflow"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Minimal Arazzo Example for AsyncAPI",
+    "types": [],
+    "version": "1.0.0"
+  },
+  "corpus_path": "arazzo-1.1/12-oai-channel-path.arazzo.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "arazzo"
+  },
+  "fingerprint": "sha256:e03f4bb491315408e8ac88caeaef94c69ad66e5be47da000bcb03570be4a5ea2",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "fba24907ae39258da0947fbc6559e0d08a2928ea3864b6781dc1fff5d17bd72f",
+    "score": 91,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}
