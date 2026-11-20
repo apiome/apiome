@@ -660,6 +660,24 @@ def version_lint_gate(
     return f"{version_record(tenant_slug, project_id, version_id)}/lint/gate"
 
 
+def version_lint_fixes(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Lint-fix plan over a stored revision (GET .../lint/fixes, GVM-3.2)."""
+    return f"{version_record(tenant_slug, project_id, version_id)}/lint/fixes"
+
+
+def version_lint_fixes_apply(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Apply lint fixes as a new revision (POST .../lint/fixes/apply, GVM-3.2)."""
+    return f"{version_lint_fixes(tenant_slug, project_id, version_id)}/apply"
+
+
 def version_lint_evidence(
     tenant_slug: str,
     project_id: str | UUID,

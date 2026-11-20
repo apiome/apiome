@@ -1,0 +1,29 @@
+---
+slug: lint-fix-cli
+title: "Fix lint findings from the CLI with apiome lint --fix"
+description: "Preview deterministic lint fixes as a diff, then apply them as a new revision."
+authors: [apiome]
+---
+
+`apiome lint --fix` brings the deterministic lint fixes to the command line: run it, read the
+diff, apply.
+
+{/* truncate */}
+
+- **Preview first:** `apiome lint --project P --version V --fix --dry-run` prints the plan and a
+  unified diff of the document before and after the ready fixes, and writes nothing.
+  `--fix-format patch` or `overlay` prints the change as one JSON Patch or an Overlay 1.0
+  document instead, and `-o` writes it to a file.
+- **Apply as a new revision:** without `--dry-run`, the ready fixes are applied as a new revision
+  and its id, score and grade are printed. The revision you planned on is never changed.
+- **Choose the fixes:** `--only rule,rule` fixes only the named rules (an unknown rule id is
+  refused) and `--allow-renames` includes rename fixes. A **breaking** fix is never applied,
+  whatever the flags.
+- **Exit codes for CI:** `0` when nothing is left to fix, `3` when breaking or conflicting fixes
+  remain for a person (never on a dry run), `2` for a refused request and `1` for an error.
+  `--json` prints the plan.
+
+Fixing a local file in place, keeping its YAML comments and key order, follows the local-file
+lint of `apiome lint <file>`.
+
+See [Fix from the CLI](/build/auto-fix#fix-from-the-cli).

@@ -29,6 +29,12 @@ Subcommands: [`evidence`](#lint-evidence), [`gate`](#lint-gate), [`verify-attest
 | `--base-version` | text |  |  | Optional base version (UUID, slug, or label) to flag breaking changes against. |
 | `--min-grade` | text |  |  | Exit non-zero when the grade is worse than this (A best, F worst). |
 | `--fail-on-policy` | flag |  |  | Fetch lint policy evaluation and exit non-zero when policy gates fail. |
+| `--fix` | flag |  |  | Apply the version's deterministic lint fixes as a new revision. |
+| `--dry-run` | flag |  |  | With --fix: print the change (a unified diff by default) and write nothing. |
+| `--only` | text |  |  | With --fix: fix only these rule ids (comma-separated); an unknown id is refused. |
+| `--allow-renames` | flag |  |  | With --fix: include rename fixes. A breaking fix is never applied. |
+| `--fix-format` | text | `diff` |  | With --fix: how the change is printed or written: diff \| patch \| overlay. |
+| `--output`, `-o` | path |  |  | With --fix: write the change (--fix-format) to this file. |
 
 ## apiome lint evidence {#lint-evidence}
 
