@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.773.0] - 2026-11-19
+
+### Added
+- **Run an Arazzo workflow against a target — OpenAPI 1.604.0 (COA-1.7, #7043):**
+  `POST /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/run` executes a
+  stored workflow end to end against an ECA-1.2 verification target (a deployment or a `mock`
+  target) and returns a per-step report (`ArazzoWorkflowRunResponse`).
+  - `app.arazzo_runtime_expression`: runtime expressions (`$statusCode`, `$url`, `$method`,
+    `$request.*`, `$response.header.*`, `$response.body#/pointer`, `$inputs.*`, `$outputs.*`,
+    `$steps.<id>.outputs.*`, `$components.*`, `{$…}` templates) and success criteria (`simple`
+    with `==`/`!=`/`<`/`<=`/`>`/`>=`/`&&`/`||`/`!`, `regex`, `jsonpath`; `xpath` reported as
+    unsupported). Each criterion records its expected and actual values.
+  - `app.arazzo_workflow_run`: compiles the workflow into an ordered run (workflow-level and
+    `components` parameters, request body `payload` + `replacements`, an implicit 2XX check for a
+    step with no criteria) and follows `end`, `goto` (to a step) and `retry` actions (`retryLimit`
+    default 1, `retryAfter` capped at 10 s, 100 step executions per run).
+  - Safety is the CTG-4.3 model: a mutating step needs the target policy, `verification.allow_mutating`
+    and a `MutatingFixture` naming its operation (or the step, by `case_id`); otherwise the whole run
+    is refused before anything is sent (`ok: false`, `refusals[]` with `mutating-method-blocked` /
+    `mutating-fixture-missing`). Unresolved steps, nested-workflow steps and inputs failing the
+    workflow's `inputs` schema are refused the same way.
+  - Every executed run is recorded as ECA-1.3 evidence (runner `apiome-arazzo-runner`, one
+    operation per executed step, criteria as assertions); `Database.get_arazzo_components` reads
+    the document's `components`.
+
 ## [1.772.0] - 2026-11-19
 
 ### Added

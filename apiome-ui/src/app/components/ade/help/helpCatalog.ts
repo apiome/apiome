@@ -913,10 +913,19 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'arazzo-workflows',
     title: 'Arazzo workflows',
-    summary: 'Read an Arazzo workflow as steps, inputs, outputs and success and failure paths.',
+    summary: "Read an Arazzo workflow's steps and paths, then run it against a target.",
     page: 'apiome-docs/docs/build/arazzo-workflows.mdx',
     section: 'reference',
-    keywords: ['steps', 'step graph', 'sourceDescriptions', 'operationRef', 'goto', 'retry'],
+    keywords: [
+      'steps',
+      'step graph',
+      'sourceDescriptions',
+      'operationRef',
+      'goto',
+      'retry',
+      'arazzo run',
+      'successCriteria',
+    ],
   },
   {
     id: 'postman-import',

@@ -99,10 +99,11 @@ consumers and imports Pact files.
 | Know *whose* build a change breaks ("breaks billing-service") | `apiome diff --consumers` | [`apiome diff`](../reference/cli/diff.md) |
 | Call a live deployment and report every response that does not match the spec | Provider verification, `apiome verify contract` | [`apiome verify`](../reference/cli/verify.md), [Contract assurance API](../reference/rest/contract-assurance.md) |
 | Re-check a deployment on a schedule, and hear when it drifts or recovers | Verification schedules, with `verification.drift.detected` and `verification.drift.resolved` webhooks | [Contract assurance API](../reference/rest/contract-assurance.md) |
+| Run an Arazzo workflow's steps, in order, against a deployment or a mock | `apiome arazzo run` | [Run a workflow against a target](../build/arazzo-workflows.mdx#run-a-workflow-against-a-target) |
 | Ask "can I promote this version?" in one call | The deploy gate | [Deploy gate API](../reference/rest/deploy-gate.md) |
 
-Provider verification sends only `GET`, `HEAD` and `OPTIONS` requests unless the target allows
-changes, the run asks for them, and a fixture names the operation.
+Provider verification and Arazzo workflow runs send only `GET`, `HEAD` and `OPTIONS` requests
+unless the target allows changes, the run asks for them, and a fixture names the operation.
 
 The deploy gate combines the lint grade, the breaking-change status, broken consumers, how
 recently the deployment was verified and the version's

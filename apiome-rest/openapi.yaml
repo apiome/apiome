@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.603.0
+  version: 1.604.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -45758,6 +45758,107 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get workflow step operationresponse422.
+  /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/run:
+    post:
+      tags:
+      - arazzo-workflows
+      summary: Run an Arazzo workflow against a verification target
+      description: 'Execute one stored workflow end to end against an ECA-1.2 verification
+        target (a deployment, or a `mock` environment target): steps run in order, each
+        request built from the workflow `inputs` and earlier steps'' `outputs` through
+        runtime expressions; each step''s `successCriteria` are judged as assertions
+        with expected-vs-actual values; `onSuccess` / `onFailure` `end`, `goto` and
+        `retry` actions are followed.
+
+
+        **Safe by default (CTG-4.3).** A step that sends `POST`/`PUT`/`PATCH`/`DELETE`
+        runs only when the target policy allows mutating methods, `verification.allow_mutating`
+        is set **and** a fixture names the step''s operation (or the step, by `case_id`).
+        Otherwise the run is refused before anything is sent: **200** with `ok: false`
+        and every reason in `refusals` (also used for unresolved steps, nested-workflow
+        steps and inputs that fail the workflow''s `inputs` schema).
+
+
+        An executed run is recorded as immutable ECA-1.3 evidence (**201**; **200**
+        on an idempotent replay) whatever its outcome. 404 when the revision or workflow
+        is unknown; target faults are 400/404; evidence faults are 400.'
+      operationId: run_version_workflow_v1_workflows__tenant_slug__versions__version_id__workflows__workflow_id__run_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
+          description: Workflow Id schema.
+        description: Path parameter identifying the workflow id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runan Arazzoworkflowagainstaverificationtauthorization schema.
+          - type: 'null'
+            description: Runan Arazzoworkflowagainstaverificationtauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runan Arazzoworkflowagainstaverificationt Xapikey schema.
+          - type: 'null'
+            description: Runan Arazzoworkflowagainstaverificationt Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArazzoWorkflowRunRequest'
+              description: Request body for runan arazzoworkflowagainstaverificationtrequest.
+        description: Request body for run an arazzo workflow against a verification
+          target.
+      responses:
+        '200':
+          description: Successful response for run an arazzo workflow against a verification
+            target.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArazzoWorkflowRunResponse'
+                description: Response payload for runan arazzoworkflowagainstaverificationtresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for runan arazzoworkflowagainstaverificationtresponse422.
   /v1/versions/{tenant_slug}/{project_id}/changelogs:
     get:
       tags:
@@ -98380,6 +98481,99 @@ components:
       - assessment
       title: ApprovalResponse
       description: A revision's assessment plus its decision history.
+    ArazzoActionTaken:
+      properties:
+        type:
+          type: string
+          title: Type
+          description: '`next`, `end`, `goto` or `retry`.'
+          example: example
+        name:
+          anyOf:
+          - type: string
+            description: Arazzo Action Taken schema.
+          - type: 'null'
+            description: Arazzo Action Taken schema.
+          title: Name
+          description: The action's `name`, when declared.
+        step_id:
+          anyOf:
+          - type: string
+            description: Arazzo Action Taken schema.
+          - type: 'null'
+            description: Arazzo Action Taken schema.
+          title: Step Id
+          description: The `goto` target step.
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      title: ArazzoActionTaken
+      description: What the run did after a step.
+    ArazzoCriterionResult:
+      properties:
+        condition:
+          type: string
+          title: Condition
+          description: The condition as written.
+          example: example
+        type:
+          type: string
+          title: Type
+          description: '`simple`, `regex`, `jsonpath` or `xpath`.'
+          example: example
+        context:
+          anyOf:
+          - type: string
+            description: Arazzo Criterion schema.
+          - type: 'null'
+            description: Arazzo Criterion schema.
+          title: Context
+          description: The context expression, when declared.
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed` or `error` (could not be evaluated).'
+          example: example
+        expected:
+          type: string
+          title: Expected
+          description: What the workflow requires.
+          example: example
+        actual:
+          anyOf:
+          - type: string
+            description: Arazzo Criterion schema.
+          - type: 'null'
+            description: Arazzo Criterion schema.
+          title: Actual
+          description: 'What was observed: the condition with each expression replaced
+            by its value, or the context value a regex/JSONPath was applied to.'
+        message:
+          anyOf:
+          - type: string
+            description: Arazzo Criterion schema.
+          - type: 'null'
+            description: Arazzo Criterion schema.
+          title: Message
+          description: Why it failed, when it did.
+        implicit:
+          type: boolean
+          title: Implicit
+          description: True for the 2XX status check applied to a step with no criteria
+            of its own.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - condition
+      - type
+      - outcome
+      - expected
+      title: ArazzoCriterionResult
+      description: One success criterion's verdict, with the expected and the observed
+        value.
     ArazzoOperationDetailOut:
       properties:
         path_operation_id:
@@ -98530,6 +98724,86 @@ components:
       - status_code
       title: ArazzoOperationResponseOut
       description: A declared response of the operation shown in the step drawer.
+    ArazzoRunErrorOut:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: Stable code of the first refusal (or `auth-unavailable`).
+          example: example
+        message:
+          type: string
+          title: Message
+          description: What blocked the run.
+          example: Example validation message.
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: ArazzoRunErrorOut
+      description: Why a run did not execute.
+    ArazzoRunOptions:
+      properties:
+        allow_mutating:
+          type: boolean
+          title: Allow Mutating
+          description: Opt in to sending mutating steps (`POST`/`PUT`/`PATCH`/`DELETE`).
+            Off by default. Even when on, a mutating step runs only when a fixture names
+            its operation (or the step, through `case_id`), and never when the target
+            policy forbids mutating methods.
+          default: false
+          example: false
+        fixtures:
+          items:
+            $ref: '#/components/schemas/MutatingFixture'
+          type: array
+          maxItems: 100
+          title: Fixtures
+          description: Per-operation permission for mutating steps. `case_id` narrows
+            a fixture to one `stepId`. Parameters and a body in the fixture override what
+            the step sends.
+      additionalProperties: false
+      type: object
+      title: ArazzoRunOptions
+      description: How much of the target a workflow run may touch — the CTG-4.3 rule,
+        per step.
+    ArazzoRunRefusal:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: Stable code (`mutating-method-blocked`, `arazzo-step-unresolved`,
+            …).
+          example: example
+        message:
+          type: string
+          title: Message
+          description: What blocked the run and how to unblock it.
+          example: Example validation message.
+        step_id:
+          anyOf:
+          - type: string
+            description: Arazzo Run Refusal schema.
+          - type: 'null'
+            description: Arazzo Run Refusal schema.
+          title: Step Id
+          description: The step concerned, when there is one.
+        operation_key:
+          anyOf:
+          - type: string
+            description: Arazzo Run Refusal schema.
+          - type: 'null'
+            description: Arazzo Run Refusal schema.
+          title: Operation Key
+          description: The step's operation (`POST /pets`), when it resolved.
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: ArazzoRunRefusal
+      description: Why the run was refused before any request was sent.
     ArazzoSourceDescriptionOut:
       properties:
         name:
@@ -98683,6 +98957,130 @@ components:
       title: ArazzoStepOperationOut
       description: The internal path operation an Arazzo step resolved to, so the viewer
         can open it.
+    ArazzoStepResult:
+      properties:
+        step_id:
+          type: string
+          title: Step Id
+          description: The step's `stepId`.
+          example: step_01h2xcejqtf3fz5y5j0v8k9m2p
+        execution:
+          type: integer
+          title: Execution
+          description: 1 for the first time this step ran, 2 after a `goto` back, …
+          example: 1
+        operation_key:
+          type: string
+          title: Operation Key
+          description: The operation the step called (`GET /pets/{petId}`).
+          example: GET
+        method:
+          type: string
+          title: Method
+          description: HTTP method sent.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Request path sent (path parameters substituted).
+          example: /resources/{id}
+        query:
+          additionalProperties:
+            type: string
+          type: object
+          title: Query
+          description: Query parameters sent.
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed` or `errored`.'
+          example: example
+        failure_code:
+          anyOf:
+          - type: string
+            description: Arazzo Step schema.
+          - type: 'null'
+            description: Arazzo Step schema.
+          title: Failure Code
+          description: Stable code when not passed.
+        failure_message:
+          anyOf:
+          - type: string
+            description: Arazzo Step schema.
+          - type: 'null'
+            description: Arazzo Step schema.
+          title: Failure Message
+          description: Why it did not pass.
+        status_code:
+          anyOf:
+          - type: integer
+            description: Arazzo Step schema.
+          - type: 'null'
+            description: Arazzo Step schema.
+          title: Status Code
+          description: Status received.
+        attempts:
+          type: integer
+          title: Attempts
+          description: Sends, including `retry` actions.
+          default: 1
+          example: 1
+        duration_ms:
+          type: integer
+          title: Duration Ms
+          description: Time spent on the step, retries included.
+          default: 0
+          example: 1
+        fixture_applied:
+          type: boolean
+          title: Fixture Applied
+          description: Whether a mutating fixture supplied part of the request.
+          default: false
+          example: false
+        criteria:
+          items:
+            $ref: '#/components/schemas/ArazzoCriterionResult'
+          type: array
+          title: Criteria
+          description: Every success criterion, in declaration order.
+          maxItems: 1000
+        outputs:
+          additionalProperties: true
+          type: object
+          title: Outputs
+          description: The step's outputs, captured when it passed.
+        action:
+          anyOf:
+          - $ref: '#/components/schemas/ArazzoActionTaken'
+          - type: 'null'
+            description: Arazzo Step schema.
+          description: What the run did next.
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+          description: When the step's first send began.
+          example: '2026-11-20T04:23:36Z'
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+          description: When the step's last send finished.
+          example: '2026-11-20T04:23:36Z'
+      additionalProperties: false
+      type: object
+      required:
+      - step_id
+      - execution
+      - operation_key
+      - method
+      - path
+      - outcome
+      - started_at
+      - finished_at
+      title: ArazzoStepResult
+      description: 'One executed step: the request sent, the criteria judged, the outputs
+        captured.'
     ArazzoWorkflowDetailResponse:
       properties:
         version_id:
@@ -98797,6 +99195,201 @@ components:
       title: ArazzoWorkflowOut
       description: One persisted Arazzo workflow with its inputs, outputs, sources and
         steps.
+    ArazzoWorkflowRunReport:
+      properties:
+        workflow_id:
+          type: string
+          title: Workflow Id
+          description: The workflow's `workflowId`.
+          example: workflow_01h2xcejqtf3fz5y5j0v8k9m2p
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed` when every executed step passed; `failed` when a step''s
+            criteria failed; `errored` when a step could not be sent or the run hit a
+            runner limit.'
+          example: example
+        digest:
+          type: string
+          title: Digest
+          description: '`sha256:` digest of the compiled run plan and its inputs.'
+          example: example
+        target:
+          $ref: '#/components/schemas/TargetIdentity'
+          description: The deployment the run was sent to.
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+          description: When the run began.
+          example: '2026-11-20T04:23:36Z'
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+          description: When the run finished.
+          example: '2026-11-20T04:23:36Z'
+        steps:
+          items:
+            $ref: '#/components/schemas/ArazzoStepResult'
+          type: array
+          title: Steps
+          description: Every executed step, in execution order.
+          maxItems: 1000
+        not_reached:
+          items:
+            type: string
+          type: array
+          title: Not Reached
+          description: Steps the run never executed (it ended or jumped past them), in
+            source order.
+          maxItems: 1000
+        outputs:
+          additionalProperties: true
+          type: object
+          title: Outputs
+          description: The workflow outputs, evaluated when the run passed.
+        output_errors:
+          items:
+            type: string
+          type: array
+          title: Output Errors
+          description: Workflow outputs that could not be evaluated.
+          maxItems: 1000
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: '`steps` (declared), `executed`, `passed`, `failed`, `errored`.'
+      additionalProperties: false
+      type: object
+      required:
+      - workflow_id
+      - outcome
+      - digest
+      - target
+      - started_at
+      - finished_at
+      title: ArazzoWorkflowRunReport
+      description: The per-step report of one workflow run.
+    ArazzoWorkflowRunRequest:
+      properties:
+        target_ref:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Target Ref
+          description: Verification target slug or id (ECA-1.2) — a deployment, or a `mock`
+            environment target pointing at an Apiome mock.
+          example: example
+        inputs:
+          additionalProperties: true
+          type: object
+          title: Inputs
+          description: Workflow inputs (`$inputs.…`). Checked against the workflow's `inputs`
+            schema after its property defaults are applied. The run hashes them into the
+            digest and does not store them; a criterion that compares with an input quotes
+            its value as evidence.
+        verification:
+          $ref: '#/components/schemas/ArazzoRunOptions'
+          description: What the run may send. Safe methods only by default; a mutating
+            step needs the target policy, `allow_mutating` and a fixture naming its operation.
+        idempotency_key:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Request body for arazzo workflow run.
+          - type: 'null'
+            description: Request body for arazzo workflow run.
+          title: Idempotency Key
+          description: Evidence retry key; forwarded to the verification-runs store.
+        context:
+          additionalProperties: true
+          type: object
+          title: Context
+          description: Non-secret CI context (commit, branch, workflow URL). Never credentials.
+      additionalProperties: false
+      type: object
+      required:
+      - target_ref
+      title: ArazzoWorkflowRunRequest
+      description: Which target to run a workflow against, with what inputs, and how much
+        it may touch.
+    ArazzoWorkflowRunResponse:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+          description: Whether the workflow executed (whatever its outcome).
+          example: false
+        version_id:
+          type: string
+          title: Version Id
+          description: The revision the workflow was read from.
+          example: 1.0.0
+        workflow_id:
+          type: string
+          title: Workflow Id
+          description: The workflow's `workflowId`.
+          example: workflow_01h2xcejqtf3fz5y5j0v8k9m2p
+        digest:
+          anyOf:
+          - type: string
+            description: Response payload for arazzo workflow run.
+          - type: 'null'
+            description: Response payload for arazzo workflow run.
+          title: Digest
+          description: Digest of the compiled run plan and its inputs.
+        report:
+          anyOf:
+          - $ref: '#/components/schemas/ArazzoWorkflowRunReport'
+          - type: 'null'
+            description: Response payload for arazzo workflow run.
+          description: The per-step report when `ok` is true.
+        refusals:
+          items:
+            $ref: '#/components/schemas/ArazzoRunRefusal'
+          type: array
+          title: Refusals
+          description: Everything that kept the run from starting; nothing was sent when
+            non-empty.
+          maxItems: 1000
+        fixture_findings:
+          items:
+            $ref: '#/components/schemas/FixtureFinding'
+          type: array
+          title: Fixture Findings
+          description: Fixtures that matched no mutating step.
+          maxItems: 1000
+        run:
+          anyOf:
+          - $ref: '#/components/schemas/VerificationRunRecord'
+          - type: 'null'
+            description: Response payload for arazzo workflow run.
+          description: The immutable ECA-1.3 evidence behind the report.
+        created:
+          anyOf:
+          - type: boolean
+            description: Response payload for arazzo workflow run.
+          - type: 'null'
+            description: Response payload for arazzo workflow run.
+          title: Created
+          description: True when evidence was newly written; False on replay.
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ArazzoRunErrorOut'
+          - type: 'null'
+            description: Response payload for arazzo workflow run.
+          description: Populated when `ok` is false.
+      additionalProperties: false
+      type: object
+      required:
+      - ok
+      - version_id
+      - workflow_id
+      title: ArazzoWorkflowRunResponse
+      description: The outcome of one workflow run attempt.
     ArazzoWorkflowStepOut:
       properties:
         step_id:

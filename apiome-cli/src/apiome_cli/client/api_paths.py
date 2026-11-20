@@ -1057,6 +1057,13 @@ def arazzo_version_workflow(tenant_slug: str, version_id: str | UUID, workflow_i
     return f"{arazzo_version_workflows(tenant_slug, version_id)}/workflows/{quote(workflow_id, safe='')}"
 
 
+def arazzo_version_workflow_run(
+    tenant_slug: str, version_id: str | UUID, workflow_id: str
+) -> str:
+    """Run one persisted Arazzo workflow against a verification target (COA-1.7, #7043)."""
+    return f"{arazzo_version_workflow(tenant_slug, version_id, workflow_id)}/run"
+
+
 def arazzo_catalog_workflows(
     tenant_slug: str, item_id: str | UUID, revision_id: str | UUID | None = None
 ) -> str:

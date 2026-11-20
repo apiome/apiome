@@ -1,6 +1,6 @@
 ---
 title: Arazzo workflows
-description: Read an Arazzo workflow as steps, inputs, outputs and success and failure paths.
+description: Read an Arazzo workflow's steps and paths, then run it against a target.
 sidebar_position: 1.35
 tags: [arazzo, workflows, catalog, projects]
 ---
@@ -99,6 +99,74 @@ operation later turns the step back into an unresolved one.
 - In the drawer, **Couldn't load the operation** — the operation could not be read; **“Try again”**
   retries it.
 
+## Run a workflow against a target
+
+`apiome arazzo run` runs a stored workflow end to end against a **verification target**: a
+deployment, or a target whose environment is **mock** and whose base URL is an Apiome mock. (Set
+targets up as described in [Check a live deployment](../ship/contract-testing-and-ci-gates.mdx#check-a-live-deployment-v2).)
+
+1. **Name the workflow, its revision and the target:**
+
+   ```bash
+   apiome arazzo run checkout --project checkout-flow --version 1.0.0 --target checkout-mock \
+     --input cartId=42
+   ```
+
+   Use `--catalog <item-uuid>` (with `--revision <version-uuid>` for an older revision) instead of
+   `--project` and `--version` for a catalog item. Pass each workflow input as `--input NAME=VALUE`
+   — a JSON value keeps its type, so `count=3` is a number — or put them all in a JSON or YAML file
+   with `--inputs ./inputs.yaml`. A missing input takes the `default` of the workflow's `inputs`
+   schema; inputs the schema rejects stop the run before anything is sent.
+2. **Read the report.** The steps run in order. Each step's parameters and request body are built
+   from runtime expressions — `$inputs.cartId`, `$steps.load-cart.outputs.total`, or a template
+   such as `Bearer {$steps.login.outputs.token}` — and each of its `successCriteria` is checked.
+   Every step prints its request, the status that came back and each criterion: **ok** with the
+   condition, or **FAIL** with the condition and the **actual** value beside it, such as
+   `FAIL $response.body#/status == 'paid'  — actual: 'pending' == 'paid'`.
+3. **Check the exit code** in CI: `0` when every step passed, `7` when a step failed or errored,
+   `3` when a write step was refused (below). `--json` prints the whole response.
+
+How the run moves between steps follows the document:
+
+| The step… | What happens next |
+| --- | --- |
+| passes, with no `onSuccess` | The next step runs; after the last one the workflow's `outputs` are evaluated |
+| fails, with no `onFailure` | The run stops and fails; the steps it never reached are listed |
+| has an action whose `criteria` hold | `end` stops, `goto` jumps to that step, `retry` sends the step again (`retryLimit` times, 1 by default, waiting `retryAfter` seconds, at most 10) |
+| declares no `successCriteria` | It passes on any `2XX` status, marked **(implicit)** |
+
+A step that failed still fails the run even when an `onFailure` `goto` moves past it, and a step
+that passes on a retry counts as passed. Criteria can be `simple` conditions
+(`$statusCode == 200 && $response.body#/items/0/id != null`; text compares without regard to
+case), `regex` or `jsonpath`; an `xpath` criterion is reported as not supported. A run stops after
+100 step executions, so a `goto` loop cannot run forever.
+
+### Steps that write
+
+Only `GET`, `HEAD` and `OPTIONS` steps are sent by default. A `POST`, `PUT`, `PATCH` or `DELETE`
+step is sent only when **all three** hold:
+
+1. the target's policy allows mutating methods;
+2. the run opts in with `--allow-mutating`;
+3. a fixture in `--fixtures` names the step's operation — and, with `case_id`, the step:
+
+   ```yaml
+   # fixtures.yaml
+   - operation_key: POST /carts
+     note: Creates a throwaway cart in the mock
+   - operation_key: DELETE /carts/{cartId}
+     case_id: cleanup
+   ```
+
+   A fixture's `path_parameters`, `query_parameters`, `headers` and `body` replace what the step
+   would send; it cannot carry credentials.
+
+If any write step misses one of the three, **nothing is sent**: the command lists each refused step
+and why (`mutating-method-blocked` or `mutating-fixture-missing`) and exits `3`. A run is refused
+the same way (exit `7`) when a step's operation was not resolved, a step calls another workflow,
+or the inputs do not match the workflow's `inputs` schema. Every run that starts is recorded as
+verification evidence, one record per step, whatever its outcome.
+
 ## With the API or the CLI
 
 - `GET /v1/workflows/{tenant_slug}/catalog/{item_id}` — the workflows of a catalog item's latest
@@ -107,8 +175,12 @@ operation later turns the step back into an unresolved one.
   `/workflows/{workflow_id}` for one workflow, then `/steps` or `/steps/{step_id}` for its steps.
 - `GET /v1/workflows/{tenant_slug}/operations/{path_operation_id}` — one operation a step calls,
   with its parameters and responses.
+- `POST /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/run` — run one
+  workflow against a target (`target_ref`, `inputs`, `verification.allow_mutating`,
+  `verification.fixtures`); `ok: false` with `refusals` when it was refused.
 - `apiome arazzo list`, `apiome arazzo show <workflowId>` and `apiome arazzo validate` read the same
-  records from a terminal, and `validate` fails when a step did not resolve.
+  records from a terminal, and `validate` fails when a step did not resolve; `apiome arazzo run`
+  runs a workflow.
 
 [Arazzo workflow records](../reference/arazzo-workflow-records.md) describes every field and
 resolution state. See also [Arazzo workflows](../reference/rest/arazzo-workflows.md) in the REST

@@ -566,6 +566,8 @@ apiome checks show --project payments-api --run <evaluation-id> --format json
 apiome arazzo list --project checkout-flow --version 1.0.0
 apiome arazzo show checkout --project checkout-flow --version 1.0.0
 apiome arazzo validate --project checkout-flow --version 1.0.0
+# Exit 0 = every step passed, 7 = a step failed, 3 = a mutating step was refused
+apiome arazzo run checkout --project checkout-flow --version 1.0.0 --target checkout-mock --input cartId=42
 
 # 3. Export reconstructed spec or download the original upload bytes
 apiome spec export \
@@ -862,6 +864,23 @@ resolve or a source description is missing:
 ```bash
 apiome arazzo validate checkout.arazzo.yaml
 apiome arazzo validate --project checkout-flow --version 1.0.0
+```
+
+`apiome arazzo run` executes a stored workflow end to end against a verification target (a
+deployment, or a `mock` target pointing at an Apiome mock). Steps run in order; each request reads
+`--input` values and earlier steps' outputs, each step's `successCriteria` are checked, and the
+report prints every criterion with its expected value — and, when it fails, the actual one. Only
+`GET`/`HEAD`/`OPTIONS` steps run by default: a `POST`/`PUT`/`PATCH`/`DELETE` step needs a target
+policy that allows mutating methods, `--allow-mutating` **and** a `--fixtures` entry naming its
+operation, or the whole run is refused before anything is sent (exit 3). A failing or erroring
+step exits 7; every executed run is recorded as verification evidence.
+
+```bash
+apiome arazzo run checkout --project checkout-flow --version 1.0.0 --target checkout-mock \
+  --input cartId=42 --inputs ./inputs.yaml
+apiome arazzo run checkout --catalog <item-uuid> --target staging \
+  --allow-mutating --fixtures ./fixtures.yaml       # [{operation_key: "POST /carts"}]
+apiome --json arazzo run checkout --project checkout-flow --version 1.0.0 --target checkout-mock
 ```
 
 ### Import JSON Schema

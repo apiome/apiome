@@ -138,6 +138,13 @@ EXIT_CHECK_FAILED = 7
 #: file, an unknown project) so CI can gate on the verdict itself. Another per-command use of 7.
 EXIT_ARAZZO_INVALID = 7
 
+#: ``apiome arazzo run`` (COA-1.7, #7043): the workflow ran and a step's success criteria failed
+#: (or a step errored), or the run was refused for a reason other than mutation safety — an
+#: unresolved step, a nested-workflow step, inputs the workflow's schema rejects. A run refused
+#: because a mutating step lacked policy, opt-in or fixture exits :data:`EXIT_POLICY_BLOCKED`
+#: instead. Another per-command use of 7.
+EXIT_ARAZZO_RUN_FAILED = 7
+
 #: ``apiome properties create`` (CLI 6.3): the new property is **invalid** — a field-level
 #: problem such as an unknown primitive or an example its schema rejects; one line per field on
 #: stderr, nothing was created. Another per-command use of 7.
