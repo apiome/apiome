@@ -1015,6 +1015,7 @@ export function gitlikeAffordance(
 export type VersionRowMenuAction =
   | 'view'
   | 'export'
+  | 'upgradeOpenapi'
   | 'heatmap'
   | 'compareWithCurrent'
   | 'relationshipGraph'
@@ -1128,6 +1129,14 @@ export function versionRowMenuItems(
     gitlike: false,
     disabled: false,
     title: 'Convert this version to another API format (fidelity shown per target)',
+  });
+  /* COA-2.6: applying the upgrade creates a version, so the item follows versions:create. */
+  if (can('versions:create')) items.push({
+    id: 'upgradeOpenapi',
+    label: 'Upgrade OpenAPI version…',
+    gitlike: false,
+    disabled: false,
+    title: 'Plan an upgrade to OpenAPI 3.0, 3.1 or 3.2, review every change, apply it as a new version',
   });
   items.push({
     id: 'heatmap',

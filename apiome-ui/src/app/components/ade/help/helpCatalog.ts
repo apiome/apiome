@@ -107,6 +107,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['additionalOperations', 'itemSchema', 'jsonl', 'server-sent events', 'parent', 'kind', 'view spec'],
   },
   {
+    id: 'upgrade-a-spec',
+    title: 'Upgrade a spec to a newer OpenAPI version',
+    summary:
+      'Plan a Swagger 2.0 or OpenAPI 3.0 / 3.1 upgrade to 3.0, 3.1 or 3.2, review every change, and apply it as a new version.',
+    page: 'apiome-docs/docs/build/upgrade-a-spec.mdx',
+    section: 'reference',
+    keywords: ['swagger', 'migrate', 'nullable', 'requestBody', 'plan', 'apiome upgrade'],
+  },
+  {
     id: 'lint-and-quality',
     title: 'Lint & check quality',
     summary:

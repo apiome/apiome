@@ -44,6 +44,7 @@ from apiome_cli.commands import (
     tags,
     teams,
     types,
+    upgrade,
     usage,
     verify,
     versions,
@@ -119,6 +120,7 @@ app.add_typer(mock.app, name="mock")
 app.add_typer(import_commands.app, name="import")
 app.add_typer(export.app, name="export")
 app.command("convert")(convert.convert)
+app.command("upgrade")(upgrade.upgrade)
 app.command("formats")(formats.formats)
 
 

@@ -1184,6 +1184,7 @@ describe('the row menu', () => {
     expect(items).toEqual([
       'versions-row-action-view',
       'versions-row-action-export',
+      'versions-row-action-upgradeOpenapi',
       'versions-row-action-heatmap',
       'versions-row-action-compareWithCurrent',
       'versions-row-action-relationshipGraph',
@@ -1234,6 +1235,62 @@ describe('the row menu', () => {
     const menu = await openRowMenu(V231_ID);
     fireEvent.click(within(menu).getByTestId('versions-row-action-export'));
     await screen.findByTestId('export-dialog');
+  });
+
+  it('upgrades a version from the menu: plans, applies with the digest, reloads the list (COA-2.6)', async () => {
+    const plan = {
+      source_version: '3.0.3',
+      source_family: '3.0',
+      target: '3.2',
+      target_version: '3.2.0',
+      hops: ['3.0→3.1', '3.1→3.2'],
+      already_current: false,
+      change_count: 2,
+      review_count: 0,
+      origin: 'captured',
+      plan_digest: 'sha256:v231',
+      rules: [{ rule: 'openapi-version', title: 'Version string', hop: '*', count: 2 }],
+      changes: [
+        { hop: '3.0→3.1', rule: 'openapi-version', title: 'Version string', pointer: '/openapi', summary: 'openapi 3.0.3 becomes 3.1.2', review: false },
+        { hop: '3.1→3.2', rule: 'openapi-version', title: 'Version string', pointer: '/openapi', summary: 'openapi 3.1.2 becomes 3.2.0', review: false },
+      ],
+    };
+    installFetch([
+      { method: 'POST', test: /^\/api\/openapi-upgrade\/plan$/, reply: () => plan },
+      {
+        method: 'POST',
+        test: /^\/api\/openapi-upgrade\/apply$/,
+        reply: () => ({
+          project_id: PROJECT_ID,
+          version_record_id: 'ver-upgraded',
+          version_label: '3.0.0',
+          source_version_record_id: V231_ID,
+          target_version: '3.2.0',
+          change_count: 2,
+        }),
+      },
+    ]);
+    await renderVersions();
+    const menu = await openRowMenu(V231_ID);
+    fireEvent.click(within(menu).getByTestId('versions-row-action-upgradeOpenapi'));
+    const dialog = await screen.findByTestId('openapi-upgrade-dialog');
+    expect(await within(dialog).findByTestId('openapi-upgrade-headline')).toHaveTextContent('OpenAPI 3.0 (3.0.3) → OpenAPI 3.2.0');
+    const listLoads = calls.filter((call) => call.url.startsWith('/api/versions?projectId=')).length;
+    fireEvent.change(within(dialog).getByTestId('openapi-upgrade-label'), { target: { value: '3.0.0' } });
+    fireEvent.click(within(dialog).getByTestId('openapi-upgrade-apply'));
+    expect(await within(dialog).findByTestId('openapi-upgrade-applied')).toHaveTextContent('Created version 3.0.0');
+    expect(calls.find((call) => call.url === '/api/openapi-upgrade/plan')?.body).toMatchObject({
+      target: '3.2',
+      project_id: PROJECT_ID,
+      version: V231_ID,
+    });
+    expect(calls.find((call) => call.url === '/api/openapi-upgrade/apply')?.body).toMatchObject({
+      plan_digest: 'sha256:v231',
+      version_label: '3.0.0',
+    });
+    await waitFor(() =>
+      expect(calls.filter((call) => call.url.startsWith('/api/versions?projectId=')).length).toBeGreaterThan(listLoads),
+    );
   });
 
   it('opens the class heatmap from the menu, loading the classes and their properties in one batch (#560)', async () => {

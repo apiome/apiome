@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.605.0",
+    "version": "1.606.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -1355,6 +1355,206 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for anx registryresourceversionappenddetailsfresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/openapi-upgrade/{tenant_slug}/apply": {
+      "post": {
+        "tags": [
+          "openapi-upgrade"
+        ],
+        "summary": "Apply a reviewed OpenAPI upgrade",
+        "description": "Apply a reviewed plan: the upgraded document becomes a new version of the same project.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 ``plan-stale`` (the source plans\n        differently now), ``nothing-to-upgrade`` (already at ``target``), ``version-exists``,\n        or a source refusal (see :func:`load_version_source`); 422 when the plan or the\n        import fails; 409 ``QUALITY_POLICY_BLOCKED`` when the tenant's import policy\n        refuses the upgraded document.",
+        "operationId": "apply_openapi_upgrade_v1_openapi_upgrade__tenant_slug__apply_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeApplyRequest",
+                "description": "Request body for applyareviewed open apiupgraderequest."
+              }
+            }
+          },
+          "description": "Request body for apply a reviewed openapi upgrade."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for apply a reviewed openapi upgrade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeApplyResponse",
+                  "description": "Response payload for applyareviewed open apiupgraderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for applyareviewed open apiupgraderesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/openapi-upgrade/{tenant_slug}/plan": {
+      "post": {
+        "tags": [
+          "openapi-upgrade"
+        ],
+        "summary": "Plan an OpenAPI version upgrade (no write)",
+        "description": "Plan the upgrade of a document or a version to ``target``; nothing is written.\n\nReturns:\n    The plan (:meth:`UpgradePlan.as_dict`) plus ``origin`` and, for a version source,\n    ``project_id`` / ``version_record_id`` / ``version_label``.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 when the version has no single-file\n        source; 413 / 422 for a document too large, unparseable, not OpenAPI, of an\n        unsupported version, or newer than ``target``.",
+        "operationId": "plan_openapi_upgrade_v1_openapi_upgrade__tenant_slug__plan_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradePlanRequest",
+                "description": "Request body for planan open apiversionupgradenowriterequest."
+              }
+            }
+          },
+          "description": "Request body for plan an openapi version upgrade (no write)."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for plan an openapi version upgrade (no write).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post",
+                  "description": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for planan open apiversionupgradenowriteresponse422."
                 }
               }
             }
@@ -241909,6 +242109,123 @@
         "title": "UnresolvedRefsResponse",
         "description": "Tenant-wide unresolved-``$ref`` summary for the type registry (#3457).\n\n``unresolved_ref_count`` (every unresolved edge) and ``affected_primitive_count``\n(distinct primitives carrying at least one) are the KPIs consumed by the registry\ncoverage/stats endpoint (#3454); ``primitives`` is the per-primitive breakdown the\nresolver UI lists (#3470)."
       },
+      "UpgradeApplyRequest": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": [
+              "3.0",
+              "3.1",
+              "3.2"
+            ],
+            "title": "Target",
+            "description": "Target OpenAPI version family (as planned).",
+            "example": "3.0"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project or catalog item to add the upgraded version to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade apply."
+              }
+            ],
+            "title": "Version",
+            "description": "The version that was planned (default: the latest)."
+          },
+          "plan_digest": {
+            "type": "string",
+            "title": "Plan Digest",
+            "description": "The plan_digest of the reviewed plan; a mismatch is refused (409).",
+            "example": "example"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Request body for upgrade apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade apply."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Label of the new version (for example 2.0.0). Default: a date/time label."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target",
+          "project_id",
+          "plan_digest"
+        ],
+        "title": "UpgradeApplyRequest",
+        "description": "Apply a reviewed plan to a project / catalog item version as a new version."
+      },
+      "UpgradeApplyResponse": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_record_id": {
+            "type": "string",
+            "title": "Version Record Id",
+            "description": "The new version's id (versions.id).",
+            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_label": {
+            "type": "string",
+            "title": "Version Label",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          },
+          "source_version_record_id": {
+            "type": "string",
+            "title": "Source Version Record Id",
+            "description": "The version that was upgraded.",
+            "example": "source_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "target_version": {
+            "type": "string",
+            "title": "Target Version",
+            "description": "The OpenAPI version the new version declares.",
+            "example": "1.0.0"
+          },
+          "change_count": {
+            "type": "integer",
+            "title": "Change Count",
+            "description": "Number of change.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id",
+          "version_record_id",
+          "version_label",
+          "source_version_record_id",
+          "target_version",
+          "change_count"
+        ],
+        "title": "UpgradeApplyResponse",
+        "description": "The version an apply created."
+      },
       "UpgradeEntryBody": {
         "properties": {
           "pinId": {
@@ -242014,6 +242331,77 @@
         ],
         "title": "UpgradeEntryBody",
         "description": "One pin of the plan."
+      },
+      "UpgradePlanRequest": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": [
+              "3.0",
+              "3.1",
+              "3.2"
+            ],
+            "title": "Target",
+            "description": "Target OpenAPI version family.",
+            "example": "3.0"
+          },
+          "document_text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade plan."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade plan."
+              }
+            ],
+            "title": "Document Text",
+            "description": "The document itself (JSON or YAML). Set this or project_id, not both."
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade plan."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade plan."
+              }
+            ],
+            "title": "Project Id",
+            "description": "Project or catalog item whose version is upgraded. Set this or document_text."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade plan."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade plan."
+              }
+            ],
+            "title": "Version",
+            "description": "The version to upgrade: a version id (UUID) or label (1.0.0). Default: the latest."
+          },
+          "include_document": {
+            "type": "boolean",
+            "title": "Include Document",
+            "description": "Return the upgraded document with the plan.",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "UpgradePlanRequest",
+        "description": "What to plan: a pasted document, or a project / catalog item version, and the target."
       },
       "UpgradePreviewRequest": {
         "properties": {

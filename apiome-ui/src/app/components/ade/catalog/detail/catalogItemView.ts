@@ -183,6 +183,18 @@ export interface CatalogDetailActions {
   exportStudio: { shown: boolean };
   /** Dismiss the item's drift banner and badge (MFI-31.3; `projects:edit`). */
   dismissDrift: { shown: boolean };
+  /** "Upgrade OpenAPI version…" (COA-2.6) — an OpenAPI / Swagger source only; `imports:create` + `projects:edit`. */
+  upgradeOpenapi: { shown: boolean };
+}
+
+/**
+ * Whether a source format is an OpenAPI or Swagger document (what the upgrade assistant reads).
+ *
+ * @param sourceFormat The item's detected format key (`openapi`, `swagger-2.0`, …).
+ * @returns True for an OpenAPI / Swagger key.
+ */
+export function isOpenapiSourceFormat(sourceFormat: string | null | undefined): boolean {
+  return /^(openapi|swagger)/i.test((sourceFormat ?? '').trim());
 }
 
 /**
@@ -219,6 +231,9 @@ export function catalogDetailActions(
     refresh: { shown: live && can('projects:edit') },
     reupload: { shown: live && can('projects:edit') && can('imports:create') },
     dismissDrift: { shown: live && can('projects:edit') },
+    upgradeOpenapi: {
+      shown: live && can('projects:edit') && can('imports:create') && isOpenapiSourceFormat(item.sourceFormat),
+    },
   };
 }
 

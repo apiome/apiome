@@ -1070,3 +1070,13 @@ def arazzo_catalog_workflows(
     """A catalog item's Arazzo workflows: its latest revision, or ``revision_id`` when given."""
     base = f"{V1}/workflows/{tenant_slug}/catalog/{item_id}"
     return base if revision_id is None else f"{base}/revisions/{revision_id}"
+
+
+def openapi_upgrade_plan(tenant_slug: str) -> str:
+    """Plan an OpenAPI version upgrade of a document or a version, with no write (COA-2.6)."""
+    return f"{V1}/openapi-upgrade/{tenant_slug}/plan"
+
+
+def openapi_upgrade_apply(tenant_slug: str) -> str:
+    """Apply a reviewed OpenAPI upgrade plan as a new version of the project (COA-2.6)."""
+    return f"{V1}/openapi-upgrade/{tenant_slug}/apply"

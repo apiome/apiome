@@ -253,6 +253,7 @@ import {
   type VersionChangelog,
 } from '@lib/version-changelog';
 import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
+import { OpenapiUpgradeDialog } from '../../../components/ade/openapi-upgrade/OpenapiUpgradeDialog';
 import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
 import { ProjectRelatedArtifactsSection } from '../../../components/ade/dashboard/ProjectRelatedArtifactsSection';
 import { FEATURE_GITLIKE } from '@lib/feature-flags';
@@ -512,6 +513,8 @@ const Versions = () => {
   const [openApiSpec, setOpenApiSpec] = useState<string>('');
   /** The revision the ExportDialog is open for — export is version-scoped (MFX-6.5, #3859). */
   const [exportVersion, setExportVersion] = useState<Version | null>(null);
+  /** COA-2.6: the revision whose OpenAPI version the upgrade dialog is planning. */
+  const [upgradeVersion, setUpgradeVersion] = useState<Version | null>(null);
   /** Bumped after an export is recorded so the recent-exports list re-reads storage. */
   const [recentExportsRefresh, setRecentExportsRefresh] = useState(0);
   const [openApiFormat, setOpenApiFormat] = useState<'json' | 'yaml'>('json');
@@ -2651,6 +2654,7 @@ const Versions = () => {
       // Export is version-scoped (MFX-6.5, #3859): an action on the viewed revision, never a
       // global nav item — a tenant may have hundreds of projects/versions.
       case 'export': setExportVersion(version); break;
+      case 'upgradeOpenapi': setUpgradeVersion(version); break;
       case 'relationshipGraph': await handleShowRelationshipGraph(version); break;
       case 'heatmap': await handleShowHeatmap(version); break;
       case 'edit':
@@ -4525,6 +4529,28 @@ const Versions = () => {
             // Feed the version view's recent-exports list (browser-local until MFX-46.1).
             recordRecentExport(exportVersion.project_id, exportVersion.id, summary);
             setRecentExportsRefresh((n) => n + 1);
+          }}
+        />
+      )}
+
+      {/* Upgrade OpenAPI version (COA-2.6, #7049) — opened from a revision's row menu; mounted per
+          revision so the plan starts over. Applying adds a version, so the list is reloaded. */}
+      {upgradeVersion && (
+        <OpenapiUpgradeDialog
+          key={upgradeVersion.id}
+          open
+          onOpenChange={(next) => {
+            if (!next) setUpgradeVersion(null);
+          }}
+          projectId={upgradeVersion.project_id}
+          versionId={upgradeVersion.id}
+          versionLabel={upgradeVersion.version_id}
+          existingLabels={versions
+            .filter((row) => row.project_id === upgradeVersion.project_id)
+            .map((row) => row.version_id)}
+          onApplied={(result) => {
+            toast.success(`Created version ${result.version_label} (OpenAPI ${result.target_version}).`);
+            void loadVersions();
           }}
         />
       )}

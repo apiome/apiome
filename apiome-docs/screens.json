@@ -410,6 +410,17 @@
       ]
     },
     {
+      "id": "openapi-upgrade-plan",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/openapi-upgrade-plan.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/openapi-upgrade/OpenapiUpgradeDialog.tsx",
+        "apiome-ui/src/app/components/ade/openapi-upgrade/openapiUpgradeModel.ts",
+        "apiome-ui/tests/openapi-upgrade-dialog.test.tsx"
+      ]
+    },
+    {
       "id": "export-dialog-targets",
       "route": "/ade/dashboard/versions",
       "waitFor": "[data-testid=\"export-dialog-body\"]",

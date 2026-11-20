@@ -1,0 +1,172 @@
+swagger: "2.0"
+info:
+  title: Library
+  version: "2.3.0"
+  description: A lending library, written to exercise every Swagger 2.0 upgrade rule.
+  x-audience: internal
+host: library.example.com
+basePath: /api
+schemes:
+  - https
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+tags:
+  - name: books
+    description: Books on the shelf.
+x-owner: platform-team
+securityDefinitions:
+  basicAuth:
+    type: basic
+  apiKey:
+    type: apiKey
+    name: X-API-Key
+    in: header
+  oauth:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://auth.example.com/authorize
+    tokenUrl: https://auth.example.com/token
+    scopes:
+      books:read: Read books
+security:
+  - apiKey: []
+parameters:
+  PageSize:
+    name: pageSize
+    in: query
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 20
+  BookBody:
+    name: book
+    in: body
+    required: true
+    schema:
+      $ref: "#/definitions/Book"
+responses:
+  NotFound:
+    description: No such book.
+    schema:
+      $ref: "#/definitions/Error"
+paths:
+  /books:
+    get:
+      operationId: listBooks
+      tags:
+        - books
+      x-rate-limit: 100
+      parameters:
+        - $ref: "#/parameters/PageSize"
+        - name: tags
+          in: query
+          type: array
+          items:
+            type: string
+        - name: ids
+          in: query
+          type: array
+          collectionFormat: multi
+          items:
+            type: integer
+        - name: X-Trace
+          in: header
+          type: string
+          required: false
+      responses:
+        "200":
+          description: The books.
+          headers:
+            X-Total:
+              type: integer
+              description: Total count.
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Book"
+          examples:
+            application/json:
+              - id: b1
+                title: Dune
+    post:
+      operationId: createBook
+      tags:
+        - books
+      parameters:
+        - $ref: "#/parameters/BookBody"
+      responses:
+        "201":
+          description: Created.
+          schema:
+            $ref: "#/definitions/Book"
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+    get:
+      operationId: getBook
+      schemes:
+        - https
+      responses:
+        "200":
+          description: The book.
+          schema:
+            $ref: "#/definitions/Book"
+        "404":
+          $ref: "#/responses/NotFound"
+  /books/{id}/cover:
+    put:
+      operationId: uploadCover
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: file
+          in: formData
+          type: file
+          required: true
+        - name: caption
+          in: formData
+          type: string
+      responses:
+        "204":
+          description: Stored.
+definitions:
+  Book:
+    type: object
+    discriminator: kind
+    required:
+      - id
+      - kind
+    properties:
+      id:
+        type: string
+        example: b1
+      kind:
+        type: string
+      title:
+        type: string
+        x-nullable: true
+      pages:
+        type: integer
+        minimum: 1
+  Ebook:
+    allOf:
+      - $ref: "#/definitions/Book"
+      - type: object
+        properties:
+          sizeBytes:
+            type: integer
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
