@@ -63,6 +63,7 @@ no tag hierarchy; :class:`OpenApiFidelityRulePack` reports both for those versio
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any, Dict, List, Literal, Mapping, Optional, Set, Tuple, Union
 
@@ -105,6 +106,7 @@ from .openapi_downgrade import (
     downgrade_to_openapi_30,
     downgrade_to_swagger_2,
 )
+from .openapi_schema_dialect import record_declared_dialect_loss, record_schema_rewrites
 from .openapi_source_preservation import (
     gate_constructs,
     preserved_source,
@@ -492,6 +494,13 @@ class OpenApiEmitter(Emitter, register=True):
         if preserved and not restore_after_downgrade:
             self._restore_source(document, api, tracker, losses, native_32=native_32)
 
+        # COA-2.3: every schema rewrite between the OpenAPI 3.0 subset and JSON Schema 2020-12
+        # is recorded. Snapshot the document before the version step; afterwards, each object
+        # the rewrite changed and no loss names gets an inferred provenance note. A 3.0 source
+        # written back as 3.0 is restored verbatim, so it has nothing to record.
+        dialect_rewrite = _dialect_rewrite_detail(family, target, restore_after_downgrade)
+        before_rewrite = copy.deepcopy(document) if dialect_rewrite else None
+
         document, path, media_type = self._apply_version(
             document, options.openapi_version, tracker, losses
         )
@@ -500,10 +509,16 @@ class OpenApiEmitter(Emitter, register=True):
             if restore_after_downgrade:
                 self._restore_source(document, api, tracker, losses, native_32=native_32)
             elif family == "3.0":
-                upgrade_document_30_to_31(document)
+                upgrade_document_30_to_31(document, losses)
             elif target == "3.0":
                 downgrade_remaining_schemas_30(document, losses)
+                record_declared_dialect_loss(preserved, losses)
             gate_constructs(document, target, losses)
+
+        if before_rewrite is not None:
+            record_schema_rewrites(
+                before_rewrite, document, tracker, losses.records(), dialect_rewrite
+            )
         elif target == "2.0" and preserved_source(api):
             losses.record(
                 LossKind.NA,
@@ -1218,3 +1233,25 @@ def _tag_hierarchy(api: CanonicalApi) -> Dict[str, Dict[str, Any]]:
     if not isinstance(hierarchy, dict):
         return {}
     return {str(name): meta for name, meta in hierarchy.items() if isinstance(meta, dict) and meta}
+
+
+def _dialect_rewrite_detail(
+    family: Optional[str], target: str, restore_after_downgrade: bool
+) -> Optional[str]:
+    """What schema-dialect rewrite an emission makes, or ``None`` when it makes none (COA-2.3).
+
+    Args:
+        family: The preserved source's version family (``None`` for a non-OpenAPI model).
+        target: The requested ``openapi_version``.
+        restore_after_downgrade: Whether a 3.0 source is written back as 3.0 verbatim.
+
+    Returns:
+        The provenance detail for the rewrite: 3.0 → 2020-12 for a 3.0 source written at
+        3.1 / 3.2, 2020-12 → 3.0 for anything written at 3.0; ``None`` otherwise (including
+        Swagger 2.0, whose structural rewrite records its own losses).
+    """
+    if target == "3.0" and not restore_after_downgrade:
+        return "schema rewritten from JSON Schema 2020-12 into the OpenAPI 3.0 schema dialect"
+    if family == "3.0" and target in ("3.1", "3.2"):
+        return "schema rewritten from the OpenAPI 3.0 schema dialect into JSON Schema 2020-12"
+    return None

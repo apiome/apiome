@@ -285,6 +285,10 @@ def _schema_to_30(schema: Any, losses: LossTracker, pointer: str) -> Any:
             )
         return {"$ref": schema["$ref"]}
 
+    folded = _fold_nullable_any_of(schema)
+    if folded is not None:
+        return _schema_to_30(folded, losses, pointer)
+
     result = dict(schema)
     _apply_nullability_30(result, losses, pointer)
     _apply_exclusive_bounds_30(result, losses, pointer)
@@ -292,6 +296,37 @@ def _schema_to_30(schema: Any, losses: LossTracker, pointer: str) -> Any:
     _drop_unsupported_keywords(result, _UNSUPPORTED_30_KEYWORDS, losses, pointer)
     _recurse_subschemas(result, losses, pointer, _schema_to_30)
     return result
+
+
+def _fold_nullable_any_of(schema: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Fold ``anyOf: [X, {type: null}]`` back into the 3.0 ``X`` + ``nullable: true`` form.
+
+    That ``anyOf`` is how a 3.0 schema without a ``type`` (``allOf: [...]`` + ``nullable``) is
+    upgraded to 2020-12 (:func:`app.openapi_source_preservation.upgrade_schema_30_to_31`), so
+    folding it makes 3.0 → 3.1 → 3.0 return the source (COA-2.3). A bare ``$ref`` member becomes
+    ``allOf: [{$ref}]`` + ``nullable``, the 3.0 idiom, because 3.0 ignores ``nullable`` next to
+    ``$ref``. Anything else (more members, other keywords, a member already nullable) is left
+    for the regular rewrite.
+
+    Returns:
+        The folded 2020-12 schema (still to be rewritten into 3.0), or ``None`` when the
+        pattern does not apply.
+    """
+    members = schema.get("anyOf")
+    if set(schema) != {"anyOf"} or not isinstance(members, list) or len(members) != 2:
+        return None
+    nulls = [m for m in members if m == {"type": "null"}]
+    others = [m for m in members if m != {"type": "null"}]
+    if len(nulls) != 1 or len(others) != 1 or not isinstance(others[0], dict):
+        return None
+    other = others[0]
+    if "nullable" in other or isinstance(other.get("type"), list) or other.get("type") == "null":
+        return None
+    if "$ref" in other:
+        if set(other) != {"$ref"}:
+            return None
+        return {"allOf": [dict(other)], "nullable": True}
+    return {**other, "nullable": True}
 
 
 def _apply_nullability_30(

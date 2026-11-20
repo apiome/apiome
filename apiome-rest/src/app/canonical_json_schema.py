@@ -53,6 +53,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .openapi_schema_dialect import declared_type_dialect
 from .schema_validation import DRAFT_2020_12, DRAFT_2020_12_META_URI
 
 __all__ = [
@@ -194,6 +195,11 @@ class CanonicalSchemaProjection:
         type_name: The source name of the projected type (``Pet``).
         dialect: The JSON Schema dialect token the document is written in (always
             :data:`app.schema_validation.DRAFT_2020_12`).
+        source_dialect: The dialect the type was declared in by its source, when the source
+            says (COA-2.3): an OpenAPI type's own ``$schema``, else the document's
+            ``jsonSchemaDialect`` or its version's default (the OpenAPI 3.0 schema subset for a
+            3.0 document). ``None`` for sources with no JSON Schema dialect. The projection is
+            always written in draft 2020-12; this records what it was converted from.
         unmapped_scalars: Sorted canonical scalar names the projection could not constrain,
             each of which contributed a ``{}`` (accept-anything) subschema.
         truncated: ``True`` when reachability hit :data:`MAX_PROJECTED_DEFS` and some reachable
@@ -205,6 +211,7 @@ class CanonicalSchemaProjection:
     type_key: str
     type_name: str
     dialect: str = DRAFT_2020_12
+    source_dialect: Optional[str] = None
     unmapped_scalars: Tuple[str, ...] = ()
     truncated: bool = False
 
@@ -291,6 +298,7 @@ def build_type_json_schema(
         title=root.name or root.key,
         type_key=root.key,
         type_name=root.name or root.key,
+        source_dialect=declared_type_dialect(api, root),
     )
 
 
@@ -415,6 +423,7 @@ def _finish_document(
     title: Optional[str],
     type_key: str,
     type_name: str,
+    source_dialect: Optional[str] = None,
 ) -> CanonicalSchemaProjection:
     """Drain the reachable ``$defs`` set and wrap a root subschema into a standalone document.
 
@@ -426,6 +435,7 @@ def _finish_document(
         title: ``title`` for the document, or ``None`` to omit it.
         type_key: Value for :attr:`CanonicalSchemaProjection.type_key`.
         type_name: Value for :attr:`CanonicalSchemaProjection.type_name`.
+        source_dialect: Value for :attr:`CanonicalSchemaProjection.source_dialect`.
 
     Returns:
         The finished :class:`CanonicalSchemaProjection`.
@@ -465,6 +475,7 @@ def _finish_document(
         document=document,
         type_key=type_key,
         type_name=type_name,
+        source_dialect=source_dialect,
         unmapped_scalars=tuple(sorted(walk.unmapped)),
         truncated=walk.truncated,
     )

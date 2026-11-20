@@ -24,7 +24,11 @@ OpenAPI emitter:
   (``$self`` or ``itemSchema`` at 3.1, ``webhooks`` at 3.0, …) is removed and recorded as a loss.
   A 3.0 source written at 3.1 / 3.2 has its schemas rewritten into the JSON Schema 2020-12
   forms (:func:`upgrade_schema_30_to_31`): ``nullable`` becomes a ``"null"`` type and boolean
-  ``exclusiveMinimum`` / ``exclusiveMaximum`` become numeric. That rewrite is lossless.
+  ``exclusiveMinimum`` / ``exclusiveMaximum`` become numeric. Each rewrite is recorded
+  (COA-2.3): as a provenance note when faithful, as a loss when not.
+* **dialect** — the source's JSON Schema dialect (``jsonSchemaDialect``, or the version's
+  default) is kept in the bag as ``schemaDialect`` (COA-2.3,
+  :mod:`app.openapi_schema_dialect`).
 
 The bag is opaque to everything else: the canonical diff ignores ``extras``, and both
 fingerprints exclude :data:`OPENAPI_SOURCE_EXTRA` exactly as they exclude ``raw`` (it is the
@@ -43,6 +47,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 from .canonical_model import CanonicalApi, Operation
 from .emitter import LossKind, LossTracker
 from .openapi_document_walk import HTTP_METHODS, Node, join_pointer, walk_document
+from .openapi_schema_dialect import document_dialect
 
 __all__ = [
     "OPENAPI_SOURCE_EXTRA",
@@ -298,6 +303,9 @@ def capture_source(api: CanonicalApi, source: Dict[str, Any]) -> CanonicalApi:
         },
         "pathOrder": [str(path) for path in paths],
         "pathItems": path_items,
+        # COA-2.3: the JSON Schema dialect the source's schemas are written in, and whether the
+        # author declared it (``jsonSchemaDialect``) or it is the version's default.
+        "schemaDialect": document_dialect(source),
     }
     return api
 
@@ -676,18 +684,40 @@ def _record_gate(losses: LossTracker, key: str, pointer: str, family: str, targe
     )
 
 
-def upgrade_schema_30_to_31(schema: Dict[str, Any]) -> None:
+def upgrade_schema_30_to_31(
+    schema: Dict[str, Any],
+    losses: Optional[LossTracker] = None,
+    pointer: str = "",
+) -> None:
     """Rewrite one OpenAPI 3.0 Schema Object into its JSON Schema 2020-12 form, in place.
 
     Only the object's own keywords are rewritten (callers walk subschemas): ``nullable:
     true`` adds ``"null"`` to ``type`` (and to ``enum``), or wraps the schema in ``anyOf``
     with a null schema when it has no ``type``; ``nullable: false`` is dropped; a boolean
-    ``exclusiveMinimum`` / ``exclusiveMaximum`` takes the bound's number. The rewrite is
-    lossless, so nothing is recorded.
+    ``exclusiveMinimum`` / ``exclusiveMaximum`` takes the bound's number.
+
+    These rewrites are faithful; the emitter records each one as an inferred provenance note
+    (:func:`app.openapi_schema_dialect.record_schema_rewrites`). One is not (COA-2.3): OpenAPI
+    3.0 ignores every keyword next to ``$ref``, so ``nullable: true`` there had no effect, while
+    the 2020-12 form makes the reference accept ``null``. That rewrite is recorded on
+    ``losses`` as ``openapi-30-nullable-ref``.
+
+    Args:
+        schema: The Schema Object to rewrite.
+        losses: Tracker for the lossy case; ``None`` records nothing.
+        pointer: The schema's JSON Pointer in the document (for the loss).
     """
     if "nullable" in schema:
         nullable = schema.pop("nullable")
         if nullable is True:
+            if "$ref" in schema and losses is not None:
+                losses.record(
+                    LossKind.INFERRED,
+                    "openapi-30-nullable-ref",
+                    "OpenAPI 3.0 ignores nullable next to $ref; the 3.1 form lets the reference "
+                    "also accept null, which is what the source most likely meant",
+                    pointer="#" + pointer,
+                )
             _add_null(schema)
     for exclusive_key, bound_key in (("exclusiveMinimum", "minimum"), ("exclusiveMaximum", "maximum")):
         value = schema.get(exclusive_key)
@@ -717,12 +747,18 @@ def _add_null(schema: Dict[str, Any]) -> None:
         schema["enum"] = [*enum, None]
 
 
-def upgrade_document_30_to_31(document: Dict[str, Any]) -> None:
+def upgrade_document_30_to_31(
+    document: Dict[str, Any], losses: Optional[LossTracker] = None
+) -> None:
     """Rewrite every schema of an OpenAPI document from the 3.0 forms to 2020-12, in place.
 
     Safe on schemas already in the 2020-12 form (nothing to rewrite), so it can run over a
     whole emitted document whose modelled parts are already 3.1.
+
+    Args:
+        document: The document to rewrite.
+        losses: Tracker for the lossy rewrites (see :func:`upgrade_schema_30_to_31`).
     """
     for node in walk_document(document):
         if node.kind == "schema":
-            upgrade_schema_30_to_31(node.value)
+            upgrade_schema_30_to_31(node.value, losses, node.pointer)

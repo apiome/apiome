@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.776.0] - 2026-11-20
+
+### Added
+- **JSON Schema dialect handling per document — OpenAPI 1.604.3 (COA-2.3, #7046):** the
+  canonical path assumed every schema was draft 2020-12, and the 3.0 ⇄ 2020-12 rewrites on export
+  were silent.
+  - `app.openapi_schema_dialect`: reads a document's dialect (`jsonSchemaDialect`, the 3.1 / 3.2
+    defaults, the OpenAPI 3.0 schema subset) and a schema's own `$schema`. Import keeps it in the
+    preservation bag (`schemaDialect`); `CanonicalSchemaProjection.source_dialect` reports it.
+  - Every schema rewrite between the 3.0 subset and 2020-12 is recorded: each rewritten object
+    gets an inferred provenance note (`record_schema_rewrites`), and the unfaithful cases are
+    losses — `openapi-30-nullable-ref` (3.0 ignored `nullable` beside `$ref`) and
+    `openapi-30-schema-dialect` (a declared non-default dialect written at 3.0).
+  - The 3.0 downgrade folds `anyOf: [X, {type: null}]` back into `X` + `nullable: true`, so an
+    upgraded nullable 3.0 schema returns as it was.
+  - Tests: `$dynamicRef` / `$dynamicAnchor` / `$anchor` at 3.1, 3.2 and 3.0; every 3.0 document
+    of the construct corpus goes 3.0 → 3.1 → 3.2 → 3.0 with every change recorded
+    (`tests/test_openapi_schema_dialect.py`).
+
 ## [1.775.0] - 2026-11-20
 
 ### Added
