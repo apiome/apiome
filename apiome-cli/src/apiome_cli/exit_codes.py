@@ -27,6 +27,12 @@ EXIT_USAGE = 2
 #: exit with this code — it is reported as waived and passes.
 EXIT_POLICY_BLOCKED = 3
 
+#: ``apiome lint --fix`` (GVM-3.3): every fix that could be applied was, but fixes **remain that
+#: need a person** — a ``breaking`` fix (never applied, whatever the flags) or a ``conflict`` fix
+#: (it becomes ready once the fix it conflicts with is in; run ``--fix`` again). ``--dry-run``
+#: never exits with this code. Another per-command use of 3.
+EXIT_FIXES_REMAIN = 3
+
 #: A ``--min-grade`` or ``--fail-on`` threshold supplied on the command line was not met.
 #: Distinct from :data:`EXIT_POLICY_BLOCKED`: the tenant policy allowed the payload and
 #: the caller's own, stricter CI threshold rejected it.

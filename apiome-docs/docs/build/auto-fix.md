@@ -18,8 +18,9 @@ is drawn. The rule catalog shows the same information for every rule; see
 
 The rule catalog (`GET /v1/lint/rules`) publishes every rule's fix capability, and the first
 thirteen OpenAPI rules carry a fix. The REST API plans fixes and applies them as a new revision
-(see [Plan the fixes](#plan-the-fixes) and [Apply fixes](#apply-fixes)). The CLI and the lint
-report arrive in later releases. Nothing in a lint report, score or grade changes because these
+(see [Plan the fixes](#plan-the-fixes) and [Apply fixes](#apply-fixes)), and `apiome lint --fix`
+does both from the command line for a stored version (see [Fix from the CLI](#fix-from-the-cli)).
+Fixing a local file from the CLI, and **Apply fix** in the lint report, arrive in later releases. Nothing in a lint report, score or grade changes because these
 rules exist: the twelve new rules below are evaluated only when a fix plan is asked for.
 
 :::
@@ -286,6 +287,88 @@ an apply leaves one audited revision or nothing. The response names the new revi
 
 Applying every `ready` fix and then planning again leaves nothing ready.
 
+## Fix from the CLI
+
+`apiome lint --fix` plans a version's fixes and applies the ready ones as a new revision, like
+[Apply fixes](#apply-fixes). Add `--dry-run` first to see the change without writing anything:
+
+```bash
+apiome lint --project payments-api --version 1.0.0 --fix --dry-run
+```
+
+The summary goes to stderr and the change to stdout, as a unified diff of the document before and
+after:
+
+```text
+Fix plan: 2 ready, 0 conflict, 1 breaking, 0 excluded
+  ready     structure.empty-required  components.schemas.Order
+  ready     structure.nullable-keyword  components.schemas.Order.properties.note
+  breaking  structure.server-url-trailing-slash  servers[0]  (the change is breaking; never applied)
+Dry run: nothing was written.
+```
+
+```diff
+--- a/openapi.json
++++ b/openapi.json
+@@ -20,10 +20,10 @@
+       "Order": {
+         "properties": {
+           "note": {
+-            "nullable": true,
+-            "type": "string"
++            "type": [
++              "string",
++              "null"
++            ]
+           }
+         },
+-        "required": [],
+         "type": "object"
+       }
+```
+
+Drop `--dry-run` to apply. The CLI prints the plan again, then the new revision:
+
+```text
+Applied 2 fixes as new revision 1.0.1 (dddddddd-dddd-4ddd-8ddd-dddddddddddd).
+  Score 91  grade A
+1 fix need a person:
+  1 breaking: never applied; change the API by hand.
+```
+
+The revision you planned on is never changed, and the apply needs the same permission and an
+unpublished revision as the REST call. Its audited reason is `Applied with apiome lint --fix`.
+
+| Option | Meaning |
+| --- | --- |
+| `--dry-run` | Print the change and write nothing |
+| `--only rule,rule` | Fix only these rules. An unknown rule id is refused, and nothing is planned. Naming a rule also selects a fix that is off by default or a rename, as `rules` does |
+| `--allow-renames` | Include `rename` fixes (`includeRenames`) |
+| `--fix-format diff\|patch\|overlay` | Print or write the change as a unified diff (the default), one JSON Patch, or an Overlay 1.0 document |
+| `-o`, `--output <file>` | Write the change to this file. On a dry run the summary then stays on stdout; without `--dry-run`, the file records what was applied |
+
+A **breaking** fix is never applied, whatever the options, `--allow-renames` included. `--json`
+prints the plan (with `--dry-run`), or the plan and the apply response as `{"plan", "applied"}`.
+
+### Exit codes
+
+| Code | When |
+| --- | --- |
+| `0` | Nothing to fix, or every ready fix was applied. A dry run always exits `0` when the plan was read |
+| `3` | Fixes remain that need a person: a **breaking** fix, or a **conflict** (run `--fix` again on the new revision, and it is ready) |
+| `2` | A refused request: an unknown `--only` rule, a published revision, a missing permission, or an option given without `--fix` |
+| `1` | Apiome could not be reached, or a server error |
+
+See the [`apiome lint` reference](/reference/cli/lint) and [Exit codes](/reference/cli/exit-codes).
+
+### Local files
+
+`apiome lint <file> --fix`, which rewrites a local file in place, follows the local-file lint of
+`apiome lint <file>`. Until that command exists, plan a file with
+[`POST /v1/lint/fixes/plan`](#plan-the-fixes). When it lands, a YAML file keeps its comments, key
+order, quoting and indentation, and a JSON file keeps its key order and indentation: only the
+places a fix changes are rewritten.
+
 ## Read the fix capability of a rule
 
 ```http
@@ -322,3 +405,4 @@ For a rule that is not fixable, `fixable` is `false` and the other fix fields ar
 - [Lint and check quality](./lint-and-quality.md) — read the lint report and the rule catalog
 - [Upgrade a spec](./upgrade-a-spec.mdx) — move a whole document from OpenAPI 3.0 to 3.1 or 3.2
 - [Lint REST reference](/reference/rest/lint) — the plan and apply endpoints
+- [`apiome lint` CLI reference](/reference/cli/lint) — `--fix`, `--dry-run` and the other options

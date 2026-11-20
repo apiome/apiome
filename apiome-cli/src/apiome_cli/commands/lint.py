@@ -1,7 +1,9 @@
-"""Quality-scoring / lint commands for a project version (read-only).
+"""Quality-scoring / lint commands for a project version.
 
-``apiome lint`` (the bare group) fetches the server-computed quality report; the CLX-4.2
-subcommands add the CI-facing surfaces:
+``apiome lint`` (the bare group) fetches the server-computed quality report; with ``--fix``
+(GVM-3.3) it plans the deterministic lint fixes of the version and applies them as a new
+revision (``--dry-run`` prints the diff and writes nothing). The CLX-4.2 subcommands add the
+CI-facing surfaces:
 
 * ``apiome lint gate`` — evaluate the policy gate, optionally against a baseline, emit a
   machine-readable artifact (JSON / SARIF / JUnit / Markdown / attestation), and exit
@@ -15,6 +17,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import urlencode
 
 import typer
 
@@ -22,7 +25,16 @@ from apiome_cli.attestation import attestation_statement, verify_attestation_env
 from apiome_cli.client import api_paths
 from apiome_cli.client.project_version_resolve import resolve_version_uuid
 from apiome_cli.client.version_scope import resolve_version_scope
+from apiome_cli.client.http import RestClient
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
+from apiome_cli.lint_fix_output import (
+    FIX_FORMATS,
+    fix_exit_code,
+    format_fix_applied,
+    format_fix_plan,
+    format_remaining,
+    ready_fix_ids,
+)
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.output_lint import (
     emit_gate_output,
@@ -31,6 +43,7 @@ from apiome_cli.output_lint import (
     lint_command_should_fail,
     maturity_gate_line,
 )
+from apiome_cli.spec_output import write_document_bytes
 
 app = typer.Typer(
     name="lint",
@@ -41,6 +54,9 @@ app = typer.Typer(
 
 #: Artifact formats the gate endpoint can emit besides the default JSON payload.
 GATE_FORMATS = ("json", "sarif", "junit", "markdown", "attestation")
+
+#: The audited reason an ``apiome lint --fix`` apply records on the new revision.
+FIX_APPLY_REASON = "Applied with apiome lint --fix"
 
 
 @app.callback(invoke_without_command=True)
@@ -65,6 +81,37 @@ def lint(
         "--fail-on-policy",
         help="Fetch lint policy evaluation and exit non-zero when policy gates fail.",
     ),
+    fix: bool = typer.Option(
+        False,
+        "--fix",
+        help="Apply the version's deterministic lint fixes as a new revision.",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="With --fix: print the change (a unified diff by default) and write nothing.",
+    ),
+    only: str | None = typer.Option(
+        None,
+        "--only",
+        help="With --fix: fix only these rule ids (comma-separated); an unknown id is refused.",
+    ),
+    allow_renames: bool = typer.Option(
+        False,
+        "--allow-renames",
+        help="With --fix: include rename fixes. A breaking fix is never applied.",
+    ),
+    fix_format: str = typer.Option(
+        "diff",
+        "--fix-format",
+        help="With --fix: how the change is printed or written: diff | patch | overlay.",
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="With --fix: write the change (--fix-format) to this file.",
+    ),
 ) -> None:
     """Fetch the server-computed quality score and findings (GET .../lint).
 
@@ -72,9 +119,26 @@ def lint(
     OpenAPI/JSON-Schema — deterministic for a fixed input. ``--base-version`` folds
     breaking-change risk into the report; ``--min-grade`` turns the report into a CI gate;
     ``--fail-on-policy`` also evaluates style-guide policy gates (GET .../lint/policy).
+
+    ``--fix`` plans the version's deterministic lint fixes (GET .../lint/fixes) and applies the
+    ready ones as a new revision (POST .../lint/fixes/apply), printing its id. ``--dry-run``
+    prints the change instead and writes nothing. Exit codes: 0 when nothing is left to fix or
+    every ready fix was applied, 3 when breaking or conflicting fixes remain for a person
+    (never with ``--dry-run``), 2 for a refused request such as an unknown ``--only`` rule.
     """
     if ctx.invoked_subcommand:
         return
+
+    _check_fix_options(
+        fix=fix,
+        dry_run=dry_run,
+        only=only,
+        allow_renames=allow_renames,
+        fix_format=fix_format,
+        output=output,
+        other_options=bool(base_version or min_grade or fail_on_policy),
+    )
+    fix_rules = _parse_only(only)
 
     if project is None:
         raise typer.BadParameter("Missing option '--project'.", param_hint="--project")
@@ -91,6 +155,20 @@ def lint(
         project=project,
         version=version,
     )
+
+    if fix:
+        _run_fix(
+            ctx,
+            client,
+            fixes_path=api_paths.version_lint_fixes(tenant_slug, project_id, version_id),
+            apply_path=api_paths.version_lint_fixes_apply(tenant_slug, project_id, version_id),
+            dry_run=dry_run,
+            rules=fix_rules,
+            allow_renames=allow_renames,
+            fix_format=fix_format.strip().lower(),
+            output=output,
+        )
+        return
 
     path = api_paths.version_lint(tenant_slug, project_id, version_id)
     if base_version:
@@ -126,6 +204,151 @@ def lint(
         fail_on_policy=fail_on_policy,
     ):
         raise typer.Exit(EXIT_ERROR)
+
+
+def _parse_only(only: str | None) -> list[str] | None:
+    """The distinct rule ids of ``--only``, in the order given, or ``None`` when not given.
+
+    Raises:
+        typer.BadParameter: ``--only`` was given but names no rule.
+    """
+    if only is None:
+        return None
+    rules = list(dict.fromkeys(part.strip() for part in only.split(",") if part.strip()))
+    if not rules:
+        raise typer.BadParameter("name at least one rule id", param_hint="--only")
+    return rules
+
+
+def _check_fix_options(
+    *,
+    fix: bool,
+    dry_run: bool,
+    only: str | None,
+    allow_renames: bool,
+    fix_format: str,
+    output: Path | None,
+    other_options: bool,
+) -> None:
+    """Refuse fix options without ``--fix``, and report options together with ``--fix``.
+
+    Args:
+        fix: ``--fix``.
+        dry_run, only, allow_renames, fix_format, output: The options that only mean
+            something with ``--fix``.
+        other_options: Whether a report-only option (``--base-version``, ``--min-grade``,
+            ``--fail-on-policy``) was given.
+
+    Raises:
+        typer.BadParameter: An invalid combination.
+    """
+    if not fix:
+        given = [
+            name
+            for name, used in (
+                ("--dry-run", dry_run),
+                ("--only", only is not None),
+                ("--allow-renames", allow_renames),
+                ("--fix-format", fix_format != "diff"),
+                ("--output", output is not None),
+            )
+            if used
+        ]
+        if given:
+            raise typer.BadParameter(
+                f"{', '.join(given)} only work with --fix", param_hint="--fix"
+            )
+        return
+    if other_options:
+        raise typer.BadParameter(
+            "--fix cannot be combined with --base-version, --min-grade or --fail-on-policy",
+            param_hint="--fix",
+        )
+    if fix_format.strip().lower() not in FIX_FORMATS:
+        raise typer.BadParameter(
+            f"must be one of {', '.join(FIX_FORMATS)}", param_hint="--fix-format"
+        )
+
+
+def _run_fix(
+    ctx: typer.Context,
+    client: RestClient,
+    *,
+    fixes_path: str,
+    apply_path: str,
+    dry_run: bool,
+    rules: list[str] | None,
+    allow_renames: bool,
+    fix_format: str,
+    output: Path | None,
+) -> None:
+    """Plan a version's lint fixes, then print the change (dry run) or apply the ready fixes.
+
+    Only ``ready`` fixes are ever applied — by their ids, or, with ``--only``, by their rules
+    (the server re-plans with the same rules, so both name the same set). A ``breaking`` fix is
+    never ready, whatever the flags, so it is never written.
+
+    Args:
+        ctx: The Typer context (``--json``).
+        client: The authenticated REST client.
+        fixes_path: ``GET …/lint/fixes`` of the version.
+        apply_path: ``POST …/lint/fixes/apply`` of the version.
+        dry_run: Print the change and write nothing.
+        rules: ``--only`` rule ids, or ``None`` for every rule.
+        allow_renames: ``--allow-renames``.
+        fix_format: ``diff``, ``patch`` or ``overlay``.
+        output: ``--output`` file, or ``None``.
+
+    Raises:
+        typer.Exit: With the exit code of :func:`apiome_cli.lint_fix_output.fix_exit_code`.
+    """
+    params: dict[str, str] = {}
+    if rules:
+        params["rules"] = ",".join(rules)
+    if allow_renames:
+        params["includeRenames"] = "true"
+    plan = client.get(f"{fixes_path}?{urlencode({**params, 'format': 'json'})}").json()
+    ready = ready_fix_ids(plan)
+    json_mode = json_mode_from_context(ctx)
+
+    # The change goes to --output, or to stdout on a human dry run (the summary then moves to
+    # stderr so the diff can be piped). It is fetched from the planned revision, before an apply.
+    rendering_to_stdout = dry_run and output is None and not json_mode
+    if ready and (output is not None or rendering_to_stdout):
+        query = urlencode({**params, "format": fix_format})
+        body = client.get(f"{fixes_path}?{query}").content
+        write_document_bytes(body, str(output) if output is not None else "-")
+
+    result = None
+    if ready and not dry_run:
+        apply_body: dict[str, object] = {
+            "reason": FIX_APPLY_REASON,
+            "includeRenames": allow_renames,
+        }
+        if rules:
+            apply_body["rules"] = rules
+        else:
+            apply_body["fixIds"] = ready
+        result = client.post(apply_path, json=apply_body).json()
+
+    if json_mode:
+        emit_json(plan if dry_run else {"plan": plan, "applied": result})
+    else:
+        err = rendering_to_stdout and bool(ready)
+        for line in format_fix_plan(plan):
+            typer.echo(line, err=err)
+        if result is not None:
+            for line in format_fix_applied(result):
+                typer.echo(line, err=err)
+        elif dry_run and ready:
+            typer.echo("Dry run: nothing was written.", err=err)
+        if not dry_run:
+            for line in format_remaining(plan):
+                typer.echo(line, err=err)
+
+    code = fix_exit_code(plan, dry_run=dry_run)
+    if code:
+        raise typer.Exit(code)
 
 
 @app.command("gate")

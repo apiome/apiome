@@ -529,6 +529,11 @@ apiome lint --project payments-api --version 1.0.0
 apiome lint --project payments-api --version 1.0.0 --base-version 0.9.0
 apiome lint --project payments-api --version 1.0.0 --min-grade B
 
+# Deterministic lint fixes (GVM-3.3): preview as a unified diff, then apply as a new revision.
+# Exit 3 when breaking or conflicting fixes remain for a person (never with --dry-run).
+apiome lint --project payments-api --version 1.0.0 --fix --dry-run
+apiome lint --project payments-api --version 1.0.0 --fix --only structure.empty-required
+
 # Independent oasdiff compatibility evidence (normalized JSON / SARIF / JUnit)
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --format sarif

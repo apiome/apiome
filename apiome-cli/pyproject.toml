@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "apiome-cli"
-version = "0.153.0"
+version = "0.154.0"
 description = "Command-line client for the Apiome REST API"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -24,6 +24,9 @@ dependencies = [
     "jsonschema>=4.18",
     "openapi-spec-validator>=0.8.5",
     "openapi-schema-validator>=0.6",
+    # Round-trip YAML loader for `apiome lint --fix` file rewrites (GVM-3.3): keeps comments,
+    # key order and quoting, which the yaml12 / PyYAML loaders drop.
+    "ruamel.yaml>=0.18",
 ]
 
 [project.scripts]
