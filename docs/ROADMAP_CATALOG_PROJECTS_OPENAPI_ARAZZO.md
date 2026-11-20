@@ -14,7 +14,7 @@ _The Contracts and PactFlow release is **RC10**: [`RC10_PLAN.md`](RC10_PLAN.md).
 | Spec | Current | Apiome today |
 | --- | --- | --- |
 | OpenAPI | **3.2.0** (3.1.2 patch, 3.0.4) | Import/emit 2.0, 3.0, 3.1, 3.2; 3.1/3.2 meta-schema validation; 3.2 `query`, `additionalOperations`, tag hierarchy modelled |
-| Arazzo | **1.1.0** (May 2026; AsyncAPI sources, `querystring`) | Read/normalise/lint/emit 1.0.x and 1.1.x in apiome-rest, the CLI, the legacy and UI generators and the docs (COA-1.1) |
+| Arazzo | **1.1.0** (May 2026; AsyncAPI sources, `querystring`) | Read/normalise/lint/emit 1.0.x and 1.1.x in apiome-rest, the CLI, the legacy and UI generators and the docs (COA-1.1); runs a stored workflow against a verification target or mock (COA-1.7) |
 | Overlay | **1.1.0** (`copy`, RFC 9535), 1.2 in progress | Applies 1.0–1.2 with provenance; stored overlays; lint rules; no UI manager |
 
 Sources: OpenAPI Initiative newsletters (Feb and Jun 2026), the Arazzo specification page and Redocly's Arazzo 1.1 release post. Competitive notes (from the Oct 2026 market analysis): OpenAPI 3.2 is a lead for Apiome (Spectral added 3.2 on 1 Oct 2026); Specmatic charges for Arazzo testing; Redocly/vacuum/Spectral lint Arazzo and Overlay; lint `--fix` and governance scorecards are the catch-up items (adopted below).
@@ -50,9 +50,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 
 Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the CLI, the legacy generator, the UI generator and the docs still say 1.0, workflows have no viewer, and filesets are not supported.
 
-| Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli`, `v2` | N | N | L | apiome-rest, apiome-cli |
+All seven issues of this epic are complete.
 
 **✅ COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs — Complete**
 - **Shipped:** CLI 0.148.0 vendors the Arazzo 1.1 schema (`import_/schemas/arazzo/1.1/2026-04-15.json`) and validates each document against the schema for the version it declares (`arazzo_version_line`; other versions fail at `/arazzo`). REST 1.767.0 / OpenAPI 1.598.0: `GET /v1/arazzo/...` (and the per-class route) take `arazzo_version` (default `1.0.1`; `400` otherwise); `arazzo_generator.resolve_generator_arazzo_version` applies the export target's rule (`1.1.0` for AsyncAPI sources, a 1.0 request for one is rejected). UI 0.671.0: `generateArazzoSpec` takes `arazzoVersion` / `sourceDescriptions` (`resolveArazzoVersion`); the import analyzer accepts 1.1.x; the Projects importer accepts `asyncapi` sources in a 1.1 document and leaves their steps to the server. Docs: `bring-in/import-a-spec.md`, `ship/export-a-spec.md`, regenerated REST/CLI reference, `ARAZZO_ENDPOINTS.md`, release note `arazzo-1-1-consistency`.
@@ -142,7 +140,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/api-changelog.mdx`; screenshots: n/a (no UI change)
 
-**COA-1.7 · #7043 Run an Arazzo workflow against a target**
+**✅ COA-1.7 · #7043 Run an Arazzo workflow against a target — Complete**
+- **Shipped:** REST 1.773.0 / OpenAPI 1.604.0: `POST /v1/workflows/{tenant}/versions/{version_id}/workflows/{workflow_id}/run` (`arazzo_workflow_run_service`, pure `arazzo_workflow_run` + `arazzo_runtime_expression`) compiles a stored workflow into an ordered run against an ECA-1.2 target (a deployment or a `mock` target): step parameters and request bodies (`payload` + `replacements`, workflow-level and `components` parameters) are built from `$inputs`/`$steps.<id>.outputs`/`{$…}` runtime expressions; `successCriteria` (`simple`, `regex`, `jsonpath`; `xpath` unsupported; an implicit 2XX check when none) are judged with expected-vs-actual values; `end`/`goto` step/`retry` (`retryLimit` default 1, `retryAfter` ≤ 10 s) are followed, 100 executions max. CTG-4.3 safety: a mutating step needs target policy + `verification.allow_mutating` + a `MutatingFixture` (operation, or step via `case_id`), else the whole run is refused before sending (`ok: false`, `refusals[]`); unresolved / nested-workflow steps and inputs failing the `inputs` schema are refused the same way. Every executed run is ECA-1.3 evidence (runner `apiome-arazzo-runner`, one operation per step, criteria as assertions); `Database.get_arazzo_components`. CLI 0.151.0: `apiome arazzo run WORKFLOW_ID --target T [--input k=v] [--inputs FILE] [--allow-mutating --fixtures FILE]` (pure `arazzo_run.py`), exit 0 passed / 7 failed (`EXIT_ARAZZO_RUN_FAILED`) / 3 mutation refused. Acceptance: `tests/test_arazzo_workflow_run.py` runs a 3-step workflow against a stateful mock with passing and failing criteria and refuses mutating steps without policy or opt-in. Docs: `build/arazzo-workflows.mdx` (**Run a workflow against a target**), `ship/contract-testing-and-ci-gates.mdx`, regenerated REST/CLI reference + exit codes; release note `arazzo-workflow-run`; What's new line.
 - **Problem:** Specmatic charges for Arazzo testing; Apiome has the suite compiler, runner and targets (ECA) but cannot execute a workflow's step chain, so the agent-facing roadmap (ATQ-5.4) has nothing to test against.
 - **Solution/Scope:**
 - Compile an Arazzo workflow into an ordered ECA run: step outputs feed later inputs through runtime expressions; success criteria are assertions.

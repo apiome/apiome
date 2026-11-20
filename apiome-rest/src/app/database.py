@@ -16018,6 +16018,40 @@ class Database:
             "report": report if isinstance(report, dict) else None,
         }
 
+    def get_arazzo_components(self, *, tenant_id: str, version_id: str) -> Dict[str, Any]:
+        """Read an Arazzo revision's document-level ``components`` (COA-1.7 / #7043).
+
+        A workflow run resolves ``$components.parameters.…`` references, components success and
+        failure actions, and an ``inputs`` ``$ref`` against this object.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            version_id: The ``versions.id`` to read.
+
+        Returns:
+            The ``components`` object from the live canonical artifact's root ``extras``, or an
+            empty dict when the document declares none (or the revision is not in the tenant).
+        """
+        rows = self.execute_query(
+            """
+            SELECT a.extras -> 'components' AS components
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            JOIN apiome.api_artifacts a
+                 ON a.version_id = v.id AND a.tenant_id = p.tenant_id AND a.deleted_at IS NULL
+            WHERE v.id = %s::uuid AND p.tenant_id = %s::uuid
+            LIMIT 1
+            """,
+            (version_id, tenant_id),
+        )
+        value = (rows[0] if rows else {}).get("components")
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except ValueError:
+                value = None
+        return value if isinstance(value, dict) else {}
+
     #: Columns that identify a path operation for the Arazzo workflow viewer (COA-1.3).
     _ARAZZO_OPERATION_SUMMARY_SQL = """
         SELECT po.id::text AS path_operation_id,

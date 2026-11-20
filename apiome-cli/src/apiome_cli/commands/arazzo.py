@@ -3,7 +3,10 @@
 * ``apiome arazzo list`` — the workflows a revision stores, with how many steps resolved;
 * ``apiome arazzo show WORKFLOW_ID`` — one workflow, its sources and its ordered steps;
 * ``apiome arazzo validate [FILE]`` — check a local Arazzo document's structure, or check that
-  every stored step's ``operationRef`` / ``operationId`` resolved and every source was found.
+  every stored step's ``operationRef`` / ``operationId`` resolved and every source was found;
+* ``apiome arazzo run WORKFLOW_ID --target T`` — run a stored workflow end to end against a
+  verification target (a deployment or a mock) and print each step's criteria, expected vs
+  actual (COA-1.7, #7043).
 
 A revision is named with ``--project`` and ``--version`` (a Project's revision) or ``--catalog``
 (a catalog item's latest revision; ``--revision`` names another one). The reads are the REST
@@ -13,6 +16,7 @@ routes under ``/v1/workflows/{tenant}/…``; the tables and checks are in
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Optional
 
 import typer
@@ -25,7 +29,18 @@ from apiome_cli.arazzo_records import (
     find_workflow,
     record_problems,
 )
+from apiome_cli.arazzo_run import (
+    build_run_body,
+    exit_code_for_run,
+    load_fixtures,
+    load_inputs,
+    refusal_lines,
+    report_lines,
+)
+from apiome_cli.cli_context import import_timeout_from_context, insecure_from_context, settings_from_context
 from apiome_cli.client import api_paths
+from apiome_cli.client.contract_verify import parse_context_pairs
+from apiome_cli.client.http import RestClient
 from apiome_cli.client.version_scope import resolve_version_scope, tenant_scoped_client
 from apiome_cli.exit_codes import EXIT_ARAZZO_INVALID, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -34,7 +49,7 @@ from apiome_cli.output import emit_json, json_mode_from_context
 
 app = typer.Typer(
     name="arazzo",
-    help="List, show and validate the Arazzo workflows a revision stores.",
+    help="List, show, validate and run the Arazzo workflows a revision stores.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -284,3 +299,137 @@ def validate(
         ctx, project=project, version=version, catalog=catalog, revision=revision
     )
     _validate_records(ctx, payload)
+
+
+def _revision_id(
+    ctx: typer.Context,
+    *,
+    project: Optional[str],
+    version: Optional[str],
+    catalog: Optional[str],
+    revision: Optional[str],
+) -> str:
+    """Resolve the revision a run reads its workflow from.
+
+    Raises:
+        typer.Exit: :data:`EXIT_USAGE` for a bad scope, an unknown revision, or a catalog item
+            with no revisions yet.
+    """
+    _check_scope(project, version, catalog, revision)
+    if catalog:
+        payload = _fetch_workflows(
+            ctx, project=None, version=None, catalog=catalog, revision=revision
+        )
+        if not payload.get("version_id"):
+            _usage(f"catalog item {catalog} has no revisions to run.")
+        return str(payload["version_id"])
+    _client, _tenant, _project_id, version_id = resolve_version_scope(
+        ctx, project=str(project), version=str(version)
+    )
+    return str(version_id)
+
+
+@app.command("run")
+def run_workflow(
+    ctx: typer.Context,
+    workflow_id: str = typer.Argument(..., help="The workflow's Arazzo workflowId."),
+    target: str = typer.Option(
+        ...,
+        "--target",
+        help=(
+            "Verification target slug or id — a deployment or a mock target. Credentials come "
+            "from the target's env/stored reference on the server, never from this flag."
+        ),
+    ),
+    project: Optional[str] = _project_option(),
+    version: Optional[str] = _version_option(),
+    catalog: Optional[str] = _catalog_option(),
+    revision: Optional[str] = _revision_option(),
+    input_pair: Optional[list[str]] = typer.Option(
+        None,
+        "--input",
+        help="Workflow input as NAME=VALUE (repeatable); a JSON value keeps its type (count=3).",
+    ),
+    inputs_file: Optional[Path] = typer.Option(
+        None, "--inputs", help="JSON or YAML file holding an object of workflow inputs."
+    ),
+    allow_mutating: bool = typer.Option(
+        False,
+        "--allow-mutating",
+        help=(
+            "Opt in to POST/PUT/PATCH/DELETE steps. Each still needs a fixture (--fixtures) and a "
+            "target policy that allows mutating methods."
+        ),
+    ),
+    fixtures_file: Optional[Path] = typer.Option(
+        None,
+        "--fixtures",
+        help=(
+            "JSON or YAML list of mutating fixtures ({operation_key, case_id?, path_parameters?, "
+            "query_parameters?, headers?, body?, note?}); case_id narrows one to a stepId."
+        ),
+    ),
+    idempotency_key: Optional[str] = typer.Option(
+        None, "--idempotency-key", help="Evidence retry key; a repeated key returns the original run."
+    ),
+    context_pair: Optional[list[str]] = typer.Option(
+        None, "--context", help="Non-secret CI context as KEY=VALUE (repeatable), e.g. commit=abc123."
+    ),
+) -> None:
+    """Run a stored Arazzo workflow end to end against a verification target.
+
+    Posts to POST /v1/workflows/{tenant}/versions/{version_id}/workflows/{workflow_id}/run. Steps
+    run in order: their requests read --input values and earlier steps' outputs, their
+    successCriteria are judged (each printed with its expected and, when it fails, actual value)
+    and onSuccess / onFailure end, goto and retry actions are followed. Only GET/HEAD/OPTIONS
+    steps run by default: a mutating step needs the target policy, --allow-mutating and a
+    --fixtures entry, or the whole run is refused before anything is sent. Every executed run is
+    recorded as verification evidence; --json prints the full response.
+
+    Exit codes: 0 every step passed; 3 refused because a mutating step lacked policy, opt-in or
+    fixture; 7 a step failed or errored, or the run was refused for another reason (unresolved
+    step, invalid inputs); 2 bad flags, unreadable files, or an unknown revision, workflow or
+    target; 1 server or network error.
+    """
+    try:
+        inputs = load_inputs(inputs_file, input_pair)
+        fixtures = load_fixtures(fixtures_file)
+        context = parse_context_pairs(context_pair)
+    except ValueError as exc:
+        _usage(str(exc))
+    body = build_run_body(
+        target=target,
+        inputs=inputs,
+        allow_mutating=allow_mutating,
+        fixtures=fixtures,
+        idempotency_key=idempotency_key,
+        context=context or None,
+    )
+
+    version_id = _revision_id(
+        ctx, project=project, version=version, catalog=catalog, revision=revision
+    )
+    settings = settings_from_context(ctx)
+    run_client = RestClient(
+        settings, timeout=import_timeout_from_context(ctx), verify=not insecure_from_context(ctx)
+    )
+    _client, tenant_slug = tenant_scoped_client(ctx)
+    payload = run_client.post(
+        api_paths.arazzo_version_workflow_run(tenant_slug, version_id, workflow_id),
+        json=body,
+        headers={"Accept": "application/json"},
+    ).json()
+
+    if json_mode_from_context(ctx):
+        emit_json(payload)
+    elif not payload.get("ok"):
+        typer.echo(
+            f"Arazzo workflow {workflow_id} was not run against {target}; nothing was sent:",
+            err=True,
+        )
+        for line in refusal_lines(payload):
+            typer.echo(line, err=True)
+    else:
+        for line in report_lines(payload, workflow_id=workflow_id, target=target):
+            typer.echo(line)
+    raise typer.Exit(exit_code_for_run(payload))

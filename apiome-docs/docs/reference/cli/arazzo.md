@@ -1,6 +1,6 @@
 ---
 title: "apiome arazzo"
-description: "List, show and validate the Arazzo workflows a revision stores."
+description: "List, show, validate and run the Arazzo workflows a revision stores."
 sidebar_position: 2
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome arazzo {#arazzo}
 
-List, show and validate the Arazzo workflows a revision stores.
+List, show, validate and run the Arazzo workflows a revision stores.
 
 ```text
 apiome arazzo [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`list`](#arazzo-list), [`show`](#arazzo-show), [`validate`](#arazzo-validate).
+Subcommands: [`list`](#arazzo-list), [`run`](#arazzo-run), [`show`](#arazzo-show), [`validate`](#arazzo-validate).
 
 ## apiome arazzo list {#arazzo-list}
 
@@ -40,6 +40,40 @@ apiome arazzo list [OPTIONS]
 | `--version` | text |  |  | Version UUID, slug or label (with --project). |
 | `--catalog` | text |  |  | Catalog item UUID; reads its latest revision unless --revision. |
 | `--revision` | text |  |  | Catalog revision UUID (with --catalog). |
+
+## apiome arazzo run {#arazzo-run}
+
+Run a stored Arazzo workflow end to end against a verification target.
+
+Posts to POST /v1/workflows/{tenant}/versions/{version_id}/workflows/{workflow_id}/run. Steps run in order: their requests read --input values and earlier steps' outputs, their successCriteria are judged (each printed with its expected and, when it fails, actual value) and onSuccess / onFailure end, goto and retry actions are followed. Only GET/HEAD/OPTIONS steps run by default: a mutating step needs the target policy, --allow-mutating and a --fixtures entry, or the whole run is refused before anything is sent. Every executed run is recorded as verification evidence; --json prints the full response.
+
+Exit codes: 0 every step passed; 3 refused because a mutating step lacked policy, opt-in or fixture; 7 a step failed or errored, or the run was refused for another reason (unresolved step, invalid inputs); 2 bad flags, unreadable files, or an unknown revision, workflow or target; 1 server or network error.
+
+```text
+apiome arazzo run [OPTIONS] WORKFLOW_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `WORKFLOW_ID` | text | yes | The workflow's Arazzo workflowId. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--target` | text |  | yes | Verification target slug or id — a deployment or a mock target. Credentials come from the target's env/stored reference on the server, never from this flag. |
+| `--project` | text |  |  | Project UUID or slug (with --version). |
+| `--version` | text |  |  | Version UUID, slug or label (with --project). |
+| `--catalog` | text |  |  | Catalog item UUID; reads its latest revision unless --revision. |
+| `--revision` | text |  |  | Catalog revision UUID (with --catalog). |
+| `--input` | text (repeatable) |  |  | Workflow input as NAME=VALUE (repeatable); a JSON value keeps its type (count=3). |
+| `--inputs` | path |  |  | JSON or YAML file holding an object of workflow inputs. |
+| `--allow-mutating` | flag |  |  | Opt in to POST/PUT/PATCH/DELETE steps. Each still needs a fixture (--fixtures) and a target policy that allows mutating methods. |
+| `--fixtures` | path |  |  | JSON or YAML list of mutating fixtures ({operation_key, case_id?, path_parameters?, query_parameters?, headers?, body?, note?}); case_id narrows one to a stepId. |
+| `--idempotency-key` | text |  |  | Evidence retry key; a repeated key returns the original run. |
+| `--context` | text (repeatable) |  |  | Non-secret CI context as KEY=VALUE (repeatable), e.g. commit=abc123. |
 
 ## apiome arazzo show {#arazzo-show}
 

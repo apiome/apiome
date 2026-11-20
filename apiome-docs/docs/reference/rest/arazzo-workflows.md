@@ -1,6 +1,6 @@
 ---
 title: "Arazzo workflows"
-description: "REST endpoints tagged arazzo-workflows: 7 operations."
+description: "REST endpoints tagged arazzo-workflows: 8 operations."
 sidebar_position: 11
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.603.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.604.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `arazzo-workflows` · 7 operations
+Tag: `arazzo-workflows` · 8 operations
 
 ## `GET /v1/workflows/{tenant_slug}/catalog/{item_id}` {#list-catalog-item-workflows-v1-workflows-tenant-slug-catalog-item-id-get}
 
@@ -210,6 +210,41 @@ Operation id: `get_version_workflow_v1_workflows__tenant_slug__versions__version
 | 200 | Successful response for get version workflow. | `application/json` [`ArazzoWorkflowDetailResponse`](#schema-arazzoworkflowdetailresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/run` {#run-version-workflow-v1-workflows-tenant-slug-versions-version-id-workflows-workflow-id-run-post}
+
+**Run an Arazzo workflow against a verification target**
+
+Execute one stored workflow end to end against an ECA-1.2 verification target (a deployment, or a `mock` environment target): steps run in order, each request built from the workflow `inputs` and earlier steps' `outputs` through runtime expressions; each step's `successCriteria` are judged as assertions with expected-vs-actual values; `onSuccess` / `onFailure` `end`, `goto` and `retry` actions are followed.
+
+**Safe by default (CTG-4.3).** A step that sends `POST`/`PUT`/`PATCH`/`DELETE` runs only when the target policy allows mutating methods, `verification.allow_mutating` is set **and** a fixture names the step's operation (or the step, by `case_id`). Otherwise the run is refused before anything is sent: **200** with `ok: false` and every reason in `refusals` (also used for unresolved steps, nested-workflow steps and inputs that fail the workflow's `inputs` schema).
+
+An executed run is recorded as immutable ECA-1.3 evidence (**201**; **200** on an idempotent replay) whatever its outcome. 404 when the revision or workflow is unknown; target faults are 400/404; evidence faults are 400.
+
+Operation id: `run_version_workflow_v1_workflows__tenant_slug__versions__version_id__workflows__workflow_id__run_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `version_id` | path | string | yes | Version identifier or semantic version label, depending on the route. |
+| `workflow_id` | path | string | yes | Path parameter identifying the workflow id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for run an arazzo workflow against a verification target.
+
+- `application/json` — [`ArazzoWorkflowRunRequest`](#schema-arazzoworkflowrunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for run an arazzo workflow against a verification target. | `application/json` [`ArazzoWorkflowRunResponse`](#schema-arazzoworkflowrunresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps` {#list-version-workflow-steps-v1-workflows-tenant-slug-versions-version-id-workflows-workflow-id-steps-get}
 
 **List Version Workflow Steps**
@@ -326,6 +361,35 @@ One persisted Arazzo workflow of a revision, with the revision it was read from.
 | `project_id` | string | yes | Project or catalog item owning the revision |
 | `sources` | array of `ArazzoSourceDescriptionOut` | no | Every source the document declares |
 | `workflow` | `ArazzoWorkflowOut` | yes | Workflow. |
+
+### `ArazzoWorkflowRunRequest` {#schema-arazzoworkflowrunrequest}
+
+Which target to run a workflow against, with what inputs, and how much it may touch.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `target_ref` | string | yes | Verification target slug or id (ECA-1.2) — a deployment, or a `mock` environment target pointing at an Apiome mock. |
+| `inputs` | object | no | Workflow inputs (`$inputs.…`). Checked against the workflow's `inputs` schema after its property defaults are applied. The run hashes them into the digest and does not store them; a criterion that compares with an input quotes its value as evidence. |
+| `verification` | `ArazzoRunOptions` | no | What the run may send. Safe methods only by default; a mutating step needs the target policy, `allow_mutating` and a fixture naming its operation. |
+| `idempotency_key` | string or null | no | Evidence retry key; forwarded to the verification-runs store. |
+| `context` | object | no | Non-secret CI context (commit, branch, workflow URL). Never credentials. |
+
+### `ArazzoWorkflowRunResponse` {#schema-arazzoworkflowrunresponse}
+
+The outcome of one workflow run attempt.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ok` | boolean | yes | Whether the workflow executed (whatever its outcome). |
+| `version_id` | string | yes | The revision the workflow was read from. |
+| `workflow_id` | string | yes | The workflow's `workflowId`. |
+| `digest` | string or null | no | Digest of the compiled run plan and its inputs. |
+| `report` | `ArazzoWorkflowRunReport` or null | no | The per-step report when `ok` is true. |
+| `refusals` | array of `ArazzoRunRefusal` | no | Everything that kept the run from starting; nothing was sent when non-empty. |
+| `fixture_findings` | array of `FixtureFinding` | no | Fixtures that matched no mutating step. |
+| `run` | `VerificationRunRecord` or null | no | The immutable ECA-1.3 evidence behind the report. |
+| `created` | boolean or null | no | True when evidence was newly written; False on replay. |
+| `error` | `ArazzoRunErrorOut` or null | no | Populated when `ok` is false. |
 
 ### `ArazzoWorkflowStepOut` {#schema-arazzoworkflowstepout}
 
