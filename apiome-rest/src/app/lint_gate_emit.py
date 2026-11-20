@@ -279,14 +279,23 @@ def _md_escape(value: Any) -> str:
     return str(value if value is not None else "").replace("|", "\\|").replace("\n", " ")
 
 
-def to_gate_markdown(gate: Mapping[str, Any]) -> str:
+def to_gate_markdown(
+    gate: Mapping[str, Any],
+    *,
+    fix_suggestions: Optional[Mapping[str, Any]] = None,
+    fix_links: Optional[Mapping[str, str]] = None,
+) -> str:
     """Emit a human-readable Markdown gate summary (PR comments, CI job summaries).
 
     Args:
         gate: Payload from :func:`app.lint_gate.gate_payload`.
+        fix_suggestions: The revision's :func:`app.lint_fix_suggestions.summarize_fix_plan`
+            output (GVM-3.4), rendered as a *Suggested fixes* section; ``None`` for none.
+        fix_links: Where the full change is downloaded, by rendering (``patch`` / ``overlay``).
 
     Returns:
-        Markdown text: verdict, gates table, counts, findings table, provenance fingerprints.
+        Markdown text: verdict, gates table, counts, findings table, suggested fixes,
+        provenance fingerprints.
     """
     gate_block = gate.get("gate") or {}
     evaluation = gate.get("evaluation") or {}
@@ -365,6 +374,13 @@ def to_gate_markdown(gate: Mapping[str, Any]) -> str:
             )
         lines.append("")
 
+    # Local import: the planner pulls in the change classifier; keep this module import-light.
+    from .lint_fix_suggestions import fix_suggestions_markdown
+
+    fixes = fix_suggestions_markdown(fix_suggestions, heading="## Suggested fixes", links=fix_links)
+    if fixes:
+        lines.extend([*fixes, ""])
+
     lines.append("## Provenance")
     lines.append("")
     lines.append(
@@ -396,6 +412,8 @@ def serialize_lint_gate(
     *,
     secret: Optional[str] = None,
     tool_version: str = "1",
+    fix_suggestions: Optional[Mapping[str, Any]] = None,
+    fix_links: Optional[Mapping[str, str]] = None,
 ) -> tuple[str, str]:
     """Return ``(body, media_type)`` for a lint gate payload in the requested format.
 
@@ -404,6 +422,8 @@ def serialize_lint_gate(
         gate: Payload from :func:`app.lint_gate.gate_payload`.
         secret: HMAC signing secret for the attestation format (unsigned when ``None``).
         tool_version: SARIF tool version string.
+        fix_suggestions: Suggested fixes for the Markdown format (ignored by the others).
+        fix_links: The full-change downloads the Markdown section links.
 
     Returns:
         Serialized body text and its HTTP media type.
@@ -418,7 +438,7 @@ def serialize_lint_gate(
     if resolved == GATE_FORMAT_JUNIT:
         return to_gate_junit(gate), media
     if resolved == GATE_FORMAT_MARKDOWN:
-        return to_gate_markdown(gate), media
+        return to_gate_markdown(gate, fix_suggestions=fix_suggestions, fix_links=fix_links), media
     if resolved == GATE_FORMAT_ATTESTATION:
         # Local import: lint_attestation pulls in app config; keep this module import-light.
         from .lint_attestation import attestation_envelope, build_attestation_statement

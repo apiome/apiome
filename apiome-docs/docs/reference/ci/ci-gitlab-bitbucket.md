@@ -177,6 +177,22 @@ Notes:
   you also gate direct pushes to `main`.
 - `artifacts: [apiome-changelog.md]` keeps the classified changelog attached to the step.
 
+## Keep the suggested fixes as an artefact
+
+GitLab and Bitbucket have no suggestion blocks, but the job can keep the spec's mechanical lint
+fixes as an artefact for a reviewer to download (GVM-3.4). Add these lines to the recipe's
+`script` after the gate. Then add the two files to `artifacts:paths` (GitLab) or `artifacts`
+(Bitbucket):
+
+```bash
+apiome lint suggest "$APIOME_SPEC" --format patch -o apiome-lint-fixes.patch.json || true
+apiome lint suggest "$APIOME_SPEC" --format overlay -o apiome-lint-fixes.overlay.json || true
+```
+
+The patch holds the same bytes the GitHub Action attaches. `|| true` keeps a spec that cannot be
+planned (not OpenAPI 3.x) from failing the job: the gate's exit code still decides. See
+[Fix suggestions in CI](../../build/auto-fix.md#fix-suggestions-in-ci).
+
 ## Fail on warnings too
 
 Set `APIOME_FAIL_ON: warn` (GitLab) or `APIOME_FAIL_ON=warn` (Bitbucket) to fail on non-breaking

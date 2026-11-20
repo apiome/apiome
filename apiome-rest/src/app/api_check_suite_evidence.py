@@ -161,6 +161,37 @@ async def read_lint_facts(
     )
 
 
+async def read_fix_suggestions(
+    *, tenant_id: str, tenant_slug: str, project_id: str, version: Mapping[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """The revision's suggested lint fixes, with the links to the full change (GVM-3.4, #5872).
+
+    The GNC-2.2 provider check carries the fix count in its summary and links the patch, whose
+    bytes are what ``apiome lint --fix --dry-run --fix-format patch`` prints.
+
+    Args:
+        tenant_id: The caller's tenant.
+        tenant_slug: The tenant slug.
+        project_id: The owning project.
+        version: The revision row.
+
+    Returns:
+        The summary plus ``links``, or ``None`` when no plan could be made.
+    """
+    from .lint_fix_routes import fix_plan_links, suggest_revision_fixes  # Lazy: a routes module.
+
+    suggestions = await asyncio.to_thread(
+        suggest_revision_fixes,
+        version,
+        tenant_slug=tenant_slug,
+        tenant_id=tenant_id,
+        project_id=project_id,
+    )
+    if suggestions is None:
+        return None
+    return {**suggestions, "links": fix_plan_links(tenant_slug, project_id, str(version["id"]))}
+
+
 # ---------------------------------------------------------------------------------------------
 # breaking + consumers
 # ---------------------------------------------------------------------------------------------
@@ -537,6 +568,9 @@ async def gather_components(
             thresholds=thresholds.lint,
             requirement=requirement[COMPONENT_LINT],
             link=links[COMPONENT_LINT],
+            fix_suggestions=await read_fix_suggestions(
+                tenant_id=tenant_id, tenant_slug=tenant_slug, project_id=project_id, version=version
+            ),
         )
 
     if requirement[COMPONENT_LINT] != REQUIREMENT_OFF:

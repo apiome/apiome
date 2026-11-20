@@ -31,6 +31,8 @@ export INPUT_TENANT="acme-corp"
 export INPUT_GITHUB_TOKEN="gh-token"
 export INPUT_COMMENT="false"
 export INPUT_BLAST_RADIUS="false"
+# Suggested fixes (GVM-3.4) have their own test: test_entrypoint_fix_suggestions.sh.
+export INPUT_FIX_SUGGESTIONS="false"
 export ARGS_LOG="${TMP}/args.log"
 
 echo '{"pull_request":{"number":7}}' >"${GITHUB_EVENT_PATH}"

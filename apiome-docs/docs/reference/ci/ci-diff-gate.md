@@ -69,6 +69,41 @@ Under each breaking change, the comment says what the change affects in the
 Set `blast-radius: false` to leave that line out. It needs the API key to have `projects:view`, and it
 never changes whether the check passes.
 
+### Suggested fixes
+
+The comment also suggests the spec's mechanical lint fixes (GVM-3.4). Below the changelog, a
+**Suggested fixes** section lists, per rule, the number of ready fixes, the fix class and the
+first hunk. A fix that changes one region of the spec, on lines the pull request changes, is also
+posted as a review comment with a GitHub suggestion block. Accept it with **Commit suggestion**.
+
+![The sticky comment: the changelog, then the Suggested fixes section with a diff snippet and the artefact link](/img/ci/diff-action-suggested-fixes.svg)
+
+The changelog and the fixes are separate sections of the one sticky comment, so each push updates
+both in place. The full patch and overlay are written to the workspace for an upload step. Add it
+after the action:
+
+```yaml
+      - uses: apiome/apiome/diff-action@main
+        id: gate
+        with:
+          spec: openapi.yaml
+          project: payments-api@latest
+          api-key: ${{ secrets.APIOME_API_KEY }}
+          tenant: ${{ secrets.APIOME_TENANT_ID }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: apiome-lint-fixes
+          path: |
+            ${{ steps.gate.outputs.fix-patch-path }}
+            ${{ steps.gate.outputs.fix-overlay-path }}
+          if-no-files-found: ignore
+```
+
+Set `fix-suggestions: false` to leave the fixes out. They never change whether the check passes,
+and nothing is pushed to the branch. See
+[Suggested fixes](./diff-action.md#suggested-fixes) for the details.
+
 ### Compatibility mode
 
 The gate grades changes by the baseline project's compatibility policy, so it agrees with
@@ -111,6 +146,7 @@ export APIOME_API_KEY=…          # from secrets
 export APIOME_TENANT_ID=…        # from secrets
 apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --format md --blast-radius
 apiome diff ./order-created.avsc --against orders-events@latest --mode full --transitive
+apiome lint suggest ./openapi.yaml                # the Suggested fixes section
 ```
 
 ## Related

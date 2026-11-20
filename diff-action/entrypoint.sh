@@ -2,11 +2,17 @@
 # GitHub Action entrypoint for apiome/diff-action (CTG-2.2 / #4472).
 # Runs `apiome diff --format md`, upserts a sticky PR comment, then exits with
 # the CLI exit code (0 = pass, 1 = gate failed, 2 = operational error).
+# GVM-3.4 (#5872): with fix-suggestions (default true) it also runs
+# `apiome lint suggest` on the spec, writes the full patch and overlay for a
+# workflow artefact, posts GitHub suggestion blocks for single-region fixes inside
+# the PR diff, and keeps a second "fixes" section in the same sticky comment.
+# Suggested fixes never change the exit code and nothing is pushed to the branch.
 
 set -uo pipefail
 
 APIOME_BIN="${APIOME_BIN:-apiome}"
 STICKY_BIN="${STICKY_BIN:-sticky_comment.sh}"
+FIX_SUGGESTIONS_BIN="${FIX_SUGGESTIONS_BIN:-fix_suggestions.sh}"
 CI_ENTRYPOINT="${CI_ENTRYPOINT:-ci_entrypoint.sh}"
 
 # Dual mode (CTG-2.4 / #4474): the GitHub Action runs this image with no
@@ -19,6 +25,9 @@ fi
 WORKSPACE="${GITHUB_WORKSPACE:-.}"
 CHANGELOG_REL="${APIOME_CHANGELOG_PATH:-.apiome-diff-changelog.md}"
 CHANGELOG_PATH="${WORKSPACE%/}/${CHANGELOG_REL#./}"
+# GVM-3.4: the artefact files, workspace-relative so an upload-artifact step can find them.
+FIX_PATCH_REL="${APIOME_FIX_PATCH_PATH:-.apiome-lint-fixes.patch.json}"
+FIX_OVERLAY_REL="${APIOME_FIX_OVERLAY_PATH:-.apiome-lint-fixes.overlay.json}"
 
 SPEC="${INPUT_SPEC:-}"
 PROJECT="${INPUT_PROJECT:-}"
@@ -32,6 +41,7 @@ BLAST_RADIUS="${INPUT_BLAST_RADIUS:-true}"
 MODE="${INPUT_MODE:-}"
 TRANSITIVE="${INPUT_TRANSITIVE:-}"
 CATEGORY="${INPUT_CATEGORY:-}"
+FIX_SUGGESTIONS="${INPUT_FIX_SUGGESTIONS:-true}"
 GITHUB_TOKEN="${INPUT_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 
 log() {
@@ -45,6 +55,16 @@ write_output() {
     {
       echo "${name}=${value}"
     } >>"${GITHUB_OUTPUT}"
+  fi
+}
+
+resolve_head_sha() {
+  if [[ -n "${HEAD_SHA:-}" ]]; then
+    echo "${HEAD_SHA}"
+    return 0
+  fi
+  if [[ -n "${GITHUB_EVENT_PATH:-}" && -f "${GITHUB_EVENT_PATH}" ]]; then
+    jq -r '.pull_request.head.sha // empty' "${GITHUB_EVENT_PATH}" 2>/dev/null || true
   fi
 }
 
@@ -89,6 +109,14 @@ case "${BLAST_RADIUS}" in
   true|false) ;;
   *)
     echo "::error::Input 'blast-radius' must be 'true' or 'false' (got: ${BLAST_RADIUS})"
+    exit 2
+    ;;
+esac
+
+case "${FIX_SUGGESTIONS}" in
+  true|false) ;;
+  *)
+    echo "::error::Input 'fix-suggestions' must be 'true' or 'false' (got: ${FIX_SUGGESTIONS})"
     exit 2
     ;;
 esac
@@ -176,7 +204,6 @@ esac
 
 COMMENT_BODY_PATH="$(mktemp)"
 {
-  echo "<!-- apiome-diff-action -->"
   echo "${HEADER}"
   echo
   echo "Compared \`${SPEC_PATH}\` against \`${PROJECT}\`."
@@ -196,22 +223,90 @@ esac
 PR_NUM="$(resolve_pr_number)"
 EVENT_NAME="${GITHUB_EVENT_NAME:-}"
 
+# post_section <section> <body-file>: upsert one section of the sticky PR comment.
+post_section() {
+  local section="$1"
+  local body_file="$2"
+  local sticky_exit
+  set +e
+  STICKY_SECTION="${section}" "${STICKY_BIN}" "${body_file}"
+  sticky_exit=$?
+  set -e
+  if [[ "${sticky_exit}" -ne 0 ]]; then
+    log "warning: sticky PR comment (${section}) failed (exit ${sticky_exit}); continuing with diff exit ${DIFF_EXIT}"
+  fi
+}
+
+can_comment=false
 if [[ "${should_comment}" == "true" ]]; then
   if [[ -n "${PR_NUM}" ]]; then
+    can_comment=true
     export GITHUB_TOKEN
     export PR_NUMBER="${PR_NUM}"
-    set +e
-    "${STICKY_BIN}" "${COMMENT_BODY_PATH}"
-    STICKY_EXIT=$?
-    set -e
-    if [[ "${STICKY_EXIT}" -ne 0 ]]; then
-      log "warning: sticky PR comment failed (exit ${STICKY_EXIT}); continuing with diff exit ${DIFF_EXIT}"
-    fi
+    post_section diff "${COMMENT_BODY_PATH}"
   else
     log "sticky comment skipped (no pull request number; event=${EVENT_NAME:-unknown})"
   fi
 else
   log "sticky comment disabled (comment=${COMMENT})"
+fi
+
+# GVM-3.4 (#5872): suggested lint fixes for the spec. Failures are logged, never fatal.
+if [[ "${FIX_SUGGESTIONS}" == "true" ]]; then
+  FIX_DIR="$(mktemp -d)"
+  SPEC_REL="${SPEC_PATH#./}"
+  ARTIFACT_URL=""
+  if [[ -n "${GITHUB_RUN_ID:-}" && -n "${GITHUB_REPOSITORY:-}" ]]; then
+    ARTIFACT_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts"
+  fi
+  SUGGEST_FLAGS=(--path "${SPEC_REL}")
+  MARKDOWN_FLAGS=()
+  if [[ -n "${ARTIFACT_URL}" ]]; then
+    MARKDOWN_FLAGS+=(--artifact-url "${ARTIFACT_URL}")
+  fi
+  log "Running: ${APIOME_BIN} lint suggest ${SPEC_PATH} --path ${SPEC_REL}"
+  set +e
+  "${APIOME_BIN}" lint suggest "${SPEC_PATH}" "${SUGGEST_FLAGS[@]}" --format json -o "${FIX_DIR}/fixes.json" \
+    && "${APIOME_BIN}" lint suggest "${SPEC_PATH}" "${SUGGEST_FLAGS[@]}" --format patch -o "${FIX_PATCH_REL}" \
+    && "${APIOME_BIN}" lint suggest "${SPEC_PATH}" "${SUGGEST_FLAGS[@]}" --format overlay -o "${FIX_OVERLAY_REL}" \
+    && "${APIOME_BIN}" lint suggest "${SPEC_PATH}" "${SUGGEST_FLAGS[@]}" --format markdown \
+      ${MARKDOWN_FLAGS[@]+"${MARKDOWN_FLAGS[@]}"} -o "${FIX_DIR}/fixes.md"
+  SUGGEST_EXIT=$?
+  set -e
+
+  if [[ "${SUGGEST_EXIT}" -eq 0 ]]; then
+    FIX_COUNT="$(jq -r '.ready // 0' "${FIX_DIR}/fixes.json" 2>/dev/null || echo 0)"
+    write_output "fix-count" "${FIX_COUNT}"
+    write_output "fix-patch-path" "${FIX_PATCH_REL}"
+    write_output "fix-overlay-path" "${FIX_OVERLAY_REL}"
+    log "suggested lint fixes: ${FIX_COUNT} ready (patch: ${FIX_PATCH_REL}, overlay: ${FIX_OVERLAY_REL})"
+    if [[ "${can_comment}" == "true" ]]; then
+      HEAD="$(resolve_head_sha)"
+      set +e
+      POSTED="$(HEAD_SHA="${HEAD}" "${FIX_SUGGESTIONS_BIN}" "${FIX_DIR}/fixes.json" | tail -n 1)"
+      set -e
+      POSTED="${POSTED:-0}"
+      if [[ "${POSTED}" =~ ^[0-9]+$ && "${POSTED}" -gt 0 ]]; then
+        {
+          echo
+          echo "${POSTED} suggestion block(s) on the changed lines can be accepted in one click from the review."
+        } >>"${FIX_DIR}/fixes.md"
+      fi
+      post_section fixes "${FIX_DIR}/fixes.md"
+    fi
+  else
+    log "warning: apiome lint suggest failed (exit ${SUGGEST_EXIT}); no suggested fixes this run"
+    write_output "fix-count" ""
+    if [[ "${can_comment}" == "true" ]]; then
+      {
+        echo "### Suggested fixes"
+        echo
+        echo "_Suggested fixes could not be computed for \`${SPEC_REL}\` this run; see the job log._"
+      } >"${FIX_DIR}/fixes.md"
+      post_section fixes "${FIX_DIR}/fixes.md"
+    fi
+  fi
+  rm -rf "${FIX_DIR}"
 fi
 
 rm -f "${COMMENT_BODY_PATH}"

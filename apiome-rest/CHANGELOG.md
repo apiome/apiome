@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.784.0] - 2026-11-20
+
+### Added
+- **Suggested lint fixes in CI summaries — OpenAPI 1.611.0 (GVM-3.4, #5872):** a reviewer sees on
+  the pull request which lint failures are mechanical.
+  - `GET /v1/versions/{tenantSlug}/{projectId}/{versionId}/lint/gate?format=markdown` gains a
+    *Suggested fixes* section before *Provenance*: per rule the number of `ready` fixes, the fix
+    class and a fenced `diff` snippet of the first hunk, the breaking and conflicting fixes left
+    for a person, and the `…/lint/fixes?format=patch` / `?format=overlay` downloads. The other
+    gate formats are unchanged.
+  - The API change check suite's `lint` component records the suggestions as
+    `evidence.fixSuggestions` (`ready`, `breaking`, `conflict`, `rules[]`, `links`), and the run's
+    `summary` — the GNC-2.2 provider check run's summary — renders the same section, so the
+    check on the pull request carries the fix count and links the patch.
+  - Both plan the revision with the default options of `GET …/lint/fixes`, so the counts match
+    the linked patch byte for byte. A revision that is not OpenAPI 3.x has no section.
+  - `app.lint_fix_suggestions` (pure summary + Markdown renderer) and
+    `app.lint_fix_routes.suggest_revision_fixes` / `fix_plan_links`.
+
 ## [1.783.0] - 2026-11-20
 
 ### Added

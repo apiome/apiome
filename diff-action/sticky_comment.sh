@@ -9,6 +9,12 @@
 # Optional env:
 #   GITHUB_API_URL     (default https://api.github.com)
 #   STICKY_MARKER      (default <!-- apiome-diff-action -->)
+#   STICKY_SECTION     (GVM-3.4) a section name such as `diff` or `fixes`: the body replaces only
+#                      that section of the one sticky comment, between
+#                      `<!-- apiome-diff-action:<name> -->` and `<!-- /apiome-diff-action:<name> -->`,
+#                      so the diff and the suggested fixes update independently. A new section is
+#                      appended; a comment written before sections existed is replaced wholesale.
+#                      Unset: the body replaces the whole comment (the CTG-2.2 behaviour).
 #   CURL_BIN           (default curl) — override in tests
 
 set -euo pipefail
@@ -41,14 +47,7 @@ REPO="${GITHUB_REPOSITORY#*/}"
 COMMENTS_URL="${API_URL}/repos/${OWNER}/${REPO}/issues/${PR_NUMBER}/comments"
 
 BODY="$(cat "${BODY_FILE}")"
-# Ensure the marker is present so later runs can find this comment.
-if [[ "${BODY}" != *"${MARKER}"* ]]; then
-  BODY="${MARKER}
-${BODY}"
-fi
-
-# Build JSON payload without requiring python (jq --rawfile / --arg).
-PAYLOAD="$(jq -n --arg body "${BODY}" '{body: $body}')"
+SECTION="${STICKY_SECTION:-}"
 
 EXISTING_ID=""
 # Paginate lightly: first 100 comments is enough for sticky upsert.
@@ -61,6 +60,38 @@ LIST_JSON="$("${CURL_BIN}" -sS \
 EXISTING_ID="$(printf '%s' "${LIST_JSON}" | jq -r \
   --arg marker "${MARKER}" \
   '[.[] | select(.body | type == "string" and contains($marker)) | .id] | first // empty')"
+
+if [[ -n "${SECTION}" ]]; then
+  EXISTING_BODY="$(printf '%s' "${LIST_JSON}" | jq -r \
+    --arg marker "${MARKER}" \
+    '[.[] | select(.body | type == "string" and contains($marker)) | .body] | first // ""')"
+  # Replace this section in place, append it after the others, or start the comment with it.
+  BODY="$(jq -rn \
+    --arg old "${EXISTING_BODY}" \
+    --arg marker "${MARKER}" \
+    --arg start "<!-- apiome-diff-action:${SECTION} -->" \
+    --arg end "<!-- /apiome-diff-action:${SECTION} -->" \
+    --arg content "${BODY}" '
+    ($start + "\n" + $content + "\n" + $end) as $block
+    | if ($old | contains($start)) and ($old | contains($end)) then
+        ($old | split($start)) as $a
+        | ($a[1:] | join($start) | split($end)) as $b
+        | $a[0] + $block + ($b[1:] | join($end))
+      elif ($old | contains("<!-- apiome-diff-action:")) then
+        $old + "\n\n" + $block
+      else
+        $marker + "\n" + $block
+      end')"
+fi
+
+# Ensure the marker is present so later runs can find this comment.
+if [[ "${BODY}" != *"${MARKER}"* ]]; then
+  BODY="${MARKER}
+${BODY}"
+fi
+
+# Build JSON payload without requiring python (jq --rawfile / --arg).
+PAYLOAD="$(jq -n --arg body "${BODY}" '{body: $body}')"
 
 http_ok() {
   local code="$1"

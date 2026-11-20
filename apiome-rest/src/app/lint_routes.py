@@ -10,6 +10,7 @@ existing :mod:`app.compatibility_engine`.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -20,7 +21,7 @@ from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .config import settings
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
-from .gate_report_emit import GATE_FORMAT_JSON, normalize_gate_format
+from .gate_report_emit import GATE_FORMAT_JSON, GATE_FORMAT_MARKDOWN, normalize_gate_format
 from .import_routing import PUBLISHABLE_FORMATS
 from .lint_evidence import SUBJECT_CATALOG_REVISION
 from .lint_gate import evaluate_lint_gate, gate_payload
@@ -1244,8 +1245,26 @@ async def lint_revision_gate(
     fmt = normalize_gate_format(format or request.headers.get("accept"))
     if fmt == GATE_FORMAT_JSON:
         return LintGateResponse.model_validate(payload)
+    fix_suggestions = None
+    fix_links = None
+    if fmt == GATE_FORMAT_MARKDOWN:
+        # GVM-3.4 (#5872): the Markdown summary names the mechanical fixes a reviewer can apply.
+        from .lint_fix_routes import fix_plan_links, suggest_revision_fixes
+
+        fix_suggestions = await asyncio.to_thread(
+            suggest_revision_fixes,
+            version,
+            tenant_slug=tenant_slug,
+            tenant_id=tenant_id,
+            project_id=project_id,
+        )
+        fix_links = fix_plan_links(tenant_slug, project_id, version_record_id)
     body, media = serialize_lint_gate(
-        fmt, payload, secret=settings.lint_attestation_signing_secret
+        fmt,
+        payload,
+        secret=settings.lint_attestation_signing_secret,
+        fix_suggestions=fix_suggestions,
+        fix_links=fix_links,
     )
     return Response(content=body, media_type=media)
 

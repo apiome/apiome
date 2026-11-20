@@ -54,7 +54,7 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 | ✅ #5869 | GVM-3.1 rule SPI — Complete | Governance |
 | ✅ #5870 | GVM-3.2 fix plan, apply and Overlay rendering — Complete | Governance |
 | ✅ #5871 | GVM-3.3 `apiome lint --fix` and `--dry-run` (version mode; file mode follows GOV-3.5 #4442) — Complete | Governance |
-| #5872 | GVM-3.4 CI fix suggestions | Governance |
+| ✅ #5872 | GVM-3.4 CI fix suggestions (diff-action suggestion blocks, `apiome lint suggest`, gate and check-suite summaries) — Complete | Governance |
 | #6654 | MFX-38.1 follow-up: GitLab/Bitbucket/Azure DevOps export git delivery | Import/export |
 | #6706 | Catalog import and export demo script | Cleanup |
 

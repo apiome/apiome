@@ -907,6 +907,7 @@ def judge_lint(
     thresholds: LintThresholds,
     requirement: str,
     link: Optional[str],
+    fix_suggestions: Optional[Mapping[str, Any]] = None,
 ) -> SuiteComponent:
     """Judge the governance evidence.
 
@@ -919,6 +920,9 @@ def judge_lint(
         thresholds: The deploy gate's lint thresholds.
         requirement: The component's requirement.
         link: Path to the full lint report.
+        fix_suggestions: The revision's suggested fixes (GVM-3.4, #5872) — the
+            :func:`app.lint_fix_suggestions.summarize_fix_plan` summary plus the ``links`` to the
+            full change — kept as evidence so the summary renders them; never part of the verdict.
 
     Returns:
         The component.
@@ -933,6 +937,8 @@ def judge_lint(
         "guide": dict(facts.guide),
         "reportFingerprint": facts.report_fingerprint,
     }
+    if fix_suggestions is not None:
+        evidence["fixSuggestions"] = dict(fix_suggestions)
     rule = {"errorSeverityFails": True, **_thresholds_rule(thresholds)}
     if errors > 0:
         guide = facts.guide.get("name") or "the style guide"
@@ -1505,6 +1511,28 @@ def _evidence_lines(component: SuiteComponent) -> List[str]:
     return lines
 
 
+def _fix_suggestion_lines(components: Sequence[SuiteComponent]) -> List[str]:
+    """The *Suggested fixes* section the lint component's evidence carries (GVM-3.4, #5872).
+
+    Args:
+        components: Every component.
+
+    Returns:
+        The section's lines, or none when lint was not judged or nothing is suggested.
+    """
+    from .lint_fix_suggestions import fix_suggestions_markdown  # Lazy: pulls in the planner.
+
+    for component in components:
+        if component.component != COMPONENT_LINT:
+            continue
+        suggestions = component.evidence.get("fixSuggestions")
+        if isinstance(suggestions, Mapping):
+            return fix_suggestions_markdown(
+                suggestions, heading="**Suggested fixes**", links=suggestions.get("links")
+            )
+    return []
+
+
 def render_summary(
     *,
     run_id: str,
@@ -1576,6 +1604,9 @@ def render_summary(
         evidence = [line for component in models for line in _evidence_lines(component)]
         if evidence:
             lines.extend(["", "**Evidence**", *evidence])
+        fixes = _fix_suggestion_lines(models)
+        if fixes:
+            lines.extend(["", *fixes])
 
     lines.append("")
     commit = f" at `{commit_sha[:12]}`" if commit_sha else ""

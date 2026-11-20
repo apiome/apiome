@@ -8,6 +8,8 @@ CI-facing surfaces:
 * ``apiome lint gate`` — evaluate the policy gate, optionally against a baseline, emit a
   machine-readable artifact (JSON / SARIF / JUnit / Markdown / attestation), and exit
   non-zero ONLY when a configured policy gate failed.
+* ``apiome lint suggest <file>`` — the suggested fixes of a spec file for a pull-request
+  comment (GVM-3.4): a Markdown section, or JSON with GitHub-suggestion line ranges.
 * ``apiome lint evidence`` — list the immutable evidence runs behind a revision's findings.
 * ``apiome lint verify-attestation`` — verify a gate attestation offline with the shared
   HMAC secret (no server round-trip).
@@ -24,7 +26,7 @@ import typer
 from apiome_cli.attestation import attestation_statement, verify_attestation_envelope
 from apiome_cli.client import api_paths
 from apiome_cli.client.project_version_resolve import resolve_version_uuid
-from apiome_cli.client.version_scope import resolve_version_scope
+from apiome_cli.client.version_scope import resolve_version_scope, tenant_scoped_client
 from apiome_cli.client.http import RestClient
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
 from apiome_cli.lint_fix_output import (
@@ -34,6 +36,11 @@ from apiome_cli.lint_fix_output import (
     format_fix_plan,
     format_remaining,
     ready_fix_ids,
+)
+from apiome_cli.lint_fix_suggest import (
+    SUGGEST_FORMATS,
+    build_suggestions,
+    format_suggestions_markdown,
 )
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.output_lint import (
@@ -460,6 +467,85 @@ def gate(
 
     if gate_should_fail(gate_payload):
         raise typer.Exit(EXIT_ERROR)
+
+
+@app.command("suggest")
+def suggest(
+    ctx: typer.Context,
+    file: Path = typer.Argument(..., help="The OpenAPI 3.x file (YAML or JSON) to suggest fixes for."),
+    format: str = typer.Option(
+        "markdown",
+        "--format",
+        help=(
+            "markdown (the Suggested fixes section) | json (rules plus single-region suggestions) "
+            "| patch | overlay | diff (the plan's full change)."
+        ),
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", "-o", help="Write to this file instead of stdout."
+    ),
+    only: str | None = typer.Option(
+        None, "--only", help="Suggest fixes for these rule ids only (comma-separated)."
+    ),
+    allow_renames: bool = typer.Option(
+        False, "--allow-renames", help="Include rename fixes. A breaking fix is never suggested."
+    ),
+    path: str | None = typer.Option(
+        None,
+        "--path",
+        help="The file's repository-relative path, as the pull request names it (default: FILE).",
+    ),
+    artifact_url: str | None = typer.Option(
+        None,
+        "--artifact-url",
+        help="markdown: link the full patch and overlay at this URL (e.g. the workflow run's artefacts).",
+    ),
+) -> None:
+    """Suggest the deterministic lint fixes of a spec file for a CI comment (GVM-3.4).
+
+    Plans the file's fixes (POST /v1/lint/fixes/plan, nothing stored) and applies each ready fix
+    alone to the file's text, so snippets and line ranges are those of the file itself. The file is
+    never rewritten. ``--format patch`` writes the plan's RFC 6902 document (the bytes the plan
+    endpoint returns); ``json`` adds, for every fix that changes a single region of the file, the
+    line range and replacement a GitHub suggestion block needs. Exits 0 whatever is suggested.
+    """
+    fmt = "json" if json_mode_from_context(ctx) else format.strip().lower()
+    if fmt not in SUGGEST_FORMATS:
+        raise typer.BadParameter(
+            f"must be one of {', '.join(SUGGEST_FORMATS)}", param_hint="--format"
+        )
+    try:
+        text = file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        typer.echo(f"Cannot read {file}: {exc}", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    client, _tenant_slug = tenant_scoped_client(ctx)
+    body: dict[str, object] = {
+        "document": text,
+        "filename": file.name,
+        "includeRenames": allow_renames,
+    }
+    rules = _parse_only(only)
+    if rules:
+        body["rules"] = rules
+    plan_path = api_paths.lint_fixes_plan()
+
+    if fmt in FIX_FORMATS:
+        rendered = client.post(plan_path, json={**body, "format": fmt}).content
+        write_document_bytes(rendered, str(output) if output is not None else "-")
+        return
+
+    plan = client.post(plan_path, json={**body, "format": "json"}).json()
+    summary = build_suggestions(text, plan, path=path or str(file))
+    if fmt == "json":
+        rendered_text = json.dumps(summary, indent=2, ensure_ascii=False) + "\n"
+    else:
+        rendered_text = format_suggestions_markdown(summary, artifact_url=artifact_url)
+    if output is not None:
+        output.write_text(rendered_text, encoding="utf-8")
+    else:
+        typer.echo(rendered_text, nl=False)
 
 
 @app.command("evidence")
