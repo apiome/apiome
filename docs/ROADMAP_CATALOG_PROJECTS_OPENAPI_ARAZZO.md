@@ -62,7 +62,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | Epic | Title | Issues |
 | --- | --- | --- |
 | ✅ COA-EPIC-1 | Arazzo: complete, current and visible — Complete | 7 |
-| COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring | 8 |
+| ✅ COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring — Complete | 8 |
 | COA-EPIC-3 | Import and export fidelity | 6 |
 | COA-EPIC-4 | Catalog and Projects cleanup | 4 |
 | COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
@@ -175,9 +175,11 @@ All seven issues of this epic are complete. The epic's overview page is `build/a
 - **Technical Stack:** apiome-rest, apiome-cli
 - **Documentation:** `build/arazzo-workflows.mdx` (running a workflow); screenshots: n/a (no UI change)
 
-### COA-EPIC-2 · [#7034](https://github.com/apiome/apiome/issues/7034) — OpenAPI 3.2 / 3.1 fidelity and authoring
+### ✅ COA-EPIC-2 · [#7034](https://github.com/apiome/apiome/issues/7034) — OpenAPI 3.2 / 3.1 fidelity and authoring — Complete
 
 OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is to prove nothing is lost, validate every version, and surface 3.2 in Projects.
+
+All eight issues of this epic are complete. The epic's overview page is `build/openapi.mdx` (**OpenAPI in Apiome**: the construct matrix → validate → dialects → 3.2 constructs → upgrade → overlays → references → export lifecycle, versions side by side, how the pieces fit), with release note `openapi-fidelity-and-authoring` and a What's new line.
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -196,7 +198,7 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-fidelity.md`, new `reference/openapi-construct-matrix.md`; screenshots: n/a (no UI change)
 
-**COA-2.2 · #7045 Validate every OpenAPI version against its meta-schema**
+**✅ COA-2.2 · #7045 Validate every OpenAPI version against its meta-schema — Complete**
 - **Shipped:** REST 1.775.0 / OpenAPI 1.604.2. Vendored the official OpenAPI 3.0 (`oas/3.0/schema/2021-09-28`) and Swagger 2.0 schemas (draft-04, `Draft4Validator`); `validate_openapi_document` picks the schema from the declared `swagger` / `openapi` version, and 3.1.0 / 3.1.1 / 3.1.2 are covered explicitly. New `has_meta_schema` / `validation_status` (`validated` / `invalid` / `not_validated`) so a document no schema covers is never reported valid. The export round-trip now schema-checks the 3.0 and 2.0 downgrades and the construct audit checks 3.0. Docs: `ship/export-a-spec.md`; release note `every-openapi-version-validated`. The COA-2.1 follow-up (bundled 3.1 meta-schema rejecting a path-item `$ref` and `x-` keys in a Callback Object) is not part of this ticket.
 - **Problem:** `openapi_validator.py` bundles the 3.1 and 3.2 meta-schemas only; 3.0 and Swagger 2.0 documents are not schema-validated, and the 3.1.2 patch release has no explicit coverage.
 - **Solution/Scope:**
@@ -208,7 +210,7 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-a-spec.md`; screenshots: n/a (no UI change)
 
-**COA-2.3 · #7046 JSON Schema dialect handling per document**
+**✅ COA-2.3 · #7046 JSON Schema dialect handling per document — Complete**
 - **Shipped:** REST 1.776.0 / OpenAPI 1.604.3. New `app.openapi_schema_dialect` reads the document dialect (`jsonSchemaDialect`, 3.1/3.2 defaults, the 3.0 schema subset) and per-schema `$schema`; import keeps it as `schemaDialect` in the preservation bag and `CanonicalSchemaProjection.source_dialect` reports it. Every 3.0 ⇄ 2020-12 rewrite is recorded — inferred provenance per rewritten object (`record_schema_rewrites`), losses for `openapi-30-nullable-ref` and `openapi-30-schema-dialect`; the 3.0 downgrade folds `anyOf: [X, {type: null}]` back to `nullable`. Tests cover `$dynamicRef`/`$anchor` and the 3.0 → 3.1 → 3.2 → 3.0 corpus chain (the only residue is a default `exclusiveMinimum: false`, recorded on the upgrade hop). Docs: `ship/export-fidelity.md` (**Schema dialects**); release note `json-schema-dialect-per-document`.
 - **Problem:** `canonical_json_schema.py` records a dialect that is always draft 2020-12; OpenAPI 3.0 uses a draft-04-like subset (`nullable`, boolean `exclusiveMinimum`) and 3.1/3.2 allow a declared dialect.
 - **Solution/Scope:**
@@ -220,7 +222,7 @@ OpenAPI 3.2 and 3.1.2 are the current specs. Import and emit exist; the work is 
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-fidelity.md`; screenshots: n/a (no UI change)
 
-**COA-2.4 · #7047 Bundle and dereference options**
+**✅ COA-2.4 · #7047 Bundle and dereference options — Complete**
 - **Shipped:** REST 1.777.0 / OpenAPI 1.604.4 · CLI 0.152.0 · UI 0.673.5. New OpenAPI emit options `refs` (`bundle` default · `dereference` · `split`) and `ref_cycles` (`keep-ref` default · `error`) in `app.openapi_ref_modes`: dereference expands every internal `$ref` (components kept; literal data never treated as a reference; a dereference past 2M JSON values refused); a cycle is never expanded — `keep-ref` keeps the closing `$ref` and records an `openapi-dereference-cycle` loss, `error` refuses (422). Split writes the root plus `paths/*.json` and `components/<section>/<name>.json` (Swagger 2.0: `definitions/`); the fileset bundler maps a split layout back (whole-file entries, `discriminator.mapping`, `operationRef`) and the OpenAPI fileset import bundles it. The vendored 3.1 meta-schema gains the Path Item `$ref` (the COA-2.1 follow-up's first half). CLI `apiome export openapi --refs … --ref-cycles …` (also on `apiome export openapi-3.1`); Export studio and the Export dialog draw the options from the schema, and the dialog downloads a split export as the job's zip. Corpus: split bundles back byte-exact and dereference is stable through import at 3.0/3.1/3.2/2.0, no new meta-schema errors (`tests/test_openapi_ref_modes.py`). Docs: `ship/export-a-spec.md` (**Bundled, dereferenced or split into files**), `ship/export-studio.mdx`; screenshot `export-refs-options`; release note `bundle-and-dereference-options`; What's new line.
 - **Problem:** Remote `$ref`s are merged on import and fileset bundling exists, but there is no user-facing choice on export (single bundled file, fully dereferenced, or split by path/schema), and no open issue covers it.
 - **Solution/Scope:**
