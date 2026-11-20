@@ -4046,12 +4046,14 @@ const Versions = () => {
         ) : null}
 
         {showOverlaysTab && effectiveMainTab === 'overlays' ? (
-          /* Stored overlay chains (GVM-4.3, #5878): applied at export and publish render only. */
+          /* Stored overlay chains (GVM-4.3, #5878): applied at export and publish render only.
+             The overlay manager (COA-2.7, #7050) adds the editor, previews and Apply as version. */
           <VersionOverlaysPanel
             key={selectedProjectId}
             projectId={selectedProjectId}
             versions={versions}
             initialRevisionId={selectedVersion?.id ?? null}
+            onVersionCreated={() => void loadVersions()}
           />
         ) : null}
 

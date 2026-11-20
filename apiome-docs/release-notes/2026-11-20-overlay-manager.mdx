@@ -1,0 +1,30 @@
+---
+slug: overlay-manager
+title: "Write, preview and apply OpenAPI Overlays in Versions"
+description: "The Overlays tab writes overlays, counts matches, shows before and after, and applies them."
+authors: [apiome]
+---
+
+The **Overlays** tab on **Versions** is now an overlay manager. Write an Overlay document in the app,
+see how many values each action matches and every value it changes, then apply the chain as a new
+version or export with it.
+
+{/* truncate */}
+
+- **Write overlays in the app:** **New overlay** (and the pencil on a stored overlay) opens an
+  editor with **Update**, **Remove**, **Copy** (Overlay 1.1) and **Reusable** (Overlay 1.2
+  `components.actions`) actions, plus a **JSON** view of the whole document. **Upload overlay**
+  still adds files.
+- **Preview before you save:** the editor renders the revision with the chain and the unsaved
+  overlay. Each action shows its match count (**1 match**, **No match**, **Not applied**), and
+  **Before and after** lists every changed value, with the overlay action that changed it.
+- **Preview the chain:** the tab's **Preview** adds an **Actions and matches** table and the before and
+  after values to the change ledger.
+- **Apply as version:** imports the rendered document as a new version through the import quality
+  gate. The revision keeps its overlays.
+- **Export with overlays:** opens Export studio on the revision, which applies the chain.
+- **REST:** `POST …/overlays/preview` previews a draft overlay, `POST …/overlays/apply` applies the
+  chain, and every overlay report now carries `actions` (a match count per action) and the
+  preview carries `diff`.
+
+See [Manage overlays in Versions](/build/overlay-manager).

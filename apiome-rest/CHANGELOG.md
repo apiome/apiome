@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.780.0] - 2026-11-20
+
+### Added
+- **Overlay manager in Versions — OpenAPI 1.607.0 (COA-2.7, #7050):** stored overlay chains could be
+  listed, uploaded and previewed, but not written, checked action by action, or applied.
+  - `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/preview` renders the
+    chain with an unsaved `draft` overlay — appended, or in place of `replace_overlay_id` — and
+    writes nothing (it works on a published revision too). 404 `overlay-not-found` for an unknown
+    `replace_overlay_id`, 422 `overlay-draft-missing` when it comes without a draft.
+  - `POST …/overlays/apply` imports the rendered document (exactly what the preview and an export
+    render) as a new version of the same project, after the tenant's import quality gate, with the
+    source version's recorded import options. `version_label` is optional (a date/time label is
+    minted). Refusals: 409 `overlay-chain-empty`, `overlay-no-changes`, `version-exists`,
+    `QUALITY_POLICY_BLOCKED`; 422 `overlay-apply-import-failed`. Needs `versions:view`,
+    `imports:create` and `projects:edit`; writes a `version.overlays.applied` audit row. The source
+    revision and its chain are untouched.
+  - Every overlay report (export jobs, verify, chain preview) carries `actions`: one row per action
+    with its `kind` (`update` / `remove` / `copy`, `ref` for a reusable action), `matches` (nodes
+    the target selected), `changes` and `status` (`applied` / `unmatched` / `invalid`).
+  - The chain preview (`GET` and `POST …/overlays/preview`) carries `diff`: one row per changed
+    value with `before` / `after` (and `before_present` / `after_present`) and `changed_by`, every
+    overlay action that changed it in application order (per-value provenance), plus `draft`.
+
+### Changed
+- The spec upgrade assistant's apply and the overlay apply share `app.openapi_version_import`
+  (label choice, quality gate, import pipeline). No behaviour change.
+
 ## [1.779.0] - 2026-11-20
 
 ### Added

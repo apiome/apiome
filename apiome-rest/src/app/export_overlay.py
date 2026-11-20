@@ -48,6 +48,7 @@ from .openapi_overlay import (
 
 __all__ = [
     "ExportOverlay",
+    "ExportOverlayActionRow",
     "ExportOverlayError",
     "ExportOverlayFinding",
     "ExportOverlayLedgerRow",
@@ -162,6 +163,23 @@ class ExportOverlayFinding(BaseModel):
     message: str = Field(description="What was wrong.")
 
 
+class ExportOverlayActionRow(BaseModel):
+    """What one overlay action did: its kind and how many nodes its target matched (COA-2.7)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    overlay: str = Field(description="The overlay the action came from.")
+    action_index: int = Field(description="0-based index of the action in that overlay's `actions`.")
+    target: str = Field(default="", description="The action's JSONPath `target` (empty when it had none).")
+    kind: str = Field(description="`update`, `remove`, `copy`, or `unknown` for a malformed action.")
+    ref: Optional[str] = Field(
+        default=None, description="The reusable action (`components.actions.<name>`) it references, if any."
+    )
+    matches: int = Field(description="Nodes the target matched when the action ran; 0 when it was not evaluated.")
+    changes: int = Field(description="Values the action changed.")
+    status: str = Field(description="`applied`, `unmatched` (the target matched nothing) or `invalid` (refused).")
+
+
 class ExportOverlayReport(BaseModel):
     """What the overlays of one export did: applied chain, per-leaf ledger rows, findings."""
 
@@ -179,6 +197,10 @@ class ExportOverlayReport(BaseModel):
     )
     changes: int = Field(description="Total values the overlays changed, including any beyond the cap.")
     truncated: bool = Field(description="True when `ledger` itemizes only the first 500 changes.")
+    actions: List[ExportOverlayActionRow] = Field(
+        default_factory=list,
+        description="One row per action, in application order, with the number of nodes its target matched.",
+    )
 
 
 class ExportOverlayError(Exception):
@@ -334,6 +356,7 @@ def apply_export_overlays(
         findings=_findings(application),
         changes=application.provenance_total,
         truncated=application.provenance_truncated,
+        actions=[ExportOverlayActionRow(**outcome.as_dict()) for outcome in application.actions],
     )
     return source.model_copy(update={"api": api}), report
 

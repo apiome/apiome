@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.606.0",
+    "version": "1.607.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -1355,206 +1355,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for anx registryresourceversionappenddetailsfresponse422."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/openapi-upgrade/{tenant_slug}/apply": {
-      "post": {
-        "tags": [
-          "openapi-upgrade"
-        ],
-        "summary": "Apply a reviewed OpenAPI upgrade",
-        "description": "Apply a reviewed plan: the upgraded document becomes a new version of the same project.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 ``plan-stale`` (the source plans\n        differently now), ``nothing-to-upgrade`` (already at ``target``), ``version-exists``,\n        or a source refusal (see :func:`load_version_source`); 422 when the plan or the\n        import fails; 409 ``QUALITY_POLICY_BLOCKED`` when the tenant's import policy\n        refuses the upgraded document.",
-        "operationId": "apply_openapi_upgrade_v1_openapi_upgrade__tenant_slug__apply_post",
-        "parameters": [
-          {
-            "name": "tenant_slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tenant Slug",
-              "description": "Tenant Slug schema."
-            },
-            "description": "URL-safe tenant slug that scopes the request."
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
-                },
-                {
-                  "type": "null",
-                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
-                }
-              ],
-              "title": "Authorization",
-              "description": "Authorization schema."
-            },
-            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
-                },
-                {
-                  "type": "null",
-                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
-                }
-              ],
-              "title": "X-Api-Key",
-              "description": "X-Api-Key schema."
-            },
-            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpgradeApplyRequest",
-                "description": "Request body for applyareviewed open apiupgraderequest."
-              }
-            }
-          },
-          "description": "Request body for apply a reviewed openapi upgrade."
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response for apply a reviewed openapi upgrade.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpgradeApplyResponse",
-                  "description": "Response payload for applyareviewed open apiupgraderesponse200."
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError",
-                  "description": "Response payload for applyareviewed open apiupgraderesponse422."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/openapi-upgrade/{tenant_slug}/plan": {
-      "post": {
-        "tags": [
-          "openapi-upgrade"
-        ],
-        "summary": "Plan an OpenAPI version upgrade (no write)",
-        "description": "Plan the upgrade of a document or a version to ``target``; nothing is written.\n\nReturns:\n    The plan (:meth:`UpgradePlan.as_dict`) plus ``origin`` and, for a version source,\n    ``project_id`` / ``version_record_id`` / ``version_label``.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 when the version has no single-file\n        source; 413 / 422 for a document too large, unparseable, not OpenAPI, of an\n        unsupported version, or newer than ``target``.",
-        "operationId": "plan_openapi_upgrade_v1_openapi_upgrade__tenant_slug__plan_post",
-        "parameters": [
-          {
-            "name": "tenant_slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tenant Slug",
-              "description": "Tenant Slug schema."
-            },
-            "description": "URL-safe tenant slug that scopes the request."
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
-                },
-                {
-                  "type": "null",
-                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
-                }
-              ],
-              "title": "Authorization",
-              "description": "Authorization schema."
-            },
-            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
-                },
-                {
-                  "type": "null",
-                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
-                }
-              ],
-              "title": "X-Api-Key",
-              "description": "X-Api-Key schema."
-            },
-            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpgradePlanRequest",
-                "description": "Request body for planan open apiversionupgradenowriterequest."
-              }
-            }
-          },
-          "description": "Request body for plan an openapi version upgrade (no write)."
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response for plan an openapi version upgrade (no write).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post",
-                  "description": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post schema."
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError",
-                  "description": "Response payload for planan open apiversionupgradenowriteresponse422."
                 }
               }
             }
@@ -43141,7 +42941,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-16T13:38:07Z"
+                          "example": "2026-11-20T20:13:56Z"
                         },
                         "method": {
                           "type": "string",
@@ -52739,6 +52539,8 @@
                     "thread_resolved",
                     "version_published",
                     "export_auto_halted",
+                    "sunset_still_used",
+                    "seat_cap_blocked_sso",
                     "owner_finding",
                     "owner_breaking_change",
                     "owner_verification_drift",
@@ -62033,6 +61835,104 @@
         }
       }
     },
+    "/v1/workflows/{tenant_slug}/versions/{version_id}": {
+      "get": {
+        "tags": [
+          "arazzo-workflows"
+        ],
+        "summary": "List Version Workflows",
+        "description": "List the Arazzo workflows persisted for a revision.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n    version_id: The revision (``versions.id``) UUID.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n    The revision's workflows in declaration order, each with its ordered steps, the\n    operation each step resolved to, and its source-description status. An empty\n    ``workflows`` list means the revision holds no Arazzo document.\n\nRaises:\n    HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant.",
+        "operationId": "list_version_workflows_v1_workflows__tenant_slug__versions__version_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Workflowsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Workflowsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Workflows Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Workflows Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list version workflows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArazzoWorkflowsResponse",
+                  "description": "Response payload for list version workflowsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list version workflowsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}": {
       "get": {
         "tags": [
@@ -62676,104 +62576,6 @@
         }
       }
     },
-    "/v1/workflows/{tenant_slug}/versions/{version_id}": {
-      "get": {
-        "tags": [
-          "arazzo-workflows"
-        ],
-        "summary": "List Version Workflows",
-        "description": "List the Arazzo workflows persisted for a revision.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n    version_id: The revision (``versions.id``) UUID.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n    The revision's workflows in declaration order, each with its ordered steps, the\n    operation each step resolved to, and its source-description status. An empty\n    ``workflows`` list means the revision holds no Arazzo document.\n\nRaises:\n    HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant.",
-        "operationId": "list_version_workflows_v1_workflows__tenant_slug__versions__version_id__get",
-        "parameters": [
-          {
-            "name": "tenant_slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tenant Slug",
-              "description": "Tenant Slug schema."
-            },
-            "description": "URL-safe tenant slug that scopes the request."
-          },
-          {
-            "name": "version_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Version Id",
-              "description": "Version Id schema."
-            },
-            "description": "Version identifier or semantic version label, depending on the route."
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "List Version Workflowsauthorization schema."
-                },
-                {
-                  "type": "null",
-                  "description": "List Version Workflowsauthorization schema."
-                }
-              ],
-              "title": "Authorization",
-              "description": "Authorization schema."
-            },
-            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "description": "List Version Workflows Xapikey schema."
-                },
-                {
-                  "type": "null",
-                  "description": "List Version Workflows Xapikey schema."
-                }
-              ],
-              "title": "X-Api-Key",
-              "description": "X-Api-Key schema."
-            },
-            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response for list version workflows.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ArazzoWorkflowsResponse",
-                  "description": "Response payload for list version workflowsresponse200."
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError",
-                  "description": "Response payload for list version workflowsresponse422."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/run": {
       "post": {
         "tags": [
@@ -62888,6 +62690,206 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for runan arazzoworkflowagainstaverificationtresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/openapi-upgrade/{tenant_slug}/plan": {
+      "post": {
+        "tags": [
+          "openapi-upgrade"
+        ],
+        "summary": "Plan an OpenAPI version upgrade (no write)",
+        "description": "Plan the upgrade of a document or a version to ``target``; nothing is written.\n\nReturns:\n    The plan (:meth:`UpgradePlan.as_dict`) plus ``origin`` and, for a version source,\n    ``project_id`` / ``version_record_id`` / ``version_label``.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 when the version has no single-file\n        source; 413 / 422 for a document too large, unparseable, not OpenAPI, of an\n        unsupported version, or newer than ``target``.",
+        "operationId": "plan_openapi_upgrade_v1_openapi_upgrade__tenant_slug__plan_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Planan Open Apiversionupgradenowriteauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Planan Open Apiversionupgradenowrite Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradePlanRequest",
+                "description": "Request body for planan open apiversionupgradenowriterequest."
+              }
+            }
+          },
+          "description": "Request body for plan an openapi version upgrade (no write)."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for plan an openapi version upgrade (no write).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post",
+                  "description": "Response Plan Openapi Upgrade V1 Openapi Upgrade  Tenant Slug  Plan Post schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for planan open apiversionupgradenowriteresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/openapi-upgrade/{tenant_slug}/apply": {
+      "post": {
+        "tags": [
+          "openapi-upgrade"
+        ],
+        "summary": "Apply a reviewed OpenAPI upgrade",
+        "description": "Apply a reviewed plan: the upgraded document becomes a new version of the same project.\n\nRaises:\n    HTTPException: 404 unknown project / version; 409 ``plan-stale`` (the source plans\n        differently now), ``nothing-to-upgrade`` (already at ``target``), ``version-exists``,\n        or a source refusal (see :func:`load_version_source`); 422 when the plan or the\n        import fails; 409 ``QUALITY_POLICY_BLOCKED`` when the tenant's import policy\n        refuses the upgraded document.",
+        "operationId": "apply_openapi_upgrade_v1_openapi_upgrade__tenant_slug__apply_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Applyareviewed Open Apiupgradeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Applyareviewed Open Apiupgrade Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeApplyRequest",
+                "description": "Request body for applyareviewed open apiupgraderequest."
+              }
+            }
+          },
+          "description": "Request body for apply a reviewed openapi upgrade."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for apply a reviewed openapi upgrade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeApplyResponse",
+                  "description": "Response payload for applyareviewed open apiupgraderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for applyareviewed open apiupgraderesponse422."
                 }
               }
             }
@@ -76193,7 +76195,7 @@
           "versions"
         ],
         "summary": "Preview Version Overlays",
-        "description": "Render the revision's source with its stored chain, as an export would.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The resolved document, the source and resolved fingerprints, and the ledger/findings.\n\nRaises:\n    HTTPException: 404 for an unknown revision; 422 (``{code, message}``) when the source is not\n        OpenAPI or the chain cannot be applied.",
+        "description": "Render the revision's source with its stored chain, as an export would.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The resolved document, the source and resolved fingerprints, the ledger / per-action rows /\n    findings, and the before / after rows.\n\nRaises:\n    HTTPException: 404 for an unknown revision; 422 (``{code, message}``) when the source is not\n        OpenAPI or the chain cannot be applied.",
         "operationId": "preview_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_preview_get",
         "parameters": [
           {
@@ -76289,6 +76291,245 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for preview version overlaysresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Preview Version Overlay Draft",
+        "description": "Render the chain with an unsaved draft overlay, so an edit can be checked before it is saved.\n\nThe draft is appended to the chain (a new overlay) or stands in for ``replace_overlay_id`` (an\nedit). Nothing is written, so a published revision can be previewed too.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision id.\n    body: The draft and the overlay it replaces, if any.\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The preview, with ``draft`` naming the draft's label in the report.\n\nRaises:\n    HTTPException: 404 unknown revision or overlay; 422 when the source is not OpenAPI, the draft\n        is not an Overlay document, or the chain cannot be applied.",
+        "operationId": "preview_version_overlay_draft_v1_versions__tenant_slug___project_id___version_record_id__overlays_preview_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Version Overlay Draftauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Version Overlay Draftauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Version Overlay Draft Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Version Overlay Draft Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionOverlayPreviewRequest",
+                "description": "Request body for preview version overlay draftrequest."
+              }
+            }
+          },
+          "description": "Request body for preview version overlay draft."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for preview version overlay draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayPreviewOut",
+                  "description": "Response payload for preview version overlay draftresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for preview version overlay draftresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/apply": {
+      "post": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Apply Version Overlays",
+        "description": "Apply the revision's stored chain as a new version of the same project.\n\nThe resolved document \u2014 exactly what the preview and an export render \u2014 passes the tenant's\nimport quality gate and is imported as a new version. The source revision and its chain are not\nchanged; the new version has an empty chain, since the overlays are now part of its source.\n\nArgs:\n    tenant_slug: The tenant slug.\n    project_id: The project id.\n    version_record_id: The revision whose chain is applied.\n    body: The new version's label (optional).\n    auth_data: Authenticated tenant context.\n\nReturns:\n    The new version's id and label, and what was applied.\n\nRaises:\n    HTTPException: 404 unknown revision; 409 ``overlay-chain-empty``, ``overlay-no-changes``,\n        ``version-exists`` or ``QUALITY_POLICY_BLOCKED``; 422 when the source is not OpenAPI,\n        the chain cannot be applied, or the import fails (``overlay-apply-import-failed``).",
+        "operationId": "apply_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_apply_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Apply Version Overlaysauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Apply Version Overlaysauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Apply Version Overlays Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Apply Version Overlays Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionOverlayApplyRequest",
+                "description": "Request body for apply version overlaysrequest."
+              }
+            }
+          },
+          "description": "Request body for apply version overlays."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for apply version overlays.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOverlayApplyOut",
+                  "description": "Response payload for apply version overlaysresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for apply version overlaysresponse422."
                 }
               }
             }
@@ -134500,6 +134741,278 @@
         "title": "ArazzoOperationDetailOut",
         "description": "One path operation with its parameters and responses (the step drawer)."
       },
+      "ArazzoOperationParameterOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "in_location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation parameter."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation parameter."
+              }
+            ],
+            "title": "In Location",
+            "description": "`path`, `query`, `header` or `cookie`"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation parameter."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation parameter."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ArazzoOperationParameterOut",
+        "description": "A parameter of the operation shown in the step drawer."
+      },
+      "ArazzoOperationResponseOut": {
+        "properties": {
+          "status_code": {
+            "type": "string",
+            "title": "Status Code",
+            "description": "Status Code.",
+            "example": "active"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation response."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation response."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status_code"
+        ],
+        "title": "ArazzoOperationResponseOut",
+        "description": "A declared response of the operation shown in the step drawer."
+      },
+      "ArazzoRunErrorOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code of the first refusal (or `auth-unavailable`).",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "What blocked the run.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ArazzoRunErrorOut",
+        "description": "Why a run did not execute."
+      },
+      "ArazzoRunOptions": {
+        "properties": {
+          "allow_mutating": {
+            "type": "boolean",
+            "title": "Allow Mutating",
+            "description": "Opt in to sending mutating steps (`POST`/`PUT`/`PATCH`/`DELETE`). Off by default. Even when on, a mutating step runs only when a fixture names its operation (or the step, through `case_id`), and never when the target policy forbids mutating methods.",
+            "default": false,
+            "example": false
+          },
+          "fixtures": {
+            "items": {
+              "$ref": "#/components/schemas/MutatingFixture"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Fixtures",
+            "description": "Per-operation permission for mutating steps. `case_id` narrows a fixture to one `stepId`. Parameters and a body in the fixture override what the step sends."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ArazzoRunOptions",
+        "description": "How much of the target a workflow run may touch \u2014 the CTG-4.3 rule, per step."
+      },
+      "ArazzoRunRefusal": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code (`mutating-method-blocked`, `arazzo-step-unresolved`, \u2026).",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "What blocked the run and how to unblock it.",
+            "example": "Example validation message."
+          },
+          "step_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Arazzo Run Refusal schema."
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Run Refusal schema."
+              }
+            ],
+            "title": "Step Id",
+            "description": "The step concerned, when there is one."
+          },
+          "operation_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Arazzo Run Refusal schema."
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Run Refusal schema."
+              }
+            ],
+            "title": "Operation Key",
+            "description": "The step's operation (`POST /pets`), when it resolved."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ArazzoRunRefusal",
+        "description": "Why the run was refused before any request was sent."
+      },
+      "ArazzoSourceDescriptionOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Url",
+            "description": "URL."
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Type",
+            "description": "`openapi`, `asyncapi` or `arazzo`"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "resolved",
+              "missing",
+              "unknown"
+            ],
+            "title": "Status",
+            "description": "`unknown` when the revision was imported before source resolution was recorded",
+            "example": "resolved"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Tier",
+            "description": "`fileset`, `catalog` or `remote` when resolved"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Reason",
+            "description": "Stable reason code when missing"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Detail",
+            "description": "Detail."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "ArazzoSourceDescriptionOut",
+        "description": "A declared `sourceDescriptions` entry and whether the import resolved it."
+      },
       "ArazzoStepOperationOut": {
         "properties": {
           "path_operation_id": {
@@ -134628,6 +135141,319 @@
         "title": "ArazzoStepOperationOut",
         "description": "The internal path operation an Arazzo step resolved to, so the viewer can open it."
       },
+      "ArazzoStepResult": {
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "title": "Step Id",
+            "description": "The step's `stepId`.",
+            "example": "step_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "execution": {
+            "type": "integer",
+            "title": "Execution",
+            "description": "1 for the first time this step ran, 2 after a `goto` back, \u2026",
+            "example": 1
+          },
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "The operation the step called (`GET /pets/{petId}`).",
+            "example": "GET"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "description": "HTTP method sent.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Request path sent (path parameters substituted).",
+            "example": "/resources/{id}"
+          },
+          "query": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Query",
+            "description": "Query parameters sent."
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`passed`, `failed` or `errored`.",
+            "example": "example"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Arazzo Step schema."
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Step schema."
+              }
+            ],
+            "title": "Failure Code",
+            "description": "Stable code when not passed."
+          },
+          "failure_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Arazzo Step schema."
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Step schema."
+              }
+            ],
+            "title": "Failure Message",
+            "description": "Why it did not pass."
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Arazzo Step schema."
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Step schema."
+              }
+            ],
+            "title": "Status Code",
+            "description": "Status received."
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts",
+            "description": "Sends, including `retry` actions.",
+            "default": 1,
+            "example": 1
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms",
+            "description": "Time spent on the step, retries included.",
+            "default": 0,
+            "example": 1
+          },
+          "fixture_applied": {
+            "type": "boolean",
+            "title": "Fixture Applied",
+            "description": "Whether a mutating fixture supplied part of the request.",
+            "default": false,
+            "example": false
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoCriterionResult"
+            },
+            "type": "array",
+            "title": "Criteria",
+            "description": "Every success criterion, in declaration order.",
+            "maxItems": 1000
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs",
+            "description": "The step's outputs, captured when it passed."
+          },
+          "action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArazzoActionTaken"
+              },
+              {
+                "type": "null",
+                "description": "Arazzo Step schema."
+              }
+            ],
+            "description": "What the run did next."
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "When the step's first send began.",
+            "example": "2026-11-20T20:13:56Z"
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Finished At",
+            "description": "When the step's last send finished.",
+            "example": "2026-11-20T20:13:56Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step_id",
+          "execution",
+          "operation_key",
+          "method",
+          "path",
+          "outcome",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "ArazzoStepResult",
+        "description": "One executed step: the request sent, the criteria judged, the outputs captured."
+      },
+      "ArazzoWorkflowDetailResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The revision read",
+            "example": "1.0.0"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project or catalog item owning the revision",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Every source the document declares",
+            "maxItems": 1000
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/ArazzoWorkflowOut",
+            "description": "Workflow."
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "project_id",
+          "workflow"
+        ],
+        "title": "ArazzoWorkflowDetailResponse",
+        "description": "One persisted Arazzo workflow of a revision, with the revision it was read from."
+      },
+      "ArazzoWorkflowOut": {
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "title": "Workflow Id",
+            "description": "Workflow ID.",
+            "example": "workflow_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow."
+              }
+            ],
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal",
+            "default": 0,
+            "description": "Ordinal.",
+            "example": 1
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Inputs",
+            "description": "Workflow `inputs` JSON Schema"
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs",
+            "description": "Workflow `outputs` map"
+          },
+          "depends_on": {
+            "items": {},
+            "type": "array",
+            "title": "Depends On",
+            "description": "Depends On.",
+            "maxItems": 1000
+          },
+          "success_actions": {
+            "items": {},
+            "type": "array",
+            "title": "Success Actions",
+            "description": "Success Actions.",
+            "maxItems": 1000
+          },
+          "failure_actions": {
+            "items": {},
+            "type": "array",
+            "title": "Failure Actions",
+            "description": "Failure Actions.",
+            "maxItems": 1000
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          },
+          "step_resolution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Step Resolution",
+            "description": "Steps counted by `resolution_status` (`resolved`, `unresolved`, `not_applicable`, `parse_error`); only statuses that occur are listed"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoWorkflowStepOut"
+            },
+            "type": "array",
+            "title": "Steps",
+            "description": "Steps.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "workflow_id"
+        ],
+        "title": "ArazzoWorkflowOut",
+        "description": "One persisted Arazzo workflow with its inputs, outputs, sources and steps."
+      },
       "ArazzoWorkflowRunReport": {
         "properties": {
           "workflow_id": {
@@ -134657,14 +135483,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-20T04:23:36Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run finished.",
-            "example": "2026-11-20T04:23:36Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "steps": {
             "items": {
@@ -135071,393 +135897,6 @@
         "title": "ArazzoWorkflowStepOut",
         "description": "One step of a workflow, in source order, with what it calls and where it goes next."
       },
-      "ArazzoStepResult": {
-        "properties": {
-          "step_id": {
-            "type": "string",
-            "title": "Step Id",
-            "description": "The step's `stepId`.",
-            "example": "step_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "execution": {
-            "type": "integer",
-            "title": "Execution",
-            "description": "1 for the first time this step ran, 2 after a `goto` back, \u2026",
-            "example": 1
-          },
-          "operation_key": {
-            "type": "string",
-            "title": "Operation Key",
-            "description": "The operation the step called (`GET /pets/{petId}`).",
-            "example": "GET"
-          },
-          "method": {
-            "type": "string",
-            "title": "Method",
-            "description": "HTTP method sent.",
-            "example": "example"
-          },
-          "path": {
-            "type": "string",
-            "title": "Path",
-            "description": "Request path sent (path parameters substituted).",
-            "example": "/resources/{id}"
-          },
-          "query": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Query",
-            "description": "Query parameters sent."
-          },
-          "outcome": {
-            "type": "string",
-            "title": "Outcome",
-            "description": "`passed`, `failed` or `errored`.",
-            "example": "example"
-          },
-          "failure_code": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Arazzo Step schema."
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Step schema."
-              }
-            ],
-            "title": "Failure Code",
-            "description": "Stable code when not passed."
-          },
-          "failure_message": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Arazzo Step schema."
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Step schema."
-              }
-            ],
-            "title": "Failure Message",
-            "description": "Why it did not pass."
-          },
-          "status_code": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "description": "Arazzo Step schema."
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Step schema."
-              }
-            ],
-            "title": "Status Code",
-            "description": "Status received."
-          },
-          "attempts": {
-            "type": "integer",
-            "title": "Attempts",
-            "description": "Sends, including `retry` actions.",
-            "default": 1,
-            "example": 1
-          },
-          "duration_ms": {
-            "type": "integer",
-            "title": "Duration Ms",
-            "description": "Time spent on the step, retries included.",
-            "default": 0,
-            "example": 1
-          },
-          "fixture_applied": {
-            "type": "boolean",
-            "title": "Fixture Applied",
-            "description": "Whether a mutating fixture supplied part of the request.",
-            "default": false,
-            "example": false
-          },
-          "criteria": {
-            "items": {
-              "$ref": "#/components/schemas/ArazzoCriterionResult"
-            },
-            "type": "array",
-            "title": "Criteria",
-            "description": "Every success criterion, in declaration order.",
-            "maxItems": 1000
-          },
-          "outputs": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Outputs",
-            "description": "The step's outputs, captured when it passed."
-          },
-          "action": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ArazzoActionTaken"
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Step schema."
-              }
-            ],
-            "description": "What the run did next."
-          },
-          "started_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Started At",
-            "description": "When the step's first send began.",
-            "example": "2026-11-20T04:23:36Z"
-          },
-          "finished_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Finished At",
-            "description": "When the step's last send finished.",
-            "example": "2026-11-20T04:23:36Z"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "step_id",
-          "execution",
-          "operation_key",
-          "method",
-          "path",
-          "outcome",
-          "started_at",
-          "finished_at"
-        ],
-        "title": "ArazzoStepResult",
-        "description": "One executed step: the request sent, the criteria judged, the outputs captured."
-      },
-      "ArazzoWorkflowDetailResponse": {
-        "properties": {
-          "version_id": {
-            "type": "string",
-            "title": "Version Id",
-            "description": "The revision read",
-            "example": "1.0.0"
-          },
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "description": "Project or catalog item owning the revision",
-            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "sources": {
-            "items": {
-              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
-            },
-            "type": "array",
-            "title": "Sources",
-            "description": "Every source the document declares",
-            "maxItems": 1000
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/ArazzoWorkflowOut",
-            "description": "Workflow."
-          }
-        },
-        "type": "object",
-        "required": [
-          "version_id",
-          "project_id",
-          "workflow"
-        ],
-        "title": "ArazzoWorkflowDetailResponse",
-        "description": "One persisted Arazzo workflow of a revision, with the revision it was read from."
-      },
-      "ArazzoWorkflowOut": {
-        "properties": {
-          "workflow_id": {
-            "type": "string",
-            "title": "Workflow Id",
-            "description": "Workflow ID.",
-            "example": "workflow_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo workflow."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo workflow."
-              }
-            ],
-            "title": "Summary",
-            "description": "Short summary suitable for navigation and reference docs."
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo workflow."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo workflow."
-              }
-            ],
-            "title": "Description",
-            "description": "Free-text description."
-          },
-          "ordinal": {
-            "type": "integer",
-            "title": "Ordinal",
-            "default": 0,
-            "description": "Ordinal.",
-            "example": 1
-          },
-          "inputs": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Inputs",
-            "description": "Workflow `inputs` JSON Schema"
-          },
-          "outputs": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Outputs",
-            "description": "Workflow `outputs` map"
-          },
-          "depends_on": {
-            "items": {},
-            "type": "array",
-            "title": "Depends On",
-            "description": "Depends On.",
-            "maxItems": 1000
-          },
-          "success_actions": {
-            "items": {},
-            "type": "array",
-            "title": "Success Actions",
-            "description": "Success Actions.",
-            "maxItems": 1000
-          },
-          "failure_actions": {
-            "items": {},
-            "type": "array",
-            "title": "Failure Actions",
-            "description": "Failure Actions.",
-            "maxItems": 1000
-          },
-          "sources": {
-            "items": {
-              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
-            },
-            "type": "array",
-            "title": "Sources",
-            "description": "Sources.",
-            "maxItems": 1000
-          },
-          "step_resolution": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "type": "object",
-            "title": "Step Resolution",
-            "description": "Steps counted by `resolution_status` (`resolved`, `unresolved`, `not_applicable`, `parse_error`); only statuses that occur are listed"
-          },
-          "steps": {
-            "items": {
-              "$ref": "#/components/schemas/ArazzoWorkflowStepOut"
-            },
-            "type": "array",
-            "title": "Steps",
-            "description": "Steps.",
-            "maxItems": 1000
-          }
-        },
-        "type": "object",
-        "required": [
-          "workflow_id"
-        ],
-        "title": "ArazzoWorkflowOut",
-        "description": "One persisted Arazzo workflow with its inputs, outputs, sources and steps."
-      },
-      "ArazzoOperationResponseOut": {
-        "properties": {
-          "status_code": {
-            "type": "string",
-            "title": "Status Code",
-            "description": "Status Code.",
-            "example": "active"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo operation response."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo operation response."
-              }
-            ],
-            "title": "Description",
-            "description": "Free-text description."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status_code"
-        ],
-        "title": "ArazzoOperationResponseOut",
-        "description": "A declared response of the operation shown in the step drawer."
-      },
-      "ArazzoOperationParameterOut": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Human-readable name.",
-            "example": "Pet"
-          },
-          "in_location": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo operation parameter."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo operation parameter."
-              }
-            ],
-            "title": "In Location",
-            "description": "`path`, `query`, `header` or `cookie`"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo operation parameter."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo operation parameter."
-              }
-            ],
-            "title": "Description",
-            "description": "Free-text description."
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "ArazzoOperationParameterOut",
-        "description": "A parameter of the operation shown in the step drawer."
-      },
       "ArazzoWorkflowStepsResponse": {
         "properties": {
           "version_id": {
@@ -135550,204 +135989,6 @@
         "type": "object",
         "title": "ArazzoWorkflowsResponse",
         "description": "The Arazzo workflows persisted for one revision."
-      },
-      "ArazzoRunErrorOut": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "description": "Stable code of the first refusal (or `auth-unavailable`).",
-            "example": "example"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "What blocked the run.",
-            "example": "Example validation message."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "code",
-          "message"
-        ],
-        "title": "ArazzoRunErrorOut",
-        "description": "Why a run did not execute."
-      },
-      "ArazzoRunOptions": {
-        "properties": {
-          "allow_mutating": {
-            "type": "boolean",
-            "title": "Allow Mutating",
-            "description": "Opt in to sending mutating steps (`POST`/`PUT`/`PATCH`/`DELETE`). Off by default. Even when on, a mutating step runs only when a fixture names its operation (or the step, through `case_id`), and never when the target policy forbids mutating methods.",
-            "default": false,
-            "example": false
-          },
-          "fixtures": {
-            "items": {
-              "$ref": "#/components/schemas/MutatingFixture"
-            },
-            "type": "array",
-            "maxItems": 100,
-            "title": "Fixtures",
-            "description": "Per-operation permission for mutating steps. `case_id` narrows a fixture to one `stepId`. Parameters and a body in the fixture override what the step sends."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "ArazzoRunOptions",
-        "description": "How much of the target a workflow run may touch \u2014 the CTG-4.3 rule, per step."
-      },
-      "ArazzoRunRefusal": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "description": "Stable code (`mutating-method-blocked`, `arazzo-step-unresolved`, \u2026).",
-            "example": "example"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "What blocked the run and how to unblock it.",
-            "example": "Example validation message."
-          },
-          "step_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Arazzo Run Refusal schema."
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Run Refusal schema."
-              }
-            ],
-            "title": "Step Id",
-            "description": "The step concerned, when there is one."
-          },
-          "operation_key": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Arazzo Run Refusal schema."
-              },
-              {
-                "type": "null",
-                "description": "Arazzo Run Refusal schema."
-              }
-            ],
-            "title": "Operation Key",
-            "description": "The step's operation (`POST /pets`), when it resolved."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "code",
-          "message"
-        ],
-        "title": "ArazzoRunRefusal",
-        "description": "Why the run was refused before any request was sent."
-      },
-      "ArazzoSourceDescriptionOut": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Human-readable name.",
-            "example": "Pet"
-          },
-          "url": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo source description."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo source description."
-              }
-            ],
-            "title": "Url",
-            "description": "URL."
-          },
-          "type": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo source description."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo source description."
-              }
-            ],
-            "title": "Type",
-            "description": "`openapi`, `asyncapi` or `arazzo`"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "resolved",
-              "missing",
-              "unknown"
-            ],
-            "title": "Status",
-            "description": "`unknown` when the revision was imported before source resolution was recorded",
-            "example": "resolved"
-          },
-          "tier": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo source description."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo source description."
-              }
-            ],
-            "title": "Tier",
-            "description": "`fileset`, `catalog` or `remote` when resolved"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo source description."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo source description."
-              }
-            ],
-            "title": "Reason",
-            "description": "Stable reason code when missing"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for arazzo source description."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for arazzo source description."
-              }
-            ],
-            "title": "Detail",
-            "description": "Detail."
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "status"
-        ],
-        "title": "ArazzoSourceDescriptionOut",
-        "description": "A declared `sourceDescriptions` entry and whether the import resolved it."
       },
       "ArtifactEntityLocation": {
         "properties": {
@@ -137529,6 +137770,72 @@
         "title": "BindingRecord",
         "description": "A stored binding as every response shows it \u2014 never with its value or its hash.\n\nAttributes:\n    id: Row id.\n    consumer_id: The consumer it attributes traffic to.\n    kind: The binding kind.\n    name: The header or claim name, or the user-agent glob.\n    hashed: Whether a value is bound (every kind but ``user_agent``).\n    key_version: The master-key version the value was hashed under.\n    last_matched_at: When traffic last matched it.\n    created_at: When it was created.\n    deleted_at: When it was deleted (it stops matching; history keeps it)."
       },
+      "BindingsDeletedResponse": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's slug.",
+            "example": "example"
+          },
+          "erased": {
+            "type": "boolean",
+            "title": "Erased",
+            "description": "Whether the consumer's counters were re-attributed to `anonymous`.",
+            "example": false
+          },
+          "bindings": {
+            "type": "integer",
+            "title": "Bindings",
+            "description": "Bindings deleted.",
+            "example": 1
+          },
+          "hourly_rows": {
+            "type": "integer",
+            "title": "Hourly Rows",
+            "description": "Hourly counter rows re-attributed to `anonymous`.",
+            "default": 0,
+            "example": 1
+          },
+          "daily_rows": {
+            "type": "integer",
+            "title": "Daily Rows",
+            "description": "Daily rollup rows re-attributed to `anonymous`.",
+            "default": 0,
+            "example": 1
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls those daily rows counted (kept, now anonymous).",
+            "default": 0,
+            "example": 1
+          },
+          "unattributed_rows": {
+            "type": "integer",
+            "title": "Unattributed Rows",
+            "description": "Suggested-consumer rows carrying its hashes, deleted.",
+            "default": 0,
+            "example": 1
+          },
+          "edges": {
+            "type": "integer",
+            "title": "Edges",
+            "description": "Runtime dependency-graph edges from the consumer, deleted.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "erased",
+          "bindings"
+        ],
+        "title": "BindingsDeletedResponse",
+        "description": "What ``DELETE \u2026/bindings`` deleted and, with ``erase=true``, re-attributed (RDG-5.4)."
+      },
       "BlastRadiusDiffMeta": {
         "properties": {
           "annotated": {
@@ -137979,6 +138286,114 @@
         "type": "object",
         "title": "BlockedSignupAttemptList",
         "description": "Payload of ``GET /v1/admin/signup-policy/blocked-attempts``."
+      },
+      "BodySampleWindow": {
+        "properties": {
+          "rate": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Rate",
+            "description": "Fraction of exchanges to keep; `0` closes the window.",
+            "example": 1.0
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Body Sample Window schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Sample Window schema."
+              }
+            ],
+            "title": "Until",
+            "description": "When sampling stops; at most 7 days ahead."
+          },
+          "acknowledgement": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "description": "Body Sample Window schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Sample Window schema."
+              }
+            ],
+            "title": "Acknowledgement",
+            "description": "Required to open a window: the exact sentence `BODY_SAMPLE_ACKNOWLEDGEMENT` (shown in the UI)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rate"
+        ],
+        "title": "BodySampleWindow",
+        "description": "Open, change or close a body-sample window.\n\nSet ``rate`` to ``0`` to close it. Opening it takes ``until`` and the exact acknowledgement sentence."
+      },
+      "BodySamples": {
+        "properties": {
+          "rate": {
+            "type": "number",
+            "title": "Rate",
+            "description": "Fraction of exchanges whose bodies are kept. `0` keeps none.",
+            "example": 1.0
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Body Samples schema."
+              },
+              {
+                "type": "null",
+                "description": "Body Samples schema."
+              }
+            ],
+            "title": "Until",
+            "description": "When sampling stops."
+          },
+          "open": {
+            "type": "boolean",
+            "title": "Open",
+            "description": "Whether sampling is happening right now (`rate > 0` and `until` ahead).",
+            "example": false
+          },
+          "maxRate": {
+            "type": "number",
+            "title": "Maxrate",
+            "description": "The hard cap on `rate`.",
+            "example": 1.0
+          },
+          "maxWindowDays": {
+            "type": "integer",
+            "title": "Maxwindowdays",
+            "description": "`until` may be at most this many days ahead.",
+            "default": 7,
+            "example": 1
+          },
+          "retentionDays": {
+            "type": "integer",
+            "title": "Retentiondays",
+            "description": "How long a kept body is stored.",
+            "default": 7,
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "rate",
+          "open",
+          "maxRate"
+        ],
+        "title": "BodySamples",
+        "description": "A body-sample opt-in as it stands, with its hard caps."
       },
       "BotPresetBody": {
         "properties": {
@@ -146993,7 +147408,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "completed_at": {
             "anyOf": [
@@ -148705,7 +149120,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "type": "object",
@@ -148761,7 +149176,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "workspaces": {
             "items": {
@@ -149376,7 +149791,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "comment_count": {
             "type": "integer",
@@ -149615,7 +150030,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "comment_count": {
             "type": "integer",
@@ -151075,14 +151490,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -154476,7 +154891,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "818f2f66-a681-410f-8d7c-3a3541f72452"
+            "example": "28d70721-b67e-4235-a070-92c09ee0e19c"
           },
           "method": {
             "type": "string",
@@ -157197,7 +157612,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -159439,7 +159854,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "browse_url": {
             "anyOf": [
@@ -165410,6 +165825,79 @@
         "title": "ExportOverlay",
         "description": "One inline overlay of an export request: a label and the parsed Overlay document."
       },
+      "ExportOverlayActionRow": {
+        "properties": {
+          "overlay": {
+            "type": "string",
+            "title": "Overlay",
+            "description": "The overlay the action came from.",
+            "example": "example"
+          },
+          "action_index": {
+            "type": "integer",
+            "title": "Action Index",
+            "description": "0-based index of the action in that overlay's `actions`.",
+            "example": 1
+          },
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The action's JSONPath `target` (empty when it had none).",
+            "default": "",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`update`, `remove`, `copy`, or `unknown` for a malformed action.",
+            "example": "example"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Overlay Action Row schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Overlay Action Row schema."
+              }
+            ],
+            "title": "Ref",
+            "description": "The reusable action (`components.actions.<name>`) it references, if any."
+          },
+          "matches": {
+            "type": "integer",
+            "title": "Matches",
+            "description": "Nodes the target matched when the action ran; 0 when it was not evaluated.",
+            "example": 1
+          },
+          "changes": {
+            "type": "integer",
+            "title": "Changes",
+            "description": "Values the action changed.",
+            "example": 1
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`applied`, `unmatched` (the target matched nothing) or `invalid` (refused).",
+            "example": "active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "overlay",
+          "action_index",
+          "kind",
+          "matches",
+          "changes",
+          "status"
+        ],
+        "title": "ExportOverlayActionRow",
+        "description": "What one overlay action did: its kind and how many nodes its target matched (COA-2.7)."
+      },
       "ExportOverlayFinding": {
         "properties": {
           "rule": {
@@ -165575,6 +166063,15 @@
             "title": "Truncated",
             "description": "True when `ledger` itemizes only the first 500 changes.",
             "example": false
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ExportOverlayActionRow"
+            },
+            "type": "array",
+            "title": "Actions",
+            "description": "One row per action, in application order, with the number of nodes its target matched.",
+            "maxItems": 1000
           }
         },
         "additionalProperties": false,
@@ -167734,7 +168231,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "reports": {
             "items": {
@@ -168034,7 +168531,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "additionalProperties": false,
@@ -169883,7 +170380,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "Last Activity At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "comments": {
             "items": {
@@ -180561,13 +181058,13 @@
             "type": "string",
             "title": "Acquired At",
             "description": "When it was taken (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "expires_at": {
             "type": "string",
             "title": "Expires At",
             "description": "When it lapses without a heartbeat (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "takeover": {
             "anyOf": [
@@ -188701,7 +189198,7 @@
             "format": "date-time",
             "title": "Checked At",
             "description": "Checked At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "status": {
             "type": "string",
@@ -189971,7 +190468,7 @@
             "type": "string",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "client_id": {
             "type": "string",
@@ -198844,6 +199341,8 @@
               "thread_resolved",
               "version_published",
               "export_auto_halted",
+              "sunset_still_used",
+              "seat_cap_blocked_sso",
               "owner_finding",
               "owner_breaking_change",
               "owner_verification_drift",
@@ -204798,7 +205297,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "When the consent stops authorizing runs. Required, timezone-aware, in the future.",
-            "example": "2026-11-16T21:33:17Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "profiles_allowed": {
             "items": {
@@ -204890,14 +205389,14 @@
             "format": "date-time",
             "title": "Approved At",
             "description": "When it was granted.",
-            "example": "2026-11-16T21:33:17Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "expires_at": {
             "type": "string",
             "format": "date-time",
             "title": "Expires At",
             "description": "When it stops authorizing runs.",
-            "example": "2026-11-16T21:33:17Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "profiles_allowed": {
             "items": {
@@ -208877,9 +209376,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Request body for push webhook subscription create."
               },
@@ -208931,9 +209430,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Response payload for push webhook subscription."
               },
@@ -209036,9 +209535,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "docs-only",
+                  "breaking",
                   "non-breaking",
-                  "breaking"
+                  "docs-only"
                 ],
                 "description": "Request body for push webhook subscription update."
               },
@@ -210266,7 +210765,7 @@
             "format": "date-time",
             "title": "Session Expires At",
             "description": "When the current session ends.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "additionalProperties": false,
@@ -210294,7 +210793,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "return_to": {
             "anyOf": [
@@ -217289,7 +217788,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "additionalProperties": false,
@@ -217378,6 +217877,41 @@
         "title": "ResponseContentTypeRequest",
         "description": "Request model for adding a content type to a response."
       },
+      "RetentionDays": {
+        "properties": {
+          "hourlyDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Days schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Days schema."
+              }
+            ],
+            "title": "Hourlydays",
+            "description": "How long hourly counters are kept, in days."
+          },
+          "rollupDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Days schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Days schema."
+              }
+            ],
+            "title": "Rollupdays",
+            "description": "How long daily rollups are kept, in days."
+          }
+        },
+        "type": "object",
+        "title": "RetentionDays",
+        "description": "A pair of retention values in days. ``-1`` means \"kept forever\" (a tier cap only)."
+      },
       "RetentionResponse": {
         "properties": {
           "reaped": {
@@ -217410,6 +217944,44 @@
         ],
         "title": "RetentionResponse",
         "description": "Outcome of a retention sweep."
+      },
+      "RetentionUpdate": {
+        "properties": {
+          "hourlyDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Retention Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Update schema."
+              }
+            ],
+            "title": "Hourlydays",
+            "description": "Days of hourly counters to keep (at most the cap)."
+          },
+          "rollupDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Retention Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Update schema."
+              }
+            ],
+            "title": "Rollupdays",
+            "description": "Days of daily rollups to keep (at most the cap)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RetentionUpdate",
+        "description": "Body of ``PUT \u2026/usage/retention``. `null` (or an omitted field) goes back to the tier cap."
       },
       "ReviewDecisionCreate": {
         "properties": {
@@ -220366,14 +220938,14 @@
             "format": "date-time",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "last_seen_at": {
             "type": "string",
             "format": "date-time",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "additionalProperties": false,
@@ -220535,7 +221107,7 @@
             "format": "date-time",
             "title": "Received At",
             "description": "Received At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "accepted": {
             "type": "integer",
@@ -229713,102 +230285,6 @@
         "title": "SsoProviderUpdateRequest",
         "description": "Body of ``PATCH /v1/admin/sso/providers/{id}`` \u2014 a partial update, by field presence.\n\nAn omitted field is left as stored. ``client_secret`` / ``sp_private_key`` are write-only: a\nvalue replaces the sealed secret, ``null`` clears it. Sending ``metadata_url`` or\n``metadata_xml`` re-reads the SAML metadata; sending ``client_id`` re-runs OIDC discovery."
       },
-      "SsoProvisionRequest": {
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "title": "User Id",
-            "description": "The signed-in account's id.",
-            "example": "user_01h2xcejqtf3fz5y5j0v8k9m2p"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "user_id"
-        ],
-        "title": "SsoProvisionRequest",
-        "description": "Body of the provision route: who just signed in through the provider."
-      },
-      "SsoProvisionResponse": {
-        "properties": {
-          "outcome": {
-            "type": "string",
-            "title": "Outcome",
-            "description": "`provisioned`, `activated`, `existing`, `suspended` or `seat-cap-blocked`.",
-            "example": "example"
-          },
-          "tenant_id": {
-            "type": "string",
-            "title": "Tenant Id",
-            "description": "Tenant that owns the resource.",
-            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "tenant_slug": {
-            "type": "string",
-            "title": "Tenant Slug",
-            "description": "URL-safe tenant slug used in path parameters.",
-            "example": "acme"
-          },
-          "tenant_name": {
-            "type": "string",
-            "title": "Tenant Name",
-            "description": "Tenant Name.",
-            "example": "Example"
-          },
-          "role_slug": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for sso provision."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for sso provision."
-              }
-            ],
-            "title": "Role Slug",
-            "description": "The member's role after the call, if they hold one."
-          },
-          "role_name": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for sso provision."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for sso provision."
-              }
-            ],
-            "title": "Role Name",
-            "description": "Role Name."
-          },
-          "seat_limit": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "description": "Response payload for sso provision."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for sso provision."
-              }
-            ],
-            "title": "Seat Limit",
-            "description": "The workspace's licensed member seats; `null` when seat enforcement is off."
-          }
-        },
-        "type": "object",
-        "required": [
-          "outcome",
-          "tenant_id",
-          "tenant_slug",
-          "tenant_name"
-        ],
-        "title": "SsoProvisionResponse",
-        "description": "What provisioning decided for one sign-in."
-      },
       "SsoProviderView": {
         "properties": {
           "id": {
@@ -230047,6 +230523,102 @@
         ],
         "title": "SsoProviderView",
         "description": "A provider as admins see it. Never carries a secret."
+      },
+      "SsoProvisionRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "The signed-in account's id.",
+            "example": "user_01h2xcejqtf3fz5y5j0v8k9m2p"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "SsoProvisionRequest",
+        "description": "Body of the provision route: who just signed in through the provider."
+      },
+      "SsoProvisionResponse": {
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`provisioned`, `activated`, `existing`, `suspended` or `seat-cap-blocked`.",
+            "example": "example"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_slug": {
+            "type": "string",
+            "title": "Tenant Slug",
+            "description": "URL-safe tenant slug used in path parameters.",
+            "example": "acme"
+          },
+          "tenant_name": {
+            "type": "string",
+            "title": "Tenant Name",
+            "description": "Tenant Name.",
+            "example": "Example"
+          },
+          "role_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sso provision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sso provision."
+              }
+            ],
+            "title": "Role Slug",
+            "description": "The member's role after the call, if they hold one."
+          },
+          "role_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sso provision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sso provision."
+              }
+            ],
+            "title": "Role Name",
+            "description": "Role Name."
+          },
+          "seat_limit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for sso provision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sso provision."
+              }
+            ],
+            "title": "Seat Limit",
+            "description": "The workspace's licensed member seats; `null` when seat enforcement is off."
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcome",
+          "tenant_id",
+          "tenant_slug",
+          "tenant_name"
+        ],
+        "title": "SsoProvisionResponse",
+        "description": "What provisioning decided for one sign-in."
       },
       "StagedTypeCandidate": {
         "properties": {
@@ -232911,13 +233483,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           }
         },
         "additionalProperties": false,
@@ -235113,7 +235685,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "detected_by": {
             "anyOf": [
@@ -236573,7 +237145,7 @@
             "type": "string",
             "title": "Requested At",
             "description": "When they asked (ISO 8601).",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "can_force_after": {
             "type": "string",
@@ -239749,6 +240321,55 @@
         ],
         "title": "TokenExchange",
         "description": "Exchange a magic-link token for a reader session."
+      },
+      "ToolsetBodySamplesOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for toolset body samples."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for toolset body samples."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          },
+          "bodySamples": {
+            "$ref": "#/components/schemas/BodySamples",
+            "description": "Body Samples."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "versionId",
+          "enabled",
+          "bodySamples"
+        ],
+        "title": "ToolsetBodySamplesOut",
+        "description": "An agent toolset of the project, with its AGX-3.3 body-capture opt-in."
       },
       "TraceBody": {
         "properties": {
@@ -243918,6 +244539,52 @@
         "title": "UsageResponse",
         "description": "A lane's daily usage, its per-service rollups and its forecast."
       },
+      "UsageRetentionResponse": {
+        "properties": {
+          "caps": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "The tier's caps. `-1` keeps rows forever."
+          },
+          "setting": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "The workspace's own values. `null` uses the cap."
+          },
+          "effective": {
+            "$ref": "#/components/schemas/RetentionDays",
+            "description": "What the nightly purge applies: the smaller of the two."
+          },
+          "sampleRetentionDays": {
+            "type": "integer",
+            "title": "Sampleretentiondays",
+            "description": "Body samples are purged after this many days, whatever the tier.",
+            "default": 7,
+            "example": 1
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for usage retention."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for usage retention."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "When the setting last changed."
+          }
+        },
+        "type": "object",
+        "required": [
+          "caps",
+          "setting",
+          "effective"
+        ],
+        "title": "UsageRetentionResponse",
+        "description": "What the workspace keeps, for how long, and the caps it may lower."
+      },
       "UsageRollupBody": {
         "properties": {
           "service": {
@@ -244041,6 +244708,159 @@
         ],
         "title": "UsageRollupBody",
         "description": "One service's usage rolled up over the period."
+      },
+      "UsageSourceList": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/UsageSourceOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          },
+          "agentToolsets": {
+            "items": {
+              "$ref": "#/components/schemas/ToolsetBodySamplesOut"
+            },
+            "type": "array",
+            "title": "Agenttoolsets",
+            "description": "Agent Toolsets.",
+            "maxItems": 1000
+          },
+          "acknowledgement": {
+            "type": "string",
+            "title": "Acknowledgement",
+            "description": "The sentence that opens a body-sample window.",
+            "default": "I understand that sampled request and response bodies are stored, after redaction, for up to 7 days.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "title": "UsageSourceList",
+        "description": "The project's sources and agent toolsets: everything that can keep traffic or bodies."
+      },
+      "UsageSourceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`otlp`, `har`, `access_log`, `mock`, `agent` or `sdk_beacon`.",
+            "example": "example"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Environment.",
+            "example": "example"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          },
+          "samplingRate": {
+            "type": "number",
+            "title": "Samplingrate",
+            "description": "Head sampling: fraction (0..1] of events kept.",
+            "example": 1.0
+          },
+          "fieldCapture": {
+            "type": "boolean",
+            "title": "Fieldcapture",
+            "description": "Whether field presence (names, never values) is counted.",
+            "example": false
+          },
+          "bodySamples": {
+            "$ref": "#/components/schemas/BodySamples",
+            "description": "Body Samples."
+          },
+          "lastReceivedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for usage source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for usage source."
+              }
+            ],
+            "title": "Lastreceivedat",
+            "description": "Last Received At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "environment",
+          "enabled",
+          "samplingRate",
+          "fieldCapture",
+          "bodySamples"
+        ],
+        "title": "UsageSourceOut",
+        "description": "One traffic source of a project, with what it captures."
+      },
+      "UsageSourceUpdate": {
+        "properties": {
+          "samplingRate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "description": "Usage Source Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "title": "Samplingrate",
+            "description": "Head sampling, in (0, 1]."
+          },
+          "fieldCapture": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Usage Source Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "title": "Fieldcapture",
+            "description": "Field Capture."
+          },
+          "bodySamples": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BodySampleWindow"
+              },
+              {
+                "type": "null",
+                "description": "Usage Source Update schema."
+              }
+            ],
+            "description": "Body Samples."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UsageSourceUpdate",
+        "description": "Body of ``PATCH \u2026/usage/sources/{id}``. At least one field is required."
       },
       "ValidationDiagnostic": {
         "properties": {
@@ -245238,14 +246058,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-16T13:38:07Z"
+            "example": "2026-11-20T20:13:56Z"
           },
           "outcome": {
             "anyOf": [
@@ -249871,6 +250691,80 @@
         "title": "VersionMockToggleRequest",
         "description": "Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."
       },
+      "VersionOverlayApplyOut": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_record_id": {
+            "type": "string",
+            "title": "Version Record Id",
+            "description": "The new version's id (versions.id).",
+            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_label": {
+            "type": "string",
+            "title": "Version Label",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          },
+          "source_version_record_id": {
+            "type": "string",
+            "title": "Source Version Record Id",
+            "description": "The revision whose chain was applied.",
+            "example": "source_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "overlay_count": {
+            "type": "integer",
+            "title": "Overlay Count",
+            "description": "Overlays in the applied chain.",
+            "example": 1
+          },
+          "change_count": {
+            "type": "integer",
+            "title": "Change Count",
+            "description": "Values the chain changed.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "version_record_id",
+          "version_label",
+          "source_version_record_id",
+          "overlay_count",
+          "change_count"
+        ],
+        "title": "VersionOverlayApplyOut",
+        "description": "The version an apply created."
+      },
+      "VersionOverlayApplyRequest": {
+        "properties": {
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Request body for version overlay apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for version overlay apply."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Label of the new version (for example 1.1.0). Default: a date/time label."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VersionOverlayApplyRequest",
+        "description": "Body of ``POST \u2026/overlays/apply``."
+      },
       "VersionOverlayChainOut": {
         "properties": {
           "version_record_id": {
@@ -249922,6 +250816,145 @@
         ],
         "title": "VersionOverlayChainOut",
         "description": "``GET \u2026/overlays``: the chain in application order."
+      },
+      "VersionOverlayChangedBy": {
+        "properties": {
+          "overlay": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Version Overlay Changed By schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Overlay Changed By schema."
+              }
+            ],
+            "title": "Overlay",
+            "description": "The overlay's label (`stored:<name>` / `draft:<name>`)."
+          },
+          "action_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Version Overlay Changed By schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Overlay Changed By schema."
+              }
+            ],
+            "title": "Action Index",
+            "description": "0-based index of the action."
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Version Overlay Changed By schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Overlay Changed By schema."
+              }
+            ],
+            "title": "Target",
+            "description": "The action's JSONPath `target`."
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`set`, `replaced`, `appended` or `removed`.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "VersionOverlayChangedBy",
+        "description": "One action that changed a value: the per-value provenance of a diff row."
+      },
+      "VersionOverlayDiffRow": {
+        "properties": {
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "JSON Pointer of the value.",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "The last change's kind: `set`, `replaced`, `appended` or `removed`.",
+            "example": "example"
+          },
+          "before": {
+            "title": "Before",
+            "description": "The value in the source; null when absent (see `before_present`)."
+          },
+          "before_present": {
+            "type": "boolean",
+            "title": "Before Present",
+            "description": "False when the source had no value here (the chain added it).",
+            "example": false
+          },
+          "after": {
+            "title": "After",
+            "description": "The value after the chain; null when absent (see `after_present`)."
+          },
+          "after_present": {
+            "type": "boolean",
+            "title": "After Present",
+            "description": "False when the chain removed the value.",
+            "example": false
+          },
+          "changed_by": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOverlayChangedBy"
+            },
+            "type": "array",
+            "title": "Changed By",
+            "description": "Every action that changed the value, in application order; the last one wins.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "pointer",
+          "kind",
+          "before_present",
+          "after_present",
+          "changed_by"
+        ],
+        "title": "VersionOverlayDiffRow",
+        "description": "A value the chain changed: before (source) and after (resolved), and who changed it."
+      },
+      "VersionOverlayDraft": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The draft's label.",
+            "example": "Pet"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The Overlay 1.0 / 1.1 / 1.2 document, at most 1 MiB serialized."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "document"
+        ],
+        "title": "VersionOverlayDraft",
+        "description": "An unsaved overlay to preview."
       },
       "VersionOverlayOut": {
         "properties": {
@@ -250052,7 +251085,30 @@
                 "description": "Response payload for version overlay preview."
               }
             ],
-            "description": "Ledger rows and `overlay.*` findings; null when the chain is empty."
+            "description": "Ledger rows, per-action match counts (`actions`) and `overlay.*` findings; null when the chain is empty."
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOverlayDiffRow"
+            },
+            "type": "array",
+            "title": "Diff",
+            "description": "One before / after row per changed value (at most 500), with the actions that changed it.",
+            "maxItems": 1000
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for version overlay preview."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version overlay preview."
+              }
+            ],
+            "title": "Draft",
+            "description": "The draft overlay's label in `report` (`draft:<name>`), when a draft was previewed."
           }
         },
         "type": "object",
@@ -250064,6 +251120,40 @@
         ],
         "title": "VersionOverlayPreviewOut",
         "description": "``GET \u2026/overlays/preview``: the resolved document and the provenance of every change."
+      },
+      "VersionOverlayPreviewRequest": {
+        "properties": {
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOverlayDraft"
+              },
+              {
+                "type": "null",
+                "description": "Request body for version overlay preview."
+              }
+            ],
+            "description": "The unsaved overlay. Omitted: the stored chain alone (same as GET)."
+          },
+          "replace_overlay_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for version overlay preview."
+              },
+              {
+                "type": "null",
+                "description": "Request body for version overlay preview."
+              }
+            ],
+            "title": "Replace Overlay Id",
+            "description": "Preview the draft in this stored overlay's place (an edit). Omitted: the draft is appended to the chain (a new overlay)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VersionOverlayPreviewRequest",
+        "description": "Body of ``POST \u2026/overlays/preview``: an optional draft, and the stored overlay it stands in for."
       },
       "VersionOverlayRenderOut": {
         "properties": {
@@ -258135,501 +259225,6 @@
         ],
         "title": "WriteRuleResponse",
         "description": "The outcome of a rule write."
-      },
-      "UsageSourceUpdate": {
-        "properties": {
-          "samplingRate": {
-            "anyOf": [
-              {
-                "type": "number",
-                "maximum": 1.0,
-                "exclusiveMinimum": 0.0,
-                "description": "Usage Source Update schema."
-              },
-              {
-                "type": "null",
-                "description": "Usage Source Update schema."
-              }
-            ],
-            "title": "Samplingrate",
-            "description": "Head sampling, in (0, 1]."
-          },
-          "fieldCapture": {
-            "anyOf": [
-              {
-                "type": "boolean",
-                "description": "Usage Source Update schema."
-              },
-              {
-                "type": "null",
-                "description": "Usage Source Update schema."
-              }
-            ],
-            "title": "Fieldcapture",
-            "description": "Field Capture."
-          },
-          "bodySamples": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/BodySampleWindow"
-              },
-              {
-                "type": "null",
-                "description": "Usage Source Update schema."
-              }
-            ],
-            "description": "Body Samples."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "UsageSourceUpdate",
-        "description": "Body of ``PATCH \u2026/usage/sources/{id}``. At least one field is required."
-      },
-      "BodySampleWindow": {
-        "properties": {
-          "rate": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Rate",
-            "description": "Fraction of exchanges to keep; `0` closes the window.",
-            "example": 1.0
-          },
-          "until": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "description": "Body Sample Window schema."
-              },
-              {
-                "type": "null",
-                "description": "Body Sample Window schema."
-              }
-            ],
-            "title": "Until",
-            "description": "When sampling stops; at most 7 days ahead."
-          },
-          "acknowledgement": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 512,
-                "description": "Body Sample Window schema."
-              },
-              {
-                "type": "null",
-                "description": "Body Sample Window schema."
-              }
-            ],
-            "title": "Acknowledgement",
-            "description": "Required to open a window: the exact sentence `BODY_SAMPLE_ACKNOWLEDGEMENT` (shown in the UI)."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "rate"
-        ],
-        "title": "BodySampleWindow",
-        "description": "Open, change or close a body-sample window.\n\nSet ``rate`` to ``0`` to close it. Opening it takes ``until`` and the exact acknowledgement sentence."
-      },
-      "RetentionUpdate": {
-        "properties": {
-          "hourlyDays": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0,
-                "description": "Retention Update schema."
-              },
-              {
-                "type": "null",
-                "description": "Retention Update schema."
-              }
-            ],
-            "title": "Hourlydays",
-            "description": "Days of hourly counters to keep (at most the cap)."
-          },
-          "rollupDays": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0,
-                "description": "Retention Update schema."
-              },
-              {
-                "type": "null",
-                "description": "Retention Update schema."
-              }
-            ],
-            "title": "Rollupdays",
-            "description": "Days of daily rollups to keep (at most the cap)."
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "RetentionUpdate",
-        "description": "Body of ``PUT \u2026/usage/retention``. `null` (or an omitted field) goes back to the tier cap."
-      },
-      "UsageSourceList": {
-        "properties": {
-          "sources": {
-            "items": {
-              "$ref": "#/components/schemas/UsageSourceOut"
-            },
-            "type": "array",
-            "title": "Sources",
-            "description": "Sources.",
-            "maxItems": 1000
-          },
-          "agentToolsets": {
-            "items": {
-              "$ref": "#/components/schemas/ToolsetBodySamplesOut"
-            },
-            "type": "array",
-            "title": "Agenttoolsets",
-            "description": "Agent Toolsets.",
-            "maxItems": 1000
-          },
-          "acknowledgement": {
-            "type": "string",
-            "title": "Acknowledgement",
-            "description": "The sentence that opens a body-sample window.",
-            "default": "I understand that sampled request and response bodies are stored, after redaction, for up to 7 days.",
-            "example": "example"
-          }
-        },
-        "type": "object",
-        "title": "UsageSourceList",
-        "description": "The project's sources and agent toolsets: everything that can keep traffic or bodies."
-      },
-      "ToolsetBodySamplesOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Stable resource identifier.",
-            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "versionId": {
-            "type": "string",
-            "title": "Versionid",
-            "description": "Version ID.",
-            "example": "1.0.0"
-          },
-          "versionLabel": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Response payload for toolset body samples."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for toolset body samples."
-              }
-            ],
-            "title": "Versionlabel",
-            "description": "Version Label."
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled",
-            "description": "Whether the resource is active.",
-            "example": true
-          },
-          "bodySamples": {
-            "$ref": "#/components/schemas/BodySamples",
-            "description": "Body Samples."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "versionId",
-          "enabled",
-          "bodySamples"
-        ],
-        "title": "ToolsetBodySamplesOut",
-        "description": "An agent toolset of the project, with its AGX-3.3 body-capture opt-in."
-      },
-      "BodySamples": {
-        "properties": {
-          "rate": {
-            "type": "number",
-            "title": "Rate",
-            "description": "Fraction of exchanges whose bodies are kept. `0` keeps none.",
-            "example": 1.0
-          },
-          "until": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "description": "Body Samples schema."
-              },
-              {
-                "type": "null",
-                "description": "Body Samples schema."
-              }
-            ],
-            "title": "Until",
-            "description": "When sampling stops."
-          },
-          "open": {
-            "type": "boolean",
-            "title": "Open",
-            "description": "Whether sampling is happening right now (`rate > 0` and `until` ahead).",
-            "example": false
-          },
-          "maxRate": {
-            "type": "number",
-            "title": "Maxrate",
-            "description": "The hard cap on `rate`.",
-            "example": 1.0
-          },
-          "maxWindowDays": {
-            "type": "integer",
-            "title": "Maxwindowdays",
-            "description": "`until` may be at most this many days ahead.",
-            "default": 7,
-            "example": 1
-          },
-          "retentionDays": {
-            "type": "integer",
-            "title": "Retentiondays",
-            "description": "How long a kept body is stored.",
-            "default": 7,
-            "example": 1
-          }
-        },
-        "type": "object",
-        "required": [
-          "rate",
-          "open",
-          "maxRate"
-        ],
-        "title": "BodySamples",
-        "description": "A body-sample opt-in as it stands, with its hard caps."
-      },
-      "UsageSourceOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Stable resource identifier.",
-            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
-          },
-          "kind": {
-            "type": "string",
-            "title": "Kind",
-            "description": "`otlp`, `har`, `access_log`, `mock`, `agent` or `sdk_beacon`.",
-            "example": "example"
-          },
-          "environment": {
-            "type": "string",
-            "title": "Environment",
-            "description": "Environment.",
-            "example": "example"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled",
-            "description": "Whether the resource is active.",
-            "example": true
-          },
-          "samplingRate": {
-            "type": "number",
-            "title": "Samplingrate",
-            "description": "Head sampling: fraction (0..1] of events kept.",
-            "example": 1.0
-          },
-          "fieldCapture": {
-            "type": "boolean",
-            "title": "Fieldcapture",
-            "description": "Whether field presence (names, never values) is counted.",
-            "example": false
-          },
-          "bodySamples": {
-            "$ref": "#/components/schemas/BodySamples",
-            "description": "Body Samples."
-          },
-          "lastReceivedAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "description": "Response payload for usage source."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for usage source."
-              }
-            ],
-            "title": "Lastreceivedat",
-            "description": "Last Received At."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "kind",
-          "environment",
-          "enabled",
-          "samplingRate",
-          "fieldCapture",
-          "bodySamples"
-        ],
-        "title": "UsageSourceOut",
-        "description": "One traffic source of a project, with what it captures."
-      },
-      "UsageRetentionResponse": {
-        "properties": {
-          "caps": {
-            "$ref": "#/components/schemas/RetentionDays",
-            "description": "The tier's caps. `-1` keeps rows forever."
-          },
-          "setting": {
-            "$ref": "#/components/schemas/RetentionDays",
-            "description": "The workspace's own values. `null` uses the cap."
-          },
-          "effective": {
-            "$ref": "#/components/schemas/RetentionDays",
-            "description": "What the nightly purge applies: the smaller of the two."
-          },
-          "sampleRetentionDays": {
-            "type": "integer",
-            "title": "Sampleretentiondays",
-            "description": "Body samples are purged after this many days, whatever the tier.",
-            "default": 7,
-            "example": 1
-          },
-          "updatedAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "description": "Response payload for usage retention."
-              },
-              {
-                "type": "null",
-                "description": "Response payload for usage retention."
-              }
-            ],
-            "title": "Updatedat",
-            "description": "When the setting last changed."
-          }
-        },
-        "type": "object",
-        "required": [
-          "caps",
-          "setting",
-          "effective"
-        ],
-        "title": "UsageRetentionResponse",
-        "description": "What the workspace keeps, for how long, and the caps it may lower."
-      },
-      "RetentionDays": {
-        "properties": {
-          "hourlyDays": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "description": "Retention Days schema."
-              },
-              {
-                "type": "null",
-                "description": "Retention Days schema."
-              }
-            ],
-            "title": "Hourlydays",
-            "description": "How long hourly counters are kept, in days."
-          },
-          "rollupDays": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "description": "Retention Days schema."
-              },
-              {
-                "type": "null",
-                "description": "Retention Days schema."
-              }
-            ],
-            "title": "Rollupdays",
-            "description": "How long daily rollups are kept, in days."
-          }
-        },
-        "type": "object",
-        "title": "RetentionDays",
-        "description": "A pair of retention values in days. ``-1`` means \"kept forever\" (a tier cap only)."
-      },
-      "BindingsDeletedResponse": {
-        "properties": {
-          "consumer": {
-            "type": "string",
-            "title": "Consumer",
-            "description": "The consumer's slug.",
-            "example": "example"
-          },
-          "erased": {
-            "type": "boolean",
-            "title": "Erased",
-            "description": "Whether the consumer's counters were re-attributed to `anonymous`.",
-            "example": false
-          },
-          "bindings": {
-            "type": "integer",
-            "title": "Bindings",
-            "description": "Bindings deleted.",
-            "example": 1
-          },
-          "hourly_rows": {
-            "type": "integer",
-            "title": "Hourly Rows",
-            "description": "Hourly counter rows re-attributed to `anonymous`.",
-            "default": 0,
-            "example": 1
-          },
-          "daily_rows": {
-            "type": "integer",
-            "title": "Daily Rows",
-            "description": "Daily rollup rows re-attributed to `anonymous`.",
-            "default": 0,
-            "example": 1
-          },
-          "calls": {
-            "type": "integer",
-            "title": "Calls",
-            "description": "Calls those daily rows counted (kept, now anonymous).",
-            "default": 0,
-            "example": 1
-          },
-          "unattributed_rows": {
-            "type": "integer",
-            "title": "Unattributed Rows",
-            "description": "Suggested-consumer rows carrying its hashes, deleted.",
-            "default": 0,
-            "example": 1
-          },
-          "edges": {
-            "type": "integer",
-            "title": "Edges",
-            "description": "Runtime dependency-graph edges from the consumer, deleted.",
-            "default": 0,
-            "example": 1
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "consumer",
-          "erased",
-          "bindings"
-        ],
-        "title": "BindingsDeletedResponse",
-        "description": "What ``DELETE \u2026/bindings`` deleted and, with ``erase=true``, re-attributed (RDG-5.4)."
       }
     },
     "securitySchemes": {

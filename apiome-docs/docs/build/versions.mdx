@@ -145,16 +145,21 @@ itself — public descriptions, a partner's servers, accepted agent descriptions
 1. Pick the **Revision**. Each overlay is listed in the order it applies, with its number of actions,
    its fingerprint and where it came from (**Uploaded**, **Export Studio**, **Agent enrichment** or
    **Lint fix**).
-2. On a draft, **click “Add overlay”** and choose one or more overlay files (`.yaml`, `.yml` or
-   `.json`, up to 1 MB). **×** removes one. A revision holds at most 10.
-3. **Click “Preview”** to render the chain the way an export does: the source and resolved
-   fingerprints, every value an overlay changed, and any action that no longer matches anything
-   (`overlay.unmatched-target`).
+2. On a draft, **click “New overlay”** to write one with **Update**, **Remove** and **Copy** actions,
+   or **click “Upload overlay”** and choose overlay files (`.yaml`, `.yml` or `.json`, up to 1 MB).
+   The pencil edits an overlay and **×** removes one. A revision holds at most 10.
+3. **Click “Preview”** to render the chain the way an export does: the number of values each
+   action matched, every changed value before and after with the action that changed it, and any
+   action that no longer matches anything (`overlay.unmatched-target`).
+4. **Click “Apply as version”** to import the rendered document as a new version, or
+   **“Export with overlays”** to open Export studio on the revision.
 
 A published revision's overlays are read-only. Under **Published render** it shows what publishing
 recorded: the source fingerprint, the resolved fingerprint and the number of changes.
 
-<Screenshot id="version-overlays" alt="The Overlays tab: two stored overlays in order, with Add overlay and Preview, and the preview's ledger with one unmatched-target finding" />
+See [Manage overlays in Versions](./overlay-manager.mdx) for the editor, the preview and apply.
+
+<Screenshot id="version-overlays" alt="The Overlays tab: a stored overlay with New overlay, Upload overlay, Preview, Apply as version and Export with overlays, and the preview's actions, before and after values and ledger" />
 
 ## Test bench
 

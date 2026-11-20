@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 63 operations."
+description: "REST endpoints tagged versions: 65 operations."
 sidebar_position: 118
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.606.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.607.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 63 operations
+Tag: `versions` · 65 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -1896,6 +1896,56 @@ Request body for add version overlay.
 | 201 | Successful response for add version overlay. | `application/json` [`VersionOverlayOut`](#schema-versionoverlayout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/apply` {#apply-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-apply-post}
+
+**Apply Version Overlays**
+
+Apply the revision's stored chain as a new version of the same project.
+
+The resolved document — exactly what the preview and an export render — passes the tenant's
+import quality gate and is imported as a new version. The source revision and its chain are not
+changed; the new version has an empty chain, since the overlays are now part of its source.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision whose chain is applied.
+    body: The new version's label (optional).
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The new version's id and label, and what was applied.
+
+Raises:
+    HTTPException: 404 unknown revision; 409 ``overlay-chain-empty``, ``overlay-no-changes``,
+        ``version-exists`` or ``QUALITY_POLICY_BLOCKED``; 422 when the source is not OpenAPI,
+        the chain cannot be applied, or the import fails (``overlay-apply-import-failed``).
+
+Operation id: `apply_version_overlays_v1_versions__tenant_slug___project_id___version_record_id__overlays_apply_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (optional)
+
+Request body for apply version overlays.
+
+- `application/json` — [`VersionOverlayApplyRequest`](#schema-versionoverlayapplyrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for apply version overlays. | `application/json` [`VersionOverlayApplyOut`](#schema-versionoverlayapplyout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/preview` {#preview-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-preview-get}
 
 **Preview Version Overlays**
@@ -1909,7 +1959,8 @@ Args:
     auth_data: Authenticated tenant context.
 
 Returns:
-    The resolved document, the source and resolved fingerprints, and the ledger/findings.
+    The resolved document, the source and resolved fingerprints, the ledger / per-action rows /
+    findings, and the before / after rows.
 
 Raises:
     HTTPException: 404 for an unknown revision; 422 (``{code, message}``) when the source is not
@@ -1932,6 +1983,54 @@ Operation id: `preview_version_overlays_v1_versions__tenant_slug___project_id___
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for preview version overlays. | `application/json` [`VersionOverlayPreviewOut`](#schema-versionoverlaypreviewout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/preview` {#preview-version-overlay-draft-v1-versions-tenant-slug-project-id-version-record-id-overlays-preview-post}
+
+**Preview Version Overlay Draft**
+
+Render the chain with an unsaved draft overlay, so an edit can be checked before it is saved.
+
+The draft is appended to the chain (a new overlay) or stands in for ``replace_overlay_id`` (an
+edit). Nothing is written, so a published revision can be previewed too.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The project id.
+    version_record_id: The revision id.
+    body: The draft and the overlay it replaces, if any.
+    auth_data: Authenticated tenant context.
+
+Returns:
+    The preview, with ``draft`` naming the draft's label in the report.
+
+Raises:
+    HTTPException: 404 unknown revision or overlay; 422 when the source is not OpenAPI, the draft
+        is not an Overlay document, or the chain cannot be applied.
+
+Operation id: `preview_version_overlay_draft_v1_versions__tenant_slug___project_id___version_record_id__overlays_preview_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for preview version overlay draft.
+
+- `application/json` — [`VersionOverlayPreviewRequest`](#schema-versionoverlaypreviewrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview version overlay draft. | `application/json` [`VersionOverlayPreviewOut`](#schema-versionoverlaypreviewout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `PUT /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays/{overlay_id}` {#replace-version-overlay-v1-versions-tenant-slug-project-id-version-record-id-overlays-overlay-id-put}
@@ -2805,6 +2904,27 @@ Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5).
 | --- | --- | --- | --- |
 | `enabled` | boolean | yes | When true, apiome-mock serves this version (draft mocks are private/key-gated). |
 
+### `VersionOverlayApplyOut` {#schema-versionoverlayapplyout}
+
+The version an apply created.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project_id` | string | yes | Project identifier the resource belongs to. |
+| `version_record_id` | string | yes | The new version's id (versions.id). |
+| `version_label` | string | yes | Version Label. |
+| `source_version_record_id` | string | yes | The revision whose chain was applied. |
+| `overlay_count` | integer | yes | Overlays in the applied chain. |
+| `change_count` | integer | yes | Values the chain changed. |
+
+### `VersionOverlayApplyRequest` {#schema-versionoverlayapplyrequest}
+
+Body of ``POST …/overlays/apply``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version_label` | string or null | no | Label of the new version (for example 1.1.0). Default: a date/time label. |
+
 ### `VersionOverlayChainOut` {#schema-versionoverlaychainout}
 
 ``GET …/overlays``: the chain in application order.
@@ -2843,7 +2963,18 @@ One stored overlay of a revision's chain.
 | `source_fingerprint` | string | yes | Fingerprint of the source OpenAPI document. |
 | `resolved_fingerprint` | string | yes | Fingerprint of the resolved document. |
 | `document` | object | yes | The resolved OpenAPI document (source + chain). |
-| `report` | `ExportOverlayReport` or null | no | Ledger rows and `overlay.*` findings; null when the chain is empty. |
+| `report` | `ExportOverlayReport` or null | no | Ledger rows, per-action match counts (`actions`) and `overlay.*` findings; null when the chain is empty. |
+| `diff` | array of `VersionOverlayDiffRow` | no | One before / after row per changed value (at most 500), with the actions that changed it. |
+| `draft` | string or null | no | The draft overlay's label in `report` (`draft:<name>`), when a draft was previewed. |
+
+### `VersionOverlayPreviewRequest` {#schema-versionoverlaypreviewrequest}
+
+Body of ``POST …/overlays/preview``: an optional draft, and the stored overlay it stands in for.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `draft` | `VersionOverlayDraft` or null | no | The unsaved overlay. Omitted: the stored chain alone (same as GET). |
+| `replace_overlay_id` | string or null | no | Preview the draft in this stored overlay's place (an edit). Omitted: the draft is appended to the chain (a new overlay). |
 
 ### `VersionOverlayWrite` {#schema-versionoverlaywrite}
 

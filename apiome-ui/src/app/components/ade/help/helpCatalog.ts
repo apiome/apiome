@@ -116,6 +116,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['swagger', 'migrate', 'nullable', 'requestBody', 'plan', 'apiome upgrade'],
   },
   {
+    id: 'overlay-manager',
+    title: 'Manage overlays in Versions',
+    summary:
+      'Write OpenAPI Overlays in the app, preview each action’s matches and every value before and after, then apply them as a version or export with them.',
+    page: 'apiome-docs/docs/build/overlay-manager.mdx',
+    section: 'reference',
+    keywords: ['jsonpath', 'copy', 'remove', 'apply as version', 'provenance', 'match count', 'diff'],
+  },
+  {
     id: 'lint-and-quality',
     title: 'Lint & check quality',
     summary:

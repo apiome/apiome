@@ -241,6 +241,30 @@
       ]
     },
     {
+      "id": "overlays-list",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:version-overlays/manager-list.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versionOverlays/VersionOverlaysPanel.tsx",
+        "apiome-ui/src/app/components/ade/versionOverlays/OverlayPreviewTables.tsx",
+        "apiome-ui/tests/overlay-manager.test.tsx"
+      ]
+    },
+    {
+      "id": "overlay-preview",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:version-overlays/manager-editor.html",
+      "scrollTo": "[data-testid=\"overlay-diff-table\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versionOverlays/OverlayEditorDialog.tsx",
+        "apiome-ui/src/app/components/ade/versionOverlays/overlayDraftModel.ts",
+        "apiome-ui/src/app/components/ade/versionOverlays/OverlayPreviewTables.tsx",
+        "apiome-ui/tests/overlay-manager.test.tsx"
+      ]
+    },
+    {
       "id": "change-report-approval",
       "route": "/ade/dashboard/versions",
       "waitFor": "[data-testid=\"change-report-approval-bar\"]",

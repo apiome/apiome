@@ -3,7 +3,8 @@
  *
  * ```
  * /api/versions/{v}/overlays?projectId=…             → /v1/versions/{t}/{p}/{v}/overlays
- * /api/versions/{v}/overlays/preview?projectId=…     → …/overlays/preview
+ * /api/versions/{v}/overlays/preview?projectId=…     → …/overlays/preview   (GET, POST with a draft)
+ * /api/versions/{v}/overlays/apply?projectId=…       → …/overlays/apply     (COA-2.7)
  * /api/versions/{v}/overlays/{overlayId}?projectId=… → …/overlays/{overlayId}
  * ```
  *
@@ -45,7 +46,7 @@ function refusalCode(detail: unknown): string | null {
  * @param request The incoming request; its `projectId` query parameter is required.
  * @param versionId The revision id from the route.
  * @param method The HTTP verb.
- * @param suffix The path after `/overlays` (`''`, `'/preview'` or `'/<encoded id>'`).
+ * @param suffix The path after `/overlays` (`''`, `'/preview'`, `'/apply'` or `'/<encoded id>'`).
  * @param body The JSON body for POST / PUT.
  * @returns `{success: true, data}` with REST's status, or `{success: false, error, code}`.
  */

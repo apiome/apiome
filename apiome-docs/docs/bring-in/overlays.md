@@ -100,7 +100,7 @@ The version's model, the Studio, lint, diff and SDK generation never see it.
 
 | Source | How it gets there |
 | --- | --- |
-| **Uploaded** | The version's [**Overlays** tab](../build/versions.mdx#overlays): **click “Add overlay”**. |
+| **Uploaded** | The version's [**Overlays** tab](../build/overlay-manager.mdx): **click “Upload overlay”**, or **click “New overlay”** to write one in the app. |
 | **Export Studio** | The **Overlays** step's save button next to an uploaded file. See [Export studio](../ship/export-studio.mdx#4-overlays). |
 | **Agent enrichment** | **Agent access → Save as overlay** copies a toolset's accepted descriptions. See [Agent access](./agent-access.mdx#save-enrichment-as-an-overlay). |
 | **Lint fix** | Accepted by the API (`source: lint-fix`) for saved fix plans. |
@@ -122,6 +122,9 @@ The version's model, the Studio, lint, diff and SDK generation never see it.
   The schema download (`GET /v1/schema/…`) is not changed by the chain.
 - **Nothing goes silent.** If a Studio edit removes what an overlay targets, the next render reports
   `overlay.unmatched-target` instead of skipping it.
+- **Apply as a version.** The chain can become part of a new version: the rendered document is
+  imported through the import quality gate (`POST …/overlays/apply`), and the new version starts
+  with an empty chain. See [Manage overlays in Versions](../build/overlay-manager.mdx#apply-as-a-version).
 
 **Preview** on the Overlays tab renders the chain exactly as an export does — the same code — so
 what it shows is what the export gets.
