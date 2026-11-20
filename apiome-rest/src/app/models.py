@@ -1,4 +1,5 @@
 import ipaddress
+import re
 from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence, Union
 from urllib.parse import urlsplit, urlunsplit
@@ -3558,6 +3559,56 @@ class ProjectCreateRequest(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class OpenApiTagExternalDocs(BaseModel):
+    """A Tag Object's ``externalDocs``."""
+
+    url: str = Field(..., min_length=1, max_length=2048)
+    description: Optional[str] = Field(None, max_length=4096)
+
+
+class OpenApiTagObject(BaseModel):
+    """One OpenAPI Tag Object of a project, with the OpenAPI 3.2 fields (#7048).
+
+    ``summary``, ``parent`` and ``kind`` are written only to OpenAPI 3.2 documents; ``parent`` names
+    another tag in the same list, which makes the tags a tree.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    name: str = Field(..., min_length=1, max_length=255)
+    summary: Optional[str] = Field(None, max_length=1024, description="Short label (OpenAPI 3.2)")
+    description: Optional[str] = Field(None, max_length=16384)
+    parent: Optional[str] = Field(
+        None, max_length=255, description="Name of the parent tag (OpenAPI 3.2); must be listed"
+    )
+    kind: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Tag kind (OpenAPI 3.2), e.g. `nav`, `badge` or `audience`",
+    )
+    external_docs: Optional[OpenApiTagExternalDocs] = Field(
+        None,
+        validation_alias=AliasChoices("externalDocs", "external_docs"),
+        serialization_alias="externalDocs",
+    )
+
+
+class ProjectOpenApiTagsOut(BaseModel):
+    """A project's OpenAPI tag list, in document order (#7048)."""
+
+    project_id: str
+    tags: List[OpenApiTagObject] = Field(default_factory=list)
+
+
+class ProjectOpenApiTagsUpdateRequest(BaseModel):
+    """Replace a project's OpenAPI tag list (#7048).
+
+    Names must be unique, and a ``parent`` must name another listed tag without forming a cycle.
+    """
+
+    tags: List[OpenApiTagObject] = Field(default_factory=list, max_length=1000)
 
 
 class ProjectUpdateRequest(BaseModel):
@@ -10824,19 +10875,64 @@ class OperationSchema(BaseModel):
         from_attributes = True
 
 
+#: An HTTP method token (RFC 9110 §5.6.2 ``tchar``s), at most the column's 50 characters.
+_HTTP_METHOD_TOKEN_RE = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,50}$")
+
+
+def _validate_http_method_token(value: Optional[str]) -> Optional[str]:
+    """Check an operation's method: a fixed verb, ``QUERY`` or a custom method token (#7048).
+
+    OpenAPI 3.2 declares ``QUERY`` with the Path Item's ``query`` field and any other method
+    (``REPORT``, ``LINK``) under ``additionalOperations``, keyed by the token as sent on the wire, so
+    any RFC 9110 token is accepted; whitespace, separators and an empty value are not.
+
+    Args:
+        value: The method as sent, or ``None`` (an update that leaves it unchanged).
+
+    Returns:
+        The trimmed token, or ``None``.
+
+    Raises:
+        ValueError: The value is not an HTTP method token.
+    """
+    if value is None:
+        return None
+    token = value.strip()
+    if not _HTTP_METHOD_TOKEN_RE.match(token):
+        raise ValueError(
+            "operation must be an HTTP method token (letters, digits and !#$%&'*+.^_`|~-, "
+            "at most 50 characters), e.g. GET, QUERY or REPORT"
+        )
+    return token
+
+
 class OperationCreateRequest(BaseModel):
-    """Request model for creating an operation."""
-    operation: str  # GET, POST, PUT, PATCH, DELETE, etc.
+    """Request model for creating an operation.
+
+    ``operation`` is the HTTP method: a fixed verb (``GET`` … ``TRACE``), ``QUERY`` or a custom
+    method token such as ``REPORT`` (OpenAPI 3.2 ``query`` / ``additionalOperations``, #7048).
+    """
+    operation: str
     metadata: Optional[Dict[str, Any]] = None
+
+    @field_validator("operation")
+    @classmethod
+    def _method_token(cls, value: str) -> str:
+        return _validate_http_method_token(value)
 
     class Config:
         from_attributes = True
 
 
 class OperationUpdateRequest(BaseModel):
-    """Request model for updating an operation."""
+    """Request model for updating an operation (``operation`` as on create)."""
     operation: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+
+    @field_validator("operation")
+    @classmethod
+    def _method_token(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_http_method_token(value)
 
     class Config:
         from_attributes = True
@@ -10873,7 +10969,7 @@ class SharedParameterSchema(BaseModel):
     id: str
     version_path_id: str
     name: str
-    in_location: str  # path, query, header, cookie
+    in_location: str  # path, query, header, cookie, querystring (OpenAPI 3.2)
     summary: Optional[str] = None
     description: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
@@ -10884,13 +10980,31 @@ class SharedParameterSchema(BaseModel):
         from_attributes = True
 
 
+#: Where a parameter is sent; ``querystring`` (the whole query string as one value) is OpenAPI 3.2.
+PARAMETER_LOCATIONS = ("path", "query", "header", "cookie", "querystring")
+
+
 class SharedParameterCreateRequest(BaseModel):
-    """Request model for creating a shared parameter."""
+    """Request model for creating a shared parameter.
+
+    ``in_location`` is ``path``, ``query``, ``header``, ``cookie`` or ``querystring`` (#7048). A
+    ``querystring`` parameter is written with ``content`` — the media type in
+    ``data.contentMediaType`` (default ``application/x-www-form-urlencoded``) and the rest of
+    ``data`` as its schema — and only to OpenAPI 3.2 documents.
+    """
     name: str
-    in_location: str  # path, query, header, cookie
+    in_location: str
     summary: Optional[str] = None
     description: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
+
+    @field_validator("in_location")
+    @classmethod
+    def _known_location(cls, value: str) -> str:
+        location = value.strip().lower()
+        if location not in PARAMETER_LOCATIONS:
+            raise ValueError(f"in_location must be one of {', '.join(PARAMETER_LOCATIONS)}")
+        return location
 
     class Config:
         from_attributes = True
@@ -10927,6 +11041,13 @@ class RequestBodyContentTypeRequest(BaseModel):
     inline_schema: Optional[Dict[str, Any]] = None  # Or inline schema
     encoding: Optional[Dict[str, Any]] = None
     examples: Optional[List[Dict[str, Any]]] = None
+    item_schema: bool = Field(
+        False,
+        description=(
+            "The schema describes each element of a stream (JSON Lines, JSON text sequence, "
+            "Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048)."
+        ),
+    )
 
     class Config:
         from_attributes = True
@@ -10966,6 +11087,13 @@ class ResponseContentTypeRequest(BaseModel):
     class_id: Optional[str] = None
     inline_schema: Optional[Dict[str, Any]] = None
     examples: Optional[List[Dict[str, Any]]] = None
+    item_schema: bool = Field(
+        False,
+        description=(
+            "The schema describes each element of a stream (JSON Lines, JSON text sequence, "
+            "Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048)."
+        ),
+    )
 
     class Config:
         from_attributes = True

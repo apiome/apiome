@@ -1,13 +1,90 @@
 """
 OpenAPI Paths Generator for Python
 
-Generates OpenAPI 3.1.0 paths section from database records.
+Generates the OpenAPI paths section from database records.
 Handles request bodies with both class references and inline schemas,
 parameters, and responses.
+
+The ``openapi_version`` option (default ``3.1.0``) decides how the OpenAPI 3.2 constructs a
+project can hold are written (COA-2.5, #7048):
+
+* a ``QUERY`` operation and any other non-standard method (``REPORT``) — the Path Item's ``query``
+  field and its ``additionalOperations`` map for 3.2; for 3.1 the ``x-apiome-query-operation`` /
+  ``x-apiome-additional-operations`` stashes the importers read back (a 3.1 Path Item allows only
+  the fixed verbs and ``x-`` keys);
+* a content row flagged ``item_schema`` (a streaming media type) — ``itemSchema`` for 3.2, else the
+  ``x-apiome-item-schema`` stash;
+* an ``in: querystring`` parameter — written (with ``content``) only for 3.2; a 3.1 Parameter
+  Object has no such location, so it is left out.
 """
 
 import json
+import re
 from typing import Dict, Any, List, Optional
+
+#: The Path Item operation fields every OpenAPI 3.x version has.
+FIXED_HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "trace")
+
+#: The 3.2 parameter location for the whole query string.
+QUERYSTRING_LOCATION = "querystring"
+
+#: Media type of a ``querystring`` parameter's ``content`` when none was stored.
+DEFAULT_QUERYSTRING_MEDIA_TYPE = "application/x-www-form-urlencoded"
+
+#: Extensions a 3.1 document carries the 3.2 constructs on (the importers' OA2 stashes).
+STASHED_QUERY_OPERATION_EXTENSION = "x-apiome-query-operation"
+STASHED_ADDITIONAL_OPERATIONS_EXTENSION = "x-apiome-additional-operations"
+STASHED_ITEM_SCHEMA_EXTENSION = "x-apiome-item-schema"
+
+
+def is_openapi_32(openapi_version: Optional[str]) -> bool:
+    """Whether a target OpenAPI version has the 3.2 constructs.
+
+    Args:
+        openapi_version: The target version (``3.2.0``, ``3.1.0``); ``None`` means 3.1.
+
+    Returns:
+        True for any 3.2.x version.
+    """
+    return isinstance(openapi_version, str) and re.match(r"^3\.2(\.|$)", openapi_version.strip()) is not None
+
+
+def _apply_item_schema_keys(content: Dict[str, Any], content_types: List[Dict[str, Any]], is32: bool) -> None:
+    """Move each streaming media type's ``schema`` to ``itemSchema`` (3.2) or its stash (3.1).
+
+    The content rows keep an element schema in the same ``class_id`` / ``inline_schema`` columns as
+    a body schema; ``item_schema`` says which it is.
+
+    Args:
+        content: The built ``content`` map (mutated).
+        content_types: The stored content rows.
+        is32: Whether the target is OpenAPI 3.2.
+    """
+    key = "itemSchema" if is32 else STASHED_ITEM_SCHEMA_EXTENSION
+    for ct in content_types:
+        if ct.get("item_schema") is not True:
+            continue
+        media = content.get(ct.get("media_type", "application/json"))
+        if isinstance(media, dict) and "schema" in media:
+            media[key] = media.pop("schema")
+
+
+def method_takes_request_body(method: str) -> bool:
+    """Whether a stored request body is written for an operation of this method.
+
+    POST, PUT and PATCH carry one, as before; so do QUERY and any custom method (#7048).
+    GET, HEAD, DELETE, OPTIONS and TRACE do not.
+
+    Args:
+        method: The stored method token.
+
+    Returns:
+        True when the request body is written.
+    """
+    upper = (method or "").strip().upper()
+    if upper in ("POST", "PUT", "PATCH"):
+        return True
+    return bool(upper) and upper.lower() not in FIXED_HTTP_METHODS
 
 
 def parse_json_field(field: Any) -> Any:
@@ -91,8 +168,47 @@ def build_schema_from_inline_properties(inline_schema: Dict[str, Any]) -> Dict[s
     return schema
 
 
+def build_querystring_parameter(param: Dict[str, Any]) -> Dict[str, Any]:
+    """Build an OpenAPI 3.2 ``in: querystring`` Parameter Object.
+
+    The whole query string is one value, so the parameter carries ``content`` (the media type in
+    ``data.contentMediaType``, default ``application/x-www-form-urlencoded``) instead of ``schema``.
+
+    Args:
+        param: The stored parameter (``in_location`` is ``querystring``).
+
+    Returns:
+        The Parameter Object.
+    """
+    data = dict(parse_json_field(param.get('data')) or {})
+    result: Dict[str, Any] = {'name': param['name'], 'in': QUERYSTRING_LOCATION}
+    if param.get('summary'):
+        result['summary'] = param['summary']
+    if param.get('description'):
+        result['description'] = param['description']
+    if data.pop('required', None) is True:
+        result['required'] = True
+    if data.pop('deprecated', None):
+        result['deprecated'] = True
+    media_type = data.pop('contentMediaType', None)
+    if not isinstance(media_type, str) or not media_type.strip():
+        media_type = DEFAULT_QUERYSTRING_MEDIA_TYPE
+    media_obj: Dict[str, Any] = {}
+    if 'example' in data:
+        media_obj['example'] = data.pop('example')
+    if 'examples' in data:
+        media_obj['examples'] = data.pop('examples')
+    for key in ('id', 'parent_id', 'style', 'explode', 'allowReserved', 'allowEmptyValue'):
+        data.pop(key, None)
+    media_obj['schema'] = data or {'type': 'object'}
+    result['content'] = {media_type.strip(): media_obj}
+    return result
+
+
 def build_parameter_for_openapi(param: Dict[str, Any]) -> Dict[str, Any]:
     """Build OpenAPI parameter object from database parameter record."""
+    if param.get('in_location') == QUERYSTRING_LOCATION:
+        return build_querystring_parameter(param)
     data = parse_json_field(param.get('data')) or {}
 
     result: Dict[str, Any] = {
@@ -149,8 +265,11 @@ def build_parameter_for_openapi(param: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def build_request_body_for_openapi(request_body: Dict[str, Any]) -> Dict[str, Any]:
-    """Build OpenAPI request body object from database request body record."""
+def build_request_body_for_openapi(request_body: Dict[str, Any], is32: bool = False) -> Dict[str, Any]:
+    """Build OpenAPI request body object from database request body record.
+
+    ``is32`` writes a streaming media type's schema as ``itemSchema`` (else as its stash).
+    """
     result: Dict[str, Any] = {}
 
     # Add description if present
@@ -204,13 +323,17 @@ def build_request_body_for_openapi(request_body: Dict[str, Any]) -> Dict[str, An
 
             content[media_type] = media_type_obj
 
+        _apply_item_schema_keys(content, content_types, is32)
         result['content'] = content
 
     return result
 
 
-def build_response_for_openapi(response: Dict[str, Any]) -> Dict[str, Any]:
-    """Build OpenAPI response object from database response record."""
+def build_response_for_openapi(response: Dict[str, Any], is32: bool = False) -> Dict[str, Any]:
+    """Build OpenAPI response object from database response record.
+
+    ``is32`` writes a streaming media type's schema as ``itemSchema`` (else as its stash).
+    """
     result: Dict[str, Any] = {}
 
     # Add description (required for OpenAPI)
@@ -253,6 +376,7 @@ def build_response_for_openapi(response: Dict[str, Any]) -> Dict[str, Any]:
 
             content[media_type] = media_type_obj
 
+        _apply_item_schema_keys(content, content_types, is32)
         result['content'] = content
     else:
         # Fallback: Single content type or legacy format
@@ -360,15 +484,20 @@ def build_operation_for_openapi(operation: Dict[str, Any], options: Optional[Dic
                     if key.startswith('x-') and key != 'x-private':
                         result[key] = value
 
-    # Add parameters
-    parameters = operation.get('parameters', [])
+    is32 = is_openapi_32(options.get('openapi_version'))
+
+    # Add parameters (a 3.2 querystring parameter has no 3.1 form and is left out of older targets)
+    parameters = [
+        p for p in (operation.get('parameters') or [])
+        if is32 or p.get('in_location') != QUERYSTRING_LOCATION
+    ]
     if parameters:
         result['parameters'] = [build_parameter_for_openapi(p) for p in parameters]
 
-    # Add request body (for POST, PUT, PATCH)
+    # Add request body (POST, PUT, PATCH, and QUERY / custom methods)
     request_body = operation.get('requestBody')
-    if request_body and operation.get('operation', '').upper() in ['POST', 'PUT', 'PATCH']:
-        result['requestBody'] = build_request_body_for_openapi(request_body)
+    if request_body and method_takes_request_body(operation.get('operation', '')):
+        result['requestBody'] = build_request_body_for_openapi(request_body, is32)
 
     # Add responses
     responses: Dict[str, Any] = {}
@@ -376,7 +505,7 @@ def build_operation_for_openapi(operation: Dict[str, Any], options: Optional[Dic
     if response_list:
         for response in response_list:
             status_code = response.get('status_code', '200')
-            responses[status_code] = build_response_for_openapi(response)
+            responses[status_code] = build_response_for_openapi(response, is32)
     else:
         # Default response if none specified (OPTIONS: typical CORS preflight is 204 No Content)
         if operation.get('operation', '').upper() == 'OPTIONS':
@@ -412,9 +541,45 @@ def build_path_item_for_openapi(path: Dict[str, Any], options: Optional[Dict[str
             if description.get('x_private') or description.get('x-private'):
                 continue
         method = operation.get('operation', 'get').lower()
-        result[method] = build_operation_for_openapi(operation, options)
+        built = build_operation_for_openapi(operation, options)
+        if method in FIXED_HTTP_METHODS:
+            result[method] = built
+        else:
+            _add_non_fixed_operation(
+                result, _method_token(operation), built, is_openapi_32(options.get('openapi_version'))
+            )
 
     return result
+
+
+def _method_token(operation: Dict[str, Any]) -> str:
+    """The method token as declared: ``metadata.httpMethod`` from an import, else the stored one."""
+    metadata = parse_json_field(operation.get('metadata'))
+    if isinstance(metadata, dict) and isinstance(metadata.get('httpMethod'), str) and metadata['httpMethod'].strip():
+        return metadata['httpMethod'].strip()
+    return str(operation.get('operation', '')).strip()
+
+
+def _add_non_fixed_operation(path_item: Dict[str, Any], token: str, operation: Dict[str, Any], is32: bool) -> None:
+    """Place a QUERY or custom-method operation on a path item.
+
+    OpenAPI 3.2 writes ``query`` and ``additionalOperations[token]``; 3.1 writes the
+    ``x-apiome-query-operation`` / ``x-apiome-additional-operations`` stashes.
+
+    Args:
+        path_item: The path item being built (mutated).
+        token: The method token as sent on the wire.
+        operation: The built Operation Object.
+        is32: Whether the target is OpenAPI 3.2.
+    """
+    if token.upper() == 'QUERY':
+        path_item['query' if is32 else STASHED_QUERY_OPERATION_EXTENSION] = operation
+        return
+    map_key = 'additionalOperations' if is32 else STASHED_ADDITIONAL_OPERATIONS_EXTENSION
+    existing = path_item.get(map_key)
+    operations = existing if isinstance(existing, dict) else {}
+    operations[token] = operation
+    path_item[map_key] = operations
 
 
 def generate_paths_for_openapi(paths: List[Dict[str, Any]], options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

@@ -1,0 +1,169 @@
+---
+title: OpenAPI 3.2 in projects
+description: QUERY and custom methods, tag hierarchy, streaming media types and querystring parameters.
+sidebar_position: 3.1
+tags: [openapi, paths, tags, projects]
+---
+
+<Route path="/ade/dashboard/versions" />
+
+OpenAPI 3.2 adds four things a project's paths can hold:
+
+| Construct | What it is |
+| --- | --- |
+| **QUERY and custom methods** | The safe, body-bearing `QUERY` method (the Path Item's `query` field), and any other HTTP method such as `REPORT` or `LINK`, keyed by its token under `additionalOperations` |
+| **Tag hierarchy** | A Tag Object's `summary`, its `parent` (another tag, so tags form a tree) and its `kind` (for example `nav`, `badge` or `audience`) |
+| **Streaming media types** | A request body or response whose content is a stream — JSON Lines, JSON text sequences, Server-Sent Events — described one element at a time with `itemSchema` |
+| **`in: querystring`** | A parameter that is the whole query string, given as one value with `content` (usually `application/x-www-form-urlencoded`) |
+
+A project keeps each of them when you import an OpenAPI 3.2 document. You can also add them with
+the REST API, see them in the spec viewer and in version diffs, and get them back in OpenAPI 3.2
+exports.
+
+## Which documents show them
+
+Each construct is written in the form the target version has:
+
+| Construct | OpenAPI 3.2 | OpenAPI 3.1 |
+| --- | --- | --- |
+| QUERY operation | `query` | `x-apiome-query-operation` |
+| Custom method | `additionalOperations.<METHOD>` | `x-apiome-additional-operations.<METHOD>` |
+| Streaming media type | `itemSchema` | `x-apiome-item-schema` |
+| `in: querystring` parameter | written | left out (3.1 has no such location) |
+| Tag `summary`, `parent`, `kind` | written | left out (`name`, `description` and `externalDocs` stay) |
+
+The `x-apiome-*` extensions are how a 3.1 document keeps an operation that 3.1 has no field for.
+Importing that document brings the operations back. No 3.2 field ever appears in a 3.1 document.
+
+The spec viewer and version diffs build OpenAPI 3.2, so they show every construct. For
+**Export to another format…**, see [Export a spec](../ship/export-a-spec.md). That page also
+explains how a 3.2 → 3.1 export lists each construct it could not keep.
+
+## See them in the spec viewer
+
+1. **Open the project** on **Versions**.
+2. On the revision's row, **open the “Actions” menu** and **choose “View spec”**.
+3. The dialog's title names the version the document declares (**OpenAPI 3.2.0 specification**).
+   When the document uses any of the four constructs, **OpenAPI 3.2.0 constructs** above the code
+   lists them, one group each:
+   - **QUERY and custom methods** — the method, the path, the `operationId` and the field it is
+     declared in (`query` or `additionalOperations`).
+   - **Tag hierarchy** — each tag with a `parent`, `kind` or `summary`.
+   - **Streaming media types** — the media type, its stream family and where it is.
+   - **Query string parameters** — the operation, the parameter and its media type.
+
+   A group with nothing in it is not shown. A 3.0 or 3.1 document has no panel.
+
+<Screenshot id="openapi32-operations" alt="The spec viewer for Orders API 2.4.0, titled OpenAPI 3.2.0 specification: the OpenAPI 3.2.0 constructs panel lists QUERY /orders searchOrders and REPORT /orders reportOrders, the orders tag tree, two streaming media types and the filter query string parameter, above the JSON" />
+
+Choose **YAML** to read the document's `tags` with their `parent` and `kind`:
+
+<Screenshot id="openapi32-tags" alt="The same spec viewer in YAML: the Tag hierarchy group lists order-search and order-events under orders and beta of kind badge, and the code shows order-search with parent: orders and kind: nav" />
+
+To see what changed between two revisions, compare them on **Versions** (see
+[Versions](./versions.mdx)). A QUERY operation, a new `additionalOperations` method, a changed
+`parent` or a new `itemSchema` shows as a line of the OpenAPI 3.2 document.
+
+## With the REST API
+
+Paths, operations, parameters and content types use the routes on
+[Edit paths and operations](./edit-paths.md#with-the-rest-api).
+
+### QUERY and custom methods
+
+Create the operation with its method token. Any [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110#name-tokens)
+token is accepted; a space, a `/` or an empty method is refused with `422`.
+
+```http
+POST /v1/paths/{tenant_slug}/{version_id}/{path_id}/operations
+X-API-Key: <your-api-key>
+
+{ "operation": "QUERY" }
+```
+
+`GET` … `TRACE` are the fixed verbs; `QUERY` is written as `query`; anything else (`REPORT`) goes
+under `additionalOperations` with the token as you sent it. QUERY and custom methods keep their
+request body, as POST, PUT and PATCH do.
+
+### Streaming media types
+
+Add the content type with `item_schema: true`. Its class or inline schema then describes **each
+element** of the stream, not the whole body:
+
+```http
+POST /v1/paths/{tenant_slug}/{version_id}/{path_id}/responses/{response_id}/content-types
+X-API-Key: <your-api-key>
+
+{ "media_type": "application/jsonl", "class_id": "<Order class id>", "item_schema": true }
+```
+
+The same field is on `…/request-bodies/{request_body_id}/content-types`. It defaults to `false`.
+
+### `in: querystring`
+
+Create the parameter with `in_location: "querystring"`. `data.contentMediaType` is its media type
+(default `application/x-www-form-urlencoded`); the rest of `data` is the schema of the whole query
+string:
+
+```http
+POST /v1/paths/{tenant_slug}/{version_id}/{path_id}/parameters
+X-API-Key: <your-api-key>
+
+{
+  "name": "filter",
+  "in_location": "querystring",
+  "data": {
+    "type": "object",
+    "properties": { "status": { "type": "string" } },
+    "contentMediaType": "application/x-www-form-urlencoded"
+  }
+}
+```
+
+`in_location` must be `path`, `query`, `header`, `cookie` or `querystring`.
+
+### Tag hierarchy
+
+A project's tags are one list, in document order:
+
+| Action | Method & route |
+|---|---|
+| Read the tags | `GET /v1/projects/{tenant_slug}/{project_id}/openapi-tags` |
+| Replace the tags | `PUT /v1/projects/{tenant_slug}/{project_id}/openapi-tags` |
+
+```http
+PUT /v1/projects/{tenant_slug}/{project_id}/openapi-tags
+X-API-Key: <your-api-key>
+
+{
+  "tags": [
+    { "name": "orders", "summary": "Orders", "description": "Everything about orders", "kind": "nav" },
+    { "name": "order-search", "summary": "Search", "parent": "orders", "kind": "nav" },
+    { "name": "beta", "kind": "badge" }
+  ]
+}
+```
+
+The list replaces the stored one, and `[]` clears it. The request is refused with `422`
+(`invalid_tags`, one message per problem) when:
+
+- a name is listed twice;
+- a `parent` is the tag itself or names a tag that is not in the list;
+- `parent` links form a cycle.
+
+If someone else changed the project while you saved, the request returns `409` (`update_conflict`).
+Read the tags again and retry. An OpenAPI import fills the same list from the document's `tags`.
+
+## Verify
+
+- **Spec viewer:** **View spec** on the revision lists the construct under **OpenAPI 3.2.0
+  constructs**.
+- **Round trip:** in the spec viewer, **click “Download”** and import the file into a new project
+  (see [Import a spec](../bring-in/import-a-spec.md)). The new project's spec viewer lists the same
+  operations, tags, streams and query string parameters.
+
+## Related
+
+- [Edit paths and operations](./edit-paths.md) — the path, operation and content-type routes
+- [OpenAPI construct matrix](../reference/openapi-construct-matrix.md) — every OpenAPI construct, version by version
+- [Export a spec](../ship/export-a-spec.md) — choose the OpenAPI version an export writes

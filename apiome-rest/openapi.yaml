@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.604.4
+  version: 1.605.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -9269,6 +9269,139 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for restore projectresponse422.
+  /v1/projects/{tenant_slug}/{project_id}/openapi-tags:
+    get:
+      tags:
+      - projects
+      summary: Get Project Openapi Tags
+      description: "List the project's OpenAPI tags, with the OpenAPI 3.2 ``summary`` / ``parent`` / ``kind``.\n\nThe list an OpenAPI import kept (project metadata ``x-apiome-tag-taxonomy``), in document\norder; the generated document's top-level ``tags`` are written from it (#7048).\n\nRaises:\n    HTTPException: 404 when the project is not in the tenant."
+      operationId: get_project_openapi_tags_v1_projects__tenant_slug___project_id__openapi_tags_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project OpenAPI Tagsauthorization schema.
+          - type: 'null'
+            description: Get Project OpenAPI Tagsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project OpenAPI Tags Xapikey schema.
+          - type: 'null'
+            description: Get Project OpenAPI Tags Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get project openapi tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectOpenApiTagsOut'
+                description: Response payload for get project openapi tagsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get project openapi tagsresponse422.
+    put:
+      tags:
+      - projects
+      summary: Replace Project Openapi Tags
+      description: "Replace the project's OpenAPI tag list (the tag hierarchy editor's save, #7048).\n\nThe list replaces the stored one; an empty list clears it. Every other metadata key is kept.\n\nRaises:\n    HTTPException: 404 when the project is not in the tenant; 422 ``invalid_tags`` listing each\n        problem (a repeated name, a ``parent`` that is the tag itself, names no listed tag or\n        closes a cycle); 409 ``update_conflict`` when the project changed while saving."
+      operationId: replace_project_openapi_tags_v1_projects__tenant_slug___project_id__openapi_tags_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replace Project OpenAPI Tagsauthorization schema.
+          - type: 'null'
+            description: Replace Project OpenAPI Tagsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replace Project OpenAPI Tags Xapikey schema.
+          - type: 'null'
+            description: Replace Project OpenAPI Tags Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectOpenApiTagsUpdateRequest'
+              description: Request body for replace project openapi tagsrequest.
+        description: Request body for replace project openapi tags.
+      responses:
+        '200':
+          description: Successful response for replace project openapi tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectOpenApiTagsOut'
+                description: Response payload for replace project openapi tagsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for replace project openapi tagsresponse422.
   /v1/projects/{tenant_slug}/{project_ref}/gate:
     get:
       tags:
@@ -149007,6 +149140,90 @@ components:
       - candidateOpenApi
       title: OpenApiChangeReportRequest
       description: Two resolved OpenAPI 3.x JSON documents for semantic comparison.
+    OpenApiTagExternalDocs:
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Url
+          description: URL.
+          example: https://example.com/resource
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4096
+            description: Open API Tag External Docs schema.
+          - type: 'null'
+            description: Open API Tag External Docs schema.
+          title: Description
+          description: Free-text description.
+      type: object
+      required:
+      - url
+      title: OpenApiTagExternalDocs
+      description: A Tag Object's ``externalDocs``.
+    OpenApiTagObject:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        summary:
+          anyOf:
+          - type: string
+            maxLength: 1024
+            description: Open API Tag Object schema.
+          - type: 'null'
+            description: Open API Tag Object schema.
+          title: Summary
+          description: Short label (OpenAPI 3.2)
+        description:
+          anyOf:
+          - type: string
+            maxLength: 16384
+            description: Open API Tag Object schema.
+          - type: 'null'
+            description: Open API Tag Object schema.
+          title: Description
+          description: Free-text description.
+        parent:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Open API Tag Object schema.
+          - type: 'null'
+            description: Open API Tag Object schema.
+          title: Parent
+          description: Name of the parent tag (OpenAPI 3.2); must be listed
+        kind:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Open API Tag Object schema.
+          - type: 'null'
+            description: Open API Tag Object schema.
+          title: Kind
+          description: Tag kind (OpenAPI 3.2), e.g. `nav`, `badge` or `audience`
+        externalDocs:
+          anyOf:
+          - $ref: '#/components/schemas/OpenApiTagExternalDocs'
+          - type: 'null'
+            description: Open API Tag Object schema.
+          description: External Docs.
+      type: object
+      required:
+      - name
+      title: OpenApiTagObject
+      description: 'One OpenAPI Tag Object of a project, with the OpenAPI 3.2 fields (#7048).
+
+
+        ``summary``, ``parent`` and ``kind`` are written only to OpenAPI 3.2 documents; ``parent`` names
+
+        another tag in the same list, which makes the tags a tree.'
     OpenTailRequest:
       properties:
         sampleRate:
@@ -153651,6 +153868,40 @@ components:
       - counts
       title: ProjectDeltaResponse
       description: The Changes step's payload.
+    ProjectOpenApiTagsOut:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        tags:
+          items:
+            $ref: '#/components/schemas/OpenApiTagObject'
+          type: array
+          title: Tags
+          description: Associated tag labels.
+          maxItems: 1000
+      type: object
+      required:
+      - project_id
+      title: ProjectOpenApiTagsOut
+      description: A project's OpenAPI tag list, in document order (#7048).
+    ProjectOpenApiTagsUpdateRequest:
+      properties:
+        tags:
+          items:
+            $ref: '#/components/schemas/OpenApiTagObject'
+          type: array
+          maxItems: 1000
+          title: Tags
+          description: Associated tag labels.
+      type: object
+      title: ProjectOpenApiTagsUpdateRequest
+      description: 'Replace a project''s OpenAPI tag list (#7048).
+
+
+        Names must be unique, and a ``parent`` must name another listed tag without forming a cycle.'
     ProjectPinRecord:
       properties:
         projectId:
@@ -162150,6 +162401,12 @@ components:
             description: Request body for request body content type.
           title: Examples
           description: Examples.
+        item_schema:
+          type: boolean
+          title: Item Schema
+          description: 'The schema describes each element of a stream (JSON Lines, JSON text sequence, Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048).'
+          default: false
+          example: false
       type: object
       required:
       - media_type
@@ -162819,6 +163076,12 @@ components:
             description: Request body for response content type.
           title: Examples
           description: Examples.
+        item_schema:
+          type: boolean
+          title: Item Schema
+          description: 'The schema describes each element of a stream (JSON Lines, JSON text sequence, Server-Sent Events): written as OpenAPI 3.2 `itemSchema` (#7048).'
+          default: false
+          example: false
       type: object
       required:
       - media_type
@@ -169279,7 +169542,16 @@ components:
       - name
       - in_location
       title: SharedParameterCreateRequest
-      description: Request model for creating a shared parameter.
+      description: 'Request model for creating a shared parameter.
+
+
+        ``in_location`` is ``path``, ``query``, ``header``, ``cookie`` or ``querystring`` (#7048). A
+
+        ``querystring`` parameter is written with ``content`` — the media type in
+
+        ``data.contentMediaType`` (default ``application/x-www-form-urlencoded``) and the rest of
+
+        ``data`` as its schema — and only to OpenAPI 3.2 documents.'
     SharedParameterSchema:
       properties:
         id:

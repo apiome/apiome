@@ -2254,7 +2254,8 @@ class Database:
                 COALESCE(json_agg(json_build_object(
                     'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id,
                     'class_name', c.name, 'inline_schema', rbc.inline_schema,
-                    'encoding', rbc.encoding, 'examples', rbc.examples
+                    'encoding', rbc.encoding, 'examples', rbc.examples,
+                    'item_schema', rbc.item_schema
                 )) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types
             FROM apiome.shared_path_request_body rb
             INNER JOIN apiome.path_operation_request_body_link link ON rb.id = link.shared_path_request_body_id
@@ -2285,7 +2286,8 @@ class Database:
                             'class_id', rc.class_id,
                             'class_name', rc_class.name,
                             'inline_schema', rc.inline_schema,
-                            'examples', rc.examples
+                            'examples', rc.examples,
+                            'item_schema', rc.item_schema
                         )
                     ) FILTER (WHERE rc.id IS NOT NULL),
                     '[]'
@@ -13475,21 +13477,26 @@ class Database:
         class_id: Optional[str] = None,
         inline_schema: Optional[Dict[str, Any]] = None,
         encoding: Optional[Dict[str, Any]] = None,
-        examples: Optional[List[Dict[str, Any]]] = None
+        examples: Optional[List[Dict[str, Any]]] = None,
+        item_schema: bool = False,
     ) -> Dict[str, Any]:
-        """Add a content type to a request body."""
+        """Add a content type to a request body.
+
+        ``item_schema`` marks the schema as the OpenAPI 3.2 ``itemSchema`` of a stream (#7048).
+        """
         query = """
             INSERT INTO apiome.shared_path_request_body_content
-            (shared_path_request_body_id, media_type, class_id, inline_schema, encoding, examples)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (shared_path_request_body_id, media_type, class_id, inline_schema, encoding, examples, item_schema)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (shared_path_request_body_id, media_type) DO UPDATE SET
                 class_id = EXCLUDED.class_id,
                 inline_schema = EXCLUDED.inline_schema,
                 encoding = EXCLUDED.encoding,
                 examples = EXCLUDED.examples,
+                item_schema = EXCLUDED.item_schema,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id, shared_path_request_body_id, media_type, class_id, inline_schema,
-                      encoding, examples, created_at, updated_at
+                      encoding, examples, item_schema, created_at, updated_at
         """
         inline_schema_json = json.dumps(inline_schema) if inline_schema else None
         encoding_json = json.dumps(encoding) if encoding else None
@@ -13499,7 +13506,7 @@ class Database:
         try:
             with conn.cursor() as cursor:
                 cursor.execute(query, (shared_request_body_id, media_type, class_id,
-                                       inline_schema_json, encoding_json, examples_json))
+                                       inline_schema_json, encoding_json, examples_json, bool(item_schema)))
                 result = cursor.fetchone()
                 conn.commit()
                 return result
@@ -13620,20 +13627,25 @@ class Database:
         media_type: str,
         class_id: Optional[str] = None,
         inline_schema: Optional[Dict[str, Any]] = None,
-        examples: Optional[List[Dict[str, Any]]] = None
+        examples: Optional[List[Dict[str, Any]]] = None,
+        item_schema: bool = False,
     ) -> Dict[str, Any]:
-        """Add a content type to a response."""
+        """Add a content type to a response.
+
+        ``item_schema`` marks the schema as the OpenAPI 3.2 ``itemSchema`` of a stream (#7048).
+        """
         query = """
             INSERT INTO apiome.shared_path_response_content
-            (shared_path_response_id, media_type, class_id, inline_schema, examples)
-            VALUES (%s, %s, %s, %s, %s)
+            (shared_path_response_id, media_type, class_id, inline_schema, examples, item_schema)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (shared_path_response_id, media_type) DO UPDATE SET
                 class_id = EXCLUDED.class_id,
                 inline_schema = EXCLUDED.inline_schema,
                 examples = EXCLUDED.examples,
+                item_schema = EXCLUDED.item_schema,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id, shared_path_response_id, media_type, class_id, inline_schema,
-                      examples, created_at, updated_at
+                      examples, item_schema, created_at, updated_at
         """
         inline_schema_json = json.dumps(inline_schema) if inline_schema else None
         examples_json = json.dumps(examples) if examples else None
@@ -13642,7 +13654,7 @@ class Database:
         try:
             with conn.cursor() as cursor:
                 cursor.execute(query, (shared_response_id, media_type, class_id,
-                                       inline_schema_json, examples_json))
+                                       inline_schema_json, examples_json, bool(item_schema)))
                 result = cursor.fetchone()
                 conn.commit()
                 return result
@@ -31194,7 +31206,8 @@ class Database:
                         COALESCE(json_agg(json_build_object(
                             'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id,
                             'class_name', c.name, 'inline_schema', rbc.inline_schema,
-                            'encoding', rbc.encoding, 'examples', rbc.examples
+                            'encoding', rbc.encoding, 'examples', rbc.examples,
+                            'item_schema', rbc.item_schema
                         )) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types
                     FROM apiome.shared_path_request_body rb
                     INNER JOIN apiome.path_operation_request_body_link link
@@ -31215,7 +31228,7 @@ class Database:
                            COALESCE(json_agg(json_build_object(
                                'id', rc.id, 'media_type', rc.media_type, 'class_id', rc.class_id,
                                'class_name', rc_class.name, 'inline_schema', rc.inline_schema,
-                               'examples', rc.examples
+                               'examples', rc.examples, 'item_schema', rc.item_schema
                            )) FILTER (WHERE rc.id IS NOT NULL), '[]') as content_types
                     FROM apiome.shared_path_response spr
                     INNER JOIN apiome.path_operation_response_link porl
@@ -31236,6 +31249,7 @@ class Database:
                     {
                         "id": op_row["id"],
                         "operation": op_row["operation"],
+                        "metadata": op_row.get("metadata"),
                         "description": desc_rows[0] if desc_rows else None,
                         "parameters": parameters,
                         "requestBody": request_bodies[0] if request_bodies else None,

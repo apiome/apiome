@@ -1,6 +1,6 @@
 ---
 title: "Projects"
-description: "REST endpoints tagged projects: 19 operations."
+description: "REST endpoints tagged projects: 21 operations."
 sidebar_position: 77
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.604.4**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.605.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `projects` · 19 operations
+Tag: `projects` · 21 operations
 
 ## `GET /v1/projects/domains` {#list-project-domain-categories-global-v1-projects-domains-get}
 
@@ -548,6 +548,73 @@ Operation id: `get_project_deletion_impact_v1_projects__tenant_slug___project_id
 | 200 | Successful response for get project deletion impact. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/projects/{tenant_slug}/{project_id}/openapi-tags` {#get-project-openapi-tags-v1-projects-tenant-slug-project-id-openapi-tags-get}
+
+**Get Project Openapi Tags**
+
+List the project's OpenAPI tags, with the OpenAPI 3.2 ``summary`` / ``parent`` / ``kind``.
+
+The list an OpenAPI import kept (project metadata ``x-apiome-tag-taxonomy``), in document
+order; the generated document's top-level ``tags`` are written from it (#7048).
+
+Raises:
+    HTTPException: 404 when the project is not in the tenant.
+
+Operation id: `get_project_openapi_tags_v1_projects__tenant_slug___project_id__openapi_tags_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get project openapi tags. | `application/json` [`ProjectOpenApiTagsOut`](#schema-projectopenapitagsout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/projects/{tenant_slug}/{project_id}/openapi-tags` {#replace-project-openapi-tags-v1-projects-tenant-slug-project-id-openapi-tags-put}
+
+**Replace Project Openapi Tags**
+
+Replace the project's OpenAPI tag list (the tag hierarchy editor's save, #7048).
+
+The list replaces the stored one; an empty list clears it. Every other metadata key is kept.
+
+Raises:
+    HTTPException: 404 when the project is not in the tenant; 422 ``invalid_tags`` listing each
+        problem (a repeated name, a ``parent`` that is the tag itself, names no listed tag or
+        closes a cycle); 409 ``update_conflict`` when the project changed while saving.
+
+Operation id: `replace_project_openapi_tags_v1_projects__tenant_slug___project_id__openapi_tags_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for replace project openapi tags.
+
+- `application/json` — [`ProjectOpenApiTagsUpdateRequest`](#schema-projectopenapitagsupdaterequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for replace project openapi tags. | `application/json` [`ProjectOpenApiTagsOut`](#schema-projectopenapitagsout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `PUT /v1/projects/{tenant_slug}/{project_id}/pin` {#pin-project-v1-projects-tenant-slug-project-id-pin-put}
 
 **Pin Project**
@@ -738,6 +805,25 @@ Request model for creating a project.
 | `description` | string or null | no | Free-text description. |
 | `slug` | string | yes | URL-safe identifier. |
 | `metadata` | object or null | no | Additional JSON metadata bag. |
+
+### `ProjectOpenApiTagsOut` {#schema-projectopenapitagsout}
+
+A project's OpenAPI tag list, in document order (#7048).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project_id` | string | yes | Project identifier the resource belongs to. |
+| `tags` | array of `OpenApiTagObject` | no | Associated tag labels. |
+
+### `ProjectOpenApiTagsUpdateRequest` {#schema-projectopenapitagsupdaterequest}
+
+Replace a project's OpenAPI tag list (#7048).
+
+Names must be unique, and a ``parent`` must name another listed tag without forming a cycle.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `tags` | array of `OpenApiTagObject` | no | Associated tag labels. |
 
 ### `ProjectPinRecord` {#schema-projectpinrecord}
 

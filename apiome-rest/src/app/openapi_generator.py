@@ -1,7 +1,8 @@
 import json
 from typing import Dict, Any, List, Optional, DefaultDict
 from collections import defaultdict
-from .paths_generator import generate_paths_for_openapi
+from .openapi_project_tags import TAG_TAXONOMY_METADATA_KEY, build_document_tags, read_stored_tags
+from .paths_generator import generate_paths_for_openapi, is_openapi_32
 from .revision_deprecation import deprecation_payload_for_openapi
 
 
@@ -189,6 +190,8 @@ def _load_paths_for_version(version_id: str) -> List[Dict[str, Any]]:
             operation = {
                 'id': op_row['id'],
                 'operation': op_row['operation'],
+                # Carries the declared method token of a QUERY / custom-method operation (#7048).
+                'metadata': op_row.get('metadata'),
                 'description': op_description,
                 'parameters': parameters,
                 'requestBody': request_body,
@@ -243,7 +246,10 @@ def _merge_project_catalog_metadata_into_info(info: Dict[str, Any], project_meta
         if li:
             info["license"] = li
 
-    merged_keys = {"summary", "termsOfService", "terms_of_service", "contact", "license"}
+    # The tag list is written as the document's ``tags`` (#7048), not copied into ``info``.
+    merged_keys = {
+        "summary", "termsOfService", "terms_of_service", "contact", "license", TAG_TAXONOMY_METADATA_KEY,
+    }
     for key, value in meta.items():
         if key in merged_keys or value is None:
             continue
@@ -279,8 +285,17 @@ def generate_openapi_spec(
     security_scheme_rows: Optional[List[Dict[str, Any]]] = None,
     server_rows: Optional[List[Dict[str, Any]]] = None,
     component_pin_rows: Optional[List[Dict[str, Any]]] = None,
+    openapi_version: str = "3.1.0",
 ) -> Dict[str, Any]:
-    """Generate a complete OpenAPI 3.1.0 specification for all classes in a version."""
+    """Generate a complete OpenAPI specification for all classes in a version.
+
+    ``openapi_version`` (default ``3.1.0``) is the version the document declares. ``3.2.0`` writes
+    the OpenAPI 3.2 constructs natively — ``query`` / ``additionalOperations``, ``itemSchema``,
+    ``in: querystring`` parameters and the tags' ``summary`` / ``parent`` / ``kind`` — where 3.1
+    carries them on ``x-apiome-*`` stashes or leaves them out (#7048, see
+    :mod:`app.paths_generator`).
+    """
+    is32 = is_openapi_32(openapi_version)
 
     # Build components/schemas for all classes
     schemas: Dict[str, Any] = {}
@@ -306,7 +321,10 @@ def generate_openapi_spec(
             # Log error but continue - paths are optional
             print(f"Warning: Could not load paths for version {version_id}: {e}")
     if resolved_paths_data:
-        paths = generate_paths_for_openapi(resolved_paths_data, options={"exclude_private": True})
+        paths = generate_paths_for_openapi(
+            resolved_paths_data,
+            options={"exclude_private": True, "openapi_version": openapi_version},
+        )
 
     # Load security schemes (API Key header/query/cookie, etc.)
     security_schemes: Dict[str, Any] = {}
@@ -375,7 +393,7 @@ def generate_openapi_spec(
     _merge_project_catalog_metadata_into_info(info_block, project_metadata)
 
     openapi_spec: Dict[str, Any] = {
-        "openapi": "3.1.0",
+        "openapi": openapi_version.strip() if is32 else "3.1.0",
         "info": info_block,
         "paths": paths,
         "components": components,
@@ -384,6 +402,11 @@ def generate_openapi_spec(
         openapi_spec["servers"] = servers_list
 
     meta_parsed = parse_json_field(project_metadata)
+    document_tags = build_document_tags(read_stored_tags(meta_parsed), is32)
+    if document_tags:
+        openapi_spec["tags"] = document_tags
+    if isinstance(meta_parsed, dict):
+        meta_parsed = {k: v for k, v in meta_parsed.items() if k != TAG_TAXONOMY_METADATA_KEY}
     if isinstance(meta_parsed, dict) and meta_parsed:
         openapi_spec["x-metadata"] = meta_parsed
 

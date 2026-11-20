@@ -588,7 +588,8 @@ async def add_request_body_content_type(
         class_id=request.class_id,
         inline_schema=request.inline_schema,
         encoding=request.encoding,
-        examples=request.examples
+        examples=request.examples,
+        item_schema=request.item_schema,
     )
     return content
 
@@ -744,7 +745,8 @@ async def add_response_content_type(
         media_type=request.media_type,
         class_id=request.class_id,
         inline_schema=request.inline_schema,
-        examples=request.examples
+        examples=request.examples,
+        item_schema=request.item_schema,
     )
     return content
 

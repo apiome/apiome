@@ -1216,7 +1216,8 @@ describe('the row menu', () => {
     await renderVersions();
     fireEvent.click(within(screen.getByTestId(`versions-cell-${V231_ID}`)).getByRole('button', { name: 'v2.3.1' }));
     const dialog = await screen.findByTestId('spec-viewer-dialog');
-    expect(within(dialog).getByRole('heading', { name: 'OpenAPI 3.1.0 specification' })).toBeInTheDocument();
+    // The title names the version the built document declares (#7048).
+    expect(await within(dialog).findByRole('heading', { name: 'OpenAPI 3.1.0 specification' })).toBeInTheDocument();
     expect(dialog).toHaveTextContent('Payments API — v2.3.1');
     await within(dialog).findByTestId('mock-monaco');
     // The export cards deep-link into the Export studio, released in RC7.

@@ -1,0 +1,85 @@
+<div role="dialog" id="radix-_r_c_" aria-describedby="radix-_r_e_" aria-labelledby="radix-_r_d_" data-state="open" class="hive-dialog fixed left-1/2 top-1/2 z-modal grid w-full -translate-x-1/2 -translate-y-1/2 max-h-[calc(100vh-3rem)] gap-4 overflow-y-auto rounded-xl bg-surface p-6 text-fg shadow-lg max-w-[60rem] ver-dialog" data-testid="spec-viewer-dialog" tabindex="-1" style="pointer-events: auto;"><div class="hive-dialog__header flex flex-col gap-1 pr-8 text-left ver-dialog__head"><span class="tnt-icon-tile" data-tone="ok" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-braces-corner" aria-hidden="true"><path d="M14 22h4a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M5 14a1 1 0 0 0-1 1v2a1 1 0 0 1-1 1 1 1 0 0 1 1 1v2a1 1 0 0 0 1 1"></path><path d="M9 22a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-2a1 1 0 0 0-1-1"></path></svg></span><div class="ver-dialog__heading"><h2 id="radix-_r_d_" class="hive-display text-xl font-semibold leading-snug tracking-[-0.01em] text-fg">OpenAPI 3.2.0 specification</h2><p id="radix-_r_e_" class="text-sm text-fg-muted">Orders API — v2.4.0</p></div></div><div class="ver-dialog__body"><div role="radiogroup" class="inline-flex items-center gap-0.5 rounded-md bg-inset p-0.75 align-middle ver-spec__format" aria-label="Specification format"><button type="button" role="radio" aria-checked="false" data-state="off" data-value="json" tabindex="-1" class="hit-target inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-[calc(var(--r-md)-3px)] font-medium text-fg-muted transition-[background-color,box-shadow,color] duration-[var(--dur-fast)] ease-out hover:text-fg focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:size-[var(--icon-button)] [&amp;_svg]:shrink-0 data-[state=on]:bg-surface data-[state=on]:text-fg data-[state=on]:shadow-[var(--shadow-raised)] h-[calc(var(--control-h)-0.75rem)] px-2 text-xs" data-testid="spec-format-tab-json">JSON</button><button type="button" role="radio" aria-checked="true" data-state="on" data-value="yaml" tabindex="0" class="hit-target inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-[calc(var(--r-md)-3px)] font-medium text-fg-muted transition-[background-color,box-shadow,color] duration-[var(--dur-fast)] ease-out hover:text-fg focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:size-[var(--icon-button)] [&amp;_svg]:shrink-0 data-[state=on]:bg-surface data-[state=on]:text-fg data-[state=on]:shadow-[var(--shadow-raised)] h-[calc(var(--control-h)-0.75rem)] px-2 text-xs" data-testid="spec-format-tab-yaml">YAML</button></div><section class="ver-oas32" aria-label="OpenAPI 3.2 constructs" data-testid="oas32-constructs"><h2 class="ver-oas32__title">OpenAPI 3.2.0 constructs</h2><div class="ver-oas32__groups"><div class="ver-oas32__group" data-testid="oas32-operations"><h3 class="ver-oas32__group-title">QUERY and custom methods</h3><ul class="ver-oas32__list"><li class="ver-oas32__item"><span data-method="query" data-testid="method-chip" class="method method--unknown method--fit">QUERY</span><span class="mono">/orders</span><span class="ver-oas32__meta mono">searchOrders</span><span class="ver-oas32__meta mono">query</span></li><li class="ver-oas32__item"><span data-method="report" data-testid="method-chip" class="method method--unknown method--fit">REPORT</span><span class="mono">/orders</span><span class="ver-oas32__meta mono">reportOrders</span><span class="ver-oas32__meta mono">additionalOperations</span></li></ul></div><div class="ver-oas32__group" data-testid="oas32-tags"><h3 class="ver-oas32__group-title">Tag hierarchy</h3><ul class="ver-oas32__list"><li class="ver-oas32__item"><span class="mono">orders</span><span class="ver-oas32__meta">kind <span class="mono">nav</span></span><span class="ver-oas32__meta">Orders</span></li><li class="ver-oas32__item"><span class="mono">order-search</span><span class="ver-oas32__meta">under <span class="mono">orders</span></span><span class="ver-oas32__meta">kind <span class="mono">nav</span></span><span class="ver-oas32__meta">Search</span></li><li class="ver-oas32__item"><span class="mono">order-events</span><span class="ver-oas32__meta">under <span class="mono">orders</span></span><span class="ver-oas32__meta">kind <span class="mono">nav</span></span><span class="ver-oas32__meta">Events</span></li><li class="ver-oas32__item"><span class="mono">beta</span><span class="ver-oas32__meta">kind <span class="mono">badge</span></span></li></ul></div><div class="ver-oas32__group" data-testid="oas32-streams"><h3 class="ver-oas32__group-title">Streaming media types</h3><ul class="ver-oas32__list"><li class="ver-oas32__item"><span class="mono">application/jsonl</span><span class="ver-oas32__meta">JSON Lines</span><span class="ver-oas32__meta mono">paths./orders.get.responses.200</span><span class="ver-oas32__meta mono">itemSchema</span></li><li class="ver-oas32__item"><span class="mono">text/event-stream</span><span class="ver-oas32__meta">Server-Sent Events</span><span class="ver-oas32__meta mono">paths./orders.REPORT.responses.200</span><span class="ver-oas32__meta mono">itemSchema</span></li></ul></div><div class="ver-oas32__group" data-testid="oas32-querystring"><h3 class="ver-oas32__group-title">Query string parameters</h3><ul class="ver-oas32__list"><li class="ver-oas32__item"><span data-method="get" data-testid="method-chip" class="method method--get method--fit">GET</span><span class="mono">/orders</span><span class="mono">filter</span><span class="ver-oas32__meta mono">application/x-www-form-urlencoded</span></li></ul></div></div></section><div class="ver-spec__editor" data-testid="spec-viewer-editor"><pre class="mono" data-testid="mock-monaco">openapi: 3.2.0
+info:
+  title: Orders API
+  version: 2.4.0
+tags:
+  - name: orders
+    summary: Orders
+    description: Everything about orders
+    kind: nav
+  - name: order-search
+    summary: Search
+    parent: orders
+    kind: nav
+  - name: order-events
+    summary: Events
+    parent: orders
+    kind: nav
+  - name: beta
+    kind: badge
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      tags:
+        - orders
+      parameters:
+        - name: filter
+          in: querystring
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      responses:
+        "200":
+          description: Orders as JSON Lines
+          content:
+            application/jsonl:
+              itemSchema:
+                $ref: "#/components/schemas/Order"
+    query:
+      operationId: searchOrders
+      tags:
+        - order-search
+        - beta
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderQuery"
+      responses:
+        "200":
+          description: Matching orders
+    additionalOperations:
+      REPORT:
+        operationId: reportOrders
+        tags:
+          - order-events
+        responses:
+          "200":
+            description: Order events
+            content:
+              text/event-stream:
+                itemSchema:
+                  $ref: "#/components/schemas/OrderEvent"
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+    OrderQuery:
+      type: object
+      properties:
+        status:
+          type: string
+    OrderEvent:
+      type: object
+      properties:
+        type:
+          type: string
+</pre></div></div><div class="hive-dialog__footer flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end -mx-6 -mb-6 mt-2 rounded-b-xl border-t border-border bg-[color-mix(in_srgb,var(--bg-subtle)_60%,var(--bg-surface))] px-6 py-3.5 ver-dialog__footer"><button class="hit-target inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium leading-none tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&amp;_svg]:size-[var(--icon-button)] [&amp;_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h)] px-3">Close</button><button class="hit-target inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium leading-none tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&amp;_svg]:size-[var(--icon-button)] [&amp;_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h)] px-3" data-testid="spec-viewer-copy"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>Copy</button><button class="hit-target inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium leading-none tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&amp;_svg]:size-[var(--icon-button)] [&amp;_svg]:shrink-0 bg-ink text-ink-fg shadow-control-solid hover:bg-ink-hover h-[var(--control-h)] px-3" data-testid="spec-viewer-download"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>Download<span class="ver-spec__filename mono">orders-api-2-4-0-openapi.yaml</span></button></div><button type="button" title="Close" class="hit-target absolute right-4 top-4 rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x size-4" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg><span class="sr-only">Close</span></button></div>

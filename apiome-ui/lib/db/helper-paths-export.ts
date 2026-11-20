@@ -13,6 +13,7 @@ import type {
   ResponseInfo,
   ContentTypeInfo,
   PathOperationDescription,
+  PathParameterLocation,
 } from '../utils/openapi-paths-generator';
 
 /**
@@ -119,7 +120,7 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
         const paramsResult = await connectionPool.query(paramsQuery, [opRow.id]);
         const parameters: PathParameter[] = paramsResult.rows.map((p: Record<string, unknown>) => ({
           id: p.id as string, name: p.name as string,
-          in_location: p.in_location as 'path' | 'query' | 'header' | 'cookie',
+          in_location: p.in_location as PathParameterLocation,
           summary: p.summary as string | undefined, description: p.description as string | undefined,
           data: p.data ? (typeof p.data === 'string' ? JSON.parse(p.data) : p.data) : {},
         }));
@@ -131,7 +132,8 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
             COALESCE(json_agg(json_build_object(
               'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id,
               'class_name', c.name, 'inline_schema', rbc.inline_schema,
-              'encoding', rbc.encoding, 'examples', rbc.examples
+              'encoding', rbc.encoding, 'examples', rbc.examples,
+              'item_schema', rbc.item_schema
             )) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types
           FROM apiome.shared_path_request_body rb
           INNER JOIN apiome.path_operation_request_body_link link ON rb.id = link.shared_path_request_body_id
@@ -148,6 +150,7 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
             inline_schema: ct.inline_schema ? (typeof ct.inline_schema === 'string' ? JSON.parse(ct.inline_schema as string) : ct.inline_schema) : null,
             encoding: ct.encoding ? (typeof ct.encoding === 'string' ? JSON.parse(ct.encoding as string) : ct.encoding) : null,
             examples: ct.examples ? (typeof ct.examples === 'string' ? JSON.parse(ct.examples as string) : ct.examples) : null,
+            item_schema: ct.item_schema === true,
           })) as ContentTypeInfo[];
           requestBody = { id: rb.id, name: rb.name, description: rb.description, required: rb.required, content_types: cts };
         }
@@ -170,7 +173,8 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
                   'class_id', rc.class_id,
                   'class_name', rc_class.name,
                   'inline_schema', rc.inline_schema,
-                  'examples', rc.examples
+                  'examples', rc.examples,
+                  'item_schema', rc.item_schema
                 )
               ) FILTER (WHERE rc.id IS NOT NULL),
               '[]'
@@ -202,6 +206,7 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
               class_name: ctRecord.class_name as string | undefined,
               inline_schema: ctRecord.inline_schema ? (typeof ctRecord.inline_schema === 'string' ? JSON.parse(ctRecord.inline_schema as string) : ctRecord.inline_schema) : null,
               examples: ctRecord.examples ? (typeof ctRecord.examples === 'string' ? JSON.parse(ctRecord.examples as string) : ctRecord.examples) : null,
+              item_schema: ctRecord.item_schema === true,
             };
           }),
         }));

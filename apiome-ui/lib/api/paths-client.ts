@@ -33,7 +33,7 @@ export interface SharedParameterData {
   id: string;
   version_path_id: string;
   name: string;
-  in_location: 'path' | 'query' | 'header' | 'cookie';
+  in_location: 'path' | 'query' | 'header' | 'cookie' | 'querystring';
   summary?: string;
   description?: string;
   data?: Record<string, any>;
@@ -65,6 +65,8 @@ export interface ContentTypeData {
   inline_schema?: Record<string, any> | null;
   encoding?: Record<string, any> | null;
   examples?: any[] | null;
+  /** True when the schema is the OpenAPI 3.2 `itemSchema` of a stream (#7048). */
+  item_schema?: boolean;
 }
 
 export interface ApiResponse<T = any> {
@@ -482,7 +484,7 @@ export async function createSharedParameter(
   pathId: string,
   param: {
     name: string;
-    in_location: 'path' | 'query' | 'header' | 'cookie';
+    in_location: 'path' | 'query' | 'header' | 'cookie' | 'querystring';
     summary?: string;
     description?: string;
     data?: Record<string, any>;
@@ -642,6 +644,8 @@ export async function addRequestBodyContentType(
     inline_schema?: Record<string, any>;
     encoding?: Record<string, any>;
     examples?: any[];
+    /** The schema describes each element of a stream (OpenAPI 3.2 `itemSchema`, #7048). */
+    item_schema?: boolean;
   }
 ): Promise<ApiResponse<ContentTypeData>> {
   try {
@@ -835,6 +839,8 @@ export async function addResponseContentType(
     class_id?: string;
     inline_schema?: Record<string, any>;
     examples?: any[];
+    /** The schema describes each element of a stream (OpenAPI 3.2 `itemSchema`, #7048). */
+    item_schema?: boolean;
   }
 ): Promise<ApiResponse<ContentTypeData>> {
   try {
