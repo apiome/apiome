@@ -170,6 +170,28 @@ predicted drop that did not happen. See
 [Measured loss from the API](./export-studio.mdx#measured-loss-from-the-api) for the `measurement`
 the REST API returns.
 
+## OpenAPI exports {#openapi}
+
+An item imported from OpenAPI 3.0, 3.1 or 3.2 and exported as OpenAPI at the same version comes back
+as it was read. Apiome keeps a copy of each imported operation and schema, and of the document's
+other parts. These include callbacks, links, webhooks, `discriminator`, `x-` extensions,
+`externalDocs`, examples, `$self`, `jsonSchemaDialect`, `$dynamicRef`, `itemSchema`, streaming media
+types, `QUERY` and custom methods, and tag `parent` and `kind`. The export writes that copy back.
+The [OpenAPI construct matrix](../reference/openapi-construct-matrix.md) lists every construct and
+version, measured on the OpenAPI Initiative's own test documents.
+
+| You export | To | What the report says |
+| --- | --- | --- |
+| An item imported from OpenAPI | The **same** OpenAPI version | Nothing is lost. |
+| An item imported from OpenAPI 3.0 | **OpenAPI 3.1** or **3.2** | Nothing is lost. Schemas are rewritten into JSON Schema 2020-12 (`nullable: true` becomes a `"null"` type). |
+| An item imported from OpenAPI 3.1 or 3.2 | **OpenAPI 3.0** | Each construct 3.0 cannot hold is **dropped** and listed: `webhooks`, `jsonSchemaDialect`, `$dynamicRef`, keywords beside a `$ref`, and the 3.2-only constructs. |
+| An item imported from OpenAPI 3.2 | **OpenAPI 3.1** | Each 3.2-only construct is **dropped** and listed: `$self`, `itemSchema`, `in: querystring` parameters, server `name`, response `summary`, tag `parent` and `kind`. |
+| An item imported from OpenAPI | **Swagger 2.0** | The file is built from the canonical model, and the report says the OpenAPI 3.x constructs are not written. |
+
+An operation or schema edited after import is exported from its current version. The fields
+Apiome has no other place for are still written, and the report lists the edited operation or
+schema, because detail inside the changed fields may be missing.
+
 ## Arazzo exports {#arazzo}
 
 Arazzo describes workflows, not APIs, so its report says what a workflow can and cannot hold. When
@@ -467,6 +489,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
+- [OpenAPI construct matrix](../reference/openapi-construct-matrix.md) — which OpenAPI constructs survive import and export, per version
 - [Push a catalog item back to the gateway](/reference/rest/connectors) — the same report, before exporting to a gateway's own format
 - [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups

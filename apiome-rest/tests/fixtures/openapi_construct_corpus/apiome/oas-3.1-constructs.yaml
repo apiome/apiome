@@ -1,0 +1,271 @@
+# Apiome construct fixture — OpenAPI 3.1 (COA-2.1, #7044).
+# One document that carries every construct the 3.1 column of the construct matrix tracks.
+openapi: 3.1.1
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+info:
+  title: Construct audit (3.1)
+  summary: Every OpenAPI 3.1 construct the losslessness audit tracks.
+  version: 1.0.0
+  termsOfService: https://example.com/terms
+  contact:
+    name: API team
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  x-audience: internal
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: events
+    description: Event streams
+    externalDocs:
+      url: https://example.com/docs/events
+externalDocs:
+  url: https://example.com/docs
+security:
+  - bearer: []
+paths:
+  /events:
+    summary: Event feed
+    parameters:
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: streamEvents
+      tags: [events]
+      x-streaming: true
+      externalDocs:
+        url: https://example.com/docs/stream
+      servers:
+        - url: https://stream.example.com/v1
+      responses:
+        '200':
+          description: A stream of events.
+          headers:
+            X-Stream-Id:
+              schema:
+                type: string
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: 'data: {"id": 1}'
+            application/jsonl:
+              schema:
+                $ref: '#/components/schemas/Event'
+            application/json-seq:
+              schema:
+                $ref: '#/components/schemas/Event'
+            multipart/mixed:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+              encoding:
+                event:
+                  contentType: application/json
+          links:
+            Next:
+              operationId: streamEvents
+              parameters:
+                cursor: $response.header.X-Stream-Id
+        '4XX':
+          $ref: '#/components/responses/Problem'
+          description: Any client error, as a problem document.
+    post:
+      operationId: subscribe
+      requestBody:
+        required: false
+        description: Subscription request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+            examples:
+              basic:
+                $ref: '#/components/examples/BasicSubscription'
+                summary: A basic subscription
+      callbacks:
+        onEvent:
+          $ref: '#/components/callbacks/EventCallback'
+      responses:
+        '202':
+          description: Accepted.
+  /tree:
+    $ref: '#/components/pathItems/Tree'
+webhooks:
+  eventPublished:
+    post:
+      operationId: eventPublished
+      x-webhook-retry: 3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '200':
+          description: Received.
+components:
+  schemas:
+    Event:
+      $id: https://example.com/schemas/event
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $comment: The envelope every event shares.
+      type: object
+      required: [id, type]
+      discriminator:
+        propertyName: type
+        mapping:
+          created: '#/components/schemas/CreatedEvent'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          type: string
+        version:
+          const: 2
+        occurredAt:
+          type: [string, 'null']
+          format: date-time
+        source:
+          $ref: '#/components/schemas/Source'
+          description: Where the event came from.
+        point:
+          type: array
+          prefixItems:
+            - type: number
+            - type: number
+          items: false
+          minItems: 2
+        payload:
+          contentMediaType: application/json
+          contentEncoding: base64
+          contentSchema:
+            type: object
+        labels:
+          type: object
+          patternProperties:
+            '^x-':
+              type: string
+          propertyNames:
+            pattern: '^[a-z-]+$'
+          unevaluatedProperties: false
+        priority:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 10
+          examples: [1, 5]
+      dependentRequired:
+        source: [id]
+      x-entity: true
+    CreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+        - if:
+            properties:
+              type:
+                const: created
+          then:
+            required: [payload]
+          else:
+            required: []
+      unevaluatedProperties: false
+    Source:
+      type: object
+      $anchor: source
+      properties:
+        system:
+          type: string
+      dependentSchemas:
+        system:
+          properties:
+            region:
+              type: string
+      $defs:
+        Region:
+          type: string
+          enum: [eu, us]
+    Node:
+      $dynamicAnchor: node
+      type: object
+      properties:
+        children:
+          type: array
+          contains:
+            type: object
+          minContains: 0
+          maxContains: 100
+          items:
+            $dynamicRef: '#node'
+    NullableId:
+      type: 'null'
+    Subscription:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        tier:
+          oneOf:
+            - const: free
+            - const: paid
+        filter:
+          anyOf:
+            - type: string
+            - type: 'null'
+        notDraft:
+          not:
+            const: draft
+      unevaluatedItems: false
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      style: form
+      explode: false
+      allowReserved: true
+      schema:
+        type: string
+  responses:
+    Problem:
+      description: A problem document.
+      content:
+        application/problem+json:
+          schema:
+            type: object
+  examples:
+    BasicSubscription:
+      value:
+        url: https://hooks.example.com/events
+  callbacks:
+    EventCallback:
+      '{$request.body#/url}':
+        post:
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
+          responses:
+            '204':
+              description: Delivered.
+  pathItems:
+    Tree:
+      get:
+        operationId: getTree
+        responses:
+          '200':
+            description: The tree.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Node'
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mtls:
+      type: mutualTLS

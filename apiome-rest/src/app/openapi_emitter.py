@@ -101,8 +101,16 @@ from .lossiness import LossinessSeverity
 from .openapi_downgrade import (
     OPENAPI_30_VERSION,
     SWAGGER_20_VERSION,
+    downgrade_remaining_schemas_30,
     downgrade_to_openapi_30,
     downgrade_to_swagger_2,
+)
+from .openapi_source_preservation import (
+    gate_constructs,
+    preserved_source,
+    restore_source,
+    source_family,
+    upgrade_document_30_to_31,
 )
 from .projection import (
     X_EVENT_ACTION,
@@ -473,9 +481,37 @@ class OpenApiEmitter(Emitter, register=True):
                     f"{api.paradigm.value} projection document note",
                 )
 
+        # COA-2.1: an OpenAPI source's own objects are written back (verbatim where the model
+        # was not edited). A 3.0 source emitted as 3.0 is restored after the downgrade so its
+        # 3.0 schemas are not rewritten; every other source is restored first, so the 3.0
+        # downgrade sees the restored schemas too.
+        target = options.openapi_version
+        preserved = preserved_source(api) if target != "2.0" else None
+        family = source_family(preserved["version"]) if preserved else None
+        restore_after_downgrade = family == "3.0" and target == "3.0"
+        if preserved and not restore_after_downgrade:
+            self._restore_source(document, api, tracker, losses, native_32=native_32)
+
         document, path, media_type = self._apply_version(
             document, options.openapi_version, tracker, losses
         )
+
+        if preserved:
+            if restore_after_downgrade:
+                self._restore_source(document, api, tracker, losses, native_32=native_32)
+            elif family == "3.0":
+                upgrade_document_30_to_31(document)
+            elif target == "3.0":
+                downgrade_remaining_schemas_30(document, losses)
+            gate_constructs(document, target, losses)
+        elif target == "2.0" and preserved_source(api):
+            losses.record(
+                LossKind.NA,
+                "openapi-swagger-2-source-constructs",
+                "Swagger 2.0 output is built from the canonical model only: OpenAPI 3.x "
+                "constructs such as callbacks, links, webhooks, examples, discriminators and "
+                "extensions on the source are not written",
+            )
 
         # APX-1.2 (#6099): the plans of the API products that include this revision. Written after
         # the dialect downgrade, which rebuilds the root, so every dialect (Swagger 2.0 too) keeps them.
@@ -538,6 +574,39 @@ class OpenApiEmitter(Emitter, register=True):
             return document, self.SWAGGER_OUTPUT_PATH, self.SWAGGER_MEDIA_TYPE
         tracker.record("/openapi", Provenance.DEFAULT, "emitter target OpenAPI version")
         return document, self.OUTPUT_PATH, self.OUTPUT_MEDIA_TYPE
+
+    # --- source preservation (COA-2.1) ---------------------------------------
+
+    @staticmethod
+    def _restore_source(
+        document: Dict[str, Any],
+        api: CanonicalApi,
+        tracker: ProvenanceTracker,
+        losses: LossTracker,
+        *,
+        native_32: bool,
+    ) -> None:
+        """Write the preserved OpenAPI source objects back into ``document``.
+
+        See :mod:`app.openapi_source_preservation`. Each restored object is recorded with
+        :attr:`~app.emitter.Provenance.SOURCE` provenance.
+        """
+
+        def operation_slot(
+            item: Dict[str, Any], method: str
+        ) -> Optional[Tuple[Dict[str, Any], str]]:
+            """Where :meth:`_paths` placed the operation for ``method`` in ``item``."""
+            if method in _OAS31_METHODS or (native_32 and method == "query"):
+                return (item, method) if isinstance(item.get(method), dict) else None
+            if method == "query":
+                return (item, X_QUERY_OPERATION) if isinstance(item.get(X_QUERY_OPERATION), dict) else None
+            bucket = item.get("additionalOperations" if native_32 else X_ADDITIONAL_OPERATIONS)
+            if isinstance(bucket, dict) and isinstance(bucket.get(method.upper()), dict):
+                return bucket, method.upper()
+            return None
+
+        for pointer in restore_source(document, api, operation_slot=operation_slot, losses=losses):
+            tracker.record(pointer, Provenance.SOURCE, "preserved OpenAPI source object (COA-2.1)")
 
     # --- info ---------------------------------------------------------------
 

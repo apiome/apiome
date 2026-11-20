@@ -40,10 +40,12 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 
 from .emitter import LossKind, LossTracker
+from .openapi_document_walk import walk_document
 
 __all__ = [
     "OPENAPI_30_VERSION",
     "SWAGGER_20_VERSION",
+    "downgrade_remaining_schemas_30",
     "downgrade_to_openapi_30",
     "downgrade_to_swagger_2",
 ]
@@ -139,6 +141,35 @@ def downgrade_to_openapi_30(document: Dict[str, Any], losses: LossTracker) -> Di
             _downgrade_path_item_schemas_30(item, losses, f"#/paths/{path}")
 
     return result
+
+
+def downgrade_remaining_schemas_30(document: Dict[str, Any], losses: LossTracker) -> None:
+    """Rewrite into the 3.0 dialect every schema :func:`downgrade_to_openapi_30` does not reach.
+
+    :func:`downgrade_to_openapi_30` rewrites the schemas the emitter writes (component
+    schemas, and parameter / body / response / header schemas of path operations). A
+    preserved source (COA-2.1) can also put schemas in other component sections, callbacks
+    and parameter ``content``. This pass rewrites every outermost schema of ``document`` in
+    place; schemas already in the 3.0 dialect are left unchanged and record nothing, so it is
+    safe to run after the main downgrade.
+
+    Args:
+        document: An OpenAPI document already passed through :func:`downgrade_to_openapi_30`.
+        losses: Tracker each rewrite is recorded on.
+    """
+    outermost: List[Any] = []
+    open_schema: Optional[str] = None
+    for node in walk_document(document):
+        if node.kind != "schema":
+            continue
+        if open_schema is not None and node.pointer.startswith(open_schema + "/"):
+            continue
+        open_schema = node.pointer
+        outermost.append(node)
+    for node in outermost:
+        rewritten = _schema_to_30(node.value, losses, "#" + node.pointer)
+        node.value.clear()
+        node.value.update(rewritten)
 
 
 def _downgrade_info_30(document: Dict[str, Any], losses: LossTracker) -> None:
@@ -242,8 +273,16 @@ def _schema_to_30(schema: Any, losses: LossTracker, pointer: str) -> Any:
     if not isinstance(schema, dict):
         return schema
     if "$ref" in schema:
-        # A reference leaf carries no sibling keywords (per the emitter), so there is
-        # nothing 3.1-specific to rewrite.
+        # OpenAPI 3.0 ignores every keyword beside ``$ref``. The emitter writes bare
+        # references; a preserved 3.1 source schema may not, so name what is dropped.
+        siblings = sorted(key for key in schema if key != "$ref")
+        if siblings:
+            losses.record(
+                LossKind.NA,
+                "openapi-30-ref-siblings",
+                "OpenAPI 3.0 ignores keywords next to $ref; dropped " + ", ".join(siblings),
+                pointer=pointer,
+            )
         return {"$ref": schema["$ref"]}
 
     result = dict(schema)

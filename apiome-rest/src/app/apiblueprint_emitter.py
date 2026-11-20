@@ -73,6 +73,7 @@ from .emitter import (
 from .export_test_tools import toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .openapi_source_preservation import without_source_extra
 from .scalar_aliases import scalar_kind
 
 __all__ = ["ApiblueprintEmitOptions", "ApiblueprintEmitter", "ApiblueprintFidelityRulePack", "mson_scalar"]
@@ -483,9 +484,10 @@ def _operation_notes(
         notes.append(Note("streaming-dropped", f"API Blueprint has no streaming; the {operation.streaming.value} "
                           "stream is written as one request and response", dropped=False,
                           severity=LossinessSeverity.WARN))
-    if not apib_source and operation.extras:
+    if not apib_source and without_source_extra(operation.extras):
         notes.append(Note("operation-details-dropped",
-                          f"source-specific details ({', '.join(sorted(operation.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(operation.extras)))}) "
+                          "are not written"))
     return notes
 
 
@@ -538,9 +540,10 @@ def _type_notes(type_: Type, names: ApibNames, apib_source: bool) -> List[Note]:
         base = (mson_scalar(type_.name) or ("string", False))[0]
         notes.append(Note("scalar-as-named-type", f"the scalar is written as a named {base} type", dropped=False))
     notes.extend(_constraint_notes(type_.constraints, "type"))
-    if type_.kind is TypeKind.RECORD and apib_source is False and type_.extras:
+    if type_.kind is TypeKind.RECORD and apib_source is False and without_source_extra(type_.extras):
         notes.append(Note("type-details-dropped",
-                          f"source-specific details ({', '.join(sorted(type_.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(type_.extras)))}) "
+                          "are not written"))
     return notes
 
 
@@ -597,9 +600,10 @@ def _document_notes(api: CanonicalApi) -> List[Note]:
                           "is not written"))
     if api.servers and (api.servers[0].name or api.servers[0].description):
         notes.append(Note("server-details-dropped", "API Blueprint's HOST has no name or description"))
-    if api.extras:
+    if without_source_extra(api.extras):
         notes.append(Note("document-details-dropped",
-                          f"source-specific details ({', '.join(sorted(api.extras))}) are not written"))
+                          f"source-specific details ({', '.join(sorted(without_source_extra(api.extras)))}) "
+                          "are not written"))
     if not notes:
         notes.append(Note("document-rewritten", "the document is written as API Blueprint 1A (title, description "
                           "and HOST)", dropped=False))

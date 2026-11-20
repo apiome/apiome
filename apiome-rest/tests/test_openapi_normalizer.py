@@ -22,6 +22,7 @@ from app.canonical_model import (
 )
 from app.normalizer import get_normalizer
 from app.openapi_normalizer import OpenApiNormalizer
+from app.openapi_source_preservation import OPENAPI_SOURCE_EXTRA, strip_source_extra
 
 
 def _petstore() -> dict:
@@ -212,7 +213,10 @@ def test_ordering_invariant_to_source_path_order() -> None:
     )
     a = OpenApiNormalizer().normalize(doc, include_raw=False)
     b = OpenApiNormalizer().normalize(shuffled, include_raw=False)
-    assert a.model_dump() == b.model_dump()
+    # The source-preservation bag (COA-2.1) keeps the source's own order on purpose, as ``raw``
+    # does, so an export reads like the file imported; the canonical model itself is invariant.
+    assert strip_source_extra(a.model_dump()) == strip_source_extra(b.model_dump())
+    assert a.extras[OPENAPI_SOURCE_EXTRA]["schemaOrder"] == list(doc["components"]["schemas"])
 
 
 def test_format_detection_30_vs_31() -> None:

@@ -1456,7 +1456,11 @@ def canonical_fingerprint(model: CanonicalApi) -> str:
     Returns:
         ``"sha256:<hex>"``.
     """
-    payload = model.model_dump(mode="json", exclude={"raw"})
+    # The OpenAPI source preservation bag (COA-2.1) is a verbatim copy of the source — the same
+    # information as ``raw`` — so it is left out at every level, as ``raw`` is.
+    from .openapi_source_preservation import strip_source_extra  # local: avoids an import cycle
+
+    payload = strip_source_extra(model.model_dump(mode="json", exclude={"raw"}))
     # The Protobuf file record (XPC-4.3) names the files, which a descriptor set and the source
     # tree it was built from spell differently; the same API must still fingerprint the same.
     extras = payload.get("extras")
@@ -1468,7 +1472,14 @@ def canonical_fingerprint(model: CanonicalApi) -> str:
 
 
 def _entity_repr(payload: Dict[str, Any]) -> str:
-    """Deterministic JSON of one entity for equality comparison in a diff."""
+    """Deterministic JSON of one entity for equality comparison in a diff.
+
+    The OpenAPI source preservation bag (COA-2.1) is left out: it is a verbatim copy of the
+    source, not normalized shape.
+    """
+    from .openapi_source_preservation import strip_source_extra  # local: avoids an import cycle
+
+    payload = strip_source_extra(payload)
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -1480,7 +1491,9 @@ def _entity_map(model: CanonicalApi) -> Dict[Tuple[str, str], str]:
     type, each channel, each agent descriptor (its own fields, excluding nested
     skills) and each skill (MFI-18.4) — so a diff reports add/remove/change at the
     level a reviewer reasons about. ``raw``/``extras`` fidelity bags are excluded from the
-    root so a diff is about *normalized* shape, not native re-serialization.
+    root so a diff is about *normalized* shape, not native re-serialization — and the
+    OpenAPI source preservation bag (COA-2.1) is excluded from every entity, for the same
+    reason.
     """
     out: Dict[Tuple[str, str], str] = {}
 

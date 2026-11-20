@@ -1761,6 +1761,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['operationRef', 'resolution', 'steps', 'cli', 'validate', 'unresolved'],
   },
   {
+    id: 'openapi-construct-matrix',
+    title: 'OpenAPI construct matrix',
+    summary: 'Which OpenAPI 3.0, 3.1 and 3.2 constructs survive import and export, measured.',
+    page: 'apiome-docs/docs/reference/openapi-construct-matrix.md',
+    section: 'reference',
+    keywords: ['fidelity', 'lossless', 'callbacks', 'webhooks', 'discriminator', 'round trip'],
+  },
+  {
     id: 'cli-export-format',
     title: 'Project export format',
     summary: 'The document apiome projects export writes: sections, ordering and determinism.',

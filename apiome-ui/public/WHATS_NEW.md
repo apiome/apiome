@@ -15,6 +15,7 @@ We continue to improve the platform based on your feedback with improvements and
 - **Arazzo workflows from the CLI and the API** — `apiome arazzo list` and `apiome arazzo show` read the workflows and steps an Arazzo import stores, with whether each step's operation was found; `apiome arazzo validate` checks a workflow file, or fails a CI job when a stored step did not resolve. The REST API reads one workflow, its steps, or any revision of a catalog item
 - **Run an Arazzo workflow against a target** — `apiome arazzo run` (and the REST API) runs a stored workflow step by step against a verification target or a mock: each step's request is built from the workflow inputs and earlier steps' outputs, every success criterion is reported with its expected and actual value, and `goto`, `retry` and `end` actions are followed. Only read-only steps run unless the target allows writes, the run opts in and a fixture names the operation
 - **Arazzo: complete, current and visible** — Arazzo 1.0 and 1.1 now work end to end: import a workflow with its API files, read it on the **Workflows** tab or from the CLI, validate it, compare revisions, export it back and run it against a mock or a deployment. **Help & docs** has a new **Arazzo in Apiome** page that shows how the pieces fit
+- **OpenAPI exports keep everything** — Export an item imported from OpenAPI 3.0, 3.1 or 3.2 to the same version and it comes back as it was read: callbacks, links, webhooks, `discriminator`, examples, `x-` extensions, `$self`, `itemSchema` and the other constructs are no longer dropped. Exporting to an older version lists each construct that version cannot hold in the loss report. The new **OpenAPI construct matrix** page in **Help & docs** shows the result for every construct and version
 
 ---
 
@@ -30,5 +31,5 @@ We'd love to hear your thoughts! Your feedback helps us make Apiome better.
 
 **Thank you for using Apiome!**
 
-*Last updated: November 19, 2026*
+*Last updated: November 20, 2026*
 

@@ -67,6 +67,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .openapi_source_preservation import OPENAPI_SOURCE_EXTRA, without_source_extra
 
 __all__ = ["DiscoveryEmitOptions", "DiscoveryEmitter", "DiscoveryFidelityRulePack"]
 
@@ -76,11 +77,15 @@ _DEFAULT_ROOT = "https://api.example.com/"
 _DEFAULT_VERSION = "v1"
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 #: Operation extras an imported Discovery item records and the export writes back (not lost).
-_DISCOVERY_OPERATION_EXTRAS = frozenset({"discovery_method", "discovery_resource_path", "discovery_id"})
+_DISCOVERY_OPERATION_EXTRAS = frozenset(
+    {"discovery_method", "discovery_resource_path", "discovery_id", OPENAPI_SOURCE_EXTRA}
+)
 #: API extras an imported Discovery item records and the export writes back.
 _DISCOVERY_API_EXTRAS = frozenset({
     "discovery_version", "discovery_kind", "discovery_id", "discovery_name", "discovery_documentation_link",
     "discovery_service_path",
+    # The OpenAPI source preservation bag (COA-2.1) is for the OpenAPI target only, not a detail.
+    OPENAPI_SOURCE_EXTRA,
 })
 _NAME = re.compile(r"^[a-z][a-z0-9]*$")
 _VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -309,8 +314,9 @@ class DiscoveryFidelityRulePack(CapabilityRulePack):
                 severity=LossinessSeverity.INFO,
                 target_mapping="enum names → dropped",
             ))
-        if type_.extras or any(v.extras for v in type_.enum_values):
-            notes.append(_details_note(type_.extras or {"enum value details": True}))
+        type_extras = without_source_extra(type_.extras)
+        if type_extras or any(v.extras for v in type_.enum_values):
+            notes.append(_details_note(type_extras or {"enum value details": True}))
         if type_.kind is TypeKind.RECORD and any(
             v.kind is not LossinessKind.OK for f in type_.fields for v in self.field_verdicts(f)
         ):

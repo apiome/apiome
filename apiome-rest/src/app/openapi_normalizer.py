@@ -13,7 +13,10 @@ keyed references) into a :class:`~app.canonical_model.CanonicalApi`:
 * ``paths`` → :class:`~app.canonical_model.Operation` (one per path+method),
   grouped into :class:`~app.canonical_model.Service` by their first ``tag``;
 * parameters → :class:`~app.canonical_model.Parameter`; ``requestBody`` and each
-  ``responses`` entry → :class:`~app.canonical_model.Message`.
+  ``responses`` entry → :class:`~app.canonical_model.Message`;
+* everything else — and the verbatim source of each operation and named schema — is kept
+  in ``extras`` by :func:`app.openapi_source_preservation.capture_source` (COA-2.1), so the
+  OpenAPI emitter writes it back instead of dropping it.
 
 Every entity is keyed via :class:`app.normalizer.Keys` so the output diffs by
 identity, and the whole model is run through
@@ -46,6 +49,7 @@ from .canonical_model import (
     Service,
 )
 from .normalizer import Keys, Normalizer, SchemaCoercer, coerce_constraints, normalize_ordering
+from .openapi_source_preservation import capture_source
 
 __all__ = ["OpenApiNormalizer"]
 
@@ -134,7 +138,10 @@ class OpenApiNormalizer(Normalizer, register=True):
             raw=source if include_raw else None,
             extras=extras,
         )
-        return normalize_ordering(api)
+        # COA-2.1: keep the source objects the canonical model has no field for (callbacks,
+        # links, webhooks, discriminator, extensions, 3.2 additions…) so the OpenAPI emitter
+        # can write them back. Captured after ordering: the digests are taken over the final model.
+        return capture_source(normalize_ordering(api), source)
 
     # --- format detection ---------------------------------------------------
 
