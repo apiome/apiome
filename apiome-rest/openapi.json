@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.609.0",
+    "version": "1.610.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -54109,6 +54109,427 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for import schematron documentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Get Lint Fix Plan",
+        "description": "Plan the deterministic lint fixes of a stored revision.\n\nThe plan is computed over the revision's OpenAPI document \u2014 the reconstruction its stored\nlint report was computed from \u2014 under the project's style guide. The stored report's\nfingerprint is echoed with whether it still matches the document, so a reader can tell the\nplan and the report describe the same content.\n\nRaises:\n    HTTPException: 404 unknown revision; 422 non-OpenAPI revision or invalid options.",
+        "operationId": "get_lint_fix_plan_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "patch",
+                "overlay",
+                "diff"
+              ],
+              "type": "string",
+              "description": "json | patch | overlay | diff.",
+              "default": "json",
+              "title": "Format"
+            },
+            "description": "json | patch | overlay | diff."
+          },
+          {
+            "name": "rules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Lint Fix Planrules schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Lint Fix Planrules schema."
+                }
+              ],
+              "description": "Comma-separated rule ids to plan.",
+              "title": "Rules"
+            },
+            "description": "Comma-separated rule ids to plan."
+          },
+          {
+            "name": "includeRenames",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Plan rename fixes.",
+              "default": false,
+              "title": "Includerenames"
+            },
+            "description": "Plan rename fixes."
+          },
+          {
+            "name": "operationIdTemplate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Template of generated operationIds: {method} {Method} {path} {Path}.",
+              "default": "{method}{Path}",
+              "title": "Operationidtemplate"
+            },
+            "description": "Template of generated operationIds: {method} {Method} {path} {Path}."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Lint Fix Planauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Lint Fix Planauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Lint Fix Plan Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Lint Fix Plan Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The plan; `format=patch` returns an RFC 6902 document, `format=overlay` an Overlay 1.0 document and `format=diff` a unified diff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFixPlanOut",
+                  "description": "Response payload for get lint fix planresponse200."
+                }
+              },
+              "application/json-patch+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Response payload for get lint fix planresponse200."
+                }
+              },
+              "text/x-diff": {
+                "schema": {
+                  "type": "string",
+                  "description": "Response payload for get lint fix planresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get lint fix planresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes/apply": {
+      "post": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Apply Lint Fixes",
+        "description": "Apply lint fixes to an unpublished revision by creating a new ``lint-fix`` revision.\n\nThe revision itself is never changed. The plan is rebuilt with the request's options, the\nnamed fixes are composed onto the document, and the result is imported as a new revision of\nthe same project (through the import quality gate and pipeline). The new revision is\nre-linted and its report stored; its ``source: lint-fix`` provenance and the\n``version.lint_fix_applied`` audit row are written in one transaction.\n\nRaises:\n    HTTPException: 404 unknown revision; 409 published revision, ``version-exists`` or\n        ``QUALITY_POLICY_BLOCKED``; 422 for a breaking, conflicting, excluded or unknown fix,\n        nothing to apply, invalid options, or a failed import; 500 when the record cannot be\n        written (the new revision is withdrawn).",
+        "operationId": "apply_lint_fixes_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_apply_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Apply Lint Fixesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Apply Lint Fixesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Apply Lint Fixes Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Apply Lint Fixes Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LintFixApplyRequest",
+                "description": "Request body for apply lint fixesrequest."
+              }
+            }
+          },
+          "description": "Request body for apply lint fixes."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for apply lint fixes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFixApplyOut",
+                  "description": "Response payload for apply lint fixesresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for apply lint fixesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lint/fixes/plan": {
+      "post": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Plan Lint Fixes For Document",
+        "description": "Plan the deterministic lint fixes of a posted document (file mode).\n\nStateless: nothing is stored. The tenant's style guide decides which rules are on, as it does\nfor a stored revision of a project without its own guide.\n\nRaises:\n    HTTPException: 413 over the size limit; 422 not YAML/JSON, not OpenAPI 3.x, or invalid options.",
+        "operationId": "plan_lint_fixes_for_document_v1_lint_fixes_plan_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Plan Lint Fixes For Documentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Plan Lint Fixes For Documentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Plan Lint Fixes For Document Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Plan Lint Fixes For Document Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LintFixPlanRequest",
+                "description": "Request body for plan lint fixes for documentrequest."
+              }
+            }
+          },
+          "description": "Request body for plan lint fixes for document."
+        },
+        "responses": {
+          "200": {
+            "description": "The plan; `format=patch` returns an RFC 6902 document, `format=overlay` an Overlay 1.0 document and `format=diff` a unified diff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFixPlanOut",
+                  "description": "Response payload for plan lint fixes for documentresponse200."
+                }
+              },
+              "application/json-patch+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Response payload for plan lint fixes for documentresponse200."
+                }
+              },
+              "text/x-diff": {
+                "schema": {
+                  "type": "string",
+                  "description": "Response payload for plan lint fixes for documentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for plan lint fixes for documentresponse422."
                 }
               }
             }
@@ -179575,6 +179996,653 @@
         ],
         "title": "LintFindingOut",
         "description": "One itemized lint finding from the deterministic quality-scoring service (#3609)."
+      },
+      "LintFixApplyOut": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "sourceVersionRecordId": {
+            "type": "string",
+            "title": "Sourceversionrecordid",
+            "description": "Source Version Record ID.",
+            "example": "1.0.0"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "Version Record ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "type": "string",
+            "title": "Versionlabel",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          },
+          "appliedFixIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Appliedfixids",
+            "description": "Applied Fix IDs.",
+            "maxItems": 1000
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/LintFixSkippedOut"
+            },
+            "type": "array",
+            "title": "Skipped",
+            "description": "Skipped.",
+            "maxItems": 1000
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix apply."
+              }
+            ],
+            "title": "Score",
+            "description": "Score."
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix apply."
+              }
+            ],
+            "title": "Grade",
+            "description": "Grade."
+          },
+          "reportFingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix apply."
+              }
+            ],
+            "title": "Reportfingerprint",
+            "description": "Report Fingerprint."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "sourceVersionRecordId",
+          "versionRecordId",
+          "versionLabel",
+          "appliedFixIds"
+        ],
+        "title": "LintFixApplyOut",
+        "description": "The revision an apply created."
+      },
+      "LintFixApplyRequest": {
+        "properties": {
+          "fixIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Request body for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint fix apply."
+              }
+            ],
+            "title": "Fixids",
+            "description": "Fix IDs."
+          },
+          "rules": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Request body for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint fix apply."
+              }
+            ],
+            "title": "Rules",
+            "description": "Rules."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "description": "Why the fixes are applied (audited).",
+            "example": "example"
+          },
+          "includeRenames": {
+            "type": "boolean",
+            "title": "Includerenames",
+            "default": false,
+            "description": "Include Renames.",
+            "example": false
+          },
+          "operationIdTemplate": {
+            "type": "string",
+            "title": "Operationidtemplate",
+            "default": "{method}{Path}",
+            "description": "Operation ID Template.",
+            "example": "GET"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Request body for lint fix apply."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint fix apply."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "LintFixApplyRequest",
+        "description": "``POST \u2026/lint/fixes/apply``: name the fixes (``fixIds``) or rules (``rules``) to apply."
+      },
+      "LintFixChangeOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "warning"
+          },
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "Pointer.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "severity",
+          "pointer"
+        ],
+        "title": "LintFixChangeOut",
+        "description": "One classified change of a fix's own delta."
+      },
+      "LintFixClassificationOut": {
+        "properties": {
+          "maxSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix classification."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix classification."
+              }
+            ],
+            "title": "Maxseverity",
+            "description": "Max Severity."
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/LintFixChangeOut"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Changes.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "LintFixClassificationOut",
+        "description": "The CTG classification of a fix's own delta."
+      },
+      "LintFixEntryOut": {
+        "properties": {
+          "fixId": {
+            "type": "string",
+            "title": "Fixid",
+            "description": "Fix ID.",
+            "example": "example"
+          },
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "fixClass": {
+            "type": "string",
+            "title": "Fixclass",
+            "description": "Fix Class.",
+            "example": "example"
+          },
+          "wireVisible": {
+            "type": "boolean",
+            "title": "Wirevisible",
+            "description": "Wire Visible.",
+            "example": false
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "Pointer.",
+            "example": "example"
+          },
+          "findingId": {
+            "type": "string",
+            "title": "Findingid",
+            "description": "Finding ID.",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message.",
+            "example": "Example validation message."
+          },
+          "ops": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Ops",
+            "description": "Ops.",
+            "maxItems": 1000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "conflict",
+              "breaking",
+              "excluded"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "ready"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix entry."
+              }
+            ],
+            "title": "Reason",
+            "description": "Reason."
+          },
+          "conflictsWith": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix entry."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix entry."
+              }
+            ],
+            "title": "Conflictswith",
+            "description": "Conflicts With."
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LintFixClassificationOut"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix entry."
+              }
+            ],
+            "description": "Classification."
+          }
+        },
+        "type": "object",
+        "required": [
+          "fixId",
+          "ruleId",
+          "fixClass",
+          "wireVisible",
+          "path",
+          "pointer",
+          "findingId",
+          "message",
+          "ops",
+          "status"
+        ],
+        "title": "LintFixEntryOut",
+        "description": "One fixable finding of a plan."
+      },
+      "LintFixPlanOut": {
+        "properties": {
+          "documentFingerprint": {
+            "type": "string",
+            "title": "Documentfingerprint",
+            "description": "Document Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "fixedDocumentFingerprint": {
+            "type": "string",
+            "title": "Fixeddocumentfingerprint",
+            "description": "Fixed Document Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "includeRenames": {
+            "type": "boolean",
+            "title": "Includerenames",
+            "description": "Include Renames.",
+            "example": false
+          },
+          "rules": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Rules",
+            "description": "Rules."
+          },
+          "operationIdTemplate": {
+            "type": "string",
+            "title": "Operationidtemplate",
+            "description": "Operation ID Template.",
+            "example": "GET"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "appliedOrder": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Appliedorder",
+            "description": "Applied Order.",
+            "maxItems": 1000
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LintFixEntryOut"
+            },
+            "type": "array",
+            "title": "Entries",
+            "description": "Entries.",
+            "maxItems": 100
+          },
+          "guideId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Guideid",
+            "description": "Guide ID."
+          },
+          "guideName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Guidename",
+            "description": "Guide Name."
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Projectid",
+            "description": "Project ID."
+          },
+          "versionRecordId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Versionrecordid",
+            "description": "Version Record ID."
+          },
+          "reportFingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Reportfingerprint",
+            "description": "Fingerprint of the revision's stored lint report (revision plans only)."
+          },
+          "reportCurrent": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Response payload for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint fix plan."
+              }
+            ],
+            "title": "Reportcurrent",
+            "description": "Whether the stored report still matches the planned document (revision plans only)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "documentFingerprint",
+          "fixedDocumentFingerprint",
+          "includeRenames",
+          "operationIdTemplate",
+          "counts",
+          "appliedOrder",
+          "entries"
+        ],
+        "title": "LintFixPlanOut",
+        "description": "A lint-fix plan (``format=json``)."
+      },
+      "LintFixPlanRequest": {
+        "properties": {
+          "document": {
+            "type": "string",
+            "title": "Document",
+            "description": "The OpenAPI document, as YAML or JSON text.",
+            "example": "example"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint fix plan."
+              }
+            ],
+            "title": "Filename",
+            "description": "The file name, for messages."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "patch",
+              "overlay",
+              "diff"
+            ],
+            "title": "Format",
+            "default": "json",
+            "description": "Format.",
+            "example": "json"
+          },
+          "rules": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Request body for lint fix plan."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint fix plan."
+              }
+            ],
+            "title": "Rules",
+            "description": "Plan only these rule ids."
+          },
+          "includeRenames": {
+            "type": "boolean",
+            "title": "Includerenames",
+            "default": false,
+            "description": "Include Renames.",
+            "example": false
+          },
+          "operationIdTemplate": {
+            "type": "string",
+            "title": "Operationidtemplate",
+            "default": "{method}{Path}",
+            "description": "Operation ID Template.",
+            "example": "GET"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "LintFixPlanRequest",
+        "description": "``POST /v1/lint/fixes/plan``: plan the fixes of a posted document."
+      },
+      "LintFixSkippedOut": {
+        "properties": {
+          "fixId": {
+            "type": "string",
+            "title": "Fixid",
+            "description": "Fix ID.",
+            "example": "example"
+          },
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fixId",
+          "ruleId",
+          "status"
+        ],
+        "title": "LintFixSkippedOut",
+        "description": "A fix of a named rule that was not applied."
       },
       "LintLevelBlockerOut": {
         "properties": {

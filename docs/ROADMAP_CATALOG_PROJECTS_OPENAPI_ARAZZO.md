@@ -52,7 +52,8 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 | #5880 | GVM-4.5 Arazzo and Overlay in the ladder, fixes and CLI | Governance |
 | #5868 | GVM-EPIC-3 Deterministic auto-fix | Governance |
 | ✅ #5869 | GVM-3.1 rule SPI — Complete | Governance |
-| #5870–#5872 | GVM-3.2 fix plan + Overlay rendering, 3.3 `apiome lint --fix`, 3.4 CI fix suggestions | Governance |
+| ✅ #5870 | GVM-3.2 fix plan, apply and Overlay rendering — Complete | Governance |
+| #5871–#5872 | GVM-3.3 `apiome lint --fix`, 3.4 CI fix suggestions | Governance |
 | #6654 | MFX-38.1 follow-up: GitLab/Bitbucket/Azure DevOps export git delivery | Import/export |
 | #6706 | Catalog import and export demo script | Cleanup |
 

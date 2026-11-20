@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.783.0] - 2026-11-20
+
+### Added
+- **Lint-fix plan, apply and Overlay rendering — OpenAPI 1.610.0 (GVM-3.2, #5870):** fixes can
+  be inspected before they are applied and reproduced after, through one contract.
+  - `GET /v1/versions/{tenantSlug}/{projectId}/{versionId}/lint/fixes` plans the fixes of a
+    stored revision under its project's style guide; `POST /v1/lint/fixes/plan` plans a posted
+    YAML/JSON document (file mode, stateless) under the tenant's guide. Options: `format`
+    (`json` / `patch` / `overlay` / `diff`), `rules`, `includeRenames`, `operationIdTemplate`.
+  - Each entry is `{fixId, ruleId, fixClass, wireVisible, path, pointer, ops[], status}` with
+    `status` `ready`, `conflict` (overlapping subtree; the outer node's fix wins and the loser
+    names it in `conflictsWith`), `breaking` (the fix's own delta is breaking under the CTG
+    classified diff; the classification is attached) or `excluded` (`reason`: `not-selected`,
+    `guide-disabled`, `renames-not-included`, `opt-in-required`). Plans are byte-identical
+    across runs.
+  - `POST …/lint/fixes/apply` with `{fixIds[] | rules[], reason}` needs `versions:edit` and an
+    unpublished revision (`409 lint-fix-version-published`). It never edits the revision: the
+    fixed document is imported as a new revision through the import pipeline, re-linted and its
+    report stored with its fingerprint; `format_metadata.source: lint-fix` (with the fix ids)
+    and the `version.lint_fix_applied` audit row are written in one transaction, and the new
+    revision is withdrawn if they cannot be (`500 lint-fix-record-failed`). A breaking fix is
+    never applied (`422 lint-fix-breaking`).
+  - `app.openapi_overlay.render_patch_overlay` renders JSON Patch operations as an Overlay 1.0
+    document that `apply_overlays` turns into the same document.
+  - `Database.record_lint_fix_revision` writes the provenance stamp and the audit row in one
+    transaction.
+
 ## [1.782.0] - 2026-11-20
 
 ### Added

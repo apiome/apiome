@@ -83,6 +83,7 @@ __all__ = [
     "OverlayProvenanceRecord",
     "OverlayRevision",
     "OverlayedOpenApiDocument",
+    "PATCH_OVERLAY_VERSION",
     "SUPPORTED_REVISIONS",
     "apply_overlays",
     "is_overlay_document",
@@ -91,6 +92,7 @@ __all__ = [
     "overlay_revision",
     "overlay_rule_for",
     "overlay_version",
+    "render_patch_overlay",
 ]
 
 
@@ -1187,3 +1189,172 @@ def _pointer_for(datum) -> str:
         tokens.append(_escape_pointer_token(str(step)))
         current = current.context
     return "".join(f"/{token}" for token in reversed(tokens))
+
+
+# ---------------------------------------------------------------------------
+# Rendering a JSON Patch as an Overlay — GVM-3.2 (#5870)
+# ---------------------------------------------------------------------------
+
+#: The Overlay revision :func:`render_patch_overlay` writes. 1.0 is the one whose ``update`` on an
+#: array appends the value as **one** entry (1.1 concatenates an array value), which is exactly
+#: what an RFC 6902 ``add`` at ``/-`` does, so every operation renders without guessing.
+PATCH_OVERLAY_VERSION = "1.0.0"
+
+
+def _jsonpath_for(document: Any, pointer: str) -> str:
+    """The JSONPath (bracket notation) that selects exactly the node ``pointer`` addresses.
+
+    Each token becomes ``['key']`` for an object member or ``[index]`` for an array element —
+    decided by walking ``document``, because a pointer token such as ``200`` is an object key in
+    ``responses`` and an index in ``tags``. Quotes and backslashes in a key are escaped.
+
+    Args:
+        document: The document the pointer is evaluated against.
+        pointer: An RFC 6901 JSON Pointer that addresses an existing node, or ``""`` (the root).
+
+    Returns:
+        The JSONPath expression; ``$`` for the root.
+
+    Raises:
+        app.lint_fix.FixError: When the pointer addresses nothing in ``document``.
+    """
+    from .lint_fix import FixError, split_pointer
+
+    parts = ["$"]
+    node = document
+    for token in split_pointer(pointer):
+        if isinstance(node, list) and token.isdigit() and int(token) < len(node):
+            parts.append(f"[{int(token)}]")
+            node = node[int(token)]
+        elif isinstance(node, Mapping) and token in node:
+            escaped = token.replace("\\", "\\\\").replace("'", "\\'")
+            parts.append(f"['{escaped}']")
+            node = node[token]
+        else:
+            raise FixError(f"nothing at {pointer!r}")
+    return "".join(parts)
+
+
+def _is_primitive(value: Any) -> bool:
+    """Whether ``value`` is a JSON primitive (not an object or array)."""
+    return not isinstance(value, (Mapping, list))
+
+
+def _set_actions(document: Any, pointer: str, value: Any, *, insert: bool) -> List[Dict[str, Any]]:
+    """The Overlay 1.0 actions that set ``pointer`` to ``value`` in ``document``.
+
+    * A new object member → one ``update`` of the parent object with ``{key: value}``.
+    * An existing primitive (object member or array element) → one ``update`` targeting it, which
+      replaces it in place, keeping its position.
+    * An existing object or array member → ``remove`` it, then ``update`` the parent with
+      ``{key: value}`` (an ``update`` on an object would *merge* into it, and on an array *append*).
+    * An array append (``insert`` at the end) → one ``update`` of the array.
+    * Anything else in an array (an insert before the end, an object or array element replaced) →
+      the whole array is set to its new value, by the same rules one level up.
+
+    Args:
+        document: The document state the actions apply to.
+        pointer: Where the value goes (``/-`` appends to an array).
+        value: The value to set.
+        insert: ``True`` for an RFC 6902 ``add`` (an array index inserts), ``False`` for ``replace``.
+
+    Returns:
+        The actions, in application order.
+    """
+    from .lint_fix import _get, split_pointer
+
+    tokens = split_pointer(pointer)
+    parent_pointer = "".join(f"/{_escape_pointer_token(token)}" for token in tokens[:-1])
+    key = tokens[-1]
+    parent = _get(document, parent_pointer)
+    parent_path = _jsonpath_for(document, parent_pointer)
+    if isinstance(parent, Mapping):
+        if key not in parent:
+            return [{"target": parent_path, "update": {key: copy.deepcopy(value)}}]
+        if _is_primitive(parent[key]):
+            return [{"target": _jsonpath_for(document, pointer), "update": copy.deepcopy(value)}]
+        return [
+            {"target": _jsonpath_for(document, pointer), "remove": True},
+            {"target": parent_path, "update": {key: copy.deepcopy(value)}},
+        ]
+    index = len(parent) if key == "-" else int(key)
+    if insert and index == len(parent):
+        return [{"target": parent_path, "update": copy.deepcopy(value)}]
+    if not insert and _is_primitive(parent[index]):
+        return [{"target": _jsonpath_for(document, pointer), "update": copy.deepcopy(value)}]
+    rewritten = copy.deepcopy(parent)
+    if insert:
+        rewritten.insert(index, copy.deepcopy(value))
+    else:
+        rewritten[index] = copy.deepcopy(value)
+    return _set_actions(document, parent_pointer, rewritten, insert=False)
+
+
+def _primitive_ops(document: Any, op: Any) -> List[Tuple[str, str, Any]]:
+    """Reduce one RFC 6902 operation to ``(kind, pointer, value)`` steps: ``remove`` / ``add`` / ``replace``.
+
+    A ``move`` is a ``remove`` of its source and an ``add`` of the moved value; a ``copy`` is an
+    ``add`` of the source's value; a ``test`` changes nothing and has no steps.
+    """
+    from .lint_fix import _get
+
+    if op.op == "test":
+        return []
+    if op.op == "move":
+        moved = copy.deepcopy(_get(document, op.from_pointer or ""))
+        return [("remove", op.from_pointer or "", None), ("add", op.path, moved)]
+    if op.op == "copy":
+        return [("add", op.path, copy.deepcopy(_get(document, op.from_pointer or "")))]
+    return [(op.op, op.path, op.value)]
+
+
+def render_patch_overlay(
+    document: Mapping[str, Any],
+    groups: Sequence[Tuple[str, Sequence[Any]]],
+    *,
+    title: str,
+) -> Dict[str, Any]:
+    """Render RFC 6902 operations as an Overlay 1.0 document that makes the same change.
+
+    The renderer beside :func:`apply_overlays`: applying the returned overlay to ``document`` with
+    :func:`apply_overlays` produces the document the operations produce. Each operation becomes a
+    ``remove`` and/or an ``update`` action (see :func:`_set_actions` for which), every action
+    carrying the label of the group it came from as its ``description``.
+
+    Args:
+        document: The document the operations apply to. Not mutated.
+        groups: ``(label, operations)`` pairs in application order — for a lint-fix plan, one
+            group per fix, labelled with the fix id and rule. The operations are
+            :class:`app.lint_fix.PatchOp` values.
+        title: The overlay's ``info.title``.
+
+    Returns:
+        The Overlay document (``overlay``, ``info``, ``actions``). ``actions`` is empty when the
+        groups change nothing; such an overlay is not applicable (the specification asks for at
+        least one action), so callers check for an empty plan first.
+
+    Raises:
+        app.lint_fix.FixError: When an operation does not apply to the document.
+    """
+    from .lint_fix import _add, _remove, _replace
+
+    working: Any = copy.deepcopy(dict(document))
+    actions: List[Dict[str, Any]] = []
+    for label, ops in groups:
+        for op in ops:
+            for kind, pointer, value in _primitive_ops(working, op):
+                if kind == "remove":
+                    step = [{"target": _jsonpath_for(working, pointer), "remove": True}]
+                    _remove(working, pointer)
+                else:
+                    step = _set_actions(working, pointer, value, insert=kind == "add")
+                    if kind == "add":
+                        _add(working, pointer, copy.deepcopy(value))
+                    else:
+                        _replace(working, pointer, copy.deepcopy(value))
+                actions.extend({**action, "description": label} for action in step)
+    return {
+        "overlay": PATCH_OVERLAY_VERSION,
+        "info": {"title": title, "version": "1.0.0"},
+        "actions": actions,
+    }
