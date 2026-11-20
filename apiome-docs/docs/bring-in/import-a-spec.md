@@ -446,7 +446,10 @@ and steps keep their raw references with a warning.
 The full result (every source, every step's resolution and every issue) is returned on the
 import job's summary as `arazzoResolution`. Each workflow and its steps are also stored as records
 of their own, with each step's resolved operation; the item's **Workflows** tab shows them — see
-[Arazzo workflows](../build/arazzo-workflows.mdx).
+[Arazzo workflows](../build/arazzo-workflows.mdx). To read the records from a terminal or a script,
+use `apiome arazzo list` / `show` or the `/v1/workflows` REST routes, and run
+`apiome arazzo validate --catalog <item-uuid>` in CI to fail when a step did not resolve. Every
+field is described in [Arazzo workflow records](../reference/arazzo-workflow-records.md).
 
 ## Import an Arazzo workflow with its API files
 

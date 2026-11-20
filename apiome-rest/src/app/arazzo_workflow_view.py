@@ -27,6 +27,7 @@ __all__ = [
     "SOURCE_UNKNOWN",
     "build_source_views",
     "build_workflow_views",
+    "step_resolution_counts",
     "step_source_names",
 ]
 
@@ -189,6 +190,25 @@ def _step_view(
     }
 
 
+def step_resolution_counts(steps: Iterable[Mapping[str, Any]]) -> Dict[str, int]:
+    """Count a workflow's steps by ``operationRef`` / ``operationId`` resolution state.
+
+    Args:
+        steps: Step payloads from :func:`_step_view` (each carries ``resolution_status``).
+
+    Returns:
+        ``{status: count}`` for every status that occurs (``resolved``, ``unresolved``,
+        ``not_applicable``, ``parse_error``), keys sorted so the payload is stable. Empty for a
+        workflow with no steps.
+    """
+    counts: Dict[str, int] = {}
+    for step in steps:
+        status = str(step.get("resolution_status") or "")
+        if status:
+            counts[status] = counts.get(status, 0) + 1
+    return dict(sorted(counts.items()))
+
+
 def build_workflow_views(
     workflows: Sequence[WorkflowRow],
     *,
@@ -206,9 +226,10 @@ def build_workflow_views(
         sources: The document's source views from :func:`build_source_views`.
 
     Returns:
-        One dict per workflow, in declaration order, with ``steps`` (ordered) and ``sources``
+        One dict per workflow, in declaration order, with ``steps`` (ordered), ``sources``
         (the declared sources its steps point into; every declared source when none can be
-        attributed, so a workflow never shows an empty status column by accident).
+        attributed, so a workflow never shows an empty status column by accident) and
+        ``step_resolution`` (its steps counted by resolution state).
     """
     operation_map = operations or {}
     source_list = [dict(source) for source in sources]
@@ -236,6 +257,7 @@ def build_workflow_views(
                 "success_actions": _list(extras.get("successActions")),
                 "failure_actions": _list(extras.get("failureActions")),
                 "sources": workflow_sources,
+                "step_resolution": step_resolution_counts(steps),
                 "steps": steps,
             }
         )

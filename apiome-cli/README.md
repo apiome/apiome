@@ -563,8 +563,9 @@ apiome checks show --project payments-api --version 2.0.0
 apiome checks show --project payments-api --run <evaluation-id> --format json
 
 # Arazzo workflows (after arazzo import)
-apiome workflows list --project checkout-flow --version 1.0.0
-apiome workflows show checkout --project checkout-flow --version 1.0.0
+apiome arazzo list --project checkout-flow --version 1.0.0
+apiome arazzo show checkout --project checkout-flow --version 1.0.0
+apiome arazzo validate --project checkout-flow --version 1.0.0
 
 # 3. Export reconstructed spec or download the original upload bytes
 apiome spec export \
@@ -584,7 +585,7 @@ Machine-readable inspection (`--json` on stdout):
 apiome --json paths list --project <uuid> --version <uuid>
 apiome --json paths show <path-uuid> --project <uuid> --version <uuid>
 apiome --json operations show createPayment --project payments-api --version 1.0.0
-apiome --json workflows list --project <uuid> --version <uuid>
+apiome --json arazzo list --project <uuid> --version <uuid>
 ```
 
 Post-MVP verification commands (`spec fidelity`, `spec verify-attestation`) are documented when they land in the CLI.
@@ -842,11 +843,25 @@ apiome --json operations show <operation-uuid> --project <uuid> --version <uuid>
 
 ### Inspect Arazzo workflows
 
+An Arazzo import stores each workflow and its ordered steps. `apiome arazzo` reads them back,
+with each step's `operationRef` / `operationId` resolution state (`resolved`, `unresolved`,
+`not_applicable` for a step that calls another workflow, or `parse_error`):
+
 ```bash
-apiome workflows list --project checkout-flow --version 1.0.0
-apiome workflows show checkout --project checkout-flow --version 1.0.0
-apiome workflows show <workflow-uuid> --project <uuid> --version <uuid>
-apiome --json workflows list --project <uuid> --version <uuid>
+apiome arazzo list --project checkout-flow --version 1.0.0
+apiome arazzo show checkout --project checkout-flow --version 1.0.0
+apiome arazzo list --catalog <item-uuid>                         # latest revision
+apiome arazzo list --catalog <item-uuid> --revision <version-uuid>
+apiome --json arazzo show checkout --project <uuid> --version <uuid>
+```
+
+`apiome arazzo validate` checks a local document against the Arazzo JSON Schema for the version
+it declares, or — given a revision instead of a file — fails (exit 7) when a stored step did not
+resolve or a source description is missing:
+
+```bash
+apiome arazzo validate checkout.arazzo.yaml
+apiome arazzo validate --project checkout-flow --version 1.0.0
 ```
 
 ### Import JSON Schema

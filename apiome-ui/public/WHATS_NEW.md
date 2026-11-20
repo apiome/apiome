@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - **Arazzo workflows with their API files** — Import a `.zip` (or, with the CLI, a folder) holding an Arazzo workflow and the OpenAPI/AsyncAPI files it calls, and they come in as one workflow with every source resolved; any source that is not found is listed in the import report with the reason
 - **See an Arazzo workflow as a flow** — An Arazzo catalog item, and a project whose HEAD revision holds workflows, has a **Workflows** tab: each workflow's steps, inputs and outputs, a step graph of its success and failure paths, and whether each source it calls was found; click a step to open the operation it calls
 - **Arazzo exports that explain themselves** — An Arazzo 1.1 step that waits on an event channel (`channelPath`) now imports and exports back unchanged, and the fidelity report on the **Arazzo** card names every difference a round trip finds; Arazzo import and export are checked against official OpenAPI Initiative fixtures and files from Redocly, Spectral and Specmatic
+- **Arazzo workflows from the CLI and the API** — `apiome arazzo list` and `apiome arazzo show` read the workflows and steps an Arazzo import stores, with whether each step's operation was found; `apiome arazzo validate` checks a workflow file, or fails a CI job when a stored step did not resolve. The REST API reads one workflow, its steps, or any revision of a catalog item
 
 ---
 

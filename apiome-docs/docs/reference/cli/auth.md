@@ -1,7 +1,7 @@
 ---
 title: "apiome auth"
 description: "Inspect signed-in identity and accessible tenants."
-sidebar_position: 2
+sidebar_position: 3
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

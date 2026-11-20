@@ -6,7 +6,8 @@ Two layers:
   is checked against what an Arazzo import actually persists: steps in order, the operation a
   step resolved to, its ``onSuccess`` / ``onFailure`` actions, called workflows, and each
   workflow's source-description status from the COA-1.2 report.
-* :mod:`app.arazzo_workflow_routes` — the three GETs, with the database patched: tenant scoping,
+* :mod:`app.arazzo_workflow_routes` — the GETs (COA-1.5, #7041, adds one workflow, its steps,
+  one step and a named catalog revision), with the database patched: tenant scoping,
   404/400 handling, and the catalog item → latest revision hop.
 """
 
@@ -33,6 +34,7 @@ from app.arazzo_workflow_view import (
     SOURCE_UNKNOWN,
     build_source_views,
     build_workflow_views,
+    step_resolution_counts,
     step_source_names,
 )
 from app.auth import validate_authentication
@@ -481,3 +483,180 @@ def test_source_context_decodes_text_json_and_defaults_missing_values():
         "source_descriptions": [],
         "report": None,
     }
+
+
+# --------------------------------------------------------------------------------------------
+# Workflow records — one workflow, its steps, one step, a named catalog revision (COA-1.5, #7041)
+# --------------------------------------------------------------------------------------------
+
+_CATALOG_VERSION = "44444444-4444-4444-4444-444444444444"
+
+
+def _routed_rows() -> List[WorkflowRow]:
+    """The routed checkout document, mapped with only ``getCart`` in the operation index."""
+    return _rows_from_text(
+        _ROUTED_DOCUMENT,
+        "checkout.arazzo.yaml",
+        [_index_row(_OP_LOGIN, "/carts/{cartId}", "GET", "getCart")],
+    )
+
+
+def test_step_resolution_counts_every_state_that_occurs():
+    views = build_workflow_views(_routed_rows())
+
+    assert views[0]["step_resolution"] == {
+        "not_applicable": 1,
+        "resolved": 1,
+        "unresolved": 1,
+    }
+    assert views[1]["step_resolution"] == {"unresolved": 1}
+    assert step_resolution_counts([]) == {}
+    assert step_resolution_counts([{"resolution_status": None}]) == {}
+
+
+def test_version_list_carries_step_resolution(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(f"/v1/workflows/acme/versions/{_VERSION}")
+
+    assert response.json()["workflows"][0]["step_resolution"]["resolved"] == 1
+
+
+def test_workflow_route_returns_one_workflow_with_its_revision(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(f"/v1/workflows/acme/versions/{_VERSION}/workflows/send-receipt")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["version_id"] == _VERSION and body["project_id"] == _PROJECT
+    assert [s["name"] for s in body["sources"]] == ["shop"]
+    assert body["workflow"]["workflow_id"] == "send-receipt"
+    assert [s["step_id"] for s in body["workflow"]["steps"]] == ["email"]
+
+
+def test_workflow_route_404s_for_an_unknown_workflow_id(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(f"/v1/workflows/acme/versions/{_VERSION}/workflows/Checkout")
+
+    assert response.status_code == 404
+    assert "Workflow not found: Checkout" in response.text
+
+
+def test_workflow_route_404s_outside_the_tenant(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        mdb.get_version_for_tenant.return_value = None
+        response = client.get(f"/v1/workflows/acme/versions/{_VERSION}/workflows/checkout")
+
+    assert response.status_code == 404
+    mdb.load_arazzo_workflows.assert_not_called()
+
+
+def test_workflow_route_rejects_a_malformed_version_id(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        response = client.get("/v1/workflows/acme/versions/nope/workflows/checkout")
+
+    assert response.status_code == 400
+    mdb.get_version_for_tenant.assert_not_called()
+
+
+def test_steps_route_lists_steps_in_order_with_resolution_state(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(
+            f"/v1/workflows/acme/versions/{_VERSION}/workflows/checkout/steps"
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["version_id"] == _VERSION and body["workflow_id"] == "checkout"
+    assert body["step_resolution"] == {"not_applicable": 1, "resolved": 1, "unresolved": 1}
+    assert [(s["step_id"], s["resolution_status"]) for s in body["steps"]] == [
+        ("load-cart", "resolved"),
+        ("pay", "unresolved"),
+        ("notify", "not_applicable"),
+    ]
+    assert body["steps"][1]["operation_ref"] == "$sourceDescriptions.payments.url#/paths/~1charges/post"
+
+
+def test_steps_route_404s_for_an_unknown_workflow(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(f"/v1/workflows/acme/versions/{_VERSION}/workflows/nope/steps")
+
+    assert response.status_code == 404
+
+
+def test_step_route_returns_one_step(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(
+            f"/v1/workflows/acme/versions/{_VERSION}/workflows/checkout/steps/load-cart"
+        )
+
+    assert response.status_code == 200
+    step = response.json()
+    assert step["step_id"] == "load-cart"
+    assert step["operation"]["path_operation_id"] == _OP_LOGIN
+    assert step["on_success"] == [{"name": "to-pay", "type": "goto", "stepId": "pay"}]
+
+
+def test_step_route_404s_for_an_unknown_step(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        response = client.get(
+            f"/v1/workflows/acme/versions/{_VERSION}/workflows/checkout/steps/email"
+        )
+
+    assert response.status_code == 404
+    assert "Step not found: email" in response.text
+
+
+def test_catalog_revision_route_reads_the_named_revision(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        _patched_db(mdb, _routed_rows())
+        mdb.get_catalog_item_by_id.return_value = {"id": _PROJECT}
+        mdb.get_version_for_tenant.return_value = {
+            "id": _CATALOG_VERSION,
+            "project_id": _PROJECT,
+        }
+        response = client.get(
+            f"/v1/workflows/acme/catalog/{_PROJECT}/revisions/{_CATALOG_VERSION}"
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["version_id"] == _CATALOG_VERSION and body["project_id"] == _PROJECT
+    assert [w["workflow_id"] for w in body["workflows"]] == ["checkout", "send-receipt"]
+    mdb.get_latest_revision_id_for_project.assert_not_called()
+    mdb.load_arazzo_workflows.assert_called_once_with(
+        tenant_id=_TENANT, version_id=_CATALOG_VERSION
+    )
+
+
+def test_catalog_revision_route_404s_for_another_items_revision(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        mdb.get_catalog_item_by_id.return_value = {"id": _PROJECT}
+        mdb.get_version_for_tenant.return_value = {"id": _VERSION, "project_id": _TENANT}
+        response = client.get(f"/v1/workflows/acme/catalog/{_PROJECT}/revisions/{_VERSION}")
+
+    assert response.status_code == 404
+    mdb.load_arazzo_workflows.assert_not_called()
+
+
+def test_catalog_revision_route_404s_for_a_non_catalog_id(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        mdb.get_catalog_item_by_id.return_value = None
+        response = client.get(f"/v1/workflows/acme/catalog/{_PROJECT}/revisions/{_VERSION}")
+
+    assert response.status_code == 404
+    mdb.get_version_for_tenant.assert_not_called()
+
+
+def test_catalog_revision_route_rejects_a_malformed_revision_id(client):
+    with patch("app.arazzo_workflow_routes.db") as mdb:
+        response = client.get(f"/v1/workflows/acme/catalog/{_PROJECT}/revisions/latest")
+
+    assert response.status_code == 400
+    mdb.get_catalog_item_by_id.assert_not_called()

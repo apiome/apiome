@@ -1736,6 +1736,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['breaking change', 'pipeline', 'github actions', 'exit code'],
   },
   {
+    id: 'arazzo-workflow-records',
+    title: 'Arazzo workflow records',
+    summary: 'What an Arazzo import stores per workflow and step, and how to read it.',
+    page: 'apiome-docs/docs/reference/arazzo-workflow-records.md',
+    section: 'reference',
+    keywords: ['operationRef', 'resolution', 'steps', 'cli', 'validate', 'unresolved'],
+  },
+  {
     id: 'cli-export-format',
     title: 'Project export format',
     summary: 'The document apiome projects export writes: sections, ordering and determinism.',

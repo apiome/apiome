@@ -52,7 +52,6 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-1.5 · [#7041](https://github.com/apiome/apiome/issues/7041) | Arazzo workflow records: REST, CLI and docs | Read workflows and steps through the API and `apiome`, and make the docs match what is stored | `enhancement`, `rest`, `cli`, `mvp` | Y | Y | M | apiome-rest, apiome-cli, apiome-docs |
 | COA-1.6 · [#7042](https://github.com/apiome/apiome/issues/7042) | Arazzo change reports and breaking-change depth | Classify changes to inputs, success criteria, parameters and sources — not only step removal and reorder | `enhancement`, `rest`, `diff`, `v2` | Y | N | M | apiome-rest |
 | COA-1.7 · [#7043](https://github.com/apiome/apiome/issues/7043) | Run an Arazzo workflow against a target | Execute a workflow end to end against a verification target or the mock and report per-step results | `enhancement`, `rest`, `cli`, `v2` | N | N | L | apiome-rest, apiome-cli |
 
@@ -118,7 +117,8 @@ Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the C
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-fidelity.md` (Arazzo rows); screenshots: n/a (no UI change)
 
-**COA-1.5 · #7041 Arazzo workflow records: REST, CLI and docs**
+**✅ COA-1.5 · #7041 Arazzo workflow records: REST, CLI and docs — Complete**
+- **Shipped:** REST 1.771.0 / OpenAPI 1.602.0: `GET /v1/workflows/{tenant}/versions/{version_id}/workflows/{workflow_id}` (one workflow by `workflowId`), `…/steps` and `…/steps/{step_id}` (ordered steps with `operationRef`/`operationId` resolution state), and `GET /v1/workflows/{tenant}/catalog/{item_id}/revisions/{version_id}` (a named catalog revision, 404 for another item's revision); `ArazzoWorkflowOut.step_resolution` counts steps by state on every workflow read. CLI 0.150.0: `apiome arazzo list|show|validate` (`commands/arazzo.py`, pure `arazzo_records.py`) for `--project/--version` or `--catalog [--revision]`; `validate FILE` checks a local document against its version's schema, `validate` with a revision exits 7 (`EXIT_ARAZZO_INVALID`) on unresolved/parse-error steps or missing sources. The dead `workflows` stubs stay unregistered; the CLI README now documents `apiome arazzo`. The stale "not stored as their own records" sentence was already removed by COA-1.3. Docs: new `reference/arazzo-workflow-records.md` (record shape, resolution states, source statuses; the generator owns `reference/rest/`, so the page lives beside it, and the REST tag page `reference/rest/arazzo-workflows.md` is regenerated), `build/arazzo-workflows.mdx`, `bring-in/import-a-spec.md`, generated `reference/cli/arazzo.md` + exit codes; release note `arazzo-workflow-records`.
 - **Problem:** `import-a-spec.md` says "Workflows and their steps are not stored as their own records yet", yet `arazzo_workflow_persistence.py` writes them; there is no documented way to read them.
 - **Solution/Scope:**
 - REST: list/get workflows and steps for a version (and for a catalog revision), with `operationRef` resolution state.

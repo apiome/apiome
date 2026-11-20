@@ -1,7 +1,7 @@
 ---
 title: "apiome browse"
 description: "Open published projects and versions in the browse app."
-sidebar_position: 3
+sidebar_position: 4
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

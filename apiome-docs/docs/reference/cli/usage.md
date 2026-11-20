@@ -1,7 +1,7 @@
 ---
 title: "apiome usage"
 description: "Feed the runtime usage index: upload recorded traffic as usage events."
-sidebar_position: 40
+sidebar_position: 41
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

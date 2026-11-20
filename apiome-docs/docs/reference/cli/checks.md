@@ -1,7 +1,7 @@
 ---
 title: "apiome checks"
 description: "Run and read the API change check suite."
-sidebar_position: 5
+sidebar_position: 6
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

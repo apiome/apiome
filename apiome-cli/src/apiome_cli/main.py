@@ -8,6 +8,7 @@ import typer
 from apiome_cli import __version__
 from apiome_cli.client.errors import handle_cli_failure, is_verbose
 from apiome_cli.commands import (
+    arazzo,
     auth,
     browse,
     catalog,
@@ -112,6 +113,7 @@ app.add_typer(usage.app, name="usage")
 app.command("diff")(diff.diff)
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")
+app.add_typer(arazzo.app, name="arazzo")
 app.add_typer(mcp.app, name="mcp")
 app.add_typer(mock.app, name="mock")
 app.add_typer(import_commands.app, name="import")

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.601.0
+  version: 1.602.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -45288,6 +45288,255 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list version workflowsresponse422.
+  /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}:
+    get:
+      tags:
+      - arazzo-workflows
+      summary: Get Version Workflow
+      description: "Read one persisted Arazzo workflow of a revision.\n\nSupports authentication\
+        \ via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n  \
+        \  version_id: The revision (``versions.id``) UUID.\n    workflow_id: The workflow's\
+        \ Arazzo ``workflowId``.\n    auth_data: Authentication data (injected by dependency).\n\
+        \nReturns:\n    The workflow with its ordered steps and their resolution state,\
+        \ plus every source the\n    document declares.\n\nRaises:\n    HTTPException:\
+        \ 400 for a malformed id; 404 when the revision is not in this tenant or\n \
+        \       has no such workflow."
+      operationId: get_version_workflow_v1_workflows__tenant_slug__versions__version_id__workflows__workflow_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
+          description: Workflow Id schema.
+        description: Path parameter identifying the workflow id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Version Workflowauthorization schema.
+          - type: 'null'
+            description: Get Version Workflowauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Version Workflow Xapikey schema.
+          - type: 'null'
+            description: Get Version Workflow Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get version workflow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArazzoWorkflowDetailResponse'
+                description: Response payload for get version workflowresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get version workflowresponse422.
+  /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps:
+    get:
+      tags:
+      - arazzo-workflows
+      summary: List Version Workflow Steps
+      description: "List the steps of one persisted Arazzo workflow, in source order.\n\
+        \nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug.\n    version_id: The revision (``versions.id``) UUID.\n \
+        \   workflow_id: The workflow's Arazzo ``workflowId``.\n    auth_data: Authentication\
+        \ data (injected by dependency).\n\nReturns:\n    The ordered steps, each with\
+        \ its ``operationRef`` / ``operationId``, resolution state and\n    resolved\
+        \ operation, and the steps counted by resolution state.\n\nRaises:\n    HTTPException:\
+        \ 400 for a malformed id; 404 when the revision is not in this tenant or\n \
+        \       has no such workflow."
+      operationId: list_version_workflow_steps_v1_workflows__tenant_slug__versions__version_id__workflows__workflow_id__steps_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
+          description: Workflow Id schema.
+        description: Path parameter identifying the workflow id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Version Workflow Stepsauthorization schema.
+          - type: 'null'
+            description: List Version Workflow Stepsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Version Workflow Steps Xapikey schema.
+          - type: 'null'
+            description: List Version Workflow Steps Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list version workflow steps.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArazzoWorkflowStepsResponse'
+                description: Response payload for list version workflow stepsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list version workflow stepsresponse422.
+  /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps/{step_id}:
+    get:
+      tags:
+      - arazzo-workflows
+      summary: Get Version Workflow Step
+      description: "Read one step of a persisted Arazzo workflow.\n\nSupports authentication\
+        \ via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n  \
+        \  version_id: The revision (``versions.id``) UUID.\n    workflow_id: The workflow's\
+        \ Arazzo ``workflowId``.\n    step_id: The step's Arazzo ``stepId``.\n    auth_data:\
+        \ Authentication data (injected by dependency).\n\nReturns:\n    The step with\
+        \ its target, resolution state, resolved operation and actions.\n\nRaises:\n\
+        \    HTTPException: 400 for a malformed id; 404 when the revision is not in\
+        \ this tenant, or\n        has no such workflow or step."
+      operationId: get_version_workflow_step_v1_workflows__tenant_slug__versions__version_id__workflows__workflow_id__steps__step_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
+          description: Workflow Id schema.
+        description: Path parameter identifying the workflow id segment.
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Step Id
+          description: Step Id schema.
+        description: Path parameter identifying the step id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Version Workflow Stepauthorization schema.
+          - type: 'null'
+            description: Get Version Workflow Stepauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Version Workflow Step Xapikey schema.
+          - type: 'null'
+            description: Get Version Workflow Step Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get version workflow step.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArazzoWorkflowStepOut'
+                description: Response payload for get version workflow stepresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get version workflow stepresponse422.
   /v1/workflows/{tenant_slug}/catalog/{item_id}:
     get:
       tags:
@@ -45359,6 +45608,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list catalog item workflowsresponse422.
+  /v1/workflows/{tenant_slug}/catalog/{item_id}/revisions/{version_id}:
+    get:
+      tags:
+      - arazzo-workflows
+      summary: List Catalog Revision Workflows
+      description: "List the Arazzo workflows of one revision of a catalog item.\n\n\
+        Supports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug.\n    item_id: The catalog item UUID.\n    version_id: The\
+        \ revision (``versions.id``) UUID; it must belong to ``item_id``.\n    auth_data:\
+        \ Authentication data (injected by dependency).\n\nReturns:\n    That revision's\
+        \ workflows, shaped like the latest-revision read.\n\nRaises:\n    HTTPException:\
+        \ 400 for a malformed id; 404 when the id is not a catalog item in this\n  \
+        \      tenant, or the revision is not one of its revisions."
+      operationId: list_catalog_revision_workflows_v1_workflows__tenant_slug__catalog__item_id__revisions__version_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Item Id
+          description: Item Id schema.
+        description: Catalog item identifier.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Catalog Revision Workflowsauthorization schema.
+          - type: 'null'
+            description: List Catalog Revision Workflowsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Catalog Revision Workflows Xapikey schema.
+          - type: 'null'
+            description: List Catalog Revision Workflows Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list catalog revision workflows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArazzoWorkflowsResponse'
+                description: Response payload for list catalog revision workflowsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list catalog revision workflowsresponse422.
   /v1/workflows/{tenant_slug}/operations/{path_operation_id}:
     get:
       tags:
@@ -98354,6 +98683,36 @@ components:
       title: ArazzoStepOperationOut
       description: The internal path operation an Arazzo step resolved to, so the viewer
         can open it.
+    ArazzoWorkflowDetailResponse:
+      properties:
+        version_id:
+          type: string
+          title: Version Id
+          description: The revision read
+          example: 1.0.0
+        project_id:
+          type: string
+          title: Project Id
+          description: Project or catalog item owning the revision
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        sources:
+          items:
+            $ref: '#/components/schemas/ArazzoSourceDescriptionOut'
+          type: array
+          title: Sources
+          description: Every source the document declares
+          maxItems: 1000
+        workflow:
+          $ref: '#/components/schemas/ArazzoWorkflowOut'
+          description: Workflow.
+      type: object
+      required:
+      - version_id
+      - project_id
+      - workflow
+      title: ArazzoWorkflowDetailResponse
+      description: One persisted Arazzo workflow of a revision, with the revision it was
+        read from.
     ArazzoWorkflowOut:
       properties:
         workflow_id:
@@ -98418,6 +98777,13 @@ components:
           title: Sources
           description: Sources.
           maxItems: 1000
+        step_resolution:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Step Resolution
+          description: Steps counted by `resolution_status` (`resolved`, `unresolved`,
+            `not_applicable`, `parse_error`); only statuses that occur are listed
         steps:
           items:
             $ref: '#/components/schemas/ArazzoWorkflowStepOut'
@@ -98561,6 +98927,37 @@ components:
       title: ArazzoWorkflowStepOut
       description: One step of a workflow, in source order, with what it calls and where
         it goes next.
+    ArazzoWorkflowStepsResponse:
+      properties:
+        version_id:
+          type: string
+          title: Version Id
+          description: The revision read
+          example: 1.0.0
+        workflow_id:
+          type: string
+          title: Workflow Id
+          description: The Arazzo `workflowId` the steps belong to
+          example: workflow_01h2xcejqtf3fz5y5j0v8k9m2p
+        step_resolution:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Step Resolution
+          description: Steps counted by `resolution_status`
+        steps:
+          items:
+            $ref: '#/components/schemas/ArazzoWorkflowStepOut'
+          type: array
+          title: Steps
+          description: Steps.
+          maxItems: 1000
+      type: object
+      required:
+      - version_id
+      - workflow_id
+      title: ArazzoWorkflowStepsResponse
+      description: The ordered steps of one persisted Arazzo workflow.
     ArazzoWorkflowsResponse:
       properties:
         version_id:

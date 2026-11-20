@@ -1,7 +1,7 @@
 ---
 title: "apiome catalog"
 description: "Catalog items: keep an item fresh from its live source and watch its drift."
-sidebar_position: 4
+sidebar_position: 5
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

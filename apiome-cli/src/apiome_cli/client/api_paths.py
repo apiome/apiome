@@ -1045,3 +1045,21 @@ def usage_har_source(tenant_slug: str) -> str:
 def agent_invocations_export(tenant_slug: str) -> str:
     """One finalized UTC day of the agent invocation audit, JSON Lines or CSV (ATQ-4.5, #5847)."""
     return f"{V1}/tenants/{quote(tenant_slug, safe='')}/agent-invocations/export"
+
+
+def arazzo_version_workflows(tenant_slug: str, version_id: str | UUID) -> str:
+    """The Arazzo workflows persisted for one revision (COA-1.3/1.5, #7039/#7041)."""
+    return f"{V1}/workflows/{tenant_slug}/versions/{version_id}"
+
+
+def arazzo_version_workflow(tenant_slug: str, version_id: str | UUID, workflow_id: str) -> str:
+    """One persisted Arazzo workflow of a revision, by its ``workflowId`` (COA-1.5, #7041)."""
+    return f"{arazzo_version_workflows(tenant_slug, version_id)}/workflows/{quote(workflow_id, safe='')}"
+
+
+def arazzo_catalog_workflows(
+    tenant_slug: str, item_id: str | UUID, revision_id: str | UUID | None = None
+) -> str:
+    """A catalog item's Arazzo workflows: its latest revision, or ``revision_id`` when given."""
+    base = f"{V1}/workflows/{tenant_slug}/catalog/{item_id}"
+    return base if revision_id is None else f"{base}/revisions/{revision_id}"
