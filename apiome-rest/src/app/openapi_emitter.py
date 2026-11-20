@@ -106,6 +106,7 @@ from .openapi_downgrade import (
     downgrade_to_openapi_30,
     downgrade_to_swagger_2,
 )
+from .openapi_ref_modes import apply_ref_mode
 from .openapi_schema_dialect import record_declared_dialect_loss, record_schema_rewrites
 from .openapi_source_preservation import (
     gate_constructs,
@@ -177,6 +178,25 @@ class OpenApiEmitOptions(EmitOptions):
         description=(
             "Include paradigm-projection ``x-`` vendor extensions "
             "(e.g. low-fidelity caveats for event/RPC sources)."
+        ),
+    )
+    refs: Literal["bundle", "dereference", "split"] = Field(
+        default="bundle",
+        title="$ref handling",
+        description=(
+            "How shared objects are written. bundle (default): one file, shared objects under "
+            "components, reached by $ref. dereference: one file, every $ref replaced by a copy of "
+            "what it points at. split: a root file plus one file per path item and component, "
+            "joined by relative $ref."
+        ),
+    )
+    ref_cycles: Literal["keep-ref", "error"] = Field(
+        default="keep-ref",
+        title="Reference cycles",
+        description=(
+            "With dereference, what to do with a circular $ref, which can never be fully "
+            "expanded. keep-ref (default): keep the $ref that closes the loop and report it. "
+            "error: refuse the export."
         ),
     )
 
@@ -539,9 +559,18 @@ class OpenApiEmitter(Emitter, register=True):
                 "API product plans (APX-1.2)",
             )
 
-        return EmitResult.from_document(
+        # COA-2.4: the bundled document as is, fully dereferenced, or split into files. Last, so
+        # every dialect and every write-back above is shaped the same way.
+        files = apply_ref_mode(
             document,
-            path=path,
+            mode=options.refs,
+            cycle_policy=options.ref_cycles,
+            root_path=path,
+            media_type=media_type,
+            losses=losses,
+        )
+        return EmitResult(
+            files=files,
             media_type=media_type,
             provenance=tracker.records(),
             losses=losses.records(),

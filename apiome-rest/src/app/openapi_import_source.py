@@ -70,6 +70,7 @@ from .import_source import (
     LintReport,
 )
 from .intake_resource_guard import IntakeLimitError
+from .openapi_fileset_bundle import bundle_openapi_fileset, references_fileset_members
 from .openapi_overlay import (
     OVERLAY_EXTRA_KEY,
     OverlayedOpenApiDocument,
@@ -310,6 +311,10 @@ class OpenApiImportSource(ImportSource, register=True):
         published as a listing plus N declarations imports as **one** API. A set of
         declarations with no listing merges just the same.
 
+        A base whose relative ``$ref`` values reach other members — the layout a split export writes
+        (COA-2.4) — is bundled into one document first
+        (:func:`~app.openapi_fileset_bundle.bundle_openapi_fileset`).
+
         Members are classified by their version markers — exactly one member must
         be an OpenAPI/Swagger *base* (``openapi``/``swagger`` marker), any member
         with an ``overlay`` marker is an *overlay*, and anything else is left
@@ -386,6 +391,10 @@ class OpenApiImportSource(ImportSource, register=True):
             )
 
         base_path, base_document = bases[0]
+        # COA-2.4: a base split across files (a root plus ``paths/…`` / ``components/…`` members
+        # reached by relative ``$ref``) is bundled back into one document first.
+        if references_fileset_members(base_document, base_path, fileset):
+            base_document = bundle_openapi_fileset(fileset, root=base_path)
         if not overlays:
             return base_document
 

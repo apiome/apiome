@@ -305,6 +305,8 @@ apiome export openapi [OPTIONS]
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
 | `--overlay` | text (repeatable) |  |  | Overlay file (JSON or YAML, Overlay 1.0–1.2) to apply to the version's OpenAPI document before it is exported. Repeatable; applied in the order given. Runs the export as a job and writes JSON. |
+| `--refs` | `bundle` \| `dereference` \| `split` |  |  | How shared objects are written: bundle (default — one file, $ref into components), dereference (one file, every $ref replaced by a copy of its target) or split (a root file plus one file per path item and component, joined by relative $ref: --out a directory unpacks it, a .zip path keeps the archive). Same as --option refs=…. dereference and split run the export as a job and write JSON. |
+| `--ref-cycles` | `keep-ref` \| `error` |  |  | With --refs dereference, what to do with a circular $ref: keep-ref (default — keep it as $ref and report it) or error (refuse the export). Same as --option ref_cycles=…. |
 
 ## apiome export preflight {#export-preflight}
 

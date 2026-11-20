@@ -654,14 +654,18 @@
             "include_components": true,
             "include_paths": true,
             "include_projection_extensions": true,
-            "openapi_version": "3.1"
+            "openapi_version": "3.1",
+            "ref_cycles": "keep-ref",
+            "refs": "bundle"
           },
           "key": "openapi",
           "options": [
             "include_components",
             "include_paths",
             "include_projection_extensions",
-            "openapi_version"
+            "openapi_version",
+            "ref_cycles",
+            "refs"
           ],
           "preserved_percent": 33,
           "tier": "lossy"
@@ -1291,14 +1295,18 @@
             "include_components": true,
             "include_paths": true,
             "include_projection_extensions": true,
-            "openapi_version": "3.1"
+            "openapi_version": "3.1",
+            "ref_cycles": "keep-ref",
+            "refs": "bundle"
           },
           "key": "openapi",
           "options": [
             "include_components",
             "include_paths",
             "include_projection_extensions",
-            "openapi_version"
+            "openapi_version",
+            "ref_cycles",
+            "refs"
           ],
           "preserved_percent": 100,
           "tier": "lossless"
@@ -1900,14 +1908,18 @@
             "include_components": true,
             "include_paths": true,
             "include_projection_extensions": true,
-            "openapi_version": "3.1"
+            "openapi_version": "3.1",
+            "ref_cycles": "keep-ref",
+            "refs": "bundle"
           },
           "key": "openapi",
           "options": [
             "include_components",
             "include_paths",
             "include_projection_extensions",
-            "openapi_version"
+            "openapi_version",
+            "ref_cycles",
+            "refs"
           ],
           "preserved_percent": 100,
           "tier": "lossless"

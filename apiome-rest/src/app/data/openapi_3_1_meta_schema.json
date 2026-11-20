@@ -903,6 +903,11 @@
       "$comment": "https://spec.openapis.org/oas/v3.1.0#path-item-object",
       "$ref": "#/$defs/specification-extensions",
       "properties": {
+        "$ref": {
+          "$comment": "Path Item $ref (OpenAPI 3.1.0 \u00a74.8.9.1); missing from the 2022-10-07 schema as vendored (COA-2.4).",
+          "format": "uri-reference",
+          "type": "string"
+        },
         "delete": {
           "$ref": "#/$defs/operation"
         },

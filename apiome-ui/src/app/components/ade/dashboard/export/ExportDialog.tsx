@@ -61,6 +61,7 @@ import {
   filterSameFormatTargets,
   optionFieldsFromSchema,
   resolveExportDialect,
+  writesMultipleFiles,
   type ExportFidelityTier,
   type ExportTargetCard,
 } from './exportTargetCatalog';
@@ -460,8 +461,11 @@ export function ExportDialog({
     );
   }, [emitted]);
 
-  /** Whether the selected target writes several files (its preview shows the primary one). */
-  const multiFile = Boolean(selected?.entry.descriptor.multi_file);
+  /**
+   * Whether the export writes several files (its preview shows the primary one): a multi-file
+   * target, or an option such as OpenAPI's `refs: split` (COA-2.4).
+   */
+  const multiFile = writesMultipleFiles(selected?.entry, optionValues);
 
   /**
    * Download the export as a `.zip`.
@@ -474,7 +478,7 @@ export function ExportDialog({
   const handleDownloadZip = useCallback(async () => {
     if (!emitted || !selected) return;
     setError(null);
-    if (!selected.entry.descriptor.multi_file) {
+    if (!multiFile) {
       try {
         const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
         downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
@@ -504,7 +508,7 @@ export function ExportDialog({
     } finally {
       setZipping(false);
     }
-  }, [acknowledged, artifact, emitted, optionValues, selected, version]);
+  }, [acknowledged, artifact, emitted, multiFile, optionValues, selected, version]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const fidelity = selected?.entry.fidelity ?? null;

@@ -18,6 +18,7 @@ import {
   targetMatchesSourceFormat,
   tierTone,
   validateExportOptions,
+  writesMultipleFiles,
   type ExportTargetDescriptor,
   type ExportTargetEntry,
   type ExportTargetsResponse,
@@ -412,5 +413,40 @@ describe('filterSameFormatTargets (MFX-41.1)', () => {
       'graphql',
       'proto',
     ]);
+  });
+});
+
+describe('writesMultipleFiles (COA-2.4)', () => {
+  /** An OpenAPI entry whose schema declares the `refs` option, defaulting to `bundle`. */
+  function openapiWithRefs(): ExportTargetEntry {
+    const entry = makeEntry();
+    entry.options_schema = {
+      properties: { refs: { enum: ['bundle', 'dereference', 'split'], default: 'bundle', type: 'string' } },
+    };
+    entry.default_options = { refs: 'bundle' };
+    return entry;
+  }
+
+  it('is true for a multi-file target whatever the options', () => {
+    expect(writesMultipleFiles(makeEntry({ multi_file: true }), {})).toBe(true);
+  });
+
+  it('is true when OpenAPI refs is split, false for bundle and dereference', () => {
+    const entry = openapiWithRefs();
+    expect(writesMultipleFiles(entry, { refs: 'split' })).toBe(true);
+    expect(writesMultipleFiles(entry, { refs: 'dereference' })).toBe(false);
+    expect(writesMultipleFiles(entry, { refs: 'bundle' })).toBe(false);
+    expect(writesMultipleFiles(entry, {})).toBe(false);
+  });
+
+  it('reads the default when the form has no value', () => {
+    const entry = openapiWithRefs();
+    entry.default_options = { refs: 'split' };
+    expect(writesMultipleFiles(entry, null)).toBe(true);
+  });
+
+  it('ignores a refs value on a target that does not declare the option', () => {
+    expect(writesMultipleFiles(makeEntry(), { refs: 'split' })).toBe(false);
+    expect(writesMultipleFiles(null, { refs: 'split' })).toBe(false);
   });
 });

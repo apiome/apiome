@@ -151,6 +151,73 @@ it. From the CLI, run `apiome export openapi-3.1 <item> --out openapi.json --opt
 Webhooks, callbacks and the full set of 3.2 security-scheme fields are not written yet, in any
 version.
 
+### Bundled, dereferenced or split into files {#bundled-dereferenced-or-split}
+
+An OpenAPI export keeps shared objects, such as a `Pet` schema used by five operations, under
+`components`, and each use points at it with `$ref`. The **$ref handling** option (`refs`) picks
+how they are written. It works with every OpenAPI version, Swagger 2.0 included.
+
+| Choice | What you get | Use it when |
+| --- | --- | --- |
+| **bundle** (default) | One file. Shared objects sit under `components`, and each use is a `$ref` such as `#/components/schemas/Pet` | Almost always: the smallest file, and every OpenAPI tool reads it |
+| **dereference** | One file. Every `$ref` is replaced by a copy of what it points at, so nothing has to be looked up | A tool that cannot follow `$ref`, or a reader who wants each operation complete in one place |
+| **split** | A `.zip` of files: `openapi.json` keeps `info`, `servers` and `tags`; each path item goes to `paths/…json` and each component to `components/<section>/<name>.json`, joined by relative `$ref` | Keeping a large API in a repository, one file per schema and path |
+
+**Dereference** keeps `components` too, with its entries dereferenced. A `discriminator.mapping`
+or a security requirement that names a component still resolves. A `$ref` with a `description`
+beside it keeps that description.
+
+**Split** names each file from its path or component: `/pets/{petId}` becomes `paths/pets_petId.json`.
+Characters other than letters, digits, `.`, `_` and `-` become `_`. Two names that would clash get a
+`-2` suffix. Swagger 2.0 writes `paths/` and `definitions/`; its shared parameters and responses stay
+in `swagger.json`, because Swagger 2.0 cannot reference them from another file. Import the `.zip` (or
+the folder, with the CLI) and Apiome bundles it back into the same document.
+
+#### Circular references {#circular-references}
+
+A schema can refer to itself, such as a `Tree` whose `children` are `Tree`s, or two schemas can refer
+to each other, such as `Person` → `Company` → `Person`. Such a cycle can never be fully copied out, so
+**dereference** never tries. The **Reference cycles** option (`ref_cycles`) decides what happens:
+
+- **keep-ref** (default): the export is written. Each `$ref` that would start the loop again stays a
+  `$ref` into `components` (`"items": {"$ref": "#/components/schemas/Tree"}`). The fidelity report
+  lists each cycle as an `openapi-dereference-cycle` loss, with where it first occurs and how many
+  times.
+- **error**: the export is refused (HTTP `422`). The message names the cycles, for example *The
+  document has 3 circular $ref(s) (#/components/schemas/Company, …)*. Export bundled or split, or
+  choose **keep-ref**.
+
+**bundle** and **split** keep every `$ref`, so a cycle is never an issue for them. A dereferenced
+document that would grow past two million JSON values is refused with a message to export it
+bundled or split instead.
+
+#### Choose it
+
+- **In Export studio:** on the **Options** step of the **OpenAPI** target, pick **$ref handling**:
+  **bundle**, **dereference** or **split**. With **dereference**, pick **Reference cycles** as well.
+  See [Export studio → Options](./export-studio.mdx#3-options).
+- **In the Export dialog:** pick the **OpenAPI** card; the same two choices are under **Target
+  options**. With **split**, **“Download all files (.zip)”** downloads every file.
+- **From the CLI:** add `--refs` (and, with `dereference`, `--ref-cycles`):
+
+  ```bash
+  apiome export openapi --project payments-api --version 1.0.0 --output ./payments --refs split
+  apiome export openapi --project payments-api --version 1.0.0 --output openapi.json \
+    --refs dereference --ref-cycles error
+  ```
+
+  `dereference` and `split` run the export as a job and write JSON. With `split`, an `--output`
+  folder gets the files unpacked; a path ending in `.zip` keeps the archive. The job command takes
+  the same flags (`apiome export openapi-3.1 payments-api --out ./payments --refs split`), and
+  `--option refs=split` does the same thing.
+- **From the REST API:** send `"options": {"refs": "split"}` (or `"refs": "dereference",
+  "ref_cycles": "error"`) with `POST /v1/export/{tenant}/jobs`, `/document`, `/preview` or `/verify`.
+  `/document` returns the main file only; a split export's other files come from the job download.
+
+Each choice is checked on the OpenAPI construct corpus: a split export imports back to exactly the
+bundled document, a dereferenced one imports and dereferences to itself, and neither adds a schema
+error to a document that was valid bundled.
+
 ### AsyncAPI 3.1, 3.0 and 2.6
 
 #### When to export to AsyncAPI
