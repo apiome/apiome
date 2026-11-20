@@ -201,6 +201,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['rule pack', 'score', 'grade', 'findings', 'quality', 'style guide'],
   },
   {
+    id: 'auto-fix',
+    title: 'Auto-fix',
+    summary: 'Which lint findings Apiome can repair by itself, and which it never touches.',
+    page: 'apiome-docs/docs/build/auto-fix.md',
+    section: 'reference',
+    keywords: ['repair', 'json patch', 'deterministic', 'rename', 'removal', 'operationId', 'lint'],
+  },
+  {
     id: 'check-an-export',
     title: 'How an export is checked',
     summary: 'Every export is validated before delivery, then linted as advice.',

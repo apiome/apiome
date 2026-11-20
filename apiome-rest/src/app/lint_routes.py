@@ -112,6 +112,11 @@ async def list_lint_rules(
     Every rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)
     and, for ``security``-category rules, the ``weight`` the security score applies to its
     severity penalty (ASP-1.3, #5921) — the weights are public, not a server secret.
+
+    Every rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and for a
+    fixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,
+    ``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs
+    the rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.
     """
     descriptors = builtin_rule_descriptors()
     rules = []
@@ -132,6 +137,13 @@ async def list_lint_rules(
                 scan_modes=payload.get("scan_modes"),
                 weight=payload.get("weight"),
                 owasp=payload.get("owasp"),
+                fixable=d.fixable,
+                fix_class=d.fix_class,
+                wire_visible=d.wire_visible,
+                fix_summary=d.fix_summary,
+                fix_scope=d.fix_scope,
+                fix_default=d.fix_default,
+                fix_owner=d.fix_owner,
             )
         )
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)

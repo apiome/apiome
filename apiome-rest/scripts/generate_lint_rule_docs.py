@@ -75,9 +75,29 @@ Blocking (`error`) rules additionally publish reference, remediation, false-posi
 fixture id, and scan-mode requirements (CLX-4.3 / #4861). See the scanner evaluation in
 `apiome-rest/docs/scanner_evaluation.md`.
 
+Every rule says who repairs its findings (**Fix owner**): the deterministic `engine`, the
+`agent`, or a `human`. A rule the engine can repair also publishes its **fix class**, whether
+the fix is wire-visible, what it may touch and whether it is applied by default — see
+[Auto-fix](./auto-fix.md).
+
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
 """
+
+
+def _fix_section(descriptor) -> list[str]:
+    """Render a rule's fix capability (GVM-3.1, #5869): the owner, and the fix when there is one."""
+    lines = [f"- **Fix owner:** {descriptor.fix_owner}"]
+    if not descriptor.fixable:
+        return lines
+    traits = [
+        "wire-visible" if descriptor.wire_visible else "not wire-visible",
+        f"scope `{descriptor.fix_scope}`",
+        "applied by default" if descriptor.fix_default else "off unless opted in",
+    ]
+    lines.append(f"- **Fix:** `{descriptor.fix_class}` — {descriptor.fix_summary}")
+    lines.append(f"- **Fix details:** {' · '.join(traits)}")
+    return lines
 
 
 def _blocking_section(rule_id: str) -> list[str]:
@@ -131,6 +151,7 @@ def render_schema(descriptors) -> str:
                 lines.append(f"- **OWASP API:** {', '.join(d.owasp_ids)}")
             if d.weight is not None:
                 lines.append(f"- **Security weight:** {d.weight:.1f}")
+            lines.extend(_fix_section(d))
             section = _transparency_section(d)
             lines.extend(section)
             if not section:

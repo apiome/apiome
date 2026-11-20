@@ -1,0 +1,132 @@
+{
+  "rule": "naming.schema-pascal-case",
+  "options": {
+    "optIn": [
+      "naming.schema-pascal-case"
+    ]
+  },
+  "finding": {
+    "path": "components.schemas.pet_record",
+    "message": "Schema 'pet_record' is not PascalCase."
+  },
+  "before": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/pet_record"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "pet_record": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "plan": [
+    {
+      "op": "replace",
+      "path": "/paths/~1pets/get/responses/200/content/application~1json/schema/$ref",
+      "value": "#/components/schemas/PetRecord"
+    },
+    {
+      "op": "move",
+      "path": "/components/schemas/PetRecord",
+      "from": "/components/schemas/pet_record"
+    }
+  ],
+  "after": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PetRecord"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "PetRecord": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

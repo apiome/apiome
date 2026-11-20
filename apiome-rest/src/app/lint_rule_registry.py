@@ -37,7 +37,16 @@ Sources aggregated (all derived from the live engines, so the registry cannot dr
   findings raised while overlays are applied (or a bare overlay is linted);
 * the intake-stage catalogue (:data:`app.intake_lint_rules.INTAKE_RULES`) — rules that
   describe the *source document as it arrived* rather than the model it produced (MFI-29.4's
-  unresolved external references), which no model-driven pack can emit.
+  unresolved external references), which no model-driven pack can emit;
+* the fixable OpenAPI rules (:func:`app.openapi_fix_rules.openapi_fix_rules`, GVM-3.1) — rules
+  evaluated on demand when a fix is asked for, never by the default lint.
+
+Every descriptor also publishes the rule's **fix capability** (GVM-3.1, #5869): ``fixable``,
+and for a fixable rule its ``fix_class``, ``wire_visible``, ``fix_scope``, ``fix_default`` and
+a one-line ``fix_summary`` — read from the :class:`~app.lint_engine.LintRule` itself — plus
+``fix_owner``, which says who repairs the rule's findings (:func:`app.lint_fix.fix_owner_for`):
+the deterministic ``engine``, the ``agent`` (documentation, examples and security findings,
+whose repair invents meaning) or a ``human``.
 
 Every descriptor also publishes the two fields the security score needs (ASP-1.3, #5921):
 ``owasp`` — the OWASP API Security Top 10 category ids a rule cites (declared on the
@@ -58,6 +67,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from .docs_site import guide_page
 from .intake_lint_rules import INTAKE_PACK, INTAKE_RULES
 from .lint_engine import (
+    LintRule,
     available_lint_formats,
     available_lint_paradigms,
     get_paradigm_rule_pack,
@@ -65,6 +75,8 @@ from .lint_engine import (
     load_format_rule_packs,
     unconditional_rule_packs,
 )
+from .lint_fix import fix_owner_for
+from .openapi_fix_rules import OPENAPI_FIX_PACK, openapi_fix_rule, openapi_fix_rules
 from .overlay_lint_rules import OVERLAY_PACK, OVERLAY_RULES
 from .owasp_api import validate_risk_ids
 from .schema_lint import OPENAPI_RULES
@@ -119,6 +131,16 @@ class LintRuleDescriptor:
         docs_anchor: Anchor slug into :data:`LINT_RULE_DOCS_PAGE` documenting the rule.
         owasp_ids: OWASP API Security Top 10 category ids the rule cites (ASP-1.3), in
             catalog order; empty for a rule that cites none.
+        fixable: Whether the rule carries a deterministic fix (GVM-3.1).
+        fix_class: ``structural`` / ``removal`` / ``fill-in`` / ``rename`` for a fixable
+            rule, else ``None``.
+        wire_visible: Whether the fix changes what clients see on the wire or in generated
+            code; ``None`` for a rule that is not fixable.
+        fix_summary: One line saying what the fix does; ``None`` when not fixable.
+        fix_scope: ``finding`` or ``document`` — what the fix may touch; ``None`` when not
+            fixable.
+        fix_default: Whether the fix is applied without an explicit opt-in; ``None`` when
+            not fixable.
     """
 
     rule_id: str
@@ -128,6 +150,17 @@ class LintRuleDescriptor:
     rationale: str
     docs_anchor: str
     owasp_ids: Tuple[str, ...] = ()
+    fixable: bool = False
+    fix_class: Optional[str] = None
+    wire_visible: Optional[bool] = None
+    fix_summary: Optional[str] = None
+    fix_scope: Optional[str] = None
+    fix_default: Optional[bool] = None
+
+    @property
+    def fix_owner(self) -> str:
+        """Who repairs this rule's findings: ``engine``, ``agent`` or ``human``."""
+        return fix_owner_for(self.category, self.fixable, self.pack)
 
     @property
     def weight(self) -> Optional[float]:
@@ -139,8 +172,10 @@ class LintRuleDescriptor:
     def as_dict(self) -> Dict[str, Any]:
         """Return the descriptor as a plain dict (snake_case keys).
 
-        Carries ``weight`` (``security`` rules only, else ``None``) and ``owasp`` (the cited
-        category ids, or ``None`` when the rule cites none). Blocking (error) rules
+        Carries ``weight`` (``security`` rules only, else ``None``), ``owasp`` (the cited
+        category ids, or ``None`` when the rule cites none) and the fix capability
+        (``fixable``, ``fix_owner`` and — for a fixable rule — ``fix_class``,
+        ``wire_visible``, ``fix_summary``, ``fix_scope``, ``fix_default``). Blocking (error) rules
         additionally carry CLX-4.3 transparency fields from
         :mod:`app.scanner_rule_transparency`.
         """
@@ -155,6 +190,13 @@ class LintRuleDescriptor:
             "docs_anchor": self.docs_anchor,
             "weight": self.weight,
             "owasp": list(self.owasp_ids) if self.owasp_ids else None,
+            "fixable": self.fixable,
+            "fix_class": self.fix_class,
+            "wire_visible": self.wire_visible,
+            "fix_summary": self.fix_summary,
+            "fix_scope": self.fix_scope,
+            "fix_default": self.fix_default,
+            "fix_owner": self.fix_owner,
         }
         return enrich_rule_dict(base, self.rule_id)
 
@@ -166,9 +208,12 @@ def _descriptor(
     severity: str,
     rationale: str,
     owasp_ids: Tuple[str, ...] = (),
+    fix_rule: Optional[LintRule] = None,
 ) -> LintRuleDescriptor:
     """Build one descriptor, deriving the docs anchor from the rule id.
 
+    :param fix_rule: The :class:`~app.lint_engine.LintRule` whose fix capability the
+        descriptor publishes; a rule without a fix (or ``None``) yields ``fixable=False``.
     :raises app.owasp_api.UnknownRiskError: when ``owasp_ids`` cites a category the OWASP API
         catalog does not define — a pack bug surfaced where the catalog is built, not later.
     """
@@ -180,7 +225,22 @@ def _descriptor(
         rationale=rationale,
         docs_anchor=docs_anchor_for(rule_id),
         owasp_ids=validate_risk_ids(owasp_ids),
+        **_fix_fields(fix_rule),
     )
+
+
+def _fix_fields(rule: Optional[LintRule]) -> Dict[str, Any]:
+    """Return the descriptor's fix fields for ``rule`` (empty when it carries no fix)."""
+    if rule is None or getattr(rule, "fix", None) is None:
+        return {}
+    return {
+        "fixable": True,
+        "fix_class": rule.fix_class,
+        "wire_visible": rule.wire_visible,
+        "fix_summary": rule.fix_summary,
+        "fix_scope": rule.fix_scope,
+        "fix_default": rule.fix_default,
+    }
 
 
 def _pack_descriptor(rule: Any, pack_label: str) -> LintRuleDescriptor:
@@ -192,6 +252,7 @@ def _pack_descriptor(rule: Any, pack_label: str) -> LintRuleDescriptor:
         rule.severity,
         rule.description,
         tuple(getattr(rule, "owasp_ids", ()) or ()),
+        fix_rule=rule,
     )
 
 
@@ -208,8 +269,20 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
     by_id: Dict[str, LintRuleDescriptor] = {}
 
     # 1. The OpenAPI spec linter's catalogue (rationales live alongside it in schema_lint).
+    #    A rule of it that gained a fix (GVM-3.1) publishes that fix from the fixable rules.
     for rule_id, (category, severity, rationale) in OPENAPI_RULES.items():
-        by_id[rule_id] = _descriptor(rule_id, _OPENAPI_PACK, category, severity, rationale)
+        by_id[rule_id] = _descriptor(
+            rule_id,
+            _OPENAPI_PACK,
+            category,
+            severity,
+            rationale,
+            fix_rule=openapi_fix_rule(rule_id),
+        )
+    #    The fixable OpenAPI rules that run on demand only (GVM-3.1): catalogued so a fix plan's
+    #    findings are attributable, never emitted by the default lint.
+    for rule in openapi_fix_rules():
+        by_id.setdefault(rule.rule_id, _pack_descriptor(rule, OPENAPI_FIX_PACK))
 
     # 2. Every unconditional pack (the cross-format common pack and the IXH-5.4
     #    example-conformance pack) — taken from the engine itself, so the catalogue lists

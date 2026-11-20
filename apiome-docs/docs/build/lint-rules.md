@@ -17,6 +17,11 @@ Blocking (`error`) rules additionally publish reference, remediation, false-posi
 fixture id, and scan-mode requirements (CLX-4.3 / #4861). See the scanner evaluation in
 `apiome-rest/docs/scanner_evaluation.md`.
 
+Every rule says who repairs its findings (**Fix owner**): the deterministic `engine`, the
+`agent`, or a `human`. A rule the engine can repair also publishes its **fix class**, whether
+the fix is wire-visible, what it may touch and whether it is applied by default — see
+[Auto-fix](./auto-fix.md).
+
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
 
@@ -29,12 +34,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Flag API keys sent in the query string.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 
 ### `a2a.duplicate-skill-id` {#a2a-duplicate-skill-id}
 
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag skill ids repeated within one card.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#a2a-duplicate-skill-id
 - **Remediation:** Give each skill in `skills` a unique `id` (rename the repeat, or merge the two skills if they are the same).
 - **False-positive guidance:** None expected: the A2A specification requires skill ids to be unique within a card.
@@ -47,12 +54,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Flag endpoints served over plain HTTP.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 
 ### `a2a.missing-required-field` {#a2a-missing-required-field}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Flag cards missing a field the A2A spec requires.
+- **Fix owner:** human
 
 ### `a2a.no-security` {#a2a-no-security}
 
@@ -60,6 +69,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Flag cards that declare no security at all.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 
 ### `a2a.security-undeclared-scheme` {#a2a-security-undeclared-scheme}
 
@@ -67,6 +77,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** error
 - **Rationale:** Flag security requirements that name an undefined scheme.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 - **Reference:** https://docs.apiome.dev/build/lint-rules#a2a-security-undeclared-scheme
 - **Remediation:** Define the scheme under `securitySchemes`, or correct the name in the card's or the skill's `security` list.
 - **False-positive guidance:** A card served to anonymous callers may omit schemes that only its authenticated extended card declares; import the extended card instead.
@@ -78,18 +89,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Flag skills with no description.
+- **Fix owner:** agent
 
 ### `a2a.skill-missing-tags` {#a2a-skill-missing-tags}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag skills with no tags.
+- **Fix owner:** human
 
 ### `a2a.skill-without-modes` {#a2a-skill-without-modes}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Flag skills with no input or output modes and no card default.
+- **Fix owner:** human
 
 ### `a2a.unknown-scheme-type` {#a2a-unknown-scheme-type}
 
@@ -97,6 +111,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Flag security schemes whose type A2A does not define.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 
 
 ## Pack: `acp`
@@ -106,18 +121,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Flag agents with no description.
+- **Fix owner:** agent
 
 ### `acp.capability-missing-description` {#acp-capability-missing-description}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Flag capabilities with no description.
+- **Fix owner:** agent
 
 ### `acp.duplicate-agent-name` {#acp-duplicate-agent-name}
 
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag agent names repeated within one listing.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#acp-duplicate-agent-name
 - **Remediation:** Rename one of the agents so every name in the `GET /agents` listing is unique.
 - **False-positive guidance:** A listing concatenated from two servers can repeat a name legitimately; import each server's listing separately.
@@ -129,36 +147,42 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Flag capability names repeated within one agent.
+- **Fix owner:** human
 
 ### `acp.invalid-agent-name` {#acp-invalid-agent-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Flag agent names that are not RFC 1123 labels.
+- **Fix owner:** human
 
 ### `acp.missing-license` {#acp-missing-license}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag agents that declare no SPDX license.
+- **Fix owner:** human
 
 ### `acp.missing-tags` {#acp-missing-tags}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag agents with no tags and no domains.
+- **Fix owner:** human
 
 ### `acp.no-capabilities` {#acp-no-capabilities}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag agents that declare no capabilities.
+- **Fix owner:** human
 
 ### `acp.untyped-content` {#acp-untyped-content}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Flag agents whose input or output content types are undeclared or */*.
+- **Fix owner:** human
 
 
 ## Pack: `agents-manifest`
@@ -168,6 +192,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Flag endpoint and action addresses that do not resolve to a URL.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#agents-manifest-broken-endpoint-ref
 - **Remediation:** Write the endpoint as an absolute https URL, or give the manifest its site (`site.url` in agents.json, `domain` in agent.json) so relative paths resolve.
 - **False-positive guidance:** An agents.txt or llms.txt imported from a file has no site, so a relative path cannot resolve; import it from its URL (or with discovery) instead.
@@ -179,12 +204,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Flag AWP action ids used by more than one action.
+- **Fix owner:** human
 
 ### `agents-manifest.duplicate-endpoint` {#agents-manifest-duplicate-endpoint}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Flag a protocol endpoint declared more than once.
+- **Fix owner:** human
 
 ### `agents-manifest.insecure-endpoint` {#agents-manifest-insecure-endpoint}
 
@@ -192,18 +219,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Flag agent endpoints served over plain http.
 - **Security weight:** 1.0
+- **Fix owner:** agent
 
 ### `agents-manifest.no-agent-endpoints` {#agents-manifest-no-agent-endpoints}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag manifests that declare no A2A, ACP or MCP endpoint.
+- **Fix owner:** human
 
 ### `agents-manifest.undeclared-via` {#agents-manifest-undeclared-via}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Flag AWP actions routed via a protocol the manifest does not declare.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#agents-manifest-undeclared-via
 - **Remediation:** Declare the protocol under `protocols` with its `endpoint`, or correct the action's `via`.
 - **False-positive guidance:** None expected: the Agent Web Protocol requires every `via` to name a declared protocol.
@@ -218,6 +248,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** drafter, the reference API Blueprint parser, should report no errors.
+- **Fix owner:** human
 - **Reference:** https://github.com/apiaryio/drafter
 - **Remediation:** Fix the line drafter names: define the missing data structure, break the inheritance cycle, or indent with spaces.
 - **False-positive guidance:** Not a false positive: drafter reports errors only for blueprints it cannot parse correctly. Only servers with the bundled drafter report it.
@@ -229,6 +260,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** drafter, the reference API Blueprint parser, should report no warnings.
+- **Fix owner:** human
 
 
 ## Pack: `arazzo`
@@ -238,6 +270,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** version
 - **Default severity:** error
 - **Rationale:** An AsyncAPI sourceDescription requires Arazzo 1.1 or newer.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-async-source-before-1-1
 - **Remediation:** Declare `arazzo: 1.1.0` at the top of the document, or change the source description's `type` to one Arazzo 1.0 defines (`openapi` or `arazzo`).
 - **False-positive guidance:** Only false if a runner is known to accept the 1.1 source types under a 1.0 marker; the published 1.0 schema does not, so prefer declaring 1.1.
@@ -249,6 +282,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationId must resolve to an embedded sourceDescription.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-dangling-operation-id
 - **Remediation:** Point the step's operationId at an operation declared in an embedded OpenAPI sourceDescription, or remove the step.
 - **False-positive guidance:** Only false if the engine cannot see an operation that exists only in an external (non-embedded) source — embed the description or switch to operationRef.
@@ -260,18 +294,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every workflow step should declare successCriteria.
+- **Fix owner:** human
 
 ### `arazzo.unused-workflow-input` {#arazzo-unused-workflow-input}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Workflow inputs should be referenced by at least one step.
+- **Fix owner:** human
 
 ### `arzzo.unresolvable-operation-ref` {#arzzo-unresolvable-operation-ref}
 
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationRef must point at a declared sourceDescription.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#arzzo-unresolvable-operation-ref
 - **Remediation:** Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a declared source, or fix the sourceDescription name.
 - **False-positive guidance:** External HTTP operationRef targets are out of scope for static resolution — prefer embedded sources for gateable workflows.
@@ -286,12 +323,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** warning
 - **Rationale:** ANY was removed from ASN.1 in 1994.
+- **Fix owner:** human
 
 ### `asn1.choice-tags-distinct` {#asn1-choice-tags-distinct}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** CHOICE alternatives must have distinct tags.
+- **Fix owner:** human
 - **Reference:** https://www.itu.int/rec/T-REC-X.680
 - **Remediation:** Tag the alternatives distinctly ([0], [1] …), or use AUTOMATIC TAGS with no explicit tags.
 - **False-positive guidance:** Not a false positive: X.680 requires distinct tags; AUTOMATIC TAGS modules whose alternatives carry no tag are not reported.
@@ -303,24 +342,28 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A DEFAULT must be in range and name only declared items.
+- **Fix owner:** human
 
 ### `asn1.extension-marker` {#asn1-extension-marker}
 
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** A SEQUENCE, SET, CHOICE or ENUMERATED should carry an extension marker.
+- **Fix owner:** human
 
 ### `asn1.legacy-string-type` {#asn1-legacy-string-type}
 
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** Legacy character-string types should be UTF8String.
+- **Fix owner:** human
 
 ### `asn1.sequence-tags-unambiguous` {#asn1-sequence-tags-unambiguous}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** An optional SEQUENCE component's tag must differ from the components that may follow it.
+- **Fix owner:** human
 - **Reference:** https://www.itu.int/rec/T-REC-X.680
 - **Remediation:** Tag the optional component and the ones that may follow it distinctly, or use AUTOMATIC TAGS.
 - **False-positive guidance:** Not a false positive: the ambiguity is a compile-time error in X.680.
@@ -332,6 +375,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** SET components must have distinct tags.
+- **Fix owner:** human
 - **Reference:** https://www.itu.int/rec/T-REC-X.680
 - **Remediation:** Give each SET component its own tag, or use AUTOMATIC TAGS with no explicit tags.
 - **False-positive guidance:** Not a false positive: X.680 requires distinct tags in a SET.
@@ -343,6 +387,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every referenced type must be built in, assigned in the module or imported.
+- **Fix owner:** human
 - **Reference:** https://www.itu.int/rec/T-REC-X.680
 - **Remediation:** Assign the type in the module, or add it to IMPORTS with the module it comes from.
 - **False-positive guidance:** A type from another module that is used without an IMPORTS entry is reported; import the defining module alongside this one.
@@ -357,30 +402,35 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every event message should carry an author-given name.
+- **Fix owner:** agent
 
 ### `asyncapi.message-missing-payload` {#asyncapi-message-missing-payload}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every event message should declare a payload schema.
+- **Fix owner:** human
 
 ### `asyncapi.message-unstable-name` {#asyncapi-message-unstable-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Message names should be author-chosen, not generator output.
+- **Fix owner:** human
 
 ### `asyncapi.server-missing-protocol` {#asyncapi-server-missing-protocol}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every server should declare its transport protocol.
+- **Fix owner:** human
 
 ### `asyncapi.server-missing-security` {#asyncapi-server-missing-security}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Servers should usually declare a security scheme.
+- **Fix owner:** human
 
 
 ## Pack: `avro`
@@ -390,6 +440,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** An Avro alias must not collide with another field's or named type's name or alias.
+- **Fix owner:** human
 - **Reference:** https://avro.apache.org/docs/1.12.0/specification/
 - **Remediation:** Remove or rename the alias so it names only the element it belongs to.
 - **False-positive guidance:** Not a false positive: an alias shared by two fields of a record, or two named types, matches both during resolution.
@@ -401,12 +452,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** An Avro doc should be a string on a field or named type, where tools keep it.
+- **Fix owner:** agent
 
 ### `avro.invalid-alias` {#avro-invalid-alias}
 
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** An Avro alias must be a valid Avro name.
+- **Fix owner:** human
 - **Reference:** https://avro.apache.org/docs/1.12.0/specification/
 - **Remediation:** Spell the alias as an Avro name ([A-Za-z_][A-Za-z0-9_]*; dotted parts for a named type's full name).
 - **False-positive guidance:** Not a false positive: the Avro specification requires aliases to be valid names.
@@ -418,6 +471,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** An Avro default must be a value of its type (a union's, of its first branch).
+- **Fix owner:** human
 - **Reference:** https://avro.apache.org/docs/1.12.0/specification/
 - **Remediation:** Change the default to a value of the field's type; for a union, put the branch the default belongs to first (for null, write ["null", T]).
 - **False-positive guidance:** Not a false positive: the Avro specification requires a default to match the field's schema, and a union's default its first branch.
@@ -429,6 +483,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** An Avro union must not nest a union or repeat a branch.
+- **Fix owner:** human
 - **Reference:** https://avro.apache.org/docs/1.12.0/specification/
 - **Remediation:** Flatten nested unions into one, and list each unnamed type and each named type only once.
 - **False-positive guidance:** Not a false positive: the Avro specification forbids unions that directly contain unions or repeat a type.
@@ -440,18 +495,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An optional ["null", T] Avro field should declare "default": null.
+- **Fix owner:** human
 
 ### `avro.optional-union-null-first` {#avro-optional-union-null-first}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An optional Avro field should be ["null", T] so it can default to null.
+- **Fix owner:** human
 
 ### `avro.redundant-alias` {#avro-redundant-alias}
 
 - **Category:** naming
 - **Default severity:** info
 - **Rationale:** An Avro alias should differ from the name it aliases.
+- **Fix owner:** human
 
 
 ## Pack: `capnproto`
@@ -461,6 +519,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Ordinals run from @0 without a gap.
+- **Fix owner:** human
 - **Reference:** https://capnproto.org/language.html#structs
 - **Remediation:** Renumber the members so their ordinals run @0, @1, @2…; to retire a member, keep it and rename it (obsolete…) rather than leaving a gap.
 - **False-positive guidance:** Not a false positive: the Cap'n Proto compiler requires ordinals to be sequential from zero.
@@ -472,6 +531,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A Cap'n Proto schema declares its @0x… file id.
+- **Fix owner:** human
 - **Reference:** https://capnproto.org/language.html#unique-ids
 - **Remediation:** Run `capnp id` and add the id it prints, followed by `;`, at the top of the file.
 - **False-positive guidance:** Not a false positive: the Cap'n Proto compiler rejects a file without an id.
@@ -483,6 +543,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Ordinals must be unique within a struct, interface or enum.
+- **Fix owner:** human
 - **Reference:** https://capnproto.org/language.html#structs
 - **Remediation:** Give each member its own `@N`; never reuse the ordinal of another member.
 - **False-positive guidance:** Not a false positive: the Cap'n Proto compiler rejects duplicate ordinals.
@@ -497,72 +558,84 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Two 88-level conditions of one item should not test the same value.
+- **Fix owner:** human
 
 ### `cobolcopybook.duplicate-name` {#cobolcopybook-duplicate-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** A data name other than FILLER should be declared once.
+- **Fix owner:** human
 
 ### `cobolcopybook.filler-unused` {#cobolcopybook-filler-unused}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** A FILLER is storage no program can read by name.
+- **Fix owner:** agent
 
 ### `cobolcopybook.odo-controller-declared` {#cobolcopybook-odo-controller-declared}
 
 - **Category:** reference
 - **Default severity:** warning
 - **Rationale:** A DEPENDING ON must name an item the copybook declares.
+- **Fix owner:** human
 
 ### `cobolcopybook.odo-controller-precedes` {#cobolcopybook-odo-controller-precedes}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A DEPENDING ON controller must be declared before its table, outside it.
+- **Fix owner:** human
 
 ### `cobolcopybook.odo-trailing-items` {#cobolcopybook-odo-trailing-items}
 
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** Items after a variable-length table have offsets that vary at run time.
+- **Fix owner:** human
 
 ### `cobolcopybook.packed-odd-digits` {#cobolcopybook-packed-odd-digits}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** A COMP-3 item should declare an odd number of digits.
+- **Fix owner:** human
 
 ### `cobolcopybook.redefines-discriminated` {#cobolcopybook-redefines-discriminated}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A REDEFINES overlay needs an earlier item whose 88-levels say which layout holds data.
+- **Fix owner:** human
 
 ### `cobolcopybook.redefines-fits` {#cobolcopybook-redefines-fits}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A redefining layout must not be larger than the item it redefines.
+- **Fix owner:** human
 
 ### `cobolcopybook.redefines-target-declared` {#cobolcopybook-redefines-target-declared}
 
 - **Category:** reference
 - **Default severity:** warning
 - **Rationale:** A REDEFINES must name an earlier item of the same group.
+- **Fix owner:** human
 
 ### `cobolcopybook.redefines-variable` {#cobolcopybook-redefines-variable}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An OCCURS DEPENDING ON table cannot be redefined or redefine.
+- **Fix owner:** human
 
 ### `cobolcopybook.storage-sized` {#cobolcopybook-storage-sized}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every elementary item's storage length should be computable.
+- **Fix owner:** human
 
 
 ## Pack: `common`
@@ -572,48 +645,56 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** The API artifact should carry a top-level description.
+- **Fix owner:** agent
 
 ### `common.channel-missing-description` {#common-channel-missing-description}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every event channel should describe itself.
+- **Fix owner:** agent
 
 ### `common.field-missing-description` {#common-field-missing-description}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every field should describe itself.
+- **Fix owner:** agent
 
 ### `common.message-missing-description` {#common-message-missing-description}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every message payload should describe itself.
+- **Fix owner:** agent
 
 ### `common.operation-missing-description` {#common-operation-missing-description}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Every operation should describe what it does.
+- **Fix owner:** agent
 
 ### `common.type-missing-description` {#common-type-missing-description}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Every named type should describe itself.
+- **Fix owner:** agent
 
 ### `common.unstable-field-name` {#common-unstable-field-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Field names should be author-chosen, not generator output.
+- **Fix owner:** human
 
 ### `common.unstable-type-name` {#common-unstable-type-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Type names should be author-chosen, not generator output.
+- **Fix owner:** human
 
 
 ## Pack: `corbaidl`
@@ -623,18 +704,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** An any value hides what it carries.
+- **Fix owner:** human
 
 ### `corbaidl.base-interface-declared` {#corbaidl-base-interface-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A base interface should be declared in the file.
+- **Fix owner:** human
 
 ### `corbaidl.exception-as-type` {#corbaidl-exception-as-type}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** An exception may only be raised, not used as a type.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Declare a struct with the same members for the value, and keep the exception for raising.
 - **False-positive guidance:** Not a false positive: IDL compilers reject an exception used as a type.
@@ -646,6 +730,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** A declared name must not be an IDL keyword (compared case-insensitively).
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Rename the identifier, or escape it with a leading underscore (_sequence).
 - **False-positive guidance:** Not a false positive: the comparison with keywords is case-insensitive by definition.
@@ -657,6 +742,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** An interface may not inherit from itself.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Remove the base that closes the cycle.
 - **False-positive guidance:** Not a false positive: the inheritance graph must be acyclic.
@@ -668,6 +754,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Struct members and operation parameters must not collide case-insensitively.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Rename one of the colliding members or parameters.
 - **False-positive guidance:** Not a false positive: IDL compares identifiers case-insensitively.
@@ -679,12 +766,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** The untyped Object reference hides which interface the caller gets.
+- **Fix owner:** human
 
 ### `corbaidl.oneway-signature` {#corbaidl-oneway-signature}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A oneway operation returns void, takes only in parameters and raises nothing.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Make the operation two-way, or make it void, in-only and raise-free.
 - **False-positive guidance:** Not a false positive: IDL compilers reject such a oneway operation.
@@ -696,6 +785,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** An interface's operations and attributes, inherited ones included, must not collide.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Give each operation, and each attribute, a distinct name.
 - **False-positive guidance:** Not a false positive: a redefined inherited operation is rejected too.
@@ -707,6 +797,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A raises clause may only name declared exceptions.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Declare the name as an exception, or remove it from the raises clause.
 - **False-positive guidance:** An exception declared in an #include is reported as undeclared; import the included definitions too.
@@ -718,6 +809,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every type must be an IDL base type or declared in the file.
+- **Fix owner:** human
 - **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
 - **Remediation:** Declare the type in the file, or import the file that declares it together with this one.
 - **False-positive guidance:** A name from an #include is reported because included files are not read; import the included definitions too before treating it as a defect of the contract.
@@ -732,6 +824,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** info
 - **Rationale:** Personal data that is not labelled cannot be governed, masked or audited.
+- **Fix owner:** human
 - **Remediation:** Classify the columns that carry personal or restricted data — an ODCS `classification` / `criticalDataElement`, or a dbt `meta` marker.
 - **Fixture:** `catalog/data-contract-classification-missing`
 
@@ -740,6 +833,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** A column nobody described is a column consumers guess at.
+- **Fix owner:** agent
 - **Remediation:** Describe the table's columns: at least three quarters of them need a `description` before the table reads as documented.
 - **Fixture:** `catalog/data-contract-column-description-coverage`
 
@@ -748,6 +842,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** info
 - **Rationale:** Freshness is the service level consumers of a dataset ask about first.
+- **Fix owner:** human
 - **Remediation:** State a freshness expectation — an ODCS `frequency`/`latency` SLA property, or a dbt source `freshness` block with `warn_after`/`error_after`.
 - **Fixture:** `catalog/data-contract-freshness-missing`
 
@@ -756,6 +851,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** A dataset nobody owns is a dataset nobody fixes.
+- **Fix owner:** human
 - **Remediation:** Declare an owner: an ODCS `team[]` member, a dbt `meta.owner`, or an exposure `owner` block naming the team accountable for the dataset.
 - **Fixture:** `catalog/data-contract-owner-missing`
 
@@ -764,6 +860,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** An ownership entry with no name, address or channel cannot actually be reached.
+- **Fix owner:** human
 - **Remediation:** Give the ownership entry a `name`, `username`, `email` or `channel` — a role with no contact is a label, not an owner.
 - **Fixture:** `catalog/data-contract-owner-unresolvable`
 
@@ -772,6 +869,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Without a declared key, a row cannot be addressed, deduplicated or joined reliably.
+- **Fix owner:** human
 - **Remediation:** Declare row identity: an ODCS `primaryKey`/`unique` property, a dbt `unique` test, or a model-contract `primary_key` constraint.
 - **Fixture:** `catalog/data-contract-primary-key-missing`
 
@@ -780,6 +878,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** A critical column with no declared check is an expectation held only in somebody's head.
+- **Fix owner:** human
 - **Remediation:** Attach a quality rule to the column — an ODCS `quality[]` entry, or a dbt data test — or attach a table-level rule that covers it.
 - **Fixture:** `catalog/data-contract-quality-rules-missing`
 
@@ -788,6 +887,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** info
 - **Rationale:** Undocumented retention is a compliance question nobody can answer from the contract.
+- **Fix owner:** human
 - **Remediation:** State how long the data is kept: an ODCS `retention` SLA property, or a custom property naming the retention window.
 - **Fixture:** `catalog/data-contract-retention-undocumented`
 
@@ -796,6 +896,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** A contract that never says where the data is served describes a table nobody can find.
+- **Fix owner:** human
 - **Remediation:** Declare the serving location — an ODCS `servers[]` entry, or the database/schema/alias a dbt resource materializes to.
 - **Fixture:** `catalog/data-contract-server-missing`
 
@@ -804,6 +905,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** Without a stated service level, a consumer cannot tell a nightly batch from a streaming table.
+- **Fix owner:** human
 - **Remediation:** Declare `slaProperties[]` (ODCS) or a source `freshness` block (dbt) stating the latency, frequency or availability the dataset promises.
 - **Fixture:** `catalog/data-contract-sla-missing`
 
@@ -812,6 +914,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** info
 - **Rationale:** A consumer cannot tell a draft dataset from a production one without a status.
+- **Fix owner:** human
 - **Remediation:** Declare a lifecycle `status` (`draft`, `active`, `deprecated`, `retired`).
 - **Fixture:** `catalog/data-contract-status-missing`
 
@@ -820,6 +923,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** governance
 - **Default severity:** warning
 - **Rationale:** An unversioned contract cannot be changed safely: nothing distinguishes revisions.
+- **Fix owner:** human
 - **Remediation:** Declare the contract's own `version` (ODCS `version`, a dbt project `version`), so consumers can pin one.
 - **Fixture:** `catalog/data-contract-version-missing`
 
@@ -831,6 +935,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** UNT, UNE and UNZ must count the segments, messages and groups they close.
+- **Fix owner:** human
 - **Reference:** https://unece.org/trade/uncefact/introducing-unedifact
 - **Remediation:** Set UNT 0074 to the segments from UNH to UNT inclusive, UNE 0060 to the group's messages and UNZ 0036 to the interchange's groups (or its messages when it has none).
 - **False-positive guidance:** Not a false positive: the counts are the receiver's integrity check. The interchange still imports, with the declared and observed figures recorded.
@@ -842,6 +947,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** UNT, UNE and UNZ must repeat the control reference of UNH, UNG and UNB.
+- **Fix owner:** human
 - **Reference:** https://unece.org/trade/uncefact/introducing-unedifact
 - **Remediation:** Write the header's reference into the trailer: UNT 0062 = UNH 0062, UNE 0048 = UNG 0048, UNZ 0020 = UNB 0020.
 - **False-positive guidance:** Not a false positive: ISO 9735 requires the pair to match, and every receiver checks it.
@@ -853,18 +959,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** UNH must name the message version and release (the directory).
+- **Fix owner:** human
 
 ### `edifact.message-references-unique` {#edifact-message-references-unique}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Message references must be unique within a group or interchange.
+- **Fix owner:** human
 
 ### `edifact.test-interchange` {#edifact-test-interchange}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** UNB 0035 '1' marks the interchange as test data.
+- **Fix owner:** human
 
 
 ## Pack: `edix12`
@@ -874,6 +983,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** SE02, GE02 and IEA02 must repeat the control number of ST02, GS06 and ISA13.
+- **Fix owner:** human
 - **Reference:** https://x12.org/products/transaction-sets
 - **Remediation:** Write the header's control number into the trailer: SE02 = ST02, GE02 = GS06, IEA02 = ISA13.
 - **False-positive guidance:** Not a false positive: every X12 receiver compares the pair before it reads the envelope.
@@ -885,12 +995,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Control numbers must be unique among a group's sets and an interchange's groups.
+- **Fix owner:** human
 
 ### `edix12.control-totals-match` {#edix12-control-totals-match}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** SE01, GE01 and IEA01 must count the segments, transaction sets and groups they close.
+- **Fix owner:** human
 - **Reference:** https://x12.org/products/transaction-sets
 - **Remediation:** Set SE01 to the segments from ST to SE inclusive, GE01 to the group's transaction sets and IEA01 to the interchange's functional groups.
 - **False-positive guidance:** Not a false positive: the totals are the receiver's integrity check. A segment pyx12 skips (an empty one) still counts, so recount from the file.
@@ -902,24 +1014,28 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** GS01 should be the functional identifier X12 assigns the transaction set.
+- **Fix owner:** human
 
 ### `edix12.test-interchange` {#edix12-test-interchange}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** ISA15 'T' marks the interchange as test data.
+- **Fix owner:** human
 
 ### `edix12.usage-indicator-valid` {#edix12-usage-indicator-valid}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** ISA15 must be 'P', 'T' or 'I'.
+- **Fix owner:** human
 
 ### `edix12.version-declared` {#edix12-version-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** GS08 must name the X12 version the group follows.
+- **Fix owner:** human
 
 
 ## Pack: `examples`
@@ -929,6 +1045,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** validation
 - **Default severity:** warning
 - **Rationale:** An example that does not satisfy its own schema ships a payload consumers cannot use — docs render it, mocks replay it, and generated clients seed fixtures from it.
+- **Fix owner:** agent
 
 
 ## Pack: `fhir`
@@ -938,30 +1055,35 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Each resource a FHIR server offers should name the profile it conforms to.
+- **Fix owner:** agent
 
 ### `fhir.capability-search` {#fhir-capability-search}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A FHIR resource that supports search should declare its search parameters.
+- **Fix owner:** human
 
 ### `fhir.capability-version` {#fhir-capability-version}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A FHIR CapabilityStatement should say which fhirVersion the server speaks.
+- **Fix owner:** human
 
 ### `fhir.element-short` {#fhir-element-short}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every element a FHIR profile constrains should have a short label or a definition.
+- **Fix owner:** agent
 
 ### `fhir.profile-base` {#fhir-profile-base}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A FHIR constraint profile must name the baseDefinition it constrains.
+- **Fix owner:** human
 - **Reference:** https://hl7.org/fhir/R4/structuredefinition-definitions.html#StructureDefinition.baseDefinition
 - **Remediation:** Set `baseDefinition` to the canonical url of the profile or base resource it constrains (for example `http://hl7.org/fhir/StructureDefinition/Patient`).
 - **False-positive guidance:** Not a false positive: FHIR requires a baseDefinition whenever derivation is `constraint` (invariant sdf-4).
@@ -973,12 +1095,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A FHIR profile should be active, not draft, retired or unknown.
+- **Fix owner:** human
 
 ### `fhir.profile-url` {#fhir-profile-url}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A FHIR profile must have a canonical url.
+- **Fix owner:** human
 - **Reference:** https://hl7.org/fhir/R4/structuredefinition.html
 - **Remediation:** Give the StructureDefinition a canonical `url`, typically `<publisher base>/StructureDefinition/<id>`, and keep it stable across versions.
 - **False-positive guidance:** Not a false positive: StructureDefinition.url is required (1..1) in every FHIR release.
@@ -990,6 +1114,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A FHIR profile should say which fhirVersion (R4, R5, R6) it targets.
+- **Fix owner:** human
 
 
 ## Pack: `fix-orchestra`
@@ -999,42 +1124,64 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** No two codes of a code set may share a wire value.
+- **Fix owner:** human
+- **Reference:** https://www.fixtrading.org/standards/fix-orchestra/
+- **Remediation:** Give each code of the code set its own value.
+- **False-positive guidance:** Not a false positive: the value is all a FIX message carries for a coded field.
+- **Fixture:** `catalog/fix-orchestra-code-values-unique`
+- **Scan modes:** `lint`
 
 ### `fix-orchestra.codeset-not-empty` {#fix-orchestra-codeset-not-empty}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A code set should declare at least one code.
+- **Fix owner:** human
 
 ### `fix-orchestra.conditional-rule-declared` {#fix-orchestra-conditional-rule-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A conditional field should declare the rule that says when it is required.
+- **Fix owner:** human
 
 ### `fix-orchestra.message-msgtype-declared` {#fix-orchestra-message-msgtype-declared}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every message must declare a msgType.
+- **Fix owner:** human
+- **Reference:** https://www.fixtrading.org/standards/fix-orchestra/
+- **Remediation:** Give the message the msgType its counterparties send in tag 35 (D for NewOrderSingle).
+- **False-positive guidance:** Not a false positive: every FIX engine dispatches on tag 35, so a message without one can never be received.
+- **Fixture:** `catalog/fix-orchestra-message-msgtype-declared`
+- **Scan modes:** `lint`
 
 ### `fix-orchestra.message-not-empty` {#fix-orchestra-message-not-empty}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A message should declare at least one field, component or group.
+- **Fix owner:** human
 
 ### `fix-orchestra.msgtype-unique` {#fix-orchestra-msgtype-unique}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** No two base-scenario messages may share a msgType.
+- **Fix owner:** human
+- **Reference:** https://www.fixtrading.org/standards/fix-orchestra/
+- **Remediation:** Give each message its own msgType, or model the variant as a scenario of the one message.
+- **False-positive guidance:** Scenarios of one message share its msgType by design and are not reported; only two base-scenario messages are.
+- **Fixture:** `catalog/fix-orchestra-msgtype-unique`
+- **Scan modes:** `lint`
 
 ### `fix-orchestra.repository-version-declared` {#fix-orchestra-repository-version-declared}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** The repository should name the FIX version it describes.
+- **Fix owner:** agent
 
 
 ## Pack: `flatbuffers`
@@ -1044,6 +1191,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A table declares an id on every field or on none.
+- **Fix owner:** human
 - **Reference:** https://flatbuffers.dev/schema/#attributes
 - **Remediation:** Add `(id: N)` to the table's remaining fields (keeping the ids they have today), or remove it from all of them.
 - **False-positive guidance:** Not a false positive: flatc rejects a table where only some fields declare an id.
@@ -1055,18 +1203,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** info
 - **Rationale:** A FlatBuffers schema should declare a namespace.
+- **Fix owner:** human
 
 ### `flatbuffers.root-type-declared` {#flatbuffers-root-type-declared}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A FlatBuffers schema should declare its root_type.
+- **Fix owner:** human
 
 ### `flatbuffers.unique-field-ids` {#flatbuffers-unique-field-ids}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Field ids must be unique within a table.
+- **Fix owner:** human
 - **Reference:** https://flatbuffers.dev/schema/#tables
 - **Remediation:** Give each field of the table its own `(id: N)`; keep a removed field as `(deprecated)` so its id stays taken.
 - **False-positive guidance:** Not a false positive: flatc rejects a table whose fields share an id, so the schema cannot be compiled as written.
@@ -1081,12 +1232,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every operation argument should describe itself.
+- **Fix owner:** agent
 
 ### `graphql.composition-error` {#graphql-composition-error}
 
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A composition error reported by `rover supergraph compose` over the imported subgraph set.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-error
 - **Remediation:** Fix the subgraph the finding names so the set composes (run `rover supergraph compose` locally for the full report), then re-import.
 - **False-positive guidance:** The verdict is captured at import time; if the subgraphs changed since, re-import the set to refresh it.
@@ -1098,6 +1251,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A @key(fields:) selection must name fields its type declares in that subgraph.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-invalid-key
 - **Remediation:** Make the @key selection reference fields the type declares in the named subgraph (declare the field, or fix the selection).
 - **False-positive guidance:** Nested key selections are checked at the top level only; a top-level field reported missing is genuinely undeclared in that subgraph's file.
@@ -1109,6 +1263,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A field resolved by more than one subgraph must be @shareable in every subgraph that resolves it.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-non-shareable-field
 - **Remediation:** Mark the field @shareable in every subgraph that resolves it, mark the stub copies @external, or move the field to a single owning subgraph.
 - **False-positive guidance:** Key fields and @external stubs are already exempt; a hit means two subgraphs genuinely both resolve the field.
@@ -1120,6 +1275,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A @requires/@provides selection must reference fields some subgraph declares.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-unresolvable-selection
 - **Remediation:** Point the @requires/@provides selection at fields declared on the target type in some subgraph (declare the field there, or fix the selection).
 - **False-positive guidance:** The check unions declarations across the whole set; a hit means no subgraph declares the selected field at all.
@@ -1131,36 +1287,42 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every enum value should describe itself.
+- **Fix owner:** agent
 
 ### `graphql.naming-argument-camel-case` {#graphql-naming-argument-camel-case}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Operation arguments should be camelCase.
+- **Fix owner:** human
 
 ### `graphql.naming-enum-value-upper-case` {#graphql-naming-enum-value-upper-case}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Enum values should be UPPER_CASE.
+- **Fix owner:** human
 
 ### `graphql.naming-field-camel-case` {#graphql-naming-field-camel-case}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Fields and operations should be camelCase.
+- **Fix owner:** human
 
 ### `graphql.naming-type-pascal-case` {#graphql-naming-type-pascal-case}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Type definitions should be PascalCase.
+- **Fix owner:** human
 
 ### `graphql.require-deprecation-reason` {#graphql-require-deprecation-reason}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** A @deprecated entity should carry a deprecation reason.
+- **Fix owner:** agent
 
 
 ## Pack: `hl7v2`
@@ -1170,36 +1332,47 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** MSH-10 must carry a message control id.
+- **Fix owner:** human
 
 ### `hl7v2.message-type-declared` {#hl7v2-message-type-declared}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** MSH-9 must name the message type.
+- **Fix owner:** human
+- **Reference:** https://www.hl7.org/implement/standards/product_brief.cfm?product_id=185
+- **Remediation:** Fill MSH-9 with the message code and trigger event (ADT^A01, ORU^R01 ...).
+- **False-positive guidance:** Not a false positive: MSH-9 is required in every HL7 v2 version.
+- **Fixture:** `catalog/hl7v2-message-type-declared`
+- **Scan modes:** `lint`
 
 ### `hl7v2.processing-id-declared` {#hl7v2-processing-id-declared}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** MSH-11 should say whether the message is production, training or debugging.
+- **Fix owner:** human
 
 ### `hl7v2.standard-encoding-characters` {#hl7v2-standard-encoding-characters}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** MSH-1 and MSH-2 should be the conventional '|' and '^~\&'.
+- **Fix owner:** human
 
 ### `hl7v2.trigger-event-declared` {#hl7v2-trigger-event-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** MSH-9 should carry a trigger event next to the message code.
+- **Fix owner:** human
 
 ### `hl7v2.version-declared` {#hl7v2-version-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** MSH-12 must name the HL7 version.
+- **Fix owner:** human
 
 
 ## Pack: `intake`
@@ -1209,12 +1382,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An external $ref pointing at a non-public address (loopback, RFC1918, link-local, or the cloud metadata endpoint) or at a non-HTTP scheme is refused by the SSRF guard and is never fetched. Publish the referenced document at a public HTTPS URL, or bundle it into the import instead of referencing it.
+- **Fix owner:** human
 
 ### `intake.unresolved-external-ref` {#intake-unresolved-external-ref}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An external $ref that is never resolved leaves the imported model incomplete: the referenced messages, schemas, or types are missing from every downstream view (diff, lint, export) with no indication that anything was dropped. Enable remote $ref resolution for the import, bundle the referenced documents into the upload, or inline the definitions in the source document.
+- **Fix owner:** human
 
 
 ## Pack: `iso8583`
@@ -1224,42 +1399,54 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every data element should declare its length.
+- **Fix owner:** human
 
 ### `iso8583.de-number-valid` {#iso8583-de-number-valid}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every data element number must be in 2–128.
+- **Fix owner:** human
+- **Reference:** https://www.iso.org/standard/31628.html
+- **Remediation:** Number the element within 2-128, or move a private field into one of the private-use elements (DE 48, DE 60-63, DE 120-127).
+- **False-positive guidance:** Not a false positive for ISO 8583:1987/1993 messages. A network with a tertiary bitmap needs its own field map.
+- **Fixture:** `catalog/iso8583-de-number-valid`
+- **Scan modes:** `lint`
 
 ### `iso8583.de-type-known` {#iso8583-de-type-known}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every data element type should be an ISO 8583 type code.
+- **Fix owner:** human
 
 ### `iso8583.mti-known` {#iso8583-mti-known}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every MTI digit must be one the standard assigns.
+- **Fix owner:** human
 
 ### `iso8583.response-code-on-response` {#iso8583-response-code-on-response}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A response or acknowledgement should carry DE 39 (Response Code).
+- **Fix owner:** human
 
 ### `iso8583.stan-present` {#iso8583-stan-present}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** DE 11 (System Trace Audit Number) should be present.
+- **Fix owner:** human
 
 ### `iso8583.transmission-datetime-present` {#iso8583-transmission-datetime-present}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** DE 7 (Transmission Date and Time) should be present.
+- **Fix owner:** human
 
 
 ## Pack: `k8s-crd`
@@ -1269,12 +1456,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Flag required lists with missing, duplicate, or undescribed fields.
+- **Fix owner:** human
 
 ### `k8s-crd.structural-schema-pruning` {#k8s-crd-structural-schema-pruning}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Flag non-structural JSON Schema keywords and preserve-unknown-fields hygiene issues that affect Kubernetes pruning.
+- **Fix owner:** human
 
 
 ## Pack: `llm-tools`
@@ -1284,6 +1473,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag colliding tool names within a bundle.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#llm-tools-duplicate-tool-name
 - **Remediation:** Give each tool a unique `name` within the bundle (rename or drop duplicates).
 - **False-positive guidance:** Cross-dialect wrappers that intentionally alias the same tool should still expose a single canonical name to agents.
@@ -1295,30 +1485,35 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** quality
 - **Default severity:** warning
 - **Rationale:** Flag parameters without descriptions.
+- **Fix owner:** human
 
 ### `llm-tools.prefer-enum-over-freetext` {#llm-tools-prefer-enum-over-freetext}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag free-text parameters that look enumerable.
+- **Fix owner:** human
 
 ### `llm-tools.required-field-hygiene` {#llm-tools-required-field-hygiene}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Flag required lists with missing or duplicate names.
+- **Fix owner:** human
 
 ### `llm-tools.tool-missing-description` {#llm-tools-tool-missing-description}
 
 - **Category:** quality
 - **Default severity:** warning
 - **Rationale:** Flag tools with no description.
+- **Fix owner:** human
 
 ### `llm-tools.tool-weak-description` {#llm-tools-tool-weak-description}
 
 - **Category:** quality
 - **Default severity:** info
 - **Rationale:** Flag tools whose description is too short or equals the name.
+- **Fix owner:** human
 
 
 ## Pack: `odata`
@@ -1328,18 +1523,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** OData CSDL should validate against the OASIS CSDL JSON schema.
+- **Fix owner:** human
 
 ### `odata.csdl-xsd` {#odata-csdl-xsd}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** OData v4 CSDL XML should validate against the OASIS EDMX / EDM XML schemas.
+- **Fix owner:** human
 
 ### `odata.entity-key` {#odata-entity-key}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every OData entity type must declare or inherit a key of non-nullable primitive properties.
+- **Fix owner:** human
 - **Reference:** https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
 - **Remediation:** Declare a Key whose PropertyRefs name existing primitive properties marked Nullable="false"; on a derived type, remove the Key and inherit the base type's.
 - **False-positive guidance:** Not a false positive: OData CSDL requires every non-abstract entity type to declare or inherit a key, and key properties to be non-nullable primitives.
@@ -1351,6 +1549,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every type, entity set, partner, binding and operation an OData document names must be declared.
+- **Fix owner:** human
 - **Reference:** https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
 - **Remediation:** Declare the missing element, fix the spelling, or qualify the name with the namespace (or alias) that declares it; for a type in another document, add an edmx:Reference that includes its namespace.
 - **False-positive guidance:** Names in namespaces the document only references are never reported. A finding names something declared nowhere in the document or its merged set.
@@ -1365,66 +1564,102 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Two enumerators must not share a number.
+- **Fix owner:** human
+- **Reference:** https://www.rfc-editor.org/rfc/rfc4506
+- **Remediation:** Give each enumerator its own value.
+- **False-positive guidance:** Not a false positive: the wire carries only the number.
+- **Fixture:** `catalog/oncrpc-enum-values-unique`
+- **Scan modes:** `lint`
 
 ### `oncrpc.null-procedure-declared` {#oncrpc-null-procedure-declared}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Every version should declare the null procedure (number 0).
+- **Fix owner:** human
 
 ### `oncrpc.null-procedure-void` {#oncrpc-null-procedure-void}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Procedure 0 should take and return void.
+- **Fix owner:** human
 
 ### `oncrpc.procedure-names-unique` {#oncrpc-procedure-names-unique}
 
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Two procedures of a version must not share a name.
+- **Fix owner:** human
+- **Reference:** https://www.rfc-editor.org/rfc/rfc5531
+- **Remediation:** Rename one of the procedures.
+- **False-positive guidance:** Not a false positive: the same name in two different versions is allowed and not reported.
+- **Fixture:** `catalog/oncrpc-procedure-names-unique`
+- **Scan modes:** `lint`
 
 ### `oncrpc.procedure-numbers-unique` {#oncrpc-procedure-numbers-unique}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Two procedures of a version must not share a number.
+- **Fix owner:** human
+- **Reference:** https://www.rfc-editor.org/rfc/rfc5531
+- **Remediation:** Give each procedure of the version its own number.
+- **False-positive guidance:** Not a false positive: the server dispatches on the number alone.
+- **Fixture:** `catalog/oncrpc-procedure-numbers-unique`
+- **Scan modes:** `lint`
 
 ### `oncrpc.program-number-assigned` {#oncrpc-program-number-assigned}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A program number below 0x20000000 must be one IANA assigned.
+- **Fix owner:** human
 
 ### `oncrpc.program-number-reserved` {#oncrpc-program-number-reserved}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A program number must stay below the reserved block (0x60000000).
+- **Fix owner:** human
 
 ### `oncrpc.type-resolves` {#oncrpc-type-resolves}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every field type must be a base type or a type the file declares.
+- **Fix owner:** human
+- **Reference:** https://www.rfc-editor.org/rfc/rfc4506
+- **Remediation:** Declare the type in the file, or import the file that declares it together with this one.
+- **False-positive guidance:** A type from a %#include is reported because included files are not read; import them too before treating it as a defect of the contract.
+- **Fixture:** `catalog/oncrpc-type-resolves`
+- **Scan modes:** `lint`
 
 ### `oncrpc.union-has-default` {#oncrpc-union-has-default}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A discriminated union should carry a default arm.
+- **Fix owner:** human
 
 ### `oncrpc.variable-length-bounded` {#oncrpc-variable-length-bounded}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A variable-length string, opaque or array should declare its bound.
+- **Fix owner:** human
 
 ### `oncrpc.version-numbers-unique` {#oncrpc-version-numbers-unique}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Two versions of a program must not share a number.
+- **Fix owner:** human
+- **Reference:** https://www.rfc-editor.org/rfc/rfc5531
+- **Remediation:** Give each version of the program its own number.
+- **False-positive guidance:** Not a false positive: rpcgen and rpcbind key a version by its number.
+- **Fixture:** `catalog/oncrpc-version-numbers-unique`
+- **Scan modes:** `lint`
 
 
 ## Pack: `openapi`
@@ -1434,6 +1669,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** error
 - **Rationale:** A change relative to the base revision breaks existing consumers.
+- **Fix owner:** human
 - **Reference:** https://docs.apiome.dev/build/lint-rules#compatibility-breaking
 - **Remediation:** Restore the removed/changed contract surface, introduce a new path or version, or deliberately gate with a documented breaking-change process.
 - **False-positive guidance:** Diff noise from reorder-only or documentation-only revisions should not appear; if it does, file a scanner bug with the base/head pair.
@@ -1445,54 +1681,173 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** warning
 - **Rationale:** A change relative to the base revision has an unclassified compatibility impact.
+- **Fix owner:** human
 
 ### `documentation.info-missing-description` {#documentation-info-missing-description}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** The API info block should describe what the API is for.
+- **Fix owner:** agent
 
 ### `documentation.operation-missing-summary` {#documentation-operation-missing-summary}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** An operation needs a summary or description to produce usable reference docs.
+- **Fix owner:** agent
 
 ### `documentation.property-missing-description` {#documentation-property-missing-description}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Every property should describe what it holds.
+- **Fix owner:** agent
 
 ### `documentation.property-missing-example` {#documentation-property-missing-example}
 
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Scalar leaf properties should carry an example so docs and mocks stay realistic.
+- **Fix owner:** agent
 
 ### `documentation.schema-missing-description` {#documentation-schema-missing-description}
 
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** A schema without a description forces consumers to guess what it models.
+- **Fix owner:** agent
+
+### `naming.operation-id-camel-case` {#naming-operation-id-camel-case}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** operationId becomes a method name in generated clients; camelCase is idiomatic in most of them.
+- **Fix owner:** engine
+- **Fix:** `rename` — Re-cases the operationId to camelCase when no link refers to it and the new id is free.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
 
 ### `naming.property-name` {#naming-property-name}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Property names should be camelCase or snake_case for predictable client bindings.
+- **Fix owner:** human
 
 ### `naming.schema-pascal-case` {#naming-schema-pascal-case}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Component schema names should be PascalCase so generated client types are idiomatic.
+- **Fix owner:** engine
+- **Fix:** `rename` — Renames the schema to PascalCase and rewrites every reference to it. Changes generated type names; never applied unless opted in.
+- **Fix details:** wire-visible · scope `document` · off unless opted in
+
+### `naming.tag-case-mismatch` {#naming-tag-case-mismatch}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** A tag used with different letter case than its declaration creates a second group in docs.
+- **Fix owner:** engine
+- **Fix:** `rename` — Replaces the tag use with the spelling of its declaration.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.boolean-exclusive-bound` {#structure-boolean-exclusive-bound}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** In OpenAPI 3.1 exclusiveMinimum and exclusiveMaximum are numbers; a boolean is not a valid bound.
+- **Fix owner:** engine
+- **Fix:** `structural` — Moves the bound's number onto the exclusive keyword, or drops a flag that sets no bound.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.duplicate-tag` {#structure-duplicate-tag}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Tag names must be unique; a repeated declaration is invalid and renders twice in docs.
+- **Fix owner:** engine
+- **Fix:** `removal` — Removes a repeated tag declaration that adds nothing to the first.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.empty-required` {#structure-empty-required}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An empty required list is invalid in OpenAPI 3.0 and states nothing in 3.1.
+- **Fix owner:** engine
+- **Fix:** `removal` — Removes the empty required list.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.nullable-keyword` {#structure-nullable-keyword}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** OpenAPI 3.1 removed nullable; a 3.1 validator ignores it, so the schema no longer accepts null.
+- **Fix owner:** engine
+- **Fix:** `structural` — Adds null to the schema's type (and enum) and removes nullable.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.operation-missing-operation-id` {#structure-operation-missing-operation-id}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Without an operationId every code generator invents its own name for the operation.
+- **Fix owner:** engine
+- **Fix:** `fill-in` — Adds an operationId built from the HTTP method and the path by a configurable template.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.operation-missing-tags` {#structure-operation-missing-tags}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** An untagged operation falls into the ungrouped section of docs and SDK tools.
+- **Fix owner:** engine
+- **Fix:** `fill-in` — Adds a tag named after the first path segment. Off unless opted in.
+- **Fix details:** not wire-visible · scope `finding` · off unless opted in
+
+### `structure.schema-example-keyword` {#structure-schema-example-keyword}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** OpenAPI 3.1 deprecates the schema example keyword in favour of the JSON Schema examples array.
+- **Fix owner:** engine
+- **Fix:** `structural` — Moves example into a one-item examples array.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.server-url-scheme-case` {#structure-server-url-scheme-case}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** URL schemes are lower case by convention; some clients compare them literally.
+- **Fix owner:** engine
+- **Fix:** `structural` — Lower-cases the scheme of the server URL.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
+### `structure.server-url-trailing-slash` {#structure-server-url-trailing-slash}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** Paths start with a slash, so a server URL that ends with one yields double-slash request URLs.
+- **Fix owner:** engine
+- **Fix:** `structural` — Removes the trailing slash from the server URL.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
 
 ### `structure.unbounded-array` {#structure-unbounded-array}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An array without maxItems permits unbounded payloads that strain clients and servers.
+- **Fix owner:** human
+
+### `structure.unused-component` {#structure-unused-component}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A component nothing references is dead weight in docs, SDKs and reviews.
+- **Fix owner:** engine
+- **Fix:** `removal` — Removes the unreferenced component.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
 
 
 ## Pack: `openrpc`
@@ -1502,12 +1857,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** Methods should have a summary or a description.
+- **Fix owner:** agent
 
 ### `openrpc.required-params-first` {#openrpc-required-params-first}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Required parameters must come before optional ones.
+- **Fix owner:** human
 - **Reference:** https://spec.open-rpc.org/#method-object
 - **Remediation:** Move every required parameter ahead of the first optional parameter.
 - **False-positive guidance:** Not a false positive: the OpenRPC specification requires every required parameter to be positioned before any optional parameter.
@@ -1519,12 +1876,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** Method names must not begin with the reserved 'rpc.' prefix.
+- **Fix owner:** human
 
 ### `openrpc.unique-method-names` {#openrpc-unique-method-names}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Method names must be unique.
+- **Fix owner:** human
 - **Reference:** https://spec.open-rpc.org/#openrpc-object
 - **Remediation:** Rename one of the methods, or merge them into one method.
 - **False-positive guidance:** Not a false positive: the OpenRPC specification requires unique method names, so callers cannot reach both methods.
@@ -1536,6 +1895,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Parameter names must be unique within a method.
+- **Fix owner:** human
 - **Reference:** https://spec.open-rpc.org/#method-object
 - **Remediation:** Give each parameter of the method its own name.
 - **False-positive guidance:** Not a false positive: the OpenRPC specification forbids duplicated parameters within a method.
@@ -1550,30 +1910,35 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An Overlay action that cannot be applied as written for its revision — no target, nothing to do (`update`, `copy` or `remove: true`), an `update` or `copy` value whose type does not fit the selected nodes, a `copy` source that is not exactly one node, a feature the declared revision does not have (`copy` before 1.1, reusable actions before 1.2), or a broken reusable-action `$ref` — leaves the resolved document without the change the overlay describes. Fix the action, or declare the Overlay revision that has the feature.
+- **Fix owner:** human
 
 ### `overlay.extends-unresolved` {#overlay-extends-unresolved}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An Overlay's `extends` says which document it was written for. When it names neither the base it is applied to (by path relative to the overlay) nor that base's `$self`, the overlay may be meant for a different document — its targets can still match by accident and change the wrong API. Point `extends` at the base, or apply the overlay to the document it names.
+- **Fix owner:** human
 
 ### `overlay.target-expression-invalid` {#overlay-target-expression-invalid}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An Overlay action's `target` (or `copy` source) must be an RFC 9535 JSONPath query. An expression that does not parse or cannot be evaluated selects nothing, so the action is never applied. Correct the expression; avoid tool-specific JSONPath extensions.
+- **Fix owner:** human
 
 ### `overlay.unmatched-target` {#overlay-unmatched-target}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** An Overlay action whose `target` JSONPath matches nothing in the base document has no effect: the modification it describes is silently skipped everywhere the resolved document is used. Fix the target expression, or remove the action if the construct it targeted no longer exists in the base.
+- **Fix owner:** human
 
 ### `overlay.version-unsupported` {#overlay-version-unsupported}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Apiome applies Overlay 1.0, 1.1 and 1.2 documents. An overlay declaring any other version (`overlay: 1.3.0`, `2.0.0`) is refused rather than applied with semantics it was not written for. Declare a supported revision, or wait for Apiome to support the newer one.
+- **Fix owner:** human
 - **Reference:** https://spec.openapis.org/overlay/
 - **Remediation:** Declare `overlay: 1.0.0`, `1.1.0` or `1.2.0` (whichever the overlay's features need), or keep the overlay out of Apiome until it supports the newer revision.
 - **False-positive guidance:** Not a false positive: the marker's major.minor selects the feature set, and Apiome reads 1.0, 1.1 and 1.2 only. The patch number is ignored.
@@ -1588,42 +1953,49 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A closed enum cannot receive a value a newer peer added.
+- **Fix owner:** human
 
 ### `protobuf.editions.delimited-encoding` {#protobuf-editions-delimited-encoding}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Editions 'message_encoding = DELIMITED' is the proto2 group wire format.
+- **Fix owner:** human
 
 ### `protobuf.editions.legacy-json-format` {#protobuf-editions-legacy-json-format}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Editions 'json_format = LEGACY_BEST_EFFORT' gives up the JSON guarantee.
+- **Fix owner:** human
 
 ### `protobuf.editions.utf8-validation-off` {#protobuf-editions-utf8-validation-off}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Editions 'utf8_validation = NONE' admits strings with no JSON encoding.
+- **Fix owner:** human
 
 ### `protobuf.field-no-required` {#protobuf-field-no-required}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Fields should not be 'required'.
+- **Fix owner:** human
 
 ### `protobuf.package-version-suffix` {#protobuf-package-version-suffix}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** A package should carry a version suffix (foo.v1).
+- **Fix owner:** human
 
 ### `protobuf.reserved-on-deletion` {#protobuf-reserved-on-deletion}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** Removed field/value numbers should be reserved, not left as gaps.
+- **Fix owner:** human
 
 
 ## Pack: `provenance`
@@ -1633,6 +2005,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** provenance
 - **Default severity:** info
 - **Rationale:** Reports the share of constructs Apiome inferred rather than read from a declaration; raise it to error in a style guide to keep inferred APIs from being published.
+- **Fix owner:** human
 
 
 ## Pack: `raml`
@@ -1642,18 +2015,21 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** warning
 - **Rationale:** Every RAML method should declare at least one response.
+- **Fix owner:** agent
 
 ### `raml.shacl-info` {#raml-shacl-info}
 
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** AMF's RAML validation reported a note.
+- **Fix owner:** human
 
 ### `raml.shacl-violation` {#raml-shacl-violation}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A RAML API should conform to AMF's SHACL validation of the RAML profile.
+- **Fix owner:** human
 - **Reference:** https://a.ml/docs/related-docs/validation_profile_dialect/
 - **Remediation:** Fix the value AMF names at the reported file and line so it conforms to its declared type or facet, then re-import.
 - **False-positive guidance:** Not a false positive: AMF reports violations only for documents that break the RAML specification's constraints. Only servers with the bundled AMF toolchain report it.
@@ -1665,24 +2041,28 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** AMF's RAML validation reported a warning.
+- **Fix owner:** human
 
 ### `raml.undeclared-security-scheme` {#raml-undeclared-security-scheme}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every securedBy scheme should be declared in securitySchemes.
+- **Fix owner:** human
 
 ### `raml.unused-base-uri-parameter` {#raml-unused-base-uri-parameter}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every baseUriParameters entry should appear in baseUri.
+- **Fix owner:** human
 
 ### `raml.unused-uri-parameter` {#raml-unused-uri-parameter}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every uriParameters entry should appear in its resource path.
+- **Fix owner:** human
 
 
 ## Pack: `rest-conventions`
@@ -1692,54 +2072,63 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A HAL-FORMS document must have a `_templates.default` template.
+- **Fix owner:** human
 
 ### `rest-conventions.hal-link-object` {#rest-conventions-hal-link-object}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A HAL link object must have `href`.
+- **Fix owner:** human
 
 ### `rest-conventions.hal-self-link` {#rest-conventions-hal-self-link}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A HAL resource should have a `_links.self` link.
+- **Fix owner:** human
 
 ### `rest-conventions.hydra-collection-member` {#rest-conventions-hydra-collection-member}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A Hydra collection's `member` must be an array.
+- **Fix owner:** human
 
 ### `rest-conventions.jsonapi-data-and-errors` {#rest-conventions-jsonapi-data-and-errors}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A JSON:API document must not contain both `data` and `errors`.
+- **Fix owner:** human
 
 ### `rest-conventions.jsonapi-error-document` {#rest-conventions-jsonapi-error-document}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A 4xx / 5xx JSON:API response should be an error document with `errors`.
+- **Fix owner:** human
 
 ### `rest-conventions.jsonapi-resource-object` {#rest-conventions-jsonapi-resource-object}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A JSON:API resource object must have `type`, and `id` in a response.
+- **Fix owner:** human
 
 ### `rest-conventions.jsonapi-top-level` {#rest-conventions-jsonapi-top-level}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A JSON:API document must contain `data`, `errors` or `meta`.
+- **Fix owner:** human
 
 ### `rest-conventions.jsonld-context` {#rest-conventions-jsonld-context}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A JSON-LD body should declare `@context` (or send it in a `Link` header).
+- **Fix owner:** human
 
 
 ## Pack: `smithy`
@@ -1749,12 +2138,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** A Smithy model should pass the smithy-linters validators (CamelCase, MissingPaginatedTrait, …).
+- **Fix owner:** human
 
 ### `smithy.validation-error` {#smithy-validation-error}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A Smithy model must validate: the Smithy CLI reports no ERROR events.
+- **Fix owner:** human
 - **Reference:** https://smithy.io/2.0/spec/model-validation.html
 - **Remediation:** Fix the shape the event names at its file and line — define the missing shape, or correct the trait — then re-import.
 - **False-positive guidance:** Not a false positive: ERROR events mark a model the Smithy specification rejects. Only servers with the bundled Smithy CLI report it.
@@ -1766,12 +2157,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** A NOTE event from Smithy's validators.
+- **Fix owner:** human
 
 ### `smithy.validation-warning` {#smithy-validation-warning}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A Smithy model should have no DANGER or WARNING validation events.
+- **Fix owner:** human
 
 
 ## Pack: `thrift`
@@ -1781,24 +2174,28 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Enum values should have explicit numbers.
+- **Fix owner:** human
 
 ### `thrift.field-no-required` {#thrift-field-no-required}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Fields should not be 'required'.
+- **Fix owner:** human
 
 ### `thrift.namespace-declared` {#thrift-namespace-declared}
 
 - **Category:** naming
 - **Default severity:** info
 - **Rationale:** A Thrift document should declare a namespace.
+- **Fix owner:** human
 
 ### `thrift.oneway-void` {#thrift-oneway-void}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** A oneway method must return void and declare no throws.
+- **Fix owner:** human
 - **Reference:** https://thrift.apache.org/docs/idl#service
 - **Remediation:** Make the method return `void` and drop its `throws`, or remove `oneway` so the caller waits for the reply.
 - **False-positive guidance:** Not a false positive: the Thrift compiler rejects a oneway method with a return value or exceptions.
@@ -1810,6 +2207,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Field, parameter and exception ids must be unique.
+- **Fix owner:** human
 - **Reference:** https://thrift.apache.org/docs/idl#field
 - **Remediation:** Give each field, parameter or exception of the struct or method its own id; never reuse the id of a removed field.
 - **False-positive guidance:** Not a false positive: the Thrift compiler rejects duplicate ids, so the document cannot be compiled as written.
@@ -1824,6 +2222,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A TypeSpec project should compile without warnings from the compiler or its built-in linter rules.
+- **Fix owner:** human
 
 
 ## Pack: `wadl`
@@ -1833,24 +2232,28 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** documentation
 - **Default severity:** info
 - **Rationale:** The description should state its resources' base URI.
+- **Fix owner:** agent
 
 ### `wadl.body-on-safe-method` {#wadl-body-on-safe-method}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A GET, HEAD or DELETE should not carry a request representation.
+- **Fix owner:** human
 
 ### `wadl.method-id-present` {#wadl-method-id-present}
 
 - **Category:** naming
 - **Default severity:** info
 - **Rationale:** A method should declare an id (it becomes the OpenAPI operationId).
+- **Fix owner:** human
 
 ### `wadl.method-id-unique` {#wadl-method-id-unique}
 
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** No two methods may share an id.
+- **Fix owner:** human
 - **Reference:** https://www.w3.org/submissions/wadl/
 - **Remediation:** Give each method its own id.
 - **False-positive guidance:** Not a false positive: an id must identify one element of the document.
@@ -1862,12 +2265,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** warning
 - **Rationale:** A method's name should be a standard HTTP method.
+- **Fix owner:** human
 
 ### `wadl.reference-resolved` {#wadl-reference-resolved}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every href and resource type must name an element of the document.
+- **Fix owner:** human
 - **Reference:** https://www.w3.org/submissions/wadl/
 - **Remediation:** Declare the element the reference names (with that id) in the same document, or write it inline.
 - **False-positive guidance:** A reference to another WADL file (other.wadl#id) is reported because it is never fetched; inline the referenced element before treating the finding as a defect of the service.
@@ -1879,30 +2284,35 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** A typed representation should state its media type.
+- **Fix owner:** human
 
 ### `wadl.representation-typed` {#wadl-representation-typed}
 
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** An XML or JSON representation should name its grammar element.
+- **Fix owner:** human
 
 ### `wadl.response-declared` {#wadl-response-declared}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A method should declare at least one response.
+- **Fix owner:** human
 
 ### `wadl.response-status-valid` {#wadl-response-status-valid}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A response status must be a three-digit HTTP code.
+- **Fix owner:** human
 
 ### `wadl.template-param-declared` {#wadl-template-param-declared}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every {name} in a resource path must have a template param.
+- **Fix owner:** human
 - **Reference:** https://www.w3.org/submissions/wadl/
 - **Remediation:** Declare a template param (`<param name="…" style="template" type="xsd:string"/>`) on the resource whose path names the variable.
 - **False-positive guidance:** Not a false positive: every path variable needs a template param for its type to be known.
@@ -1914,12 +2324,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every template param must appear as {name} in the path.
+- **Fix owner:** human
 
 ### `wadl.type-resolved` {#wadl-type-resolved}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every referenced type must be an XSD built-in or declared by the grammars.
+- **Fix owner:** human
 
 
 ## Pack: `wsi`
@@ -1929,6 +2341,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: a binding must be all rpc-literal or all document-literal.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Make every operation of the binding the same style, or split the operations into two bindings.
 - **False-positive guidance:** Not a false positive: R2705 requires each binding to be wholly rpc-literal or wholly document-literal.
@@ -1940,6 +2353,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: a document-literal body references at most one part, defined by element, with no namespace.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Reference one part defined with element= (wrap several values in one element), and remove namespace= from soap:body.
 - **False-positive guidance:** Not a false positive: these are Basic Profile requirements on document-literal bindings.
@@ -1951,6 +2365,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: SOAP bindings must use literal, not encoded, messages.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Describe the message with XML Schema elements and set use="literal" on every soap:body, soap:header, soap:headerfault and soap:fault.
 - **False-positive guidance:** Not a false positive: R2706 forbids encoded use in a conformant description; only legacy RPC/encoded toolkits accept it.
@@ -1962,6 +2377,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: an rpc-literal body references parts defined by type and names a namespace.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Define rpc-literal parts with type=, and give soap:body a namespace= naming the wrapper's namespace.
 - **False-positive guidance:** Not a false positive: these are Basic Profile requirements on rpc-literal bindings.
@@ -1973,6 +2389,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: the operations of a binding must differ on the wire.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Give each operation its own request element (or rpc operation name), or distinct soapAction values.
 - **False-positive guidance:** Reported only when both the body element and the soapAction are identical, which no receiver can disambiguate.
@@ -1984,12 +2401,14 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** The operations of a binding should have distinct soapAction values.
+- **Fix owner:** human
 
 ### `wsi.unresolved-import` {#wsi-unresolved-import}
 
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Every wsdl:import, xs:import and xs:include must resolve within the import.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Upload the imported documents with the description (a .zip or file set), import the live service URL so they are fetched, or inline them (?singleWsdl).
 - **False-positive guidance:** A single file uploaded without its imports reports every external import; re-import it with its members before treating the finding as a defect of the service.
@@ -2001,6 +2420,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** WS-I: wsdl:import must have a location and import only WSDL descriptions.
+- **Fix owner:** human
 - **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
 - **Remediation:** Give the wsdl:import a location, and import XML Schema documents with xs:import in wsdl:types instead.
 - **False-positive guidance:** Not a false positive: the Basic Profile requires these import forms.
@@ -2015,39 +2435,46 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** info
 - **Rationale:** An empty array leaves its item type unknown.
+- **Fix owner:** human
 
 ### `xmlrpc.fault-described` {#xmlrpc-fault-described}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A fault must carry a non-zero faultCode and a faultString.
+- **Fix owner:** human
 
 ### `xmlrpc.method-name-namespaced` {#xmlrpc-method-name-namespaced}
 
 - **Category:** naming
 - **Default severity:** info
 - **Rationale:** A method name should be namespaced object.method.
+- **Fix owner:** human
 
 ### `xmlrpc.multicall-calls-wellformed` {#xmlrpc-multicall-calls-wellformed}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A system.multicall param must be an array of {methodName, params} structs.
+- **Fix owner:** human
 
 ### `xmlrpc.nil-extension` {#xmlrpc-nil-extension}
 
 - **Category:** compatibility
 - **Default severity:** info
 - **Rationale:** A <nil/> value relies on the nil extension.
+- **Fix owner:** human
 
 ### `xmlrpc.response-has-value` {#xmlrpc-response-has-value}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A methodResponse must carry exactly one param.
+- **Fix owner:** human
 
 ### `xmlrpc.system-method-known` {#xmlrpc-system-method-known}
 
 - **Category:** naming
 - **Default severity:** warning
 - **Rationale:** A system. method must be an introspection or multicall method.
+- **Fix owner:** human

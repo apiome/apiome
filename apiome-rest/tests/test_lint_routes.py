@@ -330,6 +330,14 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             # ASP-1.3 security-score fields: weight for `security` rules, OWASP ids when cited.
             "weight",
             "owasp",
+            # GVM-3.1 fix capability (null fix metadata for a rule that is not fixable).
+            "fixable",
+            "fixClass",
+            "wireVisible",
+            "fixSummary",
+            "fixScope",
+            "fixDefault",
+            "fixOwner",
         }
         assert rule["ruleId"] and rule["pack"] and rule["category"]
         assert rule["defaultSeverity"] in {"error", "warning", "info"}
@@ -358,6 +366,36 @@ def test_lint_rules_catalog_publishes_the_security_weights():
         assert rule["weight"] == security_rule_weight(rule["ruleId"])
         if rule["ruleId"] in SECURITY_RULE_WEIGHTS:
             assert rule["weight"] == 2.0
+
+
+def test_lint_rules_catalog_lists_at_least_twelve_fixable_rules():
+    """GVM-3.1 acceptance: `GET /v1/lint/rules` lists at least twelve `fixable: true` rules."""
+    body = client.get("/v1/lint/rules").json()
+    fixable = [rule for rule in body["rules"] if rule["fixable"]]
+    assert len(fixable) >= 12
+    for rule in fixable:
+        assert rule["fixClass"] in {"structural", "removal", "fill-in", "rename"}
+        assert isinstance(rule["wireVisible"], bool)
+        assert rule["fixSummary"].strip()
+        assert rule["fixScope"] in {"finding", "document"}
+        assert isinstance(rule["fixDefault"], bool)
+        assert rule["fixOwner"] == "engine"
+
+
+def test_lint_rules_catalog_says_who_repairs_a_rule_that_is_not_fixable():
+    body = client.get("/v1/lint/rules").json()
+    by_id = {rule["ruleId"]: rule for rule in body["rules"]}
+    unfixable = by_id["documentation.operation-missing-summary"]
+    assert unfixable["fixable"] is False and unfixable["fixOwner"] == "agent"
+    assert [unfixable[key] for key in ("fixClass", "wireVisible", "fixSummary", "fixScope", "fixDefault")] == [None] * 5
+    assert by_id["structure.unbounded-array"]["fixOwner"] == "human"
+    rename = by_id["naming.schema-pascal-case"]
+    assert (rename["fixClass"], rename["wireVisible"], rename["fixScope"], rename["fixDefault"]) == (
+        "rename",
+        True,
+        "document",
+        False,
+    )
 
 
 def test_lint_rules_catalog_is_deterministic():

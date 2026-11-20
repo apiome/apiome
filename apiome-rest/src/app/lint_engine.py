@@ -49,6 +49,10 @@ fingerprint-hasher (:mod:`app.fingerprint`) and breaking-change-classifier
   also publish **category bars** (:meth:`RulePack.categories_for`) so a clean artifact still
   shows it ran, and may **self-gate** to nothing for an artifact it has no standing to judge.
 
+* **A rule may carry a fix** (GVM-3.1, #5869): ``LintRule.fix`` turns one finding into RFC 6902
+  operations, and :meth:`LintRule.plan_fix` refuses any operation outside the scope the rule
+  declared — by default the finding's own JSON Pointer subtree. See :mod:`app.lint_fix`.
+
 The OpenAPI behavior is unchanged: :func:`app.schema_lint.lint_openapi_spec` remains the
 OpenAPI rule pack and reproduces its current findings exactly (its tests are untouched). Both
 linters share :func:`app.schema_lint.assemble_lint_result`, so the score / grade / fingerprint
@@ -70,7 +74,7 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from .canonical_model import (
     CanonicalApi,
@@ -80,6 +84,14 @@ from .canonical_model import (
     Operation,
     Service,
     Type,
+)
+from .lint_fix import (
+    FIX_SCOPE_FINDING,
+    FixFn,
+    FixOptions,
+    PatchOp,
+    plan_rule_fix,
+    validate_fix_declaration,
 )
 from .schema_lint import LintFinding, LintResult, Severity, assemble_lint_result
 
@@ -135,6 +147,20 @@ class LintRule:
             ``security`` pack's rules so the security axis can publish one sub-score per
             category and ``GET /v1/lint/rules`` can publish ``owasp`` per rule; validated
             against the catalog when the rule registry is built. Empty for every other rule.
+        fix: Optional deterministic fix (GVM-3.1, #5869): given the document, one of this
+            rule's findings and the caller's options, it yields the RFC 6902 operations that
+            repair the finding. ``None`` (the default) means the rule is not fixable. See
+            :mod:`app.lint_fix`.
+        fix_class: What kind of edit the fix makes — ``structural`` / ``removal`` /
+            ``fill-in`` / ``rename``. Required with ``fix``; ``None`` without one.
+        wire_visible: Whether applying the fix changes what clients see on the wire or in
+            generated code (a renamed schema is; a re-spelled keyword is not).
+        fix_summary: One line saying what the fix does, published by the rule catalogue.
+        fix_scope: What the fix may touch: ``finding`` (the default — the finding's pointer
+            and its descendants) or ``document``. The engine refuses operations outside it.
+        fix_default: Whether the fix is applied without an explicit opt-in. A fix with
+            ``False`` plans nothing unless the caller names the rule in
+            :attr:`app.lint_fix.FixOptions.opt_in`.
     """
 
     rule_id: str
@@ -143,6 +169,52 @@ class LintRule:
     description: str
     check: RuleCheck
     owasp_ids: Tuple[str, ...] = ()
+    fix: Optional[FixFn] = None
+    fix_class: Optional[str] = None
+    wire_visible: bool = False
+    fix_summary: str = ""
+    fix_scope: str = FIX_SCOPE_FINDING
+    fix_default: bool = True
+
+    def __post_init__(self) -> None:
+        """Reject a half-declared fix when the rule is built (GVM-3.1).
+
+        Raises:
+            ValueError: See :func:`app.lint_fix.validate_fix_declaration`.
+        """
+        validate_fix_declaration(
+            self.rule_id, self.fix, self.fix_class, self.fix_scope, self.fix_summary, self.category
+        )
+
+    @property
+    def fixable(self) -> bool:
+        """Whether this rule carries a deterministic fix."""
+        return self.fix is not None
+
+    def plan_fix(
+        self,
+        document: Mapping[str, Any],
+        finding: LintFinding,
+        options: Optional[FixOptions] = None,
+    ) -> Tuple[PatchOp, ...]:
+        """Plan the fix of one of this rule's findings, bounded to the declared scope.
+
+        Args:
+            document: The document the finding was reported on. Not mutated.
+            finding: The finding to repair; it must carry this rule's id.
+            options: The caller's fix options; the defaults when omitted.
+
+        Returns:
+            The RFC 6902 operations in application order; empty when the rule has no fix,
+            the fix is off by default and not opted into, or the finding has no
+            deterministic repair.
+
+        Raises:
+            app.lint_fix.FixError: For a foreign finding, an unresolvable path or a
+                malformed operation.
+            app.lint_fix.FixScopeError: When an operation leaves the declared scope.
+        """
+        return plan_rule_fix(self, document, finding, options)
 
     def run(self, api: CanonicalApi) -> List[LintFinding]:
         """Run this rule over ``api`` and return its findings in the check's yield order.

@@ -1,0 +1,126 @@
+{
+  "rule": "structure.operation-missing-tags",
+  "options": {
+    "optIn": [
+      "structure.operation-missing-tags"
+    ]
+  },
+  "finding": {
+    "path": "paths./pets.get",
+    "message": "Operation GET /pets has no tags."
+  },
+  "before": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Pet": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "plan": [
+    {
+      "op": "add",
+      "path": "/paths/~1pets/get/tags",
+      "value": [
+        "pets"
+      ]
+    }
+  ],
+  "after": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          },
+          "tags": [
+            "pets"
+          ]
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Pet": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

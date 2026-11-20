@@ -1,0 +1,127 @@
+{
+  "rule": "structure.schema-example-keyword",
+  "options": {},
+  "finding": {
+    "path": "components.schemas.Pet.properties.name",
+    "message": "Schema uses example, which OpenAPI 3.1 deprecates; use an examples array."
+  },
+  "before": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Pet": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "example": "Rex"
+            }
+          }
+        }
+      }
+    }
+  },
+  "plan": [
+    {
+      "op": "add",
+      "path": "/components/schemas/Pet/properties/name/examples",
+      "value": [
+        "Rex"
+      ]
+    },
+    {
+      "op": "remove",
+      "path": "/components/schemas/Pet/properties/name/example"
+    }
+  ],
+  "after": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Pet": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

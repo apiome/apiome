@@ -108,6 +108,12 @@ rule cites, or null — and, for `security`-category rules, `weight`: the multip
 penalty (1.0 unless published otherwise). The weights are public, not a server secret; the
 table on the axis-score page is generated from the same constants.
 
+Every entry also says whether Apiome can repair the rule's findings. `fixable` is `true` when the
+rule carries a deterministic fix, and then `fixClass` (`structural`, `removal`, `fill-in` or
+`rename`), `wireVisible`, `fixScope`, `fixDefault` and a one-line `fixSummary` describe it.
+`fixOwner` names who repairs the findings: `engine`, `agent` or `human`. See
+[Auto-fix](./auto-fix.md) for the fix classes and what is never fixed.
+
 ### Data contracts score against their own rules
 
 A catalog item imported from ODCS or dbt is a *data contract*, and its quality is a different
@@ -251,6 +257,7 @@ consistency is the point of server-side scoring.
 
 - [How linting works](./how-linting-works.md) — rule packs, the score formula and the stored score
 - [Built-in lint rules](./lint-rules.md) — reference for every built-in lint rule (ids, severities, rationales)
+- [Auto-fix](./auto-fix.md) — which findings Apiome can repair by itself, and which it never touches
 - [Custom lint rules](./custom-rules.md) — author your own rules in the Spectral-compatible DSL
 - [Edit classes and properties](./edit-classes-and-properties.md) — clear "missing description" findings
 - [Publish a version](../ship/publish-a-version.md) — publishing enforces its own gates on top of lint

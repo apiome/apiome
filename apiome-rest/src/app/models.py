@@ -6890,6 +6890,59 @@ class LintRuleOut(BaseModel):
             "catalog order; null when the rule cites none."
         ),
     )
+    fixable: bool = Field(
+        default=False,
+        description=(
+            "Whether the rule carries a deterministic fix (GVM-3.1): RFC 6902 operations "
+            "computed from the document alone, with no model involved."
+        ),
+    )
+    fix_class: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixClass",
+        description=(
+            "What kind of edit the fix makes: structural, removal, fill-in or rename. "
+            "Null when the rule is not fixable."
+        ),
+    )
+    wire_visible: Optional[bool] = Field(
+        default=None,
+        serialization_alias="wireVisible",
+        description=(
+            "Whether applying the fix changes what clients see on the wire or in generated "
+            "code. Null when the rule is not fixable."
+        ),
+    )
+    fix_summary: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixSummary",
+        description="One line saying what the fix does. Null when the rule is not fixable.",
+    )
+    fix_scope: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixScope",
+        description=(
+            "What the fix may touch: finding (the finding's JSON Pointer and its descendants) "
+            "or document. The engine refuses operations outside it. Null when not fixable."
+        ),
+    )
+    fix_default: Optional[bool] = Field(
+        default=None,
+        serialization_alias="fixDefault",
+        description=(
+            "Whether the fix is applied without an explicit opt-in. False for fixes that "
+            "must be enabled by name. Null when the rule is not fixable."
+        ),
+    )
+    fix_owner: str = Field(
+        default="human",
+        serialization_alias="fixOwner",
+        description=(
+            "Who repairs this rule's findings: engine (the deterministic fix), agent "
+            "(documentation, examples and security findings, whose repair invents meaning) "
+            "or human."
+        ),
+    )
 
 
 class LintRuleCatalogResponse(BaseModel):
