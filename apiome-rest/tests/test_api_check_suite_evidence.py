@@ -111,6 +111,36 @@ def test_the_lint_report_is_read_stored_first_and_its_errors_are_kept(monkeypatc
     assert facts.report_fingerprint == "sha256:report"
 
 
+def test_the_lint_evidence_carries_the_suggested_fixes_and_the_patch_link(monkeypatch):
+    """GVM-3.4 (#5872): the provider check summary names the fix count and links the patch."""
+    summary = {"ready": 3, "breaking": 0, "conflict": 1, "rules": []}
+    seen: List[Any] = []
+
+    def suggest(version, *, tenant_slug, tenant_id, project_id):
+        seen.append((version["id"], tenant_slug, tenant_id, project_id))
+        return dict(summary)
+
+    monkeypatch.setattr("app.lint_fix_routes.suggest_revision_fixes", suggest)
+    fixes = asyncio.run(
+        evidence.read_fix_suggestions(
+            tenant_id=TENANT, tenant_slug="acme", project_id=PROJECT, version={"id": VERSION}
+        )
+    )
+    assert seen == [(VERSION, "acme", TENANT, PROJECT)]
+    assert fixes["ready"] == 3
+    assert fixes["links"]["patch"] == f"/v1/versions/acme/{PROJECT}/{VERSION}/lint/fixes?format=patch"
+
+    monkeypatch.setattr("app.lint_fix_routes.suggest_revision_fixes", lambda *_a, **_k: None)
+    assert (
+        asyncio.run(
+            evidence.read_fix_suggestions(
+                tenant_id=TENANT, tenant_slug="acme", project_id=PROJECT, version={"id": VERSION}
+            )
+        )
+        is None
+    )
+
+
 # ---------------------------------------------------------------------------------------------
 # breaking
 # ---------------------------------------------------------------------------------------------

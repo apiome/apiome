@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="560" viewBox="0 0 880 560" role="img" aria-labelledby="title desc">
+  <title id="title">diff-action sticky comment with Suggested fixes</title>
+  <desc id="desc">One pull-request comment: the Apiome contract gate changelog, then a Suggested fixes section listing a rule, its fix count and class, a diff snippet of the first hunk, and a link to the workflow artefacts.</desc>
+  <style>
+    .card { fill: #ffffff; stroke: #d0d7de; }
+    .head { fill: #f6f8fa; stroke: #d0d7de; }
+    .t { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1f2328; font-size: 14px; }
+    .muted { fill: #59636e; }
+    .h3 { font-size: 17px; font-weight: 600; }
+    .b { font-weight: 600; }
+    .code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 13px; fill: #1f2328; }
+    .pill { fill: #eff1f3; }
+    .snip { fill: #f6f8fa; stroke: #d0d7de; }
+    .del { fill: #ffebe9; }
+    .rule { stroke: #d8dee4; }
+    .link { fill: #0969da; }
+  </style>
+  <rect x="0" y="0" width="880" height="560" fill="#f6f8fa"/>
+  <rect class="card" x="20" y="20" width="840" height="520" rx="8"/>
+  <path class="head" d="M20 28a8 8 0 0 1 8-8h824a8 8 0 0 1 8 8v32H20z"/>
+  <text class="t b" x="40" y="45">github-actions <tspan class="muted" font-weight="400">commented · updated on each push</tspan></text>
+
+  <text class="t h3" x="40" y="92">Apiome contract gate: failed (threshold: breaking)</text>
+  <text class="t" x="40" y="120">Compared <tspan class="code">api/openapi.yaml</tspan> against <tspan class="code">payments-api@latest</tspan>.</text>
+  <text class="t" x="40" y="148">• <tspan class="b">Path removed</tspan> (<tspan class="code">ctg.path_removed</tspan>) — <tspan class="code">/paths/~1pets~1{petId}</tspan></text>
+  <line class="rule" x1="40" y1="172" x2="840" y2="172"/>
+
+  <text class="t h3" x="40" y="204">Suggested fixes</text>
+  <text class="t" x="40" y="232">3 mechanical fixes ready for <tspan class="code">api/openapi.yaml</tspan>; nothing is pushed to the branch.</text>
+  <text class="t" x="40" y="262">• <tspan class="code">structure.duplicate-tag</tspan> — 2 fixes (removal)</text>
+
+  <rect class="snip" x="56" y="278" width="784" height="128" rx="6"/>
+  <text class="code muted" x="72" y="302">@@ -5,4 +5,3 @@</text>
+  <text class="code" x="72" y="326"> tags:</text>
+  <text class="code" x="72" y="350">   - name: orders</text>
+  <rect class="del" x="57" y="358" width="782" height="22"/>
+  <text class="code" x="72" y="374">-  - name: orders</text>
+  <text class="code" x="72" y="398"> paths:</text>
+
+  <text class="t" x="40" y="440">• <tspan class="code">structure.empty-required</tspan> — 1 fix (removal)</text>
+  <text class="t" x="40" y="476">Download the full patch and overlay: <tspan class="link">workflow artefacts</tspan>.</text>
+  <text class="t muted" x="40" y="508">2 suggestion block(s) on the changed lines can be accepted in one click from the review.</text>
+</svg>

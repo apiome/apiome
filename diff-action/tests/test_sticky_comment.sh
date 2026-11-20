@@ -80,4 +80,79 @@ grep -q -- '-X PATCH' "${log}"
 grep -q 'issues/comments/777' "${log}"
 ! grep -q -- '-X POST' "${log}"
 
+# --- sections (GVM-3.4): one comment, the diff and the fixes update independently ---
+# This fake curl serves LIST_BODY as the one existing comment (or none when empty) and saves the
+# JSON payload of each write to PAYLOAD_LOG.
+cat >"${fake_curl}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "$@" >>"${FAKE_CURL_LOG:?}"
+args="$*"
+if [[ "${args}" == *"issues/42/comments?per_page=100"* ]]; then
+  if [[ -n "${LIST_BODY:-}" ]]; then
+    jq -n --arg body "${LIST_BODY}" '[{id: 777, body: $body}]'
+  else
+    echo '[]'
+  fi
+  exit 0
+fi
+while [[ $# -gt 0 ]]; do
+  if [[ "$1" == "-d" ]]; then printf '%s' "$2" >"${PAYLOAD_LOG:?}"; fi
+  shift
+done
+if [[ "${args}" == *"-X PATCH"* ]]; then echo "200"; exit 0; fi
+if [[ "${args}" == *"-X POST"* ]]; then echo "201"; exit 0; fi
+exit 1
+EOF
+chmod +x "${fake_curl}"
+export PAYLOAD_LOG="${TMP}/payload.json"
+posted_body() { jq -r '.body' "${PAYLOAD_LOG}"; }
+expect_body() {
+  local expected="$1"
+  if [[ "$(posted_body)" != "${expected}" ]]; then
+    echo "unexpected body:" >&2
+    posted_body >&2
+    echo "--- expected:" >&2
+    printf '%s\n' "${expected}" >&2
+    exit 1
+  fi
+}
+printf 'diff v1' >"${body}"
+fixes_body="${TMP}/fixes.md"
+
+# First run, no comment yet: the diff section starts the comment.
+: >"${log}"
+LIST_BODY="" STICKY_SECTION=diff bash "${ROOT}/sticky_comment.sh" "${body}"
+grep -q -- '-X POST' "${log}"
+expect_body $'<!-- apiome-diff-action -->\n<!-- apiome-diff-action:diff -->\ndiff v1\n<!-- /apiome-diff-action:diff -->'
+
+# The fixes section is appended to the same comment.
+both=$'<!-- apiome-diff-action -->\n<!-- apiome-diff-action:diff -->\ndiff v1\n<!-- /apiome-diff-action:diff -->'
+printf 'fixes v1' >"${fixes_body}"
+: >"${log}"
+LIST_BODY="${both}" STICKY_SECTION=fixes bash "${ROOT}/sticky_comment.sh" "${fixes_body}"
+grep -q 'issues/comments/777' "${log}"
+if grep -q -- '-X POST' "${log}"; then echo "a second comment was created" >&2; exit 1; fi
+both="${both}"$'\n\n<!-- apiome-diff-action:fixes -->\nfixes v1\n<!-- /apiome-diff-action:fixes -->'
+expect_body "${both}"
+
+# A new diff replaces only the diff section; the fixes stay as they were.
+printf 'diff v2 with ✅' >"${body}"
+: >"${log}"
+LIST_BODY="${both}" STICKY_SECTION=diff bash "${ROOT}/sticky_comment.sh" "${body}"
+if grep -q -- '-X POST' "${log}"; then echo "a second comment was created" >&2; exit 1; fi
+expect_body "${both/diff v1/diff v2 with ✅}"
+
+# New fixes replace only the fixes section.
+printf 'fixes v2' >"${fixes_body}"
+: >"${log}"
+LIST_BODY="${both}" STICKY_SECTION=fixes bash "${ROOT}/sticky_comment.sh" "${fixes_body}"
+expect_body "${both/fixes v1/fixes v2}"
+
+# A comment from before sections existed is replaced wholesale, still in place.
+: >"${log}"
+LIST_BODY=$'<!-- apiome-diff-action -->\nold changelog' STICKY_SECTION=diff bash "${ROOT}/sticky_comment.sh" "${body}"
+grep -q 'issues/comments/777' "${log}"
+expect_body $'<!-- apiome-diff-action -->\n<!-- apiome-diff-action:diff -->\ndiff v2 with ✅\n<!-- /apiome-diff-action:diff -->'
+
 echo "test_sticky_comment: ok"

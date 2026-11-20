@@ -13,10 +13,11 @@ RUN apt-get update \
 RUN pip install --no-cache-dir \
     "apiome-cli @ git+${APIOME_CLI_REPO}@${APIOME_CLI_REF}#subdirectory=apiome-cli"
 
-COPY entrypoint.sh ci_entrypoint.sh sticky_comment.sh /usr/local/bin/
+COPY entrypoint.sh ci_entrypoint.sh sticky_comment.sh fix_suggestions.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh \
     /usr/local/bin/ci_entrypoint.sh \
-    /usr/local/bin/sticky_comment.sh
+    /usr/local/bin/sticky_comment.sh \
+    /usr/local/bin/fix_suggestions.sh
 
 # Dual-mode entrypoint:
 #   no arguments  -> GitHub Action mode (reads INPUT_* env vars, CTG-2.2)

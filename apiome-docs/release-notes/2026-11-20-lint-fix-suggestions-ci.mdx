@@ -1,0 +1,27 @@
+---
+slug: lint-fix-suggestions-ci
+title: "Suggested lint fixes in pull requests and provider checks"
+description: "CI comments and checks list mechanical lint fixes, with one-click suggestions and patches."
+authors: [apiome]
+---
+
+Reviewers can now see on the pull request which lint failures are mechanical, and accept them
+without opening a terminal.
+
+{/* truncate */}
+
+- **diff-action:** the sticky comment gains a **Suggested fixes** section. It lists, per rule, the
+  number of ready fixes, the fix class and the first hunk. A fix that changes one region of the
+  spec, on lines the pull request changes, is also posted as a GitHub suggestion block, which you
+  accept with **Commit suggestion**. The changelog and the fixes are separate sections of the one
+  comment, so each updates in place. The full patch and overlay are written for a workflow
+  artefact (`fix-patch-path`, `fix-overlay-path`). Set `fix-suggestions: false` to leave them out.
+  Nothing is ever pushed to the branch.
+- **`apiome lint suggest <file>`:** the same section for any spec file, or JSON with the line range
+  and replacement of each single-region fix. `--format patch` writes the full change.
+- **Lint gate and check suite:** `apiome lint gate --format markdown` and
+  `apiome checks run --format md` show the stored version's suggested fixes and link the patch
+  (`GET …/lint/fixes?format=patch`). The API change check run on the pull request carries the
+  fix count in its summary.
+
+See [Fix suggestions in CI](/build/auto-fix#fix-suggestions-in-ci).

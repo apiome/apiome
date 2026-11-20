@@ -20,6 +20,7 @@ The rule catalog (`GET /v1/lint/rules`) publishes every rule's fix capability, a
 thirteen OpenAPI rules carry a fix. The REST API plans fixes and applies them as a new revision
 (see [Plan the fixes](#plan-the-fixes) and [Apply fixes](#apply-fixes)), and `apiome lint --fix`
 does both from the command line for a stored version (see [Fix from the CLI](#fix-from-the-cli)).
+Pull requests show the fixes as suggestions (see [Fix suggestions in CI](#fix-suggestions-in-ci)).
 Fixing a local file from the CLI, and **Apply fix** in the lint report, arrive in later releases. Nothing in a lint report, score or grade changes because these
 rules exist: the twelve new rules below are evaluated only when a fix plan is asked for.
 
@@ -369,6 +370,50 @@ See the [`apiome lint` reference](/reference/cli/lint) and [Exit codes](/referen
 order, quoting and indentation, and a JSON file keeps its key order and indentation: only the
 places a fix changes are rewritten.
 
+## Fix suggestions in CI
+
+A reviewer can tell from the pull request which lint failures are mechanical, without opening a
+terminal. Three CI summaries carry a **Suggested fixes** section. Each lists the number of
+**ready** fixes per rule, the fix class and the first hunk of one fix as a `diff` snippet. It
+also says how many **breaking** and **conflict** fixes are left for a person. Suggestions are
+never applied for you: nothing is written to the version or pushed to the branch.
+
+| Where | What it shows |
+| --- | --- |
+| `apiome lint gate --format markdown` | The section before *Provenance*, planned over the stored version. It links `GET …/lint/fixes?format=patch` and `?format=overlay` |
+| `apiome checks run --format md` and the provider check run | The section under the evidence of the API change check suite. The provider check's summary is this text, so the pull request shows the fix count and the patch link |
+| [diff-action](/reference/ci/diff-action#suggested-fixes) | A second section of the one sticky comment, planned over the spec file in the pull request. It adds one-click suggestion blocks and a workflow artefact |
+
+The version summaries plan with the default options: every rule the style guide turns on, without
+renames. The linked patch therefore holds the same bytes as
+`apiome lint --project P --version V --fix --dry-run --fix-format patch`. A version that is not
+OpenAPI 3.x has no section.
+
+### Suggest fixes for a spec file
+
+`apiome lint suggest <file>` plans a local file ([`POST /v1/lint/fixes/plan`](#plan-the-fixes),
+nothing stored). Each ready fix is applied on its own to the file's text, so the snippets and line
+numbers are those of the file itself, YAML comments included. The file is never rewritten.
+
+```bash
+apiome lint suggest api/openapi.yaml                       # the Suggested fixes section (Markdown)
+apiome lint suggest api/openapi.yaml --format json         # rules, plus a line range per fix
+apiome lint suggest api/openapi.yaml --format patch -o fixes.patch.json
+```
+
+| Option | What it does |
+| --- | --- |
+| `--format` | `markdown` (default), `json`, or the full change as `patch`, `overlay` or `diff` (the plan endpoint's bytes) |
+| `--path` | The file's path as the pull request names it, used in the section (default: the path you gave) |
+| `--artifact-url` | With `markdown`: link the full patch and overlay at this URL |
+| `--only`, `--allow-renames` | As for [`--fix`](#fix-from-the-cli) |
+| `-o` | Write to this file instead of standard output |
+
+With `--format json`, `suggestions` lists every ready fix that changes **one region** of the file.
+Each has its `startLine`, `endLine` and the `replacement` text for those lines. That is what a
+GitHub `suggestion` block needs. A fix that changes several places is listed under `rules` only. The
+command exits `0` whatever it suggests.
+
 ## Read the fix capability of a rule
 
 ```http
@@ -405,4 +450,5 @@ For a rule that is not fixable, `fixable` is `false` and the other fix fields ar
 - [Lint and check quality](./lint-and-quality.md) — read the lint report and the rule catalog
 - [Upgrade a spec](./upgrade-a-spec.mdx) — move a whole document from OpenAPI 3.0 to 3.1 or 3.2
 - [Lint REST reference](/reference/rest/lint) — the plan and apply endpoints
-- [`apiome lint` CLI reference](/reference/cli/lint) — `--fix`, `--dry-run` and the other options
+- [`apiome lint` CLI reference](/reference/cli/lint) — `--fix`, `--dry-run`, `suggest` and the other options
+- [diff-action](/reference/ci/diff-action#suggested-fixes) — suggested fixes on a pull request

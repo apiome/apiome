@@ -28,6 +28,8 @@ export INPUT_TENANT="acme-corp"
 export INPUT_BASE_URL="https://api.example.com"
 export INPUT_GITHUB_TOKEN="gh-token"
 export INPUT_COMMENT="true"
+# Suggested fixes (GVM-3.4) have their own test: test_entrypoint_fix_suggestions.sh.
+export INPUT_FIX_SUGGESTIONS="false"
 
 cat >"${GITHUB_EVENT_PATH}" <<'EOF'
 {"pull_request":{"number":99}}

@@ -534,6 +534,11 @@ apiome lint --project payments-api --version 1.0.0 --min-grade B
 apiome lint --project payments-api --version 1.0.0 --fix --dry-run
 apiome lint --project payments-api --version 1.0.0 --fix --only structure.empty-required
 
+# Suggested fixes of a spec file for a PR comment (GVM-3.4): Markdown, or JSON with the line
+# range of each single-region fix; --format patch|overlay writes the full change. Never rewrites.
+apiome lint suggest api/openapi.yaml
+apiome lint suggest api/openapi.yaml --format patch -o fixes.patch.json
+
 # Independent oasdiff compatibility evidence (normalized JSON / SARIF / JUnit)
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --format sarif

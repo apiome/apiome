@@ -29,6 +29,8 @@ export INPUT_API_KEY="test-key"
 export INPUT_TENANT="acme-corp"
 export INPUT_GITHUB_TOKEN="gh-token"
 export INPUT_COMMENT="true"
+# Suggested fixes (GVM-3.4) have their own test: test_entrypoint_fix_suggestions.sh.
+export INPUT_FIX_SUGGESTIONS="false"
 export ARGS_LOG="${TMP}/args.log"
 export BODY_COPY="${TMP}/body.md"
 

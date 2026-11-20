@@ -18,7 +18,7 @@ Score schema quality, list lint findings, and run the CI lint gate.
 apiome lint [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`evidence`](#lint-evidence), [`gate`](#lint-gate), [`verify-attestation`](#lint-verify-attestation).
+Subcommands: [`evidence`](#lint-evidence), [`gate`](#lint-gate), [`suggest`](#lint-suggest), [`verify-attestation`](#lint-verify-attestation).
 
 **Options**
 
@@ -74,6 +74,33 @@ apiome lint gate [OPTIONS]
 | `--new-only` | flag |  |  | Gate only newly introduced violations: pre-existing unwaived errors do not fail; coverage and axis gates still evaluate the full revision. |
 | `--format` | text | `json` |  | Artifact format: json \| sarif \| junit \| markdown \| attestation. |
 | `--output`, `-o` | path |  |  | Write the artifact to this file (non-json formats print to stdout otherwise). |
+
+## apiome lint suggest {#lint-suggest}
+
+Suggest the deterministic lint fixes of a spec file for a CI comment (GVM-3.4).
+
+Plans the file's fixes (POST /v1/lint/fixes/plan, nothing stored) and applies each ready fix alone to the file's text, so snippets and line ranges are those of the file itself. The file is never rewritten. ``--format patch`` writes the plan's RFC 6902 document (the bytes the plan endpoint returns); ``json`` adds, for every fix that changes a single region of the file, the line range and replacement a GitHub suggestion block needs. Exits 0 whatever is suggested.
+
+```text
+apiome lint suggest [OPTIONS] FILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `FILE` | path | yes | The OpenAPI 3.x file (YAML or JSON) to suggest fixes for. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `markdown` |  | markdown (the Suggested fixes section) \| json (rules plus single-region suggestions) \| patch \| overlay \| diff (the plan's full change). |
+| `--output`, `-o` | path |  |  | Write to this file instead of stdout. |
+| `--only` | text |  |  | Suggest fixes for these rule ids only (comma-separated). |
+| `--allow-renames` | flag |  |  | Include rename fixes. A breaking fix is never suggested. |
+| `--path` | text |  |  | The file's repository-relative path, as the pull request names it (default: FILE). |
+| `--artifact-url` | text |  |  | markdown: link the full patch and overlay at this URL (e.g. the workflow run's artefacts). |
 
 ## apiome lint verify-attestation {#lint-verify-attestation}
 

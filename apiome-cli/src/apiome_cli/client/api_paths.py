@@ -1098,3 +1098,8 @@ def openapi_upgrade_plan(tenant_slug: str) -> str:
 def openapi_upgrade_apply(tenant_slug: str) -> str:
     """Apply a reviewed OpenAPI upgrade plan as a new version of the project (COA-2.6)."""
     return f"{V1}/openapi-upgrade/{tenant_slug}/apply"
+
+
+def lint_fixes_plan() -> str:
+    """Lint-fix plan over a posted document — file mode (POST /v1/lint/fixes/plan, GVM-3.2)."""
+    return f"{V1}/lint/fixes/plan"

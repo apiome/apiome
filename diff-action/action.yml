@@ -2,7 +2,7 @@ name: Apiome Diff Gate
 description: >
   Run apiome diff against a published project version, fail the check on
   breaking (or warn-level) changes, and upsert one sticky PR comment with the
-  markdown changelog.
+  markdown changelog and the spec's suggested lint fixes.
 author: Apiome
 
 branding:
@@ -63,12 +63,27 @@ inputs:
       project's style-guide policy.
     required: false
     default: ""
+  fix-suggestions:
+    description: >
+      When true (default), add a "Suggested fixes" section to the sticky comment (per rule the
+      count, fix class and first hunk), post GitHub suggestion blocks for single-region fixes on
+      lines the PR changes, and write the full patch and overlay (outputs fix-patch-path and
+      fix-overlay-path) for an upload-artifact step. Never changes the exit code; nothing is
+      pushed to the branch.
+    required: false
+    default: "true"
 
 outputs:
   exit-code:
     description: Exit code from apiome diff (0 = pass, 1 = gate failed, 2 = error).
   changelog-path:
     description: Path to the written markdown changelog file inside the workspace.
+  fix-count:
+    description: Number of ready lint fixes suggested for the spec (empty when they could not be computed).
+  fix-patch-path:
+    description: Workspace path of the full RFC 6902 fix patch (same bytes as the plan's format=patch).
+  fix-overlay-path:
+    description: Workspace path of the same change as an Overlay 1.0 document.
 
 runs:
   using: docker
@@ -86,3 +101,4 @@ runs:
     INPUT_MODE: ${{ inputs.mode }}
     INPUT_TRANSITIVE: ${{ inputs.transitive }}
     INPUT_CATEGORY: ${{ inputs.category }}
+    INPUT_FIX_SUGGESTIONS: ${{ inputs.fix-suggestions }}

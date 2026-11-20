@@ -31,7 +31,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.responses import Response
@@ -271,6 +271,63 @@ def _plan(
         )
     except FixError as exc:
         raise _refuse(422, CODE_INVALID_OPTIONS, str(exc)) from exc
+
+
+def fix_plan_links(tenant_slug: str, project_id: str, version_record_id: str) -> Dict[str, str]:
+    """API paths of a revision's full lint-fix change, by rendering (GVM-3.4, #5872).
+
+    These are the downloads a CI summary links: ``patch`` returns the same bytes as
+    ``apiome lint --fix --dry-run --fix-format patch``.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: The project.
+        version_record_id: The revision.
+
+    Returns:
+        ``{"patch": …, "overlay": …}``.
+    """
+    base = f"/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes"
+    return {"patch": f"{base}?format={FORMAT_PATCH}", "overlay": f"{base}?format={FORMAT_OVERLAY}"}
+
+
+def suggest_revision_fixes(
+    version: Mapping[str, Any], *, tenant_slug: str, tenant_id: str, project_id: str
+) -> Optional[Dict[str, Any]]:
+    """The *Suggested fixes* summary of a revision's default plan, for CI summaries (GVM-3.4).
+
+    The plan is the one ``GET …/lint/fixes`` returns without options (every rule the style guide
+    turns on, no renames), so the counts match the linked patch. A revision the planner refuses
+    (not OpenAPI 3.x) or cannot rebuild has no suggestions — this is context for a summary and
+    never a reason to fail one.
+
+    Args:
+        version: The revision row.
+        tenant_slug: The tenant slug (the document is rebuilt under it).
+        tenant_id: The caller's tenant.
+        project_id: The owning project (its style guide decides which rules are on).
+
+    Returns:
+        :func:`app.lint_fix_suggestions.summarize_fix_plan` output, or ``None``.
+    """
+    from .lint_fix_suggestions import summarize_fix_plan
+
+    try:
+        document = openapi_for_revision(dict(version), tenant_slug, tenant_id)
+        guide = resolve_style_guide(tenant_id, project_id)
+        plan = _plan(
+            document,
+            rules=None,
+            include_renames=False,
+            operation_id_template=DEFAULT_OPERATION_ID_TEMPLATE,
+            guide=guide,
+        )
+        return summarize_fix_plan(plan)
+    except HTTPException:
+        return None
+    except Exception:  # noqa: BLE001 - suggestions are context, never a reason to fail
+        logger.warning("Could not plan lint fixes for revision %s", version.get("id"), exc_info=True)
+        return None
 
 
 def _render(plan: FixPlan, fmt: str, extra: Optional[Dict[str, Any]] = None) -> Any:

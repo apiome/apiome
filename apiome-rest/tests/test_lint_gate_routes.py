@@ -334,6 +334,26 @@ def test_gate_junit_and_markdown_and_accept_negotiation():
     json.loads(ra.text)
 
 
+def test_gate_markdown_suggests_the_revisions_mechanical_fixes():
+    """GVM-3.4 (#5872): the Markdown artifact gains a Suggested fixes section linking the patch."""
+    suggestions = {
+        "ready": 2,
+        "breaking": 0,
+        "conflict": 0,
+        "rules": [
+            {"ruleId": "duplicate-tag", "fixClass": "removal", "count": 2, "snippet": "@@ -1 +1 @@"}
+        ],
+    }
+    with patch("app.lint_fix_routes.suggest_revision_fixes", return_value=suggestions) as planned:
+        rm = _get_gate("?format=markdown")
+        rj = _get_gate("?format=junit")
+    assert planned.call_count == 1  # only the Markdown artifact plans fixes
+    assert "## Suggested fixes" in rm.text
+    assert "- `duplicate-tag` — 2 fixes (removal)" in rm.text
+    assert f"/v1/versions/acme/{PID}/{VID}/lint/fixes?format=patch" in rm.text
+    assert "Suggested fixes" not in rj.text
+
+
 def test_gate_attestation_signed_and_tamper_evident():
     from app.config import settings
     from app.lint_attestation import verify_attestation_envelope
