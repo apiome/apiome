@@ -1,0 +1,29 @@
+---
+slug: external-references
+title: "See, refresh and pin a spec's external $refs"
+description: "A References tab lists external $refs, detects remote changes, and finds reference cycles."
+authors: [apiome]
+---
+
+**Versions** has a **References** tab. It lists every external `$ref` a revision's OpenAPI document
+depends on, refreshes them, reports what changed on the remote host, and lists the document's
+circular references.
+
+{/* truncate */}
+
+- **What a spec pulls from outside:** one row per URL, with every place it is used, when it was
+  last fetched and its status: **Up to date**, **Changed**, **Unreachable**, **Blocked** or
+  **Not fetched**.
+- **Refresh:** fetches each reference now, without the cache, and compares it with the pinned
+  document or the previous fetch. A changed reference lists each changed value (added, removed or
+  changed, before and after), and the change is audited.
+- **Pin:** accept a reference's last fetched document. While it is pinned, a remote change stays
+  reported until you pin again.
+- **Circular references:** each loop of internal `$ref`s, with the path round it.
+- **External reference policy in the app:** the workspace policy (**Block**, **Fetch**,
+  **Fetch allowlisted hosts only**, plus a host allowlist) is shown on the tab. Administrators can
+  change it there, and the change is audited. It also governs repository scans.
+- **REST:** `GET /v1/projects/{tenant}/{project}/references`, `POST …/references/refresh`,
+  `PUT` / `DELETE …/references/pin`, and `GET` / `PUT /v1/tenants/{tenant}/governance/external-ref-policy`.
+
+See [External references and cycles](/build/external-references).

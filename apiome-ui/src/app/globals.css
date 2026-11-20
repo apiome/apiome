@@ -43207,6 +43207,80 @@ tr[data-selected="true"] > td:first-child {
   gap: var(--space-2);
 }
 
+/* ---- References tab (COA-2.8, #7051) --------------------------------------
+   The Versions page's References tab: the external-ref policy card, the reference table's URL,
+   places and row actions, the expanded change table and the cycle list. Tokens only. */
+.rfx-policy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.rfx-policy__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rfx-policy__icon {
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  color: var(--fg-muted);
+}
+
+.rfx-policy__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.rfx-policy__form {
+  max-inline-size: 36rem;
+}
+
+.rfx-url {
+  overflow-wrap: anywhere;
+}
+
+.rfx-places > summary {
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.rfx-places__list {
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.rfx-reason {
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.rfx-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.rfx-diff {
+  padding-block: var(--space-2);
+}
+
+.rfx-cycle {
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
 /* ---- Overlay manager (COA-2.7, #7050) -------------------------------------
    The Overlays tab's editor dialog (name / version / title, the action rows, the JSON view) and
    the preview tables' captions and before / after cells. Tokens only. */

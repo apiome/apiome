@@ -241,6 +241,17 @@
       ]
     },
     {
+      "id": "project-references",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:project-references/panel.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/projectReferences/ProjectReferencesPanel.tsx",
+        "apiome-ui/src/app/components/ade/projectReferences/ExternalRefPolicyCard.tsx",
+        "apiome-ui/tests/project-references.test.tsx"
+      ]
+    },
+    {
       "id": "overlays-list",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

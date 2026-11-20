@@ -292,10 +292,13 @@ folders it skipped (`files_skipped_by_ignore`, `directories_skipped_by_ignore`) 
 ### References to schemas outside the repository
 
 A spec may point at a schema hosted somewhere else, such as
-`{"$ref": "https://schemas.acme.com/common.json#/Money"}`. A scan **does not fetch** it: following
+`{"$ref": "https://schemas.acme.com/common.json#/Money"}`. By default a scan **does not fetch** it: following
 links found in a repository would let any file make Apiome call any address. The reference is
 reported instead: the file's row on **Discovered specs** carries a warning such as
 **2 unresolved external $refs**, so a model that is missing those definitions never looks complete.
+That is the default **Block** external reference policy. Workspace administrators can allow fetching
+from chosen hosts on a project's [**References** tab](../build/external-references.mdx#the-external-reference-policy).
+A scan then fetches each allowed reference and inlines it, and records every fetch in the audit log.
 
 ### Backstage files
 

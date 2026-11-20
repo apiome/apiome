@@ -1,6 +1,6 @@
 ---
 title: Versions
-description: A project's version timeline, and tabs for changes, overlays, testing, discussion and sources.
+description: A project's version timeline, and tabs for changes, overlays, references, discussion and sources.
 sidebar_position: 1.2
 tags: [versions]
 ---
@@ -160,6 +160,20 @@ recorded: the source fingerprint, the resolved fingerprint and the number of cha
 See [Manage overlays in Versions](./overlay-manager.mdx) for the editor, the preview and apply.
 
 <Screenshot id="version-overlays" alt="The Overlays tab: a stored overlay with New overlay, Upload overlay, Preview, Apply as version and Export with overlays, and the preview's actions, before and after values and ledger" />
+
+## References
+
+The **References** tab lists the external `$ref`s the revision's OpenAPI document depends on: each
+URL, where it is used, when it was last fetched, and whether it has changed since. It also lists
+the document's circular references.
+
+- **Click “Refresh all”** to fetch every reference now. A reference whose document changed reads
+  **Changed**, and **Show changes** lists each changed value, before and after.
+- **Click the pin** on a row to accept its last fetched document. Later refreshes compare against it.
+- The **External reference policy** at the top decides which hosts may be fetched. Workspace
+  administrators can change it there.
+
+See [External references and cycles](./external-references.mdx).
 
 ## Test bench
 

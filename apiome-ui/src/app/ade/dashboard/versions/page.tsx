@@ -30,6 +30,7 @@ import {
   GitPullRequestArrow,
   Network,
   Layers,
+  Link2,
   Workflow,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
@@ -241,6 +242,7 @@ import { ExternalCompatEvidencePanel } from '../../../components/ade/dashboard/E
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
 import { VersionChangesPanel } from './VersionChangesPanel';
 import { VersionOverlaysPanel } from '@/app/components/ade/versionOverlays/VersionOverlaysPanel';
+import { ProjectReferencesPanel } from '@/app/components/ade/projectReferences/ProjectReferencesPanel';
 import { SchemaTestBench } from '@/app/components/ade/dashboard/test-bench/SchemaTestBench';
 import { SuiteRegressionBadge } from '@/app/components/ade/dashboard/SuiteRegressionBadge';
 import {
@@ -477,6 +479,7 @@ const Versions = () => {
     | 'sources'
     | 'dependencies'
     | 'overlays'
+    | 'references'
     | 'workflows'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
@@ -968,6 +971,7 @@ const Versions = () => {
     if (tab === 'dependencies') setVersionsMainTab('dependencies');
     if (tab === 'sources') setVersionsMainTab('sources');
     if (tab === 'overlays') setVersionsMainTab('overlays');
+    if (tab === 'references') setVersionsMainTab('references');
     if (tab === 'workflows') setVersionsMainTab('workflows');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
   }, [searchParams]);
@@ -3269,6 +3273,8 @@ const Versions = () => {
   const showChangesTab = Boolean(selectedProjectId);
   /** Stored overlay chains (GVM-4.3, #5878): every project's revisions can carry one. */
   const showOverlaysTab = Boolean(selectedProjectId);
+  /** External $refs, their last fetch and the document's cycles (COA-2.8, #7051): every project. */
+  const showReferencesTab = Boolean(selectedProjectId);
   /** Schema Test Bench (IXH-5.3, #5115) — addresses schemas by project slug, so it needs one. */
   const showTestBenchTab = Boolean(selectedProjectId && selectedProject?.slug);
   /** Conversion provenance history (CPDO-3.3, #4803): the tab exists only when this project was
@@ -3314,6 +3320,7 @@ const Versions = () => {
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
     (versionsMainTab === 'overlays' && !showOverlaysTab) ||
+    (versionsMainTab === 'references' && !showReferencesTab) ||
     (versionsMainTab === 'workflows' && !showWorkflowsTab) ||
     (versionsMainTab === 'test-bench' && !showTestBenchTab) ||
     (versionsMainTab === 'conversion' && !showConversionTab)
@@ -3631,6 +3638,19 @@ const Versions = () => {
         >
           <Layers className="ver-tab-glyph" aria-hidden />
           Overlays
+        </button>
+      ) : null}
+      {showReferencesTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'references'}
+          data-testid="versions-tab-references"
+          className={tabTriggerClass({ active: effectiveMainTab === 'references' })}
+          onClick={() => setVersionsMainTab('references')}
+        >
+          <Link2 className="ver-tab-glyph" aria-hidden />
+          References
         </button>
       ) : null}
       {showTestBenchTab ? (
@@ -4054,6 +4074,16 @@ const Versions = () => {
             versions={versions}
             initialRevisionId={selectedVersion?.id ?? null}
             onVersionCreated={() => void loadVersions()}
+          />
+        ) : null}
+
+        {showReferencesTab && effectiveMainTab === 'references' ? (
+          /* External $ref hygiene (COA-2.8, #7051): refresh, pin and cycles per revision. */
+          <ProjectReferencesPanel
+            key={selectedProjectId}
+            projectId={selectedProjectId}
+            versions={versions}
+            initialRevisionId={selectedVersion?.id ?? null}
           />
         ) : null}
 

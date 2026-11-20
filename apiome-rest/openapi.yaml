@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.607.0
+  version: 1.608.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -31726,7 +31726,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-20T20:13:56Z'
+                        example: '2026-11-20T20:43:49Z'
                       method:
                         type: string
                         example: GET
@@ -56308,6 +56308,431 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for delete version overlayresponse422.
+  /v1/projects/{tenant_slug}/{project_id}/references:
+    get:
+      tags:
+      - project-references
+      summary: List a version's external $refs and cycles
+      description: "List a version's external references, their last refresh and pin,\
+        \ and its `$ref` cycles.\n\nRaises:\n    HTTPException: 404 unknown project\
+        \ / version; 409 when the version has no single-document\n        source (``unsupported-source``,\
+        \ ``source-withheld``, ``no-source``); 422 unparseable."
+      operationId: list_project_references_v1_projects__tenant_slug___project_id__references_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversionsexternalrefsandcyclesversion schema.
+          - type: 'null'
+            description: Listaversionsexternalrefsandcyclesversion schema.
+          description: Version id or label; default the latest.
+          title: Version
+        description: Version id or label; default the latest.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversionsexternalrefsandcyclesauthorization schema.
+          - type: 'null'
+            description: Listaversionsexternalrefsandcyclesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversionsexternalrefsandcycles Xapikey schema.
+          - type: 'null'
+            description: Listaversionsexternalrefsandcycles Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a version's external $refs and
+            cycles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectReferencesOut'
+                description: Response payload for listaversionsexternalrefsandcyclesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaversionsexternalrefsandcyclesresponse422.
+  /v1/projects/{tenant_slug}/{project_id}/references/refresh:
+    post:
+      tags:
+      - project-references
+      summary: Refresh a version's external $refs
+      description: "Fetch the version's external references now and report what changed.\n\
+        \nRaises:\n    HTTPException: as :func:`list_project_references`; 422 ``unknown-reference``\
+        \ when ``urls``\n        names a URL the version does not reference."
+      operationId: refresh_project_references_v1_projects__tenant_slug___project_id__references_refresh_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Refreshaversionsexternalrefsauthorization schema.
+          - type: 'null'
+            description: Refreshaversionsexternalrefsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Refreshaversionsexternalrefs Xapikey schema.
+          - type: 'null'
+            description: Refreshaversionsexternalrefs Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+              description: Request body for refreshaversionsexternalrefsrequest.
+        description: Request body for refresh a version's external $refs.
+      responses:
+        '200':
+          description: Successful response for refresh a version's external $refs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectReferencesOut'
+                description: Response payload for refreshaversionsexternalrefsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for refreshaversionsexternalrefsresponse422.
+  /v1/projects/{tenant_slug}/{project_id}/references/pin:
+    put:
+      tags:
+      - project-references
+      summary: Pin an external $ref's last fetched snapshot
+      description: "Accept the reference's last fetched snapshot; later refreshes\
+        \ compare against it.\n\nRaises:\n    HTTPException: 409 ``ref-not-fetched``\
+        \ when the reference has no fetched snapshot yet."
+      operationId: pin_project_reference_v1_projects__tenant_slug___project_id__references_pin_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pinanexternalrefslastfetchedsnapshotauthorization schema.
+          - type: 'null'
+            description: Pinanexternalrefslastfetchedsnapshotauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pinanexternalrefslastfetchedsnapshot Xapikey schema.
+          - type: 'null'
+            description: Pinanexternalrefslastfetchedsnapshot Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinRequest'
+              description: Request body for pinanexternalrefslastfetchedsnapshotrequest.
+        description: Request body for pin an external $ref's last fetched snapshot.
+      responses:
+        '200':
+          description: Successful response for pin an external $ref's last fetched
+            snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectReference'
+                description: Response payload for pinanexternalrefslastfetchedsnapshotresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for pinanexternalrefslastfetchedsnapshotresponse422.
+    delete:
+      tags:
+      - project-references
+      summary: Unpin an external $ref
+      description: "Remove a reference's pin.\n\nRaises:\n    HTTPException: 404 ``ref-not-found``\
+        \ when the reference was never refreshed."
+      operationId: unpin_project_reference_v1_projects__tenant_slug___project_id__references_pin_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: url
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          title: Url
+          description: Url schema.
+        description: 'Required. Query parameter: url.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Unpinanexternalrefauthorization schema.
+          - type: 'null'
+            description: Unpinanexternalrefauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Unpinanexternalref Xapikey schema.
+          - type: 'null'
+            description: Unpinanexternalref Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for unpin an external $ref.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectReference'
+                description: Response payload for unpinanexternalrefresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for unpinanexternalrefresponse422.
+  /v1/tenants/{tenant_slug}/governance/external-ref-policy:
+    get:
+      tags:
+      - project-references
+      summary: Get the tenant's external $ref policy
+      description: The external-ref policy in force (``block`` when never set). Readable
+        by any member.
+      operationId: get_external_ref_policy_v1_tenants__tenant_slug__governance_external_ref_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getthetenantsexternalrefpolicyauthorization schema.
+          - type: 'null'
+            description: Getthetenantsexternalrefpolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getthetenantsexternalrefpolicy Xapikey schema.
+          - type: 'null'
+            description: Getthetenantsexternalrefpolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get the tenant's external $ref policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalRefPolicyOut'
+                description: Response payload for getthetenantsexternalrefpolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for getthetenantsexternalrefpolicyresponse422.
+    put:
+      tags:
+      - project-references
+      summary: Set the tenant's external $ref policy
+      description: "Change the external-ref policy (tenant administrators only; audit-logged).\n\
+        \nRaises:\n    HTTPException: 403 for a non-administrator; 422 when an allowlist\
+        \ pattern is not a\n        hostname pattern, or ``proxy-fetch`` comes with\
+        \ an empty allowlist."
+      operationId: put_external_ref_policy_v1_tenants__tenant_slug__governance_external_ref_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Setthetenantsexternalrefpolicyauthorization schema.
+          - type: 'null'
+            description: Setthetenantsexternalrefpolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Setthetenantsexternalrefpolicy Xapikey schema.
+          - type: 'null'
+            description: Setthetenantsexternalrefpolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalRefPolicyWrite'
+              description: Request body for setthetenantsexternalrefpolicyrequest.
+        description: Request body for set the tenant's external $ref policy.
+      responses:
+        '200':
+          description: Successful response for set the tenant's external $ref policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalRefPolicyOut'
+                description: Response payload for setthetenantsexternalrefpolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for setthetenantsexternalrefpolicyresponse422.
   /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/preservation:
     get:
       tags:
@@ -99661,13 +100086,13 @@ components:
           format: date-time
           title: Started At
           description: When the step's first send began.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the step's last send finished.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -99823,13 +100248,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run finished.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         steps:
           items:
             $ref: '#/components/schemas/ArazzoStepResult'
@@ -108958,7 +109383,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         completed_at:
           anyOf:
           - type: string
@@ -110260,7 +110685,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       type: object
       required:
       - api_key
@@ -110303,7 +110728,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -110774,7 +111199,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -110957,7 +111382,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -112068,13 +112493,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -114689,7 +115114,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 28d70721-b67e-4235-a070-92c09ee0e19c
+          example: e7059ca1-7845-45d2-87db-ed2f445f482f
         method:
           type: string
           title: Method
@@ -117035,7 +117460,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         envelope:
           additionalProperties: true
           type: object
@@ -118756,7 +119181,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         browse_url:
           anyOf:
           - type: string
@@ -125356,7 +125781,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         reports:
           items:
             $ref: '#/components/schemas/ExportRunTargetReport'
@@ -125564,7 +125989,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -126358,6 +126783,76 @@ components:
       - rationale
       title: ExternalLintAdaptersResponse
       description: Discovery for Spectral / Vacuum / Redocly validation packs (CLX-2.2).
+    ExternalRefPolicyOut:
+      properties:
+        mode:
+          type: string
+          enum:
+          - block
+          - inline
+          - proxy-fetch
+          title: Mode
+          description: '`block` fetches nothing; `inline` fetches (only allowlisted
+            hosts when the allowlist is not empty); `proxy-fetch` fetches only allowlisted
+            hosts.'
+          example: block
+        allowlist:
+          items:
+            type: string
+          type: array
+          title: Allowlist
+          description: 'Hostname patterns: `schemas.acme.com`, `*.acme.com` or `*`.'
+          maxItems: 100
+        resolution_allowed:
+          type: boolean
+          title: Resolution Allowed
+          description: The deployment kill switch; false refuses every fetch whatever
+            the mode.
+          example: false
+        fetches:
+          type: boolean
+          title: Fetches
+          description: Whether this policy can fetch anything at all.
+          example: false
+        can_edit:
+          type: boolean
+          title: Can Edit
+          description: Whether the caller is a tenant administrator.
+          example: false
+      type: object
+      required:
+      - mode
+      - allowlist
+      - resolution_allowed
+      - fetches
+      - can_edit
+      title: ExternalRefPolicyOut
+      description: The external-ref policy in force, and whether the caller may change
+        it.
+    ExternalRefPolicyWrite:
+      properties:
+        mode:
+          type: string
+          enum:
+          - block
+          - inline
+          - proxy-fetch
+          title: Mode
+          description: Mode.
+          example: block
+        allowlist:
+          items:
+            type: string
+          type: array
+          maxItems: 100
+          title: Allowlist
+          description: Allowlist.
+      additionalProperties: false
+      type: object
+      required:
+      - mode
+      title: ExternalRefPolicyWrite
+      description: Body of ``PUT …/governance/external-ref-policy``.
     FactEvidence:
       properties:
         label:
@@ -126999,7 +127494,7 @@ components:
           format: date-time
           title: Last Activity At
           description: Last Activity At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         comments:
           items:
             $ref: '#/components/schemas/FeedbackComment'
@@ -135241,12 +135736,12 @@ components:
           type: string
           title: Acquired At
           description: When it was taken (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         expires_at:
           type: string
           title: Expires At
           description: When it lapses without a heartbeat (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         takeover:
           anyOf:
           - $ref: '#/components/schemas/TakeoverRecord'
@@ -141654,7 +142149,7 @@ components:
           format: date-time
           title: Checked At
           description: Checked At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         status:
           type: string
           title: Status
@@ -142755,7 +143250,7 @@ components:
           type: string
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         client_id:
           type: string
           title: Client Id
@@ -151661,6 +152156,21 @@ components:
       type: object
       title: PinListResponse
       description: PinListResponse schema.
+    PinRequest:
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Url
+          description: URL.
+          example: https://example.com/resource
+      additionalProperties: false
+      type: object
+      required:
+      - url
+      title: PinRequest
+      description: Body of ``PUT …/references/pin``.
     PinnedProject:
       properties:
         id:
@@ -154106,7 +154616,7 @@ components:
           title: Expires At
           description: When the consent stops authorizing runs. Required, timezone-aware,
             in the future.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         profiles_allowed:
           items:
             type: string
@@ -154173,13 +154683,13 @@ components:
           format: date-time
           title: Approved At
           description: When it was granted.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         expires_at:
           type: string
           format: date-time
           title: Expires At
           description: When it stops authorizing runs.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         profiles_allowed:
           items:
             type: string
@@ -154868,6 +155378,177 @@ components:
       - attribute_name
       title: ProjectPropertyUsage
       description: One class attribute that uses a library property (#3224, CLI 6.2).
+    ProjectReference:
+      properties:
+        url:
+          type: string
+          title: Url
+          description: The URL the reference fetches (fragment removed).
+          example: https://example.com/resource
+        host:
+          type: string
+          title: Host
+          description: Host.
+          example: example
+        locations:
+          items:
+            $ref: '#/components/schemas/RefLocation'
+          type: array
+          title: Locations
+          description: Locations.
+          maxItems: 1000
+        status:
+          type: string
+          enum:
+          - not-fetched
+          - ok
+          - changed
+          - unreachable
+          - blocked
+          title: Status
+          description: '`not-fetched` until the first refresh; `changed` when the
+            document differs from its pin (or, unpinned, from the previous fetch).'
+          example: not-fetched
+        reason:
+          anyOf:
+          - type: string
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Reason
+          description: Why a fetch was refused or failed.
+        detail:
+          anyOf:
+          - type: string
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Detail
+          description: Detail.
+        digest:
+          anyOf:
+          - type: string
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Digest
+          description: sha-256 of the last fetched document.
+        fetched_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Fetched At
+          description: When the document was last fetched.
+        checked_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Checked At
+          description: When the reference was last refreshed.
+        pinned:
+          anyOf:
+          - $ref: '#/components/schemas/RefPin'
+          - type: 'null'
+            description: Project Reference schema.
+          description: Pinned.
+        diff:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Project Reference schema.
+          - type: 'null'
+            description: Project Reference schema.
+          title: Diff
+          description: 'The last change found: `{changes: [{pointer, kind, before?,
+            after?}], total, truncated, against: pin|previous, from_digest, to_digest}`.'
+      type: object
+      required:
+      - url
+      - host
+      - locations
+      - status
+      title: ProjectReference
+      description: 'One external reference: where it is used and what the last refresh
+        found.'
+    ProjectReferencesOut:
+      properties:
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: Version Record ID.
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for project references.
+          - type: 'null'
+            description: Response payload for project references.
+          title: Version Label
+          description: Version Label.
+        references:
+          items:
+            $ref: '#/components/schemas/ProjectReference'
+          type: array
+          title: References
+          description: References.
+          maxItems: 1000
+        summary:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Summary
+          description: References per status.
+        cycles:
+          items:
+            $ref: '#/components/schemas/RefCycle'
+          type: array
+          title: Cycles
+          description: Cycles.
+          maxItems: 1000
+        cycle_total:
+          type: integer
+          title: Cycle Total
+          description: Cycle Total.
+          example: 1
+        cycles_truncated:
+          type: boolean
+          title: Cycles Truncated
+          description: Cycles Truncated.
+          example: false
+        policy:
+          $ref: '#/components/schemas/ExternalRefPolicyOut'
+          description: Policy.
+        refreshed:
+          anyOf:
+          - type: integer
+            description: Response payload for project references.
+          - type: 'null'
+            description: Response payload for project references.
+          title: Refreshed
+          description: References fetched by this refresh (refresh only).
+      type: object
+      required:
+      - project_id
+      - version_record_id
+      - references
+      - summary
+      - cycles
+      - cycle_total
+      - cycles_truncated
+      - policy
+      title: ProjectReferencesOut
+      description: '``GET …/references``.'
     ProjectRepositorySource:
       properties:
         id:
@@ -158224,7 +158905,7 @@ components:
           format: date-time
           title: Session Expires At
           description: When the current session ends.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -158247,7 +158928,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         return_to:
           anyOf:
           - type: string
@@ -158452,6 +159133,67 @@ components:
         \ withheld.\n    policy_source: Where the level came from (``default``, ``tenant``,\
         \ ``format``, ``request``).\n    value_preview_limit: Character limit applied\
         \ to any retained value."
+    RefCycle:
+      properties:
+        refs:
+          items:
+            type: string
+          type: array
+          title: Refs
+          description: Every reference in the loop, sorted.
+          maxItems: 1000
+        path:
+          items:
+            type: string
+          type: array
+          title: Path
+          description: One way round the loop, ending where it starts.
+          maxItems: 1000
+      type: object
+      required:
+      - refs
+      - path
+      title: RefCycle
+      description: References that reach each other through internal `$ref`s.
+    RefLocation:
+      properties:
+        location:
+          type: string
+          title: Location
+          description: JSON Pointer of the `$ref`, e.g. `#/components/schemas/Money`.
+          example: example
+        ref:
+          type: string
+          title: Ref
+          description: The reference as written.
+          example: example
+      type: object
+      required:
+      - location
+      - ref
+      title: RefLocation
+      description: One place an external reference is used.
+    RefPin:
+      properties:
+        digest:
+          type: string
+          title: Digest
+          description: Digest.
+          example: example
+        at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Ref Pin schema.
+          - type: 'null'
+            description: Ref Pin schema.
+          title: At
+          description: At.
+      type: object
+      required:
+      - digest
+      title: RefPin
+      description: The accepted snapshot of a pinned reference.
     RefreshHistoryEntryOut:
       properties:
         id:
@@ -158650,6 +159392,31 @@ components:
       - hasMore
       title: RefreshHistoryPaginationOut
       description: Offset pagination metadata for the refresh-history list.
+    RefreshRequest:
+      properties:
+        version:
+          anyOf:
+          - type: string
+            description: Request body for refresh.
+          - type: 'null'
+            description: Request body for refresh.
+          title: Version
+          description: Version id or label; default the latest.
+        urls:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            maxItems: 200
+            description: Request body for refresh.
+          - type: 'null'
+            description: Request body for refresh.
+          title: Urls
+          description: 'Refresh only these URLs (default: every external reference).'
+      additionalProperties: false
+      type: object
+      title: RefreshRequest
+      description: Body of ``POST …/references/refresh``.
     RefreshRunOut:
       properties:
         id:
@@ -163714,7 +164481,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -166195,13 +166962,13 @@ components:
           format: date-time
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         last_seen_at:
           type: string
           format: date-time
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -166344,7 +167111,7 @@ components:
           format: date-time
           title: Received At
           description: Received At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         accepted:
           type: integer
           title: Accepted
@@ -175823,12 +176590,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
       additionalProperties: false
       type: object
       required:
@@ -177477,7 +178244,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         detected_by:
           anyOf:
           - type: string
@@ -178561,7 +179328,7 @@ components:
           type: string
           title: Requested At
           description: When they asked (ISO 8601).
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         can_force_after:
           type: string
           title: Can Force After
@@ -185339,13 +186106,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-20T20:13:56Z'
+          example: '2026-11-20T20:43:49Z'
         outcome:
           anyOf:
           - type: string
