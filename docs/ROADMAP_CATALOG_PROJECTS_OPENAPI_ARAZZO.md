@@ -41,16 +41,16 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 
 | Epic | Title | Issues |
 | --- | --- | --- |
-| COA-EPIC-1 | Arazzo: complete, current and visible | 7 |
+| ✅ COA-EPIC-1 | Arazzo: complete, current and visible — Complete | 7 |
 | COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring | 8 |
 | COA-EPIC-3 | Import and export fidelity | 6 |
 | COA-EPIC-4 | Catalog and Projects cleanup | 4 |
 
-### COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible
+### ✅ COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible — Complete
 
 Arazzo 1.0/1.1 is read, normalised, linted and emitted in apiome-rest, but the CLI, the legacy generator, the UI generator and the docs still say 1.0, workflows have no viewer, and filesets are not supported.
 
-All seven issues of this epic are complete.
+All seven issues of this epic are complete. The epic's overview page is `build/arazzo.mdx` (**Arazzo in Apiome**: the import → read → check → compare → export → run lifecycle, 1.0 vs 1.1, how the pieces fit), with release note `arazzo-complete-current-visible` and a What's new line.
 
 **✅ COA-1.1 · #7037 Arazzo 1.1 consistency sweep: CLI, generator, UI and docs — Complete**
 - **Shipped:** CLI 0.148.0 vendors the Arazzo 1.1 schema (`import_/schemas/arazzo/1.1/2026-04-15.json`) and validates each document against the schema for the version it declares (`arazzo_version_line`; other versions fail at `/arazzo`). REST 1.767.0 / OpenAPI 1.598.0: `GET /v1/arazzo/...` (and the per-class route) take `arazzo_version` (default `1.0.1`; `400` otherwise); `arazzo_generator.resolve_generator_arazzo_version` applies the export target's rule (`1.1.0` for AsyncAPI sources, a 1.0 request for one is rejected). UI 0.671.0: `generateArazzoSpec` takes `arazzoVersion` / `sourceDescriptions` (`resolveArazzoVersion`); the import analyzer accepts 1.1.x; the Projects importer accepts `asyncapi` sources in a 1.1 document and leaves their steps to the server. Docs: `bring-in/import-a-spec.md`, `ship/export-a-spec.md`, regenerated REST/CLI reference, `ARAZZO_ENDPOINTS.md`, release note `arazzo-1-1-consistency`.
