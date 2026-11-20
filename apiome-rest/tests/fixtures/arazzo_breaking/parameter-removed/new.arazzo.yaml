@@ -1,0 +1,87 @@
+arazzo: 1.0.1
+info:
+  title: Pet adoption
+  version: 1.0.0
+sourceDescriptions:
+- name: petstore
+  url: https://example.com/petstore.openapi.yaml
+  type: openapi
+- name: billing
+  url: https://example.com/billing.openapi.yaml
+  type: openapi
+workflows:
+- workflowId: adopt-pet
+  summary: Find a pet and adopt it.
+  inputs:
+    type: object
+    properties:
+      petType:
+        type: string
+        description: Kind of pet.
+      maxPrice:
+        type: number
+    required:
+    - petType
+  steps:
+  - stepId: find-pet
+    operationId: petstore.findPets
+    parameters:
+    - name: type
+      in: query
+      value: $inputs.petType
+    successCriteria:
+    - condition: $statusCode == 200
+    outputs:
+      petId: $response.body#/0/id
+  - stepId: adopt
+    operationId: petstore.adoptPet
+    parameters:
+    - name: petId
+      in: path
+      value: $steps.find-pet.outputs.petId
+    requestBody:
+      contentType: application/json
+      payload:
+        maxPrice: $inputs.maxPrice
+    successCriteria:
+    - condition: $statusCode == 201
+    onFailure:
+    - name: retry-adopt
+      type: retry
+      retryAfter: 1
+      retryLimit: 3
+    outputs:
+      adoptionId: $response.body#/id
+  - stepId: pay
+    operationId: billing.createInvoice
+    dependsOn: []
+    successCriteria:
+    - condition: $statusCode == 200
+    onSuccess:
+    - name: done
+      type: end
+  outputs:
+    adoptionId: $steps.adopt.outputs.adoptionId
+- workflowId: check-order
+  inputs:
+    $ref: '#/components/inputs/order_input'
+  steps:
+  - stepId: get-order
+    operationId: billing.getInvoice
+    parameters:
+    - reference: $components.parameters.invoiceId
+      value: $inputs.invoiceId
+    successCriteria:
+    - condition: $statusCode == 200
+components:
+  inputs:
+    order_input:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+  parameters:
+    invoiceId:
+      name: invoiceId
+      in: path
+      value: ''

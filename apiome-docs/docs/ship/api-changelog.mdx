@@ -130,6 +130,51 @@ GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/changelog.md?severi
 An unknown `severity` is `422`. An unknown organization, or a project with no public published
 version, is `404`. See [`browse` in the REST reference](../reference/rest/browse.md).
 
+## Arazzo workflow changes
+
+An Arazzo document describes workflows rather than paths, so its changes are graded by workflow
+rules instead of the OpenAPI ones. They grade what a workflow's callers depend on: its inputs and
+outputs, the parameters and criteria of each step, its actions and its source descriptions. You
+see them, with their rule id and a one-line reason, in `apiome diff`, the diff GitHub Action, the
+publish check and the change report a new catalog revision writes.
+
+| Rule | Severity | Reported when |
+|---|---|---|
+| `arazzo.step-target-changed` | Breaking | A step calls a different operation, channel or workflow |
+| `arazzo.input-required-added` | Breaking | A workflow input became required, or a required input was added |
+| `arazzo.input-type-changed` | Breaking | A workflow input's type changed |
+| `arazzo.output-removed` | Breaking | A workflow or step output was removed |
+| `arazzo.source-removed` | Breaking | A source description was removed |
+| `arazzo.step-reorder` | Non-breaking (review) | Steps both versions share run in a different order |
+| `arazzo.depends-on-changed` | Non-breaking (review) | What a workflow or step depends on changed |
+| `arazzo.request-body-changed` | Non-breaking (review) | The request body a step sends changed |
+| `arazzo.input-removed` | Non-breaking (review) | A workflow input was removed |
+| `arazzo.inputs-changed` | Non-breaking (review) | An input's schema changed (format, enum, constraints) |
+| `arazzo.output-changed` | Non-breaking (review) | An output's expression changed |
+| `arazzo.parameter-added` | Non-breaking (review) | A parameter was added |
+| `arazzo.parameter-removed` | Non-breaking (review) | A parameter was removed |
+| `arazzo.parameter-changed` | Non-breaking (review) | A parameter's location or value changed |
+| `arazzo.success-criteria-added` | Non-breaking (review) | A step success criterion was added |
+| `arazzo.success-criteria-removed` | Non-breaking (review) | A step success criterion was removed |
+| `arazzo.success-actions-changed` | Non-breaking (review) | An `onSuccess` or `successActions` action was added, removed or changed |
+| `arazzo.failure-actions-changed` | Non-breaking (review) | An `onFailure` or `failureActions` action was added, removed or changed |
+| `arazzo.source-changed` | Non-breaking (review) | A source description's URL or type changed |
+| `arazzo.step-order-shifted` | Non-breaking | A step was added or removed and the others keep their order |
+| `arazzo.position-changed` | Non-breaking | Only a workflow's or step's position in the document moved |
+| `arazzo.input-added` | Non-breaking | An optional workflow input was added |
+| `arazzo.input-required-removed` | Non-breaking | A workflow input is no longer required |
+| `arazzo.output-added` | Non-breaking | An output was added |
+| `arazzo.source-added` | Non-breaking | A source description was added |
+| `arazzo.docs-changed` | Docs-only | Only a summary, description, title or example changed |
+
+A removed or added workflow or step is reported as breaking or non-breaking like any other removed
+or added surface. Inputs are compared after following a `$ref` to `components.inputs`, so making a
+shared input required is reported on every workflow that uses it.
+
+A change no rule covers (for example a step's `timeout`) is reported as **breaking** under
+`ctg.unclassified`, so nothing new gets through unreviewed. "Non-breaking (review)" changes are
+dangerous: they don't fail a breaking-change gate, but the reason tells you what to check.
+
 ## Related
 
 - [Browse published specs](./browse-published-specs.md) — the Browse app and its search

@@ -1,0 +1,27 @@
+---
+slug: arazzo-change-reports
+title: Arazzo changes graded by workflow rules
+description: "Arazzo diffs grade inputs, outputs, parameters, criteria, actions and sources."
+authors: [apiome]
+---
+
+Comparing two Arazzo revisions used to catch only a removed or reordered step. Now every change a
+workflow's callers depend on is graded, with its rule id and a one-line reason, in `apiome diff`,
+the diff GitHub Action, the publish check and the change report a new catalog revision writes.
+
+{/* truncate */}
+
+- **Breaking:** a workflow input made required (or added as required), an input's type changed, a
+  workflow or step output removed, a source description removed, a step that now calls a different
+  operation.
+- **Flagged for review:** a removed or changed input, a changed output expression, a parameter
+  added, removed or changed, a success criterion added or removed, an `onSuccess` / `onFailure`
+  action changed, a source description's URL or type changed, steps reordered.
+- **Safe:** an optional input or an output added, a source description added, a step added with
+  the others in the same order; a summary-only edit is docs-only.
+- **Shared inputs count:** inputs are compared after following `$ref` to `components.inputs`, so
+  making a shared input required is reported on every workflow that uses it.
+- **Fail-safe:** a change no rule covers is reported as breaking (`ctg.unclassified`).
+- **REST API 1.772.0, OpenAPI 1.603.0.**
+
+See [Arazzo workflow changes](/ship/api-changelog#arazzo-workflow-changes).

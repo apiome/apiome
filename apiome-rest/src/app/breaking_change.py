@@ -280,6 +280,12 @@ class BreakingChangeClassifier(ABC):
     #: ``"buf-breaking-wire"``. Defaults to the class name when left empty.
     classifier_id: ClassVar[str] = ""
 
+    #: Whether the classified diff, the publish guardrail and catalog change reports grade this
+    #: format's revisions as canonical models with this classifier (rather than through their
+    #: OpenAPI projection). Mode- and category-aware classifiers always do; a format whose
+    #: contract lives outside the OpenAPI projection (Arazzo workflows, COA-1.6) opts in here.
+    grades_classified_diff: ClassVar[bool] = False
+
     def __init_subclass__(cls, *, register: bool = False, **kwargs: Any) -> None:
         """Optionally self-register a concrete subclass in the classifier registry.
 

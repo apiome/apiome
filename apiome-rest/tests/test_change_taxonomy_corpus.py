@@ -89,7 +89,12 @@ def test_corpus_covers_every_default_rule() -> None:
         for change in expected["changes"]:
             seen.add(change["rule_id"])
 
-    missing = sorted(set(RULE_REGISTRY.keys()) - seen)
+    # Arazzo's rules (COA-1.6) have their own fixture pairs under tests/fixtures/arazzo_breaking,
+    # checked by tests/test_arazzo_breaking_change.py.
+    from app.arazzo_change_rules import ARAZZO_RULES
+
+    arazzo = {rule.rule_id for rule in ARAZZO_RULES}
+    missing = sorted(set(RULE_REGISTRY.keys()) - arazzo - seen)
     assert not missing, f"corpus missing fixtures for rules: {missing}"
     assert UNCLASSIFIED_RULE_ID in seen or any(
         c.get("unclassified")

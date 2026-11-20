@@ -16,6 +16,11 @@ operations — so the report also carries the CTG-1.1 classified diff
 in ``noChanges``, and appends its markdown changelog to the rendered body. A Kong route whose
 path moved therefore reports a removed and an added path, with their severities.
 
+A format whose contract the OpenAPI projection cannot show opts into its own classifier instead
+(``grades_classified_diff``): an Arazzo revision's ``classifiedChanges`` are the Arazzo workflow
+rules (COA-1.6, :mod:`app.arazzo_change_rules`) — a required input, a removed output or source
+description — each with its rationale.
+
 The report is stored on ``change_reports`` keyed by the new revision (one row per revision;
 an existing row is kept unchanged) and audited as ``catalog.connector.change_report.generated``.
 
@@ -72,8 +77,26 @@ def openapi_for_catalog_revision(project_id: str, revision: Dict[str, Any]) -> D
         app.catalog_conversion.ConversionError: When the revision has no captured source or it
             cannot be parsed.
     """
-    from .catalog_conversion import build_conversion_source
     from .openapi_emitter import OpenApiEmitter
+
+    return OpenApiEmitter().emit(_canonical_for_catalog_revision(project_id, revision)).document
+
+
+def _canonical_for_catalog_revision(project_id: str, revision: Dict[str, Any]) -> Any:
+    """Rebuild a catalog revision's canonical model from its captured source.
+
+    Args:
+        project_id: The catalog item id.
+        revision: The revision row (``source_format``, ``format_metadata``, ``metadata``).
+
+    Returns:
+        The revision's :class:`~app.canonical_model.CanonicalApi`.
+
+    Raises:
+        app.catalog_conversion.ConversionError: When the revision has no captured source or it
+            cannot be parsed.
+    """
+    from .catalog_conversion import build_conversion_source
 
     item = {
         "id": project_id,
@@ -82,8 +105,35 @@ def openapi_for_catalog_revision(project_id: str, revision: Dict[str, Any]) -> D
         "format_metadata": revision.get("format_metadata"),
         "metadata": revision.get("metadata"),
     }
-    api = build_conversion_source(item).api
-    return OpenApiEmitter().emit(api).document
+    return build_conversion_source(item).api
+
+
+def _classify(
+    baseline_api: Any, candidate_api: Any, baseline_openapi: Dict[str, Any], candidate_openapi: Dict[str, Any]
+) -> Any:
+    """The classified diff for the report: the format's own classifier when it opts in, else CTG-1.1.
+
+    A format whose contract lives outside the OpenAPI projection (Arazzo workflows, COA-1.6) sets
+    ``grades_classified_diff`` on its breaking-change classifier; its canonical grades are mapped
+    onto CTG changes (with their rationale). Every other format keeps the OpenAPI taxonomy.
+
+    Args:
+        baseline_api: The baseline revision's canonical model.
+        candidate_api: The new revision's canonical model.
+        baseline_openapi: The baseline's emitted OpenAPI document.
+        candidate_openapi: The new revision's emitted OpenAPI document.
+
+    Returns:
+        A :class:`~app.change_taxonomy.ClassifiedDiff`.
+    """
+    from .breaking_change import classify_models, get_breaking_change_classifier
+    from .change_taxonomy import classify_openapi_changes, summarize_changes
+    from .compatibility_modes import ctg_changes
+
+    classifier = get_breaking_change_classifier(candidate_api.format)
+    if classifier is not None and classifier.grades_classified_diff:
+        return summarize_changes([change for change, _ in ctg_changes(classify_models(baseline_api, candidate_api))])
+    return classify_openapi_changes(baseline_openapi, candidate_openapi)
 
 
 def generate_catalog_revision_change_report(
@@ -154,9 +204,9 @@ def _generate(
 ) -> Optional[Dict[str, Any]]:
     """:func:`generate_catalog_revision_change_report` without the safety net."""
     from .change_report_render import build_render_metadata, render_from_template_row
-    from .change_taxonomy import classify_openapi_changes
     from .changelog_generator import build_changelog, render_changelog_markdown
     from .openapi_change_report import build_change_report, change_report_change_counts, change_report_is_noop
+    from .openapi_emitter import OpenApiEmitter
     from .publication_change_report import _resolve_template_row
 
     candidate = _revision_row(tenant_id, project_id, revision_version_id)
@@ -164,10 +214,12 @@ def _generate(
     if candidate is None or baseline is None:
         raise LookupError("revision not found in the catalog item")
 
-    baseline_openapi = openapi_for_catalog_revision(project_id, baseline)
-    candidate_openapi = openapi_for_catalog_revision(project_id, candidate)
+    baseline_api = _canonical_for_catalog_revision(project_id, baseline)
+    candidate_api = _canonical_for_catalog_revision(project_id, candidate)
+    baseline_openapi = OpenApiEmitter().emit(baseline_api).document
+    candidate_openapi = OpenApiEmitter().emit(candidate_api).document
     change_model = build_change_report(baseline_openapi, candidate_openapi)
-    classified = classify_openapi_changes(baseline_openapi, candidate_openapi)
+    classified = _classify(baseline_api, candidate_api, baseline_openapi, candidate_openapi)
     change_model["classifiedChanges"] = {
         "changes": [change.model_dump() for change in classified.changes],
         "counts": dict(classified.counts),
