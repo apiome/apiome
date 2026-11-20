@@ -1,0 +1,25 @@
+---
+slug: bundle-and-dereference-options
+title: "Export OpenAPI bundled, dereferenced or split into files"
+description: "Choose how an OpenAPI export writes shared objects; circular references are reported."
+authors: [apiome]
+---
+
+An OpenAPI export now has a **$ref handling** option. Keep the usual single bundled file, write
+every `$ref` out in full, or split the API into one file per path and component.
+
+{/* truncate */}
+
+- **bundle** (the default): one file, shared objects under `components`, each use a `$ref`.
+- **dereference:** one file with every `$ref` replaced by a copy of what it points at.
+- **split:** a `.zip` with `openapi.json` plus `paths/…json` and `components/<section>/<name>.json`,
+  joined by relative `$ref`. Import the `.zip` and it bundles back into the same document.
+- **Circular references** are never expanded forever. **Reference cycles** keeps the `$ref` that
+  closes the loop and lists it in the fidelity report (**keep-ref**), or refuses the export
+  (**error**).
+- **Everywhere:** the **Options** step in Export studio, **Target options** in the Export dialog, `apiome export openapi
+  --refs split|dereference [--ref-cycles error]`, and `"options": {"refs": …}` in the REST API.
+- **Measured:** on the OpenAPI construct corpus, at every version, each choice round-trips and none
+  adds a schema error.
+
+See [Bundled, dereferenced or split into files](/ship/export-a-spec#bundled-dereferenced-or-split).

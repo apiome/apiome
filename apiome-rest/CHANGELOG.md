@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.777.0] - 2026-11-20
+
+### Added
+- **Bundle and dereference options — OpenAPI 1.604.4 (COA-2.4, #7047):** an OpenAPI export had
+  one shape (a bundled document with `$ref` into `components`) and no user-facing choice.
+  - New OpenAPI emit options `refs` (`bundle` default · `dereference` · `split`) and `ref_cycles`
+    (`keep-ref` default · `error`), shown in Export studio and the Export dialog from the options
+    schema, accepted by `/export/{tenant}/document`, `/preview`, `/verify` and `/jobs`.
+  - `app.openapi_ref_modes`: `dereference` replaces every internal `$ref` with its expanded target
+    (components kept, entries dereferenced; literal data such as `example` / `default` / `enum` is
+    never treated as a reference; `$ref` siblings kept). A circular reference is never expanded:
+    `keep-ref` keeps the closing `$ref` and records one `openapi-dereference-cycle` loss per cycle;
+    `error` refuses the export (422). A dereference past 2,000,000 JSON values is refused.
+    `split` writes the root plus `paths/<path>.json` and `components/<section>/<name>.json`
+    (Swagger 2.0: `definitions/`) with relative `$ref`s, safe unique file names; the job download
+    is the multi-file zip.
+  - `openapi_fileset_bundle`: a root entry that is a whole-file `$ref` (a split layout) is inlined
+    and every other reference to that file — `$ref`, `discriminator.mapping`, `operationRef` —
+    becomes the internal pointer; URL `$ref`s are left as written. The OpenAPI fileset import
+    bundles a base whose `$ref`s reach other members (`references_fileset_members`).
+  - The vendored OpenAPI 3.1 meta-schema (2022-10-07) gains the Path Item `$ref` property the
+    3.1 specification defines (the COA-2.1 follow-up), so a split 3.1 root validates.
+  - Tests: across the construct corpus at 3.0 / 3.1 / 3.2 / 2.0, a split export bundles back to
+    exactly the bundled document, a dereferenced one is stable through import, and neither adds a
+    meta-schema error to a valid document; cycles (self and mutual) for both policies
+    (`tests/test_openapi_ref_modes.py`).
+
 ## [1.776.0] - 2026-11-20
 
 ### Added

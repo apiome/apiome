@@ -539,6 +539,43 @@ export function resolveExportDialect(
   };
 }
 
+// ===========================================================================
+// Multi-file output chosen by an option (COA-2.4 — OpenAPI `refs: split`)
+// ===========================================================================
+
+/**
+ * Option values that make a single-file target write several files: OpenAPI's `refs: split`
+ * writes a root document plus one file per path item and component (COA-2.4, #7047).
+ */
+export const MULTI_FILE_OPTION_VALUES: Readonly<Record<string, readonly string[]>> = {
+  refs: ['split'],
+};
+
+/**
+ * Whether an export of `entry` with the current option `values` writes more than one file.
+ *
+ * A multi-file target always does; a single-file target does when one of its options is set to
+ * a value in {@link MULTI_FILE_OPTION_VALUES} (the form value, else the target's default). The
+ * dialog then downloads the job's bundle instead of zipping the previewed file alone.
+ *
+ * @param entry The target entry, for its descriptor and validated defaults.
+ * @param values The options form's current values, keyed by option key.
+ * @returns `true` when the export is a multi-file bundle.
+ */
+export function writesMultipleFiles(
+  entry: ExportTargetEntry | null | undefined,
+  values: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!entry) return false;
+  if (entry.descriptor.multi_file) return true;
+  const declared = new Set(Object.keys((entry.options_schema?.properties as object | undefined) ?? {}));
+  return Object.entries(MULTI_FILE_OPTION_VALUES).some(([key, multi]) => {
+    if (!declared.has(key)) return false;
+    const value = values?.[key] ?? entry.default_options?.[key];
+    return typeof value === 'string' && multi.includes(value);
+  });
+}
+
 /**
  * Compare two dotted version strings numerically (`3.2` > `3.1` > `3.0` > `2.0`, `1.10` > `1.9`).
  *

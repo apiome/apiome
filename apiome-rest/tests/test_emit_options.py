@@ -87,6 +87,8 @@ def test_describe_emit_targets_includes_options_schema_and_defaults() -> None:
         "include_paths": True,
         "include_components": True,
         "include_projection_extensions": True,
+        "refs": "bundle",
+        "ref_cycles": "keep-ref",
     }
 
     sample = next(t for t in describe_emit_targets() if t.descriptor.key == "sample")

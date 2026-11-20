@@ -210,11 +210,64 @@ def with_flavor(option_values: Sequence[str], flavor: str | None) -> tuple[str, 
     return (*option_values, f"flavor={flavor}")
 
 
+#: How an OpenAPI export writes shared objects, chosen with ``--refs`` (COA-2.4).
+REF_MODES = ("bundle", "dereference", "split")
+#: What ``--refs dereference`` does with a circular reference, chosen with ``--ref-cycles``.
+REF_CYCLE_POLICIES = ("keep-ref", "error")
+
+REFS_HELP = (
+    "How shared objects are written: bundle (default — one file, $ref into components), "
+    "dereference (one file, every $ref replaced by a copy of its target) or split (a root file "
+    "plus one file per path item and component, joined by relative $ref: --out a directory "
+    "unpacks it, a .zip path keeps the archive). Same as --option refs=…."
+)
+REF_CYCLES_HELP = (
+    "With --refs dereference, what to do with a circular $ref: keep-ref (default — keep it as "
+    "$ref and report it) or error (refuse the export). Same as --option ref_cycles=…."
+)
+
+
+def with_refs(option_values: Sequence[str], refs: str | None, ref_cycles: str | None) -> tuple[str, ...]:
+    """Add ``--refs`` / ``--ref-cycles`` to the ``--option`` values as ``refs=…`` / ``ref_cycles=…``.
+
+    Args:
+        option_values: The repeatable ``--option key=value`` flags as given.
+        refs: The ``--refs`` value (one of :data:`REF_MODES`), or ``None`` when not given.
+        ref_cycles: The ``--ref-cycles`` value (one of :data:`REF_CYCLE_POLICIES`), or ``None``.
+
+    Returns:
+        The option values to send.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` when the same option is also given with ``--option``, or when
+            ``--ref-cycles`` is given without ``--refs dereference``.
+    """
+    given = parse_export_options(option_values)
+    values = list(option_values)
+    for flag, key, value in (("--refs", "refs", refs), ("--ref-cycles", "ref_cycles", ref_cycles)):
+        if value is None:
+            continue
+        if key in given:
+            typer.echo(f"Give {key} once: {flag} or --option {key}=…, not both.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        values.append(f"{key}={value}")
+    if ref_cycles is not None and (refs or given.get("refs")) != "dereference":
+        typer.echo("--ref-cycles only applies to --refs dereference.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    return tuple(values)
+
+
+def _is_openapi_target(target_format: str) -> bool:
+    """Whether ``target_format`` names the OpenAPI emitter (``openapi``, ``openapi-3.1``)."""
+    return target_format == _OPENAPI_TARGET or target_format.startswith("openapi-")
+
+
 def _build_generic_export_command(target_format: str) -> click.Command:
     """Build a Click command that exports ``target_format`` via the async job seam (MFX-8.1).
 
     The ``postman`` command also takes ``--flavor`` (:data:`POSTMAN_FLAVORS`), a shorthand for its
-    ``flavor`` emit option (MFX-31.5).
+    ``flavor`` emit option (MFX-31.5); an OpenAPI target (``openapi-3.1``) takes ``--refs`` and
+    ``--ref-cycles`` (COA-2.4).
     """
 
     @click.command(
@@ -320,9 +373,12 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         deliver_refs: tuple[str, ...],
         flavor: str | None = None,
         dialect: str | None = None,
+        refs: str | None = None,
+        ref_cycles: str | None = None,
     ) -> None:
         ctx = click.get_current_context()
         option_values = with_flavor(option_values, flavor)
+        option_values = with_refs(option_values, refs, ref_cycles)
         if target_format in SQL_VERBS:
             option_values = with_sql_preset(option_values, target_format, dialect)
         if target_format in DATA_LAKE_VERBS:
@@ -376,6 +432,21 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             type=click.Choice(SQL_DIALECTS),
             default=None,
             help=_DIALECT_HELP,
+        )(_generic)
+    if _is_openapi_target(target_format):
+        _generic = click.option(
+            "--ref-cycles",
+            "ref_cycles",
+            type=click.Choice(REF_CYCLE_POLICIES),
+            default=None,
+            help=REF_CYCLES_HELP,
+        )(_generic)
+        _generic = click.option(
+            "--refs",
+            "refs",
+            type=click.Choice(REF_MODES),
+            default=None,
+            help=REFS_HELP,
         )(_generic)
     if target_format == "postman":
         _generic = click.option(
@@ -538,6 +609,18 @@ def export_openapi(
         metavar="FILE",
         help=OVERLAY_HELP + " Runs the export as a job and writes JSON.",
     ),
+    refs: str | None = typer.Option(
+        None,
+        "--refs",
+        click_type=click.Choice(REF_MODES),
+        help=REFS_HELP + " dereference and split run the export as a job and write JSON.",
+    ),
+    ref_cycles: str | None = typer.Option(
+        None,
+        "--ref-cycles",
+        click_type=click.Choice(REF_CYCLE_POLICIES),
+        help=REF_CYCLES_HELP,
+    ),
 ) -> None:
     """Export a version as OpenAPI and surface the emitter registry's fidelity report."""
     output = output.strip()
@@ -546,10 +629,13 @@ def export_openapi(
         raise typer.Exit(EXIT_USAGE)
 
     serialization = _parse_serialization(yaml_flag=yaml_serialization, accept=accept)
-    if overlay:
-        # GVM-4.2: overlays are applied by the export job, not the browse reconstruction.
+    option_values = with_refs((), refs if refs != "bundle" else None, ref_cycles)
+    if overlay or option_values:
+        # GVM-4.2: overlays are applied by the export job, not the browse reconstruction; so are the
+        # dereference and split shapes (COA-2.4) — the browse download is the bundled document.
         if serialization != "json":
-            typer.echo("--overlay exports through the job pipeline, which writes JSON; drop --yaml.", err=True)
+            flag = "--overlay" if overlay else "--refs"
+            typer.echo(f"{flag} exports through the job pipeline, which writes JSON; drop --yaml.", err=True)
             raise typer.Exit(EXIT_USAGE)
         run_generic_export(
             ctx,
@@ -557,7 +643,7 @@ def export_openapi(
             artifact=project,
             version=version,
             out=output,
-            option_values=(),
+            option_values=option_values,
             force=force,
             confirm=False,
             poll_interval=DEFAULT_POLL_INTERVAL,

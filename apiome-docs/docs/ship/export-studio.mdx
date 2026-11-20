@@ -124,6 +124,15 @@ environment page, which opens the studio on that gateway's format — see
 The target's options: checkboxes, a row of choices, or text fields. Errors appear under the field,
 for example *… is required.* A target with no options says so. **Click “Continue”.**
 
+For **OpenAPI**, **$ref handling** picks how shared objects are written: **bundle** (one file,
+the default), **dereference** (one file, every `$ref` replaced by a copy of its target) or
+**split** (one file per path item and component, downloaded as a `.zip`). With **dereference**,
+**Reference cycles** says what to do with a schema that refers back to itself: **keep-ref** keeps
+that `$ref` and lists it in the fidelity report; **error** stops the export. See
+[Bundled, dereferenced or split into files](./export-a-spec.md#bundled-dereferenced-or-split).
+
+<Screenshot id="export-refs-options" alt="The Options step for OpenAPI 3.1: openapi version 3.1, $ref handling set to dereference, and Reference cycles set to keep-ref" />
+
 ## 4. Overlays
 
 Optional. An [OpenAPI Overlay](../bring-in/overlays.md) changes the exported document without
