@@ -11828,6 +11828,85 @@ class Database:
             conn.rollback()
             _logger.warning("insert_workflow_audit failed: %s", e)
 
+    def record_lint_fix_revision(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_record_id: str,
+        actor_id: Optional[str],
+        provenance: Dict[str, Any],
+        audit_action: str,
+        audit_detail: Dict[str, Any],
+    ) -> bool:
+        """Stamp a lint-fix revision's provenance and write its audit row in one transaction (GVM-3.2).
+
+        ``POST …/lint/fixes/apply`` imports the fixed document as a new revision, then calls this:
+        the ``source: lint-fix`` provenance (merged into ``format_metadata``) and the
+        ``version.lint_fix_applied`` workflow-audit row commit together or not at all. Unlike
+        :meth:`insert_workflow_audit` this raises, so the caller can withdraw the revision when the
+        record cannot be written.
+
+        Args:
+            tenant_id: The tenant owning the revision.
+            project_id: The revision's project (recorded on the audit row).
+            version_record_id: The new revision (``versions.id``).
+            actor_id: The acting user.
+            provenance: Keys merged into the revision's ``format_metadata``.
+            audit_action: The audit action (``version.lint_fix_applied``).
+            audit_detail: The audit row's ``detail``.
+
+        Returns:
+            True when both were written; False when the revision is unknown to the tenant (nothing
+            is written).
+
+        Raises:
+            Exception: Any database error; the transaction is rolled back first.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.versions v
+                    SET format_metadata = COALESCE(v.format_metadata, '{}'::jsonb) || %s::jsonb,
+                        updated_at = CURRENT_TIMESTAMP
+                    FROM apiome.projects p
+                    WHERE v.id = %s
+                      AND v.project_id = p.id
+                      AND p.tenant_id = %s
+                      AND v.deleted_at IS NULL
+                    RETURNING v.id
+                    """,
+                    (Json(provenance), version_record_id, tenant_id),
+                )
+                if not cursor.fetchone():
+                    conn.rollback()
+                    return False
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.workflow_audit
+                      (tenant_id, project_id, version_id, action, outcome, actor_id, detail)
+                    VALUES (%s, %s, %s, %s, 'success', %s, %s::jsonb)
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        version_record_id,
+                        audit_action,
+                        actor_id,
+                        json.dumps(audit_detail),
+                    ),
+                )
+            conn.commit()
+            return True
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
     def list_workflow_audit_for_version(
         self,
         version_id: str,

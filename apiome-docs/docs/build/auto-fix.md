@@ -17,9 +17,10 @@ is drawn. The rule catalog shows the same information for every rule; see
 :::note What ships today
 
 The rule catalog (`GET /v1/lint/rules`) publishes every rule's fix capability, and the first
-thirteen OpenAPI rules carry a fix. Asking for a fix plan and applying it from the REST API, the
-CLI and the lint report arrive in later releases. Until then nothing in a lint report, score or
-grade changes: the twelve new rules below are evaluated only when a fix is asked for.
+thirteen OpenAPI rules carry a fix. The REST API plans fixes and applies them as a new revision
+(see [Plan the fixes](#plan-the-fixes) and [Apply fixes](#apply-fixes)). The CLI and the lint
+report arrive in later releases. Nothing in a lint report, score or grade changes because these
+rules exist: the twelve new rules below are evaluated only when a fix plan is asked for.
 
 :::
 
@@ -130,6 +131,161 @@ The catalog marks who repairs each rule's findings in `fixOwner`:
 | `agent` | The repair needs judgement about meaning: every `documentation` and `security` rule, and the `examples` pack. These are left for an AI assistant or a person, never for a fix |
 | `human` | Everything else |
 
+## Plan the fixes
+
+A **fix plan** lists every finding a fix could repair, the JSON Patch operations of each fix, and
+whether the fix may be applied. Ask for one over a stored revision:
+
+```http
+GET /v1/versions/{tenantSlug}/{projectId}/{versionId}/lint/fixes
+X-API-Key: <your-api-key>
+```
+
+Or over a file, without storing anything (file mode). Send the document as YAML or JSON text:
+
+```http
+POST /v1/lint/fixes/plan
+X-API-Key: <your-api-key>
+Content-Type: application/json
+
+{ "document": "openapi: 3.1.0\ninfo: …" }
+```
+
+A revision is planned under its project's style guide. A posted document is planned under your
+workspace's style guide. A rule the guide turns off is not planned unless you name it.
+
+Both take the same options:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `format` | `json` | `json`, `patch`, `overlay` or `diff` (see [Plan formats](#plan-formats)) |
+| `rules` | every rule | Plan only these rules. Comma-separated in the query, a list in the body. Naming a rule also selects a fix that is off by default, a rename, or a rule the guide turns off |
+| `includeRenames` | `false` | Plan `rename` fixes, including `naming.schema-pascal-case` |
+| `operationIdTemplate` | `{method}{Path}` | The [operationId template](#the-operationid-template) |
+
+The same document and options always give a byte-identical plan.
+
+### Plan statuses
+
+Every entry of a plan has a `status`:
+
+| Status | Meaning |
+| --- | --- |
+| `ready` | The fix may be applied |
+| `conflict` | The fix edits the same part of the document as another ready fix. `conflictsWith` names that fix |
+| `breaking` | The fix's own change is classified as breaking. It is never applied |
+| `excluded` | The fix was not selected. `reason` says why |
+
+**Conflicts.** Two fixes conflict when one edits a node and the other edits that node or
+something inside it. The fix of the outer node wins. Removing an unused schema wins over
+re-spelling `example` inside it. Plan again after applying the winner: if the loser's finding is
+still there, it is ready this time.
+
+**Breaking fixes.** Apiome applies each fix on its own and compares the result with the original
+using the [classified diff](/reference/rest/classified-diff). If the change contains anything
+breaking, the fix becomes `breaking`, and the entry's `classification` lists the changes. A
+schema rename is the usual case: removing the old name breaks clients. The classifier also
+treats a changed server URL (trailing slash, scheme case) as a removed server, and a widened
+`type` array as a type change, so those fixes are `breaking` too.
+
+**Exclusions.** `reason` is one of:
+
+| `reason` | Why |
+| --- | --- |
+| `not-selected` | You named other rules in `rules` |
+| `guide-disabled` | The style guide turns the rule off |
+| `renames-not-included` | It is a `rename` fix and `includeRenames` is `false` |
+| `opt-in-required` | The fix is off by default (`structure.operation-missing-tags`) |
+
+An excluded entry still lists its operations, so you can see what it would do.
+
+### A plan entry
+
+```json
+{
+  "fixId": "fix-05817bbcff5519df",
+  "ruleId": "structure.empty-required",
+  "fixClass": "removal",
+  "wireVisible": false,
+  "path": "components.schemas.Order",
+  "pointer": "/components/schemas/Order",
+  "findingId": "lint-05817bbcff5519df",
+  "message": "Schema declares an empty required list.",
+  "ops": [{ "op": "remove", "path": "/components/schemas/Order/required" }],
+  "status": "ready",
+  "reason": null,
+  "conflictsWith": null,
+  "classification": {
+    "maxSeverity": null,
+    "counts": { "breaking": 0, "non-breaking": 0, "docs-only": 0, "unclassified": 0, "total": 0 },
+    "changes": []
+  }
+}
+```
+
+The plan also returns `counts` (entries per status), `appliedOrder` (the ready fixes in the order
+they are applied), `documentFingerprint` and `fixedDocumentFingerprint`. A revision's plan adds
+`reportFingerprint` and `reportCurrent`: the fingerprint of the revision's stored lint report and
+whether that report still matches the planned document.
+
+### Plan formats
+
+| `format` | Returns |
+| --- | --- |
+| `json` | The plan, as above |
+| `patch` | One [JSON Patch](https://www.rfc-editor.org/rfc/rfc6902) document with the ready fixes' operations, in the order they apply (`application/json-patch+json`) |
+| `overlay` | The same change as an [Overlay 1.0](/build/overlay-manager) document. Each operation becomes a `remove` and/or an `update` action, and `info.title` names the rules |
+| `diff` | A unified diff of the document before and after, as indented JSON (`text/x-diff`) |
+
+The `overlay` output produces the same document as the patch. Keep it instead of editing your
+source: store it in the revision's overlay chain, or apply it at export.
+
+## Apply fixes
+
+```http
+POST /v1/versions/{tenantSlug}/{projectId}/{versionId}/lint/fixes/apply
+X-API-Key: <your-api-key>
+Content-Type: application/json
+
+{ "fixIds": ["fix-05817bbcff5519df"], "reason": "Tidy before review" }
+```
+
+Name the fixes in exactly one of:
+
+- **`fixIds`**: fixes from the plan. Each must be `ready`.
+- **`rules`**: every `ready` fix of these rules. Fixes of those rules that are not ready are
+  listed in the response's `skipped`.
+
+`reason` is required and is recorded on the audit entry. The body also takes `includeRenames`,
+`operationIdTemplate` and `versionLabel`. Send the same `includeRenames` and
+`operationIdTemplate` you planned with, so the fix ids match.
+
+Applying needs the `versions:edit` permission, and the revision must not be published.
+
+**Apply never changes the revision.** Apiome builds the fixed document and imports it as a
+**new revision** of the same project, through the import quality gate, like an upload. Then it:
+
+1. lints the new revision and stores its report;
+2. records `source: lint-fix` on the new revision, with the fix ids, the rules and your reason;
+3. writes a `version.lint_fix_applied` audit entry.
+
+Steps 2 and 3 are written together. If they cannot be written, the new revision is withdrawn, so
+an apply leaves one audited revision or nothing. The response names the new revision
+(`versionRecordId`, `versionLabel`), the fixes applied, and its new score and grade.
+
+| Status | Code | When |
+| --- | --- | --- |
+| 409 | `lint-fix-version-published` | The revision is published |
+| 422 | `lint-fix-breaking` | A named fix is `breaking`, or every fix of the named rules is |
+| 422 | `lint-fix-conflict` | A named fix is a `conflict`. Apply the fix it conflicts with first |
+| 422 | `lint-fix-excluded` | A named fix is `excluded`. Name its rule in `rules`, or set `includeRenames` |
+| 422 | `lint-fix-unknown` | A fix id is not in the revision's plan |
+| 422 | `lint-fix-nothing-to-apply` | The named rules have no ready fixes |
+| 422 | `lint-fix-invalid-options` | An unknown rule, or an invalid operationId template |
+| 422 | `lint-fix-not-openapi` | The revision is not an OpenAPI 3.x document |
+
+Applying every `ready` fix and then planning again leaves nothing ready.
+
 ## Read the fix capability of a rule
 
 ```http
@@ -165,3 +321,4 @@ For a rule that is not fixable, `fixable` is `false` and the other fix fields ar
 - [How linting works](./how-linting-works.md) — rule packs, the score and the grade
 - [Lint and check quality](./lint-and-quality.md) — read the lint report and the rule catalog
 - [Upgrade a spec](./upgrade-a-spec.mdx) — move a whole document from OpenAPI 3.0 to 3.1 or 3.2
+- [Lint REST reference](/reference/rest/lint) — the plan and apply endpoints

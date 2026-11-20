@@ -1,0 +1,24 @@
+---
+slug: lint-fix-plans
+title: "Plan lint fixes and apply them as a new revision"
+description: "Fix plans list each repair, its status and patch; apply creates an audited revision."
+authors: [apiome]
+---
+
+Lint findings with a deterministic fix can now be inspected before they are applied, and
+applied without touching the revision you planned them on.
+
+{/* truncate */}
+
+- **Fix plans:** `GET …/lint/fixes` plans a stored revision. `POST /v1/lint/fixes/plan` plans a
+  posted file without storing anything. Each entry has its JSON Patch operations and a status:
+  **ready**, **conflict** (it edits the same part as another fix), **breaking** (the classified
+  diff calls its change breaking; it is never applied) or **excluded** (not selected, with the
+  reason). The same document always gives the same plan, byte for byte.
+- **Four formats:** the plan as JSON, the ready fixes as one JSON Patch, as an Overlay 1.0
+  document you can keep instead of editing your source, or as a unified diff.
+- **Apply as a new revision:** `POST …/lint/fixes/apply` with the fix ids or rules and a reason
+  imports the fixed document as a new revision. The new revision is linted, marked
+  `source: lint-fix` and audited as `version.lint_fix_applied`. Published revisions are refused.
+
+See [Auto-fix](/build/auto-fix#plan-the-fixes).

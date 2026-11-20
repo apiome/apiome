@@ -1,6 +1,6 @@
 ---
 title: "Lint"
-description: "REST endpoints tagged lint: 13 operations."
+description: "REST endpoints tagged lint: 16 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.609.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.610.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `lint` · 13 operations
+Tag: `lint` · 16 operations
 
 ## `POST /v1/lint/custom-rules/import` {#import-spectral-ruleset-document-v1-lint-custom-rules-import-post}
 
@@ -108,6 +108,41 @@ Operation id: `list_external_lint_adapters_v1_lint_external_adapters_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list external lint adapters. | `application/json` [`ExternalLintAdaptersResponse`](#schema-externallintadaptersresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/lint/fixes/plan` {#plan-lint-fixes-for-document-v1-lint-fixes-plan-post}
+
+**Plan Lint Fixes For Document**
+
+Plan the deterministic lint fixes of a posted document (file mode).
+
+Stateless: nothing is stored. The tenant's style guide decides which rules are on, as it does
+for a stored revision of a project without its own guide.
+
+Raises:
+    HTTPException: 413 over the size limit; 422 not YAML/JSON, not OpenAPI 3.x, or invalid options.
+
+Operation id: `plan_lint_fixes_for_document_v1_lint_fixes_plan_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for plan lint fixes for document.
+
+- `application/json` — [`LintFixPlanRequest`](#schema-lintfixplanrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The plan; `format=patch` returns an RFC 6902 document, `format=overlay` an Overlay 1.0 document and `format=diff` a unified diff. | `application/json` [`LintFixPlanOut`](#schema-lintfixplanout); `application/json-patch+json` array of object; `text/x-diff` string |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/lint/format-capabilities` {#list-format-lint-capabilities-v1-lint-format-capabilities-get}
@@ -345,6 +380,86 @@ Operation id: `lint_revision_evidence_v1_versions__tenant_slug___project_id___ve
 | 200 | Successful response for lint revision evidence. | `application/json` [`LintEvidenceResponse`](#schema-lintevidenceresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes` {#get-lint-fix-plan-v1-versions-tenant-slug-project-id-version-record-id-lint-fixes-get}
+
+**Get Lint Fix Plan**
+
+Plan the deterministic lint fixes of a stored revision.
+
+The plan is computed over the revision's OpenAPI document — the reconstruction its stored
+lint report was computed from — under the project's style guide. The stored report's
+fingerprint is echoed with whether it still matches the document, so a reader can tell the
+plan and the report describe the same content.
+
+Raises:
+    HTTPException: 404 unknown revision; 422 non-OpenAPI revision or invalid options.
+
+Operation id: `get_lint_fix_plan_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `format` | query | enum `"json"`, `"patch"`, `"overlay"`, `"diff"` | no | json \| patch \| overlay \| diff. |
+| `rules` | query | string or null | no | Comma-separated rule ids to plan. |
+| `includeRenames` | query | boolean | no | Plan rename fixes. |
+| `operationIdTemplate` | query | string | no | Template of generated operationIds: {method} {Method} {path} {Path}. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The plan; `format=patch` returns an RFC 6902 document, `format=overlay` an Overlay 1.0 document and `format=diff` a unified diff. | `application/json` [`LintFixPlanOut`](#schema-lintfixplanout); `application/json-patch+json` array of object; `text/x-diff` string |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes/apply` {#apply-lint-fixes-v1-versions-tenant-slug-project-id-version-record-id-lint-fixes-apply-post}
+
+**Apply Lint Fixes**
+
+Apply lint fixes to an unpublished revision by creating a new ``lint-fix`` revision.
+
+The revision itself is never changed. The plan is rebuilt with the request's options, the
+named fixes are composed onto the document, and the result is imported as a new revision of
+the same project (through the import quality gate and pipeline). The new revision is
+re-linted and its report stored; its ``source: lint-fix`` provenance and the
+``version.lint_fix_applied`` audit row are written in one transaction.
+
+Raises:
+    HTTPException: 404 unknown revision; 409 published revision, ``version-exists`` or
+        ``QUALITY_POLICY_BLOCKED``; 422 for a breaking, conflicting, excluded or unknown fix,
+        nothing to apply, invalid options, or a failed import; 500 when the record cannot be
+        written (the new revision is withdrawn).
+
+Operation id: `apply_lint_fixes_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_apply_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for apply lint fixes.
+
+- `application/json` — [`LintFixApplyRequest`](#schema-lintfixapplyrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for apply lint fixes. | `application/json` [`LintFixApplyOut`](#schema-lintfixapplyout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/gate` {#lint-revision-gate-v1-versions-tenant-slug-project-id-version-record-id-lint-gate-get}
 
 **Lint Revision Gate**
@@ -510,6 +625,69 @@ All lint evidence for one catalog revision or MCP endpoint version (CLX-1.1, #48
 | `runs` | array of `LintEvidenceRunOut` | no | Immutable evidence runs, most recent first. |
 | `coverage` | array of `LintEvidenceCoverageOut` | no | Per-scanner coverage: expected scanners first, then any additional scanners with historical runs. Never-run scanners appear as not_run — never as clean. |
 | `count` | integer | yes | Number of evidence runs (== len(runs)). |
+
+### `LintFixApplyOut` {#schema-lintfixapplyout}
+
+The revision an apply created.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projectId` | string | yes | Project ID. |
+| `sourceVersionRecordId` | string | yes | Source Version Record ID. |
+| `versionRecordId` | string | yes | Version Record ID. |
+| `versionLabel` | string | yes | Version Label. |
+| `appliedFixIds` | array of string | yes | Applied Fix IDs. |
+| `skipped` | array of `LintFixSkippedOut` | no | Skipped. |
+| `score` | integer or null | no | Score. |
+| `grade` | string or null | no | Grade. |
+| `reportFingerprint` | string or null | no | Report Fingerprint. |
+
+### `LintFixApplyRequest` {#schema-lintfixapplyrequest}
+
+``POST …/lint/fixes/apply``: name the fixes (``fixIds``) or rules (``rules``) to apply.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `fixIds` | array of string or null | no | Fix IDs. |
+| `rules` | array of string or null | no | Rules. |
+| `reason` | string | yes | Why the fixes are applied (audited). |
+| `includeRenames` | boolean | no | Include Renames. |
+| `operationIdTemplate` | string | no | Operation ID Template. |
+| `versionLabel` | string or null | no | Version Label. |
+
+### `LintFixPlanOut` {#schema-lintfixplanout}
+
+A lint-fix plan (``format=json``).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `documentFingerprint` | string | yes | Document Fingerprint. |
+| `fixedDocumentFingerprint` | string | yes | Fixed Document Fingerprint. |
+| `includeRenames` | boolean | yes | Include Renames. |
+| `rules` | array of string or null | no | Rules. |
+| `operationIdTemplate` | string | yes | Operation ID Template. |
+| `counts` | map of integer | yes | Counts. |
+| `appliedOrder` | array of string | yes | Applied Order. |
+| `entries` | array of `LintFixEntryOut` | yes | Entries. |
+| `guideId` | string or null | no | Guide ID. |
+| `guideName` | string or null | no | Guide Name. |
+| `projectId` | string or null | no | Project ID. |
+| `versionRecordId` | string or null | no | Version Record ID. |
+| `reportFingerprint` | string or null | no | Fingerprint of the revision's stored lint report (revision plans only). |
+| `reportCurrent` | boolean or null | no | Whether the stored report still matches the planned document (revision plans only). |
+
+### `LintFixPlanRequest` {#schema-lintfixplanrequest}
+
+``POST /v1/lint/fixes/plan``: plan the fixes of a posted document.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `document` | string | yes | The OpenAPI document, as YAML or JSON text. |
+| `filename` | string or null | no | The file name, for messages. |
+| `format` | enum `"json"`, `"patch"`, `"overlay"`, `"diff"` | no | Format. |
+| `rules` | array of string or null | no | Plan only these rule ids. |
+| `includeRenames` | boolean | no | Include Renames. |
+| `operationIdTemplate` | string | no | Operation ID Template. |
 
 ### `LintLevelResponse` {#schema-lintlevelresponse}
 
