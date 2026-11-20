@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.771.0] - 2026-11-19
+
+### Added
+- **Arazzo workflow records: REST, CLI and docs — OpenAPI 1.602.0 (COA-1.5, #7041):** the
+  workflows and steps an Arazzo import persists (REPO-3.4, #2773) can be read one at a time.
+  - `GET /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}` — one workflow
+    by its Arazzo `workflowId` (`ArazzoWorkflowDetailResponse`: the workflow, its revision and the
+    document's declared sources).
+  - `GET …/workflows/{workflow_id}/steps` — its ordered steps with their `operationRef` /
+    `operationId` resolution state (`ArazzoWorkflowStepsResponse`), and `GET …/steps/{step_id}` —
+    one step by `stepId` (`ArazzoWorkflowStepOut`). Unknown workflow or step ids are `404`.
+  - `GET /v1/workflows/{tenant_slug}/catalog/{item_id}/revisions/{version_id}` — the workflows of a
+    named catalog revision; `404` when the revision belongs to another item.
+  - `ArazzoWorkflowOut.step_resolution` — each workflow's steps counted by `resolution_status`
+    (additive; also on the existing version and catalog list routes).
+
 ## [1.770.0] - 2026-11-19
 
 ### Fixed

@@ -1,14 +1,21 @@
 """
-Arazzo workflow viewer — read API (COA-1.3, #7039).
+Arazzo workflow records — read API (COA-1.3, #7039; COA-1.5, #7041).
 
 GET /v1/workflows/{tenant_slug}/versions/{version_id}
+GET /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}
+GET /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps
+GET /v1/workflows/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps/{step_id}
 GET /v1/workflows/{tenant_slug}/catalog/{item_id}
+GET /v1/workflows/{tenant_slug}/catalog/{item_id}/revisions/{version_id}
 GET /v1/workflows/{tenant_slug}/operations/{path_operation_id}
 
-The first two return the workflows REPO-3.4 (#2773) persisted for a revision — a catalog item's
-read follows its latest revision — with each step's resolved operation and each workflow's
-source-description status. The third reads one operation for the step drawer. All three are
-tenant-scoped reads, like the paths reads the viewer links into.
+The version and catalog reads return the workflows REPO-3.4 (#2773) persisted for a revision — a
+catalog item's bare read follows its latest revision, the ``revisions`` read names one — with
+each step's ``operationRef`` / ``operationId`` resolution state, the operation it resolved to,
+and each workflow's source-description status. The nested ``workflows/{workflow_id}`` reads
+narrow that payload to one workflow (by Arazzo ``workflowId``), its steps, or one step (by
+``stepId``). The operations read serves the viewer's step drawer. All are tenant-scoped reads,
+like the paths reads the viewer links into.
 """
 
 from __future__ import annotations
@@ -21,7 +28,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from .arazzo_workflow_view import build_source_views, build_workflow_views
 from .auth import validate_authentication
 from .database import db
-from .models import ArazzoOperationDetailOut, ArazzoWorkflowsResponse
+from .models import (
+    ArazzoOperationDetailOut,
+    ArazzoWorkflowDetailResponse,
+    ArazzoWorkflowOut,
+    ArazzoWorkflowStepOut,
+    ArazzoWorkflowStepsResponse,
+    ArazzoWorkflowsResponse,
+)
 
 router = APIRouter(prefix="/v1/workflows", tags=["arazzo-workflows"])
 
@@ -79,6 +93,45 @@ def _workflows_for_version(
     )
 
 
+def _version_workflows_or_404(tenant_id: str, raw_version_id: str) -> ArazzoWorkflowsResponse:
+    """Validate a revision id, check it is in the tenant, and read its workflows.
+
+    Args:
+        tenant_id: Owning tenant UUID.
+        raw_version_id: The ``version_id`` path parameter as received.
+
+    Returns:
+        The revision's viewer payload.
+
+    Raises:
+        HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant.
+    """
+    version_id = _require_uuid("version_id", raw_version_id)
+    version = db.get_version_for_tenant(tenant_id, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_id}")
+    return _workflows_for_version(tenant_id, version_id, str(version["project_id"]))
+
+
+def _find_workflow(payload: ArazzoWorkflowsResponse, workflow_id: str) -> ArazzoWorkflowOut:
+    """Return the workflow whose Arazzo ``workflowId`` is ``workflow_id``, or raise 404.
+
+    Args:
+        payload: A revision's workflows.
+        workflow_id: The ``workflowId`` to find (exact, case-sensitive, as Arazzo compares it).
+
+    Returns:
+        The matching workflow.
+
+    Raises:
+        HTTPException: 404 when the revision has no such workflow.
+    """
+    for workflow in payload.workflows:
+        if workflow.workflow_id == workflow_id:
+            return workflow
+    raise HTTPException(status_code=404, detail=f"Workflow not found: {workflow_id}")
+
+
 @router.get("/{tenant_slug}/versions/{version_id}")
 async def list_version_workflows(
     tenant_slug: str,
@@ -103,12 +156,112 @@ async def list_version_workflows(
     Raises:
         HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant.
     """
-    version_id = _require_uuid("version_id", version_id)
-    tenant_id = auth_data["tenant_id"]
-    version = db.get_version_for_tenant(tenant_id, version_id)
-    if not version:
-        raise HTTPException(status_code=404, detail=f"Version not found: {version_id}")
-    return _workflows_for_version(tenant_id, version_id, str(version["project_id"]))
+    return _version_workflows_or_404(auth_data["tenant_id"], version_id)
+
+
+@router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}")
+async def get_version_workflow(
+    tenant_slug: str,
+    version_id: str,
+    workflow_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ArazzoWorkflowDetailResponse:
+    """
+    Read one persisted Arazzo workflow of a revision.
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug.
+        version_id: The revision (``versions.id``) UUID.
+        workflow_id: The workflow's Arazzo ``workflowId``.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The workflow with its ordered steps and their resolution state, plus every source the
+        document declares.
+
+    Raises:
+        HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant or
+            has no such workflow.
+    """
+    payload = _version_workflows_or_404(auth_data["tenant_id"], version_id)
+    return ArazzoWorkflowDetailResponse(
+        version_id=str(payload.version_id),
+        project_id=str(payload.project_id),
+        sources=payload.sources,
+        workflow=_find_workflow(payload, workflow_id),
+    )
+
+
+@router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps")
+async def list_version_workflow_steps(
+    tenant_slug: str,
+    version_id: str,
+    workflow_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ArazzoWorkflowStepsResponse:
+    """
+    List the steps of one persisted Arazzo workflow, in source order.
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug.
+        version_id: The revision (``versions.id``) UUID.
+        workflow_id: The workflow's Arazzo ``workflowId``.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The ordered steps, each with its ``operationRef`` / ``operationId``, resolution state and
+        resolved operation, and the steps counted by resolution state.
+
+    Raises:
+        HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant or
+            has no such workflow.
+    """
+    payload = _version_workflows_or_404(auth_data["tenant_id"], version_id)
+    workflow = _find_workflow(payload, workflow_id)
+    return ArazzoWorkflowStepsResponse(
+        version_id=str(payload.version_id),
+        workflow_id=workflow.workflow_id,
+        step_resolution=workflow.step_resolution,
+        steps=workflow.steps,
+    )
+
+
+@router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps/{step_id}")
+async def get_version_workflow_step(
+    tenant_slug: str,
+    version_id: str,
+    workflow_id: str,
+    step_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ArazzoWorkflowStepOut:
+    """
+    Read one step of a persisted Arazzo workflow.
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug.
+        version_id: The revision (``versions.id``) UUID.
+        workflow_id: The workflow's Arazzo ``workflowId``.
+        step_id: The step's Arazzo ``stepId``.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The step with its target, resolution state, resolved operation and actions.
+
+    Raises:
+        HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant, or
+            has no such workflow or step.
+    """
+    payload = _version_workflows_or_404(auth_data["tenant_id"], version_id)
+    for step in _find_workflow(payload, workflow_id).steps:
+        if step.step_id == step_id:
+            return step
+    raise HTTPException(status_code=404, detail=f"Step not found: {step_id}")
 
 
 @router.get("/{tenant_slug}/catalog/{item_id}")
@@ -142,6 +295,45 @@ async def list_catalog_item_workflows(
     version_id = db.get_latest_revision_id_for_project(item_id, tenant_id)
     if not version_id:
         return ArazzoWorkflowsResponse(version_id=None, project_id=item_id)
+    return _workflows_for_version(tenant_id, version_id, item_id)
+
+
+@router.get("/{tenant_slug}/catalog/{item_id}/revisions/{version_id}")
+async def list_catalog_revision_workflows(
+    tenant_slug: str,
+    item_id: str,
+    version_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ArazzoWorkflowsResponse:
+    """
+    List the Arazzo workflows of one revision of a catalog item.
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug.
+        item_id: The catalog item UUID.
+        version_id: The revision (``versions.id``) UUID; it must belong to ``item_id``.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        That revision's workflows, shaped like the latest-revision read.
+
+    Raises:
+        HTTPException: 400 for a malformed id; 404 when the id is not a catalog item in this
+            tenant, or the revision is not one of its revisions.
+    """
+    item_id = _require_uuid("item_id", item_id)
+    version_id = _require_uuid("version_id", version_id)
+    tenant_id = auth_data["tenant_id"]
+    if not db.get_catalog_item_by_id(item_id, tenant_id):
+        raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
+    version = db.get_version_for_tenant(tenant_id, version_id)
+    if not version or str(version["project_id"]) != item_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Revision {version_id} not found for catalog item {item_id}",
+        )
     return _workflows_for_version(tenant_id, version_id, item_id)
 
 

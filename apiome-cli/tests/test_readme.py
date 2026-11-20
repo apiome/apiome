@@ -57,8 +57,9 @@ def test_readme_examples_are_copy_pasteable(readme: str) -> None:
         "apiome paths list",
         "apiome paths show",
         "apiome operations show",
-        "apiome workflows list",
-        "apiome workflows show",
+        "apiome arazzo list",
+        "apiome arazzo show",
+        "apiome arazzo validate",
         "apiome spec export",
         "apiome spec download-original",
     ):

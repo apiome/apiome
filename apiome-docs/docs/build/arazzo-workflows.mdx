@@ -99,15 +99,20 @@ operation later turns the step back into an unresolved one.
 - In the drawer, **Couldn't load the operation** — the operation could not be read; **“Try again”**
   retries it.
 
-## With the API
+## With the API or the CLI
 
 - `GET /v1/workflows/{tenant_slug}/catalog/{item_id}` — the workflows of a catalog item's latest
-  revision.
-- `GET /v1/workflows/{tenant_slug}/versions/{version_id}` — the workflows of any revision.
+  revision; add `/revisions/{version_id}` for another revision.
+- `GET /v1/workflows/{tenant_slug}/versions/{version_id}` — the workflows of any revision; add
+  `/workflows/{workflow_id}` for one workflow, then `/steps` or `/steps/{step_id}` for its steps.
 - `GET /v1/workflows/{tenant_slug}/operations/{path_operation_id}` — one operation a step calls,
   with its parameters and responses.
+- `apiome arazzo list`, `apiome arazzo show <workflowId>` and `apiome arazzo validate` read the same
+  records from a terminal, and `validate` fails when a step did not resolve.
 
-See [Arazzo workflows](../reference/rest/arazzo-workflows.md) in the REST reference.
+[Arazzo workflow records](../reference/arazzo-workflow-records.md) describes every field and
+resolution state. See also [Arazzo workflows](../reference/rest/arazzo-workflows.md) in the REST
+reference and [`apiome arazzo`](../reference/cli/arazzo.md) in the CLI reference.
 
 ## Where next
 

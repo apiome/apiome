@@ -132,6 +132,12 @@ EXIT_DIFFERENCES = 1
 #: gate on the verdict itself.
 EXIT_CHECK_FAILED = 7
 
+#: ``apiome arazzo validate`` (COA-1.5, #7041): the Arazzo document fails structural validation,
+#: or a stored revision has a step whose ``operationRef`` / ``operationId`` did not resolve or a
+#: source description no tier found. Distinct from :data:`EXIT_USAGE` (bad flags, an unreadable
+#: file, an unknown project) so CI can gate on the verdict itself. Another per-command use of 7.
+EXIT_ARAZZO_INVALID = 7
+
 #: ``apiome properties create`` (CLI 6.3): the new property is **invalid** — a field-level
 #: problem such as an unknown primitive or an example its schema rejects; one line per field on
 #: stderr, nothing was created. Another per-command use of 7.

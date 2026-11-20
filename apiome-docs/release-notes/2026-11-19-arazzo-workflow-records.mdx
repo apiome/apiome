@@ -1,0 +1,28 @@
+---
+slug: arazzo-workflow-records
+title: Read and check Arazzo workflow records
+description: "REST routes and apiome arazzo commands read and validate stored Arazzo workflows."
+authors: [apiome]
+---
+
+The workflows and steps an Arazzo import stores can now be read outside the **Workflows** tab: one
+workflow, its steps or one step over REST, and `apiome arazzo list`, `show` and `validate` from a
+terminal or a CI job.
+
+{/* truncate */}
+
+- **One workflow, its steps, one step:**
+  `GET /v1/workflows/{tenant}/versions/{version_id}/workflows/{workflow_id}`, `…/steps` and
+  `…/steps/{step_id}`. Each step carries its `operationRef` / `operationId` resolution state, and
+  each workflow counts its steps by state (`step_resolution`).
+- **Any catalog revision:** `GET /v1/workflows/{tenant}/catalog/{item_id}/revisions/{version_id}`
+  reads a revision other than the latest.
+- **`apiome arazzo list` and `show`:** the workflows of a project's revision (`--project`,
+  `--version`) or a catalog item (`--catalog`, `--revision`), with each step's target, resolution
+  state and operation.
+- **`apiome arazzo validate`:** checks a local Arazzo document against the schema for the version
+  it declares. Given a revision instead, it exits 7 when a stored step did not resolve or a source
+  description is missing.
+- **REST API 1.771.0, OpenAPI 1.602.0.**
+
+See [Arazzo workflow records](/reference/arazzo-workflow-records).

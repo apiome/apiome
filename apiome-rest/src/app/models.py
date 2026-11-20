@@ -18158,6 +18158,13 @@ class ArazzoWorkflowOut(BaseModel):
     success_actions: List[Any] = Field(default_factory=list)
     failure_actions: List[Any] = Field(default_factory=list)
     sources: List[ArazzoSourceDescriptionOut] = Field(default_factory=list)
+    step_resolution: Dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "Steps counted by `resolution_status` (`resolved`, `unresolved`, `not_applicable`, "
+            "`parse_error`); only statuses that occur are listed"
+        ),
+    )
     steps: List[ArazzoWorkflowStepOut] = Field(default_factory=list)
 
 
@@ -18172,3 +18179,25 @@ class ArazzoWorkflowsResponse(BaseModel):
         default_factory=list, description="Every source the document declares"
     )
     workflows: List[ArazzoWorkflowOut] = Field(default_factory=list)
+
+
+class ArazzoWorkflowDetailResponse(BaseModel):
+    """One persisted Arazzo workflow of a revision, with the revision it was read from."""
+
+    version_id: str = Field(..., description="The revision read")
+    project_id: str = Field(..., description="Project or catalog item owning the revision")
+    sources: List[ArazzoSourceDescriptionOut] = Field(
+        default_factory=list, description="Every source the document declares"
+    )
+    workflow: ArazzoWorkflowOut
+
+
+class ArazzoWorkflowStepsResponse(BaseModel):
+    """The ordered steps of one persisted Arazzo workflow."""
+
+    version_id: str = Field(..., description="The revision read")
+    workflow_id: str = Field(..., description="The Arazzo `workflowId` the steps belong to")
+    step_resolution: Dict[str, int] = Field(
+        default_factory=dict, description="Steps counted by `resolution_status`"
+    )
+    steps: List[ArazzoWorkflowStepOut] = Field(default_factory=list)

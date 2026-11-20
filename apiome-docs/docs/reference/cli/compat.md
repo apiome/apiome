@@ -1,7 +1,7 @@
 ---
 title: "apiome compat"
 description: "Compare two revisions: oasdiff evidence, or the native check graded by compatibility mode."
-sidebar_position: 7
+sidebar_position: 8
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
