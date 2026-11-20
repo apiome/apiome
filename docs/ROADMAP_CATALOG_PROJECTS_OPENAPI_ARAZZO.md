@@ -9,6 +9,26 @@ _The Contracts and PactFlow release is **RC10**: [`RC10_PLAN.md`](RC10_PLAN.md).
 
 > Once RC9 is complete, create an RC10 that contains all of the remaining cleanup and improvement items for the Projects and Catalog, since OpenAPI/Arazzo is high priority, along with the Catalog import/export features. These are the core to Apiome, and important to keep current and competitive. It may make sense to make this an RC9, and rename the current RC9 that's being created (for pact and contracts) to RC10.
 
+**Added 2026-11-19 (COA-EPIC-5):**
+
+> The more I think about it, when we're storing original versions of files that are imported, the files are imported, but they are recreated when requested, so actions like diffs between two very very large versions of OpenAPI specifications take a very long time to run, because the two files have to be generated dynamically, then a diff is created, then ultimately displayed to the user. Isn't it a better idea to store the original documents in S3, but have the normalized data stored in the database? If this is possible, it would be nice to set an S3 store parameter in the REST server, or in the UI, so that it can pull those original files from a store rather than needing to recreate them. If this is not the way it currently runs, it _should_ be for RC9, as we are hardening the functionality now. The data can still be stored in normalized form, but the _original_ should be stored outside of the server so that it can have file I/O features applied to it more quickly.
+
+**What the code does today (checked 2026-11-19 on `main` @ b3bccb2e7):**
+
+| Concern | Today | Where |
+| --- | --- | --- |
+| OpenAPI original | Scrubbed source text kept in a Postgres `TEXT` column, once per revision, for provenance only. Nothing else reads it | `apiome.version_import_snapshots.source_text` (V362), `database.record_import_snapshot` |
+| Other-format original | Scrubbed text inside the revision's JSONB `format_metadata.sourceContent`; missing for some revisions (`422 source-not-captured`, E1-6 backfill) | `versions.format_metadata`, `catalog_conversion.resolve_source_payload`, `source_backfill.py` |
+| OpenAPI diff / compatibility | **Both documents are regenerated on every request**: `openapi_for_revision` loads every class, then runs one property query per class, then `generate_openapi_spec`; repeated for each transitive baseline | `compatibility_engine.openapi_for_revision`, `classified_diff_routes._compare` |
+| Other-format diff | Canonical model re-parsed from `sourceContent` on every request | `compatibility_modes.canonical_model_for_revision` |
+| UI document views | **A second, TypeScript generator runs in the Next.js server** and reads the database directly: Versions **View OpenAPI** and **Compare** (both sides built per click, then a Monaco text diff), the Catalog Versions tab inline diff, and the merge-request and review spec views. It bypasses REST, so any REST-side cache would not help these screens | `apiome-ui/lib/db/helper.ts` `buildOpenApiSpecForVersion` / `buildOpenApiSpecJsonForVersion`, `versions/page.tsx` `loadVersionSpec`, `utils/catalog-revision-diff.ts`, `api/merge-requests/[id]/spec`, `api/reviews/[id]/spec` |
+| Other REST features | 31 modules call `generate_openapi_spec` / `openapi_for_revision` directly: lint, mock, Swagger UI, merge preview/merge/rollback, publish prechecks and guardrail, publication change report and changelog, PR-back, reviews, source workspace/provenance/preservation, consumer contracts, blast radius, component governance, repository federation, spec sync, import delta, quality capture, style guides, export/conversion | `git grep -l "generate_openapi_spec\|openapi_for_revision" apiome-rest/src` |
+| `GET /v1/schema` | Regenerated per request unless the version is frozen; frozen bytes are a DB `BYTEA` | `version_spec_snapshots` (V279) |
+| Object storage | Only for export **delivery** to a customer bucket (vault credential, boto3). The shared export artifact store's object backend is a **stub** that raises `ExportArtifactStoreNotConfigured` | `export_object_storage_delivery*.py`, `export_artifact_store.py` |
+| Download the original | No endpoint, CLI command or UI action | — |
+
+So the request describes the intended design, not the current one. One point shapes the design: a diff between two revisions has to compare what each revision **is now**, and a revision can be edited after import. Stored originals make "download / diff the original files" instant, but on their own they do not speed up a diff of an edited revision. COA-EPIC-5 therefore stores two kinds of object: the **original** (immutable, content-addressed) and the **rendered document** (the generated OpenAPI / canonical JSON for a revision at a given content stamp, written once for published or frozen revisions and cached for drafts). Normalized data stays in Postgres as the source of truth for editing.
+
 ## 1. Current standards (checked 2026-11-19)
 
 | Spec | Current | Apiome today |
@@ -21,7 +41,7 @@ Sources: OpenAPI Initiative newsletters (Feb and Jun 2026), the Arazzo specifica
 
 ## 2. MVP definition
 
-A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files it calls, see it as steps and a graph, and export it as the right version; (2) trust that no OpenAPI 3.0/3.1/3.2 construct is silently lost, with every version validated; (3) author and see the 3.2 additions in Projects; (4) manage Overlays in the UI; (5) export bundled, dereferenced or split specs; and (6) read docs that match the code. **V2:** workflow execution, change classification for Arazzo, the upgrade assistant, `$ref` hygiene, new validators.
+A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files it calls, see it as steps and a graph, and export it as the right version; (2) trust that no OpenAPI 3.0/3.1/3.2 construct is silently lost, with every version validated; (3) author and see the 3.2 additions in Projects; (4) manage Overlays in the UI; (5) export bundled, dereferenced or split specs; (6) read docs that match the code; and (7) on an install with an S3-compatible document store configured, download any revision's original file and diff two large revisions without regenerating either document. COA-EPIC-5 ships in RC9 in full, with no MVP / V2 split. **V2:** workflow execution, change classification for Arazzo, the upgrade assistant, `$ref` hygiene, new validators.
 
 ## 3. Existing issues adopted (not duplicated)
 
@@ -45,6 +65,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring | 8 |
 | COA-EPIC-3 | Import and export fidelity | 6 |
 | COA-EPIC-4 | Catalog and Projects cleanup | 4 |
+| COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
 
 ### ✅ COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible — Complete
 
@@ -385,13 +406,281 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 - **Technical Stack:** docs
 - **Documentation:** none; screenshots: n/a (no UI change)
 
+### COA-EPIC-5 · [#7076](https://github.com/apiome/apiome/issues/7076) — Document store: originals and rendered documents in object storage
+
+All of COA-EPIC-5 ships in RC9; there is no MVP / V2 split within the epic. Keep normalized data in Postgres, but store every imported **original** and every **rendered document** as an immutable object in a configurable document store: S3-compatible in production, the local filesystem for development, and the database as the zero-config fallback. Diffs, downloads, exports and `/v1/schema` then read stored bytes instead of regenerating documents on every request. The background is in §0 (Added 2026-11-19).
+
+```
+            import (any path)                          edit (classes / paths / …)
+                  │                                              │
+                  ▼                                              ▼
+   ┌──────── document store SPI (COA-5.1) ────────┐     versions.content_stamp++   (COA-5.2)
+   │ s3 (AWS, MinIO, R2, GCS-interop) │ fs │ db   │              │
+   └───────────────────────────────────────────────┘              │
+        ▲ originals/sha256/…  (COA-5.3)                           │ stale → re-render
+        ▲ rendered/<rev>/<stamp>/<generator>.json  (COA-5.5) ◄────┘
+        │
+   REST readers: diff · compatibility · merge-request changes · changelog · /v1/schema · export ·
+            source provenance · download original · lint · mock · merge · publish · … (COA-5.4, 5.6, 5.7, 5.14)
+   UI: Versions view/compare · Catalog diff · MR / review spec ──► REST only, no Next.js generator (COA-5.13)
+
+   Postgres keeps: classes · properties · paths · … (normalized, editable)
+                   apiome.document_objects + apiome.version_documents (metadata + pointers only)
+```
+
+```mermaid
+flowchart LR
+  A[Upload / URL / repo / CLI push] --> B[Scrub under tenant policy]
+  B --> C[(Store: original object)]
+  B --> D[Normalize → Postgres]
+  D --> E{Revision published or frozen?}
+  E -- yes --> F[(Store: rendered doc, immutable)]
+  E -- no --> G[Render on first read, cache by content stamp]
+  F --> H[Diff / schema / export read bytes]
+  G --> H
+```
+
+| Issue | Title | Summary | Labels | Par | Cx | Modules |
+| --- | --- | --- | --- | --- | --- | --- |
+| COA-5.1 · [#7077](https://github.com/apiome/apiome/issues/7077) | Document store SPI with S3, filesystem and database backends | One storage interface for immutable, content-addressed objects; S3-compatible, filesystem and DB backends selected by server config | `enhancement`, `rest` | N | L | apiome-rest |
+| COA-5.2 · [#7078](https://github.com/apiome/apiome/issues/7078) | Document object tables and the revision content stamp | `document_objects` / `version_documents` metadata tables and a `versions.content_stamp` bumped by every normalized-data write | `enhancement`, `database` | Y | M | apiome-db, apiome-rest |
+| COA-5.3 · [#7079](https://github.com/apiome/apiome/issues/7079) | Store the original on every import path | Every importer (UI worker, import-source pipeline, catalog upload, URL, repository, CLI push, spec sync) writes the scrubbed original to the store | `enhancement`, `rest`, `ui` | N | L | apiome-rest, apiome-ui, apiome-cli |
+| COA-5.4 · [#7080](https://github.com/apiome/apiome/issues/7080) | Read captured sources through the store | Canonical rebuild, export source, provenance, catalog detail and the source workspace read originals via one helper, with the legacy columns as fallback | `enhancement`, `rest` | Y | M | apiome-rest |
+| COA-5.5 · [#7081](https://github.com/apiome/apiome/issues/7081) | Rendered document cache for revisions | Write the generated OpenAPI / canonical JSON per (revision, content stamp, generator version); immutable for published and frozen revisions | `enhancement`, `rest`, `performance` | N | L | apiome-rest |
+| COA-5.6 · [#7082](https://github.com/apiome/apiome/issues/7082) | Diff and compatibility read stored documents | Classified diff, compatibility check, merge-request changes, changelog and transitive baselines use the cache; equal digests short-circuit to an empty diff | `enhancement`, `rest`, `performance` | N | M | apiome-rest, apiome-ui |
+| COA-5.7 · [#7083](https://github.com/apiome/apiome/issues/7083) | Download and compare the original file | REST stream / presigned download with ETag and Range, `apiome versions original`, UI download and an "originals" text-diff mode | `enhancement`, `rest`, `ui`, `cli` | Y | M | apiome-rest, apiome-ui, apiome-cli |
+| COA-5.8 · [#7084](https://github.com/apiome/apiome/issues/7084) | Migrate existing sources and snapshots into the store | Resumable, verifying job that moves `source_text`, `sourceContent`, frozen schemas and export artifacts into the store; DB purge only behind a flag | `enhancement`, `rest`, `database` | N | M | apiome-rest, apiome-db |
+| COA-5.9 · [#7085](https://github.com/apiome/apiome/issues/7085) | Document store settings, health and admin screen | Server env config is authoritative; ops health check, "test connection" and usage in the platform-admin UI | `enhancement`, `rest`, `ui` | Y | M | apiome-rest, apiome-ui |
+| COA-5.10 · [#7086](https://github.com/apiome/apiome/issues/7086) | Lifecycle, reference counting and integrity checks | Delete on prune/tenant deletion by reference count, orphan GC, scheduled digest verification and audit rows | `enhancement`, `rest`, `security` | Y | M | apiome-rest, apiome-db |
+| COA-5.11 · [#7087](https://github.com/apiome/apiome/issues/7087) | Large-spec performance benchmark and gate | Benchmark diff, schema and export on large specs before/after; nightly gate with agreed latency targets | `enhancement`, `performance`, `testing` | Y | S | apiome-rest |
+| COA-5.12 · [#7088](https://github.com/apiome/apiome/issues/7088) | Local MinIO and deployment examples | MinIO in `docker-compose.yml`, prod env example and `get-apiome` prompts for the store | `enhancement`, `devops` | Y | S | deploy, docker-compose |
+| COA-5.13 · [#7089](https://github.com/apiome/apiome/issues/7089) | UI reads revision documents from REST, not its own generator | Versions view/compare, Catalog diff and MR/review spec views fetch cached documents from REST; retire the Next.js `buildOpenApiSpecForVersion` path after a parity audit | `enhancement`, `ui`, `rest`, `performance` | N | L | apiome-ui, apiome-rest |
+| COA-5.14 · [#7090](https://github.com/apiome/apiome/issues/7090) | Every REST feature reads revision documents through the store | Lint, mock, Swagger UI, merge/rollback, publish, change reports, PR-back, reviews, source workspace, contracts, blast radius, governance, sync and export use the rendered-document service; an architecture test forbids direct generation | `enhancement`, `rest`, `performance` | Y | L | apiome-rest |
+| COA-5.15 · [#7092](https://github.com/apiome/apiome/issues/7092) | Per-tenant bring-your-own buckets | A tenant can point its originals and rendered documents at its own S3-compatible bucket, using a sealed tenant storage credential; the platform store stays the default | `enhancement`, `rest`, `ui`, `security` | Y | L | apiome-rest, apiome-ui, apiome-db |
+
+**COA-5.1 · #7077 Document store SPI with S3, filesystem and database backends**
+- **Problem:** Apiome has no general object storage. Originals sit in Postgres `TEXT`/JSONB, frozen schemas and export artifacts in `BYTEA`, and the export artifact store's object backend is a stub (`ExportArtifactStoreNotConfigured`). Large documents bloat rows, backups and queries, and no file I/O (streaming, Range, presigned URLs) can be applied to them.
+- **Solution/Scope:**
+- `app/document_store.py`: a `DocumentStore` protocol — `put(tenant_id, data|stream, media_type) -> ObjectRef` (content-addressed by SHA-256, idempotent), `get`, `open_stream`, `head`, `exists`, `delete`, `presign_get(ttl)` (optional per backend).
+- Backends: `s3` (boto3, already a dependency; AWS, MinIO, Cloudflare R2, GCS interop; virtual-host or path-style; SSE-S3/SSE-KMS; IAM role, env or static keys), `filesystem` (dev/single-node, under `APIOME_DOCUMENT_STORE_PATH`), `db` (the current behavior, so an install without a bucket keeps working).
+- Key layout: `<prefix>/tenants/<tenant_id>/objects/sha256/<aa>/<hex>`; tenant isolation in the key, never in a shared namespace.
+- Settings in `config.py`: `APIOME_DOCUMENT_STORE` (`db` default, `s3`, `filesystem`), `_BUCKET`, `_PREFIX`, `_REGION`, `_ENDPOINT_URL`, `_ADDRESSING_STYLE`, `_SSE`, `_KMS_KEY_ID`, `_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY` (optional), `_PRESIGN_TTL_SECONDS`, `_DB_MAX_BYTES`. Endpoints pass the existing SSRF guard.
+- Implement the export artifact store's object backend on this SPI (removes the stub).
+- Multipart upload above a size threshold; bounded memory (stream, never read a 100 MB spec whole when avoidable).
+- **Acceptance Criteria:**
+- One contract test suite runs against all three backends (S3 via moto or MinIO in CI).
+- Same bytes → same key; a second `put` writes nothing.
+- An export larger than `export_artifact_db_max_bytes` now succeeds when `s3` is configured.
+- Secrets never appear in logs or errors (redaction test).
+- **Parallelism/Dependencies:** First in the epic; COA-5.2 can run beside it.
+- **Technical Stack:** Python, boto3, FastAPI settings, moto/MinIO for tests.
+- **Documentation:** `admin/operating-apiome.mdx` (environment reference: document store), new `admin/document-store.mdx` (+ `helpCatalog.ts` entry); screenshots: n/a; release note.
+
+**COA-5.2 · #7078 Document object tables and the revision content stamp**
+- **Problem:** Nothing records where a revision's documents live, and nothing tells a cache whether a revision changed since a document was rendered (there is no per-revision change counter today).
+- **Solution/Scope:**
+- Migration: `apiome.document_objects` (id, tenant_id, sha256, size_bytes, media_type, encoding, backend, storage_key, ref_count, created_at, verified_at) unique on (tenant_id, sha256).
+- `apiome.version_documents` (version_id, role `original`|`original_part`|`rendered_openapi`|`rendered_canonical`|`frozen_schema`, object_id, part_path, content_stamp, generator, generator_version, created_at); filesets (Arazzo with its sources, multi-file protobuf) hold one row per part plus a manifest.
+- `versions.content_stamp BIGINT`, bumped by triggers on writes to classes, properties, paths, operations, servers, security schemes, component pins and the revision's own metadata (one trigger function, covered by a test that fails when a new normalized table is added without it).
+- **Acceptance Criteria:**
+- Every edit through REST bumps the stamp exactly once per transaction; reads do not.
+- Migration runs online on a large DB (no table rewrite of `versions`).
+- **Parallelism/Dependencies:** Parallel with COA-5.1.
+- **Technical Stack:** SQL (Flyway-style `V###__` scripts), apiome-db migrator, Python DB layer.
+- **Documentation:** `reference/rest/versions.md` (no API change; note the stamp in the ETag of COA-5.5); screenshots: n/a; release note.
+
+**COA-5.3 · #7079 Store the original on every import path**
+- **Problem:** OpenAPI imports keep the original only in `version_import_snapshots`; other formats keep it in `format_metadata.sourceContent`; some paths keep nothing (decomposed OpenAPI imports, so `source-not-captured`).
+- **Solution/Scope:**
+- Write the original through the store and a `version_documents` `original` row on: the apiome-ui tsx worker (via `spec_import_engine._record_worker_import_snapshot`), `import_source_pipeline`, catalog upload, URL import and refresh, repository import and webhook refresh, `apiome push`/CLI import, spec sync.
+- Store exactly what is stored today: the text **after** the tenant's secret scrub (MFI-29.6), with the digest of the uploaded bytes kept as now. Withheld sources stay withheld. Unscrubbed originals are out of scope.
+- Keep writing `source_text` / `sourceContent` while `APIOME_DOCUMENT_STORE=db`; in `s3`/`filesystem` mode store a pointer only.
+- Gzip-encode text above a threshold (recorded in `encoding`).
+- **Acceptance Criteria:**
+- An import on each path produces one `original` object whose SHA-256 matches the stored (scrubbed) text; re-importing identical bytes reuses the object.
+- Import latency regression < 5 % on the import benchmark.
+- **Parallelism/Dependencies:** After COA-5.1 and COA-5.2.
+- **Technical Stack:** Python (apiome-rest), TypeScript worker (apiome-ui), apiome-cli.
+- **Documentation:** `bring-in/what-an-import-records.md`, `bring-in/how-importing-works.mdx`, `bring-in/collection-secret-scrubbing.md`; screenshots: n/a; release note.
+
+**COA-5.4 · #7080 Read captured sources through the store**
+- **Problem:** At least five modules read `sourceContent` or `source_text` directly (`catalog_detail`, `export_source`, `format_adapter_evidence`, `source_provenance`, `canonical_model_for_revision`), and version queries drag the JSONB source along.
+- **Solution/Scope:**
+- `revision_source(db, store, tenant_id, version_id)` returns text + digest + format, trying `version_documents` first and the legacy columns second.
+- Move every reader onto it; drop `format_metadata` source keys from list/summary queries.
+- Cache parsed canonical models in-process by object digest (bounded LRU, memory-capped per AGENTS.md).
+- **Acceptance Criteria:**
+- A grep test fails if a module outside the helper reads `sourceContent`/`source_text`.
+- Export, conversion and provenance tests pass against all three backends.
+- **Parallelism/Dependencies:** After COA-5.3; parallel with COA-5.5.
+- **Technical Stack:** Python.
+- **Documentation:** `reference/rest/source-provenance.md`, `ship/export-fidelity.md` (source-not-captured wording); screenshots: n/a; release note.
+
+**COA-5.5 · #7081 Rendered document cache for revisions**
+- **Problem:** `openapi_for_revision` loads all classes, runs one property query per class and regenerates the spec on every diff, compatibility check and `/v1/schema` request. For very large specs this dominates diff latency.
+- **Solution/Scope:**
+- `rendered_document(revision, kind)`: look up `version_documents` by (revision, kind, content_stamp, generator_version); on a miss render, `put`, record, return. Single-flight per key so concurrent requests render once.
+- Published and frozen revisions render at publish/freeze and never again (immutable); drafts are cached by stamp; a generator version bump invalidates by key, not by deletion.
+- Move `version_spec_snapshots` content to a `frozen_schema` object (row keeps the metadata).
+- `/v1/schema` serves the cached bytes with `ETag: "<sha256>"`, honors `If-None-Match`, and streams.
+- Batch the class/property load (one query per table, not per class) for the cold path.
+- **Acceptance Criteria:**
+- Second request for the same revision issues no class/property queries (query-count test).
+- An edit bumps the stamp and the next read re-renders; the old object is left for GC.
+- Byte-for-byte equality with the current generator output across the OpenAPI corpus.
+- **Parallelism/Dependencies:** After COA-5.1 and COA-5.2.
+- **Technical Stack:** Python.
+- **Documentation:** `build/versions.mdx` (freeze/publish behavior), `reference/rest/versions.md`; REST reference regenerated; screenshots: n/a; release note.
+
+**COA-5.6 · #7082 Diff and compatibility read stored documents**
+- **Problem:** Classified diff (`/v1/diff/{t}/classified`), the compatibility check, merge-request changes, the version changelog and transitive baselines all regenerate each side, once per baseline.
+- **Solution/Scope:**
+- Route every side through COA-5.5 (`openapi_for_revision` becomes a cache read) and canonical models through COA-5.4's digest cache.
+- Short-circuit: equal rendered digests → empty diff without classifying.
+- Covers the diff family only; every other REST consumer is COA-5.14 and the UI's own diff views are COA-5.13.
+- Response carries `X-Apiome-Document-Cache: hit|miss` per side for diagnosis.
+- UI: the versions page and merge-request changes tab show progress for a cold render instead of a blank wait.
+- **Acceptance Criteria:**
+- With a warm cache, a diff of two large revisions does no generation (benchmark in COA-5.11).
+- Classified diff output is identical to the pre-change output across the diff corpus.
+- **Parallelism/Dependencies:** After COA-5.5.
+- **Technical Stack:** Python, Next.js.
+- **Documentation:** `reference/rest/classified-diff.md`, `reference/rest/compatibility.md`, `govern/compatibility-modes.md`; screenshots: n/a unless the progress state is visible (then the versions compare screenshot id); release note.
+
+**COA-5.7 · #7083 Download and compare the original file**
+- **Problem:** There is no way to get back the file that was imported, or to compare two imported files as text.
+- **Solution/Scope:**
+- REST: `GET /v1/versions/{tenant}/{project}/{version}/original` (and `/original/{part_path}` for filesets) streams the bytes with the original file name, `ETag`, `Range`; with `?redirect=presigned` and an S3 store, `302` to a short-lived presigned URL. `404 original-not-stored` when none exists, `410` when withheld.
+- CLI: `apiome versions original <project> <version> [-o file]`.
+- UI: "Download original" on the version and catalog item pages; an **Originals** mode in the compare view that text-diffs two stored originals (virtualized for large files) beside the existing semantic diff.
+- Permission: `versions:view`; withheld sources honor the intake policy.
+- **Acceptance Criteria:**
+- Downloaded bytes' SHA-256 equals the stored digest; Range requests return 206.
+- The compare view opens a 20 MB diff without freezing the tab.
+- **Parallelism/Dependencies:** After COA-5.3; parallel with COA-5.5/5.6.
+- **Technical Stack:** FastAPI, Next.js, apiome-cli.
+- **Documentation:** `build/versions.mdx`, `build/revision-history.md`, `reference/rest/versions.md`, `reference/cli/versions.md`; screenshots: `versions-download-original`, `versions-compare-originals` (light + dark); REST and CLI reference regenerated; release note.
+
+**COA-5.8 · #7084 Migrate existing sources and snapshots into the store**
+- **Problem:** Existing installs hold originals, frozen schemas and export artifacts in the database.
+- **Solution/Scope:**
+- `scripts/migrate_documents_to_store.py` (and an admin-triggered job): copies `version_import_snapshots.source_text`, `format_metadata.sourceContent`, `version_spec_snapshots.content` and `export_job_artifact` bytes into the store; writes `version_documents`; verifies each digest after upload.
+- Resumable (checkpointed), rate-limited, `--dry-run`, `--tenant`; bounded memory and one worker by default.
+- `--purge-db-copies` only after verification, as a separate step.
+- **Acceptance Criteria:**
+- Re-running is a no-op; an interrupted run resumes; every migrated object verifies.
+- **Parallelism/Dependencies:** After COA-5.3 and COA-5.5.
+- **Technical Stack:** Python, SQL.
+- **Documentation:** `admin/operating-apiome.mdx` runbook "Move documents to object storage" beside "Repair items with no captured source"; screenshots: n/a; release note.
+
+**COA-5.9 · #7085 Document store settings, health and admin screen**
+- **Problem:** Operators need to know which store is active and whether it works; you asked for the setting in the REST server or the UI.
+- **Solution/Scope:**
+- The REST server's environment is authoritative (credentials never stored in or edited from the UI). The UI never talks to the bucket directly; it reads through REST.
+- `GET /v1/ops/document-store` (platform admin): backend, bucket, prefix, region, encryption, object count/bytes, last integrity run; `POST …/test` writes, reads and deletes a probe object.
+- `/health` reports the store as a dependency.
+- Platform-admin UI page showing the same, with "Test connection".
+- Per-tenant bring-your-own buckets are COA-5.15 (#7092).
+- **Acceptance Criteria:**
+- Misconfiguration fails fast at startup with a redacted, actionable message, or degrades to `db` only if `APIOME_DOCUMENT_STORE_FALLBACK=db` is set.
+- **Parallelism/Dependencies:** After COA-5.1.
+- **Technical Stack:** FastAPI, Next.js.
+- **Documentation:** `admin/document-store.mdx`, `admin/admin-console.mdx`, `reference/rest/ops.md`; screenshots: `admin-document-store` (light + dark); REST reference regenerated; release note.
+
+**COA-5.10 · #7086 Lifecycle, reference counting and integrity checks**
+- **Problem:** Content-addressed objects are shared between revisions, so deleting a revision cannot simply delete its objects; and stored bytes must be provably unchanged.
+- **Solution/Scope:**
+- Reference counting on `document_objects`; version prune (MFI-31.5), version delete and tenant deletion decrement and delete at zero; tenant deletion also removes the tenant prefix.
+- Orphan GC job for objects with no reference after a grace period, and for stale rendered drafts.
+- Scheduled integrity run re-hashes a sample (or all) and records `verified_at`; mismatches alert and fall back to re-render (rendered) or flag (original).
+- Audit rows for purge and integrity failures.
+- **Acceptance Criteria:**
+- Deleting one of two revisions that share an original keeps the object; deleting both removes it.
+- Tenant deletion leaves no objects under its prefix (test against MinIO).
+- **Parallelism/Dependencies:** After COA-5.2 and COA-5.3.
+- **Technical Stack:** Python, SQL.
+- **Documentation:** `admin/document-store.mdx` (retention and integrity), `admin/admin-tenants.mdx` (deletion); screenshots: n/a; release note.
+
+**COA-5.11 · #7087 Large-spec performance benchmark and gate**
+- **Problem:** There is no measurement of diff, schema or export latency on very large specs, so the gain cannot be shown or protected.
+- **Solution/Scope:**
+- Fixtures: large public OpenAPI specs (e.g. GitHub REST, Stripe, Azure) plus a synthetic 50 MB spec; pairs of revisions with small and large changes.
+- Measure cold and warm latency and peak memory for classified diff, compatibility, `/v1/schema` and export, before (main) and after.
+- Nightly job with agreed thresholds (proposal: warm diff of two large revisions under 2 s, `/v1/schema` warm under 200 ms).
+- **Acceptance Criteria:**
+- Baseline recorded on `main` before COA-5.5 merges; nightly gate active by the end of the epic.
+- **Parallelism/Dependencies:** Baseline first (any time); gate after COA-5.6.
+- **Technical Stack:** pytest-benchmark or a script, GitHub Actions nightly.
+- **Documentation:** none (internal); screenshots: n/a.
+
+**COA-5.12 · #7088 Local MinIO and deployment examples**
+- **Problem:** Developers and self-hosters need a bucket to run the S3 backend.
+- **Solution/Scope:**
+- MinIO service (and bucket-init) in `docker-compose.yml`, wired by `docker-compose.env.example`; prod examples for AWS S3 and R2 in `docker-compose.prod.env.example`; `deploy/get-apiome` asks for the store.
+- **Acceptance Criteria:**
+- `docker compose up` gives a working `s3` store; the default stays `db` when unset.
+- **Parallelism/Dependencies:** After COA-5.1.
+- **Technical Stack:** Docker Compose, shell.
+- **Documentation:** `getting-started` install page, `admin/document-store.mdx`; screenshots: n/a; release note.
+
+**COA-5.13 · #7089 UI reads revision documents from REST, not its own generator**
+- **Problem:** The screens users open most build OpenAPI in the Next.js server with a TypeScript generator that queries Postgres directly (`apiome-ui/lib/db/helper.ts` `buildOpenApiSpecForVersion`): Versions **View OpenAPI** (`handleViewOpenApi`) and **Compare** (`loadVersionSpec` × 2, then a Monaco text diff), the Catalog Versions tab inline diff (`utils/catalog-revision-diff.ts`), and `GET /api/merge-requests/[id]/spec` and `/api/reviews/[id]/spec`. Every click regenerates both documents, the REST cache in COA-5.5 never sees these requests, and two generators (TypeScript and Python) can disagree about the same revision.
+- **Solution/Scope:**
+- Parity audit first: render every revision of the OpenAPI corpus (and a sample of real tenants' revisions in a scratch DB) with both generators; classify each difference (canvas notes, components, servers, extensions, ordering); move anything the UI needs into the Python generator (`openapi_generator.py`) so REST is the single generator.
+- Replace each call site with a REST fetch of the cached rendered document (`GET /v1/schema/{tenant}/{project}/{version}`, or a by-record-id variant if one is needed), honoring `ETag` / `If-None-Match` and a client cache keyed by digest.
+- Compare view: fetch both sides in parallel from REST; skip the text diff when the digests are equal; show an **Original / Rendered** toggle backed by COA-5.7; virtualize large diffs.
+- Remove `buildOpenApiSpecForVersion` / `buildOpenApiSpecJsonForVersion` and the server action in `helper-actions.ts`; keep `app/utils/openapi.ts` only for what still needs it client-side (draft previews of unsaved edits), or remove it.
+- **Acceptance Criteria:**
+- `git grep buildOpenApiSpecForVersion apiome-ui/src apiome-ui/lib` is empty, and a jest guard test keeps it that way.
+- The parity report is attached to the PR; every difference is fixed or explicitly accepted.
+- Opening Compare on two large, already-rendered revisions makes no Postgres class/property queries from the Next.js server and no generation in REST (COA-5.11 benchmark).
+- **Parallelism/Dependencies:** After COA-5.5 (the cache must exist); the parity audit can start at once. With COA-5.7 for the Original toggle.
+- **Technical Stack:** Next.js / React (apiome-ui), FastAPI (apiome-rest), jest, pytest.
+- **Documentation:** `build/versions.mdx` (View OpenAPI, Compare), `bring-in/catalog.mdx` (Versions tab diff), `build/merge-requests.mdx`, `govern/reviews.mdx`; screenshots: versions compare and catalog versions diff refreshed, `versions-compare-originals` (light + dark); REST reference regenerated if an endpoint is added; release note.
+
+**COA-5.14 · #7090 Every REST feature reads revision documents through the store**
+- **Problem:** Besides the diff family (COA-5.6), 31 apiome-rest modules call `generate_openapi_spec` or `openapi_for_revision` directly, so lint, mock, Swagger UI, merge preview/merge/rollback, publish prechecks and the breaking-change guardrail, publication change reports and changelogs, PR-back, reviews, the source workspace (provenance, preservation, source review, source apply), consumer contracts, blast radius, component governance, repository federation, spec sync, import delta, quality capture, style guides and export/conversion each regenerate the same document. The UI, CLI and MCP server reach all of these through REST, so this is where they get fixed.
+- **Solution/Scope:**
+- One module (`app/rendered_documents.py`, from COA-5.5) owns rendering. Move every caller to `rendered_document(revision, kind)` for stored revisions.
+- Hypothetical states do not read the cache: the component bulk-upgrade preview (`component_pin_rows` override), the merge result before commit and the source-change apply preview render directly through an explicit `render_uncached(...)`; the committed merge and the source apply **write through** the new stamp's document so the next read is warm.
+- Same for canonical models: every `build_conversion_source` / `canonical_model_for_revision` caller goes through COA-5.4's helper and digest cache.
+- Architecture test: outside `rendered_documents.py` and `openapi_generator.py`, any call to `generate_openapi_spec` fails CI unless it is `render_uncached` with a reason.
+- **Acceptance Criteria:**
+- The architecture test passes with zero exemptions beyond the three hypothetical renders.
+- Lint, mock start, merge preview and publish on a large warm revision issue no class/property queries (query-count tests).
+- Every affected module's existing tests pass unchanged against the `db`, `filesystem` and `s3` backends.
+- **Parallelism/Dependencies:** After COA-5.5; module groups (lint/mock, merge/publish, source workspace, governance/contracts, sync/export) can go in parallel PRs.
+- **Technical Stack:** Python (apiome-rest), pytest.
+- **Documentation:** `build/lint-and-quality.md`, `ship/mock-try-out.mdx`, `build/version-control.mdx` (merge/rollback), `getting-started/versions-and-publishing.mdx`; screenshots: n/a (no UI change); REST reference regenerated (OpenAPI version bump); release note.
+
+**COA-5.15 · #7092 Per-tenant bring-your-own buckets**
+- **Problem:** COA-5.1 gives the whole install one store. Enterprise tenants often need their API documents in a bucket they own, for data residency, their own KMS keys, retention rules or audit, and a shared SaaS install cannot meet that with one platform bucket.
+- **Solution/Scope:**
+- Tenant setting: `document_store` = `platform` (default) or `tenant`, with a stored credential, bucket, prefix, region, endpoint, addressing style and SSE / KMS key id. Credentials reuse the sealed tenant storage credentials already used for export delivery (`POST /v1/export/{tenant}/storage-credentials`, `mcp_credential_crypto`); when the credential vault (CVT-EPIC-1, #6130) lands they move with every other sealed credential.
+- A store router resolves the backend per tenant on every `put` / `get` / `presign`; `document_objects.backend` and `storage_key` record where each object lives, so platform and tenant objects can coexist during a move.
+- REST: `GET` / `PUT /v1/tenants/{tenant}/document-store`, and `POST …/document-store/test` (write, read, delete a probe object; checks the bucket policy allows Apiome's key layout).
+- Switching: moving to or from a tenant bucket runs COA-5.8's copy-and-verify job scoped to the tenant; reads keep working from the old location until each object verifies; old copies are deleted only after an explicit confirm.
+- Failure handling: an unreachable or revoked tenant bucket answers `503 tenant-document-store-unavailable` with the reason (never a secret); rendered documents fall back to rendering uncached; originals report unavailable; the tenant's admins get a notification and the ops health check lists the tenant.
+- Controls: a platform setting `APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS` (default off); a new permission `document_store:manage` for tenant admins; endpoints pass the SSRF guard; every change is audited.
+- UI: a **Document storage** section in tenant settings (choose platform or own bucket, pick or add a credential, test, start a move and watch its progress); the platform-admin screen from COA-5.9 lists which tenants use their own bucket.
+- COA-5.10's lifecycle (reference counts, GC, integrity runs, tenant deletion) works per backend; tenant deletion never deletes a tenant-owned bucket, only Apiome's prefix in it.
+- **Acceptance Criteria:**
+- With two tenants on different MinIO buckets, neither tenant's objects appear in the other's bucket or the platform bucket (test).
+- A move from platform to tenant bucket and back leaves every object verified and no request failing during the move.
+- Revoking the tenant credential produces the `503`, the notification and the health entry, and diffs still answer (uncached).
+- Secrets never appear in responses, logs or audit rows (redaction test).
+- **Parallelism/Dependencies:** After COA-5.1, COA-5.8, COA-5.9 and COA-5.10.
+- **Technical Stack:** FastAPI, boto3, SQL migration (tenant document-store settings), Next.js.
+- **Documentation:** `admin/document-store.mdx` (tenant buckets), `admin/admin-tenants.mdx`, `reference/rest/tenants.md`; screenshots: `tenant-document-storage` (light + dark, 1440 × 900); REST reference regenerated (OpenAPI version bump); release note.
+
 ## 5. Work to be done, in order
 
 1. **Quick wins and the truth pass (parallel):** COA-1.1 · COA-2.2 · COA-4.1 · COA-3.5 · COA-3.6.
 2. **Foundations:** COA-2.1 (construct audit) · COA-1.5 (workflow records) · COA-1.2 (Arazzo filesets) · COA-4.3 (usability audit).
 3. **Fidelity and options:** COA-1.4 · COA-2.3 · COA-2.4 · COA-2.7 · COA-4.2 · #5879 · #5880.
 4. **Surfaces and burn-down:** COA-1.3 · COA-2.5 · COA-3.1 · COA-3.2 · COA-3.3 · governance epics #5875 and #5868 (+ #5869–#5872).
-5. **Demos and delivery:** COA-4.4 · #6706 · #6654.
-6. **V2:** COA-1.6 · COA-2.6 · COA-2.8 · COA-3.4 · COA-1.7.
+5. **Document store (COA-EPIC-5), alongside 2–4:** COA-5.11 baseline · COA-5.1 + COA-5.2 → COA-5.3 · COA-5.9 · COA-5.12 → COA-5.4 · COA-5.5 · COA-5.7 → COA-5.6 · COA-5.13 · COA-5.14 · COA-5.8 · COA-5.10 → COA-5.15 → COA-5.11 gate. COA-5.13's parity audit can start in phase 2.
+6. **Demos and delivery:** COA-4.4 · #6706 · #6654.
+7. **V2:** COA-1.6 · COA-2.6 · COA-2.8 · COA-3.4 · COA-1.7.
 
 Each issue follows AGENTS.md: OpenAPI version bump for REST changes, package bumps, docs in the same PR with regenerated screenshots, a release note, and `yarn docs:check`.

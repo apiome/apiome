@@ -15,6 +15,7 @@ execution, by *Rank*) and the **RC9** milestone on `apiome/apiome`. The roadmap 
 | Section | What | Where |
 | --- | --- | --- |
 | §1 | New tickets: Arazzo, OpenAPI fidelity and authoring, import/export fidelity, cleanup | Roadmap epics COA-EPIC-1…4 (25 issues) |
+| §1 | Document store: originals and rendered documents in object storage (S3) | Roadmap COA-EPIC-5 ([#7076](https://github.com/apiome/apiome/issues/7076), #7077–#7090, #7092) |
 | §2 | Existing issues adopted into the release | Roadmap §3 |
 | §3 | Why now: current standards and competitive position | Roadmap §1 |
 | §4 | Open decisions | below |
@@ -31,6 +32,11 @@ execution, by *Rank*) and the **RC9** milestone on `apiome/apiome`. The roadmap 
   re-import failures, the 14 "not validated" targets, three owed sign-offs and the triage of ~86 deferred export tickets.
 - **Cleanup (COA-EPIC-4).** Docs that contradict the code, Catalog ↔ Projects path parity, a usability audit and
   demo scripts.
+- **Document store (COA-EPIC-5).** Today both sides of an OpenAPI diff are regenerated from classes and properties on
+  every request, in REST and in a second TypeScript generator behind the UI's Versions, Catalog, merge-request and
+  review views, and originals sit in Postgres TEXT/JSONB. RC9 stores originals and rendered documents in an
+  S3-compatible store (filesystem/DB fallback), with normalized data kept in Postgres, so diffs, `/v1/schema`,
+  exports, every UI document view and "download original" read stored bytes. A tenant can bring its own bucket.
 - **Governance (adopted).** Arazzo/Overlay governance (#5875, #5879, #5880) and lint `--fix` (#5868–#5872), the
   catch-up items against Redocly, vacuum and Spectral.
 
@@ -38,7 +44,7 @@ execution, by *Rank*) and the **RC9** milestone on `apiome/apiome`. The roadmap 
 
 1 quick wins (COA-1.1, 2.2, 4.1, 3.5, 3.6) → 2 foundations (2.1, 1.5, 1.2, 4.3) → 3 fidelity and options (1.4, 2.3,
 2.4, 2.7, 4.2, #5879, #5880) → 4 surfaces and burn-down (1.3, 2.5, 3.1–3.3, governance epics) → 5 demos and delivery
-(4.4, #6706, #6654) → V2 (1.6, 2.6, 2.8, 3.4, 1.7). The project's *Rank* field carries this order.
+(4.4, #6706, #6654) → V2 (1.6, 2.6, 2.8, 3.4, 1.7). COA-EPIC-5 runs alongside phases 2–4 (5.1/5.2 → 5.3 → 5.4/5.5/5.7 → 5.6/5.13/5.14/5.8/5.10 → 5.15). The project's *Rank* field carries this order.
 
 ## 3. Carry-over from RC8
 
@@ -57,4 +63,4 @@ five features (#6894). Anything RC8 does not close moves here.
 
 ## 5. Issue numbers
 
-Umbrella [#7032](https://github.com/apiome/apiome/issues/7032); epics [#7033](https://github.com/apiome/apiome/issues/7033), [#7034](https://github.com/apiome/apiome/issues/7034), [#7035](https://github.com/apiome/apiome/issues/7035), [#7036](https://github.com/apiome/apiome/issues/7036). Issues are listed in the roadmap.
+Umbrella [#7032](https://github.com/apiome/apiome/issues/7032); epics [#7033](https://github.com/apiome/apiome/issues/7033), [#7034](https://github.com/apiome/apiome/issues/7034), [#7035](https://github.com/apiome/apiome/issues/7035), [#7036](https://github.com/apiome/apiome/issues/7036), [#7076](https://github.com/apiome/apiome/issues/7076) (COA-EPIC-5, document store). Issues are listed in the roadmap.
