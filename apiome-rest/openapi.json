@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.599.0",
+    "version": "1.600.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -61620,6 +61620,300 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for list workflow auditresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows/{tenant_slug}/catalog/{item_id}": {
+      "get": {
+        "tags": [
+          "arazzo-workflows"
+        ],
+        "summary": "List Catalog Item Workflows",
+        "description": "List the Arazzo workflows of a catalog item's latest revision.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n    item_id: The catalog item UUID.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n    The latest revision's workflows; ``version_id`` is null and ``workflows`` empty when the\n    item has no revisions yet.\n\nRaises:\n    HTTPException: 400 for a malformed id; 404 when the id is not a catalog item in this\n        tenant (a publishable Project is read through the versions route instead).",
+        "operationId": "list_catalog_item_workflows_v1_workflows__tenant_slug__catalog__item_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id",
+              "description": "Item Id schema."
+            },
+            "description": "Catalog item identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Catalog Item Workflowsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Catalog Item Workflowsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Catalog Item Workflows Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Catalog Item Workflows Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list catalog item workflows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArazzoWorkflowsResponse",
+                  "description": "Response payload for list catalog item workflowsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list catalog item workflowsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows/{tenant_slug}/operations/{path_operation_id}": {
+      "get": {
+        "tags": [
+          "arazzo-workflows"
+        ],
+        "summary": "Get Workflow Step Operation",
+        "description": "Read the operation an Arazzo step calls, for the step drawer.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n    path_operation_id: The ``path_operation.id`` a step resolved to.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n    The operation's method, route, summary, owning project and revision, parameters and\n    declared responses.\n\nRaises:\n    HTTPException: 400 for a malformed id; 404 when the operation is not in this tenant.",
+        "operationId": "get_workflow_step_operation_v1_workflows__tenant_slug__operations__path_operation_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "path_operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path Operation Id",
+              "description": "Path Operation Id schema."
+            },
+            "description": "Path parameter identifying the path operation id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Workflow Step Operationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Workflow Step Operationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Workflow Step Operation Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Workflow Step Operation Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get workflow step operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArazzoOperationDetailOut",
+                  "description": "Response payload for get workflow step operationresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get workflow step operationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows/{tenant_slug}/versions/{version_id}": {
+      "get": {
+        "tags": [
+          "arazzo-workflows"
+        ],
+        "summary": "List Version Workflows",
+        "description": "List the Arazzo workflows persisted for a revision.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug.\n    version_id: The revision (``versions.id``) UUID.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n    The revision's workflows in declaration order, each with its ordered steps, the\n    operation each step resolved to, and its source-description status. An empty\n    ``workflows`` list means the revision holds no Arazzo document.\n\nRaises:\n    HTTPException: 400 for a malformed id; 404 when the revision is not in this tenant.",
+        "operationId": "list_version_workflows_v1_workflows__tenant_slug__versions__version_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Workflowsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Workflowsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Version Workflows Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Version Workflows Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list version workflows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArazzoWorkflowsResponse",
+                  "description": "Response payload for list version workflowsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list version workflowsresponse422."
                 }
               }
             }
@@ -132953,6 +133247,794 @@
         ],
         "title": "ApprovalResponse",
         "description": "A revision's assessment plus its decision history."
+      },
+      "ArazzoOperationDetailOut": {
+        "properties": {
+          "path_operation_id": {
+            "type": "string",
+            "title": "Path Operation Id",
+            "description": "`path_operation.id` the step targets",
+            "example": "op_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "description": "Upper-case HTTP method",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Route template, e.g. `/pets/{petId}`",
+            "example": "/resources/{id}"
+          },
+          "path_id": {
+            "type": "string",
+            "title": "Path Id",
+            "description": "`version_path.id` holding the route",
+            "example": "path_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation detail."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation detail."
+              }
+            ],
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation detail."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation detail."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation detail."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation detail."
+              }
+            ],
+            "title": "Operation Id",
+            "description": "The operation's `operationId`, if any"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Revision (`versions.id`) holding the operation",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation detail."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation detail."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Display version string of that revision"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project or catalog item holding the operation",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation detail."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation detail."
+              }
+            ],
+            "title": "Project Name",
+            "description": "Project Name."
+          },
+          "project_publishable": {
+            "type": "boolean",
+            "title": "Project Publishable",
+            "description": "True for a Project, false for a catalog item",
+            "default": false,
+            "example": false
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoOperationParameterOut"
+            },
+            "type": "array",
+            "title": "Parameters",
+            "description": "Parameters.",
+            "maxItems": 1000
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoOperationResponseOut"
+            },
+            "type": "array",
+            "title": "Responses",
+            "description": "Responses.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "path_operation_id",
+          "method",
+          "path",
+          "path_id",
+          "version_id",
+          "project_id"
+        ],
+        "title": "ArazzoOperationDetailOut",
+        "description": "One path operation with its parameters and responses (the step drawer)."
+      },
+      "ArazzoStepOperationOut": {
+        "properties": {
+          "path_operation_id": {
+            "type": "string",
+            "title": "Path Operation Id",
+            "description": "`path_operation.id` the step targets",
+            "example": "op_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "description": "Upper-case HTTP method",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Route template, e.g. `/pets/{petId}`",
+            "example": "/resources/{id}"
+          },
+          "path_id": {
+            "type": "string",
+            "title": "Path Id",
+            "description": "`version_path.id` holding the route",
+            "example": "path_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo step operation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo step operation."
+              }
+            ],
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo step operation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo step operation."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo step operation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo step operation."
+              }
+            ],
+            "title": "Operation Id",
+            "description": "The operation's `operationId`, if any"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Revision (`versions.id`) holding the operation",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo step operation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo step operation."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Display version string of that revision"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project or catalog item holding the operation",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo step operation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo step operation."
+              }
+            ],
+            "title": "Project Name",
+            "description": "Project Name."
+          },
+          "project_publishable": {
+            "type": "boolean",
+            "title": "Project Publishable",
+            "description": "True for a Project, false for a catalog item",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "path_operation_id",
+          "method",
+          "path",
+          "path_id",
+          "version_id",
+          "project_id"
+        ],
+        "title": "ArazzoStepOperationOut",
+        "description": "The internal path operation an Arazzo step resolved to, so the viewer can open it."
+      },
+      "ArazzoWorkflowStepOut": {
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "title": "Step Id",
+            "description": "Step ID.",
+            "example": "step_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index",
+            "description": "Order Index.",
+            "example": 1
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "target_kind": {
+            "type": "string",
+            "enum": [
+              "operation",
+              "workflow",
+              "none"
+            ],
+            "title": "Target Kind",
+            "description": "Whether the step calls an operation, another workflow, or nothing",
+            "example": "operation"
+          },
+          "target_workflow_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Target Workflow Id",
+            "description": "Called `workflowId`, if any"
+          },
+          "operation_ref": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Operation Ref",
+            "description": "Raw `operationRef` / `operationPath`"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Operation Id",
+            "description": "Raw `operationId`"
+          },
+          "resolution_status": {
+            "type": "string",
+            "title": "Resolution Status",
+            "description": "`resolved`, `unresolved`, `not_applicable` or `parse_error`",
+            "example": "active"
+          },
+          "resolution_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Resolution Reason",
+            "description": "Resolution Reason."
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArazzoStepOperationOut"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "description": "The resolved operation; null when unresolved or since deleted"
+          },
+          "source_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Names",
+            "description": "Declared sources the step's target points into",
+            "maxItems": 1000
+          },
+          "parameters": {
+            "items": {},
+            "type": "array",
+            "title": "Parameters",
+            "description": "Parameters.",
+            "maxItems": 1000
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "description": "Response payload for arazzo workflow step."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow step."
+              }
+            ],
+            "title": "Request Body",
+            "description": "Request Body."
+          },
+          "success_criteria": {
+            "items": {},
+            "type": "array",
+            "title": "Success Criteria",
+            "description": "Success Criteria.",
+            "maxItems": 1000
+          },
+          "on_success": {
+            "items": {},
+            "type": "array",
+            "title": "On Success",
+            "description": "`onSuccess` actions, verbatim",
+            "maxItems": 1000
+          },
+          "on_failure": {
+            "items": {},
+            "type": "array",
+            "title": "On Failure",
+            "description": "`onFailure` actions, verbatim",
+            "maxItems": 1000
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs",
+            "description": "Outputs."
+          },
+          "depends_on": {
+            "items": {},
+            "type": "array",
+            "title": "Depends On",
+            "description": "Depends On.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "step_id",
+          "order_index",
+          "target_kind",
+          "resolution_status"
+        ],
+        "title": "ArazzoWorkflowStepOut",
+        "description": "One step of a workflow, in source order, with what it calls and where it goes next."
+      },
+      "ArazzoWorkflowOut": {
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "title": "Workflow Id",
+            "description": "Workflow ID.",
+            "example": "workflow_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow."
+              }
+            ],
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflow."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflow."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal",
+            "default": 0,
+            "description": "Ordinal.",
+            "example": 1
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Inputs",
+            "description": "Workflow `inputs` JSON Schema"
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs",
+            "description": "Workflow `outputs` map"
+          },
+          "depends_on": {
+            "items": {},
+            "type": "array",
+            "title": "Depends On",
+            "description": "Depends On.",
+            "maxItems": 1000
+          },
+          "success_actions": {
+            "items": {},
+            "type": "array",
+            "title": "Success Actions",
+            "description": "Success Actions.",
+            "maxItems": 1000
+          },
+          "failure_actions": {
+            "items": {},
+            "type": "array",
+            "title": "Failure Actions",
+            "description": "Failure Actions.",
+            "maxItems": 1000
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoWorkflowStepOut"
+            },
+            "type": "array",
+            "title": "Steps",
+            "description": "Steps.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "workflow_id"
+        ],
+        "title": "ArazzoWorkflowOut",
+        "description": "One persisted Arazzo workflow with its inputs, outputs, sources and steps."
+      },
+      "ArazzoOperationResponseOut": {
+        "properties": {
+          "status_code": {
+            "type": "string",
+            "title": "Status Code",
+            "description": "Status Code.",
+            "example": "active"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation response."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation response."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status_code"
+        ],
+        "title": "ArazzoOperationResponseOut",
+        "description": "A declared response of the operation shown in the step drawer."
+      },
+      "ArazzoOperationParameterOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "in_location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation parameter."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation parameter."
+              }
+            ],
+            "title": "In Location",
+            "description": "`path`, `query`, `header` or `cookie`"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo operation parameter."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo operation parameter."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ArazzoOperationParameterOut",
+        "description": "A parameter of the operation shown in the step drawer."
+      },
+      "ArazzoWorkflowsResponse": {
+        "properties": {
+          "version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflows."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflows."
+              }
+            ],
+            "title": "Version Id",
+            "description": "The revision read; null for a catalog item with no revisions"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo workflows."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo workflows."
+              }
+            ],
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to."
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoSourceDescriptionOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Every source the document declares",
+            "maxItems": 1000
+          },
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/ArazzoWorkflowOut"
+            },
+            "type": "array",
+            "title": "Workflows",
+            "description": "Workflows.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "ArazzoWorkflowsResponse",
+        "description": "The Arazzo workflows persisted for one revision."
+      },
+      "ArazzoSourceDescriptionOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Url",
+            "description": "URL."
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Type",
+            "description": "`openapi`, `asyncapi` or `arazzo`"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "resolved",
+              "missing",
+              "unknown"
+            ],
+            "title": "Status",
+            "description": "`unknown` when the revision was imported before source resolution was recorded",
+            "example": "resolved"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Tier",
+            "description": "`fileset`, `catalog` or `remote` when resolved"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Reason",
+            "description": "Stable reason code when missing"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for arazzo source description."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for arazzo source description."
+              }
+            ],
+            "title": "Detail",
+            "description": "Detail."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "ArazzoSourceDescriptionOut",
+        "description": "A declared `sourceDescriptions` entry and whether the import resolved it."
       },
       "ArtifactEntityLocation": {
         "properties": {

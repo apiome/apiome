@@ -257,11 +257,14 @@ describe('the converted strip', () => {
 
 describe('the tabs', () => {
   it('draws the nine panes in the mockup order, with the mockup labels', () => {
-    // Subjects (CDG-4.5) is the one optional pane: only schema items list it.
-    expect(catalogDetailTabs().map((tab) => tab.id)).toEqual(CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects'));
-    expect(catalogDetailTabs({}, { subjects: true }).map((tab) => tab.id)).toEqual([...CATALOG_DETAIL_TAB_IDS]);
+    // Subjects (CDG-4.5) and Workflows (COA-1.3) are opt-in: only schema / Arazzo items list them.
+    const optIn = new Set(['subjects', 'workflows']);
+    expect(catalogDetailTabs().map((tab) => tab.id)).toEqual(CATALOG_DETAIL_TAB_IDS.filter((id) => !optIn.has(id)));
+    expect(catalogDetailTabs({}, { subjects: true, workflows: true }).map((tab) => tab.id)).toEqual([
+      ...CATALOG_DETAIL_TAB_IDS,
+    ]);
     expect(catalogDetailTabs({}, { dependencies: false }).map((tab) => tab.id)).toEqual(
-      CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects' && id !== 'dependencies')
+      CATALOG_DETAIL_TAB_IDS.filter((id) => !optIn.has(id) && id !== 'dependencies')
     );
     expect(catalogDetailTabs().map((tab) => tab.label)).toEqual([
       'Overview',
@@ -286,6 +289,13 @@ describe('the tabs', () => {
     expect(loaded.find((tab) => tab.id === 'versions')!.count).toBe(3);
     // The five uncounted panes never grow one.
     expect(loaded.filter((tab) => tab.count !== null)).toHaveLength(3);
+  });
+
+  it('lists Workflows last, with its count, only for an Arazzo item (COA-1.3)', () => {
+    expect(catalogDetailTabs({ workflows: 4 }).map((tab) => tab.id)).not.toContain('workflows');
+    const tabs = catalogDetailTabs({ workflows: 4 }, { workflows: true });
+    expect(tabs.at(-1)).toEqual({ id: 'workflows', label: 'Workflows', icon: 'workflows', count: 4 });
+    expect(catalogDetailTabFromQuery('workflows')).toBe('workflows');
   });
 
   it('ignores a count that is not a finite number', () => {

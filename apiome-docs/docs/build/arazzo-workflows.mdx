@@ -1,0 +1,116 @@
+---
+title: Arazzo workflows
+description: Read an Arazzo workflow as steps, inputs, outputs and success and failure paths.
+sidebar_position: 1.35
+tags: [arazzo, workflows, catalog, projects]
+---
+
+<Route path="/ade/dashboard/catalog/[id]?tab=workflows" />
+
+An [Arazzo](https://spec.openapis.org/arazzo/latest.html) document describes **workflows**:
+ordered steps, each calling an operation of an API (or another workflow), with the inputs the
+workflow takes, the outputs it returns, and what happens when a step succeeds or fails. The
+**Workflows** tab shows each workflow as that flow — a list of steps, a step graph, and the
+operation each step calls — instead of as a file.
+
+## Where the tab appears
+
+- **A catalog item imported from an Arazzo document.** **Open the item** from **Catalog** and
+  **select the “Workflows” tab**, the last tab on the item's page. Its count is the number of
+  workflows in the item's latest revision. The address is `?tab=workflows`, so you can send it to a
+  teammate.
+- **A project whose HEAD revision holds workflows.** **Open the project** on **Versions** and
+  **select the “Workflows” tab** beside **Dependencies**. The tab reads the HEAD revision, and a
+  project with no workflows has no tab. `?tab=workflows` opens it directly.
+
+The tab reads nothing until you select it.
+
+<Screenshot id="arazzo-workflows" alt="The Workflows tab: the checkout and send-receipt workflows on the left; on the right the checkout workflow's source descriptions (shop resolved, payments missing), its inputs and outputs, its three steps, and the step graph" />
+
+## Read a workflow
+
+1. **Pick a workflow** in the **Workflows** list on the left. Each entry shows its `workflowId`,
+   its summary, how many steps it has and, in red, how many of its sources are missing. The first
+   workflow is open when the tab loads.
+2. Read **Source descriptions**: every API description the workflow's steps call, with its
+   status.
+
+   | Status | Meaning |
+   | --- | --- |
+   | **Resolved** | The import found the description — **from fileset** (in the same upload, archive or repository selection), **from catalog** (a spec you had already imported) or **from remote** (fetched from its URL) |
+   | **Missing** | No source was found. The reason code beside it — such as `not-in-fileset` or `resolution-disabled` — says why; hover it for the detail. See [Import an Arazzo workflow with its API files](../bring-in/import-a-spec.md#import-an-arazzo-workflow-with-its-api-files) |
+   | **Not recorded** | The revision was imported before Apiome recorded where sources came from. Re-import it to find out |
+
+3. Read **Inputs** — each top-level property of the workflow's `inputs` schema, its type and
+   whether it is required (or the `$ref` the schema points at) — and **Outputs**, each name with
+   the runtime expression that produces it, such as `$steps.pay.outputs.receipt`.
+4. Read **Steps**, in the order the document declares them. Each row shows the `stepId` and what
+   it calls: the method and route of the operation (`GET /carts/{cartId}`), the raw `operationId`
+   or `operationRef` when it was not resolved (marked **Not resolved**), or **Calls workflow** for a
+   step that runs another workflow.
+
+## The step graph
+
+Under the steps, **Step graph** draws the workflow's routing from **Start** to **End**:
+
+| Edge | Drawn when |
+| --- | --- |
+| **Next step** (grey) | A step has no `onSuccess` actions, so it continues to the next step — or, as the last step, to **End** |
+| **On success** (green) | An `onSuccess` action: `goto` a step or workflow, or `end` |
+| **On failure** (red, dashed) | An `onFailure` action, or — when a step has none — the step failing the workflow, drawn to **Failed** |
+| **Retry** (amber, dotted) | A `retry` action that names another step or workflow |
+
+Each edge is labelled with its action's `name`. A step that retries *itself* carries a
+**retry ×3** badge instead of a loop. When every action of a step is conditional (has `criteria`),
+the default path is drawn as well, since the step falls through when no criteria match. A called
+workflow sits above the row — **select it** to show that workflow — and so does a reusable
+`$components` action, which the graph labels but does not follow.
+
+<Screenshot id="arazzo-workflow-graph" alt="The step graph of the checkout workflow: Start, load-cart, pay with a retry ×3 badge, notify and End along one row, a green to-pay edge from load-cart to pay, and red dashed edges down to Failed" />
+
+## Open a step and its operation
+
+**Click a step** in **Steps** or in the graph (or **Tab** to it and press <Kbd keys="Enter"/>) to
+open its drawer:
+
+- **Operation** — for a resolved step, the operation it calls: method and route, summary,
+  description, `operationId`, the project or catalog item that holds it, its **Parameters** and its
+  **Responses**. **“Open project”** (or **“Open catalog item”**) at the bottom goes there. A step
+  whose reference was not resolved says why instead, and shows the reference as written; a step
+  that calls a workflow offers **“Show workflow”**.
+- **Step parameters**, **Request body**, **Success criteria**, **On success**, **On failure** and
+  **Outputs** — the step as the document wrote it, with each action spelled out, such as
+  *Go to step pay* or *Retry up to 3 times, 1 s apart*.
+
+<Screenshot id="arazzo-workflow-step" alt="The step drawer for load-cart open over the Workflows tab: GET /carts/{cartId}, its parameters and responses, the step's success criteria and its on-success and on-failure actions" />
+
+Press <Kbd keys="Esc"/> or **“Close”** to return to the tab.
+
+A step resolves when the operation it names was imported in the same scan — for example, the
+OpenAPI file in the same archive or repository selection. The link is kept by id, so deleting that
+operation later turns the step back into an unresolved one.
+
+## Empty and error states
+
+- **No workflows** — the revision holds no Arazzo workflows (for example, the document declares
+  none).
+- **Couldn't load the workflows** — the read failed; the message says why, and **“Try again”**
+  retries it.
+- In the drawer, **Couldn't load the operation** — the operation could not be read; **“Try again”**
+  retries it.
+
+## With the API
+
+- `GET /v1/workflows/{tenant_slug}/catalog/{item_id}` — the workflows of a catalog item's latest
+  revision.
+- `GET /v1/workflows/{tenant_slug}/versions/{version_id}` — the workflows of any revision.
+- `GET /v1/workflows/{tenant_slug}/operations/{path_operation_id}` — one operation a step calls,
+  with its parameters and responses.
+
+See [Arazzo workflows](../reference/rest/arazzo-workflows.md) in the REST reference.
+
+## Where next
+
+- [Import an Arazzo workflow with its API files](../bring-in/import-a-spec.md#import-an-arazzo-workflow-with-its-api-files)
+- [Catalog](../bring-in/catalog.mdx#an-items-page)
+- [Versions](./versions.mdx)

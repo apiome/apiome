@@ -444,8 +444,9 @@ and steps keep their raw references with a warning.
 | `STEP_REFERENCE_UNRESOLVED` | A step's `operationId` or `operationPath` did not resolve. |
 
 The full result (every source, every step's resolution and every issue) is returned on the
-import job's summary as `arazzoResolution`. Workflows and their steps are not stored as their own
-records yet.
+import job's summary as `arazzoResolution`. Each workflow and its steps are also stored as records
+of their own, with each step's resolved operation; the item's **Workflows** tab shows them — see
+[Arazzo workflows](../build/arazzo-workflows.mdx).
 
 ## Import an Arazzo workflow with its API files
 

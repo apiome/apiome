@@ -143,7 +143,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 **“Convert to OpenAPI Project”** (**“Convert to Project”** for an OpenAPI or Arazzo item,
 **“Re-convert…”** once it has been converted), **“Export”** and **“View code”** — plus **“Open in Designer”**
 when you have [Suite Access](../admin/users.mdx#give-a-user-suite-access) (see [View an item in Designer](#view-an-item-in-designer)).
-Eight tabs follow:
+Eight tabs follow, and a ninth, **Workflows**, for an Arazzo item:
 
 | Tab | Shows |
 | --- | --- |
@@ -155,13 +155,14 @@ Eight tabs follow:
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
 | **Versions** | The item's revisions |
+| **Workflows** | Arazzo items only: each workflow as steps, inputs, outputs and a step graph of its success and failure paths, with the operation each step calls — see [Arazzo workflows](../build/arazzo-workflows.mdx) |
 
 The page address names the open tab — `?tab=lint`, `?tab=versions` and so on, with no `?tab=`
 for **Overview** — so you can **copy the address and send it** to land a teammate on the same tab.
 Switching tabs updates the address without reloading the page, and does not add a step to the
 browser's **Back** button. The tab ids are `overview`, `format`, `source`, `provenance`,
-`conversions`, `lint`, `test-bench`, and `versions`; an unknown id opens
-**Overview**.
+`conversions`, `lint`, `test-bench`, `versions` and, for an Arazzo item, `workflows`; an unknown
+id — or `workflows` on an item that is not Arazzo — opens **Overview**.
 
 While the page or a tab is loading, it shows grey placeholders in the shape of what is coming —
 the header, the tabs and the tiles — so nothing moves when the content arrives. The list does the
@@ -351,5 +352,7 @@ Every control on the list and on an item's page works from the keyboard.
   **Safe drift** badge has a new version from its live source
 - [Search across formats](./search-across-formats.md) — find an operation, type or message in
   every catalog item and Project at once
+- [Arazzo workflows](../build/arazzo-workflows.mdx) — read an Arazzo item's workflows as steps
+  and a step graph, and open the operation each step calls
 - [Import wizard](./import-wizard.mdx)
 - [Supported formats](./supported-formats.md)

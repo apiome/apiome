@@ -266,6 +266,14 @@ What the result means:
 Opening a pull request needs the `versions:publish` permission; **Preview** needs only
 `projects:view`.
 
+## Workflows
+
+A project whose HEAD revision holds [Arazzo](https://spec.openapis.org/arazzo/latest.html)
+workflows has a **Workflows** tab, with the number of workflows beside its name: each workflow as
+steps, inputs, outputs and a step graph of its success and failure paths, and the operation each
+step calls. `?tab=workflows` opens it. Projects without workflows do not have this tab. See
+[Arazzo workflows](./arazzo-workflows.mdx).
+
 ## Conversion
 
 When the project was created by [converting a catalog item](../bring-in/convert-to-openapi.md), a

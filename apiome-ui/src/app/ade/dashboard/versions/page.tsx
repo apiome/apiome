@@ -30,8 +30,11 @@ import {
   GitPullRequestArrow,
   Network,
   Layers,
+  Workflow,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import ArazzoWorkflowsPanel from '@/app/components/ade/workflows/ArazzoWorkflowsPanel';
+import { useArazzoWorkflowCount } from '@/app/components/ade/workflows/useArazzoWorkflowCount';
 import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import dynamic from 'next/dynamic';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -473,6 +476,7 @@ const Versions = () => {
     | 'sources'
     | 'dependencies'
     | 'overlays'
+    | 'workflows'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
   const [focusThreadId, setFocusThreadId] = useState<string | null>(null);
@@ -961,6 +965,7 @@ const Versions = () => {
     if (tab === 'dependencies') setVersionsMainTab('dependencies');
     if (tab === 'sources') setVersionsMainTab('sources');
     if (tab === 'overlays') setVersionsMainTab('overlays');
+    if (tab === 'workflows') setVersionsMainTab('workflows');
     setFocusThreadId(thread && isUuid(thread) ? thread : null);
   }, [searchParams]);
 
@@ -3289,6 +3294,12 @@ const Versions = () => {
    * the dependency graph is released (lib/feature-release.ts).
    */
   const showDependenciesTab = Boolean(selectedProjectId) && isFeatureReleased('dependency-graph');
+  /**
+   * A project whose HEAD revision holds Arazzo workflows has a Workflows tab (COA-1.3, #7039): its
+   * workflows as steps, inputs, outputs and a step graph.
+   */
+  const workflowCount = useArazzoWorkflowCount(selectedProjectId ? headRevisionId : null);
+  const showWorkflowsTab = Boolean(selectedProjectId) && workflowCount > 0;
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
     (versionsMainTab === 'repository' && !showRepositoryTab) ||
@@ -3299,6 +3310,7 @@ const Versions = () => {
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
     (versionsMainTab === 'overlays' && !showOverlaysTab) ||
+    (versionsMainTab === 'workflows' && !showWorkflowsTab) ||
     (versionsMainTab === 'test-bench' && !showTestBenchTab) ||
     (versionsMainTab === 'conversion' && !showConversionTab)
       ? 'timeline'
@@ -3743,6 +3755,21 @@ const Versions = () => {
           Dependencies
         </button>
       ) : null}
+      {showWorkflowsTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'workflows'}
+          data-testid="versions-tab-workflows"
+          className={tabTriggerClass({ active: effectiveMainTab === 'workflows' })}
+          title="The Arazzo workflows in the HEAD revision, as steps and a step graph"
+          onClick={() => setVersionsMainTab('workflows')}
+        >
+          <Workflow className="ver-tab-glyph" aria-hidden />
+          Workflows
+          <span className={TAB_COUNT_CLASS}>{workflowCount}</span>
+        </button>
+      ) : null}
     </div>
   ) : undefined;
 
@@ -4057,6 +4084,17 @@ const Versions = () => {
               projectId={selectedProjectId}
               versions={versions}
               initialVersionId={selectedVersion?.id ?? null}
+            />
+          </Card>
+        ) : null}
+
+        {showWorkflowsTab && effectiveMainTab === 'workflows' && headRevisionId ? (
+          /* Arazzo workflows (COA-1.3, #7039): the HEAD revision's workflows as flows. */
+          <Card className="ver-panel">
+            <ArazzoWorkflowsPanel
+              key={headRevisionId}
+              endpoint={`/api/workflows/versions/${encodeURIComponent(headRevisionId)}`}
+              active
             />
           </Card>
         ) : null}

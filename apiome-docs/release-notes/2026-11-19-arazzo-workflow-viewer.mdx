@@ -1,0 +1,27 @@
+---
+slug: arazzo-workflow-viewer
+title: See an Arazzo workflow as a flow
+description: "A Workflows tab shows each Arazzo workflow's steps, step graph and operations."
+authors: [apiome]
+---
+
+An imported Arazzo document is now readable as what it describes: workflows of steps. A
+**Workflows** tab on an Arazzo catalog item — and on a project whose HEAD revision holds
+workflows — lists each workflow with its steps, inputs, outputs and a step graph, instead of
+leaving you to read the YAML.
+
+{/* truncate */}
+
+- **Steps and what they call:** each step names the operation it calls (`GET /carts/{cartId}`),
+  or the reference as written when the operation was not imported with the workflow.
+- **A step graph:** the routing from **Start** to **End** — the next step, every `onSuccess` and
+  `onFailure` action (`goto`, `end`, `retry`) and the path to **Failed** — labelled with each
+  action's name and usable from the keyboard.
+- **Open the operation:** click a step for its drawer: the operation's route, parameters and
+  responses, the project that holds it, and the step's criteria and actions in words.
+- **Source status:** beside each workflow, every source description it calls is **Resolved** (and
+  from where) or **Missing** (and why).
+- **REST:** `GET /v1/workflows/{tenant}/catalog/{item_id}`, `…/versions/{version_id}` and
+  `…/operations/{path_operation_id}` (REST API 1.769.0, OpenAPI 1.600.0).
+
+See [Arazzo workflows](/build/arazzo-workflows).

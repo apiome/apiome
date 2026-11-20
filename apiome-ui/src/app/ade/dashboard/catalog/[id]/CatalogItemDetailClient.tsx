@@ -67,10 +67,12 @@ import {
   Route,
   ShieldCheck,
   Tags,
+  Workflow,
 } from 'lucide-react';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
 import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { CatalogSubjectsPanel } from '@/app/components/ade/schemaRegistry/CatalogSubjectsPanel';
+import ArazzoWorkflowsPanel from '@/app/components/ade/workflows/ArazzoWorkflowsPanel';
 import { isRegistryFormat } from '@lib/schema-registry';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
@@ -214,6 +216,7 @@ const TAB_GLYPH: Readonly<Record<string, typeof LayoutDashboard>> = {
   versions: GitBranch,
   dependencies: Network,
   subjects: BookKey,
+  workflows: Workflow,
 };
 
 /** The empty summary a payload without one degrades to. */
@@ -323,7 +326,8 @@ export function CatalogItemDetailClient({
     lint: number | null;
     versions: number | null;
     subjects: number | null;
-  }>({ conversions: null, lint: null, versions: null, subjects: null });
+    workflows: number | null;
+  }>({ conversions: null, lint: null, versions: null, subjects: null, workflows: null });
   // A lint finding deep-link (MFI-28.2) wants to scroll to this Overview entity once it mounts.
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
   const [highlightedAnchor, setHighlightedAnchor] = useState<string | null>(null);
@@ -508,6 +512,10 @@ export function CatalogItemDetailClient({
     (count: number) => setTabCounts((prev) => (prev.subjects === count ? prev : { ...prev, subjects: count })),
     [],
   );
+  const setWorkflowsCount = useCallback(
+    (count: number) => setTabCounts((prev) => (prev.workflows === count ? prev : { ...prev, workflows: count })),
+    [],
+  );
 
   /** **Export** — the in-place Export dialog for this item's latest revision. */
   const handleExport = useCallback(() => setExportOpen(true), []);
@@ -548,16 +556,25 @@ export function CatalogItemDetailClient({
   // Dependencies (CDG-3.4) wait for their features' release (lib/feature-release.ts).
   const hasSubjects = isFeatureReleased('schema-registry') && isRegistryFormat(item?.sourceFormat);
   const hasDependencies = isFeatureReleased('dependency-graph');
+  // Workflows (COA-1.3) is an Arazzo item's tab: its workflows as steps and a step graph.
+  const hasWorkflows = item?.sourceFormat === 'arazzo';
   const tabs = useMemo(
-    () => catalogDetailTabs(tabCounts, { subjects: hasSubjects, dependencies: hasDependencies }),
-    [tabCounts, hasSubjects, hasDependencies]
+    () =>
+      catalogDetailTabs(tabCounts, {
+        subjects: hasSubjects,
+        dependencies: hasDependencies,
+        workflows: hasWorkflows,
+      }),
+    [tabCounts, hasSubjects, hasDependencies, hasWorkflows]
   );
 
-  // A `?tab=subjects` or `?tab=dependencies` link to an item without that tab opens Overview.
+  // A `?tab=subjects`, `?tab=dependencies` or `?tab=workflows` link to an item without that tab
+  // opens Overview.
   useEffect(() => {
     if (item && !hasSubjects && activeTab === 'subjects') setActiveTab('overview');
+    if (item && !hasWorkflows && activeTab === 'workflows') setActiveTab('overview');
     if (!hasDependencies && activeTab === 'dependencies') setActiveTab('overview');
-  }, [item, hasSubjects, hasDependencies, activeTab]);
+  }, [item, hasSubjects, hasDependencies, hasWorkflows, activeTab]);
 
   /** Select and focus the tab at `index`, wrapping around the ends (WAI-ARIA automatic activation). */
   const focusTab = useCallback(
@@ -1000,6 +1017,15 @@ export function CatalogItemDetailClient({
               itemSlug={item.slug ?? null}
               active={activeTab === 'subjects'}
               onCountChange={setSubjectsCount}
+            />
+          </TabPanel>
+        ) : null}
+        {hasWorkflows ? (
+          <TabPanel id="workflows" active={activeTab}>
+            <ArazzoWorkflowsPanel
+              endpoint={`/api/workflows/catalog/${encodeURIComponent(item.id)}`}
+              active={activeTab === 'workflows'}
+              onLoaded={setWorkflowsCount}
             />
           </TabPanel>
         ) : null}
