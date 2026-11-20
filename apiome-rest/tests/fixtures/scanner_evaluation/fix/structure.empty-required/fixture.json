@@ -1,13 +1,11 @@
 {
-  "rule": "naming.schema-pascal-case",
-  "options": {
-    "optIn": [
-      "naming.schema-pascal-case"
-    ]
-  },
+  "kind": "fix",
+  "id": "fix/structure.empty-required",
+  "rule": "structure.empty-required",
+  "options": {},
   "finding": {
-    "path": "components.schemas.pet_record",
-    "message": "Schema 'pet_record' is not PascalCase."
+    "path": "components.schemas.Pet",
+    "message": "Schema declares an empty required list."
   },
   "before": {
     "openapi": "3.1.0",
@@ -36,7 +34,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/pet_record"
+                    "$ref": "#/components/schemas/Pet"
                   }
                 }
               }
@@ -47,7 +45,7 @@
     },
     "components": {
       "schemas": {
-        "pet_record": {
+        "Pet": {
           "type": "object",
           "description": "A pet.",
           "properties": {
@@ -58,23 +56,22 @@
                 "Rex"
               ]
             }
-          }
+          },
+          "required": []
         }
       }
     }
   },
   "plan": [
     {
-      "op": "replace",
-      "path": "/paths/~1pets/get/responses/200/content/application~1json/schema/$ref",
-      "value": "#/components/schemas/PetRecord"
-    },
-    {
-      "op": "move",
-      "path": "/components/schemas/PetRecord",
-      "from": "/components/schemas/pet_record"
+      "op": "remove",
+      "path": "/components/schemas/Pet/required"
     }
   ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -102,7 +99,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/PetRecord"
+                    "$ref": "#/components/schemas/Pet"
                   }
                 }
               }
@@ -113,7 +110,7 @@
     },
     "components": {
       "schemas": {
-        "PetRecord": {
+        "Pet": {
           "type": "object",
           "description": "A pet.",
           "properties": {

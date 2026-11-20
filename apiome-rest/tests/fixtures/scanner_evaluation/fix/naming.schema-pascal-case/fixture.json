@@ -1,9 +1,15 @@
 {
-  "rule": "structure.unused-component",
-  "options": {},
+  "kind": "fix",
+  "id": "fix/naming.schema-pascal-case",
+  "rule": "naming.schema-pascal-case",
+  "options": {
+    "optIn": [
+      "naming.schema-pascal-case"
+    ]
+  },
   "finding": {
-    "path": "components.schemas.Orphan",
-    "message": "Component 'Orphan' in components.schemas is never referenced."
+    "path": "components.schemas.pet_record",
+    "message": "Schema 'pet_record' is not PascalCase."
   },
   "before": {
     "openapi": "3.1.0",
@@ -32,7 +38,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/Pet"
+                    "$ref": "#/components/schemas/pet_record"
                   }
                 }
               }
@@ -43,7 +49,7 @@
     },
     "components": {
       "schemas": {
-        "Pet": {
+        "pet_record": {
           "type": "object",
           "description": "A pet.",
           "properties": {
@@ -55,20 +61,27 @@
               ]
             }
           }
-        },
-        "Orphan": {
-          "type": "string",
-          "description": "Referenced by nothing."
         }
       }
     }
   },
   "plan": [
     {
-      "op": "remove",
-      "path": "/components/schemas/Orphan"
+      "op": "replace",
+      "path": "/paths/~1pets/get/responses/200/content/application~1json/schema/$ref",
+      "value": "#/components/schemas/PetRecord"
+    },
+    {
+      "op": "move",
+      "path": "/components/schemas/PetRecord",
+      "from": "/components/schemas/pet_record"
     }
   ],
+  "classification": {
+    "maxSeverity": "breaking",
+    "planStatus": "breaking",
+    "reason": "A schema rename removes and adds a component and rewrites references; it is wire-visible and withheld unless opted in."
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -96,7 +109,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/Pet"
+                    "$ref": "#/components/schemas/PetRecord"
                   }
                 }
               }
@@ -107,7 +120,7 @@
     },
     "components": {
       "schemas": {
-        "Pet": {
+        "PetRecord": {
           "type": "object",
           "description": "A pet.",
           "properties": {

@@ -1,72 +1,13 @@
 {
-  "rule": "naming.operation-id-camel-case",
+  "kind": "fix",
+  "id": "fix/structure.nullable-keyword",
+  "rule": "structure.nullable-keyword",
   "options": {},
   "finding": {
-    "path": "paths./pets.get.operationId",
-    "message": "operationId 'List_pets' is not camelCase."
+    "path": "components.schemas.Pet.properties.name",
+    "message": "Schema uses nullable, which OpenAPI 3.1 removed; declare null in type instead."
   },
   "before": {
-    "openapi": "3.1.0",
-    "info": {
-      "title": "Pet API",
-      "version": "1.0.0",
-      "description": "A one-defect fixture."
-    },
-    "tags": [
-      {
-        "name": "pets",
-        "description": "Everything about pets."
-      }
-    ],
-    "paths": {
-      "/pets": {
-        "get": {
-          "operationId": "List_pets",
-          "tags": [
-            "pets"
-          ],
-          "summary": "List pets",
-          "responses": {
-            "200": {
-              "description": "The pets.",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Pet"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "components": {
-      "schemas": {
-        "Pet": {
-          "type": "object",
-          "description": "A pet.",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "Its name.",
-              "examples": [
-                "Rex"
-              ]
-            }
-          }
-        }
-      }
-    }
-  },
-  "plan": [
-    {
-      "op": "replace",
-      "path": "/paths/~1pets/get/operationId",
-      "value": "listPets"
-    }
-  ],
-  "after": {
     "openapi": "3.1.0",
     "info": {
       "title": "Pet API",
@@ -110,6 +51,83 @@
           "properties": {
             "name": {
               "type": "string",
+              "description": "Its name.",
+              "examples": [
+                "Rex"
+              ],
+              "nullable": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "plan": [
+    {
+      "op": "replace",
+      "path": "/components/schemas/Pet/properties/name/type",
+      "value": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "op": "remove",
+      "path": "/components/schemas/Pet/properties/name/nullable"
+    }
+  ],
+  "classification": {
+    "maxSeverity": "breaking",
+    "planStatus": "breaking",
+    "reason": "The classifier reads nullable -> type array as a type change (ctg.type_narrowed), so the plan withholds it."
+  },
+  "after": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Pet API",
+      "version": "1.0.0",
+      "description": "A one-defect fixture."
+    },
+    "tags": [
+      {
+        "name": "pets",
+        "description": "Everything about pets."
+      }
+    ],
+    "paths": {
+      "/pets": {
+        "get": {
+          "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
+          "summary": "List pets",
+          "responses": {
+            "200": {
+              "description": "The pets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Pet": {
+          "type": "object",
+          "description": "A pet.",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ],
               "description": "Its name.",
               "examples": [
                 "Rex"

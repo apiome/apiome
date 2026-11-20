@@ -1,9 +1,11 @@
 {
-  "rule": "structure.duplicate-tag",
+  "kind": "fix",
+  "id": "fix/structure.operation-missing-operation-id",
+  "rule": "structure.operation-missing-operation-id",
   "options": {},
   "finding": {
-    "path": "tags.1",
-    "message": "Tag 'pets' is declared more than once."
+    "path": "paths./pets.get",
+    "message": "Operation GET /pets has no operationId."
   },
   "before": {
     "openapi": "3.1.0",
@@ -16,15 +18,11 @@
       {
         "name": "pets",
         "description": "Everything about pets."
-      },
-      {
-        "name": "pets"
       }
     ],
     "paths": {
       "/pets": {
         "get": {
-          "operationId": "listPets",
           "tags": [
             "pets"
           ],
@@ -64,10 +62,15 @@
   },
   "plan": [
     {
-      "op": "remove",
-      "path": "/tags/1"
+      "op": "add",
+      "path": "/paths/~1pets/get/operationId",
+      "value": "getPets"
     }
   ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -84,7 +87,6 @@
     "paths": {
       "/pets": {
         "get": {
-          "operationId": "listPets",
           "tags": [
             "pets"
           ],
@@ -100,7 +102,8 @@
                 }
               }
             }
-          }
+          },
+          "operationId": "getPets"
         }
       }
     },

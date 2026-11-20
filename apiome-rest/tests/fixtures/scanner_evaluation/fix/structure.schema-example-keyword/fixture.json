@@ -1,9 +1,11 @@
 {
-  "rule": "structure.operation-missing-operation-id",
+  "kind": "fix",
+  "id": "fix/structure.schema-example-keyword",
+  "rule": "structure.schema-example-keyword",
   "options": {},
   "finding": {
-    "path": "paths./pets.get",
-    "message": "Operation GET /pets has no operationId."
+    "path": "components.schemas.Pet.properties.name",
+    "message": "Schema uses example, which OpenAPI 3.1 deprecates; use an examples array."
   },
   "before": {
     "openapi": "3.1.0",
@@ -21,6 +23,7 @@
     "paths": {
       "/pets": {
         "get": {
+          "operationId": "listPets",
           "tags": [
             "pets"
           ],
@@ -49,9 +52,7 @@
             "name": {
               "type": "string",
               "description": "Its name.",
-              "examples": [
-                "Rex"
-              ]
+              "example": "Rex"
             }
           }
         }
@@ -61,10 +62,20 @@
   "plan": [
     {
       "op": "add",
-      "path": "/paths/~1pets/get/operationId",
-      "value": "getPets"
+      "path": "/components/schemas/Pet/properties/name/examples",
+      "value": [
+        "Rex"
+      ]
+    },
+    {
+      "op": "remove",
+      "path": "/components/schemas/Pet/properties/name/example"
     }
   ],
+  "classification": {
+    "maxSeverity": "docs-only",
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -81,6 +92,7 @@
     "paths": {
       "/pets": {
         "get": {
+          "operationId": "listPets",
           "tags": [
             "pets"
           ],
@@ -96,8 +108,7 @@
                 }
               }
             }
-          },
-          "operationId": "getPets"
+          }
         }
       }
     },

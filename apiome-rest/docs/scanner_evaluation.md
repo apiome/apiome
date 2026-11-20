@@ -45,6 +45,8 @@ tests/fixtures/scanner_evaluation/
   mcp/unsafe/owasp/…          # OWASP MCP Top 10 examples
   mcp/unsafe/toolbench/…      # ToolBench-style usability defects
   catalog/…                   # Arazzo / compatibility / multi-format pointers
+  fix/<rule id>/…             # one-defect auto-fix fixtures (GVM-3.5)
+  README.md                   # corpus guide + generated table of fixable rules
 ```
 
 Runners: `src/app/scanner_evaluation_corpus.py`. Tests:
@@ -58,6 +60,23 @@ Before merging scanner / rule changes:
 2. If findings change intentionally, update `manifest.json` `expected_blocking_rule_ids`
    (and transparency metadata / fixtures) in the same PR
 3. Do not remove fixtures that document OWASP / ToolBench coverage without replacement
+
+### Fix fixtures and gates (GVM-3.5, #5873)
+
+A `fix` fixture (`"kind": "fix"`) belongs to one fixable lint rule and holds `before` (a document
+with a single defect), `plan` (the expected RFC 6902 operations), `after` (the expected document),
+`finding` and `classification` (the expected CTG severity of the fix and the plan status).
+`tests/test_scanner_fix_corpus.py` gates each one:
+
+1. after the fix the rule is clean;
+2. the finding set outside the rule is unchanged;
+3. planning and applying twice is byte-stable;
+4. the classified diff of the fix is non-breaking — or pinned `breaking` with a `reason`, in
+   which case the plan withholds the fix;
+5. a rule flagged `fixable` without a fixture fails `test_every_fixable_rule_has_a_fixture`.
+
+Adding a fixable rule: add `fix/<rule id>/fixture.json`, a manifest entry with `"kind": "fix"`, and
+regenerate the README table with `uv run python scripts/generate_fix_corpus_readme.py`.
 
 ## Unassessed coverage
 

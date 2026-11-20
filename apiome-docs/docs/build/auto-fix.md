@@ -117,6 +117,32 @@ is not a purely mechanical one, and the finding stays for a person:
 - A schema whose PascalCase name is already taken.
 - An operation with no tags whose path starts with a parameter, such as `/{tenant}/pets`.
 
+## What every fix is tested against
+
+Each fixable rule has a one-defect fixture in the scanner-evaluation corpus
+(`apiome-rest/tests/fixtures/scanner_evaluation/fix/<rule id>/`): a small OpenAPI document with
+exactly one defect, the plan Apiome must produce for it, and the document it must produce after the
+fix. Five gates run in the REST CI on every fixture, so a fix cannot silently change more than its
+finding:
+
+1. **After the fix the rule is clean.** The finding is gone, and the fixed document is the expected one,
+   key order included.
+2. **No other finding changes.** The findings of every other rule, default lint and fixable rules
+   alike, are the same before and after.
+3. **Byte-stable twice.** Planning and applying a second time changes nothing, and planning the same
+   document twice yields the same plan.
+4. **The classified diff is non-breaking.** The [classified diff](/reference/rest/classified-diff) of the fix's
+   own change must not be breaking. The few fixes the classifier does read as breaking (the
+   `nullable` rewrite, the two server URL rules and the schema rename) are pinned in their fixture with
+   the reason; the plan withholds them as `breaking` and never applies them. If a classification
+   changes, the fixture has to change in review.
+5. **No fixable rule without a fixture.** Adding a rule with a fix but no fixture fails the build in
+   `test_every_fixable_rule_has_a_fixture`.
+
+The corpus README lists every fixable rule with its fixture, regenerated from the rule registry. See
+[the scanner-evaluation corpus](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md)
+for how the corpus is organised and how to add a fixture.
+
 ## What is never fixed
 
 A fix never invents meaning. These are never fixable, whatever the rule:

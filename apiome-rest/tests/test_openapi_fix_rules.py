@@ -1,6 +1,6 @@
 """The first fixable OpenAPI rules and their fix fixtures — GVM-3.1 (#5869).
 
-Every fixable rule has a one-defect fixture under ``tests/fixtures/lint_fix/<rule id>.json``
+Every fixable rule has a one-defect fixture under ``tests/fixtures/scanner_evaluation/fix/<rule id>/`` (GVM-3.5 gates them in CI too)
 holding the document, the expected plan and the expected post-fix document. The gates run over
 each fixture:
 
@@ -35,16 +35,16 @@ from app.openapi_fix_rules import (
 )
 from app.schema_lint import OPENAPI_RULES, LintFinding, lint_openapi_spec
 
-FIXTURES = Path(__file__).parent / "fixtures" / "lint_fix"
+FIXTURES = Path(__file__).parent / "fixtures" / "scanner_evaluation" / "fix"
 OPENAPI_FAMILY = Path(__file__).parent / "fixtures" / "openapi_family"
 
 
 def _fixture_ids() -> List[str]:
-    return sorted(path.stem for path in FIXTURES.glob("*.json"))
+    return sorted(path.parent.name for path in FIXTURES.glob("*/fixture.json"))
 
 
 def _load(rule_id: str) -> Dict[str, Any]:
-    return json.loads((FIXTURES / f"{rule_id}.json").read_text(encoding="utf-8"))
+    return json.loads((FIXTURES / rule_id / "fixture.json").read_text(encoding="utf-8"))
 
 
 def _options(fixture: Dict[str, Any]) -> FixOptions:

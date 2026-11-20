@@ -39,7 +39,7 @@ from app.lint_fix_plan import (
 from app.openapi_overlay import PATCH_OVERLAY_VERSION, apply_overlays, render_patch_overlay
 from app.schema_lint import LintFinding
 
-FIXTURES = Path(__file__).parent / "fixtures" / "lint_fix"
+FIXTURES = Path(__file__).parent / "fixtures" / "scanner_evaluation" / "fix"
 
 #: Several defects at once: three duplicate tag declarations that repeat their first one (array
 #: removals at several indexes), an unused schema that also uses ``example`` (a conflict the removal wins), an
@@ -99,7 +99,7 @@ MULTI_DEFECT: Dict[str, Any] = {
 
 def _corpus() -> List[Dict[str, Any]]:
     """Every corpus document: the one-defect fixtures and the multi-defect document."""
-    docs = [json.loads(path.read_text(encoding="utf-8"))["before"] for path in sorted(FIXTURES.glob("*.json"))]
+    docs = [json.loads(path.read_text(encoding="utf-8"))["before"] for path in sorted(FIXTURES.glob("*/fixture.json"))]
     return docs + [MULTI_DEFECT]
 
 
@@ -215,7 +215,7 @@ def test_a_breaking_fix_is_downgraded_with_its_classification() -> None:
 
 
 def test_off_by_default_fix_needs_an_opt_in() -> None:
-    document = json.loads((FIXTURES / "structure.operation-missing-tags.json").read_text())["before"]
+    document = json.loads((FIXTURES / "structure.operation-missing-tags" / "fixture.json").read_text())["before"]
     plan = build_fix_plan(document)
     entry = _by_rule(plan, "structure.operation-missing-tags")[0]
     assert (entry.status, entry.reason) == (STATUS_EXCLUDED, EXCLUDED_OPT_IN_REQUIRED)
@@ -266,7 +266,7 @@ def test_input_is_not_mutated() -> None:
 
 
 def test_a_document_without_defects_has_an_empty_plan() -> None:
-    clean = json.loads((FIXTURES / "structure.empty-required.json").read_text())["after"]
+    clean = json.loads((FIXTURES / "structure.empty-required" / "fixture.json").read_text())["after"]
     plan = build_fix_plan(clean, include_renames=True)
     assert plan.entries == ()
     assert plan.patch() == []

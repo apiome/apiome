@@ -1,9 +1,15 @@
 {
-  "rule": "structure.empty-required",
-  "options": {},
+  "kind": "fix",
+  "id": "fix/structure.operation-missing-tags",
+  "rule": "structure.operation-missing-tags",
+  "options": {
+    "optIn": [
+      "structure.operation-missing-tags"
+    ]
+  },
   "finding": {
-    "path": "components.schemas.Pet",
-    "message": "Schema declares an empty required list."
+    "path": "paths./pets.get",
+    "message": "Operation GET /pets has no tags."
   },
   "before": {
     "openapi": "3.1.0",
@@ -22,9 +28,6 @@
       "/pets": {
         "get": {
           "operationId": "listPets",
-          "tags": [
-            "pets"
-          ],
           "summary": "List pets",
           "responses": {
             "200": {
@@ -54,18 +57,24 @@
                 "Rex"
               ]
             }
-          },
-          "required": []
+          }
         }
       }
     }
   },
   "plan": [
     {
-      "op": "remove",
-      "path": "/components/schemas/Pet/required"
+      "op": "add",
+      "path": "/paths/~1pets/get/tags",
+      "value": [
+        "pets"
+      ]
     }
   ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -83,9 +92,6 @@
       "/pets": {
         "get": {
           "operationId": "listPets",
-          "tags": [
-            "pets"
-          ],
           "summary": "List pets",
           "responses": {
             "200": {
@@ -98,7 +104,10 @@
                 }
               }
             }
-          }
+          },
+          "tags": [
+            "pets"
+          ]
         }
       }
     },

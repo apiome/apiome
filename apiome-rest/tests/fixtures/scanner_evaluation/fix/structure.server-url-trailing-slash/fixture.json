@@ -1,4 +1,6 @@
 {
+  "kind": "fix",
+  "id": "fix/structure.server-url-trailing-slash",
   "rule": "structure.server-url-trailing-slash",
   "options": {},
   "finding": {
@@ -71,6 +73,11 @@
       "value": "https://api.example.com/v1"
     }
   ],
+  "classification": {
+    "maxSeverity": "breaking",
+    "planStatus": "breaking",
+    "reason": "The classifier reads a changed server URL as server_removed + server_added, so the plan withholds it."
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {

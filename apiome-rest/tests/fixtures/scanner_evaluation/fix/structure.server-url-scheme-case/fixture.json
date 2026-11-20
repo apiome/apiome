@@ -1,13 +1,11 @@
 {
-  "rule": "structure.operation-missing-tags",
-  "options": {
-    "optIn": [
-      "structure.operation-missing-tags"
-    ]
-  },
+  "kind": "fix",
+  "id": "fix/structure.server-url-scheme-case",
+  "rule": "structure.server-url-scheme-case",
+  "options": {},
   "finding": {
-    "path": "paths./pets.get",
-    "message": "Operation GET /pets has no tags."
+    "path": "servers.0",
+    "message": "Server URL 'HTTPS://api.example.com/v1' has a scheme that is not lower case."
   },
   "before": {
     "openapi": "3.1.0",
@@ -26,6 +24,9 @@
       "/pets": {
         "get": {
           "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
           "summary": "List pets",
           "responses": {
             "200": {
@@ -58,17 +59,25 @@
           }
         }
       }
-    }
+    },
+    "servers": [
+      {
+        "url": "HTTPS://api.example.com/v1"
+      }
+    ]
   },
   "plan": [
     {
-      "op": "add",
-      "path": "/paths/~1pets/get/tags",
-      "value": [
-        "pets"
-      ]
+      "op": "replace",
+      "path": "/servers/0/url",
+      "value": "https://api.example.com/v1"
     }
   ],
+  "classification": {
+    "maxSeverity": "breaking",
+    "planStatus": "breaking",
+    "reason": "The classifier reads a changed server URL as server_removed + server_added, so the plan withholds it."
+  },
   "after": {
     "openapi": "3.1.0",
     "info": {
@@ -86,6 +95,9 @@
       "/pets": {
         "get": {
           "operationId": "listPets",
+          "tags": [
+            "pets"
+          ],
           "summary": "List pets",
           "responses": {
             "200": {
@@ -98,10 +110,7 @@
                 }
               }
             }
-          },
-          "tags": [
-            "pets"
-          ]
+          }
         }
       }
     },
@@ -121,6 +130,11 @@
           }
         }
       }
-    }
+    },
+    "servers": [
+      {
+        "url": "https://api.example.com/v1"
+      }
+    ]
   }
 }
