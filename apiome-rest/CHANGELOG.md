@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.781.0] - 2026-11-20
+
+### Added
+- **`$ref` hygiene: refresh, cycles and external-ref policy — OpenAPI 1.608.0 (COA-2.8, #7051):**
+  a project had no view of what its spec pulls from outside, or of when it was last fetched.
+  - `GET /v1/projects/{tenant_slug}/{project_id}/references?version=…` lists every external `$ref`
+    of the version's OpenAPI document, grouped by URL with every location. Each one carries its
+    status (`not-fetched` / `ok` / `changed` / `unreachable` / `blocked`, with the reason), the
+    last fetched digest and time, the pin and the last diff. The response also lists the
+    document's circular internal references (`cycles`, each with a path round the loop) and the
+    external-ref policy in force. It needs `projects:view` and `imports:view`.
+  - `POST …/references/refresh` (`{version?, urls?}`) fetches the references now, under the
+    tenant's external-ref policy, the `remote_ref_resolution_allowed` kill switch and the SSRF
+    guard, bypassing the resolver cache. It compares each document with its pin, or with the
+    previous snapshot when unpinned. A different digest is `changed`, with a JSON Pointer diff
+    (`added` / `removed` / `changed`, at most 200 rows, totals kept). A failed fetch keeps the
+    previous snapshot. Writes `project.external_ref.changed` and `project.external_refs.refreshed`
+    audit rows. 422 `unknown-reference`. Needs `projects:edit`.
+  - `PUT …/references/pin` (`{url}`) accepts the last fetched snapshot (409 `ref-not-fetched`).
+    `DELETE …/references/pin?url=` removes the pin (404 `ref-not-found`).
+  - `GET /v1/tenants/{tenant_slug}/governance/external-ref-policy` (any member) and `PUT` (tenant
+    administrators; access-audited as `governance.external_ref_policy.update`) read and set the
+    REPO-3.9 policy (`block` / `inline` / `proxy-fetch` + host allowlist), which had no API.
+    Refusals: 422 `invalid-allowlist`, `allowlist-required`.
+  - Pure `app.openapi_ref_hygiene` (external-ref grouping, Tarjan cycle groups, JSON diff) and
+    `app.project_references`. V398 adds `apiome.project_external_refs` (one row per project and
+    URL).
+
 ## [1.780.0] - 2026-11-20
 
 ### Added

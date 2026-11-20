@@ -1,0 +1,113 @@
+---
+title: External references and cycles
+description: See a spec's external $refs, refresh and pin them, and find circular references.
+sidebar_position: 3.4
+tags: [openapi, references, versions, security]
+---
+
+<Route path="/ade/dashboard/versions" />
+
+An OpenAPI document can use definitions that live at another address, such as
+`{"$ref": "https://schemas.acme.com/common.json#/Money"}`. The **References** tab on **Versions**
+shows what a revision depends on from outside, when each one was last fetched, and whether it has
+changed since. It also lists the document's **circular references**, the internal `$ref`s that
+lead back to themselves.
+
+<Screenshot id="project-references" alt="The References tab: the external reference policy, three external references (one Changed with its changes open, one Up to date, one Blocked because its host is not allowlisted) and one circular reference" />
+
+## Open the tab
+
+1. Open **Versions** and pick the project.
+2. **Click the “References” tab**, then pick the **Revision**.
+
+The tab reads the revision's OpenAPI document as it was imported. A revision imported from several
+files has no single document to read. Export it as one bundled file and import that file instead.
+
+## The references
+
+There is one row per URL. A URL used in several places (`common.json#/Money`,
+`common.json#/Tax`) is one row, and **Used at** lists every place.
+
+| Column | What it shows |
+| --- | --- |
+| **Reference** | The URL, without its `#` fragment. |
+| **Used at** | How many `$ref`s use it. Open it to see each JSON Pointer. |
+| **Status** | What the last refresh found (see below). |
+| **Last fetched** | When the document was last fetched, and the start of its sha-256 digest. |
+| **Pinned** | The digest of the pinned document, if the reference is pinned. |
+
+| Status | Meaning |
+| --- | --- |
+| **Not fetched** | No one has refreshed this reference yet. |
+| **Up to date** | The document has not changed: it matches its pin, or the previous fetch if it is not pinned. |
+| **Changed** | The document is different. **Show changes** lists what changed. |
+| **Unreachable** | The host did not answer, answered with an error, or did not send JSON or YAML. The last fetched document is kept. |
+| **Blocked** | The fetch was not allowed. The row says why: the policy, the allowlist, a private address, or fetching turned off for the deployment. |
+
+## Refresh
+
+**Click “Refresh all”**, or the refresh button on one row. Apiome fetches each document now. It
+does not reuse an earlier download, so a change on the remote host is always seen. It then
+compares the new document with:
+
+- the **pinned** document, if the reference is pinned;
+- otherwise, the **previous fetch**. The first fetch of a reference has nothing to compare with,
+  so it reads **Up to date**.
+
+A changed reference reads **Changed**. **Click “Show changes”** to see each changed value: its JSON
+Pointer, whether it was **Added**, **Removed** or **Changed**, and the value before and after. The
+list shows up to 200 changes and counts the rest.
+
+Refreshing needs permission to edit the project. Each refresh, and each change it finds, is
+recorded in the audit log (`project.external_refs.refreshed`, `project.external_ref.changed`).
+
+## Pin
+
+**Click the pin** on a row to accept the document it last fetched. While a reference is pinned,
+every refresh compares against the pin. A remote change therefore stays **Changed** until you
+review it and pin again. An unpinned reference compares with the previous fetch, so a change shows
+only once.
+
+**Click the crossed-out pin** to unpin. A reference must have been fetched before it can be pinned.
+
+## Circular references
+
+**Circular references** lists each loop of internal references, for example
+`#/components/schemas/Category → #/components/schemas/Node → #/components/schemas/Category`. A
+self-recursive schema is a loop of one. Loops are valid OpenAPI. When you
+[export a spec dereferenced](/ship/export-a-spec), the reference that closes each loop is kept as a
+`$ref` rather than expanded forever.
+
+## The external reference policy
+
+The policy at the top of the tab decides which URLs Apiome may fetch. It applies to every project
+in the workspace, and to [repository scans](../bring-in/repositories.mdx#references-to-schemas-outside-the-repository).
+
+| Mode | What is fetched |
+| --- | --- |
+| **Block** (the default) | Nothing. Every reference reads **Blocked** when refreshed. |
+| **Fetch** | Any public host. If the allowlist is not empty, only the hosts on it. |
+| **Fetch allowlisted hosts only** | Only hosts on the allowlist, which must not be empty. |
+
+Workspace administrators **click “Change policy”**, choose the **Mode**, list the
+**Allowed hosts** one per line, and **click “Save policy”**. A host is written as
+`schemas.acme.com`, `*.acme.com` (any subdomain, not `acme.com` itself) or `*` (any host). Each
+change is recorded in the access audit log (`governance.external_ref_policy.update`).
+
+Whatever the policy says, Apiome never fetches a private or local address, and follows only
+`http` and `https`. A deployment can also turn fetching off entirely
+(`remote_ref_resolution_allowed`). The policy line then says so, and every reference reads
+**Blocked**.
+
+## REST API
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/projects/{tenant_slug}/{project_id}/references?version=…` | The references, their status and pins, the cycles and the policy. |
+| `POST …/references/refresh` | Fetch every reference now, or only the `urls` given. |
+| `PUT …/references/pin` · `DELETE …/references/pin?url=…` | Pin or unpin a reference. |
+| `GET` · `PUT /v1/tenants/{tenant_slug}/governance/external-ref-policy` | Read the policy (any member), or change it (administrators). |
+
+See the [project references reference](/reference/rest/project-references). Refusals carry a
+`code`: `ref-not-fetched` (409, pin before any fetch), `ref-not-found` (404), `unknown-reference`
+(422, a URL the revision does not use), `invalid-allowlist` and `allowlist-required` (422).

@@ -116,6 +116,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['swagger', 'migrate', 'nullable', 'requestBody', 'plan', 'apiome upgrade'],
   },
   {
+    id: 'external-references',
+    title: 'External references and cycles',
+    summary:
+      'See which external $refs a spec depends on and when each was fetched, refresh and pin them, find circular $refs, and set the fetch policy.',
+    page: 'apiome-docs/docs/build/external-references.mdx',
+    section: 'reference',
+    keywords: ['$ref', 'remote', 'refresh', 'pin', 'allowlist', 'policy', 'circular', 'changed'],
+  },
+  {
     id: 'overlay-manager',
     title: 'Manage overlays in Versions',
     summary:
