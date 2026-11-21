@@ -1,0 +1,27 @@
+---
+slug: diff-reads-stored-documents
+title: "Diff and compatibility read stored documents"
+description: "Comparisons read each version's stored OpenAPI document instead of generating it."
+authors: [apiome]
+---
+
+Comparisons now read each version's OpenAPI document from the
+[document store](/admin/document-store#rendered-documents) instead of generating it on every
+request. A second comparison of two large versions no longer reads their classes, properties
+and paths.
+
+{/* truncate */}
+
+- **Every diff reads the store:** the classified diff (`apiome diff`), the compatibility check,
+  a merge request's or review's **Changes** tab, the published version's changelog and every
+  earlier revision a transitive check reads.
+- **Same document, no work:** when both sides are the same stored document, the comparison
+  reports no changes straight away.
+- **The results are unchanged:** every case of the diff corpus grades the same as before.
+- **See what was read:** the classified diff and compatibility check responses have an
+  `X-Apiome-Document-Cache` header, for example `base=hit, head=miss`.
+- **A long wait says why:** when the first comparison of a large version takes a while, the
+  **Changes** tab and the merge compatibility check on **Versions** say
+  **Rendering the documents for the first time**.
+
+See [Which documents are compared](/govern/compatibility-modes#which-documents-are-compared).

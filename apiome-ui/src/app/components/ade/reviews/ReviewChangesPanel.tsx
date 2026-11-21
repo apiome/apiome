@@ -24,6 +24,7 @@ import { GitCompareArrows } from 'lucide-react';
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { ColdRenderNote } from '@/app/components/ui/ColdRenderNote';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { JsonDiffViewer } from '@/app/components/ui/code/JsonDiffViewer';
@@ -149,6 +150,7 @@ export function ReviewChangesPanel({
     return (
       <LoadingState
         message={`Comparing with ${baselineRole}…`}
+        detail={<ColdRenderNote />}
         minHeightClassName="rvw-min-h"
         data-testid="review-changes-loading"
       />
@@ -199,6 +201,7 @@ export function ReviewChangesPanel({
       body = (
         <LoadingState
           message="Building both documents…"
+          detail={<ColdRenderNote />}
           minHeightClassName="rvw-min-h"
           data-testid="review-plain-diff-loading"
         />

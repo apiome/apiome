@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.623.0
+  version: 1.624.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -19720,7 +19720,14 @@ paths:
         compared against
 
         every earlier revision of the base, and each finding names the revision it
-        was found against.'
+        was found against.
+
+
+        Each side is the revision''s rendered OpenAPI document from the document store
+        (COA-5.6);
+
+        ``X-Apiome-Document-Cache`` reports ``hit`` or ``miss`` per side, on the 409
+        replies too.'
       operationId: check_revision_compatibility_v1_versions__tenant_slug___project_id__compatibility_post
       parameters:
       - name: tenant_slug
@@ -19780,6 +19787,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompatibilityCheckResponse'
                 description: Response payload for check revision compatibilityresponse200.
+          headers:
+            X-Apiome-Document-Cache:
+              description: Whether each side's rendered OpenAPI document came from
+                the document store (`hit`) or was rendered by this request (`miss`),
+                for example `base=hit, head=miss`. A transitive comparison adds `prior`
+                (`miss` when any earlier revision missed). Absent when the sides were
+                compared as canonical models.
+              schema:
+                type: string
         '422':
           description: Validation Error
           content:
@@ -25983,7 +25999,17 @@ paths:
         the change against the base project and revision — and each breaking row of
         the markdown gains a
 
-        "Blast radius:" line. The flag needs ``projects:view``.'
+        "Blast radius:" line. The flag needs ``projects:view``.
+
+
+        Stored OpenAPI sides are read from the rendered document cache (COA-5.6);
+        the
+
+        ``X-Apiome-Document-Cache`` header reports ``hit`` or ``miss`` for ``base``,
+        ``head`` and, on a
+
+        transitive comparison, ``prior``. It is absent when the sides were compared
+        as canonical models.'
       operationId: post_classified_diff_v1_diff__tenant_slug__classified_post
       parameters:
       - name: tenant_slug
@@ -26053,6 +26079,15 @@ paths:
                 type: string
                 contentMediaType: text/markdown
                 description: Response payload for post classified diffresponse200.
+          headers:
+            X-Apiome-Document-Cache:
+              description: Whether each side's rendered OpenAPI document came from
+                the document store (`hit`) or was rendered by this request (`miss`),
+                for example `base=hit, head=miss`. A transitive comparison adds `prior`
+                (`miss` when any earlier revision missed). Absent when the sides were
+                compared as canonical models.
+              schema:
+                type: string
         '422':
           description: Validation Error
           content:

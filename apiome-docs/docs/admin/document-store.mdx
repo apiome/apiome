@@ -315,6 +315,11 @@ Things to know:
 A version with a canonical model (a non-OpenAPI import) also gets that model stored as JSON, with
 the role `rendered_canonical`, when it is published.
 
+Comparisons read the same stored documents: the classified diff, the compatibility check, a merge
+request's **Changes** tab, the published version's changelog and transitive checks. Their
+responses say `hit` or `miss` per side in the `X-Apiome-Document-Cache` header. See
+[Which documents are compared](../govern/compatibility-modes.md#which-documents-are-compared).
+
 ### Frozen schemas
 
 [Freezing a version](../ship/publish-a-version.md#freeze-a-versions-schema) keeps its OpenAPI

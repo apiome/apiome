@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.623.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.624.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `compatibility` · 4 operations
 
@@ -53,6 +53,9 @@ to the project's style-guide policy. Avro, JSON Schema and AsyncAPI revisions ar
 mode, Protobuf revisions at the category; other formats keep the OpenAPI engine and report
 ``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also compared against
 every earlier revision of the base, and each finding names the revision it was found against.
+
+Each side is the revision's rendered OpenAPI document from the document store (COA-5.6);
+``X-Apiome-Document-Cache`` reports ``hit`` or ``miss`` per side, on the 409 replies too.
 
 Operation id: `check_revision_compatibility_v1_versions__tenant_slug___project_id__compatibility_post`
 

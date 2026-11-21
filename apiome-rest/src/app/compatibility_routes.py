@@ -9,6 +9,11 @@ by it from their canonical models; every other revision keeps the OpenAPI engine
 
 Also exposes independent oasdiff compatibility evidence (CLX-2.3 / #4853) with
 normalized JSON / SARIF / JUnit gate outputs.
+
+Since COA-5.6 (#7082) both routes read each revision's rendered OpenAPI document from the document
+store (:func:`app.compatibility_engine.read_revision_openapi`) instead of generating it, a baseline
+byte-identical to the head yields no findings without running the engine, and the check's response
+carries ``X-Apiome-Document-Cache`` (``hit`` / ``miss`` per side).
 """
 
 from __future__ import annotations
@@ -21,7 +26,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 
 from .auth import validate_authentication
-from .compatibility_engine import CompatibilityCheckEngine, compat_report_fingerprint, openapi_for_revision
+from .compatibility_engine import (
+    DOCUMENT_CACHE_HEADER,
+    DOCUMENT_CACHE_HEADER_DOC,
+    CompatibilityCheckEngine,
+    RevisionOpenApi,
+    compat_report_fingerprint,
+    document_cache_header,
+    read_revision_openapi,
+    same_document,
+)
 from .compatibility_modes import (
     NATIVE_COMPAT_RULESET,
     Baseline,
@@ -169,6 +183,7 @@ def _compare_baselines(
     List[Tuple[Baseline, List[CompatibilityFindingOut]]],
     List[FormatEvaluation],
     Optional[Tuple[Dict[str, Any], Dict[str, Any]]],
+    Optional[str],
 ]:
     """Compare the head against each baseline, with the mode-aware classifier when there is one.
 
@@ -182,10 +197,12 @@ def _compare_baselines(
         rules: The OpenAPI engine's toggles (unused on the canonical path).
 
     Returns:
-        ``(pairs, evaluations, specs)``: findings per baseline; how each canonical pair was graded
-        (empty on the OpenAPI path); and the base and head OpenAPI documents on the OpenAPI path
-        (``None`` on the canonical one). An earlier revision whose source cannot be rebuilt is
-        skipped.
+        ``(pairs, evaluations, specs, cache_header)``: findings per baseline; how each canonical
+        pair was graded (empty on the OpenAPI path); the base and head OpenAPI documents on the
+        OpenAPI path (``None`` on the canonical one); and the ``X-Apiome-Document-Cache`` value for
+        the OpenAPI sides read (``None`` on the canonical path). An earlier revision whose source
+        cannot be rebuilt is skipped. A baseline whose rendered document is byte-identical to the
+        head's has no findings and is not run through the engine (COA-5.6).
     """
     head_id, base_id = str(head_ver["id"]), str(base_ver["id"])
     head_model = canonical_model_for_revision(db, tenant_id, head_id)
@@ -205,19 +222,24 @@ def _compare_baselines(
             result, evaluation = classify_under(model, head_model, compat_policy)
             evaluations.append(evaluation)
             pairs.append((baseline, [_canonical_finding(c) for c in graded_changes(result)]))
-        return pairs, evaluations, None
+        return pairs, evaluations, None, None
 
-    base_spec = openapi_for_revision(base_ver, tenant_slug, tenant_id)
-    head_spec = openapi_for_revision(head_ver, tenant_slug, tenant_id)
+    base_doc = read_revision_openapi(base_ver, tenant_slug, tenant_id)
+    head_doc = read_revision_openapi(head_ver, tenant_slug, tenant_id)
+    sides: List[Tuple[str, RevisionOpenApi]] = [("base", base_doc), ("head", head_doc)]
     for baseline in baselines:
         if baseline.role == "base":
-            spec = base_spec
+            doc = base_doc
         else:
             row = db.get_version_by_id(baseline.revision_id, tenant_id)
             if not row:
                 continue
-            spec = openapi_for_revision(row, tenant_slug, tenant_id)
-        result = CompatibilityCheckEngine.run(spec, head_spec, rules)
+            doc = read_revision_openapi(row, tenant_slug, tenant_id)
+            sides.append(("prior", doc))
+        if same_document(doc, head_doc):
+            pairs.append((baseline, []))
+            continue
+        result = CompatibilityCheckEngine.run(doc.spec, head_doc.spec, rules)
         pairs.append(
             (
                 baseline,
@@ -235,14 +257,24 @@ def _compare_baselines(
             )
         )
     head_format = revision_format(db, tenant_id, head_id)
-    return pairs, [FormatEvaluation(format=head_format, ruleset=NATIVE_COMPAT_RULESET)], (base_spec, head_spec)
+    return (
+        pairs,
+        [FormatEvaluation(format=head_format, ruleset=NATIVE_COMPAT_RULESET)],
+        (base_doc.spec, head_doc.spec),
+        document_cache_header(sides),
+    )
 
 
-@router.post("/{tenant_slug}/{project_id}/compatibility", response_model=CompatibilityCheckResponse)
+@router.post(
+    "/{tenant_slug}/{project_id}/compatibility",
+    response_model=CompatibilityCheckResponse,
+    responses={200: {"headers": DOCUMENT_CACHE_HEADER_DOC}},
+)
 async def check_revision_compatibility(
     tenant_slug: str,
     project_id: str,
     body: CompatibilityCheckRequest,
+    http_response: Response,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CompatibilityCheckResponse:
     """
@@ -254,6 +286,9 @@ async def check_revision_compatibility(
     mode, Protobuf revisions at the category; other formats keep the OpenAPI engine and report
     ``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also compared against
     every earlier revision of the base, and each finding names the revision it was found against.
+
+    Each side is the revision's rendered OpenAPI document from the document store (COA-5.6);
+    ``X-Apiome-Document-Cache`` reports ``hit`` or ``miss`` per side, on the 409 replies too.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
@@ -305,7 +340,7 @@ async def check_revision_compatibility(
         base_label=str(base_ver["version_id"]),
         transitive=compat_policy.transitive,
     )
-    pairs, evaluations, specs = _compare_baselines(
+    pairs, evaluations, specs, cache_header = _compare_baselines(
         tenant_slug=tenant_slug,
         tenant_id=tenant_id,
         base_ver=base_ver,
@@ -314,6 +349,8 @@ async def check_revision_compatibility(
         compat_policy=compat_policy,
         rules=_rules_from_payload(body),
     )
+    cache_headers = {DOCUMENT_CACHE_HEADER: cache_header} if cache_header else {}
+    http_response.headers.update(cache_headers)
     merged = merge_transitive(
         pairs,
         key=lambda f: (f.rule, f.path),
@@ -402,6 +439,7 @@ async def check_revision_compatibility(
                 "message": "Head revision introduces breaking changes relative to base",
                 "report": response.model_dump(by_alias=True),
             },
+            headers=cache_headers or None,
         )
 
     if policy and policy.http409_when_deprecated_revision and dep_out:
@@ -412,6 +450,7 @@ async def check_revision_compatibility(
                 "message": "One or both revisions in this compatibility check are deprecated",
                 "report": response.model_dump(by_alias=True),
             },
+            headers=cache_headers or None,
         )
 
     # CLX-2.3: best-effort independent oasdiff evidence (does not affect native gate). Only the
@@ -558,8 +597,9 @@ async def create_compatibility_evidence(
         base_id=base_id,
         head_id=head_id,
     )
-    base_spec = openapi_for_revision(base_ver, tenant_slug, tenant_id)
-    head_spec = openapi_for_revision(head_ver, tenant_slug, tenant_id)
+    # Both sides from the rendered document cache (COA-5.6, #7082).
+    base_spec = read_revision_openapi(base_ver, tenant_slug, tenant_id).spec
+    head_spec = read_revision_openapi(head_ver, tenant_slug, tenant_id).spec
 
     result, changelog_md, changelog_html = await run_oasdiff_compatibility(
         base_document=base_spec,
