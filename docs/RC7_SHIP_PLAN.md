@@ -420,7 +420,8 @@ default (AWS accepts 2.0 and 3.0; Azure only partly processes 3.1).
 ### 10.4 Beyond RC7
 
 The ranked list of new targets and output modes for the next release, and the formats considered
-and not planned, are in [`RC8_PLAN.md`](RC8_PLAN.md) §2 and §4. The SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311) ✅,
+and not planned, are in [`RC8_PLAN.md`](RC8_PLAN.md) §2 and §4 (corrected 2026-11-20: the §4 formats that had
+tickets were built; see [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md)). The SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311) ✅,
 [#6488](https://github.com/apiome/apiome/pull/6488)) and DBML/Prisma ([#4312](https://github.com/apiome/apiome/issues/4312) ✅, [#6489](https://github.com/apiome/apiome/pull/6489)) tickets were
 planned to move there but shipped in RC7 on 2026-10-31.
 
@@ -487,6 +488,9 @@ Epics closing with them: [#3813](https://github.com/apiome/apiome/issues/3813) (
 ### 11.3 Everything else moves to RC8
 
 Every other in-scope ticket moves to [`RC8_PLAN.md`](RC8_PLAN.md):
+
+> **Status 2026-11-20:** the export tickets moved there were triaged in COA-3.6 ([#7057](https://github.com/apiome/apiome/issues/7057)); each one's state and
+> decision is in [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md).
 
 - deferred new targets and modes, delivery, presets and schedules, the MCP export surface,
   test-drive, visualizations, enterprise ops UX and cross-format breaking semantics (RC8 §3);
