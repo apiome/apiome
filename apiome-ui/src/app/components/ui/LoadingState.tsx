@@ -56,6 +56,12 @@ export interface LoadingStateProps extends React.HTMLAttributes<HTMLDivElement> 
   minHeightClassName?: string;
   /** Size of the spinner. Ignored when `skeleton` is given. */
   spinnerSize?: SpinnerProps['size'];
+  /**
+   * A further line under the spinner's message — for example a `ColdRenderNote` that appears
+   * when the wait runs long. Inside the live region, so it is announced when it appears.
+   * Ignored when `skeleton` is given.
+   */
+  detail?: React.ReactNode;
 }
 
 /**
@@ -72,6 +78,7 @@ export const LoadingState = React.forwardRef<HTMLDivElement, LoadingStateProps>(
       skeleton,
       minHeightClassName = 'min-h-70',
       spinnerSize = 'lg',
+      detail,
       ...props
     },
     ref
@@ -100,6 +107,7 @@ export const LoadingState = React.forwardRef<HTMLDivElement, LoadingStateProps>(
               one, and the pair announce twice. The region speaks; the ring is decoration. */}
           <Spinner size={spinnerSize} role={undefined} aria-label={undefined} aria-hidden />
           <p className="text-sm text-fg-muted">{message}</p>
+          {detail}
         </div>
       )}
     </div>

@@ -16415,6 +16415,15 @@ button.tfa-reset-notice__close > svg {
   flex-shrink: 0;
 }
 
+/* COA-5.6 (#7082): the note a comparison gains when a first render of a revision's document runs
+   long (ColdRenderNote). Quiet, like the loading line it follows. */
+.cold-render-note {
+  margin: 0;
+  max-inline-size: 60ch;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
 /* The quiet centred line a filtered-empty list shows in place of its rows. */
 .vdlg-inline-empty {
   display: flex;

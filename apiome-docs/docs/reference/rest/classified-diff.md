@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.623.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.624.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `classified-diff` · 1 operation
 
@@ -37,6 +37,10 @@ With ``blastRadius: true`` each breaking change also carries ``blastRadius`` —
 affected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of
 the change against the base project and revision — and each breaking row of the markdown gains a
 "Blast radius:" line. The flag needs ``projects:view``.
+
+Stored OpenAPI sides are read from the rendered document cache (COA-5.6); the
+``X-Apiome-Document-Cache`` header reports ``hit`` or ``miss`` for ``base``, ``head`` and, on a
+transitive comparison, ``prior``. It is absent when the sides were compared as canonical models.
 
 Operation id: `post_classified_diff_v1_diff__tenant_slug__classified_post`
 

@@ -59,6 +59,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Label } from '../../../components/ui/Label';
 import { Alert } from '../../../components/ui/Alert';
+import { ColdRenderNote } from '../../../components/ui/ColdRenderNote';
 import { LoadingState } from '../../../components/ui/LoadingState';
 import { ErrorBanner, ErrorState } from '../../../components/ui/ErrorState';
 import { EmptyState, GatedState } from '../../../components/ui/EmptyState';
@@ -5697,6 +5698,7 @@ const Versions = () => {
                 Checking backward compatibility (target tip → source tip)…
               </p>
             )}
+            {mergeCompatLoading && <ColdRenderNote standalone />}
             {mergeCompat && !mergeCompatLoading && (
               <Alert
                 variant={

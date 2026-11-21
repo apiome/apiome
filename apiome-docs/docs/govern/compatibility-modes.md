@@ -437,6 +437,47 @@ finds one, its message names the earlier version, for example
 `1 breaking change(s) versus 2.0.0 published as 2.1.0 (breaking against earlier revision(s) 1.0.0)`.
 Under a **block** policy that publish is refused.
 
+### Which documents are compared
+
+When a comparison uses OpenAPI (every format without a mode-aware classifier), each stored side
+is the version's OpenAPI document from the
+[document store](../admin/document-store.mdx#rendered-documents). This applies to the classified
+diff, the compatibility check, a merge request's or review's **Changes** tab, the published version's
+changelog and every earlier revision a transitive check reads.
+
+- The first comparison of a version, or the first one after it was edited, generates the
+  document and stores it. Later comparisons read the stored copy, so a large version is compared
+  quickly.
+- When both sides are the same document, the comparison reports no changes straight away.
+- The graded changes are the same either way.
+- In the app, a wait that runs long while a document is generated says **Rendering the documents
+  for the first time**.
+
+Formats graded by mode are compared as canonical models, rebuilt from each version's imported
+file. Apiome keeps recently rebuilt models in memory
+([the parsed-model cache](../admin/document-store.mdx#the-parsed-model-cache)).
+
+To see whether a comparison read stored documents, look at the `X-Apiome-Document-Cache`
+response header of `POST /v1/diff/{tenant}/classified` or
+`POST /v1/versions/{tenant}/{project}/compatibility`:
+
+```bash
+curl -s -D - -o /dev/null -X POST https://api.example.com/v1/diff/acme/classified \
+  -H "X-API-Key: $APIOME_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"base": {"project": "payments-api", "version": "2.0.0"},
+       "head": {"project": "payments-api", "version": "2.1.0"}}' | grep -i x-apiome-document-cache
+# x-apiome-document-cache: base=hit, head=miss
+```
+
+| Value | Meaning |
+| --- | --- |
+| `hit` | The side was read from the store. |
+| `miss` | This request generated the side. The next comparison reads it from the store. |
+
+`base` and `head` are listed for each comparison. A transitive check also lists `prior`, which is
+`miss` when any earlier revision had to be generated. An inline head (an uploaded file) is not
+listed. The header is not sent when the sides were compared as canonical models.
+
 ## Known differences from reference tools
 
 Apiome checks its grades against the tools each format's teams already run. A test corpus of

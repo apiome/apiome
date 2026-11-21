@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.798.0] - 2026-11-21
+
+### Added
+- **Diff and compatibility read stored documents — OpenAPI 1.624.0 (COA-5.6, #7082):**
+  `compatibility_engine.read_revision_openapi(version, tenant_slug, tenant_id)` returns a
+  revision's OpenAPI document from the rendered document cache (COA-5.5) as a `RevisionOpenApi`
+  (`spec`, `sha256`, `cache` = `hit` | `miss`). A revision the cache cannot serve, or a render that
+  fails through the cache, is generated directly by `openapi_for_revision`, which raises what it
+  always raised. `same_document(a, b)` compares rendered digests; `document_cache_header(sides)`
+  builds the header value.
+- `X-Apiome-Document-Cache` response header on `POST /v1/diff/{tenant_slug}/classified` (JSON and
+  Markdown) and `POST /v1/versions/{tenant_slug}/{project_id}/compatibility` (also on its 409
+  replies): `base=hit, head=miss`, plus `prior` on a transitive comparison (`miss` when any earlier
+  revision missed). Absent when the sides were compared as canonical models; an inline head is
+  not listed.
+
+### Changed
+- The classified diff, the compatibility check, the oasdiff compatibility evidence
+  (`POST …/compatibility/evidence`) and the publish-time version changelog read every stored side,
+  including each transitive baseline, through `read_revision_openapi` instead of generating it.
+  A merge request's Changes tab calls the classified diff, so it is covered too. With a warm
+  cache a diff issues no class, property or path query (`tests/test_diff_document_cache_db.py`).
+- A baseline whose rendered digest equals the head's is reported with no changes without
+  classifying (classified diff, compatibility check, changelog).
+- Classified diff output is unchanged: `tests/test_diff_document_cache.py` checks every case of
+  the CTG-1.4 diff corpus (`tests/fixtures/diff`) through the route, before and after.
+- Canonical (mode-graded) comparisons already read their models through COA-5.4's per-worker
+  model cache; unchanged.
+- Not moved here (COA-5.14, #7090): merge preview/merge/rollback, publish prechecks and the other
+  `openapi_for_revision` callers.
+
 ## [1.797.0] - 2026-11-21
 
 ### Added

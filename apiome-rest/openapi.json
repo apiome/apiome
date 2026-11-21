@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.623.0",
+    "version": "1.624.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -27020,7 +27020,7 @@
           "compatibility"
         ],
         "summary": "Check Revision Compatibility",
-        "description": "Compare **baseRevisionId** (older / consumer expectation) to **headRevisionId** (newer).\nReturns structured safe / breaking / unknown findings for CI-style merge gates.\n\n``mode`` (BACKWARD / FORWARD / FULL / NONE), ``transitive`` and ``category`` (Protobuf) default\nto the project's style-guide policy. Avro, JSON Schema and AsyncAPI revisions are graded by\nmode, Protobuf revisions at the category; other formats keep the OpenAPI engine and report\n``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also compared against\nevery earlier revision of the base, and each finding names the revision it was found against.",
+        "description": "Compare **baseRevisionId** (older / consumer expectation) to **headRevisionId** (newer).\nReturns structured safe / breaking / unknown findings for CI-style merge gates.\n\n``mode`` (BACKWARD / FORWARD / FULL / NONE), ``transitive`` and ``category`` (Protobuf) default\nto the project's style-guide policy. Avro, JSON Schema and AsyncAPI revisions are graded by\nmode, Protobuf revisions at the category; other formats keep the OpenAPI engine and report\n``evaluatedUnder.modeApplied: false``. With ``transitive`` the head is also compared against\nevery earlier revision of the base, and each finding names the revision it was found against.\n\nEach side is the revision's rendered OpenAPI document from the document store (COA-5.6);\n``X-Apiome-Document-Cache`` reports ``hit`` or ``miss`` per side, on the 409 replies too.",
         "operationId": "check_revision_compatibility_v1_versions__tenant_slug___project_id__compatibility_post",
         "parameters": [
           {
@@ -27106,6 +27106,14 @@
                 "schema": {
                   "$ref": "#/components/schemas/CompatibilityCheckResponse",
                   "description": "Response payload for check revision compatibilityresponse200."
+                }
+              }
+            },
+            "headers": {
+              "X-Apiome-Document-Cache": {
+                "description": "Whether each side's rendered OpenAPI document came from the document store (`hit`) or was rendered by this request (`miss`), for example `base=hit, head=miss`. A transitive comparison adds `prior` (`miss` when any earlier revision missed). Absent when the sides were compared as canonical models.",
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -35061,7 +35069,7 @@
           "classified-diff"
         ],
         "summary": "Post Classified Diff",
-        "description": "Classify changes between a stored base revision and a stored or inline head.\n\nSupports **stored-vs-stored** (``head: {project, version}``) and\n**inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline\ndocuments larger than 10MB UTF-8 are rejected with ``413``.\n\nDefault response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``\nincludes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown\nchangelog for the same classification (used by ``apiome diff --format md``).\n\nWith ``consumers: true`` the response also carries the CTG-4.2 per-consumer analysis \u2014\n``consumers`` on the body, and the touched handles on each change \u2014 and the markdown gains a\n\"Consumer impact\" section. Consumers are those registered against the **base** project, since\nthat is the published contract they declared against; the flag needs\n``consumer_contracts:view``.\n\nWith ``blastRadius: true`` each breaking change also carries ``blastRadius`` \u2014 consumers\naffected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of\nthe change against the base project and revision \u2014 and each breaking row of the markdown gains a\n\"Blast radius:\" line. The flag needs ``projects:view``.",
+        "description": "Classify changes between a stored base revision and a stored or inline head.\n\nSupports **stored-vs-stored** (``head: {project, version}``) and\n**inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline\ndocuments larger than 10MB UTF-8 are rejected with ``413``.\n\nDefault response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``\nincludes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown\nchangelog for the same classification (used by ``apiome diff --format md``).\n\nWith ``consumers: true`` the response also carries the CTG-4.2 per-consumer analysis \u2014\n``consumers`` on the body, and the touched handles on each change \u2014 and the markdown gains a\n\"Consumer impact\" section. Consumers are those registered against the **base** project, since\nthat is the published contract they declared against; the flag needs\n``consumer_contracts:view``.\n\nWith ``blastRadius: true`` each breaking change also carries ``blastRadius`` \u2014 consumers\naffected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of\nthe change against the base project and revision \u2014 and each breaking row of the markdown gains a\n\"Blast radius:\" line. The flag needs ``projects:view``.\n\nStored OpenAPI sides are read from the rendered document cache (COA-5.6); the\n``X-Apiome-Document-Cache`` header reports ``hit`` or ``miss`` for ``base``, ``head`` and, on a\ntransitive comparison, ``prior``. It is absent when the sides were compared as canonical models.",
         "operationId": "post_classified_diff_v1_diff__tenant_slug__classified_post",
         "parameters": [
           {
@@ -35163,6 +35171,14 @@
                   "type": "string",
                   "contentMediaType": "text/markdown",
                   "description": "Response payload for post classified diffresponse200."
+                }
+              }
+            },
+            "headers": {
+              "X-Apiome-Document-Cache": {
+                "description": "Whether each side's rendered OpenAPI document came from the document store (`hit`) or was rendered by this request (`miss`), for example `base=hit, head=miss`. A transitive comparison adds `prior` (`miss` when any earlier revision missed). Absent when the sides were compared as canonical models.",
+                "schema": {
+                  "type": "string"
                 }
               }
             }

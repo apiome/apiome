@@ -30,6 +30,7 @@ export * from './Spinner';
 // `ErrorBanner` are the two spellings of a failure, `LoadingState` is the live region, and
 // the `Skeleton*` presets are the shapes it holds space with.
 export * from './LoadingState';
+export * from './ColdRenderNote';
 export * from './EmptyState';
 export * from './ErrorState';
 

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.auth import validate_authentication
 from app.classified_diff_routes import INLINE_SPEC_MAX_BYTES
 from app.main import app
+from revision_reads import always, reads
 
 client = TestClient(app)
 
@@ -97,8 +98,8 @@ def test_classified_diff_stored_vs_stored_breaking(mock_auth):
     with (
         patch("app.classified_diff_routes.db") as mock_db,
         patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            side_effect=[_BASE_SPEC, _HEAD_REMOVED_PATH],
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=reads(_BASE_SPEC, _HEAD_REMOVED_PATH),
         ),
     ):
         mock_db.user_has_permission.return_value = True
@@ -134,8 +135,8 @@ def test_classified_diff_inline_vs_stored(mock_auth):
     with (
         patch("app.classified_diff_routes.db") as mock_db,
         patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            return_value=_BASE_SPEC,
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=always(_BASE_SPEC),
         ),
     ):
         mock_db.user_has_permission.return_value = True
@@ -165,8 +166,8 @@ def test_classified_diff_inline_over_10mb_rejected(mock_auth):
         mock_db.get_project_by_slug.return_value = _FAKE_PROJECT
         mock_db.get_version_by_version_id.return_value = _FAKE_BASE_VER
         with patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            return_value=_BASE_SPEC,
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=always(_BASE_SPEC),
         ):
             r = client.post(
                 "/v1/diff/acme/classified",
@@ -220,8 +221,8 @@ def test_classified_diff_invalid_inline_400(mock_auth):
     with (
         patch("app.classified_diff_routes.db") as mock_db,
         patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            return_value=_BASE_SPEC,
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=always(_BASE_SPEC),
         ),
     ):
         mock_db.user_has_permission.return_value = True
@@ -278,8 +279,8 @@ def test_classified_diff_accept_markdown_changelog(mock_auth):
     with (
         patch("app.classified_diff_routes.db") as mock_db,
         patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            return_value=_BASE_WITH_PROPERTY,
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=always(_BASE_WITH_PROPERTY),
         ),
     ):
         mock_db.user_has_permission.return_value = True
@@ -370,8 +371,8 @@ def _classified_call(mock_db, summaries, *, body, accept="application/json"):
     """Run the endpoint with a mocked registry read and the real impact engine."""
     with (
         patch(
-            "app.classified_diff_routes.openapi_for_revision",
-            side_effect=[_BASE_SPEC, _HEAD_REMOVED_PATH],
+            "app.classified_diff_routes.read_revision_openapi",
+            side_effect=reads(_BASE_SPEC, _HEAD_REMOVED_PATH),
         ),
         patch(
             "app.consumer_impact_service.list_consumer_summaries",

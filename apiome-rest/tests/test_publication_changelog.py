@@ -8,6 +8,7 @@ from app.publication_changelog import (
     generate_version_changelog_on_publish,
     initial_publication_changelog_json,
 )
+from revision_reads import always
 
 
 def test_initial_publication_changelog_json_marker():
@@ -95,7 +96,7 @@ def test_generate_version_changelog_with_baseline():
         return None
 
     with patch("app.publication_changelog.db") as mdb, patch(
-        "app.publication_changelog.openapi_for_revision", return_value=oa
+        "app.publication_changelog.read_revision_openapi", side_effect=always(oa)
     ), patch(
         "app.publication_changelog.classify_openapi_changes", return_value=classified
     ) as mcls, patch(

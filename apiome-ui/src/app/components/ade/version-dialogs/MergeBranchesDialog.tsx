@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from '../../ui/Dialog';
 import { Alert } from '../../ui/Alert';
+import { ColdRenderNote } from '../../ui/ColdRenderNote';
 import { Button } from '../../ui/Button';
 import { Label } from '../../ui/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
@@ -450,6 +451,7 @@ export function MergeBranchesDialog({
               Checking backward compatibility (target tip → source tip)…
             </p>
           )}
+          {compatLoading && <ColdRenderNote standalone />}
 
           {compat && !compatLoading && (
             <Alert

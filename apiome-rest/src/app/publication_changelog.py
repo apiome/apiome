@@ -10,13 +10,13 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
-from .change_taxonomy import classify_openapi_changes
+from .change_taxonomy import classify_openapi_changes, summarize_changes
 from .changelog_generator import (
     CHANGELOG_SCHEMA_VERSION,
     build_changelog,
     render_changelog_json,
 )
-from .compatibility_engine import openapi_for_revision
+from .compatibility_engine import read_revision_openapi, same_document
 from .database import db
 
 logger = logging.getLogger(__name__)
@@ -162,10 +162,15 @@ def _generate_version_changelog_on_publish_impl(
         )
 
     from_label = str(baseline_ver.get("version_id") or "—")
-    baseline_openapi = openapi_for_revision(baseline_ver, tenant_slug, tenant_id)
-    candidate_openapi = openapi_for_revision(version, tenant_slug, tenant_id)
+    # Both sides from the rendered document cache (COA-5.6, #7082); publishing usually warmed the
+    # candidate already. Byte-identical documents need no classifying.
+    baseline_openapi = read_revision_openapi(baseline_ver, tenant_slug, tenant_id)
+    candidate_openapi = read_revision_openapi(version, tenant_slug, tenant_id)
 
-    classified = classify_openapi_changes(baseline_openapi, candidate_openapi)
+    if same_document(baseline_openapi, candidate_openapi):
+        classified = summarize_changes([])
+    else:
+        classified = classify_openapi_changes(baseline_openapi.spec, candidate_openapi.spec)
     changelog = build_changelog(
         classified,
         from_version=from_label,

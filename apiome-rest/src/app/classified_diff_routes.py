@@ -24,6 +24,12 @@ Schema, AsyncAPI) or a category-aware one (Protobuf), both sides are compared as
 graded by it — an inline head is read with the same importer as the base. Every other format keeps
 the CTG-1.1 OpenAPI taxonomy. The response's ``evaluatedUnder`` says which ran and what it ran under,
 and every change carries its ``ruleId``.
+
+Since COA-5.6 (#7082) each stored side of the OpenAPI comparison is the revision's rendered document
+from the document store (:func:`app.compatibility_engine.read_revision_openapi`), so a warm diff does
+no generation; a baseline whose rendered digest equals the head's is reported unchanged without
+classifying. The response's ``X-Apiome-Document-Cache`` header says ``hit`` or ``miss`` per side.
+Canonical models come from COA-5.4's per-worker model cache, keyed by source digest.
 """
 
 from __future__ import annotations
@@ -36,7 +42,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .auth import validate_authentication
 from .change_taxonomy import ClassifiedChange, ClassifiedDiff, classify_openapi_changes, summarize_changes
 from .changelog_generator import build_changelog, render_changelog_markdown
-from .compatibility_engine import openapi_for_revision
+from .compatibility_engine import (
+    DOCUMENT_CACHE_HEADER,
+    DOCUMENT_CACHE_HEADER_DOC,
+    RevisionOpenApi,
+    document_cache_header,
+    read_revision_openapi,
+    same_document,
+)
 from .compatibility_modes import (
     Baseline,
     FormatEvaluation,
@@ -472,7 +485,7 @@ def _compare(
     head_version: Optional[Dict[str, Any]],
     baselines: Sequence[Baseline],
     policy: CompatibilityPolicy,
-) -> Tuple[List[Tuple[Baseline, List[_GradedRow]]], List[FormatEvaluation]]:
+) -> Tuple[List[Tuple[Baseline, List[_GradedRow]]], List[FormatEvaluation], Optional[str]]:
     """Compare the head against each baseline: canonically for mode-graded formats, else as OpenAPI.
 
     Args:
@@ -485,7 +498,9 @@ def _compare(
         policy: The effective mode / category.
 
     Returns:
-        ``(pairs, evaluations)``: the rows per baseline, and how each pair was graded.
+        ``(pairs, evaluations, cache_header)``: the rows per baseline, how each pair was graded, and
+        the ``X-Apiome-Document-Cache`` value for the stored OpenAPI sides read (``None`` on the
+        canonical path).
 
     Raises:
         HTTPException: 400 when an inline head cannot be read as the base's format.
@@ -518,14 +533,18 @@ def _compare(
             rows, evaluation = _canonical_rows(model, head_model, policy)
             evaluations.append(evaluation)
             pairs.append((baseline, rows))
-        return pairs, evaluations
+        return pairs, evaluations, None
 
-    # The base document is built before the head's, as it always was.
-    base_doc = openapi_for_revision(base_version, tenant_slug, tenant_id)
+    # The base document is read before the head's, as it always was.
+    base_doc = read_revision_openapi(base_version, tenant_slug, tenant_id)
+    sides: List[Tuple[str, RevisionOpenApi]] = [("base", base_doc)]
+    head_doc: Optional[RevisionOpenApi] = None
     if head_version is None:
-        head_doc = _parse_inline(body.head.inline)  # type: ignore[union-attr]
+        head_spec = _parse_inline(body.head.inline)  # type: ignore[union-attr]
     else:
-        head_doc = openapi_for_revision(head_version, tenant_slug, tenant_id)
+        head_doc = read_revision_openapi(head_version, tenant_slug, tenant_id)
+        sides.append(("head", head_doc))
+        head_spec = head_doc.spec
     for baseline in baselines:
         if baseline.role == "base":
             doc = base_doc
@@ -533,10 +552,15 @@ def _compare(
             row = db.get_version_by_id(baseline.revision_id, tenant_id)
             if not row:
                 continue
-            doc = openapi_for_revision(row, tenant_slug, tenant_id)
-        pairs.append((baseline, [_GradedRow(c) for c in classify_openapi_changes(doc, head_doc).changes]))
+            doc = read_revision_openapi(row, tenant_slug, tenant_id)
+            sides.append(("prior", doc))
+        if head_doc is not None and same_document(doc, head_doc):
+            # Byte-identical documents: nothing to classify (COA-5.6).
+            pairs.append((baseline, []))
+            continue
+        pairs.append((baseline, [_GradedRow(c) for c in classify_openapi_changes(doc.spec, head_spec).changes]))
     fmt = revision_format(db, tenant_id, base_id)
-    return pairs, [FormatEvaluation(format=fmt, ruleset=CTG_RULESET)]
+    return pairs, [FormatEvaluation(format=fmt, ruleset=CTG_RULESET)], document_cache_header(sides)
 
 
 def _response_from_classified(
@@ -618,6 +642,7 @@ def _response_from_classified(
                 "Classified JSON by default, or CTG-1.3 markdown when "
                 "``Accept: text/markdown`` (or ``text/md``) is sent."
             ),
+            "headers": DOCUMENT_CACHE_HEADER_DOC,
             "content": {
                 "text/markdown": {
                     "schema": {"type": "string", "contentMediaType": "text/markdown"}
@@ -629,6 +654,7 @@ def _response_from_classified(
 async def post_classified_diff(
     tenant_slug: str,
     body: ClassifiedDiffRequest,
+    response: Response,
     accept: Optional[str] = Header(None),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Union[ClassifiedDiffResponse, Response]:
@@ -652,6 +678,10 @@ async def post_classified_diff(
     affected, their owner teams and verification runs invalidated, from the CDG-3.3 blast radius of
     the change against the base project and revision — and each breaking row of the markdown gains a
     "Blast radius:" line. The flag needs ``projects:view``.
+
+    Stored OpenAPI sides are read from the rendered document cache (COA-5.6); the
+    ``X-Apiome-Document-Cache`` header reports ``hit`` or ``miss`` for ``base``, ``head`` and, on a
+    transitive comparison, ``prior``. It is absent when the sides were compared as canonical models.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     if body.consumers:
@@ -692,7 +722,7 @@ async def post_classified_diff(
         base_label=base_meta.version_label,
         transitive=policy.transitive,
     )
-    pairs, evaluations = _compare(
+    pairs, evaluations, cache_header = _compare(
         tenant_id=tenant_id,
         tenant_slug=tenant_slug,
         body=body,
@@ -701,6 +731,8 @@ async def post_classified_diff(
         baselines=baselines,
         policy=policy,
     )
+    cache_headers = {DOCUMENT_CACHE_HEADER: cache_header} if cache_header else {}
+    response.headers.update(cache_headers)
     merged = merge_transitive(
         pairs,
         key=lambda r: (r.change.rule_id, r.change.pointer, r.change.change_kind),
@@ -763,7 +795,7 @@ async def post_classified_diff(
         graded_under = evaluated_under_markdown(evaluated)
         if graded_under:
             md = md.rstrip("\n") + "\n\n" + graded_under + "\n"
-        return Response(content=md, media_type="text/markdown; charset=utf-8")
+        return Response(content=md, media_type="text/markdown; charset=utf-8", headers=cache_headers)
 
     return _response_from_classified(
         result,

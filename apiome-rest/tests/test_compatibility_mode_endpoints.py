@@ -30,6 +30,7 @@ from app.avro_import_source import AvroImportSource
 from app.breaking_publish_guardrail import STATUS_BLOCKED, STATUS_OK, assess_breaking_publish
 from app.canonical_model import CanonicalApi
 from app.main import app
+from revision_reads import always, reads
 
 client = TestClient(app)
 
@@ -252,7 +253,7 @@ def test_an_openapi_pair_reports_the_mode_was_not_applied(authed: None) -> None:
     head["paths"] = {}
     with patch("app.classified_diff_routes.db", db), patch(
         "app.classified_diff_routes.canonical_model_for_revision", lambda *_a: None
-    ), patch("app.classified_diff_routes.openapi_for_revision", side_effect=[_SPEC, head]):
+    ), patch("app.classified_diff_routes.read_revision_openapi", side_effect=reads(_SPEC, head)):
         r = client.post(
             "/v1/diff/acme/classified",
             json={
@@ -282,7 +283,7 @@ def test_an_openapi_transitive_diff_compares_earlier_revisions_too(authed: None)
     older["paths"]["/owners"] = {"get": {"responses": {"200": {"description": "ok"}}}}
     with patch("app.classified_diff_routes.db", db), patch(
         "app.classified_diff_routes.canonical_model_for_revision", lambda *_a: None
-    ), patch("app.classified_diff_routes.openapi_for_revision", side_effect=[_SPEC, _SPEC, older]):
+    ), patch("app.classified_diff_routes.read_revision_openapi", side_effect=reads(_SPEC, _SPEC, older)):
         r = client.post(
             "/v1/diff/acme/classified",
             json={
@@ -354,7 +355,7 @@ def test_compatibility_check_on_openapi_names_the_native_engine(authed: None) ->
     with patch("app.compatibility_routes.db", db), patch(
         "app.compatibility_routes.canonical_model_for_revision", lambda *_a: None
     ), patch("app.compatibility_routes.enforce_permission"), patch(
-        "app.compatibility_routes.openapi_for_revision", return_value=_SPEC
+        "app.compatibility_routes.read_revision_openapi", side_effect=always(_SPEC)
     ), patch("app.compatibility_routes.capture_oasdiff_compatibility_evidence"):
         r = client.post(
             "/v1/versions/acme/proj-1/compatibility",

@@ -26,6 +26,7 @@ from app.diff_blast_radius import (
     summary_line,
 )
 from app.main import app
+from revision_reads import reads
 
 client = TestClient(app)
 
@@ -251,7 +252,7 @@ def mock_auth():
 def _call(body_extra: Dict[str, Any], *, accept: str = "application/json", permission=None, answer=None):
     with (
         patch("app.classified_diff_routes.db") as mock_db,
-        patch("app.classified_diff_routes.openapi_for_revision", side_effect=[_SPEC, _HEAD_SPEC]),
+        patch("app.classified_diff_routes.read_revision_openapi", side_effect=reads(_SPEC, _HEAD_SPEC)),
         patch(
             "app.diff_blast_radius.blast_radius",
             return_value=answer
