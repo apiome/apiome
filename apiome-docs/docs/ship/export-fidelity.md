@@ -10,7 +10,8 @@ GraphQL SDL, Proto3, Avro, …), apiome predicts **before generation** what will
 preserved, what will change, and what will be lost — and shows you *why*, per construct,
 with a link to the destination format's official documentation when the limitation is
 the format's own. This page explains how to read that evidence and how the risk
-acknowledgement works.
+acknowledgement works. How the loss report, scalar types, read-back and validation fit
+together is on [Import and export fidelity](./import-and-export-fidelity.mdx).
 
 > **Rule of thumb:** the one-word tier is a triage badge, not a guarantee. Always check
 > the projection map (or the `export evidence` table) before relying on a lossy or

@@ -66,7 +66,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | --- | --- | --- |
 | ✅ COA-EPIC-1 | Arazzo: complete, current and visible — Complete | 7 |
 | ✅ COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring — Complete | 8 |
-| COA-EPIC-3 | Import and export fidelity | 6 |
+| ✅ COA-EPIC-3 | Import and export fidelity — Complete | 6 |
 | COA-EPIC-4 | Catalog and Projects cleanup | 4 |
 | COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
 
@@ -286,9 +286,11 @@ All eight issues of this epic are complete. The epic's overview page is `build/o
 - **Technical Stack:** apiome-ui, apiome-rest
 - **Documentation:** `build/` references page; screenshots: project-references
 
-### COA-EPIC-3 · [#7035](https://github.com/apiome/apiome/issues/7035) — Import and export fidelity
+### ✅ COA-EPIC-3 · [#7035](https://github.com/apiome/apiome/issues/7035) — Import and export fidelity — Complete
 
 Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage the deferred export tickets, so every catalog import and export is honest and current.
+
+All six issues of this epic are complete. The epic's overview page is `ship/import-and-export-fidelity.mdx` (**Import and export fidelity**: every loss reported → exact scalars → every export reads back → every export checked, how the pieces fit, a CLI cheat sheet), with release note `import-and-export-fidelity` and a What's new line.
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
