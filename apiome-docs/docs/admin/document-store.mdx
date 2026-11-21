@@ -129,6 +129,10 @@ All of these are set on the `rest` service.
 | `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` | `33554432` | `db`: the largest single object accepted (32 MiB). |
 | `APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES` | `65536` | Originals of at least this many bytes are stored gzip-coded. `0` turns the coding off. |
 | `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE` | `false` | `s3`: allow an endpoint on a private or loopback address. |
+| `APIOME_DOCUMENT_STORE_FALLBACK` | — | What startup does when the store cannot be used. Empty refuses to start; `db` starts on the database store instead. See [Check the store](#check-the-store). |
+
+These variables are the only place the store is set. The admin console's **Document store** page
+shows them but cannot change them, and never shows a key.
 
 ### Endpoints on a private network
 
@@ -137,6 +141,81 @@ The endpoint URL passes the same check as any URL the REST API calls: it must be
 network (`http://garage.internal:3900`, `http://127.0.0.1:9000`) is refused until you set
 `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=true`. That setting applies to the document store endpoint
 only. It does not let users import from private addresses, which `APIOME_SSRF_ALLOW_PRIVATE` would.
+
+## Check the store
+
+### At startup
+
+When the REST API starts, it builds the store from the settings above and checks that it answers:
+
+- **`s3`:** the bucket exists and the key may use it (`HeadBucket`).
+- **`filesystem`:** the directory exists, or can be created, and is writable.
+- **`db`:** nothing more to check; the database readiness check covers it.
+
+If the check fails, the REST API **does not start**. The log names the problem and the setting to
+fix, with every key replaced by `[redacted]`:
+
+```text
+The document store (APIOME_DOCUMENT_STORE=s3) is not usable: The document store could not reach
+bucket 'acme-apiome-documents' (NoSuchBucket: …). Check the APIOME_DOCUMENT_STORE_* settings, the
+bucket and the key's permissions. Fix the APIOME_DOCUMENT_STORE_* settings, or set
+APIOME_DOCUMENT_STORE_FALLBACK=db to start on the database store instead.
+```
+
+To keep serving while you fix the store, set `APIOME_DOCUMENT_STORE_FALLBACK=db` and restart. The
+REST API then starts on the database store, logs why, and reports the fallback on `/health` and on
+the **Document store** page. New documents go to the database until you fix the settings and
+restart without the fallback; [move them](#move-existing-documents-into-the-store) afterwards.
+
+:::warning
+The fallback only covers the configured store failing. An unknown `APIOME_DOCUMENT_STORE` value,
+or a bad `APIOME_DOCUMENT_STORE_PREFIX` with `db`, still stops startup.
+:::
+
+### In the admin console
+
+<Route path="/admin/dashboard/document-store" />
+
+<Screenshot id="admin-document-store" alt="The Document store page: an S3-compatible bucket marked Reachable, a passed connection test with its three steps, the bucket settings and the usage totals" />
+
+1. **Sign in to the [admin console](./admin-console.mdx)** and **click “Document store”** in the
+   sidebar.
+2. **Read the status card.** It names the backend and says **Reachable** or **Unreachable**, with
+   the error when the last check failed. The check is repeated at most every 30 seconds.
+3. **Click “Test connection”.** The REST API writes a small probe object, reads it back, compares
+   the bytes and deletes it. The **Connection test** card lists **Write a probe object**,
+   **Read it back** and **Delete it**, each with its time or its error. When the write fails, the
+   other two steps are skipped.
+
+The page also shows:
+
+| Card | What it shows |
+| --- | --- |
+| **Settings** | The settings of the active backend: bucket, region, endpoint, addressing style, encryption, where the credentials come from (**Static keys** or **Default credential chain or IAM role**), download link lifetime and prefix for `s3`; the directory for `filesystem`; the largest object for `db`. |
+| **Usage** | The number and total size of objects in the document index (originals, rendered documents and frozen schemas), split by backend when more than one holds objects, and **Last integrity check**: the latest time an object was read back and verified, for example by the [migration](#move-existing-documents-into-the-store). |
+
+If the REST API started on the fallback, an amber notice at the top names the configured backend
+and why it could not be used.
+
+### From the REST API
+
+| Endpoint | Who | Does |
+| --- | --- | --- |
+| `GET /health` | Anyone | Adds a `document_store` block: `status` (`ok`, `degraded` on the fallback, `unavailable` when the store did not answer), `backend` and `fallback`. No error text or settings. |
+| `GET /v1/ops/document-store` | Platform administrators | The same data as the **Document store** page. |
+| `POST /v1/ops/document-store/test` | Platform administrators | Runs the connection test. Answers `200` whether or not it passed; read `ok` and each step's `error`. |
+
+```bash
+curl -s https://api.example.com/health | jq .document_store
+# { "status": "ok", "backend": "s3", "fallback": false }
+
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  https://api.example.com/v1/ops/document-store/test | jq '.ok, [.steps[] | .name + ": " + (.ok|tostring)]'
+```
+
+A store that stops answering does not make `/health` return `503`: only the database decides
+readiness. Imports and exports that need the store report their own errors, as described below.
+The endpoints are in the [ops reference](../reference/rest/ops.md).
 
 ## Originals of imports
 
@@ -381,6 +460,8 @@ written to an error or a log.
 | A host name like `bucket.host` does not resolve | Set `APIOME_DOCUMENT_STORE_ADDRESSING_STYLE=path`. |
 | `/v1/schema` answers `503` for a frozen version | The frozen object is missing from the bucket or directory. Restore it from a backup, or unfreeze the version and freeze it again. |
 | `rendered document not stored` in the REST log | The store refused the write. `/v1/schema` still works but generates the document for each request. Check the store settings above. |
+| The REST API stops at startup with `The document store (…) is not usable` | Fix the setting the message names, or set `APIOME_DOCUMENT_STORE_FALLBACK=db` to start on the database store meanwhile. See [At startup](#at-startup). |
+| **Test connection** fails at **Delete it** | The key can write and read but not delete. Grant `s3:DeleteObject` on the prefix. |
 
 ## Where next
 

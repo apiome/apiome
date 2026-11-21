@@ -149,7 +149,9 @@ def test_health_backward_compatible_shape():
     assert body["status"] == "healthy"
     assert body["database"] == "connected"
     # Bundled-toolchain verdict (FMT-1.3, #5414) — additive, and never a filesystem path.
-    assert set(body) == {"status", "database", "toolchain"}
+    # The document store as a dependency (COA-5.9, #7085) — additive too.
+    assert set(body) == {"status", "database", "toolchain", "document_store"}
+    assert set(body["document_store"]) == {"status", "backend", "fallback"}
     toolchain = body["toolchain"]
     assert set(toolchain) == {"status", "enforced", "required", "available", "missing"}
     assert toolchain["status"] in {"ok", "degraded", "failed"}

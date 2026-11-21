@@ -1841,6 +1841,19 @@
       ]
     },
     {
+      "id": "admin-document-store",
+      "route": "/admin/dashboard/document-store",
+      "waitFor": "[data-testid=\"document-store-probe\"]",
+      "data": "fixture:hive-a11y/admin-document-store.html",
+      "sources": [
+        "apiome-ui/src/app/admin/dashboard/document-store",
+        "apiome-ui/lib/admin-document-store.ts"
+      ],
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
       "id": "admin-property-templates",
       "route": "/admin/dashboard/templates",
       "waitFor": "table",

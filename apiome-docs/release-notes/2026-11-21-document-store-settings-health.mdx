@@ -1,0 +1,28 @@
+---
+slug: document-store-settings-health
+title: "Document store settings, health and admin screen"
+description: "See which document store runs, test it, and catch a bad configuration at startup."
+authors: [apiome]
+---
+
+Operators can now see which [document store](/admin/document-store) the REST API uses and whether
+it works, without reading the server's environment. A store that cannot be used stops the REST API
+at startup with a message that says what to fix.
+
+{/* truncate */}
+
+- **Admin console → Document store:** the active backend and its settings (bucket, prefix, region,
+  endpoint, encryption, where the credentials come from), whether the store answers, how many
+  objects it holds and their size, and when an integrity check last verified them.
+  **Test connection** writes, reads back and deletes a probe object and lists each step.
+- **The environment stays the source of truth:** the page is read-only, and credentials are never
+  sent to the browser. The UI reads everything through the REST API; it never talks to the bucket.
+- **Fails fast at startup:** a missing bucket, a refused key or an unwritable directory stops the
+  REST API with a redacted message naming the setting. Set `APIOME_DOCUMENT_STORE_FALLBACK=db` to
+  start on the database store instead; the fallback is then reported everywhere.
+- **`/health` reports the store as a dependency:** a `document_store` block with `status`
+  (`ok`, `degraded` or `unavailable`), the backend and whether a fallback is in effect.
+- **From the REST API:** platform administrators can read `GET /v1/ops/document-store` and run
+  `POST /v1/ops/document-store/test`.
+
+See [Check the store](/admin/document-store#check-the-store).

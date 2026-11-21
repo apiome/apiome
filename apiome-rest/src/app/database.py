@@ -31095,6 +31095,30 @@ class Database:
         """
         return bool(self.execute_query(query, (tenant_id, sha256)))
 
+    def document_store_usage(self) -> List[Dict[str, Any]]:
+        """Summarize the document index per backend (COA-5.9, #7085).
+
+        Reads ``apiome.document_objects`` (the index of stored originals, rendered documents and
+        frozen schemas), never the bytes and never the bucket, so it stays cheap on any backend.
+
+        Returns:
+            One row per backend that holds indexed objects:
+            ``{backend, objects, bytes, verified_objects, last_verified_at}`` — ``last_verified_at``
+            is the latest ``verified_at`` an integrity run recorded, or None.
+        """
+        return self.execute_query(
+            """
+            SELECT backend,
+                   count(*)::bigint AS objects,
+                   coalesce(sum(size_bytes), 0)::bigint AS bytes,
+                   count(verified_at)::bigint AS verified_objects,
+                   max(verified_at) AS last_verified_at
+            FROM apiome.document_objects
+            GROUP BY backend
+            ORDER BY backend
+            """
+        ) or []
+
     # ───────────────────── originals in the document store (COA-5.3, #7079) ─────────────────────
     # ``document_objects`` says where a stored object lives; ``version_documents`` says which
     # object is a revision's original. ``app.original_documents`` is the only caller.

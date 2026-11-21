@@ -178,6 +178,11 @@ downloads above the database threshold — in the **document store**. `APIOME_DO
 any backend. [Document store](./document-store.mdx) lists every setting, with examples for Garage,
 MinIO, R2 and AWS.
 
+The REST API checks the store at startup and refuses to start when it cannot be used, unless
+`APIOME_DOCUMENT_STORE_FALLBACK=db` is set. `/health` reports it under `document_store`, and the
+admin console's **Document store** page has **Test connection** — see
+[Check the store](./document-store.mdx#check-the-store).
+
 ### Agent runtime address in server.json
 
 The [server.json export](../bring-in/agent-access.mdx#export-serverjson) gives hosts the agent

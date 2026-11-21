@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.626.0
+  version: 1.627.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -92554,20 +92554,20 @@ paths:
         to readiness.
 
 
-        The ``status``/``database`` keys are unchanged. The response additionally
-        carries a
+        The ``status``/``database`` keys are unchanged. The response additionally carries
+        a
 
-        ``toolchain`` block (FMT-1.3) reporting the bundled-toolchain verdict this
-        runtime booted
+        ``toolchain`` block (FMT-1.3) reporting the bundled-toolchain verdict this runtime
+        booted
 
         with: ``status`` (``ok`` / ``degraded`` / ``failed``), whether the deployment
         ``enforced``
 
-        the toolchain, how many hard-required tools there are, how many resolved,
-        and the keys of
+        the toolchain, how many hard-required tools there are, how many resolved, and
+        the keys of
 
-        any that are ``missing``. Availability only — resolved paths, the optional
-        tools and the
+        any that are ``missing``. Availability only — resolved paths, the optional tools
+        and the
 
         exact third-party versions stay on the platform-admin ``GET /v1/ops/toolchain``,
         because
@@ -92575,11 +92575,29 @@ paths:
         this endpoint is unauthenticated.
 
 
-        The HTTP status reflects readiness only: an enforcing deployment cannot serve
-        at all with a
+        The ``document_store`` block (COA-5.9, #7085) reports the store as a dependency:
 
-        required tool missing (startup refuses), and a non-enforcing one is degraded
-        deliberately.'
+        ``status`` (``ok``; ``degraded`` when running on the ``db`` fallback; ``unavailable``
+        when
+
+        the store did not answer its last check), the active ``backend`` and whether
+        a ``fallback``
+
+        is in effect. The check is cached for 30 seconds; error details and settings
+        stay on the
+
+        platform-admin ``GET /v1/ops/document-store``.
+
+
+        The HTTP status reflects database readiness only: an enforcing deployment cannot
+        serve at
+
+        all with a required tool missing (startup refuses), a non-enforcing one is degraded
+
+        deliberately, and a store outage fails the writes that need it without making
+        the server
+
+        unready.'
       operationId: health_check_health_get
       responses:
         '200':
@@ -93215,6 +93233,229 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for document migration statusresponse422.
+  /v1/ops/document-store:
+    get:
+      tags:
+      - ops
+      summary: Ops Document Store
+      description: 'The active document store: backend, settings, health and usage (COA-5.9,
+        #7085). Platform-admin only.
+
+
+        Settings come from the server environment and are read-only here; credentials
+        are never
+
+        returned — ``credentials`` only says whether static keys or boto3''s default
+        chain are used.'
+      operationId: ops_document_store_v1_ops_document_store_get
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ops Document Storeauthorization schema.
+          - type: 'null'
+            description: Ops Document Storeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ops Document Store Xapikey schema.
+          - type: 'null'
+            description: Ops Document Store Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for ops document store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStoreStatus'
+                description: Response payload for ops document storeresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for ops document storeresponse422.
+  /v1/ops/document-store/test:
+    post:
+      tags:
+      - ops
+      summary: Ops Test Document Store
+      description: 'Test the document store: write, read back and delete a probe object
+        (COA-5.9, #7085). Platform-admin only.
+
+
+        Answers ``200`` whether or not the test passed; ``ok`` and each step''s ``error``
+        say what
+
+        failed.'
+      operationId: ops_test_document_store_v1_ops_document_store_test_post
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ops Test Document Storeauthorization schema.
+          - type: 'null'
+            description: Ops Test Document Storeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ops Test Document Store Xapikey schema.
+          - type: 'null'
+            description: Ops Test Document Store Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for ops test document store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStoreProbeResult'
+                description: Response payload for ops test document storeresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for ops test document storeresponse422.
+  /v1/admin/document-store:
+    get:
+      tags:
+      - ops
+      summary: Admin Document Store
+      description: 'The super-admin console''s view of ``GET /v1/ops/document-store``
+        (COA-5.9, #7085).'
+      operationId: admin_document_store_v1_admin_document_store_get
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Document Store Xadmin Session schema.
+          - type: 'null'
+            description: Admin Document Store Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Document Storeadminsession schema.
+          - type: 'null'
+            description: Admin Document Storeadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for admin document store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStoreStatus'
+                description: Response payload for admin document storeresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for admin document storeresponse422.
+  /v1/admin/document-store/test:
+    post:
+      tags:
+      - ops
+      summary: Admin Test Document Store
+      description: 'The super-admin console''s view of ``POST /v1/ops/document-store/test``
+        (COA-5.9, #7085).'
+      operationId: admin_test_document_store_v1_admin_document_store_test_post
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Test Document Store Xadmin Session schema.
+          - type: 'null'
+            description: Admin Test Document Store Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Test Document Storeadminsession schema.
+          - type: 'null'
+            description: Admin Test Document Storeadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for admin test document store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStoreProbeResult'
+                description: Response payload for admin test document storeresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for admin test document storeresponse422.
   /v1/admin/auth-providers:
     get:
       tags:
@@ -119569,6 +119810,328 @@ components:
       type: object
       title: DocumentMigrationRequest
       description: One step of the document migration to start.
+    DocumentStoreBackendUsage:
+      properties:
+        backend:
+          type: string
+          title: Backend
+          description: db, s3 or filesystem.
+          example: example
+        objects:
+          type: integer
+          title: Objects
+          description: Indexed objects this backend holds.
+          example: 1
+        bytes:
+          type: integer
+          title: Bytes
+          description: Their total size in bytes.
+          example: 1
+      type: object
+      required:
+      - backend
+      - objects
+      - bytes
+      title: DocumentStoreBackendUsage
+      description: Indexed objects held by one backend.
+    DocumentStoreHealth:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+          description: Whether the store answered.
+          example: false
+        checkedAt:
+          type: number
+          title: Checkedat
+          description: When the check ran (epoch seconds).
+          example: 1.0
+        error:
+          anyOf:
+          - type: string
+            description: Document Store Health schema.
+          - type: 'null'
+            description: Document Store Health schema.
+          title: Error
+          description: The redacted failure; null when ok.
+      type: object
+      required:
+      - ok
+      - checkedAt
+      title: DocumentStoreHealth
+      description: The latest reachability check of the active store.
+    DocumentStoreIntegrity:
+      properties:
+        lastVerifiedAt:
+          anyOf:
+          - type: string
+            description: Document Store Integrity schema.
+          - type: 'null'
+            description: Document Store Integrity schema.
+          title: Lastverifiedat
+          description: Latest time an integrity run verified an object (ISO 8601); null
+            when none has.
+        verifiedObjects:
+          type: integer
+          title: Verifiedobjects
+          description: Indexed objects verified at least once.
+          example: 1
+      type: object
+      required:
+      - verifiedObjects
+      title: DocumentStoreIntegrity
+      description: What integrity runs have verified so far.
+    DocumentStoreProbeResult:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+          description: True when every step succeeded.
+          example: false
+        backend:
+          type: string
+          title: Backend
+          description: Backend.
+          example: example
+        checkedAt:
+          type: number
+          title: Checkedat
+          description: When the test finished (epoch seconds).
+          example: 1.0
+        durationMs:
+          type: number
+          title: Durationms
+          description: Duration Ms.
+          example: 1.0
+        steps:
+          items:
+            $ref: '#/components/schemas/DocumentStoreProbeStep'
+          type: array
+          title: Steps
+          description: Steps.
+          maxItems: 1000
+      type: object
+      required:
+      - ok
+      - backend
+      - checkedAt
+      - durationMs
+      - steps
+      title: DocumentStoreProbeResult
+      description: The outcome of writing, reading back and deleting one probe object.
+    DocumentStoreProbeStep:
+      properties:
+        name:
+          type: string
+          enum:
+          - write
+          - read
+          - delete
+          title: Name
+          description: Human-readable name.
+          example: write
+        ok:
+          type: boolean
+          title: Ok
+          description: Ok.
+          example: false
+        skipped:
+          type: boolean
+          title: Skipped
+          description: True when an earlier step failed, so this one did not run.
+          default: false
+          example: false
+        durationMs:
+          type: number
+          title: Durationms
+          description: Duration Ms.
+          example: 1.0
+        error:
+          anyOf:
+          - type: string
+            description: Document Store Probe Step schema.
+          - type: 'null'
+            description: Document Store Probe Step schema.
+          title: Error
+          description: The redacted failure; null when ok or skipped.
+      type: object
+      required:
+      - name
+      - ok
+      - durationMs
+      title: DocumentStoreProbeStep
+      description: One step of the connection test.
+    DocumentStoreStatus:
+      properties:
+        backend:
+          type: string
+          title: Backend
+          description: 'The backend the server runs on: db, s3 or filesystem.'
+          example: example
+        configuredBackend:
+          type: string
+          title: Configuredbackend
+          description: The backend APIOME_DOCUMENT_STORE names.
+          example: example
+        fallback:
+          type: boolean
+          title: Fallback
+          description: True when startup fell back to db (APIOME_DOCUMENT_STORE_FALLBACK=db).
+          example: false
+        fallbackReason:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Fallbackreason
+          description: Why the configured backend was not usable (redacted).
+        backends:
+          items:
+            type: string
+          type: array
+          title: Backends
+          description: Every backend this server supports.
+          maxItems: 1000
+        bucket:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Bucket
+          description: 's3: the bucket.'
+        prefix:
+          type: string
+          title: Prefix
+          description: The folder every object key starts with ('' for none).
+          example: example
+        region:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Region
+          description: 's3: the signing region.'
+        endpointUrl:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Endpointurl
+          description: 's3: the service URL; null for AWS.'
+        addressingStyle:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Addressingstyle
+          description: 's3: auto, path or virtual.'
+        path:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Path
+          description: 'filesystem: the storage directory.'
+        encryption:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Encryption
+          description: 's3: none, sse-s3 or sse-kms.'
+        kmsKeyId:
+          anyOf:
+          - type: string
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Kmskeyid
+          description: 's3 with sse-kms: the key; null for the bucket default.'
+        credentials:
+          anyOf:
+          - type: string
+            enum:
+            - static
+            - default-chain
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Credentials
+          description: 's3: ''static'' (keys in the environment) or ''default-chain''
+            (boto3''s chain / IAM role).'
+        presignTtlSeconds:
+          anyOf:
+          - type: integer
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Presignttlseconds
+          description: 's3: default lifetime of a download link.'
+        maxObjectBytes:
+          anyOf:
+          - type: integer
+            description: Document Store schema.
+          - type: 'null'
+            description: Document Store schema.
+          title: Maxobjectbytes
+          description: 'db: the largest object accepted.'
+        health:
+          $ref: '#/components/schemas/DocumentStoreHealth'
+          description: Health.
+        usage:
+          anyOf:
+          - $ref: '#/components/schemas/DocumentStoreUsage'
+          - type: 'null'
+            description: Document Store schema.
+          description: Null when the document index cannot be read.
+      type: object
+      required:
+      - backend
+      - configuredBackend
+      - fallback
+      - backends
+      - prefix
+      - health
+      title: DocumentStoreStatus
+      description: 'The active document store: settings (never credentials), health and
+        usage.'
+    DocumentStoreUsage:
+      properties:
+        objects:
+          type: integer
+          title: Objects
+          description: Indexed objects across every backend.
+          example: 1
+        bytes:
+          type: integer
+          title: Bytes
+          description: Their total size in bytes.
+          example: 1
+        byBackend:
+          items:
+            $ref: '#/components/schemas/DocumentStoreBackendUsage'
+          type: array
+          title: Bybackend
+          description: By Backend.
+          maxItems: 1000
+        integrity:
+          $ref: '#/components/schemas/DocumentStoreIntegrity'
+          description: Integrity.
+      type: object
+      required:
+      - objects
+      - bytes
+      - integrity
+      title: DocumentStoreUsage
+      description: Totals from the document index (originals, rendered documents, frozen
+        schemas).
     DocumentationEvidence:
       properties:
         specification:

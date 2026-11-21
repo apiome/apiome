@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.801.0] - 2026-11-21
+
+### Added
+- **Document store settings, health and connection test — OpenAPI 1.627.0 (COA-5.9, #7085):**
+  `GET /v1/ops/document-store` (platform admin) reports the active backend, the configured one and
+  any startup fallback, the non-secret settings (bucket, prefix, region, endpoint, addressing
+  style, directory, encryption and KMS key, whether static keys or the default credential chain
+  are used, presign lifetime, `db` object cap), a cached reachability check (`HeadBucket` for
+  `s3`, a writable directory for `filesystem`, a read of `document_store_blob` for `db`) and the
+  document index's object count and bytes per backend with the latest `verified_at`.
+  `POST /v1/ops/document-store/test` writes, reads back and deletes a random probe object under the
+  `apiome-probe` key segment and reports each step with its duration and redacted error (`200`
+  either way). The same two endpoints are served at `/v1/admin/document-store[/test]` for the
+  super-admin console session. `Database.document_store_usage()` reads `document_objects` only.
+- **Fail fast at startup:** `app.document_store_health.initialize_document_store` builds the
+  configured store and checks an `s3` bucket or `filesystem` directory answers; an unusable store
+  stops startup with a redacted `DocumentStoreConfigError` naming the setting. New
+  `APIOME_DOCUMENT_STORE_FALLBACK` (empty, or `db`) starts on the database backend instead and
+  reports the fallback.
+- **`GET /health`** gains a `document_store` block (`status` `ok` / `degraded` / `unavailable`,
+  `backend`, `fallback`), cached for 30 seconds, with no error text or settings. The HTTP status
+  still reflects database readiness only.
+
 ## [1.800.0] - 2026-11-21
 
 ### Added

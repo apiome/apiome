@@ -10,7 +10,8 @@ Two planes of endpoints:
     - ``GET /health`` — retained for backward compatibility (existing compose healthcheck); behaves
       like readiness, and additionally reports the **bundled-toolchain** verdict (FMT-1.3): which
       hard-required tools resolved and the version each reported, so a deployment that lost a
-      shipped format is visible without an authenticated call.
+      shipped format is visible without an authenticated call, and the **document store** as a
+      dependency (COA-5.9): its status (``ok`` / ``degraded`` / ``unavailable``) and backend.
 
 * **Ops dashboard** (platform-admin only — it exposes operational internals and backup metadata):
     - ``GET /v1/ops/metrics``  — request rate, error rate, latency percentiles, uptime, in-flight.
@@ -27,6 +28,7 @@ Two planes of endpoints:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -37,6 +39,7 @@ from .auth import validate_authentication
 from .backup_status import collect_backup_status
 from .config import settings
 from .database import db
+from .document_store_health import health_detail as document_store_health_detail
 from .export_job_health import export_job_health
 from .import_export_metrics import import_export_metrics
 from .mcp_discovery_sweep import SWEEP_RUN_RETENTION_DAYS
@@ -94,8 +97,16 @@ async def health_check() -> JSONResponse:
     exact third-party versions stay on the platform-admin ``GET /v1/ops/toolchain``, because
     this endpoint is unauthenticated.
 
-    The HTTP status reflects readiness only: an enforcing deployment cannot serve at all with a
-    required tool missing (startup refuses), and a non-enforcing one is degraded deliberately.
+    The ``document_store`` block (COA-5.9, #7085) reports the store as a dependency:
+    ``status`` (``ok``; ``degraded`` when running on the ``db`` fallback; ``unavailable`` when
+    the store did not answer its last check), the active ``backend`` and whether a ``fallback``
+    is in effect. The check is cached for 30 seconds; error details and settings stay on the
+    platform-admin ``GET /v1/ops/document-store``.
+
+    The HTTP status reflects database readiness only: an enforcing deployment cannot serve at
+    all with a required tool missing (startup refuses), a non-enforcing one is degraded
+    deliberately, and a store outage fails the writes that need it without making the server
+    unready.
     """
     status_code, payload = _readiness_payload()
     # Preserve the historical key shape while reporting the same readiness signal.
@@ -109,6 +120,8 @@ async def health_check() -> JSONResponse:
         # with a missing tool (startup refuses), and a non-enforcing one is degraded on purpose,
         # not unready.
         "toolchain": toolchain_health_detail(),
+        # Document store as a dependency (COA-5.9): status and backend only, no error text.
+        "document_store": await asyncio.to_thread(document_store_health_detail),
     }
     if "error" in payload:
         body["error"] = payload["error"]

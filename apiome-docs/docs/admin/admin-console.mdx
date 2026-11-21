@@ -10,8 +10,8 @@ tags: [admin, legacy]
 <Legacy />
 
 The **admin console** is where the operator of an Apiome installation manages everything that
-spans workspaces: user accounts, tenants, licenses, feature flags, property templates
-and the sign-in providers. It is separate from the app — it has its own password, its own session
+spans workspaces: user accounts, tenants, licenses, feature flags, property templates,
+the sign-in providers and the status of the document store. It is separate from the app — it has its own password, its own session
 and its own sidebar — and nobody reaches it from the app's rail. **Browse to `/admin`** on the
 apiome-ui host.
 
@@ -43,8 +43,9 @@ to end it early.
 
 Set both in `apiome-ui/.env`, and the **same** values in `apiome-rest/.env` (under Docker,
 `docker-compose.yml` passes them to both services from the compose `.env`). apiome-rest checks the
-session a second time for [Sign-in providers](./auth-providers.mdx); if its copy is missing or
-different, that screen answers with a 403 even though you are signed in. See
+session a second time for [Sign-in providers](./auth-providers.mdx) and
+[Document store](./document-store.mdx#in-the-admin-console); if its copy is missing or
+different, those screens answer with a 403 even though you are signed in. See
 [Operating Apiome](./operating-apiome.mdx) for the rest of the environment.
 
 ## The sidebar
@@ -59,6 +60,7 @@ The sidebar, headed **Super Admin · Apiome Console**, lists **Overview** and, u
 | **Licenses** | License tiers and what they grant — [Licenses](./licenses.mdx) |
 | **Feature Flags** | Flags and flag groups — [Feature flags](./feature-flags.mdx) |
 | **Property Templates** | Reusable property definitions — [Property templates](./property-templates.mdx) |
+| **Document store** | Where the REST API keeps documents, whether it answers, and **Test connection** — [Document store](./document-store.mdx#in-the-admin-console) |
 | **Payments**, **Database**, **Monitoring** | Not built yet: each opens a 404 — *This page could not be found.* |
 | **System settings** | The sign-in providers — [Sign-in providers](./auth-providers.mdx) |
 
@@ -88,8 +90,10 @@ The console's sign-in is a route of apiome-ui itself, not of the REST API:
 | `DELETE /api/admin/auth` | Signs out (clears the cookie) |
 
 The management screens read and write the database through apiome-ui's server, and have no REST or
-CLI equivalent. The exception is [Sign-in providers](./auth-providers.mdx), which apiome-ui forwards to
-apiome-rest's `/v1/admin/auth-providers` — see the [API reference](../reference/api-reference.md).
+CLI equivalent. The exceptions are [Sign-in providers](./auth-providers.mdx), which apiome-ui forwards to
+apiome-rest's `/v1/admin/auth-providers`, and [Document store](./document-store.mdx#in-the-admin-console),
+forwarded to `/v1/admin/document-store` (platform administrators can call the same data at
+`/v1/ops/document-store`) — see the [API reference](../reference/api-reference.md).
 
 ## Where next
 
