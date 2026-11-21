@@ -1,6 +1,6 @@
 ---
 title: "Ops"
-description: "REST endpoints tagged ops: 10 operations."
+description: "REST endpoints tagged ops: 12 operations."
 sidebar_position: 67
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.625.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.626.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `ops` · 10 operations
+Tag: `ops` · 12 operations
 
 ## `GET /health` {#health-check-health-get}
 
@@ -114,6 +114,67 @@ Operation id: `ops_dashboard_v1_ops_dashboard_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for ops dashboard. | `text/html` string |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/ops/document-migration` {#document-migration-status-v1-ops-document-migration-get}
+
+**Document Migration Status**
+
+The document migration's status (COA-5.8, #7084). Platform-admin only.
+
+Whether this instance is running a step, the last run's report or error, the active
+document store backend, and every checkpoint (per scope, step and source: the last key
+finished, running totals and when the step completed).
+
+Operation id: `document_migration_status_v1_ops_document_migration_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for document migration status. | `application/json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/ops/document-migration` {#start-document-migration-v1-ops-document-migration-post}
+
+**Start Document Migration**
+
+Start one step of the document migration in the background (COA-5.8, #7084). Platform-admin only.
+
+The copy step writes each database-held import source, frozen schema and export artifact to
+the document store, verifies it and links it; the purge step (``purgeDbCopies``) re-verifies
+each stored object and drops its database copy. Answers ``202`` with the run's status; follow
+it with ``GET /v1/ops/document-migration``.
+
+Operation id: `start_document_migration_v1_ops_document_migration_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for start document migration.
+
+- `application/json` — [`DocumentMigrationRequest`](#schema-documentmigrationrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for start document migration. | `application/json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/ops/import-export` {#ops-import-export-v1-ops-import-export-get}
@@ -259,6 +320,20 @@ Operation id: `ops_toolchain_v1_ops_toolchain_get`
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
+
+### `DocumentMigrationRequest` {#schema-documentmigrationrequest}
+
+One step of the document migration to start.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `purgeDbCopies` | boolean | no | Run the purge step (drop database copies whose stored object verifies) instead of the copy step. |
+| `dryRun` | boolean | no | Report what the step would do; write nothing. |
+| `tenantId` | string or null | no | Only this tenant (UUID); every tenant when omitted. |
+| `sources` | array of enum `"adapter_source"`, `"import_snapshot"`, `"frozen_schema"`, `"export_artifact"` or null | no | Only these sources; every source when omitted. |
+| `rate` | number | no | Most rows per second; 0 for no limit. |
+| `batchSize` | integer | no | Rows per page and checkpoint. |
+| `workers` | integer | no | Rows processed in parallel. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

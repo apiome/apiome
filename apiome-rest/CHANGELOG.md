@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.800.0] - 2026-11-21
+
+### Added
+- **Move existing documents into the store — OpenAPI 1.626.0 (COA-5.8, #7084):**
+  `app/document_migration.py` copies the documents the database still holds into the configured
+  document store: `format_metadata.sourceContent` (`adapter_source`; a base64 archive becomes a
+  manifest plus one `original_part` per file), `version_import_snapshots.source_text`
+  (`import_snapshot`), `version_spec_snapshots.content` (`frozen_schema`) and unexpired
+  `export_job_artifact.content` (`export_artifact`, `s3`/`filesystem` only). Each object is read
+  back and checked (SHA-256 of the stored bytes and the decoded content against the database copy),
+  `document_objects.verified_at` is stamped, then it is linked (`version_documents`, the
+  `sourceDocument` pointer, `export_job_artifact.storage_uri`). The purge step
+  (`purge_db_copies`) re-verifies each object against its database copy and only then drops the
+  copy (export rows switch to `object_store`); it is refused on the `db` backend. Re-running is a
+  no-op (each step selects only rows it still has to do, so originals on another backend are
+  re-copied), an interrupted run resumes from `apiome.document_migration_checkpoints` (V405), and
+  `versions.content_stamp` is claimed in the same statement so rendered documents stay valid. A
+  stored original that differs from the database copy is skipped (`original-differs`), never
+  overwritten. Rate-limited (20 rows/s), 50-row batches, one worker by default (up to 4), one
+  run at a time across instances (advisory lock).
+- `scripts/migrate_documents_to_store.py` (`--dry-run`, `--tenant`, `--purge-db-copies`,
+  `--source`, `--rate`, `--batch-size`, `--workers`; exit 0 / 1 failed rows / 2 refused or busy).
+- `POST /v1/ops/document-migration` (platform admin) starts a step in the background (`202`;
+  `409 document-migration-running` / `document-migration-refused`), and
+  `GET /v1/ops/document-migration` reports the run, its last report or error, the backend and
+  every checkpoint.
+
+### Changed
+- `revision_source.legacy_fileset` (was private `_legacy_fileset`) is shared with the migration.
+
 ## [1.799.0] - 2026-11-21
 
 ### Added

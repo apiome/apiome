@@ -1,0 +1,29 @@
+---
+slug: migrate-documents-to-store
+title: "Move existing documents into the document store"
+description: "A resumable, verifying job moves older sources, frozen schemas and exports into the store."
+authors: [apiome]
+---
+
+Installations that ran before the [document store](/admin/document-store) existed still keep
+import originals, frozen schemas and export downloads in the database. A new job moves them into
+the store you have configured, checks every file it writes, and removes the database copies only
+when you ask, as a separate step.
+
+{/* truncate */}
+
+- **`scripts/migrate_documents_to_store.py`:** copies `format_metadata.sourceContent`,
+  `version_import_snapshots.source_text`, `version_spec_snapshots.content` and unexpired export
+  downloads into the store, reads each object back and checks it, then links it to its version.
+- **Removal is a separate step:** `--purge-db-copies` re-reads each stored file, compares it byte
+  for byte with the database copy, and only then removes the copy. It is refused on the `db`
+  backend.
+- **Safe to stop and run again:** progress is checkpointed after every batch, an interrupted run
+  resumes where it stopped, and a run with nothing left to do changes nothing.
+- **Gentle by default:** one worker, 20 rows a second, `--dry-run` and `--tenant` to try it on
+  one workspace first.
+- **From the REST API:** platform administrators can start a step with
+  `POST /v1/ops/document-migration` and follow it with `GET /v1/ops/document-migration`.
+
+Migration V405 adds the checkpoint table. See
+[Move documents to object storage](/admin/operating-apiome#move-documents-to-object-storage).
