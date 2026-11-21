@@ -22,6 +22,7 @@ from .schema_compatibility import (
     Overall,
     analyze_schema_compatibility,
 )
+from .spec_snapshot import load_classes_and_properties
 
 
 def compat_report_fingerprint(
@@ -154,10 +155,8 @@ def openapi_for_revision(
     project = db.get_project_by_id(version["project_id"], tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found for revision")
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, Any] = {}
-    for c in classes:
-        all_properties[c["id"]] = db.get_properties_for_class(c["id"])
+    # One query per table, not one per class (COA-5.5, #7081).
+    classes, all_properties = load_classes_and_properties(db, version["id"])
     return generate_openapi_spec(
         tenant_slug,
         project["slug"],

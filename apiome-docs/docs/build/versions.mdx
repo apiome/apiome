@@ -381,6 +381,11 @@ the [Version change report](../reference/rest/version-change-report.md) and
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
+  **Publishing** a version generates its OpenAPI document once and stores it, and
+  `GET /v1/schema/{tenant}/{project}/{version}` serves the stored bytes with an `ETag` until the
+  version changes. **Freezing** keeps those bytes even when the version is edited — see
+  [Freeze a version's schema](../ship/publish-a-version.md#freeze-a-versions-schema) and
+  [Rendered documents](../admin/document-store.mdx#rendered-documents).
   The **Sources** tab reads `GET /v1/tenants/{tenant}/projects/{project}/repository-sources?version=…`
   — see [Project repository sources](../reference/rest/project-repository-sources.md). **Sync back to
   repositories** calls `POST /v1/tenants/{tenant}/projects/{project}/pr-back` — see

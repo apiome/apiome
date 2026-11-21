@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.622.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.623.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 ## `GET /` {#root-get}
 
@@ -193,15 +193,21 @@ Operation id: `get_class_jsonschema_spec_v1_json__tenant_slug___project_slug___v
 
 Get the complete OpenAPI specification for all classes in a version.
 
+The document is rendered once per change of the version and kept in the document store
+(COA-5.5, #7081); later requests stream the stored bytes. The response carries
+``ETag: "<sha256>"``, the SHA-256 of the body. Send it back as ``If-None-Match`` to get
+``304 Not Modified`` with no body while the document is unchanged.
+
 Args:
     tenant_slug: The tenant slug
     project_slug: The project slug
     version_slug: The version ID (e.g., "1.0.0")
     x_api_key: Optional API key for private versions (header)
     api_key: Optional API key for private versions (query, for links)
+    if_none_match: Optional ETag(s) the client already holds
 
 Returns:
-    OpenAPI 3.1.0 specification in JSON format
+    OpenAPI 3.1.0 specification in JSON format, or 304 when ``If-None-Match`` matches
 
 Operation id: `get_version_openapi_spec_v1_schema__tenant_slug___project_slug___version_slug__get`
 
@@ -214,13 +220,16 @@ Operation id: `get_version_openapi_spec_v1_schema__tenant_slug___project_slug___
 | `version_slug` | path | string | yes | Semantic version label or version slug (for example ``1.0.0``). |
 | `api_key` | query | string or null | no | API key for private versions (alternative to X-API-Key header) |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `If-None-Match` | header | string or null | no | An ETag from an earlier response; the answer is 304 with no body when the document has not changed. |
 
 **Responses**
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for get version openapi spec. | `application/json` any |
+| 200 | The version's OpenAPI document. | `application/json` any |
+| 304 | The document still matches an ETag sent in If-None-Match; no body. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | The version is frozen and its stored document cannot be read. | — |
 
 ## `GET /v1/schema/{tenant_slug}/{project_slug}/{version_slug}/{class_name}` {#get-class-openapi-spec-v1-schema-tenant-slug-project-slug-version-slug-class-name-get}
 

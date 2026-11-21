@@ -14,9 +14,12 @@ three backends, and you choose one with environment variables on the `rest` serv
 | `s3` | A bucket on an S3-compatible service | Production. Works with AWS S3, MinIO, Garage, Cloudflare R2 and Google Cloud Storage (interoperability mode). |
 | `filesystem` | A directory on the REST host | Development and single-node installations. |
 
-Apiome writes two kinds of object to the store:
+Apiome writes four kinds of object to the store:
 
 - **The original document of every import** (see [Originals of imports](#originals-of-imports)).
+- **The generated OpenAPI document of a version**, kept until the version changes (see
+  [Rendered documents](#rendered-documents)).
+- **The frozen schema of a version** (see [Frozen schemas](#frozen-schemas)).
 - **Export downloads larger than the database threshold** (see
   [Large export downloads](#large-export-downloads)).
 
@@ -267,6 +270,71 @@ starts at `0` for every revision, including revisions that existed before the up
 migration adds the column without rewriting the `versions` table, so it is safe to run on a
 large, live database.
 
+## Rendered documents
+
+Apiome generates a version's OpenAPI document from its classes, properties and paths. For a large
+version this takes many database reads, so Apiome generates the document once and stores the
+bytes. The next request for the same version reads the stored object.
+
+| When | What Apiome does |
+| --- | --- |
+| The first request for a version | Generates the document, writes it to the store and records it in `version_documents` with the role `rendered_openapi`. |
+| A later request, version unchanged | Reads the stored bytes. It reads no class, property or path. |
+| The version is edited | The [content stamp](#how-the-content-stamp-changes) goes up, so the next request generates a new document. |
+| The project's slug, description or metadata changes | The next request generates a new document. |
+| The version is published | Generates and stores the document straight away, so the first reader gets stored bytes. |
+| Apiome's generator changes in an upgrade | The next request generates a new document. |
+
+`GET /v1/schema/{tenant}/{project}/{version}` serves these bytes. Its response has an
+`ETag` header, which is the SHA-256 of the document in double quotes. Send that value in
+`If-None-Match` and the answer is `304 Not Modified`, with no body, while the document is
+unchanged:
+
+```bash
+curl -sI https://api.example.com/v1/schema/acme/payments-api/2.1.0 | grep -i etag
+# etag: "7f2c…a041"
+
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -H 'If-None-Match: "7f2c…a041"' \
+  https://api.example.com/v1/schema/acme/payments-api/2.1.0
+# 304
+```
+
+Things to know:
+
+- **The document is the same as before.** The stored bytes are exactly what the generator
+  produces.
+- **Older documents stay in the store.** An edit leaves the previous document and its record in
+  place. Apiome does not yet remove unused objects.
+- **A store failure does not fail the request.** If the bucket cannot be reached, Apiome generates
+  the document for each request and serves it. The log has `rendered document not stored`.
+- **Rendered documents are not compressed**, so the stored object's SHA-256 is the `ETag`.
+- With `APIOME_DOCUMENT_STORE=db`, a document larger than `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` is
+  generated for each request. Use `s3` or `filesystem` for very large versions.
+
+A version with a canonical model (a non-OpenAPI import) also gets that model stored as JSON, with
+the role `rendered_canonical`, when it is published.
+
+### Frozen schemas
+
+[Freezing a version](../ship/publish-a-version.md#freeze-a-versions-schema) keeps its OpenAPI
+document byte-for-byte. The bytes are a store object, linked to the version with the role
+`frozen_schema`. The `version_spec_snapshots` row keeps the SHA-256, size, counts, who froze the
+version and the download count.
+
+| `APIOME_DOCUMENT_STORE` | Where the frozen bytes are |
+| --- | --- |
+| `s3`, `filesystem` | In the store only. The row's `content` column is empty. |
+| `db` | In the store and in the row's `content` column. |
+
+- If the store write fails during a freeze, the bytes are kept in the row and the freeze succeeds.
+- A version frozen before this release keeps its bytes in the row and is served from there.
+- **Unfreezing** removes the row and the link. The object stays in the store.
+- If a frozen version's bytes cannot be read from the store, `/v1/schema` answers `503`. It never
+  falls back to a newly generated document, because that could differ from the frozen one.
+
+Migration V404 makes the `content` column optional. It changes no rows.
+
 ## Troubleshooting
 
 Errors name the bucket and the provider's error code. Access keys and secret keys are never
@@ -280,6 +348,8 @@ written to an error or a log.
 | `… (AccessDenied: …)` | Grant the key read, write and delete on the prefix. |
 | `… (SignatureDoesNotMatch: …)` | Check the secret key, and that `REGION` matches the service. |
 | A host name like `bucket.host` does not resolve | Set `APIOME_DOCUMENT_STORE_ADDRESSING_STYLE=path`. |
+| `/v1/schema` answers `503` for a frozen version | The frozen object is missing from the bucket or directory. Restore it from a backup, or unfreeze the version and freeze it again. |
+| `rendered document not stored` in the REST log | The store refused the write. `/v1/schema` still works but generates the document for each request. Check the store settings above. |
 
 ## Where next
 

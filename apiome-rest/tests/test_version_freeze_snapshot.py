@@ -4,11 +4,15 @@ The rules in :mod:`app.spec_snapshot`, the ``…/freeze-schema`` POST / GET / DE
 ``GET /v1/schema`` serving the stored bytes — all with the database mocked. (A live-database run
 of the whole flow — freeze, edit a class, fetch byte-identical, unfreeze refused after downloads,
 forced unfreeze — was done by hand for the PR.)
+
+Since COA-5.5 (#7081) the frozen bytes are a document store object and ``/v1/schema`` answers with
+an ``ETag``; the store-backed flow runs against Postgres in ``tests/test_rendered_documents_db.py``.
 """
 
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 from typing import Any, Dict, Optional
 from unittest.mock import MagicMock, patch
@@ -18,6 +22,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.main import app
+from app.rendered_documents import KIND_OPENAPI, RenderedDocument
 from app.spec_snapshot import (
     CODE_DOWNLOADED,
     CODE_FORCE_REQUIRES_ADMIN,
@@ -48,13 +53,16 @@ def test_rendered_bytes_match_what_json_response_sends() -> None:
 def test_the_live_spec_counts_classes_properties_and_paths() -> None:
     db = MagicMock()
     db.get_classes_for_version.return_value = [{"id": "c1"}, {"id": "c2"}]
-    db.get_properties_for_class.side_effect = [[{"name": "a"}, {"name": "b"}], [{"name": "c"}]]
+    db.get_properties_for_classes.return_value = {"c1": [{"name": "a"}, {"name": "b"}], "c2": [{"name": "c"}]}
     with patch(
         "app.spec_snapshot.generate_openapi_spec",
         return_value={"paths": {"/charges": {}, "/refunds": {}, "/x": {}}},
     ):
         spec, counts = build_live_spec(db, {"id": "v1"}, "acme", "payments", "2.1.0")
     assert counts == SpecCounts(classes=2, properties=3, paths=3)
+    # One query for every class's properties, not one per class (COA-5.5).
+    db.get_properties_for_classes.assert_called_once_with(["c1", "c2"])
+    db.get_properties_for_class.assert_not_called()
     assert "/charges" in spec["paths"]
 
 
@@ -119,6 +127,8 @@ def _call(
     snapshot: Optional[Dict[str, Any]] = None,
     is_admin: bool = False,
     inserted: Any = "default",
+    in_store: bool = True,
+    columns_kept: bool = True,
 ):
     app.dependency_overrides[validate_authentication] = lambda: _AUTH
     try:
@@ -127,7 +137,10 @@ def _call(
             patch("app.versions_routes.enforce_permission"),
             patch("app.versions_routes.get_authenticated_user_id", return_value="user-1"),
             patch("app.versions_routes.build_live_spec", return_value=(_SPEC, SpecCounts(1, 2, 1))),
+            patch("app.versions_routes.store_frozen_schema", return_value=in_store) as store_frozen,
+            patch("app.versions_routes.legacy_source_columns_kept", return_value=columns_kept),
         ):
+            mock_db.store_frozen_schema = store_frozen
             mock_db.get_version_by_id.return_value = version if version is not None else _VERSION
             mock_db.get_version_by_slugs.return_value = {"id": "v1"}
             mock_db.get_spec_snapshot.return_value = snapshot
@@ -158,6 +171,42 @@ def test_freeze_stores_the_rendered_bytes_and_returns_the_sha() -> None:
     assert (body["classCount"], body["propertyCount"], body["pathCount"]) == (1, 2, 1)
     assert db.insert_spec_snapshot.call_args.kwargs["content"] == content
     db.freeze_version_schema.assert_not_called()  # class schemas were already captured
+    # The same bytes went to the document store as the version's frozen_schema object (COA-5.5).
+    db.store_frozen_schema.assert_called_once_with("tenant-1", "v1", content)
+
+
+def test_freeze_with_an_object_backend_keeps_only_metadata_in_the_row() -> None:
+    response, db = _call("POST", columns_kept=False)
+    assert response.status_code == 200, response.text
+    content = render_spec_bytes(_SPEC)
+    # The row is written with its bytes first, then they are dropped once the store has them.
+    assert db.insert_spec_snapshot.call_args.kwargs["content"] == content
+    db.clear_spec_snapshot_content.assert_called_once_with("v1")
+    assert response.json()["sizeBytes"] == len(content)
+
+
+def test_freeze_with_the_db_backend_keeps_the_bytes_in_the_row() -> None:
+    _response, db = _call("POST", columns_kept=True)
+    db.store_frozen_schema.assert_called_once()
+    db.clear_spec_snapshot_content.assert_not_called()
+
+
+def test_freeze_keeps_the_bytes_in_the_row_when_the_store_did_not_take_them() -> None:
+    response, db = _call("POST", columns_kept=False, in_store=False)
+    assert response.status_code == 200, response.text
+    db.clear_spec_snapshot_content.assert_not_called()
+
+
+def test_a_lost_freeze_race_links_no_object() -> None:
+    response, db = _call("POST", inserted=None, columns_kept=False)
+    assert response.status_code == 409
+    db.store_frozen_schema.assert_not_called()
+    db.clear_spec_snapshot_content.assert_not_called()
+
+
+def test_a_dry_run_does_not_write_to_the_store() -> None:
+    _response, db = _call("POST", json_body={"dryRun": True})
+    db.store_frozen_schema.assert_not_called()
 
 
 def test_freeze_captures_class_schemas_when_missing() -> None:
@@ -270,34 +319,122 @@ def test_row_summary_strips_the_char_padding() -> None:
 
 # --- /v1/schema ------------------------------------------------------------------------------
 
+_LIVE = render_spec_bytes(_SPEC)
+_LIVE_SHA = hashlib.sha256(_LIVE).hexdigest()
 
-def _schema_get(snapshot: Optional[Dict[str, Any]]):
+
+def _document(content: bytes = _LIVE) -> RenderedDocument:
+    return RenderedDocument(
+        tenant_id="tenant-1",
+        version_id="v1",
+        kind=KIND_OPENAPI,
+        sha256=hashlib.sha256(content).hexdigest(),
+        size_bytes=len(content),
+        content_stamp=3,
+        generator="apiome-openapi",
+        generator_version="1+0",
+        cached=True,
+        stored=True,
+        _content=content,
+    )
+
+
+def _schema_get(
+    snapshot: Optional[Dict[str, Any]],
+    *,
+    headers: Optional[Dict[str, str]] = None,
+    stored_object: Optional[bytes] = None,
+):
+    """GET /v1/schema with the database mocked.
+
+    ``snapshot`` is the frozen row (its ``content`` key is only returned by the with-content read);
+    ``stored_object`` is what the document store holds for a frozen version.
+    """
+    meta = {k: v for k, v in (snapshot or {}).items() if k != "content"} or None
     with (
         patch("app.main.db") as mock_db,
         patch("app.main.validate_private_access"),
-        patch("app.main.build_live_spec", return_value=(_SPEC, SpecCounts(1, 0, 1))) as live,
+        patch("app.main.rendered_document", return_value=_document()) as live,
+        patch(
+            "app.main.open_frozen_schema",
+            return_value=io.BytesIO(stored_object) if stored_object is not None else None,
+        ) as frozen_object,
     ):
-        mock_db.get_version_by_slugs.return_value = {"id": "v1", "published": True, "visibility": "public"}
-        mock_db.get_spec_snapshot.return_value = snapshot
-        response = client.get("/v1/schema/acme/payments/2.1.0")
+        mock_db.get_version_by_slugs.return_value = {
+            "id": "v1", "published": True, "visibility": "public", "tenant_id": "tenant-1",
+        }
+        mock_db.get_spec_snapshot.side_effect = lambda _id, with_content=False: (
+            snapshot if with_content else meta
+        )
+        mock_db.frozen_object = frozen_object
+        response = client.get("/v1/schema/acme/payments/2.1.0", headers=headers or {})
         return response, mock_db, live
 
 
 def test_a_frozen_version_serves_the_stored_bytes_and_counts_the_download() -> None:
     stored = b'{"openapi":"3.1.0","frozen":true}'
-    response, db, live = _schema_get({**_SNAPSHOT, "content": stored})
+    response, db, live = _schema_get({**_SNAPSHOT, "size_bytes": len(stored), "content": stored})
     assert response.status_code == 200
     assert response.content == stored
     assert response.headers["content-type"].startswith("application/json")
     assert response.headers["x-apiome-snapshot-sha256"] == "ab" * 32
+    assert response.headers["etag"] == '"' + "ab" * 32 + '"'
+    assert response.headers["content-length"] == str(len(stored))
+    db.record_spec_snapshot_download.assert_called_once_with("v1")
+    db.frozen_object.assert_not_called()  # the row still has the bytes
+    live.assert_not_called()
+
+
+def test_a_frozen_version_without_row_bytes_is_read_from_the_document_store() -> None:
+    stored = b'{"openapi":"3.1.0","frozen":true}'
+    response, db, live = _schema_get(
+        {**_SNAPSHOT, "size_bytes": len(stored), "content": None}, stored_object=stored
+    )
+    assert response.status_code == 200 and response.content == stored
+    db.frozen_object.assert_called_once_with("tenant-1", "ab" * 32)
     db.record_spec_snapshot_download.assert_called_once_with("v1")
     live.assert_not_called()
 
 
-def test_an_unfrozen_version_is_generated_live() -> None:
+def test_a_frozen_version_whose_bytes_are_gone_is_a_503_not_a_live_render() -> None:
+    response, db, live = _schema_get({**_SNAPSHOT, "content": None})
+    assert response.status_code == 503
+    db.record_spec_snapshot_download.assert_not_called()
+    live.assert_not_called()
+
+
+def test_a_frozen_version_answers_304_to_a_matching_etag_without_counting_a_download() -> None:
+    response, db, _live = _schema_get(
+        {**_SNAPSHOT, "content": b"{}"}, headers={"If-None-Match": '"' + "ab" * 32 + '"'}
+    )
+    assert response.status_code == 304 and response.content == b""
+    assert response.headers["etag"] == '"' + "ab" * 32 + '"'
+    db.record_spec_snapshot_download.assert_not_called()
+
+
+def test_an_unfrozen_version_serves_the_rendered_document_with_its_etag() -> None:
     response, db, live = _schema_get(None)
     assert response.status_code == 200
     assert json.loads(response.content) == _SPEC
-    assert response.content == render_spec_bytes(_SPEC)
+    assert response.content == _LIVE
+    assert response.headers["etag"] == f'"{_LIVE_SHA}"'
+    assert response.headers["content-length"] == str(len(_LIVE))
+    assert response.headers["content-type"].startswith("application/json")
+    assert "x-apiome-snapshot-sha256" not in response.headers
     db.record_spec_snapshot_download.assert_not_called()
-    live.assert_called_once()
+    live.assert_called_once_with("v1", KIND_OPENAPI, tenant_id="tenant-1", database=db)
+
+
+@pytest.mark.parametrize(
+    "header",
+    [f'"{_LIVE_SHA}"', f'W/"{_LIVE_SHA}"', f'"other", "{_LIVE_SHA}"', "*"],
+)
+def test_an_unfrozen_version_answers_304_to_a_matching_etag(header: str) -> None:
+    response, _db, _live = _schema_get(None, headers={"If-None-Match": header})
+    assert response.status_code == 304 and response.content == b""
+    assert response.headers["etag"] == f'"{_LIVE_SHA}"'
+
+
+def test_a_stale_etag_gets_the_document() -> None:
+    response, _db, _live = _schema_get(None, headers={"If-None-Match": '"' + "00" * 32 + '"'})
+    assert response.status_code == 200 and response.content == _LIVE

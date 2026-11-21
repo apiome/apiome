@@ -140,6 +140,8 @@ from .rate_limit import FixedWindowRateLimiter
 from .publication_changelog import generate_version_changelog_on_publish
 from .project_timeline import publish_audit_detail
 from .publish_notifications import notify_version_published_on_publish
+from .original_documents import legacy_source_columns_kept
+from .rendered_documents import store_frozen_schema, warm_rendered_documents
 from .spec_snapshot import (
     CODE_ALREADY_FROZEN,
     CODE_NOT_FROZEN,
@@ -2341,6 +2343,13 @@ async def publish_version(
         actor_id=user_id,
     )
 
+    # COA-5.5 (#7081): render the published revision's documents into the document store now, so
+    # its readers are served stored bytes. Best-effort; never fails the publish.
+    background_tasks.add_task(
+        warm_rendered_documents,
+        auth_data["tenant_id"],
+        version_record_id,
+    )
     # GVM-4.3 (#5878): render the revision's stored overlay chain and record the resolved
     # document's fingerprint beside the source fingerprint. Best-effort; never fails the publish.
     background_tasks.add_task(
@@ -4257,7 +4266,8 @@ async def freeze_version_schema(
 
     Stores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,
     that route returns them verbatim, so later edits to the version's classes, properties and paths
-    do not change the downloaded document. Also captures the class schemas into
+    do not change the downloaded document. The bytes are written to the document store as the
+    version's ``frozen_schema`` object (COA-5.5, #7081). Also captures the class schemas into
     ``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).
 
     * Only **published** versions can be frozen (409 ``version_not_published``).
@@ -4321,6 +4331,12 @@ async def freeze_version_schema(
             status_code=409,
             detail={"code": CODE_ALREADY_FROZEN, "message": f"{label} is already frozen."},
         )
+    # COA-5.5 (#7081): the bytes become the version's frozen_schema object in the document store.
+    # The row is written first, so a lost freeze race never links an object. With an s3 or
+    # filesystem store the row then keeps the metadata only; with the db backend, or when the
+    # store did not take the bytes, the row keeps them.
+    if store_frozen_schema(auth_data["tenant_id"], version_record_id, content) and not legacy_source_columns_kept():
+        db.clear_spec_snapshot_content(version_record_id)
     frozen = summarize(content=content, counts=counts, url=url, frozen=True, snapshot_row=row)
     return _freeze_response(existing, frozen)
 

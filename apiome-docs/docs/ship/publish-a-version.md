@@ -156,11 +156,16 @@ tenant administrator is refused with `403` `silent_requires_admin`.
 
 ## Freeze a version's schema
 
-`GET /v1/schema/{tenant}/{project}/{version}` normally builds the OpenAPI document from the
+`GET /v1/schema/{tenant}/{project}/{version}` normally serves the OpenAPI document of the
 version's **current** classes, properties and paths, so editing a published version changes what
 consumers download. **Freezing** stores the document byte-for-byte; while a version is frozen,
 `/v1/schema` serves exactly those bytes — the right thing to point an SDK generator at. Only a
 **published** version can be frozen, by its creator or a tenant administrator.
+
+Apiome generates the document when you publish and keeps it in the
+[document store](../admin/document-store.mdx#rendered-documents). It generates a new one only after
+the version changes. Every `/v1/schema` response has an `ETag` header, the SHA-256 of the document
+in double quotes. Send it back in `If-None-Match` to get `304 Not Modified` when nothing changed.
 
 ### With the CLI
 
@@ -182,7 +187,8 @@ apiome versions freeze payments-api v2.1.0
 1. **Run** `apiome versions freeze <project> <version>`. The summary comes from the server, so the
    SHA-256 is the one consumers will see.
 2. **Answer `y`** to freeze, or pass `--yes` in a script.
-3. **Verify** a download: the response carries the SHA-256 in the `X-Apiome-Snapshot-Sha256` header.
+3. **Verify** a download: the response carries the SHA-256 in the `X-Apiome-Snapshot-Sha256` header
+   and, in double quotes, in the `ETag` header.
 
 With `--json` the command prints `{ "frozen": true, "sha256": "…", "size_bytes": …, "snapshot_url": "…" }`
 plus the counts.
@@ -190,8 +196,9 @@ plus the counts.
 **Unfreeze** with `apiome versions freeze <project> <version> --unfreeze`. Every fetch of the
 frozen `/v1/schema` URL is counted; once anyone has downloaded the snapshot, unfreezing is refused
 (exit `6`) because a consumer may depend on its bytes. A tenant administrator can still unfreeze
-with `--force-unfreeze`. After an unfreeze, `/v1/schema` is generated from the version's current
-classes again.
+with `--force-unfreeze`. After an unfreeze, `/v1/schema` serves the document of the version's
+current classes again. A request that sends a matching `If-None-Match` gets `304` and is not
+counted as a download.
 
 Only the version document at `/v1/schema/{tenant}/{project}/{version}` is frozen. Per-class
 documents, Swagger UI, `/v1/json` and `/v1/arazzo` are still generated live.

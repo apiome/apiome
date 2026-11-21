@@ -1,0 +1,30 @@
+---
+slug: rendered-document-cache
+title: "Rendered document cache for revisions"
+description: "A version's OpenAPI document is generated once, stored, and served with an ETag."
+authors: [apiome]
+---
+
+Apiome now generates a version's OpenAPI document once and keeps it in the
+[document store](/admin/document-store#rendered-documents). Requests for an unchanged version read
+the stored bytes and no longer read the version's classes, properties and paths.
+
+{/* truncate */}
+
+- **`/v1/schema` is served from the store:** the first request generates the document and
+  stores it. Later requests stream the stored bytes. The document itself is unchanged.
+- **`ETag` and `If-None-Match`:** every `GET /v1/schema/{tenant}/{project}/{version}` response
+  has `ETag: "<sha256>"`. Send it back in `If-None-Match` to get `304 Not Modified` with no body.
+- **Edits are picked up at once:** an edit to the version, or to its project's slug, description
+  or metadata, makes the next request generate a new document.
+- **Publishing prepares the document:** a published version's document is generated and stored
+  at publish, so its first reader gets stored bytes.
+- **Frozen schemas move to the store:** a newly frozen version's bytes are a store object. With
+  `s3` or `filesystem` the database row keeps only the SHA-256, size and counts. Versions frozen
+  earlier still work.
+- **A faster first render:** the properties of all classes are loaded in one query, not one per
+  class.
+
+Migration V404 runs with the upgrade and changes no rows. See
+[Rendered documents](/admin/document-store#rendered-documents) and
+[Freeze a version's schema](/ship/publish-a-version#freeze-a-versions-schema).

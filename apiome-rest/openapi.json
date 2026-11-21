@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.622.0",
+    "version": "1.623.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -67781,7 +67781,7 @@
           "versions"
         ],
         "summary": "Freeze Version Schema",
-        "description": "Freeze a published version's OpenAPI document (#3214).\n\nStores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,\nthat route returns them verbatim, so later edits to the version's classes, properties and paths\ndo not change the downloaded document. Also captures the class schemas into\n``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).\n\n* Only **published** versions can be frozen (409 ``version_not_published``).\n* A version already frozen is 409 ``already_frozen`` (with its SHA-256).\n* ``dryRun`` returns the snapshot that would be stored without writing anything.\n* Only the version creator or a tenant administrator can freeze.\n\nReturns:\n    ``frozen``, ``sha256``, ``sizeBytes``, ``snapshotUrl`` and the class / property / path counts.",
+        "description": "Freeze a published version's OpenAPI document (#3214).\n\nStores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,\nthat route returns them verbatim, so later edits to the version's classes, properties and paths\ndo not change the downloaded document. The bytes are written to the document store as the\nversion's ``frozen_schema`` object (COA-5.5, #7081). Also captures the class schemas into\n``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).\n\n* Only **published** versions can be frozen (409 ``version_not_published``).\n* A version already frozen is 409 ``already_frozen`` (with its SHA-256).\n* ``dryRun`` returns the snapshot that would be stored without writing anything.\n* Only the version creator or a tenant administrator can freeze.\n\nReturns:\n    ``frozen``, ``sha256``, ``sizeBytes``, ``snapshotUrl`` and the class / property / path counts.",
         "operationId": "freeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_post",
         "parameters": [
           {
@@ -129694,7 +129694,7 @@
     "/v1/schema/{tenant_slug}/{project_slug}/{version_slug}": {
       "get": {
         "summary": "Get Version Openapi Spec",
-        "description": "Get the complete OpenAPI specification for all classes in a version.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    x_api_key: Optional API key for private versions (header)\n    api_key: Optional API key for private versions (query, for links)\n\nReturns:\n    OpenAPI 3.1.0 specification in JSON format",
+        "description": "Get the complete OpenAPI specification for all classes in a version.\n\nThe document is rendered once per change of the version and kept in the document store\n(COA-5.5, #7081); later requests stream the stored bytes. The response carries\n``ETag: \"<sha256>\"``, the SHA-256 of the body. Send it back as ``If-None-Match`` to get\n``304 Not Modified`` with no body while the document is unchanged.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_slug: The project slug\n    version_slug: The version ID (e.g., \"1.0.0\")\n    x_api_key: Optional API key for private versions (header)\n    api_key: Optional API key for private versions (query, for links)\n    if_none_match: Optional ETag(s) the client already holds\n\nReturns:\n    OpenAPI 3.1.0 specification in JSON format, or 304 when ``If-None-Match`` matches",
         "operationId": "get_version_openapi_spec_v1_schema__tenant_slug___project_slug___version_slug__get",
         "parameters": [
           {
@@ -129769,18 +129769,58 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version OpenAPI Spec If None Match schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version OpenAPI Spec If None Match schema."
+                }
+              ],
+              "description": "An ETag from an earlier response; the answer is 304 with no body when the document has not changed.",
+              "title": "If-None-Match"
+            },
+            "description": "An ETag from an earlier response; the answer is 304 with no body when the document has not changed."
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful response for get version openapi spec.",
+            "description": "The version's OpenAPI document.",
             "content": {
               "application/json": {
                 "schema": {
                   "description": "Response payload for get version openapi specresponse200."
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "description": "The SHA-256 of the response body, in double quotes.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Apiome-Snapshot-Sha256": {
+                "description": "The SHA-256 of the frozen snapshot; only sent for a frozen version.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
+          },
+          "304": {
+            "description": "The document still matches an ETag sent in If-None-Match; no body."
+          },
+          "503": {
+            "description": "The version is frozen and its stored document cannot be read."
           },
           "422": {
             "description": "Validation Error",

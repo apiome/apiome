@@ -3,8 +3,13 @@
 ``GET /v1/schema/{tenant}/{project}/{version}`` normally builds the OpenAPI document from the
 version's live classes, properties and paths. Freezing stores the exact response bytes in
 ``apiome.version_spec_snapshots`` (V279); while frozen, the route serves those bytes verbatim, so
-later class edits never change what consumers download.
+later class edits never change what consumers download. Since COA-5.5 (#7081) the bytes are a
+document store object (:func:`app.rendered_documents.store_frozen_schema`) and the row keeps the
+metadata; an unfrozen version is served from the rendered document cache
+(:func:`app.rendered_documents.rendered_document`), which generates through this module.
 
+* :func:`load_classes_and_properties` — a version's classes and all their properties, in two
+  queries (COA-5.5, #7081);
 * :func:`build_live_spec` — the document ``/v1/schema`` generates, plus what it holds;
 * :func:`render_spec_bytes` — the bytes the route sends (Starlette ``JSONResponse`` form), so a
   snapshot taken now is byte-identical to the live response at that moment;
@@ -17,7 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .openapi_generator import generate_openapi_spec
 
@@ -38,6 +43,22 @@ class SpecCounts:
     paths: int
 
 
+def load_classes_and_properties(db: Any, version_id: Any) -> Tuple[List[Dict[str, Any]], Dict[Any, Any]]:
+    """Load a version's classes and every class's properties: one query per table.
+
+    Args:
+        db: Database handle (``get_classes_for_version``, ``get_properties_for_classes``).
+        version_id: The version (``versions.id``).
+
+    Returns:
+        ``(classes, all_properties)`` where ``all_properties`` maps each class id to its property
+        rows, in the order :func:`app.openapi_generator.generate_openapi_spec` expects.
+    """
+    classes = db.get_classes_for_version(version_id)
+    all_properties = db.get_properties_for_classes([class_data["id"] for class_data in classes])
+    return classes, all_properties
+
+
 def build_live_spec(
     db: Any,
     version: Mapping[str, Any],
@@ -48,7 +69,7 @@ def build_live_spec(
     """Generate the OpenAPI 3.1 document ``/v1/schema`` serves for an unfrozen version.
 
     Args:
-        db: Database handle (``get_classes_for_version``, ``get_properties_for_class``).
+        db: Database handle (``get_classes_for_version``, ``get_properties_for_classes``).
         version: The version row from ``get_version_by_slugs`` (needs ``id``, ``metadata``,
             ``project_description``, ``project_metadata``).
         tenant_slug: Tenant slug used in the document's URLs.
@@ -58,10 +79,7 @@ def build_live_spec(
     Returns:
         The document and its :class:`SpecCounts`.
     """
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[Any, Any] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
+    classes, all_properties = load_classes_and_properties(db, version["id"])
     spec = generate_openapi_spec(
         tenant_slug,
         project_slug,
