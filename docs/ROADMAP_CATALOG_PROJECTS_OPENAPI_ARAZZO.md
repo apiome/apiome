@@ -292,7 +292,6 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-3.5 · [#7056](https://github.com/apiome/apiome/issues/7056) | Sign-offs owed on closed export tickets #6223, #6227, #6229 | Verify the three closed tickets against their acceptance criteria and record the result | `documentation`, `mvp` | Y | Y | S | apiome-ui, apiome-docs |
 | COA-3.6 · [#7057](https://github.com/apiome/apiome/issues/7057) | Triage the deferred export tickets and the "not planned" list | Check the state of every RC7/RC8 export ticket; close the not-planned ones with the stated reason; ticket what remains | `documentation`, `mvp` | Y | Y | S | docs |
 
 **✅ COA-3.1 · #7052 Silent-loss ledger burn-down — Complete**
@@ -340,7 +339,7 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-studio.mdx`; screenshots: n/a (no UI change)
 
-**COA-3.5 · #7056 Sign-offs owed on closed export tickets #6223, #6227, #6229**
+**✅ COA-3.5 · #7056 Sign-offs owed on closed export tickets #6223, #6227, #6229 — Complete**
 - **Problem:** Three tickets closed with a sign-off still owed (X2, X6, X8).
 - **Solution/Scope:**
 - Walk each ticket's criteria in the running app; file defects for any miss; comment the result.
