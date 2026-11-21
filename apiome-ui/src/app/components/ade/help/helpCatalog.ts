@@ -477,6 +477,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['diagram', 'erd', 'service map', 'mapping graph', 'fidelity overlay', 'picture'],
   },
   {
+    id: 'import-and-export-fidelity',
+    title: 'Import and export fidelity',
+    summary: 'How Apiome reports every loss, maps scalars, reads exports back and checks them.',
+    page: 'apiome-docs/docs/ship/import-and-export-fidelity.mdx',
+    section: 'reference',
+    keywords: ['overview', 'silent loss', 'round trip', 'scalar', 'validation', 'read back'],
+  },
+  {
     id: 'export-fidelity',
     title: 'Understand export fidelity',
     summary:

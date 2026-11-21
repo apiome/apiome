@@ -1,0 +1,84 @@
+---
+title: Import and export fidelity
+description: "How Apiome reports every loss, maps scalars, reads exports back and checks them."
+sidebar_position: 5.95
+tags: [export, import, fidelity, overview]
+---
+
+Apiome converts an item from the format it was imported in to any of its export targets. Each
+conversion is held to four promises:
+
+- **Every loss is reported.** If a file reads back differently from the item, the fidelity report
+  says what changed and why. It never says "nothing lost" about a file that lost something.
+- **Every scalar is the target's own type.** An `int64` stays 64-bit. Where a target has no type
+  big enough, the report says so.
+- **Every exported file reads back.** An export imports back into Apiome. A target that has nothing
+  to write for a source refuses it, with the reason, before writing anything.
+- **Every export is checked, or says it was not.** A file is validated before you can download it.
+  A format with no check reads **Not validated**, never as a pass.
+
+Each part has its own section. This page shows how they fit together.
+
+## When to read this
+
+- **You export to another format than the one you imported.** A Protobuf item exported as OpenAPI,
+  an agent card as WIT or a REST API as GraphQL changes names, kinds and metadata. The report lists
+  each change, so you can decide before you ship the file.
+- **A tool downstream reads the file.** The file is checked against its format, and its scalar types
+  are the ones that tool expects.
+- **You want to know how far to trust the report.** Every pair of source format and target is tested
+  on each change, and no pair may lose something the report does not name.
+
+## The promises at a glance
+
+| You want to know… | Where you see it | Details |
+| --- | --- | --- |
+| **What a conversion to another format changes**: the kind of API, renamed operations and types, metadata the target has no field for | The fidelity report in the **Export** dialog and Export studio, `apiome export evidence` | [Exports from another format](./export-fidelity.md#cross-format) |
+| **How each scalar is written** in ASN.1, Avro, OMG IDL, FlatBuffers, TypeSpec, XSD and WSDL, and where a value can be narrowed | The fidelity report (**approximated**, `warn`) | [Scalar types](./export-fidelity.md#scalar-types) |
+| **Whether the file imports back**, or why a target is greyed out | The **Export** dialog's target grid, the export job | [Every exported file reads back](./export-fidelity.md#reimport) |
+| **Whether the file is legal in its format** | The **Validation** tab and the verdict banner in Export studio, the export job | [How an export is checked](./check-an-export.mdx), [Formats checked against their specification](./check-an-export.mdx#formats-checked-against-their-specification) |
+| **How the promises are tested** | The repository's export grid | [How exports are tested](./export-fidelity.md#how-exports-are-tested) |
+
+## How the pieces fit
+
+1. **Before the export runs, the report predicts what changes.** The target grid ranks each target
+   and the fidelity report lists every construct that is **dropped**, **approximated** or
+   **synthesized**. A conversion to another format also lists what belongs to no single operation or
+   type: the kind of API the file reads back as, each name the target rewrites, and the document's
+   title, namespace or version when the target has no place for them. An item exported back to its
+   own format lists none of these.
+2. **Each scalar is written as the target's type.** An OpenAPI `integer` or `number` takes its width
+   from its `format`. When the target's nearest type cannot hold every value (Avro's `long` for an
+   unsigned 64-bit value, `double` for a decimal with no precision), the report lists it as
+   **approximated**.
+3. **A target that cannot hold the source refuses it.** ASN.1, CDDL, FlatBuffers and XSD need a type;
+   WADL and RAML need an HTTP operation or a type; an Avro `.avsc` needs a type. Such a target is
+   greyed out in the **Export** dialog with the reason, instead of exporting an empty file.
+4. **The written file is read back and checked.** Apiome imports the file with its own importer for
+   the format and, where the server has it, runs the format's own tool. CloudEvents, XML-RPC, MCP and
+   A2A files are also checked against the rules of their specification. An **Invalid** file is
+   blocked; a format with no check is delivered as **Not validated**.
+5. **Every pair is tested, and the list of silent losses stays empty.** One example per import
+   format is exported to every target on each change. Each pair must be exported, lossy with a
+   report, or refused with a reason. A pair whose file reads back differently with nothing in the
+   report fails the build.
+
+## From the command line
+
+```bash
+apiome export targets --project payments-api --version 1.4.0          # every target, ranked, with its tier
+apiome export evidence --project payments-api --version 1.4.0 --target avro   # each construct's fate and why
+apiome export grpc --project payments-api --version 1.4.0 --output payments.proto    # proto3
+apiome export avro --project payments-api --version 1.4.0 --force --output payments.avsc   # accept a lossy export
+```
+
+A lossy export exits non-zero unless you pass `--force` (or confirm at a prompt). See
+[`apiome export`](../reference/cli/export.md) in the CLI reference.
+
+## Where next
+
+- [Understand export fidelity](./export-fidelity.md) — tiers, statuses, reasons and the risk
+  acknowledgement
+- [How an export is checked](./check-an-export.mdx) — validation verdicts and lint
+- [Export a spec](./export-a-spec.md) — every format the **Export** dialog offers
+- [OpenAPI in Apiome](../build/openapi.mdx) — OpenAPI imports and exports at every version

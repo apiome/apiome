@@ -1,0 +1,27 @@
+---
+slug: import-and-export-fidelity
+title: "Import and export fidelity"
+description: "Every loss reported, exact scalars, every export reads back and is checked."
+authors: [apiome]
+---
+
+A conversion from one format to another now says exactly what it changes, writes each scalar as the
+target's own type, imports back into Apiome, and is checked before you download it. A new
+[Import and export fidelity](/ship/import-and-export-fidelity) page shows how the pieces fit.
+
+{/* truncate */}
+
+- **Every loss reported:** an export to another format lists the kind of API the file reads back as,
+  each operation or type written under another name, and the source details the target has no
+  field for. No pair of import format and export target loses something the report does not name.
+- **Exact scalars:** ASN.1, Avro, OMG IDL, FlatBuffers, TypeSpec, WSDL and XSD exports write every
+  scalar as the target's own type, and an `int64` stays 64-bit. Where a target has no type big
+  enough, the fidelity report says so.
+- **Every export reads back:** AsyncAPI, Protobuf, Connect RPC and ONC RPC exports of an item from
+  another format import back. ASN.1, WADL, CDDL, FlatBuffers, XSD and RAML are greyed out, with the
+  reason, for a source they cannot hold anything of, instead of exporting an empty file.
+- **Every export checked:** CloudEvents, XML-RPC, Connect RPC, Kafka Connect, MCP and A2A exports
+  are validated before delivery. Where no check exists, Export studio says **Not validated** instead
+  of reading as a pass.
+
+See [Import and export fidelity](/ship/import-and-export-fidelity).
