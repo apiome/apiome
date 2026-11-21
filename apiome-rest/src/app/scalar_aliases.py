@@ -10,8 +10,13 @@ writes those names as type references, and the file does not compile — Protobu
 This module reduces a spelling (plus its ``format``) to a small set of :data:`ScalarKind` values,
 and each emitter maps a kind to its own keyword (:data:`PROTO_SCALAR_FOR_KIND`,
 :data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`, :data:`OMG_IDL_SCALAR_FOR_KIND`,
-:data:`SMITHY_SCALAR_FOR_KIND`).
+:data:`SMITHY_SCALAR_FOR_KIND`, :data:`AVRO_SCALAR_FOR_KIND`, :data:`FLATBUFFERS_SCALAR_FOR_KIND`,
+:data:`ASN1_SCALAR_FOR_KIND`, :data:`TYPESPEC_SCALAR_FOR_KIND`, :data:`XSD_SCALAR_FOR_KIND`).
 Stored canonical models are untouched; only the emitted text changes.
+
+An emitter whose own table predates this module keeps it for bare spellings, and asks
+:func:`format_kind` first so a ``format`` that names a width is never ignored — COA-3.2 (#7053):
+Avro wrote ``integer`` + ``int64`` as ``int``.
 
 Only spellings with one clear meaning are listed. A name that is not listed — a named type, or a
 scalar such as ``decimal`` or ``date`` whose mapping is a choice — resolves to ``None``, and the
@@ -20,15 +25,22 @@ emitter keeps its previous behaviour for it.
 
 from __future__ import annotations
 
-from typing import Dict, Mapping, Optional
+from typing import Dict, Mapping, Optional, Tuple
 
 __all__ = [
+    "ASN1_SCALAR_FOR_KIND",
+    "AVRO_SCALAR_FOR_KIND",
     "CAPNP_SCALAR_FOR_KIND",
+    "FLATBUFFERS_SCALAR_FOR_KIND",
+    "INTEGER_RANGE_FOR_KIND",
     "OMG_IDL_SCALAR_FOR_KIND",
     "SMITHY_SCALAR_FOR_KIND",
     "PROTO_SCALAR_FOR_KIND",
     "THRIFT_SCALAR_FOR_KIND",
+    "TYPESPEC_SCALAR_FOR_KIND",
+    "XSD_SCALAR_FOR_KIND",
     "ScalarKind",
+    "format_kind",
     "scalar_kind",
     "target_scalar",
 ]
@@ -52,19 +64,23 @@ _FIXED_KINDS: Dict[str, ScalarKind] = {
     "i32": "int32",
     "int32": "int32",
     "sint32": "int32",
-    "fixed32": "int32",
     "sfixed32": "int32",
     "i64": "int64",
     "int64": "int64",
     "sint64": "int64",
-    "fixed64": "int64",
     "sfixed64": "int64",
     "long": "int64",
-    # unsigned integers
+    # unsigned integers (Protobuf's ``fixed32`` / ``fixed64`` are unsigned)
+    "u8": "uint8",
     "uint8": "uint8",
+    "u16": "uint16",
     "uint16": "uint16",
+    "u32": "uint32",
     "uint32": "uint32",
+    "fixed32": "uint32",
+    "u64": "uint64",
     "uint64": "uint64",
+    "fixed64": "uint64",
     # reals
     "float": "float",
     "f32": "float",
@@ -76,6 +92,7 @@ _FIXED_KINDS: Dict[str, ScalarKind] = {
     "text": "string",
     "bytes": "bytes",
     "binary": "bytes",
+    "blob": "bytes",
 }
 
 #: JSON Schema ``integer`` / ``number`` ``format`` values that pick a width (OpenAPI's registry).
@@ -171,6 +188,134 @@ SMITHY_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
     "string": "String",
     "bytes": "Blob",
 }
+
+#: Avro primitive per kind. Avro has only 32- and 64-bit signed integers: a smaller integer widens to
+#: ``int``, ``uint32`` to ``long``, and ``uint64`` *narrows* to ``long`` (values above 2^63 − 1 do
+#: not fit) — the emitter reports it.
+AVRO_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "boolean",
+    "int8": "int",
+    "int16": "int",
+    "int32": "int",
+    "int64": "long",
+    "uint8": "int",
+    "uint16": "int",
+    "uint32": "long",
+    "uint64": "long",
+    "float": "float",
+    "double": "double",
+    "string": "string",
+    "bytes": "bytes",
+}
+
+#: FlatBuffers scalar per kind. FlatBuffers has every width, signed and unsigned, so nothing widens;
+#: ``bytes`` is a vector of ``ubyte``.
+FLATBUFFERS_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "bool",
+    "int8": "byte",
+    "int16": "short",
+    "int32": "int",
+    "int64": "long",
+    "uint8": "ubyte",
+    "uint16": "ushort",
+    "uint32": "uint",
+    "uint64": "ulong",
+    "float": "float",
+    "double": "double",
+    "string": "string",
+    "bytes": "[ubyte]",
+}
+
+#: ASN.1 built-in type per kind. ASN.1 has one unbounded ``INTEGER`` and one ``REAL``: an integer's
+#: width is written as a value range from :data:`INTEGER_RANGE_FOR_KIND`, and ``float`` / ``double``
+#: are both ``REAL`` (which holds either).
+ASN1_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "BOOLEAN",
+    "int8": "INTEGER",
+    "int16": "INTEGER",
+    "int32": "INTEGER",
+    "int64": "INTEGER",
+    "uint8": "INTEGER",
+    "uint16": "INTEGER",
+    "uint32": "INTEGER",
+    "uint64": "INTEGER",
+    "float": "REAL",
+    "double": "REAL",
+    "string": "UTF8String",
+    "bytes": "OCTET STRING",
+}
+
+#: TypeSpec scalar per kind. TypeSpec has every width, signed and unsigned.
+TYPESPEC_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "boolean",
+    "int8": "int8",
+    "int16": "int16",
+    "int32": "int32",
+    "int64": "int64",
+    "uint8": "uint8",
+    "uint16": "uint16",
+    "uint32": "uint32",
+    "uint64": "uint64",
+    "float": "float32",
+    "double": "float64",
+    "string": "string",
+    "bytes": "bytes",
+}
+
+#: XSD built-in (local name) per kind, used by the XSD and WSDL emitters. XSD has every width,
+#: signed and unsigned, so nothing narrows or widens.
+XSD_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "boolean",
+    "int8": "byte",
+    "int16": "short",
+    "int32": "int",
+    "int64": "long",
+    "uint8": "unsignedByte",
+    "uint16": "unsignedShort",
+    "uint32": "unsignedInt",
+    "uint64": "unsignedLong",
+    "float": "float",
+    "double": "double",
+    "string": "string",
+    "bytes": "base64Binary",
+}
+
+#: The inclusive value range of each integer kind (an ASN.1 width, a narrowing check).
+INTEGER_RANGE_FOR_KIND: Mapping[ScalarKind, Tuple[int, int]] = {
+    "int8": (-(2**7), 2**7 - 1),
+    "int16": (-(2**15), 2**15 - 1),
+    "int32": (-(2**31), 2**31 - 1),
+    "int64": (-(2**63), 2**63 - 1),
+    "uint8": (0, 2**8 - 1),
+    "uint16": (0, 2**16 - 1),
+    "uint32": (0, 2**32 - 1),
+    "uint64": (0, 2**64 - 1),
+}
+
+
+def format_kind(name: Optional[str], fmt: Optional[str]) -> Optional[ScalarKind]:
+    """The kind a ``format`` picks for a JSON Schema ``integer`` / ``number`` (or ``int``).
+
+    An emitter with its own spelling table asks this first: a bare ``integer`` keeps the emitter's
+    choice, but ``integer`` + ``int64`` is always a 64-bit integer.
+
+    Args:
+        name: The canonical spelling.
+        fmt: The field's ``format`` constraint, if any.
+
+    Returns:
+        ``int32`` / ``int64`` / ``float`` / ``double`` when ``name`` is ``integer``, ``int`` or
+        ``number`` and ``fmt`` names a width; otherwise ``None``.
+    """
+    if not name or not fmt:
+        return None
+    key = name.strip().lower()
+    hint = fmt.strip().lower()
+    if key in ("integer", "int"):
+        return _INTEGER_FORMATS.get(hint)
+    if key == "number":
+        return _NUMBER_FORMATS.get(hint)
+    return None
 
 
 def scalar_kind(name: Optional[str], fmt: Optional[str] = None) -> Optional[ScalarKind]:

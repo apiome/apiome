@@ -74,6 +74,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .scalar_aliases import ASN1_SCALAR_FOR_KIND, INTEGER_RANGE_FOR_KIND, format_kind
 
 __all__ = ["Asn1EmitOptions", "Asn1Emitter", "Asn1FidelityRulePack", "validate_asn1_module"]
 
@@ -92,8 +93,8 @@ _SCALARS: Dict[str, Tuple[str, str, Optional[Tuple[int, int]]]] = {
     "time": ("TIME-OF-DAY", "time", None),
     **{name: ("OCTET STRING", "bytes", None) for name in ("bytes", "binary", "blob")},
     **{name: ("INTEGER", "integer", None) for name in ("integer", "int", "bigint")},
-    **{name: ("INTEGER", "integer", (-128, 127)) for name in ("i8", "int8", "sbyte")},
-    **{name: ("INTEGER", "integer", (0, 255)) for name in ("u8", "uint8", "byte")},
+    **{name: ("INTEGER", "integer", (-128, 127)) for name in ("i8", "int8", "sbyte", "byte")},
+    **{name: ("INTEGER", "integer", (0, 255)) for name in ("u8", "uint8")},
     **{name: ("INTEGER", "integer", (-32768, 32767)) for name in ("i16", "int16", "short")},
     **{name: ("INTEGER", "integer", (0, 65535)) for name in ("u16", "uint16")},
     **{name: ("INTEGER", "integer", (-(2**31), 2**31 - 1)) for name in (
@@ -660,9 +661,16 @@ class _Asn1Writer:
                              constraints, owner)
 
     def _scalar(self, name: str, owner: str, constraints: Optional[Constraints]) -> Tuple[str, Optional[Tuple]]:
-        """The ASN.1 type of a canonical scalar name (a string's time ``format`` picks a time type)."""
-        spec = _scalar_spec(name)
+        """The ASN.1 type of a canonical scalar name, and its integer width.
+
+        A string's time ``format`` picks a time type; an ``integer`` / ``number`` ``format`` that names a
+        width picks it (``integer`` + ``int64`` → a 64-bit value range, COA-3.2 #7053).
+        """
         fmt = constraints.format if constraints is not None else None
+        sized = format_kind(name, fmt)
+        if sized is not None:
+            return ASN1_SCALAR_FOR_KIND[sized], INTEGER_RANGE_FOR_KIND.get(sized)
+        spec = _scalar_spec(name)
         if spec is not None and spec[1] == "string" and fmt in _TIME_FORMATS:
             return _TIME_FORMATS[fmt], None
         if spec is None:

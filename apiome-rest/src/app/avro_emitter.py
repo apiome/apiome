@@ -55,6 +55,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .scalar_aliases import AVRO_SCALAR_FOR_KIND, format_kind, scalar_kind
 from .schema_registry_subjects import registry_subject
 
 __all__ = [
@@ -86,6 +87,8 @@ _AVRO_PRIMITIVES = frozenset(
 
 _CANONICAL_TO_AVRO: Dict[str, str] = {
     "null": "null",
+    "void": "null",
+    "none": "null",
     "boolean": "boolean",
     "bool": "boolean",
     "integer": "int",
@@ -136,6 +139,17 @@ _CANONICAL_TO_AVRO: Dict[str, str] = {
     "json": "string",
     "binary": "bytes",
     "byte[]": "bytes",
+}
+
+#: Scalar kinds and spellings Avro writes as a primitive that cannot hold every value → (mapping, why).
+#: Each is reported as a loss (COA-3.2, #7053); a ``decimal`` with a logical type is not narrowed.
+_NARROWED: Dict[str, Tuple[str, str]] = {
+    "uint64": ("uint64 → long", "Avro has no unsigned 64-bit integer; long holds values up to 2^63 − 1"),
+    "bigint": ("bigint → long", "Avro has no arbitrary-precision integer; long holds 64 bits"),
+    "decimal": (
+        "decimal → double",
+        "a decimal without a precision is written as double, so decimal digits can round",
+    ),
 }
 
 # JSON-Schema ``format`` values that become Avro logical types on a primitive base.
@@ -306,7 +320,26 @@ class AvroFidelityRulePack(CapabilityRulePack):
         default = self._default_verdict(field)
         if default is not None:
             verdicts.append(default)
+        narrowed = self._narrowed_verdict(field)
+        if narrowed is not None:
+            verdicts.append(narrowed)
         return verdicts
+
+    def _narrowed_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """``APPROX`` when the field's scalar is written as an Avro primitive too small for it (``uint64``)."""
+        ref = field.type
+        while ref.item is not None:
+            ref = ref.item
+        fmt = field.constraints.format if field.constraints is not None else None
+        narrowed = _narrowing(ref.name, fmt, field.extras)
+        if narrowed is None:
+            return None
+        mapping, reason = narrowed
+        return FidelityVerdict.approx(
+            message=f"{field.key!r} loses precision in {self.target_label}: {reason}",
+            severity=LossinessSeverity.WARN,
+            target_mapping=mapping,
+        )
 
     def _nullability_verdict(
         self, field: CanonicalField
@@ -721,10 +754,19 @@ class _AvroWriter:
         if ref.name is None:
             return "string"
 
-        primitive = _canonical_primitive(ref.name)
+        constraints = field.constraints if field is not None else None
+        fmt = constraints.format if constraints is not None else None
+        primitive = _canonical_primitive(ref.name, fmt)
         if primitive is not None:
-            constraints = field.constraints if field is not None else None
             extras = field.extras if field is not None else {}
+            narrowed = _narrowing(ref.name, fmt, extras)
+            if narrowed is not None:
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "precision-narrowed",
+                    f"{ref.name!r} is written as {primitive}: {narrowed[1]}.",
+                    pointer=field.key if field is not None else ref.name,
+                )
             # Format-specific extras first: a source that recorded ``timestamp-micros``
             # knows more than the canonical ``date-time`` format it also projects onto.
             logical = _logical_from_extras(extras) or _logical_from_constraints(constraints)
@@ -1072,12 +1114,46 @@ def _named_type_reference_by_key(key: str, *, namespace: Optional[str]) -> str:
     return f"{ref_namespace}.{simple}"
 
 
-def _canonical_primitive(name: str) -> Optional[str]:
-    """Map a canonical primitive name to an Avro primitive, or ``None`` (case-insensitive)."""
+def _canonical_primitive(name: str, fmt: Optional[str] = None) -> Optional[str]:
+    """Map a canonical primitive name to an Avro primitive, or ``None`` (case-insensitive).
+
+    Args:
+        name: The canonical spelling (``integer``, ``i64``, ``fixed32`` …).
+        fmt: The field's ``format`` constraint. It picks the width of a JSON Schema ``integer`` /
+            ``number``, so ``integer`` + ``int64`` is ``long``, not ``int`` (COA-3.2, #7053).
+
+    Returns:
+        The Avro primitive, or ``None`` when ``name`` is not a scalar Avro has a primitive for.
+    """
+    sized = format_kind(name, fmt)
+    if sized is not None:
+        return AVRO_SCALAR_FOR_KIND[sized]
     mapped = _CANONICAL_TO_AVRO.get(name) or _CANONICAL_TO_AVRO.get(name.lower())
     if mapped in _AVRO_PRIMITIVES:
         return mapped
-    return None
+    kind = scalar_kind(name)
+    return AVRO_SCALAR_FOR_KIND[kind] if kind is not None else None
+
+
+def _narrowing(
+    name: Optional[str], fmt: Optional[str] = None, extras: Optional[Dict[str, Any]] = None
+) -> Optional[Tuple[str, str]]:
+    """Why Avro's primitive for ``name`` cannot hold every value of it, or ``None`` when it can.
+
+    Args:
+        name: The canonical spelling.
+        fmt: The field's ``format`` constraint (a logical type such as ``decimal`` is not narrowed).
+        extras: The field's extras (a recorded ``logicalType`` is not narrowed).
+
+    Returns:
+        ``(target mapping, reason)`` from :data:`_NARROWED`, or ``None``.
+    """
+    if not name or _logical_from_extras(extras or {}) is not None:
+        return None
+    if fmt and _logical_from_constraints(Constraints(format=fmt)) is not None:
+        return None
+    key = format_kind(name, fmt) or scalar_kind(name, fmt) or name.strip().lower()
+    return _NARROWED.get(key)
 
 
 def _logical_from_constraints(constraints: Optional[Constraints]) -> Optional[Tuple[str, str]]:

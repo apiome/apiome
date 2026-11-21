@@ -292,7 +292,6 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-3.2 · [#7053](https://github.com/apiome/apiome/issues/7053) | IDL scalar-name leaks and Avro int64 narrowing | Stop foreign scalar names leaking into asn1, corbaidl, flatbuffers, typespec, wsdl and xsd output; fix Avro int64 → int (#6278) | `bug`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-3.3 · [#7054](https://github.com/apiome/apiome/issues/7054) | Re-import failures: wadl, asn1, asyncapi, postman, oncrpc, protobuf, connectrpc, corbaidl | Make export → re-import succeed (or fail honestly) for the eight formats that currently do not | `bug`, `rest`, `mvp` | Y | Y | M | apiome-rest |
 | COA-3.4 · [#7055](https://github.com/apiome/apiome/issues/7055) | Validators for the 14 "not applicable" export targets | Add a validator per target where one exists; show "not validated" where none does | `enhancement`, `rest`, `v2` | Y | N | M | apiome-rest |
 | COA-3.5 · [#7056](https://github.com/apiome/apiome/issues/7056) | Sign-offs owed on closed export tickets #6223, #6227, #6229 | Verify the three closed tickets against their acceptance criteria and record the result | `documentation`, `mvp` | Y | Y | S | apiome-ui, apiome-docs |
@@ -310,7 +309,8 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-fidelity.md`; screenshots: n/a (no UI change)
 
-**COA-3.2 · #7053 IDL scalar-name leaks and Avro int64 narrowing**
+**✅ COA-3.2 · #7053 IDL scalar-name leaks and Avro int64 narrowing — Complete**
+- **Shipped:** REST 1.787.0 / OpenAPI 1.613.0 (no endpoint change). `app.scalar_aliases` gained a kind table per target (Avro, FlatBuffers, ASN.1, TypeSpec, XSD — the last two moved out of their emitters), `INTEGER_RANGE_FOR_KIND` and `format_kind()`; `fixed32` / `fixed64` are unsigned, and `blob` and `u8` … `u64` are known spellings. Avro writes `integer` + `int64` as `long` (was `int`) and `fixed32` / `fixed64` as `long` (was `string`); FlatBuffers and ASN.1 read a width `format`; OMG IDL leaves out a `void` member (was `void f;`); TypeSpec and XSD / WSDL map `bigint`, `instant` and `blob` (were strings); `byte` is signed in every target. Narrowing is a reported loss (`precision-narrowed`, `APPROX` `warn`): Avro `uint64` / `bigint` / precision-less `decimal`, FlatBuffers `bigint` / `decimal`. Tests: `tests/test_idl_scalar_table.py` (every canonical scalar × the seven targets, validator-compiled). Docs: `ship/export-fidelity.md` (new **Scalar types**); release note `exact-scalar-types-in-idl-exports`.
 - **Problem:** Emitters pass canonical scalar names through unmapped in several IDL targets, and Avro narrows int64.
 - **Solution/Scope:**
 - Map every canonical scalar per target with a table test; narrowing becomes a reported loss or a `long`.

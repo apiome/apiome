@@ -263,6 +263,35 @@ What each target adds:
 
 An item exported back to its own format reports none of these.
 
+## Scalar types {#scalar-types}
+
+Each format spells its scalars its own way (`integer`, `i64`, `int64`, `long`, `fixed64` …), and an
+item keeps the spelling it was imported with. An export writes each one as the target's own type.
+An OpenAPI `integer` or `number` takes its width from its `format`:
+
+| Source | ASN.1 | Avro | OMG IDL | FlatBuffers | TypeSpec | XSD, WSDL |
+| --- | --- | --- | --- | --- | --- | --- |
+| `integer` | `INTEGER` | `int` | `long` | `long` | `int32` | `xs:int` |
+| `integer`, `format: int64` | `INTEGER` (64-bit range) | `long` | `long long` | `long` | `int64` | `xs:long` |
+| `number`, `format: float` | `REAL` | `float` | `float` | `float` | `float32` | `xs:float` |
+| `uint64`, `fixed64` | `INTEGER (0..18446744073709551615)` | `long` (reported) | `unsigned long long` | `ulong` | `uint64` | `xs:unsignedLong` |
+| `bytes`, `binary`, `blob` | `OCTET STRING` | `bytes` | `sequence<octet>` | `[ubyte]` | `bytes` | `xs:base64Binary` |
+
+Three spellings mean one thing in every target: Protobuf's `fixed32` and `fixed64` are unsigned,
+`byte` is a signed 8-bit integer, and `blob` is binary.
+
+When a target has no type that holds every value of a scalar, the export uses the closest one and
+the fidelity report says so (**approximated**, `warn`):
+
+| Target | Scalar | Written as |
+| --- | --- | --- |
+| **Avro** | `uint64`, `fixed64` | `long`, which holds values up to 2^63 − 1 |
+| **Avro**, **FlatBuffers** | `bigint` (TypeScript) | `long` (64 bits) |
+| **Avro**, **FlatBuffers** | `decimal` with no precision | `double`, so decimal digits can round. In Avro, a `decimal` `format` or logical type is written as the `decimal` logical type instead, which keeps every digit. |
+
+A field of type `void` holds no value. OMG IDL has no member type for it, so the field is not
+written and the report lists it as **dropped**.
+
 ## Destination documentation links
 
 When (and only when) the cause is a genuine `destination_unsupported` specification

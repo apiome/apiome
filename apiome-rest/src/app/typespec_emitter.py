@@ -69,7 +69,7 @@ from .emitter import (
 from .export_test_tools import toolchain_check
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
-from .scalar_aliases import scalar_kind
+from .scalar_aliases import TYPESPEC_SCALAR_FOR_KIND, scalar_kind
 from .typespec_parser import parse_typespec
 from .writer_loss_rulepack import WriterLossRulePack
 
@@ -98,21 +98,16 @@ _BUILTIN_TYPES = frozenset({
     "offsetDateTime", "plainDate", "plainTime", "duration", "url", "unknown", "void", "never", "null",
     "Record", "Array", "object",
 })
-#: Scalar kind (:func:`app.scalar_aliases.scalar_kind`) → TypeSpec scalar.
-_TSP_FOR_KIND: Dict[str, str] = {
-    "bool": "boolean", "int8": "int8", "int16": "int16", "int32": "int32", "int64": "int64", "uint8": "uint8",
-    "uint16": "uint16", "uint32": "uint32", "uint64": "uint64", "float": "float32", "double": "float64",
-    "string": "string", "bytes": "bytes",
-}
 #: Canonical scalar spellings (lower-cased) the kind table does not cover.
 _EXTRA_SCALARS: Dict[str, str] = {
-    "datetime": "utcDateTime", "date-time": "utcDateTime", "timestamp": "utcDateTime",
+    "datetime": "utcDateTime", "date-time": "utcDateTime", "timestamp": "utcDateTime", "instant": "utcDateTime",
     "utcdatetime": "utcDateTime", "offsetdatetime": "offsetDateTime", "date": "plainDate",
     "plaindate": "plainDate", "time": "plainTime", "plaintime": "plainTime", "duration": "duration",
     "uri": "url", "url": "url", "decimal": "decimal", "bigdecimal": "decimal", "decimal128": "decimal128",
-    "biginteger": "integer", "safeint": "safeint", "numeric": "numeric", "object": "Record<unknown>",
+    "biginteger": "integer", "bigint": "integer", "safeint": "safeint", "numeric": "numeric",
+    "object": "Record<unknown>",
     "map": "Record<unknown>", "dict": "Record<unknown>", "any": "unknown", "json": "unknown",
-    "document": "unknown", "unknown": "unknown", "void": "void", "null": "null",
+    "document": "unknown", "unknown": "unknown", "void": "void", "null": "null", "none": "null",
 }
 #: A string ``format`` with a TypeSpec scalar of its own (otherwise it is kept with ``@format``).
 _STRING_FORMATS: Dict[str, str] = {
@@ -510,7 +505,7 @@ class _TypeSpecWriter:
             return _STRING_FORMATS[hint], True
         kind = scalar_kind(name, fmt)
         if kind is not None:
-            return _TSP_FOR_KIND[kind], lowered in ("integer", "int", "number") and bool(hint)
+            return TYPESPEC_SCALAR_FOR_KIND[kind], lowered in ("integer", "int", "number") and bool(hint)
         if lowered in _EXTRA_SCALARS:
             return _EXTRA_SCALARS[lowered], False
         if name in _BUILTIN_TYPES:

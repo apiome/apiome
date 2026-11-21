@@ -18,7 +18,7 @@ from typing import Dict, Optional
 
 from elementpath.regex import RegexError, translate_pattern
 
-from .scalar_aliases import scalar_kind
+from .scalar_aliases import XSD_SCALAR_FOR_KIND, scalar_kind
 
 __all__ = ["XSD_BUILTINS", "is_ncname", "ncname", "xsd_builtin", "xsd_pattern"]
 
@@ -70,24 +70,6 @@ XSD_BUILTINS: Dict[str, str] = {
     )
 }
 
-#: Scalar kind (:mod:`app.scalar_aliases`) → XSD built-in. XSD has every width, signed and
-#: unsigned, so nothing narrows or widens.
-_KIND_TO_XSD: Dict[str, str] = {
-    "bool": "boolean",
-    "int8": "byte",
-    "int16": "short",
-    "int32": "int",
-    "int64": "long",
-    "uint8": "unsignedByte",
-    "uint16": "unsignedShort",
-    "uint32": "unsignedInt",
-    "uint64": "unsignedLong",
-    "float": "float",
-    "double": "double",
-    "string": "string",
-    "bytes": "base64Binary",
-}
-
 #: A string's ``format`` → the XSD built-in that keeps its meaning.
 _STRING_FORMAT_TO_XSD: Dict[str, str] = {
     "date-time": "dateTime",
@@ -111,10 +93,12 @@ _NAMED_TO_XSD: Dict[str, str] = {
     "datetime": "dateTime",
     "date-time": "dateTime",
     "timestamp": "dateTime",
+    "instant": "dateTime",
     "time": "time",
     "duration": "duration",
     "uri": "anyURI",
     "url": "anyURI",
+    "bigint": "integer",
     "any": "anyType",
 }
 
@@ -147,7 +131,7 @@ def xsd_builtin(
         return "decimal"
     kind = scalar_kind(name, fmt)
     if kind is not None:
-        return _KIND_TO_XSD[kind]
+        return XSD_SCALAR_FOR_KIND[kind]
     if key in _NAMED_TO_XSD:
         return _NAMED_TO_XSD[key]
     if key in XSD_BUILTINS:
