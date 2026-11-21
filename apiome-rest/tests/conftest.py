@@ -419,3 +419,18 @@ def _no_stored_overlay_chain_by_default(request, monkeypatch):
     if request.node.get_closest_marker("requires_db") is not None:
         return
     monkeypatch.setattr("app.version_overlay_store.list_overlays", lambda *_args, **_kwargs: [])
+
+
+@pytest.fixture(autouse=True)
+def _fresh_document_store():
+    """
+    Give every test its own process-wide document store (COA-5.3, #7079). Imports write their
+    original through ``get_document_store()``, and the ``db`` backend keeps the database handle it
+    first saw, so a store built while one test had ``app.database.db`` patched must not reach the
+    next test.
+    """
+    from app.document_store import set_document_store
+
+    set_document_store(None)
+    yield
+    set_document_store(None)

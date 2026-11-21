@@ -31017,6 +31017,178 @@ class Database:
         """
         return bool(self.execute_query(query, (tenant_id, sha256)))
 
+    # ───────────────────── originals in the document store (COA-5.3, #7079) ─────────────────────
+    # ``document_objects`` says where a stored object lives; ``version_documents`` says which
+    # object is a revision's original. ``app.original_documents`` is the only caller.
+
+    def upsert_document_object(
+        self,
+        *,
+        tenant_id: str,
+        sha256: str,
+        size_bytes: int,
+        media_type: str,
+        encoding: str,
+        backend: str,
+        storage_key: str,
+    ) -> str:
+        """Record a stored object, or refresh where the tenant's existing one lives.
+
+        The caller has just written (or found) the bytes in ``backend``, so on a repeat the row
+        is pointed at that location: it is the one known to hold the object now.
+
+        Args:
+            tenant_id: The owning tenant.
+            sha256: Lower-case hex SHA-256 of the stored bytes.
+            size_bytes: Length of the stored bytes.
+            media_type: Media type of the document.
+            encoding: Content coding of the stored bytes: ``identity`` or ``gzip``.
+            backend: ``db``, ``s3`` or ``filesystem``.
+            storage_key: The object's key inside that backend.
+
+        Returns:
+            The ``document_objects.id`` of the row.
+        """
+        rows = self.execute_query(
+            """
+            INSERT INTO apiome.document_objects
+                (tenant_id, sha256, size_bytes, media_type, encoding, backend, storage_key)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (tenant_id, sha256) DO UPDATE
+                SET backend = EXCLUDED.backend, storage_key = EXCLUDED.storage_key
+            RETURNING id::text AS id
+            """,
+            (tenant_id, sha256, size_bytes, media_type, encoding, backend, storage_key),
+        )
+        return str(rows[0]["id"])
+
+    def set_version_original_documents(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        original_object_id: str,
+        parts: List[Tuple[str, str]],
+        keep_existing: bool = False,
+    ) -> bool:
+        """Point a revision at its original object and, for a set of files, at each part.
+
+        All rows are written in one transaction: the ``original`` row is replaced, parts are
+        upserted by path, and parts the new set no longer has are removed.
+
+        Args:
+            tenant_id: The tenant that must own the revision.
+            version_id: The revision (``versions.id``).
+            original_object_id: ``document_objects.id`` of the document, or of a set's manifest.
+            parts: ``(part_path, object_id)`` for each file of a set; empty for one document.
+            keep_existing: When True, a revision that already has an ``original`` row is left
+                untouched.
+
+        Returns:
+            True when the rows were written; False when the revision is not the tenant's, or
+            when ``keep_existing`` kept an earlier original.
+        """
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                SELECT v.id,
+                       EXISTS (SELECT 1 FROM apiome.version_documents d
+                               WHERE d.version_id = v.id AND d.role = 'original') AS has_original
+                FROM apiome.versions v
+                JOIN apiome.projects p ON p.id = v.project_id
+                WHERE v.id = %s::uuid AND p.tenant_id = %s
+                FOR UPDATE OF v
+                """,
+                (version_id, tenant_id),
+            )
+            row = cursor.fetchone()
+            if not row or (keep_existing and row["has_original"]):
+                return None
+            cursor.execute(
+                """
+                DELETE FROM apiome.version_documents
+                WHERE version_id = %s::uuid
+                  AND (role = 'original'
+                       OR (role = 'original_part' AND NOT (part_path = ANY(%s::text[]))))
+                """,
+                (version_id, [path for path, _ in parts]),
+            )
+            cursor.execute(
+                """
+                INSERT INTO apiome.version_documents (version_id, role, object_id)
+                SELECT %s::uuid, 'original', o.id
+                FROM apiome.document_objects o
+                WHERE o.id = %s::uuid AND o.tenant_id = %s
+                """,
+                (version_id, original_object_id, tenant_id),
+            )
+            if cursor.rowcount != 1:
+                return None
+            for part_path, object_id in parts:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.version_documents (version_id, role, object_id, part_path)
+                    SELECT %s::uuid, 'original_part', o.id, %s
+                    FROM apiome.document_objects o
+                    WHERE o.id = %s::uuid AND o.tenant_id = %s
+                    ON CONFLICT ON CONSTRAINT version_documents_slot_key
+                        DO UPDATE SET object_id = EXCLUDED.object_id
+                    """,
+                    (version_id, part_path, object_id, tenant_id),
+                )
+                if cursor.rowcount != 1:
+                    return None
+            return True
+
+        return bool(self._guarded_tx(work))
+
+    def clear_version_original_documents(self, *, tenant_id: str, version_id: str) -> int:
+        """Remove a revision's ``original`` and ``original_part`` rows (its source is withheld).
+
+        Args:
+            tenant_id: The tenant that must own the revision.
+            version_id: The revision (``versions.id``).
+
+        Returns:
+            The number of rows removed. The objects themselves are not touched.
+        """
+        return self._execute_write(
+            """
+            DELETE FROM apiome.version_documents d
+            USING apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE d.version_id = v.id
+              AND v.id = %s::uuid AND p.tenant_id = %s
+              AND d.role IN ('original', 'original_part')
+            """,
+            (version_id, tenant_id),
+        )
+
+    def list_version_original_documents(self, *, tenant_id: str, version_id: str) -> List[Dict[str, Any]]:
+        """List a revision's original rows with their objects: the original first, then parts by path.
+
+        Args:
+            tenant_id: The tenant that must own the objects.
+            version_id: The revision (``versions.id``).
+
+        Returns:
+            Rows of ``role``, ``part_path``, ``object_id``, ``sha256``, ``size_bytes``,
+            ``media_type``, ``encoding``, ``backend`` and ``storage_key``.
+        """
+        return self.execute_query(
+            """
+            SELECT d.role, d.part_path, o.id::text AS object_id, o.sha256, o.size_bytes,
+                   o.media_type, o.encoding, o.backend, o.storage_key
+            FROM apiome.version_documents d
+            JOIN apiome.document_objects o ON o.id = d.object_id
+            WHERE d.version_id = %s::uuid AND o.tenant_id = %s
+              AND d.role IN ('original', 'original_part')
+            ORDER BY (d.role = 'original') DESC, d.part_path
+            """,
+            (version_id, tenant_id),
+        )
+
     # ───────────────────── revision content stamp (COA-5.2, #7078, V403) ─────────────────────
     # ``versions.content_stamp`` is bumped by database triggers once per transaction that writes
     # the revision's normalized data; application code only ever reads it.

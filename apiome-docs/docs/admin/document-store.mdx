@@ -14,9 +14,11 @@ three backends, and you choose one with environment variables on the `rest` serv
 | `s3` | A bucket on an S3-compatible service | Production. Works with AWS S3, MinIO, Garage, Cloudflare R2 and Google Cloud Storage (interoperability mode). |
 | `filesystem` | A directory on the REST host | Development and single-node installations. |
 
-Today Apiome writes one kind of object to the store: **export downloads larger than the database
-threshold** (see [Large export downloads](#large-export-downloads)). With the default `db` backend
-nothing changes for an existing installation.
+Apiome writes two kinds of object to the store:
+
+- **The original document of every import** (see [Originals of imports](#originals-of-imports)).
+- **Export downloads larger than the database threshold** (see
+  [Large export downloads](#large-export-downloads)).
 
 ## How objects are stored
 
@@ -122,6 +124,7 @@ All of these are set on the `rest` service.
 | `APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY` | — | `s3`: the secret key. Keep it in your secret manager. |
 | `APIOME_DOCUMENT_STORE_PRESIGN_TTL_SECONDS` | `300` | `s3`: how long a presigned download link stays valid (1 second to 7 days). |
 | `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` | `33554432` | `db`: the largest single object accepted (32 MiB). |
+| `APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES` | `65536` | Originals of at least this many bytes are stored gzip-coded. `0` turns the coding off. |
 | `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE` | `false` | `s3`: allow an endpoint on a private or loopback address. |
 
 ### Endpoints on a private network
@@ -131,6 +134,40 @@ The endpoint URL passes the same check as any URL the REST API calls: it must be
 network (`http://garage.internal:3900`, `http://127.0.0.1:9000`) is refused until you set
 `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=true`. That setting applies to the document store endpoint
 only. It does not let users import from private addresses, which `APIOME_SSRF_ALLOW_PRIVATE` would.
+
+## Originals of imports
+
+Every import writes the document it read to the store, after the workspace's secret scrub, and
+records it as the revision's `original` in `version_documents`. An archive is written as one
+object per file (`original_part`) plus a manifest (`original`). A source that is withheld writes
+nothing. [What an import records](../bring-in/what-an-import-records.md#the-original-document)
+describes this for users.
+
+Where the document text is also kept depends on the backend:
+
+| `APIOME_DOCUMENT_STORE` | The store holds | The database holds |
+| --- | --- | --- |
+| `db` (default) | The original | The text as before (`version_import_snapshots.source_text`, `format_metadata.sourceContent`) and the pointer |
+| `s3` or `filesystem` | The original | The pointer only |
+
+:::warning
+With `s3` or `filesystem`, the text of a new import is no longer in the database. Features that
+read it from there (convert to OpenAPI, export from source, the source workspace's as-imported
+view) do not find it until they read from the store, which is planned for this release (COA-5.4).
+Stay on `db` until then if you rely on them.
+:::
+
+- **Large documents are gzip-coded.** A document of at least
+  `APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES` bytes (64 KiB) is stored compressed, and its
+  `document_objects.encoding` is `gzip`. Smaller documents, and documents gzip does not shrink,
+  are stored as they are (`identity`).
+- **The digest is of the stored bytes.** For an `identity` object, `document_objects.sha256` is
+  the SHA-256 of the document text. For a `gzip` object it is the SHA-256 of the compressed bytes.
+- **If the store cannot be written**, the import still succeeds and the text stays in the
+  database, whatever the backend. The REST log has a line `original not stored`.
+- **With `db`, an original larger than `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` is not stored.** The
+  text stays in the database as before.
+- **Existing versions are not changed.** Only imports that run after the upgrade write an original.
 
 ## Large export downloads
 

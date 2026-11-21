@@ -54,6 +54,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '../../../ui/toast';
 import { createProject } from '@lib/db/helper-actions';
 import { startImport, getImportStatus } from '@lib/db/import-actions';
+import { buildImportOriginalRecord, recordImportOriginal } from '@/app/utils/import-original-record';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '@/app/utils/project-quality-score-history';
 import { analyzeSpecification, type AnalysisResult } from '@/app/utils/openapi-analyzer';
 import { generateSlug } from '@/app/utils/slug';
@@ -289,6 +290,8 @@ export function RepositoryFileImportMapping({
   const [catalogImportExecutionComplete, setCatalogImportExecutionComplete] = useState(false);
   const [catalogImportSucceeded, setCatalogImportSucceeded] = useState(false);
   const dryRunRef = useRef(false);
+  /** The job whose original was already sent to REST (COA-5.3). */
+  const originalRecordedJobRef = useRef<string | null>(null);
 
   // User-adjustable import options for this file. Initialized from the spec
   // analysis once the file content loads and editable via the Import options card.
@@ -554,6 +557,25 @@ export function RepositoryFileImportMapping({
       setCatalogImportPhase('summary');
     })();
   }, [catalogImportJobId]);
+
+  // COA-5.3: a successful import sends the file's text to REST, which keeps it (after the secret
+  // scrub) as the revision's original. Best-effort and once per job; never for a dry run.
+  useEffect(() => {
+    if (catalogImportPhase !== 'summary' || !catalogImportSucceeded || !catalogImportJobId) return;
+    if (dryRunRef.current || originalRecordedJobRef.current === catalogImportJobId) return;
+    originalRecordedJobRef.current = catalogImportJobId;
+    const content = payload?.content;
+    void (async () => {
+      try {
+        const status = await getImportStatus(catalogImportJobId);
+        const result = (status as { result?: { versionId?: string } }).result;
+        const body = buildImportOriginalRecord(result, content, file.path);
+        if (body) await recordImportOriginal(body);
+      } catch {
+        // The import succeeded; only its stored original is missing.
+      }
+    })();
+  }, [catalogImportPhase, catalogImportSucceeded, catalogImportJobId, payload?.content, file.path]);
 
   useEffect(() => {
     if (catalogImportPhase !== 'summary' || !catalogImportSucceeded || !catalogImportJobId || !catalogImportAnalysis?.qualityScore) return;

@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.795.0] - 2026-11-21
+
+### Added
+- **Every import stores its original in the document store — OpenAPI 1.621.0 (COA-5.3, #7079):**
+  `app.original_documents` writes the document an import read — the text after the tenant's
+  secret scrub — through `app.document_store`, records it in `apiome.document_objects` and links
+  it to the revision in `apiome.version_documents` with role `original`. An archive is one
+  `original_part` row per file plus a manifest (`application/vnd.apiome.fileset-manifest+json`)
+  as the `original`. Identical bytes reuse the object; a withheld source stores nothing and drops
+  an earlier original of the revision.
+  - Both import write points call it: `import_source_pipeline.persist_adapter_import` (every
+    in-process importer: catalog upload and re-upload, connectors, live refresh, schema registry,
+    Backstage migration, lint-fix / upgrade / overlay revisions) and
+    `spec_import_engine._record_worker_import_snapshot` (OpenAPI and Swagger through the
+    apiome-ui worker: URL refresh, bulk and git import, `apiome import`, catalog conversion).
+    The snapshot hook now also stores the original of an Arazzo document.
+  - `POST /v1/tenants/{tenant_slug}/import-originals` (`imports:create`) records the original of
+    an import that ran outside the REST import job (the apiome-ui import wizard and repository
+    file import). Only the revision's creator may call it, a revision keeps its first original,
+    and the document passes the upload size, alias and depth limits.
+  - `format_metadata.sourceDocument` holds the pointer (`sha256`, `contentSha256`, `sizeBytes`,
+    `mediaType`, `encoding`, `parts`).
+  - `APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES` (default 65536; 0 = off): originals of at least this
+    size are stored gzip-coded, with `document_objects.encoding = 'gzip'`.
+  - `Database.upsert_document_object`, `set_version_original_documents`,
+    `clear_version_original_documents` and `list_version_original_documents`.
+
+### Changed
+- With `APIOME_DOCUMENT_STORE=s3` or `filesystem`, a new import no longer writes
+  `version_import_snapshots.source_text` or `format_metadata.sourceContent` / `sourceEncoding`:
+  the database keeps the pointer only. With `db` (the default) both are written as before. When
+  the store write fails, the text is kept in the database under any backend. Readers of those
+  columns move to the store in COA-5.4 (#7080).
+- `source_backfill.find_missing_source_revisions` no longer lists a revision whose source is in
+  the document store.
+
+
 ## [1.794.0] - 2026-11-21
 
 ### Added

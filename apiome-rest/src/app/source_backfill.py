@@ -149,6 +149,8 @@ def find_missing_source_revisions(db: Any, tenant_id: Optional[str] = None) -> L
           AND lower(v.source_format) NOT LIKE 'swagger%%'
           AND coalesce(v.format_metadata ->> 'sourceContent', '') = ''
           AND coalesce(v.format_metadata ->> 'sourceWithheld', '') = ''
+          -- COA-5.3 (#7079): a source kept in the document store is captured, not missing.
+          AND coalesce(v.format_metadata -> 'sourceDocument' ->> 'sha256', '') = ''
           {tenant_clause}
         ORDER BY v.created_at, v.id
         """,

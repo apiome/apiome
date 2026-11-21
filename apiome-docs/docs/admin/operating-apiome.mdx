@@ -165,8 +165,8 @@ changing it. **Import to catalog** uploads through the REST API instead and is n
 
 ### Document store
 
-The REST API keeps large, unchanging files — today, export downloads above the database
-threshold — in the **document store**. `APIOME_DOCUMENT_STORE` on the `rest` service picks where:
+The REST API keeps unchanging files — the original document of every import, and export
+downloads above the database threshold — in the **document store**. `APIOME_DOCUMENT_STORE` on the `rest` service picks where:
 
 | Value | Objects are kept in | Also set |
 | --- | --- | --- |
