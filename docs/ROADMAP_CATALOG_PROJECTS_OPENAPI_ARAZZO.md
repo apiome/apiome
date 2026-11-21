@@ -368,7 +368,6 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | COA-4.1 · [#7058](https://github.com/apiome/apiome/issues/7058) | Docs truth pass for Catalog, Projects, OpenAPI and Arazzo | Remove every statement that contradicts the code | `documentation`, `mvp` | Y | Y | S | apiome-docs |
-| COA-4.4 · [#7061](https://github.com/apiome/apiome/issues/7061) | Demo scripts: Arazzo workflows and OpenAPI 3.2 | Two five-minute demo-video scripts as GitHub issues | `documentation`, `mvp` | Y | Y | S | docs |
 
 **COA-4.1 · #7058 Docs truth pass for Catalog, Projects, OpenAPI and Arazzo**
 - **Problem:** Known contradictions: "Arazzo 1.0" claims, "workflows are not stored as records", the format support matrix §7 ("no Arazzo 1.1", "no Overlay lint"), and format-coverage statements that name only the Projects path.
@@ -402,7 +401,8 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 - **Technical Stack:** apiome-ui
 - **Documentation:** none; screenshots: n/a (no UI change)
 
-**COA-4.4 · #7061 Demo scripts: Arazzo workflows and OpenAPI 3.2**
+**✅ COA-4.4 · #7061 Demo scripts: Arazzo workflows and OpenAPI 3.2 — Complete**
+- **Shipped:** Two five-minute scripts, each its own issue in the house shape (goal, before you record, timed table, if it runs long, risky spots, reference, done-when): **#7131 Arazzo workflows** — import `adopt-a-pet.zip` (an Arazzo 1.0.1 workflow file with its OpenAPI file; both inline in the issue, schema-checked with `apiome arazzo validate`), the **Workflows** tab (sources, inputs/outputs, steps, step graph, step drawer), `apiome arazzo list|validate`, then `apiome arazzo run` against a mock target: a read-only run, a refused write step (exit 3) and the run with `--allow-mutating --fixtures`; **#7132 OpenAPI 3.2** — upgrade `30-openapi-3.0-petstore.yaml` to 3.2 with the upgrade assistant, add a QUERY operation with the paths REST API (the path editor is shelved) and read it in the spec viewer's **OpenAPI 3.2.0 constructs** panel, then write, preview and apply an overlay as a version. Recording is tracked on those issues. No product, docs-site or version change.
 - **Problem:** Demo scripts live in issues (not files). #6706 already covers catalog import/export.
 - **Solution/Scope:**
 - Script 1: import an Arazzo workflow with its OpenAPI files, view the workflow graph, run it (if COA-1.7 lands). Script 2: author a 3.2 QUERY operation, upgrade a 3.0 spec, apply an overlay.
