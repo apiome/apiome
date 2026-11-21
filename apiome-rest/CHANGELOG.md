@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.796.0] - 2026-11-21
+
+### Added
+- **One reader for captured sources — OpenAPI 1.622.0 (COA-5.4, #7080):**
+  `app.revision_source.revision_source(db, store, tenant_id, version_id)` returns the source an
+  import captured for a revision (text, SHA-256 digest, format; for an archive, every file and
+  the root). It reads the revision's `original` from the document store first (`version_documents`
+  → `document_objects`, gzip decoded) and the legacy columns second
+  (`format_metadata.sourceContent`, then `version_import_snapshots.source_text`). It never raises:
+  a missing object or an unreachable bucket falls back to the database text.
+  - `attach_revision_source` / `source_from_row` carry the source on a row for the row-shaped
+    readers; `has_revision_source` answers without reading the content.
+  - `decomposed=True` also returns the document an OpenAPI, Swagger or Arazzo worker import read.
+    Model rebuilds leave it out, because such a revision is exported from its classes, paths and
+    workflows; provenance uses it.
+  - `CanonicalModelCache`: parsed canonical models are kept per worker by source digest, least
+    recently used first out, bounded by `APIOME_CANONICAL_MODEL_CACHE_ENTRIES` (default 32) and
+    `APIOME_CANONICAL_MODEL_CACHE_MAX_BYTES` (default 16777216, the sum of the cached sources'
+    sizes; a source over a quarter of it is not cached). `0` turns the cache off. Readers get a
+    deep copy.
+  - `tests/test_revision_source_readers.py` fails when a module other than the helper names
+    `sourceContent` or `source_text` in code. The import writers and the E1-6 repair job
+    (`source_backfill`) are listed there with their known writes.
+
+### Changed
+- Every reader of a captured source goes through the helper: export and public export
+  (`export_source`), conversion (`catalog_conversion`), the catalog source download and detail
+  (`catalog_detail`), lint evidence (`format_adapter_evidence`), compatibility
+  (`compatibility_modes.canonical_model_for_revision`), OpenAPI upgrade, source provenance, the
+  schema registry, catalog refresh and the catalog revision change report. With
+  `APIOME_DOCUMENT_STORE=s3` or `filesystem` these no longer answer `source-not-captured` for a
+  revision whose source is in the store.
+- Version queries no longer select the source text. `format_metadata` comes back without
+  `sourceContent` from the catalog list and item (`GET /v1/catalog/{tenant}` and
+  `…/{item_id}`), `get_version_source_projection`, `get_public_version_source_projection`,
+  `get_revision_source_row`, the identity profile and suggestion queries and the schema registry
+  lookups. Catalog rows gain `source_captured` and `latest_version_id`; the item's
+  `source.has_content` is unchanged. Download the document with
+  `GET /v1/catalog/{tenant}/{item_id}/source`.
+- `Database.get_import_snapshot_lineage` no longer returns `source_text`.
+- An item imported from an archive is rebuilt from its stored files. Its captured text (the
+  source download, a conversion's `source_text` and source hash) is now the root file's text,
+  not the base64 of the archive, so the conversion history of such an item shows the source as
+  changed once.
+
 ## [1.795.0] - 2026-11-21
 
 ### Added

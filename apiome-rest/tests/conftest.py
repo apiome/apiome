@@ -422,6 +422,20 @@ def _no_stored_overlay_chain_by_default(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _fresh_canonical_model_cache():
+    """Start every test with an empty canonical-model cache (COA-5.4, #7080).
+
+    The cache is process-wide and keyed by source digest, so a model parsed in one test would
+    otherwise be served to a later test that patches the adapter for the same text.
+    """
+    from app.revision_source import canonical_model_cache
+
+    canonical_model_cache().clear()
+    yield
+    canonical_model_cache().clear()
+
+
+@pytest.fixture(autouse=True)
 def _fresh_document_store():
     """
     Give every test its own process-wide document store (COA-5.3, #7079). Imports write their

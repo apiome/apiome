@@ -195,7 +195,9 @@ def _absent_record(
     Returns:
         A :class:`~app.payload_analysis.PayloadAnalysisRecord` with an empty tree and a stated reason.
     """
-    source = derive_catalog_source(item.get("format_metadata"), item.get("metadata"))
+    source = derive_catalog_source(
+        item.get("format_metadata"), item.get("metadata"), item.get("source_captured")
+    )
     has_source = bool(source.get("has_content")) or bool(source.get("uri"))
 
     if version_record_id and not has_source:

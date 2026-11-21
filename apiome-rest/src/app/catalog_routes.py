@@ -448,7 +448,9 @@ async def get_catalog_item(
         )
 
     summary = derive_catalog_summary(item.get("format_metadata"))
-    source = derive_catalog_source(item.get("format_metadata"), item.get("metadata"))
+    source = derive_catalog_source(
+        item.get("format_metadata"), item.get("metadata"), item.get("source_captured")
+    )
     parsed, provenance_summary = derive_catalog_parsed_view(item)
     tenant_id = auth_data["tenant_id"]
 
@@ -1059,7 +1061,8 @@ async def get_catalog_item_source(
     """
     Serve a catalog item's original source material (MFI-23.9): viewable / downloadable.
 
-    Resolves what the import captured onto the item's ``format_metadata``:
+    Resolves what the import captured for the item's latest revision (read from the document
+    store, or from the legacy column for a revision imported before it):
 
     * **inline content** — streamed back as a downloadable attachment (typed by source format);
     * **a source URL** (when no content was captured) — answered with a redirect to that URL;

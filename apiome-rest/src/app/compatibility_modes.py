@@ -277,7 +277,8 @@ def canonical_model_for_revision(db: Any, tenant_id: str, revision_id: str) -> O
     """Rebuild a revision's canonical model from its captured source, when it is mode-graded.
 
     Args:
-        db: Database handle exposing ``get_revision_source_row``.
+        db: Database handle exposing ``get_revision_source_row`` and ``execute_query`` (the
+            captured source is read through :mod:`app.revision_source`).
         tenant_id: The owning tenant.
         revision_id: The revision (``versions.id``).
 
@@ -290,9 +291,13 @@ def canonical_model_for_revision(db: Any, tenant_id: str, revision_id: str) -> O
     if not row or not is_mode_graded_format(row.get("source_format")):
         return None
     from .catalog_conversion import build_conversion_source
+    from .revision_source import attach_revision_source
 
     try:
-        return build_conversion_source(_conversion_item(row)).api
+        item = attach_revision_source(
+            _conversion_item(row), tenant_id=tenant_id, version_id=str(revision_id), db=db
+        )
+        return build_conversion_source(item).api
     except Exception:  # noqa: BLE001 - an unrebuildable source falls back to the OpenAPI path
         logger.info("compatibility: revision %s has no rebuildable source", revision_id, exc_info=True)
         return None

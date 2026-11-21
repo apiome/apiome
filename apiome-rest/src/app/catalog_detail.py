@@ -17,10 +17,15 @@ Three entry points:
 
 Kept out of ``catalog_routes`` so the extraction logic is unit-testable without a database or an
 HTTP client, and so the detail schema and the /source endpoint share one source of truth.
+
+The captured source itself is not read here (COA-5.4, #7080): :func:`resolve_source_payload` asks
+:func:`app.revision_source.source_from_row`, which reads the document store for a catalog item
+row and otherwise only what the row carries.
 """
 
 from typing import Any, Dict, Optional, Tuple
 
+from .revision_source import row_has_source, source_from_row
 
 # Keys (in priority order) that may carry each piece of provenance across metadata shapes. These
 # mirror the UI's resolveCatalogSource so both layers read the same bag the same way.
@@ -31,12 +36,6 @@ _LABEL_KEYS: Tuple[str, ...] = (
 )
 _KIND_KEYS: Tuple[str, ...] = ("inputKind", "input_kind", "sourceKind", "source_kind")
 _URI_KEYS: Tuple[str, ...] = ("sourceUri", "source_uri", "sourceUrl", "source_url")
-_CONTENT_KEYS: Tuple[str, ...] = (
-    "sourceContent", "source_content",
-    "sourceText", "source_text",
-    "rawSource", "raw_source",
-    "raw", "content",
-)
 
 # Per-count aliases for the normalized summary. The canonical (plural) key is what
 # ImportRoutingDecision.as_dict() emits under "counts"; the *Count variants are tolerated.
@@ -178,7 +177,9 @@ def derive_catalog_summary(format_metadata: Any) -> Dict[str, Optional[int]]:
     return _read_counts(format_metadata)
 
 
-def derive_catalog_source(format_metadata: Any, metadata: Any) -> Dict[str, Any]:
+def derive_catalog_source(
+    format_metadata: Any, metadata: Any, source_captured: Optional[bool] = None
+) -> Dict[str, Any]:
     """Derive the source-material descriptor for a catalog item.
 
     Reads the input kind, a display label, an optional source URL and whether raw content was
@@ -187,6 +188,8 @@ def derive_catalog_source(format_metadata: Any, metadata: Any) -> Dict[str, Any]
     Args:
         format_metadata: The latest revision's ``format_metadata`` bag, or None.
         metadata: The project's generic ``metadata`` bag, or None.
+        source_captured: The row's ``source_captured`` flag, when the query selected it (catalog
+            item rows do, because they no longer carry the source text itself).
 
     Returns:
         A descriptor dict ``{kind, label, uri, has_content, downloadable, connector}``;
@@ -208,7 +211,9 @@ def derive_catalog_source(format_metadata: Any, metadata: Any) -> Dict[str, Any]
         elif label is not None:
             kind = "file"
 
-    has_content = _first_str_in(fmd, md, _CONTENT_KEYS) is not None
+    has_content = row_has_source(
+        {"format_metadata": fmd, "metadata": md, "source_captured": source_captured}
+    )
     downloadable = has_content or uri is not None
 
     return {
@@ -244,26 +249,32 @@ def resolve_source_payload(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Decide what ``GET …/{id}/source`` should serve for a catalog item.
 
     Args:
-        item: The catalog item row (must include ``format_metadata`` / ``metadata``).
+        item: The catalog item row (``format_metadata`` / ``metadata``), carrying its captured
+            source when the caller attached one (:func:`app.revision_source.attach_revision_source`).
 
     Returns:
-        ``{"mode": "content", "content", "media_type", "filename"}`` when raw source content was
-        captured; ``{"mode": "redirect", "url"}`` when only a source URL is recorded; or None when
-        nothing retrievable was captured (the caller 404s).
+        ``{"mode": "content", "content", "media_type", "filename", "source"}`` when a source was
+        captured (``content`` is its trimmed text; for a set of files, the root file's; ``source`` is
+        the :class:`~app.revision_source.RevisionSource`); ``{"mode": "redirect", "url"}`` when
+        only a source URL is recorded; or None when nothing retrievable was captured (the caller
+        404s).
     """
     fmd = _as_bag(item.get("format_metadata"))
     md = _as_bag(item.get("metadata"))
 
-    content = _first_str_in(fmd, md, _CONTENT_KEYS)
-    if content is not None:
+    source = source_from_row(item)
+    if source is not None:
         label = _first_str_in(fmd, md, _LABEL_KEYS)
         source_format = item.get("source_format")
         _, media_type = _file_hint(source_format)
         return {
             "mode": "content",
-            "content": content,
+            # Trimmed, as this payload always was: the digests recorded for earlier conversions
+            # were taken over the trimmed text. ``source`` keeps the exact text.
+            "content": source.text.strip(),
             "media_type": media_type,
             "filename": _download_filename(item, label, source_format),
+            "source": source,
         }
 
     uri_value = _first_str_in(fmd, md, _URI_KEYS)

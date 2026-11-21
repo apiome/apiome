@@ -28,6 +28,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, Mapping, Optional
 
+from .revision_source import sourceless_format_metadata_sql
+
 _logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -306,8 +308,9 @@ def upload_staleness(
 def newest_revision(db: Any, project_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
     """The item's newest live revision with what the hint and a re-upload need, or ``None``."""
     rows = db.execute_query(
-        """
-        SELECT v.id, v.version_id, v.created_at, v.source_format, v.protocol, v.format_metadata, p.metadata
+        f"""
+        SELECT v.id, v.version_id, v.created_at, v.source_format, v.protocol,
+               {sourceless_format_metadata_sql("v")} AS format_metadata, p.metadata
         FROM apiome.versions v
         JOIN apiome.projects p ON p.id = v.project_id
         WHERE v.project_id = %s::uuid AND p.tenant_id = %s::uuid AND v.deleted_at IS NULL

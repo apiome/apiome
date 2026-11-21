@@ -8,9 +8,10 @@ module is that caller-side glue for the MFI-22.6 REST endpoint.
 
 A catalog item (MFI-23.1) is the ``publishable = false`` slice of ``projects``: its id *is* a project
 id, and its latest revision records what *kind* of API it came from (``source_format`` / ``protocol``
-/ ``format_metadata`` / ``source_tool_versions``, MFI-7.1/7.2) — **including the captured raw source**
-in ``format_metadata`` (the ``sourceContent`` / ``rawSource`` / … keys :func:`resolve_source_payload`
-reads). Because the canonical model is not itself re-loadable from the relational catalog, this module
+/ ``format_metadata`` / ``source_tool_versions``, MFI-7.1/7.2). The captured raw source is read
+through :mod:`app.revision_source` (the document store first, the legacy columns second; COA-5.4):
+a caller that loaded the row attaches it with :func:`~app.revision_source.attach_revision_source`.
+Because the canonical model is not itself re-loadable from the relational catalog, this module
 rebuilds it the same way the import did: resolve the source's :class:`~app.import_source.ImportSource`
 adapter, ``parse`` the captured text into the format's native AST, and ``normalize`` that into a
 :class:`~app.canonical_model.CanonicalApi`. That reconstructed model is exactly what the emitter
@@ -26,12 +27,10 @@ status the endpoint maps straight through, so the caller never has to re-classif
 
 from __future__ import annotations
 
-import base64
 from typing import Any, Dict, Optional
 
 from .catalog_detail import resolve_source_payload
 from .conversion_job import ConversionError, ConversionSource
-from .fileset import IntakeFileset
 from .import_source import (
     DetectionInput,
     ImportSource,
@@ -42,6 +41,7 @@ from .import_source import (
     load_builtin_import_sources,
 )
 from .payload_analysis import PayloadAnalysisDocument
+from .revision_source import RevisionSource, canonical_model_cache
 
 __all__ = [
     "SOURCE_NOT_CAPTURED",
@@ -103,32 +103,53 @@ def resolve_conversion_adapter(source_format: Optional[str], raw: str) -> Import
     )
 
 
-def _captured_fileset(item: Dict[str, Any], raw: str) -> Optional[IntakeFileset]:
+def _captured_fileset(source: RevisionSource) -> Optional[Any]:
     """The fileset of an item imported from an archive, or ``None`` for a single document.
 
-    An archive intake (``format_metadata.intakeKind == "archive"``) captures the original archive
-    as base64 (``sourceEncoding``) with the root the import chose (``filesetRoot``). Unpacking it
-    with that root rebuilds exactly the fileset the import parsed (CDG-1.4: a connector item is an
-    archive of a definition and its policies).
+    An archive intake captures every file with the root the import chose. Rebuilding the fileset
+    from them gives exactly what the import parsed (CDG-1.4: a connector item is an archive of a
+    definition and its policies).
+
+    Args:
+        source: The item's captured source.
 
     Raises:
-        ImportSourceError: ``INPUT_ARCHIVE_INVALID`` when the captured archive cannot be unpacked.
+        ImportSourceError: ``INPUT_ARCHIVE_INVALID`` when the captured files do not form a fileset.
     """
-    fmd = item.get("format_metadata") if isinstance(item.get("format_metadata"), dict) else {}
-    if fmd.get("intakeKind") != "archive" or fmd.get("sourceEncoding") != "base64":
-        return None
-    from .archive_intake import ArchiveIntakeError, unpack_archive
-
-    root = fmd.get("filesetRoot") if isinstance(fmd.get("filesetRoot"), str) else None
     try:
-        unpacked = unpack_archive(base64.standard_b64decode(raw), root_path=root)
-    except (ArchiveIntakeError, ValueError) as exc:
+        return source.intake_fileset()
+    except ValueError as exc:
         raise ImportSourceError(
             f"The captured archive cannot be unpacked: {exc}", code="INPUT_ARCHIVE_INVALID"
         ) from exc
-    return IntakeFileset.from_members(
-        unpacked.members, root=unpacked.root_path, binary_members=unpacked.binary_members
-    )
+
+
+def _normalized_model(adapter: ImportSource, source: RevisionSource, source_label: Optional[str]) -> Any:
+    """Parse and normalize a captured source, reusing the model cached for the same content.
+
+    Args:
+        adapter: The import-source adapter for the source's format.
+        source: The captured source.
+        source_label: The file name the adapter sees for a single document.
+
+    Returns:
+        A :class:`~app.canonical_model.CanonicalApi` the caller owns.
+
+    Raises:
+        ImportSourceError: When the source does not parse or normalize.
+    """
+
+    def build() -> Any:
+        fileset = _captured_fileset(source)
+        if fileset is not None:
+            native_ast = adapter.parse_fileset(fileset, source_label=fileset.root)
+        else:
+            native_ast = adapter.parse(source.text, source_label=source_label)
+        return adapter.normalize(native_ast)
+
+    # Some adapters read the label's extension, so it is part of what identifies a parse.
+    key = (source.digest, type(adapter).__qualname__, source.root or source_label or "")
+    return canonical_model_cache().get_or_build(key, source.size_bytes, build)
 
 
 def _source_withheld(item: Dict[str, Any]) -> Optional[str]:
@@ -152,15 +173,16 @@ def build_conversion_source(
 ) -> ConversionSource:
     """Rebuild a :class:`ConversionSource` from a stored catalog item row.
 
-    Extracts the item's captured raw source (:func:`resolve_source_payload`), resolves the source's
+    Extracts the item's captured raw source (:func:`resolve_source_payload`: the source attached
+    to the row, else legacy keys the row carries), resolves the source's
     adapter (:func:`resolve_conversion_adapter`), parses + normalizes it back into a
     :class:`~app.canonical_model.CanonicalApi`, and bundles it with the provenance coordinates the
     converted Project must link back to (source project/revision id, format/protocol, tool versions).
 
     Args:
         item: The catalog item row from :meth:`app.database.Database.get_catalog_item_by_id` — it must
-            carry ``id`` and, to be convertible, a captured source in ``format_metadata`` and a
-            ``source_format``.
+            carry ``id`` and, to be convertible, a captured source (attached with
+            :func:`app.revision_source.attach_revision_source`) and a ``source_format``.
         source_version_id: The source revision (``versions.id``) being converted, recorded on the
             provenance so a later re-import diffs cleanly; ``None`` when it cannot be resolved.
         analysis: The revision's payload analysis (CPDO-1.1/1.2), when the caller loaded one. Carried
@@ -193,18 +215,14 @@ def build_conversion_source(
             code=SOURCE_NOT_CAPTURED,
         )
 
+    captured: RevisionSource = payload["source"]
     raw = payload["content"]
     source_label = payload.get("filename")
     source_format = item.get("source_format")
 
     adapter = resolve_conversion_adapter(source_format, raw)
     try:
-        fileset = _captured_fileset(item, raw)
-        if fileset is not None:
-            native_ast = adapter.parse_fileset(fileset, source_label=fileset.root)
-        else:
-            native_ast = adapter.parse(raw, source_label=source_label)
-        api = adapter.normalize(native_ast)
+        api = _normalized_model(adapter, captured, source_label)
     except ImportSourceError as exc:
         raise ConversionError(
             f"Could not reconstruct the canonical model for conversion: {exc}",

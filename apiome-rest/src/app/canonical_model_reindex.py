@@ -7,7 +7,7 @@ no rows to find. This one-off backfill fills them in.
 
 The canonical model is not stored anywhere else, so it is rebuilt the way the import built it:
 :func:`app.catalog_conversion.build_conversion_source` resolves the item's adapter, parses the
-source the revision captured (``format_metadata.sourceContent``) and normalizes it. The result is
+source the revision captured (read through :mod:`app.revision_source`) and normalizes it. The result is
 written with :meth:`app.database.Database.persist_canonical_api`, the same call the import makes.
 
 Run it from ``apiome-rest`` with ``scripts/backfill_canonical_models.py``. It is safe to re-run:

@@ -78,6 +78,7 @@ from .revision_deprecation import (
     successor_revision_id_from_metadata,
 )
 from .revision_dag import RevisionNode
+from .revision_source import source_captured_sql, sourceless_format_metadata_sql
 from .revision_dag import ancestors as revision_ancestors
 from .revision_dag import merge_base as revision_merge_base
 from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
@@ -3925,11 +3926,16 @@ class Database:
 
     # The columns a catalog item projects off its latest live revision (MFI-7.1/7.2): the captured
     # lint score/grade plus what *kind* of API it is and the format provenance. Shared by the list
-    # and single-item catalog reads so both surfaces project an identical shape.
-    _CATALOG_VERSION_LATERAL = """
+    # and single-item catalog reads so both surfaces project an identical shape. The captured
+    # source text is left out (COA-5.4, #7080): ``source_captured`` says whether there is one and
+    # ``latest_version_id`` is the revision :mod:`app.revision_source` reads it for.
+    _CATALOG_VERSION_LATERAL = f"""
             LEFT JOIN LATERAL (
-                SELECT v.quality_score, v.quality_grade,
-                       v.source_format, v.protocol, v.format_metadata,
+                SELECT v.id::text AS latest_version_id,
+                       v.quality_score, v.quality_grade,
+                       v.source_format, v.protocol,
+                       {sourceless_format_metadata_sql("v")} AS format_metadata,
+                       {source_captured_sql("v")} AS source_captured,
                        v.source_tool_versions AS tool_versions
                 FROM apiome.versions v
                 WHERE v.project_id = p.id AND v.deleted_at IS NULL
@@ -4025,6 +4031,7 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   cv.latest_version_id, cv.source_captured,
                    COALESCE(vc.versions_count, 0) AS versions_count,
                    aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS},
@@ -4062,6 +4069,7 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   cv.latest_version_id, cv.source_captured,
                    COALESCE(vc.versions_count, 0) AS versions_count,
                    aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS}
@@ -9039,13 +9047,16 @@ class Database:
             A row carrying ``id`` (the owning project id), ``project_slug``, ``version_label``,
             ``source_format``, ``protocol``, ``format_metadata``, ``tool_versions`` and the project
             ``metadata``, or ``None`` when no live revision with that id exists for the tenant.
+            ``format_metadata`` is without the source text (COA-5.4): read that with
+            :func:`app.revision_source.revision_source`.
         """
         if not version_record_id or not is_uuid_string(str(version_record_id)):
             return None
-        query = """
+        query = f"""
             SELECT v.project_id AS id, p.slug AS project_slug,
                    v.version_id AS version_label,
-                   v.source_format, v.protocol, v.format_metadata,
+                   v.source_format, v.protocol,
+                   {sourceless_format_metadata_sql("v")} AS format_metadata,
                    v.source_tool_versions AS tool_versions,
                    p.metadata
             FROM apiome.versions v
@@ -9085,12 +9096,13 @@ class Database:
             needs it to read that tenant's branding). ``None`` when no published public revision
             matches the slugs.
         """
-        query = """
+        query = f"""
             SELECT p.id AS id, p.slug AS project_slug,
                    t.id AS tenant_id,
                    v.id AS version_record_id,
                    v.version_id AS version_label,
-                   v.source_format, v.protocol, v.format_metadata,
+                   v.source_format, v.protocol,
+                   {sourceless_format_metadata_sql("v")} AS format_metadata,
                    v.source_tool_versions AS tool_versions,
                    p.metadata
             FROM apiome.versions v
@@ -14180,15 +14192,17 @@ class Database:
 
         Returns:
             ``{"id", "project_id", "version_id", "source_format", "protocol", "format_metadata",
-            "metadata"}`` (``metadata`` is the project's), or ``None`` when the revision is not a
-            live revision of the tenant.
+            "metadata"}`` (``metadata`` is the project's; ``format_metadata`` is without the
+            source text, which :func:`app.revision_source.revision_source` reads), or ``None``
+            when the revision is not a live revision of the tenant.
         """
         if not version_id or not is_uuid_string(str(version_id)):
             return None
         rows = self.execute_query(
-            """
+            f"""
             SELECT v.id::text AS id, v.project_id::text AS project_id, v.version_id,
-                   v.source_format, v.protocol, v.format_metadata, p.metadata
+                   v.source_format, v.protocol,
+                   {sourceless_format_metadata_sql("v")} AS format_metadata, p.metadata
             FROM apiome.versions v
             JOIN apiome.projects p ON p.id = v.project_id
             WHERE v.id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
@@ -15633,13 +15647,14 @@ class Database:
         self, tenant_id: str, project_id: str
     ) -> Optional[Dict[str, Any]]:
         """Latest format/identity coordinates for one project (MFI-6.4 suggestions anchor)."""
-        query = """
+        query = f"""
             SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
                    cv.source_format, cv.protocol, cv.format_metadata,
                    aa.identity_name, aa.identity_namespace
             FROM apiome.projects p
             LEFT JOIN LATERAL (
-                SELECT v.source_format, v.protocol, v.format_metadata
+                SELECT v.source_format, v.protocol,
+                       {sourceless_format_metadata_sql("v")} AS format_metadata
                 FROM apiome.versions v
                 WHERE v.project_id = p.id AND v.deleted_at IS NULL
                 ORDER BY v.created_at DESC NULLS LAST, v.id DESC
@@ -15678,12 +15693,13 @@ class Database:
         """
         if not structures:
             return []
-        query = """
+        query = f"""
             SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
                    cv.source_format, cv.protocol, cv.format_metadata
             FROM apiome.projects p
             JOIN LATERAL (
-                SELECT v.source_format, v.protocol, v.format_metadata
+                SELECT v.source_format, v.protocol,
+                       {sourceless_format_metadata_sql("v")} AS format_metadata
                 FROM apiome.versions v
                 WHERE v.project_id = p.id AND v.deleted_at IS NULL
                 ORDER BY v.created_at DESC NULLS LAST, v.id DESC
@@ -15701,13 +15717,14 @@ class Database:
         self, tenant_id: str, project_id: str, *, limit: int = 20
     ) -> List[Dict[str, Any]]:
         """Return tenant projects that are not already grouped with ``project_id``."""
-        query = """
+        query = f"""
             SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
                    cv.source_format, cv.protocol, cv.format_metadata,
                    aa.identity_name, aa.identity_namespace
             FROM apiome.projects p
             LEFT JOIN LATERAL (
-                SELECT v.source_format, v.protocol, v.format_metadata
+                SELECT v.source_format, v.protocol,
+                       {sourceless_format_metadata_sql("v")} AS format_metadata
                 FROM apiome.versions v
                 WHERE v.project_id = p.id AND v.deleted_at IS NULL
                 ORDER BY v.created_at DESC NULLS LAST, v.id DESC
@@ -32078,6 +32095,8 @@ class Database:
             ``(snapshot_row_or_None, chain)`` — ``chain`` is the revision ids from ``version_id`` up
             to and including the snapshot's revision (or the whole walked chain when none was found);
             source edits on any of them postdate the import.
+            The row does not carry the imported text: read it for ``snapshot["version_id"]`` with
+            :func:`app.revision_source.revision_source` (COA-5.4).
         """
         chain: List[str] = []
         current: Optional[str] = version_id
@@ -32085,7 +32104,7 @@ class Database:
             chain.append(current)
             rows = self.execute_query(
                 """
-                SELECT s.version_id, s.source_file, s.source_format, s.source_digest, s.source_text,
+                SELECT s.version_id, s.source_file, s.source_format, s.source_digest,
                        s.canonical_document, s.created_at
                 FROM apiome.version_import_snapshots s
                 WHERE s.version_id = %s::uuid AND s.tenant_id = %s

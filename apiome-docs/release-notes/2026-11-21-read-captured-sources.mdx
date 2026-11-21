@@ -1,0 +1,30 @@
+---
+slug: read-captured-sources
+title: "Read captured sources through the store"
+description: "Export, conversion and provenance now read an import's document from the document store."
+authors: [apiome]
+---
+
+Every feature that needs the document an import read now gets it from the
+[document store](/admin/document-store#how-originals-are-read). This completes the move that
+started with [Every import keeps its original document](/release-notes/import-originals).
+
+{/* truncate */}
+
+- **One reader:** export, conversion, lint evidence, compatibility checks, the catalog's
+  **Source & Code** tab, the schema registry and the source workspace's as-imported view
+  read the stored original first. A version imported before originals were stored is still read
+  from the database.
+- **`s3` and `filesystem` are safe to use:** with those stores the database holds only a
+  pointer, and export and conversion used to answer `source-not-captured`. They now find the
+  document.
+- **Archives convert from their files:** an item imported from an archive is rebuilt from the
+  stored files, not from the archive. Its **Source & Code** tab now shows the root file.
+- **Smaller API responses:** the catalog list, a catalog item and version lookups no longer
+  return the document in `format_metadata.sourceContent`. Use
+  `GET /v1/catalog/{tenant}/{item}/source` to download it.
+- **Faster repeat reads:** each REST worker keeps recently parsed models in memory, bounded by
+  `APIOME_CANONICAL_MODEL_CACHE_ENTRIES` (32) and `APIOME_CANONICAL_MODEL_CACHE_MAX_BYTES`
+  (16 MiB).
+
+See [How originals are read](/admin/document-store#how-originals-are-read).

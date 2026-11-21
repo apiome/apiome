@@ -451,7 +451,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| COA-5.4 · [#7080](https://github.com/apiome/apiome/issues/7080) | Read captured sources through the store | Canonical rebuild, export source, provenance, catalog detail and the source workspace read originals via one helper, with the legacy columns as fallback | `enhancement`, `rest` | Y | M | apiome-rest |
 | COA-5.5 · [#7081](https://github.com/apiome/apiome/issues/7081) | Rendered document cache for revisions | Write the generated OpenAPI / canonical JSON per (revision, content stamp, generator version); immutable for published and frozen revisions | `enhancement`, `rest`, `performance` | N | L | apiome-rest |
 | COA-5.6 · [#7082](https://github.com/apiome/apiome/issues/7082) | Diff and compatibility read stored documents | Classified diff, compatibility check, merge-request changes, changelog and transitive baselines use the cache; equal digests short-circuit to an empty diff | `enhancement`, `rest`, `performance` | N | M | apiome-rest, apiome-ui |
 | COA-5.7 · [#7083](https://github.com/apiome/apiome/issues/7083) | Download and compare the original file | REST stream / presigned download with ETag and Range, `apiome versions original`, UI download and an "originals" text-diff mode | `enhancement`, `rest`, `ui`, `cli` | Y | M | apiome-rest, apiome-ui, apiome-cli |
@@ -510,7 +509,8 @@ flowchart LR
 - **Technical Stack:** Python (apiome-rest), TypeScript worker (apiome-ui), apiome-cli.
 - **Documentation:** `bring-in/what-an-import-records.md`, `bring-in/how-importing-works.mdx`, `bring-in/collection-secret-scrubbing.md`; screenshots: n/a; release note.
 
-**COA-5.4 · #7080 Read captured sources through the store**
+**✅ COA-5.4 · #7080 Read captured sources through the store — Complete**
+- **Shipped:** `app/revision_source.py` — `revision_source(db, store, tenant_id, version_id)` reads the `original` from the document store, then `format_metadata.sourceContent`, then `version_import_snapshots.source_text`. Export, conversion, catalog detail and source download, lint evidence, compatibility, OpenAPI upgrade, provenance, the schema registry, catalog refresh and the revision change report read through it. Version queries select `format_metadata` without the source text (catalog rows gain `source_captured` and `latest_version_id`). Parsed models are cached per worker by source digest (`APIOME_CANONICAL_MODEL_CACHE_ENTRIES`, `APIOME_CANONICAL_MODEL_CACHE_MAX_BYTES`). `tests/test_revision_source_readers.py` is the grep test; `tests/test_revision_source.py` runs export, conversion and provenance on `db`, `filesystem` and `s3`. Not moved: `source_backfill` (the E1-6 repair job that writes the legacy column), which moves with the migration in COA-5.8 (#7084).
 - **Problem:** At least five modules read `sourceContent` or `source_text` directly (`catalog_detail`, `export_source`, `format_adapter_evidence`, `source_provenance`, `canonical_model_for_revision`), and version queries drag the JSONB source along.
 - **Solution/Scope:**
 - `revision_source(db, store, tenant_id, version_id)` returns text + digest + format, trying `version_documents` first and the legacy columns second.

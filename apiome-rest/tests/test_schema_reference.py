@@ -24,6 +24,7 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.conversion_job import ConversionSource
+from app.revision_source import source_from_row
 from app.schema_reference import (
     KIND_CATALOG,
     KIND_PROJECT,
@@ -432,4 +433,4 @@ def test_a_decomposed_openapi_project_is_rebuilt_for_the_bench() -> None:
 
     assert sorted(t.key for t in revision.api.types) == ["Owner", "Pet"]
     export_db.get_version_by_id.assert_called_once_with(_REVISION_ID, _TENANT)
-    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)
+    assert source_from_row(calls[1]).text == json.dumps(spec)
