@@ -1,0 +1,33 @@
+---
+slug: every-export-is-checked
+title: "Every export is checked"
+description: "Six more export formats are validated; unchecked files say Not validated."
+authors: [apiome]
+---
+
+CloudEvents, XML-RPC, Connect RPC, Kafka Connect, MCP and A2A exports are now validated before
+delivery, like every other format. A file that has no check says **Not validated**, never that it
+passed.
+
+{/* truncate */}
+
+- **New — CloudEvents:** each event is checked against the CloudEvents 1.0 rules: `specversion`, a
+  non-empty `id`, `source` and `type`, an RFC 3339 `time`, not both `data` and `data_base64`, and
+  extension attributes with lower-case names and simple values. Every event must import back.
+- **New — XML-RPC:** the `methodCall` must have one `methodName` that XML-RPC allows, and every value
+  must read through Python's own XML-RPC reader (`xmlrpc.client`), then import back.
+- **New — Connect RPC:** compiled with `buf build`, as Protobuf is. Without `buf` on the server the
+  export says it was not re-validated.
+- **New — Kafka Connect, MCP, A2A:** Kafka Connect schemas import back together with
+  `connector.json`; each MCP tool is checked against the MCP Tool schema of the descriptor's
+  version, and each A2A Agent Card against the AgentCard schema.
+- **Changed — "Not validated":** the one export left without a check (the `curl` script of the
+  `.http` file target) shows **Not validated** on the **Validation** tab in **Export studio**, and a
+  **Clean** verdict banner says the file *was not validated* instead of *validated cleanly*. The
+  REST report's `headline` reads **Not validated** (the verdict is still `not_applicable`).
+- **Fixed — XML-RPC method names:** an operation name XML-RPC does not allow, such as an agent
+  skill `Build itinerary`, is written as `Build_itinerary`, and the fidelity report lists the
+  rename.
+- **REST:** no endpoint changes (REST API 1.789.0, OpenAPI 1.615.0).
+
+See [How an export is checked](/ship/check-an-export#formats-checked-against-their-specification).

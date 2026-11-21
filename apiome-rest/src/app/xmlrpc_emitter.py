@@ -45,7 +45,7 @@ from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .normalizer import Keys
 
-__all__ = ["XmlRpcEmitOptions", "XmlRpcEmitter", "XmlRpcFidelityRulePack"]
+__all__ = ["XmlRpcEmitOptions", "XmlRpcEmitter", "XmlRpcFidelityRulePack", "xmlrpc_method_name"]
 
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
@@ -69,7 +69,7 @@ class XmlRpcFidelityRulePack(CapabilityRulePack):
         self._native = api.format == XmlRpcEmitter.format
         primary = _primary_rpc_operation(api)
         self._primary_key = primary.key if primary is not None else None
-        self._method = primary.name if primary is not None else None
+        self._method = xmlrpc_method_name(primary.name) if primary is not None else None
         report = super().evaluate(api)
         if self._native or not api.agents:
             return report
@@ -154,8 +154,9 @@ class XmlRpcFidelityRulePack(CapabilityRulePack):
         self, operation: Operation
     ) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
         """The re-key verdicts of the written operation (``{method}.{method}`` on re-import)."""
+        method = xmlrpc_method_name(operation.name)
         return rekey_verdicts(
-            operation.key, Keys.operation_rpc(operation.name, operation.name),
+            operation.key, Keys.operation_rpc(method, method),
             target_label=self.target_label, noun="operation",
             reason="names a call by its method only",
         )
@@ -188,6 +189,28 @@ class XmlRpcEmitOptions(EmitOptions):
         default=True,
         description="Emit the XML 1.0 declaration prolog.",
     )
+
+
+#: Runs of characters the XML-RPC specification does not allow in a ``methodName``.
+_ILLEGAL_METHOD_CHARS = re.compile(r"[^A-Za-z0-9_.:/]+")
+
+
+def xmlrpc_method_name(name: Optional[str]) -> str:
+    """The ``methodName`` XML-RPC can carry for an operation name (COA-3.4, #7055).
+
+    The specification allows only ``A-Z a-z 0-9 _ . : /`` in a method name. An operation named in
+    another format (an agent skill ``Build itinerary``, an Agent Card URL) has other characters, and
+    writing it as-is fails the export's validator. Each run of illegal characters becomes one
+    ``_``; a legal name is returned unchanged, so a native XML-RPC source round-trips byte for byte.
+    The rename is reported by the rule pack's re-key verdict, since the call reads back under it.
+
+    Args:
+        name: The operation's name.
+
+    Returns:
+        A legal, non-empty method name (``method`` when nothing legal is left).
+    """
+    return _ILLEGAL_METHOD_CHARS.sub("_", name or "").strip("_") or "method"
 
 
 def _primary_rpc_operation(api: CanonicalApi) -> Optional[Operation]:
@@ -297,7 +320,7 @@ class _XmlRpcWriter:
 
         root = ET.Element("methodCall")
         method_el = ET.SubElement(root, "methodName")
-        method_el.text = operation.name
+        method_el.text = xmlrpc_method_name(operation.name)
 
         request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
         params = request.extras.get("xmlrpc_params") if request is not None else None

@@ -13,8 +13,9 @@ delivery may proceed and to render parser/toolchain detail.
 * ``skipped`` — a matching parser exists but its toolchain was unavailable, so the artifact
   was not re-validated here; delivery proceeds but the report **warns** (a possibly-valid
   export ships without this guarantee);
-* ``not_applicable`` — no importer matches the format (the sample no-op target); the gate
-  stays out of the way.
+* ``not_applicable`` — no validator exists for the format (the sample no-op target, the
+  ``http-file`` ``curl`` script); the gate stays out of the way, and the report's headline is
+  **Not validated** so the band never reads as a pass (COA-3.4, #7055).
 
 The report carries structured :class:`~app.export_validation.ValidationFinding` rows (message,
 JSON-pointer path, bundle file, line/column when the validator provides them, tool identity)
@@ -46,7 +47,7 @@ class ValidationVerdict(str, Enum):
 
     Ordered from safest to worst for UI gating: ``valid`` needs no attention,
     ``invalid`` blocks delivery, ``skipped`` warns but does not block,
-    ``not_applicable`` means there was nothing to validate.
+    ``not_applicable`` means no validator exists for the format, so the artifact was not validated.
     """
 
     VALID = "valid"
@@ -62,6 +63,13 @@ TOOL_BY_TARGET: Dict[str, str] = {
     "asyncapi-3": "asyncapi-parser",
     "avro": "fastavro",
     "proto3": "buf build",
+    # COA-3.4 (#7055)
+    "connectrpc": "buf build",
+    "cloudevents": "CloudEvents 1.0 rules + CloudEvents import",
+    "xmlrpc": "xmlrpc.client + XML-RPC import",
+    "kafka-connect": "Kafka Connect import",
+    "a2a": "A2A AgentCard schema + A2A import",
+    "mcp": "MCP Tool schema + MCP import",
 }
 
 
@@ -151,10 +159,12 @@ def _headline_and_message(
             "Validation skipped",
             f"{reason} The export proceeded without an emitted-artifact guarantee.",
         )
+    # COA-3.4 (#7055): "not applicable" is why no check ran, not a result — the headline says the
+    # artifact was not validated, so no surface can read it as a pass.
+    reason = detail or f"Apiome has no validator for the {label!r} target, so the emitted artifact was not validated."
     return (
-        "Not applicable",
-        detail
-        or f"No import parser matches the {label!r} target; the emitted artifact was not re-validated.",
+        "Not validated",
+        f"{reason} The export proceeded without an emitted-artifact check.",
     )
 
 

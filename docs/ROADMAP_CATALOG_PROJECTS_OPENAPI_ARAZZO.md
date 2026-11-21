@@ -292,7 +292,6 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-3.4 · [#7055](https://github.com/apiome/apiome/issues/7055) | Validators for the 14 "not applicable" export targets | Add a validator per target where one exists; show "not validated" where none does | `enhancement`, `rest`, `v2` | Y | N | M | apiome-rest |
 | COA-3.5 · [#7056](https://github.com/apiome/apiome/issues/7056) | Sign-offs owed on closed export tickets #6223, #6227, #6229 | Verify the three closed tickets against their acceptance criteria and record the result | `documentation`, `mvp` | Y | Y | S | apiome-ui, apiome-docs |
 | COA-3.6 · [#7057](https://github.com/apiome/apiome/issues/7057) | Triage the deferred export tickets and the "not planned" list | Check the state of every RC7/RC8 export ticket; close the not-planned ones with the stated reason; ticket what remains | `documentation`, `mvp` | Y | Y | S | docs |
 
@@ -330,7 +329,8 @@ Close the silent-loss, scalar-leak and re-import gaps left from RC7 and triage t
 - **Technical Stack:** apiome-rest
 - **Documentation:** `ship/export-fidelity.md`; screenshots: n/a (no UI change)
 
-**COA-3.4 · #7055 Validators for the 14 "not applicable" export targets**
+**✅ COA-3.4 · #7055 Validators for the 14 "not applicable" export targets — Complete**
+- **Shipped:** REST 1.789.0 / OpenAPI 1.615.0 (no endpoint change). Every registered emit target except the internal `sample-noop` now has a validator (`app.export_validation._VALIDATORS`; ratchet in `tests/test_unvalidated_export_targets.py`). Of the 14 audit targets nine gained one in RC7 and WADL in MFX-29.3; this ticket adds `connectrpc` (`buf build`), `cloudevents` (`app.cloudevents_spec_validation`: the CloudEvents 1.0 core + JSON-format rules, then a per-event re-import), `xmlrpc` (`app.xmlrpc_spec_validation`: structure + `methodName` charset after a secure parse, `xmlrpc.client.loads` for every value, then a re-import) and `kafka-connect` (schemas + `connector.json` re-imported together), plus `a2a` / `mcp` (vendored AgentCard / MCP Tool schemas, then a re-import). A corpus sweep found two output bugs the new checks catch: XML-RPC `methodName` from agent skill names (now `xmlrpc_method_name`, reported by the existing re-key verdict) and CloudEvents batches the import source cannot read whole (re-imported per event). The `not_applicable` verdict (now only the `http-file` `curl` script and unregistered formats) reads **Not validated** in the report headline and message, the job event, the Verify **Validation** lens and the **Clean** banner (UI 0.679.0, `validationRan`). Docs: `ship/export-studio.mdx` (Validation tab states), `ship/check-an-export.mdx` (new **Formats checked against their specification**), `ship/export-a-spec.md`, `ship/export-fidelity.md`; release note `every-export-is-checked`.
 - **Problem:** 14 targets report the validator as "not applicable", which reads as a pass.
 - **Solution/Scope:**
 - Integrate an available validator per target, or make the UI and report say "not validated".

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.614.0",
+    "version": "1.615.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -247288,7 +247288,7 @@
           "not_applicable"
         ],
         "title": "ValidationVerdict",
-        "description": "The band an emitted-artifact validation falls into (MFX-5.3).\n\nOrdered from safest to worst for UI gating: ``valid`` needs no attention,\n``invalid`` blocks delivery, ``skipped`` warns but does not block,\n``not_applicable`` means there was nothing to validate."
+        "description": "The band an emitted-artifact validation falls into (MFX-5.3).\n\nOrdered from safest to worst for UI gating: ``valid`` needs no attention,\n``invalid`` blocks delivery, ``skipped`` warns but does not block,\n``not_applicable`` means no validator exists for the format, so the artifact was not validated."
       },
       "ValueProvenance": {
         "properties": {

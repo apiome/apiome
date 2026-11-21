@@ -266,10 +266,20 @@ export interface VerifyVerdictBanner {
  * `Clean` / `Lossy — acknowledge to continue` / `Severe — acknowledge to continue` /
  * `Invalid — export blocked`.
  *
+ * A `clean` band only says the artifact "validated cleanly" when a validator actually ran: with
+ * `validated` false (no validator exists for the target, or its toolchain was not installed) the
+ * description says the artifact was **not validated** instead (COA-3.4), so the green banner never
+ * claims a check that did not happen.
+ *
  * @param verdict The overall verdict band.
+ * @param options.validated Whether a validator ran on the emitted artifact
+ *   ({@link validationRan}); defaults to `true`.
  * @returns The banner label, description, and tone.
  */
-export function verifyVerdictBanner(verdict: ExportVerifyVerdict): VerifyVerdictBanner {
+export function verifyVerdictBanner(
+  verdict: ExportVerifyVerdict,
+  { validated = true }: { validated?: boolean } = {},
+): VerifyVerdictBanner {
   switch (verdict) {
     case 'invalid':
       return {
@@ -296,8 +306,9 @@ export function verifyVerdictBanner(verdict: ExportVerifyVerdict): VerifyVerdict
     default:
       return {
         label: 'Clean',
-        description:
-          'The conversion is lossless and the emitted artifact validated cleanly. You can generate this export.',
+        description: validated
+          ? 'The conversion is lossless and the emitted artifact validated cleanly. You can generate this export.'
+          : 'The conversion is lossless, but the emitted artifact was not validated — see the Validation lens. You can generate this export.',
         tone: 'clean',
       };
   }
@@ -364,7 +375,8 @@ export function lensBadgeCount(lens: VerifyLensKey, result: ExportVerifyResponse
  * - **valid** — a validator ran and the emitted artifact re-parsed cleanly (the positive verdict).
  * - **invalid** — a validator ran and rejected the artifact (blocks delivery); findings render.
  * - **unavailable** — the required toolchain was missing; validation could not run (warns).
- * - **not_applicable** — no validator matches the target format; there is nothing to validate.
+ * - **not_applicable** — no validator exists for the target format; the artifact was **not
+ *   validated** (COA-3.4), shown neutral but never as a pass.
  *
  * @param validation The emitted-output validation report.
  * @returns The lens presentation state.
@@ -381,6 +393,18 @@ export function validationLensState(validation: EmittedValidationReport): Valida
     default:
       return 'valid';
   }
+}
+
+/**
+ * Whether a validator actually ran on the emitted artifact (COA-3.4): `valid` and `invalid` are
+ * verdicts a validator returned; `skipped` (toolchain unavailable) and `not_applicable` (no
+ * validator exists for the format) mean the artifact was **not validated**.
+ *
+ * @param validation The emitted-output validation report.
+ * @returns True when the verdict came from a validator that ran.
+ */
+export function validationRan(validation: Pick<EmittedValidationReport, 'verdict'>): boolean {
+  return validation.verdict === 'valid' || validation.verdict === 'invalid';
 }
 
 /** The four states the validation lens can present (MFX-42.2). */

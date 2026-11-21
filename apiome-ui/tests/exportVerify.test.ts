@@ -19,6 +19,7 @@ import {
   validatorToolLabel,
   verifyGatePasses,
   verifyVerdictBanner,
+  validationRan,
   verifyVerdictAlertVariant,
   type EmittedArtifactLintReport,
   type EmittedValidationReport,
@@ -219,6 +220,23 @@ describe('verifyVerdictBanner', () => {
     expect(verifyVerdictBanner('lossy').label).toBe('Lossy — acknowledge to continue');
     expect(verifyVerdictBanner('severe').label).toBe('Severe — acknowledge to continue');
     expect(verifyVerdictBanner('invalid').label).toBe('Invalid — export blocked');
+  });
+
+  it('counts only valid / invalid as a validator having run (COA-3.4)', () => {
+    expect(validationRan({ verdict: 'valid' })).toBe(true);
+    expect(validationRan({ verdict: 'invalid' })).toBe(true);
+    expect(validationRan({ verdict: 'skipped' })).toBe(false);
+    expect(validationRan({ verdict: 'not_applicable' })).toBe(false);
+  });
+
+  it('only claims a clean validation when a validator ran (COA-3.4)', () => {
+    expect(verifyVerdictBanner('clean').description).toMatch(/validated cleanly/);
+    expect(verifyVerdictBanner('clean', { validated: true }).description).toMatch(/validated cleanly/);
+    const unvalidated = verifyVerdictBanner('clean', { validated: false });
+    expect(unvalidated.description).toMatch(/not validated/);
+    expect(unvalidated.description).not.toMatch(/validated cleanly/);
+    expect(unvalidated.label).toBe('Clean');
+    expect(unvalidated.tone).toBe('clean');
   });
 
   it('names the types-only outcome in the severe description (MFX-42.4)', () => {
