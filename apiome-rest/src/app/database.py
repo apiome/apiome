@@ -31267,6 +31267,35 @@ class Database:
             (version_id, tenant_id),
         )
 
+    def get_version_original_facts(self, *, tenant_id: str, version_id: str) -> Optional[Dict[str, Any]]:
+        """Read what a download of a revision's original needs besides the object (COA-5.7, #7083).
+
+        Args:
+            tenant_id: The tenant that must own the revision.
+            version_id: The revision (``versions.id``).
+
+        Returns:
+            ``source_withheld`` (the reason an import withheld the source, or ``None``),
+            ``source_label`` (the file name or URL the import named), ``source_file`` (the import
+            snapshot's file name), ``project_slug`` and ``version_label``; ``None`` when the tenant
+            has no such live revision. Never the source text.
+        """
+        rows = self.execute_query(
+            """
+            SELECT v.format_metadata ->> 'sourceWithheld' AS source_withheld,
+                   v.format_metadata ->> 'sourceLabel' AS source_label,
+                   s.source_file, p.slug AS project_slug, v.version_id AS version_label
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            LEFT JOIN apiome.version_import_snapshots s
+                   ON s.version_id = v.id AND s.tenant_id = p.tenant_id
+            WHERE v.id = %s::uuid AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            """,
+            (version_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
     # ───────────────────── revision content stamp (COA-5.2, #7078, V403) ─────────────────────
     # ``versions.content_stamp`` is bumped by database triggers once per transaction that writes
     # the revision's normalized data; application code only ever reads it.

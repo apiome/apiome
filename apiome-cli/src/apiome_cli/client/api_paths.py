@@ -712,6 +712,18 @@ def version_unpublish(
     return f"{version_record(tenant_slug, project_id, version_record_id)}/unpublish"
 
 
+def version_original(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_record_id: str | UUID,
+    part: str | None = None,
+) -> str:
+    """``…/original`` (or ``…/original/{part}``): GET downloads the stored original (COA-5.7)."""
+    from apiome_cli.version_original import original_suffix
+
+    return f"{version_record(tenant_slug, project_id, version_record_id)}{original_suffix(part)}"
+
+
 def version_freeze(
     tenant_slug: str,
     project_id: str | UUID,

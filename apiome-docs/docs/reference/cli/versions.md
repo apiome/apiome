@@ -18,7 +18,7 @@ List, show, create, publish, fork, compare and delete versions.
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`compatibility`](#versions-compatibility), [`create`](#versions-create), [`delete`](#versions-delete), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`show`](#versions-show), [`unpublish`](#versions-unpublish).
+Subcommands: [`compatibility`](#versions-compatibility), [`create`](#versions-create), [`delete`](#versions-delete), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`original`](#versions-original), [`publish`](#versions-publish), [`show`](#versions-show), [`unpublish`](#versions-unpublish).
 
 ## apiome versions compatibility {#versions-compatibility}
 
@@ -191,6 +191,30 @@ apiome versions list [OPTIONS]
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--project-id` | uuid |  |  | Restrict results to one project (required unless listing all projects). |
+
+## apiome versions original {#versions-original}
+
+Download the file a version was imported from (GET …/{version_record_id}/original).
+
+The bytes are exactly what the import stored (after the tenant's secret scrub) and are checked against the server's SHA-256 before anything is written. For a version imported from a set of files the original is the set's JSON manifest; --part downloads one of its files. With --json and -o, prints {file, filename, sha256, sizeBytes, mediaType}.
+
+```text
+apiome versions original [OPTIONS] PROJECT VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `VERSION_REF` | text | yes | Version label (2.1.0 or v2.1.0) or revision UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--output`, `-o` | path |  |  | Write to this file (or, for a directory, under the original file name). Default: stdout. |
+| `--part` | text |  |  | For a version imported from a set of files: the file to download, by its path in the set. |
 
 ## apiome versions publish {#versions-publish}
 

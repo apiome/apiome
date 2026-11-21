@@ -1,0 +1,26 @@
+---
+slug: download-and-compare-originals
+title: "Download and compare the original file"
+description: "Download the file a version was imported from, and diff two originals as text."
+authors: [apiome]
+---
+
+Every import keeps the file it read. You can now get that file back, and compare two of them line
+by line.
+
+{/* truncate */}
+
+- **Download original:** the spec viewer on **Versions** (**Actions → View spec**) and a catalog
+  item's header have a **Download original** button. The file is saved under the name it was
+  imported with, exactly as it was stored.
+- **Compare two originals:** **Compare** has a new **Originals** tab — a text diff of the two
+  imported files beside the semantic diff, with unchanged runs folded. Only the rows on screen are
+  drawn, so a 20 MB pair opens without freezing the tab.
+- **From the CLI:** `apiome versions original <project> <version> -o <file>` downloads it and checks
+  its SHA-256; `--part <path>` fetches one file of an archive import.
+- **From the API:** `GET /v1/versions/{tenant}/{project}/{version}/original` supports `ETag`,
+  `If-None-Match` and `Range`, and `?redirect=presigned` hands out a short-lived S3 link.
+- **Withheld stays withheld:** an import that withheld its source under the intake policy answers
+  `410 original-withheld`.
+
+See [Original file](/build/versions#original-file).

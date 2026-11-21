@@ -1,4 +1,4 @@
-"""``apiome versions``: list, show, get, create, publish, unpublish, freeze, compatibility, delete and fork."""
+"""``apiome versions``: list, show, get, create, publish, unpublish, freeze, original, compatibility, delete and fork."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ from apiome_cli.client.list_response import fetch_list
 from apiome_cli import __version__
 from apiome_cli.exit_codes import (
     EXIT_BREAKING_CHANGES,
+    EXIT_CHECKSUM_MISMATCH,
     EXIT_COMPAT_UNAVAILABLE,
     EXIT_DELETE_REFUSED,
     EXIT_ERROR,
@@ -67,7 +68,7 @@ from apiome_cli.version_compat import (
     to_sarif,
 )
 from apiome_cli.version_compat import render_result as render_compat_result
-from apiome_cli import version_create, version_show
+from apiome_cli import version_create, version_original, version_show
 from apiome_cli.version_delete import DeleteRefused, DeleteUsageError, plan_delete
 from apiome_cli.version_delete import json_result as delete_json_result
 from apiome_cli.version_delete import render_plan as render_delete_plan
@@ -647,6 +648,70 @@ def freeze_version(
         emit_json(json_result(result))
     else:
         typer.echo(render_frozen(result))
+
+
+@app.command("original")
+def download_original(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    version_ref: str = typer.Argument(
+        ..., metavar="VERSION", help="Version label (2.1.0 or v2.1.0) or revision UUID."
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Write to this file (or, for a directory, under the original file name). Default: stdout.",
+    ),
+    part: Optional[str] = typer.Option(
+        None,
+        "--part",
+        help="For a version imported from a set of files: the file to download, by its path in the set.",
+    ),
+) -> None:
+    """Download the file a version was imported from (GET …/{version_record_id}/original).
+
+    The bytes are exactly what the import stored (after the tenant's secret scrub) and are checked
+    against the server's SHA-256 before anything is written. For a version imported from a set of
+    files the original is the set's JSON manifest; --part downloads one of its files. With --json
+    and -o, prints {file, filename, sha256, sizeBytes, mediaType}.
+    """
+    release = parse_release(version_ref)
+    if release is not None:
+        version_ref = ".".join(str(item) for item in release)
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id, version_id = _resolve_publish_version_id(
+        client, tenant_slug, version_ref=version_ref, project_ref=project_ref
+    )
+    response = client.get_raw(api_paths.version_original(tenant_slug, project_id, version_id, part))
+    if response.status_code in (404, 410):
+        try:
+            detail = response.json().get("detail")
+        except (ValueError, AttributeError):
+            detail = None
+        message = version_original.error_message(response.status_code, detail, version_ref)
+        if message:
+            typer.echo(message, err=True)
+            raise typer.Exit(EXIT_ERROR)
+    exit_on_api_error(response)
+    body = response.content
+    problem = version_original.digest_problem(body, response.headers.get("X-Apiome-Content-Sha256"))
+    if problem:
+        typer.echo(problem, err=True)
+        raise typer.Exit(EXIT_CHECKSUM_MISMATCH)
+    name = version_original.download_name(response.headers.get("Content-Disposition"))
+    if output is None:
+        typer.echo(body, nl=False)
+        return
+    target = version_original.target_path(output, name)
+    target.write_bytes(body)
+    result = version_original.json_result(
+        path=target, name=name, body=body, media_type=response.headers.get("Content-Type")
+    )
+    if json_mode_from_context(ctx):
+        emit_json(result)
+    else:
+        typer.echo(f"Wrote {target} ({result['sizeBytes']} bytes, sha256 {result['sha256']}).", err=True)
 
 
 def _response_code(response: Any) -> Optional[str]:

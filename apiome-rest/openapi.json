@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.624.0",
+    "version": "1.625.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -63667,6 +63667,469 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get version changelogresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/original": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Version Original",
+        "description": "Download the file the import stored for a revision (COA-5.7).\n\nFor a single document this is the document; for a set of files it is the set's manifest\n(``application/vnd.apiome.fileset-manifest+json``), whose ``members`` name each file to\nfetch from ``\u2026/original/{part_path}``.",
+        "operationId": "get_version_original_v1_versions__tenant_slug___project_id___version_record_id__original_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "redirect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "presigned",
+                  "type": "string",
+                  "description": "Get Version Originalredirect schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Originalredirect schema."
+                }
+              ],
+              "description": "`presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed.",
+              "title": "Redirect"
+            },
+            "description": "`presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed."
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Range schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Range schema."
+                }
+              ],
+              "title": "Range",
+              "description": "Range schema."
+            },
+            "description": "Header parameter: Range."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original If None Match schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original If None Match schema."
+                }
+              ],
+              "title": "If-None-Match",
+              "description": "If-None-Match schema."
+            },
+            "description": "ETag from a prior response; returns 304 when unchanged."
+          },
+          {
+            "name": "If-Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original If Range schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original If Range schema."
+                }
+              ],
+              "title": "If-Range",
+              "description": "If-Range schema."
+            },
+            "description": "Header parameter: If Range."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Originalauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Originalauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The original file, streamed, with `ETag`, `Accept-Ranges` and `Content-Disposition`.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Response payload for get version originalresponse200."
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "`\"<sha256>\"` of the content.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Apiome-Content-Sha256": {
+                "description": "SHA-256 of the bytes served (the whole file).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "The requested byte range (`Content-Range` names it)."
+          },
+          "302": {
+            "description": "`?redirect=presigned`: a short-lived presigned URL in `Location`."
+          },
+          "304": {
+            "description": "`If-None-Match` names the current ETag."
+          },
+          "404": {
+            "description": "Unknown revision, or `original-not-stored`: nothing stored (or no file at the path)."
+          },
+          "410": {
+            "description": "`original-withheld`: the import withheld the source under the intake policy."
+          },
+          "416": {
+            "description": "The `Range` starts past the end; `Content-Range: bytes */<size>`."
+          },
+          "502": {
+            "description": "`original-unreadable`: the document store did not return the bytes."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get version originalresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/original/{part_path}": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Version Original Part",
+        "description": "Download one file of a revision's stored set of files, by its path inside the set (COA-5.7).",
+        "operationId": "get_version_original_part_v1_versions__tenant_slug___project_id___version_record_id__original__part_path__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "part_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Part Path",
+              "description": "Part Path schema."
+            },
+            "description": "Path parameter identifying the part path segment."
+          },
+          {
+            "name": "redirect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "presigned",
+                  "type": "string",
+                  "description": "Get Version Original Partredirect schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Partredirect schema."
+                }
+              ],
+              "description": "`presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed.",
+              "title": "Redirect"
+            },
+            "description": "`presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed."
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Part Range schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Part Range schema."
+                }
+              ],
+              "title": "Range",
+              "description": "Range schema."
+            },
+            "description": "Header parameter: Range."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Part If None Match schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Part If None Match schema."
+                }
+              ],
+              "title": "If-None-Match",
+              "description": "If-None-Match schema."
+            },
+            "description": "ETag from a prior response; returns 304 when unchanged."
+          },
+          {
+            "name": "If-Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Part If Range schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Part If Range schema."
+                }
+              ],
+              "title": "If-Range",
+              "description": "If-Range schema."
+            },
+            "description": "Header parameter: If Range."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Partauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Partauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Original Part Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Original Part Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The original file, streamed, with `ETag`, `Accept-Ranges` and `Content-Disposition`.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Response payload for get version original partresponse200."
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "`\"<sha256>\"` of the content.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Apiome-Content-Sha256": {
+                "description": "SHA-256 of the bytes served (the whole file).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "The requested byte range (`Content-Range` names it)."
+          },
+          "302": {
+            "description": "`?redirect=presigned`: a short-lived presigned URL in `Location`."
+          },
+          "304": {
+            "description": "`If-None-Match` names the current ETag."
+          },
+          "404": {
+            "description": "Unknown revision, or `original-not-stored`: nothing stored (or no file at the path)."
+          },
+          "410": {
+            "description": "`original-withheld`: the import withheld the source under the intake policy."
+          },
+          "416": {
+            "description": "The `Range` starts past the end; `Content-Range: bytes */<size>`."
+          },
+          "502": {
+            "description": "`original-unreadable`: the document store did not return the bytes."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get version original partresponse422."
                 }
               }
             }
@@ -146881,6 +147344,20 @@
             "default": false,
             "description": "Downloadable.",
             "example": false
+          },
+          "revisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Source Descriptor schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Source Descriptor schema."
+              }
+            ],
+            "title": "Revisionid",
+            "description": "The item's latest revision: the one whose stored original `GET /v1/versions/{tenant}/{project}/{revisionId}/original` downloads (COA-5.7)."
           },
           "connector": {
             "anyOf": [

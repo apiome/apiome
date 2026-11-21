@@ -5,8 +5,8 @@
  *
  * Authority: `docs/mockups/build/versions.html` §Spec viewer — the JSON / YAML segmented
  * switch over the code, then the two export cards (`VersionExportPanel`: best-fidelity and
- * lossy targets, recent exports), and Close · Copy · Download in the footer with the file
- * name beside Download.
+ * lossy targets, recent exports), and Close · Download original · Copy · Download in the footer
+ * with the file name beside Download ("Download original" is COA-5.7's stored import file).
  *
  * The spec is built by the screen (`buildOpenApiSpecJsonForVersion`) and handed in as text;
  * this owns the two renderings, the clipboard and the download — three things that read only
@@ -33,6 +33,7 @@ import VersionExportPanel from '@/app/components/ade/dashboard/export/VersionExp
 import { isFeatureReleased } from '@lib/feature-release';
 
 import { VersionDialogHead } from './VersionDialogChrome';
+import DownloadOriginalButton from './DownloadOriginalButton';
 import { versionLabel, type Version } from './versionsModel';
 import { SPEC_FORMATS, renderSpec, specDownloadName, type SpecFormat } from './specRendering';
 import Openapi32ConstructsPanel from './Openapi32ConstructsPanel';
@@ -193,6 +194,14 @@ export default function SpecViewerDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
+          {/* COA-5.7: the file the version was imported from, as it was stored. */}
+          {version ? (
+            <DownloadOriginalButton
+              projectId={version.project_id}
+              versionId={version.id}
+              testId="spec-viewer-download-original"
+            />
+          ) : null}
           <Button variant="outline" onClick={() => void handleCopy()} title={loading ? 'Loading the spec…' : error ? 'The spec could not be loaded' : undefined} disabled={loading || Boolean(error)} data-testid="spec-viewer-copy">
             <Copy aria-hidden />
             Copy

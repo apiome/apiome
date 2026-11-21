@@ -64,6 +64,8 @@ export interface CatalogSourceDescriptor {
   uri: string | null;
   hasContent: boolean;
   downloadable: boolean;
+  /** The latest revision, whose stored original "Download original" fetches (COA-5.7); absent on older REST. */
+  revisionId?: string | null;
   /** Set when the revision was synced by a catalog connector; absent for every other intake. */
   connector?: CatalogConnectorSource | null;
 }

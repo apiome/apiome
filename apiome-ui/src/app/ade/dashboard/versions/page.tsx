@@ -363,6 +363,14 @@ function renderDiffRow(row: VersionDiffRow, showLineNo: boolean) {
   );
 }
 
+/** The compare view's Originals mode (COA-5.7): loaded when the tab is first opened. */
+const OriginalsDiffPanel = dynamic(() => import('@/app/components/ade/versions/OriginalsDiffPanel'), {
+  ssr: false,
+  loading: () => (
+    <LoadingState className="vdlg-origdiff__state" spinnerSize="md" message="Loading the originals diff…" />
+  ),
+});
+
 const VersionCanvasCompare = dynamic(() => import('./VersionCanvasCompare'), {
   ssr: false,
   loading: () => (
@@ -566,7 +574,7 @@ const Versions = () => {
     showModified: boolean;
   }>({ showAdded: true, showRemoved: true, showModified: true });
   const [activeCompareTab, setActiveCompareTab] = useState<
-    'diff' | 'summary' | 'breaking' | 'migration' | 'canvas'
+    'diff' | 'summary' | 'breaking' | 'migration' | 'originals' | 'canvas'
   >('diff');
   /** Stored publish-time classification for the compared pair (CTG-3.2, #4476); null when the pair has none. */
   const [compareStoredChangelog, setCompareStoredChangelog] = useState<VersionChangelog | null>(null);
@@ -4855,6 +4863,20 @@ const Versions = () => {
                       <span>Migration guide</span>
                     </div>
                   </button>
+                  {/* COA-5.7: a text diff of the two files the versions were imported from. */}
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCompareTab === 'originals'}
+                    onClick={() => setActiveCompareTab('originals')}
+                    className={tabTriggerClass({ active: activeCompareTab === 'originals' })}
+                    data-testid="compare-tab-originals"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" aria-hidden />
+                      <span>Originals</span>
+                    </div>
+                  </button>
                   {COMPARE_CANVAS_ENABLED && (
                   <button
                     type="button"
@@ -5288,6 +5310,28 @@ const Versions = () => {
                       placeholder="Compare two versions to generate breaking-changes Markdown."
                       aria-label="Generated breaking changes markdown"
                     />
+                  </div>
+                ) : activeCompareTab === 'originals' ? (
+                  <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff">
+                    {(() => {
+                      const baseVersion = versions.find((v) => v.id === compareVersion1Id);
+                      const headVersion = versions.find((v) => v.id === compareVersion2Id);
+                      if (!baseVersion || !headVersion) return null;
+                      return (
+                        <OriginalsDiffPanel
+                          base={{
+                            projectId: baseVersion.project_id,
+                            versionId: baseVersion.id,
+                            label: formatVersionWithPrefix(baseVersion.version_id),
+                          }}
+                          head={{
+                            projectId: headVersion.project_id,
+                            versionId: headVersion.id,
+                            label: formatVersionWithPrefix(headVersion.version_id),
+                          }}
+                        />
+                      );
+                    })()}
                   </div>
                 ) : activeCompareTab === 'migration' ? (
                   <div className="vdlg-compare__tabpanel vdlg-doc">

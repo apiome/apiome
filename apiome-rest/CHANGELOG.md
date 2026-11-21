@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.799.0] - 2026-11-21
+
+### Added
+- **Download the original file — OpenAPI 1.625.0 (COA-5.7, #7083):**
+  `GET /v1/versions/{tenant}/{project}/{version}/original` streams the document an import stored
+  for a revision (after the tenant's secret scrub) under its original file name;
+  `…/original/{part_path}` streams one file of a stored set (`…/original` is then the set's
+  manifest). `ETag: "<sha256 of the content>"` and `X-Apiome-Content-Sha256`, `If-None-Match` →
+  `304`, one `Range` → `206` (`416` past the end), `If-Range`. A gzip-coded object is decoded into
+  a spooled temporary file, so the digest and ranges are over the imported bytes.
+  `?redirect=presigned` answers `302` to a 5-minute presigned link when the store can sign one
+  (`s3`) and the object is stored uncoded; otherwise the file streams. Errors carry `detail.code`:
+  `404 original-not-stored`, `410 original-withheld` (`format_metadata.sourceWithheld`), `502
+  original-unreadable`. A single document a pre-store import kept in a legacy column is served too.
+  Permission `versions:view`. New `app/version_original.py` (resolve, materialize, `Range`/`ETag`
+  helpers), `app/version_original_routes.py`, `Database.get_version_original_facts`.
+- Catalog item detail: `source.revisionId`, the latest revision whose original the UI downloads.
+
+### Changed
+- `DocumentStore.presign_get` accepts `content_disposition` and `content_type`; the S3 backend signs
+  them as `ResponseContentDisposition` / `ResponseContentType`.
+
 ## [1.798.0] - 2026-11-21
 
 ### Added

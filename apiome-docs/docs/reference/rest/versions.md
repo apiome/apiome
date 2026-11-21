@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 65 operations."
+description: "REST endpoints tagged versions: 67 operations."
 sidebar_position: 119
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.624.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.625.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 65 operations
+Tag: `versions` · 67 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -1821,6 +1821,83 @@ Request body for set version mock scenarios.
 | --- | --- | --- |
 | 200 | Successful response for set version mock scenarios. | `application/json` [`VersionMockScenariosResponse`](#schema-versionmockscenariosresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/original` {#get-version-original-v1-versions-tenant-slug-project-id-version-record-id-original-get}
+
+**Get Version Original**
+
+Download the file the import stored for a revision (COA-5.7).
+
+For a single document this is the document; for a set of files it is the set's manifest
+(``application/vnd.apiome.fileset-manifest+json``), whose ``members`` name each file to
+fetch from ``…/original/{part_path}``.
+
+Operation id: `get_version_original_v1_versions__tenant_slug___project_id___version_record_id__original_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `redirect` | query | `"presigned"` or null | no | `presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed. |
+| `Range` | header | string or null | no | Header parameter: Range. |
+| `If-None-Match` | header | string or null | no | ETag from a prior response; returns 304 when unchanged. |
+| `If-Range` | header | string or null | no | Header parameter: If Range. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The original file, streamed, with `ETag`, `Accept-Ranges` and `Content-Disposition`. | `application/octet-stream` string (binary) |
+| 206 | The requested byte range (`Content-Range` names it). | — |
+| 302 | `?redirect=presigned`: a short-lived presigned URL in `Location`. | — |
+| 304 | `If-None-Match` names the current ETag. | — |
+| 404 | Unknown revision, or `original-not-stored`: nothing stored (or no file at the path). | — |
+| 410 | `original-withheld`: the import withheld the source under the intake policy. | — |
+| 416 | The `Range` starts past the end; `Content-Range: bytes */<size>`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 502 | `original-unreadable`: the document store did not return the bytes. | — |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/original/{part_path}` {#get-version-original-part-v1-versions-tenant-slug-project-id-version-record-id-original-part-path-get}
+
+**Get Version Original Part**
+
+Download one file of a revision's stored set of files, by its path inside the set (COA-5.7).
+
+Operation id: `get_version_original_part_v1_versions__tenant_slug___project_id___version_record_id__original__part_path__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `part_path` | path | string | yes | Path parameter identifying the part path segment. |
+| `redirect` | query | `"presigned"` or null | no | `presigned`: answer `302` to a short-lived presigned URL when the store can sign one (`s3`) and the content is stored as it is; otherwise the file is streamed. |
+| `Range` | header | string or null | no | Header parameter: Range. |
+| `If-None-Match` | header | string or null | no | ETag from a prior response; returns 304 when unchanged. |
+| `If-Range` | header | string or null | no | Header parameter: If Range. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The original file, streamed, with `ETag`, `Accept-Ranges` and `Content-Disposition`. | `application/octet-stream` string (binary) |
+| 206 | The requested byte range (`Content-Range` names it). | — |
+| 302 | `?redirect=presigned`: a short-lived presigned URL in `Location`. | — |
+| 304 | `If-None-Match` names the current ETag. | — |
+| 404 | Unknown revision, or `original-not-stored`: nothing stored (or no file at the path). | — |
+| 410 | `original-withheld`: the import withheld the source under the intake policy. | — |
+| 416 | The `Range` starts past the end; `Content-Range: bytes */<size>`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 502 | `original-unreadable`: the document store did not return the bytes. | — |
 
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/overlays` {#list-version-overlays-v1-versions-tenant-slug-project-id-version-record-id-overlays-get}
 
