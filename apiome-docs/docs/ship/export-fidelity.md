@@ -187,6 +187,8 @@ version, measured on the OpenAPI Initiative's own test documents.
 | An item imported from OpenAPI 3.1 or 3.2 | **OpenAPI 3.0** | Each construct 3.0 cannot hold is **dropped** and listed: `webhooks`, `jsonSchemaDialect`, `$dynamicRef`, `$anchor`, keywords beside a `$ref`, and the 3.2-only constructs. A declared dialect other than the OpenAPI default (draft-07, say) is named in the report. |
 | An item imported from OpenAPI 3.2 | **OpenAPI 3.1** | Each 3.2-only construct is **dropped** and listed: `$self`, `itemSchema`, `in: querystring` parameters, server `name`, response `summary`, tag `parent` and `kind`. |
 | An item imported from OpenAPI | **Swagger 2.0** | The file is built from the canonical model, and the report says the OpenAPI 3.x constructs are not written. |
+| An item imported from another format (RAML, Postman, gRPC, GraphQL, an agent card, a JSON Schema, …) | **OpenAPI** | `lossy`. The file is built from the canonical model, and the report lists what that changes. See [Exports from another format](#cross-format). |
+| An item imported from AWS API Gateway or Azure API Management | **OpenAPI** | `lossy`. The gateway's own extensions (`x-amazon-apigateway-*`) are written back as they were read. The report says an OpenAPI reader does not read them back as integrations, backends or policies. |
 
 ### Schema dialects {#schema-dialects}
 
@@ -222,12 +224,44 @@ listed in the report.
 | An item imported from Arazzo | A gateway, API client, API Blueprint or Google Discovery | Not offered. These targets need an HTTP method and path, and a workflow step has neither. |
 | An item imported from Arazzo | Arrow, COBOL copybook, FIX Orchestra, Kafka Connect, ODCS, SQL DDL or xRegistry | Not offered. These targets need a record type or an event, and an Arazzo item has neither. (The COBOL copybook card is offered, but the export stops with that reason.) |
 | An item imported from Arazzo | EDI X12, FIX, HL7 v2, IDoc, ISO 20022, ISO 8583 or z/OS Connect | Not offered. These targets need details that only an import of that same format records. |
-| An item imported from Arazzo | Any other target, such as OpenAPI, Protobuf or GraphQL | `lossy`. The steps become the target's operations. Some of these targets rename the steps in ways the report does not predict yet, so a round trip can still show unexplained differences. That work is tracked in [#7052](https://github.com/apiome/apiome/issues/7052) and [#7054](https://github.com/apiome/apiome/issues/7054). |
+| An item imported from Arazzo | Any other target, such as OpenAPI, Protobuf or GraphQL | `lossy`. The steps become the target's operations, and the report names the key each one is written under — `POST /checkout#pay` in OpenAPI, `checkout.pay` in Protobuf. See [Exports from another format](#cross-format). A target whose file Apiome cannot read back yet is tracked in [#7054](https://github.com/apiome/apiome/issues/7054). |
 
 Apiome checks Arazzo import and export against documents it didn't write. These include the OpenAPI
 Initiative's 1.0.0 examples and 1.1.0 schema fixtures, and Arazzo files from Redocly, Spectral and
 Specmatic. Each must pass the official schema, import, and export back unchanged. The set covers
 `$components` references, runtime expressions, `querystring` parameters and `channelPath` steps.
+
+## Exports from another format {#cross-format}
+
+An export to a format other than the one the item was imported from changes things that belong to
+no single operation or type. The report lists each of them, so it never says "nothing lost" about
+a file that reads back differently.
+
+| The report says | When | Status and severity |
+| --- | --- | --- |
+| *"OpenAPI 3.1 describes REST APIs; this agent API is written in REST terms and reads back as a REST API"* | The target describes another kind of API than the source: an agent card to OpenAPI, a data schema to GraphQL, a REST API to Protobuf. | **approximated**, `warn`, on the document |
+| *"… operation 'Wallet.getBalance' is written as 'POST /Wallet/getBalance' and reads back under that key"* | The target can only write an operation, a type or a service under another name. The source's key is **dropped** and the new key is **synthesized**, as for [Arazzo](#arazzo). An operation whose line already says how it is reframed (a REST operation written as a GraphQL field) is not listed a second time. | **dropped** + **synthesized**, `info` |
+| *"OpenAPI 3.1 has no field for the apigee metadata of this operation (apigee, cors, rate_limits); it is not written"* | The source format records details the target has no field for: a gateway's routes and policies, a dbt model's tags, an API client's saved samples. | **dropped**, `info` |
+| *"CDDL has no place for the document's title 'X12 850' and namespace 'X12-850'; they are not written"* | The target file has no title, identifier, namespace or version. | **dropped**, `info`, on the document |
+| *"OpenAPI 3.1 requires a version and the source declares none; '0.0.0' is written"* | The target requires a value the source does not have. | **synthesized**, on the document |
+| *"WIT has no agent descriptor; agent 'Travel Concierge' is not written"* | The source is an agent card and the target does not describe agents. Each skill is listed too. | **dropped**, `warn` |
+
+What each target adds:
+
+| Target | What a file built from another format's item reports |
+| --- | --- |
+| **OpenAPI** | An operation with no HTTP method and path is placed on one (`POST /<service>/<method>` for RPC, `/graphql/<field>` for GraphQL). An `operationId` and an empty default response are **synthesized** where the source has none. A service is kept only as the first tag of its operations. A service with no tagged operation is **dropped**, and its operations read back under `default`. |
+| **AsyncAPI** | A source with no operation and no channel becomes a file that holds only `components.schemas`. An AsyncAPI 2 item written as AsyncAPI 3 lists its `publish` / `subscribe` operations (now `send` / `receive`) and the channels that gained a name. |
+| **CloudEvents** | Every named type is **dropped**: an event carries attributes and sample data, not type declarations. A source with no publish or subscribe operation exports as a placeholder event, and the report says so at `critical` severity. |
+| **GraphQL SDL** | Every operation becomes a `Query` or `Mutation` field, and its service is **dropped**. An operation that maps to neither is **dropped**. A source with no read operation gets a placeholder `Query._` field. A type named `acme.Pet` is written as `Pet`. |
+| **JSON Type Definition**, **CDDL** | A type named with a namespace (`X12-850.PO1`) is written under its bare name (`PO1`). JTD also writes the first type as the root schema when no type is named after the document. |
+| **Avro**, **Kafka Connect** | A type is written under its namespace and name (`orders` becomes `commerce.orders`). The document's identifier and version are **dropped**. |
+| **Protobuf**, **Connect RPC** | Service and method names become Protobuf identifiers: `Travel Concierge` is written as `Travel_Concierge`. |
+| **ONC RPC** | Every type, program and procedure is read back under the first program's name (`Bank.Account`, `Bank.Bank.open`). A map, an alias or a scalar type is **dropped**. |
+| **XML-RPC** | The file is one `methodCall`, for the first RPC operation. Every other operation and every named type is **dropped**. |
+| **WIT** | When no operation or type reports a loss of its own, the document does: one line names how many identifiers were rewritten in lower-kebab-case, with examples, and a package name or a `types` interface that Apiome had to invent is **synthesized**. |
+
+An item exported back to its own format reports none of these.
 
 ## Destination documentation links
 
@@ -446,7 +480,7 @@ Exports from Browse, which need no sign-in, carry no plans.
 ## How exports are tested
 
 Every format Apiome imports is exported to every target on each change to the exporter. One
-example file per format is exported to all 53 targets, and each pair must end in one of four
+example file per format is exported to all 66 targets, and each pair must end in one of four
 outcomes:
 
 | Outcome | Means |
@@ -454,10 +488,24 @@ outcomes:
 | Exported | The file is written and nothing is lost. |
 | Lossy, with a report | The file is written and the fidelity report names what was dropped, approximated or synthesized. |
 | Refused, with a reason | The target cannot carry this source (for example, it needs an HTTP operation), and says so. |
-| Silent loss | The report says nothing was lost, but reading the file back shows a difference. These pairs are tracked and must only ever go down. |
+| Silent loss | The report says nothing was lost, but reading the file back shows a difference. No pair ends here: the tracked list (`apiome-rest/tests/export_conformance_ledger.py`) is empty, and the check fails on any pair that would join it. |
 
 An export that crashes fails the check. The current grid is in the repository at
 `apiome-rest/tests/golden/export_conformance/matrix.md`.
+
+The list held 148 pairs before it was emptied. Most reported nothing because the report only
+looked at what the target's vocabulary cannot hold; those now report the losses in
+[Exports from another format](#cross-format). The rest were defects in the exported file, now
+fixed:
+
+- **GraphQL SDL** left out every type that no `Query` or `Mutation` field reaches. An item with
+  types and no operations exported as a placeholder `Query` alone.
+- **ONC RPC** left out every struct that was not imported from ONC RPC, numbered every procedure
+  `1`, and wrote names that are not identifiers (`Task API`) as they were.
+- **OpenAPI** wrote a required request body as an optional one, in every file built from the
+  canonical model (including AWS API Gateway and Azure API Management exports).
+- **Azure API Management** wrote the backend a `set-backend-service` policy names into the
+  definition's `servers` as well.
 
 ### Every surface says the same thing
 

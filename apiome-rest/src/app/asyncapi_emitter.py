@@ -89,6 +89,7 @@ from .canonical_model import (
     Service,
     StreamingMode,
 )
+from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -222,6 +223,7 @@ class AsyncApiFidelityRulePack(CapabilityRulePack):
         preview and the export job report exactly what the chosen version loses.
         """
         options = getattr(self, "_options", None) or AsyncApiEmitOptions()
+        self._v2_upgrade = self._upgrades_v2(api)
         self._downgrades: List[Loss] = []
         if options.asyncapi_version != "3.1":
             result = AsyncApiEmitter().emit(api, opts=options)
@@ -239,6 +241,7 @@ class AsyncApiFidelityRulePack(CapabilityRulePack):
         to invent or rename (a channel keyed by its name, a renamed schema format) an ``APPROX``.
         """
         verdicts = list(super().root_verdicts(api))
+        verdicts += self._conversion_root_verdicts(api)
         for loss in getattr(self, "_downgrades", []):
             if loss.kind is LossKind.NA:
                 verdicts.append(FidelityVerdict.drop(message=loss.detail, severity=LossinessSeverity.WARN,
@@ -246,6 +249,71 @@ class AsyncApiFidelityRulePack(CapabilityRulePack):
             else:
                 verdicts.append(FidelityVerdict.approx(message=loss.detail, severity=LossinessSeverity.INFO,
                                                        target_mapping=loss.subject))
+        return verdicts
+
+    def _upgrades_v2(self, api: CanonicalApi) -> bool:
+        """Whether an AsyncAPI 2 source is being written in the 3.x structure."""
+        options = getattr(self, "_options", None) or AsyncApiEmitOptions()
+        return api.format == "asyncapi-2" and not options.asyncapi_version.startswith("2")
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's verdict; a 2.x ``publish``/``subscribe`` written as 3.x is an ``APPROX``."""
+        if getattr(self, "_v2_upgrade", False) and operation.kind in self._EVENT_OPERATION_KINDS:
+            return [FidelityVerdict.approx(
+                message="AsyncAPI 3 names an operation by what the application does: the 2.x "
+                f"{operation.kind.value} operation is written with the matching send or receive action",
+                severity=LossinessSeverity.INFO,
+                target_mapping="publish/subscribe → send/receive",
+            )]
+        return super().operation_verdicts(operation)
+
+    def channel_verdicts(self, channel: Channel) -> List[FidelityVerdict]:
+        """The channel's verdict; a 2.x channel written as 3.x gets a name (``SYNTH``)."""
+        if getattr(self, "_v2_upgrade", False) and not channel.name:
+            return [FidelityVerdict.synth(
+                message="an AsyncAPI 3 channel is keyed by a name and holds its address; the 2.x "
+                f"channel {channel.key!r} has an address only, so a name is derived from it",
+                target_mapping="channel address → channel name",
+            )]
+        return super().channel_verdicts(channel)
+
+    def _conversion_root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What a document built from another format changes about the envelope — COA-3.1 (#7052).
+
+        * a source that is not an event API reads back as one (``APPROX``); one with no operation
+          and no channel becomes a components-only document, whose schemas an AsyncAPI reader
+          does not read back as named types (``APPROX``);
+        * an AsyncAPI 2 source written as 3.x is restructured (``APPROX``, info);
+        * ``info`` has no identifier or namespace (``DROP``, info) and requires a version
+          (``SYNTH``).
+        """
+        options = getattr(self, "_options", None) or AsyncApiEmitOptions()
+        source_format = api.format or ""
+        verdicts: List[FidelityVerdict] = []
+        if source_format.startswith("asyncapi"):
+            if self._upgrades_v2(api):
+                verdicts.append(FidelityVerdict.approx(
+                    message=f"the AsyncAPI 2 source is written as AsyncAPI {options.asyncapi_version}: "
+                    "publish and subscribe operations become send and receive, channels are named and "
+                    "servers are split into host and path",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"asyncapi-2 → asyncapi-{options.asyncapi_version}",
+                ))
+            return verdicts
+        paradigm = paradigm_change_verdict(api, ApiParadigm.EVENT, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+        if api.types and not api.channels and not any(True for _ in api.operations()):
+            verdicts.append(FidelityVerdict.approx(
+                message=f"the source declares no operation and no channel: the {self.target_label} "
+                f"document holds only its {len(api.types)} type(s), under components.schemas, which "
+                "an AsyncAPI reader does not read back as named types",
+                target_mapping="types → components.schemas only",
+            ))
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_id=False, keeps_namespace=False,
+            default_version=AsyncApiEmitter.DEFAULT_INFO_VERSION,
+        )
         return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:

@@ -118,9 +118,10 @@ def test_cells_are_the_engines_tiers() -> None:
 def test_known_answers() -> None:
     """Spot checks a reader would notice if they went wrong."""
     by_label = {row.label: row for row in collect_target_tier_rows()}
-    # OpenAPI carries the REST source and the types cleanly.
+    # OpenAPI carries the REST source cleanly. The types are written whole, but as a REST document
+    # with a version of its own, and the report says so (COA-3.1, #7052).
     assert by_label["OpenAPI 3.1"].tiers[0] == "lossless"
-    assert by_label["OpenAPI 3.1"].tiers[3] == "lossless"
+    assert by_label["OpenAPI 3.1"].tiers[3] == "lossy"
     # AsyncAPI carries the event source cleanly.
     assert by_label["AsyncAPI 3.1"].tiers[2] == "lossless"
     # A schema-only target keeps only the types of an API with operations.

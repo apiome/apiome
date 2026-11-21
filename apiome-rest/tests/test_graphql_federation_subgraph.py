@@ -313,11 +313,12 @@ class TestSubgraphSdl:
         assert 'type Odd @key(fields: "order_id")' in sdl
         build_graphql_schema(sdl)
 
-    def test_unreachable_types_get_no_key_and_no_report(self) -> None:
+    def test_a_type_no_field_reaches_is_written_and_is_an_entity(self) -> None:
+        # COA-3.1 (#7052): every model type is written, not only those a root field reaches.
         result = _emit(_api(_record("Lonely", _field("Lonely", "id"))))
-        assert "Lonely" not in result.files[0].content
-        assert not [loss for loss in result.losses if loss.subject == "federation-key-synthesized"]
-        assert any(loss.subject == "federation-no-entities" for loss in result.losses)
+        assert 'type Lonely @key(fields: "id")' in result.files[0].content
+        assert [loss.pointer for loss in result.losses if loss.subject == "federation-key-synthesized"] == ["Lonely"]
+        assert not any(loss.subject == "federation-no-entities" for loss in result.losses)
 
     def test_to_subgraph_sdl_keeps_an_existing_key(self) -> None:
         sdl = with_federation_definitions('type Query { a: A }\ntype A @key(fields: "b") { b: ID c: ID }')
@@ -369,7 +370,11 @@ def _pack(options: Dict[str, Any]) -> GraphQlFidelityRulePack:
 
 
 def _synth_items(report) -> List[Any]:
-    return [item for item in report.items if item.kind is LossinessKind.SYNTH]
+    """The synthesized ``@key`` items (a reframed source also synthesizes root types and fields)."""
+    return [
+        item for item in report.items
+        if item.kind is LossinessKind.SYNTH and "@key" in (item.target_mapping or "")
+    ]
 
 
 class TestReporting:

@@ -50,7 +50,7 @@ from __future__ import annotations
 import re
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
 
 from pydantic import Field, field_validator
 
@@ -67,6 +67,7 @@ from .canonical_model import (
     Type,
     TypeKind,
 )
+from .conversion_verdicts import agent_loss_items, paradigm_change_verdict
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -74,11 +75,13 @@ from .emitter import (
     EmitResult,
     EmittedFile,
     Emitter,
+    Loss,
     LossTracker,
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .lossiness import LossinessKind, LossinessReport, LossinessReportBuilder, LossinessSeverity
 from .wit_type_system import (
     WitNameAllocator,
     WitTypeRenderer,
@@ -1498,6 +1501,64 @@ class WitFidelityRulePack(CapabilityRulePack):
     """
 
     target_label = "WIT"
+
+    #: The writer's document-level losses the report states at the root, and how (COA-3.1, #7052):
+    #: what a package built from another format's model renames, invents or leaves out.
+    _DOCUMENT_LOSSES: Dict[str, Tuple[LossinessKind, LossinessSeverity]] = {
+        "renamed-identifier": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "synthesized-package-name": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "synthesized-interface": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "server-binding": (LossinessKind.DROP, LossinessSeverity.INFO),
+        "security-scheme": (LossinessKind.DROP, LossinessSeverity.WARN),
+    }
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Bind the emit options the package is planned with; invalid ones fall back to defaults."""
+        try:
+            self._options = WitEmitOptions.model_validate(dict(options))
+        except ValueError:
+            self._options = WitEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Walk the model; when that finds no loss in another format's model, say what the package changes.
+
+        WIT names are lower-kebab-case and package-qualified, and a type lives inside an interface,
+        so a package built from another format renames every identifier, and may invent the package
+        name and an interface to hold the types. Each construct is still carried, so the walk can
+        report nothing while a re-import shows every key changed. In that case the package is built
+        once (pure, no I/O) and the writer's own document-level losses — with the paradigm change
+        and any agents — are stated at the root. A report that already names a loss keeps to its
+        constructs, and a WIT source or one the writer refuses adds nothing.
+        """
+        report = super().evaluate(api)
+        if api.format == WIT_FORMAT_KEY or not report.is_lossless:
+            return report
+        document: List[FidelityVerdict] = []
+        paradigm = paradigm_change_verdict(api, ApiParadigm.RPC, target_label=self.target_label)
+        if paradigm is not None:
+            document.append(paradigm)
+        writer = _WitWriter(api, getattr(self, "_options", None) or WitEmitOptions())
+        try:
+            writer.render()
+        except ValueError:
+            losses: List[Loss] = []
+        else:
+            losses = writer.losses.records()
+        seen = set()
+        for loss in losses:
+            rule = self._DOCUMENT_LOSSES.get(loss.subject)
+            if rule is None or loss.detail in seen:
+                continue
+            seen.add(loss.detail)
+            document.append(FidelityVerdict(
+                kind=rule[0], severity=rule[1], message=loss.detail, target_mapping=loss.subject
+            ))
+        builder = LossinessReportBuilder()
+        for item in report.items:
+            builder.add(item.construct_key, item.kind, item.severity, item.message, item.target_mapping)
+        self._record(builder, ROOT_CONSTRUCT_KEY, document)
+        items = [*builder.build().items, *agent_loss_items(api, target_label=self.target_label)]
+        return LossinessReport(items=items)
 
     def channel_verdict(self, channel: Channel) -> FidelityVerdict:
         """An event channel has no WIT representation; it is dropped."""

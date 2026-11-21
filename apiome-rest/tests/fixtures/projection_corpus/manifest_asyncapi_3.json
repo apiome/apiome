@@ -4,6 +4,19 @@
       "detail": "source construct normalized into the canonical model",
       "documentation": null,
       "explanation": null,
+      "id": "derives:",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:",
+      "status": "retained",
+      "target": "canonical:",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
       "id": "derives:Contact",
       "reason": null,
       "relation": "derives",
@@ -64,6 +77,46 @@
       "status": "retained",
       "target": "canonical:user/signedup",
       "target_mapping": null
+    },
+    {
+      "detail": "AsyncAPI 3.1 describes event APIs; this REST API is written in event terms and reads back as an event API",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "AsyncAPI Specification",
+        "url": "https://www.asyncapi.com/docs/reference/specification/v3.0.0",
+        "version": "3.0.0"
+      },
+      "explanation": "The destination format cannot represent this construct; its specification has no equivalent construct.",
+      "id": "projects:#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "rest → event"
+    },
+    {
+      "detail": "AsyncAPI 3.1 requires a version and the source declares none; '0.0.0' is written",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "AsyncAPI Specification",
+        "url": "https://www.asyncapi.com/docs/reference/specification/v3.0.0",
+        "version": "3.0.0"
+      },
+      "explanation": "The destination format cannot represent this construct; its specification has no equivalent construct.",
+      "id": "projects:#1",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:",
+      "status": "synthesized",
+      "target": null,
+      "target_mapping": "version → 0.0.0"
     },
     {
       "detail": "union carried to AsyncAPI 3.1",
@@ -142,6 +195,19 @@
   "nodes": [
     {
       "canonical_kind": null,
+      "construct_key": "",
+      "id": "native:",
+      "kind": "native",
+      "label": "",
+      "native": {
+        "native_id": null,
+        "native_name": "",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
       "construct_key": "Contact",
       "id": "native:Contact",
       "kind": "native",
@@ -206,6 +272,15 @@
       "target": null
     },
     {
+      "canonical_kind": "unknown",
+      "construct_key": "",
+      "id": "canonical:",
+      "kind": "canonical",
+      "label": "",
+      "native": null,
+      "target": null
+    },
+    {
       "canonical_kind": "type",
       "construct_key": "Contact",
       "id": "canonical:Contact",
@@ -252,7 +327,7 @@
     }
   ],
   "reason_counts": {
-    "destination_unsupported": 1,
+    "destination_unsupported": 3,
     "emitter_unsupported": 0,
     "not_applicable": 0,
     "option_excluded": 0,
@@ -262,11 +337,11 @@
     "target_tool_unavailable": 0
   },
   "status_counts": {
-    "approximated": 1,
+    "approximated": 2,
     "dropped": 0,
     "not-applicable": 0,
     "retained": 4,
-    "synthesized": 0,
+    "synthesized": 1,
     "transformed": 0,
     "unavailable": 0
   },

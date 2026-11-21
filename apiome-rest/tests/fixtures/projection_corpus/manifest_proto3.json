@@ -4,6 +4,19 @@
       "detail": "source construct normalized into the canonical model",
       "documentation": null,
       "explanation": null,
+      "id": "derives:",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:",
+      "status": "retained",
+      "target": "canonical:",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
       "id": "derives:Contact",
       "reason": null,
       "relation": "derives",
@@ -103,6 +116,26 @@
       "status": "retained",
       "target": "canonical:user/signedup",
       "target_mapping": null
+    },
+    {
+      "detail": "Protocol Buffers (proto3) describes RPC APIs; this REST API is written in RPC terms and reads back as an RPC API",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Protocol Buffers Language Guide (proto3)",
+        "url": "https://protobuf.dev/programming-guides/proto3/",
+        "version": null
+      },
+      "explanation": "The destination format cannot represent this construct; its specification has no equivalent construct.",
+      "id": "projects:#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "rest → rpc"
     },
     {
       "detail": "Protocol Buffers (proto3) has no first-class union type; 'Contact' is emitted as a message wrapping a oneof",
@@ -328,6 +361,19 @@
   "nodes": [
     {
       "canonical_kind": null,
+      "construct_key": "",
+      "id": "native:",
+      "kind": "native",
+      "label": "",
+      "native": {
+        "native_id": null,
+        "native_name": "",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
       "construct_key": "Contact",
       "id": "native:Contact",
       "kind": "native",
@@ -431,6 +477,15 @@
       "target": null
     },
     {
+      "canonical_kind": "unknown",
+      "construct_key": "",
+      "id": "canonical:",
+      "kind": "canonical",
+      "label": "",
+      "native": null,
+      "target": null
+    },
+    {
       "canonical_kind": "type",
       "construct_key": "Contact",
       "id": "canonical:Contact",
@@ -504,7 +559,7 @@
     }
   ],
   "reason_counts": {
-    "destination_unsupported": 9,
+    "destination_unsupported": 10,
     "emitter_unsupported": 0,
     "not_applicable": 0,
     "option_excluded": 0,
@@ -514,7 +569,7 @@
     "target_tool_unavailable": 0
   },
   "status_counts": {
-    "approximated": 4,
+    "approximated": 5,
     "dropped": 2,
     "not-applicable": 0,
     "retained": 3,

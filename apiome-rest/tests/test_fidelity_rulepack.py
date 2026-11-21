@@ -513,8 +513,14 @@ def test_openapi_pack_carries_unary_rpc_operation_cleanly():
         identity=ApiIdentity(name="Chat"),
         services=[Service(key="acme.Chat", name="Chat", operations=[unary])],
     )
-    item = _items_for(compute_lossiness_for_emitter(api, OpenApiEmitter), "acme.Chat.Send")[0]
-    assert item.kind is LossinessKind.OK
+    report = compute_lossiness_for_emitter(api, OpenApiEmitter)
+    # The call itself is carried; what the report names is the HTTP binding it is placed on,
+    # the key it reads back under (COA-3.1, #7052) and the operationId and response it gains.
+    kinds = {item.kind for item in _items_for(report, "acme.Chat.Send")}
+    assert kinds == {LossinessKind.DROP, LossinessKind.SYNTH}
+    rekey = next(i for i in _items_for(report, "acme.Chat.Send") if i.kind is LossinessKind.DROP)
+    assert rekey.severity is LossinessSeverity.INFO and "'POST /acme.Chat/Send'" in rekey.message
+    assert {i.kind for i in _items_for(report, "POST /acme.Chat/Send")} == {LossinessKind.SYNTH}
 
 
 def test_openapi_pack_drops_graphql_subscription():

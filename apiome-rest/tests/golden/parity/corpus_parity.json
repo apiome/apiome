@@ -430,8 +430,8 @@
         {
           "source_format": "asyncapi",
           "emit_key": "asyncapi",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",
@@ -539,8 +539,8 @@
         {
           "source_format": "aws-apigateway",
           "emit_key": "aws-apigateway",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",
@@ -589,8 +589,8 @@
         {
           "source_format": "azure-apim",
           "emit_key": "azure-apim",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",
@@ -1744,8 +1744,8 @@
         {
           "source_format": "graphql",
           "emit_key": "graphql",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",
@@ -3306,14 +3306,14 @@
         {
           "source_format": "swagger",
           "emit_key": "openapi",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         },
         {
           "source_format": "swagger-1.2",
           "emit_key": "openapi",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

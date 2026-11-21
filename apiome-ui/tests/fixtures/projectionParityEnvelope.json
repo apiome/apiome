@@ -1,12 +1,12 @@
 {
   "projection": {
-    "edge_count": 14,
-    "evidence_count": 7,
+    "edge_count": 20,
+    "evidence_count": 10,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 14,
+    "node_count": 20,
     "reason_counts": {
-      "destination_unsupported": 5,
+      "destination_unsupported": 8,
       "emitter_unsupported": 0,
       "not_applicable": 0,
       "option_excluded": 0,
@@ -16,11 +16,11 @@
       "target_tool_unavailable": 0
     },
     "status_counts": {
-      "approximated": 4,
-      "dropped": 1,
+      "approximated": 5,
+      "dropped": 2,
       "not-applicable": 0,
       "retained": 2,
-      "synthesized": 0,
+      "synthesized": 1,
       "transformed": 0,
       "unavailable": 0
     },
@@ -52,25 +52,25 @@
       "paradigm": "graph",
       "registry_version": "1"
     },
-    "total_constructs": 7,
+    "total_constructs": 9,
     "truncated": false,
     "worst_severity": "critical"
   },
   "report": {
     "kind_counts": {
-      "approx": 4,
-      "drop": 1,
+      "approx": 5,
+      "drop": 2,
       "ok": 2,
-      "synth": 0
+      "synth": 1
     }
   },
   "summary": {
-    "approximated": 4,
-    "dropped": 1,
+    "approximated": 5,
+    "dropped": 2,
     "preserved": 2,
-    "preserved_percent": 29,
-    "synthesized": 0,
+    "preserved_percent": 20,
+    "synthesized": 1,
     "tier": "lossy",
-    "total": 7
+    "total": 10
   }
 }

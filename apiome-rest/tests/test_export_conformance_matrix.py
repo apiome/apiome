@@ -7,6 +7,7 @@ Every corpus source family × every production export target, through the catalo
 * a **silent-loss** pair (empty fidelity report, round-trip drift) not in the tracked ledger
   :data:`export_conformance_ledger.KNOWN_SILENT_LOSS`, and a ledger entry that no longer
   reproduces (so the ledger only ever shrinks);
+* a ledger longer than :data:`SILENT_LOSS_CEILING` (COA-3.1, #7052: the ledger is empty);
 * a cell whose status drifted from the checked-in matrix (``tests/golden/export_conformance/``).
 
 Regenerate the matrix and the ledger with
@@ -74,6 +75,20 @@ def test_silent_loss_is_tracked_and_the_ledger_only_shrinks(matrix, request):
     assert not stale, (
         f"{len(stale)} ledger entr(ies) no longer lose data silently — regenerate the ledger "
         "(UPDATE_EXPORT_CONFORMANCE=1) to drop them:\n" + "\n".join(f"  {f} -> {t}" for f, t in stale[:30])
+    )
+
+
+#: The most silent-loss pairs the ledger may hold. COA-3.1 (#7052) emptied it; raising this number
+#: means shipping an export that loses data without saying so, so lower it, never raise it.
+SILENT_LOSS_CEILING = 0
+
+
+def test_the_ledger_stays_at_or_below_its_ceiling():
+    """The ratchet: the tracked list never grows past :data:`SILENT_LOSS_CEILING`."""
+    assert len(KNOWN_SILENT_LOSS) <= SILENT_LOSS_CEILING, (
+        f"{len(KNOWN_SILENT_LOSS)} tracked silent-loss pair(s) exceed the ceiling of "
+        f"{SILENT_LOSS_CEILING}: make the fidelity report name the loss, fix the emitter, or refuse "
+        "the pair with a reason — do not add it to the ledger."
     )
 
 

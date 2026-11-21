@@ -83,6 +83,15 @@ from .canonical_model import (
     Server,
     Service,
     StreamingMode,
+    Type,
+)
+from .conversion_verdicts import (
+    agent_loss_items,
+    envelope_verdicts,
+    paradigm_change_verdict,
+    rekey_verdicts,
+    source_metadata_keys,
+    source_metadata_verdict,
 )
 from .emitter import (
     CapabilityProfile,
@@ -98,7 +107,8 @@ from .emitter import (
 )
 from .export_test_tools import ExportTestToolKind, test_tool, toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .normalizer import Keys
 from .openapi_downgrade import (
     OPENAPI_30_VERSION,
     SWAGGER_20_VERSION,
@@ -109,6 +119,7 @@ from .openapi_downgrade import (
 from .openapi_ref_modes import apply_ref_mode
 from .openapi_schema_dialect import record_declared_dialect_loss, record_schema_rewrites
 from .openapi_source_preservation import (
+    OPENAPI_SOURCE_EXTRA,
     gate_constructs,
     preserved_source,
     restore_source,
@@ -243,6 +254,56 @@ class OpenApiFidelityRulePack(CapabilityRulePack):
     )
     #: The OpenAPI version the report is computed for (:meth:`apply_options`); 3.1 by default.
     _version = "3.1"
+    #: Whether the document is built from another format's model (:meth:`evaluate`); ``False`` until then.
+    _rebuilt = False
+    #: The source's format key, named in messages (:meth:`evaluate`).
+    _source_format = ""
+    #: Operation ``extras`` the writer carries (``http`` is an RPC method's own HTTP binding).
+    _WRITTEN_OPERATION_EXTRAS = frozenset(
+        {"operationId", "summary", "security", "http", OPENAPI_SOURCE_EXTRA}
+    )
+    #: The service a re-import files an untagged operation under.
+    _DEFAULT_SERVICE = "default"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Predict where each operation is written, then walk the model — COA-3.1 (#7052).
+
+        A model that carries its OpenAPI source (COA-2.1) is written back from it, and one authored
+        as OpenAPI is written as it stands. A model imported from any other format is **rebuilt**:
+        the writer places each operation with the paradigm's projection
+        (:mod:`app.projection`) and a re-import keys it ``METHOD /path`` and groups it by its first
+        tag, so both are known here, before the export runs. The re-keys, the source-format metadata
+        OpenAPI has no field for and the envelope it must invent are reported from them.
+        """
+        self._source_format = api.format or ""
+        # A model with no format, or an OpenAPI one with no source bag (authored in Apiome), is
+        # OpenAPI's own: only another format's model is "rebuilt".
+        self._rebuilt = (
+            preserved_source(api) is None
+            and bool(self._source_format)
+            and not self._source_format.startswith("openapi")
+        )
+        self._operation_keys: Dict[str, Optional[str]] = {}
+        self._rekeyed: Set[str] = set()
+        self._service_keys: Set[str] = set()
+        if self._rebuilt:
+            projection = get_projection(api.paradigm)
+            for service in api.services:
+                for operation in service.operations:
+                    binding = projection.route(operation, service, LossTracker())
+                    self._operation_keys[operation.key] = (
+                        Keys.operation_http(binding.method, binding.path) if binding else None
+                    )
+                    if binding is not None:
+                        self._service_keys.add(
+                            operation.tags[0] if operation.tags else self._DEFAULT_SERVICE
+                        )
+        report = super().evaluate(api)
+        if not self._rebuilt or not api.agents:
+            return report
+        return LossinessReport(
+            items=[*report.items, *agent_loss_items(api, target_label=self.target_label)]
+        )
 
     def apply_options(self, options: Mapping[str, Any]) -> None:
         """Compute the report for the chosen ``openapi_version`` — MFX-9.5 (#4342).
@@ -263,6 +324,7 @@ class OpenApiFidelityRulePack(CapabilityRulePack):
         document declared is dropped (``DROP``, info: navigation metadata, not the contract).
         """
         verdicts = list(super().root_verdicts(api))
+        verdicts += self._rebuilt_root_verdicts(api)
         hierarchy = _tag_hierarchy(api)
         if hierarchy and self._version != "3.2":
             verdicts.append(
@@ -334,6 +396,191 @@ class OpenApiFidelityRulePack(CapabilityRulePack):
                 target_mapping=f"{operation.streaming.value} streaming → {X_STREAMING}",
             )
         return super().operation_verdict(operation)
+
+    # --- a document rebuilt from another format's model (COA-3.1, #7052) -----------------
+
+    def _rebuilt_root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What a rebuilt document changes about the envelope: paradigm, dialect, identity, version."""
+        if not self._rebuilt:
+            return self._carried_metadata_verdicts(
+                [*source_metadata_keys(api.extras, {OPENAPI_SOURCE_EXTRA}),
+                 *(key for server in api.servers for key in source_metadata_keys(server.extras))],
+                noun="document",
+            )
+        verdicts: List[FidelityVerdict] = []
+        paradigm = paradigm_change_verdict(api, ApiParadigm.REST, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+        else:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"the {self._source_format} source is rebuilt as an OpenAPI {self._version} "
+                "document from its model: it reads back as OpenAPI, in that dialect's structure",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{self._source_format} → openapi-{self._version}",
+            ))
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_id=False, keeps_namespace=False,
+            default_version=OpenApiEmitter.DEFAULT_INFO_VERSION,
+        )
+        metadata = source_metadata_verdict(
+            [key for server in api.servers for key in source_metadata_keys(server.extras)],
+            source_format=self._source_format, target_label=self.target_label, noun="document's servers",
+        )
+        if metadata is not None:
+            verdicts.append(metadata)
+        return verdicts
+
+    def _carried_metadata_verdicts(self, keys: List[str], *, noun: str) -> List[FidelityVerdict]:
+        """``APPROX`` for another format's metadata on a model that carries its OpenAPI document.
+
+        An API gateway export (AWS API Gateway, Azure API Management) *is* an OpenAPI document with
+        the gateway's vendor extensions, so it is written back from that document (COA-2.1) and the
+        extensions survive; what the importer derived from the gateway's other files (a policy
+        document) has no OpenAPI field. An OpenAPI reader interprets neither: the routing, policy and
+        backend metadata does not read back.
+
+        Args:
+            keys: The metadata keys of the construct (:func:`~app.conversion_verdicts.source_metadata_keys`).
+            noun: The construct they belong to.
+
+        Returns:
+            One ``info`` ``APPROX``, or ``[]`` for an OpenAPI source or a construct with no metadata.
+        """
+        if not self._source_format or self._source_format.startswith(("openapi", "swagger")) or not keys:
+            return []
+        names = sorted(set(keys))
+        return [FidelityVerdict.approx(
+            message=f"{self.target_label} has no field for the {self._source_format} metadata of this "
+            f"{noun} ({', '.join(names[:4])}{f' and {len(names) - 4} more' if len(names) > 4 else ''}): "
+            "vendor extensions of the source document are written back as they stand, metadata from "
+            "the gateway's other files is not written, and an OpenAPI reader reads neither back as "
+            f"{self._source_format} metadata",
+            severity=LossinessSeverity.INFO,
+            target_mapping=f"{self._source_format} metadata → vendor extensions",
+        )]
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's own verdict, plus what a rebuilt document changes about it.
+
+        * an operation with no HTTP binding is placed on a synthesized one and reads back under that
+          ``METHOD /path`` key (``DROP`` under the source key; the new key is a ``SYNTH`` of
+          :meth:`synthesized_verdicts`);
+        * an ``operationId`` and a response are synthesized where the source has none;
+        * the source format's metadata on the operation, its parameters and messages is not written.
+        """
+        verdicts = [self.operation_verdict(operation)]
+        if not self._rebuilt:
+            carried = self._carried_metadata_verdicts(
+                source_metadata_keys(operation.extras, self._WRITTEN_OPERATION_EXTRAS), noun="operation"
+            )
+            if carried:
+                verdicts = [v for v in verdicts if v.kind is not LossinessKind.OK] + carried
+            return verdicts
+        emitted = self._operation_keys.get(operation.key)
+        if emitted is None:
+            return verdicts
+        rekey = rekey_verdicts(
+            operation.key, emitted, target_label=self.target_label, noun="operation",
+            reason="places every operation on an HTTP method and path",
+        )
+        carried = len(verdicts)
+        if rekey is not None and verdicts[0].kind is LossinessKind.OK:
+            # An operation whose own verdict already says how it is reframed (a pub/sub or
+            # streaming operation) needs no second line for its key.
+            verdicts.append(rekey[0])
+            self._rekeyed.add(operation.key)
+        declared_id = operation.extras.get("operationId")
+        if not (isinstance(declared_id, str) and declared_id):
+            verdicts.append(FidelityVerdict.synth(
+                message="the operation declares no operationId; one is synthesized from its method "
+                "and path",
+                target_mapping="operationId (synthesized)",
+            ))
+        if not any(m.role in (MessageRole.RESPONSE, MessageRole.ERROR) for m in operation.messages):
+            verdicts.append(FidelityVerdict.synth(
+                message=f"{self.target_label} requires a response and the operation declares none; "
+                "an empty default response is written",
+                target_mapping="responses.default (synthesized)",
+            ))
+        metadata = source_metadata_verdict(
+            [
+                *source_metadata_keys(operation.extras, self._WRITTEN_OPERATION_EXTRAS),
+                *(k for p in operation.parameters for k in source_metadata_keys(p.extras)),
+                *(k for m in operation.messages for k in source_metadata_keys(m.extras)),
+            ],
+            source_format=self._source_format, target_label=self.target_label, noun="operation",
+        )
+        if metadata is not None:
+            verdicts.append(metadata)
+        if len(verdicts) > carried:
+            # Something about the operation changes, so a plain "carried" no longer describes it.
+            verdicts = [v for v in verdicts if v.kind is not LossinessKind.OK]
+        return verdicts
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's own verdict, plus the source-format metadata a rebuilt document leaves out."""
+        verdicts = super().type_verdicts(type_)
+        if not self._rebuilt:
+            return verdicts
+        metadata = source_metadata_verdict(
+            [
+                *source_metadata_keys(type_.extras),
+                *(k for f in type_.fields for k in source_metadata_keys(f.extras)),
+                *(k for v in type_.enum_values for k in source_metadata_keys(v.extras)),
+            ],
+            source_format=self._source_format, target_label=self.target_label, noun="type",
+        )
+        if metadata is None:
+            return verdicts
+        return [v for v in verdicts if v.kind is not LossinessKind.OK] + [metadata]
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """A rebuilt document keeps a service only as the first tag of its operations.
+
+        A service none of whose written operations is tagged with its key is not written (``DROP``):
+        its operations read back under their own first tag, or under ``default``. One that survives
+        as a tag keeps its name only (``APPROX``) when it has a description or metadata.
+        """
+        verdicts = list(super().service_verdicts(service))
+        if not self._rebuilt:
+            return verdicts
+        if service.key not in self._service_keys:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no service construct — operations are grouped by "
+                f"tag; service {service.key!r} is not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping="service → dropped (operations grouped by tag)",
+            ))
+        elif service.description or source_metadata_keys(service.extras):
+            verdicts.append(FidelityVerdict.approx(
+                message=f"service {service.key!r} is kept only as the tag of its operations; its "
+                "description and metadata are not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping="service → operation tag",
+            ))
+        return verdicts
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The keys a rebuilt document's re-import adds: re-keyed operations and tag services."""
+        pairs = list(super().synthesized_verdicts(api))
+        if not self._rebuilt:
+            return pairs
+        for operation in api.operations():
+            emitted = self._operation_keys.get(operation.key) if operation.key in self._rekeyed else None
+            rekey = emitted and rekey_verdicts(
+                operation.key, emitted, target_label=self.target_label, noun="operation",
+                reason="places every operation on an HTTP method and path",
+            )
+            if rekey:
+                pairs.append(rekey[1])
+        source_services = {service.key for service in api.services}
+        for key in sorted(self._service_keys - source_services):
+            pairs.append((key, FidelityVerdict.synth(
+                message=f"a reader groups operations by their first tag; the service {key!r} "
+                "is read back from it",
+                target_mapping="operation tag → service",
+            )))
+        return pairs
 
     def channel_verdict(self, channel: Channel) -> FidelityVerdict:
         """OpenAPI has no event-channel construct; a channel survives only as notes.
@@ -1030,6 +1277,9 @@ class OpenApiEmitter(Emitter, register=True):
         }
         if request.description:
             body["description"] = request.description
+        if request.required:
+            # COA-3.1 (#7052): a required body was written as an optional one, and read back as one.
+            body["required"] = True
         tracker.record(ptr, Provenance.SOURCE)
         return body
 

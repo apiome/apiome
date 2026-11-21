@@ -45,6 +45,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .cddl_grammar import canonical_scalar_to_cddl
+from .conversion_verdicts import envelope_verdicts, rekey_verdicts
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -79,9 +80,41 @@ _UNSUPPORTED_CONSTRAINTS = ("multiple_of", "unique_items")
 
 
 class CddlFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for CDDL export."""
+    """Fidelity rules for CDDL export.
+
+    A grammar is a list of rules and nothing else (COA-3.1, #7052): it has no title, identifier or
+    namespace, so a reader names the document after its first rule, and a namespace-qualified type
+    is written under its bare name and reads back under that key (``DROP`` + ``SYNTH``).
+    """
 
     target_label = "CDDL"
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The title, identifier and namespace a grammar has no place for."""
+        verdicts = list(super().root_verdicts(api))
+        first = _first_rule_name(api)
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_id=False, keeps_namespace=False,
+            keeps_title=first is None or api.title == first,
+        )
+        return verdicts
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The re-key ``DROP`` of a type written under another name, else the inherited verdicts."""
+        rekey = self._rekey(type_)
+        return [rekey[0]] if rekey else super().type_verdicts(type_)
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The rule names re-keyed types read back under."""
+        pairs = list(super().synthesized_verdicts(api))
+        return pairs + [rekey[1] for rekey in map(self._rekey, api.types) if rekey]
+
+    def _rekey(self, type_: Type) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a type whose key is not the rule name it is written under."""
+        return rekey_verdicts(
+            type_.key, _identifier(type_.name or type_.key), target_label=self.target_label,
+            noun="type", reason="rules have no namespaces",
+        )
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -715,6 +748,22 @@ def _brackets(shape: Any) -> Tuple[str, str]:
     if shape == "array":
         return "[", "]"
     return "{", "}"
+
+
+def _first_rule_name(api: CanonicalApi) -> Optional[str]:
+    """The name of the rule a grammar for ``api`` starts with, which a reader names the document after.
+
+    Mirrors :meth:`_CddlWriter._ordered_types`: the type the model names as its root, else the first
+    by key. ``None`` when the model has no types.
+    """
+    if not api.types:
+        return None
+    by_key = {type_.key: type_ for type_ in api.types}
+    extras = api.extras.get("cddl") if isinstance(api.extras, dict) else None
+    root = (extras.get("root_type") or extras.get("root_rule")) if isinstance(extras, dict) else None
+    if not (isinstance(root, str) and root in by_key):
+        root = api.identity.name if api.identity and api.identity.name in by_key else min(by_key)
+    return _identifier(by_key[root].name or root)
 
 
 def _number(value: float) -> str:

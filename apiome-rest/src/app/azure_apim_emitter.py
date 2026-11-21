@@ -74,6 +74,8 @@ _LABEL = "Azure API Management export"
 
 #: Where the API-scope policy goes.
 _API_POLICY = "policy.xml"
+#: The name the APIM importer gives the server it derives from a `set-backend-service` policy.
+_BACKEND_SERVER = "backend"
 
 #: Methods of an OpenAPI path item.
 _HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "trace")
@@ -234,7 +236,7 @@ class _ApimWriter:
                 "of HTTP operations, and a model with none has nothing to declare."
             )
         record_method_path_collisions(self.api, self.losses, label="APIM definition")
-        projection = OpenApiEmitter().emit(self.api, opts=OpenApiEmitOptions(openapi_version="3.0"))
+        projection = OpenApiEmitter().emit(self._definition_model(), opts=OpenApiEmitOptions(openapi_version="3.0"))
         for loss in projection.losses:
             self.losses.record(loss.kind, loss.subject, loss.detail, loss.pointer)
         content = projection.files[0].content
@@ -247,6 +249,21 @@ class _ApimWriter:
         files = [EmittedFile(path="openapi.json", content=text, media_type="application/json")]
         files.extend(EmittedFile(path=path, content=xml, media_type="application/xml") for path, xml in policies)
         return files
+
+    def _definition_model(self) -> CanonicalApi:
+        """The model the definition is written from: an APIM import's without its backend server.
+
+        The importer adds the upstream a ``set-backend-service`` policy names as a server called
+        ``backend``. It belongs to the policy, which is written back, not to the definition's
+        ``servers`` — written there it read back as an unnamed gateway URL, and made the definition
+        look edited (COA-3.1, #7052).
+        """
+        if self.api.format != AZURE_APIM_FORMAT_KEY:
+            return self.api
+        servers = [server for server in self.api.servers if server.name != _BACKEND_SERVER]
+        if len(servers) == len(self.api.servers):
+            return self.api
+        return self.api.model_copy(update={"servers": servers})
 
     def _operation_ids(self, definition: Dict[str, Any]) -> Dict[Tuple[str, str], str]:
         """``(METHOD, path)`` → the ``operationId`` the definition gives each operation."""

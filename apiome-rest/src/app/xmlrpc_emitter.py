@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import Field
 
@@ -19,9 +19,16 @@ from .canonical_model import (
     MessageRole,
     Operation,
     OperationKind,
+    Service,
     Type,
     TypeKind,
     TypeRef,
+)
+from .conversion_verdicts import (
+    agent_loss_items,
+    envelope_verdicts,
+    paradigm_change_verdict,
+    rekey_verdicts,
 )
 from .emitter import (
     CapabilityProfile,
@@ -35,6 +42,8 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .normalizer import Keys
 
 __all__ = ["XmlRpcEmitOptions", "XmlRpcEmitter", "XmlRpcFidelityRulePack"]
 
@@ -42,9 +51,114 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 
 
 class XmlRpcFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for XML-RPC export."""
+    """Fidelity rules for XML-RPC export.
+
+    An XML-RPC document is one ``methodCall``: the first RPC operation of the source, by name, with
+    its parameters. Everything else is left out, and the report says so (COA-3.1, #7052): every other
+    operation and every named type is a ``DROP``, the written operation reads back under the key
+    ``{method}.{method}`` in a service named after it (``DROP`` + ``SYNTH``), and the document has no
+    title, description, identifier, namespace or version.
+    """
 
     target_label = "XML-RPC"
+    #: Whether the source is itself XML-RPC (:meth:`evaluate`); a pack asked before that adds nothing.
+    _native = True
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Find the one operation the ``methodCall`` is written for, walk, then add agent losses."""
+        self._native = api.format == XmlRpcEmitter.format
+        primary = _primary_rpc_operation(api)
+        self._primary_key = primary.key if primary is not None else None
+        self._method = primary.name if primary is not None else None
+        report = super().evaluate(api)
+        if self._native or not api.agents:
+            return report
+        return LossinessReport(
+            items=[*report.items, *agent_loss_items(api, target_label=self.target_label)]
+        )
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The paradigm change and the envelope a ``methodCall`` cannot hold."""
+        verdicts = list(super().root_verdicts(api))
+        if self._native:
+            return verdicts
+        paradigm = paradigm_change_verdict(api, ApiParadigm.RPC, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_title=False, keeps_id=False,
+            keeps_namespace=False, keeps_version=False,
+        )
+        return verdicts
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's verdict: only the first RPC operation is written, under its method name."""
+        verdicts = [self.operation_verdict(operation)]
+        if self._native or verdicts[0].kind is not LossinessKind.OK:
+            return verdicts
+        if operation.key != self._primary_key:
+            return [FidelityVerdict.drop(
+                message=f"an {self.target_label} document is one methodCall, written for operation "
+                f"{self._primary_key!r}; operation {operation.key!r} is not written",
+                severity=LossinessSeverity.WARN,
+                target_mapping="operation → dropped (one methodCall per document)",
+            )]
+        rekey = self._method_rekey(operation)
+        return [rekey[0]] if rekey else verdicts
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """A ``methodCall`` names a method, not a service: the service is not written."""
+        verdicts = list(super().service_verdicts(service))
+        if not self._native and service.key != self._method:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no service construct; service {service.key!r} is "
+                "not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping="service → dropped",
+            ))
+        return verdicts
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """A ``methodCall`` carries parameter values, not type declarations."""
+        if self._native:
+            return super().type_verdict(type_)
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} has no type declarations — a methodCall carries parameter "
+            f"values; type {type_.key!r} is not written",
+            severity=LossinessSeverity.WARN,
+            target_mapping="type → dropped",
+        )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """A dropped type's fields go with it (the type's ``DROP`` covers them)."""
+        return super().field_verdicts(field) if self._native else []
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The key the written operation reads back under, and the service named after its method."""
+        pairs = list(super().synthesized_verdicts(api))
+        if self._native or self._method is None:
+            return pairs
+        primary = next(op for op in api.operations() if op.key == self._primary_key)
+        rekey = self._method_rekey(primary)
+        if rekey:
+            pairs.append(rekey[1])
+        if all(service.key != self._method for service in api.services):
+            pairs.append((self._method, FidelityVerdict.synth(
+                message=f"a reader files the methodCall under a service named after its method, "
+                f"{self._method!r}",
+                target_mapping="methodName → service",
+            )))
+        return pairs
+
+    def _method_rekey(
+        self, operation: Operation
+    ) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of the written operation (``{method}.{method}`` on re-import)."""
+        return rekey_verdicts(
+            operation.key, Keys.operation_rpc(operation.name, operation.name),
+            target_label=self.target_label, noun="operation",
+            reason="names a call by its method only",
+        )
 
     def event_verdict(self, event) -> FidelityVerdict:
         return FidelityVerdict.drop(

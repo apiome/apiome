@@ -446,13 +446,15 @@ def test_graphql_reports_scalar_narrowing_as_a_conformance_failure():
     )
 
 
-def test_graphql_types_only_model_reports_the_entity_missing():
-    # With no operations the GraphQL emitter reaches no types, so the emitted SDL lost the
-    # entity — an instance-level conformance loss, not a silent pass.
+def test_graphql_types_only_model_keeps_the_entity():
+    # COA-3.1 (#7052): with no operations the GraphQL emitter used to reach no types, so the
+    # emitted SDL lost the entity. Every type is written now, so the entity is there to check —
+    # and is checked like any other, never passed silently.
     report = _run(_api(), targets=["graphql"])
     target = _target(report, "graphql")
-    assert target.valid is False
-    assert target.entities[0].status == "missing"
+    entity = target.entities[0]
+    assert entity.status == "fail"  # written, and its `int32` narrowed to String like any other
+    assert any(f.kind == "conformance" and f.pointer == "/count" for f in entity.failures)
 
 
 def test_graphql_union_member_is_skipped_never_passing():
