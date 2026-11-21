@@ -86,6 +86,8 @@ export interface VersionsTableProps {
   error?: string | null;
   /** Run the revisions read again. */
   onRetry?: () => void;
+  /** A lint-fix apply created a revision (GVM-3.6, #5874); re-read the list without a skeleton. */
+  onRevisionsChanged?: () => void;
   /** The selected project's id — every lint badge and mock cell is scoped to it. */
   projectId: string;
   /** The project's slug, which keys the mock-usage series. */
@@ -150,6 +152,7 @@ export default function VersionsTable({
   loading = false,
   error = null,
   onRetry,
+  onRevisionsChanged,
   projectId,
   projectSlug,
   headRevisionId,
@@ -216,6 +219,7 @@ export default function VersionsTable({
             isLatest={latestRevisionId != null && version.id === latestRevisionId}
             tags={tagsByVersionId.get(version.id) ?? []}
             onView={() => onRowAction('view', version)}
+            onFixApplied={onRevisionsChanged}
           />
         ),
         skeletonWidth: '11rem',
@@ -378,6 +382,7 @@ export default function VersionsTable({
       latestRevisionId,
       mockUsageByVersion,
       onMockChanged,
+      onRevisionsChanged,
       onRowAction,
       projectId,
       projectSlug,
@@ -419,6 +424,8 @@ export interface VersionCellProps {
   isLatest?: boolean;
   tags: readonly VersionTagRow[];
   onView: () => void;
+  /** The lint report applied fixes as a new revision (GVM-3.6, #5874). */
+  onFixApplied?: () => void;
 }
 
 /**
@@ -427,7 +434,15 @@ export interface VersionCellProps {
  * @param props See {@link VersionCellProps}.
  * @returns The cell.
  */
-export function VersionCell({ version, projectId, isHead, isLatest = false, tags, onView }: VersionCellProps) {
+export function VersionCell({
+  version,
+  projectId,
+  isHead,
+  isLatest = false,
+  tags,
+  onView,
+  onFixApplied,
+}: VersionCellProps) {
   const lifecycle = versionLifecycle(version);
   const label = versionLabel(version);
   return (
@@ -483,6 +498,7 @@ export function VersionCell({ version, projectId, isHead, isLatest = false, tags
             versionLabel={version.version_id}
             storedScore={version.qualityScore}
             storedGrade={version.qualityGrade}
+            onFixApplied={onFixApplied}
           />
         ) : null}
       </div>

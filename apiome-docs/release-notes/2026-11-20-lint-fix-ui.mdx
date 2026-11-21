@@ -1,0 +1,24 @@
+---
+slug: lint-fix-ui
+title: "Apply lint fixes from the lint report and Lint posture"
+description: "One-click and bulk Apply fix in the UI, as a new revision."
+authors: [apiome]
+---
+
+The deterministic lint fixes are now one click away where the finding is: in a revision's lint
+report and in Lint posture.
+
+{/* truncate */}
+
+- **Lint report (Versions):** findings with a deterministic fix carry a **Fix** chip, and **Apply N
+  deterministic fixes** applies every ready one. Confirm a reason, and the fixes become a new
+  revision that is linted again; the report links it with its new grade.
+- **Lint posture:** a finding's drawer has a **Fix** section and an **Apply fix** button, and the
+  bulk bar applies the fixes of a selection. A finding moves to **Fixed** only once the new
+  revision's lint report no longer lists it.
+- **Never a surprise:** breaking and conflicting fixes show their reason instead of an action, a
+  published revision's fixes are read-only, and MCP endpoint findings say why they have no document
+  to fix.
+
+See [Version dialogs → Lint report](/build/version-dialogs#lint-report) and
+[Lint posture → Apply a fix](/govern/lint-posture#apply-a-fix).

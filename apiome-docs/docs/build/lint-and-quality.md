@@ -23,6 +23,15 @@ are editing. Fix the findings (most are missing descriptions) and the grade upda
 On the **Versions** screen (`/ade/dashboard/versions`) every revision row carries a grade chip
 read from the stored score; click it to open the full report (fetched on demand).
 
+### Apply fixes from the report
+
+Findings with a deterministic fix carry a **Fix** chip in the report, and **Apply N deterministic
+fixes** applies every ready one. Confirm the **Reason** and **click “Apply fix”**: the fixes become
+a **new revision**, which is linted again, and the report links it. Breaking and conflicting fixes
+show their reason instead of a chip, and a published revision's fixes are read-only. The steps and
+a screenshot are in [Version dialogs → Lint report](./version-dialogs.mdx#lint-report); triaging
+across the catalog, use **Apply fix** in [Lint posture](../govern/lint-posture.mdx#apply-a-fix).
+
 ## With the CLI
 
 ```bash

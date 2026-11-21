@@ -93,6 +93,7 @@ Tick the findings to act on (or press <Kbd keys="x"/> on a row). The bar that ap
 | --- | --- | --- |
 | **Acknowledge** | Acknowledged | You have seen it and own it. |
 | **Mark fixed** | Fixed | The next scan should no longer report it. |
+| **Apply fix** | Fixed, once observed | A deterministic fix exists ([below](#apply-a-fix)). |
 | **False positive** | False positive | The rule is wrong about this case. |
 | **Request waiver** | Waiver requested | You want to accept the risk for a while (below). |
 | **Approve waiver** | Waived | You can approve waivers (below). |
@@ -130,6 +131,39 @@ the finding's remediation history.
 
 Waivers that let a blocked *import or export* through are different — they come from the tenant's
 [import & export policy](./style-guides.mdx#import--export-policy) on Style guides.
+
+### Apply a fix
+
+Many lint findings on a catalog revision have a **deterministic fix** — a mechanical change such as
+adding a missing `operationId` (see [Auto-fix lint findings](../build/auto-fix.md)). Open the
+finding: its drawer has a **Fix** section that says whether a fix exists and whether it can be
+applied here.
+
+1. **Open the finding** from the queue. When the **Fix** section reads *A deterministic fix is
+   available*, the footer shows **Apply fix**.
+2. **Click “Apply fix”.** The dialog prefills a **Reason** — for example *Apply the deterministic
+   operation-id-required fix.* Edit it if you like; it is recorded in the audit trail.
+3. **Click “Apply fix”** in the dialog. The fix is applied as a **new revision** — the revision the
+   finding is on is not changed — and the new revision is linted again.
+
+<Screenshot id="lint-posture-apply-fix" alt="A finding's drawer: the Fix section with a ready fix and the Apply fix button" />
+
+The finding moves to **Fixed** only when the new revision's lint report **no longer lists it**; if
+it is still reported, its state is left as it was and the drawer says so. The toast and the drawer
+link the new revision (**Open revision**).
+
+To fix several findings at once, select them and **click “Apply fix”** in the bulk bar. Findings on
+the same revision are applied together as one new revision.
+
+Apply fix is not offered, and the **Fix** section says why, when:
+
+- the finding is on an **MCP endpoint** — it is on the live server, so there is no document to fix;
+- the revision is **published** — its fixes are shown read-only; apply them to a draft revision;
+- the fix is **breaking** or **conflicts** with another fix — these always need a person;
+- the rule has no deterministic fix for the finding.
+
+Applying needs the `versions:edit` permission, and marking the finding fixed needs
+`lint_findings:edit`.
 
 ### Assign an owner
 

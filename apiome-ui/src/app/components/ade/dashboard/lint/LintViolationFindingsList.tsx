@@ -44,6 +44,8 @@ export interface LintViolationFindingsListProps {
   rowClassName?: string;
   /** When false, omit the built-in "Findings" + toggle header (parent supplies it). */
   showHeader?: boolean;
+  /** Optional content under a row's message (the GVM-3.6 Fix chip / fix reason). */
+  renderRowExtra?: (finding: EnrichedLintViolation) => React.ReactNode;
 }
 
 function ViolationRow({
@@ -51,11 +53,13 @@ function ViolationRow({
   rowClassName,
   hideRuleChip,
   renderPath,
+  renderRowExtra,
 }: {
   finding: EnrichedLintViolation;
   rowClassName?: string;
   hideRuleChip?: boolean;
   renderPath?: (finding: EnrichedLintViolation) => React.ReactNode;
+  renderRowExtra?: (finding: EnrichedLintViolation) => React.ReactNode;
 }) {
   return (
     <li className={cn('rounded-lg p-3', rowClassName)} data-testid="lint-violation-row">
@@ -66,6 +70,7 @@ function ViolationRow({
         </div>
       ) : null}
       <p className="mt-1 text-sm text-fg">{finding.message}</p>
+      {renderRowExtra ? renderRowExtra(finding) : null}
     </li>
   );
 }
@@ -85,6 +90,7 @@ export function LintViolationFindingsList({
   renderPath,
   rowClassName,
   showHeader = true,
+  renderRowExtra,
 }: LintViolationFindingsListProps) {
   const { catalog, customDescriptions, loading: catalogLoading } = useLintViolationContext(guideId);
   const [groupByRuleInternal, setGroupByRuleInternal] = useState(false);
@@ -175,6 +181,7 @@ export function LintViolationFindingsList({
                     rowClassName={rowClassName}
                     hideRuleChip
                     renderPath={renderPath}
+                    renderRowExtra={renderRowExtra}
                   />
                 ))}
               </ul>
@@ -189,6 +196,7 @@ export function LintViolationFindingsList({
               finding={finding}
               rowClassName={rowClassName}
               renderPath={renderPath}
+              renderRowExtra={renderRowExtra}
             />
           ))}
         </ul>

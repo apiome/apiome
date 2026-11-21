@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Check, FileSignature, Lightbulb, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Check, FileSignature, Lightbulb, ShieldCheck, Wrench } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -24,6 +24,13 @@ import {
   type VersionLintReport,
 } from '@/app/utils/version-lint-report';
 import type { BulkActionSet, LintWorkspaceFinding } from '@/app/utils/lint-workspace';
+import { fixSubjectSupport } from '@/app/utils/lint-fix';
+import {
+  LintFindingFixSection,
+  findingFixState,
+} from '@/app/components/ade/lintFix/LintFindingFixSection';
+import { useRevisionLintFixes } from '@/app/components/ade/lintFix/useRevisionLintFixes';
+import type { PostureFixOutcome } from '@/app/components/ade/lintFix/postureFixes';
 
 import {
   NO_VALUE,
@@ -59,6 +66,14 @@ import {
  * bar, where a decision is made about a *set*. Request waiver opens the same dialog the bulk
  * bar does, because a waiver without a rationale is a waiver the server refuses.
  *
+ * ### Apply fix (GVM-3.6, #5874)
+ *
+ * A third verb, offered only when the finding's catalog revision has a `ready` deterministic
+ * fix and is a draft. The Fix section says why it is absent otherwise (MCP endpoint findings
+ * have no document; a published revision is read-only; a breaking or conflicting fix needs a
+ * human). Applying creates a new revision; the finding moves to `fixed` only when the new
+ * revision's re-lint no longer reports it.
+ *
  * ### One departure from the mockup
  *
  * There is no "Open full page ↗" link. DESIGN.md §5.4 asks for one *when a page exists*, and
@@ -78,6 +93,10 @@ export interface LintFindingDrawerProps {
   onRequestWaiver: (finding: LintWorkspaceFinding) => void;
   /** True while a write is in flight. */
   busy?: boolean;
+  /** Open the Apply fix confirmation for this one finding (GVM-3.6). */
+  onApplyFix?: (finding: LintWorkspaceFinding) => void;
+  /** The last Apply fix outcome, shown when it concerns this finding. */
+  fixOutcome?: PostureFixOutcome | null;
 }
 
 /** What the history request is currently holding, keyed by the decision it was made for. */
@@ -193,6 +212,8 @@ export default function LintFindingDrawer({
   onDecision,
   onRequestWaiver,
   busy = false,
+  onApplyFix,
+  fixOutcome = null,
 }: LintFindingDrawerProps) {
   // Keyed by the decision it was fetched for, so switching findings shows the loading state
   // — a stale entry simply no longer matches — without resetting state inside an effect.
@@ -205,6 +226,14 @@ export default function LintFindingDrawer({
   const decisionId = finding?.decision?.id ?? null;
   const projectId = finding?.projectId ?? null;
   const versionRecordId = finding?.versionRecordId ?? null;
+  const fixSupported = finding ? fixSubjectSupport(finding).supported : false;
+  // The revision's fix plan (GVM-3.6), read while the drawer shows a catalog-revision finding.
+  // Only the plan is used here: the apply runs through the page, which owns the decision write.
+  const fixes = useRevisionLintFixes(
+    fixSupported ? projectId : null,
+    fixSupported ? versionRecordId : null,
+    Boolean(onApplyFix) && fixSupported,
+  );
 
   React.useEffect(() => {
     if (!decisionId) return;
@@ -257,6 +286,15 @@ export default function LintFindingDrawer({
   const linkedTicket = finding.decision?.linkedTicket ?? null;
   const owner = finding.decision?.ownerUserId ?? null;
   const canOpenReport = Boolean(projectId && versionRecordId);
+  const fixState = findingFixState(finding, fixes.plan);
+  // Once applied (gone or still reported), the original revision's plan still lists the fix;
+  // offering it again would create another revision for the same change.
+  const fixApplied = Boolean(
+    fixOutcome &&
+      [...fixOutcome.fixed, ...fixOutcome.remaining].some(
+        (f) => f.sourceFingerprint === finding.sourceFingerprint,
+      ),
+  );
 
   return (
     <>
@@ -309,6 +347,16 @@ export default function LintFindingDrawer({
                 </Alert>
               ) : null}
             </section>
+
+            {onApplyFix ? (
+              <LintFindingFixSection
+                finding={finding}
+                plan={fixes.plan}
+                loading={fixes.loading}
+                error={fixes.error}
+                outcome={fixOutcome}
+              />
+            ) : null}
 
             <section data-testid="detail-links">
               <h3 className="hive-caps">Links</h3>
@@ -384,6 +432,18 @@ export default function LintFindingDrawer({
           </DrawerBody>
 
           <DrawerFooter>
+            {onApplyFix && fixState.canApply && !fixApplied ? (
+              <Button
+                variant="outline"
+                disabled={busy}
+                title={busy ? 'A change is being saved.' : 'Apply the fix as a new revision'}
+                data-testid="detail-apply-fix"
+                onClick={() => onApplyFix(finding)}
+              >
+                <Wrench aria-hidden />
+                Apply fix
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               disabled={busy}

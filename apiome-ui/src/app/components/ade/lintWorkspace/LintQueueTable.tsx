@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Ban, Check, Link2, RotateCcw, SearchX, ShieldCheck, UserPlus, Wrench } from 'lucide-react';
+import { Ban, Check, Hammer, Link2, RotateCcw, SearchX, ShieldCheck, UserPlus, Wrench } from 'lucide-react';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -125,6 +125,11 @@ export interface LintQueueTableProps {
   onOpenWaiverDialog: (mode: WaiverDialogMode) => void;
   /** True while a bulk write is in flight. */
   bulkBusy?: boolean;
+  /**
+   * Apply the deterministic lint fixes of the selection (GVM-3.6, #5874). Catalog-revision
+   * findings only; the outcome says why the others were skipped.
+   */
+  onApplyFix?: () => void;
 }
 
 /**
@@ -214,6 +219,7 @@ export default function LintQueueTable({
   onBulkApply,
   onOpenWaiverDialog,
   bulkBusy = false,
+  onApplyFix,
 }: LintQueueTableProps) {
   const [owner, setOwner] = React.useState('');
 
@@ -499,6 +505,17 @@ export default function LintQueueTable({
               {verb.label}
             </DataTableBulkAction>
           ))}
+          {onApplyFix ? (
+            <DataTableBulkAction
+              disabled={bulkBusy}
+              title="Apply deterministic fixes as new revisions. Catalog revisions only — MCP endpoint findings have no document to fix."
+              data-testid="bulk-apply-fix"
+              onClick={onApplyFix}
+            >
+              <Hammer aria-hidden />
+              Apply fix
+            </DataTableBulkAction>
+          ) : null}
           <span className="lw-bulk-rule" aria-hidden />
           <Input
             value={owner}

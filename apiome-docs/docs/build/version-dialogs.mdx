@@ -130,6 +130,28 @@ many others depend on. A version with no classes shows an empty state; add class
 
 <Screenshot id="version-heatmap-dialog" alt="The Heatmap dialog: a payments schema's classes as tiles, colored by complexity, with the metric switch and legend" />
 
+## Lint report
+
+**Click a revision's grade chip** (for example **B · 80**) to open its **Quality & Lint report**:
+the score, the severity counts and every finding.
+
+Findings with a deterministic fix carry a **Fix** chip. Above the list, **Apply N deterministic
+fixes** applies every fix that is ready.
+
+1. **Click “Fix”** on a finding, or **“Apply N deterministic fixes”**.
+2. Check the **Reason** (prefilled, for example *Apply the deterministic operation-id-required
+   fix.*) and **click “Apply fix”**.
+3. The fixes are applied as a **new revision**; the report shows **Applied 1 fix as a new revision
+   v1.0.1** with its new grade, and the Versions list gains the revision. The revision you opened
+   is not changed.
+
+<Screenshot id="lint-report-apply-fix" alt="The lint report: a Fix chip on a finding, Apply 1 deterministic fix, and the reasons breaking and conflicting fixes are not applied" />
+
+A fix that would make a **breaking** change, or that **conflicts** with another fix, has no chip;
+its reason is shown under the finding instead. On a **published** revision the fixes are
+read-only: *This revision is published, so fixes cannot be applied to it. Apply them to a draft
+revision.* See [Auto-fix lint findings](./auto-fix.md) for what each fix does.
+
 ## Git-like features
 
 <Flag name="FEATURE_GITLIKE" />
