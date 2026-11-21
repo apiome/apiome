@@ -14,14 +14,36 @@ This page explains which rules are fixable, what kind of edit each fix makes, an
 is drawn. The rule catalog shows the same information for every rule; see
 [Built-in lint rules](./lint-rules.md).
 
+## At a glance
+
+Every fix takes the same path, wherever you ask for it:
+
+1. **A finding with a fixable rule.** The rule's fix computes [JSON Patch](#how-a-fix-is-described)
+   operations that [stay inside the finding](#a-fix-stays-inside-its-finding). A rule without a
+   fix leaves the finding for a person or an AI assistant.
+2. **A plan.** Apiome checks the fixes against each other ([conflicts](#plan-statuses)) and
+   classifies each fix's change with the classified diff. A breaking fix is never applied.
+3. **A choice of output.** The ready fixes come back as one JSON Patch, an Overlay 1.0 document or
+   a unified diff ([Plan formats](#plan-formats)).
+4. **A new revision.** Applying builds the fixed document, imports it as a new revision marked
+   `lint-fix`, and lints it again. The revision you fixed is never changed
+   ([Apply fixes](#apply-fixes)).
+
+You can ask for fixes in four places:
+
+| Where | What you do | Section |
+| --- | --- | --- |
+| REST API | Plan a stored revision or a posted document, then apply | [Plan the fixes](#plan-the-fixes), [Apply fixes](#apply-fixes) |
+| UI | **Apply fix** in a revision's lint report and in **Lint posture** | [Apply fixes in the UI](#apply-fixes-in-the-ui) |
+| CLI | `apiome lint --fix`, with `--dry-run` to preview | [Fix from the CLI](#fix-from-the-cli) |
+| CI | **Suggested fixes** on the pull request, never applied for you | [Fix suggestions in CI](#fix-suggestions-in-ci) |
+
 :::note What ships today
 
-The rule catalog (`GET /v1/lint/rules`) publishes every rule's fix capability, and the first
-thirteen OpenAPI rules carry a fix. The REST API plans fixes and applies them as a new revision
-(see [Plan the fixes](#plan-the-fixes) and [Apply fixes](#apply-fixes)), and `apiome lint --fix`
-does both from the command line for a stored version (see [Fix from the CLI](#fix-from-the-cli)).
-Pull requests show the fixes as suggestions (see [Fix suggestions in CI](#fix-suggestions-in-ci)).
-Fixing a local file from the CLI, and **Apply fix** in the lint report, arrive in later releases. Nothing in a lint report, score or grade changes because these
+The first thirteen OpenAPI rules carry a fix; the rule catalog (`GET /v1/lint/rules`) publishes
+every rule's fix capability. Fixing a **local file** in place with `apiome lint <file> --fix`
+arrives with local-file lint (see [Local files](#local-files)); until then, plan a file with the
+REST API or `apiome lint suggest`. Nothing in a lint report, score or grade changes because these
 rules exist: the twelve new rules below are evaluated only when a fix plan is asked for.
 
 :::

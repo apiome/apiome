@@ -1,0 +1,20 @@
+---
+slug: deterministic-auto-fix
+title: "Deterministic auto-fix, end to end"
+description: "One page for every way to plan and apply lint fixes."
+authors: [apiome]
+---
+
+Deterministic lint fixes are complete across the product: the REST API, the UI, the CLI and CI
+all plan and apply the same fixes, through the same checks.
+
+{/* truncate */}
+
+- **One path for every fix:** a fixable rule's JSON Patch stays inside its finding, the plan checks
+  conflicts and classifies each change, a breaking fix is never applied, and applying always
+  creates a new revision that is linted again.
+- **One page to start from:** [Auto-fix](/build/auto-fix#at-a-glance) now opens with that path and
+  a table of where to ask for fixes: REST, **Apply fix** in the UI, `apiome lint --fix` and
+  **Suggested fixes** in CI.
+- **Still to come:** fixing a local file in place with `apiome lint <file> --fix` arrives with
+  local-file lint. Until then, `apiome lint suggest <file>` shows the fixes for a file.
