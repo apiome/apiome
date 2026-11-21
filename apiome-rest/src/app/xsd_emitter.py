@@ -403,6 +403,8 @@ class XsdEmitter(Emitter, register=True):
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
     options_model = XsdEmitOptions
+    #: COA-3.3 (#7054): with nothing to write, the file did not re-import; refuse instead.
+    requires_source = ("type",)
 
     OUTPUT_MEDIA_TYPE = "application/xml"
 
@@ -432,6 +434,7 @@ class XsdEmitter(Emitter, register=True):
             if isinstance(opts, XsdEmitOptions)
             else XsdEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        self.raise_if_source_unsupported(api)
         writer = _XsdWriter(api, options)
         media_type = XSD_OUTPUT_MODES[options.mode][1]
         files = [

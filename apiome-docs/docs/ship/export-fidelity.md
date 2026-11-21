@@ -251,13 +251,13 @@ What each target adds:
 | Target | What a file built from another format's item reports |
 | --- | --- |
 | **OpenAPI** | An operation with no HTTP method and path is placed on one (`POST /<service>/<method>` for RPC, `/graphql/<field>` for GraphQL). An `operationId` and an empty default response are **synthesized** where the source has none. A service is kept only as the first tag of its operations. A service with no tagged operation is **dropped**, and its operations read back under `default`. |
-| **AsyncAPI** | A source with no operation and no channel becomes a file that holds only `components.schemas`. An AsyncAPI 2 item written as AsyncAPI 3 lists its `publish` / `subscribe` operations (now `send` / `receive`) and the channels that gained a name. |
+| **AsyncAPI** | A source with no operation and no channel becomes a file that holds only `components.schemas`. An AsyncAPI 2 item written as AsyncAPI 3 lists its `publish` / `subscribe` operations (now `send` / `receive`) and the channels that gained a name. Another format's metadata is written only as its `x-` extensions, and a type name AsyncAPI does not allow as a component key (`http://example.com/orders.Order`) is written with `_` in place of each other character. |
 | **CloudEvents** | Every named type is **dropped**: an event carries attributes and sample data, not type declarations. A source with no publish or subscribe operation exports as a placeholder event, and the report says so at `critical` severity. |
 | **GraphQL SDL** | Every operation becomes a `Query` or `Mutation` field, and its service is **dropped**. An operation that maps to neither is **dropped**. A source with no read operation gets a placeholder `Query._` field. A type named `acme.Pet` is written as `Pet`. |
 | **JSON Type Definition**, **CDDL** | A type named with a namespace (`X12-850.PO1`) is written under its bare name (`PO1`). JTD also writes the first type as the root schema when no type is named after the document. |
 | **Avro**, **Kafka Connect** | A type is written under its namespace and name (`orders` becomes `commerce.orders`). The document's identifier and version are **dropped**. |
-| **Protobuf**, **Connect RPC** | Service and method names become Protobuf identifiers: `Travel Concierge` is written as `Travel_Concierge`. |
-| **ONC RPC** | Every type, program and procedure is read back under the first program's name (`Bank.Account`, `Bank.Bank.open`). A map, an alias or a scalar type is **dropped**. |
+| **Protobuf**, **Connect RPC** | Service and method names become Protobuf identifiers: `Travel Concierge` is written as `Travel_Concierge`. Packages are too (`CUSTOMER-RECORD` → `CUSTOMER_RECORD`, `FIX.4.4` → `FIX._4._4`). A type with no Protobuf declaration is written as the closest Protobuf type and reported. An rpc whose payload is not a message uses a wrapper (`google.protobuf.UInt32Value`). A field number Protobuf does not allow (`0`, `19000`–`19999`), a repeated field name, and a service named like a message are renamed or renumbered and reported. |
+| **ONC RPC** | Every type, program and procedure is read back under the first program's name (`Bank.Account`, `Bank.Bank.open`). A map, an alias or a scalar type is **dropped**. Scalars are written as XDR types (`integer` → `int`, `int64` → `hyper`); a type with no XDR form is written as `string`, `hyper`, `double` or `bool` and reported. |
 | **XML-RPC** | The file is one `methodCall`, for the first RPC operation. Every other operation and every named type is **dropped**. |
 | **WIT** | When no operation or type reports a loss of its own, the document does: one line names how many identifiers were rewritten in lower-kebab-case, with examples, and a package name or a `types` interface that Apiome had to invent is **synthesized**. |
 
@@ -535,6 +535,36 @@ fixed:
   canonical model (including AWS API Gateway and Azure API Management exports).
 - **Azure API Management** wrote the backend a `set-backend-service` policy names into the
   definition's `servers` as well.
+
+### Every exported file reads back {#reimport}
+
+Each test also reads the exported file back with Apiome's importer for that format. Until this
+release, the files of eight targets often did not read back: WADL, ASN.1, AsyncAPI, Postman, ONC
+RPC, Protobuf, Connect RPC and CORBA IDL. Each one now reads back, or the target refuses the source
+before writing anything.
+
+| Target | What did not read back | Now |
+| --- | --- | --- |
+| **AsyncAPI** | Another format's metadata written as AsyncAPI fields (a Postman `sample_count`, a gateway's `backends`); references to scalar names such as `bool` or `int32` that had no schema; component keys AsyncAPI does not allow; a type that contains itself. | Metadata is written only as `x-` extensions. A scalar is written inline (`{"type": "integer", "format": "int32"}`). Component keys are renamed and every reference follows. A type that contains itself reads back as a reference to itself. |
+| **Protobuf**, **Connect RPC** | Package and type names that are not identifiers, references to types the file does not declare (`.decimal`, an alias), scalar rpc payloads, field number `0`, repeated field names, a service and a message with the same name. | See the Protobuf row in [Exports from another format](#cross-format). |
+| **ONC RPC** | Scalar names written as they were imported (`integer age;`), and a file of structs only, which the importer did not recognize. | XDR scalar types, and the importer reads a file of structs only. |
+| **ASN.1**, **WADL** | A source with nothing either format can hold (an agent card, a gateway configuration) was written as an empty module. | Refused, with a reason, before export. |
+| **Postman**, **CORBA IDL** | Nothing: every file they write reads back. Postman refuses a source with no HTTP operation. | Unchanged. |
+
+The same refusal now applies to **Avro** schema files (`.avsc`), **CDDL**, **FlatBuffers** and
+**XSD** for a source with no type, and to **RAML** for a source with no HTTP operation and no type.
+Each of those exports used to be an empty file. Avro IDL (`.avdl`) still exports such a source,
+because a protocol can hold its operations.
+
+ASN.1, CDDL, FlatBuffers, XSD, WADL and RAML are greyed out in the **Export** dialog for such a
+source, with the reason. Avro stays offered, because the choice between `.avsc` and `.avdl` is an
+export option; an `.avsc` export of such a source is refused with the reason when it runs.
+
+| Target | Reason shown |
+| --- | --- |
+| ASN.1, CDDL, FlatBuffers, XSD | *"… export needs at least one type; this source has none (only operations, agents or channels)."* |
+| WADL, RAML | *"… export needs at least one HTTP operation or one type; this source has neither."* |
+| Avro (`.avsc`) | *"Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations."* |
 
 ### Every surface says the same thing
 

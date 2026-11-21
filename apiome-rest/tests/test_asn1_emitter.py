@@ -456,6 +456,10 @@ def test_a_type_imported_from_another_module_is_text_and_recorded() -> None:
 
 
 def test_every_corpus_representative_compiles() -> None:
+    """Every corpus representative with a type writes a module that compiles.
+
+    A source with no type is refused up front (COA-3.3, #7054) and is skipped here.
+    """
     from corpus_roundtrip import representatives_by_format
     from export_conformance import _import_entry
 
@@ -466,6 +470,8 @@ def test_every_corpus_representative_compiles() -> None:
         try:
             api = _import_entry(entry)
         except Exception:  # noqa: BLE001 - the import matrix owns import failures
+            continue
+        if not api.types:
             continue
         try:
             validate_asn1_module(_text(api))

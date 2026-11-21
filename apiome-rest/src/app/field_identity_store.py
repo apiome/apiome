@@ -18,7 +18,7 @@ after emit, :func:`persist_field_number_assignments` writes any newly synthesize
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from .canonical_model import CanonicalField, Type
 from .database import db
@@ -89,20 +89,32 @@ class FieldNumberAllocator:
         type_: Type,
         *,
         persisted: Optional[Dict[str, int]] = None,
+        legal: Optional[Callable[[int], bool]] = None,
     ) -> None:
+        """Index one message's source, stored and reserved numbers.
+
+        Args:
+            type_: The record whose fields are numbered.
+            persisted: Numbers stored by earlier exports, keyed by field key.
+            legal: Whether a source number is legal in the target (Protobuf: ``1`` to
+                ``536870911``, outside ``19000``–``19999``). A source number it rejects is
+                treated as missing, so the field gets a fresh number (COA-3.3, #7054: a Cap'n
+                Proto ordinal ``@0`` was written as Protobuf field ``0``). ``None`` accepts all.
+        """
+        self._legal = legal or (lambda number: True)
         reserved_ranges = type_.extras.get("reserved_ranges") or []
         self._reserved_ranges = reserved_ranges
         self._persisted = dict(persisted or {})
         self._explicit: set[int] = {
             f.field_number
             for f in type_.fields
-            if isinstance(f.field_number, int)
+            if self._is_source_number(f.field_number)
         }
         self._used: set[int] = set(self._explicit)
         #: Numbers already handed out by :meth:`allocate` (source, stored or fresh).
         self._claimed: set[int] = set()
         for field in type_.fields:
-            if field.field_number is None:
+            if not self._is_source_number(field.field_number):
                 stored = self._persisted.get(field.key)
                 if isinstance(stored, int):
                     self._used.add(stored)
@@ -117,9 +129,13 @@ class FieldNumberAllocator:
         self.assignments: Dict[str, int] = {}
         self.new_assignments: Dict[str, int] = {}
 
+    def _is_source_number(self, number: object) -> bool:
+        """Whether ``number`` is a source field number the target accepts."""
+        return isinstance(number, int) and self._legal(number)
+
     def allocate(self, field: CanonicalField) -> Tuple[int, bool]:
         """Return ``(field_number, synthesized)`` for ``field``."""
-        if isinstance(field.field_number, int):
+        if self._is_source_number(field.field_number):
             self.assignments[field.key] = field.field_number
             self._claimed.add(field.field_number)
             return field.field_number, False

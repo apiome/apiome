@@ -53,8 +53,9 @@ None of these has a ticket yet. Each blocks the §4.4 exit criteria:
 2. ✅ **Scalar names leaking into IDL output** (same bug as [#6278](https://github.com/apiome/apiome/issues/6278)) in asn1, corbaidl, flatbuffers,
    typespec, wsdl and xsd, and Avro narrowing `int64` to `int`. The §4.3 follow-up — done in
    COA-3.2 ([#7053](https://github.com/apiome/apiome/issues/7053)).
-3. **Re-import failures by target** (wadl, asn1, asyncapi, postman, oncrpc, protobuf, connectrpc,
-   corbaidl): triage each into a fix, a types-only pair, or a refusal with a reason.
+3. ✅ **Re-import failures by target** (wadl, asn1, asyncapi, postman, oncrpc, protobuf, connectrpc,
+   corbaidl): triage each into a fix, a types-only pair, or a refusal with a reason — done in
+   COA-3.3 ([#7054](https://github.com/apiome/apiome/issues/7054)): every cell re-imports or is refused up front.
 4. **Verify validators** for 14 targets that report "not applicable" (§4.3). Not a gate blocker:
    each must show as "not validated".
 5. **Open the gate:** remove `export-studio` from `UNRELEASED_FEATURE_IDS` once 1–3 are done and the

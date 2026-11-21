@@ -19,7 +19,7 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
-from .oncrpc_parser import OncRpcDocument, OncRpcParseError, is_oncrpc, parse_oncrpc
+from .oncrpc_parser import OncRpcDocument, OncRpcParseError, is_oncrpc, is_xdr_types_only, parse_oncrpc
 
 __all__ = ["OncRpcImportSource"]
 
@@ -39,6 +39,13 @@ class OncRpcImportSource(ImportSource, register=True):
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         text = payload.text
+        if text is not None and is_xdr_types_only(text):
+            # Structs alone are weaker evidence than a ``program`` (COA-3.3, #7054).
+            return DetectionResult(
+                confidence=0.6,
+                format="oncrpc",
+                reason="XDR `struct … };` declarations only",
+            )
         if text is not None and is_oncrpc(text):
             return DetectionResult(
                 confidence=0.95,

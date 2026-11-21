@@ -64,22 +64,57 @@ function readStdin() {
  * `x-parser-schema-id`, `x-parser-spec-parsed`). They are parser bookkeeping, not part of
  * the AsyncAPI document, so dropping them yields a stable canonical JSON whose fingerprint
  * depends only on the author's content.
+ *
+ * A recursive schema (a type with a member of its own type) dereferences to a JS object that
+ * contains itself, which has no JSON form; walking it overflowed the stack (COA-3.3, #7054).
+ * Where the walk meets an object already on its path, it writes a `$ref` to the component the
+ * parser named it after (`x-parser-schema-id`), which the normalizer reads as a reference by
+ * name, or `{}` (any value) when the object is not a named component.
+ *
+ * @param {unknown} value The parser's JSON value.
+ * @param {Set<object>} [ancestors] Objects on the current path (internal).
+ * @returns {unknown} The value without parser keys and without cycles.
  */
-function stripParserExtensions(value) {
+function stripParserExtensions(value, ancestors = new Set()) {
   if (Array.isArray(value)) {
-    return value.map(stripParserExtensions);
+    if (ancestors.has(value)) {
+      return [];
+    }
+    ancestors.add(value);
+    const out = value.map((item) => stripParserExtensions(item, ancestors));
+    ancestors.delete(value);
+    return out;
   }
   if (value && typeof value === 'object') {
+    if (ancestors.has(value)) {
+      return cycleReference(value);
+    }
+    ancestors.add(value);
     const out = {};
     for (const [key, child] of Object.entries(value)) {
       if (key.startsWith('x-parser-')) {
         continue;
       }
-      out[key] = stripParserExtensions(child);
+      out[key] = stripParserExtensions(child, ancestors);
     }
+    ancestors.delete(value);
     return out;
   }
   return value;
+}
+
+/**
+ * The JSON written where a recursive schema refers back to itself.
+ *
+ * @param {object} value The object met again on its own path.
+ * @returns {object} `{"$ref": "#/components/schemas/<id>"}` for a named component, else `{}`.
+ */
+function cycleReference(value) {
+  const id = value['x-parser-schema-id'];
+  if (typeof id === 'string' && id && !id.startsWith('<anonymous')) {
+    return { $ref: `#/components/schemas/${id}` };
+  }
+  return {};
 }
 
 /** Map one parser diagnostic onto the wrapper's stable, JSON-friendly shape. */

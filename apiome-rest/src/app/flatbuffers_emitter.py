@@ -244,6 +244,8 @@ class FlatBuffersEmitter(Emitter, register=True):
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
     options_model = FlatBuffersEmitOptions
+    #: COA-3.3 (#7054): with nothing to write, the file did not re-import; refuse instead.
+    requires_source = ("type",)
 
     OUTPUT_MEDIA_TYPE = "text/x-flatbuffers"
 
@@ -272,6 +274,7 @@ class FlatBuffersEmitter(Emitter, register=True):
             if isinstance(opts, FlatBuffersEmitOptions)
             else FlatBuffersEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        self.raise_if_source_unsupported(api)
         writer = _FlatBuffersWriter(api, options)
         content = writer.render()
         return EmitResult(

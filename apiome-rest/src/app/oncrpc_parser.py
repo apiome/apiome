@@ -132,7 +132,37 @@ def is_oncrpc(content: str) -> bool:
         r"\b(enum|typedef|program)\b", trimmed
     ):
         return True
-    return False
+    return is_xdr_types_only(trimmed)
+
+
+#: Markers of the C-family IDLs whose ``struct X { … };`` looks like XDR: an OMG IDL ``module`` or
+#: ``interface``, a C preprocessor line, a Cap'n Proto ordinal.
+_NOT_XDR_RE = re.compile(r"\b(module|interface)\s+\w+|^\s*#\s*(include|define|pragma)\b|@\d+\b", re.MULTILINE)
+
+
+def is_xdr_types_only(content: str) -> bool:
+    """Return ``True`` for an XDR file that declares only structs — COA-3.3 (#7054).
+
+    RPCL with no ``program``, ``union … switch``, ``enum`` or ``typedef`` is still a valid XDR file:
+    the ONC RPC export of a data-schema source writes only ``struct X { … };`` declarations, and
+    it did not re-import. Such a file is recognized when every brace block is a struct terminated
+    by ``};`` and nothing marks it as OMG IDL, C or Cap'n Proto.
+
+    Args:
+        content: The document text.
+
+    Returns:
+        Whether it reads as types-only XDR.
+    """
+    cleaned = _strip_comments(content).strip()
+    if not cleaned or _NOT_XDR_RE.search(cleaned):
+        return False
+    structs = re.findall(r"\bstruct\s+\w+\s*\{[^{}]*\}\s*;", cleaned)
+    if not structs:
+        return False
+    remainder = re.sub(r"\bstruct\s+\w+\s*\{[^{}]*\}\s*;", "", cleaned)
+    remainder = re.sub(r"\bconst\s+\w+\s*=\s*[^;]+;", "", remainder)
+    return not remainder.strip()
 
 
 def _strip_comments(text: str) -> str:

@@ -242,6 +242,8 @@ class WadlEmitter(Emitter, register=True):
     paradigm = ApiParadigm.REST
     multi_file = True
     options_model = WadlEmitOptions
+    #: COA-3.3 (#7054): with nothing to write, the file did not re-import; refuse instead.
+    requires_source = ("http-operation-or-type",)
 
     OUTPUT_MEDIA_TYPE = "application/vnd.sun.wadl+xml"
     SCHEMA_MEDIA_TYPE = "application/xml"
@@ -272,6 +274,7 @@ class WadlEmitter(Emitter, register=True):
             if isinstance(opts, WadlEmitOptions)
             else WadlEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        self.raise_if_source_unsupported(api)
         writer = _WadlWriter(api, options)
         wadl_text, schema_text = writer.render()
         files = [EmittedFile(path=writer.output_path, content=wadl_text, media_type=self.OUTPUT_MEDIA_TYPE)]

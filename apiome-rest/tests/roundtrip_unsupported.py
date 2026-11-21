@@ -16,6 +16,14 @@ Two families, both about Arazzo:
   clients, API Blueprint, Discovery), a record type (Arrow, COBOL, Orchestra, Kafka Connect, ODCS,
   SQL DDL), an event or type (xRegistry), or import-only extras (EDI X12, FIX, HL7 v2, IDoc,
   ISO 20022, ISO 8583, z/OS Connect).
+
+A third family is the re-import triage of COA-3.3 (#7054):
+
+* **Sources with nothing the target can hold → ASN.1, Avro, CDDL, FlatBuffers, XSD, WADL, RAML,
+  Postman**: a source with no type (agent cards, gateway configurations, an Arazzo workflow) used to
+  be written as an empty ASN.1 module, CDDL file, FlatBuffers schema or XSD, no .avsc at all, or
+  a WADL / RAML document with no resource, and none of those read back. The target now refuses the
+  source up front (requires_source); Postman already refused a source with no HTTP operation.
 """
 
 from __future__ import annotations
@@ -36,6 +44,35 @@ def _arazzo_source_refusal(message: str) -> str:
         f"and no types, and the target refuses it: {message}"
     )
 
+
+def _reimport_triage_refusal(message: str) -> str:
+    """The reason for a cell the target refuses because the source has nothing it can hold (COA-3.3)."""
+    return f"Deliberate refusal (COA-3.3, #7054): the target refuses this source: {message}"
+
+_ASN1_REFUSAL = _reimport_triage_refusal(
+    'ASN.1 export needs at least one type; this source has none (only operations, agents or channels).'
+)
+_AVRO_REFUSAL = _reimport_triage_refusal(
+    'Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.'
+)
+_CDDL_REFUSAL = _reimport_triage_refusal(
+    'CDDL export needs at least one type; this source has none (only operations, agents or channels).'
+)
+_FLATBUFFERS_REFUSAL = _reimport_triage_refusal(
+    'FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).'
+)
+_POSTMAN_REFUSAL = _reimport_triage_refusal(
+    'Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.'
+)
+_RAML_REFUSAL = _reimport_triage_refusal(
+    'RAML export needs at least one HTTP operation or one type; this source has neither.'
+)
+_WADL_REFUSAL = _reimport_triage_refusal(
+    'WADL export needs at least one HTTP operation or one type; this source has neither.'
+)
+_XSD_REFUSAL = _reimport_triage_refusal(
+    'XSD export needs at least one type; this source has none (only operations, agents or channels).'
+)
 
 DELIBERATE_UNSUPPORTED_CELLS: Dict[Tuple[str, str], str] = {
     ('arrow', 'arazzo'): _NO_OPERATION_TO_SEQUENCE,
@@ -199,4 +236,170 @@ DELIBERATE_UNSUPPORTED_CELLS: Dict[Tuple[str, str], str] = {
     ('arazzo', 'zosconnect'): _arazzo_source_refusal(
         'z/OS Connect export requires `zosconnect_descriptor` extras from import'
     ),
+    # --- COA-3.3 (#7054): sources with nothing the target can hold ---
+    ('a2a', 'asn1'): _ASN1_REFUSAL,
+    ('a2a', 'avro'): _AVRO_REFUSAL,
+    ('a2a', 'cddl'): _CDDL_REFUSAL,
+    ('a2a', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('a2a', 'postman'): _POSTMAN_REFUSAL,
+    ('a2a', 'raml'): _RAML_REFUSAL,
+    ('a2a', 'wadl'): _WADL_REFUSAL,
+    ('a2a', 'xsd'): _XSD_REFUSAL,
+    ('acp', 'asn1'): _ASN1_REFUSAL,
+    ('acp', 'avro'): _AVRO_REFUSAL,
+    ('acp', 'cddl'): _CDDL_REFUSAL,
+    ('acp', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('acp', 'postman'): _POSTMAN_REFUSAL,
+    ('acp', 'raml'): _RAML_REFUSAL,
+    ('acp', 'wadl'): _WADL_REFUSAL,
+    ('acp', 'xsd'): _XSD_REFUSAL,
+    ('agents-manifest', 'asn1'): _ASN1_REFUSAL,
+    ('agents-manifest', 'avro'): _AVRO_REFUSAL,
+    ('agents-manifest', 'cddl'): _CDDL_REFUSAL,
+    ('agents-manifest', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('agents-manifest', 'postman'): _POSTMAN_REFUSAL,
+    ('agents-manifest', 'raml'): _RAML_REFUSAL,
+    ('agents-manifest', 'wadl'): _WADL_REFUSAL,
+    ('agents-manifest', 'xsd'): _XSD_REFUSAL,
+    ('apigee', 'asn1'): _ASN1_REFUSAL,
+    ('apigee', 'avro'): _AVRO_REFUSAL,
+    ('apigee', 'cddl'): _CDDL_REFUSAL,
+    ('apigee', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('apigee', 'xsd'): _XSD_REFUSAL,
+    ('arazzo', 'asn1'): _ASN1_REFUSAL,
+    ('arazzo', 'avro'): _AVRO_REFUSAL,
+    ('arazzo', 'cddl'): _CDDL_REFUSAL,
+    ('arazzo', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('arazzo', 'raml'): _RAML_REFUSAL,
+    ('arazzo', 'wadl'): _WADL_REFUSAL,
+    ('arazzo', 'xsd'): _XSD_REFUSAL,
+    ('arrow', 'postman'): _POSTMAN_REFUSAL,
+    ('asn1', 'postman'): _POSTMAN_REFUSAL,
+    ('asyncapi', 'asn1'): _ASN1_REFUSAL,
+    ('asyncapi', 'avro'): _AVRO_REFUSAL,
+    ('asyncapi', 'cddl'): _CDDL_REFUSAL,
+    ('asyncapi', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('asyncapi', 'postman'): _POSTMAN_REFUSAL,
+    ('asyncapi', 'raml'): _RAML_REFUSAL,
+    ('asyncapi', 'wadl'): _WADL_REFUSAL,
+    ('asyncapi', 'xsd'): _XSD_REFUSAL,
+    ('avro', 'postman'): _POSTMAN_REFUSAL,
+    ('avro-idl', 'postman'): _POSTMAN_REFUSAL,
+    ('azure-apim', 'asn1'): _ASN1_REFUSAL,
+    ('azure-apim', 'avro'): _AVRO_REFUSAL,
+    ('azure-apim', 'cddl'): _CDDL_REFUSAL,
+    ('azure-apim', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('azure-apim', 'xsd'): _XSD_REFUSAL,
+    ('capnproto', 'postman'): _POSTMAN_REFUSAL,
+    ('cddl', 'postman'): _POSTMAN_REFUSAL,
+    ('cics-bms', 'postman'): _POSTMAN_REFUSAL,
+    ('cloudevents', 'postman'): _POSTMAN_REFUSAL,
+    ('cobolcopybook', 'postman'): _POSTMAN_REFUSAL,
+    ('connectrpc', 'postman'): _POSTMAN_REFUSAL,
+    ('consul', 'asn1'): _ASN1_REFUSAL,
+    ('consul', 'avro'): _AVRO_REFUSAL,
+    ('consul', 'cddl'): _CDDL_REFUSAL,
+    ('consul', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('consul', 'xsd'): _XSD_REFUSAL,
+    ('corbaidl', 'postman'): _POSTMAN_REFUSAL,
+    ('cue', 'postman'): _POSTMAN_REFUSAL,
+    ('dbt', 'postman'): _POSTMAN_REFUSAL,
+    ('dhall', 'postman'): _POSTMAN_REFUSAL,
+    ('dicom', 'postman'): _POSTMAN_REFUSAL,
+    ('dtd', 'postman'): _POSTMAN_REFUSAL,
+    ('edifact', 'postman'): _POSTMAN_REFUSAL,
+    ('edix12', 'postman'): _POSTMAN_REFUSAL,
+    ('envoy-xds', 'asn1'): _ASN1_REFUSAL,
+    ('envoy-xds', 'avro'): _AVRO_REFUSAL,
+    ('envoy-xds', 'cddl'): _CDDL_REFUSAL,
+    ('envoy-xds', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('envoy-xds', 'xsd'): _XSD_REFUSAL,
+    ('fix', 'postman'): _POSTMAN_REFUSAL,
+    ('fix-orchestra', 'postman'): _POSTMAN_REFUSAL,
+    ('flatbuffers', 'postman'): _POSTMAN_REFUSAL,
+    ('gateway-api', 'asn1'): _ASN1_REFUSAL,
+    ('gateway-api', 'avro'): _AVRO_REFUSAL,
+    ('gateway-api', 'cddl'): _CDDL_REFUSAL,
+    ('gateway-api', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('gateway-api', 'xsd'): _XSD_REFUSAL,
+    ('graphql', 'postman'): _POSTMAN_REFUSAL,
+    ('haproxy', 'asn1'): _ASN1_REFUSAL,
+    ('haproxy', 'avro'): _AVRO_REFUSAL,
+    ('haproxy', 'cddl'): _CDDL_REFUSAL,
+    ('haproxy', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('haproxy', 'xsd'): _XSD_REFUSAL,
+    ('hl7v2', 'postman'): _POSTMAN_REFUSAL,
+    ('hl7v3', 'postman'): _POSTMAN_REFUSAL,
+    ('idoc', 'postman'): _POSTMAN_REFUSAL,
+    ('ims', 'postman'): _POSTMAN_REFUSAL,
+    ('iso20022', 'postman'): _POSTMAN_REFUSAL,
+    ('iso8583', 'postman'): _POSTMAN_REFUSAL,
+    ('istio', 'asn1'): _ASN1_REFUSAL,
+    ('istio', 'avro'): _AVRO_REFUSAL,
+    ('istio', 'cddl'): _CDDL_REFUSAL,
+    ('istio', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('istio', 'xsd'): _XSD_REFUSAL,
+    ('json-schema', 'postman'): _POSTMAN_REFUSAL,
+    ('jsonld', 'postman'): _POSTMAN_REFUSAL,
+    ('jtd', 'postman'): _POSTMAN_REFUSAL,
+    ('k8s-crd', 'postman'): _POSTMAN_REFUSAL,
+    ('kafka-connect', 'postman'): _POSTMAN_REFUSAL,
+    ('kong', 'asn1'): _ASN1_REFUSAL,
+    ('kong', 'avro'): _AVRO_REFUSAL,
+    ('kong', 'cddl'): _CDDL_REFUSAL,
+    ('kong', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('kong', 'xsd'): _XSD_REFUSAL,
+    ('llm-tools', 'postman'): _POSTMAN_REFUSAL,
+    ('lwm2m', 'postman'): _POSTMAN_REFUSAL,
+    ('matter', 'postman'): _POSTMAN_REFUSAL,
+    ('mcp', 'postman'): _POSTMAN_REFUSAL,
+    ('nacha', 'postman'): _POSTMAN_REFUSAL,
+    ('natural-ddm', 'postman'): _POSTMAN_REFUSAL,
+    ('ncpdp', 'postman'): _POSTMAN_REFUSAL,
+    ('nginx', 'asn1'): _ASN1_REFUSAL,
+    ('nginx', 'avro'): _AVRO_REFUSAL,
+    ('nginx', 'cddl'): _CDDL_REFUSAL,
+    ('nginx', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('nginx', 'xsd'): _XSD_REFUSAL,
+    ('odcs', 'postman'): _POSTMAN_REFUSAL,
+    ('oncrpc', 'postman'): _POSTMAN_REFUSAL,
+    ('opcua-nodeset', 'postman'): _POSTMAN_REFUSAL,
+    ('openapi', 'postman'): _POSTMAN_REFUSAL,
+    ('openrpc', 'postman'): _POSTMAN_REFUSAL,
+    ('owl', 'postman'): _POSTMAN_REFUSAL,
+    ('pkl', 'postman'): _POSTMAN_REFUSAL,
+    ('pli', 'postman'): _POSTMAN_REFUSAL,
+    ('protobuf', 'postman'): _POSTMAN_REFUSAL,
+    ('protobuf-editions', 'postman'): _POSTMAN_REFUSAL,
+    ('pydantic', 'postman'): _POSTMAN_REFUSAL,
+    ('relaxng', 'postman'): _POSTMAN_REFUSAL,
+    ('ros2', 'postman'): _POSTMAN_REFUSAL,
+    ('sepa', 'postman'): _POSTMAN_REFUSAL,
+    ('shacl', 'postman'): _POSTMAN_REFUSAL,
+    ('smithy', 'postman'): _POSTMAN_REFUSAL,
+    ('sparkplug', 'postman'): _POSTMAN_REFUSAL,
+    ('sql-ddl', 'postman'): _POSTMAN_REFUSAL,
+    ('swift-mt', 'postman'): _POSTMAN_REFUSAL,
+    ('thrift', 'postman'): _POSTMAN_REFUSAL,
+    ('tradacoms', 'postman'): _POSTMAN_REFUSAL,
+    ('traefik', 'asn1'): _ASN1_REFUSAL,
+    ('traefik', 'avro'): _AVRO_REFUSAL,
+    ('traefik', 'cddl'): _CDDL_REFUSAL,
+    ('traefik', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('traefik', 'xsd'): _XSD_REFUSAL,
+    ('trpc', 'postman'): _POSTMAN_REFUSAL,
+    ('tyk', 'asn1'): _ASN1_REFUSAL,
+    ('tyk', 'avro'): _AVRO_REFUSAL,
+    ('tyk', 'cddl'): _CDDL_REFUSAL,
+    ('tyk', 'flatbuffers'): _FLATBUFFERS_REFUSAL,
+    ('tyk', 'xsd'): _XSD_REFUSAL,
+    ('typescript-types', 'postman'): _POSTMAN_REFUSAL,
+    ('vsam-idcams', 'postman'): _POSTMAN_REFUSAL,
+    ('wit', 'postman'): _POSTMAN_REFUSAL,
+    ('wsdl', 'postman'): _POSTMAN_REFUSAL,
+    ('wsdl2', 'postman'): _POSTMAN_REFUSAL,
+    ('xmlrpc', 'postman'): _POSTMAN_REFUSAL,
+    ('xregistry', 'postman'): _POSTMAN_REFUSAL,
+    ('xsd', 'postman'): _POSTMAN_REFUSAL,
+    ('zod', 'postman'): _POSTMAN_REFUSAL,
 }

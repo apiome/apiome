@@ -72,7 +72,13 @@ def test_adapter_detect_parse_normalize(adapter: OncRpcImportSource):
 
 def test_adapter_invalid_source_raises(adapter: OncRpcImportSource):
     with pytest.raises(ImportSourceError):
-        adapter.parse("struct Only { int x; };")
+        adapter.parse("message Only { int32 x = 1; }")
+
+
+def test_adapter_reads_a_file_of_structs_only(adapter: OncRpcImportSource):
+    """XDR with no program is still RPCL: a data schema's ONC RPC export (COA-3.3, #7054)."""
+    document = adapter.parse("struct Only { int x; };")
+    assert [struct.name for struct in document.structs] == ["Only"]
 
 
 def test_emitter_round_trips_core_constructs():
