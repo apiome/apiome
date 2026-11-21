@@ -3,8 +3,11 @@
  *
  * Lives in `lib/` (no `next/server` import) so it can be unit-tested without
  * pulling in the Next.js Edge runtime. The middleware (`src/middleware.ts`)
- * is the sole production caller.
+ * enforces {@link isApiRouteDisabled}; a page asks the same question before
+ * calling a route it would otherwise see 404 (#7060).
  */
+
+import { FEATURE_GITLIKE } from './feature-flags';
 
 /**
  * Always-blocked git-like API path prefixes (any HTTP method).
@@ -58,4 +61,18 @@ export function isGitlikePath(pathname: string, method: string): boolean {
     if (block.test(pathname) && block.methods.has(method)) return true;
   }
   return false;
+}
+
+/**
+ * Whether this build answers the request with 404 — the rule `src/middleware.ts` applies:
+ * a git-like route while `FEATURE_GITLIKE` is off. A caller checks it before fetching, so a
+ * route that is switched off reads as "nothing here", not as an error (#7060: the New version
+ * dialog asked for branches and showed "Couldn't load this project's branches — Not found").
+ *
+ * @param pathname The API path, e.g. `/api/projects/p-1/version-branches`.
+ * @param method The uppercase HTTP verb, e.g. `GET`.
+ * @returns `true` when the middleware refuses the request in this build.
+ */
+export function isApiRouteDisabled(pathname: string, method: string): boolean {
+  return !FEATURE_GITLIKE && isGitlikePath(pathname, method);
 }

@@ -92,11 +92,16 @@ async function login(page: Page): Promise<void> {
 /**
  * Open the Versions page of the converted project and wait for its table.
  *
+ * The page opens on the **Timeline** view (the facelift default); the row menus, the
+ * `versions-view-<id>` cells and the published chips this journey reads live in the **Table**
+ * view, so the step switches to it first (#7060).
+ *
  * @param page The test's page.
  */
 async function gotoVersions(page: Page): Promise<void> {
   expect(projectId, 'the convert step must have created the project').not.toBeNull();
   await page.goto(`/ade/dashboard/versions?projectId=${encodeURIComponent(projectId!)}`);
+  await page.getByTestId('versions-view-table').click({ timeout: 60_000 });
   await expect(page.getByTestId('versions-table')).toBeVisible({ timeout: 60_000 });
 }
 

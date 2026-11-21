@@ -1,4 +1,5 @@
-import { isGitlikePath } from '@lib/gitlike-route-guard';
+import { isApiRouteDisabled, isGitlikePath } from '@lib/gitlike-route-guard';
+import { FEATURE_GITLIKE } from '@lib/feature-flags';
 
 describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
   describe('always-blocked git-like routes (any method)', () => {
@@ -89,5 +90,28 @@ describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
     it.each(cases)('allows %s %s', (path, method) => {
       expect(isGitlikePath(path, method)).toBe(false);
     });
+  });
+});
+
+describe('isApiRouteDisabled (the middleware rule, asked before a fetch — #7060)', () => {
+  it('switches the branch routes off while FEATURE_GITLIKE is false, as this build ships', () => {
+    expect(FEATURE_GITLIKE).toBe(false);
+    expect(isApiRouteDisabled('/api/projects/p-1/version-branches', 'GET')).toBe(true);
+  });
+
+  it('leaves the core version routes on', () => {
+    expect(isApiRouteDisabled('/api/versions', 'POST')).toBe(false);
+    expect(isApiRouteDisabled('/api/versions/v-1', 'GET')).toBe(false);
+    expect(isApiRouteDisabled('/api/versions/sunset-timeline', 'GET')).toBe(false);
+  });
+
+  it('agrees with isGitlikePath for every path while the flag is off', () => {
+    for (const [path, method] of [
+      ['/api/projects/p-1/version-tags', 'GET'],
+      ['/api/versions/v-1', 'DELETE'],
+      ['/api/projects/p-1', 'GET'],
+    ] as const) {
+      expect(isApiRouteDisabled(path, method)).toBe(isGitlikePath(path, method));
+    }
   });
 });

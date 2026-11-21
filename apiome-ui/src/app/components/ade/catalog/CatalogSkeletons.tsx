@@ -170,8 +170,8 @@ export function CatalogDetailSkeleton() {
       <PageHeader
         leading={<Skeleton className="size-18 shrink-0 rounded-lg" />}
         breadcrumb={[{ label: 'Catalog', href: '/ade/dashboard/catalog' }]}
-        title={<Skeleton className="h-7 w-64 max-w-full" />}
-        description={<Skeleton className="h-3.5 w-96 max-w-full" />}
+        title={<Skeleton as="span" className="h-7 w-64 max-w-full" />}
+        description={<Skeleton as="span" className="h-3.5 w-96 max-w-full" />}
         meta={
           <div className="cid-meta" aria-hidden>
             <SkeletonChips count={3} />

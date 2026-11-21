@@ -368,7 +368,6 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | COA-4.1 · [#7058](https://github.com/apiome/apiome/issues/7058) | Docs truth pass for Catalog, Projects, OpenAPI and Arazzo | Remove every statement that contradicts the code | `documentation`, `mvp` | Y | Y | S | apiome-docs |
-| COA-4.3 · [#7060](https://github.com/apiome/apiome/issues/7060) | Projects and Catalog usability audit | Walk the core journeys end to end and file every defect | `enhancement`, `ui`, `mvp` | Y | Y | M | apiome-ui |
 | COA-4.4 · [#7061](https://github.com/apiome/apiome/issues/7061) | Demo scripts: Arazzo workflows and OpenAPI 3.2 | Two five-minute demo-video scripts as GitHub issues | `documentation`, `mvp` | Y | Y | S | docs |
 
 **COA-4.1 · #7058 Docs truth pass for Catalog, Projects, OpenAPI and Arazzo**
@@ -392,7 +391,8 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 - **Technical Stack:** apiome-rest, apiome-ui
 - **Documentation:** `bring-in/catalog.mdx`, `bring-in/import-a-spec.md`; screenshots: n/a (no UI change)
 
-**COA-4.3 · #7060 Projects and Catalog usability audit**
+**✅ COA-4.3 · #7060 Projects and Catalog usability audit — Complete**
+- **Shipped:** UI 0.679.3 · docs 0.499.3 (no REST change). Defect list `docs/COA_USABILITY_AUDIT.md`: 18 defects from the RAML journey (import → convert → edit → cut → publish → export → unpublish) and an OpenAPI paste into **Import to catalog**, at 1440 × 900 and 1024 × 768, light and dark, with console, overflow and axe checks. S1 is #7113 (journey CI red; now RC9). Fixed here: the New version branches 404 banner and the tag 404 (`isApiRouteDisabled` in `lib/gitlike-route-guard.ts`, shared with the middleware), the OpenAPI routing dead end (link to Projects), the stale `gotoVersions` in `catalog-project-journey.spec.ts` (Timeline default), the catalog item skeleton hydration error (`Skeleton as="span"`), **Rule docs** links in the quality step, **Edit project** stat sizing, the Convert dialog's format label. Ticketed into RC9: #7126 (blank New version default, S2), #7127 (OpenAPI hand-off to the Projects importer, S2), #7128 (S3/S4 polish), #7129 (converted project description and slug). Docs: `bring-in/import-wizard.mdx` (Detect & route step); release note `catalog-projects-usability-audit`; What's new line.
 - **Problem:** RC8 narrowed to Catalog and Projects; the journeys (import → project → version → publish → export) have not had one end-to-end review since the facelift.
 - **Solution/Scope:**
 - Run the catalog/project journey specs and a manual pass on 1440×900 and 1024 wide, light and dark; list defects by severity; fix the small ones in the audit PR and ticket the rest into this release.

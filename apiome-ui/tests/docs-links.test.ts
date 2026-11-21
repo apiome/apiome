@@ -18,6 +18,7 @@ import {
   LEGACY_GUIDE_ROUTES,
   RELEASE_NOTES_URL,
   buildDocsHref,
+  docsHrefFromPointer,
 } from '@/app/utils/docsLinks';
 import { buildLintRuleDocsHref } from '@/app/utils/lint-rule-catalog';
 import { buildGovernanceDocsHref } from '@/app/utils/lint-axis-ui';
@@ -86,6 +87,30 @@ describe('buildDocsHref', () => {
     // The point of the extraction: one URL to change if the site ever moves.
     expect(buildLintRuleDocsHref('', '')).toBe(`${DOCS_SITE_BASE}build/lint-rules`);
     expect(buildGovernanceDocsHref(null)).toBe(`${DOCS_SITE_BASE}build/axis-score`);
+  });
+});
+
+describe('docsHrefFromPointer', () => {
+  it('links a repository page with its anchor, the shape import-preflight findings carry (#7060)', () => {
+    expect(
+      docsHrefFromPointer('apiome-docs/docs/build/lint-rules.md#common-message-missing-description'),
+    ).toBe('https://docs.apiome.dev/build/lint-rules#common-message-missing-description');
+  });
+
+  it('links a repository page without an anchor', () => {
+    expect(docsHrefFromPointer('apiome-docs/docs/build/lint-rules.md')).toBe(
+      'https://docs.apiome.dev/build/lint-rules',
+    );
+  });
+
+  it('passes an absolute URL through unchanged', () => {
+    expect(docsHrefFromPointer('https://example.com/rules#x')).toBe('https://example.com/rules#x');
+  });
+
+  it('returns null when there is nothing to link to', () => {
+    expect(docsHrefFromPointer(null)).toBeNull();
+    expect(docsHrefFromPointer(undefined)).toBeNull();
+    expect(docsHrefFromPointer('   ')).toBeNull();
   });
 });
 

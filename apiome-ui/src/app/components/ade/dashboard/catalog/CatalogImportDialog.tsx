@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -104,6 +105,9 @@ export interface JsonSchemaHandoffPayload {
 }
 
 type SourceMethod = 'file' | 'url' | 'paste' | 'git' | 'compass';
+
+/** Where an OpenAPI or Swagger source is imported instead of the catalog (#7060). */
+const PROJECTS_ROUTE = '/ade/dashboard/projects';
 
 /**
  * Repository provenance returned by `POST /api/catalog/import/git` (MFI-29.3) and echoed back
@@ -1342,6 +1346,17 @@ export function CatalogImportDialog({
                 <div>
                   <div className="cat-imp-routing__title">Routing decision → {routing.label}</div>
                   <div className="cat-imp-routing__body">{routing.description}</div>
+                  {routing.destination === 'project' && (
+                    // This dialog stores catalog items only; an OpenAPI source has to go through the
+                    // Projects importer, and Continue stays disabled here. Say so and link there
+                    // rather than leave a dead end (#7060).
+                    <div className="cat-imp-routing__note" data-testid="catalog-import-routing-projects">
+                      This dialog does not import it. Use <strong>Import</strong> on the Projects page.{' '}
+                      <Link href={PROJECTS_ROUTE} className="cat-imp-link" onClick={handleClose}>
+                        Open Projects
+                      </Link>
+                    </div>
+                  )}
                   {adapterUnavailable && (
                     <div className="cat-imp-routing__note">
                       {unavailableReason || `${adapter?.label} import is unavailable in this runtime.`}

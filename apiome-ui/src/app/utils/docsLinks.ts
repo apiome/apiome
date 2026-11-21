@@ -121,3 +121,20 @@ export function buildDocsHref(docsPage: string, docsAnchor?: string | null): str
 
   return DOCS_SITE_BASE;
 }
+
+/**
+ * Turn a docs pointer into a link (#7060): either an absolute `http(s)` URL, passed through, or a
+ * repository-relative page with an optional `#anchor` — the shape REST sends on import-preflight
+ * findings (`docs_url`, e.g. `apiome-docs/docs/build/lint-rules.md#common-message-missing-description`),
+ * which the quality step used to print as plain text.
+ *
+ * @param pointer The pointer as the API returned it; blank or absent means "no link".
+ * @returns The absolute URL to open, or `null` when there is nothing to link to.
+ */
+export function docsHrefFromPointer(pointer: string | null | undefined): string | null {
+  const value = (pointer ?? '').trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  const hash = value.indexOf('#');
+  return hash === -1 ? buildDocsHref(value) : buildDocsHref(value.slice(0, hash), value.slice(hash + 1));
+}

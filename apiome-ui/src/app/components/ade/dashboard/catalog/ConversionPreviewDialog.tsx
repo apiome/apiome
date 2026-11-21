@@ -70,6 +70,7 @@ import {
 import { ConversionProjectionGraphPanel } from './ConversionProjectionGraphPanel';
 import { CODE_BLOCK_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
 import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
+import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
 
 /** Offline fallback when Monaco cannot load — keeps the raw OpenAPI JSON visible.
  * `value` is optional to stay prop-compatible with Monaco's `EditorProps` in the
@@ -328,13 +329,16 @@ export function ConversionPreviewDialog({
     }
   }, [itemId, defaults, serversText, onConverted, onOpenChange]);
 
+  // The format's display name ("RAML"), not its registry id ("raml") — #7060.
+  const sourceFormatLabel = sourceFormat ? (resolveCatalogFormat(sourceFormat)?.label ?? sourceFormat) : '';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onCloseAutoFocus={returnFocus} className="flex h-[90vh] max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{convertPreviewDialogTitle(itemName, sourceFormat)}</DialogTitle>
           <DialogDescription>
-            Review what the {sourceFormat ? `${sourceFormat} ` : ''}source can and cannot carry onto OpenAPI
+            Review what the {sourceFormatLabel ? `${sourceFormatLabel} ` : ''}source can and cannot carry onto OpenAPI
             before creating a project. Nothing is created until you convert.
           </DialogDescription>
         </DialogHeader>

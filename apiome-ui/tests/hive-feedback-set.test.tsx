@@ -397,6 +397,15 @@ describe('the skeleton presets are shaped, and silent', () => {
     expect(bar).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('draws as a block span for phrasing-only slots like a header title (#7060)', () => {
+    const { container } = render(<Skeleton as="span" className="h-3 w-24" />);
+    const bar = container.firstElementChild as Element;
+    expect(bar.tagName).toBe('SPAN');
+    for (const name of ['hive-skeleton', 'block', 'h-3', 'w-24']) expect(classesOf(bar)).toContain(name);
+    expect(bar).toHaveAttribute('aria-hidden', 'true');
+    expect(render(<Skeleton />).container.firstElementChild?.tagName).toBe('DIV');
+  });
+
   it('ends a paragraph short, the way a paragraph ends', () => {
     const { container } = render(<SkeletonText lines={4} lastLineWidth="40%" />);
     const bars = container.querySelectorAll<HTMLElement>('.hive-skeleton');
