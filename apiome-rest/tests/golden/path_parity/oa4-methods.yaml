@@ -1,0 +1,46 @@
+openapi: 3.2.0
+info:
+  title: Methods parity
+  version: 1.0.0
+paths:
+  /search:
+    query:
+      operationId: searchItems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchFilter'
+      responses:
+        "200":
+          description: Matches
+    additionalOperations:
+      REPORT:
+        operationId: reportItems
+        responses:
+          "207":
+            description: Report
+      Purge:
+        operationId: purgeItems
+        responses:
+          "204":
+            description: Purged
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        "200":
+          description: Items
+    additionalOperations:
+      GET:
+        operationId: listItemsAgain
+        responses:
+          "200":
+            description: Declared a second time
+components:
+  schemas:
+    SearchFilter:
+      type: object
+      properties:
+        text:
+          type: string

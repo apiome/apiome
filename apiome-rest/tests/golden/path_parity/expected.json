@@ -1,0 +1,161 @@
+{
+  "cases": {
+    "oa3-streaming": {
+      "streams": [
+        {
+          "operation": "GET /events",
+          "message": "response 200",
+          "mediaType": "text/event-stream",
+          "kind": "sse",
+          "element": "inline"
+        },
+        {
+          "operation": "GET /logs",
+          "message": "response 200",
+          "mediaType": "application/jsonl",
+          "kind": "jsonl",
+          "element": "LogEvent"
+        },
+        {
+          "operation": "GET /problems",
+          "message": "response 200",
+          "mediaType": "application/problem+json",
+          "kind": "sequential",
+          "element": "Problem"
+        },
+        {
+          "operation": "POST /logs/import",
+          "message": "request",
+          "mediaType": "application/json-seq",
+          "kind": "json-seq",
+          "element": "inline-object"
+        }
+      ]
+    },
+    "oa4-methods": {
+      "operations": [
+        {
+          "operation": "GET /items",
+          "token": "GET",
+          "operationId": "listItems"
+        },
+        {
+          "operation": "PURGE /search",
+          "token": "Purge",
+          "operationId": "purgeItems"
+        },
+        {
+          "operation": "QUERY /search",
+          "token": "QUERY",
+          "operationId": "searchItems"
+        },
+        {
+          "operation": "REPORT /search",
+          "token": "REPORT",
+          "operationId": "reportItems"
+        }
+      ],
+      "duplicates": {
+        "/items": [
+          "GET"
+        ]
+      }
+    },
+    "oa5-tag-hierarchy": {
+      "tags": {
+        "billing": {
+          "summary": "Billing",
+          "kind": "nav"
+        },
+        "gamma": {
+          "parent": "alpha"
+        },
+        "invoices": {
+          "parent": "billing"
+        },
+        "refunds": {
+          "parent": "billing",
+          "kind": "badge"
+        }
+      },
+      "operationTags": {
+        "GET /invoices": [
+          "invoices",
+          "billing"
+        ]
+      }
+    },
+    "oa6-self-references": {
+      "fields": {
+        "Order.customer": {
+          "ref": "Customer",
+          "description": "Overrides Customer.description for this field"
+        },
+        "Order.local": {
+          "ref": "Address",
+          "description": null
+        },
+        "Order.partner": {
+          "ref": "external:common.yaml#/components/schemas/Partner",
+          "description": null
+        },
+        "Order.shipping": {
+          "ref": "Address",
+          "description": null
+        }
+      },
+      "externalReferences": [
+        "common.yaml#/components/schemas/Partner"
+      ]
+    },
+    "az2-arazzo": {
+      "sources": {
+        "petstore": "resolved",
+        "users": "unresolved"
+      },
+      "steps": {
+        "adoptPet/feedPet": {
+          "status": "unresolved"
+        },
+        "adoptPet/getPet": {
+          "status": "resolved",
+          "operation": "GET /pets/{petId}"
+        },
+        "adoptPet/listPets": {
+          "status": "resolved",
+          "operation": "GET /pets"
+        },
+        "adoptPet/removePet": {
+          "status": "resolved",
+          "operation": "DELETE /pets/{petId}"
+        }
+      }
+    }
+  },
+  "differences": [
+    {
+      "case": "oa3-streaming",
+      "construct": "Inline stream element",
+      "projects": "An object-shaped inline itemSchema becomes a class named after the operation (ImportLogsRequestStreamItem), and every element class is tagged x-apiome-stream-kind.",
+      "catalog": "The inline element stays on the message (extras.streams) with its stream kind; the kind is recorded per media type on the message, not on the type. The element is not the message payload, and the source itemSchema is written back on export."
+    },
+    {
+      "case": "oa5-tag-hierarchy",
+      "construct": "Tag fields and class tags",
+      "projects": "Every tag field (name, summary, description, parent, kind, externalDocs) is stored on the project's x-apiome-tag-taxonomy, and a schema's x-tags / x-tag / tags are listed on the class as x-apiome-tags.",
+      "catalog": "parent, summary and kind are kept on the model's tag hierarchy and a tag's description on its service; externalDocs and a schema's x-tags stay in the preserved source and are written back on export."
+    },
+    {
+      "case": "oa6-self-references",
+      "construct": "$ref sibling summary",
+      "projects": "A summary written beside a $ref stays on the property.",
+      "catalog": "The summary stays in the preserved source and is written back on export; the sibling description becomes the field's description on both paths."
+    },
+    {
+      "case": "az2-arazzo",
+      "construct": "Where sources and steps resolve",
+      "projects": "Sources resolve only against the documents supplied with the import; an AsyncAPI step in an Arazzo 1.1 document is left not-applicable for the server.",
+      "catalog": "Sources resolve against the fileset, then the catalog, then (when allowed) a remote fetch; steps resolve against the operations imported in the same scan, and AsyncAPI steps link to their channel. An unresolved step names its reason as a code (unknown-operation, ambiguous-operation)."
+    }
+  ]
+}

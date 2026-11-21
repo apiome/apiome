@@ -18,6 +18,23 @@ keyed references) into a :class:`~app.canonical_model.CanonicalApi`:
   in ``extras`` by :func:`app.openapi_source_preservation.capture_source` (COA-2.1), so the
   OpenAPI emitter writes it back instead of dropping it.
 
+OpenAPI 3.2 constructs follow the same rules as the Projects importer (COA-4.2, #7059), so a
+document reads the same whichever path imports it:
+
+* ``$ref``s resolve against a declared ``$self`` (same-document references become local, see
+  :mod:`app.openapi_self_references`); a reference to another document is marked on its
+  :class:`~app.canonical_model.TypeRef` as ``extras.externalRef`` and listed on the model's
+  ``extras.externalReferences`` when the document declares ``$self``;
+* a Media Type Object's ``itemSchema`` (a streamed body) is recorded on the message's
+  ``extras.streams`` with its stream kind (``jsonl`` / ``json-seq`` / ``sse`` / ``sequential``);
+* a method declared twice on one path item (``get`` and ``additionalOperations.GET``) imports
+  once, the first declaration wins, and the repeat is listed on ``extras.duplicateMethods``; an
+  ``additionalOperations`` token written in mixed or lower case (``Purge``) is kept as written on
+  ``extras.methodToken``;
+* the tag hierarchy keeps a tag's first declaration, drops a ``parent`` that names no declared
+  tag and the ``parent`` of every tag on a cycle, and lists each repair on
+  ``extras.tagHierarchyIssues``.
+
 Every entity is keyed via :class:`app.normalizer.Keys` so the output diffs by
 identity, and the whole model is run through
 :func:`app.normalizer.normalize_ordering` before return so it is byte-stable
@@ -47,26 +64,13 @@ from .canonical_model import (
     Server,
     ServerVariable,
     Service,
+    TypeRef,
 )
 from .normalizer import Keys, Normalizer, SchemaCoercer, coerce_constraints, normalize_ordering
+from .openapi_self_references import resolve_self_references
 from .openapi_source_preservation import capture_source
 
 __all__ = ["OpenApiNormalizer"]
-
-# The HTTP methods an OpenAPI Path Item may carry, lower-cased as they appear in
-# the document. ``trace`` is included for completeness (rare but valid). OpenAPI
-# 3.2 adds ``query`` (the QUERY HTTP method) as a first-class operation key.
-_HTTP_METHODS: Tuple[str, ...] = (
-    "get",
-    "put",
-    "post",
-    "delete",
-    "options",
-    "head",
-    "patch",
-    "trace",
-    "query",
-)
 
 # OpenAPI parameter ``in`` value → canonical :class:`ParameterLocation`.
 _PARAM_LOCATIONS: Dict[str, ParameterLocation] = {
@@ -79,6 +83,72 @@ _PARAM_LOCATIONS: Dict[str, ParameterLocation] = {
 # Service key used for operations that declare no tag, so every operation lives
 # under exactly one service.
 _DEFAULT_SERVICE = "default"
+
+# The HTTP methods an OpenAPI Path Item may carry, lower-cased as they appear in the document
+# (``trace`` is rare but valid; OpenAPI 3.2 adds ``query``, the QUERY HTTP method). They are walked
+# in the Projects importer's order, so the first of two declarations of one method is the same
+# one on both import paths (COA-4.2).
+_WALK_ORDER: Tuple[str, ...] = (
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "head",
+    "options",
+    "trace",
+    "query",
+)
+
+
+def stream_kind(media_type: str, has_item_schema: bool = False) -> Optional[str]:
+    """Classify a media type into its stream family (OpenAPI 3.2 sequential media types).
+
+    Mirrors ``getStreamKind`` in ``apiome-ui/src/app/utils/openapi-stream-media-types.ts``.
+    Parameters (``; charset=utf-8``) and case are ignored.
+
+    Args:
+        media_type: A media type key such as ``text/event-stream``.
+        has_item_schema: Whether the Media Type Object declares an ``itemSchema``; an
+            unrecognized media type with an ``itemSchema`` is still a stream (``sequential``).
+
+    Returns:
+        ``jsonl``, ``json-seq``, ``sse`` or ``sequential``; ``None`` when it is not a stream.
+    """
+    base = str(media_type or "").split(";", 1)[0].strip().lower()
+    if base == "application/jsonl" or base.endswith("+jsonl"):
+        return "jsonl"
+    if base == "application/json-seq" or base.endswith("+json-seq"):
+        return "json-seq"
+    if base == "text/event-stream":
+        return "sse"
+    return "sequential" if has_item_schema else None
+
+
+class _OpenApiSchemaCoercer(SchemaCoercer):
+    """A :class:`SchemaCoercer` that marks references to other documents (COA-4.2).
+
+    The base coercer reads any ``$ref`` by its last pointer segment, so
+    ``common.yaml#/components/schemas/Partner`` would otherwise look exactly like a local
+    ``Partner``. The reference as written is kept on the use site's ``extras.externalRef``.
+    """
+
+    def type_ref(self, schema: Dict[str, Any], *, required: bool = True) -> TypeRef:
+        """Coerce a use-site schema, marking a ``$ref`` that does not start with ``#``.
+
+        Args:
+            schema: The use-site schema fragment.
+            required: Whether the owning member is required.
+
+        Returns:
+            The base coercer's :class:`TypeRef`, with ``extras.externalRef`` for a reference
+            into another document.
+        """
+        result = super().type_ref(schema, required=required)
+        ref = schema.get("$ref") if isinstance(schema, dict) else None
+        if isinstance(ref, str) and ref and not ref.startswith("#"):
+            result.extras["externalRef"] = ref
+        return result
 
 
 class OpenApiNormalizer(Normalizer, register=True):
@@ -114,15 +184,24 @@ class OpenApiNormalizer(Normalizer, register=True):
         if not isinstance(source, dict):
             raise ValueError("OpenAPI source must be a parsed mapping (dict)")
         format_key = self._detect_format(source)
+        # Same-document `$ref`s written against `$self` become local fragments (COA-4.2). The
+        # rewritten copy drives the model only; `raw` and the preserved source stay as written.
+        self_resolution = resolve_self_references(source)
+        document = self_resolution.document
 
-        info = source.get("info") or {}
-        components = (source.get("components") or {}).get("schemas") or {}
-        coercer = SchemaCoercer(components=components)
+        info = document.get("info") or {}
+        components = (document.get("components") or {}).get("schemas") or {}
+        coercer = _OpenApiSchemaCoercer(components=components)
 
-        tag_metadata = self._tag_hierarchy(source.get("tags") or [])
+        tag_metadata, tag_issues = self._tag_hierarchy(document.get("tags") or [])
         extras: Dict[str, Any] = {}
         if tag_metadata:
             extras["tagHierarchy"] = tag_metadata
+        if tag_issues:
+            extras["tagHierarchyIssues"] = tag_issues
+        if self_resolution.external:
+            extras["externalReferences"] = list(self_resolution.external)
+        duplicates: Dict[str, List[str]] = {}
 
         api = CanonicalApi(
             paradigm=self.paradigm,
@@ -133,11 +212,13 @@ class OpenApiNormalizer(Normalizer, register=True):
             title=info.get("title"),
             description=info.get("description"),
             servers=self._servers(source.get("servers") or []),
-            services=self._services(source, coercer),
+            services=self._services(document, coercer, duplicates),
             types=coercer.named_types_from_components(),
             raw=source if include_raw else None,
             extras=extras,
         )
+        if duplicates:
+            api.extras["duplicateMethods"] = duplicates
         # COA-2.1: keep the source objects the canonical model has no field for (callbacks,
         # links, webhooks, discriminator, extensions, 3.2 additions…) so the OpenAPI emitter
         # can write them back. Captured after ordering: the digests are taken over the final model.
@@ -201,60 +282,126 @@ class OpenApiNormalizer(Normalizer, register=True):
         return result
 
     @staticmethod
-    def _tag_hierarchy(tags: List[Any]) -> Dict[str, Dict[str, Any]]:
-        """Collect OpenAPI 3.2 hierarchical tag metadata keyed by tag name."""
-        result: Dict[str, Dict[str, Any]] = {}
+    def _tag_hierarchy(tags: List[Any]) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
+        """Collect OpenAPI 3.2 hierarchical tag metadata keyed by tag name.
+
+        Follows the Projects importer's rules (``buildTagTaxonomy``, OA5) so both paths build
+        the same tree (COA-4.2): a name declared twice keeps its first declaration; a
+        ``parent`` naming no declared tag is dropped (the tag becomes top-level); every tag on
+        a ``parent`` cycle, including a tag that is its own parent, has its ``parent`` dropped,
+        while tags hanging below the cycle keep theirs.
+
+        Args:
+            tags: The document's ``tags`` array.
+
+        Returns:
+            ``(hierarchy, issues)`` — tag name → ``parent``/``summary``/``kind`` for the tags
+            that carry any of them after the repairs, and one message per repair.
+        """
+        declared: Dict[str, Dict[str, Any]] = {}
+        issues: List[str] = []
         for tag in tags:
-            if not isinstance(tag, dict) or "name" not in tag:
+            if not isinstance(tag, dict) or tag.get("name") is None:
                 continue
-            meta: Dict[str, Any] = {}
-            for key in ("parent", "summary", "kind"):
-                if tag.get(key) is not None:
-                    meta[key] = tag[key]
-            if meta:
-                result[str(tag["name"])] = meta
-        return result
+            name = str(tag["name"])
+            if name in declared:
+                issues.append(f"tag {name!r} is declared more than once; the first was kept")
+                continue
+            declared[name] = {
+                key: tag[key] for key in ("parent", "summary", "kind") if tag.get(key) is not None
+            }
+
+        for name, meta in declared.items():
+            parent = meta.get("parent")
+            if parent is not None and str(parent) not in declared:
+                issues.append(f"tag {name!r}: parent {parent!r} is not a declared tag")
+                del meta["parent"]
+
+        on_cycle: List[str] = []
+        for start in declared:
+            walk: List[str] = []
+            current: Optional[str] = start
+            while current is not None and current not in on_cycle:
+                if current in walk:
+                    cycle = walk[walk.index(current):]
+                    on_cycle.extend(cycle)
+                    issues.append(
+                        "tags " + " → ".join(cycle + [cycle[0]]) + " form a parent cycle"
+                    )
+                    break
+                walk.append(current)
+                parent = declared[current].get("parent")
+                current = str(parent) if parent is not None else None
+        for name in on_cycle:
+            declared[name].pop("parent", None)
+
+        return {name: meta for name, meta in declared.items() if meta}, issues
 
     @staticmethod
-    def _path_operations(item: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
-        """Return every operation on a path item as ``(method, op_obj)`` pairs.
+    def _path_operations(
+        item: Dict[str, Any],
+    ) -> Tuple[List[Tuple[str, Dict[str, Any], Optional[str]]], List[str]]:
+        """Return every operation on a path item, each method once.
 
-        Includes standard HTTP methods, the OpenAPI 3.2 ``query`` operation key,
-        and any custom methods declared under ``additionalOperations``.
+        Includes the fixed HTTP methods, the OpenAPI 3.2 ``query`` operation key and any
+        custom methods declared under ``additionalOperations``, walked in the Projects
+        importer's order. A method declared twice (``get`` and ``additionalOperations.GET``,
+        compared case-insensitively) keeps its first declaration (COA-4.2).
+
+        Args:
+            item: The Path Item Object.
+
+        Returns:
+            ``(operations, duplicates)`` — ``(method, op_obj, token)`` triples, where ``token``
+            is the ``additionalOperations`` key as written (``None`` for a fixed verb or
+            ``query``), and the tokens of the repeated declarations that were skipped.
         """
-        result: List[Tuple[str, Dict[str, Any]]] = []
-        for method in _HTTP_METHODS:
+        result: List[Tuple[str, Dict[str, Any], Optional[str]]] = []
+        duplicates: List[str] = []
+        seen: set = set()
+        for method in _WALK_ORDER:
             op_obj = item.get(method)
             if isinstance(op_obj, dict):
-                result.append((method, op_obj))
+                seen.add(method.upper())
+                result.append((method, op_obj, None))
         additional = item.get("additionalOperations")
         if isinstance(additional, dict):
-            for method, op_obj in additional.items():
-                if isinstance(method, str) and isinstance(op_obj, dict):
-                    result.append((method.lower(), op_obj))
-        return result
+            for token, op_obj in additional.items():
+                if not isinstance(token, str) or not isinstance(op_obj, dict):
+                    continue
+                if token.upper() in seen:
+                    duplicates.append(token)
+                    continue
+                seen.add(token.upper())
+                result.append((token.lower(), op_obj, token))
+        return result, duplicates
 
     # --- services / operations ---------------------------------------------
 
     def _services(
-        self, source: Dict[str, Any], coercer: SchemaCoercer
+        self,
+        source: Dict[str, Any],
+        coercer: SchemaCoercer,
+        duplicates: Optional[Dict[str, List[str]]] = None,
     ) -> List[Service]:
         """Build operations from ``paths`` and group them into services by tag.
 
         Args:
             source: The parsed document.
             coercer: The shared :class:`SchemaCoercer` for payload/parameter types.
+            duplicates: When given, filled with path → the method tokens declared more than
+                once on it (only the first declaration imports).
 
         Returns:
             One :class:`Service` per distinct first-tag (and a ``default`` service
             for untagged operations), each holding its operations. Tag
             descriptions from the top-level ``tags`` array are attached when present.
         """
-        tag_descriptions = {
-            t["name"]: t.get("description")
-            for t in (source.get("tags") or [])
-            if isinstance(t, dict) and "name" in t
-        }
+        # First declaration of a tag wins, as in the tag hierarchy (COA-4.2).
+        tag_descriptions: Dict[str, Any] = {}
+        for t in source.get("tags") or []:
+            if isinstance(t, dict) and "name" in t:
+                tag_descriptions.setdefault(t["name"], t.get("description"))
         by_service: Dict[str, List[Operation]] = {}
 
         for path, item in (source.get("paths") or {}).items():
@@ -262,8 +409,15 @@ class OpenApiNormalizer(Normalizer, register=True):
                 continue
             # Path-level parameters are shared by every method on the path.
             shared_params = item.get("parameters") or []
-            for method, op_obj in self._path_operations(item):
+            walked, repeated = self._path_operations(item)
+            if repeated and duplicates is not None:
+                duplicates[str(path)] = repeated
+            for method, op_obj, token in walked:
                 operation = self._operation(method, path, op_obj, shared_params, coercer)
+                # Only a token whose case differs from the method (`Purge`) carries anything
+                # the upper-cased `http_method` does not, so only that one is recorded.
+                if token is not None and token != token.upper():
+                    operation.extras["methodToken"] = token
                 service_key = operation.tags[0] if operation.tags else _DEFAULT_SERVICE
                 by_service.setdefault(service_key, []).append(operation)
 
@@ -379,7 +533,7 @@ class OpenApiNormalizer(Normalizer, register=True):
             content_types, schema = self._select_content(request_body.get("content"))
             payload, payload_schema = self._payload(schema, coercer)
             messages.append(
-                Message(
+                self._with_streams(request_body.get("content"), coercer, Message(
                     key=Keys.request_message(op_key),
                     role=MessageRole.REQUEST,
                     required=bool(request_body.get("required", False)),
@@ -387,7 +541,7 @@ class OpenApiNormalizer(Normalizer, register=True):
                     payload_schema=payload_schema,
                     content_types=content_types,
                     description=request_body.get("description"),
-                )
+                ))
             )
 
         for status_code, response in (op_obj.get("responses") or {}).items():
@@ -396,7 +550,7 @@ class OpenApiNormalizer(Normalizer, register=True):
             content_types, schema = self._select_content(response.get("content"))
             payload, payload_schema = self._payload(schema, coercer)
             messages.append(
-                Message(
+                self._with_streams(response.get("content"), coercer, Message(
                     key=Keys.response_message(op_key, str(status_code)),
                     role=self._response_role(str(status_code)),
                     payload=payload,
@@ -405,10 +559,50 @@ class OpenApiNormalizer(Normalizer, register=True):
                     content_types=content_types,
                     status_code=str(status_code),
                     description=response.get("description"),
-                )
+                ))
             )
 
         return messages
+
+    @staticmethod
+    def _with_streams(
+        content: Optional[Dict[str, Any]], coercer: SchemaCoercer, message: Message
+    ) -> Message:
+        """Record a message's streamed media types (OpenAPI 3.2 ``itemSchema``, COA-4.2).
+
+        Each media type that declares an ``itemSchema`` is listed on ``extras.streams`` under
+        its media type with its stream kind and its element: ``{"type": <TypeRef>}`` for a
+        ``$ref`` element, ``{"schema": <schema>}`` for an inline one. The element describes
+        *each item* of the stream, so it is not the message's ``payload``; the verbatim source
+        still round-trips through the preserved operation.
+
+        Args:
+            content: The request body's or response's ``content`` map.
+            coercer: The shared :class:`SchemaCoercer`.
+            message: The message built from that content.
+
+        Returns:
+            ``message``, with ``extras.streams`` set when any media type streams.
+        """
+        if not isinstance(content, dict):
+            return message
+        streams: Dict[str, Dict[str, Any]] = {}
+        for media_type in sorted(content):
+            media = content.get(media_type)
+            if not isinstance(media, dict) or "itemSchema" not in media:
+                continue
+            item = media.get("itemSchema")
+            entry: Dict[str, Any] = {"kind": stream_kind(str(media_type), True)}
+            if isinstance(item, dict) and isinstance(item.get("$ref"), str):
+                entry["type"] = coercer.type_ref(item, required=True).model_dump(
+                    mode="json", exclude_defaults=True
+                )
+            else:
+                entry["schema"] = item
+            streams[str(media_type)] = entry
+        if streams:
+            message.extras["streams"] = streams
+        return message
 
     @staticmethod
     def _response_role(status_code: str) -> MessageRole:

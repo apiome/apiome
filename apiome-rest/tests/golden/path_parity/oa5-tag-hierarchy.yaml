@@ -1,0 +1,41 @@
+openapi: 3.2.0
+info:
+  title: Tag hierarchy parity
+  version: 1.0.0
+tags:
+  - name: billing
+    summary: Billing
+    kind: nav
+  - name: invoices
+    parent: billing
+  - name: refunds
+    parent: billing
+    kind: badge
+  - name: orphan
+    parent: missing
+  - name: alpha
+    parent: beta
+  - name: beta
+    parent: alpha
+  - name: gamma
+    parent: alpha
+  - name: selfish
+    parent: selfish
+  - name: billing
+    summary: Declared twice
+paths:
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices, billing]
+      responses:
+        "200":
+          description: Invoices
+components:
+  schemas:
+    Invoice:
+      type: object
+      x-tags: [invoices]
+      properties:
+        id:
+          type: string

@@ -368,7 +368,6 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | COA-4.1 · [#7058](https://github.com/apiome/apiome/issues/7058) | Docs truth pass for Catalog, Projects, OpenAPI and Arazzo | Remove every statement that contradicts the code | `documentation`, `mvp` | Y | Y | S | apiome-docs |
-| COA-4.2 · [#7059](https://github.com/apiome/apiome/issues/7059) | Catalog ↔ Projects path parity | Check that formats built "on the Projects path" also behave on the Catalog path, and the reverse | `enhancement`, `rest`, `ui`, `mvp` | Y | Y | M | apiome-rest, apiome-ui |
 | COA-4.3 · [#7060](https://github.com/apiome/apiome/issues/7060) | Projects and Catalog usability audit | Walk the core journeys end to end and file every defect | `enhancement`, `ui`, `mvp` | Y | Y | M | apiome-ui |
 | COA-4.4 · [#7061](https://github.com/apiome/apiome/issues/7061) | Demo scripts: Arazzo workflows and OpenAPI 3.2 | Two five-minute demo-video scripts as GitHub issues | `documentation`, `mvp` | Y | Y | S | docs |
 
@@ -382,7 +381,8 @@ Docs that contradict the code, Catalog/Projects path parity, a usability audit a
 - **Technical Stack:** apiome-docs
 - **Documentation:** `bring-in/*`, `build/*`, `ship/export-*`; screenshots: n/a (no UI change)
 
-**COA-4.2 · #7059 Catalog ↔ Projects path parity**
+**✅ COA-4.2 · #7059 Catalog ↔ Projects path parity — Complete**
+- **Shipped:** REST 1.790.0 / OpenAPI 1.616.0 (no endpoint change) · UI 0.679.2. Shared fixtures in `apiome-rest/tests/golden/path_parity/` (OA3–OA6, AZ2) import on the Catalog path (`tests/test_catalog_projects_path_parity.py`) and the Projects path (`apiome-ui/tests/catalog-projects-path-parity.test.ts`); both compare a language-neutral projection with one `expected.json`, which also lists the four storage differences left out. Catalog fixes in `app.openapi_normalizer`: `itemSchema` bodies recorded on `extras.streams` with their stream kind (they had no payload); a method declared twice imports once, first declaration wins (both imported under one key), mixed-case tokens kept; tag hierarchy first-wins with dangling-parent and cycle repair (`extras.tagHierarchyIssues`); `$ref`s resolve against `$self` (new `app.openapi_self_references`) and a reference to another document is marked `extras.externalRef` instead of binding to a same-named local type. AZ2 already matched. Docs: `bring-in/import-a-spec.md` (**The same result in the catalog** parity table), `bring-in/catalog.mdx`; release note `catalog-projects-path-parity`; What's new line.
 - **Problem:** RC7 §3.2 builds OA3–OA6 and AZ2 on the Projects path; whether the Catalog path gives the same result is not asserted.
 - **Solution/Scope:**
 - A parity test importing each format both ways and comparing the canonical output; fix or document each difference.
