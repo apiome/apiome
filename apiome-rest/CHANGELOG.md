@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.786.0] - 2026-11-20
+
+### Fixed
+- **Silent-loss ledger burn-down — OpenAPI 1.612.0 (COA-3.1, #7052):** no endpoint changes; the
+  version moves with the export and fidelity changes below. `tests/export_conformance_ledger.py`
+  held 148 source → target pairs whose export reported no loss while a re-import showed drift. It
+  is now empty: 145 pairs report their loss, 3 are fixed outright, and 16 pairs that counted as
+  `ok` only because the file could not be read back now report theirs.
+  - `app.conversion_verdicts` (new): the verdicts a cross-format export shares — a paradigm change
+    (`APPROX` on the root), a construct written under another key (`DROP` under the source key,
+    `SYNTH` under the new one, both `info`), source-format metadata the target has no field for
+    (`DROP`, `info`), the title / identifier / namespace / version a target cannot hold or must
+    invent, and agents and skills.
+  - Fidelity reports (`GET /v1/export/.../targets`, preview, jobs, `export/preflight`) now name
+    these for a model imported from another format:
+    - **OpenAPI:** the HTTP method and path an operation with no binding is placed on, a
+      synthesized `operationId` and default response, a service kept only as a tag (or dropped),
+      the source format's `extras` on operations, parameters, messages, types and fields, and a
+      synthesized `info.version`. A gateway import that carries its OpenAPI document (AWS API
+      Gateway, Azure API Management) reports its metadata as read back only as vendor extensions.
+      A model imported from OpenAPI, or authored as OpenAPI, reports nothing new.
+    - **AsyncAPI:** a components-only document for a source with no operation or channel; an
+      AsyncAPI 2 source written as 3.x (`send` / `receive`, named channels).
+    - **CloudEvents:** every named type (`DROP`); a placeholder event for a source with no
+      publish or subscribe operation (`critical`).
+    - **GraphQL SDL:** the root field an operation becomes, the root types, a placeholder
+      `Query._`, a type written under its bare name, an operation that maps to no root type.
+    - **JSON Type Definition, CDDL:** a namespace-qualified type written under its bare name.
+    - **Avro, Kafka Connect:** a type written under its namespace-qualified name; the document's
+      identifier and version.
+    - **Protobuf, Connect RPC:** service and method names coerced to protobuf identifiers.
+    - **ONC RPC:** every type, program and procedure filed under the first program's name; a
+      type kind RPCL does not declare.
+    - **XML-RPC:** the one operation the `methodCall` is written for; every other operation and
+      every named type (`DROP`).
+    - **WIT:** when nothing else is reported, the writer's renamed identifiers and its
+      synthesized package name and `types` interface.
+    - An operation whose verdict already says how it is reframed gets no second, re-key line.
+  - Emitter fixes:
+    - **GraphQL** wrote only the types a root field reaches, so a source with no operations
+      exported as a placeholder `Query` alone. Every model type is now written.
+    - **ONC RPC** wrote a struct only for a record imported from ONC RPC, numbered every
+      procedure `1`, and wrote names as they were. Records are written as structs, procedures
+      are numbered in order (after any number the source assigned), and names become identifiers.
+    - **OpenAPI** did not write `requestBody.required`. This also fixes the AWS API Gateway and
+      Azure API Management exports, which are built on it.
+    - **Azure API Management** wrote the server the importer derives from a
+      `set-backend-service` policy into the definition's `servers`.
+  - Tests: `tests/test_silent_loss_burn_down.py`; `SILENT_LOSS_CEILING = 0` ratchet in
+    `tests/test_export_conformance_matrix.py`. 251 strict round-trip xfails removed from
+    `tests/roundtrip_xfails.py` (899 → 1,150 passing cells; `ARAZZO_XFAIL_CEILING` 29 → 25).
+    Conformance, round-trip, corpus-parity, projection and export-surface-parity goldens
+    regenerated, with their CLI, UI and Browse copies.
+
 ## [1.785.0] - 2026-11-20
 
 ### Added

@@ -4,6 +4,19 @@
       "detail": "source construct normalized into the canonical model",
       "documentation": null,
       "explanation": null,
+      "id": "derives:",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:",
+      "status": "retained",
+      "target": "canonical:",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
       "id": "derives:Contact",
       "reason": null,
       "relation": "derives",
@@ -24,6 +37,19 @@
       "source": "native:GET /users/{id}",
       "status": "retained",
       "target": "canonical:GET /users/{id}",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:Query",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Query",
+      "status": "retained",
+      "target": "canonical:Query",
       "target_mapping": null
     },
     {
@@ -82,6 +108,19 @@
       "detail": "source construct normalized into the canonical model",
       "documentation": null,
       "explanation": null,
+      "id": "derives:Users",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Users",
+      "status": "retained",
+      "target": "canonical:Users",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
       "id": "derives:user/signedup",
       "reason": null,
       "relation": "derives",
@@ -90,6 +129,26 @@
       "status": "retained",
       "target": "canonical:user/signedup",
       "target_mapping": null
+    },
+    {
+      "detail": "GraphQL SDL describes GraphQL APIs; this REST API is written in GraphQL terms and reads back as a GraphQL API",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "GraphQL Specification",
+        "url": "https://spec.graphql.org/October2021/",
+        "version": "October 2021"
+      },
+      "explanation": "The destination format cannot represent this construct; its specification has no equivalent construct.",
+      "id": "projects:#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "rest → graph"
     },
     {
       "detail": "GraphQL SDL cannot represent the union shape; 'Contact' is approximated without faithful member alternatives",
@@ -130,6 +189,26 @@
       "status": "approximated",
       "target": null,
       "target_mapping": "HTTP operation → Query/Mutation field (HTTP method, path dropped)"
+    },
+    {
+      "detail": "the Query root type the operations are written under reads back as a service",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "GraphQL Specification",
+        "url": "https://spec.graphql.org/October2021/",
+        "version": "October 2021"
+      },
+      "explanation": "The destination format cannot represent `Query`; its specification has no equivalent construct.",
+      "id": "projects:Query#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:Query",
+      "status": "synthesized",
+      "target": null,
+      "target_mapping": "Query root type → service"
     },
     {
       "detail": "enum type carried to GraphQL SDL",
@@ -198,6 +277,26 @@
       "target_mapping": "constraints → custom scalar"
     },
     {
+      "detail": "GraphQL SDL has root types, not services; service 'Users' is not written and its operations become Query and Mutation fields",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "GraphQL Specification",
+        "url": "https://spec.graphql.org/October2021/",
+        "version": "October 2021"
+      },
+      "explanation": "The destination format cannot represent `Users`; its specification has no equivalent construct.",
+      "id": "projects:Users#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:Users",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": "service → Query/Mutation fields"
+    },
+    {
       "detail": "GraphQL SDL cannot represent event channels; the channel is dropped",
       "documentation": {
         "anchor": null,
@@ -222,6 +321,19 @@
   "nodes": [
     {
       "canonical_kind": null,
+      "construct_key": "",
+      "id": "native:",
+      "kind": "native",
+      "label": "",
+      "native": {
+        "native_id": null,
+        "native_name": "",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
       "construct_key": "Contact",
       "id": "native:Contact",
       "kind": "native",
@@ -242,6 +354,19 @@
       "native": {
         "native_id": null,
         "native_name": "getUser",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "Query",
+      "id": "native:Query",
+      "kind": "native",
+      "label": "Query",
+      "native": {
+        "native_id": null,
+        "native_name": "Query",
         "source_location": null
       },
       "target": null
@@ -300,6 +425,19 @@
     },
     {
       "canonical_kind": null,
+      "construct_key": "Users",
+      "id": "native:Users",
+      "kind": "native",
+      "label": "Users",
+      "native": {
+        "native_id": null,
+        "native_name": "Users",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
       "construct_key": "user/signedup",
       "id": "native:user/signedup",
       "kind": "native",
@@ -309,6 +447,15 @@
         "native_name": "user/signedup",
         "source_location": null
       },
+      "target": null
+    },
+    {
+      "canonical_kind": "unknown",
+      "construct_key": "",
+      "id": "canonical:",
+      "kind": "canonical",
+      "label": "",
+      "native": null,
       "target": null
     },
     {
@@ -326,6 +473,15 @@
       "id": "canonical:GET /users/{id}",
       "kind": "canonical",
       "label": "GET /users/{id}",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "unknown",
+      "construct_key": "Query",
+      "id": "canonical:Query",
+      "kind": "canonical",
+      "label": "Query",
       "native": null,
       "target": null
     },
@@ -366,6 +522,15 @@
       "target": null
     },
     {
+      "canonical_kind": "unknown",
+      "construct_key": "Users",
+      "id": "canonical:Users",
+      "kind": "canonical",
+      "label": "Users",
+      "native": null,
+      "target": null
+    },
+    {
       "canonical_kind": "channel",
       "construct_key": "user/signedup",
       "id": "canonical:user/signedup",
@@ -376,7 +541,7 @@
     }
   ],
   "reason_counts": {
-    "destination_unsupported": 5,
+    "destination_unsupported": 8,
     "emitter_unsupported": 0,
     "not_applicable": 0,
     "option_excluded": 0,
@@ -386,11 +551,11 @@
     "target_tool_unavailable": 0
   },
   "status_counts": {
-    "approximated": 4,
-    "dropped": 1,
+    "approximated": 5,
+    "dropped": 2,
     "not-applicable": 0,
     "retained": 2,
-    "synthesized": 0,
+    "synthesized": 1,
     "transformed": 0,
     "unavailable": 0
   },
@@ -422,6 +587,6 @@
     "paradigm": "graph",
     "registry_version": "1"
   },
-  "total_constructs": 7,
+  "total_constructs": 9,
   "truncated": false
 }

@@ -499,7 +499,7 @@ def test_xfail_map_entries_refer_to_real_cells(roundtrip_matrix: RoundTripMatrix
 
 #: How many strict xfails involve Arazzo after COA-1.4. The number only goes down: a fix deletes
 #: its entry and lowers this, and a new Arazzo xfail fails here (the issue's "none is added").
-ARAZZO_XFAIL_CEILING = 29
+ARAZZO_XFAIL_CEILING = 25
 
 
 def _arazzo_cells(cells) -> List[tuple]:

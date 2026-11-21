@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 
 from graphql import (
     DirectiveLocation,
@@ -54,6 +54,7 @@ from graphql import (
     GraphQLString,
     GraphQLUnionType,
     Undefined,
+    is_specified_scalar_type,
     print_schema,
     specified_directives,
     validate_schema,
@@ -73,6 +74,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict, rekey_verdicts
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -93,7 +95,8 @@ from .graphql_federation_subgraph import (
     to_subgraph_sdl,
     with_federation_definitions,
 )
-from .lossiness import LossinessReport
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .normalizer import Keys
 
 __all__ = ["GraphQlEmitOptions", "GraphQlEmitter", "GraphQlFidelityRulePack"]
 
@@ -205,6 +208,13 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
         super().__init__(profile, target_label)
         self._types_by_key: Dict[str, Type] = {}
         self._options = GraphQlEmitOptions()
+        # What :meth:`evaluate` predicts about a schema built from another format (COA-3.1).
+        self._reframed = False
+        self._operation_keys: Dict[str, str] = {}
+        self._unplaced: Set[str] = set()
+        self._rekeyed: Set[str] = set()
+        self._type_keys: Dict[str, str] = {}
+        self._placeholder_query = False
 
     def apply_options(self, options: Mapping[str, Any]) -> None:
         """Bind ``federation`` (MFX-13.6); invalid options fall back to the defaults."""
@@ -216,6 +226,9 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
         """The type's own verdict, plus a ``SYNTH`` for a synthesized federation ``@key``."""
         verdicts = super().type_verdicts(type_)
+        rekey = self._type_rekey(type_)
+        if rekey is not None:
+            verdicts = [v for v in verdicts if v.kind is not LossinessKind.OK] + [rekey[0]]
         if self._options.federation:
             key = entity_key_for(type_, self._types_by_key)
             if key is not None and key.synthesized:
@@ -230,12 +243,141 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
         return verdicts
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Walk ``api`` with a type lookup for union-eligibility checks."""
+        """Walk ``api`` with a type lookup for union-eligibility checks.
+
+        For a source that is not a GraphQL schema the writer is built first (pure, no I/O), so the
+        report can name what a schema built from another format's model changes (COA-3.1, #7052):
+        the root type and field each operation becomes, and the GraphQL name each type gets.
+        """
         self._types_by_key = {type_.key: type_ for type_ in api.types}
+        self._reframed = False
+        self._operation_keys: Dict[str, str] = {}
+        self._unplaced: Set[str] = set()
+        self._rekeyed: Set[str] = set()
+        self._type_keys: Dict[str, str] = {}
+        self._placeholder_query = False
+        writer = _GraphQlWriter(api, self._options)
+        if not (api.paradigm is ApiParadigm.GRAPH and writer._has_graph_native_roots()):
+            self._reframed = api.format != GraphQlEmitter.format
+            roots = {"query": "Query", "mutation": "Mutation", "subscription": "Subscription"}
+            for operation in api.operations():
+                slot = writer._slot_for_operation(operation)
+                if slot is None:
+                    self._unplaced.add(operation.key)
+                else:
+                    self._operation_keys[operation.key] = Keys.operation_graphql(
+                        roots[slot], _graphql_field_name(operation)
+                    )
+            self._placeholder_query = not any(
+                key.startswith("Query.") for key in self._operation_keys.values()
+            )
+        if self._reframed:
+            for type_ in sorted(api.types, key=lambda t: t.key):
+                # Only a type the writer declares has a name to read back under: a map or an alias
+                # resolves to a built-in scalar, and its own verdict says so.
+                declared = writer._ensure_named_type(type_)
+                if not is_specified_scalar_type(declared) and type_.key in writer._gql_names_by_key:
+                    self._type_keys[type_.key] = declared.name
         try:
             return super().evaluate(api)
         finally:
             self._types_by_key = {}
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What a schema built from another format changes about the envelope.
+
+        SDL has no title, identifier, namespace or version, so a reader names every schema
+        ``GraphQL Schema``; a source that is not a graph API reads back as one.
+        """
+        verdicts = list(super().root_verdicts(api))
+        if not self._reframed:
+            return verdicts
+        paradigm = paradigm_change_verdict(api, ApiParadigm.GRAPH, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_title=False, keeps_id=False,
+            keeps_namespace=False, keeps_version=False,
+        )
+        return verdicts
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's own verdict, plus the re-key ``DROP`` when it becomes a root field."""
+        verdicts = super().operation_verdicts(operation)
+        if operation.key in self._unplaced and all(v.kind is LossinessKind.OK for v in verdicts):
+            return [FidelityVerdict.drop(
+                message=f"{self.target_label} writes an operation as a Query, Mutation or "
+                f"Subscription field; the {operation.kind.value} operation {operation.key!r} maps to "
+                "none of them and is not written",
+                severity=LossinessSeverity.WARN,
+                target_mapping="operation → dropped (no root type)",
+            )]
+        rekey = self._operation_rekey(operation)
+        if rekey is None or any(v.kind is not LossinessKind.OK for v in verdicts):
+            # A verdict that already says the operation is reframed as a root field covers its key.
+            return verdicts
+        self._rekeyed.add(operation.key)
+        return [rekey[0]]
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """A reframed service is not written: its operations become fields of the root types."""
+        verdicts = list(super().service_verdicts(service))
+        if self._reframed and service.key not in _GRAPH_ROOT_NAMES:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has root types, not services; service {service.key!r} "
+                "is not written and its operations become Query and Mutation fields",
+                severity=LossinessSeverity.INFO,
+                target_mapping="service → Query/Mutation fields",
+            ))
+        return verdicts
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The keys a re-import of a reframed schema adds: root types, root fields, renamed types."""
+        pairs = list(super().synthesized_verdicts(api))
+        if not self._reframed:
+            return pairs
+        pairs += [
+            rekey[1] for rekey in map(self._operation_rekey, api.operations())
+            if rekey and rekey[0].target_mapping.split(" → ", 1)[0] in self._rekeyed
+        ]
+        pairs += [rekey[1] for rekey in map(self._type_rekey, api.types) if rekey]
+        source_services = {service.key for service in api.services}
+        roots = {key.split(".", 1)[0] for key in self._operation_keys.values()}
+        if self._placeholder_query:
+            roots.add("Query")
+            pairs.append(("Query._", FidelityVerdict.synth(
+                message=f"{self.target_label} requires a Query root type and the source has no "
+                "read operation; a placeholder field `_` is written",
+                target_mapping="Query._ (placeholder)",
+            )))
+        for root in sorted(roots - source_services):
+            pairs.append((root, FidelityVerdict.synth(
+                message=f"the {root} root type the operations are written under reads back as a service",
+                target_mapping=f"{root} root type → service",
+            )))
+        return pairs
+
+    def _operation_rekey(
+        self, operation: Operation
+    ) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of an operation written as a root field under another key."""
+        emitted = self._operation_keys.get(operation.key) if self._reframed else None
+        if emitted is None:
+            return None
+        return rekey_verdicts(
+            operation.key, emitted, target_label=self.target_label, noun="operation",
+            reason="writes every operation as a field of a root type",
+        )
+
+    def _type_rekey(self, type_: Type) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a type whose GraphQL name is not its source key."""
+        emitted = self._type_keys.get(type_.key)
+        if emitted is None:
+            return None
+        return rekey_verdicts(
+            type_.key, emitted, target_label=self.target_label, noun="type",
+            reason="type names have no namespaces",
+        )
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """Reframe non-graph operations, enumerating dropped HTTP semantics."""
@@ -421,6 +563,7 @@ class _GraphQlWriter:
             query=query,
             mutation=mutation,
             subscription=subscription,
+            types=self._declared_types({root.name for root in (query, mutation, subscription) if root}),
             directives=[*specified_directives, *directives] if directives else None,
             description=self._options.schema_description or self._api.description,
         )
@@ -432,6 +575,27 @@ class _GraphQlWriter:
             return self._reattach_applied_directives(print_schema(schema))
         sdl = self._reattach_applied_directives(with_federation_definitions(print_schema(schema)))
         return self._federate(sdl)
+
+    def _declared_types(self, roots: Set[str]) -> List[GraphQLNamedType]:
+        """Every named type built from the model, so one no root field reaches is still written.
+
+        A schema prints only the types reachable from its roots unless they are listed. A data-schema
+        source has no operations, so without this its SDL was a placeholder ``Query`` and nothing
+        else, and a type no field uses was left out of any source (COA-3.1, #7052).
+
+        Args:
+            roots: The names of the schema's root types, which a model type of the same name
+                (a source's own ``Query`` record) must not be listed beside.
+
+        Returns:
+            The built types, one per GraphQL name, without the built-in scalars a map or an alias
+            resolves to.
+        """
+        declared: Dict[str, GraphQLNamedType] = {}
+        for gql in self._gql_types.values():
+            if not is_specified_scalar_type(gql) and gql.name not in roots:
+                declared.setdefault(gql.name, gql)
+        return list(declared.values())
 
     # --- federation subgraph (MFX-13.6) ---------------------------------------
 

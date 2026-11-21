@@ -53,7 +53,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from pydantic import Field, ValidationError
 
@@ -70,6 +70,12 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .conversion_verdicts import (
+    agent_loss_items,
+    envelope_verdicts,
+    paradigm_change_verdict,
+    rekey_verdicts,
+)
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -85,7 +91,8 @@ from .export_test_tools import toolchain_check
 from .export_viz_modes import ExportVizModeKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .field_identity_store import FieldNumberAllocator
-from .lossiness import LossinessReport, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .normalizer import Keys
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY,
     ENUM_CLOSED_EXTRA_KEY,
@@ -471,9 +478,75 @@ class ProtoFidelityRulePack(CapabilityRulePack):
             self._options = ProtoEmitOptions()
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Index the model's types (to read request-message fields), then walk the model."""
+        """Index the model's types (to read request-message fields), then walk the model.
+
+        The keys a re-import gives each service and method are predicted first (COA-3.1, #7052): a
+        ``.proto`` names a service ``package.Service`` and a method ``package.Service.Method``, with
+        every name coerced to a protobuf identifier, so a source that names them otherwise (an
+        agent card's ``Travel Concierge``, an Arazzo step's ``checkout#pay``) reads back re-keyed.
+        """
         self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
-        return super().evaluate(api)
+        options = getattr(self, "_options", None) or ProtoEmitOptions()
+        self._service_keys: Dict[str, str] = {}
+        self._operation_keys: Dict[str, str] = {}
+        self._rekeyed: Set[str] = set()
+        for service in api.services:
+            package = _apply_package_override(_package_for_service(service), api, options)
+            name = _sanitize_identifier(service.name)
+            emitted = f"{package}.{name}" if package else name
+            self._service_keys[service.key] = emitted
+            for operation in service.operations:
+                self._operation_keys[operation.key] = Keys.operation_rpc(
+                    emitted, _sanitize_identifier(operation.name)
+                )
+        report = super().evaluate(api)
+        if not api.agents:
+            return report
+        return LossinessReport(
+            items=[*report.items, *agent_loss_items(api, target_label=self.target_label)]
+        )
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """A source that is not an RPC API reads back as one; a ``.proto`` has no title or version."""
+        verdicts = list(super().root_verdicts(api))
+        paradigm = paradigm_change_verdict(api, ApiParadigm.RPC, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+            verdicts += envelope_verdicts(
+                api, target_label=self.target_label, keeps_title=False, keeps_id=False,
+                keeps_version=False,
+            )
+        return verdicts
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """The re-key ``DROP`` of a service whose name is not a protobuf identifier."""
+        verdicts = list(super().service_verdicts(service))
+        rekey = self._rekey(service.key, getattr(self, "_service_keys", {}), "service")
+        if rekey is not None and service.operations:
+            verdicts.append(rekey[0])
+        return verdicts
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The keys re-keyed services and methods read back under."""
+        pairs = list(super().synthesized_verdicts(api))
+        for service in api.services:
+            rekey = self._rekey(service.key, self._service_keys, "service")
+            if rekey is not None and service.operations:
+                pairs.append(rekey[1])
+        for operation in api.operations():
+            rekey = self._rekey(operation.key, self._operation_keys, "operation")
+            if rekey is not None and operation.key in self._rekeyed:
+                pairs.append(rekey[1])
+        return pairs
+
+    def _rekey(
+        self, key: str, emitted: Dict[str, str], noun: str
+    ) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a service or operation ``key``, or ``None`` when it keeps its key."""
+        return rekey_verdicts(
+            key, emitted.get(key, key), target_label=self.target_label, noun=noun,
+            reason="names a method package.Service.Method, each part a protobuf identifier",
+        )
 
     def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
         """The operation's own verdict, plus how its REST binding lands (when it has one)."""
@@ -481,6 +554,12 @@ class ProtoFidelityRulePack(CapabilityRulePack):
         annotation = http_annotation_for(operation)
         if annotation is not None:
             verdicts.append(self._http_binding_verdict(operation, annotation))
+        rekey = self._rekey(operation.key, getattr(self, "_operation_keys", {}), "operation")
+        if rekey is not None and annotation is None and all(v.kind is LossinessKind.OK for v in verdicts):
+            # A verdict that already says how the operation is reframed, or what its REST binding
+            # becomes, covers its key.
+            verdicts = [rekey[0]]
+            self._rekeyed.add(operation.key)
         return verdicts
 
     def _http_binding_verdict(

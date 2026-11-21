@@ -16,10 +16,13 @@ from pydantic import Field
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
+    CanonicalField,
     MessageRole,
     Operation,
     OperationKind,
+    Type,
 )
+from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -33,6 +36,7 @@ from .emitter import (
     SchemaEmitter,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessReport, LossinessSeverity
 
 __all__ = ["CloudEventsEmitOptions", "CloudEventsEmitter", "CloudEventsFidelityRulePack"]
 
@@ -43,9 +47,57 @@ _REST_OPERATION_KINDS = frozenset(
 
 
 class CloudEventsFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for CloudEvents export."""
+    """Fidelity rules for CloudEvents export.
+
+    A CloudEvents document is one event envelope per publish/subscribe operation: context
+    attributes and sample data. It declares no types and has no title, so (COA-3.1, #7052) every
+    named type is a ``DROP``, a source that is not an event API reads back as one, and a source with
+    no event operation exports as a placeholder event that carries nothing of it (critical ``DROP``).
+    """
 
     target_label = "CloudEvents"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note whether the source is itself a CloudEvents document, then walk the model."""
+        self._native = api.format == CloudEventsEmitter.format
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The paradigm change, the placeholder event, and the envelope an event cannot hold."""
+        verdicts = list(super().root_verdicts(api))
+        if getattr(self, "_native", False):
+            return verdicts
+        paradigm = paradigm_change_verdict(api, ApiParadigm.EVENT, target_label=self.target_label)
+        if paradigm is not None:
+            verdicts.append(paradigm)
+        if not any(operation.kind in _EVENT_OPERATION_KINDS for operation in api.operations()):
+            verdicts.append(FidelityVerdict.drop(
+                message=f"the source declares no publish or subscribe operation, and a "
+                f"{self.target_label} document is one event per such operation: a placeholder event "
+                "is written, and it carries nothing of the source",
+                severity=LossinessSeverity.CRITICAL,
+                target_mapping="no event operation → placeholder event",
+            ))
+        verdicts += envelope_verdicts(
+            api, target_label=self.target_label, keeps_title=False, keeps_id=False,
+            keeps_namespace=False, keeps_version=False,
+        )
+        return verdicts
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """An event envelope declares no types: a named type is not written."""
+        if getattr(self, "_native", False):
+            return super().type_verdict(type_)
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} has no type declarations — an event carries context "
+            f"attributes and sample data; type {type_.key!r} is not written",
+            severity=LossinessSeverity.WARN,
+            target_mapping="type → dropped",
+        )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """A dropped type's fields go with it (the type's ``DROP`` covers them)."""
+        return super().field_verdicts(field) if getattr(self, "_native", False) else []
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         if operation.kind in _REST_OPERATION_KINDS:

@@ -169,19 +169,26 @@
         },
         "graphql": {
           "advisory": {
-            "affected": 2,
-            "approximated": 0,
-            "dropped": 2,
+            "affected": 6,
+            "approximated": 1,
+            "dropped": 3,
             "headline": "Fidelity notice — exporting to GraphQL SDL may lose detail.",
-            "message": "Exporting to GraphQL SDL may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to GraphQL SDL may lose some fidelity. The destination format can't represent everything in this API, so 6 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": true,
             "severity": "critical",
             "show": true,
-            "synthesized": 0,
+            "synthesized": 2,
             "target_format": "GraphQL SDL"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "GraphQL SDL describes GraphQL APIs; this event API is written in GraphQL terms and reads back as a GraphQL API",
+                "severity": "warn",
+                "target_mapping": "event → graph"
+              },
               {
                 "construct": "Order",
                 "kind": "ok",
@@ -190,11 +197,32 @@
                 "target_mapping": null
               },
               {
+                "construct": "Query",
+                "kind": "synth",
+                "message": "the Query root type the operations are written under reads back as a service",
+                "severity": "warn",
+                "target_mapping": "Query root type → service"
+              },
+              {
+                "construct": "Query._",
+                "kind": "synth",
+                "message": "GraphQL SDL requires a Query root type and the source has no read operation; a placeholder field `_` is written",
+                "severity": "warn",
+                "target_mapping": "Query._ (placeholder)"
+              },
+              {
                 "construct": "orderPlaced.publish",
                 "kind": "drop",
                 "message": "GraphQL SDL cannot represent event operations; the operation is dropped",
                 "severity": "critical",
                 "target_mapping": null
+              },
+              {
+                "construct": "orders",
+                "kind": "drop",
+                "message": "GraphQL SDL has root types, not services; service 'orders' is not written and its operations become Query and Mutation fields",
+                "severity": "info",
+                "target_mapping": "service → Query/Mutation fields"
               },
               {
                 "construct": "orders/placed",
@@ -205,25 +233,25 @@
               }
             ],
             "kind_counts": {
-              "approx": 0,
-              "drop": 2,
+              "approx": 1,
+              "drop": 3,
               "ok": 1,
-              "synth": 0
+              "synth": 2
             },
             "severity_counts": {
               "critical": 2,
-              "info": 1,
-              "warn": 0
+              "info": 2,
+              "warn": 3
             }
           },
           "summary": {
-            "approximated": 0,
-            "dropped": 2,
+            "approximated": 1,
+            "dropped": 3,
             "preserved": 1,
-            "preserved_percent": 33,
-            "synthesized": 0,
+            "preserved_percent": 14,
+            "synthesized": 2,
             "tier": "lossy",
-            "total": 3
+            "total": 7
           },
           "target": {
             "available": true,
@@ -399,19 +427,33 @@
         },
         "openapi": {
           "advisory": {
-            "affected": 2,
-            "approximated": 2,
-            "dropped": 0,
+            "affected": 8,
+            "approximated": 3,
+            "dropped": 1,
             "headline": "Fidelity notice — exporting to OpenAPI 3.1 may lose detail.",
-            "message": "Exporting to OpenAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to OpenAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 8 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
             "severity": "warn",
             "show": true,
-            "synthesized": 0,
+            "synthesized": 4,
             "target_format": "OpenAPI 3.1"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "OpenAPI 3.1 describes REST APIs; this event API is written in REST terms and reads back as a REST API",
+                "severity": "warn",
+                "target_mapping": "event → rest"
+              },
+              {
+                "construct": "",
+                "kind": "synth",
+                "message": "OpenAPI 3.1 requires a version and the source declares none; '0.0.0' is written",
+                "severity": "warn",
+                "target_mapping": "version → 0.0.0"
+              },
               {
                 "construct": "Order",
                 "kind": "ok",
@@ -420,11 +462,39 @@
                 "target_mapping": null
               },
               {
+                "construct": "default",
+                "kind": "synth",
+                "message": "a reader groups operations by their first tag; the service 'default' is read back from it",
+                "severity": "warn",
+                "target_mapping": "operation tag → service"
+              },
+              {
                 "construct": "orderPlaced.publish",
                 "kind": "approx",
                 "message": "OpenAPI 3.1 has no pub/sub semantics; the 'publish' operation is emitted only as a non-normative documentation path with an x-apiome-event-action note",
                 "severity": "warn",
                 "target_mapping": "pub/sub action → non-normative path + x-apiome-event-action"
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "synth",
+                "message": "OpenAPI 3.1 requires a response and the operation declares none; an empty default response is written",
+                "severity": "warn",
+                "target_mapping": "responses.default (synthesized)"
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "synth",
+                "message": "the operation declares no operationId; one is synthesized from its method and path",
+                "severity": "warn",
+                "target_mapping": "operationId (synthesized)"
+              },
+              {
+                "construct": "orders",
+                "kind": "drop",
+                "message": "OpenAPI 3.1 has no service construct — operations are grouped by tag; service 'orders' is not written",
+                "severity": "info",
+                "target_mapping": "service → dropped (operations grouped by tag)"
               },
               {
                 "construct": "orders/placed",
@@ -435,25 +505,25 @@
               }
             ],
             "kind_counts": {
-              "approx": 2,
-              "drop": 0,
+              "approx": 3,
+              "drop": 1,
               "ok": 1,
-              "synth": 0
+              "synth": 4
             },
             "severity_counts": {
               "critical": 0,
-              "info": 1,
-              "warn": 2
+              "info": 2,
+              "warn": 7
             }
           },
           "summary": {
-            "approximated": 2,
-            "dropped": 0,
+            "approximated": 3,
+            "dropped": 1,
             "preserved": 1,
-            "preserved_percent": 33,
-            "synthesized": 0,
+            "preserved_percent": 11,
+            "synthesized": 4,
             "tier": "lossy",
-            "total": 3
+            "total": 9
           },
           "target": {
             "available": true,
@@ -471,11 +541,11 @@
         },
         "protobuf": {
           "advisory": {
-            "affected": 4,
-            "approximated": 2,
+            "affected": 5,
+            "approximated": 3,
             "dropped": 1,
             "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
-            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 5 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": true,
             "severity": "critical",
             "show": true,
@@ -484,6 +554,13 @@
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) describes RPC APIs; this event API is written in RPC terms and reads back as an RPC API",
+                "severity": "warn",
+                "target_mapping": "event → rpc"
+              },
               {
                 "construct": "Order",
                 "kind": "ok",
@@ -521,7 +598,7 @@
               }
             ],
             "kind_counts": {
-              "approx": 2,
+              "approx": 3,
               "drop": 1,
               "ok": 1,
               "synth": 1
@@ -529,17 +606,17 @@
             "severity_counts": {
               "critical": 1,
               "info": 1,
-              "warn": 3
+              "warn": 4
             }
           },
           "summary": {
-            "approximated": 2,
+            "approximated": 3,
             "dropped": 1,
             "preserved": 1,
-            "preserved_percent": 20,
+            "preserved_percent": 17,
             "synthesized": 1,
             "tier": "lossy",
-            "total": 5
+            "total": 6
           },
           "target": {
             "available": true,
@@ -610,7 +687,7 @@
             "federation",
             "schema_description"
           ],
-          "preserved_percent": 33,
+          "preserved_percent": 14,
           "tier": "lossy"
         },
         {
@@ -667,7 +744,7 @@
             "ref_cycles",
             "refs"
           ],
-          "preserved_percent": 33,
+          "preserved_percent": 11,
           "tier": "lossy"
         },
         {
@@ -686,7 +763,7 @@
             "persisted_field_numbers",
             "protovalidate"
           ],
-          "preserved_percent": 20,
+          "preserved_percent": 17,
           "tier": "lossy"
         }
       ]
@@ -696,19 +773,33 @@
       "previews": {
         "asyncapi": {
           "advisory": {
-            "affected": 1,
-            "approximated": 1,
+            "affected": 3,
+            "approximated": 2,
             "dropped": 0,
             "headline": "Fidelity notice — exporting to AsyncAPI 3.1 may lose detail.",
-            "message": "Exporting to AsyncAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 1 construct will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to AsyncAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
             "severity": "warn",
             "show": true,
-            "synthesized": 0,
+            "synthesized": 1,
             "target_format": "AsyncAPI 3.1"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "AsyncAPI 3.1 describes event APIs; this REST API is written in event terms and reads back as an event API",
+                "severity": "warn",
+                "target_mapping": "rest → event"
+              },
+              {
+                "construct": "",
+                "kind": "synth",
+                "message": "AsyncAPI 3.1 requires a version and the source declares none; '0.0.0' is written",
+                "severity": "warn",
+                "target_mapping": "version → 0.0.0"
+              },
               {
                 "construct": "GET /widgets",
                 "kind": "approx",
@@ -725,25 +816,25 @@
               }
             ],
             "kind_counts": {
-              "approx": 1,
+              "approx": 2,
               "drop": 0,
               "ok": 1,
-              "synth": 0
+              "synth": 1
             },
             "severity_counts": {
               "critical": 0,
               "info": 1,
-              "warn": 1
+              "warn": 3
             }
           },
           "summary": {
-            "approximated": 1,
+            "approximated": 2,
             "dropped": 0,
             "preserved": 1,
-            "preserved_percent": 50,
-            "synthesized": 0,
+            "preserved_percent": 25,
+            "synthesized": 1,
             "tier": "lossy",
-            "total": 2
+            "total": 4
           },
           "target": {
             "available": true,
@@ -845,25 +936,46 @@
         },
         "graphql": {
           "advisory": {
-            "affected": 0,
-            "approximated": 0,
-            "dropped": 0,
-            "headline": "No fidelity loss exporting to GraphQL SDL.",
-            "message": "Exporting to GraphQL SDL preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "affected": 5,
+            "approximated": 1,
+            "dropped": 2,
+            "headline": "Fidelity notice — exporting to GraphQL SDL may lose detail.",
+            "message": "Exporting to GraphQL SDL may lose some fidelity. The destination format can't represent everything in this API, so 5 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
-            "severity": null,
-            "show": false,
-            "synthesized": 0,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 2,
             "target_format": "GraphQL SDL"
           },
           "report": {
             "items": [
               {
+                "construct": "",
+                "kind": "approx",
+                "message": "GraphQL SDL describes GraphQL APIs; this REST API is written in GraphQL terms and reads back as a GraphQL API",
+                "severity": "warn",
+                "target_mapping": "rest → graph"
+              },
+              {
                 "construct": "GET /widgets",
-                "kind": "ok",
-                "message": "operation carried to GraphQL SDL",
+                "kind": "drop",
+                "message": "GraphQL SDL writes every operation as a field of a root type; operation 'GET /widgets' is written as 'Query.listWidgets' and reads back under that key",
                 "severity": "info",
-                "target_mapping": null
+                "target_mapping": "GET /widgets → Query.listWidgets"
+              },
+              {
+                "construct": "Query",
+                "kind": "synth",
+                "message": "the Query root type the operations are written under reads back as a service",
+                "severity": "warn",
+                "target_mapping": "Query root type → service"
+              },
+              {
+                "construct": "Query.listWidgets",
+                "kind": "synth",
+                "message": "operation 'GET /widgets' as GraphQL SDL writes it",
+                "severity": "warn",
+                "target_mapping": "GET /widgets → Query.listWidgets"
               },
               {
                 "construct": "Widget",
@@ -871,28 +983,35 @@
                 "message": "object carried to GraphQL SDL",
                 "severity": "info",
                 "target_mapping": null
+              },
+              {
+                "construct": "widgets",
+                "kind": "drop",
+                "message": "GraphQL SDL has root types, not services; service 'widgets' is not written and its operations become Query and Mutation fields",
+                "severity": "info",
+                "target_mapping": "service → Query/Mutation fields"
               }
             ],
             "kind_counts": {
-              "approx": 0,
-              "drop": 0,
-              "ok": 2,
-              "synth": 0
+              "approx": 1,
+              "drop": 2,
+              "ok": 1,
+              "synth": 2
             },
             "severity_counts": {
               "critical": 0,
-              "info": 2,
-              "warn": 0
+              "info": 3,
+              "warn": 3
             }
           },
           "summary": {
-            "approximated": 0,
-            "dropped": 0,
-            "preserved": 2,
-            "preserved_percent": 100,
-            "synthesized": 0,
-            "tier": "lossless",
-            "total": 2
+            "approximated": 1,
+            "dropped": 2,
+            "preserved": 1,
+            "preserved_percent": 17,
+            "synthesized": 2,
+            "tier": "lossy",
+            "total": 6
           },
           "target": {
             "available": true,
@@ -1119,25 +1238,32 @@
         },
         "protobuf": {
           "advisory": {
-            "affected": 2,
-            "approximated": 1,
-            "dropped": 0,
+            "affected": 5,
+            "approximated": 2,
+            "dropped": 1,
             "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
-            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 5 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
             "severity": "warn",
             "show": true,
-            "synthesized": 1,
+            "synthesized": 2,
             "target_format": "Protocol Buffers (proto3)"
           },
           "report": {
             "items": [
               {
+                "construct": "",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) describes RPC APIs; this REST API is written in RPC terms and reads back as an RPC API",
+                "severity": "warn",
+                "target_mapping": "rest → rpc"
+              },
+              {
                 "construct": "GET /widgets",
-                "kind": "ok",
-                "message": "operation carried to Protocol Buffers (proto3)",
+                "kind": "drop",
+                "message": "Protocol Buffers (proto3) names a method package.Service.Method, each part a protobuf identifier; operation 'GET /widgets' is written as 'widgets.listWidgets' and reads back under that key",
                 "severity": "info",
-                "target_mapping": null
+                "target_mapping": "GET /widgets → widgets.listWidgets"
               },
               {
                 "construct": "Widget",
@@ -1159,28 +1285,35 @@
                 "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
                 "severity": "warn",
                 "target_mapping": "synthesized field number"
+              },
+              {
+                "construct": "widgets.listWidgets",
+                "kind": "synth",
+                "message": "operation 'GET /widgets' as Protocol Buffers (proto3) writes it",
+                "severity": "warn",
+                "target_mapping": "GET /widgets → widgets.listWidgets"
               }
             ],
             "kind_counts": {
-              "approx": 1,
-              "drop": 0,
-              "ok": 2,
-              "synth": 1
+              "approx": 2,
+              "drop": 1,
+              "ok": 1,
+              "synth": 2
             },
             "severity_counts": {
               "critical": 0,
               "info": 2,
-              "warn": 2
+              "warn": 4
             }
           },
           "summary": {
-            "approximated": 1,
-            "dropped": 0,
-            "preserved": 2,
-            "preserved_percent": 50,
-            "synthesized": 1,
+            "approximated": 2,
+            "dropped": 1,
+            "preserved": 1,
+            "preserved_percent": 17,
+            "synthesized": 2,
             "tier": "lossy",
-            "total": 4
+            "total": 6
           },
           "target": {
             "available": true,
@@ -1219,7 +1352,7 @@
             "include_channels",
             "include_components"
           ],
-          "preserved_percent": 50,
+          "preserved_percent": 25,
           "tier": "lossy"
         },
         {
@@ -1251,8 +1384,8 @@
             "federation",
             "schema_description"
           ],
-          "preserved_percent": 100,
-          "tier": "lossless"
+          "preserved_percent": 17,
+          "tier": "lossy"
         },
         {
           "default_options": {
@@ -1327,7 +1460,7 @@
             "persisted_field_numbers",
             "protovalidate"
           ],
-          "preserved_percent": 50,
+          "preserved_percent": 17,
           "tier": "lossy"
         }
       ]
@@ -1337,19 +1470,40 @@
       "previews": {
         "asyncapi": {
           "advisory": {
-            "affected": 0,
-            "approximated": 0,
+            "affected": 3,
+            "approximated": 2,
             "dropped": 0,
-            "headline": "No fidelity loss exporting to AsyncAPI 3.1.",
-            "message": "Exporting to AsyncAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "headline": "Fidelity notice — exporting to AsyncAPI 3.1 may lose detail.",
+            "message": "Exporting to AsyncAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
-            "severity": null,
-            "show": false,
-            "synthesized": 0,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 1,
             "target_format": "AsyncAPI 3.1"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "AsyncAPI 3.1 describes event APIs; this data schema API is written in event terms and reads back as an event API",
+                "severity": "warn",
+                "target_mapping": "data_schema → event"
+              },
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "the source declares no operation and no channel: the AsyncAPI 3.1 document holds only its 1 type(s), under components.schemas, which an AsyncAPI reader does not read back as named types",
+                "severity": "warn",
+                "target_mapping": "types → components.schemas only"
+              },
+              {
+                "construct": "",
+                "kind": "synth",
+                "message": "AsyncAPI 3.1 requires a version and the source declares none; '0.0.0' is written",
+                "severity": "warn",
+                "target_mapping": "version → 0.0.0"
+              },
               {
                 "construct": "Customer",
                 "kind": "ok",
@@ -1359,25 +1513,25 @@
               }
             ],
             "kind_counts": {
-              "approx": 0,
+              "approx": 2,
               "drop": 0,
               "ok": 1,
-              "synth": 0
+              "synth": 1
             },
             "severity_counts": {
               "critical": 0,
               "info": 1,
-              "warn": 0
+              "warn": 3
             }
           },
           "summary": {
-            "approximated": 0,
+            "approximated": 2,
             "dropped": 0,
             "preserved": 1,
-            "preserved_percent": 100,
-            "synthesized": 0,
-            "tier": "lossless",
-            "total": 1
+            "preserved_percent": 25,
+            "synthesized": 1,
+            "tier": "lossy",
+            "total": 4
           },
           "target": {
             "available": true,
@@ -1486,47 +1640,68 @@
         },
         "graphql": {
           "advisory": {
-            "affected": 0,
-            "approximated": 0,
+            "affected": 3,
+            "approximated": 1,
             "dropped": 0,
-            "headline": "No fidelity loss exporting to GraphQL SDL.",
-            "message": "Exporting to GraphQL SDL preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "headline": "Fidelity notice — exporting to GraphQL SDL may lose detail.",
+            "message": "Exporting to GraphQL SDL may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
-            "severity": null,
-            "show": false,
-            "synthesized": 0,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 2,
             "target_format": "GraphQL SDL"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "GraphQL SDL describes GraphQL APIs; this data schema API is written in GraphQL terms and reads back as a GraphQL API",
+                "severity": "warn",
+                "target_mapping": "data_schema → graph"
+              },
               {
                 "construct": "Customer",
                 "kind": "ok",
                 "message": "object carried to GraphQL SDL",
                 "severity": "info",
                 "target_mapping": null
+              },
+              {
+                "construct": "Query",
+                "kind": "synth",
+                "message": "the Query root type the operations are written under reads back as a service",
+                "severity": "warn",
+                "target_mapping": "Query root type → service"
+              },
+              {
+                "construct": "Query._",
+                "kind": "synth",
+                "message": "GraphQL SDL requires a Query root type and the source has no read operation; a placeholder field `_` is written",
+                "severity": "warn",
+                "target_mapping": "Query._ (placeholder)"
               }
             ],
             "kind_counts": {
-              "approx": 0,
+              "approx": 1,
               "drop": 0,
               "ok": 1,
-              "synth": 0
+              "synth": 2
             },
             "severity_counts": {
               "critical": 0,
               "info": 1,
-              "warn": 0
+              "warn": 3
             }
           },
           "summary": {
-            "approximated": 0,
+            "approximated": 1,
             "dropped": 0,
             "preserved": 1,
-            "preserved_percent": 100,
-            "synthesized": 0,
-            "tier": "lossless",
-            "total": 1
+            "preserved_percent": 25,
+            "synthesized": 2,
+            "tier": "lossy",
+            "total": 4
           },
           "target": {
             "available": true,
@@ -1667,19 +1842,33 @@
         },
         "openapi": {
           "advisory": {
-            "affected": 0,
-            "approximated": 0,
+            "affected": 2,
+            "approximated": 1,
             "dropped": 0,
-            "headline": "No fidelity loss exporting to OpenAPI 3.1.",
-            "message": "Exporting to OpenAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "headline": "Fidelity notice — exporting to OpenAPI 3.1 may lose detail.",
+            "message": "Exporting to OpenAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
-            "severity": null,
-            "show": false,
-            "synthesized": 0,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 1,
             "target_format": "OpenAPI 3.1"
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "OpenAPI 3.1 describes REST APIs; this data schema API is written in REST terms and reads back as a REST API",
+                "severity": "warn",
+                "target_mapping": "data_schema → rest"
+              },
+              {
+                "construct": "",
+                "kind": "synth",
+                "message": "OpenAPI 3.1 requires a version and the source declares none; '0.0.0' is written",
+                "severity": "warn",
+                "target_mapping": "version → 0.0.0"
+              },
               {
                 "construct": "Customer",
                 "kind": "ok",
@@ -1689,25 +1878,25 @@
               }
             ],
             "kind_counts": {
-              "approx": 0,
+              "approx": 1,
               "drop": 0,
               "ok": 1,
-              "synth": 0
+              "synth": 1
             },
             "severity_counts": {
               "critical": 0,
               "info": 1,
-              "warn": 0
+              "warn": 2
             }
           },
           "summary": {
-            "approximated": 0,
+            "approximated": 1,
             "dropped": 0,
             "preserved": 1,
-            "preserved_percent": 100,
-            "synthesized": 0,
-            "tier": "lossless",
-            "total": 1
+            "preserved_percent": 33,
+            "synthesized": 1,
+            "tier": "lossy",
+            "total": 3
           },
           "target": {
             "available": true,
@@ -1725,11 +1914,11 @@
         },
         "protobuf": {
           "advisory": {
-            "affected": 4,
-            "approximated": 2,
+            "affected": 5,
+            "approximated": 3,
             "dropped": 0,
             "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
-            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 5 constructs will be dropped or approximated — review the fidelity report before downloading.",
             "requires_ack": false,
             "severity": "warn",
             "show": true,
@@ -1738,6 +1927,13 @@
           },
           "report": {
             "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) describes RPC APIs; this data schema API is written in RPC terms and reads back as an RPC API",
+                "severity": "warn",
+                "target_mapping": "data_schema → rpc"
+              },
               {
                 "construct": "Customer",
                 "kind": "ok",
@@ -1775,7 +1971,7 @@
               }
             ],
             "kind_counts": {
-              "approx": 2,
+              "approx": 3,
               "drop": 0,
               "ok": 1,
               "synth": 2
@@ -1783,17 +1979,17 @@
             "severity_counts": {
               "critical": 0,
               "info": 1,
-              "warn": 4
+              "warn": 5
             }
           },
           "summary": {
-            "approximated": 2,
+            "approximated": 3,
             "dropped": 0,
             "preserved": 1,
-            "preserved_percent": 20,
+            "preserved_percent": 17,
             "synthesized": 2,
             "tier": "lossy",
-            "total": 5
+            "total": 6
           },
           "target": {
             "available": true,
@@ -1832,8 +2028,8 @@
             "include_channels",
             "include_components"
           ],
-          "preserved_percent": 100,
-          "tier": "lossless"
+          "preserved_percent": 25,
+          "tier": "lossy"
         },
         {
           "default_options": {
@@ -1864,8 +2060,8 @@
             "federation",
             "schema_description"
           ],
-          "preserved_percent": 100,
-          "tier": "lossless"
+          "preserved_percent": 25,
+          "tier": "lossy"
         },
         {
           "default_options": {
@@ -1921,8 +2117,8 @@
             "ref_cycles",
             "refs"
           ],
-          "preserved_percent": 100,
-          "tier": "lossless"
+          "preserved_percent": 33,
+          "tier": "lossy"
         },
         {
           "default_options": {
@@ -1940,7 +2136,7 @@
             "persisted_field_numbers",
             "protovalidate"
           ],
-          "preserved_percent": 20,
+          "preserved_percent": 17,
           "tier": "lossy"
         }
       ]

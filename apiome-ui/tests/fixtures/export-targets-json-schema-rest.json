@@ -143,11 +143,11 @@
       "fidelity": {
         "tier": "types-only",
         "preserved_percent": 10,
-        "total": 20,
+        "total": 21,
         "preserved": 2,
         "dropped": 5,
         "approximated": 4,
-        "synthesized": 9
+        "synthesized": 10
       }
     }
   ]

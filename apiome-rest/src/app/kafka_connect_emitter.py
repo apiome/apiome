@@ -51,6 +51,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict, rekey_verdicts
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -81,6 +82,7 @@ from .kafka_connect_schema import (
     ConnectParseError,
     logical_type_for_format,
 )
+from .lossiness import LossinessKind, LossinessReport
 
 __all__ = [
     "KafkaConnectEmitOptions",
@@ -212,6 +214,58 @@ class KafkaConnectFidelityRulePack(CapabilityRulePack):
     """
 
     target_label = "Kafka Connect"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note the namespace schema names are qualified with, then walk the model."""
+        self._default_namespace = (api.identity.namespace or "").strip() or None
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What a Connect schema cannot say about the document — COA-3.1 (#7052).
+
+        A schema is a struct with a name, an optional version of its own and a doc string: a source
+        that is not a data schema reads back as one, and the document's identifier and version are
+        not written.
+        """
+        verdicts = list(super().root_verdicts(api))
+        if api.format == KafkaConnectEmitter.format:
+            return verdicts
+        # A source with operations or channels is told so by their own types-only drops; this is
+        # for one that has types alone under another paradigm (a ROS 2 message file).
+        if api.types and not api.services and not api.channels:
+            paradigm = paradigm_change_verdict(api, ApiParadigm.DATA_SCHEMA, target_label=self.target_label)
+            if paradigm is not None:
+                verdicts.append(paradigm)
+        return verdicts + envelope_verdicts(
+            api, target_label=self.target_label, keeps_id=False, keeps_version=False
+        )
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's own verdict, plus the re-key ``DROP`` when its schema name is not its key."""
+        verdicts = super().type_verdicts(type_)
+        rekey = self._rekey(type_)
+        if rekey is None:
+            return verdicts
+        return [v for v in verdicts if v.kind is not LossinessKind.OK] + [rekey[0]]
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The schema names re-keyed record types read back under."""
+        pairs = list(super().synthesized_verdicts(api))
+        return pairs + [rekey[1] for rekey in map(self._rekey, api.types) if rekey]
+
+    def _rekey(self, type_: Type) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a record whose qualified schema name differs from its key.
+
+        Mirrors :meth:`_ConnectWriter._schema_name`; only a record is a named schema.
+        """
+        if type_.kind is not TypeKind.RECORD:
+            return None
+        namespace = type_.namespace or getattr(self, "_default_namespace", None)
+        emitted = f"{namespace}.{type_.name}" if namespace else type_.name
+        return rekey_verdicts(
+            type_.key, emitted, target_label=self.target_label, noun="type",
+            reason="names a schema by its namespace and name",
+        )
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         """Every operation is a critical ``DROP`` on a types-only Connect export."""

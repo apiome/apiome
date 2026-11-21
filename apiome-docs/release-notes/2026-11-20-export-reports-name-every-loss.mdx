@@ -1,0 +1,41 @@
+---
+slug: export-reports-name-every-loss
+title: "Export reports name every loss"
+description: "No export says nothing was lost while the file reads back differently."
+authors: [apiome]
+---
+
+Export an item to a format other than the one it was imported from, and the fidelity report now
+lists what the conversion changes. Before, 148 pairs of source and target formats reported
+"nothing lost" while the exported file read back differently. That list is now empty.
+
+{/* truncate */}
+
+- **A different kind of API:** an agent card exported as OpenAPI, a JSON Schema as GraphQL or a
+  REST API as Protobuf reads back as the target's kind of API. The report says so on the document.
+- **Renamed on the way out:** an RPC method exported as OpenAPI is written as
+  `POST /<service>/<method>`. A type named `X12-850.PO1` is written as `PO1` in JSON Type
+  Definition and CDDL. `Travel Concierge` is written as `Travel_Concierge` in Protobuf. The
+  report names each old key as **dropped** and each new key as **synthesized**.
+- **Details with no place to go:** a gateway's routes and policies, a dbt model's tags and an API
+  client's saved samples are listed as **dropped** when the target has no field for them. So are a
+  title, identifier, namespace or version the target file cannot hold.
+- **Fixed — GraphQL SDL:** an export left out every type that no `Query` or `Mutation` field
+  reaches. An item with types and no operations exported as a placeholder `Query` alone. Every
+  type is now written.
+- **Fixed — ONC RPC:** an export left out every struct that was not imported from ONC RPC and
+  numbered every procedure `1`. Structs are now written, procedures are numbered in order, and a
+  name that is not an identifier (`Task API`) is written as one (`Task_API`).
+- **Fixed — OpenAPI:** a required request body was written as an optional one in every file built
+  from the canonical model, including AWS API Gateway and Azure API Management exports.
+- **Fixed — Azure API Management:** the backend that a `set-backend-service` policy names is no
+  longer written into the definition's `servers` as well.
+- **Fewer one-file exports:** an XML-RPC export writes one `methodCall`, and a CloudEvents export
+  of an item with no event writes a placeholder event. Both reports now say what is left out, the
+  second at `critical` severity.
+- **Checked on every change:** all 108 formats are exported to all 66 targets. The check fails on
+  any pair that loses something without saying so.
+- **REST:** no endpoint changes (REST API 1.786.0, OpenAPI 1.612.0).
+
+See [Exports from another format](/ship/export-fidelity#cross-format) and
+[How exports are tested](/ship/export-fidelity#how-exports-are-tested).

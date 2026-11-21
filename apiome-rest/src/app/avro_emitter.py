@@ -41,6 +41,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict, rekey_verdicts
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -53,7 +54,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
-from .lossiness import LossinessReport, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .schema_registry_subjects import registry_subject
 
 __all__ = [
@@ -216,10 +217,53 @@ class AvroFidelityRulePack(CapabilityRulePack):
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Walk ``api`` with a type lookup for union-eligibility checks."""
         self._types_by_key = {type_.key: type_ for type_ in api.types}
+        self._default_namespace = (api.identity.namespace or "").strip() or None
         try:
             return super().evaluate(api)
         finally:
             self._types_by_key = {}
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What an Avro schema cannot say about the document — COA-3.1 (#7052).
+
+        A schema file is named types and nothing else: a source that is not a data schema reads
+        back as one, and the document's identifier and version are not written.
+        """
+        verdicts = list(super().root_verdicts(api))
+        if api.format == AvroEmitter.format:
+            return verdicts
+        # A source with operations or channels is told so by their own types-only drops; this is
+        # for one that has types alone under another paradigm (a ROS 2 message file).
+        if api.types and not api.services and not api.channels:
+            paradigm = paradigm_change_verdict(api, ApiParadigm.DATA_SCHEMA, target_label=self.target_label)
+            if paradigm is not None:
+                verdicts.append(paradigm)
+        return verdicts + envelope_verdicts(
+            api, target_label=self.target_label, keeps_id=False, keeps_version=False
+        )
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's own verdict, plus the re-key ``DROP`` when its Avro full name is not its key."""
+        verdicts = super().type_verdicts(type_)
+        rekey = self._rekey(type_)
+        if rekey is None:
+            return verdicts
+        return [v for v in verdicts if v.kind is not LossinessKind.OK] + [rekey[0]]
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The Avro full names re-keyed types read back under."""
+        pairs = list(super().synthesized_verdicts(api))
+        return pairs + [rekey[1] for rekey in map(self._rekey, api.types) if rekey]
+
+    def _rekey(self, type_: Type) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a named type whose Avro full name differs from its key."""
+        if type_.kind not in (TypeKind.RECORD, TypeKind.ENUM):
+            return None
+        return rekey_verdicts(
+            type_.key, _qualified_name(type_, getattr(self, "_default_namespace", None)),
+            target_label=self.target_label, noun="type",
+            reason="names a type by its namespace and name",
+        )
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """Every operation is a critical ``DROP`` on a types-only Avro export."""

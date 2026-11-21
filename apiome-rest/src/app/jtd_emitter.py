@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import Field
 
@@ -17,6 +17,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .conversion_verdicts import envelope_verdicts, rekey_verdicts
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -30,6 +31,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .jtd_import_source import JTD_FORMAT, JtdImportSource, is_jtd_document
+from .lossiness import LossinessReport
 
 __all__ = [
     "JtdEmitOptions",
@@ -42,10 +44,70 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 
+def _source_document(api: CanonicalApi) -> Optional[Dict[str, Any]]:
+    """The imported JTD document ``api`` carries, which an export writes back as it stands."""
+    raw = api.raw
+    if isinstance(raw, dict) and isinstance(raw.get("source"), dict):
+        return dict(raw["source"])
+    return None
+
+
+def _root_name(api: CanonicalApi) -> str:
+    """The name of the type a rebuilt document writes as its root schema."""
+    return api.title or api.identity.name or "Schema"
+
+
 class JtdFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for JTD export."""
+    """Fidelity rules for JTD export.
+
+    A document rebuilt from another format's model (COA-3.1, #7052) names each definition by the
+    type's bare name — JTD has no namespaces — so a namespace-qualified type reads back under a new
+    key (``DROP`` + ``SYNTH``), the namespace itself is not written, and when no type is named after
+    the document the first type is also written as the root schema (``SYNTH``).
+    """
 
     target_label = "JSON Type Definition"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note whether the document is rebuilt (not the imported one written back), then walk."""
+        self._rebuilt = _source_document(api) is None
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The namespace a rebuilt document has no place for."""
+        verdicts = list(super().root_verdicts(api))
+        if self._rebuilt:
+            verdicts += envelope_verdicts(api, target_label=self.target_label, keeps_namespace=False)
+        return verdicts
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The re-key ``DROP`` of a namespace-qualified type, else the inherited verdicts."""
+        rekey = self._rekey(type_)
+        return [rekey[0]] if rekey else super().type_verdicts(type_)
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The bare-name keys of re-keyed types, and the root schema copied from the first type."""
+        pairs = list(super().synthesized_verdicts(api))
+        if not self._rebuilt:
+            return pairs
+        pairs += [rekey[1] for rekey in map(self._rekey, api.types) if rekey]
+        root = _root_name(api)
+        if api.types and all(type_.name != root for type_ in api.types):
+            pairs.append((root, FidelityVerdict.synth(
+                message=f"a JTD document is one root schema and no type is named {root!r}; type "
+                f"{api.types[0].key!r} is also written as the root",
+                target_mapping=f"{api.types[0].key} → root schema",
+            )))
+        return pairs
+
+    def _rekey(self, type_: Type) -> Optional[Tuple[FidelityVerdict, Tuple[str, FidelityVerdict]]]:
+        """The re-key verdicts of a type whose key is not the bare name a definition gets."""
+        if not getattr(self, "_rebuilt", False):
+            return None
+        return rekey_verdicts(
+            type_.key, type_.name, target_label=self.target_label, noun="type",
+            reason="definitions have no namespaces",
+        )
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -164,15 +226,10 @@ class _JtdWriter:
         return json.dumps(document, separators=(",", ":"), ensure_ascii=False) + "\n"
 
     def _source_document(self) -> Optional[Dict[str, Any]]:
-        raw = self._api.raw
-        if isinstance(raw, dict):
-            source = raw.get("source")
-            if isinstance(source, dict):
-                return dict(source)
-        return None
+        return _source_document(self._api)
 
     def _rebuild_document(self) -> Dict[str, Any]:
-        root_name = self._api.title or self._api.identity.name or "Schema"
+        root_name = _root_name(self._api)
         definitions: Dict[str, Any] = {}
         root_schema: Optional[Dict[str, Any]] = None
 
