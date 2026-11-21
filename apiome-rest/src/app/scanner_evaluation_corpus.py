@@ -407,10 +407,32 @@ def fix_fixture_findings(document: Mapping[str, Any]) -> List[Any]:
     Returns:
         The :class:`~app.schema_lint.LintFinding` list (default lint first, then fixable rules).
     """
+    from .arazzo_fix_rules import is_arazzo_document, lint_arazzo_fixable
     from .openapi_fix_rules import lint_openapi_fixable
     from .schema_lint import lint_openapi_spec
 
+    if is_arazzo_document(document):
+        # GVM-4.5: an Arazzo fixture draws the fixable Arazzo rules only — the default lint's
+        # structure rules report the same defects with their own paths and would block.
+        return lint_arazzo_fixable(document)
     return list(lint_openapi_spec(dict(document)).findings) + lint_openapi_fixable(document)
+
+
+def fixable_findings(document: Mapping[str, Any]) -> List[Any]:
+    """The on-demand fixable-rule findings of an OpenAPI or Arazzo document (GVM-4.5)."""
+    from .arazzo_fix_rules import is_arazzo_document, lint_arazzo_fixable
+    from .openapi_fix_rules import lint_openapi_fixable
+
+    return lint_arazzo_fixable(document) if is_arazzo_document(document) else lint_openapi_fixable(document)
+
+
+def plan_fixable(document: Mapping[str, Any], finding: Any, options: Any = None) -> Any:
+    """Plan one finding's fix with the rule set of the document's format (GVM-4.5)."""
+    from .arazzo_fix_rules import is_arazzo_document, plan_arazzo_fix
+    from .openapi_fix_rules import plan_openapi_fix
+
+    planner = plan_arazzo_fix if is_arazzo_document(document) else plan_openapi_fix
+    return planner(document, finding, options)
 
 
 def fix_fixture_ids(root: Optional[Path] = None) -> List[str]:
@@ -436,6 +458,7 @@ def fixable_rules_table(root: Optional[Path] = None) -> str:
     Returns:
         The Markdown table, ending in a newline.
     """
+    from .arazzo_fix_rules import arazzo_fix_rules
     from .openapi_fix_rules import openapi_fix_rules
 
     lines = [
@@ -443,7 +466,7 @@ def fixable_rules_table(root: Optional[Path] = None) -> str:
         "|------|-----------|---------------|---------|-------------------|",
     ]
     have = set(fix_fixture_ids(root))
-    for rule in sorted(openapi_fix_rules(), key=lambda r: r.rule_id):
+    for rule in sorted([*openapi_fix_rules(), *arazzo_fix_rules()], key=lambda r: r.rule_id):
         fixture = f"`fix/{rule.rule_id}/`" if rule.rule_id in have else "**missing**"
         default = "yes" if rule.fix_default else "no"
         lines.append(

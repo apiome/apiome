@@ -1,0 +1,91 @@
+{
+  "kind": "fix",
+  "id": "fix/arazzo.version-marker-bump",
+  "rule": "arazzo.version-marker-bump",
+  "options": {},
+  "finding": {
+    "path": "arazzo",
+    "message": "The document declares Arazzo 1.0.1 but uses an asyncapi source description, which need Arazzo 1.1.0."
+  },
+  "before": {
+    "arazzo": "1.0.1",
+    "info": {
+      "title": "Pet flows",
+      "version": "1.0.0"
+    },
+    "sourceDescriptions": [
+      {
+        "name": "pets",
+        "type": "openapi",
+        "url": "./pets.yaml"
+      },
+      {
+        "name": "events",
+        "type": "asyncapi",
+        "url": "./events.yaml"
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "browse",
+        "steps": [
+          {
+            "stepId": "list",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "plan": [
+    {
+      "op": "replace",
+      "path": "/arazzo",
+      "value": "1.1.0"
+    }
+  ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
+  "after": {
+    "arazzo": "1.1.0",
+    "info": {
+      "title": "Pet flows",
+      "version": "1.0.0"
+    },
+    "sourceDescriptions": [
+      {
+        "name": "pets",
+        "type": "openapi",
+        "url": "./pets.yaml"
+      },
+      {
+        "name": "events",
+        "type": "asyncapi",
+        "url": "./events.yaml"
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "browse",
+        "steps": [
+          {
+            "stepId": "list",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

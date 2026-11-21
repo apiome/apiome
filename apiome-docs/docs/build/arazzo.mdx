@@ -78,6 +78,13 @@ The operationRef rule shipped as `arzzo.unresolvable-operation-ref`. Findings no
 `arazzo.unresolvable-operation-ref`, and the old id is kept as an **alias**: a style guide that
 names it, a stored finding and a waiver recorded against it all still match.
 
+### Fixes
+
+Three Arazzo findings can be repaired by a deterministic fix: a repeated `stepId`, a step with no
+`successCriteria` whose embedded source operation declares a `2xx` response, and an `arazzo: 1.0.x`
+marker on a document that uses a 1.1-only feature. See
+[Fixable Arazzo rules](./auto-fix.md#fixable-arazzo-rules).
+
 ## How the pieces fit
 
 1. **Import stores the workflow as records.** Each workflow and each of its steps is stored on the

@@ -1,0 +1,23 @@
+---
+slug: arazzo-fixes
+title: "Auto-fix for Arazzo workflows"
+description: "Three Arazzo findings can now be repaired by a deterministic fix."
+authors: [apiome]
+---
+
+A fix plan now accepts an Arazzo workflow document as well as OpenAPI, and can repair three
+findings without a person or an AI model.
+
+{/* truncate */}
+
+- **Repeated step ids:** the repeat gets a suffix (`list` becomes `list-2`); the first step keeps
+  its id.
+- **Missing success criteria:** a step whose embedded OpenAPI source declares a `2xx` response gets
+  `successCriteria: [{condition: "$statusCode == 200"}]`. Off unless you switch it on.
+- **Version marker:** `arazzo: 1.0.x` becomes `1.1.0` when the document uses an AsyncAPI source, a
+  `channelPath` step or a `querystring` / `channel` parameter.
+
+See [Fixable Arazzo rules](/build/auto-fix#fixable-arazzo-rules).
+
+- **REST:** API 1.618.0. `POST /v1/lint/fixes/plan` plans Arazzo documents.
+- **CLI:** no changes; `apiome lint <file> --fix` will detect Arazzo files once local-file lint ships.

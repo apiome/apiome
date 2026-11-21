@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.792.0] - 2026-11-21
+
+### Added
+- **Fixable Arazzo rules — OpenAPI 1.618.0 (GVM-4.5, #5880):** three on-demand rules in
+  `app.arazzo_fix_rules`, registered in the rule catalogue (`GET /v1/lint/rules`) and never part of
+  the default Arazzo lint: `arazzo.step-id-suffix` (`rename`, suffixes a repeated `stepId`),
+  `arazzo.success-criteria-scaffold` (`fill-in`, off by default; adds
+  `successCriteria: [{condition: "$statusCode == 200"}]` from the 2xx response of the step's
+  embedded OpenAPI source operation) and `arazzo.version-marker-bump` (`structural`, `arazzo: 1.0.x`
+  → `1.1.0` when an asyncapi source, `channelPath` step or `querystring` / `channel` parameter is
+  used). `POST /v1/lint/fixes/plan` and `build_fix_plan` now plan an Arazzo document (recognised by
+  its `arazzo` field); the unified diff of such a plan is labelled `arazzo.json`. Each rule has a
+  GVM-3.5 fixture; `V401` seeds the rules into the built-in style guide. The format-scoped ladder
+  level test is `xfail` until GOV-3.2 (#4439).
+
 ## [1.791.0] - 2026-11-21
 
 ### Added

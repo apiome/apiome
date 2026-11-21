@@ -49,7 +49,7 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 | --- | --- | --- |
 | #5875 | GVM-EPIC-4 Arazzo and Overlay governance | Governance |
 | ✅ #5879 | GVM-4.4 Arazzo 1.1 validation rules — Complete | Governance |
-| #5880 | GVM-4.5 Arazzo and Overlay in the ladder, fixes and CLI | Governance |
+| ✅ #5880 | GVM-4.5 Arazzo and Overlay in the ladder, fixes and CLI — Complete | Governance |
 | ✅ #5868 | GVM-EPIC-3 Deterministic auto-fix (GVM-3.1–3.6) — Complete | Governance |
 | ✅ #5869 | GVM-3.1 rule SPI — Complete | Governance |
 | ✅ #5870 | GVM-3.2 fix plan, apply and Overlay rendering — Complete | Governance |

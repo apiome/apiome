@@ -56,6 +56,7 @@ from .lint_fix import (
     pointer_within,
     split_pointer,
 )
+from .arazzo_fix_rules import arazzo_fix_rule, arazzo_fix_rules, is_arazzo_document, lint_arazzo_fixable
 from .openapi_fix_rules import lint_openapi_fixable, openapi_fix_rule, openapi_fix_rules
 from .schema_lint import LintFinding
 
@@ -228,9 +229,8 @@ class FixPlan:
         """
         before = _pretty(self.original_document).splitlines()
         after = _pretty(self.fixed_document).splitlines()
-        lines = list(
-            difflib.unified_diff(before, after, "a/openapi.json", "b/openapi.json", lineterm="")
-        )
+        name = "arazzo.json" if is_arazzo_document(self.original_document) else "openapi.json"
+        lines = list(difflib.unified_diff(before, after, f"a/{name}", f"b/{name}", lineterm=""))
         return "\n".join(lines) + "\n" if lines else ""
 
     def as_dict(self) -> Dict[str, Any]:
@@ -323,6 +323,10 @@ def _classification(document: Mapping[str, Any], ops: Sequence[PatchOp]) -> Opti
         fixed = apply_fix_ops(document, ops)
     except FixError:
         return None
+    if is_arazzo_document(document):
+        # No Arazzo change taxonomy classifies a single fix's delta yet; the Arazzo fixes edit one
+        # id, one criteria list or the version marker and are non-breaking by construction.
+        return {"maxSeverity": None, "counts": {}, "changes": []}
     diff = classify_openapi_changes(dict(document), fixed)
     return {
         "maxSeverity": diff.max_severity,
@@ -390,7 +394,7 @@ def build_fix_plan(
     operation_id_template: str = DEFAULT_OPERATION_ID_TEMPLATE,
     enabled: Optional[Callable[[str], bool]] = None,
 ) -> FixPlan:
-    """Build the lint-fix plan of an OpenAPI document.
+    """Build the lint-fix plan of an OpenAPI 3.x or Arazzo 1.x document (GVM-4.5 adds Arazzo).
 
     Steps: evaluate the fixable rules (:func:`app.openapi_fix_rules.lint_openapi_fixable`), plan
     each finding's fix, mark the excluded ones, classify each remaining fix's own delta and mark
@@ -398,7 +402,7 @@ def build_fix_plan(
     ready fix as a conflict, and compose the ready set.
 
     Args:
-        document: A parsed OpenAPI 3.x document. Not mutated.
+        document: A parsed OpenAPI 3.x or Arazzo document. Not mutated.
         rules: Plan only these rule ids (naming a rule also selects a fix the guide turns off,
             a rename, or an off-by-default fix). ``None`` for every rule.
         include_renames: Select ``rename`` fixes (including the off-by-default ones).
@@ -412,21 +416,25 @@ def build_fix_plan(
         FixError: When ``operation_id_template`` is invalid, or ``rules`` names a rule that has
             no fix.
     """
+    arazzo = is_arazzo_document(document)
+    fix_rule = arazzo_fix_rule if arazzo else openapi_fix_rule
+    fix_rules = arazzo_fix_rules if arazzo else openapi_fix_rules
+    lint_fixable = lint_arazzo_fixable if arazzo else lint_openapi_fixable
     selected = tuple(dict.fromkeys(rules)) if rules else None
     if selected is not None:
-        unknown = [rule_id for rule_id in selected if openapi_fix_rule(rule_id) is None]
+        unknown = [rule_id for rule_id in selected if fix_rule(rule_id) is None]
         if unknown:
             raise FixError(f"no fixable rule {', '.join(repr(r) for r in unknown)}")
     is_enabled = enabled or (lambda _rule_id: True)
     # Plan every fix — off-by-default ones included — so excluded entries still show their ops.
     options = FixOptions(
         operation_id_template=operation_id_template,
-        opt_in=frozenset(rule.rule_id for rule in openapi_fix_rules()),
+        opt_in=frozenset(rule.rule_id for rule in fix_rules()),
     ).validate()
 
     candidates: List[FixPlanEntry] = []
-    for finding in lint_openapi_fixable(document):
-        rule = openapi_fix_rule(finding.rule)
+    for finding in lint_fixable(document):
+        rule = fix_rule(finding.rule)
         if rule is None:
             continue
         try:

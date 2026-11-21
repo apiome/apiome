@@ -25,14 +25,15 @@ import pytest
 from app.lint_fix import FixOptions, apply_fix_ops
 from app.lint_fix_plan import STATUS_BREAKING, STATUS_READY, build_fix_plan
 from app.lint_rule_registry import builtin_rule_descriptors
-from app.openapi_fix_rules import lint_openapi_fixable, plan_openapi_fix
 from app.scanner_evaluation_corpus import (
     corpus_root,
     fix_fixture_findings,
     fix_fixture_ids,
+    fixable_findings,
     fixable_rules_table,
     load_fixture,
     load_manifest,
+    plan_fixable,
     run_fixture,
 )
 
@@ -59,9 +60,9 @@ def _findings_outside(document: Dict[str, Any], rule_id: str) -> Set[Tuple[str, 
 
 
 def _fix_once(document: Dict[str, Any], rule_id: str, options: FixOptions) -> Dict[str, Any]:
-    for finding in lint_openapi_fixable(document):
+    for finding in fixable_findings(document):
         if finding.rule == rule_id:
-            document = apply_fix_ops(document, plan_openapi_fix(document, finding, options))
+            document = apply_fix_ops(document, plan_fixable(document, finding, options))
     return document
 
 
@@ -85,7 +86,7 @@ def test_fixture_declares_its_kind_and_one_defect(rule_id: str):
     fixture = _load(rule_id)
     assert fixture["kind"] == "fix" and fixture["id"] == f"fix/{rule_id}"
     assert fixture["rule"] == rule_id
-    findings = lint_openapi_fixable(fixture["before"])
+    findings = fixable_findings(fixture["before"])
     assert [f.rule for f in findings] == [rule_id], "a fix fixture carries one defect"
     assert {"path": findings[0].path, "message": findings[0].message} == fixture["finding"]
     blocking, run_findings = run_fixture(fixture)
@@ -113,7 +114,7 @@ def test_gate3_planning_and_applying_twice_is_byte_stable(rule_id: str):
     fixture = _load(rule_id)
     options = _options(fixture)
     before = fixture["before"]
-    ops = plan_openapi_fix(before, lint_openapi_fixable(before)[0], options)
+    ops = plan_fixable(before, fixable_findings(before)[0], options)
     assert [op.as_dict() for op in ops] == fixture["plan"]
     once = _fix_once(before, rule_id, options)
     twice = _fix_once(once, rule_id, options)

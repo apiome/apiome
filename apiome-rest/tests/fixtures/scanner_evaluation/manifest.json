@@ -1062,6 +1062,30 @@
       "expected_rule_ids": [
         "structure.unused-component"
       ]
+    },
+    {
+      "id": "fix/arazzo.step-id-suffix",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "arazzo.step-id-suffix"
+      ]
+    },
+    {
+      "id": "fix/arazzo.success-criteria-scaffold",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "arazzo.success-criteria-scaffold"
+      ]
+    },
+    {
+      "id": "fix/arazzo.version-marker-bump",
+      "kind": "fix",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "arazzo.version-marker-bump"
+      ]
     }
   ]
 }
