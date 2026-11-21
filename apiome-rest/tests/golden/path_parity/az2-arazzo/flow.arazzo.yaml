@@ -1,0 +1,22 @@
+arazzo: 1.0.1
+info:
+  title: Arazzo source parity
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    type: openapi
+    url: ./petstore.yaml
+  - name: users
+    type: openapi
+    url: ./users.yaml
+workflows:
+  - workflowId: adoptPet
+    steps:
+      - stepId: listPets
+        operationId: listPets
+      - stepId: getPet
+        operationId: $sourceDescriptions.petstore.getPet
+      - stepId: removePet
+        operationPath: '{$sourceDescriptions.petstore.url}#/paths/~1pets~1{petId}/delete'
+      - stepId: feedPet
+        operationId: feedPet

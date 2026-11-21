@@ -1,0 +1,28 @@
+---
+slug: catalog-projects-path-parity
+title: "OpenAPI 3.2 and Arazzo read the same in the catalog"
+description: "The catalog now reads OpenAPI 3.2 and Arazzo exactly as Projects do."
+authors: [apiome]
+---
+
+An OpenAPI 3.2 or Arazzo document now imports the same way whether it becomes a Project or a
+catalog item. Tests import one set of documents both ways and fail on any difference that is not
+documented.
+
+{/* truncate */}
+
+- **Fixed — streaming bodies in the catalog:** a request or response described with `itemSchema`
+  keeps its element and its stream kind (`jsonl`, `json-seq`, `sse` or `sequential`), as in a
+  Project. Before, the catalog read such a body as empty.
+- **Fixed — a method declared twice:** a path that declares a method in two places, such as `get`
+  and `additionalOperations.GET`, imports it once — the first declaration — and reports the repeat.
+  A custom method written in mixed case, such as `Purge`, keeps its spelling.
+- **Fixed — tag hierarchy:** a tag declared twice keeps its first declaration. A tag whose `parent`
+  is not declared, or that is on a `parent` cycle, becomes a top-level tag, and each repair is
+  reported.
+- **Fixed — `$self` references:** a `$ref` written against the document's `$self` links to its
+  schema, and a `$ref` into another file is kept as written instead of being linked to a schema with
+  the same name.
+- **Docs:** [The same result in the catalog](/bring-in/import-a-spec#the-same-result-in-the-catalog)
+  lists each construct and what Projects and the catalog store differently.
+- **REST:** no endpoint changes (REST API 1.790.0, OpenAPI 1.616.0).

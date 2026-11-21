@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.790.0] - 2026-11-20
+
+### Changed
+- **Catalog ↔ Projects path parity for OpenAPI 3.2 and Arazzo — OpenAPI 1.616.0 (COA-4.2,
+  #7059):** no endpoint changes. The Catalog normalizer (`app.openapi_normalizer`) now reads the
+  OpenAPI 3.2 constructs RC7 §3.2 built on the Projects path the same way the Projects importer does:
+  - **Streaming (OA3):** each Media Type Object with an `itemSchema` is recorded on the message's
+    `extras.streams` with its stream kind (`jsonl`, `json-seq`, `sse`, `sequential`) and its
+    element (a `TypeRef`, or the inline schema). Before, a streamed body had no payload at all.
+  - **Methods (OA4):** a method declared twice on one path item (`get` and
+    `additionalOperations.GET`) imports once — the first declaration, walked in the Projects
+    order — and is listed on the model's `extras.duplicateMethods`. Before, both imported under
+    one key. A mixed-case token (`Purge`) is kept on `extras.methodToken`.
+  - **Tag hierarchy (OA5):** a tag's first declaration wins (the last one did), a `parent` naming
+    no declared tag is dropped, and every tag on a `parent` cycle becomes top-level; each repair
+    is listed on `extras.tagHierarchyIssues`. Service descriptions also take the first declaration.
+  - **`$self` (OA6):** `$ref`s resolve against a declared `$self` (new
+    `app.openapi_self_references`); a reference to another document is marked on its `TypeRef`
+    as `extras.externalRef` (before, `common.yaml#/components/schemas/Partner` read as the local
+    `Partner`) and listed on `extras.externalReferences`. `raw` and the preserved source keep the
+    references as written.
+  - **Arazzo (AZ2):** already resolved the same steps and sources; now asserted.
+- **Tests:** `tests/test_catalog_projects_path_parity.py` imports the fixtures in
+  `tests/golden/path_parity/` on the Catalog path and compares a language-neutral projection with
+  `expected.json`; `apiome-ui/tests/catalog-projects-path-parity.test.ts` compares the Projects
+  path with the same file. The storage differences left out of the projection are listed in it.
+
+
 ## [1.789.0] - 2026-11-20
 
 ### Added

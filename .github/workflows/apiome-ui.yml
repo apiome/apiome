@@ -20,6 +20,8 @@ on:
       - 'docs/catalog-projects-permission-matrix.json'
       # X4: the export permission matrix (permission-matrix-export.test.tsx).
       - 'docs/export-permission-matrix.json'
+      # COA-4.2: the Catalog ↔ Projects path-parity fixtures and expected projection.
+      - 'apiome-rest/tests/golden/path_parity/**'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'
@@ -46,6 +48,8 @@ on:
       - 'docs/catalog-projects-permission-matrix.json'
       # X4: the export permission matrix (permission-matrix-export.test.tsx).
       - 'docs/export-permission-matrix.json'
+      # COA-4.2: the Catalog ↔ Projects path-parity fixtures and expected projection.
+      - 'apiome-rest/tests/golden/path_parity/**'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'

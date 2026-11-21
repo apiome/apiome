@@ -230,7 +230,8 @@ check is server-side, so a client cannot grant itself one.
 
 OpenAPI 3.2 describes a streamed body with `itemSchema`: the schema of **each element** of the
 stream, not of the whole body. The Projects importer reads `itemSchema` wherever it would read
-`schema`, in request bodies and responses:
+`schema`, in request bodies and responses. The catalog reads it too, with the same stream kinds;
+see [The same result in the catalog](#the-same-result-in-the-catalog):
 
 ```yaml
 responses:
@@ -282,7 +283,7 @@ paths:
         responses: { "207": { description: Report } }
 ```
 
-The Projects importer walks both, the same way it walks the fixed verbs:
+The Projects importer and the catalog walk both, the same way they walk the fixed verbs:
 
 - **Every operation imports.** A `query` operation imports as **QUERY**. Each
   `additionalOperations` entry imports under its method, such as **REPORT**. Their parameters,
@@ -315,7 +316,8 @@ tags:
     parent: billing
 ```
 
-The Projects importer keeps the whole taxonomy:
+The Projects importer keeps the whole taxonomy (the catalog builds the same tree; see
+[The same result in the catalog](#the-same-result-in-the-catalog)):
 
 - **Every tag field is kept.** `name`, `summary`, `description`, `parent`, `kind` and
   `externalDocs` are stored on the project's metadata under `x-apiome-tag-taxonomy`. A later
@@ -360,7 +362,7 @@ components:
           $ref: ./orders.yaml#/components/schemas/Address
 ```
 
-What the Projects importer does:
+What the Projects importer does (the catalog does the same):
 
 - **Same-document references resolve.** A `$ref` that resolves against `$self` to the same
   document imports as a local reference, the same as `#/components/schemas/Customer`. Both
@@ -512,6 +514,24 @@ workflow exports back unchanged.
 | `fetch-failed` | The fetch failed (timeout, connection error, or an error status). |
 | `unparseable-document` | The fetched document is not valid JSON or YAML. |
 | `budget-exhausted-refs`, `budget-exhausted-bytes`, `budget-exhausted-time` | The import's remote-fetch budget ran out. |
+
+## The same result in the catalog
+
+An OpenAPI or Arazzo document can also land in the **catalog**: a connector sync, an Arazzo
+fileset import, or an OpenAPI item you later convert with **“Convert to Project”**. The catalog
+reads the document with the server's importer instead of the Projects importer. Both read the
+OpenAPI 3.2 and Arazzo constructs on this page the same way:
+
+| Construct | Projects and catalog both… | How each stores it |
+| --- | --- | --- |
+| Streaming `itemSchema` | Read the element of each streamed media type, with the same stream kind (`jsonl`, `json-seq`, `sse`, `sequential`). A media type with only a `schema` is a regular body on both. | Projects turns an inline object element into a class named after the operation, such as `ImportLogsRequestStreamItem`, and tags element classes with `x-apiome-stream-kind`. The catalog keeps an inline element inline, on the request or response. |
+| `query` and `additionalOperations` | Import every operation once, under the same method (**QUERY**, **REPORT**). A method declared twice keeps its first declaration and is reported. A token written in mixed case, such as `Purge`, is kept as written. | The same on both. |
+| Tag hierarchy | Keep a tag's first declaration and its `summary`, `kind` and `parent`. Make a tag whose `parent` is not declared, or that is on a `parent` cycle, a top-level tag. Report each repair. | Projects stores every tag field in the project's `x-apiome-tag-taxonomy` and lists a schema's `x-tags` on its class. The catalog keeps `externalDocs` and a schema's `x-tags` in the stored source, and writes them back on export. |
+| `$self` and `$ref` overrides | Resolve same-document references against `$self`. Keep a reference to another document as written, without linking it to a schema of the same name. Use a sibling `description` as the property's description. | Projects keeps a sibling `summary` on the property. The catalog keeps it in the stored source and writes it back on export. |
+| Arazzo sources and steps | Resolve a step's `operationId` (in every spelling) and `operationPath` to the same operation, and report the same sources and steps as unresolved. | Projects resolves only against the files imported with the workflow. The catalog also looks in the catalog and, when allowed, fetches a remote URL (see [Import an Arazzo workflow with its API files](#import-an-arazzo-workflow-with-its-api-files)), and links an AsyncAPI step to its channel. |
+
+Tests import the same set of documents both ways and compare the results. A difference that is
+not in the **How each stores it** column fails the build.
 
 ## Verify
 

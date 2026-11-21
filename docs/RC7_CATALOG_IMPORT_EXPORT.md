@@ -165,7 +165,7 @@ Epic ([#3497](https://github.com/apiome/apiome/issues/3497)) is built and closed
 
 OA3 ([#3500](https://github.com/apiome/apiome/issues/3500)) is built on the Projects path: `itemSchema` elements of JSON Lines, JSON text
 sequences and SSE import as classes tagged `x-apiome-stream-kind`, and **Analyze** lists the
-streaming media types. The Catalog (REST normalizer) side was outside that issue's scope.
+streaming media types. The Catalog (REST normalizer) side reads them the same way since COA-4.2 (#7059).
 
 OA4 ([#3501](https://github.com/apiome/apiome/issues/3501)) is done on both paths: the Projects importer now walks `query` and
 `additionalOperations`, imports their schemas and keeps each method token, and OpenAPI 3.1
@@ -173,17 +173,23 @@ export writes them to `x-apiome-query-operation` / `x-apiome-additional-operatio
 
 OA5 ([#3502](https://github.com/apiome/apiome/issues/3502)) is built on the Projects path: tags keep summary / parent / kind / externalDocs on
 the project (`x-apiome-tag-taxonomy`), the parent tree is cycle-checked, and classes list their
-declared tags. The Catalog side still has no tree or cycle check; that was outside the issue's scope.
+declared tags. The Catalog side builds the same tree, with the same cycle check, since COA-4.2 (#7059).
 
 OA6 ([#3503](https://github.com/apiome/apiome/issues/3503)) is built on the Projects path: `$ref`s resolve against a declared `$self`
 (same-document references import as local, others are kept and warned about), and `$ref` sibling
-summary/description are kept as local overrides. The Catalog (REST normalizer) side was outside
-that issue's scope.
+summary/description are kept as local overrides. The Catalog (REST normalizer) side resolves
+`$self` the same way since COA-4.2 (#7059).
 
 AZ2 ([#3505](https://github.com/apiome/apiome/issues/3505)) is built on the Projects path: `lib/importers/arazzo.ts` validates
 `sourceDescriptions` and resolves step `operationId` / `operationPath` against the documents
 supplied with the import (`sourceDocuments`), returning `arazzoResolution` on the import job. The
 Import dialog and repository-file imports do not supply source documents yet.
+
+COA-4.2 ([#7059](https://github.com/apiome/apiome/issues/7059)) asserts both paths give the same
+result for OA3–OA6 and AZ2: `apiome-rest/tests/test_catalog_projects_path_parity.py` and
+`apiome-ui/tests/catalog-projects-path-parity.test.ts` compare one shared projection, and
+`bring-in/import-a-spec.md` (**The same result in the catalog**) lists what each path stores
+differently.
 
 ### 3.3 Format depth (P2 unless noted)
 
