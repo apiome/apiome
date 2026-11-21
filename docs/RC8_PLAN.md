@@ -20,6 +20,11 @@ No milestone exists yet; §8 lists the milestone moves.
 > released one at a time through the *Enable* projects (127–131). The §6 "Other features" items moved to their own
 > feature projects; the board keeps Catalog/Projects work, Export & Interoperability, and the sign-in items.
 
+> **Update 2026-11-20 — export tickets triaged (COA-3.6, [#7057](https://github.com/apiome/apiome/issues/7057)).** Every ticket in §2, §3 and §4 was checked
+> against GitHub; the table with each ticket's state and decision is [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md). All are closed
+> except [#6163](https://github.com/apiome/apiome/issues/6163). The ten tickets §4 proposed to close unbuilt were built instead, and the seven untracked §2
+> targets now have tickets ([#7116](https://github.com/apiome/apiome/issues/7116)–[#7122](https://github.com/apiome/apiome/issues/7122)). §2, §3, §4 and §8 below are corrected to match.
+
 ---
 
 ## 0. What is in RC8
@@ -59,21 +64,21 @@ Every new target must meet the RC7 bar from day one:
 
 | # | Target or mode | Ticket | Effort | Why |
 | --- | --- | --- | --- | --- |
-| 1 | SQL DDL emitter (ANSI + PostgreSQL/MySQL) | [#4311](https://github.com/apiome/apiome/issues/4311) | M | Highest demand of the new targets. Currently in the RC7 milestone: move it here |
-| 2 | Bruno and Insomnia v5 output | [#4291](https://github.com/apiome/apiome/issues/4291) | M | Collections round trip; Bruno import exists |
-| 3 | TypeScript types-only emitter | new (R8-FG1) | M | TypeScript types are already imported; code-adjacent schemas are a common ask |
-| 4 | gRPC JSON transcoding / gRPC-Gateway options | [#4343](https://github.com/apiome/apiome/issues/4343) | M | gRPC estates fronted by REST |
-| 5 | Apollo Federation subgraph output from any source | [#4344](https://github.com/apiome/apiome/issues/4344) | M | Federated GraphQL estates |
-| 6 | Google Cloud API Gateway target | new (R8-FG2) | S–M | OpenAPI 2.0/3.0.x with `x-google-*` extensions; AWS and Azure already exist |
-| 7 | MCP server manifest and A2A Agent Card emitters | [#4295](https://github.com/apiome/apiome/issues/4295), [#4296](https://github.com/apiome/apiome/issues/4296) | S each | Import exists for both; RC7 adds the MCP tool-definition dialect (R7-FG4) |
-| 8 | OData V2 output option | new (R8-FG3) | M | SAP estates still run V2 |
-| 9 | Zod emitter | new (R8-FG4) | M | Zod is imported; TypeScript-first teams |
-| 10 | DBML + Prisma output modes | [#4312](https://github.com/apiome/apiome/issues/4312) | M | After SQL DDL. Currently in the RC7 milestone: move it here |
-| 11 | Multi-format Schema Registry subjects | [#4183](https://github.com/apiome/apiome/issues/4183) | M | Confluent estates |
-| 12 | Protobuf Editions output | new (R8-FG5) | S | Editions are imported but written as proto3; losses are already reported |
-| 13 | Tyk OAS output | new (R8-FG6) | S | Tyk is imported; the gateway set is otherwise complete |
-| 14 | UN/EDIFACT message-guide emitter | [#4146](https://github.com/apiome/apiome/issues/4146) | M | EDIFACT is imported; X12 already emits |
-| 15 | Parquet / Arrow schema emitter | [#4317](https://github.com/apiome/apiome/issues/4317) | M | Arrow is imported |
+| 1 | ✅ **Shipped in RC7** ([#6488](https://github.com/apiome/apiome/pull/6488)) — SQL DDL emitter (ANSI + PostgreSQL/MySQL) | [#4311](https://github.com/apiome/apiome/issues/4311) | M | Highest demand of the new targets |
+| 2 | ◐ Bruno and Insomnia output — ✅ shipped as Bruno `.bru` and Insomnia **v4** ([#6476](https://github.com/apiome/apiome/pull/6476)); Insomnia v5 and Bruno OpenCollection are open | [#4291](https://github.com/apiome/apiome/issues/4291) ✅, [#7118](https://github.com/apiome/apiome/issues/7118) (R8-FG7) | M | Collections round trip; Bruno import exists |
+| 3 | TypeScript types-only emitter | [#7116](https://github.com/apiome/apiome/issues/7116) (R8-FG1) | M | TypeScript types are already imported; code-adjacent schemas are a common ask |
+| 4 | ✅ **Shipped** ([#6799](https://github.com/apiome/apiome/pull/6799)) — gRPC JSON transcoding / gRPC-Gateway options | [#4343](https://github.com/apiome/apiome/issues/4343) | M | gRPC estates fronted by REST |
+| 5 | ✅ **Shipped** ([#6800](https://github.com/apiome/apiome/pull/6800)) — Apollo Federation subgraph output from any source | [#4344](https://github.com/apiome/apiome/issues/4344) | M | Federated GraphQL estates |
+| 6 | Google Cloud API Gateway target | [#7119](https://github.com/apiome/apiome/issues/7119) (R8-FG2) | S–M | OpenAPI 2.0/3.0.x with `x-google-*` extensions; AWS and Azure already exist |
+| 7 | ✅ **Shipped** ([#6487](https://github.com/apiome/apiome/pull/6487), [#6627](https://github.com/apiome/apiome/pull/6627)) — MCP server manifest and A2A Agent Card emitters | [#4295](https://github.com/apiome/apiome/issues/4295), [#4296](https://github.com/apiome/apiome/issues/4296) | S each | Import exists for both; RC7 adds the MCP tool-definition dialect (R7-FG4) |
+| 8 | OData V2 output option | [#7122](https://github.com/apiome/apiome/issues/7122) (R8-FG3) | M | SAP estates still run V2 |
+| 9 | Zod emitter | [#7117](https://github.com/apiome/apiome/issues/7117) (R8-FG4) | M | Zod is imported; TypeScript-first teams |
+| 10 | ✅ **Shipped in RC7** ([#6489](https://github.com/apiome/apiome/pull/6489)) — DBML + Prisma output modes | [#4312](https://github.com/apiome/apiome/issues/4312) | M | After SQL DDL |
+| 11 | ✅ **Shipped** ([#6625](https://github.com/apiome/apiome/pull/6625)) — Multi-format Schema Registry subjects | [#4183](https://github.com/apiome/apiome/issues/4183) | M | Confluent estates |
+| 12 | Protobuf Editions output | [#7120](https://github.com/apiome/apiome/issues/7120) (R8-FG5) | S | Editions are imported but written as proto3; losses are already reported |
+| 13 | Tyk OAS output | [#7121](https://github.com/apiome/apiome/issues/7121) (R8-FG6) | S | Tyk is imported; the gateway set is otherwise complete |
+| 14 | ✅ **Shipped** ([#6616](https://github.com/apiome/apiome/pull/6616)) — UN/EDIFACT message-guide emitter | [#4146](https://github.com/apiome/apiome/issues/4146) | M | EDIFACT is imported; X12 already emits |
+| 15 | ✅ **Shipped** ([#6642](https://github.com/apiome/apiome/pull/6642)) — Parquet / Arrow schema emitter | [#4317](https://github.com/apiome/apiome/issues/4317) | M | Arrow is imported |
 | 16 | ✅ **Shipped in RC7** ([#6424](https://github.com/apiome/apiome/pull/6424)) — FHIR R5 output | [#4157](https://github.com/apiome/apiome/issues/4157) (R5 part; RC7 rebuilds R4) | S | Done with R7-EM17: option `fhir_version` writes R4 or R5 |
 
 ---
@@ -81,6 +86,11 @@ Every new target must meet the RC7 bar from day one:
 ## 3. Deferred import/export work (existing tickets)
 
 These move from *Future* (or no milestone) to **RC8**.
+
+> **Status 2026-11-20:** every ticket and epic in §3.1–§3.6 is closed as completed, with two exceptions.
+> [#6163](https://github.com/apiome/apiome/issues/6163) is open and waits for Connectors ([#6894](https://github.com/apiome/apiome/issues/6894)). [#1735](https://github.com/apiome/apiome/issues/1735) was closed on 2026-11-10 with no pull
+> request, and its PDF helper still has no screen that calls it. Each ticket's closing pull request is in
+> [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md) §4.
 
 ### 3.1 New targets and modes
 
@@ -135,9 +145,11 @@ references; gated by `connectors`).
 
 ## 4. Considered and not planned
 
-These were weighed in the RC7 gap analysis and are not worth building. Unless RC8 decides
-otherwise, close their tickets with the reason "not planned: low demand for the effort — see
-RC8_PLAN §4".
+These were weighed in the RC7 gap analysis and judged not worth building.
+
+> **Corrected 2026-11-20 (COA-3.6, [#7057](https://github.com/apiome/apiome/issues/7057)).** RC8 decided otherwise for every format that had a ticket: all
+> were built, and their rows below say so. No ticket was closed as "not planned". The rows with no ticket
+> are still not planned, and no ticket is opened for them.
 
 | Format | Ticket | Why not |
 | --- | --- | --- |
@@ -146,15 +158,15 @@ RC8_PLAN §4".
 | JSON:API / HAL output | — | Conventions on top of OpenAPI; belong in lint profiles |
 | Postman v2.0 | — | v2.1 is the format every current tool reads |
 | Swagger 1.2 | — | Obsolete |
-| WSDL 2.0 | [#4182](https://github.com/apiome/apiome/issues/4182) | Little tool support; WSDL 1.1 is what estates run |
-| Google API Discovery | [#4174](https://github.com/apiome/apiome/issues/4174) | Google's own format; Google publishes OpenAPI too |
+| WSDL 2.0 — ✅ **shipped** ([#6626](https://github.com/apiome/apiome/pull/6626)) | [#4182](https://github.com/apiome/apiome/issues/4182) | Built after all: the WSDL export's `wsdl_version: 2.0` option. 1.1 stays the default |
+| Google API Discovery — ✅ **shipped** ([#6621](https://github.com/apiome/apiome/pull/6621)) | [#4174](https://github.com/apiome/apiome/issues/4174) | Built after all, as its own export target |
 | OData CSDL JSON — ✅ **shipped in RC7** ([#6422](https://github.com/apiome/apiome/pull/6422)) | [#3897](https://github.com/apiome/apiome/issues/3897) (JSON part) | CSDL JSON 4.01 is now the default OData output; CSDL XML is `output: xml` |
-| RELAX NG / DTD output | [#4134](https://github.com/apiome/apiome/issues/4134) | XSD covers XML schema consumers |
-| PL/I include structures | [#4141](https://github.com/apiome/apiome/issues/4141) | Very small audience; copybooks cover mainframe layouts |
+| RELAX NG / DTD output — ✅ **shipped** ([#6611](https://github.com/apiome/apiome/pull/6611)) | [#4134](https://github.com/apiome/apiome/issues/4134) | Built after all: the XSD export's `mode` option writes RELAX NG (XML or compact) or a DTD |
+| PL/I include structures — ✅ **shipped** ([#6614](https://github.com/apiome/apiome/pull/6614)) | [#4141](https://github.com/apiome/apiome/issues/4141) | Built after all, as an output mode of the COBOL copybook export |
 | Liquibase / Flyway changelogs — ✅ **shipped** ([#6637](https://github.com/apiome/apiome/pull/6637)) | [#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795) | Built after all: the SQL DDL export's `output: liquibase` / `flyway` writes changesets and diffs each export against a persisted baseline, so the "diff between database states" objection no longer holds |
-| Iceberg | [#4319](https://github.com/apiome/apiome/issues/4319) | Table metadata, not an API contract |
-| BigQuery / Spark schemas | [#4318](https://github.com/apiome/apiome/issues/4318) | Revisit after Parquet / Arrow (§2) |
-| xRegistry | [#4306](https://github.com/apiome/apiome/issues/4306)–[#4309](https://github.com/apiome/apiome/issues/4309) | Low adoption so far |
+| Iceberg — ✅ **shipped** ([#6644](https://github.com/apiome/apiome/pull/6644)) | [#4319](https://github.com/apiome/apiome/issues/4319) | Built after all, as its own export target |
+| BigQuery / Spark schemas — ✅ **shipped** ([#6643](https://github.com/apiome/apiome/pull/6643)) | [#4318](https://github.com/apiome/apiome/issues/4318) | Built with Parquet / Arrow, as modes of that export |
+| xRegistry — ✅ **shipped** ([#6632](https://github.com/apiome/apiome/pull/6632)–[#6636](https://github.com/apiome/apiome/pull/6636)) | [#4306](https://github.com/apiome/apiome/issues/4306)–[#4309](https://github.com/apiome/apiome/issues/4309) | Built after all: an xRegistry export target and a read-only xRegistry API |
 | HAR, SoapUI, tRPC output | — | Captures, test suites and code, not specs to exchange |
 | nginx / HAProxy / Consul output | — | Imported for discovery; the gateway targets cover config output |
 | Industry, mainframe and IoT formats | — | Stay import-only (they still export to any other target through the canonical model) |
@@ -211,7 +223,8 @@ later.
 - **R8-HK1:** create the **RC8** milestone.
 - **R8-HK2:** move every issue in §2, §3, §5 and §6 to it.
 - **R8-HK3:** move [#4311](https://github.com/apiome/apiome/issues/4311) and [#4312](https://github.com/apiome/apiome/issues/4312) out of RC7.
-- **R8-HK4:** close the §4 tickets with their reason, or keep them in RC8 if planning decides
-  otherwise.
-- **R8-HK5:** file R8-FG1–FG6 when RC8 planning confirms them.
+- **R8-HK4:** ✅ **done 2026-11-20** — nothing to close as "not planned": every §4 ticket was built and closed as
+  completed. Each has a comment recording that ([`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md)).
+- **R8-HK5:** ✅ **done 2026-11-20** — R8-FG1–FG6 are [#7116](https://github.com/apiome/apiome/issues/7116), [#7119](https://github.com/apiome/apiome/issues/7119), [#7122](https://github.com/apiome/apiome/issues/7122), [#7117](https://github.com/apiome/apiome/issues/7117), [#7120](https://github.com/apiome/apiome/issues/7120) and [#7121](https://github.com/apiome/apiome/issues/7121);
+  R8-FG7 ([#7118](https://github.com/apiome/apiome/issues/7118)) covers the Insomnia v5 and Bruno OpenCollection output left over from [#4291](https://github.com/apiome/apiome/issues/4291).
 - **R8-HK6:** at RC7 release, record any carried-over V2 tickets in §1.

@@ -530,6 +530,10 @@ triage tickets.
 
 ## Appendix A — export targets not built (deferred, not RC7)
 
+> **Status 2026-11-20 (COA-3.6, [#7057](https://github.com/apiome/apiome/issues/7057)): nothing in this appendix is still deferred.** Every ticket listed
+> here is closed as completed — the targets shipped in RC7 or RC8. The list is kept as the record of what was
+> deferred on 2026-10-25; each ticket's state and closing pull request is in [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md).
+
 - **Data:** SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311)), DBML / Prisma ([#4312](https://github.com/apiome/apiome/issues/4312)), Liquibase / Flyway ([#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795)), SQL pack and
   validation ([#4314](https://github.com/apiome/apiome/issues/4314), [#4315](https://github.com/apiome/apiome/issues/4315)), Parquet / Arrow ([#4317](https://github.com/apiome/apiome/issues/4317)), BigQuery / Spark ([#4318](https://github.com/apiome/apiome/issues/4318)), Iceberg ([#4319](https://github.com/apiome/apiome/issues/4319)),
   packs and cards ([#4320](https://github.com/apiome/apiome/issues/4320), [#4321](https://github.com/apiome/apiome/issues/4321)).
@@ -548,6 +552,10 @@ triage tickets.
   HL7 v2 [#4159](https://github.com/apiome/apiome/issues/4159), …).
 
 ## Appendix B — other export work deferred
+
+> **Status 2026-11-20 (COA-3.6, [#7057](https://github.com/apiome/apiome/issues/7057)): nothing in this appendix is still deferred.** Every ticket in the
+> ranges below is closed as completed, except [#4374](https://github.com/apiome/apiome/issues/4374) (the emitted-schema graph view), which was closed on
+> 2026-07-25 as absorbed by [#5110](https://github.com/apiome/apiome/issues/5110). See [`EXPORT_TICKET_TRIAGE.md`](EXPORT_TICKET_TRIAGE.md).
 
 Delivery channels (MFX-EPIC-38: [#4328](https://github.com/apiome/apiome/issues/4328)–[#4331](https://github.com/apiome/apiome/issues/4331), [#4381](https://github.com/apiome/apiome/issues/4381)), push-to-registry ([#3851](https://github.com/apiome/apiome/issues/3851), [#3912](https://github.com/apiome/apiome/issues/3912)), presets,
 schedules and auto-export ([#4335](https://github.com/apiome/apiome/issues/4335)–[#4337](https://github.com/apiome/apiome/issues/4337), [#4382](https://github.com/apiome/apiome/issues/4382)), MCP export tools ([#4339](https://github.com/apiome/apiome/issues/4339)–[#4341](https://github.com/apiome/apiome/issues/4341)), test-drive tooling
