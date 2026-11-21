@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.793.0] - 2026-11-21
+
+### Added
+- **Document store SPI with S3, filesystem and database backends — OpenAPI 1.619.0 (COA-5.1,
+  #7077):** `app.document_store` is one interface for immutable, content-addressed objects.
+  `DocumentStore.put(tenant_id, data | stream, media_type)` returns an `ObjectRef` keyed by the
+  SHA-256 of the bytes (a second `put` of the same bytes writes nothing), with `get`,
+  `open_stream`, `head`, `exists`, `delete` and `presign_get(ttl)` (S3 only). Keys are
+  `<prefix>/tenants/<tenant_id>/objects/sha256/<aa>/<hex>`, so tenants never share a namespace.
+  - Backends, chosen by `APIOME_DOCUMENT_STORE`: `db` (default; `apiome.document_store_blob`,
+    apiome-db **V402**, capped by `APIOME_DOCUMENT_STORE_DB_MAX_BYTES`), `s3` (boto3; AWS, MinIO,
+    Garage, Cloudflare R2, GCS interop; path-style or virtual-host; SSE-S3 / SSE-KMS; IAM role,
+    environment or static keys; multipart upload above 16 MiB) and `filesystem`
+    (`APIOME_DOCUMENT_STORE_PATH`).
+  - Settings: `APIOME_DOCUMENT_STORE`, `_BUCKET`, `_PREFIX` (the storage folder, default `apiome`),
+    `_PATH`, `_REGION`, `_ENDPOINT_URL`, `_ADDRESSING_STYLE`, `_SSE`, `_KMS_KEY_ID`,
+    `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY`, `_PRESIGN_TTL_SECONDS`, `_DB_MAX_BYTES` and
+    `_ALLOW_PRIVATE`. The endpoint passes the SSRF guard; `_ALLOW_PRIVATE=true` lifts the address
+    filter for this endpoint only (a store on a private network).
+  - Streams are hashed while spooled to a temporary file (8 MiB in memory at most). Provider
+    errors are raised as `DocumentStoreError` with the access key and secret key redacted.
+
+### Changed
+- **Export artifacts above the DB threshold are stored (COA-5.1, #7077):** the export artifact
+  store's object backend is implemented on the document store. An export larger than
+  `APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES` (and within `APIOME_EXPORT_ARTIFACT_MAX_BYTES`) now
+  succeeds when `APIOME_DOCUMENT_STORE` is `s3` or `filesystem`; its row records
+  `backend = object_store` and the object's `storage_uri`. With `db` it still fails with
+  `EXPORT_ARTIFACT_STORE_UNAVAILABLE`, and the message names the setting. Deleting or reaping an
+  artifact leaves the shared object in place until reference-counted cleanup (COA-5.10, #7086).
+- No endpoint or schema changed; the OpenAPI document changes in version only.
+
 ## [1.792.0] - 2026-11-21
 
 ### Added

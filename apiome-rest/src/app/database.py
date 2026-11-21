@@ -30951,6 +30951,72 @@ class Database:
         rows = self.execute_query(query, (ts, ts, ts, limit))
         return len(rows)
 
+    # ───────────────────── document store blobs (COA-5.1, #7077, V402) ─────────────────────
+    # The ``db`` backend of ``app.document_store``: immutable, content-addressed bytes keyed by
+    # (tenant, SHA-256). Rows are written once and never updated.
+
+    def put_document_store_blob(
+        self,
+        *,
+        tenant_id: str,
+        sha256: str,
+        size_bytes: int,
+        media_type: str,
+        content: bytes,
+    ) -> bool:
+        """Insert a blob unless the tenant already holds these bytes.
+
+        Args:
+            tenant_id: The owning tenant (the document store's tenant key segment).
+            sha256: Lower-case hex SHA-256 of ``content``.
+            size_bytes: Length of ``content``.
+            media_type: The object's media type.
+            content: The bytes.
+
+        Returns:
+            True when a row was inserted; False when the blob already existed.
+        """
+        query = """
+            INSERT INTO apiome.document_store_blob
+                (tenant_id, sha256, size_bytes, media_type, content)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (tenant_id, sha256) DO NOTHING
+            RETURNING sha256
+        """
+        rows = self.execute_query(
+            query, (tenant_id, sha256, size_bytes, media_type, psycopg2.Binary(content))
+        )
+        return bool(rows)
+
+    def head_document_store_blob(self, tenant_id: str, sha256: str) -> Optional[Dict[str, Any]]:
+        """Return ``{size_bytes, media_type, created_at}`` for a blob, or None — never the bytes."""
+        query = """
+            SELECT size_bytes, media_type, created_at
+            FROM apiome.document_store_blob
+            WHERE tenant_id = %s AND sha256 = %s
+        """
+        rows = self.execute_query(query, (tenant_id, sha256))
+        return rows[0] if rows else None
+
+    def get_document_store_blob(self, tenant_id: str, sha256: str) -> Optional[bytes]:
+        """Return a blob's bytes, or None when the tenant holds no such blob."""
+        query = """
+            SELECT content
+            FROM apiome.document_store_blob
+            WHERE tenant_id = %s AND sha256 = %s
+        """
+        rows = self.execute_query(query, (tenant_id, sha256))
+        return bytes(rows[0]["content"]) if rows else None
+
+    def delete_document_store_blob(self, tenant_id: str, sha256: str) -> bool:
+        """Delete a tenant's blob; return True when a row was removed."""
+        query = """
+            DELETE FROM apiome.document_store_blob
+            WHERE tenant_id = %s AND sha256 = %s
+            RETURNING sha256
+        """
+        return bool(self.execute_query(query, (tenant_id, sha256)))
+
     # ------------------------------------------------------------------
     # Round-trip preservation envelope (DCW-2.1, private-suite#2352, V184)
     # ------------------------------------------------------------------

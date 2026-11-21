@@ -1,0 +1,171 @@
+---
+title: Document store
+description: "Keep large documents in an S3-compatible bucket, a directory or the database."
+sidebar_position: 2.5
+tags: [admin, operations, storage]
+---
+
+The **document store** is where the REST API keeps files that never change once written. It has
+three backends, and you choose one with environment variables on the `rest` service:
+
+| `APIOME_DOCUMENT_STORE` | Objects are kept in | Use it for |
+| --- | --- | --- |
+| `db` (default) | The Apiome database | Any installation without a bucket. Nothing to set up. |
+| `s3` | A bucket on an S3-compatible service | Production. Works with AWS S3, MinIO, Garage, Cloudflare R2 and Google Cloud Storage (interoperability mode). |
+| `filesystem` | A directory on the REST host | Development and single-node installations. |
+
+Today Apiome writes one kind of object to the store: **export downloads larger than the database
+threshold** (see [Large export downloads](#large-export-downloads)). With the default `db` backend
+nothing changes for an existing installation.
+
+## How objects are stored
+
+Every object is named by the SHA-256 of its bytes, inside the owning tenant's folder:
+
+```text
+<prefix>/tenants/<tenant>/objects/sha256/<first two hex digits>/<sha-256>
+```
+
+- **The same bytes are stored once.** Writing a file the tenant already holds writes nothing.
+- **Tenants never share a folder.** The same file in two tenants is two objects.
+- **Objects are never changed**, only added and removed.
+
+## Choose the storage folder
+
+`APIOME_DOCUMENT_STORE_PREFIX` is the folder all Apiome objects are written under. It applies to
+every backend, and defaults to `apiome`:
+
+```bash
+APIOME_DOCUMENT_STORE_PREFIX=apiome                  # s3://<bucket>/apiome/tenants/…
+APIOME_DOCUMENT_STORE_PREFIX=teams/platform/apiome   # a nested folder
+APIOME_DOCUMENT_STORE_PREFIX=                        # the root of the bucket or directory
+```
+
+Use it to share one bucket with other applications, or to keep two Apiome installations apart in
+the same bucket. Leading and trailing slashes are ignored; `.` and `..` segments are refused.
+
+:::warning
+Changing the prefix does not move objects. Objects written under the old folder are no longer
+found, so copy them to the new folder before you restart the REST API.
+:::
+
+## Use an S3-compatible bucket
+
+1. Create the bucket. Apiome does not create it.
+2. Give the key (or IAM role) permission to read, write and delete objects under the prefix:
+   `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListBucket` on the bucket.
+3. Set the variables in `apiome-rest/.env` (or on the `rest` service in Compose) and restart.
+
+### Garage
+
+```bash
+APIOME_DOCUMENT_STORE=s3
+APIOME_DOCUMENT_STORE_BUCKET=apiome
+APIOME_DOCUMENT_STORE_PREFIX=apiome
+APIOME_DOCUMENT_STORE_ENDPOINT_URL=http://garage.internal:3900
+APIOME_DOCUMENT_STORE_REGION=garage
+APIOME_DOCUMENT_STORE_ADDRESSING_STYLE=path
+APIOME_DOCUMENT_STORE_ACCESS_KEY_ID=GK…
+APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY=…
+APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=true   # only when Garage is on a private network
+```
+
+`REGION` must match `s3_region` in Garage's configuration (`garage` unless you changed it). Leave
+`APIOME_DOCUMENT_STORE_SSE` empty: Garage does not offer SSE-S3 or SSE-KMS.
+
+### MinIO and Cloudflare R2
+
+The same variables as Garage, with the service's endpoint. For MinIO use
+`ADDRESSING_STYLE=path` and `REGION=us-east-1` unless you configured another. For R2 use
+`ENDPOINT_URL=https://<account id>.r2.cloudflarestorage.com` and `REGION=auto`.
+
+### AWS S3
+
+```bash
+APIOME_DOCUMENT_STORE=s3
+APIOME_DOCUMENT_STORE_BUCKET=acme-apiome-documents
+APIOME_DOCUMENT_STORE_REGION=eu-west-1
+APIOME_DOCUMENT_STORE_SSE=kms
+APIOME_DOCUMENT_STORE_KMS_KEY_ID=alias/apiome-documents
+```
+
+Leave the two key variables unset to use the instance's IAM role or the standard `AWS_*`
+environment variables. Set both to use a static key pair.
+
+## Use a directory
+
+```bash
+APIOME_DOCUMENT_STORE=filesystem
+APIOME_DOCUMENT_STORE_PATH=/var/lib/apiome/documents
+```
+
+The directory is created on the first write. In Docker, mount a volume at that path, or the
+objects are lost when the container is replaced. Every REST instance must see the same directory,
+so use `s3` when you run more than one.
+
+## Settings
+
+All of these are set on the `rest` service.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `APIOME_DOCUMENT_STORE` | `db` | The backend: `db`, `s3` or `filesystem`. |
+| `APIOME_DOCUMENT_STORE_PREFIX` | `apiome` | The folder all objects are written under. Empty for the root. |
+| `APIOME_DOCUMENT_STORE_PATH` | — | `filesystem`: the storage directory. Required. |
+| `APIOME_DOCUMENT_STORE_BUCKET` | — | `s3`: the bucket. Required. |
+| `APIOME_DOCUMENT_STORE_REGION` | `us-east-1` | `s3`: the signing region. |
+| `APIOME_DOCUMENT_STORE_ENDPOINT_URL` | — | `s3`: the service URL for anything other than AWS. |
+| `APIOME_DOCUMENT_STORE_ADDRESSING_STYLE` | `auto` | `s3`: `path` (`https://host/bucket/key`), `virtual` (`https://bucket.host/key`) or `auto`. |
+| `APIOME_DOCUMENT_STORE_SSE` | — | `s3`: encryption requested on each write. `s3` (SSE-S3) or `kms` (SSE-KMS). Empty uses the bucket's default. |
+| `APIOME_DOCUMENT_STORE_KMS_KEY_ID` | — | `s3` with `SSE=kms`: the key. Empty uses the bucket's default KMS key. |
+| `APIOME_DOCUMENT_STORE_ACCESS_KEY_ID` | — | `s3`: a static access key. Set it together with the secret key, or set neither. |
+| `APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY` | — | `s3`: the secret key. Keep it in your secret manager. |
+| `APIOME_DOCUMENT_STORE_PRESIGN_TTL_SECONDS` | `300` | `s3`: how long a presigned download link stays valid (1 second to 7 days). |
+| `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` | `33554432` | `db`: the largest single object accepted (32 MiB). |
+| `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE` | `false` | `s3`: allow an endpoint on a private or loopback address. |
+
+### Endpoints on a private network
+
+The endpoint URL passes the same check as any URL the REST API calls: it must be `http` or
+`https`, carry no user name or password, and resolve to public addresses. A store on your own
+network (`http://garage.internal:3900`, `http://127.0.0.1:9000`) is refused until you set
+`APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=true`. That setting applies to the document store endpoint
+only. It does not let users import from private addresses, which `APIOME_SSRF_ALLOW_PRIVATE` would.
+
+## Large export downloads
+
+A finished export keeps its download for `APIOME_EXPORT_ARTIFACT_RETENTION_HOURS` (24 by default).
+
+| Download size | Where it is kept |
+| --- | --- |
+| Up to `APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES` (32 MiB) | The database |
+| Above that, up to `APIOME_EXPORT_ARTIFACT_MAX_BYTES` (32 MiB) | The document store (`s3` or `filesystem`) |
+| Above `APIOME_EXPORT_ARTIFACT_MAX_BYTES` | Nowhere: the export fails with `EXPORT_ARTIFACT_TOO_LARGE` |
+
+The two limits are equal by default, so every download goes to the database. To allow larger
+exports, configure `s3` or `filesystem` and raise `APIOME_EXPORT_ARTIFACT_MAX_BYTES`. To move
+large downloads out of the database, lower `APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES`.
+
+With `APIOME_DOCUMENT_STORE=db`, an export above the database limit fails with
+`EXPORT_ARTIFACT_STORE_UNAVAILABLE`.
+
+When a download expires it can no longer be fetched, but its object stays in the bucket or
+directory. Apiome does not yet remove unused objects, so remove them yourself if space matters.
+
+## Troubleshooting
+
+Errors name the bucket and the provider's error code. Access keys and secret keys are never
+written to an error or a log.
+
+| Message | Fix |
+| --- | --- |
+| `APIOME_DOCUMENT_STORE=s3 needs APIOME_DOCUMENT_STORE_BUCKET` | Set the bucket. |
+| `APIOME_DOCUMENT_STORE_ENDPOINT_URL is refused` | The endpoint is on a private address. Set `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=true`. |
+| `… (NoSuchBucket: …)` | Create the bucket, or check the endpoint and region. |
+| `… (AccessDenied: …)` | Grant the key read, write and delete on the prefix. |
+| `… (SignatureDoesNotMatch: …)` | Check the secret key, and that `REGION` matches the service. |
+| A host name like `bucket.host` does not resolve | Set `APIOME_DOCUMENT_STORE_ADDRESSING_STYLE=path`. |
+
+## Where next
+
+- [Operating Apiome](./operating-apiome.mdx) — the environment reference and the runbooks.

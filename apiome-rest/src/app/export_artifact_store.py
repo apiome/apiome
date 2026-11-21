@@ -1,12 +1,20 @@
-"""Shared export artifact store — driver interface + DB/object-store backends (IXH-6.1, #5120).
+"""Shared export artifact store — driver interface + DB/object-store backends (IXH-6.1, #5120;
+object-store backend on the document store SPI: COA-5.1, #7077).
 
 V158 shared export *status* via ``apiome.async_job``, but download bytes stayed on the owning
 process. This module persists the delivery payload (single-file UTF-8 or multi-file zip) behind
 a backend interface so any instance can serve ``GET …/jobs/{id}/download``.
 
 * **DB backend** (shipped) — size-bounded BYTEA on ``apiome.export_job_artifact``.
-* **Object-store backend** (stub) — selected when size exceeds the DB threshold but is still
-  under the hard cap; raises a clear configuration error until a real store is wired.
+* **Object-store backend** — selected when size exceeds the DB threshold but is still under
+  the hard cap. The bytes go to the document store (:mod:`app.document_store`, ``s3`` or
+  ``filesystem``) under the tenant's content-addressed key; the DB row keeps the metadata and
+  the object's locator (``storage_uri``). With ``APIOME_DOCUMENT_STORE=db`` there is no object
+  store, and such an artifact fails with a clear configuration error.
+
+Objects are immutable and content-addressed, so two jobs that emit the same bytes share one
+object. Deleting or reaping an artifact therefore clears its row only; unreferenced objects are
+collected by the document store's reference-counted cleanup (COA-5.10, #7086).
 
 The owning instance may keep an in-memory :class:`~app.emitter.EmitResult` as a fast path;
 the shared store is authoritative for non-owners and for content-hash integrity headers.
@@ -17,11 +25,13 @@ from __future__ import annotations
 import base64
 import hashlib
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Optional, Protocol, runtime_checkable
 
 from .config import settings
+from .document_store import BACKEND_DB as DOCUMENT_BACKEND_DB
+from .document_store import DocumentNotFound, DocumentStore, get_document_store, parse_object_uri
 
 BACKEND_DB = "db"
 BACKEND_OBJECT_STORE = "object_store"
@@ -43,14 +53,16 @@ class ExportArtifactTooLarge(Exception):
 
 
 class ExportArtifactStoreNotConfigured(Exception):
-    """Raised when the object-store backend is selected but not implemented/configured."""
+    """Raised when an artifact needs the object store but ``APIOME_DOCUMENT_STORE`` is ``db``."""
 
     def __init__(self, size_bytes: int, db_max_bytes: int) -> None:
         self.size_bytes = size_bytes
         self.db_max_bytes = db_max_bytes
         super().__init__(
             f"Export artifact is {size_bytes} bytes, above the DB store limit of "
-            f"{db_max_bytes} bytes, but no object-store backend is configured."
+            f"{db_max_bytes} bytes, but no object-store backend is configured. Set "
+            f"APIOME_DOCUMENT_STORE to s3 or filesystem, or raise "
+            f"APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES."
         )
 
 
@@ -135,8 +147,12 @@ def expires_at_from_ms(expires_at_ms: Optional[int]) -> Optional[datetime]:
 class ExportArtifactBackend(Protocol):
     """Storage driver for shared export download payloads."""
 
-    def put(self, record: ExportArtifactRecord) -> None:
-        """Persist ``record`` (including content for the DB backend)."""
+    def put(self, record: ExportArtifactRecord) -> Optional[ExportArtifactRecord]:
+        """Persist ``record`` (its ``content`` holds the bytes).
+
+        Returns:
+            The record as stored (backend, ``storage_uri``), or ``None`` for "as given".
+        """
 
     def get(self, tenant_slug: str, job_id: str) -> ExportArtifactRecord:
         """Load a tenant-scoped artifact; raise NotFound / Expired as appropriate."""
@@ -167,14 +183,7 @@ class DbExportArtifactBackend:
         )
 
     def get(self, tenant_slug: str, job_id: str) -> ExportArtifactRecord:
-        from .database import db
-
-        row = db.get_export_job_artifact(job_id, tenant_slug)
-        if row is None:
-            raise ExportArtifactNotFound(job_id)
-        record = _row_to_record(row)
-        if record.is_expired:
-            raise ExportArtifactExpired(job_id)
+        record = _load_live_record(tenant_slug, job_id)
         if record.content is None:
             raise ExportArtifactExpired(job_id)
         return record
@@ -186,16 +195,75 @@ class DbExportArtifactBackend:
 
 
 class ObjectStoreExportArtifactBackend:
-    """Stub object-store backend — selected for large artifacts until a real store lands."""
+    """Large artifacts in the document store; metadata and the locator in the DB row.
 
-    def put(self, record: ExportArtifactRecord) -> None:
-        raise ExportArtifactStoreNotConfigured(record.size_bytes, settings.export_artifact_db_max_bytes)
+    The tenant slug is the document store tenant segment, matching the artifact table's own
+    tenant scope.
+    """
+
+    def __init__(self, document_store: Optional[DocumentStore] = None) -> None:
+        """
+        Args:
+            document_store: The store to use; the process-wide one when omitted (looked up on
+                every call, so a reconfigured store is picked up).
+        """
+        self._document_store = document_store
+
+    def _store(self, size_bytes: int = 0) -> DocumentStore:
+        """Return the object store, or raise when only the ``db`` document store is configured."""
+        store = self._document_store or get_document_store()
+        if store.backend == DOCUMENT_BACKEND_DB:
+            raise ExportArtifactStoreNotConfigured(size_bytes, settings.export_artifact_db_max_bytes)
+        return store
+
+    def put(self, record: ExportArtifactRecord) -> ExportArtifactRecord:
+        """Write the bytes to the document store, then the metadata row that points at them."""
+        from .database import db
+
+        if record.content is None:
+            raise ValueError("Object-store backend requires content bytes")
+        ref = self._store(record.size_bytes).put(record.tenant_slug, record.content, record.media_type)
+        db.upsert_export_job_artifact(
+            job_id=record.job_id,
+            tenant_slug=record.tenant_slug,
+            content_sha256=record.content_sha256,
+            size_bytes=record.size_bytes,
+            media_type=record.media_type,
+            filename=record.filename,
+            backend=BACKEND_OBJECT_STORE,
+            content=None,
+            storage_uri=ref.uri,
+            expires_at=record.expires_at,
+        )
+        return replace(record, backend=BACKEND_OBJECT_STORE, content=None, storage_uri=ref.uri)
+
+    def hydrate(self, record: ExportArtifactRecord) -> ExportArtifactRecord:
+        """Return ``record`` with its bytes read back from the document store.
+
+        Raises:
+            ExportArtifactExpired: if the row no longer names an object, the object is gone, or
+                the stored bytes no longer match the recorded digest.
+        """
+        if not record.storage_uri:
+            raise ExportArtifactExpired(record.job_id)
+        try:
+            tenant_id, sha256 = parse_object_uri(record.storage_uri)
+            content = self._store().get(tenant_id, sha256)
+        except (DocumentNotFound, ValueError):
+            raise ExportArtifactExpired(record.job_id) from None
+        if tenant_id != record.tenant_slug or content_sha256_hex(content) != record.content_sha256:
+            raise ExportArtifactExpired(record.job_id)
+        return replace(record, content=content)
 
     def get(self, tenant_slug: str, job_id: str) -> ExportArtifactRecord:
-        raise ExportArtifactStoreNotConfigured(0, settings.export_artifact_db_max_bytes)
+        """Load a tenant-scoped artifact and its bytes; raise NotFound / Expired as appropriate."""
+        return self.hydrate(_load_live_record(tenant_slug, job_id))
 
     def delete(self, tenant_slug: str, job_id: str) -> bool:
-        raise ExportArtifactStoreNotConfigured(0, settings.export_artifact_db_max_bytes)
+        """Delete the artifact row. The shared, content-addressed object is left to COA-5.10."""
+        from .database import db
+
+        return db.delete_export_job_artifact(job_id, tenant_slug)
 
 
 class ExportArtifactStore(ABC):
@@ -224,7 +292,7 @@ class ExportArtifactStore(ABC):
 
 
 class DefaultExportArtifactStore(ExportArtifactStore):
-    """Production facade over the DB and (stub) object-store backends."""
+    """Production facade over the DB and document-store-backed object-store backends."""
 
     def __init__(
         self,
@@ -267,18 +335,28 @@ class DefaultExportArtifactStore(ExportArtifactStore):
             media_type=media_type,
             filename=filename,
             backend=backend_name,
-            content=body if backend_name == BACKEND_DB else None,
+            content=body,
             storage_uri=None,
             expires_at=expires_at,
             reaped_at=None,
         )
-        backend.put(record)
-        return record
+        stored = backend.put(record)
+        if stored is not None:
+            return stored
+        # A backend that returns nothing stored the record as given; keep bytes off the
+        # returned record for an object-store backend, as its row holds none.
+        return record if backend_name == BACKEND_DB else replace(record, content=None)
 
     def get(self, tenant_slug: str, job_id: str) -> ExportArtifactRecord:
-        # Reads always go through the DB metadata row (even object-store backends record
-        # metadata there). The DB backend.get enforces tenant scope + expiry.
-        return self._db.get(tenant_slug, job_id)
+        # Every artifact has a DB metadata row; it says which backend holds the bytes. The
+        # row read enforces tenant scope + expiry before any object is fetched.
+        record = _load_live_record(tenant_slug, job_id)
+        if record.backend == BACKEND_OBJECT_STORE:
+            hydrate = getattr(self._object_store, "hydrate", None)
+            return hydrate(record) if hydrate else self._object_store.get(tenant_slug, job_id)
+        if record.content is None:
+            raise ExportArtifactExpired(job_id)
+        return record
 
     def delete(self, tenant_slug: str, job_id: str) -> bool:
         return self._db.delete(tenant_slug, job_id)
@@ -324,6 +402,31 @@ def put_export_artifact(
 def get_export_artifact(tenant_slug: str, job_id: str) -> ExportArtifactRecord:
     """Load a tenant-scoped shared artifact (raises NotFound / Expired)."""
     return get_export_artifact_store().get(tenant_slug, job_id)
+
+
+def _load_live_record(tenant_slug: str, job_id: str) -> ExportArtifactRecord:
+    """Read an artifact's metadata row, scoped to the tenant.
+
+    Args:
+        tenant_slug: The tenant asking; another tenant's job reads as not found.
+        job_id: The export job.
+
+    Returns:
+        The record (``content`` set only for the DB backend).
+
+    Raises:
+        ExportArtifactNotFound: if the tenant has no artifact row for the job.
+        ExportArtifactExpired: if the retention window has elapsed or the row was reaped.
+    """
+    from .database import db
+
+    row = db.get_export_job_artifact(job_id, tenant_slug)
+    if row is None:
+        raise ExportArtifactNotFound(job_id)
+    record = _row_to_record(row)
+    if record.is_expired:
+        raise ExportArtifactExpired(job_id)
+    return record
 
 
 def _row_to_record(row: dict) -> ExportArtifactRecord:

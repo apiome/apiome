@@ -2037,6 +2037,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['docker compose', 'deploy', 'backup', 'disaster recovery', '.env', 'operator'],
   },
   {
+    id: 'document-store',
+    title: 'Document store',
+    summary:
+      'Keep large files such as big export downloads in an S3-compatible bucket, a directory or the database, and choose the folder they are written under.',
+    page: 'apiome-docs/docs/admin/document-store.mdx',
+    section: 'reference',
+    keywords: ['s3', 'bucket', 'garage', 'minio', 'r2', 'object storage', 'prefix', 'filesystem'],
+  },
+  {
     id: 'agent-telemetry',
     title: 'Agent telemetry',
     summary: 'Export agent tool calls as OpenTelemetry traces and metrics over OTLP.',
