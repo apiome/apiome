@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .docs_site import guide_page, site_url
+from .lint_rule_aliases import canonical_rule_id
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, docs_anchor_for
 from .mcp_owasp import CATALOG_REFERENCE as OWASP_REFERENCE
 
@@ -167,17 +168,175 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/arazzo-async-source-before-1-1",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
-    "arzzo.unresolvable-operation-ref": _meta(
-        "arzzo.unresolvable-operation-ref",
+    "arazzo.unresolvable-operation-ref": _meta(
+        "arazzo.unresolvable-operation-ref",
         ENGINE_SCHEMA,
         rationale="Step operationRef must point at a declared sourceDescription.",
-        reference=_SCHEMA_REF + "#arzzo-unresolvable-operation-ref",
+        reference=_SCHEMA_REF + "#arazzo-unresolvable-operation-ref",
         remediation="Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a "
         "declared source, or fix the sourceDescription name.",
         false_positive_guidance="External HTTP operationRef targets are out of scope for "
-        "static resolution — prefer embedded sources for gateable workflows.",
+        "static resolution — prefer embedded sources for gateable workflows. Shipped as "
+        "`arzzo.unresolvable-operation-ref`, which remains an alias.",
         scan_modes=("lint",),
-        fixture_id="catalog/arzzo-unresolvable-operation-ref",
+        fixture_id="catalog/arazzo-unresolvable-operation-ref",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.runtime-expression-invalid": _meta(
+        "arazzo.runtime-expression-invalid",
+        ENGINE_SCHEMA,
+        rationale="Every runtime expression must parse against the Arazzo grammar.",
+        reference=_SCHEMA_REF + "#arazzo-runtime-expression-invalid",
+        remediation="Fix the expression at the reported position: start from a defined root "
+        "($url, $method, $statusCode, $self, $request, $response, $message, $inputs, $outputs, "
+        "$steps, $workflows, $sourceDescriptions, $components) and use `body#/pointer` for "
+        "body reads.",
+        false_positive_guidance="Only false for a runner-specific root (for example "
+        "`$specmatic.auth`) that no Arazzo runner but its own understands; keep such values "
+        "out of gateable workflows or waive the finding.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-runtime-expression-invalid",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.success-criteria-context-required": _meta(
+        "arazzo.success-criteria-context-required",
+        ENGINE_SCHEMA,
+        rationale="A jsonpath or regex success criterion must declare its context.",
+        reference=_SCHEMA_REF + "#arazzo-success-criteria-context-required",
+        remediation="Add `context:` naming the value the query applies to, for example "
+        "`$response.body` or `$response.header.Location`.",
+        false_positive_guidance="None known: without a context the condition has nothing to "
+        "run against.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-success-criteria-context-required",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.on-success-target-unresolved": _meta(
+        "arazzo.on-success-target-unresolved",
+        ENGINE_SCHEMA,
+        rationale="A success action's goto stepId or workflowId must resolve.",
+        reference=_SCHEMA_REF + "#arazzo-on-success-target-unresolved",
+        remediation="Point the goto at a stepId of the same workflow, a workflowId of this "
+        "document, or `$sourceDescriptions.<name>.<workflowId>` for a declared Arazzo source.",
+        false_positive_guidance="A workflow in another document is only checked for its source "
+        "name; the target workflow itself is not read.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-on-success-target-unresolved",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.on-failure-target-unresolved": _meta(
+        "arazzo.on-failure-target-unresolved",
+        ENGINE_SCHEMA,
+        rationale="A failure action's goto stepId or workflowId must resolve.",
+        reference=_SCHEMA_REF + "#arazzo-on-failure-target-unresolved",
+        remediation="Point the goto at a stepId of the same workflow, a workflowId of this "
+        "document, or `$sourceDescriptions.<name>.<workflowId>` for a declared Arazzo source.",
+        false_positive_guidance="A workflow in another document is only checked for its source "
+        "name; the target workflow itself is not read.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-on-failure-target-unresolved",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.component-ref-unresolved": _meta(
+        "arazzo.component-ref-unresolved",
+        ENGINE_SCHEMA,
+        rationale="Every $components reference must name a declared component.",
+        reference=_SCHEMA_REF + "#arazzo-component-ref-unresolved",
+        remediation="Declare the entry under `components.<kind>` (parameters, inputs, "
+        "successActions, failureActions) or fix the reference's spelling.",
+        false_positive_guidance="None known: an unresolved reference fails at run time.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-component-ref-unresolved",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.step-id-duplicate": _meta(
+        "arazzo.step-id-duplicate",
+        ENGINE_SCHEMA,
+        rationale="Step ids must be unique within their workflow.",
+        reference=_SCHEMA_REF + "#arazzo-step-id-duplicate",
+        remediation="Rename one of the steps and update the `$steps.<id>` expressions and goto "
+        "actions that address it.",
+        false_positive_guidance="None known: the Arazzo specification requires unique step "
+        "ids.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-step-id-duplicate",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.workflow-id-duplicate": _meta(
+        "arazzo.workflow-id-duplicate",
+        ENGINE_SCHEMA,
+        rationale="Workflow ids must be unique within the document.",
+        reference=_SCHEMA_REF + "#arazzo-workflow-id-duplicate",
+        remediation="Rename one of the workflows and update the dependsOn entries, goto "
+        "actions and `$workflows.<id>` expressions that address it.",
+        false_positive_guidance="None known: the Arazzo specification requires unique workflow "
+        "ids.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-workflow-id-duplicate",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.depends-on-cycle": _meta(
+        "arazzo.depends-on-cycle",
+        ENGINE_SCHEMA,
+        rationale="Workflow dependsOn chains must not form a cycle.",
+        reference=_SCHEMA_REF + "#arazzo-depends-on-cycle",
+        remediation="Remove one dependsOn edge of the reported chain so the workflows can be "
+        "ordered.",
+        false_positive_guidance="Dependencies on workflows in other documents are not "
+        "followed, so a cycle that passes through another document is not reported.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-depends-on-cycle",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.parameter-in-invalid": _meta(
+        "arazzo.parameter-in-invalid",
+        ENGINE_SCHEMA,
+        rationale="A step parameter's `in` must be a location its source type defines.",
+        reference=_SCHEMA_REF + "#arazzo-parameter-in-invalid",
+        remediation="Set `in` to a location the step's source defines: path, query, header or "
+        "cookie for OpenAPI (plus querystring in 1.1); header or channel for an AsyncAPI step.",
+        false_positive_guidance="A step whose source has no declared `type` is treated as "
+        "OpenAPI; declare `type: asyncapi` on an event source.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-parameter-in-invalid",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.inputs-schema-invalid": _meta(
+        "arazzo.inputs-schema-invalid",
+        ENGINE_SCHEMA,
+        rationale="Workflow inputs must be a valid JSON Schema 2020-12 schema.",
+        reference=_SCHEMA_REF + "#arazzo-inputs-schema-invalid",
+        remediation="Fix the schema at the reported location so it validates against the JSON "
+        "Schema 2020-12 meta-schema.",
+        false_positive_guidance="None known: Arazzo defines inputs as JSON Schema 2020-12.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-inputs-schema-invalid",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.outputs-expression-invalid": _meta(
+        "arazzo.outputs-expression-invalid",
+        ENGINE_SCHEMA,
+        rationale="Every workflow and step output must be a valid runtime expression.",
+        reference=_SCHEMA_REF + "#arazzo-outputs-expression-invalid",
+        remediation="Make each output a runtime expression such as `$response.body#/id` or "
+        "`$steps.<id>.outputs.<name>` (from 1.1, a selector object with a valid context).",
+        false_positive_guidance="A literal output value is never read as data; if a constant "
+        "is intended, pass it as an input instead.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-outputs-expression-invalid",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "arazzo.source-description-type-invalid": _meta(
+        "arazzo.source-description-type-invalid",
+        ENGINE_SCHEMA,
+        rationale="A sourceDescription type must be one the declared Arazzo version defines.",
+        reference=_SCHEMA_REF + "#arazzo-source-description-type-invalid",
+        remediation="Use a type the declared version defines — openapi or arazzo for 1.0, plus "
+        "asyncapi for 1.1 — or drop `type`.",
+        false_positive_guidance="None known; an AsyncAPI source under a 1.0 marker is reported "
+        "by arazzo.async-source-before-1-1 instead.",
+        scan_modes=("lint",),
+        fixture_id="catalog/arazzo-source-description-type-invalid",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "thrift.unique-field-ids": _meta(
@@ -1347,7 +1506,8 @@ def enrich_rule_dict(payload: Mapping[str, Any], rule_id: Optional[str] = None) 
     its own remediation and fixture (FMT-5.5) is served from :func:`_pack_transparency`.
     """
     out = dict(payload)
-    rid = rule_id or str(out.get("rule_id") or out.get("ruleId") or "")
+    # A renamed rule's old id (GVM-4.4) is served the renamed rule's metadata.
+    rid = canonical_rule_id(rule_id or str(out.get("rule_id") or out.get("ruleId") or ""))
     meta = BLOCKING_RULES.get(rid)
     if meta is None:
         supplied = _pack_transparency().get(rid)

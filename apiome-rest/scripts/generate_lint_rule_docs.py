@@ -80,6 +80,9 @@ Every rule says who repairs its findings (**Fix owner**): the deterministic `eng
 the fix is wire-visible, what it may touch and whether it is applied by default — see
 [Auto-fix](./auto-fix.md).
 
+A rule that was renamed lists its earlier ids under **Aliases**: they keep matching the rule, so
+a style guide or waiver written against the old id goes on working.
+
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
 """
@@ -147,6 +150,13 @@ def render_schema(descriptors) -> str:
             lines.append(f"- **Category:** {d.category}")
             lines.append(f"- **Default severity:** {d.default_severity}")
             lines.append(f"- **Rationale:** {d.rationale}")
+            if d.aliases:
+                # GVM-4.4: a renamed rule's earlier ids still match it.
+                names = ", ".join(f"`{alias}`" for alias in d.aliases)
+                lines.append(
+                    f"- **Aliases:** {names} — an earlier id of this rule; style-guide rows, "
+                    "stored findings and waivers recorded under it still match"
+                )
             if d.owasp_ids:
                 lines.append(f"- **OWASP API:** {', '.join(d.owasp_ids)}")
             if d.weight is not None:

@@ -34,12 +34,77 @@
     "bare": null,
     "no_security": null
   },
+  "catalog/arazzo-compliant-1-1-workflow": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "catalog/arazzo-component-ref-unresolved": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
   "catalog/arazzo-dangling-operation-id": {
     "assessed": null,
     "bare": null,
     "no_security": null
   },
-  "catalog/arzzo-unresolvable-operation-ref": {
+  "catalog/arazzo-depends-on-cycle": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-inputs-schema-invalid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-on-failure-target-unresolved": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-on-success-target-unresolved": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-outputs-expression-invalid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-parameter-in-invalid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-runtime-expression-invalid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-source-description-type-invalid": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-step-id-duplicate": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-success-criteria-context-required": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-unresolvable-operation-ref": {
+    "assessed": null,
+    "bare": null,
+    "no_security": null
+  },
+  "catalog/arazzo-workflow-id-duplicate": {
     "assessed": null,
     "bare": null,
     "no_security": null
@@ -423,6 +488,71 @@
     "assessed": null,
     "bare": null,
     "no_security": null
+  },
+  "fix/naming.operation-id-camel-case": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/naming.schema-pascal-case": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/naming.tag-case-mismatch": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.boolean-exclusive-bound": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.duplicate-tag": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.empty-required": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.nullable-keyword": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.operation-missing-operation-id": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.operation-missing-tags": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.schema-example-keyword": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.server-url-scheme-case": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.server-url-trailing-slash": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/structure.unused-component": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
   },
   "mcp/safe/clean-surface": {
     "assessed": "gold",

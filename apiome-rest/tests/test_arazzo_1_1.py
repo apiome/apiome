@@ -439,7 +439,7 @@ def _arazzo_findings(model) -> List[str]:
     return sorted(
         finding.rule
         for finding in lint_arazzo_result(model).findings
-        if finding.rule.startswith("arazzo.") or finding.rule.startswith("arzzo.")
+        if finding.rule.startswith("arazzo.")
     )
 
 
@@ -468,7 +468,7 @@ def test_operation_ref_by_index_is_accepted(adapter: ArazzoImportSource) -> None
 
     document["workflows"][0]["steps"][2]["operationRef"] = "#/sourceDescriptions/9"
     findings = _arazzo_findings(adapter.normalize(document))
-    assert "arzzo.unresolvable-operation-ref" in findings
+    assert "arazzo.unresolvable-operation-ref" in findings
 
 
 def test_runtime_expression_operation_id_is_checked_against_its_own_source(

@@ -68,6 +68,7 @@ from .custom_rule_dsl import (
     validate_custom_definition,
 )
 from .database import db
+from .lint_rule_aliases import canonical_rule_id
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
     StyleGuideCreateRequest,
@@ -594,9 +595,14 @@ def _rules_view(guide: Dict[str, Any], rows: List[Dict[str, Any]]) -> StyleGuide
     skipped), otherwise the rule is disabled at its default severity. Rows for rule ids the
     registry no longer knows are ignored — they cannot render a category or rationale.
     """
-    overrides = {
-        row["rule_id"]: row for row in rows if row.get("custom_def") is None
-    }
+    # A row stored under a renamed rule's old id (GVM-4.4) is that rule's row; a row under the
+    # canonical id wins when both exist.
+    overrides: Dict[str, Any] = {}
+    for row in sorted(
+        (r for r in rows if r.get("custom_def") is None),
+        key=lambda r: canonical_rule_id(r["rule_id"]) == r["rule_id"],
+    ):
+        overrides[canonical_rule_id(row["rule_id"])] = row
     rules = []
     for d in builtin_rule_descriptors():
         row = overrides.get(d.rule_id)
@@ -661,18 +667,20 @@ async def put_style_guide_rules(
     registered = {d.rule_id for d in builtin_rule_descriptors()}
     seen: set = set()
     for rule in body.rules:
-        if rule.rule_id not in registered:
+        # A renamed rule's old id (GVM-4.4) is accepted and stored under the canonical id.
+        canonical = canonical_rule_id(rule.rule_id)
+        if canonical not in registered:
             raise HTTPException(
                 status_code=400, detail=f"Unknown built-in rule id: {rule.rule_id}"
             )
-        if rule.rule_id in seen:
+        if canonical in seen:
             raise HTTPException(
                 status_code=400, detail=f"Duplicate rule id in request: {rule.rule_id}"
             )
-        seen.add(rule.rule_id)
+        seen.add(canonical)
 
     rows = [
-        {"rule_id": r.rule_id, "enabled": r.enabled, "severity": r.severity}
+        {"rule_id": canonical_rule_id(r.rule_id), "enabled": r.enabled, "severity": r.severity}
         for r in body.rules
     ]
     _capture_before_edit(str(guide["id"]), tenant_id)

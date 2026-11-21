@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.616.0
+  version: 1.617.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -39544,21 +39544,24 @@ paths:
       description: 'List every registered built-in lint rule (GOV-1.2, #4428).
 
 
-        Returns the full rule-catalog registry: each rule''s stable id (the exact string
-        lint
+        Returns the full rule-catalog registry: each rule''s stable id (the exact
+        string lint
 
-        findings carry in their ``rule`` field), its pack, category, default severity, one-line
+        findings carry in their ``rule`` field), its pack, category, default severity,
+        one-line
 
-        rationale, and a docs anchor into the rule reference page. Sorted by rule id, so
-        the
+        rationale, and a docs anchor into the rule reference page. Sorted by rule
+        id, so the
 
-        payload is deterministic. The catalog is the same for every tenant — style guides
+        payload is deterministic. The catalog is the same for every tenant — style
+        guides
 
-        (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top
-        of it.
+        (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on
+        top of it.
 
 
-        Every rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)
+        Every rule also publishes the OWASP API Security Top 10 categories it cites
+        (``owasp``)
 
         and, for ``security``-category rules, the ``weight`` the security score applies
         to its
@@ -39566,15 +39569,21 @@ paths:
         severity penalty (ASP-1.3, #5921) — the weights are public, not a server secret.
 
 
-        Every rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and
-        for a
+        Every rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``,
+        and for a
 
         fixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,
 
-        ``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who
-        repairs
+        ``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says
+        who repairs
 
-        the rule''s findings: the deterministic ``engine``, the ``agent`` or a ``human``.'
+        the rule''s findings: the deterministic ``engine``, the ``agent`` or a ``human``.
+
+
+        A renamed rule lists its earlier ids in ``aliases`` (GVM-4.4, #5879): the
+        Arazzo
+
+        ``arazzo.unresolvable-operation-ref`` still answers to ``arzzo.unresolvable-operation-ref``.'
       operationId: list_lint_rules_v1_lint_rules_get
       parameters:
       - name: authorization
@@ -39975,13 +39984,13 @@ paths:
       tags:
       - lint
       summary: Get Lint Fix Plan
-      description: "Plan the deterministic lint fixes of a stored revision.\n\nThe plan\
-        \ is computed over the revision's OpenAPI document — the reconstruction its\
-        \ stored\nlint report was computed from — under the project's style guide. The\
-        \ stored report's\nfingerprint is echoed with whether it still matches the document,\
-        \ so a reader can tell the\nplan and the report describe the same content.\n\
-        \nRaises:\n    HTTPException: 404 unknown revision; 422 non-OpenAPI revision\
-        \ or invalid options."
+      description: "Plan the deterministic lint fixes of a stored revision.\n\nThe\
+        \ plan is computed over the revision's OpenAPI document — the reconstruction\
+        \ its stored\nlint report was computed from — under the project's style guide.\
+        \ The stored report's\nfingerprint is echoed with whether it still matches\
+        \ the document, so a reader can tell the\nplan and the report describe the\
+        \ same content.\n\nRaises:\n    HTTPException: 404 unknown revision; 422 non-OpenAPI\
+        \ revision or invalid options."
       operationId: get_lint_fix_plan_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_get
       parameters:
       - name: tenant_slug
@@ -40052,7 +40061,8 @@ paths:
             {Path}.'
           default: '{method}{Path}'
           title: Operationidtemplate
-        description: 'Template of generated operationIds: {method} {Method} {path} {Path}.'
+        description: 'Template of generated operationIds: {method} {Method} {path}
+          {Path}.'
       - name: authorization
         in: header
         required: false
@@ -40064,8 +40074,8 @@ paths:
             description: Get Lint Fix Planauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -40109,17 +40119,18 @@ paths:
       tags:
       - lint
       summary: Apply Lint Fixes
-      description: "Apply lint fixes to an unpublished revision by creating a new ``lint-fix``\
-        \ revision.\n\nThe revision itself is never changed. The plan is rebuilt with\
-        \ the request's options, the\nnamed fixes are composed onto the document, and\
-        \ the result is imported as a new revision of\nthe same project (through the\
-        \ import quality gate and pipeline). The new revision is\nre-linted and its\
-        \ report stored; its ``source: lint-fix`` provenance and the\n``version.lint_fix_applied``\
-        \ audit row are written in one transaction.\n\nRaises:\n    HTTPException: 404\
-        \ unknown revision; 409 published revision, ``version-exists`` or\n        ``QUALITY_POLICY_BLOCKED``;\
-        \ 422 for a breaking, conflicting, excluded or unknown fix,\n        nothing\
-        \ to apply, invalid options, or a failed import; 500 when the record cannot\
-        \ be\n        written (the new revision is withdrawn)."
+      description: "Apply lint fixes to an unpublished revision by creating a new\
+        \ ``lint-fix`` revision.\n\nThe revision itself is never changed. The plan\
+        \ is rebuilt with the request's options, the\nnamed fixes are composed onto\
+        \ the document, and the result is imported as a new revision of\nthe same\
+        \ project (through the import quality gate and pipeline). The new revision\
+        \ is\nre-linted and its report stored; its ``source: lint-fix`` provenance\
+        \ and the\n``version.lint_fix_applied`` audit row are written in one transaction.\n\
+        \nRaises:\n    HTTPException: 404 unknown revision; 409 published revision,\
+        \ ``version-exists`` or\n        ``QUALITY_POLICY_BLOCKED``; 422 for a breaking,\
+        \ conflicting, excluded or unknown fix,\n        nothing to apply, invalid\
+        \ options, or a failed import; 500 when the record cannot be\n        written\
+        \ (the new revision is withdrawn)."
       operationId: apply_lint_fixes_v1_versions__tenant_slug___project_id___version_record_id__lint_fixes_apply_post
       parameters:
       - name: tenant_slug
@@ -40157,8 +40168,8 @@ paths:
             description: Apply Lint Fixesauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -40202,8 +40213,8 @@ paths:
       description: "Plan the deterministic lint fixes of a posted document (file mode).\n\
         \nStateless: nothing is stored. The tenant's style guide decides which rules\
         \ are on, as it does\nfor a stored revision of a project without its own guide.\n\
-        \nRaises:\n    HTTPException: 413 over the size limit; 422 not YAML/JSON, not\
-        \ OpenAPI 3.x, or invalid options."
+        \nRaises:\n    HTTPException: 413 over the size limit; 422 not YAML/JSON,\
+        \ not OpenAPI 3.x, or invalid options."
       operationId: plan_lint_fixes_for_document_v1_lint_fixes_plan_post
       parameters:
       - name: tenant_slug
@@ -40225,8 +40236,8 @@ paths:
             description: Plan Lint Fixes For Documentauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -134855,8 +134866,8 @@ components:
           - type: 'null'
             description: Response payload for lint fix plan.
           title: Reportfingerprint
-          description: Fingerprint of the revision's stored lint report (revision plans
-            only).
+          description: Fingerprint of the revision's stored lint report (revision
+            plans only).
         reportCurrent:
           anyOf:
           - type: boolean
@@ -134864,8 +134875,8 @@ components:
           - type: 'null'
             description: Response payload for lint fix plan.
           title: Reportcurrent
-          description: Whether the stored report still matches the planned document (revision
-            plans only).
+          description: Whether the stored report still matches the planned document
+            (revision plans only).
       type: object
       required:
       - documentFingerprint
@@ -135651,8 +135662,8 @@ components:
         fixable:
           type: boolean
           title: Fixable
-          description: 'Whether the rule carries a deterministic fix (GVM-3.1): RFC 6902 operations
-            computed from the document alone, with no model involved.'
+          description: 'Whether the rule carries a deterministic fix (GVM-3.1): RFC
+            6902 operations computed from the document alone, with no model involved.'
           default: false
           example: false
         fixClass:
@@ -135662,8 +135673,8 @@ components:
           - type: 'null'
             description: Response payload for lint rule.
           title: Fixclass
-          description: 'What kind of edit the fix makes: structural, removal, fill-in or rename.
-            Null when the rule is not fixable.'
+          description: 'What kind of edit the fix makes: structural, removal, fill-in
+            or rename. Null when the rule is not fixable.'
         wireVisible:
           anyOf:
           - type: boolean
@@ -135671,8 +135682,8 @@ components:
           - type: 'null'
             description: Response payload for lint rule.
           title: Wirevisible
-          description: Whether applying the fix changes what clients see on the wire or in
-            generated code. Null when the rule is not fixable.
+          description: Whether applying the fix changes what clients see on the wire
+            or in generated code. Null when the rule is not fixable.
         fixSummary:
           anyOf:
           - type: string
@@ -135680,7 +135691,8 @@ components:
           - type: 'null'
             description: Response payload for lint rule.
           title: Fixsummary
-          description: One line saying what the fix does. Null when the rule is not fixable.
+          description: One line saying what the fix does. Null when the rule is not
+            fixable.
         fixScope:
           anyOf:
           - type: string
@@ -135688,9 +135700,9 @@ components:
           - type: 'null'
             description: Response payload for lint rule.
           title: Fixscope
-          description: 'What the fix may touch: finding (the finding''s JSON Pointer and its
-            descendants) or document. The engine refuses operations outside it. Null when
-            not fixable.'
+          description: 'What the fix may touch: finding (the finding''s JSON Pointer
+            and its descendants) or document. The engine refuses operations outside
+            it. Null when not fixable.'
         fixDefault:
           anyOf:
           - type: boolean
@@ -135698,16 +135710,25 @@ components:
           - type: 'null'
             description: Response payload for lint rule.
           title: Fixdefault
-          description: Whether the fix is applied without an explicit opt-in. False for fixes
-            that must be enabled by name. Null when the rule is not fixable.
+          description: Whether the fix is applied without an explicit opt-in. False
+            for fixes that must be enabled by name. Null when the rule is not fixable.
         fixOwner:
           type: string
           title: Fixowner
-          description: 'Who repairs this rule''s findings: engine (the deterministic fix),
-            agent (documentation, examples and security findings, whose repair invents meaning)
-            or human.'
+          description: 'Who repairs this rule''s findings: engine (the deterministic
+            fix), agent (documentation, examples and security findings, whose repair
+            invents meaning) or human.'
           default: human
           example: example
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+          description: 'Earlier ids of this rule that still match it (GVM-4.4, #5879).
+            A style-guide row, stored finding or waiver recorded under an alias governs
+            this rule; findings are emitted under rule_id only.'
+          maxItems: 1000
       type: object
       required:
       - ruleId
@@ -186132,8 +186153,8 @@ components:
 
         ``invalid`` blocks delivery, ``skipped`` warns but does not block,
 
-        ``not_applicable`` means no validator exists for the format, so the artifact was
-        not validated.'
+        ``not_applicable`` means no validator exists for the format, so the artifact
+        was not validated.'
     ValueProvenance:
       properties:
         pointer:

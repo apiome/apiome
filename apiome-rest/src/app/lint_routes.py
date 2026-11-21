@@ -118,6 +118,9 @@ async def list_lint_rules(
     fixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,
     ``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs
     the rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.
+
+    A renamed rule lists its earlier ids in ``aliases`` (GVM-4.4, #5879): the Arazzo
+    ``arazzo.unresolvable-operation-ref`` still answers to ``arzzo.unresolvable-operation-ref``.
     """
     descriptors = builtin_rule_descriptors()
     rules = []
@@ -145,6 +148,7 @@ async def list_lint_rules(
                 fix_scope=d.fix_scope,
                 fix_default=d.fix_default,
                 fix_owner=d.fix_owner,
+                aliases=list(d.aliases),
             )
         )
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)

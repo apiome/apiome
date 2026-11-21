@@ -14,6 +14,19 @@ flags:
 * **async sources before 1.1** — a ``1.0.x`` document declares an AsyncAPI
   ``sourceDescription``, which only Arazzo 1.1 admits.
 
+**Arazzo 1.1 structural rules (GVM-4.4, #5879).** Twelve more rules, implemented in
+:mod:`app.arazzo_structure_rules`: runtime-expression grammar (with the position it stops
+parsing, :mod:`app.arazzo_expression_grammar`), ``jsonpath``/``regex`` criteria without
+``context``, unresolved ``goto`` targets of success and failure actions, unresolved
+``$components.*`` references, duplicate step and workflow ids, ``dependsOn`` cycles,
+parameter ``in`` per the step's source type, inputs that are not JSON Schema 2020-12, output
+values that are not runtime expressions, and source-description types the declared version
+does not define (``async-source-before-1-1`` stays as that rule's AsyncAPI-under-1.0 case).
+
+The operationRef rule shipped as ``arzzo.unresolvable-operation-ref``; it is emitted as
+``arazzo.unresolvable-operation-ref`` and the old id is an alias
+(:mod:`app.lint_rule_aliases`) that style guides, stored findings and waivers still match.
+
 **Arazzo 1.1 reference forms (FMT-3.1).** Reference checking runs through
 :func:`app.arazzo_spec.resolve_step_target`, so the three spellings a 1.1 document uses —
 the ``$sourceDescriptions.<name>.<operationId>`` runtime expression, an ``operationRef``
@@ -34,8 +47,22 @@ from .arazzo_spec import (
     parse_arazzo_version,
     resolve_step_target,
     source_description_names,
-    source_description_types,
     supports_async_sources,
+)
+from .arazzo_structure_rules import (
+    check_component_ref_unresolved,
+    check_depends_on_cycle,
+    check_inputs_schema_invalid,
+    check_on_failure_target_unresolved,
+    check_on_success_target_unresolved,
+    check_outputs_expression_invalid,
+    check_parameter_in_invalid,
+    check_runtime_expression_invalid,
+    check_source_description_type_invalid,
+    check_step_id_duplicate,
+    check_success_criteria_context_required,
+    check_workflow_id_duplicate,
+    invalid_source_types,
 )
 from .canonical_model import CanonicalApi, Operation, Service
 from .lint_engine import LintRule, RulePack, lint_canonical_model
@@ -301,7 +328,9 @@ def _check_async_source_before_1_1(api: CanonicalApi) -> Iterable[Tuple[str, str
     ``sourceDescriptions[].type: asyncapi`` — and with it a workflow spanning a
     synchronous and an asynchronous API — arrived in Arazzo 1.1 (FMT-3.1, #5426). A 1.0
     document that uses it will be rejected by a conforming 1.0 runner, so the fix is to
-    declare ``arazzo: 1.1.0``, not to drop the source.
+    declare ``arazzo: 1.1.0``, not to drop the source. Since GVM-4.4 this is the AsyncAPI
+    case of the per-version type table (:func:`~app.arazzo_structure_rules.invalid_source_types`);
+    every other undefined type is ``arazzo.source-description-type-invalid``.
     """
     try:
         version = parse_arazzo_version(api.extras.get("arazzo"))
@@ -310,9 +339,7 @@ def _check_async_source_before_1_1(api: CanonicalApi) -> Iterable[Tuple[str, str
     if supports_async_sources(version):
         return
     async_sources = sorted(
-        name
-        for name, kind in source_description_types(api.extras.get("sourceDescriptions")).items()
-        if kind == SOURCE_TYPE_ASYNCAPI
+        name for name, kind, _allowed in invalid_source_types(api) if kind == SOURCE_TYPE_ASYNCAPI
     )
     if async_sources:
         yield (
@@ -337,7 +364,8 @@ class ArazzoRulePack(RulePack, register=True):
             check=_check_dangling_operation_ref,
         ),
         LintRule(
-            rule_id="arzzo.unresolvable-operation-ref",
+            # Shipped as `arzzo.unresolvable-operation-ref`, which stays an alias (GVM-4.4).
+            rule_id="arazzo.unresolvable-operation-ref",
             category="reference",
             severity="error",
             description="Step operationRef must point at a declared sourceDescription.",
@@ -363,6 +391,91 @@ class ArazzoRulePack(RulePack, register=True):
             severity="error",
             description="An AsyncAPI sourceDescription requires Arazzo 1.1 or newer.",
             check=_check_async_source_before_1_1,
+        ),
+        # --- Arazzo 1.1 structural rules (GVM-4.4, #5879) --------------------------------
+        LintRule(
+            rule_id="arazzo.runtime-expression-invalid",
+            category="structure",
+            severity="error",
+            description="Every runtime expression must parse against the Arazzo grammar.",
+            check=check_runtime_expression_invalid,
+        ),
+        LintRule(
+            rule_id="arazzo.success-criteria-context-required",
+            category="structure",
+            severity="error",
+            description="A jsonpath or regex success criterion must declare its context.",
+            check=check_success_criteria_context_required,
+        ),
+        LintRule(
+            rule_id="arazzo.on-success-target-unresolved",
+            category="reference",
+            severity="error",
+            description="A success action's goto stepId or workflowId must resolve.",
+            check=check_on_success_target_unresolved,
+        ),
+        LintRule(
+            rule_id="arazzo.on-failure-target-unresolved",
+            category="reference",
+            severity="error",
+            description="A failure action's goto stepId or workflowId must resolve.",
+            check=check_on_failure_target_unresolved,
+        ),
+        LintRule(
+            rule_id="arazzo.component-ref-unresolved",
+            category="reference",
+            severity="error",
+            description="Every $components reference must name a declared component.",
+            check=check_component_ref_unresolved,
+        ),
+        LintRule(
+            rule_id="arazzo.step-id-duplicate",
+            category="structure",
+            severity="error",
+            description="Step ids must be unique within their workflow.",
+            check=check_step_id_duplicate,
+        ),
+        LintRule(
+            rule_id="arazzo.workflow-id-duplicate",
+            category="structure",
+            severity="error",
+            description="Workflow ids must be unique within the document.",
+            check=check_workflow_id_duplicate,
+        ),
+        LintRule(
+            rule_id="arazzo.depends-on-cycle",
+            category="structure",
+            severity="error",
+            description="Workflow dependsOn chains must not form a cycle.",
+            check=check_depends_on_cycle,
+        ),
+        LintRule(
+            rule_id="arazzo.parameter-in-invalid",
+            category="structure",
+            severity="error",
+            description="A step parameter's `in` must be a location its source type defines.",
+            check=check_parameter_in_invalid,
+        ),
+        LintRule(
+            rule_id="arazzo.inputs-schema-invalid",
+            category="structure",
+            severity="error",
+            description="Workflow inputs must be a valid JSON Schema 2020-12 schema.",
+            check=check_inputs_schema_invalid,
+        ),
+        LintRule(
+            rule_id="arazzo.outputs-expression-invalid",
+            category="structure",
+            severity="error",
+            description="Every workflow and step output must be a valid runtime expression.",
+            check=check_outputs_expression_invalid,
+        ),
+        LintRule(
+            rule_id="arazzo.source-description-type-invalid",
+            category="version",
+            severity="error",
+            description="A sourceDescription type must be one the declared Arazzo version defines.",
+            check=check_source_description_type_invalid,
         ),
     )
 

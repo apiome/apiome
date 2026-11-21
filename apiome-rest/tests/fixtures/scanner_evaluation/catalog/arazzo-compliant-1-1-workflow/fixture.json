@@ -1,0 +1,176 @@
+{
+  "kind": "catalog_arazzo",
+  "document": {
+    "arazzo": "1.1.0",
+    "info": {
+      "title": "Order to cash",
+      "version": "1.0.0",
+      "description": "A compliant Arazzo 1.1 workflow over a REST API and an event broker."
+    },
+    "sourceDescriptions": [
+      {
+        "name": "orders",
+        "type": "openapi",
+        "url": "https://api.example.test/openapi.yaml"
+      },
+      {
+        "name": "orderEvents",
+        "type": "asyncapi",
+        "url": "https://events.example.test/asyncapi.yaml"
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "placeOrder",
+        "summary": "Place an order and wait for the broker to accept it.",
+        "description": "Creates the order over REST, then waits for the acceptance event.",
+        "inputs": {
+          "type": "object",
+          "required": [
+            "sku"
+          ],
+          "properties": {
+            "sku": {
+              "type": "string",
+              "description": "Product to order."
+            }
+          }
+        },
+        "steps": [
+          {
+            "stepId": "createOrder",
+            "description": "Create the order.",
+            "operationId": "$sourceDescriptions.orders.createOrder",
+            "parameters": [
+              {
+                "name": "X-Request-Id",
+                "in": "header",
+                "value": "req-{$inputs.sku}"
+              },
+              {
+                "reference": "$components.parameters.channelHint"
+              }
+            ],
+            "requestBody": {
+              "contentType": "application/json",
+              "payload": {
+                "sku": "$inputs.sku"
+              }
+            },
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 201"
+              },
+              {
+                "context": "$response.body",
+                "condition": "$.id",
+                "type": "jsonpath"
+              }
+            ],
+            "onSuccess": [
+              {
+                "name": "awaitIt",
+                "type": "goto",
+                "stepId": "awaitAccepted"
+              }
+            ],
+            "onFailure": [
+              {
+                "reference": "$components.failureActions.retryOnce"
+              }
+            ],
+            "outputs": {
+              "orderId": "$response.body#/id"
+            }
+          },
+          {
+            "stepId": "awaitAccepted",
+            "description": "Wait for the acceptance event.",
+            "operationId": "$sourceDescriptions.orderEvents.receiveOrderAccepted",
+            "action": "receive",
+            "correlationId": "$steps.createOrder.outputs.orderId",
+            "parameters": [
+              {
+                "name": "traceparent",
+                "in": "header",
+                "value": "$inputs.sku"
+              }
+            ],
+            "successCriteria": [
+              {
+                "context": "$message.payload",
+                "condition": "^accepted$",
+                "type": "regex"
+              }
+            ],
+            "outputs": {
+              "acceptedAt": "$message.payload#/acceptedAt"
+            }
+          }
+        ],
+        "outputs": {
+          "orderId": "$steps.createOrder.outputs.orderId"
+        }
+      },
+      {
+        "workflowId": "shipOrder",
+        "summary": "Ship an accepted order.",
+        "description": "Runs once placeOrder has completed.",
+        "dependsOn": [
+          "placeOrder"
+        ],
+        "inputs": {
+          "type": "object",
+          "properties": {
+            "orderId": {
+              "type": "string",
+              "description": "Order to ship."
+            }
+          }
+        },
+        "steps": [
+          {
+            "stepId": "ship",
+            "description": "Request shipment.",
+            "operationId": "$sourceDescriptions.orders.shipOrder",
+            "parameters": [
+              {
+                "name": "orderId",
+                "in": "path",
+                "value": "$inputs.orderId"
+              }
+            ],
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 202"
+              }
+            ],
+            "outputs": {
+              "shipmentId": "$response.header.Location"
+            }
+          }
+        ],
+        "outputs": {
+          "shipmentId": "$steps.ship.outputs.shipmentId"
+        }
+      }
+    ],
+    "components": {
+      "parameters": {
+        "channelHint": {
+          "name": "X-Channel",
+          "in": "header",
+          "value": "web"
+        }
+      },
+      "failureActions": {
+        "retryOnce": {
+          "name": "retryOnce",
+          "type": "retry",
+          "retryAfter": 1,
+          "retryLimit": 1
+        }
+      }
+    }
+  }
+}

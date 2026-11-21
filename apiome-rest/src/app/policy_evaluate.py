@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from .lint_rule_aliases import canonical_rule_id
+
 # --- Defaults -------------------------------------------------------------------------------
 
 #: Default required coverage when a guide has no draft / snapshot value (CLX-1.2 compatible).
@@ -270,9 +272,14 @@ def _finding_severity(finding: Mapping[str, Any]) -> str:
 
 
 def _finding_rule_id(finding: Mapping[str, Any]) -> Optional[str]:
-    """Extract rule id from envelope (``rule_id``) or native (``rule``) shapes."""
+    """Extract rule id from envelope (``rule_id``) or native (``rule``) shapes.
+
+    A stored finding recorded under a renamed rule's old id reports the canonical id (GVM-4.4);
+    its fingerprint — what decisions match on — is unchanged by the rename
+    (:func:`app.lint_rule_aliases.fingerprint_rule_id`).
+    """
     rid = finding.get("rule_id") or finding.get("ruleId") or finding.get("rule")
-    return str(rid) if rid else None
+    return canonical_rule_id(str(rid)) if rid else None
 
 
 def _axes_by_key(axes: Optional[Sequence[Mapping[str, Any]]]) -> Dict[str, Mapping[str, Any]]:

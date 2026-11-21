@@ -361,12 +361,12 @@
   },
   "fingerprint": "sha256:d0472141115a0f18b0ecf74e59f8f3b0664f7464baa189fa83e80f0db729fbc5",
   "lint": {
-    "findings": 7,
-    "grade": "C",
-    "report_fingerprint": "c8540be0437d2eb9f136adafd9be0adce4f4473c46a1e8b9c0b9dfbd1379e2fe",
-    "score": 75,
+    "findings": 12,
+    "grade": "F",
+    "report_fingerprint": "83676fc98ece1dbf0c8795629b6597e8b7e6bb5840f63b292c787f5508efc74b",
+    "score": 55,
     "severity_counts": {
-      "error": 0,
+      "error": 5,
       "info": 1,
       "warning": 6
     }

@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.791.0] - 2026-11-21
+
+### Added
+- **Arazzo 1.1 validation rules — OpenAPI 1.617.0 (GVM-4.4, #5879):** the `arazzo` rule pack
+  (`app.arazzo_lint.ArazzoRulePack`) gains twelve `error` rules, implemented in
+  `app.arazzo_structure_rules`: `arazzo.runtime-expression-invalid` (every `$`-expression parses
+  against the Arazzo runtime-expression grammar, `app.arazzo_expression_grammar`, with the position
+  where it stops), `arazzo.success-criteria-context-required`, `arazzo.on-success-target-unresolved`,
+  `arazzo.on-failure-target-unresolved`, `arazzo.component-ref-unresolved`,
+  `arazzo.step-id-duplicate`, `arazzo.workflow-id-duplicate`, `arazzo.depends-on-cycle`,
+  `arazzo.parameter-in-invalid` (per the step's source type and version: 1.1 adds `querystring`,
+  and `header` / `channel` for an AsyncAPI step), `arazzo.inputs-schema-invalid` (JSON Schema
+  2020-12), `arazzo.outputs-expression-invalid` (a 1.1 output may be a selector object) and
+  `arazzo.source-description-type-invalid` (`app.arazzo_spec.SOURCE_TYPES_BY_VERSION`;
+  `arazzo.async-source-before-1-1` stays as its AsyncAPI-under-1.0 case). Each has a CLX-4.3
+  transparency entry and a corpus fixture; `catalog/arazzo-compliant-1-1-workflow` trips nothing.
+  V400 seeds them in the built-in style guide.
+- **`aliases` on `GET /v1/lint/rules`:** each rule lists the earlier ids that still match it
+  (empty for every rule but one).
+
+### Changed
+- **`arzzo.unresolvable-operation-ref` → `arazzo.unresolvable-operation-ref`:** the operationRef
+  rule is emitted under the corrected id. The old id is a registered alias
+  (`app.lint_rule_aliases`): a style-guide row under it governs the rule (compilation and
+  `PUT /v1/style-guides/{tenant}/{guide}/rules`, which stores the canonical id), a stored finding
+  carrying it is re-scored as the renamed rule, and finding ids — which decisions and waivers
+  match on — are hashed with the old id, so they do not change. The corpus fixture moved to
+  `catalog/arazzo-unresolvable-operation-ref`.
+- **Corpus:** Specmatic's `arazzo-1.1/16-specmatic-place-order` now reports
+  `arazzo.runtime-expression-invalid` for its runner-specific `$specmatic.auth` parameter values;
+  no other shipped Arazzo example changes.
+
 ## [1.790.0] - 2026-11-20
 
 ### Changed

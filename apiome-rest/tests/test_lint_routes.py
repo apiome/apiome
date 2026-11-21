@@ -338,7 +338,10 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             "fixScope",
             "fixDefault",
             "fixOwner",
+            # GVM-4.4 earlier ids that still match the rule (empty for most rules).
+            "aliases",
         }
+        assert isinstance(rule["aliases"], list)
         assert rule["ruleId"] and rule["pack"] and rule["category"]
         assert rule["defaultSeverity"] in {"error", "warning", "info"}
         assert rule["rationale"].strip()
@@ -353,6 +356,19 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             assert rule["weight"] is None
         if rule["owasp"] is not None:
             assert rule["owasp"] and set(rule["owasp"]) <= {f"API{n}" for n in range(1, 11)}
+
+
+def test_lint_rules_catalog_resolves_the_arazzo_operation_ref_alias():
+    """GVM-4.4 AC: the typo id is an alias of the corrected rule, published on its entry."""
+    body = client.get("/v1/lint/rules").json()
+    by_id = {rule["ruleId"]: rule for rule in body["rules"]}
+    assert "arzzo.unresolvable-operation-ref" not in by_id
+    entry = by_id["arazzo.unresolvable-operation-ref"]
+    assert entry["aliases"] == ["arzzo.unresolvable-operation-ref"]
+    assert entry["pack"] == "arazzo" and entry["defaultSeverity"] == "error"
+    assert entry["fixtureId"] == "catalog/arazzo-unresolvable-operation-ref"
+    aliased = [rule["ruleId"] for rule in body["rules"] if rule["aliases"]]
+    assert aliased == ["arazzo.unresolvable-operation-ref"]
 
 
 def test_lint_rules_catalog_publishes_the_security_weights():

@@ -54,6 +54,11 @@ Every descriptor also publishes the two fields the security score needs (ASP-1.3
 every ``security``-category rule, its published scoring ``weight``
 (:func:`app.security_score.security_rule_weight`).
 
+A renamed rule keeps its old id as an **alias** (GVM-4.4, #5879; :mod:`app.lint_rule_aliases`):
+the descriptor publishes ``aliases``, :func:`resolve_rule_id` maps an alias to its descriptor,
+and every consumer that matches stored ids — style-guide compilation, the guide editor, finding
+fingerprints — accepts either spelling.
+
 The MCP *surface* linter (:mod:`app.mcp_lint`, V2-MCP-21.x) is intentionally **not**
 included: it lints an MCP capability surface, not a schema revision, and is not part of the
 governance style-guide surface (GOV-1.4 evaluates guides in the revision lint paths).
@@ -76,6 +81,7 @@ from .lint_engine import (
     unconditional_rule_packs,
 )
 from .lint_fix import fix_owner_for
+from .lint_rule_aliases import aliases_for, canonical_rule_id
 from .openapi_fix_rules import OPENAPI_FIX_PACK, openapi_fix_rule, openapi_fix_rules
 from .overlay_lint_rules import OVERLAY_PACK, OVERLAY_RULES
 from .owasp_api import validate_risk_ids
@@ -88,6 +94,8 @@ __all__ = [
     "builtin_rule_descriptors",
     "builtin_rule_ids",
     "docs_anchor_for",
+    "registered_rule_ids_with_aliases",
+    "resolve_rule_id",
 ]
 
 #: Repository-relative path of the human-readable rule reference every descriptor's
@@ -141,6 +149,8 @@ class LintRuleDescriptor:
             fixable.
         fix_default: Whether the fix is applied without an explicit opt-in; ``None`` when
             not fixable.
+        aliases: Earlier ids of this rule that still match it (GVM-4.4) — a style-guide row,
+            stored finding or waiver recorded under one governs this rule. Empty for most rules.
     """
 
     rule_id: str
@@ -156,6 +166,7 @@ class LintRuleDescriptor:
     fix_summary: Optional[str] = None
     fix_scope: Optional[str] = None
     fix_default: Optional[bool] = None
+    aliases: Tuple[str, ...] = ()
 
     @property
     def fix_owner(self) -> str:
@@ -197,6 +208,7 @@ class LintRuleDescriptor:
             "fix_scope": self.fix_scope,
             "fix_default": self.fix_default,
             "fix_owner": self.fix_owner,
+            "aliases": list(self.aliases),
         }
         return enrich_rule_dict(base, self.rule_id)
 
@@ -225,6 +237,7 @@ def _descriptor(
         rationale=rationale,
         docs_anchor=docs_anchor_for(rule_id),
         owasp_ids=validate_risk_ids(owasp_ids),
+        aliases=aliases_for(rule_id),
         **_fix_fields(fix_rule),
     )
 
@@ -329,3 +342,31 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
 def builtin_rule_ids() -> List[str]:
     """Return every registered built-in rule id, sorted — the ids findings may carry."""
     return [descriptor.rule_id for descriptor in builtin_rule_descriptors()]
+
+
+def registered_rule_ids_with_aliases() -> frozenset:
+    """Every id a stored row may name: the registered rule ids plus their aliases (GVM-4.4).
+
+    Use it where an id is *accepted* (a guide row, a custom rule's reserved-id check); emit and
+    compare with :func:`app.lint_rule_aliases.canonical_rule_id` applied.
+    """
+    ids = set(builtin_rule_ids())
+    for descriptor in builtin_rule_descriptors():
+        ids.update(descriptor.aliases)
+    return frozenset(ids)
+
+
+def resolve_rule_id(rule_id: str) -> Optional[LintRuleDescriptor]:
+    """Return the descriptor for ``rule_id`` — canonical or an alias — or ``None`` when unknown.
+
+    Args:
+        rule_id: A rule id as stored or requested.
+
+    Returns:
+        The registered rule's descriptor (an alias resolves to the renamed rule's descriptor).
+    """
+    canonical = canonical_rule_id(rule_id)
+    for descriptor in builtin_rule_descriptors():
+        if descriptor.rule_id == canonical:
+            return descriptor
+    return None

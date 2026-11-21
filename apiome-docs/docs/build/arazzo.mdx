@@ -32,6 +32,7 @@ Each part has its own page. This page shows how they fit together.
 | **Bring in** a workflow with the OpenAPI and AsyncAPI files it calls | **Import** dialog, or `apiome import arazzo <archive or folder>` | [Import an Arazzo workflow with its API files](../bring-in/import-a-spec.md#import-an-arazzo-workflow-with-its-api-files) |
 | **Read** its steps, inputs, outputs and success and failure paths | The **Workflows** tab of a catalog item or project; `apiome arazzo list` and `apiome arazzo show` | [Arazzo workflows](./arazzo-workflows.mdx) |
 | **Check** that every step resolved and every source was found | `apiome arazzo validate`, or `apiome arazzo validate FILE` for a local document | [Arazzo workflow records](../reference/arazzo-workflow-records.md) |
+| **Lint** its structure — expressions, criteria, `goto` targets, ids, inputs and outputs | The **Quality** score of the revision; `GET /v1/lint/rules` lists the rules | [Lint rules](#lint-rules) |
 | **Compare** two revisions and see what breaks a workflow's callers | `apiome diff`, the diff GitHub Action, the publish check and catalog change reports | [Arazzo workflow changes](../ship/api-changelog.mdx#arazzo-workflow-changes) |
 | **Export** it back, or start workflows for an API you already have | **Export** dialog → **REST & HTTP** → **Arazzo** | [Arazzo from any source](../ship/export-a-spec.md#arazzo-from-any-source), [Arazzo exports](../ship/export-fidelity.md#arazzo) |
 | **Run** it, step by step, against a deployment or a mock | `apiome arazzo run <workflowId> --target <target>` | [Run a workflow against a target](./arazzo-workflows.mdx#run-a-workflow-against-a-target) |
@@ -49,6 +50,33 @@ Every surface accepts both lines and keeps the version a document declares:
   1.0 cannot express them; asking for 1.0 is refused rather than silently dropping the sources.
 - **Round trips are tested** against the OpenAPI Initiative's own examples and files from Redocly,
   Spectral and Specmatic; the fidelity report on the **Arazzo** card names any difference.
+
+## Lint rules
+
+Every Arazzo revision is linted by the `arazzo` rule pack, under the rules of the version it
+declares. All of these are **errors** by default; a style guide can turn any of them down or off.
+
+| The pack checks that… | Rule |
+| --- | --- |
+| each step's `operationId` or `operationRef` names an operation of a declared source | [`arazzo.dangling-operation-id`](./lint-rules.md#arazzo-dangling-operation-id), [`arazzo.unresolvable-operation-ref`](./lint-rules.md#arazzo-unresolvable-operation-ref) |
+| every `$`-expression parses — the finding gives the position where it stops | [`arazzo.runtime-expression-invalid`](./lint-rules.md#arazzo-runtime-expression-invalid) |
+| a `jsonpath` or `regex` success criterion names its `context` | [`arazzo.success-criteria-context-required`](./lint-rules.md#arazzo-success-criteria-context-required) |
+| a `goto` action's `stepId` or `workflowId` exists | [`arazzo.on-success-target-unresolved`](./lint-rules.md#arazzo-on-success-target-unresolved), [`arazzo.on-failure-target-unresolved`](./lint-rules.md#arazzo-on-failure-target-unresolved) |
+| every `$components.*` reference names a declared component | [`arazzo.component-ref-unresolved`](./lint-rules.md#arazzo-component-ref-unresolved) |
+| step ids are unique in their workflow, and workflow ids in the document | [`arazzo.step-id-duplicate`](./lint-rules.md#arazzo-step-id-duplicate), [`arazzo.workflow-id-duplicate`](./lint-rules.md#arazzo-workflow-id-duplicate) |
+| workflow `dependsOn` chains do not loop back | [`arazzo.depends-on-cycle`](./lint-rules.md#arazzo-depends-on-cycle) |
+| a parameter's `in` is one its step's source defines: `path`, `query`, `header` or `cookie` for OpenAPI (plus `querystring` in 1.1); `header` or `channel` for an AsyncAPI step | [`arazzo.parameter-in-invalid`](./lint-rules.md#arazzo-parameter-in-invalid) |
+| workflow `inputs` are valid JSON Schema 2020-12 | [`arazzo.inputs-schema-invalid`](./lint-rules.md#arazzo-inputs-schema-invalid) |
+| every output is a runtime expression (or, from 1.1, a selector object) | [`arazzo.outputs-expression-invalid`](./lint-rules.md#arazzo-outputs-expression-invalid) |
+| each source description's `type` is one the version defines — `asyncapi` only from 1.1 | [`arazzo.source-description-type-invalid`](./lint-rules.md#arazzo-source-description-type-invalid), [`arazzo.async-source-before-1-1`](./lint-rules.md#arazzo-async-source-before-1-1) |
+
+Two **warnings** round out the pack:
+[`arazzo.missing-success-criteria`](./lint-rules.md#arazzo-missing-success-criteria) and
+[`arazzo.unused-workflow-input`](./lint-rules.md#arazzo-unused-workflow-input).
+
+The operationRef rule shipped as `arzzo.unresolvable-operation-ref`. Findings now carry
+`arazzo.unresolvable-operation-ref`, and the old id is kept as an **alias**: a style guide that
+names it, a stored finding and a waiver recorded against it all still match.
 
 ## How the pieces fit
 
