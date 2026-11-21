@@ -38,6 +38,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import validate_authentication
+from .arazzo_fix_rules import is_arazzo_document
 from .compatibility_engine import openapi_for_revision
 from .database import db
 from .lint_fix import DEFAULT_OPERATION_ID_TEMPLATE, FixError
@@ -259,8 +260,12 @@ def _plan(
     guide: Any,
 ) -> FixPlan:
     """Build the plan, turning a bad option or a non-OpenAPI document into a 422."""
-    if not isinstance(document, dict) or not str(document.get("openapi") or "").startswith("3."):
-        raise _refuse(422, CODE_NOT_OPENAPI, "Lint fixes are planned for OpenAPI 3.x documents only.")
+    if not isinstance(document, dict) or not (
+        str(document.get("openapi") or "").startswith("3.") or is_arazzo_document(document)
+    ):
+        raise _refuse(
+            422, CODE_NOT_OPENAPI, "Lint fixes are planned for OpenAPI 3.x and Arazzo documents only."
+        )
     try:
         return build_fix_plan(
             document,

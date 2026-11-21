@@ -40,11 +40,11 @@ You can ask for fixes in four places:
 
 :::note What ships today
 
-The first thirteen OpenAPI rules carry a fix; the rule catalog (`GET /v1/lint/rules`) publishes
+The first thirteen OpenAPI rules and three [Arazzo rules](#fixable-arazzo-rules) carry a fix; the rule catalog (`GET /v1/lint/rules`) publishes
 every rule's fix capability. Fixing a **local file** in place with `apiome lint <file> --fix`
 arrives with local-file lint (see [Local files](#local-files)); until then, plan a file with the
 REST API or `apiome lint suggest`. Nothing in a lint report, score or grade changes because these
-rules exist: the twelve new rules below are evaluated only when a fix plan is asked for.
+rules exist: the new rules below are evaluated only when a fix plan is asked for.
 
 :::
 
@@ -102,6 +102,46 @@ OpenAPI 3.1 or later, where the 3.0 spelling is no longer valid.
 | `naming.operation-id-camel-case` | `rename` | Re-cases an `operationId` to camelCase |
 | `naming.tag-case-mismatch` | `rename` | Re-cases a tag on an operation to match its declaration |
 | `naming.schema-pascal-case` | `rename` | Renames a schema to PascalCase and rewrites its references. **Off by default**, wire-visible |
+
+## Fixable Arazzo rules
+
+An [Arazzo](./arazzo.mdx) workflow document gets its own three fixes, through the same plan,
+conflict check and output formats. A plan of a posted document (`POST /v1/lint/fixes/plan`)
+recognises an Arazzo document by its top-level `arazzo` field and plans these rules instead of the
+OpenAPI ones. They read the document you send, so a finding's path is a place in that file, such as
+`workflows.0.steps.1.stepId`.
+
+| Rule | Class | What the fix does |
+| --- | --- | --- |
+| `arazzo.step-id-suffix` | `rename` | Gives a repeated `stepId` a suffix: `list` becomes `list-2`, then `list-3` |
+| `arazzo.success-criteria-scaffold` | `fill-in` | Adds `successCriteria: [{condition: "$statusCode == 200"}]` to a step that has none. **Off by default** |
+| `arazzo.version-marker-bump` | `structural` | Changes `arazzo: 1.0.x` to `1.1.0` when the document uses a 1.1-only feature |
+
+- **Step ids.** Only the repeat is renamed; the first step keeps its id, so every `$steps.<id>` and
+  `goto` that already resolved still points at the same step. The new id is the first
+  `<id>-<n>` (starting at 2) that no step of the workflow uses. A rename is not wire-visible.
+- **The scaffold** is derived, never guessed. It is planned only when the step calls an operation
+  by `operationId` and the source description is **embedded** in the document (`content`), so the
+  fix can read the operation's responses. It uses `200` when the operation declares it, otherwise
+  the lowest numeric `2xx` code. A `2XX` range or `default` response gives no code, so no
+  scaffold. Because a scaffold is only a starting point, switch it on by name (`rules`) or in your
+  guide.
+- **The marker bump** fires when a document that declares Arazzo 1.0 uses an AsyncAPI source
+  description, a `channelPath` step, or a `querystring` / `channel` parameter. The fix names the
+  version that defines what the document already uses; it does not remove anything.
+
+Their one-defect fixtures sit beside the OpenAPI ones in `scanner_evaluation/fix/`, and the same
+gates run on them. These rules are separate from the detection rules of the
+[Arazzo lint pack](./arazzo.mdx#lint-rules), which keep their own paths and are unchanged.
+
+:::note Local files and ladders
+
+`apiome lint <file.arazzo.yaml> --fix` follows from [local-file lint](#local-files) with no extra
+Arazzo code: the file is detected by its `arazzo` field. Until then, plan the file with the REST
+API. A [maturity ladder](../govern/maturity-ladders.mdx#arazzo-and-overlay-levels) judges Arazzo
+and Overlay findings with the guide's shared levels.
+
+:::
 
 ### The operationId template
 

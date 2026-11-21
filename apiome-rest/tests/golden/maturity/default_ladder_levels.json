@@ -489,6 +489,21 @@
     "bare": null,
     "no_security": null
   },
+  "fix/arazzo.step-id-suffix": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/arazzo.success-criteria-scaffold": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
+  "fix/arazzo.version-marker-bump": {
+    "assessed": "gold",
+    "bare": "bronze",
+    "no_security": "silver"
+  },
   "fix/naming.operation-id-camel-case": {
     "assessed": "gold",
     "bare": "bronze",

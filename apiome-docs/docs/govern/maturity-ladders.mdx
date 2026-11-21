@@ -82,6 +82,19 @@ ladder.
 
 Waivers count at Bronze and Silver. Gold, the top level, asks for waived findings to be fixed.
 
+## Arazzo and Overlay levels
+
+A guide has one ladder, and its levels are **format-agnostic**: a level names rules, and a finding
+from an Arazzo workflow or an OpenAPI Overlay counts toward a level exactly like an OpenAPI
+finding, because the finding's rule id is what the level matches. To hold workflows to the same
+bar as APIs, list the `arazzo.*` rules (and the Overlay rules) in the levels that should require
+them.
+
+A level cannot yet apply to some formats only. Once format-conditional rules ship (GOV-3.2), a
+level may carry `formats: [arazzo, overlay]` so that one guide's ladder judges workflows and
+overlays with their own rules. Until then, rules of a format your document does not use simply
+report nothing.
+
 ## How a level is judged
 
 Levels are checked lowest first, and the check stops at the first level that is not met. That

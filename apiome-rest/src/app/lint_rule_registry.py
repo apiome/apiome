@@ -82,6 +82,7 @@ from .lint_engine import (
 )
 from .lint_fix import fix_owner_for
 from .lint_rule_aliases import aliases_for, canonical_rule_id
+from .arazzo_fix_rules import ARAZZO_FIX_PACK, arazzo_fix_rules
 from .openapi_fix_rules import OPENAPI_FIX_PACK, openapi_fix_rule, openapi_fix_rules
 from .overlay_lint_rules import OVERLAY_PACK, OVERLAY_RULES
 from .owasp_api import validate_risk_ids
@@ -296,6 +297,10 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
     #    findings are attributable, never emitted by the default lint.
     for rule in openapi_fix_rules():
         by_id.setdefault(rule.rule_id, _pack_descriptor(rule, OPENAPI_FIX_PACK))
+
+    #    The fixable Arazzo rules (GVM-4.5), on demand only for the same reason.
+    for rule in arazzo_fix_rules():
+        by_id.setdefault(rule.rule_id, _pack_descriptor(rule, ARAZZO_FIX_PACK))
 
     # 2. Every unconditional pack (the cross-format common pack and the IXH-5.4
     #    example-conformance pack) — taken from the engine itself, so the catalogue lists

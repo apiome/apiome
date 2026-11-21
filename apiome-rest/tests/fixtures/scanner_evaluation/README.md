@@ -25,6 +25,9 @@ uv run python scripts/generate_fix_corpus_readme.py
 <!-- fixable-rules:begin -->
 | Rule | Fix class | On by default | Fixture | What the fix does |
 |------|-----------|---------------|---------|-------------------|
+| `arazzo.step-id-suffix` | rename | yes | `fix/arazzo.step-id-suffix/` | Suffixes a repeated stepId (-2, -3, …) to the first id the workflow does not use. |
+| `arazzo.success-criteria-scaffold` | fill-in | no | `fix/arazzo.success-criteria-scaffold/` | Adds successCriteria [{condition: '$statusCode == 200'}] from the 2xx response the step's embedded source operation declares. Off unless the guide enables it. |
+| `arazzo.version-marker-bump` | structural | yes | `fix/arazzo.version-marker-bump/` | Bumps the arazzo marker to 1.1.0 when a 1.1-only feature is in use. |
 | `naming.operation-id-camel-case` | rename | yes | `fix/naming.operation-id-camel-case/` | Re-cases the operationId to camelCase when no link refers to it and the new id is free. |
 | `naming.schema-pascal-case` | rename | no | `fix/naming.schema-pascal-case/` | Renames the schema to PascalCase and rewrites every reference to it. Changes generated type names; never applied unless opted in. |
 | `naming.tag-case-mismatch` | rename | yes | `fix/naming.tag-case-mismatch/` | Replaces the tag use with the spelling of its declaration. |

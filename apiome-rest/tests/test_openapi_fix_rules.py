@@ -27,12 +27,11 @@ from app.canonical_model import ApiIdentity, ApiParadigm, CanonicalApi
 from app.lint_fix import FIX_SCOPE_DOCUMENT, FIX_SCOPE_FINDING, FixOptions, apply_fix_ops
 from app.lint_rule_registry import builtin_rule_descriptors
 from app.openapi_fix_rules import (
-    lint_openapi_fixable,
     openapi_fix_rule,
     openapi_fix_rules,
-    plan_openapi_fix,
     render_operation_id,
 )
+from app.scanner_evaluation_corpus import fix_fixture_findings, fixable_findings, plan_fixable
 from app.schema_lint import OPENAPI_RULES, LintFinding, lint_openapi_spec
 
 FIXTURES = Path(__file__).parent / "fixtures" / "scanner_evaluation" / "fix"
@@ -57,12 +56,12 @@ def _options(fixture: Dict[str, Any]) -> FixOptions:
 
 def _all_findings(document: Dict[str, Any]) -> Set[Tuple[str, str, str]]:
     """Every finding of the default lint and the on-demand rules, as ``(rule, path, message)``."""
-    findings = list(lint_openapi_spec(document).findings) + lint_openapi_fixable(document)
+    findings = fix_fixture_findings(document)
     return {(f.rule, f.path, f.message) for f in findings}
 
 
 def _one(document: Dict[str, Any], rule_id: str) -> LintFinding:
-    findings = [f for f in lint_openapi_fixable(document) if f.rule == rule_id]
+    findings = [f for f in fixable_findings(document) if f.rule == rule_id]
     assert len(findings) == 1, findings
     return findings[0]
 
@@ -94,7 +93,7 @@ def _doc(**overrides: Any) -> Dict[str, Any]:
 
 
 def _plan(document: Dict[str, Any], rule_id: str, *opt_in: str) -> List[Dict[str, Any]]:
-    ops = plan_openapi_fix(document, _one(document, rule_id), FixOptions(opt_in=frozenset(opt_in)))
+    ops = plan_fixable(document, _one(document, rule_id), FixOptions(opt_in=frozenset(opt_in)))
     return [op.as_dict() for op in ops]
 
 
@@ -116,10 +115,10 @@ def test_every_fixable_rule_has_a_fixture():
 def test_fixture_triggers_exactly_its_rule_and_the_expected_plan(rule_id: str):
     fixture = _load(rule_id)
     assert fixture["rule"] == rule_id
-    findings = lint_openapi_fixable(fixture["before"])
+    findings = fixable_findings(fixture["before"])
     assert [f.rule for f in findings] == [rule_id], "a fix fixture carries one defect"
     assert {"path": findings[0].path, "message": findings[0].message} == fixture["finding"]
-    ops = plan_openapi_fix(fixture["before"], findings[0], _options(fixture))
+    ops = plan_fixable(fixture["before"], findings[0], _options(fixture))
     assert [op.as_dict() for op in ops] == fixture["plan"]
 
 
@@ -128,11 +127,11 @@ def test_after_the_fix_the_rule_is_clean_and_nothing_else_changed(rule_id: str):
     fixture = _load(rule_id)
     before = fixture["before"]
     finding = _one(before, rule_id)
-    after = apply_fix_ops(before, plan_openapi_fix(before, finding, _options(fixture)))
+    after = apply_fix_ops(before, plan_fixable(before, finding, _options(fixture)))
     # Key order is part of the expected document: a fix must not reshuffle what it leaves alone.
     assert json.dumps(after) == json.dumps(fixture["after"])
 
-    assert all(f.rule != rule_id for f in lint_openapi_fixable(after))
+    assert all(f.rule != rule_id for f in fixable_findings(after))
     others_before = {f for f in _all_findings(before) if f[0] != rule_id}
     others_after = {f for f in _all_findings(after) if f[0] != rule_id}
     assert others_after == others_before
@@ -144,9 +143,9 @@ def test_planning_and_applying_twice_is_byte_stable(rule_id: str):
     options = _options(fixture)
 
     def fix_all(document: Dict[str, Any]) -> Dict[str, Any]:
-        for finding in lint_openapi_fixable(document):
+        for finding in fixable_findings(document):
             if finding.rule == rule_id:
-                document = apply_fix_ops(document, plan_openapi_fix(document, finding, options))
+                document = apply_fix_ops(document, plan_fixable(document, finding, options))
         return document
 
     once = fix_all(fixture["before"])
@@ -158,7 +157,7 @@ def test_planning_and_applying_twice_is_byte_stable(rule_id: str):
 def test_planning_does_not_mutate_the_fixture(rule_id: str):
     fixture = _load(rule_id)
     before = copy.deepcopy(fixture["before"])
-    plan_openapi_fix(before, _one(before, rule_id), _options(fixture))
+    plan_fixable(before, _one(before, rule_id), _options(fixture))
     assert before == fixture["before"]
 
 
@@ -236,10 +235,10 @@ def test_the_default_lint_never_emits_an_on_demand_rule():
 
 
 def test_the_on_demand_rules_self_gate_on_anything_but_openapi_3():
-    assert lint_openapi_fixable({"swagger": "2.0", "paths": {"/p": {"get": {}}}}) == []
-    assert lint_openapi_fixable({"asyncapi": "3.0.0"}) == []
-    assert lint_openapi_fixable({}) == []
-    assert lint_openapi_fixable([]) == []  # type: ignore[arg-type]
+    assert fixable_findings({"swagger": "2.0", "paths": {"/p": {"get": {}}}}) == []
+    assert fixable_findings({"asyncapi": "3.0.0"}) == []
+    assert fixable_findings({}) == []
+    assert fixable_findings([]) == []  # type: ignore[arg-type]
 
 
 def test_the_rules_run_over_a_canonical_artifacts_retained_document():
@@ -260,7 +259,7 @@ def test_a_finding_of_a_rule_without_a_fix_plans_nothing():
         path="info", category="documentation", rule="documentation.info-missing-description",
         severity="info", message="API info block is missing a description.",
     )
-    assert plan_openapi_fix(_doc(), finding) == ()
+    assert plan_fixable(_doc(), finding) == ()
 
 
 # ===========================================================================
@@ -273,7 +272,7 @@ def test_syntax_moves_fire_only_from_openapi_3_1():
     for marker, expected in (("3.0.3", set()), ("3.1.0", {"n", "e", "b"}), ("3.2.0", {"n", "e", "b"})):
         document = _doc(openapi=marker)
         document["components"]["schemas"]["Pet"]["properties"]["age"] = dict(schema)
-        fired = {f.rule for f in lint_openapi_fixable(document)}
+        fired = {f.rule for f in fixable_findings(document)}
         assert ("structure.nullable-keyword" in fired) == ("n" in expected)
         assert ("structure.schema-example-keyword" in fired) == ("e" in expected)
         assert ("structure.boolean-exclusive-bound" in fired) == ("b" in expected)
@@ -284,7 +283,7 @@ def test_a_property_named_like_a_keyword_is_data_not_a_keyword():
     document["components"]["schemas"]["Pet"]["properties"].update(
         {"nullable": {"type": "boolean"}, "example": {"type": "string"}, "required": {"type": "array", "items": {}}}
     )
-    assert lint_openapi_fixable(document) == []
+    assert fixable_findings(document) == []
 
 
 def _with_name_schema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -334,7 +333,7 @@ def test_example_is_not_moved_over_existing_examples():
 def test_a_media_type_example_is_not_a_schema_example():
     document = _doc()
     document["paths"]["/pets"]["get"]["responses"]["200"]["content"]["application/json"]["example"] = {"name": "Rex"}
-    assert lint_openapi_fixable(document) == []
+    assert fixable_findings(document) == []
 
 
 @pytest.mark.parametrize(
@@ -367,7 +366,7 @@ def test_boolean_exclusive_bound_fix(schema: Dict[str, Any], plan: List[Dict[str
 
 
 def test_a_numeric_exclusive_bound_is_already_3_1():
-    assert lint_openapi_fixable(_with_name_schema({"type": "number", "exclusiveMinimum": 0})) == []
+    assert fixable_findings(_with_name_schema({"type": "number", "exclusiveMinimum": 0})) == []
 
 
 # ===========================================================================
@@ -377,13 +376,13 @@ def test_a_numeric_exclusive_bound_is_already_3_1():
 
 @pytest.mark.parametrize("url", ["/", "https://api.example.com", "{scheme}://api.example.com", "/v1", ""])
 def test_server_urls_that_are_left_alone(url: str):
-    assert lint_openapi_fixable(_doc(servers=[{"url": url}])) == []
+    assert fixable_findings(_doc(servers=[{"url": url}])) == []
 
 
 def test_operation_level_servers_are_checked_too():
     document = _doc()
     document["paths"]["/pets"]["get"]["servers"] = [{"url": "Https://files.example.com//"}]
-    findings = lint_openapi_fixable(document)
+    findings = fixable_findings(document)
     assert {f.rule for f in findings} == {
         "structure.server-url-trailing-slash",
         "structure.server-url-scheme-case",
@@ -407,7 +406,7 @@ def test_a_component_used_only_by_an_unused_component_is_unused_too():
     document["components"]["schemas"].update(
         {"Orphan": {"properties": {"leaf": {"$ref": "#/components/schemas/Leaf"}}}, "Leaf": {"type": "string"}}
     )
-    unused = {f.path for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"}
+    unused = {f.path for f in fixable_findings(document) if f.rule == "structure.unused-component"}
     assert unused == {"components.schemas.Orphan", "components.schemas.Leaf"}
 
 
@@ -417,7 +416,7 @@ def test_transitive_and_self_references_keep_a_component():
     schemas["Pet"]["properties"]["owner"] = {"$ref": "#/components/schemas/Owner"}
     schemas["Owner"] = {"properties": {"pets": {"type": "array", "items": {"$ref": "#/components/schemas/Pet"}}}}
     schemas["Loop"] = {"properties": {"next": {"$ref": "#/components/schemas/Loop"}}}
-    unused = {f.path for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"}
+    unused = {f.path for f in fixable_findings(document) if f.rule == "structure.unused-component"}
     assert unused == {"components.schemas.Loop"}  # only itself refers to it
 
 
@@ -430,7 +429,7 @@ def test_discriminator_mappings_and_deep_references_count_as_use():
     }
     schemas["Pet"]["properties"]["tag"] = {"$ref": "#/components/schemas/Shared/properties/tag"}
     schemas.update({"Cat": {}, "Dog": {}, "Shared": {"properties": {"tag": {"type": "string"}}}})
-    assert [f for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"] == []
+    assert [f for f in fixable_findings(document) if f.rule == "structure.unused-component"] == []
 
 
 def test_other_component_sections_are_checked_and_security_schemes_are_not():
@@ -443,20 +442,20 @@ def test_other_component_sections_are_checked_and_security_schemes_are_not():
         }
     )
     document["paths"]["/pets"]["get"]["parameters"] = [{"$ref": "#/components/parameters/Limit"}]
-    unused = {f.path for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"}
+    unused = {f.path for f in fixable_findings(document) if f.rule == "structure.unused-component"}
     assert unused == {"components.responses.NotFound"}
 
 
 def test_a_component_library_without_paths_reports_nothing_unused():
     document = _doc()
     del document["paths"]
-    assert [f for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"] == []
+    assert [f for f in fixable_findings(document) if f.rule == "structure.unused-component"] == []
 
 
 def test_a_webhook_reference_keeps_a_component():
     document = _doc(webhooks={"petAdded": {"post": {"requestBody": {"$ref": "#/components/requestBodies/Added"}}}})
     document["components"]["requestBodies"] = {"Added": {"content": {}}}
-    assert [f for f in lint_openapi_fixable(document) if f.rule == "structure.unused-component"] == []
+    assert [f for f in fixable_findings(document) if f.rule == "structure.unused-component"] == []
 
 
 def test_a_component_name_that_needs_pointer_escaping_resolves():
@@ -485,13 +484,13 @@ def test_an_identical_duplicate_tag_is_removed():
 def test_tag_case_is_ambiguous_when_both_casings_are_declared():
     document = _doc(tags=[{"name": "pets"}, {"name": "Pets"}])
     document["paths"]["/pets"]["get"]["tags"] = ["PETS"]
-    assert [f for f in lint_openapi_fixable(document) if f.rule == "naming.tag-case-mismatch"] == []
+    assert [f for f in fixable_findings(document) if f.rule == "naming.tag-case-mismatch"] == []
 
 
 def test_an_undeclared_tag_is_not_a_case_mismatch():
     document = _doc()
     document["paths"]["/pets"]["get"]["tags"] = ["store"]
-    assert lint_openapi_fixable(document) == []
+    assert fixable_findings(document) == []
 
 
 def test_missing_tags_are_not_filled_in_by_default_or_from_a_path_parameter():
@@ -537,9 +536,9 @@ def _two_operations() -> Dict[str, Any]:
 def test_generated_operation_ids_are_unique_across_the_document():
     document = _two_operations()
     generated = {}
-    for finding in lint_openapi_fixable(document):
+    for finding in fixable_findings(document):
         if finding.rule == "structure.operation-missing-operation-id":
-            (op,) = plan_openapi_fix(document, finding)
+            (op,) = plan_fixable(document, finding)
             generated[finding.path] = op.value
     # "getPetsId" is taken by POST /pets, and the two /pets/… paths render alike.
     assert generated == {
@@ -551,15 +550,15 @@ def test_generated_operation_ids_are_unique_across_the_document():
 
 def test_the_operation_id_template_is_the_callers():
     document = _two_operations()
-    finding = next(f for f in lint_openapi_fixable(document) if f.path == "paths./pets.get")
-    (op,) = plan_openapi_fix(document, finding, FixOptions(operation_id_template="{path}_{method}"))
+    finding = next(f for f in fixable_findings(document) if f.path == "paths./pets.get")
+    (op,) = plan_fixable(document, finding, FixOptions(operation_id_template="{path}_{method}"))
     assert op.as_dict() == {"op": "add", "path": "/paths/~1pets/get/operationId", "value": "pets_get"}
 
 
 def test_a_template_that_renders_no_identifier_plans_nothing():
     document = _two_operations()
-    finding = next(f for f in lint_openapi_fixable(document) if f.path == "paths./pets.get")
-    assert plan_openapi_fix(document, finding, FixOptions(operation_id_template="{path}-{method}")) == ()
+    finding = next(f for f in fixable_findings(document) if f.path == "paths./pets.get")
+    assert plan_fixable(document, finding, FixOptions(operation_id_template="{path}-{method}")) == ()
 
 
 @pytest.mark.parametrize(
@@ -637,10 +636,10 @@ def test_the_schema_rename_rewrites_every_reference_then_moves_the_schema():
     }
     finding = _one(document, "naming.schema-pascal-case")
     after = apply_fix_ops(
-        document, plan_openapi_fix(document, finding, FixOptions(opt_in=frozenset({finding.rule})))
+        document, plan_fixable(document, finding, FixOptions(opt_in=frozenset({finding.rule})))
     )
     assert "pet_record" not in json.dumps(after)
-    assert lint_openapi_fixable(after) == []
+    assert fixable_findings(after) == []
 
 
 def test_the_schema_rename_declines_a_taken_or_impossible_name():
@@ -673,8 +672,8 @@ def test_every_planned_fix_applies_and_removes_its_finding(name: str):
     options = FixOptions(opt_in=frozenset(rule.rule_id for rule in openapi_fix_rules()))
     for _round in range(500):
         planned = None
-        for finding in lint_openapi_fixable(document):
-            ops = plan_openapi_fix(document, finding, options)
+        for finding in fixable_findings(document):
+            ops = plan_fixable(document, finding, options)
             if ops:
                 planned = (finding, ops)
                 break
@@ -682,7 +681,7 @@ def test_every_planned_fix_applies_and_removes_its_finding(name: str):
             break
         finding, ops = planned
         document = apply_fix_ops(document, ops)
-        assert finding.id not in {f.id for f in lint_openapi_fixable(document)}
+        assert finding.id not in {f.id for f in fixable_findings(document)}
     else:  # pragma: no cover - a fix that never converges
         pytest.fail("fixes did not converge")
-    assert all(not plan_openapi_fix(document, f, options) for f in lint_openapi_fixable(document))
+    assert all(not plan_fixable(document, f, options) for f in fixable_findings(document))

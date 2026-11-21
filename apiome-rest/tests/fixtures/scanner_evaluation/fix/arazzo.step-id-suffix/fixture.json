@@ -1,0 +1,99 @@
+{
+  "kind": "fix",
+  "id": "fix/arazzo.step-id-suffix",
+  "rule": "arazzo.step-id-suffix",
+  "options": {},
+  "finding": {
+    "path": "workflows.0.steps.1.stepId",
+    "message": "stepId 'list' is declared more than once in this workflow."
+  },
+  "before": {
+    "arazzo": "1.0.1",
+    "info": {
+      "title": "Pet flows",
+      "version": "1.0.0"
+    },
+    "sourceDescriptions": [
+      {
+        "name": "pets",
+        "type": "openapi",
+        "url": "./pets.yaml"
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "browse",
+        "steps": [
+          {
+            "stepId": "list",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          },
+          {
+            "stepId": "list",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "plan": [
+    {
+      "op": "replace",
+      "path": "/workflows/0/steps/1/stepId",
+      "value": "list-2"
+    }
+  ],
+  "classification": {
+    "maxSeverity": null,
+    "planStatus": "ready"
+  },
+  "after": {
+    "arazzo": "1.0.1",
+    "info": {
+      "title": "Pet flows",
+      "version": "1.0.0"
+    },
+    "sourceDescriptions": [
+      {
+        "name": "pets",
+        "type": "openapi",
+        "url": "./pets.yaml"
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "browse",
+        "steps": [
+          {
+            "stepId": "list",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          },
+          {
+            "stepId": "list-2",
+            "operationId": "$sourceDescriptions.pets.listPets",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

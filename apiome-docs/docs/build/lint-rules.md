@@ -419,6 +419,15 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Fixture:** `catalog/arazzo-step-id-duplicate`
 - **Scan modes:** `lint`
 
+### `arazzo.step-id-suffix` {#arazzo-step-id-suffix}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Step ids must be unique within their workflow; a repeat makes $steps and goto references ambiguous.
+- **Fix owner:** engine
+- **Fix:** `rename` — Suffixes a repeated stepId (-2, -3, …) to the first id the workflow does not use.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
+
 ### `arazzo.success-criteria-context-required` {#arazzo-success-criteria-context-required}
 
 - **Category:** structure
@@ -430,6 +439,15 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **False-positive guidance:** None known: without a context the condition has nothing to run against.
 - **Fixture:** `catalog/arazzo-success-criteria-context-required`
 - **Scan modes:** `lint`
+
+### `arazzo.success-criteria-scaffold` {#arazzo-success-criteria-scaffold}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A step with no successCriteria cannot be verified; its source operation's 2xx response gives a start.
+- **Fix owner:** engine
+- **Fix:** `fill-in` — Adds successCriteria [{condition: '$statusCode == 200'}] from the 2xx response the step's embedded source operation declares. Off unless the guide enables it.
+- **Fix details:** not wire-visible · scope `finding` · off unless opted in
 
 ### `arazzo.unresolvable-operation-ref` {#arazzo-unresolvable-operation-ref}
 
@@ -450,6 +468,15 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** Workflow inputs should be referenced by at least one step.
 - **Fix owner:** human
+
+### `arazzo.version-marker-bump` {#arazzo-version-marker-bump}
+
+- **Category:** version
+- **Default severity:** warning
+- **Rationale:** An Arazzo 1.0 document that uses a 1.1-only feature is rejected by a conforming 1.0 runner.
+- **Fix owner:** engine
+- **Fix:** `structural` — Bumps the arazzo marker to 1.1.0 when a 1.1-only feature is in use.
+- **Fix details:** not wire-visible · scope `finding` · applied by default
 
 ### `arazzo.workflow-id-duplicate` {#arazzo-workflow-id-duplicate}
 

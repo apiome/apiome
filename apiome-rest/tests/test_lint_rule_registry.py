@@ -28,6 +28,7 @@ from app.lint_rule_registry import (
     docs_anchor_for,
 )
 from app.intake_lint_rules import INTAKE_RULES
+from app.arazzo_fix_rules import arazzo_fix_rules
 from app.openapi_fix_rules import openapi_fix_rules
 from app.overlay_lint_rules import OVERLAY_RULES
 from app.schema_lint import OPENAPI_RULES, RULE_CATALOGUE, lint_openapi_spec
@@ -54,6 +55,8 @@ def _all_engine_rule_ids() -> set:
     ids = set(OPENAPI_RULES) | set(INTAKE_RULES) | set(OVERLAY_RULES)
     # The fixable OpenAPI rules (GVM-3.1) run on demand, when a fix is asked for.
     ids.update(rule.rule_id for rule in openapi_fix_rules())
+    # … and the fixable Arazzo rules (GVM-4.5).
+    ids.update(rule.rule_id for rule in arazzo_fix_rules())
     # Every pack the engine runs for all formats — the common pack and the IXH-5.4
     # example-conformance pack — taken from the engine itself rather than listed here.
     for pack in unconditional_rule_packs():
