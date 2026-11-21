@@ -125,6 +125,7 @@ from .onboarding_routes import router as onboarding_router
 from .openapi_enrichment import enrich_openapi_spec
 from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
 from .ops_routes import health_router, ops_router
+from .document_migration_routes import router as document_migration_router
 from .ownership_policy_routes import router as ownership_policy_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -254,7 +255,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.625.0",
+    version="1.626.0",
 )
 
 
@@ -684,6 +685,7 @@ app.include_router(mcp_tool_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)
 app.include_router(ops_router)
+app.include_router(document_migration_router)
 # Super-admin OAuth provider config CRUD (OLO-8.4, #4970): GET/PUT /v1/admin/auth-providers,
 # gated by the signed super-admin session (OLO-8.1); secrets are write-only and never returned.
 app.include_router(auth_provider_config_router)

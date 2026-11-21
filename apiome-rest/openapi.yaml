@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.625.0
+  version: 1.626.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -93075,6 +93075,146 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for ops dashboardresponse422.
+  /v1/ops/document-migration:
+    post:
+      tags:
+      - ops
+      summary: Start Document Migration
+      description: 'Start one step of the document migration in the background (COA-5.8,
+        #7084). Platform-admin only.
+
+
+        The copy step writes each database-held import source, frozen schema and export
+        artifact to
+
+        the document store, verifies it and links it; the purge step (``purgeDbCopies``)
+        re-verifies
+
+        each stored object and drops its database copy. Answers ``202`` with the run''s
+        status; follow
+
+        it with ``GET /v1/ops/document-migration``.'
+      operationId: start_document_migration_v1_ops_document_migration_post
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Start Document Migrationauthorization schema.
+          - type: 'null'
+            description: Start Document Migrationauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Start Document Migration Xapikey schema.
+          - type: 'null'
+            description: Start Document Migration Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentMigrationRequest'
+              description: Request body for start document migrationrequest.
+        description: Request body for start document migration.
+      responses:
+        '202':
+          description: Successful response for start document migration.
+          content:
+            application/json:
+              schema:
+                description: Response payload for start document migrationresponse202.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for start document migrationresponse422.
+    get:
+      tags:
+      - ops
+      summary: Document Migration Status
+      description: 'The document migration''s status (COA-5.8, #7084). Platform-admin
+        only.
+
+
+        Whether this instance is running a step, the last run''s report or error, the
+        active
+
+        document store backend, and every checkpoint (per scope, step and source: the
+        last key
+
+        finished, running totals and when the step completed).'
+      operationId: document_migration_status_v1_ops_document_migration_get
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Document Migration Statusauthorization schema.
+          - type: 'null'
+            description: Document Migration Statusauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Document Migration Status Xapikey schema.
+          - type: 'null'
+            description: Document Migration Status Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for document migration status.
+          content:
+            application/json:
+              schema:
+                description: Response payload for document migration statusresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for document migration statusresponse422.
   /v1/admin/auth-providers:
     get:
       tags:
@@ -119365,6 +119505,70 @@ components:
       - purpose
       title: DnsRecordBody
       description: One row of the DNS table the tenant copies into their provider.
+    DocumentMigrationRequest:
+      properties:
+        purgeDbCopies:
+          type: boolean
+          title: Purgedbcopies
+          description: Run the purge step (drop database copies whose stored object verifies)
+            instead of the copy step.
+          default: false
+          example: false
+        dryRun:
+          type: boolean
+          title: Dryrun
+          description: Report what the step would do; write nothing.
+          default: false
+          example: false
+        tenantId:
+          anyOf:
+          - type: string
+            description: Request body for document migration.
+          - type: 'null'
+            description: Request body for document migration.
+          title: Tenantid
+          description: Only this tenant (UUID); every tenant when omitted.
+        sources:
+          anyOf:
+          - items:
+              type: string
+              enum:
+              - adapter_source
+              - import_snapshot
+              - frozen_schema
+              - export_artifact
+            type: array
+            description: Request body for document migration.
+          - type: 'null'
+            description: Request body for document migration.
+          title: Sources
+          description: Only these sources; every source when omitted.
+        rate:
+          type: number
+          minimum: 0.0
+          title: Rate
+          description: Most rows per second; 0 for no limit.
+          default: 20.0
+          example: 1.0
+        batchSize:
+          type: integer
+          maximum: 500.0
+          minimum: 1.0
+          title: Batchsize
+          description: Rows per page and checkpoint.
+          default: 50
+          example: 50
+        workers:
+          type: integer
+          maximum: 4.0
+          minimum: 1.0
+          title: Workers
+          description: Rows processed in parallel.
+          default: 1
+          example: 1
+      type: object
+      title: DocumentMigrationRequest
+      description: One step of the document migration to start.
     DocumentationEvidence:
       properties:
         specification:

@@ -42,6 +42,9 @@ WRITERS: Dict[str, int] = {
     # The one-off repair job (E1-6) that copies a legacy source between revisions and writes it
     # back to the legacy column. Moving existing sources into the store is COA-5.8 (#7084).
     "source_backfill.py": 4,
+    # The migration job (COA-5.8, #7084) that copies both columns into the document store and,
+    # in its purge step, drops them once the stored copy verifies.
+    "document_migration.py": 8,
 }
 
 _SQL = re.compile(r"\b(SELECT|INSERT|UPDATE|DELETE)\b")

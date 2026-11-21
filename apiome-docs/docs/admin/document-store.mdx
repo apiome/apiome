@@ -169,7 +169,9 @@ losing export, conversion or the source workspace's as-imported view.
   database, whatever the backend. The REST log has a line `original not stored`.
 - **With `db`, an original larger than `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` is not stored.** The
   text stays in the database as before.
-- **Existing versions are not changed.** Only imports that run after the upgrade write an original.
+- **Existing versions are not changed by the upgrade.** Only imports that run after it write an
+  original. To move older originals into the store, run the
+  [migration](./operating-apiome.mdx#move-documents-to-object-storage).
 
 ## How originals are read
 
@@ -226,6 +228,9 @@ large downloads out of the database, lower `APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES`
 
 With `APIOME_DOCUMENT_STORE=db`, an export above the database limit fails with
 `EXPORT_ARTIFACT_STORE_UNAVAILABLE`.
+
+Downloads written to the database before you configured `s3` or `filesystem` can be moved with the
+[migration](./operating-apiome.mdx#move-documents-to-object-storage).
 
 When a download expires it can no longer be fetched, but its object stays in the bucket or
 directory. Apiome does not yet remove unused objects, so remove them yourself if space matters.
@@ -333,12 +338,33 @@ version and the download count.
 | `db` | In the store and in the row's `content` column. |
 
 - If the store write fails during a freeze, the bytes are kept in the row and the freeze succeeds.
-- A version frozen before this release keeps its bytes in the row and is served from there.
+- A version frozen before this release keeps its bytes in the row and is served from there, until
+  the [migration](./operating-apiome.mdx#move-documents-to-object-storage) moves them.
 - **Unfreezing** removes the row and the link. The object stays in the store.
 - If a frozen version's bytes cannot be read from the store, `/v1/schema` answers `503`. It never
   falls back to a newly generated document, because that could differ from the frozen one.
 
 Migration V404 makes the `content` column optional. It changes no rows.
+
+## Move existing documents into the store
+
+Changing `APIOME_DOCUMENT_STORE` does not move what the database already holds: the originals of
+earlier imports, schemas frozen earlier and unexpired export downloads. Readers find them where they
+are, so nothing breaks. To move them, run `scripts/migrate_documents_to_store.py` (or
+`POST /v1/ops/document-migration`): it copies each one into the store, verifies it and links it, and
+a separate `--purge-db-copies` run removes the database copies once each verifies. The steps are in
+[Move documents to object storage](./operating-apiome.mdx#move-documents-to-object-storage).
+
+| What it writes | Where |
+| --- | --- |
+| An `original` (plus `original_part` rows for an archive) | `version_documents`, and the `sourceDocument` pointer on `format_metadata` |
+| A `frozen_schema` | `version_documents` |
+| An export download's object | `export_job_artifact.storage_uri`; the purge switches the row to `object_store` |
+| `verified_at` on every object it read back | `document_objects` |
+| How far each step got | `document_migration_checkpoints` (migration V405) |
+
+The same step also moves originals written to the `db` backend into `s3` or `filesystem` after you
+switch backends, as long as the database copy is still there.
 
 ## Troubleshooting
 

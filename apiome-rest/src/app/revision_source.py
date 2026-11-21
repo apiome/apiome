@@ -53,6 +53,7 @@ __all__ = [
     "attach_revision_source",
     "canonical_model_cache",
     "has_revision_source",
+    "legacy_fileset",
     "revision_source",
     "row_has_source",
     "source_captured_sql",
@@ -255,8 +256,11 @@ def _first_text(bag: Mapping[str, Any]) -> Optional[str]:
     return None
 
 
-def _legacy_fileset(content: str, root: Optional[str]) -> Optional[Tuple[Dict[str, bytes], str]]:
+def legacy_fileset(content: str, root: Optional[str]) -> Optional[Tuple[Dict[str, bytes], str]]:
     """Unpack a legacy base64 archive into its files.
+
+    Readers use it to serve an archive kept in ``format_metadata``; the migration job
+    (:mod:`app.document_migration`, COA-5.8) uses it to move that archive into the store.
 
     Args:
         content: The base64 text of the archive.
@@ -299,7 +303,7 @@ def _from_legacy_bags(
         return None
     if fmd.get("intakeKind") == "archive" and fmd.get("sourceEncoding") == "base64":
         root = fmd.get("filesetRoot") if isinstance(fmd.get("filesetRoot"), str) else None
-        unpacked = _legacy_fileset(content, root)
+        unpacked = legacy_fileset(content, root)
         if unpacked is not None:
             members, chosen = unpacked
             return RevisionSource(

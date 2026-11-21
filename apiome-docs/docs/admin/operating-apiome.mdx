@@ -311,6 +311,76 @@ It prints how many revisions it scanned and repaired, and how many it could not 
 (`unverifiable`, `no_copy`), with one outcome per revision. Each repaired revision records where its
 source came from in `sourceBackfilledFrom`. It is safe to run again.
 
+## Move documents to object storage
+
+Imports, freezes and large exports write their files to the [document store](./document-store.mdx).
+Data written before the store existed, or while `APIOME_DOCUMENT_STORE=db`, is still kept in the
+database. `scripts/migrate_documents_to_store.py` moves it into the store you have configured:
+
+| Source | Kept in the database as |
+| --- | --- |
+| `adapter_source` | The original of a non-OpenAPI import (`format_metadata.sourceContent`; an archive is unpacked into its files) |
+| `import_snapshot` | The original of an OpenAPI or Swagger import (`version_import_snapshots.source_text`) |
+| `frozen_schema` | A frozen version's schema (`version_spec_snapshots.content`) |
+| `export_artifact` | An export download that has not expired (`export_job_artifact.content`) |
+
+The move takes two steps, run separately. The first copies. The second, run only after you have
+checked the first, removes the database copies.
+
+1. **Configure the store.** Set `APIOME_DOCUMENT_STORE` to `s3` or `filesystem` and restart the REST
+   API (see [Document store](./document-store.mdx)). Run the script with the same environment as the
+   `rest` service.
+2. **Check what would be copied.** From `apiome-rest`:
+
+   ```bash
+   PYTHONPATH=src python scripts/migrate_documents_to_store.py --dry-run
+   ```
+
+3. **Copy.** Each file is written to the store, read back and checked against its SHA-256 and the
+   database copy, then linked to its version. The database copies stay:
+
+   ```bash
+   PYTHONPATH=src python scripts/migrate_documents_to_store.py                         # every workspace
+   PYTHONPATH=src python scripts/migrate_documents_to_store.py --tenant <tenant-uuid>  # one workspace
+   ```
+
+4. **Check the report.** `failed` must be `0`. Each failed or skipped row is listed with its key and
+   the reason. Fix the cause (usually the store's permissions) and run step 3 again; it picks up
+   only what is left.
+5. **Remove the database copies.** Each stored file is read back again and compared byte for byte
+   with its database copy, and the copy is removed only when they match:
+
+   ```bash
+   PYTHONPATH=src python scripts/migrate_documents_to_store.py --purge-db-copies --dry-run
+   PYTHONPATH=src python scripts/migrate_documents_to_store.py --purge-db-copies
+   ```
+
+Things to know:
+
+- **It is safe to run again.** A finished row is never selected again, so a second run reports
+  `"scanned": 0`.
+- **It resumes.** After each batch the script records how far it got in
+  `apiome.document_migration_checkpoints`. If a run is stopped, the next run starts after the last
+  finished batch and the report shows `resumed_after`.
+- **It runs gently by default:** one worker, 50 rows a batch and at most 20 rows a second, one
+  document in memory at a time. Change this with `--workers` (up to 4), `--batch-size` (up to 500)
+  and `--rate` (`0` for no limit). `--source` limits the run to one source and can be repeated.
+- **Only one run at a time.** A second run, from the script or from another host, exits with
+  `Another document migration run is in progress.`
+- **Versions are not changed.** Rendered documents stay valid, and no version's content stamp moves.
+- **A different original wins.** If a version already has a stored original that differs from its
+  database copy, the row is skipped (`original-differs`) and nothing is overwritten.
+- **On the `db` backend** the copy step only links what the database holds, and export downloads are
+  skipped. `--purge-db-copies` is refused, because the `db` backend keeps the database copies by
+  design.
+- The script exits `0` when no row failed, `1` when a row failed, and `2` when the run was refused
+  or another run was in progress.
+
+A platform administrator can also run the steps from the REST API. `POST /v1/ops/document-migration`
+starts one in the background and answers `202`; the body takes `purgeDbCopies`, `dryRun`, `tenantId`,
+`sources`, `rate`, `batchSize` and `workers`. `GET /v1/ops/document-migration` shows whether a run is
+going, the last run's report and every checkpoint. See the [ops reference](../reference/rest/ops.md).
+
 ## Watch exports
 
 Before Export studio opens to everyone, watch how exports are doing. Sign in as a platform
