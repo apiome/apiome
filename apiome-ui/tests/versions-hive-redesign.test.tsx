@@ -47,6 +47,21 @@ const mockReplace = jest.fn((href: string) => {
   mockSearchListeners.forEach((listener) => listener());
 });
 
+/**
+ * Whether the middleware switches a git-like route off, as the page asks it. Off-means-404 as
+ * shipped (`FEATURE_GITLIKE` is false), except where a test turns git-like on to reach the
+ * branch read the New version dialog makes only in such a build.
+ */
+const mockGitlike = { on: false };
+jest.mock('@lib/gitlike-route-guard', () => {
+  const actual = jest.requireActual<typeof import('@lib/gitlike-route-guard')>('@lib/gitlike-route-guard');
+  return {
+    ...actual,
+    isApiRouteDisabled: (pathname: string, method: string) =>
+      !mockGitlike.on && actual.isGitlikePath(pathname, method),
+  };
+});
+
 jest.mock('@lib/auth/session-client', () => ({
   useAuthSession: () => ({
     data: { user: { user_id: 'u-ada', current_tenant_id: 't-acme', email: 'ada@acme.io', is_tenant_admin: true } },
@@ -467,6 +482,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  mockGitlike.on = false;
   installFetch();
   mockSearch = new URLSearchParams();
   // These suites exercise the table; the timeline is the default view (facelift "timeline").
@@ -590,7 +606,21 @@ describe('a pending or failed read inside a Versions dialog (RC6-H3, #6210)', ()
     expect(await screen.findByTestId('heatmap-grid')).toBeInTheDocument();
   });
 
+  it('New version: a build without git-like features asks for no branches and shows no error (#7060)', async () => {
+    // The middleware answers every branch route with 404 in such a build; the dialog used to
+    // open on a red "Couldn't load this project's branches — Not found" banner every time.
+    installFetch([{ test: /\/version-branches$/, status: 404, reply: () => ({ success: false, error: 'Not found' }) }]);
+    await renderVersions();
+    fireEvent.click(screen.getByTestId('versions-new-button'));
+    const dialog = await screen.findByTestId('new-version-dialog');
+    expect(within(dialog).queryByTestId('new-version-branches-error')).toBeNull();
+    expect(calls.filter((call) => call.url.endsWith('/version-branches'))).toHaveLength(0);
+    // Nor does the page read tags, the other git-like list it used to fetch (and 404) on load.
+    expect(calls.filter((call) => call.url.endsWith('/version-tags'))).toHaveLength(0);
+  });
+
   it('New version: a failed branch read says so, with a retry, and the rest of the dialog still works', async () => {
+    mockGitlike.on = true;
     installFetch([{ test: /\/version-branches$/, status: 500, reply: () => ({ success: false, error: 'Branch index unavailable' }) }]);
     await renderVersions();
     fireEvent.click(screen.getByTestId('versions-new-button'));

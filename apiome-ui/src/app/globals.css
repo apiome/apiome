@@ -13922,6 +13922,14 @@ button.tfa-reset-notice__close > svg {
   flex-shrink: 0;
 }
 
+/* The edit dialog's stats are words and timestamps, not figures: at the stat step (`4xl`) a
+   date wrapped to three lines and the strip took a third of the dialog (#7060). */
+.prj-edit-stats .hive-stat__value {
+  font-size: var(--fs-lg);
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+
 /* ---- The scores dialog --------------------------------------------------- */
 /* The width is `DialogContent size="lg"`, not a second ceiling here: two
    declarations of the same measurement are two things that can disagree. */
@@ -23992,6 +24000,19 @@ html[data-motion='reduce'] .prm-spin {
 .cat-imp-routing__note {
   margin-block-start: var(--space-1);
   font-size: var(--fs-xs);
+}
+
+/* An inline link in the import dialog (#7060): the quality step's link to a finding's rule on
+   the docs site (it printed the rule page's repository path as plain text) and the routing
+   card's way to Projects for an OpenAPI source (Continue was disabled with nowhere to go). */
+.cat-imp-link {
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cat-imp-link:hover {
+  color: var(--accent);
 }
 
 .cat-imp-routing__note {

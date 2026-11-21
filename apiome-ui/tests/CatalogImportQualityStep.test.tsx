@@ -46,7 +46,7 @@ function buildReport(overrides: Partial<PreflightReport> = {}): PreflightReport 
           weight: 2,
           rule_penalty: 4,
           remediation: 'Add a description to the type.',
-          docs_url: 'lint-rules#graphql-type-description',
+          docs_url: 'apiome-docs/docs/build/lint-rules.md#graphql-type-description',
         },
         {
           rank: 2,
@@ -398,9 +398,12 @@ describe('CatalogImportQualityStep — ranked findings', () => {
     expect(screen.getByTestId('import-quality-finding-remediation')).toHaveTextContent(
       'Add a description to the type.',
     );
-    expect(screen.getByTestId('import-quality-finding-remediation')).toHaveTextContent(
-      'lint-rules#graphql-type-description',
-    );
+    // The pointer is a link to the rule on the docs site, not the repository path as text (#7060).
+    const docs = screen.getByTestId('import-quality-finding-docs');
+    expect(docs).toHaveTextContent('Rule docs');
+    expect(docs).toHaveAttribute('href', 'https://docs.apiome.dev/build/lint-rules#graphql-type-description');
+    expect(docs).toHaveAttribute('target', '_blank');
+    expect(screen.getByTestId('import-quality-finding-remediation')).not.toHaveTextContent('apiome-docs/');
   });
 
   it('virtualizes above the bounded count instead of mounting every row', async () => {

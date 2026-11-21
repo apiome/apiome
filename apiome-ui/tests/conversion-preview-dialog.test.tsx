@@ -100,6 +100,15 @@ describe('ConversionPreviewDialog', () => {
     expect(screen.getByTestId('conversion-tier-pill')).toHaveTextContent('low fidelity');
   });
 
+  it('names the source format by its display label, not its registry id (#7060)', async () => {
+    global.fetch = okFetch(LOW_TIER) as unknown as typeof fetch;
+    render(<ConversionPreviewDialog itemId="cat-1" itemName="Books" sourceFormat="raml" open onOpenChange={() => {}} />);
+
+    expect(screen.getByText(/Review what the RAML source can and cannot carry onto OpenAPI/)).toBeInTheDocument();
+    expect(screen.queryByText(/Review what the raml source/)).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('conversion-provided-column')).toBeInTheDocument());
+  });
+
   it('shows the mandatory warning banner and gates Convert on low tier', async () => {
     global.fetch = okFetch(LOW_TIER) as unknown as typeof fetch;
     render(<ConversionPreviewDialog itemId="cat-1" itemName="Orders" open onOpenChange={() => {}} />);

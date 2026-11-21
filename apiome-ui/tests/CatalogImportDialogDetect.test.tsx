@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -93,6 +93,29 @@ describe('CatalogImportDialog — detect confidence + paradigm + routing (MFI-26
 
     expect(screen.getByText(/paradigm REST/i)).toBeInTheDocument();
     expect(screen.getByText(/Routing decision → Projects/i)).toBeInTheDocument();
+
+    // Continue cannot import it here, so the card says where to go and links there (#7060).
+    const note = screen.getByTestId('catalog-import-routing-projects');
+    expect(note).toHaveTextContent('This dialog does not import it. Use Import on the Projects page.');
+    expect(within(note).getByRole('link', { name: 'Open Projects' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/projects',
+    );
+  });
+
+  it('offers no Projects link for a source the catalog stores', async () => {
+    global.fetch = mockFetch({
+      matched: true,
+      detected: { format: 'graphql', confidence: 0.95, reason: 'SDL type definitions', importable: true },
+    }) as unknown as typeof fetch;
+
+    render(<CatalogImportDialog open onClose={jest.fn()} />);
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith('/api/import/sources', expect.anything()),
+    );
+    await pasteAndDetect();
+
+    expect(screen.queryByTestId('catalog-import-routing-projects')).not.toBeInTheDocument();
   });
 
   it('surfaces ambiguous detection with the close cluster', async () => {

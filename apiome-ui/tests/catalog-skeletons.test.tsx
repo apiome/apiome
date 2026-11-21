@@ -135,6 +135,15 @@ describe('CatalogDetailSkeleton', () => {
     expect(container.querySelector('.cid-overview__aside')).not.toBeNull();
   });
 
+  it('puts no block element in the header title or description, so hydration stays clean (#7060)', () => {
+    const { container } = render(<CatalogDetailSkeleton />);
+    // `<p>` and `<h1>` take phrasing content only; a `div` there made React report a hydration
+    // error on every catalog item load.
+    expect(container.querySelectorAll('.page-header h1 div, .page-header p div')).toHaveLength(0);
+    expect(container.querySelector('.page-header h1 .hive-skeleton')?.tagName).toBe('SPAN');
+    expect(container.querySelector('.page-header__desc .hive-skeleton')?.tagName).toBe('SPAN');
+  });
+
   it('names what is loading in its live region and draws no spinner', () => {
     const { container } = render(<CatalogDetailSkeleton />);
     const region = screen.getByTestId('catalog-detail-loading');

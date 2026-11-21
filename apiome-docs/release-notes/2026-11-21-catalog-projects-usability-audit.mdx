@@ -1,0 +1,29 @@
+---
+slug: catalog-projects-usability-audit
+title: "Catalog and Projects, walked end to end"
+description: "An end-to-end pass over import, project, version, publish and export fixes seven defects."
+authors: [apiome]
+---
+
+We walked the whole Catalog and Projects journey (import, convert to a project, cut a version,
+publish, export) at 1440 and 1024 pixels wide, in the light and dark themes. Seven defects are fixed
+in this release. The rest are scheduled for this release candidate.
+
+{/* truncate */}
+
+- **Fixed — New version error:** the **New version** dialog no longer opens on *Couldn't load this
+  project's branches — Not found*. This build has no branches, so the dialog no longer asks for them.
+  The Versions page also stopped asking for version tags on every load.
+- **Fixed — OpenAPI in Import to catalog:** an OpenAPI or Swagger file pasted into **Import to
+  catalog** shows *Routing decision → Projects*. The card now says to use **Import** on the Projects
+  page and has an **Open Projects** link. Before, **Continue** was disabled with no reason given.
+- **Fixed — rule links:** in the import quality step, each finding links to its rule on this site
+  (**Rule docs**) instead of showing the file path as text.
+- **Fixed — Edit project:** **Created** and **Updated** fit on one line instead of three.
+- **Fixed — Convert dialog:** it names the source format as *RAML*, not *raml*.
+- **Fixed — catalog item loading:** opening a catalog item no longer logs a page error while it
+  loads.
+- **Coming next:** **New version** will copy the latest version by default and warn before you
+  publish an empty one. **Import to catalog** will pass an OpenAPI file straight to the Projects
+  importer. A converted project will get a readable description and slug.
+- **REST:** no changes.

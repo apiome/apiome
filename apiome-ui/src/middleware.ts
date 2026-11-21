@@ -18,7 +18,7 @@
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import { FEATURE_GITLIKE } from '@lib/feature-flags';
-import { isGitlikePath } from '@lib/gitlike-route-guard';
+import { isApiRouteDisabled } from '@lib/gitlike-route-guard';
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.next();
@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 
-  if (isGitlikePath(pathname, request.method.toUpperCase())) {
+  if (isApiRouteDisabled(pathname, request.method.toUpperCase())) {
     return NextResponse.json(
       {
         success: false,

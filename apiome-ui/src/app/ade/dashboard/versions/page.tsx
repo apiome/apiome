@@ -259,6 +259,7 @@ import { OpenapiUpgradeDialog } from '../../../components/ade/openapi-upgrade/Op
 import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
 import { ProjectRelatedArtifactsSection } from '../../../components/ade/dashboard/ProjectRelatedArtifactsSection';
 import { FEATURE_GITLIKE } from '@lib/feature-flags';
+import { isApiRouteDisabled } from '@lib/gitlike-route-guard';
 import type { VersionMockChange } from '../../../components/ade/dashboard/VersionMockCell';
 import {
   guardrailBlocksPublish,
@@ -1053,12 +1054,21 @@ const Versions = () => {
 
   const loadBranches = async () => {
     if (!selectedProjectId) return;
+    const branchesPath = `/api/projects/${selectedProjectId}/version-branches`;
+    // With git-like features off, `src/middleware.ts` answers every branch route with 404, so
+    // asking only drew a red "Couldn't load this project's branches — Not found" banner in
+    // every New version dialog (#7060). A build without branches has none to list.
+    if (isApiRouteDisabled(branchesPath, 'GET')) {
+      setVersionBranches([]);
+      setBranchListError(null);
+      return;
+    }
     setBranchListLoading(true);
     setBranchListError(null);
     setBranchPermissionDenied(false);
     setVersionBranches([]);
     try {
-      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches`);
+      const r = await fetch(branchesPath);
       if (r.status === 401 || r.status === 403) {
         setBranchPermissionDenied(true);
         setBranchListError('You do not have permission to view branch metadata for this project.');
@@ -1084,8 +1094,15 @@ const Versions = () => {
 
   const loadVersionTags = async () => {
     if (!selectedProjectId) return;
+    const tagsPath = `/api/projects/${selectedProjectId}/version-tags`;
+    // Switched off with git-like features (the middleware answers 404): no tags to list, and
+    // no failed request on every Versions load (#7060).
+    if (isApiRouteDisabled(tagsPath, 'GET')) {
+      setVersionTags([]);
+      return;
+    }
     try {
-      const r = await fetch(`/api/projects/${selectedProjectId}/version-tags`);
+      const r = await fetch(tagsPath);
       const d = await r.json();
       if (d.success && Array.isArray(d.tags)) setVersionTags(d.tags);
       else setVersionTags([]);

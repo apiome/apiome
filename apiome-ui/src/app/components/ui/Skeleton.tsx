@@ -39,7 +39,15 @@ import { cn } from '../../../../lib/utils';
  * the container itself.
  */
 
-export type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
+export interface SkeletonProps extends React.HTMLAttributes<HTMLElement> {
+  /**
+   * The element to draw the bar as (default `div`). Use `span` where the placeholder stands in
+   * for text inside phrasing-only content — a page header's `<h1>` title or `<p>` description
+   * (#7060): a `div` there is invalid HTML and React reports a hydration error. The span is
+   * drawn as a block, so the same width and height classes size it.
+   */
+  as?: 'div' | 'span';
+}
 
 /**
  * One placeholder bar: the inset fill with the shimmer of `hive.css` §14 sweeping across it.
@@ -49,12 +57,17 @@ export type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
  * because reduced motion then reaches it through the app-wide rule that zeroes every
  * animation.
  *
- * @param props Standard `div` props; give it a size with `className` or `style`.
+ * @param props Standard element props plus `as`; give it a size with `className` or `style`.
  * @returns The bar, hidden from assistive technology.
  */
-const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} aria-hidden className={cn('hive-skeleton', className)} {...props} />
+const Skeleton = React.forwardRef<HTMLElement, SkeletonProps>(
+  ({ as: Tag = 'div', className, ...props }, ref) => (
+    <Tag
+      ref={ref as React.Ref<never>}
+      aria-hidden
+      className={cn('hive-skeleton', Tag === 'span' && 'block', className)}
+      {...props}
+    />
   )
 );
 Skeleton.displayName = 'Skeleton';

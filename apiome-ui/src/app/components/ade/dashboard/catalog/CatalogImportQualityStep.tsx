@@ -66,6 +66,7 @@ import {
   type PreflightReport,
   type PreflightRequest,
 } from '@/app/utils/import-preflight';
+import { docsHrefFromPointer } from '@/app/utils/docsLinks';
 import { clampRowIndex, computeCenteredLineRange, computeWindowedRange } from '@/app/utils/windowed-rows';
 import {
   FINDINGS_VIRTUALIZE_ABOVE,
@@ -394,6 +395,8 @@ export function CatalogImportQualityStep({
   );
   // The preview panel's link wins until a finding is selected again (selecting one clears it).
   const selectedLine = previewLine ?? findingLines[selectedIndex] ?? null;
+  // The selected finding's rule page on the docs site; REST sends it as a repository path.
+  const selectedRuleDocsHref = docsHrefFromPointer(findings[selectedIndex]?.docs_url);
 
   // Auto-advance only for a real, non-blocking verdict: a block, an unimportable candidate, and a
   // failed pre-flight always stop here, so the preference can never hide a gate.
@@ -776,7 +779,20 @@ export function CatalogImportQualityStep({
                             data-testid="import-quality-finding-remediation"
                           >
                             {findings[selectedIndex].remediation}
-                            {findings[selectedIndex].docs_url ? ` · ${findings[selectedIndex].docs_url}` : ''}
+                            {selectedRuleDocsHref ? (
+                              <>
+                                {' · '}
+                                <a
+                                  href={selectedRuleDocsHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="cat-imp-link"
+                                  data-testid="import-quality-finding-docs"
+                                >
+                                  Rule docs
+                                </a>
+                              </>
+                            ) : null}
                           </p>
                         )}
                       </>
