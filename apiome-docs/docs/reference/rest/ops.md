@@ -1,6 +1,6 @@
 ---
 title: "Ops"
-description: "REST endpoints tagged ops: 12 operations."
+description: "REST endpoints tagged ops: 16 operations."
 sidebar_position: 67
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.626.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.627.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `ops` · 12 operations
+Tag: `ops` · 16 operations
 
 ## `GET /health` {#health-check-health-get}
 
@@ -27,8 +27,16 @@ any that are ``missing``. Availability only — resolved paths, the optional too
 exact third-party versions stay on the platform-admin ``GET /v1/ops/toolchain``, because
 this endpoint is unauthenticated.
 
-The HTTP status reflects readiness only: an enforcing deployment cannot serve at all with a
-required tool missing (startup refuses), and a non-enforcing one is degraded deliberately.
+The ``document_store`` block (COA-5.9, #7085) reports the store as a dependency:
+``status`` (``ok``; ``degraded`` when running on the ``db`` fallback; ``unavailable`` when
+the store did not answer its last check), the active ``backend`` and whether a ``fallback``
+is in effect. The check is cached for 30 seconds; error details and settings stay on the
+platform-admin ``GET /v1/ops/document-store``.
+
+The HTTP status reflects database readiness only: an enforcing deployment cannot serve at
+all with a required tool missing (startup refuses), a non-enforcing one is degraded
+deliberately, and a store outage fails the writes that need it without making the server
+unready.
 
 Operation id: `health_check_health_get`
 
@@ -65,6 +73,50 @@ Operation id: `readiness_readyz_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for readiness. | `application/json` any |
+
+## `GET /v1/admin/document-store` {#admin-document-store-v1-admin-document-store-get}
+
+**Admin Document Store**
+
+The super-admin console's view of ``GET /v1/ops/document-store`` (COA-5.9, #7085).
+
+Operation id: `admin_document_store_v1_admin_document_store_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `X-Admin-Session` | header | string or null | no | Header parameter: X Admin Session. |
+| `admin_session` | cookie | string or null | no | Cookie parameter: admin session. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for admin document store. | `application/json` [`DocumentStoreStatus`](#schema-documentstorestatus) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/admin/document-store/test` {#admin-test-document-store-v1-admin-document-store-test-post}
+
+**Admin Test Document Store**
+
+The super-admin console's view of ``POST /v1/ops/document-store/test`` (COA-5.9, #7085).
+
+Operation id: `admin_test_document_store_v1_admin_document_store_test_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `X-Admin-Session` | header | string or null | no | Header parameter: X Admin Session. |
+| `admin_session` | cookie | string or null | no | Cookie parameter: admin session. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for admin test document store. | `application/json` [`DocumentStoreProbeResult`](#schema-documentstoreproberesult) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/ops/backups` {#ops-backups-v1-ops-backups-get}
 
@@ -175,6 +227,58 @@ Request body for start document migration.
 | Status | Description | Body |
 | --- | --- | --- |
 | 202 | Successful response for start document migration. | `application/json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/ops/document-store` {#ops-document-store-v1-ops-document-store-get}
+
+**Ops Document Store**
+
+The active document store: backend, settings, health and usage (COA-5.9, #7085). Platform-admin only.
+
+Settings come from the server environment and are read-only here; credentials are never
+returned — ``credentials`` only says whether static keys or boto3's default chain are used.
+
+Operation id: `ops_document_store_v1_ops_document_store_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for ops document store. | `application/json` [`DocumentStoreStatus`](#schema-documentstorestatus) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/ops/document-store/test` {#ops-test-document-store-v1-ops-document-store-test-post}
+
+**Ops Test Document Store**
+
+Test the document store: write, read back and delete a probe object (COA-5.9, #7085). Platform-admin only.
+
+Answers ``200`` whether or not the test passed; ``ok`` and each step's ``error`` say what
+failed.
+
+Operation id: `ops_test_document_store_v1_ops_document_store_test_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for ops test document store. | `application/json` [`DocumentStoreProbeResult`](#schema-documentstoreproberesult) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/ops/import-export` {#ops-import-export-v1-ops-import-export-get}
@@ -334,6 +438,43 @@ One step of the document migration to start.
 | `rate` | number | no | Most rows per second; 0 for no limit. |
 | `batchSize` | integer | no | Rows per page and checkpoint. |
 | `workers` | integer | no | Rows processed in parallel. |
+
+### `DocumentStoreProbeResult` {#schema-documentstoreproberesult}
+
+The outcome of writing, reading back and deleting one probe object.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ok` | boolean | yes | True when every step succeeded. |
+| `backend` | string | yes | Backend. |
+| `checkedAt` | number | yes | When the test finished (epoch seconds). |
+| `durationMs` | number | yes | Duration Ms. |
+| `steps` | array of `DocumentStoreProbeStep` | yes | Steps. |
+
+### `DocumentStoreStatus` {#schema-documentstorestatus}
+
+The active document store: settings (never credentials), health and usage.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `backend` | string | yes | The backend the server runs on: db, s3 or filesystem. |
+| `configuredBackend` | string | yes | The backend APIOME_DOCUMENT_STORE names. |
+| `fallback` | boolean | yes | True when startup fell back to db (APIOME_DOCUMENT_STORE_FALLBACK=db). |
+| `fallbackReason` | string or null | no | Why the configured backend was not usable (redacted). |
+| `backends` | array of string | yes | Every backend this server supports. |
+| `bucket` | string or null | no | s3: the bucket. |
+| `prefix` | string | yes | The folder every object key starts with ('' for none). |
+| `region` | string or null | no | s3: the signing region. |
+| `endpointUrl` | string or null | no | s3: the service URL; null for AWS. |
+| `addressingStyle` | string or null | no | s3: auto, path or virtual. |
+| `path` | string or null | no | filesystem: the storage directory. |
+| `encryption` | string or null | no | s3: none, sse-s3 or sse-kms. |
+| `kmsKeyId` | string or null | no | s3 with sse-kms: the key; null for the bucket default. |
+| `credentials` | enum `"static"`, `"default-chain"` or null | no | s3: 'static' (keys in the environment) or 'default-chain' (boto3's chain / IAM role). |
+| `presignTtlSeconds` | integer or null | no | s3: default lifetime of a download link. |
+| `maxObjectBytes` | integer or null | no | db: the largest object accepted. |
+| `health` | `DocumentStoreHealth` | yes | Health. |
+| `usage` | `DocumentStoreUsage` or null | no | Null when the document index cannot be read. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

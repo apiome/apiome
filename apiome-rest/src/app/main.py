@@ -126,6 +126,9 @@ from .openapi_enrichment import enrich_openapi_spec
 from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
 from .ops_routes import health_router, ops_router
 from .document_migration_routes import router as document_migration_router
+from .document_store_health import initialize_document_store
+from .document_store_routes import admin_router as document_store_admin_router
+from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -255,7 +258,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.626.0",
+    version="1.627.0",
 )
 
 
@@ -686,6 +689,8 @@ app.include_router(mcp_tool_router)
 app.include_router(health_router)
 app.include_router(ops_router)
 app.include_router(document_migration_router)
+app.include_router(document_store_ops_router)
+app.include_router(document_store_admin_router)
 # Super-admin OAuth provider config CRUD (OLO-8.4, #4970): GET/PUT /v1/admin/auth-providers,
 # gated by the signed super-admin session (OLO-8.1); secrets are write-only and never returned.
 app.include_router(auth_provider_config_router)
@@ -771,6 +776,12 @@ async def startup_event():
     # required tool raises here and startup fails loudly, instead of the service coming up with
     # a shipped format silently unavailable.
     await enforce_toolchain_selfcheck(log=_startup_log)
+
+    # Document store (COA-5.9, #7085). Builds the configured store and checks an s3 bucket or a
+    # storage directory answers. An unusable store stops startup with a redacted message naming
+    # the setting to fix — unless APIOME_DOCUMENT_STORE_FALLBACK=db, which starts on the database
+    # store instead and reports the fallback on /health and GET /v1/ops/document-store.
+    await asyncio.to_thread(initialize_document_store, log=_startup_log)
 
     async def _webhook_delivery_sweep() -> None:
         log = logging.getLogger(__name__)

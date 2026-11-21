@@ -1328,6 +1328,14 @@ class Settings(BaseSettings):
         default=300,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_PRESIGN_TTL_SECONDS", "document_store_presign_ttl_seconds"),
     )
+    # What startup does when the configured store is unusable (COA-5.9, #7085): empty (the
+    # default) refuses to start, with a redacted message naming the setting to fix; ``db`` logs
+    # the error and starts on the database backend instead, which ``/health`` and
+    # ``GET /v1/ops/document-store`` then report as a fallback.
+    document_store_fallback: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_FALLBACK", "document_store_fallback"),
+    )
     # Largest single object the ``db`` backend accepts.
     document_store_db_max_bytes: int = Field(
         default=33_554_432,

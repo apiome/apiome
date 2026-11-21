@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   Award,
   Flag,
+  HardDrive,
 } from 'lucide-react';
 import SidebarShell, { SidebarSectionLabel } from '../../components/sidebar/SidebarShell';
 import SidebarDensityToggle from '../../components/sidebar/SidebarDensityToggle';
@@ -41,6 +42,7 @@ const MANAGEMENT_ITEMS: AdminMenuItem[] = [
   { id: 'featureFlags', path: '/admin/dashboard/feature-flags', icon: <Flag className="w-4 h-4" />, title: 'Feature Flags' },
   { id: 'templates', path: '/admin/dashboard/templates', icon: <Package className="w-4 h-4" />, title: 'Property Templates' },
   { id: 'payments', path: '/admin/dashboard/payments', icon: <CreditCard className="w-4 h-4" />, title: 'Payments' },
+  { id: 'documentStore', path: '/admin/dashboard/document-store', icon: <HardDrive className="w-4 h-4" />, title: 'Document store' },
   { id: 'database', path: '/admin/dashboard/database', icon: <Database className="w-4 h-4" />, title: 'Database' },
   { id: 'monitoring', path: '/admin/dashboard/monitoring', icon: <Activity className="w-4 h-4" />, title: 'Monitoring' },
   { id: 'settings', path: '/admin/dashboard/settings', icon: <Settings className="w-4 h-4" />, title: 'System settings' },
