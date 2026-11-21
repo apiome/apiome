@@ -31119,6 +31119,325 @@ class Database:
             """
         ) or []
 
+    # ───────────────────── document object lifecycle (COA-5.10, #7086, V406) ─────────────────────
+    # ``document_objects.ref_count`` is kept equal to the live references by V406's triggers;
+    # ``app.document_lifecycle`` is the only caller of these methods.
+
+    def delete_document_store_blobs_for_tenant(self, tenant_id: str) -> int:
+        """Delete every ``db`` backend blob of a tenant key segment; return how many went."""
+        rows = self.execute_query(
+            "DELETE FROM apiome.document_store_blob WHERE tenant_id = %s RETURNING sha256",
+            (tenant_id,),
+        )
+        return len(rows or [])
+
+    def document_object_ids_for_versions(self, version_ids: Sequence[str]) -> List[str]:
+        """Return the ``document_objects.id`` of every object the given revisions link to."""
+        if not version_ids:
+            return []
+        rows = self.execute_query(
+            """
+            SELECT DISTINCT object_id::text AS id
+            FROM apiome.version_documents
+            WHERE version_id = ANY(%s::uuid[])
+            """,
+            (list(version_ids),),
+        )
+        return [row["id"] for row in rows or []]
+
+    def list_unreferenced_document_objects(
+        self, *, cutoff: Any, object_ids: Optional[Sequence[str]] = None, limit: int = 500
+    ) -> List[Dict[str, Any]]:
+        """Objects with no live reference since before ``cutoff``.
+
+        An object that was never linked (``unreferenced_at`` still null) counts from its
+        ``created_at``.
+
+        Args:
+            cutoff: Only objects unreferenced at or before this time.
+            object_ids: Only these objects (``None`` for any).
+            limit: The most rows to return.
+
+        Returns:
+            ``{id, tenant_id, sha256, backend, storage_key, size_bytes}`` rows, oldest first.
+        """
+        params: List[Any] = [cutoff]
+        only = ""
+        if object_ids is not None:
+            if not object_ids:
+                return []
+            only = "AND o.id = ANY(%s::uuid[])"
+            params.append(list(object_ids))
+        params.append(int(limit))
+        return self.execute_query(
+            f"""
+            SELECT o.id::text AS id, o.tenant_id, o.sha256, o.backend, o.storage_key, o.size_bytes
+            FROM apiome.document_objects o
+            WHERE o.ref_count = 0
+              AND COALESCE(o.unreferenced_at, o.created_at) <= %s
+              {only}
+            ORDER BY COALESCE(o.unreferenced_at, o.created_at), o.id
+            LIMIT %s
+            """,
+            tuple(params),
+        ) or []
+
+    def purge_unreferenced_document_object(self, object_id: str) -> Optional[Dict[str, Any]]:
+        """Delete an object's index row if, recounted under a row lock, nothing live uses it.
+
+        In one transaction: lock the row, recount its live references, and — only when there are
+        none — delete the links left by deleted revisions and the row itself. A concurrent import
+        linking the same object waits on the lock and then fails its foreign key instead of
+        linking a row that is about to disappear.
+
+        Returns:
+            ``{id, tenant_id, sha256, backend, storage_key, size_bytes}`` of the deleted row, or
+            ``None`` when it is gone already or is referenced again.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id FROM apiome.document_objects WHERE id = %s::uuid FOR UPDATE",
+                    (object_id,),
+                )
+                if cursor.fetchone() is None:
+                    conn.commit()
+                    return None
+                cursor.execute("SELECT apiome.recount_document_objects(ARRAY[%s::uuid])", (object_id,))
+                cursor.execute(
+                    "SELECT ref_count FROM apiome.document_objects WHERE id = %s::uuid",
+                    (object_id,),
+                )
+                row = cursor.fetchone()
+                count = row["ref_count"] if isinstance(row, dict) else row[0]
+                if int(count or 0) > 0:
+                    conn.commit()
+                    return None
+                cursor.execute("DELETE FROM apiome.version_documents WHERE object_id = %s::uuid", (object_id,))
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.document_objects
+                    WHERE id = %s::uuid
+                    RETURNING id::text AS id, tenant_id, sha256, backend, storage_key, size_bytes
+                    """,
+                    (object_id,),
+                )
+                deleted = cursor.fetchone()
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        if deleted is None:
+            return None
+        if isinstance(deleted, dict):
+            return dict(deleted)
+        keys = ("id", "tenant_id", "sha256", "backend", "storage_key", "size_bytes")
+        return dict(zip(keys, deleted))
+
+    def document_object_indexed(self, tenant_id: str, sha256: str) -> bool:
+        """Whether an index row exists for (tenant, SHA-256) — a concurrent writer re-created it."""
+        rows = self.execute_query(
+            "SELECT 1 AS found FROM apiome.document_objects WHERE tenant_id = %s AND sha256 = %s",
+            (tenant_id, sha256),
+        )
+        return bool(rows)
+
+    def delete_stale_rendered_documents(self, *, cutoff: Any, limit: int = 500) -> List[str]:
+        """Drop rendered documents a newer render of the same revision and kind has replaced.
+
+        A ``rendered_openapi`` / ``rendered_canonical`` link is stale when a newer link of the same
+        role exists for its revision (a later content stamp or generator) and it was written at
+        or before ``cutoff``. The objects it pointed to are recounted by V406's trigger.
+
+        Returns:
+            The ``document_objects.id`` the dropped links pointed to.
+        """
+        rows = self.execute_query(
+            """
+            DELETE FROM apiome.version_documents d
+            WHERE d.id IN (
+                SELECT s.id
+                FROM apiome.version_documents s
+                WHERE s.role IN ('rendered_openapi', 'rendered_canonical')
+                  AND s.created_at <= %s
+                  AND EXISTS (
+                      SELECT 1 FROM apiome.version_documents n
+                      WHERE n.version_id = s.version_id
+                        AND n.role = s.role
+                        AND (n.created_at, n.id) > (s.created_at, s.id)
+                  )
+                ORDER BY s.created_at
+                LIMIT %s
+            )
+            RETURNING d.object_id::text AS object_id
+            """,
+            (cutoff, int(limit)),
+        )
+        return sorted({row["object_id"] for row in rows or []})
+
+    def list_purgeable_tenants(self, *, cutoff: Any, limit: int = 20) -> List[Dict[str, Any]]:
+        """Tenants deleted at or before ``cutoff`` whose store prefix has not been purged yet.
+
+        Returns:
+            ``{id, slug, slug_in_use}`` rows; ``slug_in_use`` is true when a live tenant now has
+            the same slug (its export downloads share that key segment).
+        """
+        return self.execute_query(
+            """
+            SELECT t.id::text AS id, t.slug,
+                   EXISTS (SELECT 1 FROM apiome.tenants l
+                           WHERE l.slug = t.slug AND l.deleted_at IS NULL AND l.id <> t.id) AS slug_in_use
+            FROM apiome.tenants t
+            WHERE t.deleted_at IS NOT NULL
+              AND t.deleted_at <= %s
+              AND NOT EXISTS (SELECT 1 FROM apiome.document_tenant_purges p WHERE p.tenant_id = t.id)
+            ORDER BY t.deleted_at
+            LIMIT %s
+            """,
+            (cutoff, int(limit)),
+        ) or []
+
+    def tenant_document_object_ids(self, tenant_id: str) -> List[str]:
+        """Every ``document_objects.id`` of a tenant key segment."""
+        rows = self.execute_query(
+            "SELECT id::text AS id FROM apiome.document_objects WHERE tenant_id = %s ORDER BY id",
+            (tenant_id,),
+        )
+        return [row["id"] for row in rows or []]
+
+    def record_document_tenant_purge(self, tenant_id: str, objects_deleted: int) -> None:
+        """Record that a deleted tenant's store prefix was emptied."""
+        self.execute_query(
+            """
+            INSERT INTO apiome.document_tenant_purges (tenant_id, objects_deleted)
+            VALUES (%s::uuid, %s)
+            ON CONFLICT (tenant_id) DO UPDATE
+                SET purged_at = now(), objects_deleted = EXCLUDED.objects_deleted
+            RETURNING tenant_id
+            """,
+            (tenant_id, int(objects_deleted)),
+        )
+
+    def insert_document_lifecycle_event(
+        self,
+        *,
+        event: str,
+        reason: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        object_id: Optional[str] = None,
+        sha256: Optional[str] = None,
+        backend: Optional[str] = None,
+        storage_key: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Write one ``document_lifecycle_events`` audit row."""
+        self.execute_query(
+            """
+            INSERT INTO apiome.document_lifecycle_events
+                (event, reason, tenant_id, object_id, sha256, backend, storage_key, detail)
+            VALUES (%s, %s, %s, %s::uuid, %s, %s, %s, %s::jsonb)
+            RETURNING id
+            """,
+            (event, reason, tenant_id, object_id, sha256, backend, storage_key, json.dumps(detail or {})),
+        )
+
+    def list_document_objects_for_integrity(
+        self, *, limit: int, after_id: Optional[str] = None, oldest_first: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Objects for an integrity run.
+
+        Args:
+            limit: The most rows to return.
+            after_id: Page after this id (a full run walks the table by id).
+            oldest_first: Sample the least recently verified objects (never-verified first)
+                instead of paging by id.
+
+        Returns:
+            ``{id, tenant_id, sha256, backend, storage_key, size_bytes, roles}`` rows; ``roles``
+            lists the ``version_documents`` roles that point to the object.
+        """
+        if oldest_first:
+            where, order, params = "", "o.verified_at NULLS FIRST, o.created_at, o.id", (int(limit),)
+        else:
+            where = "WHERE o.id > %s::uuid" if after_id else ""
+            order = "o.id"
+            params = ((after_id, int(limit)) if after_id else (int(limit),))
+        return self.execute_query(
+            f"""
+            SELECT o.id::text AS id, o.tenant_id, o.sha256, o.backend, o.storage_key, o.size_bytes,
+                   COALESCE(ARRAY(SELECT DISTINCT d.role FROM apiome.version_documents d
+                                  WHERE d.object_id = o.id), ARRAY[]::text[]) AS roles
+            FROM apiome.document_objects o
+            {where}
+            ORDER BY {order}
+            LIMIT %s
+            """,
+            params,
+        ) or []
+
+    def mark_document_object_verified(self, object_id: str) -> None:
+        """Stamp ``verified_at`` and clear an integrity flag after the bytes hashed correctly."""
+        self.execute_query(
+            """
+            UPDATE apiome.document_objects
+            SET verified_at = now(), integrity_failed_at = NULL
+            WHERE id = %s::uuid
+            RETURNING id
+            """,
+            (object_id,),
+        )
+
+    def flag_document_object_integrity(self, object_id: str) -> None:
+        """Flag an object whose stored bytes are changed or missing (kept, not deleted)."""
+        self.execute_query(
+            """
+            UPDATE apiome.document_objects
+            SET integrity_failed_at = COALESCE(integrity_failed_at, now())
+            WHERE id = %s::uuid
+            RETURNING id
+            """,
+            (object_id,),
+        )
+
+    def drop_rendered_document_object(self, object_id: str) -> bool:
+        """Remove a bad rendered object so the next request renders it again.
+
+        Deletes the object's ``rendered_*`` links and then the index row, in one transaction —
+        only when no other kind of link points to it.
+
+        Returns:
+            True when the row was removed; False when another link still uses it.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id FROM apiome.document_objects WHERE id = %s::uuid FOR UPDATE",
+                    (object_id,),
+                )
+                if cursor.fetchone() is None:
+                    conn.commit()
+                    return False
+                cursor.execute(
+                    """
+                    SELECT 1 FROM apiome.version_documents
+                    WHERE object_id = %s::uuid AND role NOT IN ('rendered_openapi', 'rendered_canonical')
+                    LIMIT 1
+                    """,
+                    (object_id,),
+                )
+                if cursor.fetchone() is not None:
+                    conn.commit()
+                    return False
+                cursor.execute("DELETE FROM apiome.version_documents WHERE object_id = %s::uuid", (object_id,))
+                cursor.execute("DELETE FROM apiome.document_objects WHERE id = %s::uuid", (object_id,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        return True
+
     # ───────────────────── originals in the document store (COA-5.3, #7079) ─────────────────────
     # ``document_objects`` says where a stored object lives; ``version_documents`` says which
     # object is a revision's original. ``app.original_documents`` is the only caller.

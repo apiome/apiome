@@ -61,6 +61,12 @@ Open a tenant's **⋮** menu in the list:
 | **Disable Tenant** / **Enable Tenant** | A disabled tenant is left out of **Active Tenants**, and its workspace API keys stop authenticating against the REST API until it is enabled again |
 | **Delete Tenant** | Deletes the tenant after you type its name to confirm. Every member loses access, and its projects, versions and API keys go with it |
 
+Deleting a tenant also deletes its files from the [document store](./document-store.mdx#deleted-tenants):
+the original documents of its imports, rendered and frozen documents, and export downloads. This
+happens `APIOME_DOCUMENT_GC_GRACE_HOURS` after the deletion (24 hours by default), when the REST
+API's retention run empties the tenant's folder in the bucket or directory. The run is audited in
+`apiome.document_lifecycle_events`.
+
 ## Manage members
 
 With a tenant selected:

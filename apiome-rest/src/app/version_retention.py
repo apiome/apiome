@@ -153,6 +153,10 @@ def prune_refresh_versions(
     )
     pruned = [str(row["id"]) for row in rows]
     if pruned:
+        # COA-5.10: delete the stored documents only the pruned revisions used (best-effort).
+        from .document_lifecycle import release_versions_safely
+
+        release_versions_safely(db, pruned)
         try:
             db.insert_workflow_audit(
                 tenant_id,

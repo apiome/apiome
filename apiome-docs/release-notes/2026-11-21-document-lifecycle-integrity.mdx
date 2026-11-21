@@ -1,0 +1,30 @@
+---
+slug: document-lifecycle-integrity
+title: "Lifecycle, reference counting and integrity checks for stored documents"
+description: "Unused stored documents are deleted, deleted tenants emptied, and stored bytes re-checked."
+authors: [apiome]
+---
+
+The [document store](/admin/document-store) now cleans up after itself and proves what it holds is
+unchanged. Revisions share stored files, so Apiome counts which live revisions use each file and
+deletes it only when none does.
+
+{/* truncate */}
+
+- **Reference counts:** `document_objects.ref_count` is kept equal to the live revisions using an
+  object, through imports, renders, freezes, version deletion, retention pruning and tenant
+  deletion (migration V406). Deleting one of two revisions that share an original keeps the file;
+  deleting both removes it.
+- **Delete at zero:** deleting or pruning a version deletes the files only it used, straight away.
+- **Garbage collection:** every hour the REST API deletes files unused for 24 hours
+  (`APIOME_DOCUMENT_GC_GRACE_HOURS`), rendered documents a newer render replaced, and everything a
+  deleted tenant had in the store, under its folder in the bucket or directory.
+- **Integrity checks:** each run re-hashes 100 files (`APIOME_DOCUMENT_INTEGRITY_SAMPLE`), the least
+  recently checked first, and records when each last verified. A changed or missing rendered
+  document is rendered again; a changed original or frozen schema is flagged, and the REST log has
+  an `ERROR` line starting `document integrity failure` to alert on.
+- **Audit:** every purge and integrity failure is a row in `apiome.document_lifecycle_events`.
+- **On demand:** `scripts/document_lifecycle.py --dry-run` shows what a run would delete;
+  `--integrity-only --all` checks every file.
+
+See [Retention and integrity](/admin/document-store#retention-and-integrity).

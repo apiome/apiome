@@ -1336,6 +1336,28 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_FALLBACK", "document_store_fallback"),
     )
+    # Document lifecycle (COA-5.10, #7086). ``app.document_lifecycle`` runs every
+    # ``document_lifecycle_interval_seconds`` (0 turns the schedule off): it deletes objects no
+    # live revision has used for ``document_gc_grace_hours``, drops rendered documents replaced
+    # that long ago, empties the store prefix of tenants deleted that long ago, and re-hashes
+    # ``document_integrity_sample`` objects (the least recently verified first; 0 skips it).
+    document_lifecycle_interval_seconds: int = Field(
+        default=3600,
+        ge=0,
+        validation_alias=AliasChoices(
+            "APIOME_DOCUMENT_LIFECYCLE_INTERVAL_SECONDS", "document_lifecycle_interval_seconds"
+        ),
+    )
+    document_gc_grace_hours: float = Field(
+        default=24.0,
+        ge=0,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_GC_GRACE_HOURS", "document_gc_grace_hours"),
+    )
+    document_integrity_sample: int = Field(
+        default=100,
+        ge=0,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_INTEGRITY_SAMPLE", "document_integrity_sample"),
+    )
     # Largest single object the ``db`` backend accepts.
     document_store_db_max_bytes: int = Field(
         default=33_554_432,

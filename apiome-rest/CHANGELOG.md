@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.802.0] - 2026-11-21
+
+### Added
+- **Document lifecycle: reference counting, GC and integrity checks — OpenAPI 1.628.0 (COA-5.10, #7086):**
+  migration V406 keeps `document_objects.ref_count` equal to the live references
+  (`version_documents` links whose revision and tenant are not deleted; a soft-deleted project still
+  counts) with triggers on link insert / re-point / delete and on `versions.deleted_at` /
+  `tenants.deleted_at`, stamps `unreferenced_at` at zero, and adds `integrity_failed_at`, the
+  `document_lifecycle_events` audit table and `document_tenant_purges`.
+  `app.document_lifecycle`: `release_versions` (called after `DELETE /v1/versions/…` and MFI-31.5
+  pruning) deletes the objects only those revisions used; `run_document_lifecycle` (every
+  `APIOME_DOCUMENT_LIFECYCLE_INTERVAL_SECONDS`, default 3600; advisory-locked) drops renders a newer
+  render replaced, deletes objects unreferenced for `APIOME_DOCUMENT_GC_GRACE_HOURS` (24; never-linked
+  rows count from `created_at`), empties deleted tenants' store prefixes (tenant id and, unless a
+  live tenant reuses it, slug; also the `db` store), and re-hashes `APIOME_DOCUMENT_INTEGRITY_SAMPLE`
+  objects (100, least recently verified first): a match stamps `verified_at`, a mismatch or missing
+  object writes an `integrity_failed` row and an `ERROR` log `document integrity failure`, then drops a
+  rendered document for re-render or flags an original / frozen schema. Each purge recounts under a
+  row lock before deleting the index row, and deletes the bytes only if no writer re-created the row.
+  `DocumentStore.delete_tenant_objects` on every backend (S3 paginated `DeleteObjects`).
+  `scripts/document_lifecycle.py` (`--dry-run`, `--grace-hours`, `--sample`, `--all`,
+  `--integrity-only`). No endpoint changes.
+
 ## [1.801.0] - 2026-11-21
 
 ### Added
