@@ -39,6 +39,7 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Constraints,
     OperationKind,
     Type,
     TypeKind,
@@ -60,6 +61,7 @@ from .emitter import (
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .flatbuffers_identity import FieldIdAllocator, compact_field_ids
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .scalar_aliases import FLATBUFFERS_SCALAR_FOR_KIND, format_kind, scalar_kind
 from .writer_loss_rulepack import filed_writer_verdicts
 
 __all__ = ["FlatBuffersEmitOptions", "FlatBuffersEmitter", "FlatBuffersFidelityRulePack"]
@@ -68,8 +70,8 @@ __all__ = ["FlatBuffersEmitOptions", "FlatBuffersEmitter", "FlatBuffersFidelityR
 #: of it may carry: a ``number`` / ``bool`` default, ``required`` (``string`` and ``bytes`` only).
 _SCALARS: Dict[str, Tuple[str, str]] = {
     **{name: ("bool", "bool") for name in ("bool", "boolean")},
-    **{name: ("byte", "int") for name in ("int8", "i8", "sbyte")},
-    **{name: ("ubyte", "int") for name in ("uint8", "u8", "byte")},
+    **{name: ("byte", "int") for name in ("int8", "i8", "sbyte", "byte")},
+    **{name: ("ubyte", "int") for name in ("uint8", "u8")},
     **{name: ("short", "int") for name in ("int16", "i16", "short")},
     **{name: ("ushort", "int") for name in ("uint16", "u16")},
     **{name: ("int", "int") for name in ("int32", "i32", "int", "sint32", "sfixed32")},
@@ -83,6 +85,16 @@ _SCALARS: Dict[str, Tuple[str, str]] = {
         "ipv6", "date", "time", "datetime", "date-time", "timestamp", "instant", "duration",
     )},
     **{name: ("[ubyte]", "bytes") for name in ("bytes", "binary", "blob")},
+}
+#: Spellings :data:`_SCALARS` writes as a type that cannot hold every value → why (COA-3.2, #7053).
+_NARROWED: Dict[str, str] = {
+    "bigint": "FlatBuffers has no arbitrary-precision integer; it is written as long (64 bits)",
+    "decimal": "FlatBuffers has no decimal type; it is written as double, so decimal digits can round",
+}
+#: Scalar kind (:mod:`app.scalar_aliases`) → the value kind of :data:`_SCALARS`.
+_VALUE_KIND_FOR_KIND: Dict[str, str] = {
+    "bool": "bool", "float": "float", "double": "float", "string": "string", "bytes": "bytes",
+    **{kind: "int" for kind in ("int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64")},
 }
 #: Canonical names for "any JSON value": written as opaque bytes.
 _ANY_SCALARS = frozenset({"any", "object", "json", "map", "value", "unknown", "variant"})
@@ -143,6 +155,7 @@ class FlatBuffersFidelityRulePack(CapabilityRulePack):
         "alias-inlined": (LossinessKind.APPROX, LossinessSeverity.INFO),
         "opaque-value": (LossinessKind.APPROX, LossinessSeverity.WARN),
         "unmapped-scalar": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "precision-narrowed": (LossinessKind.APPROX, LossinessSeverity.WARN),
         "name-respelled": (LossinessKind.APPROX, LossinessSeverity.INFO),
         "field-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
         "default-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
@@ -605,7 +618,7 @@ class _FlatBuffersWriter:
         fields = sorted(type_.fields, key=lambda f: f.field_number or 0) if not table.synthesized else type_.fields
         resolved: Dict[str, Tuple[CanonicalField, _Resolved, str]] = {}
         for f in fields:
-            target = self._resolve(f.type, f.key, hint=f"{name}_{f.name}")
+            target = self._resolve(f.type, f.key, hint=f"{name}_{f.name}", fmt=_format(f.constraints))
             if target.kind == "none":
                 self._loss("field-dropped", f.key, f"{f.key!r} has the type {f.type.name!r}, which holds no value; "
                            "FlatBuffers has no such type, so the field is left out.")
@@ -717,10 +730,20 @@ class _FlatBuffersWriter:
         """The model type a name refers to: by key, else by its name when that is unique."""
         return self._types_by_key.get(name) or self._by_unique_name.get(name)
 
-    def _resolve(self, ref: TypeRef, owner: str, *, hint: str = "", _seen: Optional[set] = None) -> _Resolved:
-        """A reference written as a FlatBuffers type (wrapping what a vector cannot hold)."""
+    def _resolve(
+        self, ref: TypeRef, owner: str, *, hint: str = "", fmt: Optional[str] = None, _seen: Optional[set] = None
+    ) -> _Resolved:
+        """A reference written as a FlatBuffers type (wrapping what a vector cannot hold).
+
+        Args:
+            ref: The reference (a list, a scalar or a named type).
+            owner: The construct key losses are filed under.
+            hint: The name stem of a synthesized wrapper table.
+            fmt: The ``format`` constraint, which picks the width of a JSON Schema ``integer`` / ``number``.
+            _seen: Alias keys already followed (cycle guard).
+        """
         if ref.is_list():
-            item = self._resolve(ref.item or TypeRef(name="string"), owner, hint=f"{hint}Item", _seen=_seen)
+            item = self._resolve(ref.item or TypeRef(name="string"), owner, hint=f"{hint}Item", fmt=fmt, _seen=_seen)
             if item.kind in ("vector", "bytes", "union"):
                 why = (f"a vector cannot hold a {'union' if item.kind == 'union' else 'vector'}; the items of "
                        f"{owner!r} are wrapped")
@@ -746,16 +769,29 @@ class _FlatBuffersWriter:
             if target.kind is TypeKind.MAP:
                 return _Resolved(f"[{self._entry_table(target)}]", "vector", target)
             if target.kind is TypeKind.ALIAS and target.aliased is not None:
-                return self._resolve(target.aliased, owner, hint=hint, _seen=seen | {target.key})
-            return self._scalar(target.name or target.key, owner)
-        return self._scalar(name, owner)
+                return self._resolve(target.aliased, owner, hint=hint, fmt=_format(target.constraints) or fmt,
+                                     _seen=seen | {target.key})
+            return self._scalar(target.name or target.key, owner, _format(target.constraints))
+        return self._scalar(name, owner, fmt)
 
-    def _scalar(self, name: str, owner: str) -> _Resolved:
-        """The FlatBuffers type of a canonical scalar name."""
+    def _scalar(self, name: str, owner: str, fmt: Optional[str] = None) -> _Resolved:
+        """The FlatBuffers type of a canonical scalar name.
+
+        A ``format`` that names a width wins (``integer`` + ``int32`` → ``int``, ``int`` + ``int64`` →
+        ``long``); then this module's spellings; then the shared kinds of :mod:`app.scalar_aliases`.
+        """
         lowered = name.lower()
+        kind = format_kind(name, fmt)
+        if kind is not None:
+            return _Resolved(FLATBUFFERS_SCALAR_FOR_KIND[kind], _VALUE_KIND_FOR_KIND[kind])
         spec = _SCALARS.get(lowered)
         if spec is not None:
+            if lowered in _NARROWED:
+                self._loss("precision-narrowed", owner, f"{_NARROWED[lowered]} ({name!r} in {owner!r}).")
             return _Resolved(spec[0], spec[1])
+        kind = scalar_kind(name)
+        if kind is not None:
+            return _Resolved(FLATBUFFERS_SCALAR_FOR_KIND[kind], _VALUE_KIND_FOR_KIND[kind])
         if lowered in _NONE_SCALARS:
             return _Resolved("", "none")
         if lowered in _ANY_SCALARS:
@@ -829,6 +865,11 @@ def _enum_items(type_: Type) -> List[Tuple[Any, int, str]]:
 def _pascal(text: str) -> str:
     """``order_lines_Item`` → ``OrderLinesItem`` (a synthesized table's name)."""
     return "".join(part[:1].upper() + part[1:] for part in re.split(r"[^A-Za-z0-9]+", text) if part) or "Item"
+
+
+def _format(constraints: Optional[Constraints]) -> Optional[str]:
+    """The ``format`` of ``constraints``, if any."""
+    return constraints.format if constraints is not None else None
 
 
 def _scalar_default(value: Any, target: _Resolved) -> Optional[str]:

@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.787.0] - 2026-11-20
+
+### Fixed
+- **IDL scalar names and Avro int64 narrowing — OpenAPI 1.613.0 (COA-3.2, #7053):** no endpoint
+  changes; the version moves with the export changes below. Every canonical scalar spelling now
+  maps to the target's own type in the ASN.1, Avro, OMG IDL, FlatBuffers, TypeSpec, WSDL and XSD
+  exports, and a JSON Schema `integer` / `number` keeps the width its `format` names.
+  - `app.scalar_aliases`: new per-target kind tables (`AVRO_`, `FLATBUFFERS_`, `ASN1_`,
+    `TYPESPEC_`, `XSD_SCALAR_FOR_KIND`), `INTEGER_RANGE_FOR_KIND` and `format_kind()`. The TypeSpec
+    and XSD tables moved here from their emitters. `fixed32` / `fixed64` are now unsigned (as in
+    Protobuf), and `blob` and `u8` … `u64` are known spellings.
+  - **Avro:** `integer` + `format: int64` was written as `int`; it is now `long`
+    (`number` + `float` is `float`). `fixed32` / `fixed64` were written as `string`; they are
+    `long`. `void` / `none` are `null`. `uint64` / `fixed64`, `bigint` and a `decimal` with no
+    precision are reported as **approximated** (`warn`, `precision-narrowed`): `long` holds values
+    up to 2^63 − 1, and `double` rounds decimal digits.
+  - **FlatBuffers:** a width `format` is read (`int` + `int64` was written as `int`, `integer` +
+    `int32` as `long`, `number` + `float` as `double`). `byte` is now signed (`byte`, was
+    `ubyte`). `bigint` → `long` and `decimal` → `double` are reported as `precision-narrowed`.
+  - **ASN.1:** `integer` + `format: int32` / `int64` is written with the width as a value range.
+    `byte` is now signed (`-128..127`).
+  - **OMG IDL:** a member of type `void` was written as `void f;`, which no IDL compiler reads; it is
+    left out and reported (`void-member-dropped`). `blob` is `sequence<octet>`, `fixed32` /
+    `fixed64` are unsigned.
+  - **TypeSpec:** `bigint` → `integer`, `instant` → `utcDateTime`, `blob` → `bytes`, `none` →
+    `null` (all were `string`).
+  - **XSD, WSDL:** `bigint` → `xs:integer`, `instant` → `xs:dateTime`, `blob` →
+    `xs:base64Binary` (all were `xs:string`); `fixed32` / `fixed64` are unsigned.
+  - Tests: `tests/test_idl_scalar_table.py` — every canonical scalar × the seven targets, the kind
+    tables, narrowing, and the all-scalars record compiled by each target's validator.
+
 ## [1.786.0] - 2026-11-20
 
 ### Fixed

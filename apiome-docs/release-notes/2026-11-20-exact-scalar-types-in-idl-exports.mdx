@@ -1,0 +1,30 @@
+---
+slug: exact-scalar-types-in-idl-exports
+title: "Exact scalar types in IDL and schema exports"
+description: "Every scalar keeps its type and width in seven more export targets."
+authors: [apiome]
+---
+
+ASN.1, Avro, OMG IDL, FlatBuffers, TypeSpec, WSDL and XSD exports now write every scalar as the
+target's own type. An OpenAPI `integer` or `number` keeps the width its `format` names.
+
+{/* truncate */}
+
+- **Fixed — Avro:** an OpenAPI `integer` with `format: int64` was written as `int`, which holds
+  32 bits. It is now `long`. Protobuf's `fixed32` and `fixed64` were written as `string`; they are
+  now `long`.
+- **Fixed — FlatBuffers and ASN.1:** a width `format` was ignored, so `int` + `int64` was written
+  as `int` in FlatBuffers and an ASN.1 `INTEGER` had no range. Both now follow the `format`.
+- **Fixed — OMG IDL:** a field of type `void` was written as `void f;`, which IDL compilers reject.
+  It is left out and listed as **dropped**.
+- **Fixed — TypeSpec, XSD and WSDL:** `bigint`, `instant` and `blob` were written as strings. They
+  are now `integer`, a date-time and binary.
+- **One meaning per spelling:** `fixed32` and `fixed64` are unsigned, `byte` is a signed 8-bit
+  integer, and `blob` is binary, in every target.
+- **Reported when a type is too small:** Avro has no unsigned 64-bit integer, so `uint64` is
+  written as `long` and the fidelity report says values above 2^63 − 1 do not fit. A `bigint` or a
+  `decimal` with no precision, written as `long` or `double` in Avro and FlatBuffers, is reported
+  the same way.
+- **REST:** no endpoint changes (REST API 1.787.0, OpenAPI 1.613.0).
+
+See [Scalar types](/ship/export-fidelity#scalar-types).

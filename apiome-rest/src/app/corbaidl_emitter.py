@@ -919,6 +919,16 @@ class _CorbaIdlWriter:
             expr = self._member_expr(field)
             if expr is None:
                 continue
+            if expr == "void":
+                # `void` is only a return type in IDL: a member of it holds nothing (COA-3.2, #7053).
+                self.losses.record(
+                    LossKind.NA,
+                    "void-member-dropped",
+                    f"IDL has no member type that holds no value; {field.key!r} has the type {field.type.name!r} "
+                    "and is not written.",
+                    pointer=field.key,
+                )
+                continue
             expr = self._bounded(expr, field)
             members.extend(self._comment_lines(field.constraints, field.key, "  "))
             member = self._member_name(scope, field)
