@@ -1238,8 +1238,9 @@ class Settings(BaseSettings):
     # (single-file UTF-8 or multi-file zip) must fit under ``export_artifact_max_bytes`` or the
     # job fails with a clear error rather than storing a truncated body. Artifacts at or below
     # ``export_artifact_db_max_bytes`` are stored as a DB BYTEA; larger ones (still under the
-    # hard cap) select the object-store driver. Defaults are equal so production always uses
-    # the DB backend until an object store is configured and the DB threshold is lowered.
+    # hard cap) go to the document store (``document_store`` = ``s3`` or ``filesystem``; with
+    # ``db`` such an export fails). Defaults are equal so every artifact uses the DB backend
+    # until the hard cap is raised or the DB threshold is lowered.
     export_artifact_max_bytes: int = Field(
         default=33_554_432,  # 32 MiB
         validation_alias=AliasChoices(
@@ -1248,11 +1249,93 @@ class Settings(BaseSettings):
         ),
     )
     export_artifact_db_max_bytes: int = Field(
-        default=33_554_432,  # 32 MiB — same as hard cap → DB-only until object store lands
+        default=33_554_432,  # 32 MiB — same as hard cap → DB-only by default
         validation_alias=AliasChoices(
             "APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES",
             "export_artifact_db_max_bytes",
         ),
+    )
+
+    # Document store (COA-5.1, #7077). One storage interface (``app.document_store``) for
+    # immutable, content-addressed objects: captured originals, rendered documents and export
+    # artifacts above the DB threshold. ``document_store`` picks the backend:
+    #
+    # * ``db`` (default) — bytes in Postgres (``apiome.document_store_blob``), capped per object
+    #   by ``document_store_db_max_bytes``; an install without a bucket keeps working.
+    # * ``s3`` — any S3-compatible service (AWS, MinIO, Garage, Cloudflare R2, GCS interop).
+    #   Needs ``document_store_bucket``; a non-AWS service also needs
+    #   ``document_store_endpoint_url`` and usually ``document_store_addressing_style=path``.
+    # * ``filesystem`` — a directory on this host (``document_store_path``); development and
+    #   single-node installs only, because every REST instance must see the same directory.
+    #
+    # ``document_store_prefix`` is the folder every object is written under, for all backends:
+    # ``<prefix>/tenants/<tenant_id>/objects/sha256/<aa>/<hex>``. Empty writes at the root.
+    # Static keys are optional: without them boto3's own chain applies (environment, shared
+    # config, IAM role). The endpoint passes the SSRF guard; ``document_store_allow_private``
+    # lifts the address filter for this endpoint only (a store on your own network), without
+    # opening user-supplied URLs the way ``ssrf_allow_private`` does.
+    document_store: str = Field(
+        default="db",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE", "document_store"),
+    )
+    document_store_bucket: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_BUCKET", "document_store_bucket"),
+    )
+    document_store_prefix: str = Field(
+        default="apiome",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_PREFIX", "document_store_prefix"),
+    )
+    document_store_path: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_PATH", "document_store_path"),
+    )
+    document_store_region: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_REGION", "document_store_region"),
+    )
+    document_store_endpoint_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ENDPOINT_URL", "document_store_endpoint_url"),
+    )
+    # ``auto`` (boto3 decides), ``path`` (``https://host/bucket/key``) or ``virtual``
+    # (``https://bucket.host/key``).
+    document_store_addressing_style: str = Field(
+        default="auto",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ADDRESSING_STYLE", "document_store_addressing_style"),
+    )
+    # Server-side encryption asked for on every write: empty (the bucket's default), ``s3``
+    # (SSE-S3, AES256) or ``kms`` (SSE-KMS, with ``document_store_kms_key_id`` or the bucket's
+    # default key).
+    document_store_sse: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_SSE", "document_store_sse"),
+    )
+    document_store_kms_key_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_KMS_KEY_ID", "document_store_kms_key_id"),
+    )
+    document_store_access_key_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ACCESS_KEY_ID", "document_store_access_key_id"),
+    )
+    document_store_secret_access_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY", "document_store_secret_access_key"),
+    )
+    # Lifetime of a presigned download link when the caller names none (1 s – 7 days).
+    document_store_presign_ttl_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_PRESIGN_TTL_SECONDS", "document_store_presign_ttl_seconds"),
+    )
+    # Largest single object the ``db`` backend accepts.
+    document_store_db_max_bytes: int = Field(
+        default=33_554_432,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_DB_MAX_BYTES", "document_store_db_max_bytes"),
+    )
+    document_store_allow_private: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ALLOW_PRIVATE", "document_store_allow_private"),
     )
 
     # Export webhook delivery (MFX-38.2, #4329). A delivery POSTs the export result to a URL; a

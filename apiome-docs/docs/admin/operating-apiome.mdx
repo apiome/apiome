@@ -163,6 +163,21 @@ To raise the cap, set `APIOME_SERVER_ACTION_BODY_LIMIT` (for example `50mb`) in 
 **before building** apiome-ui. The value is baked into the build, so rebuild the image after
 changing it. **Import to catalog** uploads through the REST API instead and is not affected.
 
+### Document store
+
+The REST API keeps large, unchanging files — today, export downloads above the database
+threshold — in the **document store**. `APIOME_DOCUMENT_STORE` on the `rest` service picks where:
+
+| Value | Objects are kept in | Also set |
+| --- | --- | --- |
+| `db` (default) | The database | Nothing |
+| `s3` | An S3-compatible bucket (AWS, MinIO, Garage, R2) | `APIOME_DOCUMENT_STORE_BUCKET`, and `…_ENDPOINT_URL` for anything other than AWS |
+| `filesystem` | A directory on the REST host | `APIOME_DOCUMENT_STORE_PATH` |
+
+`APIOME_DOCUMENT_STORE_PREFIX` (default `apiome`) is the folder all objects are written under, in
+any backend. [Document store](./document-store.mdx) lists every setting, with examples for Garage,
+MinIO, R2 and AWS.
+
 ### Agent runtime address in server.json
 
 The [server.json export](../bring-in/agent-access.mdx#export-serverjson) gives hosts the agent
@@ -466,5 +481,6 @@ These screens predate the Hive redesign; each page says so, and the redesign is 
 
 ## Where next
 
+- [Document store](./document-store.mdx)
 - [Host the documentation site](./docs-image.mdx)
 - [The admin console](./admin-console.mdx)

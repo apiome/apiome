@@ -1,0 +1,27 @@
+---
+slug: document-store
+title: "A document store for large files: S3, a directory or the database"
+description: "Operators can keep large export downloads in an S3-compatible bucket or a directory."
+authors: [apiome]
+---
+
+The REST API has a **document store**: one place for large files that never change, with three
+backends an operator chooses by environment variable.
+
+{/* truncate */}
+
+- **Three backends:** `APIOME_DOCUMENT_STORE=db` (the default, in the database), `s3` (AWS S3,
+  MinIO, Garage, Cloudflare R2, Google Cloud Storage interoperability) or `filesystem` (a
+  directory on the REST host).
+- **Choose the folder:** `APIOME_DOCUMENT_STORE_PREFIX` (default `apiome`) is the folder all
+  Apiome objects are written under, so a bucket can be shared with other applications.
+- **Stored once, per tenant:** an object is named by the SHA-256 of its bytes inside its tenant's
+  folder. Writing the same file again writes nothing.
+- **Larger exports:** an export download above `APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES` is now kept
+  in the bucket or directory. Before, it failed.
+- **S3 options:** path-style or virtual-host addressing, SSE-S3 or SSE-KMS, an IAM role or a
+  static key pair, and multipart upload for large objects.
+- **No change by default:** an installation that sets nothing keeps using the database. The `db`
+  backend adds one table, in apiome-db migration V402.
+
+See [Document store](/admin/document-store).

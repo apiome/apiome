@@ -451,7 +451,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| COA-5.1 · [#7077](https://github.com/apiome/apiome/issues/7077) | Document store SPI with S3, filesystem and database backends | One storage interface for immutable, content-addressed objects; S3-compatible, filesystem and DB backends selected by server config | `enhancement`, `rest` | N | L | apiome-rest |
 | COA-5.2 · [#7078](https://github.com/apiome/apiome/issues/7078) | Document object tables and the revision content stamp | `document_objects` / `version_documents` metadata tables and a `versions.content_stamp` bumped by every normalized-data write | `enhancement`, `database` | Y | M | apiome-db, apiome-rest |
 | COA-5.3 · [#7079](https://github.com/apiome/apiome/issues/7079) | Store the original on every import path | Every importer (UI worker, import-source pipeline, catalog upload, URL, repository, CLI push, spec sync) writes the scrubbed original to the store | `enhancement`, `rest`, `ui` | N | L | apiome-rest, apiome-ui, apiome-cli |
 | COA-5.4 · [#7080](https://github.com/apiome/apiome/issues/7080) | Read captured sources through the store | Canonical rebuild, export source, provenance, catalog detail and the source workspace read originals via one helper, with the legacy columns as fallback | `enhancement`, `rest` | Y | M | apiome-rest |
@@ -467,7 +466,7 @@ flowchart LR
 | COA-5.14 · [#7090](https://github.com/apiome/apiome/issues/7090) | Every REST feature reads revision documents through the store | Lint, mock, Swagger UI, merge/rollback, publish, change reports, PR-back, reviews, source workspace, contracts, blast radius, governance, sync and export use the rendered-document service; an architecture test forbids direct generation | `enhancement`, `rest`, `performance` | Y | L | apiome-rest |
 | COA-5.15 · [#7092](https://github.com/apiome/apiome/issues/7092) | Per-tenant bring-your-own buckets | A tenant can point its originals and rendered documents at its own S3-compatible bucket, using a sealed tenant storage credential; the platform store stays the default | `enhancement`, `rest`, `ui`, `security` | Y | L | apiome-rest, apiome-ui, apiome-db |
 
-**COA-5.1 · #7077 Document store SPI with S3, filesystem and database backends**
+**✅ COA-5.1 · #7077 Document store SPI with S3, filesystem and database backends — Complete**
 - **Problem:** Apiome has no general object storage. Originals sit in Postgres `TEXT`/JSONB, frozen schemas and export artifacts in `BYTEA`, and the export artifact store's object backend is a stub (`ExportArtifactStoreNotConfigured`). Large documents bloat rows, backups and queries, and no file I/O (streaming, Range, presigned URLs) can be applied to them.
 - **Solution/Scope:**
 - `app/document_store.py`: a `DocumentStore` protocol — `put(tenant_id, data|stream, media_type) -> ObjectRef` (content-addressed by SHA-256, idempotent), `get`, `open_stream`, `head`, `exists`, `delete`, `presign_get(ttl)` (optional per backend).
