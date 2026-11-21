@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.789.0] - 2026-11-20
+
+### Added
+- **Validators for the export targets that reported "not applicable" — OpenAPI 1.615.0 (COA-3.4,
+  #7055):** no endpoint changes; the `ValidationVerdict` description is updated. Every registered
+  emit target except the internal `sample-noop` now has an emitted-artifact validator
+  (`app.export_validation._VALIDATORS`); `tests/test_unvalidated_export_targets.py` fails if a new
+  target is added without one. Of the 14 targets the RC7 audit listed, nine gained one in RC7 and
+  WADL in MFX-29.3; this release adds the rest, plus the two agent targets:
+  - **`connectrpc`:** `buf build`, as for `proto3` (skipped, never passed, without `buf`).
+  - **`cloudevents`:** `app.cloudevents_spec_validation` checks the CloudEvents 1.0 core and JSON
+    format rules (`specversion`, required `id` / `source` / `type`, attribute types, RFC 3339
+    `time`, `data` vs `data_base64`, extension names and values), then each event re-imports. A
+    batch is re-imported event by event: the CloudEvents import source reads one event per document.
+  - **`xmlrpc`:** `app.xmlrpc_spec_validation` checks the structure (`methodCall` with one
+    `methodName` of `A-Z a-z 0-9 _ . : /`) after a secure parse, then every value through
+    `xmlrpc.client.loads`, then a re-import.
+  - **`kafka-connect`:** the schemas and `connector.json` re-import together through the Kafka
+    Connect reader.
+  - **`a2a` / `mcp`:** each Agent Card against the vendored AgentCard schema, each MCP tool against
+    the MCP Tool schema of the descriptor's `mcpVersion`, then a re-import.
+  - Findings carry their rule as `keyword` (`cloudevents.required`, `xmlrpc.method-name`,
+    `mcp.tool-schema`, `<format>.reimport` …); `TOOL_BY_TARGET` names each new validator.
+
+### Changed
+- **A target with no validator reads "Not validated":** the `not_applicable` verdict's report
+  `headline` is **Not validated** (was **Not applicable**) and its `message` says the export
+  proceeded without an emitted-artifact check; the `VALIDATION_NOT_APPLICABLE` job event and the
+  dispatcher's `detail` say the artifact was not validated. The enum value is unchanged.
+
+### Fixed
+- **XML-RPC `methodName`:** an operation name with characters XML-RPC does not allow (an agent
+  skill `Build itinerary`, an Agent Card URL) is written with each run of them as `_`
+  (`xmlrpc_emitter.xmlrpc_method_name`); the rule pack's re-key verdict reports the rename. A legal
+  name is unchanged.
+
 ## [1.788.0] - 2026-11-20
 
 ### Fixed

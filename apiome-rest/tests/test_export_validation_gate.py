@@ -84,6 +84,27 @@ def test_not_applicable_verdict_stays_out_of_the_way() -> None:
     assert report.tool is None
 
 
+def test_not_applicable_reads_not_validated_never_a_pass() -> None:
+    """COA-3.4 (#7055): a target with no validator is headed "Not validated", never "Valid"."""
+    validation = EmittedArtifactValidation(target="sample-noop", applicable=False, validated=False, valid=True)
+    report = build_validation_report(validation)
+
+    assert report.headline == "Not validated"
+    assert "not validated" in report.message
+    assert "without an emitted-artifact check" in report.message
+    assert "Valid" not in report.headline
+
+
+def test_the_coa_3_4_targets_name_their_validator() -> None:
+    """COA-3.4 (#7055): each target that gained a validator names the tool that ran."""
+    for target in ("connectrpc", "cloudevents", "xmlrpc", "kafka-connect", "a2a", "mcp"):
+        report = build_validation_report(
+            EmittedArtifactValidation(target=target, applicable=True, validated=True, valid=True)
+        )
+        assert report.tool, target
+        assert report.headline == "Valid"
+
+
 def test_report_is_a_stable_pydantic_model() -> None:
     """The report round-trips through ``model_dump`` for poll payloads."""
     validation = EmittedArtifactValidation(

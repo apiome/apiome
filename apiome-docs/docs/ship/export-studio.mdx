@@ -182,6 +182,19 @@ and what was dropped, approximated or synthesized; **Show per-construct report**
 projection map, where each construct links to its reason. Changing the target, an option or the
 overlays clears the verdict and the acknowledgement — run it again.
 
+**Validation** says whether the exported file is legal in its format, and which check ran:
+
+| The tab says | What it means |
+| --- | --- |
+| **Valid** | A check ran and accepted the file. |
+| **Invalid — export blocked** | A check ran and rejected the file; each problem is listed with its file and place. |
+| **Validation skipped** | The format has a check, but its tool is not installed on this server. The file was **not validated**. |
+| **Not validated** | Apiome has no check for this format (today only the `curl` script of the `.http` file target), so nothing checked the file. |
+
+The verdict banner follows the tab: a **Clean** export whose file was not validated says *the emitted
+artifact was not validated* instead of *validated cleanly*. Neither case blocks the export. Every
+other format has a check; [How an export is checked](./check-an-export.mdx) lists what each one runs.
+
 With overlays, an **Overlays** panel under the tabs says how many values they changed. It lists any
 action that could not be applied (for example `overlay.unmatched-target`, an action whose target
 matches nothing), then one row per changed value: the value's path, the change (**Added**,

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.614.0
+  version: 1.615.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -186132,7 +186132,8 @@ components:
 
         ``invalid`` blocks delivery, ``skipped`` warns but does not block,
 
-        ``not_applicable`` means there was nothing to validate.'
+        ``not_applicable`` means no validator exists for the format, so the artifact was
+        not validated.'
     ValueProvenance:
       properties:
         pointer:

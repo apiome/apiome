@@ -5,7 +5,7 @@
  *  1. Deliberately broken fixtures render actionable errors with their locations, naming the tool.
  *  2. A toolchain-missing verdict renders as a distinct warning (not silent success).
  *  3. A zero-error verdict renders a positive confirmation.
- *  4. A not-applicable format renders an explicit neutral state.
+ *  4. A not-applicable format renders an explicit neutral "not validated" state (COA-3.4).
  *  5. A finding whose located problem is openable is a clickable row (MFX-43.3); findings without
  *     one (no location, or no artifact yet) stay plain.
  */
@@ -161,13 +161,14 @@ describe('ValidationResultsLens — located findings click through to the editor
 });
 
 describe('ValidationResultsLens — not applicable renders a neutral state (MFX-42.2)', () => {
-  it('explains there is nothing to validate for the target', () => {
+  it('says the artifact was not validated, never that it passed (COA-3.4)', () => {
     render(<ValidationResultsLens validation={report('not_applicable', { tool: null })} />);
     const lens = screen.getByTestId('verify-validation');
     expect(lens).toHaveAttribute('data-validation-state', 'not_applicable');
-    expect(screen.getByTestId('verify-validation-not-applicable')).toHaveTextContent(
-      /nothing to validate/i,
-    );
+    const note = screen.getByTestId('verify-validation-not-applicable');
+    expect(note).toHaveTextContent(/not validated/i);
+    expect(note).toHaveTextContent(/no validator for this format/i);
+    expect(screen.queryByTestId('verify-validation-clean')).not.toBeInTheDocument();
     // No validator ran, so no tool line and no findings.
     expect(screen.queryByTestId('verify-validation-tool')).not.toBeInTheDocument();
     expect(screen.queryByTestId('verify-validation-findings')).not.toBeInTheDocument();

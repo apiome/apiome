@@ -56,8 +56,10 @@ None of these has a ticket yet. Each blocks the §4.4 exit criteria:
 3. ✅ **Re-import failures by target** (wadl, asn1, asyncapi, postman, oncrpc, protobuf, connectrpc,
    corbaidl): triage each into a fix, a types-only pair, or a refusal with a reason — done in
    COA-3.3 ([#7054](https://github.com/apiome/apiome/issues/7054)): every cell re-imports or is refused up front.
-4. **Verify validators** for 14 targets that report "not applicable" (§4.3). Not a gate blocker:
-   each must show as "not validated".
+4. ✅ **Verify validators** for 14 targets that report "not applicable" (§4.3). Not a gate blocker:
+   each must show as "not validated" — done in COA-3.4 ([#7055](https://github.com/apiome/apiome/issues/7055)):
+   every emit target but the internal `sample-noop` has a validator, and a target without one reads
+   **Not validated**.
 5. **Open the gate:** remove `export-studio` from `UNRELEASED_FEATURE_IDS` once 1–3 are done and the
    owed sign-offs above are in (§2.1).
 6. **Apply the §8 milestone triage**, which is still not applied: move [#4311](https://github.com/apiome/apiome/issues/4311) and [#4312](https://github.com/apiome/apiome/issues/4312) to
@@ -446,7 +448,9 @@ gained one in [#4179](https://github.com/apiome/apiome/issues/4179), raml in [#3
 reader — in [#3905](https://github.com/apiome/apiome/issues/3905) ✅, postman — the v2.1.0 JSON Schema plus a re-parse — in
 [#4289](https://github.com/apiome/apiome/issues/4289) ✅): thrift, connectrpc, flatbuffers, wsdl, wadl, openrpc, xmlrpc, xsd, cloudevents,
 smithy, kafka-connect. Not a gate blocker; record each as "not validated" in the
-matrix and the target card so the studio never implies a check that did not run.
+matrix and the target card so the studio never implies a check that did not run. ✅ Done in COA-3.4
+([#7055](https://github.com/apiome/apiome/issues/7055)): the last four (connectrpc, cloudevents, xmlrpc,
+kafka-connect) and a2a / mcp gained validators; a target with none reads **Not validated**.
 
 ### 4.4 Exit criteria (PLAN_POST_LAUNCH_ENABLEMENT §2.6)
 

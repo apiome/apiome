@@ -77,8 +77,19 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``cobolcopybook`` — :func:`app.cobolcopybook_cb2xml.check_with_cb2xml` (MFX-23.4): cb2xml parses the
   copybook when the toolchain has it, and the layout it reads must match the emit plan (the trees the
   emitter rendered with the export's options); the copybook reader always re-parses it too;
-* ``sample-noop`` and any unregistered format — *not applicable* (the sample emitter is an
-  internal no-op with no importable artifact).
+* ``connectrpc`` — the same ``buf`` compile as ``proto3`` (a Connect export is a proto3 bundle; COA-3.4);
+* ``cloudevents`` — :func:`app.cloudevents_spec_validation.cloudevents_spec_problems` (the CloudEvents 1.0
+  core and JSON-format rules) then a re-import (COA-3.4);
+* ``xmlrpc`` — :func:`app.xmlrpc_spec_validation.xmlrpc_spec_problems` (the XML-RPC structure plus Python's
+  own ``xmlrpc.client`` unmarshaller for every value) then a re-import (COA-3.4);
+* ``kafka-connect`` — the emitted schemas and ``connector.json`` re-imported together through the Kafka
+  Connect reader, the only authority for Connect's schema form (COA-3.4);
+* ``a2a`` / ``mcp`` — each Agent Card against the vendored A2A AgentCard schema, each tool of an MCP
+  descriptor against the vendored MCP Tool schema of its ``mcpVersion``, then a re-import (COA-3.4);
+* ``sample-noop`` and any unregistered format — *not applicable*: no validator exists, so the artifact is
+  reported **not validated** (the sample emitter is an internal no-op with no importable artifact). Every
+  user-facing emit target has a validator; ``tests/test_export_validation.py`` fails if one is added
+  without one (COA-3.4, #7055).
 
 **Honesty about what ran.** A toolchain-backed validator (AsyncAPI, protobuf) cannot run
 when its tool is absent from the runtime (MFI-5.2). Rather than fail a *valid* export because
@@ -149,8 +160,10 @@ class EmittedArtifactValidation(BaseModel):
       rejected the artifact; the job fails (:attr:`failed`). ``errors`` carries the detail.
     * **skipped** — ``applicable`` but not ``validated``: a required toolchain was unavailable,
       so the artifact could not be re-parsed here; the job proceeds but records ``detail``.
-    * **not applicable** — not ``applicable``: no importer matches the format (the sample
-      no-op target); nothing to validate.
+    * **not applicable** — not ``applicable``: no validator is registered for the format (the
+      sample no-op target, the ``http-file`` target's ``curl`` script). The artifact was **not
+      validated**, and every surface says so (COA-3.4, #7055): "not applicable" names why no
+      check ran, never that one passed.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -236,7 +249,7 @@ def _skipped(target: str, reason: str) -> EmittedArtifactValidation:
 
 
 def _not_applicable(target: str, reason: str) -> EmittedArtifactValidation:
-    """No importer matches this format; there is nothing to re-validate."""
+    """No validator exists for this format (or output mode): the artifact was **not validated**."""
     return EmittedArtifactValidation(
         target=target, applicable=False, validated=False, valid=True, detail=reason
     )
@@ -1383,7 +1396,7 @@ async def _validate_http_file(
             target,
             "The request-file target emitted a shell script of `curl` commands; the "
             "`http-file` parser reads a request file (or one cURL command), not a "
-            "script, so the emitted artifact was not re-parsed.",
+            "script, so the emitted script was not validated.",
         )
     return await _run_text_validator(target, emit_result, validate_http_file_document)
 
@@ -1910,6 +1923,259 @@ async def _validate_wsdl(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+# ===========================================================================
+# COA-3.4 (#7055): the targets that had no validator
+# ===========================================================================
+
+
+def _file_text(emitted: EmittedFile) -> str:
+    """An emitted file's content as text (a structured JSON document is serialised)."""
+    return emitted.content if isinstance(emitted.content, str) else json.dumps(emitted.content)
+
+
+def _problem_findings(problems: List[Dict[str, Any]], *, file: str) -> List[ValidationFinding]:
+    """Turn ``{"rule", "message", "file", "path"}`` problem dicts into findings (rule → ``keyword``)."""
+    return [
+        ValidationFinding(message=p["message"], file=p.get("file") or file, path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+
+
+async def _check_and_reimport(
+    target: str,
+    emit_result: EmitResult,
+    *,
+    label: str,
+    import_format: str,
+    spec_check: Optional[Callable[[EmittedFile], List[Dict[str, Any]]]] = None,
+    reimport_units: Optional[Callable[[EmittedFile], List[str]]] = None,
+) -> EmittedArtifactValidation:
+    """Check every emitted file against its spec rules, then re-import it (COA-3.4).
+
+    The shape the COA-3.4 validators share: for each file, ``spec_check`` (when given) returns the
+    spec violations, and the file is then parsed and normalized by the target's own import source,
+    so a file that breaks the spec *or* that Apiome cannot read back is a finding. Every file is
+    attempted, so a multi-file bundle reports all of its problems. The walk runs in one worker
+    thread (re-parsing is CPU-bound).
+
+    Args:
+        target: The resolved target format key, echoed into the verdict.
+        emit_result: The emitter's output bundle.
+        label: The format's display name, for the "wrote no file" finding.
+        import_format: The import-source key that reads the format back.
+        spec_check: Optional per-file spec checker returning problem dicts.
+        reimport_units: Optional splitter returning the texts of one file to re-import, for a file
+            the import source can only read in parts (a CloudEvents batch); the whole file by default.
+
+    Returns:
+        :func:`_passed` when every file meets the spec and re-imports, else :func:`_rejected`.
+    """
+    from .import_source import get_import_source
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message(f"The {label} export wrote no file.")])
+
+    def _run() -> List[ValidationFinding]:
+        source = get_import_source(import_format)
+        findings: List[ValidationFinding] = []
+        for emitted in emit_result.files:
+            if spec_check is not None:
+                findings.extend(_problem_findings(spec_check(emitted), file=emitted.path))
+            units = reimport_units(emitted) if reimport_units is not None else [_file_text(emitted)]
+            for unit in units:
+                try:
+                    native = source.parse(unit, source_label=emitted.path)
+                    source.normalize(native, include_raw=False)
+                except Exception as exc:  # noqa: BLE001 — any reader failure means "not valid", never a crash
+                    findings.append(
+                        ValidationFinding(
+                            message=f"The file does not import: {exc}",
+                            file=emitted.path,
+                            keyword=f"{import_format}.reimport",
+                        )
+                    )
+                    break
+        return findings
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
+def _json_document(emitted: EmittedFile) -> Tuple[Any, List[Dict[str, Any]]]:
+    """Decode an emitted JSON file, returning ``(document, problems)``; a decode error is one problem."""
+    if not isinstance(emitted.content, str):
+        return emitted.content, []
+    try:
+        return json.loads(emitted.content), []
+    except json.JSONDecodeError as exc:
+        return None, [{"rule": "json.syntax", "message": f"The file is not JSON: {exc}", "path": None}]
+
+
+async def _validate_cloudevents(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate emitted CloudEvents JSON (COA-3.4, #7055).
+
+    Each file must meet the CloudEvents 1.0 core and JSON-format rules
+    (:func:`app.cloudevents_spec_validation.cloudevents_spec_problems`: ``specversion``, the required
+    ``id`` / ``source`` / ``type``, attribute types and names, ``data`` vs ``data_base64``), then import
+    again through the CloudEvents import source. A batch (several events, JSON format §4) is checked
+    as a whole and re-imported one event at a time, because the import source reads a single event
+    per document.
+    """
+    from .cloudevents_spec_validation import cloudevents_spec_problems
+
+    def _events(emitted: EmittedFile) -> List[str]:
+        """A batch file re-imports event by event: the import source reads one event per document."""
+        document, problems = _json_document(emitted)
+        if not problems and isinstance(document, list) and document:
+            return [json.dumps(event) for event in document]
+        return [_file_text(emitted)]
+
+    return await _check_and_reimport(
+        target,
+        emit_result,
+        label="CloudEvents",
+        import_format="cloudevents",
+        spec_check=lambda emitted: cloudevents_spec_problems(emitted.content, file=emitted.path),
+        reimport_units=_events,
+    )
+
+
+async def _validate_xmlrpc(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted XML-RPC message (COA-3.4, #7055).
+
+    The XML-RPC structure (``methodCall`` with one legal ``methodName``) and every value read by
+    Python's own XML-RPC unmarshaller (:func:`app.xmlrpc_spec_validation.xmlrpc_spec_problems`), then
+    a re-import through the XML-RPC import source.
+    """
+    from .xmlrpc_spec_validation import xmlrpc_spec_problems
+
+    return await _check_and_reimport(
+        target,
+        emit_result,
+        label="XML-RPC",
+        import_format="xmlrpc",
+        spec_check=lambda emitted: xmlrpc_spec_problems(_file_text(emitted), file=emitted.path),
+    )
+
+
+def _a2a_card_problems(emitted: EmittedFile) -> List[Dict[str, Any]]:
+    """The vendored A2A AgentCard schema's violations for one emitted card file."""
+    from .a2a_emitter import agent_card_schema_violations
+
+    document, problems = _json_document(emitted)
+    if problems:
+        return problems
+    if not isinstance(document, dict):
+        return [{"rule": "a2a.schema", "message": "An Agent Card must be a JSON object.", "path": None}]
+    return [
+        {"rule": "a2a.schema", "message": violation, "path": violation.split(":", 1)[0]}
+        for violation in agent_card_schema_violations(document)
+    ]
+
+
+async def _validate_a2a(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted A2A Agent Card (COA-3.4, #7055).
+
+    Each card against the vendored A2A AgentCard JSON Schema (``data/a2a_agent_card_schema.json``),
+    then a re-import through the A2A import source.
+    """
+    from .a2a_agent_card_normalizer import FORMAT_KEY
+
+    return await _check_and_reimport(
+        target, emit_result, label="A2A Agent Card", import_format=FORMAT_KEY, spec_check=_a2a_card_problems
+    )
+
+
+def _mcp_descriptor_problems(emitted: EmittedFile) -> List[Dict[str, Any]]:
+    """The MCP checks for one emitted server descriptor: a known ``mcpVersion`` and every tool valid.
+
+    Each ``tools`` entry is checked against the vendored MCP Tool schema of the revision the
+    descriptor declares (``data/mcp_tool_schema.json``).
+    """
+    from .mcp_emitter import PROTOCOL_VERSIONS, mcp_tool_schema_violations
+
+    document, problems = _json_document(emitted)
+    if problems:
+        return problems
+    if not isinstance(document, dict):
+        return [{"rule": "mcp.descriptor", "message": "An MCP server descriptor must be a JSON object.", "path": None}]
+    version = document.get("mcpVersion")
+    if version not in PROTOCOL_VERSIONS:
+        return [
+            {
+                "rule": "mcp.descriptor",
+                "message": f"`mcpVersion` must be one of {', '.join(PROTOCOL_VERSIONS)} (found {version!r}).",
+                "path": "/mcpVersion",
+            }
+        ]
+    tools = document.get("tools")
+    if not isinstance(tools, list):
+        return [{"rule": "mcp.descriptor", "message": "`tools` must be an array.", "path": "/tools"}]
+    found: List[Dict[str, Any]] = []
+    for index, tool in enumerate(tools):
+        for violation in mcp_tool_schema_violations(tool if isinstance(tool, dict) else {}, version):
+            pointer, _, message = violation.partition(": ")
+            found.append(
+                {
+                    "rule": "mcp.tool-schema",
+                    "message": f"Tool {index}: {message or violation}",
+                    "path": f"/tools/{index}{'' if pointer == '/' else pointer}",
+                }
+            )
+    return found
+
+
+async def _validate_mcp(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted MCP server descriptor (COA-3.4, #7055).
+
+    The declared ``mcpVersion``, every tool against the MCP Tool schema of that revision, then a
+    re-import through the MCP import source.
+    """
+    return await _check_and_reimport(
+        target, emit_result, label="MCP", import_format="mcp", spec_check=_mcp_descriptor_problems
+    )
+
+
+async def _validate_kafka_connect(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Kafka Connect schema set (COA-3.4, #7055).
+
+    Connect publishes no schema for its own schema form; its reader is the authority available, so
+    every emitted file set is imported again *together* (the schemas and the ``connector.json``
+    configuration, as a pipeline is composed) through the Kafka Connect import source. Any file the
+    reader refuses is a finding (``kafka-connect.reimport``).
+    """
+    from .fileset import IntakeFileset
+    from .import_source import get_import_source
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Kafka Connect export wrote no file.")])
+    members = {emitted.path: _file_text(emitted) for emitted in emit_result.files}
+    schema_paths = [path for path in members if path != "connector.json"]
+    root = schema_paths[0] if schema_paths else next(iter(members))
+
+    def _run() -> List[ValidationFinding]:
+        source = get_import_source("kafka-connect")
+        try:
+            native = source.parse_fileset(IntakeFileset.from_members(members, root=root))
+            source.normalize(native, include_raw=False)
+        except Exception as exc:  # noqa: BLE001 — any reader failure means "not valid", never a crash
+            return [ValidationFinding(message=f"The file set does not import: {exc}", keyword="kafka-connect.reimport")]
+        return []
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -1994,6 +2260,14 @@ _VALIDATORS: Dict[str, _Validator] = {
     "iceberg": _validate_iceberg,
     # MFX-37.3 (#4325)
     "fix-orchestra": _validate_fix_orchestra,
+    # COA-3.4 (#7055): the targets that reported "not applicable". Connect RPC writes a proto3
+    # bundle, so ``buf`` compiles it exactly as it compiles a protobuf export.
+    "connectrpc": _validate_proto,
+    "cloudevents": _validate_cloudevents,
+    "xmlrpc": _validate_xmlrpc,
+    "kafka-connect": _validate_kafka_connect,
+    "a2a": _validate_a2a,
+    "mcp": _validate_mcp,
 }
 
 
@@ -2039,7 +2313,7 @@ async def validate_emitted_artifact(
     if validator is None:
         return _not_applicable(
             target_format,
-            f"No import parser matches the {target_format!r} target; the emitted artifact "
-            "was not re-validated.",
+            f"Apiome has no validator for the {target_format!r} target, so the emitted artifact "
+            "was not validated.",
         )
     return await validator(target_format, emit_result, api)

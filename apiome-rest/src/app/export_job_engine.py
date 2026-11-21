@@ -1412,7 +1412,8 @@ def build_validation_events(validation: EmittedArtifactValidation) -> List[_Even
     * **passed** — the artifact re-parsed cleanly through its matching MFI import parser;
     * **skipped** — a matching parser exists but its toolchain was unavailable, so the artifact
       was not re-validated (a ``warn``: the export ships without this guarantee);
-    * **not applicable** — no importer matches the format (the sample no-op target).
+    * **not applicable** — no validator exists for the format (the sample no-op target); the
+      line says the artifact was **not validated** (COA-3.4, #7055).
 
     Args:
         validation: A validation whose
@@ -1427,7 +1428,7 @@ def build_validation_events(validation: EmittedArtifactValidation) -> List[_Even
             "info",
             "VALIDATION_NOT_APPLICABLE",
             validation.detail
-            or f"No import parser matches the {target!r} target; the artifact was not re-validated.",
+            or f"Apiome has no validator for the {target!r} target, so the artifact was not validated.",
             {"target": target},
         )]
     if not validation.validated:

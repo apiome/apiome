@@ -25,7 +25,25 @@ The check ends in one of four verdicts:
 | **Valid** | The file read back cleanly. | The export is delivered. |
 | **Invalid** | A check ran and rejected the file. | The export is **blocked**: the job fails with `EMITTED_ARTIFACT_INVALID` and nothing is delivered. |
 | **Skipped** | The format has a check, but its tool is not installed on this server. | The export is delivered with a warning that it was **not re-validated**. |
-| **Not applicable** | No importer reads the format back. | The export is delivered; there was nothing to check. |
+| **Not validated** | Apiome has no check for the format. Today that is only the `curl` script the `.http` file target can write. | The export is delivered, and every surface says it was **not validated** — never that it passed. |
+
+In the REST API the last verdict is `not_applicable`; its `headline` reads **Not validated**.
+
+### Formats checked against their specification
+
+Every other format has a check. Most are read back by Apiome's importer and, where there is one, the
+format's own tool. These formats are also checked against the rules of their specification:
+
+| Export | What the check rejects |
+| --- | --- |
+| CloudEvents | A `specversion` other than `1.0` (or `0.3`, for an event imported at that version); a missing or empty `id`, `source` or `type`; a `time` that is not an RFC 3339 timestamp; an empty `subject`, `datacontenttype` or `dataschema`; both `data` and `data_base64`; an extension whose name is not lower-case letters and digits, or whose value is an object, an array or a fraction. Each event of a batch is checked, then read back. |
+| XML-RPC | A root other than `methodCall` or `methodResponse`; a `methodCall` without exactly one `methodName`, or a name with characters other than `A–Z a–z 0–9 _ . : /`; a value Python's own XML-RPC reader (`xmlrpc.client`) refuses, such as an `<int>` that is not a number or an unknown value type. |
+| Connect RPC | Anything `buf build` refuses, as for Protobuf. Without `buf` the export says it was not re-validated. |
+| Kafka Connect | A schema Apiome's Kafka Connect reader refuses. The schemas and `connector.json` are read back together, as a pipeline is. Connect publishes no schema for its own format, so its reader is the check. |
+| A2A Agent Card | A card that breaks the A2A AgentCard schema. |
+| MCP Tool Definitions | An `mcpVersion` Apiome does not know, or a tool that breaks the MCP Tool schema of that version. |
+
+Each finding names its rule: `cloudevents.required`, `xmlrpc.method-name`, `mcp.tool-schema` and so on.
 
 An invalid verdict lists each problem on its own: the message, the file it is in, its place (a JSON
 pointer such as `/components/schemas/Pet`, or a line and column), the rule or tool that found it,

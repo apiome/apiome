@@ -180,6 +180,34 @@ describe('VerifyWorkbench — one click yields three lenses + verdict (MFX-42.1)
   });
 });
 
+describe('VerifyWorkbench — no validator never reads as a pass (COA-3.4)', () => {
+  it('says "not validated" in the clean banner and the validation lens', () => {
+    const result = makeResult('clean');
+    result.validation = {
+      ...result.validation,
+      verdict: 'not_applicable',
+      headline: 'Not validated',
+      message: "Apiome has no validator for the 'sample-noop' target, so the emitted artifact was not validated.",
+    };
+    renderWorkbench({ hasRun: true, result, verdict: 'clean' });
+
+    const banner = screen.getByTestId('verify-verdict');
+    expect(banner).toHaveAttribute('data-verdict', 'clean');
+    expect(banner).toHaveTextContent(/not validated/i);
+    expect(banner).not.toHaveTextContent(/validated cleanly/i);
+
+    fireEvent.click(screen.getByTestId('verify-tab-validation'));
+    const panel = screen.getByTestId('verify-panel-validation');
+    expect(within(panel).getByTestId('verify-validation-headline')).toHaveTextContent('Not validated');
+    expect(within(panel).getByTestId('verify-validation-not-applicable')).toHaveTextContent(/not validated/i);
+  });
+
+  it('keeps "validated cleanly" when a validator ran', () => {
+    renderWorkbench({ hasRun: true, result: makeResult('clean'), verdict: 'clean' });
+    expect(screen.getByTestId('verify-verdict')).toHaveTextContent(/validated cleanly/i);
+  });
+});
+
 describe('VerifyWorkbench — invalid blocks with detail (MFX-42.1)', () => {
   it('shows the validation error detail with its location for an invalid export', () => {
     renderWorkbench({ hasRun: true, result: makeResult('invalid'), verdict: 'invalid' });

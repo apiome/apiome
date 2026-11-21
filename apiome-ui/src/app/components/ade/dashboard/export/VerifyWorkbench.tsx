@@ -27,6 +27,7 @@ import {
   isSevereConversion,
   lensBadgeCount,
   verifyVerdictBanner,
+  validationRan,
   verifyVerdictAlertVariant,
   type ExportVerifyResponse,
   type ExportVerifyVerdict,
@@ -312,7 +313,7 @@ export function VerifyWorkbench({
   return (
     <div className="space-y-4" data-testid="verify-workbench">
       {header}
-      <VerdictBanner verdict={verdict} />
+      <VerdictBanner verdict={verdict} validated={validationRan(result.validation)} />
       {/* Which configuration this verdict belongs to (MFX-42.6) — a verdict without its target +
           options is ambiguous the moment the user starts iterating. */}
       <VerifyConfigNote summary={configSummary} fromCache={fromCache} />
@@ -511,9 +512,21 @@ function VerifyConfigNote({
   );
 }
 
-/** The single go/no-go verdict banner shown above the lenses (and reused on Review). */
-export function VerdictBanner({ verdict }: { verdict: ExportVerifyVerdict }) {
-  const banner = verifyVerdictBanner(verdict);
+/**
+ * The single go/no-go verdict banner shown above the lenses (and reused on Review).
+ *
+ * @param verdict The overall verdict band.
+ * @param validated Whether a validator ran on the emitted artifact (`validationRan`); a clean band
+ *   without one says "not validated" (COA-3.4). Defaults to `true`.
+ */
+export function VerdictBanner({
+  verdict,
+  validated = true,
+}: {
+  verdict: ExportVerifyVerdict;
+  validated?: boolean;
+}) {
+  const banner = verifyVerdictBanner(verdict, { validated });
   const Icon =
     banner.tone === 'invalid'
       ? ShieldX

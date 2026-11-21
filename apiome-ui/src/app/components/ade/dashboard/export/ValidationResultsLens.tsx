@@ -6,7 +6,8 @@
  * verdict. This lens renders that verdict:
  *
  *  - the overall band as a toned headline (valid / invalid / toolchain-unavailable / not-applicable),
- *    naming the validator that ran (or would have run);
+ *    naming the validator that ran (or would have run); a not-applicable target (no validator exists)
+ *    reads **not validated**, never as a pass (COA-3.4);
  *  - for a rejection, the structured error list — message plus file-in-bundle, JSON pointer, and
  *    line/column wherever the validator supplies them (these locations feed MFX-43.3's markers);
  *  - external-toolchain unavailability as an explicit **warning** ("validator not installed on the
@@ -112,10 +113,12 @@ export function ValidationResultsLens({
         </div>
       )}
 
-      {/* Not-applicable: no toolchain matches the format, so there is genuinely nothing to check. */}
+      {/* Not-applicable: Apiome has no validator for this format (or output mode). That is why no
+          check ran, not a result — say "not validated" so it never reads as a pass (COA-3.4). */}
       {state === 'not_applicable' && (
         <p className="hive-quiet" data-testid="verify-validation-not-applicable">
-          No validator matches this format — there is nothing to validate for this target.
+          The emitted artifact was <strong>not validated</strong> — Apiome has no validator for this
+          format, so nothing checked that the file is legal in it.
         </p>
       )}
 

@@ -73,7 +73,7 @@ import { useExportToolChecks } from './useExportToolChecks';
 import { useExportPreviewManifest } from './useExportPreviewManifest';
 import type { EntityRevealRequest, ExportManifestEntity } from './exportPreviewManifest';
 import { OriginalSourceOption } from './OriginalSourceOption';
-import { deriveVerifyVerdict, verifyGatePasses } from './exportVerify';
+import { deriveVerifyVerdict, validationRan, verifyGatePasses } from './exportVerify';
 import { describeVerifyConfig } from './exportVerifyCache';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import {
@@ -1685,7 +1685,12 @@ export function ExportStudio({
             <div className="xstd-stack">
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
-              {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
+              {verifyVerdict && (
+                <VerdictBanner
+                  verdict={verifyVerdict}
+                  validated={verifyResult ? validationRan(verifyResult.validation) : true}
+                />
+              )}
               {/* MFX-44.6: what the format's own toolchain said, attached to the verify report. */}
               <ToolCheckReport results={toolChecks.results} />
               {/* MFX-38.4: deliver with saved profiles — chosen before Generate, listed after. */}

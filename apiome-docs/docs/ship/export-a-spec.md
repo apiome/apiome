@@ -84,7 +84,7 @@ way the last column says.
 
 | Export | Checked with | Without the tool |
 | --- | --- | --- |
-| Protobuf (gRPC) | `buf build` compiles every `.proto` | Not compiled; the export says it was not re-validated |
+| Protobuf (gRPC), Connect RPC | `buf build` compiles every `.proto` | Not compiled; the export says it was not re-validated |
 | TypeSpec | `tsp compile` to OpenAPI, and that OpenAPI must import | Read back by Apiome's TypeSpec reader |
 | Smithy | `smithy validate` on each file, then `smithy ast` builds the model to import | Read back by Apiome's Smithy reader |
 | RAML | AMF's RAML 1.0 validation | Read back by Apiome's RAML reader |
@@ -102,8 +102,11 @@ way the last column says.
 | WADL | The W3C WADL schema, and an XML Schema processor builds its grammar | Always checked: the schema and processor ship with Apiome |
 | Google API Discovery | The Discovery metaschema and the document's rules | Always checked: the metaschema ships with Apiome |
 
-The sections below say what each check rejects. [How an export is checked](./check-an-export.mdx)
-explains the four verdicts and the lint of the exported file.
+The sections below say what each check rejects. CloudEvents, XML-RPC, Kafka Connect and the agent
+formats are checked against their specification's rules instead: see
+[Formats checked against their specification](./check-an-export.mdx#formats-checked-against-their-specification).
+[How an export is checked](./check-an-export.mdx) explains the four verdicts and the lint of the
+exported file.
 
 ### When an item has nothing to export from
 
@@ -291,7 +294,7 @@ fidelity report starts with a critical warning and the export asks you to confir
 | **Options** | `specversion`, `indent` | `registry_id`, `source`, `indent` | `?inline=*` |
 | **An event becomes** | A CloudEvent with a sample `data` payload | A message definition: `type`, `source`, `datacontenttype`, `dataschemaxid` | The same message definitions, one message group per project service |
 | **Types become** | Only an event's payload, written as sample `data` | JSON Schemas (draft 2020-12) | JSON Schemas, versioned by the published version |
-| **Checked by** | Not re-validated | Structure, the official xRegistry schema, and re-import | — |
+| **Checked by** | The CloudEvents 1.0 rules ([what it rejects](./check-an-export.mdx#formats-checked-against-their-specification)), and re-import | Structure, the official xRegistry schema, and re-import | — |
 | **Imports back with** | **Import to catalog** ([RPC and event formats](../bring-in/rpc-and-event-formats.mdx)) | [Import a CNCF xRegistry](../bring-in/xregistry-import.md) | The same importer, from the API's documents |
 | **CLI** | `apiome export cloudevents` | `apiome export xregistry` | `curl` (see [the API](./serve-an-xregistry.md#read-it)) |
 | **Details** | — | [xRegistry from any source](#xregistry-from-any-source) | [Serve your catalog as an xRegistry](./serve-an-xregistry.md) |
