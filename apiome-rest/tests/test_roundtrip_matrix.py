@@ -499,7 +499,7 @@ def test_xfail_map_entries_refer_to_real_cells(roundtrip_matrix: RoundTripMatrix
 
 #: How many strict xfails involve Arazzo after COA-1.4. The number only goes down: a fix deletes
 #: its entry and lowers this, and a new Arazzo xfail fails here (the issue's "none is added").
-ARAZZO_XFAIL_CEILING = 25
+ARAZZO_XFAIL_CEILING = 18
 
 
 def _arazzo_cells(cells) -> List[tuple]:
@@ -521,6 +521,36 @@ def test_every_arazzo_xfail_names_a_ticket() -> None:
         key for key in _arazzo_cells(KNOWN_ROUNDTRIP_XFAILS) if not re.search(r"#\d+", KNOWN_ROUNDTRIP_XFAILS[key])
     ]
     assert not unnamed, f"Arazzo xfails without a ticket: {unnamed}"
+
+
+# ---------------------------------------------------------------------------
+# COA-3.3 (#7054): the eight targets RC7 §0.1 listed for re-import failures
+# ---------------------------------------------------------------------------
+
+#: The targets whose exports did not import back (RC7 §0.1). Every cell in their columns now
+#: re-imports, or the target refuses the source up front (``roundtrip_unsupported``).
+REIMPORT_TRIAGED_TARGETS = frozenset(
+    {"wadl", "asn1", "asyncapi", "postman", "oncrpc", "protobuf", "connectrpc", "corbaidl"}
+)
+
+
+def test_no_triaged_target_xfail_is_a_reimport_failure() -> None:
+    """No strict xfail of the eight targets says its file does not import back."""
+    stale = sorted(
+        key for key, reason in KNOWN_ROUNDTRIP_XFAILS.items()
+        if key[1] in REIMPORT_TRIAGED_TARGETS and reason.startswith("Re-import failed")
+    )
+    assert not stale, f"re-import failures listed for the COA-3.3 targets: {stale[:10]}"
+
+
+def test_triaged_targets_import_back_every_file_they_write(roundtrip_matrix: RoundTripMatrix) -> None:
+    """Each of the eight targets' cells passes, refuses up front, or fails on a diff — never on re-import."""
+    failed = sorted(
+        f"{cell.cell_id}: {cell.reason}"
+        for cell in roundtrip_matrix.cells
+        if cell.emit_key in REIMPORT_TRIAGED_TARGETS and "Re-import failed" in (cell.reason or "")
+    )
+    assert not failed, f"{len(failed)} COA-3.3 target cell(s) do not import back:\n" + "\n".join(failed[:20])
 
 
 def test_deliberate_unsupported_cells_are_not_also_xfails() -> None:

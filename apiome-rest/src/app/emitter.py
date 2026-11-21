@@ -364,6 +364,11 @@ SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
         "{label} export needs at least one type or event (publish / subscribe) operation; this source "
         "has neither.",
     ),
+    "type": (
+        lambda api: bool(api.types),
+        "{label} export needs at least one type; this source has none (only operations, agents or "
+        "channels).",
+    ),
     "http-operation-or-type": (
         lambda api: _has_http_operation(api) or bool(api.types),
         "{label} export needs at least one HTTP operation or one type; this source has neither.",
@@ -713,6 +718,24 @@ class Emitter(ABC):
             if reason:
                 return reason
         return None
+
+    @classmethod
+    def raise_if_source_unsupported(cls, api: "CanonicalApi") -> None:
+        """Refuse, at emit time, a source :meth:`source_unsupported_reason` rejects — COA-3.3 (#7054).
+
+        The export service refuses such a source before it calls the emitter; an emitter that
+        would otherwise write a file its own importer rejects (an ASN.1 module with no types)
+        calls this first, so a direct ``emit`` refuses with the same sentence.
+
+        Args:
+            api: The source canonical model.
+
+        Raises:
+            EmitPreconditionError: With the reason, when the source is not supported.
+        """
+        reason = cls.source_unsupported_reason(api)
+        if reason:
+            raise EmitPreconditionError(reason)
 
     @classmethod
     def default_options(cls) -> EmitOptions:
@@ -1146,7 +1169,9 @@ class SchemaEmitter:
             properties[field.name] = self._field_schema(field)
             # A non-nullable field is a required member; the normalizer set
             # `nullable=False` exactly for members in the source `required` array.
-            if field.type.nullable is False:
+            # A name repeated across fields (an ISO 20022 choice) is listed once: JSON Schema
+            # requires `required` items to be unique (COA-3.3, #7054).
+            if field.type.nullable is False and field.name not in required:
                 required.append(field.name)
         schema: Dict[str, Any] = {"type": "object", "properties": properties}
         if required:
@@ -1184,7 +1209,13 @@ class SchemaEmitter:
     @staticmethod
     def _enum(type_: Type) -> Dict[str, Any]:
         """Emit an ENUM type, recovering its base scalar type from its values."""
-        values = [ev.value if ev.value is not None else ev.name for ev in type_.enum_values]
+        values: List[Any] = []
+        for ev in type_.enum_values:
+            value = ev.value if ev.value is not None else ev.name
+            # Two members may share a value (ROS 2 constants); JSON Schema requires `enum`
+            # items to be unique, so each value is written once (COA-3.3, #7054).
+            if not any(value == seen and type(value) is type(seen) for seen in values):
+                values.append(value)
         schema: Dict[str, Any] = {}
         json_type = SchemaEmitter._infer_scalar_type(values)
         if json_type is not None:

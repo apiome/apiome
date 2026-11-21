@@ -66,7 +66,7 @@ recorded on the result's :attr:`~app.emitter.EmitResult.losses` with a named rea
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
+from typing import Any, Collection, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 from pydantic import Field, ValidationError
 
@@ -89,6 +89,7 @@ from .canonical_model import (
     Service,
     StreamingMode,
 )
+from .canonical_json_schema import CANONICAL_SCALAR_SCHEMAS
 from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict
 from .emitter import (
     CapabilityProfile,
@@ -138,6 +139,10 @@ _OPERATION_RESERVED_EXTRAS = frozenset({"action", "reply"})
 # stays unambiguous. The wire address keeps its original characters (it is a value,
 # never a ref segment).
 _UNSAFE_NAME_RE = re.compile(r"[^\w.\-]")
+
+# AsyncAPI's ``components`` map keys must match ``^[a-zA-Z0-9\.\-_]+$``; any other character
+# (a WSDL type's ``http://…`` namespace, a space) is replaced with ``_`` — COA-3.3 (#7054).
+_COMPONENT_KEY_UNSAFE_RE = re.compile(r"[^A-Za-z0-9.\-_]")
 
 
 class AsyncApiEmitOptions(EmitOptions):
@@ -481,6 +486,8 @@ class AsyncApiEmitter(Emitter, register=True):
         tracker = ProvenanceTracker()
         losses = LossTracker()
         schema = SchemaEmitter(ref_prefix=self.REF_PREFIX)
+        # Extras of another format's constructs are not AsyncAPI fields (COA-3.3, #7054).
+        self._native_source = (api.format or "").startswith("asyncapi")
 
         # The version string is recorded in ``_apply_version`` so its provenance note
         # names the version actually emitted.
@@ -503,6 +510,8 @@ class AsyncApiEmitter(Emitter, register=True):
             components = self._components(api, schema, tracker)
             if components:
                 document["components"] = components
+
+        document = self._resolve_schema_refs(document, api, losses)
 
         document = self._apply_version(
             document, api, schema, options.asyncapi_version, tracker, losses
@@ -682,7 +691,7 @@ class AsyncApiEmitter(Emitter, register=True):
         # first so first-class fields below win on any overlap. The FMT-8.6 provenance stamp
         # is Apiome's bookkeeping, not an AsyncAPI attribute, so it never rides along (here or
         # on any other object below).
-        for key, value in sorted(without_provenance_stamp(server.extras).items()):
+        for key, value in self.carried_extras(server.extras):
             entry[key] = value
 
         host, pathname, scheme = self._split_url(server.url)
@@ -808,7 +817,7 @@ class AsyncApiEmitter(Emitter, register=True):
         ``extras``.
         """
         obj: Dict[str, Any] = {}
-        for key, value in sorted(without_provenance_stamp(message.extras).items()):
+        for key, value in self.carried_extras(message.extras):
             obj[key] = value
         if message.name:
             obj["name"] = message.name
@@ -881,6 +890,116 @@ class AsyncApiEmitter(Emitter, register=True):
                 Provenance.SOURCE,
             )
         return {"schemas": schemas} if schemas else {}
+
+    # --- source extras and schema references (COA-3.3, #7054) ---------------
+
+    def carried_extras(self, extras: Mapping[str, Any]) -> List[Tuple[str, Any]]:
+        """The ``extras`` of one construct that are written onto its AsyncAPI object.
+
+        An AsyncAPI source's extras are the AsyncAPI fields the canonical model does not
+        model (``bindings``, ``traits``, ``correlationId``, …), so all of them are written
+        back. Another format's extras are that format's metadata (a Postman
+        ``sample_count``, a gateway's ``backends``): AsyncAPI has no field for them, and
+        writing them made the document fail schema validation on re-import. Only the
+        ``x-`` specification extensions among them are written; the rest are left out,
+        as the rule pack's source-metadata verdict reports.
+
+        Args:
+            extras: The construct's ``extras`` bag.
+
+        Returns:
+            The ``(key, value)`` pairs to write, sorted by key, without the provenance stamp.
+        """
+        items = sorted(without_provenance_stamp(extras or {}).items())
+        if getattr(self, "_native_source", True):
+            return items
+        return [(key, value) for key, value in items if key.startswith("x-")]
+
+    def _resolve_schema_refs(
+        self, document: Dict[str, Any], api: CanonicalApi, losses: LossTracker
+    ) -> Dict[str, Any]:
+        """Make every ``#/components/schemas/…`` reference in ``document`` resolve.
+
+        * A component key AsyncAPI does not allow (``http://example.com/orders.Order``) is
+          renamed to its safe spelling, and every reference to it follows.
+        * A reference to a name the model does not declare as a type is a scalar spelling of
+          the source format (``bool``, ``int32``, ``decimal``): it is written inline as its
+          JSON-Schema form (:data:`~app.canonical_json_schema.CANONICAL_SCALAR_SCHEMAS`), or as
+          any value (with an ``unknown-type`` loss) when it has none.
+
+        Before this, those references named schemas that did not exist and the document was
+        rejected on re-import.
+
+        Args:
+            document: The emitted 3.1 document (changed in place and returned).
+            api: The source model, whose type keys are the declarable component names.
+            losses: Loss tracker an unknown scalar is recorded on.
+
+        Returns:
+            ``document`` with every schema reference resolvable.
+        """
+        declared = {type_.key for type_ in api.types}
+        renames = self.component_renames(declared)
+        schemas = (document.get("components") or {}).get("schemas")
+        if isinstance(schemas, dict) and renames:
+            document["components"]["schemas"] = {
+                renames.get(key, key): value for key, value in schemas.items()
+            }
+        unknown: List[str] = []
+
+        def resolve(node: Any) -> Any:
+            if isinstance(node, list):
+                return [resolve(item) for item in node]
+            if not isinstance(node, dict):
+                return node
+            out = {key: resolve(value) for key, value in node.items()}
+            ref = out.get("$ref")
+            if not (isinstance(ref, str) and ref.startswith(self.REF_PREFIX)):
+                return out
+            name = ref[len(self.REF_PREFIX):]
+            if name in declared:
+                out["$ref"] = self.REF_PREFIX + renames.get(name, name)
+                return out
+            del out["$ref"]
+            scalar = CANONICAL_SCALAR_SCHEMAS.get(name.lower())
+            if scalar is None and name not in unknown:
+                unknown.append(name)
+            return {**dict(scalar or {}), **out}
+
+        resolved = resolve(document)
+        for name in unknown:
+            losses.record(
+                LossKind.INFERRED,
+                "unknown-type",
+                f"the type {name!r} is not declared and has no JSON-Schema form; it is "
+                "written as any value",
+                pointer=name,
+            )
+        return resolved
+
+    @staticmethod
+    def component_renames(keys: Collection[str]) -> Dict[str, str]:
+        """Map each type key AsyncAPI cannot use as a component key to a safe, unique one.
+
+        Args:
+            keys: The model's type keys.
+
+        Returns:
+            ``{original key: safe key}`` for the keys that change; ``{}`` when all are safe.
+        """
+        taken = {key for key in keys if not _COMPONENT_KEY_UNSAFE_RE.search(key)}
+        renames: Dict[str, str] = {}
+        for key in sorted(keys):
+            if key in taken:
+                continue
+            base = _COMPONENT_KEY_UNSAFE_RE.sub("_", key).strip("_") or "Schema"
+            candidate, counter = base, 2
+            while candidate in taken:
+                candidate = f"{base}_{counter}"
+                counter += 1
+            taken.add(candidate)
+            renames[key] = candidate
+        return renames
 
     # --- name helpers -------------------------------------------------------
 
@@ -957,7 +1076,7 @@ class _ChannelBuilder:
         base = ProvenanceTracker.child("/channels", doc)
         obj: Dict[str, Any] = {}
         # Merge fidelity extras (title, tags, externalDocs, servers) first.
-        for key, value in sorted(without_provenance_stamp(channel.extras).items()):
+        for key, value in self._emitter.carried_extras(channel.extras):
             obj[key] = value
         obj["address"] = channel.address
         self._tracker.record(f"{base}/address", Provenance.SOURCE)
@@ -975,7 +1094,7 @@ class _ChannelBuilder:
         parameters: Dict[str, Any] = {}
         for param in sorted(channel.parameters, key=lambda p: p.key):
             spec: Dict[str, Any] = {}
-            for key, value in sorted(without_provenance_stamp(param.extras).items()):  # location, examples
+            for key, value in self._emitter.carried_extras(param.extras):  # location, examples
                 spec[key] = value
             if param.description:
                 spec["description"] = param.description
@@ -1047,7 +1166,7 @@ class _ChannelBuilder:
             "channel": {"$ref": f"#/channels/{doc_channel}"},
         }
         # Carry harmless fidelity extras (bindings, traits, security, …) back.
-        for key, value in sorted(without_provenance_stamp(operation.extras).items()):
+        for key, value in self._emitter.carried_extras(operation.extras):
             if key not in _OPERATION_RESERVED_EXTRAS:
                 obj.setdefault(key, value)
 

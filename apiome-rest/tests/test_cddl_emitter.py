@@ -39,10 +39,9 @@ from app.cddl_emitter import (
     CddlFidelityRulePack,
     validate_cddl_document,
 )
-from app.cddl_grammar import CddlParseError
 from app.cddl_normalizer import CddlNormalizer
 from app.cddl_parser import parse_cddl, parse_cddl_fileset
-from app.emitter import LossKind, get_emitter, load_builtin_emitters
+from app.emitter import EmitPreconditionError, LossKind, get_emitter, load_builtin_emitters
 from app.import_source import canonical_diff
 
 load_builtin_emitters()
@@ -563,15 +562,19 @@ def test_a_name_cddl_cannot_spell_is_folded_into_one_it_can() -> None:
     validate_cddl_document(text)
 
 
-def test_an_empty_model_writes_nothing_a_reader_can_parse() -> None:
-    """A CDDL file with no rules is not a grammar; there is nothing honest to invent."""
+def test_an_empty_model_is_refused_instead_of_written() -> None:
+    """A CDDL file with no rules is not a grammar; there is nothing honest to invent.
+
+    The export refuses the source with a reason (COA-3.3, #7054) rather than writing a file that
+    does not read back.
+    """
     api = CanonicalApi(
         paradigm=ApiParadigm.DATA_SCHEMA,
         format="json-schema",
         identity=ApiIdentity(name="Empty"),
     )
-    with pytest.raises(CddlParseError):
-        validate_cddl_document(str(CddlEmitter().emit(api).files[0].content))
+    with pytest.raises(EmitPreconditionError, match="CDDL export needs at least one type"):
+        CddlEmitter().emit(api)
 
 
 def test_provenance_is_recorded_for_every_written_type_and_member() -> None:

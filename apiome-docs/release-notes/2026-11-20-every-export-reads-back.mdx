@@ -1,0 +1,33 @@
+---
+slug: every-export-reads-back
+title: "Every export reads back"
+description: "Exports of eight more targets import back, or are refused with a reason."
+authors: [apiome]
+---
+
+The WADL, ASN.1, AsyncAPI, Postman, ONC RPC, Protobuf, Connect RPC and CORBA IDL exports of an item
+now import back into Apiome. A target that has nothing to write for a source refuses it, with the
+reason, instead of exporting an empty file.
+
+{/* truncate */}
+
+- **Fixed — AsyncAPI:** an item from another format was written with that format's metadata as
+  AsyncAPI fields (a Postman `sample_count`, a gateway's `backends`), and with references to
+  scalar schemas such as `bool` or `int32` that the file did not declare, so it failed validation.
+  The metadata is now written only as its `x-` extensions, and a scalar is written inline. A type
+  name AsyncAPI does not allow as a component key, a field listed twice in `required`, a repeated
+  enum value and a type that contains itself no longer stop the file from reading back.
+- **Fixed — Protobuf and Connect RPC:** `.proto` files of items from another format often did not
+  compile. Package and type names are now Protobuf identifiers (`CUSTOMER-RECORD` →
+  `CUSTOMER_RECORD`), every reference names a declaration (an alias is written as the type it
+  aliases, `decimal` as `string`, a date-time as `google.protobuf.Timestamp`), and a scalar rpc
+  payload uses a wrapper message. Field number `0`, a repeated field name and a service named like
+  a message are renumbered or renamed, and the fidelity report lists each one.
+- **Fixed — ONC RPC:** scalars are written as XDR types (`integer age;` is now `int age;`), and a
+  file of structs only, the export of a data schema, imports back.
+- **Refused with a reason:** ASN.1, CDDL, FlatBuffers and XSD for a source with no type, and WADL
+  and RAML for a source with no HTTP operation and no type, are greyed out in the **Export** dialog.
+  An Avro `.avsc` export of such a source is refused; Avro IDL (`.avdl`) still exports it.
+- **REST:** no endpoint changes (REST API 1.788.0, OpenAPI 1.614.0).
+
+See [Every exported file reads back](/ship/export-fidelity#reimport).

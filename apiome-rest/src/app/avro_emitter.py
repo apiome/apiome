@@ -45,6 +45,7 @@ from .conversion_verdicts import envelope_verdicts, paradigm_change_verdict, rek
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -489,6 +490,13 @@ class AvroEmitter(Emitter, register=True):
             if isinstance(opts, AvroEmitOptions)
             else AvroEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        if options.output_syntax != "avdl" and not api.types:
+            # One ``.avsc`` per named type: a source with none wrote no file, and the export did
+            # not re-import (COA-3.3, #7054). An ``.avdl`` protocol can still carry its messages.
+            raise EmitPreconditionError(
+                f"{self.label} schema export writes one .avsc per type, and this source has none; "
+                "export Avro IDL (.avdl) to keep its operations."
+            )
         writer = _AvroWriter(api, options)
         if options.output_syntax == "avdl":
             files = render_avro_idl(

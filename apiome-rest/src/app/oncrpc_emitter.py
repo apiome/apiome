@@ -23,6 +23,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .canonical_json_schema import CANONICAL_SCALAR_SCHEMAS
 from .conversion_verdicts import (
     agent_loss_items,
     envelope_verdicts,
@@ -44,6 +45,7 @@ from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .normalizer import Keys
 from .oncrpc_parser import parse_oncrpc
+from .scalar_aliases import XDR_SCALAR_FOR_KIND, target_scalar
 
 __all__ = ["OncRpcEmitOptions", "OncRpcEmitter", "OncRpcFidelityRulePack", "validate_oncrpc_document"]
 
@@ -420,7 +422,8 @@ class _OncRpcWriter:
             else:
                 rendered = f"{type_expr} {field.name}"
         else:
-            rendered = f"{self._render_type_ref(field.type)} {_identifier(field.name)}"
+            fmt = field.constraints.format if field.constraints is not None else None
+            rendered = f"{self._render_type_ref(field.type, fmt)} {_identifier(field.name)}"
         self.tracker.record(field.key, Provenance.SOURCE)
         return rendered
 
@@ -432,16 +435,42 @@ class _OncRpcWriter:
             return f"{match.group(1)}<{match.group(2)}>"
         return type_expr
 
-    def _render_type_ref(self, ref: TypeRef) -> str:
-        if ref.name:
-            mapped = _CANONICAL_TO_XDR.get(ref.name)
-            if mapped:
-                return mapped
-            target = self._types_by_key.get(ref.name)
-            if target is not None:
-                return _identifier(target.name)
-            return _identifier(ref.name.split(".")[-1])
-        return "string"
+    def _render_type_ref(self, ref: TypeRef, fmt: Optional[str] = None) -> str:
+        """Render a field's type: an XDR scalar, a declared type's name, or the closest scalar.
+
+        Another format's scalar spelling (``integer``, ``boolean``, ``int64``) maps through
+        :data:`~app.scalar_aliases.XDR_SCALAR_FOR_KIND`; a name the model does not declare
+        (``decimal``, ``date-time``) is written as the XDR scalar of its JSON-Schema form, or
+        ``string``, with an ``unmapped-type`` loss. Before COA-3.3 (#7054) both were written as
+        type names that the file did not declare.
+
+        Args:
+            ref: The field's type reference.
+            fmt: The field's ``format`` constraint (picks an integer or number width).
+
+        Returns:
+            The XDR type expression.
+        """
+        if not ref.name:
+            return "string"
+        mapped = _CANONICAL_TO_XDR.get(ref.name)
+        if mapped:
+            return mapped
+        target = self._types_by_key.get(ref.name)
+        if target is not None:
+            return _identifier(target.name)
+        alias = target_scalar(ref.name, XDR_SCALAR_FOR_KIND, fmt)
+        if alias is not None:
+            return alias
+        json_type = (CANONICAL_SCALAR_SCHEMAS.get(ref.name.lower()) or {}).get("type")
+        expr = {"integer": "hyper", "number": "double", "boolean": "bool"}.get(json_type, "string")
+        self.losses.record(
+            LossKind.INFERRED,
+            "unmapped-type",
+            f"The type {ref.name!r} has no XDR declaration; it is written as {expr!r}.",
+            pointer=ref.name,
+        )
+        return expr
 
     def _render_program(self, program: Dict[str, Any]) -> List[str]:
         name = str(program.get("name", "PROGRAM"))

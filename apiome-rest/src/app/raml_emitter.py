@@ -866,6 +866,8 @@ class RamlEmitter(Emitter, register=True):
     paradigm = ApiParadigm.REST
     multi_file = False
     options_model = RamlEmitOptions
+    #: COA-3.3 (#7054): with nothing to write, the file did not re-import; refuse instead.
+    requires_source = ("http-operation-or-type",)
 
     OUTPUT_MEDIA_TYPE = "application/raml+yaml"
 
@@ -895,6 +897,7 @@ class RamlEmitter(Emitter, register=True):
             if isinstance(opts, RamlEmitOptions)
             else RamlEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        self.raise_if_source_unsupported(api)
         writer = _RamlWriter(api, options)
         content = writer.render()
         return EmitResult(

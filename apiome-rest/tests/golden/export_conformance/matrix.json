@@ -38,15 +38,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "a2a",
@@ -62,7 +56,7 @@
     },
     {
       "family": "a2a",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -98,15 +92,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "a2a",
@@ -200,15 +188,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "a2a",
@@ -422,15 +404,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "raml",
-      "tier": "lossy"
+      "reason": "RAML export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "raml"
     },
     {
       "family": "a2a",
@@ -488,15 +464,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "wadl",
-      "tier": "lossy"
+      "reason": "WADL export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "wadl"
     },
     {
       "family": "a2a",
@@ -548,15 +518,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "a2a",
@@ -608,15 +572,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "acp",
@@ -632,7 +590,7 @@
     },
     {
       "family": "acp",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -668,15 +626,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "acp",
@@ -770,15 +722,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "acp",
@@ -1004,15 +950,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "raml",
-      "tier": "lossy"
+      "reason": "RAML export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "raml"
     },
     {
       "family": "acp",
@@ -1070,15 +1010,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 1
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "wadl",
-      "tier": "lossy"
+      "reason": "WADL export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "wadl"
     },
     {
       "family": "acp",
@@ -1130,15 +1064,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "acp",
@@ -1190,15 +1118,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "agents-manifest",
@@ -1214,7 +1136,7 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -1250,15 +1172,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "agents-manifest",
@@ -1352,15 +1268,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "agents-manifest",
@@ -1586,15 +1496,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 8,
-        "synth": 1
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "raml",
-      "tier": "lossy"
+      "reason": "RAML export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "raml"
     },
     {
       "family": "agents-manifest",
@@ -1652,15 +1556,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "wadl",
-      "tier": "lossy"
+      "reason": "WADL export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "wadl"
     },
     {
       "family": "agents-manifest",
@@ -1712,15 +1610,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "agents-manifest",
@@ -2522,15 +2414,9 @@
     },
     {
       "family": "apigee",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "apigee",
@@ -2546,7 +2432,7 @@
     },
     {
       "family": "apigee",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -2600,15 +2486,9 @@
     },
     {
       "family": "apigee",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "apigee",
@@ -2714,15 +2594,9 @@
     },
     {
       "family": "apigee",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "apigee",
@@ -3122,15 +2996,9 @@
     },
     {
       "family": "apigee",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "apigee",
@@ -3176,15 +3044,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "arazzo",
@@ -3200,7 +3062,7 @@
     },
     {
       "family": "arazzo",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -3236,15 +3098,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "arazzo",
@@ -3338,15 +3194,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "arazzo",
@@ -3572,15 +3422,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 1
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "raml",
-      "tier": "lossy"
+      "reason": "RAML export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "raml"
     },
     {
       "family": "arazzo",
@@ -3638,15 +3482,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 3,
-        "synth": 1
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "wadl",
-      "tier": "lossy"
+      "reason": "WADL export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "wadl"
     },
     {
       "family": "arazzo",
@@ -3698,15 +3536,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "arazzo",
@@ -5018,15 +4850,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "asyncapi",
@@ -5042,7 +4868,7 @@
     },
     {
       "family": "asyncapi",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -5078,15 +4904,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "asyncapi",
@@ -5180,15 +5000,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "asyncapi",
@@ -5396,15 +5210,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 1
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "raml",
-      "tier": "lossy"
+      "reason": "RAML export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "raml"
     },
     {
       "family": "asyncapi",
@@ -5456,15 +5264,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "wadl",
-      "tier": "lossy"
+      "reason": "WADL export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "wadl"
     },
     {
       "family": "asyncapi",
@@ -5516,15 +5318,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "asyncapi",
@@ -7634,15 +7430,9 @@
     },
     {
       "family": "azure-apim",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "azure-apim",
@@ -7658,7 +7448,7 @@
     },
     {
       "family": "azure-apim",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -7706,15 +7496,9 @@
     },
     {
       "family": "azure-apim",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "azure-apim",
@@ -7820,15 +7604,9 @@
     },
     {
       "family": "azure-apim",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "azure-apim",
@@ -8228,15 +8006,9 @@
     },
     {
       "family": "azure-apim",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "azure-apim",
@@ -9717,7 +9489,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 21,
         "synth": 3
       },
@@ -11637,7 +11409,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 24,
         "synth": 3
       },
@@ -11799,7 +11571,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 36,
+        "approx": 37,
         "drop": 0,
         "synth": 11
       },
@@ -12926,15 +12698,9 @@
     },
     {
       "family": "consul",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "consul",
@@ -12950,7 +12716,7 @@
     },
     {
       "family": "consul",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -12998,15 +12764,9 @@
     },
     {
       "family": "consul",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 1,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "consul",
@@ -13112,15 +12872,9 @@
     },
     {
       "family": "consul",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "consul",
@@ -13514,15 +13268,9 @@
     },
     {
       "family": "consul",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "consul",
@@ -19490,15 +19238,9 @@
     },
     {
       "family": "envoy-xds",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "envoy-xds",
@@ -19514,7 +19256,7 @@
     },
     {
       "family": "envoy-xds",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -19562,15 +19304,9 @@
     },
     {
       "family": "envoy-xds",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "envoy-xds",
@@ -19676,15 +19412,9 @@
     },
     {
       "family": "envoy-xds",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "envoy-xds",
@@ -20078,15 +19808,9 @@
     },
     {
       "family": "envoy-xds",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "envoy-xds",
@@ -22820,15 +22544,9 @@
     },
     {
       "family": "gateway-api",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "gateway-api",
@@ -22844,7 +22562,7 @@
     },
     {
       "family": "gateway-api",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -22898,15 +22616,9 @@
     },
     {
       "family": "gateway-api",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "gateway-api",
@@ -23012,15 +22724,9 @@
     },
     {
       "family": "gateway-api",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "gateway-api",
@@ -23420,15 +23126,9 @@
     },
     {
       "family": "gateway-api",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "gateway-api",
@@ -24152,15 +23852,9 @@
     },
     {
       "family": "haproxy",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "haproxy",
@@ -24176,7 +23870,7 @@
     },
     {
       "family": "haproxy",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -24224,15 +23918,9 @@
     },
     {
       "family": "haproxy",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "haproxy",
@@ -24338,15 +24026,9 @@
     },
     {
       "family": "haproxy",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "haproxy",
@@ -24740,15 +24422,9 @@
     },
     {
       "family": "haproxy",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "haproxy",
@@ -28995,7 +28671,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 37,
         "synth": 3
       },
@@ -29163,7 +28839,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 37,
+        "approx": 39,
         "drop": 0,
         "synth": 19
       },
@@ -31664,15 +31340,9 @@
     },
     {
       "family": "istio",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "istio",
@@ -31688,7 +31358,7 @@
     },
     {
       "family": "istio",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -31742,15 +31412,9 @@
     },
     {
       "family": "istio",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "istio",
@@ -31856,15 +31520,9 @@
     },
     {
       "family": "istio",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "istio",
@@ -32264,15 +31922,9 @@
     },
     {
       "family": "istio",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "istio",
@@ -35534,15 +35186,9 @@
     },
     {
       "family": "kong",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "kong",
@@ -35558,7 +35204,7 @@
     },
     {
       "family": "kong",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -35612,15 +35258,9 @@
     },
     {
       "family": "kong",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "kong",
@@ -35726,15 +35366,9 @@
     },
     {
       "family": "kong",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "kong",
@@ -36134,15 +35768,9 @@
     },
     {
       "family": "kong",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "kong",
@@ -39525,7 +39153,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 21,
         "synth": 1
       },
@@ -39693,7 +39321,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 31,
+        "approx": 33,
         "drop": 0,
         "synth": 12
       },
@@ -40796,15 +40424,9 @@
     },
     {
       "family": "nginx",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "nginx",
@@ -40820,7 +40442,7 @@
     },
     {
       "family": "nginx",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -40868,15 +40490,9 @@
     },
     {
       "family": "nginx",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "nginx",
@@ -40982,15 +40598,9 @@
     },
     {
       "family": "nginx",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "nginx",
@@ -41384,15 +40994,9 @@
     },
     {
       "family": "nginx",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "nginx",
@@ -46221,7 +45825,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 9,
+        "approx": 10,
         "drop": 1,
         "synth": 9
       },
@@ -46383,7 +45987,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 9
       },
@@ -47487,7 +47091,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 34,
         "synth": 2
       },
@@ -47655,7 +47259,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 37,
+        "approx": 39,
         "drop": 0,
         "synth": 21
       },
@@ -56301,7 +55905,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 7,
+        "approx": 8,
         "drop": 3,
         "synth": 8
       },
@@ -56943,7 +56547,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 2,
         "synth": 1
       },
@@ -57111,7 +56715,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 23,
+        "approx": 27,
         "drop": 0,
         "synth": 21
       },
@@ -61748,15 +61352,9 @@
     },
     {
       "family": "traefik",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "traefik",
@@ -61772,7 +61370,7 @@
     },
     {
       "family": "traefik",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -61820,15 +61418,9 @@
     },
     {
       "family": "traefik",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "traefik",
@@ -61934,15 +61526,9 @@
     },
     {
       "family": "traefik",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "traefik",
@@ -62336,15 +61922,9 @@
     },
     {
       "family": "traefik",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "traefik",
@@ -63074,15 +62654,9 @@
     },
     {
       "family": "tyk",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "asn1",
-      "tier": "types-only"
+      "reason": "ASN.1 export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "asn1"
     },
     {
       "family": "tyk",
@@ -63098,7 +62672,7 @@
     },
     {
       "family": "tyk",
-      "reason": "Target 'avro' produced no document for this source.",
+      "reason": "Apache Avro schema export writes one .avsc per type, and this source has none; export Avro IDL (.avdl) to keep its operations.",
       "status": "refused",
       "target": "avro"
     },
@@ -63152,15 +62726,9 @@
     },
     {
       "family": "tyk",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "cddl",
-      "tier": "types-only"
+      "reason": "CDDL export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "cddl"
     },
     {
       "family": "tyk",
@@ -63266,15 +62834,9 @@
     },
     {
       "family": "tyk",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "flatbuffers",
-      "tier": "types-only"
+      "reason": "FlatBuffers export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "flatbuffers"
     },
     {
       "family": "tyk",
@@ -63674,15 +63236,9 @@
     },
     {
       "family": "tyk",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "reason": "XSD export needs at least one type; this source has none (only operations, agents or channels).",
+      "status": "refused",
+      "target": "xsd"
     },
     {
       "family": "tyk",
@@ -71763,9 +71319,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4832,
+    "lossy": 4758,
     "ok": 29,
-    "refused": 2267,
+    "refused": 2341,
     "silent-loss": 0,
     "skipped": 0
   },

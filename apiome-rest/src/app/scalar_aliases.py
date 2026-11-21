@@ -38,6 +38,7 @@ __all__ = [
     "PROTO_SCALAR_FOR_KIND",
     "THRIFT_SCALAR_FOR_KIND",
     "TYPESPEC_SCALAR_FOR_KIND",
+    "XDR_SCALAR_FOR_KIND",
     "XSD_SCALAR_FOR_KIND",
     "ScalarKind",
     "format_kind",
@@ -114,6 +115,24 @@ PROTO_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
     "double": "double",
     "string": "string",
     "bytes": "bytes",
+}
+
+#: ONC RPC / XDR type per kind (RFC 4506). XDR has no 8-bit integer; ``int8`` / ``uint8`` widen to
+#: ``int`` / ``unsigned int``. COA-3.3 (#7054): the emitter wrote ``integer age;``.
+XDR_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "bool",
+    "int8": "int",
+    "int16": "short",
+    "int32": "int",
+    "int64": "hyper",
+    "uint8": "unsigned int",
+    "uint16": "unsigned short",
+    "uint32": "unsigned int",
+    "uint64": "unsigned hyper",
+    "float": "float",
+    "double": "double",
+    "string": "string",
+    "bytes": "opaque",
 }
 
 #: Thrift base type per kind. Thrift has no unsigned integers or ``float``: an unsigned value widens

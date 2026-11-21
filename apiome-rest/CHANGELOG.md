@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.788.0] - 2026-11-20
+
+### Fixed
+- **Re-import failures: wadl, asn1, asyncapi, postman, oncrpc, protobuf, connectrpc, corbaidl —
+  OpenAPI 1.614.0 (COA-3.3, #7054):** no endpoint changes; the version moves with the export
+  changes below. Every cell of these eight targets in the round-trip matrix now re-imports, or the
+  target refuses the source up front (300 re-import failures across the matrix → 15, none in
+  these columns; ONC RPC passes 38 → 69).
+  - **AsyncAPI:** another format's `extras` are written only as `x-` extensions
+    (`AsyncApiEmitter.carried_extras`); an AsyncAPI source's are written back as before. A `$ref`
+    to an undeclared scalar (`bool`, `int32`, `decimal`) is written inline from
+    `CANONICAL_SCALAR_SCHEMAS` (`unknown-type` loss when it has no form); a component key outside
+    `^[A-Za-z0-9.\-_]+$` is renamed and every reference follows (`component_renames`).
+  - **`toolchain/asyncapi-parse.mjs`:** a recursive schema dereferences to a cycle; the wrapper
+    overflowed its stack. It now writes a `$ref` to the named component at the cycle.
+  - **`SchemaEmitter` (every JSON Schema target):** a field name repeated in a record is listed once
+    in `required`, and an enum value shared by two members is written once.
+  - **Protobuf / Connect RPC:** packages are sanitized per segment (`_sanitize_package`); a reference
+    uses the qualified name its declaration is written under (`_qualified_name`); an `ALIAS` is
+    written as its target and a declared `SCALAR` as its proto scalar; an undeclared name becomes the
+    closest proto type (`unmapped-type`: `decimal` → `string`, date-time → `Timestamp`, else
+    `google.protobuf.Value`); a non-message rpc payload becomes a wrapper or `Value`
+    (`wrapped-rpc-type`); an illegal field number is renumbered (`renumbered-field`;
+    `FieldNumberAllocator(legal=…)`); a repeated field name or JSON name is suffixed
+    (`renamed-field`); a service named like a message or sub-package becomes `<Name>Service`
+    (`renamed-service`); enum values sharing a number get `allow_alias`; a service in a named
+    package imports the default package's `api.proto`.
+  - **ONC RPC:** scalars map through the new `XDR_SCALAR_FOR_KIND`; an undeclared name is written as
+    `string` / `hyper` / `double` / `bool` (`unmapped-type`). `is_xdr_types_only()`: a file of
+    `struct … };` declarations only is ONC RPC (detected at confidence 0.6).
+  - **Refusals:** new `"type"` source requirement; ASN.1, CDDL, FlatBuffers and XSD require a type,
+    WADL and RAML an HTTP operation or a type; Avro refuses an `.avsc` export of a typeless source
+    (`.avdl` still exports it). `Emitter.raise_if_source_unsupported()` refuses at emit time with the
+    `source_unsupported_reason` sentence.
+  - Tests: `tests/test_reimport_failures.py`; `tests/test_roundtrip_matrix.py` gates the eight
+    columns on no re-import failure. 165 cells moved from strict xfails to deliberate refusals
+    (`tests/roundtrip_unsupported.py`), 31 xfails removed, `ARAZZO_XFAIL_CEILING` 25 → 18.
+
 ## [1.787.0] - 2026-11-20
 
 ### Fixed

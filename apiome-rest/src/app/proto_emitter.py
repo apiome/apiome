@@ -53,7 +53,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from pydantic import Field, ValidationError
 
@@ -121,6 +121,7 @@ from .proto_validate import (
     rules_family_for_scalar,
     verbatim_rules,
 )
+from .canonical_json_schema import CANONICAL_SCALAR_SCHEMAS
 from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 
 __all__ = [
@@ -188,6 +189,35 @@ _WKT_IMPORTS: Dict[str, str] = {
 
 # The type protobuf substitutes for a missing rpc response (an event/one-way source operation).
 _EMPTY_TYPE = "google.protobuf.Empty"
+
+# The well-known type that holds any JSON value: what a reference to a type the model does not
+# declare, or that has no Protobuf form, is written as (COA-3.3, #7054).
+_WKT_VALUE = "google.protobuf.Value"
+
+# Proto scalar → its well-known wrapper message. An ``rpc`` takes and returns messages, so a
+# scalar request or response payload (a Cap'n Proto ``lookup(id :UInt32)``) is written as the
+# wrapper (COA-3.3, #7054).
+_SCALAR_WRAPPERS: Dict[str, str] = {
+    "double": "google.protobuf.DoubleValue",
+    "float": "google.protobuf.FloatValue",
+    "int64": "google.protobuf.Int64Value",
+    "sint64": "google.protobuf.Int64Value",
+    "sfixed64": "google.protobuf.Int64Value",
+    "uint64": "google.protobuf.UInt64Value",
+    "fixed64": "google.protobuf.UInt64Value",
+    "int32": "google.protobuf.Int32Value",
+    "sint32": "google.protobuf.Int32Value",
+    "sfixed32": "google.protobuf.Int32Value",
+    "uint32": "google.protobuf.UInt32Value",
+    "fixed32": "google.protobuf.UInt32Value",
+    "bool": "google.protobuf.BoolValue",
+    "string": "google.protobuf.StringValue",
+    "bytes": "google.protobuf.BytesValue",
+}
+
+# Field numbers Protobuf reserves for its own implementation; a source number in this range (or
+# outside ``1``–``536870911``) is not written (COA-3.3, #7054).
+_PROTO_IMPLEMENTATION_RESERVED = range(19000, 20000)
 
 # Method idempotency labels the normalizer stored (``extras["idempotency_level"]``) → the proto
 # enum constant emitted as an ``option idempotency_level = …;``.
@@ -981,7 +1011,7 @@ class _ProtoWriter:
         self._record_editions_downgrade()
         if self._package:
             lines.append("")
-            lines.append(f"package {self._package};")
+            lines.append(f"package {_sanitize_package(self._package)};")
             self.tracker.record("/package", Provenance.SOURCE)
         for path in sorted(self._imports):
             # The first import gets a preceding blank line for readability.
@@ -1120,12 +1150,15 @@ class _ProtoWriter:
         """Render a record's fields, grouping ``oneof`` members and synthesizing missing numbers."""
         lines: List[str] = []
         counter = FieldNumberAllocator(
-            type_, persisted=self._options.persisted_field_numbers
+            type_, persisted=self._options.persisted_field_numbers, legal=_legal_field_number
         )
         declared_oneofs: List[str] = [
             _sanitize_identifier(name) for name in type_.extras.get("oneofs", [])
         ]
         emitted_oneofs: set[str] = set()
+        # Names (and their JSON names) already written in this message: a repeated name gets a
+        # suffix so the message compiles (COA-3.3, #7054).
+        self._field_names: Dict[str, str] = {}
 
         for field in type_.fields:
             oneof = field.extras.get("oneof")
@@ -1185,9 +1218,18 @@ class _ProtoWriter:
         comment.
         """
         pointer = ProvenanceTracker.child("/messages", type_.key, "fields", field.name)
-        name = _sanitize_identifier(field.name)
+        name = self._unique_field_name(field)
         number, synthesized = counter.allocate(field)
-        if synthesized:
+        if synthesized and isinstance(field.field_number, int):
+            self.losses.record(
+                LossKind.INFERRED,
+                "renumbered-field",
+                f"Field {field.key!r} has number {field.field_number}, which Protobuf does not "
+                f"allow; assigned {number}.",
+                pointer=field.key,
+            )
+            self.tracker.record(pointer, Provenance.INFERRED, "renumbered field")
+        elif synthesized:
             self.losses.record(
                 LossKind.INFERRED,
                 "synthesized-field-number",
@@ -1239,6 +1281,37 @@ class _ProtoWriter:
         decl = f"{pad}{prefix}{type_expr} {name} = {number}{_field_options(option_list, pad)};"
         comment = _comment(field.description, pad)
         return "\n".join([*comment, decl]) if comment else decl
+
+    def _unique_field_name(self, field: CanonicalField) -> str:
+        """The field's sanitized name, suffixed when this message already has it.
+
+        Protobuf rejects two fields with one name, or with one JSON name (``order_id`` and
+        ``orderId``); a source can have both (an ISO 20022 choice repeats a member). The second
+        is written as ``<name>_2`` and recorded as a ``renamed-field`` loss (COA-3.3, #7054).
+
+        Args:
+            field: The field being written.
+
+        Returns:
+            A name unique in the current message.
+        """
+        names = getattr(self, "_field_names", None)
+        if names is None:
+            names = self._field_names = {}
+        base = _sanitize_identifier(field.name)
+        name, counter = base, 2
+        while name in names or _proto_json_name(name) in names.values():
+            name = f"{base}_{counter}"
+            counter += 1
+        if name != base:
+            self.losses.record(
+                LossKind.INFERRED,
+                "renamed-field",
+                f"Field {field.key!r} repeats a name in its message; it is written as {name!r}.",
+                pointer=field.key,
+            )
+        names[name] = _proto_json_name(name)
+        return name
 
     def _validation_options(
         self, field: CanonicalField, type_expr: str, prefix: str
@@ -1371,13 +1444,26 @@ class _ProtoWriter:
         value_expr = self._leaf_expr(map_type.value_type) if map_type.value_type else "string"
         return f"map<{key_expr}, {value_expr}>"
 
-    def _leaf_expr(self, ref: Optional[TypeRef], fmt: Optional[str] = None) -> str:
+    def _leaf_expr(
+        self, ref: Optional[TypeRef], fmt: Optional[str] = None, _seen: FrozenSet[str] = frozenset()
+    ) -> str:
         """Render a leaf (non-list) type reference: a proto scalar or a qualified type name.
+
+        * a proto scalar keyword is written as is;
+        * another format's scalar spelling (``integer``, ``boolean``, ``i64``) is mapped (#6278);
+        * a declared ``ALIAS`` is written as the type it aliases, and a declared ``SCALAR`` as
+          its proto scalar (Protobuf has no alias or named scalar);
+        * a declared message, enum or union is written by its qualified name, built from the
+          same sanitized package and names its declaration uses (COA-3.3, #7054);
+        * a well-known type (``google.protobuf.Timestamp``) is written with its import;
+        * anything else — a name the model does not declare, or a scalar with no proto keyword
+          (``decimal``, ``date``, ``any``) — is resolved by :meth:`_undeclared_expr`.
 
         Args:
             ref: The reference; ``None`` or a nameless one renders ``bytes``.
             fmt: The field's ``format`` constraint, which picks the width of a JSON Schema
                 ``integer`` or ``number``.
+            _seen: Alias keys already followed (guards an alias cycle).
 
         Returns:
             A proto scalar keyword, or ``.``-prefixed fully qualified type name.
@@ -1387,16 +1473,99 @@ class _ProtoWriter:
         name = ref.name
         if name in _PROTO_SCALARS:
             return name
-        # Another normalizer's scalar spelling (``integer``, ``boolean``, ``i64``, …), unless the
-        # model defines a type by that name (#6278).
-        if name not in self._types_by_key:
+        type_ = self._types_by_key.get(name)
+        if type_ is None:
             alias = target_scalar(name, PROTO_SCALAR_FOR_KIND, fmt)
             if alias is not None:
                 return alias
-        # A named type: local (emitted in this file) or imported from a sibling package / WKT.
+            if name in _WKT_IMPORTS or name.startswith("google."):
+                self._note_import(name)
+                return f".{name}"
+            return self._undeclared_expr(name, fmt)
+        if type_.kind == TypeKind.ALIAS and type_.aliased is not None and name not in _seen:
+            if type_.aliased.is_list():
+                return self._undeclared_expr(name, fmt)
+            return self._leaf_expr(type_.aliased, fmt, _seen | {name})
+        if type_.kind in (TypeKind.SCALAR, TypeKind.ALIAS):
+            scalar_fmt = fmt or (type_.constraints.format if type_.constraints is not None else None)
+            alias = target_scalar(type_.name, PROTO_SCALAR_FOR_KIND, scalar_fmt)
+            return alias if alias is not None else self._undeclared_expr(name, scalar_fmt)
+        if type_.kind == TypeKind.MAP:
+            return self._wkt("google.protobuf.Struct")
+        # A named type: local (emitted in this file) or imported from a sibling package.
         if name not in self._emittable_keys:
             self._note_import(name)
+        return f".{self._qualified_name(name)}"
+
+    def _qualified_name(self, key: str) -> str:
+        """The fully qualified Protobuf name (no leading ``.``) a declared type is written under.
+
+        The package and every name are sanitized exactly as :meth:`_render_header` and the
+        declarations sanitize them, so a reference always names a declaration: an IMS type
+        keyed ``ims.CUSTDB.ADDRESS`` (name ``CUSTDB.ADDRESS``) is ``ims.CUSTDB.CUSTDB_ADDRESS``.
+
+        Args:
+            key: A declared type's key.
+
+        Returns:
+            ``<package>.<Outer>.<Name>``, or the bare name in the default package.
+        """
+        type_ = self._types_by_key[key]
+        name = _sanitize_identifier(type_.name)
+        parent = _parent_key_for_type(key, self._types_by_key)
+        if parent is not None:
+            return f"{self._qualified_name(parent)}.{name}"
+        package = _sanitize_package(
+            _apply_package_override(_package_for_type(type_, self._types_by_key), self._api, self._options)
+        )
+        return f"{package}.{name}" if package else name
+
+    def _wkt(self, name: str) -> str:
+        """Write a well-known type reference (``.google.protobuf.X``) and note its import."""
+        self._note_import(name)
         return f".{name}"
+
+    def _undeclared_expr(self, name: str, fmt: Optional[str]) -> str:
+        """Write a type with no Protobuf declaration as the closest proto type, and say so.
+
+        Before COA-3.3 (#7054) the name was written as a type reference (``.decimal``,
+        ``.GetUserResponse200``) and the file did not compile. The JSON-Schema form of a known
+        scalar spelling (:data:`~app.canonical_json_schema.CANONICAL_SCALAR_SCHEMAS`) picks the
+        proto type: a date-time is a ``google.protobuf.Timestamp``, a duration a
+        ``google.protobuf.Duration``, a decimal a ``string`` (it keeps its digits), any other
+        string, integer, number or boolean its proto scalar. Everything else — a name the model
+        does not declare, or "any value" — is a ``google.protobuf.Value``. Each is an
+        ``unmapped-type`` loss.
+
+        Args:
+            name: The type name.
+            fmt: The use site's ``format`` constraint, if any.
+
+        Returns:
+            A proto scalar keyword or a ``.``-prefixed well-known type.
+        """
+        schema = CANONICAL_SCALAR_SCHEMAS.get(name.lower()) or {}
+        json_type = schema.get("type")
+        json_format = fmt or schema.get("format")
+        if name.lower() in ("decimal", "bigint"):
+            expr = "string"
+        elif json_type == "string" and json_format == "date-time":
+            expr = self._wkt("google.protobuf.Timestamp")
+        elif json_type == "string" and json_format == "duration":
+            expr = self._wkt("google.protobuf.Duration")
+        elif json_type == "string" and schema.get("contentEncoding"):
+            expr = "bytes"
+        elif json_type in ("string", "integer", "number", "boolean"):
+            expr = {"string": "string", "integer": "int64", "number": "double", "boolean": "bool"}[json_type]
+        else:
+            expr = self._wkt(_WKT_VALUE)
+        self.losses.record(
+            LossKind.INFERRED,
+            "unmapped-type",
+            f"The type {name!r} has no Protobuf declaration; it is written as {expr.lstrip('.')!r}.",
+            pointer=name,
+        )
+        return expr
 
     def _note_import(self, type_name: str) -> None:
         """Add the ``import`` for a referenced non-local type, or record an unresolved-import loss."""
@@ -1405,7 +1574,11 @@ class _ProtoWriter:
             self._imports.add(path)
             return
         sibling_pkg = _package_for_type_name(type_name, self._types_by_key)
-        if sibling_pkg and sibling_pkg != self._package:
+        if type_name in self._types_by_key:
+            sibling_pkg = _apply_package_override(sibling_pkg, self._api, self._options)
+        # The default package ("") is a file too (``api.proto``): a service in a named package that
+        # uses its messages imports it (COA-3.3, #7054).
+        if sibling_pkg != self._package:
             sibling_path = self._package_paths.get(sibling_pkg)
             if sibling_path is not None:
                 self._imports.add(sibling_path)
@@ -1471,7 +1644,11 @@ class _ProtoWriter:
 
         if type_.deprecated:
             lines.append(f"{inner}option deprecated = true;")
-        if type_.extras.get("allow_alias"):
+        numbers = _resolved_enum_numbers(type_.enum_values)
+        shares_numbers = numbers is not None and len(set(numbers)) < len(numbers)
+        if type_.extras.get("allow_alias") or shares_numbers:
+            # Two values with one number (ROS 2 constants) need the alias option to compile
+            # (COA-3.3, #7054).
             lines.append(f"{inner}option allow_alias = true;")
         lines.extend(self._render_reserved(type_, inner, enum=True))
 
@@ -1544,7 +1721,8 @@ class _ProtoWriter:
             member = self._types_by_key.get(member_key)
             member_name = member.name if member is not None else member_key.rsplit(".", 1)[-1]
             field_name = _snake_case(member_name) or f"option_{number}"
-            lines.append(f"{member_pad}.{member_key} {field_name} = {number};")
+            member_expr = self._leaf_expr(TypeRef(name=member_key))
+            lines.append(f"{member_pad}{member_expr} {field_name} = {number};")
         lines.append(f"{inner}}}")
         lines.append(f"{pad}}}")
         return lines
@@ -1554,6 +1732,28 @@ class _ProtoWriter:
     def _render_service(self, service: Service) -> List[str]:
         """Render a ``service`` block with one ``rpc`` per operation."""
         name = _sanitize_identifier(service.name)
+        taken = {_sanitize_identifier(t.name) for t in self._children.get(None, [])}
+        # A sub-package's first segment is a name in this package's scope too (WIT's interface
+        # ``calculate`` is a service here and the package ``examples_calculator.calculate``).
+        prefix = f"{_sanitize_package(self._package)}." if self._package else ""
+        for package in self._package_paths:
+            qualified = _sanitize_package(package)
+            if qualified.startswith(prefix) and qualified != prefix.rstrip("."):
+                taken.add(qualified[len(prefix):].split(".", 1)[0])
+        if name in taken:
+            # A service and a message cannot share a name in one package (FHIR names both
+            # ``Patient``); the service is written as ``PatientService`` (COA-3.3, #7054).
+            renamed = f"{name}Service"
+            while renamed in taken:
+                renamed += "_"
+            self.losses.record(
+                LossKind.INFERRED,
+                "renamed-service",
+                f"Service {service.key!r} shares its name with a message; it is written as "
+                f"{renamed!r}.",
+                pointer=service.key,
+            )
+            name = renamed
         lines = _comment(service.description, "")
         lines.append(f"service {name} {{")
         self.tracker.record(ProvenanceTracker.child("/services", service.key), Provenance.SOURCE)
@@ -1573,8 +1773,8 @@ class _ProtoWriter:
         self.tracker.record(pointer, Provenance.SOURCE)
 
         signature = (
-            f"{_INDENT}rpc {name} ({req_stream}.{request_type}) "
-            f"returns ({resp_stream}.{response_type})"
+            f"{_INDENT}rpc {name} ({req_stream}{request_type}) "
+            f"returns ({resp_stream}{response_type})"
         )
 
         method_options = [*self._http_option(operation, pointer), *self._rpc_options(operation)]
@@ -1614,8 +1814,7 @@ class _ProtoWriter:
             )
 
         if request_type is None:
-            request_type = _EMPTY_TYPE
-            self._note_import(_EMPTY_TYPE)
+            request_expr = self._wkt(_EMPTY_TYPE)
             self.losses.record(
                 LossKind.INFERRED,
                 "synthesized-request",
@@ -1623,10 +1822,9 @@ class _ProtoWriter:
                 pointer=operation.key,
             )
         else:
-            self._register_reference(request_type)
+            request_expr = self._rpc_type_expr(request_type, operation)
         if response_type is None:
-            response_type = _EMPTY_TYPE
-            self._note_import(_EMPTY_TYPE)
+            response_expr = self._wkt(_EMPTY_TYPE)
             self.losses.record(
                 LossKind.INFERRED,
                 "synthesized-response",
@@ -1634,16 +1832,45 @@ class _ProtoWriter:
                 pointer=operation.key,
             )
         else:
-            self._register_reference(response_type)
-        return request_type, response_type
+            response_expr = self._rpc_type_expr(response_type, operation)
+        return request_expr, response_expr
 
-    def _register_reference(self, type_name: str) -> None:
-        """Note the import for an rpc request/response type when it is not local to this file."""
-        if type_name in _PROTO_SCALARS or type_name in self._emittable_keys:
-            return
-        if type_name not in self._types_by_key and target_scalar(type_name, PROTO_SCALAR_FOR_KIND):
-            return
-        self._note_import(type_name)
+    def _rpc_type_expr(self, type_name: str, operation: Operation) -> str:
+        """Write an rpc request or response type, which Protobuf requires to be a message.
+
+        A declared record or union is written by its qualified name. A payload that is not a
+        message — a scalar, an enum, an alias, a name the model does not declare — is written as
+        its well-known wrapper (``google.protobuf.UInt32Value``) or, with no wrapper, as
+        ``google.protobuf.Value``; either is a ``wrapped-rpc-type`` loss (COA-3.3, #7054).
+
+        Args:
+            type_name: The payload's type name.
+            operation: The operation, for the loss pointer.
+
+        Returns:
+            The ``.``-prefixed message type.
+        """
+        declared = self._types_by_key.get(type_name)
+        if declared is not None and declared.kind in (TypeKind.RECORD, TypeKind.UNION):
+            return self._leaf_expr(TypeRef(name=type_name))
+        if type_name.startswith("google.protobuf.") and type_name in _WKT_IMPORTS:
+            return self._wkt(type_name)
+        leaf = self._leaf_expr(TypeRef(name=type_name))
+        wrapper = _SCALAR_WRAPPERS.get(leaf)
+        if wrapper is not None:
+            expr = self._wkt(wrapper)
+        elif leaf.lstrip(".") in _WKT_IMPORTS and leaf.lstrip(".") != "google.protobuf.NullValue":
+            expr = leaf
+        else:
+            expr = self._wkt(_WKT_VALUE)
+        self.losses.record(
+            LossKind.INFERRED,
+            "wrapped-rpc-type",
+            f"An rpc takes and returns messages; the {type_name!r} payload of {operation.key!r} "
+            f"is written as {expr.lstrip('.')!r}.",
+            pointer=operation.key,
+        )
+        return expr
 
     def _http_option(self, operation: Operation, pointer: str) -> List[str]:
         """Render an rpc's ``google.api.http`` rule from its REST binding (MFX-12.6).
@@ -1732,6 +1959,28 @@ def _sanitize_identifier(name: str) -> str:
     if sanitized[0].isdigit():
         sanitized = f"_{sanitized}"
     return sanitized
+
+
+def _sanitize_package(package: str) -> str:
+    """Coerce a dotted ``package`` to legal Protobuf: each segment a legal identifier.
+
+    ``CUSTOMER-RECORD`` → ``CUSTOMER_RECORD``, ``FIX.4.4`` → ``FIX._4._4``. A proto-native package
+    is already legal, so this is a no-op for a round-tripped source (COA-3.3, #7054).
+    """
+    if not package:
+        return ""
+    return ".".join(_sanitize_identifier(part) for part in package.split(".") if part)
+
+
+def _proto_json_name(name: str) -> str:
+    """The JSON name protoc derives from a field name (``order_id`` → ``orderId``)."""
+    parts = name.split("_")
+    return parts[0] + "".join(part[:1].upper() + part[1:] for part in parts[1:])
+
+
+def _legal_field_number(number: int) -> bool:
+    """Whether ``number`` is a field number Protobuf accepts (COA-3.3, #7054)."""
+    return 1 <= number <= _PROTO_MAX_FIELD_NUMBER and number not in _PROTO_IMPLEMENTATION_RESERVED
 
 
 def _snake_case(name: str) -> str:
