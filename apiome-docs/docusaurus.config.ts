@@ -97,6 +97,8 @@ const config: Config = {
     // (`42<!--format-count:importable-->`) and `<a id>` anchors, which MDX would reject; pages that
     // use components (`<Screenshot/>`, `<Route/>`) are `.mdx`.
     format: 'detect',
+    // ```mermaid fences render as diagrams (via @docusaurus/theme-mermaid), in .md and .mdx pages.
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -147,6 +149,7 @@ const config: Config = {
   ],
 
   themes: [
+    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       {
@@ -161,6 +164,10 @@ const config: Config = {
   ],
 
   themeConfig: {
+    // Mermaid diagrams follow the site's light/dark mode.
+    mermaid: {
+      theme: {light: 'neutral', dark: 'dark'},
+    },
     image: 'img/bee-logo.png',
     colorMode: {
       defaultMode: 'light',
