@@ -1044,6 +1044,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['designer', 'editor', 'paths editor', 'classes'],
   },
   {
+    id: 'arazzo-and-overlay-governance',
+    title: 'Arazzo and Overlay governance',
+    summary: 'How workflows and overlays are linted, fixed, graded and exported.',
+    page: 'apiome-docs/docs/govern/arazzo-and-overlay-governance.mdx',
+    section: 'reference',
+    keywords: ['workflow', 'lint', 'maturity ladder', 'fix', 'export'],
+  },
+  {
     id: 'catalog-and-projects',
     title: 'Catalog and Projects',
     summary: 'Where an import lands, how the two paths agree, and the journey through both.',
