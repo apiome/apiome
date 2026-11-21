@@ -1044,6 +1044,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['designer', 'editor', 'paths editor', 'classes'],
   },
   {
+    id: 'catalog-and-projects',
+    title: 'Catalog and Projects',
+    summary: 'Where an import lands, how the two paths agree, and the journey through both.',
+    page: 'apiome-docs/docs/bring-in/catalog-and-projects.mdx',
+    section: 'reference',
+    keywords: ['overview', 'routing', 'path parity', 'convert', 'journey', 'projects importer'],
+  },
+  {
     id: 'catalog',
     title: 'Catalog',
     summary: 'Imports in formats other than OpenAPI: find items, read their tabs, convert one to OpenAPI.',

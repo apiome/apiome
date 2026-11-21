@@ -67,7 +67,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | ✅ COA-EPIC-1 | Arazzo: complete, current and visible — Complete | 7 |
 | ✅ COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring — Complete | 8 |
 | ✅ COA-EPIC-3 | Import and export fidelity — Complete | 6 |
-| COA-EPIC-4 | Catalog and Projects cleanup | 4 |
+| ✅ COA-EPIC-4 | Catalog and Projects cleanup — Complete | 4 |
 | COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
 
 ### ✅ COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible — Complete
@@ -361,15 +361,18 @@ All six issues of this epic are complete. The epic's overview page is `ship/impo
 - **Technical Stack:** docs
 - **Documentation:** none; screenshots: n/a (no UI change)
 
-### COA-EPIC-4 · [#7036](https://github.com/apiome/apiome/issues/7036) — Catalog and Projects cleanup
+### ✅ COA-EPIC-4 · [#7036](https://github.com/apiome/apiome/issues/7036) — Catalog and Projects cleanup — Complete
 
 Docs that contradict the code, Catalog/Projects path parity, a usability audit and the demo scripts.
 
+All four issues of this epic are complete. The epic's overview page is `bring-in/catalog-and-projects.mdx` (**Catalog and Projects**: which path an import takes, how the two paths agree, the import → convert → edit → version → publish → export → unpublish journey, a CLI cheat sheet), with release note `catalog-and-projects-cleanup` and a What's new line.
+
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| COA-4.1 · [#7058](https://github.com/apiome/apiome/issues/7058) | Docs truth pass for Catalog, Projects, OpenAPI and Arazzo | Remove every statement that contradicts the code | `documentation`, `mvp` | Y | Y | S | apiome-docs |
+| ✅ COA-4.1 · [#7058](https://github.com/apiome/apiome/issues/7058) | Docs truth pass for Catalog, Projects, OpenAPI and Arazzo | Remove every statement that contradicts the code | `documentation`, `mvp` | Y | Y | S | apiome-docs |
 
-**COA-4.1 · #7058 Docs truth pass for Catalog, Projects, OpenAPI and Arazzo**
+**✅ COA-4.1 · #7058 Docs truth pass for Catalog, Projects, OpenAPI and Arazzo — Complete**
+- **Shipped:** Closed as already satisfied on `main` (no PR): no Arazzo 1.0-only claims remain (`build/arazzo.mdx`, `ship/export-fidelity.md`, CLI/REST reference say 1.0 and 1.1); `build/arazzo.mdx` documents workflows stored as records; `bring-in/supported-formats.md` is generated from the registries (no diff on regeneration) and lists Arazzo 1.1.x and Overlay 1.0–1.2; `build/lint-rules.md` has the overlay rule pack; no Projects-path-only format-coverage statements found. A targeted check of the named contradictions, not a full 20-statement sample.
 - **Problem:** Known contradictions: "Arazzo 1.0" claims, "workflows are not stored as records", the format support matrix §7 ("no Arazzo 1.1", "no Overlay lint"), and format-coverage statements that name only the Projects path.
 - **Solution/Scope:**
 - Read the Bring in, Build and Ship pages for these formats against the code; correct them; regenerate the matrix from the registry rather than by hand.

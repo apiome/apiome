@@ -1,0 +1,87 @@
+---
+title: Catalog and Projects
+description: "Where an import lands, how the two paths agree, and the journey through both."
+sidebar_position: 1.11
+tags: [catalog, projects, import, overview]
+---
+
+An API you bring into Apiome lands in one of two places. An **OpenAPI** or **Swagger** document
+becomes a [Project](../build/projects.mdx) that you can edit, version and publish. Every other
+format becomes a [catalog](./catalog.mdx) item, kept in the format it came in. This page shows how
+the two fit together and links to the page with the steps for each part.
+
+## Which path an import takes
+
+| You import… | It becomes… | You can… |
+| --- | --- | --- |
+| **OpenAPI 3.x** or **Swagger 2.0**, with **Import** on **Projects** | A **Project** | Edit, version, lint, publish and export it |
+| **Any other format** — GraphQL, Protobuf, AsyncAPI, RAML, WSDL and the rest — with **Import to catalog** | A **catalog item** in its own format | Search, compare, lint and export it; [convert it to OpenAPI](./convert-to-openapi.md) to publish it |
+| **OpenAPI or Arazzo from a connector sync or an Arazzo `.zip`** | A **catalog item** | The same as any catalog item; **“Convert to OpenAPI Project”** turns an OpenAPI item into a Project |
+
+The server decides which importer reads a document, from the format it detects
+([Two importers, one registry](./import-a-spec.md#two-importers-one-registry)). An OpenAPI file
+pasted into **Import to catalog** is not imported there: the **Detect & route** step shows
+*Routing decision → Projects*, and **“Open Projects”** takes you to **Import** on the Projects page
+([Import to catalog](./import-wizard.mdx#import-to-catalog)).
+
+## The same document reads the same either way
+
+An OpenAPI 3.2 or Arazzo document that lands in the catalog is read the same way as one imported
+into a Project:
+
+- **Streaming bodies** (`itemSchema`) keep their element and their stream kind.
+- **QUERY and custom methods** import once each, under the same method name.
+- **The tag tree** keeps each tag's first declaration, and a broken `parent` is repaired and
+  reported.
+- **`$self` and `$ref`s** resolve against the document's `$self`. A reference into another file is
+  kept as written.
+- **Arazzo steps** resolve to the same operations, and the same sources and steps are reported as
+  unresolved.
+
+Where the two store a construct differently, for example an inline stream element, the difference
+is listed in [The same result in the catalog](./import-a-spec.md#the-same-result-in-the-catalog).
+Tests import one set of documents both ways, and any difference not listed there fails the build.
+
+## The journey, end to end
+
+1. **Import.** Use **Import to catalog** on the [Catalog](./catalog.mdx) for most formats, or
+   **Import** on **Projects** for OpenAPI ([Import wizard](./import-wizard.mdx)). The quality step
+   links each finding to its rule under **Rule docs**.
+2. **Convert** (catalog items only). **Click “Convert to OpenAPI Project”** on the item, read the
+   **Fidelity** grade and **click “Convert & create Project”**
+   ([Convert to OpenAPI](./catalog.mdx#convert-to-openapi)).
+3. **Edit.** Open the project and change its classes, properties and paths
+   ([Projects](../build/projects.mdx)).
+4. **Cut a version.** **Click “New version”** on **Versions**. **Copy from version** starts on
+   **Create blank version**, so pick the version to copy from unless you mean to start empty
+   ([New version](../build/version-dialogs.mdx#new-version)).
+5. **Publish.** **Click “Publish”** on the draft's row and check the **Publish gates**
+   ([Publish a version](../ship/publish-a-version.md)).
+6. **Export.** Write the version, or a catalog item, in another format and read what the conversion
+   keeps ([Export a spec](../ship/export-a-spec.md), [Export catalog items](../ship/export-catalog-items.mdx)).
+7. **Unpublish** if you need to. The version goes back to draft and its tags move back
+   ([Unpublish a version](../ship/publish-a-version.md#unpublish-a-version)).
+
+This journey was walked end to end at 1440 and 1024 pixels wide, in the light and dark themes. The
+defects found are fixed or scheduled.
+
+## From the command line
+
+```bash
+apiome import openapi payments.yaml                          # an OpenAPI file becomes a Project
+apiome import auto schema.graphql                            # detect the format and import it
+apiome convert my-graphql-item --to openapi --dry-run        # preview a conversion to OpenAPI
+apiome versions unpublish payments-api v2.1.0 --reason 'Wrong workspace'
+```
+
+See [`apiome import`](../reference/cli/import.md),
+[Convert a catalog item to OpenAPI](./convert-to-openapi.md#with-the-cli) and
+[Manage versions from the CLI](../ship/manage-versions-from-the-cli.md) for the rest.
+
+## Where next
+
+- [Catalog](./catalog.mdx) — find, read and convert catalog items
+- [Projects](../build/projects.mdx) — edit a project and its versions
+- [Import a specification](./import-a-spec.md) — every OpenAPI and Arazzo construct, and what each
+  path stores
+- [How importing works](./how-importing-works.mdx) — sources, preview and commit, import history
