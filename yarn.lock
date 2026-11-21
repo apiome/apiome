@@ -2262,6 +2262,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@braintree/sanitize-url@npm:^7.1.2":
+  version: 7.1.2
+  resolution: "@braintree/sanitize-url@npm:7.1.2"
+  checksum: 10c0/62f2aa0cf58626e3880b2dc1025c42064b4639abd157ae4e1c35f4c2f5031e9273772046a423979845069c814e27ff818e8e669280dc53585e6f033d5b7a59cb
+  languageName: node
+  linkType: hard
+
 "@bramus/specificity@npm:^2.4.2":
   version: 2.4.3
   resolution: "@bramus/specificity@npm:2.4.3"
@@ -2465,6 +2472,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@chevrotain/cst-dts-gen@npm:13.2.0":
+  version: 13.2.0
+  resolution: "@chevrotain/cst-dts-gen@npm:13.2.0"
+  dependencies:
+    "@chevrotain/gast": "npm:13.2.0"
+    "@chevrotain/types": "npm:13.2.0"
+  checksum: 10c0/844c3bbed4b55e428597dca6e33d34073971c2a0d28a1e804995a89581d2de598d9823a44b6b45651aa8364fe46495fbe31074a319b99fb53123870b898c8718
+  languageName: node
+  linkType: hard
+
 "@chevrotain/gast@npm:11.1.2":
   version: 11.1.2
   resolution: "@chevrotain/gast@npm:11.1.2"
@@ -2475,10 +2492,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@chevrotain/gast@npm:13.2.0":
+  version: 13.2.0
+  resolution: "@chevrotain/gast@npm:13.2.0"
+  dependencies:
+    "@chevrotain/types": "npm:13.2.0"
+  checksum: 10c0/57b87780cb8941fa04781177fc73b40adc091b0daf822d45124bd1096f8b7b1c936013222e2f29cdb847bcb09e36586e8eb04710a8b8c9b65c91842e8bd5e703
+  languageName: node
+  linkType: hard
+
 "@chevrotain/regexp-to-ast@npm:11.1.2":
   version: 11.1.2
   resolution: "@chevrotain/regexp-to-ast@npm:11.1.2"
   checksum: 10c0/645f02ac94cb33e04c10547b197762c6936c7b7668966240684795ce131cb515a76b63e0cc500e787d669f1a36bd2f902ec518f27843ec857ecf9043c717527e
+  languageName: node
+  linkType: hard
+
+"@chevrotain/regexp-to-ast@npm:13.2.0":
+  version: 13.2.0
+  resolution: "@chevrotain/regexp-to-ast@npm:13.2.0"
+  checksum: 10c0/ddba2885059d83b6cb56df12b6b30d96bcd8c90f1b43f541d8a9e9eeafcba37c7542ecf17b1a15d5a8f2ea9c969717523069bf034cf931003e91a2039c1c06e1
   languageName: node
   linkType: hard
 
@@ -2489,10 +2522,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@chevrotain/types@npm:13.2.0, @chevrotain/types@npm:~13.2.0":
+  version: 13.2.0
+  resolution: "@chevrotain/types@npm:13.2.0"
+  checksum: 10c0/89375750866db94ff957bc1468bad71c7522fe46f314c395d81fa748f71f80b249cb09073de4def3de81a9bc98b2c4533d634845be0400bf7710901d831ca505
+  languageName: node
+  linkType: hard
+
 "@chevrotain/utils@npm:11.1.2":
   version: 11.1.2
   resolution: "@chevrotain/utils@npm:11.1.2"
   checksum: 10c0/72989e7051781b9084252486712844c55e3b454318c7da4a5f6ded28dcd3947ba2882773a6bf09b7e744599e8c8025df8d3de0d487121734e6edb66999450438
+  languageName: node
+  linkType: hard
+
+"@chevrotain/utils@npm:13.2.0":
+  version: 13.2.0
+  resolution: "@chevrotain/utils@npm:13.2.0"
+  checksum: 10c0/4d87dd83f865d2a868d0eeca36f330dd397967f224505b6aaf4492703b3f385646378c4a905594a483d1b7d9651e000292253ca4e1e17c521811b23f6a06fec8
   languageName: node
   linkType: hard
 
@@ -3800,6 +3847,28 @@ __metadata:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
   checksum: 10c0/2ec64449ff69beb3c506f3f7de837afe6a38fc904b1d38547415fb32cd3dcac7d868b14b59d6fc14e0eb3d47c2091bd05fecd294455b765a4bc9b2af9cdadf0a
+  languageName: node
+  linkType: hard
+
+"@docusaurus/theme-mermaid@npm:3.10.2":
+  version: 3.10.2
+  resolution: "@docusaurus/theme-mermaid@npm:3.10.2"
+  dependencies:
+    "@docusaurus/core": "npm:3.10.2"
+    "@docusaurus/module-type-aliases": "npm:3.10.2"
+    "@docusaurus/theme-common": "npm:3.10.2"
+    "@docusaurus/types": "npm:3.10.2"
+    "@docusaurus/utils-validation": "npm:3.10.2"
+    mermaid: "npm:>=11.6.0"
+    tslib: "npm:^2.6.0"
+  peerDependencies:
+    "@mermaid-js/layout-elk": ^0.1.9
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@mermaid-js/layout-elk":
+      optional: true
+  checksum: 10c0/5a1c783d8b7a188c119cd2d0167d70099a6d6121f001f8cca68cdbc167b9606b9d2cc6da59b005b1edcefbff06ee2e5547247cc0d8d01d33abd99dee35bb3903
   languageName: node
   linkType: hard
 
@@ -5697,6 +5766,15 @@ __metadata:
   dependencies:
     langium: "npm:^4.0.0"
   checksum: 10c0/449e594a1f9ff1e24da7eb66b7d85694f1c48bdf1d27e798e0e182659e907fd3438a69bf30754807a8a8e286ab3173fa1b8e43ee102be31e30ee7632b9bc1d03
+  languageName: node
+  linkType: hard
+
+"@mermaid-js/parser@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@mermaid-js/parser@npm:2.0.1"
+  dependencies:
+    "@chevrotain/types": "npm:~13.2.0"
+  checksum: 10c0/15ef44aac5dd772d0b28b62fa97ef30440561fa9f8008267da885a73a8e2e2940af350214664f125244a1571729257c3b2e28af7c1f5e6060f4b23701a73efcc
   languageName: node
   linkType: hard
 
@@ -11315,6 +11393,7 @@ __metadata:
     "@docusaurus/plugin-content-docs": "npm:3.10.2"
     "@docusaurus/preset-classic": "npm:3.10.2"
     "@docusaurus/theme-common": "npm:3.10.2"
+    "@docusaurus/theme-mermaid": "npm:3.10.2"
     "@docusaurus/tsconfig": "npm:3.10.2"
     "@docusaurus/types": "npm:3.10.2"
     "@easyops-cn/docusaurus-search-local": "npm:^0.55.0"
@@ -12600,6 +12679,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chevrotain@npm:~13.2.0":
+  version: 13.2.0
+  resolution: "chevrotain@npm:13.2.0"
+  dependencies:
+    "@chevrotain/cst-dts-gen": "npm:13.2.0"
+    "@chevrotain/gast": "npm:13.2.0"
+    "@chevrotain/regexp-to-ast": "npm:13.2.0"
+    "@chevrotain/types": "npm:13.2.0"
+    "@chevrotain/utils": "npm:13.2.0"
+  checksum: 10c0/f7384a69c4ef7d43be6fd63a9447af5877de7b66842638d8568a85e7f404a278495d68f0fd9024f12aec886aee9b888c544734549b9c95e03f6e4c6e87fcb1cf
+  languageName: node
+  linkType: hard
+
 "chokidar@npm:^3.5.3, chokidar@npm:^3.6.0":
   version: 3.6.0
   resolution: "chokidar@npm:3.6.0"
@@ -12898,6 +12990,13 @@ __metadata:
   version: 13.1.0
   resolution: "commander@npm:13.1.0"
   checksum: 10c0/7b8c5544bba704fbe84b7cab2e043df8586d5c114a4c5b607f83ae5060708940ed0b5bd5838cf8ce27539cde265c1cbd59ce3c8c6b017ed3eec8943e3a415164
+  languageName: node
+  linkType: hard
+
+"commander@npm:^15.0.0":
+  version: 15.1.0
+  resolution: "commander@npm:15.1.0"
+  checksum: 10c0/dd1013291d3e8779c726313616fa23174abc962182d0894ac73017c55d8b1ffe4a72401d91a1173974050536576896dc5279db07d37f929dbad469a16a12c54e
   languageName: node
   linkType: hard
 
@@ -13508,6 +13607,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cytoscape@npm:^3.34.0":
+  version: 3.35.0
+  resolution: "cytoscape@npm:3.35.0"
+  checksum: 10c0/2c93219056fe9e1fc4313b8d05a075e716a9d54347cda7a99521d1bfa53b1a60a6078edbdb7a26376402f74dad37505272cc4ba950a0881d6cc9e88db57f0624
+  languageName: node
+  linkType: hard
+
 "d3-array@npm:1 - 2":
   version: 2.12.1
   resolution: "d3-array@npm:2.12.1"
@@ -13935,6 +14041,13 @@ __metadata:
   version: 1.11.19
   resolution: "dayjs@npm:1.11.19"
   checksum: 10c0/7d8a6074a343f821f81ea284d700bd34ea6c7abbe8d93bce7aba818948957c1b7f56131702e5e890a5622cdfc05dcebe8aed0b8313bdc6838a594d7846b0b000
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.21":
+  version: 1.11.23
+  resolution: "dayjs@npm:1.11.23"
+  checksum: 10c0/69ab04bf19c676e44ab50cc2fca223d265f3dafd107151ef3b0f3ad74d360c37caa602abe62f87cb25d90bd9f6bee003698af47df5b0dbf10a998b7b5f3bb3f1
   languageName: node
   linkType: hard
 
@@ -14375,6 +14488,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dompurify@npm:^3.4.17":
+  version: 3.4.18
+  resolution: "dompurify@npm:3.4.18"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10c0/03c96d4e04ce6588014d008c09bb80e97dc1f905acc28d0be0cf14ea6974f788f5706cac409a5b7b7a73831dbce15ac7ca68c6fe08b2e1522254f06ce6647e87
+  languageName: node
+  linkType: hard
+
 "domutils@npm:^2.5.2, domutils@npm:^2.8.0":
   version: 2.8.0
   resolution: "domutils@npm:2.8.0"
@@ -14461,6 +14586,13 @@ __metadata:
   version: 1.5.450
   resolution: "electron-to-chromium@npm:1.5.450"
   checksum: 10c0/7272e0d354021c9482757f9bdd6f55dbeaee196546d3bb5c1cc2b16798ce053556a8dac704e9ae074082591473b81021cbbdedcbb5818af62d7fe0279e514f12
+  languageName: node
+  linkType: hard
+
+"elkjs@npm:^0.12.0":
+  version: 0.12.1
+  resolution: "elkjs@npm:0.12.1"
+  checksum: 10c0/bc9779f8460ae190cb598573489632d9d75de3c99f389c9cc85ab6a345a3597ed4d6b0bcd0c8fee60c51574ae0b95e020687c149932e3f15b2350bac9c14df73
   languageName: node
   linkType: hard
 
@@ -14762,6 +14894,16 @@ __metadata:
     is-date-object: "npm:^1.0.5"
     is-symbol: "npm:^1.0.4"
   checksum: 10c0/c7e87467abb0b438639baa8139f701a06537d2b9bc758f23e8622c3b42fd0fdb5bde0f535686119e446dd9d5e4c0f238af4e14960f4771877cf818d023f6730b
+  languageName: node
+  linkType: hard
+
+"es-toolkit@npm:^1.45.1":
+  version: 1.53.2
+  resolution: "es-toolkit@npm:1.53.2"
+  dependenciesMeta:
+    vitepress-plugin-sandpack@1.1.4:
+      unplugged: true
+  checksum: 10c0/5b0cad13f54e010d84fabd74dbc016a3db09cd9d3992bd97bc06fe54568af439333a61692e68494751c71fd2f453f882711cceb9c61239658a231f013882452a
   languageName: node
   linkType: hard
 
@@ -18730,6 +18872,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"katex@npm:^0.18.0":
+  version: 0.18.10
+  resolution: "katex@npm:0.18.10"
+  dependencies:
+    commander: "npm:^15.0.0"
+  bin:
+    katex: cli.js
+  checksum: 10c0/3864a236334e9c7aef906b2fdd70defb76edfe8362372ccd5504167e8b22bbc1a48210e5d03e30e464c0c0f669e6d467b3b8b01120598fb1968c275fa5059721
+  languageName: node
+  linkType: hard
+
 "keyv@npm:^4.5.3, keyv@npm:^4.5.4":
   version: 4.5.4
   resolution: "keyv@npm:4.5.4"
@@ -19811,6 +19964,36 @@ __metadata:
   version: 1.4.1
   resolution: "merge2@npm:1.4.1"
   checksum: 10c0/254a8a4605b58f450308fc474c82ac9a094848081bf4c06778200207820e5193726dc563a0d2c16468810516a5c97d9d3ea0ca6585d23c58ccfff2403e8dbbeb
+  languageName: node
+  linkType: hard
+
+"mermaid@npm:>=11.6.0":
+  version: 12.3.0
+  resolution: "mermaid@npm:12.3.0"
+  dependencies:
+    "@braintree/sanitize-url": "npm:^7.1.2"
+    "@iconify/utils": "npm:^3.0.2"
+    "@mermaid-js/parser": "npm:^2.0.1"
+    "@types/d3": "npm:^7.4.3"
+    "@upsetjs/venn.js": "npm:^2.0.0"
+    chevrotain: "npm:~13.2.0"
+    cytoscape: "npm:^3.34.0"
+    cytoscape-cose-bilkent: "npm:^4.1.0"
+    cytoscape-fcose: "npm:^2.2.0"
+    d3: "npm:^7.9.0"
+    d3-sankey: "npm:^0.12.3"
+    dagre-d3-es: "npm:7.0.14"
+    dayjs: "npm:^1.11.21"
+    dompurify: "npm:^3.4.17"
+    elkjs: "npm:^0.12.0"
+    es-toolkit: "npm:^1.45.1"
+    katex: "npm:^0.18.0"
+    khroma: "npm:^2.1.0"
+    marked: "npm:^16.3.0"
+    roughjs: "npm:^4.6.6"
+    stylis: "npm:^4.3.6"
+    ts-dedent: "npm:^2.2.0"
+  checksum: 10c0/c3236c6b08d4cbf0e24b23af38736917936a653dffca634a83288198b765872a665d3c4b792d997ae1fcc9f39257c00c3025517542a973dcb695905b9305e3f8
   languageName: node
   linkType: hard
 
