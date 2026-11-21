@@ -784,7 +784,7 @@ class Database:
         query = """
             SELECT v.id, v.version_id, v.visibility, v.published,
                    p.description as project_description, p.metadata as project_metadata,
-                   v.metadata
+                   v.metadata, p.tenant_id::text AS tenant_id
             FROM apiome.versions v
             JOIN apiome.projects p ON v.project_id = p.id
             JOIN apiome.tenants t ON p.tenant_id = t.id
@@ -830,6 +830,36 @@ class Database:
             ORDER BY cp.parent_id NULLS FIRST, cp.name ASC
         """
         return self.execute_query(query, (class_id,))
+
+    def get_properties_for_classes(self, class_ids: Sequence[Any]) -> Dict[Any, List[Dict[str, Any]]]:
+        """Get the properties of several classes in one query (COA-5.5, #7081).
+
+        The batched form of :meth:`get_properties_for_class`: the same columns, and within each
+        class the same order, so a document generated from either is the same.
+
+        Args:
+            class_ids: The ``classes.id`` values, as the class rows carry them.
+
+        Returns:
+            ``{class_id: [property rows]}`` keyed by the ids as given, with an empty list for a
+            class that has no properties.
+        """
+        grouped: Dict[Any, List[Dict[str, Any]]] = {class_id: [] for class_id in class_ids}
+        if not grouped:
+            return grouped
+        by_text = {str(class_id): class_id for class_id in grouped}
+        query = """
+            SELECT cp.id, cp.class_id, cp.property_id, cp.name, cp.description, cp.data, cp.parent_id,
+                   cp.primitive_id, cp.primitive_ref,
+                   p.id as property_source_id, p.name as property_source_name, p.data as property_source_data
+            FROM apiome.class_properties cp
+            LEFT JOIN apiome.properties p ON cp.property_id = p.id
+            WHERE cp.class_id = ANY(%s::uuid[])
+            ORDER BY cp.parent_id NULLS FIRST, cp.name ASC
+        """
+        for row in self.execute_query(query, (list(by_text),)):
+            grouped[by_text[str(row["class_id"])]].append(row)
+        return grouped
 
     def get_classes_with_properties_and_tags_for_version(self, version_id: str) -> List[Dict[str, Any]]:
         """Get all classes for a version with their properties and tags in bulk.
@@ -10367,8 +10397,31 @@ class Database:
 
         return self._guarded_tx(work)
 
+    def clear_spec_snapshot_content(self, version_record_id: str) -> bool:
+        """Drop a frozen snapshot's bytes from its row, keeping the metadata (COA-5.5, #7081).
+
+        Call it only after the bytes are stored as the version's ``frozen_schema`` object in the
+        document store: afterwards the row's ``sha256`` is the only pointer to them.
+
+        Args:
+            version_record_id: The frozen version.
+
+        Returns:
+            True when a row was updated.
+        """
+        return bool(
+            self._modify(
+                "UPDATE apiome.version_spec_snapshots SET content = NULL WHERE version_id = %s",
+                (version_record_id,),
+            )
+        )
+
     def delete_spec_snapshot(self, version_record_id: str) -> Optional[Dict[str, Any]]:
-        """Unfreeze: delete the snapshot row. Returns the deleted row, or ``None`` if there was none."""
+        """Unfreeze: delete the snapshot row. Returns the deleted row, or ``None`` if there was none.
+
+        The version's ``frozen_schema`` link (COA-5.5, #7081) goes in the same transaction; the
+        stored object is left for the lifecycle job.
+        """
 
         def work(cursor: Any) -> Optional[Dict[str, Any]]:
             cursor.execute(
@@ -10379,6 +10432,14 @@ class Database:
                 (version_record_id,),
             )
             row = cursor.fetchone()
+            if row:
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.version_documents
+                    WHERE version_id = %s::uuid AND role = 'frozen_schema'
+                    """,
+                    (version_record_id,),
+                )
             return dict(row) if row else None
 
         return self._guarded_tx(work)
@@ -31226,6 +31287,121 @@ class Database:
             (str(version_record_id),),
         )
         return int(rows[0]["content_stamp"]) if rows else None
+
+    # ───────────────────── rendered documents (COA-5.5, #7081) ─────────────────────
+    # ``app.rendered_documents`` is the only caller. A rendered row is current while its
+    # ``content_stamp`` equals the revision's; older rows are left for the lifecycle job.
+
+    def get_rendered_document_context(self, *, tenant_id: str, version_id: str) -> Optional[Dict[str, Any]]:
+        """Read what a render of a revision depends on, in one query.
+
+        Args:
+            tenant_id: The tenant that must own the revision.
+            version_id: The revision (``versions.id``).
+
+        Returns:
+            ``id``, ``version_id`` (the label), ``metadata``, ``content_stamp``, ``published``,
+            ``project_slug``, ``project_description``, ``project_metadata`` and ``tenant_slug``;
+            ``None`` when the tenant has no such live revision.
+        """
+        if not version_id or not is_uuid_string(str(version_id)):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT v.id::text AS id, v.version_id, v.metadata, v.content_stamp, v.published,
+                   p.slug AS project_slug, p.description AS project_description,
+                   p.metadata AS project_metadata, t.slug AS tenant_slug
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            JOIN apiome.tenants t ON t.id = p.tenant_id
+            WHERE v.id = %s::uuid AND p.tenant_id::text = %s AND v.deleted_at IS NULL
+            """,
+            (str(version_id), str(tenant_id)),
+        )
+        return dict(rows[0]) if rows else None
+
+    def find_version_document(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        role: str,
+        content_stamp: Optional[int] = None,
+        generator: Optional[str] = None,
+        generator_version: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Find the object recorded for a revision in one ``version_documents`` slot.
+
+        Args:
+            tenant_id: The tenant that must own the object.
+            version_id: The revision (``versions.id``).
+            role: ``rendered_openapi``, ``rendered_canonical`` or ``frozen_schema``.
+            content_stamp: The stamp a rendered document was rendered at; ``None`` for a frozen schema.
+            generator: The generator of a rendered document; ``None`` for a frozen schema.
+            generator_version: Its version; ``None`` for a frozen schema.
+
+        Returns:
+            ``object_id``, ``sha256``, ``size_bytes``, ``media_type`` and ``encoding``, or ``None``
+            when the slot is empty.
+        """
+        rows = self.execute_query(
+            """
+            SELECT o.id::text AS object_id, o.sha256, o.size_bytes, o.media_type, o.encoding
+            FROM apiome.version_documents d
+            JOIN apiome.document_objects o ON o.id = d.object_id
+            WHERE d.version_id = %s::uuid AND d.role = %s AND d.part_path IS NULL
+              AND d.content_stamp IS NOT DISTINCT FROM %s
+              AND d.generator IS NOT DISTINCT FROM %s
+              AND d.generator_version IS NOT DISTINCT FROM %s
+              AND o.tenant_id = %s
+            """,
+            (str(version_id), role, content_stamp, generator, generator_version, str(tenant_id)),
+        )
+        return dict(rows[0]) if rows else None
+
+    def set_version_document(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        role: str,
+        object_id: str,
+        content_stamp: Optional[int] = None,
+        generator: Optional[str] = None,
+        generator_version: Optional[str] = None,
+    ) -> bool:
+        """Point one ``version_documents`` slot of a revision at an object.
+
+        The slot is (revision, role, stamp, generator, generator version). A slot that already
+        holds an object is pointed at this one, so a repeat is harmless.
+
+        Args:
+            tenant_id: The tenant that must own both the revision and the object.
+            version_id: The revision (``versions.id``).
+            role: ``rendered_openapi``, ``rendered_canonical`` or ``frozen_schema``.
+            object_id: ``document_objects.id`` of the stored document.
+            content_stamp: The stamp a rendered document was rendered at.
+            generator: The generator of a rendered document.
+            generator_version: Its version.
+
+        Returns:
+            True when the row was written; False when the revision or the object is not the tenant's.
+        """
+        written = self._execute_write(
+            """
+            INSERT INTO apiome.version_documents
+                (version_id, role, object_id, content_stamp, generator, generator_version)
+            SELECT v.id, %s, o.id, %s, %s, %s
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            JOIN apiome.document_objects o ON o.id = %s::uuid AND o.tenant_id = p.tenant_id::text
+            WHERE v.id = %s::uuid AND p.tenant_id::text = %s
+            ON CONFLICT ON CONSTRAINT version_documents_slot_key
+                DO UPDATE SET object_id = EXCLUDED.object_id
+            """,
+            (role, content_stamp, generator, generator_version, str(object_id), str(version_id), str(tenant_id)),
+        )
+        return bool(written)
 
     # ------------------------------------------------------------------
     # Round-trip preservation envelope (DCW-2.1, private-suite#2352, V184)

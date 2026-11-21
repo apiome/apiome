@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.622.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.623.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 65 operations
 
@@ -1020,7 +1020,8 @@ Freeze a published version's OpenAPI document (#3214).
 
 Stores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,
 that route returns them verbatim, so later edits to the version's classes, properties and paths
-do not change the downloaded document. Also captures the class schemas into
+do not change the downloaded document. The bytes are written to the document store as the
+version's ``frozen_schema`` object (COA-5.5, #7081). Also captures the class schemas into
 ``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).
 
 * Only **published** versions can be frozen (409 ``version_not_published``).

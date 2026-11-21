@@ -6,6 +6,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.797.0] - 2026-11-21
+
+### Added
+- **Rendered document cache for revisions — OpenAPI 1.623.0 (COA-5.5, #7081):**
+  `app.rendered_documents.rendered_document(revision, kind, tenant_id=…)` returns a revision's
+  generated document from the document store. It looks the document up in `version_documents` by
+  (revision, role, content stamp, generator, generator version). On a miss it renders, `put`s the
+  bytes, records them and returns them. Kinds: `openapi` (role `rendered_openapi`, the bytes
+  `GET /v1/schema` sends) and `canonical` (role `rendered_canonical`, the canonical model as JSON;
+  `None` for a revision without one).
+  - An edit bumps `versions.content_stamp`, so the next read renders again. The older row and
+    object are left for the lifecycle job (COA-5.10).
+  - The OpenAPI document names the project, which the stamp does not cover. The recorded generator
+    version is `<version>+<digest of the project's slug, description and metadata>`, so a project
+    change also misses.
+  - A generator version bump (`OPENAPI_GENERATOR_VERSION`, `CANONICAL_GENERATOR_VERSION`) changes
+    the key; no row is deleted.
+  - Renders are single-flight per key inside a worker. Two workers can render the same key at
+    once; the result is one object and one row.
+  - The cache never fails a read: when the store or the tables cannot keep the document, the
+    rendered bytes are returned unrecorded (`rendered document not stored` in the log). A row
+    whose object is gone is rendered again.
+  - Rendered documents are stored without a content coding, so the object's SHA-256 is the
+    digest of the bytes served.
+- `GET /v1/schema/{tenant}/{project}/{version}` sends `ETag: "<sha256>"` and `Content-Length`,
+  honors `If-None-Match` (weak comparison, lists and `*`) with `304 Not Modified`, and streams
+  the stored bytes. A `304` for a frozen version is not counted as a download.
+- Publishing a version renders and stores its documents in a background task
+  (`warm_rendered_documents`), so a published revision's first reader gets stored bytes.
+- `Database.get_properties_for_classes`, `get_rendered_document_context`, `find_version_document`,
+  `set_version_document` and `clear_spec_snapshot_content`. `get_version_by_slugs` also returns
+  `tenant_id`.
+- apiome-db V404: `version_spec_snapshots.content` is nullable.
+
+### Changed
+- `/v1/schema` for an unfrozen version reads the rendered document cache. The second request for
+  an unchanged version issues no class, property or path query. The bytes are identical to the
+  previous live generation (checked across the OpenAPI corpus in
+  `tests/test_rendered_documents_db.py`).
+- A freeze writes the snapshot bytes to the document store as the version's `frozen_schema`
+  object (`store_frozen_schema`). The row is written first, then the object, so a lost freeze
+  race links nothing. With `APIOME_DOCUMENT_STORE=s3` or `filesystem` the row's bytes are then
+  dropped and it keeps the metadata only (`content` is NULL); with `db`, or when the store write
+  fails, the row keeps the bytes too. Unfreezing deletes the row and the
+  `frozen_schema` link in one transaction. Snapshots frozen earlier are served from their row
+  until COA-5.8 (#7084) moves them.
+- A frozen version whose bytes cannot be read answers `503` from `/v1/schema`; it is never
+  replaced by a newly generated document.
+- The class and property load for a render is one query per table
+  (`spec_snapshot.load_classes_and_properties`), used by `/v1/schema`, the freeze and
+  `compatibility_engine.openapi_for_revision`. `openapi_for_revision` itself still generates on
+  every call; COA-5.6 (#7082) moves the diff family onto the cache.
+
 ## [1.796.0] - 2026-11-21
 
 ### Added

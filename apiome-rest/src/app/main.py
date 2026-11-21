@@ -1,4 +1,5 @@
 import asyncio
+import io
 import json
 import logging
 from typing import Any, Dict, Optional
@@ -8,7 +9,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .access_routes import platform_router as access_platform_router
@@ -193,7 +194,14 @@ from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
 from .source_provenance_routes import router as source_provenance_router
 from .spec_import_routes import router as spec_import_router
-from .spec_snapshot import build_live_spec
+from .rendered_documents import (
+    KIND_OPENAPI,
+    etag_for,
+    etag_matches,
+    iter_stream,
+    open_frozen_schema,
+    rendered_document,
+)
 from .spec_sync_routes import router as spec_sync_router
 from .style_guide_routes import router as style_guide_router
 from .team_routes import router as team_router
@@ -245,7 +253,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.622.0",
+    version="1.623.0",
 )
 
 
@@ -1594,16 +1602,47 @@ async def root():
     }
 
 
-@app.get("/v1/schema/{tenant_slug}/{project_slug}/{version_slug}")
+@app.get(
+    "/v1/schema/{tenant_slug}/{project_slug}/{version_slug}",
+    responses={
+        200: {
+            "description": "The version's OpenAPI document.",
+            "headers": {
+                "ETag": {
+                    "description": "The SHA-256 of the response body, in double quotes.",
+                    "schema": {"type": "string"},
+                },
+                "X-Apiome-Snapshot-Sha256": {
+                    "description": "The SHA-256 of the frozen snapshot; only sent for a frozen version.",
+                    "schema": {"type": "string"},
+                },
+            },
+        },
+        304: {"description": "The document still matches an ETag sent in If-None-Match; no body."},
+        503: {"description": "The version is frozen and its stored document cannot be read."},
+    },
+)
 async def get_version_openapi_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    api_key: Optional[str] = Query(None, description="API key for private versions (alternative to X-API-Key header)")
-) -> JSONResponse:
+    api_key: Optional[str] = Query(None, description="API key for private versions (alternative to X-API-Key header)"),
+    if_none_match: Optional[str] = Header(
+        None,
+        alias="If-None-Match",
+        description=(
+            "An ETag from an earlier response; the answer is 304 with no body when the document has not changed."
+        ),
+    ),
+) -> Response:
     """
     Get the complete OpenAPI specification for all classes in a version.
+
+    The document is rendered once per change of the version and kept in the document store
+    (COA-5.5, #7081); later requests stream the stored bytes. The response carries
+    ``ETag: "<sha256>"``, the SHA-256 of the body. Send it back as ``If-None-Match`` to get
+    ``304 Not Modified`` with no body while the document is unchanged.
 
     Args:
         tenant_slug: The tenant slug
@@ -1611,9 +1650,10 @@ async def get_version_openapi_spec(
         version_slug: The version ID (e.g., "1.0.0")
         x_api_key: Optional API key for private versions (header)
         api_key: Optional API key for private versions (query, for links)
+        if_none_match: Optional ETag(s) the client already holds
 
     Returns:
-        OpenAPI 3.1.0 specification in JSON format
+        OpenAPI 3.1.0 specification in JSON format, or 304 when ``If-None-Match`` matches
     """
     # Get version information
     version = db.get_version_by_slugs(tenant_slug, project_slug, version_slug)
@@ -1634,20 +1674,43 @@ async def get_version_openapi_spec(
     # Validate access for private versions (header or query param)
     validate_private_access(version, tenant_slug, x_api_key or api_key)
 
+    version_record_id = str(version['id'])
+    tenant_id = str(version.get('tenant_id') or '')
+
     # A frozen version (#3214) serves its stored snapshot byte-for-byte, and counts the download.
-    snapshot = db.get_spec_snapshot(str(version['id']), with_content=True)
-    if snapshot and snapshot.get('content') is not None:
-        db.record_spec_snapshot_download(str(version['id']))
-        return Response(
-            content=snapshot['content'],
-            media_type="application/json",
-            headers={"X-Apiome-Snapshot-Sha256": str(snapshot['sha256']).strip()},
+    snapshot = db.get_spec_snapshot(version_record_id)
+    if snapshot:
+        sha256 = str(snapshot['sha256']).strip()
+        headers = {"ETag": etag_for(sha256), "X-Apiome-Snapshot-Sha256": sha256}
+        if etag_matches(if_none_match, sha256):
+            return Response(status_code=304, headers=headers)
+        # The bytes are the version's frozen_schema object (COA-5.5, #7081); a snapshot frozen
+        # before that, or with the db backend, still has them in its row.
+        row = db.get_spec_snapshot(version_record_id, with_content=True) or {}
+        content = row.get('content')
+        stream = io.BytesIO(content) if content is not None else open_frozen_schema(tenant_id, sha256)
+        if stream is None:
+            raise HTTPException(
+                status_code=503,
+                detail="The frozen document of this version cannot be read from the document store"
+            )
+        db.record_spec_snapshot_download(version_record_id)
+        headers["Content-Length"] = str(int(snapshot['size_bytes']))
+        return StreamingResponse(iter_stream(stream), media_type="application/json", headers=headers)
+
+    # Otherwise the rendered document of the version's current content: stored bytes when it was
+    # rendered before, generated from classes, properties and paths (and stored) when it was not.
+    document = rendered_document(version_record_id, KIND_OPENAPI, tenant_id=tenant_id, database=db)
+    if document is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {tenant_slug}/{project_slug}/{version_slug}"
         )
-
-    # Classes, properties and paths, generated live (the same document a freeze stores).
-    openapi_spec, _counts = build_live_spec(db, version, tenant_slug, project_slug, version_slug)
-
-    return JSONResponse(content=openapi_spec)
+    headers = {"ETag": document.etag}
+    if etag_matches(if_none_match, document.sha256):
+        return Response(status_code=304, headers=headers)
+    headers["Content-Length"] = str(document.size_bytes)
+    return StreamingResponse(iter_stream(document.open_stream()), media_type=document.media_type, headers=headers)
 
 
 @app.get("/v1/schema/{tenant_slug}/{project_slug}/{version_slug}/{class_name}")
