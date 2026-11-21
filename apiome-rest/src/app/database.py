@@ -31017,6 +31017,27 @@ class Database:
         """
         return bool(self.execute_query(query, (tenant_id, sha256)))
 
+    # ───────────────────── revision content stamp (COA-5.2, #7078, V403) ─────────────────────
+    # ``versions.content_stamp`` is bumped by database triggers once per transaction that writes
+    # the revision's normalized data; application code only ever reads it.
+
+    def get_version_content_stamp(self, version_record_id: str) -> Optional[int]:
+        """Return a revision's content stamp.
+
+        Args:
+            version_record_id: The ``versions.id`` UUID.
+
+        Returns:
+            The stamp (0 for a revision never edited after creation), or None when no such
+            revision exists. A rendered document is current only while its recorded stamp equals
+            this value.
+        """
+        rows = self.execute_query(
+            "SELECT content_stamp FROM apiome.versions WHERE id = %s::uuid",
+            (str(version_record_id),),
+        )
+        return int(rows[0]["content_stamp"]) if rows else None
+
     # ------------------------------------------------------------------
     # Round-trip preservation envelope (DCW-2.1, private-suite#2352, V184)
     # ------------------------------------------------------------------

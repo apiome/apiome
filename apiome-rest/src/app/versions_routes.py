@@ -900,6 +900,11 @@ async def get_version(
     the strong ETag still identifies the revision only (same as full body, #2568).
 
     Delta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed schema entities only).
+
+    Content stamp (#7078): the database keeps a per-revision change counter that moves by one for
+    every transaction that edits the revision's classes, properties, paths, operations, servers,
+    security schemes, component pins or its own content fields; reads never move it. The
+    rendered-document cache (#7081) keys documents, and the schema ETag, on (revision, stamp).
     """
     tenant_id = auth_data["tenant_id"]
     pull_actor = get_authenticated_user_id(auth_data)

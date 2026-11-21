@@ -451,7 +451,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| COA-5.2 · [#7078](https://github.com/apiome/apiome/issues/7078) | Document object tables and the revision content stamp | `document_objects` / `version_documents` metadata tables and a `versions.content_stamp` bumped by every normalized-data write | `enhancement`, `database` | Y | M | apiome-db, apiome-rest |
 | COA-5.3 · [#7079](https://github.com/apiome/apiome/issues/7079) | Store the original on every import path | Every importer (UI worker, import-source pipeline, catalog upload, URL, repository, CLI push, spec sync) writes the scrubbed original to the store | `enhancement`, `rest`, `ui` | N | L | apiome-rest, apiome-ui, apiome-cli |
 | COA-5.4 · [#7080](https://github.com/apiome/apiome/issues/7080) | Read captured sources through the store | Canonical rebuild, export source, provenance, catalog detail and the source workspace read originals via one helper, with the legacy columns as fallback | `enhancement`, `rest` | Y | M | apiome-rest |
 | COA-5.5 · [#7081](https://github.com/apiome/apiome/issues/7081) | Rendered document cache for revisions | Write the generated OpenAPI / canonical JSON per (revision, content stamp, generator version); immutable for published and frozen revisions | `enhancement`, `rest`, `performance` | N | L | apiome-rest |
@@ -484,7 +483,7 @@ flowchart LR
 - **Technical Stack:** Python, boto3, FastAPI settings, moto/MinIO for tests.
 - **Documentation:** `admin/operating-apiome.mdx` (environment reference: document store), new `admin/document-store.mdx` (+ `helpCatalog.ts` entry); screenshots: n/a; release note.
 
-**COA-5.2 · #7078 Document object tables and the revision content stamp**
+**✅ COA-5.2 · #7078 Document object tables and the revision content stamp — Complete**
 - **Problem:** Nothing records where a revision's documents live, and nothing tells a cache whether a revision changed since a document was rendered (there is no per-revision change counter today).
 - **Solution/Scope:**
 - Migration: `apiome.document_objects` (id, tenant_id, sha256, size_bytes, media_type, encoding, backend, storage_key, ref_count, created_at, verified_at) unique on (tenant_id, sha256).

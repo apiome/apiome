@@ -152,6 +152,46 @@ With `APIOME_DOCUMENT_STORE=db`, an export above the database limit fails with
 When a download expires it can no longer be fetched, but its object stays in the bucket or
 directory. Apiome does not yet remove unused objects, so remove them yourself if space matters.
 
+## Document records and the content stamp
+
+The database keeps a record of each stored document, apart from the bytes. Migration V403 adds
+two tables and one column:
+
+| Name | What it records |
+| --- | --- |
+| `document_objects` | One row per stored object: tenant, SHA-256, size, media type, content encoding, the backend that holds it (`db`, `s3` or `filesystem`) and its key there. One row per tenant and SHA-256. |
+| `version_documents` | Which object a revision uses, and for what. See the roles below. |
+| `versions.content_stamp` | A counter for each revision that goes up when the revision's content changes. |
+
+A row in `version_documents` has one of these roles:
+
+| Role | The object is |
+| --- | --- |
+| `original` | The file the revision was imported from. For a set of files (an Arazzo document with its sources, a multi-file protobuf), it is the manifest that lists the files. |
+| `original_part` | One file of a set, with its path inside the set. |
+| `rendered_openapi` | An OpenAPI document generated from the revision. |
+| `rendered_canonical` | A canonical model document generated from the revision. |
+| `frozen_schema` | A frozen schema snapshot. |
+
+A rendered document also records the content stamp it was generated at, and the generator and
+its version.
+
+### How the content stamp changes
+
+- **It goes up by one for each transaction** that changes the revision's classes, properties,
+  paths, operations, parameters, responses, servers, security schemes, component pins, canonical
+  API model or the revision's own fields. A save that writes many rows still counts as one
+  change.
+- **Editing a shared property** in the project library raises the stamp of every revision that
+  uses it.
+- **Reading never changes it.** Neither do saves that change nothing, moving items on the canvas,
+  or Apiome updating a revision's quality score.
+
+A rendered document is current while its recorded stamp equals the revision's stamp. The stamp
+starts at `0` for every revision, including revisions that existed before the upgrade. The
+migration adds the column without rewriting the `versions` table, so it is safe to run on a
+large, live database.
+
 ## Troubleshooting
 
 Errors name the bucket and the provider's error code. Access keys and secret keys are never
