@@ -3026,6 +3026,14 @@ class CatalogSourceDescriptor(BaseModel):
     uri: Optional[str] = None
     has_content: bool = Field(False, serialization_alias="hasContent")
     downloadable: bool = False
+    revision_id: Optional[str] = Field(
+        None,
+        serialization_alias="revisionId",
+        description=(
+            "The item's latest revision: the one whose stored original "
+            "`GET /v1/versions/{tenant}/{project}/{revisionId}/original` downloads (COA-5.7)."
+        ),
+    )
     connector: Optional[CatalogConnectorSource] = Field(
         None,
         description=(

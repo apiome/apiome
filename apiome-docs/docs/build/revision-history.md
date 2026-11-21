@@ -78,6 +78,27 @@ single database query, however many revisions it covers.
 | `TIPS_REQUIRED` (400) | No `tip` was given and the project has no branches |
 | `TOO_MANY_TIPS` (400) | More than 50 tips |
 
+### The original file of a revision
+
+`GET /v1/versions/{tenant}/{project}/{revision}/original` streams the file the revision was imported
+from, under its original name. It needs the `versions:view` permission.
+
+| Feature | Behavior |
+| --- | --- |
+| `ETag` | `"<SHA-256>"` of the bytes; `X-Apiome-Content-Sha256` carries the same digest. `If-None-Match` with it answers `304` |
+| `Range` | One `bytes=` range answers `206` with `Content-Range`; a start past the end answers `416` |
+| `?redirect=presigned` | With the `s3` [document store](../admin/document-store.mdx), answers `302` to a link valid for 5 minutes. Other stores, and an original stored gzip-coded, stream instead |
+| A set of files | `…/original` is the set's JSON manifest; `…/original/{path}` is one file, by its path in the set |
+
+| Error code | Cause |
+| --- | --- |
+| `original-not-stored` (404) | No original is stored for the revision, or no file at that path |
+| `original-withheld` (410) | The import withheld the source under the workspace's intake policy |
+| `original-unreadable` (502) | The document store did not return the bytes |
+
+From the CLI: `apiome versions original <project> <version> -o <file>` — see
+[Manage versions from the CLI](../ship/manage-versions-from-the-cli.md).
+
 ## Related
 
 - [Version dialogs](./version-dialogs.mdx#git-like-features): branch, merge and history-graph tools.

@@ -315,7 +315,15 @@ class DocumentStore(Protocol):
     def delete(self, tenant_id: str, sha256: str) -> bool:
         """Remove the object; return ``True`` when one was removed."""
 
-    def presign_get(self, tenant_id: str, sha256: str, ttl: Optional[int] = None) -> Optional[str]:
+    def presign_get(
+        self,
+        tenant_id: str,
+        sha256: str,
+        ttl: Optional[int] = None,
+        *,
+        content_disposition: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> Optional[str]:
         """Return a time-limited download link, or ``None`` when the backend has none."""
 
 
@@ -411,7 +419,15 @@ class BaseDocumentStore(ABC):
         """Report whether the object is stored for the tenant."""
         return self.head(tenant_id, sha256) is not None
 
-    def presign_get(self, tenant_id: str, sha256: str, ttl: Optional[int] = None) -> Optional[str]:
+    def presign_get(
+        self,
+        tenant_id: str,
+        sha256: str,
+        ttl: Optional[int] = None,
+        *,
+        content_disposition: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> Optional[str]:
         """Return ``None``: this backend serves bytes through the REST API only."""
         return None
 
@@ -819,24 +835,36 @@ class S3DocumentStore(BaseDocumentStore):
             raise self._failure("delete from", exc) from None
         return True
 
-    def presign_get(self, tenant_id: str, sha256: str, ttl: Optional[int] = None) -> Optional[str]:
+    def presign_get(
+        self,
+        tenant_id: str,
+        sha256: str,
+        ttl: Optional[int] = None,
+        *,
+        content_disposition: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> Optional[str]:
         """Return a link that downloads the object straight from the store.
 
         Args:
             tenant_id: The owning tenant.
             sha256: The object's digest.
             ttl: Lifetime in seconds; the configured default when omitted. Clamped to 1 s – 7 days.
+            content_disposition: ``Content-Disposition`` the store answers the link with (so a
+                browser saves it under the original file name), when given (COA-5.7).
+            content_type: ``Content-Type`` the store answers the link with, when given.
 
         Returns:
             The URL. It embeds a signature, so treat it as a secret and never log it.
         """
         seconds = max(1, min(int(ttl if ttl is not None else self.presign_ttl_seconds), PRESIGN_MAX_TTL_SECONDS))
+        params = {"Bucket": self.bucket, "Key": self.key_for(tenant_id, sha256)}
+        if content_disposition:
+            params["ResponseContentDisposition"] = content_disposition
+        if content_type:
+            params["ResponseContentType"] = content_type
         try:
-            return self.client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self.bucket, "Key": self.key_for(tenant_id, sha256)},
-                ExpiresIn=seconds,
-            )
+            return self.client.generate_presigned_url("get_object", Params=params, ExpiresIn=seconds)
         except DocumentStoreError:
             raise
         except Exception as exc:  # noqa: BLE001

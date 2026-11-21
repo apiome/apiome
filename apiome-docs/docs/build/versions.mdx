@@ -300,6 +300,35 @@ When the project was created by [converting a catalog item](../bring-in/convert-
 **Conversion** tab shows its conversion history — every projection and the evidence behind it. Other
 projects do not have this tab.
 
+## Original file
+
+Every import keeps the file it read (after the workspace's secret scrub) as the version's
+**original**. To get it back:
+
+1. **Click “View spec”** in a version's **Actions** menu.
+2. **Click “Download original”** in the dialog's footer. The file is saved under the name it was
+   imported with, byte for byte as it was stored.
+
+A version made in the Designer, or imported before originals were kept, has no original: the button
+then says **No original file is stored for this version.** When the import withheld its source
+because it carried secrets, the button says so instead — see
+[Secret scrubbing](../bring-in/collection-secret-scrubbing.md). A version imported from a set of files
+(an archive, a multi-file import) downloads the set's JSON manifest; fetch each file with the CLI's
+`--part` or the REST path below.
+
+<Screenshot id="versions-download-original" alt="The spec viewer's footer: Close, Download original, Copy, and Download with the generated file name" />
+
+### Compare two originals
+
+**Click “Compare”**, pick two versions, then **click the “Originals” tab**. It is a line-by-line
+text diff of the two imported files, beside the semantic diff on **Diff View**: the files' names and
+sizes, a download button for each, **+** and **−** line counts, both files' line numbers, and every
+run of unchanged lines folded to one *⋯ N unchanged lines* row. Only the rows on screen are drawn, so
+a 20 MB pair scrolls without freezing the tab. When either version has no stored original, the tab
+names it instead of comparing.
+
+<Screenshot id="versions-compare-originals" alt="The Originals tab: both imported files with their sizes, +8 −2, a removed and an added title line, an added path and a changed enum, with unchanged lines folded" />
+
 ## Change report <Flag name="FEATURE_GITLIKE"/>
 
 A **Change report** tab with the publication change report and its templates appears only when
@@ -370,7 +399,7 @@ the [Version change report](../reference/rest/version-change-report.md) and
 
 ## With the CLI or the API
 
-- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome mock status|enable|disable` — see
+- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|original|fork|compatibility|delete`, `apiome mock status|enable|disable` — see
   [Manage versions from the CLI](../ship/manage-versions-from-the-cli.md),
   the [`versions` command reference](../reference/cli/versions.md) and the [CLI
   quick-start](../reference/cli-quickstart.md). To take a release back with a recorded reason, see
@@ -381,6 +410,8 @@ the [Version change report](../reference/rest/version-change-report.md) and
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
+  `GET /v1/versions/{tenant}/{project}/{version}/original` downloads the [original file](#original-file) —
+  see [The original file of a revision](./revision-history.md#the-original-file-of-a-revision).
   **Publishing** a version generates its OpenAPI document once and stores it, and
   `GET /v1/schema/{tenant}/{project}/{version}` serves the stored bytes with an `ETag` until the
   version changes. **Freezing** keeps those bytes even when the version is edited — see

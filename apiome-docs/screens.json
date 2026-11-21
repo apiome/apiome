@@ -402,6 +402,28 @@
       ]
     },
     {
+      "id": "versions-download-original",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/spec-viewer-download-original.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/SpecViewerDialog.tsx",
+        "apiome-ui/src/app/components/ade/versions/DownloadOriginalButton.tsx",
+        "apiome-ui/tests/version-original-ui.test.tsx"
+      ]
+    },
+    {
+      "id": "versions-compare-originals",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/compare-originals.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/OriginalsDiffPanel.tsx",
+        "apiome-ui/src/app/utils/original-text-diff.ts",
+        "apiome-ui/tests/version-original-ui.test.tsx"
+      ]
+    },
+    {
       "id": "version-compare-cards",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

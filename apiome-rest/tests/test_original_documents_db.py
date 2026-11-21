@@ -190,3 +190,23 @@ def test_a_repeat_points_the_object_row_at_the_current_backend(ctx) -> None:
         row = cur.fetchone()
     ctx["conn"].commit()
     assert (row["backend"], row["storage_key"]) == ("filesystem", "apiome/new")
+
+
+def test_the_download_facts_name_the_file_and_the_withheld_reason(ctx) -> None:
+    """COA-5.7: ``get_version_original_facts`` reads the label, slug and withheld reason only."""
+    with ctx["conn"].cursor() as cur:
+        cur.execute(
+            "UPDATE apiome.versions SET format_metadata = %s::jsonb WHERE id = %s::uuid",
+            (json.dumps({"sourceLabel": "pets.yaml", "sourceWithheld": "secrets-detected"}), ctx["version"]),
+        )
+    ctx["conn"].commit()
+
+    facts = ctx["db"].get_version_original_facts(tenant_id=ctx["tenant"], version_id=ctx["version"])
+
+    assert facts["source_label"] == "pets.yaml"
+    assert facts["source_withheld"] == "secrets-detected"
+    assert facts["version_label"] == "1.0.0"
+    assert facts["project_slug"].startswith("orders-")
+    assert facts["source_file"] is None
+    other = "00000000-0000-4000-8000-000000000000"
+    assert ctx["db"].get_version_original_facts(tenant_id=other, version_id=ctx["version"]) is None

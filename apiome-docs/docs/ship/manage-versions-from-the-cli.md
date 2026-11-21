@@ -45,6 +45,7 @@ Use it when you:
 | `apiome versions publish <version> --project <project>` | Publish a version | `POST …/{version}/publish` |
 | `apiome versions unpublish <project> <version> --reason '…'` | Take a published version back, with a recorded reason | `POST …/{version}/unpublish` |
 | `apiome versions freeze <project> <version>` | Pin a published version's OpenAPI document byte-for-byte | `POST …/{version}/freeze-schema` |
+| `apiome versions original <project> <version> -o <file>` | Download the file the version was imported from, checked against its SHA-256; `--part <path>` for one file of a set | `GET …/{version}/original` |
 | `apiome versions delete <project> <version>` | Delete a version after typing it to confirm | `DELETE …/{version}` |
 
 Every option is listed in the [`apiome versions` reference](../reference/cli/versions.md).
@@ -130,7 +131,7 @@ Actions recipe and SARIF output.
 | `0` | Done |
 | `1` | The server refused the request (for `create`, also: the head moved — re-run) |
 | `2` | A bad argument, or a project, version or tag that does not exist |
-| `6` | The command's refusal: the label already exists (`create`, `fork`), a breaking change (`compatibility`), the last published version (`unpublish`), a downloaded snapshot (`freeze --unfreeze`), a published or tagged version (`delete`) |
+| `6` | The command's refusal: the label already exists (`create`, `fork`), a breaking change (`compatibility`), the last published version (`unpublish`), a downloaded snapshot (`freeze --unfreeze`), a published or tagged version (`delete`), a download whose SHA-256 does not match (`original`) |
 | `8` | `compatibility` could not reach a verdict |
 
 The full list is in [Exit codes](../reference/cli/exit-codes.md).

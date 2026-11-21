@@ -78,6 +78,7 @@ import ArazzoWorkflowsPanel from '@/app/components/ade/workflows/ArazzoWorkflows
 import { isRegistryFormat } from '@lib/schema-registry';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
+import DownloadOriginalButton from '@/app/components/ade/versions/DownloadOriginalButton';
 import { useAuthSession } from '@lib/auth/session-client';
 import { useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { isFeatureReleased } from '@lib/feature-release';
@@ -769,6 +770,14 @@ export function CatalogItemDetailClient({
                 <Code2 aria-hidden />
                 View code
               </Button>
+              {/* COA-5.7: the file the latest revision was imported from, as it was stored. */}
+              {source?.hasContent && source.revisionId ? (
+                <DownloadOriginalButton
+                  projectId={item.id}
+                  versionId={source.revisionId}
+                  testId="catalog-detail-download-original"
+                />
+              ) : null}
               {designerPreviewHref && !item.deleted_at ? (
                 <Button variant="outline" asChild>
                   <a

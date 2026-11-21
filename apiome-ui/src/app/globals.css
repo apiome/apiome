@@ -17051,6 +17051,70 @@ button.tfa-reset-notice__close > svg {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
+/* ---- The Originals tab (COA-5.7, #7083) ---------------------------------- */
+/* A text diff of the two imported files. Rows are windowed, so each one is a single,
+   non-wrapping line of one fixed height; the pane scrolls sideways for long lines. */
+.vdlg-origdiff {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+}
+
+.vdlg-origdiff__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.vdlg-origdiff__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.vdlg-origdiff__file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.vdlg-origdiff__counts {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vdlg-origdiff__scroll {
+  overflow: auto;
+}
+
+.vdlg-origdiff__row {
+  block-size: var(--space-5);
+  line-height: var(--space-5);
+  padding-block: 0;
+  white-space: pre;
+  inline-size: max-content;
+  min-inline-size: 100%;
+}
+
+.vdlg-origdiff__skip {
+  padding-inline: var(--space-3);
+  background: var(--bg-subtle);
+  font-style: italic;
+  color: var(--fg-muted);
+  user-select: none;
+}
+
+.vdlg-origdiff__state {
+  flex: 1 1 0;
+  min-block-size: min(32vh, 16rem);
+}
+
 /* ---- The schema-changes tab --------------------------------------------- */
 /* Fills the Schema Changes tab to the dialog's footer. */
 .vdlg-classdiff {

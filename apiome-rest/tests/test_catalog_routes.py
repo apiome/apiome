@@ -386,6 +386,20 @@ def test_get_catalog_item_includes_summary_and_source():
         assert data["source"]["label"] == "acme.proto"
         assert data["source"]["hasContent"] is True
         assert data["source"]["downloadable"] is True
+        assert data["source"]["revisionId"] is None
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+
+def test_get_catalog_item_names_the_revision_whose_original_downloads():
+    """COA-5.7: ``source.revisionId`` is the latest revision, for ``…/{revisionId}/original``."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.catalog_routes.db") as mock_db:
+            mock_db.get_catalog_item_by_id.return_value = {**_CATALOG_RICH, "latest_version_id": "rev-9"}
+            response = client.get("/v1/catalog/test-tenant/cat-rich")
+        assert response.status_code == 200
+        assert response.json()["source"]["revisionId"] == "rev-9"
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
 

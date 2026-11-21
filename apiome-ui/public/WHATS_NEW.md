@@ -33,6 +33,7 @@ We continue to improve the platform based on your feedback with improvements and
 - **Catalog and Projects cleanup** — The Bring in, Build and Ship pages now match the code, an OpenAPI 3.2 or Arazzo document reads the same in the **Catalog** as in a Project, and the journey from import to export was walked end to end with seven defects fixed. **Help & docs** has a new **Catalog and Projects** page that shows where an import lands and how the two paths fit
 - **Arazzo and Overlay governance** — Arazzo workflows and OpenAPI Overlays are now linted, fixed, graded by a maturity ladder and exported like the APIs they sit beside. **Help & docs** has a new **Arazzo and Overlay governance** page that shows how the pieces fit
 - **Faster comparisons of large versions** — A merge request's or review's **Changes** tab, the merge compatibility check on **Versions** and a published version's changelog now read each version's stored OpenAPI document instead of building it again, so comparing two large versions a second time is quick. The first comparison of a version still builds it, and a long wait now says **Rendering the documents for the first time** instead of just spinning
+- **Download and compare the original file** — **Download original** in a version's spec viewer and on a catalog item saves the file the import read, under its original name. **Compare** has a new **Originals** tab: a line-by-line diff of the two imported files beside the semantic diff, quick even for very large files. From the CLI: `apiome versions original`
 
 ---
 

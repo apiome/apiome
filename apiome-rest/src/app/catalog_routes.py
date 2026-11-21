@@ -463,7 +463,7 @@ async def get_catalog_item(
         **_category_fields(item, tags),
         related_artifacts=_build_related_artifacts(tenant_id, item_id),
         summary=CatalogNormalizedSummary(**summary),
-        source=CatalogSourceDescriptor(**source),
+        source=CatalogSourceDescriptor(**source, revision_id=item.get("latest_version_id")),
         parsed=parsed,
         provenance_summary=CatalogProvenanceSummary(**provenance_summary),
         analysis=analysis_summary_for_item(tenant_id, item),
