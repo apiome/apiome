@@ -1,0 +1,24 @@
+---
+slug: document-records-content-stamp
+title: "Document records and a content stamp for every revision"
+description: "The database now records stored documents and counts each revision's content changes."
+authors: [apiome]
+---
+
+The database now keeps a record of the documents in the [document store](/admin/document-store),
+and every revision has a **content stamp** that counts its content changes. This is groundwork for
+storing each revision's original file and caching its generated documents.
+
+{/* truncate */}
+
+- **Document records:** `document_objects` holds one row per stored object (tenant, SHA-256,
+  size, media type, encoding, backend and key). `version_documents` says which object a revision
+  uses: its original file (or each file of a set, plus the manifest), a generated OpenAPI or
+  canonical document, or a frozen schema.
+- **Content stamp:** `versions.content_stamp` goes up by one for each transaction that changes a
+  revision's classes, properties, paths, operations, servers, security schemes, component pins or
+  its own fields. Reads, saves that change nothing and canvas moves leave it alone.
+- **Safe on large databases:** apiome-db migration V403 adds the column without rewriting the
+  `versions` table. Nothing changes in the product yet.
+
+See [Document records and the content stamp](/admin/document-store#document-records-and-the-content-stamp).

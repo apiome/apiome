@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.619.0",
+    "version": "1.620.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -64292,7 +64292,7 @@
           "versions"
         ],
         "summary": "Get Version",
-        "description": "Get a specific version by ID.\n\nSupports authentication via JWT token or API key.\n\nSuccessor resolution (#749): when ``successorResolution`` is ``resolve`` or ``redirect``, follows\n``metadata.successorRevisionId`` (#748) within the project until a revision has no successor, hits a\nprotected branch tip / protected tag target (#504), or errors. Loops return 409 ``SUCCESSOR_CYCLE``.\n\nPull payload selection (#2591): ``includeSections`` / ``excludeSections`` reduce JSON size for CI;\nthe strong ETag still identifies the revision only (same as full body, #2568).\n\nDelta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed schema entities only).",
+        "description": "Get a specific version by ID.\n\nSupports authentication via JWT token or API key.\n\nSuccessor resolution (#749): when ``successorResolution`` is ``resolve`` or ``redirect``, follows\n``metadata.successorRevisionId`` (#748) within the project until a revision has no successor, hits a\nprotected branch tip / protected tag target (#504), or errors. Loops return 409 ``SUCCESSOR_CYCLE``.\n\nPull payload selection (#2591): ``includeSections`` / ``excludeSections`` reduce JSON size for CI;\nthe strong ETag still identifies the revision only (same as full body, #2568).\n\nDelta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed schema entities only).\n\nContent stamp (#7078): the database keeps a per-revision change counter that moves by one for\nevery transaction that edits the revision's classes, properties, paths, operations, servers,\nsecurity schemes, component pins or its own content fields; reads never move it. The\nrendered-document cache (#7081) keys documents, and the schema ETag, on (revision, stamp).",
         "operationId": "get_version_v1_versions__tenant_slug___project_id___version_record_id__get",
         "parameters": [
           {

@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.794.0] - 2026-11-21
+
+### Added
+- **Revision content stamp and document object tables — OpenAPI 1.620.0 (COA-5.2, #7078):**
+  apiome-db **V403** adds `versions.content_stamp` (BIGINT, catalog-only add — no rewrite of
+  `versions`), `apiome.document_objects` (one row per stored object, unique on
+  `(tenant_id, sha256)`; size, media type, encoding, backend, storage key, `ref_count`,
+  `verified_at`) and `apiome.version_documents` (role `original` | `original_part` |
+  `rendered_openapi` | `rendered_canonical` | `frozen_schema`, the object, the fileset
+  `part_path`, and for rendered roles the `content_stamp`, `generator` and `generator_version`).
+  - One trigger function, `apiome.bump_version_content_stamp()`, bumps the stamp once per
+    transaction on writes to classes, class properties and tags, library properties (every
+    revision using one), paths, operations and their descriptions, parameters, request bodies,
+    responses and contents, servers, security schemes, component pins, the canonical API model
+    tables and the revision's own content columns. Reads, no-op updates, `updated_at` /
+    `canvas_metadata`-only updates and the quality / search columns do not bump it.
+  - `Database.get_version_content_stamp(version_record_id)` reads it.
+  - `tests/test_content_stamp_db.py` fails when a table referencing a revision's content has
+    neither the trigger nor a listed reason.
+- `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}` documents the stamp; no
+  endpoint or schema changed.
+
+
 ## [1.793.0] - 2026-11-21
 
 ### Added

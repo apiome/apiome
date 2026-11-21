@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.619.0
+  version: 1.620.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -47277,7 +47277,20 @@ paths:
 
 
         Delta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed
-        schema entities only).'
+        schema entities only).
+
+
+        Content stamp (#7078): the database keeps a per-revision change counter that
+        moves by one for
+
+        every transaction that edits the revision''s classes, properties, paths, operations,
+        servers,
+
+        security schemes, component pins or its own content fields; reads never move
+        it. The
+
+        rendered-document cache (#7081) keys documents, and the schema ETag, on (revision,
+        stamp).'
       operationId: get_version_v1_versions__tenant_slug___project_id___version_record_id__get
       parameters:
       - name: tenant_slug

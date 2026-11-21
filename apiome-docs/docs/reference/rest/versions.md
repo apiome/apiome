@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.619.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.620.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 65 operations
 
@@ -695,6 +695,11 @@ Pull payload selection (#2591): ``includeSections`` / ``excludeSections`` reduce
 the strong ETag still identifies the revision only (same as full body, #2568).
 
 Delta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed schema entities only).
+
+Content stamp (#7078): the database keeps a per-revision change counter that moves by one for
+every transaction that edits the revision's classes, properties, paths, operations, servers,
+security schemes, component pins or its own content fields; reads never move it. The
+rendered-document cache (#7081) keys documents, and the schema ETag, on (revision, stamp).
 
 Operation id: `get_version_v1_versions__tenant_slug___project_id___version_record_id__get`
 
