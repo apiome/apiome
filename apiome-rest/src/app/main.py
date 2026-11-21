@@ -258,7 +258,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.627.0",
+    version="1.628.0",
 )
 
 
@@ -728,6 +728,7 @@ _usage_sweep_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
+_document_lifecycle_task: asyncio.Task | None = None
 _repository_webhook_secret_task: asyncio.Task | None = None
 _repository_webhook_ip_range_task: asyncio.Task | None = None
 _sdk_regen_task: asyncio.Task | None = None
@@ -1210,6 +1211,33 @@ async def startup_event():
             except Exception:
                 log.exception("async job retention sweep")
 
+    async def _document_lifecycle_sweep(interval: int) -> None:
+        """Run the document lifecycle job every ``interval`` seconds (COA-5.10, #7086).
+
+        Deletes objects no live revision has used for the grace period, drops replaced rendered
+        documents, empties deleted tenants' store prefixes and re-hashes a sample of objects. One
+        run at a time across replicas (the job's advisory lock); the first run waits one interval.
+        """
+        log = logging.getLogger(__name__)
+        while True:
+            await asyncio.sleep(interval)
+            try:
+
+                def _run_lifecycle() -> dict:
+                    thread_db = Database()
+                    try:
+                        from .document_lifecycle import run_document_lifecycle
+
+                        return run_document_lifecycle(thread_db).as_dict()
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_lifecycle)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("document lifecycle sweep")
+
     async def _repository_webhook_secret_sweep() -> None:
         """Periodically close webhook signing-secret rotation windows (REPO-4.7, #2785).
 
@@ -1368,6 +1396,11 @@ async def startup_event():
     _verification_schedule_task = asyncio.create_task(_verification_schedule_sweep())
     global _async_job_retention_task
     _async_job_retention_task = asyncio.create_task(_async_job_retention_sweep())
+    global _document_lifecycle_task
+    if int(settings.document_lifecycle_interval_seconds) > 0:
+        _document_lifecycle_task = asyncio.create_task(
+            _document_lifecycle_sweep(int(settings.document_lifecycle_interval_seconds))
+        )
     global _repository_webhook_secret_task
     _repository_webhook_secret_task = asyncio.create_task(
         _repository_webhook_secret_sweep()
@@ -1497,6 +1530,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _async_job_retention_task = None
+    global _document_lifecycle_task
+    if _document_lifecycle_task is not None:
+        _document_lifecycle_task.cancel()
+        try:
+            await _document_lifecycle_task
+        except asyncio.CancelledError:
+            pass
+        _document_lifecycle_task = None
     global _repository_webhook_secret_task
     if _repository_webhook_secret_task is not None:
         _repository_webhook_secret_task.cancel()

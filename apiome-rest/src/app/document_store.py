@@ -447,6 +447,21 @@ class BaseDocumentStore(ABC):
     def delete(self, tenant_id: str, sha256: str) -> bool:
         """Remove the object; return ``True`` when one was removed."""
 
+    def tenant_prefix(self, tenant_id: str) -> str:
+        """Return the folder holding every object of a tenant: ``<prefix>/tenants/<tenant_id>/``."""
+        tenant = _require_tenant(tenant_id)
+        folder = f"tenants/{tenant}/"
+        return f"{self.prefix}/{folder}" if self.prefix else folder
+
+    @abstractmethod
+    def delete_tenant_objects(self, tenant_id: str) -> int:
+        """Delete every object under the tenant's folder (COA-5.10); return how many went.
+
+        Raises:
+            ValueError: if ``tenant_id`` is not a safe key segment.
+            DocumentStoreError: if the backend fails.
+        """
+
     @abstractmethod
     def _write(self, tenant_id: str, sha256: str, size_bytes: int, media_type: str, stream: BinaryIO) -> bool:
         """Write a new object from ``stream`` (positioned at 0).
@@ -502,6 +517,9 @@ class DbDocumentStore(BaseDocumentStore):
 
     def delete(self, tenant_id: str, sha256: str) -> bool:
         return bool(self._db.delete_document_store_blob(_require_tenant(tenant_id), _require_sha256(sha256)))
+
+    def delete_tenant_objects(self, tenant_id: str) -> int:
+        return int(self._db.delete_document_store_blobs_for_tenant(_require_tenant(tenant_id)))
 
     def _write(self, tenant_id: str, sha256: str, size_bytes: int, media_type: str, stream: BinaryIO) -> bool:
         return bool(
@@ -587,6 +605,21 @@ class FilesystemDocumentStore(BaseDocumentStore):
         except OSError as exc:
             raise DocumentStoreError(f"The stored object could not be deleted ({type(exc).__name__}).") from None
         return True
+
+    def delete_tenant_objects(self, tenant_id: str) -> int:
+        folder = (self.root / self.tenant_prefix(tenant_id)).resolve()
+        if not folder.is_relative_to(self.root) or folder == self.root:
+            raise DocumentStoreError("The tenant folder resolves outside the storage directory.")
+        if not folder.exists():
+            return 0
+        count = sum(1 for item in folder.rglob("*") if item.is_file() and not item.name.endswith(".meta"))
+        try:
+            shutil.rmtree(folder)
+        except OSError as exc:
+            raise DocumentStoreError(
+                f"The tenant folder could not be deleted ({type(exc).__name__}: {exc.strerror or 'I/O error'})."
+            ) from None
+        return count
 
     def _write(self, tenant_id: str, sha256: str, size_bytes: int, media_type: str, stream: BinaryIO) -> bool:
         target = self._path(tenant_id, sha256)
@@ -834,6 +867,32 @@ class S3DocumentStore(BaseDocumentStore):
         except Exception as exc:  # noqa: BLE001
             raise self._failure("delete from", exc) from None
         return True
+
+    def delete_tenant_objects(self, tenant_id: str) -> int:
+        prefix = self.tenant_prefix(tenant_id)
+        deleted = 0
+        try:
+            paginator = self.client.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix):
+                keys = [{"Key": item["Key"]} for item in page.get("Contents", []) or []]
+                # DeleteObjects takes at most 1000 keys; a listing page holds at most 1000.
+                if keys:
+                    response = self.client.delete_objects(Bucket=self.bucket, Delete={"Objects": keys, "Quiet": True})
+                    errors = response.get("Errors") or []
+                    if errors:
+                        first = errors[0]
+                        raise DocumentStoreError(
+                            self._safe(
+                                f"The document store could not delete {len(errors)} object(s) under "
+                                f"{prefix!r} in bucket {self.bucket!r} ({first.get('Code')}: {first.get('Message')})."
+                            )
+                        )
+                    deleted += len(keys)
+        except DocumentStoreError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise self._failure("delete from", exc) from None
+        return deleted
 
     def presign_get(
         self,

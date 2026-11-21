@@ -4465,4 +4465,9 @@ async def delete_version(
             )
         raise HTTPException(status_code=500, detail="Failed to delete version")
 
+    # COA-5.10: delete the stored documents no live revision uses any more (best-effort; the
+    # lifecycle job collects anything left after its grace period).
+    from .document_lifecycle import release_versions_safely
+
+    release_versions_safely(db, [version_record_id])
     return {"message": f"Version '{existing['version_id']}' deleted successfully"}

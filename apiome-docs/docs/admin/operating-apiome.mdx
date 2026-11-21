@@ -183,6 +183,10 @@ The REST API checks the store at startup and refuses to start when it cannot be 
 admin console's **Document store** page has **Test connection** — see
 [Check the store](./document-store.mdx#check-the-store).
 
+Every hour the REST API also deletes stored files no live version uses any more (after a 24-hour
+grace period), empties the folders of deleted tenants, and re-hashes a sample of files to check they
+are unchanged — see [Retention and integrity](./document-store.mdx#retention-and-integrity).
+
 ### Agent runtime address in server.json
 
 The [server.json export](../bring-in/agent-access.mdx#export-serverjson) gives hosts the agent

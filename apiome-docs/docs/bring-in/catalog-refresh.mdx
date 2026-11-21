@@ -236,6 +236,10 @@ These are never pruned:
 Opening or diffing a pruned version answers **410 Gone** with the code `version-pruned` and when it
 was pruned, rather than "not found".
 
+The stored files only a pruned version used (its original document and rendered documents) are
+deleted from the [document store](../admin/document-store.mdx#retention-and-integrity) at the same
+time. Files another version still uses are kept.
+
 ## Change or stop refresh
 
 - To change the endpoint, cadence or credential, **click “Edit refresh…”**. A new endpoint or

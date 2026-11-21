@@ -106,6 +106,17 @@ def test_pruning_soft_deletes_the_overflow_and_audits_it():
     ]
 
 
+def test_pruning_releases_the_pruned_versions_documents(monkeypatch):
+    """COA-5.10: the stored documents only pruned versions used are deleted right away."""
+    from app import document_lifecycle
+
+    released: List[List[str]] = []
+    monkeypatch.setattr(document_lifecycle, "release_versions_safely", lambda db, ids: released.append(list(ids)))
+    fake = _Db([_vid(n) for n in range(4, 0, -1)], protected=[])
+    pruned = vr.prune_refresh_versions(fake, tenant_id=_TENANT, project_id=_ITEM, keep=2)
+    assert released == [pruned] and pruned
+
+
 def test_nothing_happens_within_the_limit():
     fake = _Db([_vid(n) for n in range(3, 0, -1)], protected=[])
     assert vr.prune_refresh_versions(fake, tenant_id=_TENANT, project_id=_ITEM, keep=3) == []

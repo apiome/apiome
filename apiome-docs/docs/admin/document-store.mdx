@@ -130,6 +130,9 @@ All of these are set on the `rest` service.
 | `APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES` | `65536` | Originals of at least this many bytes are stored gzip-coded. `0` turns the coding off. |
 | `APIOME_DOCUMENT_STORE_ALLOW_PRIVATE` | `false` | `s3`: allow an endpoint on a private or loopback address. |
 | `APIOME_DOCUMENT_STORE_FALLBACK` | — | What startup does when the store cannot be used. Empty refuses to start; `db` starts on the database store instead. See [Check the store](#check-the-store). |
+| `APIOME_DOCUMENT_LIFECYCLE_INTERVAL_SECONDS` | `3600` | How often the REST API runs [retention and the integrity check](#retention-and-integrity). `0` turns the schedule off. |
+| `APIOME_DOCUMENT_GC_GRACE_HOURS` | `24` | How long an unused object, a replaced rendered document or a deleted tenant's files wait before they are deleted. |
+| `APIOME_DOCUMENT_INTEGRITY_SAMPLE` | `100` | How many objects each run re-hashes, least recently checked first. `0` skips the check. |
 
 These variables are the only place the store is set. The admin console's **Document store** page
 shows them but cannot change them, and never shows a key.
@@ -192,7 +195,7 @@ The page also shows:
 | Card | What it shows |
 | --- | --- |
 | **Settings** | The settings of the active backend: bucket, region, endpoint, addressing style, encryption, where the credentials come from (**Static keys** or **Default credential chain or IAM role**), download link lifetime and prefix for `s3`; the directory for `filesystem`; the largest object for `db`. |
-| **Usage** | The number and total size of objects in the document index (originals, rendered documents and frozen schemas), split by backend when more than one holds objects, and **Last integrity check**: the latest time an object was read back and verified, for example by the [migration](#move-existing-documents-into-the-store). |
+| **Usage** | The number and total size of objects in the document index (originals, rendered documents and frozen schemas), split by backend when more than one holds objects, and **Last integrity check**: the latest time an object was read back and verified, by the [integrity check](#the-integrity-check) or the [migration](#move-existing-documents-into-the-store). |
 
 If the REST API started on the fallback, an amber notice at the top names the configured backend
 and why it could not be used.
@@ -312,7 +315,9 @@ Downloads written to the database before you configured `s3` or `filesystem` can
 [migration](./operating-apiome.mdx#move-documents-to-object-storage).
 
 When a download expires it can no longer be fetched, but its object stays in the bucket or
-directory. Apiome does not yet remove unused objects, so remove them yourself if space matters.
+directory. Export downloads are not part of the document index, so
+[retention](#retention-and-integrity) does not remove them; only deleting the tenant does. Remove
+expired ones yourself if space matters.
 
 ## Document records and the content stamp
 
@@ -388,8 +393,9 @@ Things to know:
 
 - **The document is the same as before.** The stored bytes are exactly what the generator
   produces.
-- **Older documents stay in the store.** An edit leaves the previous document and its record in
-  place. Apiome does not yet remove unused objects.
+- **Older documents are removed later.** An edit leaves the previous document in place until
+  [retention](#retention-and-integrity) drops it, `APIOME_DOCUMENT_GC_GRACE_HOURS` after the newer
+  one was written.
 - **A store failure does not fail the request.** If the bucket cannot be reached, Apiome generates
   the document for each request and serves it. The log has `rendered document not stored`.
 - **Rendered documents are not compressed**, so the stored object's SHA-256 is the `ETag`.
@@ -419,11 +425,106 @@ version and the download count.
 - If the store write fails during a freeze, the bytes are kept in the row and the freeze succeeds.
 - A version frozen before this release keeps its bytes in the row and is served from there, until
   the [migration](./operating-apiome.mdx#move-documents-to-object-storage) moves them.
-- **Unfreezing** removes the row and the link. The object stays in the store.
+- **Unfreezing** removes the row and the link. The object is deleted by
+  [retention](#retention-and-integrity) once nothing else uses it.
 - If a frozen version's bytes cannot be read from the store, `/v1/schema` answers `503`. It never
   falls back to a newly generated document, because that could differ from the frozen one.
 
 Migration V404 makes the `content` column optional. It changes no rows.
+
+## Retention and integrity
+
+Stored objects are named by their content, so revisions share them: two imports of the same file
+use one object. Apiome therefore counts, for each object, the revisions that still use it, and
+deletes the object only when that count reaches zero.
+
+### What counts as a use
+
+`document_objects.ref_count` is the number of links (`version_documents` rows) from revisions that
+are not deleted, in tenants that are not deleted. The database keeps it current (migration V406),
+whichever screen or job made the change:
+
+| Change | The count |
+| --- | --- |
+| An import, render or freeze links an object to a revision | Goes up |
+| A version is deleted, or pruned by [version retention](../bring-in/catalog-refresh.mdx#version-retention) | Goes down |
+| A tenant is deleted | Goes to zero for all its objects |
+| A project is deleted (but not permanently) | Unchanged: the project can be restored |
+| A deleted version or tenant is restored in the database (`deleted_at` cleared) before the grace period ends | Goes back up |
+
+When the count reaches zero, `document_objects.unreferenced_at` records when.
+
+### When objects are deleted
+
+- **Deleting or pruning a version** deletes, straight away, every object that version used and no
+  other live revision uses. **Deleting one of two revisions that share an original keeps the
+  object; deleting both removes it.**
+- **The retention run**, every `APIOME_DOCUMENT_LIFECYCLE_INTERVAL_SECONDS` (one hour), deletes:
+  - objects unused for longer than `APIOME_DOCUMENT_GC_GRACE_HOURS` (24 hours), including objects
+    a failed import wrote but never linked, and objects of permanently deleted projects;
+  - rendered documents a newer render of the same revision replaced longer than the grace period
+    ago;
+  - everything a deleted tenant had in the store, once the tenant has been deleted for longer than
+    the grace period: see [Deleted tenants](#deleted-tenants).
+
+Each object is recounted under a lock just before it is deleted, so an import that starts using it
+again in the meantime keeps it. If the store refuses the delete, the index row is removed anyway and
+an `object_purge_failed` audit row names the key, so you can remove it by hand.
+
+### Deleted tenants
+
+Deleting a tenant in the [admin console](./admin-tenants.mdx#change-a-tenant) drops its objects' counts
+to zero. After the grace period the retention run deletes them, then deletes everything left under
+the tenant's folder (`<prefix>/tenants/<tenant id>/`) and under its slug (`<prefix>/tenants/<slug>/`,
+where export downloads are kept), in the active store and in the database store. The slug folder is
+left alone when a live tenant now uses the same slug. Each tenant is purged once; the purge is
+recorded in `document_tenant_purges`.
+
+### The integrity check
+
+Each retention run also re-hashes `APIOME_DOCUMENT_INTEGRITY_SAMPLE` objects (100), the least
+recently checked first, and compares the SHA-256 of the stored bytes with the one the object is
+named by:
+
+| Result | What Apiome does |
+| --- | --- |
+| The bytes match | Records `document_objects.verified_at` (shown as **Last integrity check**) |
+| A rendered document changed or is missing | Drops it, so the next request renders it again |
+| An original or frozen schema changed or is missing | Keeps it and sets `document_objects.integrity_failed_at`. A later check that matches clears the flag |
+| The store cannot be read | Skips the object and tries again next run; an outage is not counted as damage |
+
+Every failure writes an `integrity_failed` audit row and an `ERROR` line in the REST log beginning
+`document integrity failure`. Point your log alerting at that text.
+
+To check every object, or to see what a run would delete:
+
+```bash
+cd apiome-rest
+PYTHONPATH=src python scripts/document_lifecycle.py --dry-run           # what would be deleted
+PYTHONPATH=src python scripts/document_lifecycle.py --integrity-only --all
+```
+
+The script prints a JSON report and exits `1` when an object failed its check, `2` when another run
+holds the lock. Only one run goes at a time across all REST instances.
+
+### The audit
+
+`apiome.document_lifecycle_events` has one row per purge and per integrity failure:
+
+| `event` | `reason` |
+| --- | --- |
+| `object_purged` | `version-deleted`, `unreferenced`, `stale-render` or `tenant-deleted` |
+| `object_purge_failed` | The same, with the store's error in `detail` |
+| `tenant_purged` | `tenant-deleted`, with the number of objects deleted |
+| `integrity_failed` | `mismatch` or `missing`, with the SHA-256 found and the roles that use the object |
+| `rendered_dropped` | A rendered document dropped after a failed check |
+
+```sql
+SELECT occurred_at, event, reason, tenant_id, storage_key
+FROM apiome.document_lifecycle_events
+ORDER BY occurred_at DESC
+LIMIT 20;
+```
 
 ## Move existing documents into the store
 
