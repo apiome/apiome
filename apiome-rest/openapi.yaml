@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.620.0
+  version: 1.621.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -15896,6 +15896,78 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for turna urlimportsrefreshonorofforsetitscadresponse422.
+  /v1/tenants/{tenant_slug}/import-originals:
+    post:
+      tags:
+      - spec-import
+      summary: Record the original document of an import
+      description: "Keep the document a finished import was read from as the revision's\
+        \ original.\n\nFor an import that ran outside the REST import job (the apiome-ui\
+        \ import wizard). The text is\nscrubbed under the tenant's secret-scrub policy\
+        \ before it is stored, and for OpenAPI and\nSwagger an import snapshot is recorded\
+        \ with it. A revision keeps its first original: calling\nagain answers ``stored:\
+        \ false`` and changes nothing.\n\nRaises:\n    HTTPException: 403 when the caller\
+        \ did not create the revision; 404 when the revision is\n        not the tenant's;\
+        \ 413 when the document is over the upload size limit; 422 when it is\n    \
+        \    not parseable JSON or YAML or breaches another intake limit."
+      operationId: record_import_original_v1_tenants__tenant_slug__import_originals_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordtheoriginaldocumentofanimportauthorization schema.
+          - type: 'null'
+            description: Recordtheoriginaldocumentofanimportauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordtheoriginaldocumentofanimport Xapikey schema.
+          - type: 'null'
+            description: Recordtheoriginaldocumentofanimport Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportOriginalRequest'
+              description: Request body for recordtheoriginaldocumentofanimportrequest.
+        description: Request body for record the original document of an import.
+      responses:
+        '200':
+          description: Successful response for record the original document of an import.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportOriginalOut'
+                description: Response payload for recordtheoriginaldocumentofanimportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for recordtheoriginaldocumentofanimportresponse422.
   /v1/catalog/{tenant_slug}:
     get:
       tags:
@@ -131271,6 +131343,89 @@ components:
         carries
 
         the intake-taxonomy code.'
+    ImportOriginalOut:
+      properties:
+        stored:
+          type: boolean
+          title: Stored
+          description: True when this call recorded the original. False when the revision
+            already had one, or the document is not OpenAPI, Swagger or Arazzo.
+          example: false
+        sha256:
+          anyOf:
+          - type: string
+            description: Response payload for import original.
+          - type: 'null'
+            description: Response payload for import original.
+          title: Sha256
+          description: SHA-256 of the stored object.
+        contentSha256:
+          anyOf:
+          - type: string
+            description: Response payload for import original.
+          - type: 'null'
+            description: Response payload for import original.
+          title: Contentsha256
+          description: SHA-256 of the stored text (after the secret scrub). Equals sha256
+            unless the object is gzip-coded.
+        sizeBytes:
+          anyOf:
+          - type: integer
+            description: Response payload for import original.
+          - type: 'null'
+            description: Response payload for import original.
+          title: Sizebytes
+          description: Length of the stored text in bytes.
+        mediaType:
+          anyOf:
+          - type: string
+            description: Response payload for import original.
+          - type: 'null'
+            description: Response payload for import original.
+          title: Mediatype
+          description: Media type of the document.
+        encoding:
+          anyOf:
+          - type: string
+            description: Response payload for import original.
+          - type: 'null'
+            description: Response payload for import original.
+          title: Encoding
+          description: 'Content coding of the stored object: identity or gzip.'
+      type: object
+      required:
+      - stored
+      title: ImportOriginalOut
+      description: What was kept for the revision.
+    ImportOriginalRequest:
+      properties:
+        versionId:
+          type: string
+          title: Versionid
+          description: The revision the import produced (versions.id).
+          example: 1.0.0
+        content:
+          type: string
+          minLength: 1
+          title: Content
+          description: 'The document text, as it was read: JSON or YAML.'
+          example: example
+        filename:
+          anyOf:
+          - type: string
+            maxLength: 4096
+            description: Request body for import original.
+          - type: 'null'
+            description: Request body for import original.
+          title: Filename
+          description: The file name or URL the document came from.
+      additionalProperties: false
+      type: object
+      required:
+      - versionId
+      - content
+      title: ImportOriginalRequest
+      description: The document an import that just succeeded was read from.
     ImportPreflightCache:
       properties:
         hit:

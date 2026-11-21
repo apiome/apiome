@@ -1391,6 +1391,66 @@ def source_retention_withheld(model: CanonicalApi) -> Optional[str]:
     return reason if isinstance(reason, str) and reason else "format-policy"
 
 
+def _store_intake_original(
+    tenant_id: str,
+    version_record_id: str,
+    intake: _ResolvedIntake,
+    format_metadata: Dict[str, Any],
+    source_label: Any,
+) -> None:
+    """Write an import's original to the document store and point ``format_metadata`` at it (COA-5.3).
+
+    Stores exactly what ``format_metadata`` is about to keep: a single document's text after the
+    tenant's secret scrub, or an archive's files as a manifest plus one part per file. A withheld
+    source (``sourceContent`` is ``None``) stores nothing and drops any original an earlier import
+    of the revision recorded.
+
+    On success ``format_metadata.sourceDocument`` holds the pointer (digest, size, media type,
+    encoding). Outside the ``db`` backend ``sourceContent`` / ``sourceEncoding`` are then removed,
+    so the database keeps the pointer only. When the store write fails, ``format_metadata`` is
+    left as it was and the source stays in the database.
+
+    Args:
+        tenant_id: The importing tenant.
+        version_record_id: The revision the import wrote.
+        intake: The resolved upload.
+        format_metadata: The revision's metadata bag, changed in place.
+        source_label: The file name or URL the import named, used to pick the media type.
+    """
+    from .original_documents import (
+        clear_originals,
+        legacy_source_columns_kept,
+        store_original,
+        store_original_fileset,
+    )
+
+    content = format_metadata.get("sourceContent")
+    if not isinstance(content, str):
+        clear_originals(tenant_id, version_record_id)
+        return
+    if intake.fileset is not None:
+        fileset = intake.fileset
+        stored = store_original_fileset(
+            tenant_id,
+            version_record_id,
+            {path: fileset.member_bytes(path) for path in fileset.members},
+            root=fileset.root,
+        )
+    else:
+        stored = store_original(
+            tenant_id,
+            version_record_id,
+            content,
+            filename=source_label if isinstance(source_label, str) else None,
+        )
+    if stored is None:
+        return
+    format_metadata["sourceDocument"] = stored.pointer()
+    if not legacy_source_columns_kept():
+        format_metadata.pop("sourceContent", None)
+        format_metadata.pop("sourceEncoding", None)
+
+
 def persist_adapter_import(
     payload: Dict[str, Any],
     model: CanonicalApi,
@@ -1542,6 +1602,7 @@ def persist_adapter_import(
         import_spec = upload_spec_metadata(metadata.get("source_kind"), options)
         if import_spec is not None:
             format_metadata["importSpec"] = import_spec
+    _store_intake_original(tenant_id, version_record_id, intake, format_metadata, source_label)
     db.set_version_source_format(
         version_record_id,
         tenant_id,

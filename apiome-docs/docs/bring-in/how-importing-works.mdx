@@ -25,8 +25,10 @@ gives an overview of the import system and links to the page with the steps for 
 
    A **Dry run** answers the same questions and saves nothing.
 4. **Commit.** The import runs as a job. You can close the wizard and it keeps going.
-5. **Record.** The new version stores where it came from and how it was read
-   ([What an import records](./what-an-import-records.md)). Its import job joins the import history.
+5. **Record.** The new version stores where it came from and how it was read, and keeps the
+   document it was imported from, after the secret scrub, as its **original**
+   ([What an import records](./what-an-import-records.md#the-original-document)). Its import job
+   joins the import history.
 
 If the import fails, nothing is saved. **“Undo import”** on the **Done** step of **Import specification** reverses an
 import that finished.

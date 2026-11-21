@@ -18,6 +18,8 @@ its source, converted, re-imported or refreshed later — whatever format it cam
 | **Tool versions** | The toolchain that parsed the source into Apiome's model | One entry per tool, with its version |
 | **Format metadata** | What the import knew about the source beyond the model | See below |
 
+| **Original document** | The file the import read, after the secret scrub, kept in the document store | See [The original document](#the-original-document) |
+
 Format and protocol are what the [Catalog's filters](./find-apis-across-formats.md), search
 across formats and the browse app's **Paradigm** and **Format** chips read.
 
@@ -37,6 +39,45 @@ format never needs a database change. It can hold:
 - **The import settings** of an uploaded file, so a **Re-upload…** replays them.
 - **Format-specific details**, such as an EDI dialect profile, FIX message types, a z/OS Connect
   binding or the REST hypermedia conventions a source declares.
+
+## The original document
+
+Every import keeps the document it read as the version's **original**, in the
+[document store](../admin/document-store.mdx#originals-of-imports). This applies to every way in:
+the import wizards, a file, a URL, pasted text, a repository, a connector, a refresh, the CLI and
+the REST API.
+
+- **What is kept is the text after the secret scrub.** Under an enforcing policy, each credential
+  is replaced before the document is stored. Apiome never stores the unscrubbed upload. See
+  [Secrets in collections and captures](./collection-secret-scrubbing.md).
+- **A withheld source stays withheld.** An archive that held a credential, or a format whose
+  uploads are sensitive (a DICOM file), stores no original. The record says so.
+- **An archive is kept as its files.** Each file is stored once, with a manifest that lists the
+  files and names the root document.
+- **The same document is stored once.** Importing an identical document again, into any version of
+  the workspace, reuses the stored object.
+- **A version keeps the original of the import that created it.** A draft made from an imported
+  version has no original of its own.
+
+Format metadata points to the original under `sourceDocument`:
+
+| Field | Holds |
+| --- | --- |
+| `sha256` | The SHA-256 of the stored object |
+| `contentSha256` | The SHA-256 of the document text. It equals `sha256` unless the object is gzip-coded |
+| `sizeBytes` | The length of the document in bytes |
+| `mediaType` | `application/json`, `application/yaml`, `application/xml` or `text/plain`; a manifest for an archive |
+| `encoding` | `identity`, or `gzip` for a large document |
+| `parts` | For an archive, the number of files |
+
+An OpenAPI or Swagger import into a project has no format metadata source. Its original is linked
+to the version directly, beside the import snapshot that the source workspace reads.
+
+:::note
+Where the document text is also kept in the database depends on the server. With the default
+`db` document store, format metadata still holds the text (`sourceContent`). With an `s3` or
+`filesystem` store, it holds the `sourceDocument` pointer only.
+:::
 
 ## Where you see it
 

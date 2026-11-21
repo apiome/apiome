@@ -971,20 +971,32 @@ async def _drive_job_inner(job_id: str, payload: Dict[str, Any]) -> None:
 
 def _record_worker_import_snapshot(
     tenant_id: str, tenant_slug: str, version_record_id: str, payload: Dict[str, Any]
-) -> None:
-    """Store a worker-imported OpenAPI document's import snapshot (DCW-2.4, #2365), never raising.
+) -> Optional[Any]:
+    """Keep the document a decomposed import read (DCW-2.4, #2365; COA-5.3, #7079), never raising.
 
-    OpenAPI and Swagger imports are decomposed into classes and paths by the apiome-ui worker and
-    keep no ``sourceContent``. This keeps, once per revision, the submitted text — scrubbed under
-    the tenant's intake policy exactly as catalog intake scrubs it — its file name and digest, and
-    the canonical document generated for the revision now that the import has committed. A document
-    that is not OpenAPI/Swagger, or cannot be read, parsed or regenerated, records nothing.
+    OpenAPI, Swagger and Arazzo imports are decomposed into classes, paths and workflows by the
+    apiome-ui importer and keep no ``sourceContent``. This keeps, once per revision, the submitted
+    text — scrubbed under the tenant's intake policy exactly as catalog intake scrubs it:
+
+    * as the revision's ``original`` object in the document store (every one of those formats);
+    * for OpenAPI and Swagger, also as an import snapshot: its file name, the digest of the
+      uploaded bytes and the canonical document generated for the revision now that the import
+      has committed. The snapshot keeps the text too while ``APIOME_DOCUMENT_STORE=db``; with
+      another backend it keeps a pointer only, unless the store write failed.
+
+    A document of any other kind, or one that cannot be read, parsed or regenerated, records
+    nothing.
 
     Args:
         tenant_id: The importing tenant.
         tenant_slug: Its slug, for regenerating the canonical document.
-        version_record_id: The revision the worker wrote.
-        payload: The job payload.
+        version_record_id: The revision the import wrote.
+        payload: The job payload (``document_base64`` or ``document_path``, ``filename``,
+            ``user_id``).
+
+    Returns:
+        The :class:`~app.original_documents.StoredOriginal` this call recorded, or ``None`` when
+        it recorded no original (also when the revision already had one).
     """
     import hashlib
 
@@ -995,37 +1007,62 @@ def _record_worker_import_snapshot(
     from .import_source_pipeline import _decode_document_bytes
     from .intake_scrub_policy import load_tenant_scrub_policy, resolve_scrub_mode
     from .intake_secret_scrub import scrub_document_text
+    from .original_documents import legacy_source_columns_kept, store_original
 
     try:
         raw = _decode_document_bytes(payload)
         text = raw.decode("utf-8", errors="replace")
         parsed = yaml.safe_load(text)
-        if not isinstance(parsed, dict) or not ({"openapi", "swagger"} & set(parsed)):
-            return
+        if not isinstance(parsed, dict):
+            return None
+        is_openapi = bool({"openapi", "swagger"} & set(parsed))
+        if not is_openapi and "arazzo" not in parsed:
+            return None
         version_row = db.get_version_by_id(version_record_id, tenant_id)
         if not version_row:
-            return
-        canonical = openapi_for_revision(version_row, tenant_slug, tenant_id)
-        resolution = resolve_scrub_mode(load_tenant_scrub_policy(tenant_id), format_key="openapi")
+            return None
+        format_key = "openapi" if is_openapi else "arazzo"
+        resolution = resolve_scrub_mode(load_tenant_scrub_policy(tenant_id), format_key=format_key)
         outcome = scrub_document_text(text, entropy_detection=resolution.entropy_detection)
+        source_format = "json" if text.lstrip().startswith("{") else "yaml"
+        stored_text = outcome.text if resolution.enforced else text
+        if not is_openapi:
+            return store_original(
+                tenant_id,
+                version_record_id,
+                stored_text,
+                media_type=f"application/{source_format}",
+                keep_existing=True,
+            )
+        canonical = openapi_for_revision(version_row, tenant_slug, tenant_id)
         report = outcome.report()
         report.update(resolution.as_report_fields())
         metadata = payload.get("metadata") or {}
+        stored = store_original(
+            tenant_id,
+            version_record_id,
+            stored_text,
+            media_type=f"application/{source_format}",
+            keep_existing=True,
+        )
+        keep_text = stored is None or legacy_source_columns_kept()
         db.record_import_snapshot(
             tenant_id=tenant_id,
             version_id=version_record_id,
             source_file=str(payload.get("filename") or metadata.get("filename") or "") or None,
-            source_format="json" if text.lstrip().startswith("{") else "yaml",
+            source_format=source_format,
             source_digest="sha256:" + hashlib.sha256(raw).hexdigest(),
-            source_text=outcome.text if resolution.enforced else text,
+            source_text=stored_text if keep_text else None,
             canonical_document=canonical,
             scrub_report=report,
             created_by=str(payload.get("user_id") or "") or None,
         )
+        return stored
     except Exception as exc:  # noqa: BLE001 - provenance must not fail a finished import
         logger.info(
             "import snapshot skipped version_record_id=%s: %s", version_record_id, f"{type(exc).__name__}"[:100]
         )
+        return None
 
 
 def _record_worker_declared_dependencies(tenant_id: str, project_id: str, payload: Dict[str, Any]) -> None:

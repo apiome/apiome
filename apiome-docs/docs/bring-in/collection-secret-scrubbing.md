@@ -39,6 +39,11 @@ lists them under `lockedFormats`. See the [governance reference](../reference/re
 | One file (a collection, a capture, a request file) | The file with each credential replaced by `«redacted»`. The rest of the file is unchanged, so it can still be converted later. |
 | An archive or a git selection (a Bruno folder, a Postman fileset) | When any member holds a credential, the archive itself is **withheld**: only its member list is stored. A clean archive is stored as uploaded. |
 
+The same rule decides the version's **original** in the document store
+([What an import records](./what-an-import-records.md#the-original-document)): the scrubbed file is
+the original, and a withheld archive has no original at all. The file as you uploaded it is never
+stored.
+
 The catalog item is built from the same scrubbed values. Request headers, query values, bodies,
 example URLs and saved samples never keep a credential. An `Authorization` header keeps only its
 scheme word: `Bearer eyJ…` is stored as `Bearer «redacted»`.

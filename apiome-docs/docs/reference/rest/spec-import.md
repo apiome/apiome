@@ -1,6 +1,6 @@
 ---
 title: "Spec import"
-description: "REST endpoints tagged spec-import: 15 operations."
+description: "REST endpoints tagged spec-import: 16 operations."
 sidebar_position: 104
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,48 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.620.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.621.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `spec-import` · 15 operations
+Tag: `spec-import` · 16 operations
+
+## `POST /v1/tenants/{tenant_slug}/import-originals` {#record-import-original-v1-tenants-tenant-slug-import-originals-post}
+
+**Record the original document of an import**
+
+Keep the document a finished import was read from as the revision's original.
+
+For an import that ran outside the REST import job (the apiome-ui import wizard). The text is
+scrubbed under the tenant's secret-scrub policy before it is stored, and for OpenAPI and
+Swagger an import snapshot is recorded with it. A revision keeps its first original: calling
+again answers ``stored: false`` and changes nothing.
+
+Raises:
+    HTTPException: 403 when the caller did not create the revision; 404 when the revision is
+        not the tenant's; 413 when the document is over the upload size limit; 422 when it is
+        not parseable JSON or YAML or breaches another intake limit.
+
+Operation id: `record_import_original_v1_tenants__tenant_slug__import_originals_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for record the original document of an import.
+
+- `application/json` — [`ImportOriginalRequest`](#schema-importoriginalrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record the original document of an import. | `application/json` [`ImportOriginalOut`](#schema-importoriginalout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/import/bulk` {#start-bulk-import-v1-tenants-tenant-slug-import-bulk-post}
 
@@ -605,6 +644,29 @@ the intake-taxonomy code.
 | `kind` | string | yes | 'archive' for a bundle payload, 'single-document' otherwise. |
 | `inventory` | `ImportBundleInventory` or null | no | The inventory page; null when ok is false or kind is single-document. |
 | `error` | `SpecImportJobError` or null | no | Stable intake-taxonomy error when the archive could not be unpacked. |
+
+### `ImportOriginalOut` {#schema-importoriginalout}
+
+What was kept for the revision.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `stored` | boolean | yes | True when this call recorded the original. False when the revision already had one, or the document is not OpenAPI, Swagger or Arazzo. |
+| `sha256` | string or null | no | SHA-256 of the stored object. |
+| `contentSha256` | string or null | no | SHA-256 of the stored text (after the secret scrub). Equals sha256 unless the object is gzip-coded. |
+| `sizeBytes` | integer or null | no | Length of the stored text in bytes. |
+| `mediaType` | string or null | no | Media type of the document. |
+| `encoding` | string or null | no | Content coding of the stored object: identity or gzip. |
+
+### `ImportOriginalRequest` {#schema-importoriginalrequest}
+
+The document an import that just succeeded was read from.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `versionId` | string | yes | The revision the import produced (versions.id). |
+| `content` | string | yes | The document text, as it was read: JSON or YAML. |
+| `filename` | string or null | no | The file name or URL the document came from. |
 
 ### `ImportPreflightReport` {#schema-importpreflightreport}
 

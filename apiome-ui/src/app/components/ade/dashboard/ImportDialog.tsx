@@ -48,6 +48,7 @@ import { planImportVersion } from '../../../utils/import-version-label';
 import { generateSlug } from '../../../utils/slug';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '../../../utils/project-quality-score-history';
 import { buildUrlImportRecord, recordUrlImport, type UrlImportSource } from '../../../utils/url-import-record';
+import { buildImportOriginalRecord, recordImportOriginal } from '../../../utils/import-original-record';
 import {
   FileIntakePanel,
   ImportChangesPanel,
@@ -136,6 +137,9 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [urlSource, setUrlSource] = useState<UrlImportSource | null>(null);
   /** The importer kind and options a URL import used, captured when it starts. */
   const urlRecordRef = useRef<{ jobId: string; sourceKind: string; options: Record<string, unknown> } | null>(null);
+  // COA-5.3: the text Analyze read, and the job that imported it, so REST can keep the original.
+  const analyzedSourceRef = useRef<{ content: string; filename: string } | null>(null);
+  const originalRecordRef = useRef<{ jobId: string; content: string; filename: string } | null>(null);
   const [clipboardContent, setClipboardContent] = useState<string | null>(null);
   const [clipboardFilename, setClipboardFilename] = useState<string | null>(null);
   const [gitContent, setGitContent] = useState<string | null>(null);
@@ -220,6 +224,24 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     })();
   }, [importComplete, importSucceeded, jobId, urlSource]);
 
+  // COA-5.3: a successful import sends the text it read to REST, which keeps it (after the secret
+  // scrub) as the revision's original. Best-effort and once per job; never for a dry run.
+  useEffect(() => {
+    const pending = originalRecordRef.current;
+    if (!importComplete || !importSucceeded || !jobId || !pending || pending.jobId !== jobId) return;
+    originalRecordRef.current = null;
+    void (async () => {
+      try {
+        const status = await getImportStatus(jobId);
+        const result = (status as { result?: { versionId?: string } }).result;
+        const body = buildImportOriginalRecord(result, pending.content, pending.filename);
+        if (body) await recordImportOriginal(body);
+      } catch {
+        // The import succeeded; only its stored original is missing.
+      }
+    })();
+  }, [importComplete, importSucceeded, jobId]);
+
   // When opened with spec from AI Design Chat (Projects dashboard), run analysis immediately
   useEffect(() => {
     if (!open || !initialLLMSpec) return;
@@ -232,6 +254,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setIsAnalyzing(true);
     analyzeSpecification(initialLLMSpec, 'ai-generated-spec.json')
       .then((result) => {
+        analyzedSourceRef.current = { content: initialLLMSpec, filename: 'ai-generated-spec.json' };
         setAnalysisResult(result);
         setCurrentStep('analysis');
       })
@@ -392,6 +415,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       const content = urlContent || clipboardContent || gitContent || swaggerHubContent || postmanContent || await selectedFile!.text();
       const filename = urlFilename || clipboardFilename || gitFilename || swaggerHubFilename || postmanFilename || selectedFile?.name || 'openapi-spec.yaml';
       const result = await analyzeSpecification(content, filename);
+      analyzedSourceRef.current = { content, filename };
       // FMT-1.1 (#5412): the local analyzer reads only the OpenAPI/Swagger/Arazzo family. When it
       // cannot place a document, ask the registry-wide detector what the bytes actually are and
       // report *its* verdict, instead of leaving the user with a bare parse error.
@@ -623,6 +647,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     urlRecordRef.current =
       selectedSource === 'url' && !importOptions.dryRun
         ? { jobId: job.jobId, sourceKind, options: { ...jobOptions } }
+        : null;
+    originalRecordRef.current =
+      analyzedSourceRef.current && !importOptions.dryRun
+        ? { jobId: job.jobId, ...analyzedSourceRef.current }
         : null;
     setJobId(job.jobId);
     setCurrentStep('import');

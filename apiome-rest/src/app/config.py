@@ -1333,6 +1333,13 @@ class Settings(BaseSettings):
         default=33_554_432,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_DB_MAX_BYTES", "document_store_db_max_bytes"),
     )
+    # Originals of at least this many bytes are stored gzip-coded (COA-5.3, #7079); smaller ones,
+    # and content gzip does not shrink, are stored as they are. 0 turns the coding off.
+    document_store_gzip_min_bytes: int = Field(
+        default=65_536,
+        ge=0,
+        validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES", "document_store_gzip_min_bytes"),
+    )
     document_store_allow_private: bool = Field(
         default=False,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ALLOW_PRIVATE", "document_store_allow_private"),

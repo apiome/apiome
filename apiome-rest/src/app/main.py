@@ -40,6 +40,7 @@ from .catalog_agent_routes import router as catalog_agent_router
 from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_drift_routes import router as catalog_drift_router
 from .url_import_routes import router as url_import_router
+from .import_original_routes import router as import_original_router
 from .catalog_refresh_routes import router as catalog_refresh_router
 from .catalog_routes import router as catalog_router
 from .catalog_upload_routes import router as catalog_upload_router
@@ -244,7 +245,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.620.0",
+    version="1.621.0",
 )
 
 
@@ -440,6 +441,7 @@ app.include_router(catalog_refresh_router)
 app.include_router(catalog_upload_router)
 app.include_router(catalog_drift_router)
 app.include_router(url_import_router)
+app.include_router(import_original_router)
 app.include_router(catalog_router)
 app.include_router(model_search_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.

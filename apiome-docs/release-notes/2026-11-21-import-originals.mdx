@@ -1,0 +1,28 @@
+---
+slug: import-originals
+title: "Every import keeps its original document"
+description: "Imports now store the document they read, after the secret scrub, in the document store."
+authors: [apiome]
+---
+
+Every import now keeps the document it read as the version's **original**, in the
+[document store](/admin/document-store). Until now an OpenAPI import kept its source in one
+database table, other formats kept theirs in another, and an import from the wizard kept none.
+
+{/* truncate */}
+
+- **Every way in:** the import wizards, a file, a URL, pasted text, a repository file, a
+  connector, a refresh, `apiome import` and the REST API. The wizard and the repository file
+  import send the document to the REST API after the import succeeds
+  (`POST /v1/tenants/{tenant}/import-originals`).
+- **Scrubbed, as before:** the original is the text after your workspace's secret scrub. A
+  withheld source stays withheld and stores nothing.
+- **Stored once:** identical documents share one stored object. An archive is stored as its files
+  plus a manifest. Documents of 64 KiB or more are gzip-coded
+  (`APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES`).
+- **For operators:** with the default `db` store the text also stays in the database, so nothing
+  else changes. With `s3` or `filesystem` the database keeps a pointer only; read the warning on
+  the document store page before you switch.
+
+See [What an import records](/bring-in/what-an-import-records#the-original-document) and
+[Originals of imports](/admin/document-store#originals-of-imports).
