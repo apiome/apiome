@@ -49,6 +49,7 @@ from .catalog_refresh import (
     RefreshSettingsError,
     register_refresh_apply,
 )
+from .revision_source import attach_revision_source, sourceless_format_metadata_sql
 
 _logger = logging.getLogger(__name__)
 
@@ -118,8 +119,9 @@ def _catalog_item(db: Any, project_id: str, tenant_id: str) -> Dict[str, Any]:
 def _revisions(db: Any, project_id: str, tenant_id: str) -> List[Dict[str, Any]]:
     """The item's live revisions, newest first, with what a rebuild needs."""
     rows = db.execute_query(
-        """
-        SELECT v.id, v.version_id, v.source_format, v.protocol, v.format_metadata, p.metadata
+        f"""
+        SELECT v.id, v.version_id, v.source_format, v.protocol,
+               {sourceless_format_metadata_sql("v")} AS format_metadata, p.metadata, p.tenant_id
         FROM apiome.versions v
         JOIN apiome.projects p ON p.id = v.project_id
         WHERE v.project_id = %s::uuid AND p.tenant_id = %s::uuid AND v.deleted_at IS NULL
@@ -138,8 +140,8 @@ def previous_version(project_id: str, revision: Mapping[str, Any]) -> Any:
 
     Args:
         project_id: The catalog item id.
-        revision: The newest revision row (``id``, ``version_id``, ``source_format``,
-            ``format_metadata``, ``metadata``).
+        revision: The newest revision row (``id``, ``tenant_id``, ``version_id``,
+            ``source_format``, ``format_metadata``, ``metadata``).
 
     Returns:
         A :class:`~app.versioning.PreviousVersion` carrying the model, or ``None`` when the
@@ -158,6 +160,12 @@ def previous_version(project_id: str, revision: Mapping[str, Any]) -> Any:
         "metadata": revision.get("metadata"),
     }
     try:
+        # The revision's source is read through the one helper (COA-5.4).
+        item = attach_revision_source(
+            item,
+            tenant_id=str(revision["tenant_id"]) if revision.get("tenant_id") else None,
+            version_id=str(revision["id"]) if revision.get("id") else None,
+        )
         model = build_conversion_source(item).api
     except Exception as exc:  # noqa: BLE001 - an unreadable baseline is "no baseline", not a failure
         _logger.info(

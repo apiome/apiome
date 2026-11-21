@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .revision_source import attach_revision_source, sourceless_format_metadata_sql
 from .schema_registry import FINGERPRINT_KIND, MODE_READWRITE, SchemaRegistryError
 
 #: Columns of a subject, in a stable order shared by every read.
@@ -306,15 +307,16 @@ def get_schema_by_id(db: Any, tenant_id: str, schema_id: int) -> Optional[Dict[s
     """Resolve a schema id — even when every subject holding it is soft-deleted.
 
     Returns:
-        The schema row plus the revision's ``source_format`` / ``format_metadata`` (for its text)
+        The schema row plus the revision's ``source_format`` / ``format_metadata`` (without the
+        schema text: :func:`app.schema_registry_service.schema_text` reads that)
         and ``subjects`` — the live ``{subject, version}`` pairs holding it — or ``None``.
     """
     row = _one(
         db.execute_query(
-            """
+            f"""
             SELECT r.schema_id, r.schema_type, r.fingerprint, r.fingerprint_kind, r.project_id,
                    r.version_record_id, r."references", r.created_at,
-                   ver.source_format, ver.format_metadata
+                   ver.source_format, {sourceless_format_metadata_sql("ver")} AS format_metadata
             FROM apiome.schema_registry_schemas r
             LEFT JOIN apiome.versions ver ON ver.id = r.version_record_id
             WHERE r.tenant_id = %s AND r.schema_id = %s
@@ -340,12 +342,36 @@ def get_schema_by_id(db: Any, tenant_id: str, schema_id: int) -> Optional[Dict[s
 
 
 def get_revision_source(db: Any, version_record_id: str) -> Optional[Dict[str, Any]]:
-    """Return a revision's ``source_format`` and ``format_metadata`` (where its schema text lives)."""
-    return _one(
+    """Return a revision's ``source_format`` and ``format_metadata`` with its schema text attached.
+
+    Args:
+        db: The database layer.
+        version_record_id: The revision (``versions.id``).
+
+    Returns:
+        The row (``id``, ``tenant_id``, ``source_format``, ``format_metadata`` without the source
+        text) carrying the revision's captured source for
+        :func:`app.revision_source.source_from_row`, or ``None`` for an unknown revision.
+    """
+    row = _one(
         db.execute_query(
-            "SELECT id, source_format, format_metadata FROM apiome.versions WHERE id = %s",
+            f"""
+            SELECT v.id, p.tenant_id, v.source_format,
+                   {sourceless_format_metadata_sql("v")} AS format_metadata
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE v.id = %s
+            """,
             (version_record_id,),
         )
+    )
+    if row is None:
+        return None
+    return attach_revision_source(
+        row,
+        tenant_id=str(row["tenant_id"]) if row.get("tenant_id") else None,
+        version_id=str(version_record_id),
+        db=db,
     )
 
 
@@ -357,8 +383,9 @@ def get_latest_live_revision(db: Any, tenant_id: str, project_id: str) -> Option
     """
     return _one(
         db.execute_query(
-            """
-            SELECT v.id, v.version_id, v.source_format, v.format_metadata
+            f"""
+            SELECT v.id, v.version_id, v.source_format,
+                   {sourceless_format_metadata_sql("v")} AS format_metadata
             FROM apiome.versions v
             JOIN apiome.projects p ON p.id = v.project_id
             WHERE v.project_id = %s AND p.tenant_id = %s AND p.publishable = false

@@ -34,6 +34,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from .database import db
+from .revision_source import SOURCE_ROW_KEY, attach_revision_source, sourceless_format_metadata_sql
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,9 @@ CHANGE_REPORT_ACTION = "catalog.connector.change_report.generated"
 def _revision_row(tenant_id: str, project_id: str, version_id: str) -> Optional[Dict[str, Any]]:
     """The revision's label, source format and captured source, scoped to the tenant's item."""
     rows = db.execute_query(
-        """
-        SELECT v.id, v.version_id, v.source_format, v.protocol, v.format_metadata, v.created_at,
+        f"""
+        SELECT v.id, v.version_id, v.source_format, v.protocol,
+               {sourceless_format_metadata_sql("v")} AS format_metadata, v.created_at,
                p.metadata
         FROM apiome.versions v
         JOIN apiome.projects p ON p.id = v.project_id
@@ -60,7 +62,10 @@ def _revision_row(tenant_id: str, project_id: str, version_id: str) -> Optional[
         """,
         (version_id, project_id, tenant_id),
     )
-    return rows[0] if rows else None
+    if not rows:
+        return None
+    # The source text is read through the one helper (COA-5.4): the store, then legacy columns.
+    return attach_revision_source(rows[0], tenant_id=tenant_id, version_id=version_id, db=db)
 
 
 def openapi_for_catalog_revision(project_id: str, revision: Dict[str, Any]) -> Dict[str, Any]:
@@ -104,6 +109,7 @@ def _canonical_for_catalog_revision(project_id: str, revision: Dict[str, Any]) -
         "protocol": revision.get("protocol"),
         "format_metadata": revision.get("format_metadata"),
         "metadata": revision.get("metadata"),
+        SOURCE_ROW_KEY: revision.get(SOURCE_ROW_KEY),
     }
     return build_conversion_source(item).api
 

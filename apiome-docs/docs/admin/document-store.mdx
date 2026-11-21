@@ -150,11 +150,10 @@ Where the document text is also kept depends on the backend:
 | `db` (default) | The original | The text as before (`version_import_snapshots.source_text`, `format_metadata.sourceContent`) and the pointer |
 | `s3` or `filesystem` | The original | The pointer only |
 
-:::warning
-With `s3` or `filesystem`, the text of a new import is no longer in the database. Features that
-read it from there (convert to OpenAPI, export from source, the source workspace's as-imported
-view) do not find it until they read from the store, which is planned for this release (COA-5.4).
-Stay on `db` until then if you rely on them.
+:::note
+Every feature that needs the document reads it from the store, whatever the backend:
+[How originals are read](#how-originals-are-read). You can run on `s3` or `filesystem` without
+losing export, conversion or the source workspace's as-imported view.
 :::
 
 - **Large documents are gzip-coded.** A document of at least
@@ -168,6 +167,45 @@ Stay on `db` until then if you rely on them.
 - **With `db`, an original larger than `APIOME_DOCUMENT_STORE_DB_MAX_BYTES` is not stored.** The
   text stays in the database as before.
 - **Existing versions are not changed.** Only imports that run after the upgrade write an original.
+
+## How originals are read
+
+Export, conversion, lint evidence, compatibility checks, the catalog's **Source & Code**
+tab, the schema registry and the source workspace's as-imported view all read an import's
+document the same way:
+
+1. **The document store.** The revision's `original` in `version_documents`, decoded if it is
+   gzip-coded. An archive comes back as its files, with the root file the import chose.
+2. **The database, for older revisions.** A revision imported before originals were stored is
+   read from where its text was kept then (`format_metadata.sourceContent` or
+   `version_import_snapshots.source_text`).
+
+If neither holds the document, the feature reports that the source was not kept, as before (for
+an export, `422 source-not-captured`).
+
+- **If an object cannot be read** (a bucket that is down, an object deleted by hand), the reader
+  falls back to the database text when there is one. The REST log has a line `original not read`.
+- **An OpenAPI, Swagger or Arazzo project is not rebuilt from its original.** Its classes, paths
+  and workflows are what you edit, so exports are generated from them. The original is used only
+  to show what was imported.
+- **Lists do not carry the document.** The catalog list, a catalog item and version lookups
+  return `format_metadata` without `sourceContent`. `GET …/catalog/{tenant}/{item}/source`
+  returns the document.
+
+### The parsed-model cache
+
+Reading a version for export or a check means parsing its document. Each REST worker keeps the
+most recently parsed models in memory, keyed by the SHA-256 of the document, so a second read of
+the same document does not parse it again. An import that changes the document has a new digest,
+so nothing needs to be cleared.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `APIOME_CANONICAL_MODEL_CACHE_ENTRIES` | `32` | The most models one worker keeps. `0` turns the cache off. |
+| `APIOME_CANONICAL_MODEL_CACHE_MAX_BYTES` | `16777216` | The most document bytes the kept models may add up to (16 MiB). A document larger than a quarter of this is parsed every time. `0` turns the cache off. |
+
+Memory use grows with both settings and with the number of REST workers. Lower them on a small
+host.
 
 ## Large export downloads
 

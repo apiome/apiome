@@ -20,6 +20,7 @@ import pytest
 
 from app.canonical_model import ApiIdentity, ApiParadigm, CanonicalApi
 from app.conversion_job import ConversionError, ConversionSource
+from app.revision_source import source_from_row
 from app.export_source import (
     ExportSourceError,
     load_export_source,
@@ -228,7 +229,7 @@ def test_decomposed_openapi_revision_is_rebuilt_from_the_database(source_format)
     assert source.version_record_id == _REV_UUID
     rebuild.assert_called_once()
     assert calls[1]["source_format"] == "openapi"
-    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)
+    assert source_from_row(calls[1]).text == json.dumps(spec)
 
 
 def test_a_non_openapi_revision_without_source_is_not_rebuilt():
@@ -277,7 +278,7 @@ def test_public_load_rebuilds_a_decomposed_openapi_revision():
 
     assert source.version_record_id == _REV_UUID
     db.get_version_by_id.assert_called_once_with(_REV_UUID, "tenant-9")
-    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)
+    assert source_from_row(calls[1]).text == json.dumps(spec)
 
 
 def test_the_shared_loader_never_rebuilds_without_a_tenant():

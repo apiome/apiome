@@ -1340,6 +1340,19 @@ class Settings(BaseSettings):
         ge=0,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_GZIP_MIN_BYTES", "document_store_gzip_min_bytes"),
     )
+    # Parsed canonical models kept in-process by source digest (COA-5.4, #7080). The cache holds
+    # at most ``canonical_model_cache_entries`` models whose sources add up to at most
+    # ``canonical_model_cache_max_bytes``; either at 0 turns it off. Each worker has its own.
+    canonical_model_cache_entries: int = Field(
+        default=32,
+        ge=0,
+        validation_alias=AliasChoices("APIOME_CANONICAL_MODEL_CACHE_ENTRIES", "canonical_model_cache_entries"),
+    )
+    canonical_model_cache_max_bytes: int = Field(
+        default=16_777_216,
+        ge=0,
+        validation_alias=AliasChoices("APIOME_CANONICAL_MODEL_CACHE_MAX_BYTES", "canonical_model_cache_max_bytes"),
+    )
     document_store_allow_private: bool = Field(
         default=False,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ALLOW_PRIVATE", "document_store_allow_private"),

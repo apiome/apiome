@@ -403,22 +403,41 @@ def compatibility_verdict(
     return {"is_compatible": verdict.is_compatible, "messages": messages}
 
 
-def revision_fingerprint(revision: Dict[str, Any], schema_type: str, subject: str) -> str:
+def revision_fingerprint(
+    revision: Dict[str, Any],
+    schema_type: str,
+    subject: str,
+    *,
+    db: Any = None,
+    tenant_id: Optional[str] = None,
+) -> str:
     """Return a revision's fingerprint: the one its import recorded, else recomputed from its source.
 
     The import pipeline stores the adapter's fingerprint on ``format_metadata.fingerprint`` (MFI-25.8),
     which is the same canonical-model fingerprint :func:`app.schema_registry.fingerprint_schema`
     computes, so an attached item and a registered schema compare like with like.
 
+    Args:
+        revision: The revision row (``id``, ``format_metadata``).
+        schema_type: The schema type to fingerprint as.
+        subject: The subject the schema is attached to.
+        db: The database layer, to read the revision's captured source when no fingerprint was
+            recorded. Without it only a source the row itself carries is read.
+        tenant_id: The tenant that owns the revision.
+
     Raises:
         SchemaRegistryError: ``item-has-no-source`` (422) when neither is available.
     """
     from .catalog_detail import resolve_source_payload
+    from .revision_source import attach_revision_source
 
     fmd = revision.get("format_metadata") if isinstance(revision.get("format_metadata"), dict) else {}
     stored = fmd.get("fingerprint")
     if isinstance(stored, str) and stored.startswith("sha256:"):
         return stored
+    if db is not None and tenant_id and revision.get("id"):
+        # No recorded fingerprint: read the schema through the one source helper (COA-5.4).
+        revision = attach_revision_source(revision, tenant_id=tenant_id, version_id=str(revision["id"]), db=db)
     payload = resolve_source_payload(revision)
     if not payload or payload.get("mode") != "content":
         raise SchemaRegistryError(
@@ -473,7 +492,7 @@ def attach_catalog_item(
             "Only Avro, JSON Schema and Protobuf catalog items can be attached to a subject "
             f"(this item is {revision.get('source_format') or 'of unknown format'}).",
         )
-    fingerprint = revision_fingerprint(revision, schema_type, subject)
+    fingerprint = revision_fingerprint(revision, schema_type, subject, db=db, tenant_id=tenant_id)
     return store.record_version(
         db,
         tenant_id=tenant_id,

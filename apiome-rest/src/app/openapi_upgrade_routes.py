@@ -45,6 +45,7 @@ from .openapi_version_import import (
     import_openapi_as_version,
 )
 from .permissions import Action, Resource, enforce_permission
+from .revision_source import attach_revision_source, source_from_row
 
 logger = logging.getLogger(__name__)
 
@@ -182,15 +183,21 @@ def load_version_source(
             "unsupported-source",
             "This version was imported from several files. Export it as one bundled document and upgrade that file.",
         )
-    text = fmd.get("sourceContent")
-    if isinstance(text, str) and text.strip():
+    captured = source_from_row(attach_revision_source(row, tenant_id=tenant_id, version_id=str(revision_id), db=db))
+    if captured is not None and captured.is_fileset:
+        raise _refuse(
+            409,
+            "unsupported-source",
+            "This version was imported from several files. Export it as one bundled document and upgrade that file.",
+        )
+    if captured is not None and captured.text.strip():
         meta["origin"] = "captured"
-        return _parse_text(text, str(row.get("version_label") or project_id)), meta
+        return _parse_text(captured.text, str(row.get("version_label") or project_id)), meta
     if _is_decomposed_openapi(row.get("source_format")):
         rebuilt = _reconstructed_openapi_item(row, tenant_id, str(revision_id))
         if rebuilt is not None:
             meta["origin"] = "rebuilt"
-            return _parse_text(rebuilt["format_metadata"]["sourceContent"], str(project_id)), meta
+            return _parse_text(source_from_row(rebuilt).text, str(project_id)), meta
     raise _refuse(409, "no-source", "This version has no OpenAPI source to upgrade.")
 
 

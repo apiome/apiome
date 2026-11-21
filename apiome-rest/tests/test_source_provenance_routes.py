@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.main import app
+from app.revision_source import source_from_text
 
 client = TestClient(app)
 _AUTH = {"tenant_id": "t1", "user_id": "u1", "auth_method": "jwt"}
@@ -32,7 +33,6 @@ SNAPSHOT = {
     "source_file": "pets.yaml",
     "source_format": "yaml",
     "source_digest": "sha256:abc",
-    "source_text": SOURCE,
     "canonical_document": IMPORTED,
     "created_at": datetime(2026, 11, 1, tzinfo=timezone.utc),
 }
@@ -45,7 +45,11 @@ def _wired():
         patch("app.source_provenance_routes.enforce_permission", return_value="u1") as guard,
         patch("app.source_provenance_routes.openapi_for_revision", return_value=CURRENT),
         patch("app.source_provenance_routes.db") as db,
+        # COA-5.4: the imported text is read through the one source helper, not off the snapshot.
+        patch("app.source_provenance_routes.revision_source", return_value=source_from_text(SOURCE)) as read,
+        patch("app.source_provenance_routes.has_revision_source", return_value=True),
     ):
+        db.read_source = read
         db.get_version_by_id.return_value = {"id": "v2", "project_id": "p1", "parent_version_id": "v1"}
         db.get_import_snapshot_lineage.return_value = (SNAPSHOT, ["v2", "v1"])
         db.list_source_edits.return_value = [
@@ -149,3 +153,18 @@ def test_an_unknown_or_foreign_revision_is_a_404(_wired):
 
 def test_a_malformed_pointer_is_a_422(_wired):
     assert client.get(_URL, params={"pointer": "paths"}).status_code == 422
+
+
+def test_the_excerpt_text_is_read_for_the_snapshot_revision_through_the_helper(_wired):
+    db, _ = _wired
+    client.get(_URL, params={"pointer": "/paths/~1pets/post/summary"})
+    db.read_source.assert_called_once_with(db, None, "t1", "v1", decomposed=True)
+
+
+def test_no_excerpt_when_the_imported_text_is_gone(_wired):
+    db, _ = _wired
+    db.read_source.return_value = None
+    with patch("app.source_provenance_routes.has_revision_source", return_value=False):
+        body = client.get(_URL, params={"pointer": "/paths/~1pets/post/summary"}).json()
+    assert body["elements"][0]["excerpt"] is None
+    assert body["snapshot"]["textAvailable"] is False

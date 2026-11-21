@@ -27,6 +27,7 @@ from .auth import validate_authentication
 from .compatibility_engine import openapi_for_revision
 from .database import db
 from .permissions import Action, Resource, enforce_permission
+from .revision_source import has_revision_source, revision_source
 from .source_provenance import EXCERPT_MAX_LINES, classify_elements, escape_token, excerpt
 
 __all__ = ["router"]
@@ -194,7 +195,13 @@ async def get_source_provenance(
     if pointer is not None:
         owner = _owning_element(pointer, elements)
         elements = [owner] if owner else []
-        text = snapshot.get("source_text") if snapshot else None
+        # The imported document is read through the one helper: the store, then the snapshot row.
+        imported = (
+            revision_source(db, None, tenant_id, str(snapshot["version_id"]), decomposed=True)
+            if snapshot and owner and owner.source_pointer
+            else None
+        )
+        text = imported.text if imported else None
         if owner and owner.source_pointer and text:
             quoted = excerpt(text, owner.source_pointer)
             owner.excerpt = (
@@ -228,7 +235,7 @@ async def get_source_provenance(
             source_format=snapshot["source_format"],
             source_digest=snapshot["source_digest"],
             imported_at=_iso(snapshot.get("created_at")),
-            text_available=bool(snapshot.get("source_text")),
+            text_available=has_revision_source(db, tenant_id, str(snapshot["version_id"]), decomposed=True),
         )
         if snapshot
         else None,

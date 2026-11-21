@@ -333,6 +333,26 @@ Evidence rows also always redact source-native identifiers and text (shown as
 `[redacted]`) — construct keys, statuses, reasons, and target locations remain, but
 captured source values never leave the server.
 
+## Where the source comes from
+
+Evidence and exports are computed from the document the import read. Apiome reads that document
+from the [document store](../admin/document-store.mdx#how-originals-are-read), or from the
+database for a version imported before documents were stored there.
+
+When no document was kept, there is nothing to compute from. Every export and fidelity route then
+answers `422` with one of two codes:
+
+| `code` | Meaning | What to do |
+| --- | --- | --- |
+| `source-not-captured` | The version has no stored document. | Import the source again. |
+| `source-withheld` | The document was not stored on purpose, because it held credentials or sensitive payload. | Remove the secret from the source, then import it again. |
+
+[When an item has nothing to export from](./export-a-spec.md#when-an-item-has-nothing-to-export-from)
+shows the same case in the **Export** dialog.
+
+An OpenAPI, Swagger or Arazzo project is the exception: it is exported from its classes, paths
+and workflows, so it never reports a missing source.
+
 ## Options change the snapshot
 
 Per-target export options (e.g. OpenAPI's `include_paths`) are folded into the

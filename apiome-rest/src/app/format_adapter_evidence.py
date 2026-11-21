@@ -22,6 +22,7 @@ from .external_linter_runner import default_restricted_runner
 from .format_lint_capabilities import normalize_format_key
 from .graphql_eslint_adapter import run_graphql_eslint_via_adapter
 from .lint_evidence import SUBJECT_CATALOG_REVISION
+from .revision_source import attach_revision_source, source_from_row
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +181,21 @@ def capture_graphql_eslint_evidence_sync(
         return None
 
 
-def _source_text_from_projection(projection: Any) -> Optional[str]:
-    """Extract plain-text source from a version source projection when available."""
+def _source_text_from_projection(
+    projection: Any, *, version_record_id: Optional[str] = None, tenant_id: Optional[str] = None
+) -> Optional[str]:
+    """Return a revision's captured source as plain text, when it is one document.
+
+    Args:
+        projection: The revision's source projection row.
+        version_record_id: The revision, to read its source through
+            :func:`app.revision_source.attach_revision_source`; omit to read only what the row
+            carries.
+        tenant_id: The tenant that owns the revision.
+
+    Returns:
+        The text, or ``None`` for no source, an archive, or a set of files (not unpacked here).
+    """
     if not projection:
         return None
     fmd = projection.get("format_metadata") or {}
@@ -189,10 +203,11 @@ def _source_text_from_projection(projection: Any) -> Optional[str]:
         return None
     if fmd.get("intakeKind") == "archive" or fmd.get("sourceEncoding") == "base64":
         return None
-    content = fmd.get("sourceContent") or fmd.get("rawSource") or fmd.get("source_content")
-    if isinstance(content, str) and content.strip():
-        return content
-    return None
+    row = attach_revision_source(projection, tenant_id=tenant_id, version_id=version_record_id, db=db)
+    source = source_from_row(row)
+    if source is None or source.is_fileset or not source.text.strip():
+        return None
+    return source.text
 
 
 def _scanner_already_evidenced(version_record_id: str, tenant_id: str, scanner_id: str) -> bool:
@@ -221,7 +236,13 @@ async def capture_format_adapters_for_revision(
 
         projection = db.get_version_source_projection(version_record_id, tenant_id)
         fmt = normalize_format_key(source_format or (projection or {}).get("source_format"))
-        text = source_text if source_text is not None else _source_text_from_projection(projection)
+        text = (
+            source_text
+            if source_text is not None
+            else _source_text_from_projection(
+                projection, version_record_id=version_record_id, tenant_id=tenant_id
+            )
+        )
         if not fmt:
             return ids
         if fmt == "graphql" and text:

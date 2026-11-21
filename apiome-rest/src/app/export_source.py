@@ -34,6 +34,7 @@ from .catalog_conversion import build_conversion_source
 from .conversion_job import ConversionError, ConversionSource
 from .database import db
 from .revision_deprecation import is_uuid_string
+from .revision_source import SOURCE_ROW_KEY, attach_revision_source, source_from_text
 
 _logger = logging.getLogger(__name__)
 
@@ -192,7 +193,8 @@ def _is_decomposed_openapi(source_format: Optional[str]) -> bool:
     """Whether a revision with this ``source_format`` was imported as decomposed OpenAPI.
 
     OpenAPI imports (and catalog conversions, which commit through the OpenAPI import) are
-    decomposed into classes and paths by the import worker and keep no ``sourceContent``; their
+    decomposed into classes and paths by the import worker and are not rebuilt from the document
+    they read; their
     ``source_format`` is empty or an OpenAPI/Swagger key.
     """
     key = (source_format or "").strip().lower()
@@ -223,7 +225,8 @@ def _reconstructed_openapi_item(
     return {
         **item,
         "source_format": "openapi",
-        "format_metadata": {"sourceContent": json.dumps(spec)},
+        "format_metadata": {},
+        SOURCE_ROW_KEY: source_from_text(json.dumps(spec), source_format="openapi"),
     }
 
 
@@ -236,7 +239,7 @@ def build_revision_source(
     test bench and validation/synthesis (``schema_reference``), schema and contract suites. It
     tries the revision's captured source first — the same parse + normalize the import ran — and,
     when there is none because the revision is a decomposed OpenAPI import (which keeps classes
-    and paths, never ``sourceContent``), rebuilds the OpenAPI document from the database with the
+    and paths, which may have been edited since the import), rebuilds the OpenAPI document from the database with the
     generator the spec viewer and compatibility checks use, then parses that instead.
 
     Args:
@@ -253,6 +256,8 @@ def build_revision_source(
         ConversionError: When the revision has neither a captured source nor a rebuildable OpenAPI
             document (``422``), or its source has no adapter (``400``) or does not parse (``422``).
     """
+    # The captured source is read through the one helper (COA-5.4): store first, legacy second.
+    item = attach_revision_source(item, tenant_id=tenant_id, version_id=revision_id, db=db)
     try:
         return build_conversion_source(item, source_version_id=revision_id)
     except ConversionError:

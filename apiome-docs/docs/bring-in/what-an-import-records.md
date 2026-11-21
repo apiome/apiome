@@ -75,8 +75,11 @@ to the version directly, beside the import snapshot that the source workspace re
 
 :::note
 Where the document text is also kept in the database depends on the server. With the default
-`db` document store, format metadata still holds the text (`sourceContent`). With an `s3` or
-`filesystem` store, it holds the `sourceDocument` pointer only.
+`db` document store, the database still holds the text (`sourceContent`). With an `s3` or
+`filesystem` store, it holds the `sourceDocument` pointer only. Either way, the REST API no
+longer returns `sourceContent` in a catalog item's `format_metadata`. Download the document
+with `GET /v1/catalog/{tenant}/{item}/source`, or **click "Download raw source"** on the item's
+**Source & Code** tab.
 :::
 
 ## Where you see it
