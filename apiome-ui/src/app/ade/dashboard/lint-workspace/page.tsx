@@ -57,6 +57,16 @@ import {
   type WorkspaceFilters,
   type WorkspaceSort,
 } from '@/app/utils/lint-workspace';
+import { applyLintFixes, fetchLintFixPlan, revisionHref } from '@/app/utils/lint-fix';
+import { fetchVersionLintReport } from '@/app/utils/version-lint-report';
+import LintFixApplyDialog from '@/app/components/ade/lintFix/LintFixApplyDialog';
+import {
+  applyPostureFixes,
+  groupFindingsByRevision,
+  partitionFixableFindings,
+  postureFixToast,
+  type PostureFixOutcome,
+} from '@/app/components/ade/lintFix/postureFixes';
 
 /**
  * Lint posture — `/ade/dashboard/lint-workspace` (CLX-4.1, #4859; redesigned HIVE-5.8, #5311).
@@ -85,6 +95,14 @@ import {
  * are now closed over by the toast that offers them, so a toast can only ever undo its own
  * write. Partial failures are undoable too, for the same reason: the server applied part of
  * the batch, and that part is exactly what `buildUndoBulkRequests` describes.
+ *
+ * ### Apply fix (GVM-3.6, #5874)
+ *
+ * The drawer and the bulk bar both offer *Apply fix* for catalog-revision findings. The page
+ * runs it (`applyPostureFixes`): plan per revision, apply the ready fixes as new `lint-fix`
+ * revisions, read each new revision's stored re-lint, and move to `fixed` only the findings it
+ * no longer reports. The outcome is kept so the drawer can show the new revision and what the
+ * re-lint observed.
  *
  * ### The reads are independent
  *
@@ -173,6 +191,8 @@ function LintWorkspacePageInner() {
   const [waiver, setWaiver] = React.useState<WaiverTarget | null>(null);
   const [saveViewOpen, setSaveViewOpen] = React.useState(false);
   const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [fixTarget, setFixTarget] = React.useState<LintWorkspaceFinding[] | null>(null);
+  const [fixOutcome, setFixOutcome] = React.useState<PostureFixOutcome | null>(null);
 
   const applyUrlState = React.useCallback(
     (next: WorkspaceFilters, nextSort: string, nextOffset: number) => {
@@ -358,6 +378,71 @@ function LintWorkspacePageInner() {
       }
     },
     [runBulk, refreshAll]
+  );
+
+  /**
+   * Open the Apply fix confirmation for a set of findings, or say why none can be fixed.
+   *
+   * @param findings The drawer's finding or the bulk selection.
+   */
+  const requestApplyFix = React.useCallback((findings: readonly LintWorkspaceFinding[]) => {
+    const { supported, skipped } = partitionFixableFindings(findings);
+    if (supported.length === 0) {
+      toast.warning('No fixes to apply', {
+        description: skipped[0]?.reason ?? 'Select findings on catalog revisions.',
+      });
+      return;
+    }
+    setFixTarget([...findings]);
+  }, []);
+
+  /**
+   * Run Apply fix over the confirmed findings with the given reason.
+   *
+   * @param reason The audited reason.
+   */
+  const runApplyFix = React.useCallback(
+    async (reason: string) => {
+      if (!fixTarget) return;
+      setBulkBusy(true);
+      try {
+        const outcome = await applyPostureFixes(fixTarget, reason, {
+          fetchPlan: (projectId, versionId) => fetchLintFixPlan(projectId, versionId),
+          apply: applyLintFixes,
+          fetchReport: (projectId, versionId) => fetchVersionLintReport(projectId, versionId),
+          markFixed: (findings, rationale) =>
+            runBulk(buildBulkRequest([...findings], { state: 'fixed', rationale })),
+        });
+        setFixOutcome(outcome);
+        // The drawer's finding takes the state the decision endpoint recorded, not a guess.
+        setDetail((current) => {
+          const state = current?.sourceFingerprint
+            ? outcome.states[current.sourceFingerprint]
+            : undefined;
+          return current && state ? { ...current, effectiveState: state } : current;
+        });
+        const copy = postureFixToast(outcome);
+        const created = outcome.revisions.filter((revision) => revision.result);
+        const action =
+          created.length === 1
+            ? {
+                label: 'Open revision',
+                onClick: () => router.push(revisionHref(created[0].projectId)),
+              }
+            : undefined;
+        const show =
+          copy.tone === 'error' ? toast.error : copy.tone === 'warning' ? toast.warning : toast.success;
+        show(copy.title, { description: copy.description, action });
+        setSelected(new Set());
+        refreshAll();
+      } catch (caught) {
+        toast.error(describeFailure(caught, 'Apply fix failed'));
+      } finally {
+        setBulkBusy(false);
+        setFixTarget(null);
+      }
+    },
+    [fixTarget, runBulk, refreshAll, router]
   );
 
   const selectedFindings = React.useMemo(
@@ -554,6 +639,7 @@ function LintWorkspacePageInner() {
                 })
               }
               bulkBusy={bulkBusy}
+              onApplyFix={() => requestApplyFix(selectedFindings)}
             />
           </div>
         )}
@@ -591,6 +677,24 @@ function LintWorkspacePageInner() {
         onRequestWaiver={(finding) =>
           setWaiver({ mode: 'request', findings: [finding], verbLabel: 'Request waiver' })
         }
+        onApplyFix={(finding) => requestApplyFix([finding])}
+        fixOutcome={fixOutcome}
+      />
+
+      <LintFixApplyDialog
+        target={
+          fixTarget
+            ? {
+                count: partitionFixableFindings(fixTarget).supported.length,
+                ruleId: fixTarget.length === 1 ? fixTarget[0].ruleId : null,
+                revisions: groupFindingsByRevision(partitionFixableFindings(fixTarget).supported)
+                  .size,
+              }
+            : null
+        }
+        busy={bulkBusy}
+        onClose={() => setFixTarget(null)}
+        onSubmit={(reason) => void runApplyFix(reason)}
       />
 
       <LintWaiverDialog

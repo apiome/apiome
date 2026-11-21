@@ -4295,6 +4295,7 @@ const Versions = () => {
                       setVersionsLoaded(false);
                       void loadVersions();
                     }}
+                    onRevisionsChanged={() => void loadVersions()}
                     projectId={selectedProjectId}
                     projectSlug={selectedProject?.slug}
                     headRevisionId={headRevisionId}

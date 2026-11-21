@@ -22,6 +22,7 @@ import {
 } from '../version-dialogs/versionDialogsModel';
 import { LintReportDialog } from './LintReportDialog';
 import { fetchVersionLintReport, type VersionLintReport } from '../../../utils/version-lint-report';
+import { useRevisionLintFixes } from '../lintFix/useRevisionLintFixes';
 
 interface VersionLintBadgeProps {
   projectId: string;
@@ -32,6 +33,11 @@ interface VersionLintBadgeProps {
   storedScore?: number | null;
   /** A-F grade stored on the version record (`qualityGrade`); null/undefined = not scored yet. */
   storedGrade?: string | null;
+  /**
+   * Called after the report dialog applied lint fixes (GVM-3.6, #5874): a new revision exists,
+   * so the caller re-reads its revisions list.
+   */
+  onFixApplied?: () => void;
 }
 
 /** The headline the chip renders: the stored record values, or a fetched report's values. */
@@ -69,6 +75,7 @@ export function VersionLintBadge({
   versionLabel,
   storedScore,
   storedGrade,
+  onFixApplied,
 }: VersionLintBadgeProps) {
   const [report, setReport] = useState<VersionLintReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -114,6 +121,13 @@ export function VersionLintBadge({
   // changes identity while mounted).
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // The deterministic fixes (GVM-3.6): planned once the report is on screen. An apply creates a
+  // new revision, so the stored report is read again and the caller refreshes its list.
+  const fixes = useRevisionLintFixes(projectId, versionId, open && report !== null, () => {
+    startFetch();
+    onFixApplied?.();
+  });
+
   const headline = resolveLintHeadline(storedScore, storedGrade, report);
 
   const dialog = (
@@ -127,6 +141,7 @@ export function VersionLintBadge({
       error={error}
       onRetry={startFetch}
       preferenceView="studio-lint"
+      fixes={fixes}
     />
   );
 

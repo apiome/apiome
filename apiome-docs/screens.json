@@ -1116,6 +1116,26 @@
       "data": "fixture:hive-a11y/lint-posture-ranks.html"
     },
     {
+      "id": "lint-posture-apply-fix",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-apply-fix.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/lintWorkspace/LintFindingDrawer.tsx",
+        "apiome-ui/src/app/components/ade/lintFix/LintFindingFixSection.tsx"
+      ]
+    },
+    {
+      "id": "lint-report-apply-fix",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-report-apply-fix.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/LintReportDialog.tsx",
+        "apiome-ui/src/app/components/ade/lintFix/LintReportFixControls.tsx"
+      ]
+    },
+    {
       "id": "review",
       "route": "/ade/reviews/[id]",
       "waitFor": "#a11y-mount > *",

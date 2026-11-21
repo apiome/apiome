@@ -314,6 +314,19 @@ an apply leaves one audited revision or nothing. The response names the new revi
 
 Applying every `ready` fix and then planning again leaves nothing ready.
 
+## Apply fixes in the UI
+
+Both UI surfaces call the same apply endpoint, with a reason:
+
+- **Versions → lint report:** a **Fix** chip on each fixable finding and **Apply N deterministic
+  fixes** for all ready ones. See [Version dialogs → Lint report](./version-dialogs.mdx#lint-report).
+- **Lint posture:** **Apply fix** in a finding's drawer and in the bulk bar, for findings on catalog
+  revisions. The finding moves to **Fixed** only once the new revision's lint report no longer lists
+  it. See [Lint posture → Apply a fix](../govern/lint-posture.mdx#apply-a-fix).
+
+Only `ready` fixes are offered. `breaking` and `conflict` entries show their reason, and a published
+revision's fixes are read-only.
+
 ## Fix from the CLI
 
 `apiome lint --fix` plans a version's fixes and applies the ready ones as a new revision, like

@@ -33,6 +33,14 @@ import {
   lintReportGuideContext,
 } from './lint/LintViolationFindingsList';
 import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
+import { useState } from 'react';
+import LintFixApplyDialog from '@/app/components/ade/lintFix/LintFixApplyDialog';
+import {
+  LintFixRowAction,
+  LintReportFixBar,
+  type LintFixApplyRequest,
+} from '@/app/components/ade/lintFix/LintReportFixControls';
+import type { RevisionLintFixes } from '@/app/components/ade/lintFix/useRevisionLintFixes';
 
 interface LintReportDialogProps {
   open: boolean;
@@ -62,6 +70,13 @@ interface LintReportDialogProps {
    * the catalog "Open full report" surface, where reading room matters more than compactness.
    */
   expanded?: boolean;
+  /**
+   * The revision's deterministic lint fixes (GVM-3.6, #5874). When given, fixable findings carry
+   * a *Fix* chip, the list is headed by *Apply N deterministic fixes*, and `breaking` /
+   * `conflict` entries render their reason; a published revision shows them read-only. Omitted
+   * on surfaces that have no revision to fix (the catalog orbs).
+   */
+  fixes?: RevisionLintFixes;
 }
 
 /**
@@ -80,10 +95,13 @@ export function LintReportDialog({
   preferenceView = 'catalog-lint',
   preferCapturedScore = false,
   expanded = false,
+  fixes,
 }: LintReportDialogProps) {
   // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
   // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
   const returnFocus = useReturnFocus(open);
+  // The fixes the confirm-with-reason dialog is about to apply.
+  const [pendingFix, setPendingFix] = useState<LintFixApplyRequest | null>(null);
   const findings = report ? sortLintFindings(report.findings) : [];
   const severity = report?.severityCounts ?? {};
   const guide = lintReportGuideContext(report);
@@ -180,6 +198,8 @@ export function LintReportDialog({
               </Alert>
             )}
 
+            {fixes ? <LintReportFixBar fixes={fixes} onRequestApply={setPendingFix} /> : null}
+
             <div
               className={
                 expanded
@@ -193,11 +213,36 @@ export function LintReportDialog({
                 guideName={guide.guideName}
                 guideId={guide.guideId}
                 preferenceView={preferenceView}
+                renderRowExtra={
+                  fixes
+                    ? (finding) => (
+                        <LintFixRowAction
+                          fixes={fixes}
+                          finding={finding}
+                          onRequestApply={setPendingFix}
+                        />
+                      )
+                    : undefined
+                }
               />
             </div>
           </div>
         )}
       </DialogContent>
+      {fixes ? (
+        <LintFixApplyDialog
+          target={
+            pendingFix ? { count: pendingFix.fixIds.length, ruleId: pendingFix.ruleId } : null
+          }
+          busy={fixes.busy}
+          onClose={() => setPendingFix(null)}
+          onSubmit={(reason) => {
+            const request = pendingFix;
+            if (!request) return;
+            void fixes.apply(request.fixIds, reason).finally(() => setPendingFix(null));
+          }}
+        />
+      ) : null}
     </Dialog>
   );
 }
