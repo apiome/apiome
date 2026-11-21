@@ -6943,6 +6943,14 @@ class LintRuleOut(BaseModel):
             "or human."
         ),
     )
+    aliases: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Earlier ids of this rule that still match it (GVM-4.4, #5879). A style-guide row, "
+            "stored finding or waiver recorded under an alias governs this rule; findings are "
+            "emitted under rule_id only."
+        ),
+    )
 
 
 class LintRuleCatalogResponse(BaseModel):

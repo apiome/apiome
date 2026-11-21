@@ -31,6 +31,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from .lint_rule_aliases import fingerprint_rule_id
+
 # --- Severity model -------------------------------------------------------------------------
 
 Severity = str  # "error" | "warning" | "info"
@@ -92,7 +94,12 @@ def _is_property_name_ok(name: str) -> bool:
 
 @dataclass(frozen=True)
 class LintFinding:
-    """One itemized lint result. ``id`` is a stable hash of ``path|rule|message``."""
+    """One itemized lint result. ``id`` is a stable hash of ``path|rule|message``.
+
+    For a renamed rule the hash uses the rule's original id
+    (:func:`app.lint_rule_aliases.fingerprint_rule_id`, GVM-4.4), so a finding keeps the id —
+    and the decisions and waivers keyed by it — across the rename.
+    """
 
     path: str
     category: str
@@ -104,7 +111,7 @@ class LintFinding:
     def __post_init__(self) -> None:
         if not self.id:
             digest = hashlib.sha256(
-                f"{self.path}|{self.rule}|{self.message}".encode("utf-8")
+                f"{self.path}|{fingerprint_rule_id(self.rule)}|{self.message}".encode("utf-8")
             ).hexdigest()[:16]
             object.__setattr__(self, "id", f"lint-{digest}")
 

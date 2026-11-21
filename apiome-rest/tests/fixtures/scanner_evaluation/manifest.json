@@ -61,6 +61,19 @@
       ]
     },
     {
+      "id": "catalog/arazzo-compliant-1-1-workflow",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": []
+    },
+    {
+      "id": "catalog/arazzo-component-ref-unresolved",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.component-ref-unresolved"
+      ]
+    },
+    {
       "id": "catalog/arazzo-dangling-operation-id",
       "kind": "catalog_arazzo",
       "expected_blocking_rule_ids": [
@@ -68,10 +81,87 @@
       ]
     },
     {
-      "id": "catalog/arzzo-unresolvable-operation-ref",
+      "id": "catalog/arazzo-depends-on-cycle",
       "kind": "catalog_arazzo",
       "expected_blocking_rule_ids": [
-        "arzzo.unresolvable-operation-ref"
+        "arazzo.depends-on-cycle"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-inputs-schema-invalid",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.inputs-schema-invalid"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-on-failure-target-unresolved",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.on-failure-target-unresolved"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-on-success-target-unresolved",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.on-success-target-unresolved"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-outputs-expression-invalid",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.outputs-expression-invalid"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-parameter-in-invalid",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.parameter-in-invalid"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-runtime-expression-invalid",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.runtime-expression-invalid"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-source-description-type-invalid",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.source-description-type-invalid"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-step-id-duplicate",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.step-id-duplicate"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-success-criteria-context-required",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.success-criteria-context-required"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-unresolvable-operation-ref",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.unresolvable-operation-ref"
+      ]
+    },
+    {
+      "id": "catalog/arazzo-workflow-id-duplicate",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.workflow-id-duplicate"
       ]
     },
     {

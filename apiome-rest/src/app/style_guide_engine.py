@@ -48,7 +48,12 @@ from .custom_rule_dsl import (
     evaluate_custom_rules,
     validate_custom_definition,
 )
-from .lint_rule_registry import builtin_rule_descriptors, builtin_rule_ids
+from .lint_rule_aliases import canonical_rule_id
+from .lint_rule_registry import (
+    builtin_rule_descriptors,
+    builtin_rule_ids,
+    registered_rule_ids_with_aliases,
+)
 from .schema_lint import LintFinding, LintResult, assemble_lint_result, lint_openapi_spec
 from .security_score import SECURITY_CATEGORY
 
@@ -116,12 +121,15 @@ class CompiledStyleGuide:
     fingerprint: str
 
     def is_enabled(self, rule_id: str) -> bool:
-        """Return whether this guide enables the given built-in rule id."""
-        return rule_id in self.rule_severities
+        """Return whether this guide enables the given built-in rule id (or an alias of it)."""
+        return canonical_rule_id(rule_id) in self.rule_severities
 
     def severity_for(self, rule_id: str) -> Optional[str]:
-        """Return the severity this guide assigns ``rule_id``, or ``None`` when disabled."""
-        return self.rule_severities.get(rule_id)
+        """Return the severity this guide assigns ``rule_id``, or ``None`` when disabled.
+
+        An alias (GVM-4.4) is answered for the rule it names.
+        """
+        return self.rule_severities.get(canonical_rule_id(rule_id))
 
     def has_rules_in_scope(self, scope: str) -> bool:
         """Return whether this guide carries any evaluable custom rule declaring ``scope``.
@@ -169,9 +177,11 @@ class CompiledStyleGuide:
         registered = _builtin_registry_ids()
         findings: List[LintFinding] = []
         for finding in result.findings:
-            severity = self.rule_severities.get(finding.rule)
+            # A stored finding may still carry a renamed rule's old id (GVM-4.4).
+            rule_id = canonical_rule_id(finding.rule)
+            severity = self.rule_severities.get(rule_id)
             if severity is None:
-                if finding.rule in registered:
+                if rule_id in registered:
                     continue  # a registry rule this guide disabled or omitted
                 findings.append(finding)  # ungovernable external finding: pass through
             elif finding.severity == severity:
@@ -330,8 +340,10 @@ def _compile_cached(
     # :func:`rules_content_fingerprint` can never drift apart (GOV-1.6 pins on this equality).
     fingerprint = hashlib.sha256(rows_key.encode("utf-8")).hexdigest()
 
-    reserved = frozenset(builtin_rule_ids())
+    reserved = registered_rule_ids_with_aliases()
     rule_severities: Dict[str, str] = {}
+    # Rules set by a row under their canonical id; such a row wins over an alias row (GVM-4.4).
+    set_canonically: set = set()
     custom_rules: List[CustomRule] = []
     custom_rule_errors: Dict[str, str] = {}
 
@@ -341,7 +353,14 @@ def _compile_cached(
             continue
         custom_def = row.get("custom_def")
         if custom_def is None:
-            rule_severities[rule_id] = row["severity"]
+            # A row stored under a renamed rule's old id (an alias, GVM-4.4) governs the rule
+            # under its canonical id, which is the id the engine emits.
+            canonical = canonical_rule_id(rule_id)
+            if canonical == rule_id:
+                set_canonically.add(canonical)
+            elif canonical in set_canonically:
+                continue
+            rule_severities[canonical] = row["severity"]
             continue
         # Custom rule row: re-validate the stored definition (defence in depth — it was
         # validated on write, but the linter must never trust stored JSON blindly). The

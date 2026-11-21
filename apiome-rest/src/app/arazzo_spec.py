@@ -32,11 +32,15 @@ __all__ = [
     "SOURCE_TYPE_ARAZZO",
     "SOURCE_TYPE_ASYNCAPI",
     "SOURCE_TYPE_OPENAPI",
+    "SOURCE_TYPES_BY_VERSION",
     "STEP_TARGET_FIELDS",
     "SUPPORTED_ARAZZO_VERSIONS",
     "ArazzoSemanticError",
     "ArazzoVersionError",
+    "PARAMETER_LOCATIONS",
     "StepTarget",
+    "allowed_source_types",
+    "parameter_locations",
     "default_arazzo_version",
     "is_arazzo_marker",
     "parse_arazzo_version",
@@ -188,6 +192,62 @@ def supports_async_sources(version: Tuple[int, int]) -> bool:
         ``True`` from Arazzo 1.1 onwards, which is where ``type: asyncapi`` was added.
     """
     return version >= (1, 1)
+
+
+#: The ``sourceDescriptions[].type`` values each Arazzo minor version defines (GVM-4.4, #5879).
+#: ``asyncapi`` is the 1.1 addition; a type outside its version's set is a lint finding.
+SOURCE_TYPES_BY_VERSION: Dict[Tuple[int, int], Tuple[str, ...]] = {
+    (1, 0): (SOURCE_TYPE_OPENAPI, SOURCE_TYPE_ARAZZO),
+    (1, 1): (SOURCE_TYPE_OPENAPI, SOURCE_TYPE_ARAZZO, SOURCE_TYPE_ASYNCAPI),
+}
+
+#: Where a step's parameter may go, per Arazzo minor version and the type of the source the step
+#: calls (GVM-4.4, #5879), from the published 1.0 / 1.1 JSON Schemas: 1.0 defines the four OpenAPI
+#: locations; 1.1 adds ``querystring`` (OpenAPI 3.2's whole-query parameter) and ``channel`` (an
+#: AsyncAPI channel parameter). An AsyncAPI step sets message headers and channel parameters; its
+#: payload goes through ``requestBody``.
+PARAMETER_LOCATIONS: Dict[Tuple[int, int], Dict[str, Tuple[str, ...]]] = {
+    (1, 0): {SOURCE_TYPE_OPENAPI: ("path", "query", "header", "cookie")},
+    (1, 1): {
+        SOURCE_TYPE_OPENAPI: ("path", "query", "querystring", "header", "cookie"),
+        SOURCE_TYPE_ASYNCAPI: ("header", "channel"),
+    },
+}
+
+
+def _table_version(version: Tuple[int, int], table: Mapping[Tuple[int, int], Any]) -> Tuple[int, int]:
+    """The key of ``table`` that governs ``version`` (newest for a future minor, else oldest)."""
+    if version in table:
+        return version
+    newest = max(table)
+    return newest if version > newest else min(table)
+
+
+def parameter_locations(version: Tuple[int, int], source_type: str) -> Tuple[str, ...]:
+    """The ``in`` values a step parameter may use.
+
+    Args:
+        version: A ``(major, minor)`` pair from :func:`parse_arazzo_version`.
+        source_type: The type of source the step calls (``openapi`` or ``asyncapi``).
+
+    Returns:
+        The defined locations; empty when the version defines no such step (an AsyncAPI step
+        under 1.0).
+    """
+    return PARAMETER_LOCATIONS[_table_version(version, PARAMETER_LOCATIONS)].get(source_type, ())
+
+
+def allowed_source_types(version: Tuple[int, int]) -> Tuple[str, ...]:
+    """The ``sourceDescriptions[].type`` values a version defines.
+
+    Args:
+        version: A ``(major, minor)`` pair from :func:`parse_arazzo_version`.
+
+    Returns:
+        The defined types; a version newer than the table gets the newest known set, so a
+        future minor is not flagged for types it can only have added to.
+    """
+    return SOURCE_TYPES_BY_VERSION[_table_version(version, SOURCE_TYPES_BY_VERSION)]
 
 
 def default_arazzo_version(*, has_async_sources: bool) -> str:

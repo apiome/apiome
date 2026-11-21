@@ -22,6 +22,9 @@ Every rule says who repairs its findings (**Fix owner**): the deterministic `eng
 the fix is wire-visible, what it may touch and whether it is applied by default — see
 [Auto-fix](./auto-fix.md).
 
+A rule that was renamed lists its earlier ids under **Aliases**: they keep matching the rule, so
+a style guide or waiver written against the old id goes on working.
+
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
 
@@ -277,6 +280,18 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Fixture:** `catalog/arazzo-async-source-before-1-1`
 - **Scan modes:** `lint`
 
+### `arazzo.component-ref-unresolved` {#arazzo-component-ref-unresolved}
+
+- **Category:** reference
+- **Default severity:** error
+- **Rationale:** Every $components reference must name a declared component.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-component-ref-unresolved
+- **Remediation:** Declare the entry under `components.<kind>` (parameters, inputs, successActions, failureActions) or fix the reference's spelling.
+- **False-positive guidance:** None known: an unresolved reference fails at run time.
+- **Fixture:** `catalog/arazzo-component-ref-unresolved`
+- **Scan modes:** `lint`
+
 ### `arazzo.dangling-operation-id` {#arazzo-dangling-operation-id}
 
 - **Category:** reference
@@ -289,12 +304,145 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Fixture:** `catalog/arazzo-dangling-operation-id`
 - **Scan modes:** `lint`
 
+### `arazzo.depends-on-cycle` {#arazzo-depends-on-cycle}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Workflow dependsOn chains must not form a cycle.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-depends-on-cycle
+- **Remediation:** Remove one dependsOn edge of the reported chain so the workflows can be ordered.
+- **False-positive guidance:** Dependencies on workflows in other documents are not followed, so a cycle that passes through another document is not reported.
+- **Fixture:** `catalog/arazzo-depends-on-cycle`
+- **Scan modes:** `lint`
+
+### `arazzo.inputs-schema-invalid` {#arazzo-inputs-schema-invalid}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Workflow inputs must be a valid JSON Schema 2020-12 schema.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-inputs-schema-invalid
+- **Remediation:** Fix the schema at the reported location so it validates against the JSON Schema 2020-12 meta-schema.
+- **False-positive guidance:** None known: Arazzo defines inputs as JSON Schema 2020-12.
+- **Fixture:** `catalog/arazzo-inputs-schema-invalid`
+- **Scan modes:** `lint`
+
 ### `arazzo.missing-success-criteria` {#arazzo-missing-success-criteria}
 
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** Every workflow step should declare successCriteria.
 - **Fix owner:** human
+
+### `arazzo.on-failure-target-unresolved` {#arazzo-on-failure-target-unresolved}
+
+- **Category:** reference
+- **Default severity:** error
+- **Rationale:** A failure action's goto stepId or workflowId must resolve.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-on-failure-target-unresolved
+- **Remediation:** Point the goto at a stepId of the same workflow, a workflowId of this document, or `$sourceDescriptions.<name>.<workflowId>` for a declared Arazzo source.
+- **False-positive guidance:** A workflow in another document is only checked for its source name; the target workflow itself is not read.
+- **Fixture:** `catalog/arazzo-on-failure-target-unresolved`
+- **Scan modes:** `lint`
+
+### `arazzo.on-success-target-unresolved` {#arazzo-on-success-target-unresolved}
+
+- **Category:** reference
+- **Default severity:** error
+- **Rationale:** A success action's goto stepId or workflowId must resolve.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-on-success-target-unresolved
+- **Remediation:** Point the goto at a stepId of the same workflow, a workflowId of this document, or `$sourceDescriptions.<name>.<workflowId>` for a declared Arazzo source.
+- **False-positive guidance:** A workflow in another document is only checked for its source name; the target workflow itself is not read.
+- **Fixture:** `catalog/arazzo-on-success-target-unresolved`
+- **Scan modes:** `lint`
+
+### `arazzo.outputs-expression-invalid` {#arazzo-outputs-expression-invalid}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every workflow and step output must be a valid runtime expression.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-outputs-expression-invalid
+- **Remediation:** Make each output a runtime expression such as `$response.body#/id` or `$steps.<id>.outputs.<name>` (from 1.1, a selector object with a valid context).
+- **False-positive guidance:** A literal output value is never read as data; if a constant is intended, pass it as an input instead.
+- **Fixture:** `catalog/arazzo-outputs-expression-invalid`
+- **Scan modes:** `lint`
+
+### `arazzo.parameter-in-invalid` {#arazzo-parameter-in-invalid}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A step parameter's `in` must be a location its source type defines.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-parameter-in-invalid
+- **Remediation:** Set `in` to a location the step's source defines: path, query, header or cookie for OpenAPI (plus querystring in 1.1); header or channel for an AsyncAPI step.
+- **False-positive guidance:** A step whose source has no declared `type` is treated as OpenAPI; declare `type: asyncapi` on an event source.
+- **Fixture:** `catalog/arazzo-parameter-in-invalid`
+- **Scan modes:** `lint`
+
+### `arazzo.runtime-expression-invalid` {#arazzo-runtime-expression-invalid}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every runtime expression must parse against the Arazzo grammar.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-runtime-expression-invalid
+- **Remediation:** Fix the expression at the reported position: start from a defined root ($url, $method, $statusCode, $self, $request, $response, $message, $inputs, $outputs, $steps, $workflows, $sourceDescriptions, $components) and use `body#/pointer` for body reads.
+- **False-positive guidance:** Only false for a runner-specific root (for example `$specmatic.auth`) that no Arazzo runner but its own understands; keep such values out of gateable workflows or waive the finding.
+- **Fixture:** `catalog/arazzo-runtime-expression-invalid`
+- **Scan modes:** `lint`
+
+### `arazzo.source-description-type-invalid` {#arazzo-source-description-type-invalid}
+
+- **Category:** version
+- **Default severity:** error
+- **Rationale:** A sourceDescription type must be one the declared Arazzo version defines.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-source-description-type-invalid
+- **Remediation:** Use a type the declared version defines — openapi or arazzo for 1.0, plus asyncapi for 1.1 — or drop `type`.
+- **False-positive guidance:** None known; an AsyncAPI source under a 1.0 marker is reported by arazzo.async-source-before-1-1 instead.
+- **Fixture:** `catalog/arazzo-source-description-type-invalid`
+- **Scan modes:** `lint`
+
+### `arazzo.step-id-duplicate` {#arazzo-step-id-duplicate}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Step ids must be unique within their workflow.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-step-id-duplicate
+- **Remediation:** Rename one of the steps and update the `$steps.<id>` expressions and goto actions that address it.
+- **False-positive guidance:** None known: the Arazzo specification requires unique step ids.
+- **Fixture:** `catalog/arazzo-step-id-duplicate`
+- **Scan modes:** `lint`
+
+### `arazzo.success-criteria-context-required` {#arazzo-success-criteria-context-required}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A jsonpath or regex success criterion must declare its context.
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-success-criteria-context-required
+- **Remediation:** Add `context:` naming the value the query applies to, for example `$response.body` or `$response.header.Location`.
+- **False-positive guidance:** None known: without a context the condition has nothing to run against.
+- **Fixture:** `catalog/arazzo-success-criteria-context-required`
+- **Scan modes:** `lint`
+
+### `arazzo.unresolvable-operation-ref` {#arazzo-unresolvable-operation-ref}
+
+- **Category:** reference
+- **Default severity:** error
+- **Rationale:** Step operationRef must point at a declared sourceDescription.
+- **Aliases:** `arzzo.unresolvable-operation-ref` — an earlier id of this rule; style-guide rows, stored findings and waivers recorded under it still match
+- **Fix owner:** human
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-unresolvable-operation-ref
+- **Remediation:** Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a declared source, or fix the sourceDescription name.
+- **False-positive guidance:** External HTTP operationRef targets are out of scope for static resolution — prefer embedded sources for gateable workflows. Shipped as `arzzo.unresolvable-operation-ref`, which remains an alias.
+- **Fixture:** `catalog/arazzo-unresolvable-operation-ref`
+- **Scan modes:** `lint`
 
 ### `arazzo.unused-workflow-input` {#arazzo-unused-workflow-input}
 
@@ -303,16 +451,16 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Workflow inputs should be referenced by at least one step.
 - **Fix owner:** human
 
-### `arzzo.unresolvable-operation-ref` {#arzzo-unresolvable-operation-ref}
+### `arazzo.workflow-id-duplicate` {#arazzo-workflow-id-duplicate}
 
-- **Category:** reference
+- **Category:** structure
 - **Default severity:** error
-- **Rationale:** Step operationRef must point at a declared sourceDescription.
+- **Rationale:** Workflow ids must be unique within the document.
 - **Fix owner:** human
-- **Reference:** https://docs.apiome.dev/build/lint-rules#arzzo-unresolvable-operation-ref
-- **Remediation:** Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a declared source, or fix the sourceDescription name.
-- **False-positive guidance:** External HTTP operationRef targets are out of scope for static resolution — prefer embedded sources for gateable workflows.
-- **Fixture:** `catalog/arzzo-unresolvable-operation-ref`
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-workflow-id-duplicate
+- **Remediation:** Rename one of the workflows and update the dependsOn entries, goto actions and `$workflows.<id>` expressions that address it.
+- **False-positive guidance:** None known: the Arazzo specification requires unique workflow ids.
+- **Fixture:** `catalog/arazzo-workflow-id-duplicate`
 - **Scan modes:** `lint`
 
 

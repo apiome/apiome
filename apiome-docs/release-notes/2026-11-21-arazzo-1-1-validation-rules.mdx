@@ -1,0 +1,29 @@
+---
+slug: arazzo-1-1-validation-rules
+title: "Arazzo 1.1 validation rules"
+description: "Twelve new Arazzo lint rules, and a corrected rule id kept as an alias."
+authors: [apiome]
+---
+
+Arazzo workflows now get structural feedback from twelve new **error** rules in the `arazzo` lint
+pack, each checked against the version the document declares.
+[See the rules](/build/arazzo#lint-rules).
+
+{/* truncate */}
+
+- **Runtime expressions:** a `$`-expression that does not parse is reported with the position
+  where it stops, in parameters, request bodies and success criteria.
+- **Criteria and actions:** a `jsonpath` or `regex` criterion needs a `context`, and a `goto` must
+  name a step or workflow that exists.
+- **References and ids:** `$components.*` references must resolve, step and workflow ids must be
+  unique, and `dependsOn` must not loop.
+- **Parameters, inputs and outputs:** a parameter's `in` must suit its step's source (1.1 adds
+  `querystring`, and `header` / `channel` for AsyncAPI steps), `inputs` must be JSON Schema
+  2020-12, and every output must be a runtime expression or, from 1.1, a selector object.
+- **Source types:** each `sourceDescriptions[].type` must be one the version defines.
+- **A corrected rule id:** `arzzo.unresolvable-operation-ref` is now
+  `arazzo.unresolvable-operation-ref`. The old id is an **alias**, so style guides, stored findings
+  and waivers that name it keep matching.
+- **REST:** `GET /v1/lint/rules` lists each rule's `aliases`.
+
+See [Built-in lint rules](/build/lint-rules#pack-arazzo).

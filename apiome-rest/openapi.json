@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.615.0",
+    "version": "1.617.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -53632,7 +53632,7 @@
           "lint"
         ],
         "summary": "List Lint Rules",
-        "description": "List every registered built-in lint rule (GOV-1.2, #4428).\n\nReturns the full rule-catalog registry: each rule's stable id (the exact string lint\nfindings carry in their ``rule`` field), its pack, category, default severity, one-line\nrationale, and a docs anchor into the rule reference page. Sorted by rule id, so the\npayload is deterministic. The catalog is the same for every tenant \u2014 style guides\n(GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.\n\nEvery rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)\nand, for ``security``-category rules, the ``weight`` the security score applies to its\nseverity penalty (ASP-1.3, #5921) \u2014 the weights are public, not a server secret.\n\nEvery rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and for a\nfixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,\n``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs\nthe rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.",
+        "description": "List every registered built-in lint rule (GOV-1.2, #4428).\n\nReturns the full rule-catalog registry: each rule's stable id (the exact string lint\nfindings carry in their ``rule`` field), its pack, category, default severity, one-line\nrationale, and a docs anchor into the rule reference page. Sorted by rule id, so the\npayload is deterministic. The catalog is the same for every tenant \u2014 style guides\n(GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.\n\nEvery rule also publishes the OWASP API Security Top 10 categories it cites (``owasp``)\nand, for ``security``-category rules, the ``weight`` the security score applies to its\nseverity penalty (ASP-1.3, #5921) \u2014 the weights are public, not a server secret.\n\nEvery rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and for a\nfixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,\n``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs\nthe rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.\n\nA renamed rule lists its earlier ids in ``aliases`` (GVM-4.4, #5879): the Arazzo\n``arazzo.unresolvable-operation-ref`` still answers to ``arzzo.unresolvable-operation-ref``.",
         "operationId": "list_lint_rules_v1_lint_rules_get",
         "parameters": [
           {
@@ -181726,6 +181726,15 @@
             "description": "Who repairs this rule's findings: engine (the deterministic fix), agent (documentation, examples and security findings, whose repair invents meaning) or human.",
             "default": "human",
             "example": "example"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases",
+            "description": "Earlier ids of this rule that still match it (GVM-4.4, #5879). A style-guide row, stored finding or waiver recorded under an alias governs this rule; findings are emitted under rule_id only.",
+            "maxItems": 1000
           }
         },
         "type": "object",

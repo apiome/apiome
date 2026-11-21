@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.616.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.617.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `lint` · 16 operations
 
@@ -227,6 +227,9 @@ Every rule also publishes its fix capability (GVM-3.1, #5869): ``fixable``, and 
 fixable rule ``fixClass`` (structural / removal / fill-in / rename), ``wireVisible``,
 ``fixScope``, ``fixDefault`` and a one-line ``fixSummary``. ``fixOwner`` says who repairs
 the rule's findings: the deterministic ``engine``, the ``agent`` or a ``human``.
+
+A renamed rule lists its earlier ids in ``aliases`` (GVM-4.4, #5879): the Arazzo
+``arazzo.unresolvable-operation-ref`` still answers to ``arzzo.unresolvable-operation-ref``.
 
 Operation id: `list_lint_rules_v1_lint_rules_get`
 
