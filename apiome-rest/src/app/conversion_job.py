@@ -165,6 +165,17 @@ class ConversionSource(BaseModel):
     source_format: Optional[str] = Field(
         default=None, description="Source format key (e.g. ``grpc``); defaults to the model's format."
     )
+    source_name: Optional[str] = Field(
+        default=None, description="The catalog item's name; names the converted Project's description."
+    )
+    source_slug: Optional[str] = Field(
+        default=None,
+        description="The catalog item's slug; the converted Project's slug is this plus ``-openapi``.",
+    )
+    source_description: Optional[str] = Field(
+        default=None,
+        description="The catalog item's own description, reused for the converted Project when set.",
+    )
     source_protocol: Optional[str] = Field(
         default=None, description="Source protocol; defaults to the model's protocol."
     )
@@ -745,14 +756,16 @@ class SpecImportCommitter:
         )
         from .spec_import_engine import get_spec_import_status, schedule_spec_import
 
-        name, slug = _converted_project_identity(source)
+        name, base_slug, description = _converted_project_identity(source)
+        slug = base_slug
+        if target_project_id is None and await self._slug_taken(tenant_id, base_slug):
+            slug = _collision_slug(base_slug, source.source_project_id)
         metadata = SpecImportStartMetadata(
             source_kind=CONVERT_IMPORT_SOURCE_KIND,
             project=SpecImportProjectTarget(
                 name=name,
                 slug=slug,
-                description=f"Converted from {source.source_format or source.api.format} "
-                f"catalog item {source.source_project_id}.",
+                description=description,
             ),
             version=SpecImportVersionTarget(
                 version_id=version_label,
@@ -802,6 +815,16 @@ class SpecImportCommitter:
             version_record_id=str(result.version_record_id),
             created_project=target_project_id is None,
         )
+
+    async def _slug_taken(self, tenant_id: str, slug: str) -> bool:
+        """True when ``slug`` already names a project of the tenant."""
+
+        def _lookup() -> bool:
+            from .database import db
+
+            return bool(db.get_project_by_slug(slug, tenant_id))
+
+        return await asyncio.to_thread(_lookup)
 
 
 class DbLintScorer:
@@ -962,17 +985,43 @@ def default_ports() -> Dict[str, Any]:
 # ===========================================================================
 
 
-def _converted_project_identity(source: ConversionSource) -> tuple[str, str]:
-    """Derive a stable ``(name, slug)`` for the converted Project from the source identity.
+def _format_label(format_key: str) -> str:
+    """Human label for a source format key (``raml`` → ``RAML``); the key itself when unknown."""
+    try:
+        from .format_capability_registry import capability_for
 
-    Deterministic in the source artifact id so a re-convert (which also passes the prior Project via
-    ``existing_project_id``) resolves consistently. The name prefers the model's title/identity name.
+        return capability_for(format_key).label or format_key
+    except Exception:  # noqa: BLE001 - a label is cosmetic; never fail a conversion over it
+        return format_key
+
+
+def _converted_project_identity(source: ConversionSource) -> tuple[str, str, str]:
+    """Derive a readable ``(name, slug, description)`` for the converted Project.
+
+    * name — the model's title / identity name plus `` (OpenAPI)``.
+    * slug — the item's slug plus ``-openapi`` (no UUID); the committer adds a short suffix only
+      when that slug is already taken.
+    * description — the source's own description when it has one, else
+      ``Converted from the RAML catalog item “Bookstore API”.``
     """
     ident = source.api.identity
     base_name = (source.api.title or getattr(ident, "name", None) or "Converted API").strip()
+    item_name = (source.source_name or base_name).strip()
     name = f"{base_name} (OpenAPI)"
-    slug = _slugify(f"{base_name}-openapi-{source.source_project_id}")
-    return name, slug
+    slug = _slugify(f"{source.source_slug or base_name}-openapi")
+    own = (source.source_description or "").strip()
+    if own:
+        description = own
+    else:
+        label = _format_label(source.source_format or source.api.format)
+        description = f"Converted from the {label} catalog item \u201c{item_name}\u201d."
+    return name, slug, description
+
+
+def _collision_slug(slug: str, source_project_id: str) -> str:
+    """Append a short, stable suffix (first 6 id characters) to a colliding ``slug``."""
+    short = "".join(ch for ch in str(source_project_id).lower() if ch.isalnum())[:6]
+    return f"{slug}-{short}" if short else slug
 
 
 def _slugify(value: str) -> str:

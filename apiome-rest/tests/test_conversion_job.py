@@ -50,6 +50,7 @@ from app.conversion_job import (
     LintScore,
     SpecImportCommitter,
     _apply_defaults,
+    _collision_slug,
     _converted_project_identity,
     _next_version_label,
     _slugify,
@@ -471,13 +472,54 @@ def test_converter_tool_versions_keys() -> None:
 
 def test_slugify_and_identity_are_deterministic() -> None:
     src = _source()
-    name1, slug1 = _converted_project_identity(src)
-    name2, slug2 = _converted_project_identity(src)
-    assert (name1, slug1) == (name2, slug2)
+    name1, slug1, desc1 = _converted_project_identity(src)
+    name2, slug2, desc2 = _converted_project_identity(src)
+    assert (name1, slug1, desc1) == (name2, slug2, desc2)
     assert name1 == "Widgets (OpenAPI)"
-    assert slug1 == "widgets-openapi-cat-1"
+    assert slug1 == "widgets-openapi"
     assert _slugify("  Foo/Bar  !!") == "foo-bar"
     assert _slugify("///") == "converted-api"
+
+
+def test_identity_is_readable_without_uuid() -> None:
+    src = _source(
+        source_project_id="e1501f13-0575-4137-9eb5-ddd2da1c37e0",
+        source_format="raml",
+        source_name="Bookstore API",
+        source_slug="bookstore-api",
+    )
+    _, slug, description = _converted_project_identity(src)
+    assert slug == "bookstore-api-openapi"
+    assert "e1501f13" not in slug and "e1501f13" not in description
+    assert description == "Converted from the RAML catalog item \u201cBookstore API\u201d."
+
+
+def test_identity_prefers_the_sources_own_description() -> None:
+    src = _source(source_description="  Books, authors and orders.  ", source_slug="bk")
+    assert _converted_project_identity(src)[2] == "Books, authors and orders."
+
+
+def test_collision_slug_appends_short_suffix() -> None:
+    assert _collision_slug("bk-openapi", "E1501F13-0575") == "bk-openapi-e1501f"
+
+
+async def test_committer_suffixes_slug_only_on_collision(monkeypatch: pytest.MonkeyPatch) -> None:
+    result = types.SimpleNamespace(
+        project_id="p", project_slug="x", version_id="1.0.0", version_record_id="v"
+    )
+    src = _source(source_project_id="abcdef123456", source_slug="bk", source_name="Bk")
+    for taken, expected in ((False, "bk-openapi"), (True, "bk-openapi-abcdef")):
+        captured = _install_fake_import_engine(monkeypatch, states=["completed"], result=result)
+
+        async def _taken(self, tenant_id, slug, _t=taken):  # noqa: ANN001
+            return _t
+
+        monkeypatch.setattr(SpecImportCommitter, "_slug_taken", _taken)
+        await SpecImportCommitter(poll_interval=0.001, timeout=5.0).commit(
+            tenant_slug="acme", tenant_id="t", user_id="u", document={"openapi": "3.1.0"},
+            source=src, target_project_id=None, version_label="1.0.0",
+        )
+        assert captured["schedule"][3].metadata.project.slug == expected
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +546,10 @@ def _install_fake_import_engine(monkeypatch: pytest.MonkeyPatch, *, states: List
         events = [types.SimpleNamespace(level="error", message=error_msg)] if error_msg else []
         return types.SimpleNamespace(state=state, result=result, events=events)
 
+    async def _free(self, tenant_id, slug):  # noqa: ANN001
+        return False
+
+    monkeypatch.setattr(SpecImportCommitter, "_slug_taken", _free)
     monkeypatch.setattr(engine, "schedule_spec_import", _schedule)
     monkeypatch.setattr(engine, "get_spec_import_status", _status)
     return captured

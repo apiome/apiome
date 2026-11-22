@@ -58,6 +58,12 @@ flowchart LR
    before, the button reads **“Re-convert”**: it adds a new version to the Project the item
    already produced instead of creating another one.
 
+The new Project is named after the item, and its **description** reads _Converted from the RAML
+catalog item “Bookstore API”._ (the format's own label and the item's name) — or the item's own
+description when it has one. Its **slug** is the item's slug plus `-openapi` (for example
+`bookstore-api-openapi`), with a short suffix added only when that slug is already taken. Both can
+be changed later in **Edit project**.
+
 ## The projection graph
 
 The graph shows three lanes — **In the OpenAPI document**, **Omitted from OpenAPI**, and
