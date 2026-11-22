@@ -72,6 +72,7 @@ import { cn } from '@lib/utils';
 
 import { GitlikeFlag } from './GitlikeFlag';
 import { VersionDialogHead } from './VersionDialogChrome';
+import { useVersionIsEmpty } from './useVersionIsEmpty';
 import { versionLabel, type GitlikeAffordance, type Version } from './versionsModel';
 
 /** The two visibilities a published revision can have. */
@@ -187,6 +188,8 @@ export default function PublishVersionDialog({
   gitlike,
   onSubmit,
 }: PublishVersionDialogProps) {
+  // An empty revision is publishable, so this only warns (COA-4.3a, #7126).
+  const isEmpty = useVersionIsEmpty(version?.project_id, version?.id, open);
   const blocked =
     blockers.guideErrors ||
     blockers.verificationPolicy ||
@@ -344,6 +347,17 @@ export default function PublishVersionDialog({
               </h3>
               {version ? (
                 <>
+                  {isEmpty ? (
+                    <Alert
+                      variant="warning"
+                      icon={<TriangleAlert aria-hidden />}
+                      data-testid="publish-empty-version-warning"
+                    >
+                      This version has no operations and no schemas. Publishing it freezes an
+                      empty document — go back and copy from an earlier version if that is not
+                      what you meant.
+                    </Alert>
+                  ) : null}
                   <ReviewStatusPanel review={review} loading={reviewLoading} />
                   <PublishGuideViolationsPanel
                     projectId={version.project_id}

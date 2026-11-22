@@ -1469,7 +1469,11 @@ describe('the dialogs', () => {
       await renderVersions();
       fireEvent.click(screen.getByTestId('versions-new-button'));
       const dialog = await screen.findByTestId('new-version-dialog');
-      // Blank version: nothing to copy, so no choice.
+      // The head is the default source (#7126), so the paths choice is there from the start.
+      expect(within(dialog).getByTestId('new-version-copy-paths')).toBeInTheDocument();
+      // Blank version, picked explicitly: nothing to copy, so no choice.
+      await user.click(within(dialog).getByRole('combobox', { name: 'Copy from version' }));
+      await user.click(await screen.findByRole('option', { name: 'Create blank version' }));
       expect(within(dialog).queryByTestId('new-version-copy-paths')).not.toBeInTheDocument();
       await user.click(within(dialog).getByRole('combobox', { name: 'Copy from version' }));
       await user.click(await screen.findByRole('option', { name: /v2\.3\.1/ }));
@@ -1493,17 +1497,38 @@ describe('the dialogs', () => {
     }
   });
 
-  it('sends no copyPaths for a blank version', async () => {
+  it('copies the head by default (#7126)', async () => {
     await renderVersions();
     fireEvent.click(screen.getByTestId('versions-new-button'));
     const dialog = await screen.findByTestId('new-version-dialog');
-    fireEvent.change(within(dialog).getByTestId('new-version-message'), { target: { value: 'Blank' } });
+    fireEvent.change(within(dialog).getByTestId('new-version-message'), { target: { value: 'Default' } });
     await waitFor(() => expect(within(dialog).getByTestId('new-version-submit')).toBeEnabled());
     fireEvent.click(within(dialog).getByTestId('new-version-submit'));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.url === '/api/versions')).toBe(true));
     const post = calls.find((c) => c.method === 'POST' && c.url === '/api/versions');
-    expect(post?.body).not.toHaveProperty('copyPaths');
-    expect(post?.body).not.toHaveProperty('source_version_id');
+    expect(post?.body).toMatchObject({ source_version_id: HEAD_ID, copyPaths: true });
+  });
+
+  it('sends no copyPaths for a blank version', async () => {
+    // user-event installs its own clipboard; keep the suite's mock for the tests after this one.
+    const clipboard = navigator.clipboard;
+    const user = userEvent.setup();
+    try {
+      await renderVersions();
+      fireEvent.click(screen.getByTestId('versions-new-button'));
+      const dialog = await screen.findByTestId('new-version-dialog');
+      await user.click(within(dialog).getByRole('combobox', { name: 'Copy from version' }));
+      await user.click(await screen.findByRole('option', { name: 'Create blank version' }));
+      fireEvent.change(within(dialog).getByTestId('new-version-message'), { target: { value: 'Blank' } });
+      await waitFor(() => expect(within(dialog).getByTestId('new-version-submit')).toBeEnabled());
+      fireEvent.click(within(dialog).getByTestId('new-version-submit'));
+      await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.url === '/api/versions')).toBe(true));
+      const post = calls.find((c) => c.method === 'POST' && c.url === '/api/versions');
+      expect(post?.body).not.toHaveProperty('copyPaths');
+      expect(post?.body).not.toHaveProperty('source_version_id');
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+    }
   });
 
   it('opens Edit on a draft with its note, and saves through PUT', async () => {

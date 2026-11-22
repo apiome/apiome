@@ -22,6 +22,7 @@ import {
 } from '../version-dialogs/versionDialogsModel';
 import { LintReportDialog } from './LintReportDialog';
 import { fetchVersionLintReport, type VersionLintReport } from '../../../utils/version-lint-report';
+import { useVersionIsEmpty } from '../versions/useVersionIsEmpty';
 import { useRevisionLintFixes } from '../lintFix/useRevisionLintFixes';
 
 interface VersionLintBadgeProps {
@@ -128,7 +129,10 @@ export function VersionLintBadge({
     onFixApplied?.();
   });
 
-  const headline = resolveLintHeadline(storedScore, storedGrade, report);
+  // An empty revision is not an A · 100 (COA-4.3a, #7126). Emptiness needs the document, so it
+  // is read when the report opens; until then the chip shows the stored headline.
+  const nothingToScore = useVersionIsEmpty(projectId, versionId, open) === true;
+  const headline = nothingToScore ? null : resolveLintHeadline(storedScore, storedGrade, report);
 
   const dialog = (
     <LintReportDialog
@@ -142,6 +146,7 @@ export function VersionLintBadge({
       onRetry={startFetch}
       preferenceView="studio-lint"
       fixes={fixes}
+      nothingToScore={nothingToScore}
     />
   );
 
@@ -152,7 +157,7 @@ export function VersionLintBadge({
           type="button"
           onClick={openReport}
           className={cn(badgeVariants({ variant: 'outline' }), chipBaseClass)}
-          title={LINT_BADGE_UNSCORED_TITLE}
+          title={nothingToScore ? 'Nothing to score — this version has no operations or schemas' : LINT_BADGE_UNSCORED_TITLE}
           data-testid="version-lint-badge-unscored"
         >
           {lintBadgeLabel(null, null)}
