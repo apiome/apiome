@@ -1285,3 +1285,75 @@ export function versionRowQuickActions(
   }
   return actions;
 }
+
+// ---------------------------------------------------------------------------------------
+// New version default source, and the empty-version check (COA-4.3a, #7126)
+// ---------------------------------------------------------------------------------------
+
+/** What the New version dialog starts with: the Copy source key and the revision it resolves to. */
+export interface DefaultCopySource {
+  /** `'blank'` or `branch:<id>` — the branch-tip mode's value. */
+  branchKey: string;
+  /** The revision to copy from; `''` for a blank version. */
+  sourceVersionId: string;
+}
+
+/**
+ * Where a new version should copy from by default: the project's head, never nothing.
+ *
+ * With two or more branches the dialog is in branch-tip mode, so the default is the default
+ * branch's tip (the branch flagged `is_default`, else one named `main`, else the first branch).
+ * Otherwise it is the head revision — `versions[0]`, the newest, as the screen already treats it.
+ * A project with no versions has nothing to copy, so the answer is blank.
+ *
+ * @param versions The project's revisions, newest first.
+ * @param branches The project's named branches.
+ * @returns The default copy source.
+ */
+export function defaultCopySource(
+  versions: readonly Pick<Version, 'id'>[],
+  branches: readonly VersionBranchRow[],
+): DefaultCopySource {
+  if (branches.length > 1) {
+    const branch =
+      branches.find((b) => b.is_default) ??
+      branches.find((b) => b.name.trim().toLowerCase() === 'main') ??
+      branches[0];
+    if (branch.tip_version_id) {
+      return { branchKey: `branch:${branch.id}`, sourceVersionId: branch.tip_version_id };
+    }
+    return { branchKey: 'blank', sourceVersionId: '' };
+  }
+  const head = branches.length === 1 && branches[0].tip_version_id ? branches[0].tip_version_id : versions[0]?.id;
+  return { branchKey: 'blank', sourceVersionId: head ?? '' };
+}
+
+/**
+ * Whether an OpenAPI document has nothing in it: no operations and no schemas.
+ *
+ * Operations are the HTTP-method entries under `paths` (path-level `parameters` and the like do
+ * not count); schemas are the entries under `components.schemas` (or `definitions`, for Swagger 2).
+ * A body that is not an OpenAPI/Swagger document (no `openapi` or `swagger` field) is not judged
+ * empty — it is not something this check understands, and a false "empty" warning is worse than
+ * none.
+ *
+ * @param document The parsed document body.
+ * @returns `true` when it is an OpenAPI document with no operations and no schemas.
+ */
+export function isEmptyOpenApiDocument(document: unknown): boolean {
+  if (!document || typeof document !== 'object') return false;
+  const doc = document as Record<string, unknown>;
+  if (doc.openapi == null && doc.swagger == null) return false;
+  const methods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
+  const paths = doc.paths && typeof doc.paths === 'object' ? (doc.paths as Record<string, unknown>) : {};
+  const hasOperation = Object.values(paths).some(
+    (item) =>
+      item &&
+      typeof item === 'object' &&
+      methods.some((m) => (item as Record<string, unknown>)[m] != null),
+  );
+  const components = doc.components as Record<string, unknown> | undefined;
+  const schemas = components?.schemas ?? doc.definitions;
+  const hasSchema = !!schemas && typeof schemas === 'object' && Object.keys(schemas).length > 0;
+  return !hasOperation && !hasSchema;
+}

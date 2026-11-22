@@ -77,6 +77,11 @@ interface LintReportDialogProps {
    * on surfaces that have no revision to fix (the catalog orbs).
    */
   fixes?: RevisionLintFixes;
+  /**
+   * The revision has no operations and no schemas (COA-4.3a, #7126): the headline reads
+   * "Nothing to score" instead of an empty document's A · 100.
+   */
+  nothingToScore?: boolean;
 }
 
 /**
@@ -96,6 +101,7 @@ export function LintReportDialog({
   preferCapturedScore = false,
   expanded = false,
   fixes,
+  nothingToScore = false,
 }: LintReportDialogProps) {
   // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
   // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
@@ -146,14 +152,20 @@ export function LintReportDialog({
             <div className="lr-headline">
               <span
                 data-testid="lint-report-grade"
-                className={`lr-grade ${gradeBand(displayLint!.grade).solidClass}`}
+                className={`lr-grade ${nothingToScore ? '' : gradeBand(displayLint!.grade).solidClass}`}
               >
-                {displayLint!.grade}
+                {nothingToScore ? '—' : displayLint!.grade}
               </span>
               <div className="lr-headline__text">
-                <p className="lr-score">
-                  Score <strong>{displayLint!.score}</strong>
-                  <span className="lr-score__max">/100</span>
+                <p className="lr-score" data-testid={nothingToScore ? 'lint-report-nothing-to-score' : undefined}>
+                  {nothingToScore ? (
+                    <strong>Nothing to score</strong>
+                  ) : (
+                    <>
+                      Score <strong>{displayLint!.score}</strong>
+                      <span className="lr-score__max">/100</span>
+                    </>
+                  )}
                 </p>
                 <div className="lr-headline__marks">
                   <Badge status="error">{severity.error ?? 0} error</Badge>

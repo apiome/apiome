@@ -12,9 +12,11 @@ one, in the order you are likely to meet them.
 
 **Click “New version”** in the page header.
 
-1. **Copy source** — **Copy from version** starts from an existing version's classes; leave it on
-   **Create blank version** to start empty. Once you pick a version, **Copy paths** decides whether
-   its paths come too (see [Copy paths](#copy-paths)).
+1. **Copy source** — **Copy from version** starts on the project's **head** (its newest version), so
+   a new version begins as a copy of what you have. With two or more branches it is **Base copy on
+   branch tip**, starting on the default branch's tip. Pick another version to copy from it instead,
+   or choose **Create blank version** to start empty. **Copy paths** decides whether the paths come
+   too (see [Copy paths](#copy-paths)).
 2. **Version** — keep **Auto-generate version** and pick a **Bump strategy** (**Minor** by default,
    or **Patch**); the dialog shows the number it will create. Or choose **Manual entry** and type a
    **Version ID** such as `2.5.0`.
@@ -55,6 +57,12 @@ whose role can publish (an **Editor** can't). Choose **Private** or **Public**, 
 check the **Publish gates**, and **click “Publish”**. The full walk-through, including **Force
 publish (ignore validation errors)**, is in [Version and
 publish](../getting-started/versions-and-publishing.mdx).
+
+If the version has no operations and no schemas — for example a blank version you never filled in —
+the gates panel opens with a warning, **This version has no operations and no schemas**. It doesn't
+block **Publish**, but publishing freezes an empty document, so go back and copy from an earlier
+version if that isn't what you meant. An empty version's lint report reads **Nothing to score**
+rather than a grade.
 
 <Screenshot id="publish-dialog" alt="The Publish dialog: visibility, revision note, changelog and the publish gates panel" />
 

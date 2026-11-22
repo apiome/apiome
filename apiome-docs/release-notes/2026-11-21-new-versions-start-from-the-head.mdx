@@ -1,0 +1,23 @@
+---
+slug: new-versions-start-from-the-head
+title: "New versions start from your latest"
+description: "New version copies the head by default, and Publish warns before an empty version goes out."
+authors: [apiome]
+---
+
+**New version** used to open on **Create blank version**. Accept the defaults and **Publish**, and
+you froze a version with no paths and no schemas — which then scored A · 100.
+
+{/* truncate */}
+
+## What changed
+
+- **New version copies the head.** **Copy from version** starts on the project's newest version.
+  With two or more branches, **Base copy on branch tip** starts on the default branch's tip.
+  **Create blank version** is still there as an explicit choice.
+- **Publish warns about an empty version.** When a version has no operations and no schemas, the
+  **Publish gates** panel says so before you **click “Publish”**. It's a warning, not a block.
+- **An empty version isn't graded.** Its lint report reads **Nothing to score**, and its grade chip
+  shows **Lint —**, once you open the report.
+
+See [New version](/build/version-dialogs#new-version) and [Publish](/build/version-dialogs#publish).

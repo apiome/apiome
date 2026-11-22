@@ -118,6 +118,7 @@ import {
   NewVersionDialog,
   ProjectFactsCard,
   PublishVersionDialog,
+  defaultCopySource,
   SUNSET_TIMELINE_ROUTE,
   SpecViewerDialog,
   SunsetScheduleDialog,
@@ -515,6 +516,8 @@ const Versions = () => {
   const [copyPaths, setCopyPaths] = useState(true);
   /** When multiple named branches exist, select by branch id before resolving tip (#505). */
   const [copySourceBranchKey, setCopySourceBranchKey] = useState<string>('blank');
+  /** True once the user picks a copy source, so the late-loading branches never override it. */
+  const copySourceTouchedRef = useRef(false);
   const [branchListLoading, setBranchListLoading] = useState(false);
   const [branchListError, setBranchListError] = useState<string | null>(null);
   const [branchPermissionDenied, setBranchPermissionDenied] = useState(false);
@@ -1293,9 +1296,13 @@ const Versions = () => {
   const handleNewVersionClick = () => {
     setVersionId(''); setAutoGenerate(true); setBumpStrategy('minor');
     setNextAutoVersion(calculateNextVersion('minor')); setDescription('');
-    setChangeLog(''); setCommitExternalRef(''); setEnabled(true); setSourceVersionId('');
+    setChangeLog(''); setCommitExternalRef(''); setEnabled(true);
+    // Start from the head, not from nothing (COA-4.3a, #7126); blank stays an explicit pick.
+    const start = defaultCopySource(versions, versionBranches);
+    setSourceVersionId(start.sourceVersionId);
     setCopyPaths(true);
-    setCopySourceBranchKey('blank');
+    setCopySourceBranchKey(start.branchKey);
+    copySourceTouchedRef.current = false;
     setErrorMessage(''); setBranchListError(null);
     void loadBranches();
     setShowCreateDialog(true);
@@ -2641,8 +2648,18 @@ const Versions = () => {
     [versions]
   );
 
+  // The branches load after the dialog opens: once they arrive, an untouched dialog moves its
+  // default to the default branch's tip (COA-4.3a, #7126).
+  useEffect(() => {
+    if (!showCreateDialog || copySourceTouchedRef.current || versionBranches.length < 2) return;
+    const start = defaultCopySource(versions, versionBranches);
+    setCopySourceBranchKey(start.branchKey);
+    setSourceVersionId(start.sourceVersionId);
+  }, [showCreateDialog, versionBranches, versions]);
+
   /** The New version dialog's branch-tip pick: the key, and the tip it resolves to. */
   const handleCopySourceBranchKeyChange = (val: string) => {
+    copySourceTouchedRef.current = true;
     setCopySourceBranchKey(val);
     if (val === 'blank') setSourceVersionId('');
     else if (val.startsWith('branch:')) {
@@ -4429,7 +4446,10 @@ const Versions = () => {
         copySourceBranchKey={copySourceBranchKey}
         onCopySourceBranchKeyChange={handleCopySourceBranchKeyChange}
         sourceVersionId={sourceVersionId}
-        onSourceVersionIdChange={setSourceVersionId}
+        onSourceVersionIdChange={(id) => {
+          copySourceTouchedRef.current = true;
+          setSourceVersionId(id);
+        }}
         copyPaths={copyPaths}
         onCopyPathsChange={setCopyPaths}
         autoGenerate={autoGenerate}

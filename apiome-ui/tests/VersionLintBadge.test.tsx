@@ -305,3 +305,21 @@ describe('VersionLintBadge', () => {
     expect(lintFetchCalls()).toHaveLength(2);
   });
 });
+
+describe('VersionLintBadge — empty revision (#7126)', () => {
+  it('shows "Nothing to score" instead of an empty document as A · 100', async () => {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const body = /\/document/.test(url)
+        ? { openapi: '3.1.0', paths: {} }
+        : /\/versions\/[^/]+\/lint/.test(url)
+          ? { ...REPORT, score: 100, grade: 'A' }
+          : {};
+      return Promise.resolve({ ok: true, status: 200, json: async () => body } as Response);
+    }) as jest.Mock;
+    render(<VersionLintBadge projectId="p1" versionId="v1" storedScore={100} storedGrade="A" />);
+    fireEvent.click(screen.getByTestId('version-lint-badge'));
+    await waitFor(() => expect(screen.getByTestId('lint-report-nothing-to-score')).toBeInTheDocument());
+    expect(screen.getByTestId('version-lint-badge-unscored')).toBeInTheDocument();
+  });
+});
