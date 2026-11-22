@@ -12,8 +12,9 @@
  * hatch to the full versions dashboard.
  *
  * Data comes from the same `GET /api/versions?projectId={id}` endpoint the versions dashboard uses
- * (catalog items are versioned on the shared versions table). The compare read reuses the dashboard's
- * `buildOpenApiSpecJsonForVersion` machinery via {@link loadCatalogRevisionSpec} — no new endpoints.
+ * (catalog items are versioned on the shared versions table). The compare read fetches the two
+ * revisions' stored documents from apiome-rest via {@link loadCatalogRevisionSpec} (COA-5.13, #7089);
+ * when their digests are equal the documents are the same and no diff is computed.
  * The version-list fetch is **lazy** (only once the Versions tab is first active) and **one-shot**
  * (re-activating never refetches), mirroring {@link CatalogLintPanel}. All selection maths live in
  * `catalog-versions-timeline` so this component stays a thin view.
@@ -49,14 +50,11 @@ import {
   type CatalogVersionRevision,
 } from '@/app/utils/catalog-versions-timeline';
 import { loadCatalogRevisionSpec } from '@/app/utils/catalog-revision-diff';
+import { sameRevisionDocument } from '@/app/utils/revision-document';
 
 interface CatalogVersionsPanelProps {
   /** The catalog item id (a project id) whose revisions to list. */
   itemId: string;
-  /** The catalog item's name — feeds the diffed specs' `info.title` so both sides match. */
-  itemName?: string | null;
-  /** The catalog item's metadata — feeds the diffed specs' `info` block so both sides match. */
-  itemMetadata?: Record<string, unknown> | null;
   /** Whether the Versions tab is active; revisions are fetched the first time this is true. */
   active: boolean;
   /** Report how many revisions this item has, for the shell's tab count (HIVE-7.2). */
@@ -81,10 +79,12 @@ interface CompareState {
   original: string;
   /** The newer revision's spec JSON (right / "after"). */
   modified: string;
+  /** True when both revisions have the same document (equal digests): there is nothing to diff. */
+  identical: boolean;
   error: string | null;
 }
 
-const IDLE_COMPARE: CompareState = { status: 'idle', original: '', modified: '', error: null };
+const IDLE_COMPARE: CompareState = { status: 'idle', original: '', modified: '', identical: false, error: null };
 
 /** Format an ISO timestamp for display; falls back to the raw value / em dash. */
 function formatTimestamp(value: string | null | undefined): string {
@@ -166,8 +166,6 @@ function DiffModeToggle({
  */
 export function CatalogVersionsPanel({
   itemId,
-  itemName,
-  itemMetadata,
   active,
   onCountChange,
   requestedPair,
@@ -273,7 +271,7 @@ export function CatalogVersionsPanel({
     [selected, revisions],
   );
 
-  // RC6-H3 (#6210): bumped by the diff error's retry, to build the same pair again.
+  // RC6-H3 (#6210): bumped by the diff error's retry, to read the same pair again.
   const [compareAttempt, setCompareAttempt] = useState(0);
 
   // Run the compare read whenever the ordered pair changes; clear it when the pair is incomplete.
@@ -287,22 +285,29 @@ export function CatalogVersionsPanel({
     void (async () => {
       try {
         const [original, modified] = await Promise.all([
-          loadCatalogRevisionSpec(pair.base, itemId, itemName ?? null, itemMetadata),
-          loadCatalogRevisionSpec(pair.head, itemId, itemName ?? null, itemMetadata),
+          loadCatalogRevisionSpec(pair.base, itemId),
+          loadCatalogRevisionSpec(pair.head, itemId),
         ]);
         if (compareTokenRef.current !== token) return; // superseded — drop this result.
-        setCompare({ status: 'loaded', original, modified, error: null });
+        setCompare({
+          status: 'loaded',
+          original: original.text,
+          modified: modified.text,
+          identical: sameRevisionDocument(original, modified),
+          error: null,
+        });
       } catch (e) {
         if (compareTokenRef.current !== token) return;
         setCompare({
           status: 'error',
           original: '',
           modified: '',
+          identical: false,
           error: e instanceof Error ? e.message : 'Failed to build the diff.',
         });
       }
     })();
-  }, [pair, itemId, itemName, itemMetadata, compareAttempt]);
+  }, [pair, itemId, compareAttempt]);
 
   const openHistory = useCallback(() => {
     router.push(`/ade/dashboard/versions?projectId=${encodeURIComponent(itemId)}`);
@@ -447,7 +452,7 @@ export function CatalogVersionsPanel({
                     type="button"
                     data-testid="catalog-versions-expand-all"
                     onClick={toggleExpandAll}
-                    disabled={compare.status !== 'loaded'}
+                    disabled={compare.status !== 'loaded' || compare.identical}
                     aria-pressed={expandAll}
                     title={
                       expandAll ? 'Collapse the unchanged regions' : 'Expand every unchanged region'
@@ -473,6 +478,11 @@ export function CatalogVersionsPanel({
                   onRetry={() => setCompareAttempt((count) => count + 1)}
                   data-testid="catalog-versions-diff-error"
                 />
+              ) : compare.status === 'loaded' && compare.identical ? (
+                // Equal digests (COA-5.13): the same document on both sides, so no diff is computed.
+                <p className="cid-versions-identical" role="status" data-testid="catalog-versions-diff-identical">
+                  These two revisions have the same document. There is nothing to compare.
+                </p>
               ) : compare.status === 'loaded' ? (
                 <JsonDiffViewer
                   original={compare.original}

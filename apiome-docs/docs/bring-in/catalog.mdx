@@ -156,7 +156,7 @@ Eight tabs follow, and a ninth, **Workflows**, for an Arazzo item:
 | **Conversions** | Every conversion to OpenAPI, with its evidence |
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
-| **Versions** | The item's revisions |
+| **Versions** | The item's revisions. **Tick any two** to compare their documents in place — see [Compare two revisions](#compare-two-revisions) |
 | **Workflows** | Arazzo items only: each workflow as steps, inputs, outputs and a step graph of its success and failure paths, with the operation each step calls — see [Arazzo workflows](../build/arazzo-workflows.mdx) |
 
 The page address names the open tab — `?tab=lint`, `?tab=versions` and so on, with no `?tab=`
@@ -202,6 +202,19 @@ what each one stores differently.
 <Screenshot id="catalog-item-test-bench" alt="The Test bench tab: a schema picker, a payload editor and test suites" />
 
 <Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
+
+### Compare two revisions
+
+On the **Versions** tab, **tick two revisions**. Their diff opens under the list, older on the left,
+without leaving the page. **“Side-by-side”** and **“Unified”** change the layout, and **“Expand
+all”** shows the unchanged lines between the changes.
+
+The two documents are the ones the REST server keeps for each revision — the same documents
+**View spec** and **Compare** show on [Versions](../build/versions.mdx#the-versions-document) — so a
+revision that was opened before loads at once. When both revisions have the same document, the tab
+says so and draws no diff.
+
+<Screenshot id="catalog-item-versions-identical" alt="The Versions tab with two of three revisions ticked and, under the list, the note These two revisions have the same document. There is nothing to compare." />
 
 ### Facts
 

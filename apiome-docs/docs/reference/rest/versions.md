@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 67 operations."
+description: "REST endpoints tagged versions: 68 operations."
 sidebar_position: 119
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.629.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.630.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 67 operations
+Tag: `versions` · 68 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -846,6 +846,51 @@ Operation id: `get_breaking_publish_guardrail_v1_versions__tenant_slug___project
 | --- | --- | --- |
 | 200 | Successful response for get breaking publish guardrail. | `application/json` [`BreakingPublishGuardrailOut`](#schema-breakingpublishguardrailout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/document` {#get-version-document-v1-versions-tenant-slug-project-id-version-record-id-document-get}
+
+**Get Version Document**
+
+Read a revision's OpenAPI document, draft or published (COA-5.13).
+
+The document a workspace member sees in the UI: OpenAPI 3.2, private operations kept. It is
+served from the document store once rendered; ``If-None-Match`` answers ``304``.
+
+Args:
+    tenant_slug: The workspace slug (the workspace is taken from the credentials).
+    project_id: The project (or catalog item) UUID the revision belongs to.
+    version_record_id: The revision UUID (``versions.id``).
+    if_none_match: ETag(s) the caller already holds.
+    auth_data: The authenticated caller.
+
+Returns:
+    The document streamed as JSON, or ``304`` with no body.
+
+Raises:
+    HTTPException: ``404`` for an unknown revision, ``502`` when the stored bytes are gone.
+
+Operation id: `get_version_document_v1_versions__tenant_slug___project_id___version_record_id__document_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `If-None-Match` | header | string or null | no | An ETag from an earlier response; the answer is 304 while the document is unchanged. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The revision's OpenAPI 3.2 document, as compact JSON. | `application/json` object |
+| 304 | `If-None-Match` names the current ETag; no body. | — |
+| 404 | Unknown revision, or one of another workspace or project. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 502 | `document-unreadable`: the document store did not return the stored bytes. | — |
 
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/draft-lock` {#get-draft-lock-status-v1-versions-tenant-slug-project-id-version-record-id-draft-lock-get}
 

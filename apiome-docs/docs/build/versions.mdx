@@ -110,7 +110,7 @@ see [Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and
 
 | Item | Does |
 | --- | --- |
-| **View spec** | Opens the generated OpenAPI 3.2 document (JSON or YAML) to copy or download, with its 3.2 constructs listed above the code — see [OpenAPI 3.2 in projects](./openapi-3-2-in-projects.mdx#see-them-in-the-spec-viewer) |
+| **View spec** | Opens the version's OpenAPI 3.2 document (JSON or YAML) to copy or download, with its 3.2 constructs listed above the code — see [The version's document](#the-versions-document) and [OpenAPI 3.2 in projects](./openapi-3-2-in-projects.mdx#see-them-in-the-spec-viewer) |
 | **Export to another format…** | Opens the export dialog — see [Export](./version-dialogs.mdx#export) |
 | **Upgrade OpenAPI version…** | Plans an upgrade of the version to OpenAPI 3.0, 3.1 or 3.2, lists every change, and applies it as a new version — see [Upgrade a spec](./upgrade-a-spec.mdx). Needs permission to create versions |
 | **Heatmap** | Shows the version's classes colored by complexity, recent change, references or documentation — see [Heatmap](./version-dialogs.mdx#heatmap) |
@@ -300,6 +300,42 @@ When the project was created by [converting a catalog item](../bring-in/convert-
 **Conversion** tab shows its conversion history — every projection and the evidence behind it. Other
 projects do not have this tab.
 
+## The version's document
+
+**View spec** and **Compare** show the same document: the one the REST server renders from the
+version's classes, properties, paths, servers and security schemes. The server renders it once,
+keeps it in the [document store](../admin/document-store.mdx#rendered-documents), and renders it
+again only after the version changes. So the first time a large version is opened it can take a
+moment, and after that it opens at once.
+
+What the document holds:
+
+- It declares **OpenAPI 3.2**.
+- Its title is the project's slug followed by `API`, and its description is the project's.
+- Every schema has a `title`, the name of its class.
+- Operations marked **private** are included, each with `x-private: true`. The published document
+  at `GET /v1/schema/…` leaves them out and declares OpenAPI 3.1.
+- Canvas sticky notes are not part of it.
+
+### Compare two versions
+
+1. **Click “Compare”** in the header.
+2. **Pick two versions** — *Version 1 (base)* and *Version 2 (compare to)* — and **click
+   “Compare versions”**.
+
+Both documents are fetched at the same time. **Diff View** opens on **Rendered**: a line diff of the
+two documents, with added, removed and unchanged lines marked. **“Show only changes”** (on by
+default) folds each run of unchanged lines into one *⋯ N unchanged lines* row; **Overlay** and
+**Side-by-side** change the layout; **JSON** and **YAML** change the format.
+
+<Screenshot id="versions-compare" alt="Diff View on Rendered: the Rendered / Original switch, the legend, v1.0.0 → v1.1.0, and a line diff with an added path, an added enum value and folded unchanged lines" />
+
+- When both versions have the same document, **Diff View** says **Identical documents** and no diff
+  is computed.
+- A diff of more than 1,500 rows draws only the rows on screen. Its lines then do not wrap; scroll
+  sideways to read a long one.
+- **Schema Changes**, **Breaking doc** and **Migration guide** read the same two documents.
+
 ## Original file
 
 Every import keeps the file it read (after the workspace's secret scrub) as the version's
@@ -320,14 +356,15 @@ because it carried secrets, the button says so instead — see
 
 ### Compare two originals
 
-**Click “Compare”**, pick two versions, then **click the “Originals” tab**. It is a line-by-line
-text diff of the two imported files, beside the semantic diff on **Diff View**: the files' names and
-sizes, a download button for each, **+** and **−** line counts, both files' line numbers, and every
-run of unchanged lines folded to one *⋯ N unchanged lines* row. Only the rows on screen are drawn, so
-a 20 MB pair scrolls without freezing the tab. When either version has no stored original, the tab
-names it instead of comparing.
+**Click “Compare”**, pick two versions, then **click “Original”** in the **Rendered / Original**
+switch at the top of **Diff View**. It is a line-by-line text diff of the two imported files, where
+**Rendered** compares the documents built from them: the files' names and sizes, a download button
+for each, **+** and **−** line counts, both files' line numbers, and every run of unchanged lines
+folded to one *⋯ N unchanged lines* row. Only the rows on screen are drawn, so a 20 MB pair scrolls
+without freezing the tab. When either version has no stored original, the view names it instead of
+comparing. **Click “Rendered”** to go back.
 
-<Screenshot id="versions-compare-originals" alt="The Originals tab: both imported files with their sizes, +8 −2, a removed and an added title line, an added path and a changed enum, with unchanged lines folded" />
+<Screenshot id="versions-compare-originals" alt="Diff View on Original: the Rendered / Original switch, both imported files with their sizes, +8 −2, a removed and an added title line, an added path and a changed enum, with unchanged lines folded" />
 
 ## Change report <Flag name="FEATURE_GITLIKE"/>
 
@@ -412,6 +449,9 @@ the [Version change report](../reference/rest/version-change-report.md) and
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
   `GET /v1/versions/{tenant}/{project}/{version}/original` downloads the [original file](#original-file) —
   see [The original file of a revision](./revision-history.md#the-original-file-of-a-revision).
+  `GET /v1/versions/{tenant}/{project}/{version}/document` returns [the version's
+  document](#the-versions-document), draft or published, with an `ETag`; send it back as
+  `If-None-Match` to get `304` while the version is unchanged.
   **Publishing** a version generates its OpenAPI document once and stores it, and
   `GET /v1/schema/{tenant}/{project}/{version}` serves the stored bytes with an `ETag` until the
   version changes. **Freezing** keeps those bytes even when the version is edited — see

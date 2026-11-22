@@ -37,7 +37,6 @@ import {
   tenantOfClasses,
   tenantOfMemberRecord,
   tenantOfVersion,
-  versionScope,
   type Refusal,
 } from '../auth/action-guard';
 import * as helper from './helper';
@@ -220,23 +219,6 @@ export async function getPropertiesForClassesBatch(
       ? requireSignedIn()
       : tenantOfClasses(classIds).then(requireTenantMember);
   return guarded(check, () => helper.getPropertiesForClassesBatch(...args));
-}
-
-/**
- * Build a version's OpenAPI document. The row comes from the caller, so the version must be in one
- * of the caller's workspaces and the row's project must be the version's own.
- *
- * @throws Error when the caller may not read the version (this returns the document, not JSON).
- */
-export async function buildOpenApiSpecJsonForVersion(
-  ...args: Parameters<typeof helper.buildOpenApiSpecJsonForVersion>
-) {
-  const [versionRow] = args;
-  const scope = await versionScope(versionRow?.id);
-  const refusal = await requireTenantMember(scope?.tenantId);
-  if (refusal) throw new Error(refusal);
-  if (String(scope?.projectId) !== String(versionRow.project_id)) throw new Error(NOT_FOUND);
-  return helper.buildOpenApiSpecJsonForVersion(...args);
 }
 
 // ---- Canvas layouts -----------------------------------------------------------------------------

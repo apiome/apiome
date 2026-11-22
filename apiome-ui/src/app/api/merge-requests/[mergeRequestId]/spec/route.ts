@@ -2,15 +2,17 @@
  * Proxy GET for a merge request's OpenAPI documents — COL-4.3 (#4527).
  *
  * `?side=head` (the default) is the branch tip; `?side=base` is the merge base it is compared with,
- * for the Changes tab's plain diff. Both are drafts or published revisions of the project; the
- * document is built exactly as the review page builds it (`buildOpenApiSpecJsonForVersion`). The
- * revision ids come only from the merge request apiome-rest returned — read first, which proves
- * `versions:view` — so no document is built for a revision the caller could not see.
+ * for the Changes tab's plain diff. Both are drafts or published revisions of the project.
+ *
+ * The document is the one apiome-rest renders once and keeps in the document store
+ * (`GET /v1/versions/{tenant}/{project}/{version}/document`, COA-5.13 #7089); nothing is generated
+ * here. The revision ids come only from the merge request apiome-rest returned, and REST checks
+ * `versions:view` again when it serves the document. `sha256` is the document's digest: equal on
+ * both sides means the two documents are the same and no diff is needed.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { buildOpenApiSpecJsonForVersion } from '@lib/db/helper';
-import { coerceProjectMetadataRecord } from '@lib/project-metadata';
+import { fetchRevisionDocument } from '@lib/revision-document-server';
 import { reviewSpecSideFromQuery } from '@lib/review-page';
 import { reviewFailure } from '../../../reviews/review-proxy';
 import {
@@ -24,7 +26,7 @@ import {
  *
  * @param request - The browser's request.
  * @param context - The route parameters.
- * @returns `{success: true, side, versionId, versionLabel, spec}` or a failure envelope.
+ * @returns `{success: true, side, versionId, versionLabel, spec, sha256}` or a failure envelope.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ mergeRequestId: string }> }) {
   try {
@@ -43,12 +45,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         404
       );
     }
-    const spec = await buildOpenApiSpecJsonForVersion(
-      { id, version_id: label ?? '', shortMessage: null, project_id: ctx.project.id },
-      ctx.project.name || null,
-      coerceProjectMetadataRecord(ctx.project.metadata)
-    );
-    return NextResponse.json({ success: true, side, versionId: id, versionLabel: label, spec });
+    const document = await fetchRevisionDocument(ctx, ctx.project.id, id);
+    if (!document.ok) return reviewFailure(document.error, document.status, document.code);
+    return NextResponse.json({
+      success: true,
+      side,
+      versionId: id,
+      versionLabel: label,
+      spec: document.spec,
+      sha256: document.sha256,
+    });
   } catch (error) {
     return mergeRequestRouteError(error, 'merge request spec GET');
   }

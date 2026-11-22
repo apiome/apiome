@@ -367,7 +367,8 @@ A row in `version_documents` has one of these roles:
 | --- | --- |
 | `original` | The file the revision was imported from. For a set of files (an Arazzo document with its sources, a multi-file protobuf), it is the manifest that lists the files. |
 | `original_part` | One file of a set, with its path inside the set. |
-| `rendered_openapi` | An OpenAPI document generated from the revision. |
+| `rendered_openapi` | The published OpenAPI document generated from the revision (`GET /v1/schema`). |
+| `rendered_openapi_members` | The OpenAPI document the app shows a workspace member — see [The document the app shows](#the-document-the-app-shows). |
 | `rendered_canonical` | A canonical model document generated from the revision. |
 | `frozen_schema` | A frozen schema snapshot. |
 
@@ -435,6 +436,31 @@ Things to know:
 
 A version with a canonical model (a non-OpenAPI import) also gets that model stored as JSON, with
 the role `rendered_canonical`, when it is published.
+
+### The document the app shows
+
+The app's **View spec**, **Compare**, catalog **Versions** diff and the **Spec** and **Plain diff**
+of a review or merge request read a second stored document of the same version, with the role
+`rendered_openapi_members`. It differs from the published one in two ways: it declares OpenAPI 3.2,
+and it keeps the operations marked private. A draft has one too.
+
+| | Published document | The document the app shows |
+| --- | --- | --- |
+| Route | `GET /v1/schema/{tenant}/{project}/{version}` | `GET /v1/versions/{tenant}/{project id}/{version id}/document` |
+| Who can read it | Anyone, for a public version; an API key for a private one | A signed-in member with `versions:view` |
+| Drafts | Refused | Served |
+| OpenAPI version | 3.1 | 3.2 |
+| Private operations | Left out | Kept, with `x-private: true` |
+| Stored when | At publish, and on the first request after a change | On the first request after a change |
+
+It is stored, re-rendered and removed by the same rules as the table above. Its response has the
+same `ETag`, plus `X-Apiome-Content-Sha256` (the same digest, without quotes) and
+`X-Apiome-Document-Cache`: `hit` when the stored bytes were served, `miss` when this request
+rendered them. The app sends `If-None-Match`, so an unchanged version is not downloaded twice.
+
+Upgrading to this release renders every published document once more, because the generator
+changed: see the [release note](/release-notes/one-openapi-document-everywhere). The stored copies
+of the older generator are removed by [retention](#retention-and-integrity).
 
 Comparisons read the same stored documents: the classified diff, the compatibility check, a merge
 request's **Changes** tab, the published version's changelog and transitive checks. Their

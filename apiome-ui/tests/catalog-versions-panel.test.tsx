@@ -7,8 +7,15 @@
  * localStorage, an expand-all/collapse-all control folds/reveals the unchanged regions, and the
  * off-page "Open version history" link is retained as the escape hatch. These assertions pin that
  * contract plus the loading / error / empty degradations.
+ *
+ * The docs screenshot fixture `catalog-item-versions-identical` (two revisions with the same
+ * document, COA-5.13) is written when `CATALOG_VERSIONS_FIXTURE_DUMP=1`:
+ *
+ *     CATALOG_VERSIONS_FIXTURE_DUMP=1 npx jest tests/catalog-versions-panel.test.tsx
  */
 
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -80,10 +87,19 @@ function mockVersionsFetch(versions: unknown, ok = true) {
   }) as unknown as typeof fetch;
 }
 
-/** Resolve each revision's spec to a deterministic, revision-tagged JSON string. */
-function stubSpecsByRevisionId() {
+/**
+ * Resolve each revision's document to a deterministic, revision-tagged JSON string.
+ *
+ * @param digest The digest every read reports. A different one per revision by default; the same
+ *   one for all of them makes the documents identical (COA-5.13).
+ */
+function stubSpecsByRevisionId(digest?: string) {
   mockLoadSpec.mockImplementation((revision: { id: string }) =>
-    Promise.resolve(`{"revision":"${revision.id}"}`),
+    Promise.resolve({
+      text: `{"revision":"${revision.id}"}`,
+      sha256: digest ?? `sha-${revision.id}`,
+      notModified: false,
+    }),
   );
 }
 
@@ -135,7 +151,7 @@ describe('CatalogVersionsPanel', () => {
   it('renders the diff inline (no route change) once exactly two revisions are ticked', async () => {
     mockVersionsFetch(VERSIONS);
     stubSpecsByRevisionId();
-    render(<CatalogVersionsPanel itemId={ITEM_ID} itemName="Catalog Item" active />);
+    render(<CatalogVersionsPanel itemId={ITEM_ID} active />);
 
     await screen.findByTestId('catalog-versions-timeline');
     // No diff before a full pair is selected.
@@ -151,15 +167,38 @@ describe('CatalogVersionsPanel', () => {
     // Older (rev-old) → original/base, newer (rev-new) → modified/head, regardless of tick order.
     expect(viewer).toHaveAttribute('data-original', '{"revision":"rev-old"}');
     expect(viewer).toHaveAttribute('data-modified', '{"revision":"rev-new"}');
-    // The compare read is invoked per revision with (revision, itemId, itemName, itemMetadata).
-    expect(mockLoadSpec).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'rev-old' }),
-      ITEM_ID,
-      'Catalog Item',
-      undefined,
-    );
+    // The compare read is invoked per revision with (revision, itemId): the document comes from
+    // apiome-rest by id, so the item's name and metadata are no longer passed (COA-5.13).
+    expect(mockLoadSpec).toHaveBeenCalledWith(expect.objectContaining({ id: 'rev-old' }), ITEM_ID);
+    expect(mockLoadSpec).toHaveBeenCalledWith(expect.objectContaining({ id: 'rev-new' }), ITEM_ID);
     // Inline only — the reader is never routed away.
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('skips the diff when both revisions have the same document (equal digests)', async () => {
+    mockVersionsFetch(VERSIONS);
+    stubSpecsByRevisionId('same-digest');
+    const { container } = render(<CatalogVersionsPanel itemId={ITEM_ID} active />);
+
+    await screen.findByTestId('catalog-versions-timeline');
+    const checkboxes = screen.getAllByTestId('catalog-versions-checkbox');
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[2]);
+
+    const identical = await screen.findByTestId('catalog-versions-diff-identical');
+    if (process.env.CATALOG_VERSIONS_FIXTURE_DUMP === '1') {
+      const out = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-catalog-item');
+      // React sets `checked` as a property; a static dump needs the attribute to draw the ticks.
+      container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((box) => {
+        if (box.checked) box.setAttribute('checked', '');
+      });
+      fs.mkdirSync(out, { recursive: true });
+      fs.writeFileSync(path.join(out, 'tab-versions-identical.html'), container.innerHTML);
+    }
+    expect(identical).toHaveTextContent('These two revisions have the same document');
+    // No diff viewer is mounted, and there are no unchanged regions to expand.
+    expect(screen.queryByTestId('mock-diff-viewer')).not.toBeInTheDocument();
+    expect(screen.getByTestId('catalog-versions-expand-all')).toBeDisabled();
   });
 
   it('persists the side-by-side/unified layout toggle across mounts', async () => {
@@ -238,7 +277,7 @@ describe('CatalogVersionsPanel', () => {
     expect(error).toHaveTextContent('spec boom');
 
     // RC6-H3 (#6210): the retry builds the same pair again.
-    mockLoadSpec.mockImplementation(async () => '{"openapi":"3.1.0"}');
+    mockLoadSpec.mockImplementation(async () => ({ text: '{"openapi":"3.1.0"}', sha256: null, notModified: false }));
     fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.queryByTestId('catalog-versions-diff-error')).not.toBeInTheDocument());
   });

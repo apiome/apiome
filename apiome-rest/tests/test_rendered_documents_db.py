@@ -26,8 +26,10 @@ import app.database as database_module
 from app.openapi_generator import generate_openapi_spec
 from app.rendered_documents import (
     KIND_OPENAPI,
+    KIND_OPENAPI_MEMBERS,
     ROLE_FROZEN_SCHEMA,
     ROLE_RENDERED_OPENAPI,
+    ROLE_RENDERED_OPENAPI_MEMBERS,
     open_frozen_schema,
     rendered_document,
     store_frozen_schema,
@@ -194,6 +196,83 @@ def test_the_batched_property_load_matches_the_per_class_load(ctx) -> None:
     for class_row in classes:
         assert batched[class_row["id"]] == db.get_properties_for_class(class_row["id"])
     assert db.get_properties_for_classes([]) == {}
+
+
+# ───────────────────────────── the members' document (COA-5.13, #7089) ─────────────────────────────
+
+
+def _require_members_role(ctx: Dict[str, Any]) -> None:
+    """Skip unless V407 lets ``version_documents`` hold the members' role."""
+    with ctx["conn"].cursor() as cur:
+        cur.execute(
+            "SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint "
+            "WHERE conname = 'version_documents_role_check'"
+        )
+        found = cur.fetchone()
+    ctx["conn"].commit()
+    if not found or ROLE_RENDERED_OPENAPI_MEMBERS not in found["definition"]:
+        pytest.skip("V407 not applied")
+
+
+def test_a_warm_members_document_issues_no_class_property_or_path_queries(ctx) -> None:
+    """The COA-5.13 acceptance criterion: an already-rendered revision is read without generating."""
+    _require_members_role(ctx)
+    _seed_order(ctx)
+
+    first = _read(ctx, kind=KIND_OPENAPI_MEMBERS)
+    ctx["queries"].clear()
+    second = _read(ctx, kind=KIND_OPENAPI_MEMBERS)
+
+    assert first.cached is False and first.stored is True
+    assert second.cached is True
+    assert _touching(ctx, *_CONTENT_TABLES) == []
+    assert len(ctx["queries"]) == 3
+    assert second.content() == first.content()
+    document = second.json()
+    assert document["openapi"] == "3.2.0"
+    assert document["paths"]["/orders"]["get"]["operationId"] == "listOrders"
+    assert document["components"]["schemas"]["Order"]["properties"]["id"]["description"] == "Identifier"
+
+
+def test_the_members_and_the_public_document_are_kept_side_by_side(ctx) -> None:
+    """Each has its own role, so the stale-render purge never drops one for the other."""
+    _require_members_role(ctx)
+    _seed_order(ctx)
+    public = _read(ctx)
+    members = _read(ctx, kind=KIND_OPENAPI_MEMBERS)
+    assert public.sha256 != members.sha256
+
+    with ctx["conn"].cursor() as cur:
+        cur.execute(
+            "SELECT role FROM apiome.version_documents WHERE version_id = %s::uuid ORDER BY role",
+            (ctx["version"],),
+        )
+        roles = [row["role"] for row in cur.fetchall()]
+        cur.execute("SELECT now() + interval '1 hour' AS later")
+        later = cur.fetchone()["later"]
+    ctx["conn"].commit()
+    assert roles == [ROLE_RENDERED_OPENAPI, ROLE_RENDERED_OPENAPI_MEMBERS]
+
+    assert ctx["db"].delete_stale_rendered_documents(cutoff=later) == []
+    ctx["queries"].clear()
+    assert _read(ctx).cached is True
+    assert _read(ctx, kind=KIND_OPENAPI_MEMBERS).cached is True
+
+
+def test_an_older_members_render_is_purged_as_stale(ctx) -> None:
+    _require_members_role(ctx)
+    order = _seed_order(ctx)
+    before = _read(ctx, kind=KIND_OPENAPI_MEMBERS)
+    _add_property(ctx, order, "total", {"type": "number"})
+    after = _read(ctx, kind=KIND_OPENAPI_MEMBERS)
+    assert after.cached is False and after.sha256 != before.sha256
+
+    with ctx["conn"].cursor() as cur:
+        cur.execute("SELECT now() + interval '1 hour' AS later")
+        later = cur.fetchone()["later"]
+    ctx["conn"].commit()
+    assert len(ctx["db"].delete_stale_rendered_documents(cutoff=later)) == 1
+    assert _read(ctx, kind=KIND_OPENAPI_MEMBERS).sha256 == after.sha256
 
 
 # ───────────────────────────── acceptance: an edit re-renders ─────────────────────────────

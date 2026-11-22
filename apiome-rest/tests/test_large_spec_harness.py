@@ -57,8 +57,15 @@ def test_warm_stages_never_generate_and_the_diffs_see_the_edits(tiny_run):
     assert tiny_run.detail["emitted_files"] >= 1
 
 
+def test_the_compare_stage_reads_both_members_documents_without_generating(tiny_run):
+    """COA-5.13 (#7089): the UI's Compare read of two rendered revisions runs no generator."""
+    assert tiny_run.detail["warm_renders"]["compare-warm"] == 0
+    # Two members' documents, each about the size of the public one.
+    assert tiny_run.detail["compare_bytes"] > tiny_run.detail["document_bytes"]
+
+
 def test_the_stage_vocabulary_has_a_cold_and_a_warm_of_every_operation():
-    for operation in ("schema", "diff-small", "diff-large", "compat-small", "compat-large", "export"):
+    for operation in ("schema", "diff-small", "diff-large", "compat-small", "compat-large", "compare", "export"):
         assert f"{operation}-cold" in STAGES and f"{operation}-warm" in STAGES
     assert set(TARGET_STAGES) <= set(STAGES)
 

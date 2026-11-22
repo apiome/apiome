@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.804.0] - 2026-11-21
+
+### Added
+- **The members' OpenAPI document, served from the document store — OpenAPI 1.630.0 (COA-5.13, #7089):**
+  `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/document` (`versions:view`) returns a
+  revision's OpenAPI document by record id, draft or published. It is the document the UI now shows in the
+  version view, the compare view, the catalog's version diff and the merge-request / review spec views, in
+  place of the one the Next.js server used to generate. It declares OpenAPI 3.2 and keeps the operations
+  marked `x-private` (each carrying `x-private: true`); the public `GET /v1/schema` is unchanged in both
+  respects. Rendered once per change of the revision and then streamed from the store
+  (`rendered_documents.KIND_OPENAPI_MEMBERS`, role `rendered_openapi_members`, apiome-db V407): `ETag` /
+  `X-Apiome-Content-Sha256`, `If-None-Match` → `304`, `X-Apiome-Document-Cache: hit|miss`,
+  `Cache-Control: private, no-cache`; `404` for a revision of another workspace or project, `502`
+  `document-unreadable` when the stored bytes are gone. Not rendered at publish: the first member to open
+  it pays for the render. The lifecycle job treats the new role like the other rendered roles.
+  `generate_openapi_spec` and `build_live_spec` take `include_private` (and `build_live_spec`
+  `openapi_version`).
+- The large-spec benchmark (COA-5.11) gains `compare-cold` / `compare-warm`: the two members' documents the
+  UI's Compare view fetches. A warm run must not generate; baselines added to
+  `tests/scale/large_spec_budgets.json`.
+
+### Fixed
+- **The OpenAPI generator, after a parity audit against the UI's generator (COA-5.13, #7089).** Both
+  generators rendered the 46 importable OpenAPI corpus files and the sample project; the report is
+  `docs/coa-5-13-generator-parity.md`. Five differences were defects here and are fixed, so
+  `GET /v1/schema`, the classified diff, compatibility checks and exports now see them too:
+  - a property's `description` column was ignored (311 descriptions across the corpus were missing);
+  - `operationId` was never written (the row names it `operation_id`);
+  - only `apiKey` security schemes were written — `http`, `oauth2`, `openIdConnect`, `mutualTLS` and
+    custom schemes now are;
+  - an object property with required children lost its own `required` flag on its parent;
+  - `type: object` was forced on a schema composed with `allOf` / `anyOf` / `oneOf`.
+
+### Changed
+- `OPENAPI_GENERATOR_VERSION` is `2`, so every stored `rendered_openapi` document is rendered again on its
+  next read (the old rows are left for the lifecycle job). A frozen version keeps its frozen bytes.
+  **The `ETag` of `GET /v1/schema` changes once for every unfrozen version**, and the document can gain
+  the fields listed above.
+
 ## [1.803.0] - 2026-11-21
 
 ### Added

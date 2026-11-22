@@ -1,0 +1,60 @@
+---
+slug: one-openapi-document-everywhere
+title: "One OpenAPI document everywhere in the app"
+description: "View spec, Compare, the catalog diff and review specs read the REST server's stored document."
+authors: [apiome]
+---
+
+Until now the screens people open most built a version's OpenAPI document themselves, in the web
+server, every time: **View spec**, **Compare**, a catalog item's **Versions** diff and the **Spec**
+and **Plain diff** of a review or merge request. The REST server had its own generator, and the two
+could disagree about the same version. There is now one generator. Every screen reads
+[the document the REST server keeps](/build/versions#the-versions-document).
+
+{/* truncate */}
+
+## What changes on screen
+
+- **Faster second opens.** The document is rendered once per change of a version and then read from
+  the [document store](/admin/document-store#rendered-documents). Opening **View spec** or
+  **Compare** again downloads nothing when the version has not changed.
+- **Identical documents.** When two versions have the same document, **Compare**, the catalog
+  **Versions** diff and **Plain diff** say so and compute no diff.
+- **Rendered / Original.** In **Compare**, the **Originals** tab is now a **Rendered / Original**
+  switch at the top of **Diff View**. See [Compare two versions](/build/versions#compare-two-versions).
+- **Long diffs scroll.** A rendered diff of more than 1,500 rows draws only the rows on screen.
+
+## What changes in the document
+
+The document these screens show is the REST server's, so a few things read differently:
+
+- `info.title` is the project's slug followed by `API`, and `info.description` is the project's
+  description. Before, they were the project's name and the version's note.
+- Every schema has a `title`, the name of its class.
+- Canvas sticky notes (`x-apiome-note`, `x-apiome-canvas`) are no longer written into it. They were
+  each person's own notes, so two people saw different documents for one version.
+- The top-level `security` list the page used to add is gone. Security schemes are still listed
+  under `components.securitySchemes`.
+
+It still declares OpenAPI 3.2 and still includes operations marked private.
+
+## What changes in the published document
+
+Both generators rendered the whole OpenAPI example corpus, and every difference was classified.
+Five were mistakes in the REST generator. They are fixed, so `GET /v1/schema/…`, the classified
+diff, compatibility checks and exports now have:
+
+- property descriptions (they were missing when written in the **Description** field);
+- `operationId` on every operation that has one;
+- `http`, `oauth2`, `openIdConnect`, `mutualTLS` and custom security schemes, not only `apiKey`;
+- the right `required` list when a required property is an object with required properties of its own;
+- no `type: object` forced on a schema built with `allOf`, `anyOf` or `oneOf`.
+
+Because of these fixes the published document of every version that is not frozen is rendered once
+more, and **its `ETag` changes once**. A frozen version keeps its bytes.
+
+## For API clients
+
+`GET /v1/versions/{tenant}/{project}/{version}/document` returns the document the app shows, draft
+or published, with `ETag`, `X-Apiome-Content-Sha256` and `If-None-Match` → `304`. It needs
+`versions:view`. See the [REST reference](/reference/rest/versions).

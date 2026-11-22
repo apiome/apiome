@@ -81,18 +81,6 @@ export interface CustomSchemeInput {
   additional_properties?: Record<string, string>;
 }
 
-/** OpenAPI security scheme definition for export */
-export interface OpenAPISecurityScheme {
-  type: 'apiKey' | 'http' | 'oauth2' | 'openIdConnect' | 'mutualTLS';
-  name?: string;
-  in?: 'header' | 'query' | 'cookie';
-  scheme?: string;
-  bearerFormat?: string;
-  openIdConnectUrl?: string;
-  description?: string;
-  [key: string]: unknown;
-}
-
 /**
  * Get all security schemes for a version
  */
@@ -878,68 +866,4 @@ export async function deleteSecurityScheme(schemeId: string): Promise<{ success:
     const msg = err instanceof Error ? err.message : 'Unknown error';
     return { success: false, error: msg };
   }
-}
-
-/**
- * Convert security scheme records to OpenAPI components.securitySchemes format
- */
-export async function securitySchemesToOpenAPI(schemes: SecuritySchemeRecord[]): Promise<Record<string, OpenAPISecurityScheme>> {
-  const result: Record<string, OpenAPISecurityScheme> = {};
-  for (const s of schemes) {
-    if (s.scheme_type === 'apiKey') {
-      result[s.scheme_name] = {
-        type: 'apiKey',
-        name: s.param_name || s.scheme_name,
-        in: (s.in_location as 'header' | 'query' | 'cookie') || 'header',
-        description: s.description || undefined,
-      };
-    } else if (s.scheme_type === 'http' && s.http_scheme) {
-      const httpScheme: OpenAPISecurityScheme = {
-        type: 'http',
-        scheme: s.http_scheme,
-        description: s.description || undefined,
-      };
-      const bearerFormat = (s.data as { bearerFormat?: string })?.bearerFormat;
-      if (bearerFormat) httpScheme.bearerFormat = bearerFormat;
-      result[s.scheme_name] = httpScheme;
-    } else if (s.scheme_type === 'oauth2') {
-      const flows = (s.data as { flows?: Record<string, unknown> })?.flows;
-      if (flows && typeof flows === 'object' && Object.keys(flows).length > 0) {
-        result[s.scheme_name] = {
-          type: 'oauth2',
-          flows,
-          description: s.description || undefined,
-        };
-      }
-    } else if (s.scheme_type === 'openIdConnect') {
-      const url = (s.data as { openIdConnectUrl?: string })?.openIdConnectUrl;
-      if (url && typeof url === 'string' && url.trim()) {
-        result[s.scheme_name] = {
-          type: 'openIdConnect',
-          openIdConnectUrl: url.trim(),
-          description: s.description || undefined,
-        };
-      }
-    } else if (s.scheme_type === 'mutualTLS') {
-      result[s.scheme_name] = {
-        type: 'mutualTLS',
-        description: s.description || undefined,
-      };
-    } else if (s.scheme_type === 'custom') {
-      const data = s.data as Record<string, unknown>;
-      const typeVal = (data?.type as string)?.trim() || 'apiKey';
-      const out: Record<string, unknown> = {
-        type: typeVal,
-        description: s.description || (data?.description as string) || undefined,
-      };
-      if (data && typeof data === 'object') {
-        for (const [k, v] of Object.entries(data)) {
-          if (k === 'type' || k === 'description') continue;
-          if (v !== undefined && v !== null) out[k] = typeof v === 'string' ? v : v;
-        }
-      }
-      result[s.scheme_name] = out as OpenAPISecurityScheme;
-    }
-  }
-  return result;
 }

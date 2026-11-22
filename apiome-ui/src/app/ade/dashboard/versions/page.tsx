@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
 import { controlState, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
-import { Fragment, useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Check,
   GitBranch,
@@ -108,10 +108,7 @@ import {
   VERSION_DIALOG_COPY,
   VERSION_DIFF_LEGEND,
   buildVersionDiffRows,
-  diffLinePrefix,
-  versionDiffFoldLabel,
   type VersionChangeClass,
-  type VersionDiffRow,
 } from '../../../components/ade/version-dialogs/versionDialogsModel';
 import {
   DEFAULT_VERSIONS_SORT,
@@ -184,13 +181,17 @@ import type { VersionChangelogSummary } from '@lib/version-changelog';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import {
   deleteVersion,
-  buildOpenApiSpecJsonForVersion,
   getClassesForVersion,
   getPropertiesForClass,
   getPropertiesForClassesBatch,
   getTenantsAdministratedByUser
 } from '../../../../../lib/db/helper-actions';
-import { coerceProjectMetadataRecord } from '@lib/project-metadata';
+import {
+  loadRevisionDocument,
+  sameRevisionDocument,
+  type RevisionDocument,
+} from '@/app/utils/revision-document';
+import { WindowedDiffRows } from '@/app/components/ade/versions/WindowedDiffRows';
 import YAML from 'yaml';
 import { diffLines, Change } from 'diff';
 import {
@@ -345,25 +346,25 @@ function SpecJsonYamlToggle({
 const COMPARE_CANVAS_ENABLED = false;
 
 /**
- * One drawn diff row: a spec line, or a fold standing in for unchanged lines.
+ * The line diff the Diff tab draws for two rendered documents.
  *
- * @param row The row, from `buildVersionDiffRows`.
- * @param showLineNo Draw the gutter line number (the split view does; the overlay does not).
- * @returns The row's element; the caller supplies the key.
+ * When the two documents are known to be the same (equal digests, COA-5.13) no diff is computed:
+ * the whole text is one unchanged part.
+ *
+ * @param spec1 The base document, as JSON text.
+ * @param spec2 The compare-to document, as JSON text.
+ * @param format Show the documents as JSON or YAML.
+ * @param identical Both documents have the same digest.
+ * @returns The diff parts, in order.
  */
-function renderDiffRow(row: VersionDiffRow, showLineNo: boolean) {
-  if (row.kind === 'fold') {
-    return <div className="vdlg-diff__fold">{versionDiffFoldLabel(row.hidden)}</div>;
-  }
-  return (
-    <div className="vdlg-diff__line" data-change={row.change}>
-      {showLineNo ? <span className="vdlg-diff__ln">{row.lineNo}</span> : null}
-      {showLineNo ? row.text || ' ' : `${diffLinePrefix(row.change)}${row.text}`}
-    </div>
-  );
+function diffCompareTexts(spec1: string, spec2: string, format: 'json' | 'yaml', identical: boolean): Change[] {
+  const content1 = format === 'json' ? spec1 : YAML.stringify(JSON.parse(spec1));
+  if (identical) return [{ value: content1, count: content1.split('\n').length, added: false, removed: false }];
+  const content2 = format === 'json' ? spec2 : YAML.stringify(JSON.parse(spec2));
+  return diffLines(content1, content2);
 }
 
-/** The compare view's Originals mode (COA-5.7): loaded when the tab is first opened. */
+/** The compare view's Original mode (COA-5.7): loaded when the Diff tab is first switched to it. */
 const OriginalsDiffPanel = dynamic(() => import('@/app/components/ade/versions/OriginalsDiffPanel'), {
   ssr: false,
   loading: () => (
@@ -574,8 +575,15 @@ const Versions = () => {
     showModified: boolean;
   }>({ showAdded: true, showRemoved: true, showModified: true });
   const [activeCompareTab, setActiveCompareTab] = useState<
-    'diff' | 'summary' | 'breaking' | 'migration' | 'originals' | 'canvas'
+    'diff' | 'summary' | 'breaking' | 'migration' | 'canvas'
   >('diff');
+  /**
+   * What the Diff tab compares (COA-5.13): the documents apiome-rest renders from the two
+   * revisions, or the two files they were imported from (COA-5.7).
+   */
+  const [compareSource, setCompareSource] = useState<'rendered' | 'original'>('rendered');
+  /** True when both revisions have the same rendered document (equal digests): no diff is computed. */
+  const [compareIdentical, setCompareIdentical] = useState(false);
   /** Stored publish-time classification for the compared pair (CTG-3.2, #4476); null when the pair has none. */
   const [compareStoredChangelog, setCompareStoredChangelog] = useState<VersionChangelog | null>(null);
   /** Pending deep-link target inside the compare dialog (a `ctg.changelog.v1` JSON Pointer). */
@@ -1946,17 +1954,13 @@ const Versions = () => {
     setViewingVersion(version); setShowOpenApiDialog(true); setIsLoadingSpec(true); setOpenApiFormat('json');
     setSpecError(null);
     try {
-      const project = projects.find(p => p.id === version.project_id);
-      const spec = await buildOpenApiSpecJsonForVersion(
-        version,
-        project?.name ?? null,
-        coerceProjectMetadataRecord((project as { metadata?: unknown })?.metadata)
-      );
-      setOpenApiSpec(spec);
+      // COA-5.13 (#7089): the document apiome-rest keeps in the document store, not one built here.
+      const document = await loadRevisionDocument(version.project_id, version.id);
+      setOpenApiSpec(document.text);
     } catch (error) {
-      // RC6-H3 (#6210): say the build failed, with a retry, instead of showing a made-up spec.
+      // RC6-H3 (#6210): say the read failed, with a retry, instead of showing a made-up spec.
       setOpenApiSpec('');
-      setSpecError(error instanceof Error && error.message ? error.message : 'The specification could not be built.');
+      setSpecError(error instanceof Error && error.message ? error.message : 'The specification could not be read.');
     }
     finally { setIsLoadingSpec(false); }
   };
@@ -2005,15 +2009,16 @@ const Versions = () => {
     }
   };
 
-  const loadVersionSpec = async (versionId: string): Promise<string> => {
+  /**
+   * Read a revision's rendered OpenAPI document from apiome-rest (COA-5.13, #7089).
+   *
+   * @param versionId The revision UUID, which must be in the loaded list.
+   * @returns The document's text and its digest.
+   */
+  const loadVersionSpec = async (versionId: string): Promise<RevisionDocument> => {
     const version = versions.find(v => v.id === versionId);
     if (!version) throw new Error('Version not found');
-    const project = projects.find(p => p.id === version.project_id);
-    return buildOpenApiSpecJsonForVersion(
-      version,
-      project?.name ?? null,
-      coerceProjectMetadataRecord((project as { metadata?: unknown })?.metadata)
-    );
+    return loadRevisionDocument(version.project_id, version.id);
   };
 
   /**
@@ -2056,22 +2061,27 @@ const Versions = () => {
     setCanvasCompareDiff(null);
     setCanvasComparePairKey('');
     setCompareError(null);
+    setCompareIdentical(false);
+    setCompareSource('rendered');
     setIsLoadingComparison(true);
     void loadStoredChangelogForPair(baseId, targetId);
     try {
-      const [spec1, spec2] = await Promise.all([loadVersionSpec(baseId), loadVersionSpec(targetId)]);
+      // Both sides at once, from the document store (COA-5.13, #7089).
+      const [base, target] = await Promise.all([loadVersionSpec(baseId), loadVersionSpec(targetId)]);
+      const spec1 = base.text;
+      const spec2 = target.text;
+      const identical = sameRevisionDocument(base, target);
       setCompareSpec1(spec1);
       setCompareSpec2(spec2);
+      setCompareIdentical(identical);
       const diffSummary = compareSchemas(spec1, spec2);
       setSchemaDiffSummary(diffSummary);
       setClassDiffRows(buildClassLevelDiff(spec1, spec2));
-      const content1 = compareFormat === 'json' ? spec1 : YAML.stringify(JSON.parse(spec1));
-      const content2 = compareFormat === 'json' ? spec2 : YAML.stringify(JSON.parse(spec2));
-      setDiffResult(diffLines(content1, content2));
+      setDiffResult(diffCompareTexts(spec1, spec2, compareFormat, identical));
     } catch (error) {
       console.error('Comparison error:', error);
       // RC6-H3 (#6210): said in the dialog, with a retry, rather than a modal on top of it.
-      setCompareError(error instanceof Error && error.message ? error.message : 'The two specifications could not be built.');
+      setCompareError(error instanceof Error && error.message ? error.message : 'The two specifications could not be read.');
     } finally {
       setIsLoadingComparison(false);
     }
@@ -2594,9 +2604,7 @@ const Versions = () => {
   const handleCompareFormatChange = (newFormat: 'json' | 'yaml') => {
     setCompareFormat(newFormat);
     if (compareSpec1 && compareSpec2) {
-      const content1 = newFormat === 'json' ? compareSpec1 : YAML.stringify(JSON.parse(compareSpec1));
-      const content2 = newFormat === 'json' ? compareSpec2 : YAML.stringify(JSON.parse(compareSpec2));
-      setDiffResult(diffLines(content1, content2));
+      setDiffResult(diffCompareTexts(compareSpec1, compareSpec2, newFormat, compareIdentical));
     }
   };
 
@@ -4623,7 +4631,7 @@ const Versions = () => {
                 <div>Compare version schemas</div>
                 <div className="vdlg-compare__subtitle">View differences between two version specifications</div>
               </div>
-              {diffResult.length > 0 && activeCompareTab === 'diff' && (
+              {diffResult.length > 0 && activeCompareTab === 'diff' && compareSource === 'rendered' && !compareIdentical && (
                 <div className="vdlg-compare__switches">
                   <Segmented
                     value={diffViewMode}
@@ -4863,20 +4871,6 @@ const Versions = () => {
                       <span>Migration guide</span>
                     </div>
                   </button>
-                  {/* COA-5.7: a text diff of the two files the versions were imported from. */}
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeCompareTab === 'originals'}
-                    onClick={() => setActiveCompareTab('originals')}
-                    className={tabTriggerClass({ active: activeCompareTab === 'originals' })}
-                    data-testid="compare-tab-originals"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" aria-hidden />
-                      <span>Originals</span>
-                    </div>
-                  </button>
                   {COMPARE_CANVAS_ENABLED && (
                   <button
                     type="button"
@@ -4898,6 +4892,16 @@ const Versions = () => {
                   // Diff View Tab
                   <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff">
                     <div className="vdlg-compare__legend-row">
+                      {/* COA-5.13: the documents REST renders, or the files that were imported (COA-5.7). */}
+                      <Segmented
+                        value={compareSource}
+                        onValueChange={(next) => setCompareSource(next as 'rendered' | 'original')}
+                        size="sm"
+                        aria-label="What to compare"
+                      >
+                        <SegmentedItem value="rendered" data-testid="compare-source-rendered">Rendered</SegmentedItem>
+                        <SegmentedItem value="original" data-testid="compare-source-original">Original</SegmentedItem>
+                      </Segmented>
                       <div className="vdlg-legend">
                         {VERSION_DIFF_LEGEND.map((entry) => (
                           <span key={entry.change} className="vdlg-legend__item">
@@ -4912,46 +4916,79 @@ const Versions = () => {
                       </div>
                       <div className="hive-quiet">{formatVersionWithPrefix(versions.find(v => v.id === compareVersion1Id)?.version_id)} → {formatVersionWithPrefix(versions.find(v => v.id === compareVersion2Id)?.version_id)}</div>
                     </div>
+                    {compareSource === 'original' ? (
+                      // COA-5.7: a text diff of the two files the versions were imported from.
+                      (() => {
+                        const baseVersion = versions.find((v) => v.id === compareVersion1Id);
+                        const headVersion = versions.find((v) => v.id === compareVersion2Id);
+                        if (!baseVersion || !headVersion) return null;
+                        return (
+                          <OriginalsDiffPanel
+                            base={{
+                              projectId: baseVersion.project_id,
+                              versionId: baseVersion.id,
+                              label: formatVersionWithPrefix(baseVersion.version_id),
+                            }}
+                            head={{
+                              projectId: headVersion.project_id,
+                              versionId: headVersion.id,
+                              label: formatVersionWithPrefix(headVersion.version_id),
+                            }}
+                          />
+                        );
+                      })()
+                    ) : compareIdentical ? (
+                      // Equal digests (COA-5.13): the same document on both sides, so no diff is computed.
+                      <div className="vdlg-compare__identical" data-testid="compare-identical">
+                        <EmptyState
+                          icon={<GitCompareArrows />}
+                          title="Identical documents"
+                          description="These two versions have the same OpenAPI document, byte for byte. Switch to Original to compare the files they were imported from."
+                        />
+                      </div>
+                    ) : (
                     <div className="vdlg-diff" data-testid="compare-diff" data-changes-only={diffChangesOnly}>
                       {diffViewMode === 'overlay' ? (
                         // Overlay/Unified diff view
-                        <div className="vdlg-diff__scroll">
-                          {diffRows.unified.map((row, i) => (
-                            <Fragment key={i}>{renderDiffRow(row, false)}</Fragment>
-                          ))}
-                        </div>
+                        <WindowedDiffRows
+                          rows={diffRows.unified}
+                          showLineNo={false}
+                          className="vdlg-diff__scroll"
+                          testId="compare-diff-rows"
+                        />
                       ) : (
                         // Side-by-side view
                         <div className="vdlg-diff__split">
                           {/* Left panel - Version 1 (Base) */}
-                          <div
-                            ref={leftPanelRef}
+                          <WindowedDiffRows
+                            rows={diffRows.left}
+                            showLineNo
+                            paneRef={leftPanelRef}
                             onScroll={handleLeftScroll}
                             className="vdlg-diff__pane vdlg-diff__pane--left"
-                          >
-                            <div className="vdlg-diff__pane-title">
-                              v{versions.find(v => v.id === compareVersion1Id)?.version_id} (base)
-                            </div>
-                            {diffRows.left.map((row, i) => (
-                              <Fragment key={i}>{renderDiffRow(row, true)}</Fragment>
-                            ))}
-                          </div>
+                            title={
+                              <div className="vdlg-diff__pane-title">
+                                v{versions.find(v => v.id === compareVersion1Id)?.version_id} (base)
+                              </div>
+                            }
+                          />
                           {/* Right panel - Version 2 (Compare To) */}
-                          <div
-                            ref={rightPanelRef}
+                          <WindowedDiffRows
+                            rows={diffRows.right}
+                            showLineNo
+                            paneRef={rightPanelRef}
                             onScroll={handleRightScroll}
                             className="vdlg-diff__pane"
-                          >
-                            <div className="vdlg-diff__pane-title">
-                              v{versions.find(v => v.id === compareVersion2Id)?.version_id} (compare to)
-                            </div>
-                            {diffRows.right.map((row, i) => (
-                              <Fragment key={i}>{renderDiffRow(row, true)}</Fragment>
-                            ))}
-                          </div>
+                            title={
+                              <div className="vdlg-diff__pane-title">
+                                v{versions.find(v => v.id === compareVersion2Id)?.version_id} (compare to)
+                              </div>
+                            }
+                          />
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 ) : activeCompareTab === 'summary' ? (
                   // Schema Changes Summary Tab
@@ -5310,28 +5347,6 @@ const Versions = () => {
                       placeholder="Compare two versions to generate breaking-changes Markdown."
                       aria-label="Generated breaking changes markdown"
                     />
-                  </div>
-                ) : activeCompareTab === 'originals' ? (
-                  <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff">
-                    {(() => {
-                      const baseVersion = versions.find((v) => v.id === compareVersion1Id);
-                      const headVersion = versions.find((v) => v.id === compareVersion2Id);
-                      if (!baseVersion || !headVersion) return null;
-                      return (
-                        <OriginalsDiffPanel
-                          base={{
-                            projectId: baseVersion.project_id,
-                            versionId: baseVersion.id,
-                            label: formatVersionWithPrefix(baseVersion.version_id),
-                          }}
-                          head={{
-                            projectId: headVersion.project_id,
-                            versionId: headVersion.id,
-                            label: formatVersionWithPrefix(headVersion.version_id),
-                          }}
-                        />
-                      );
-                    })()}
                   </div>
                 ) : activeCompareTab === 'migration' ? (
                   <div className="vdlg-compare__tabpanel vdlg-doc">

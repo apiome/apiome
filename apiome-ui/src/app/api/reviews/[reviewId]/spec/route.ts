@@ -4,16 +4,16 @@
  * `?side=head` (the default) is the version under review, for the Spec tab; `?side=base` is the
  * newest published version it is compared with, for the Changes tab's plain diff.
  *
- * The public schema endpoint refuses drafts, so the document is built exactly as the Versions
- * screen's spec viewer builds it (`buildOpenApiSpecJsonForVersion`, with the project's name and
- * metadata). The revision is taken only from apiome-rest's version list for the review's project —
- * read after the review itself — so the caller's `projects:view` and `versions:view` are both proven
- * before any document is built.
+ * The public schema endpoint refuses drafts, so the document is the one the Versions screen's spec
+ * viewer shows: the members' document apiome-rest renders once and keeps in the document store
+ * (`GET /v1/versions/{tenant}/{project}/{version}/document`, COA-5.13 #7089). Nothing is generated
+ * here. The revision is taken only from apiome-rest's version list for the review's project — read
+ * after the review itself — and REST checks `versions:view` again when it serves the document.
+ * `sha256` is the document's digest: equal on both sides means no diff is needed.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { buildOpenApiSpecJsonForVersion } from '@lib/db/helper';
-import { coerceProjectMetadataRecord } from '@lib/project-metadata';
+import { fetchRevisionDocument } from '@lib/revision-document-server';
 import { newestPublishedRevision, reviewSpecSideFromQuery, sameId } from '@lib/review-page';
 import {
   fetchProjectRevisions,
@@ -28,7 +28,7 @@ import {
  *
  * @param request - The browser's request.
  * @param context - The route parameters.
- * @returns `{success: true, side, versionId, versionLabel, spec}` (the document as JSON text), or
+ * @returns `{success: true, side, versionId, versionLabel, spec, sha256}` (the document as JSON text), or
  *   `{success: false, error, code?}` — 404 when `side=base` and nothing is published.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ reviewId: string }> }) {
@@ -57,17 +57,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    const spec = await buildOpenApiSpecJsonForVersion(
-      {
-        id: row.id,
-        version_id: row.version_id,
-        shortMessage: row.shortMessage ?? null,
-        project_id: ctx.project.id,
-      },
-      ctx.project.name || null,
-      coerceProjectMetadataRecord(ctx.project.metadata)
-    );
-    return NextResponse.json({ success: true, side, versionId: row.id, versionLabel: row.version_id, spec });
+    const document = await fetchRevisionDocument(ctx, ctx.project.id, row.id);
+    if (!document.ok) return reviewFailure(document.error, document.status, document.code);
+    return NextResponse.json({
+      success: true,
+      side,
+      versionId: row.id,
+      versionLabel: row.version_id,
+      spec: document.spec,
+      sha256: document.sha256,
+    });
   } catch (error) {
     return reviewRouteError(error, 'review spec GET');
   }

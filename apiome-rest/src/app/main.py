@@ -234,6 +234,7 @@ from .verification_target_routes import router as verification_target_router
 from .probe_consent_routes import router as probe_consent_router
 from .version_change_report_routes import router as version_change_report_router
 from .version_changelog_routes import router as version_changelog_router
+from .version_document_routes import router as version_document_router
 from .version_original_routes import router as version_original_router
 from .version_merge_routes import router as version_merge_router
 from .revision_graph_routes import router as revision_graph_router
@@ -258,7 +259,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.629.0",
+    version="1.630.0",
 )
 
 
@@ -558,6 +559,7 @@ app.include_router(openapi_upgrade_router)
 app.include_router(version_changelog_router)
 # COA-5.7 (#7083): download a revision's stored original (literal /original suffix).
 app.include_router(version_original_router)
+app.include_router(version_document_router)  # COA-5.13 (#7089): the members' OpenAPI document
 # Registered before versions_router for the same reason: the literal
 # /{tenant_slug}/{project_id}/{version_record_id}/agent-outputs suffix stays unambiguous
 # against the versions parameter routes (APX-3.4, private-suite#2459).

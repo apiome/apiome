@@ -187,25 +187,3 @@ export async function deleteServer(serverId: string): Promise<{ success: boolean
     return { success: false, error: msg };
   }
 }
-
-/** OpenAPI Server object: url, description?, variables? */
-export type OpenAPIServerObject = {
-  url: string;
-  description?: string;
-  variables?: Record<string, { default: string; enum?: string[]; description?: string }>;
-};
-
-/**
- * Convert version servers to OpenAPI servers array (url, description, variables).
- * Async to satisfy Server Action requirement ('use server').
- */
-export async function serversToOpenAPI(servers: VersionServerRecord[]): Promise<OpenAPIServerObject[]> {
-  return servers
-    .filter((s) => s.url?.trim())
-    .map((s) => {
-      const obj: OpenAPIServerObject = { url: s.url.trim() };
-      if (s.description?.trim()) obj.description = s.description.trim();
-      if (s.variables && Object.keys(s.variables).length > 0) obj.variables = s.variables;
-      return obj;
-    });
-}
