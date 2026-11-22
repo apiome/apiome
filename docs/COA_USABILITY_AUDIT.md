@@ -79,11 +79,11 @@ were captured again.
 | --- | --- | --- | --- |
 | S3-1 | **Import to catalog** → Quality | The selected finding's docs pointer was the repository path as plain text (`apiome-docs/docs/build/lint-rules.md#…`). | **Fixed** — a **Rule docs** link to the docs site |
 | S3-2 | Projects → **Edit project** | **Created** and **Updated** were drawn at the headline-figure size; each date wrapped to three lines and the strip took a third of the dialog. | **Fixed** — body-size values |
-| S3-3 | Catalog at 1024 × 768 | The header, the info banner and twelve kind tiles push the first item under the fold. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S3-4 | Versions tabs at 1024 | The tab strip is cut mid-word (*Test be…*) with no overflow cue. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S3-5 | **Import to catalog** → done | *Stored in the catalog…* has **Close** and **Done**, which do the same, and no link to the new item. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S3-6 | Catalog item → Overview | A fresh item says *The normalized-content summary has not been captured for this item yet.* while **Operations** lists 3 below it. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S3-7 | **Import to catalog** → Quality | The findings list opens scrolled, with finding #1 above the fold although it is selected. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
+| S3-3 | Catalog at 1024 × 768 | The header, the info banner and twelve kind tiles push the first item under the fold. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the kind tiles become one sideways-scrolling row with an edge fade below 1,200 px |
+| S3-4 | Versions tabs at 1024 | The tab strip is cut mid-word (*Test be…*) with no overflow cue. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the tab strip fades the edge that hides tabs (`useOverflowEdges` + `.overflow-fade`) |
+| S3-5 | **Import to catalog** → done | *Stored in the catalog…* has **Close** and **Done**, which do the same, and no link to the new item. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the done step links **Open the catalog item** and keeps only **Done** |
+| S3-6 | Catalog item → Overview | A fresh item says *The normalized-content summary has not been captured for this item yet.* while **Operations** lists 3 below it. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the line is dropped when the parsed model lists entities |
+| S3-7 | **Import to catalog** → Quality | The findings list opens scrolled, with finding #1 above the fold although it is selected. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the raw viewer centres the line inside itself instead of `scrollIntoView`, which scrolled the wizard body |
 | S3-8 | Converted project | Description *Converted from raml catalog item e1501f13-…* and a slug ending in the full catalog UUID, on the card, the Versions page, **Edit project** and every download name. | Ticketed — [#7129](https://github.com/apiome/apiome/issues/7129) |
 
 ### S4
@@ -91,9 +91,9 @@ were captured again.
 | # | Where | Defect | Status |
 | --- | --- | --- | --- |
 | S4-1 | **Convert to OpenAPI Project** | The description named the format by its id: *Review what the raml source…*. | **Fixed** — the registry label (*RAML*) |
-| S4-2 | **Import to catalog** → Quality | A finding's location is the internal model path (`services.<title> <timestamp>.operations.…`). | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S4-3 | **Convert** → Summary | *Source OpenAPI version — source is not OpenAPI 3.2* is listed as missing for a non-OpenAPI source. | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
-| S4-4 | Versions row menu | With the menu open, axe reports `aria-hidden-focus` on the header, status strip and overview (the modal menu hides focusable siblings). | Ticketed — [#7128](https://github.com/apiome/apiome/issues/7128) |
+| S4-2 | **Import to catalog** → Quality | A finding's location is the internal model path (`services.<title> <timestamp>.operations.…`). | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the row shows the resolved source line; the model path is its tooltip |
+| S4-3 | **Convert** → Summary | *Source OpenAPI version — source is not OpenAPI 3.2* is listed as missing for a non-OpenAPI source. | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the `n/a` **Source OpenAPI version** row is left out of the Summary columns |
+| S4-4 | Versions row menu | With the menu open, axe reports `aria-hidden-focus` on the header, status strip and overview (the modal menu hides focusable siblings). | ✅ **Fixed** in [#7128](https://github.com/apiome/apiome/issues/7128) — the row menu is non-modal, so nothing is `aria-hidden` while it is open |
 
 ### Checked, not defects
 

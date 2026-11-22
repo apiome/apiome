@@ -162,9 +162,19 @@ export function isCatalogItemOpenable(item: CatalogItem): boolean {
   return !item.deleted_at;
 }
 
+/**
+ * Where a catalog item's detail lives, from its id alone (MFI-23.9).
+ *
+ * @param id The catalog item id (a project id).
+ * @returns The detail route, with the id URL-encoded.
+ */
+export function catalogItemHrefForId(id: string): string {
+  return `/ade/dashboard/catalog/${encodeURIComponent(id)}`;
+}
+
 /** Where a catalog item's detail lives (MFI-23.9). */
 export function catalogItemHref(item: CatalogItem): string {
-  return `/ade/dashboard/catalog/${encodeURIComponent(item.id)}`;
+  return catalogItemHrefForId(item.id);
 }
 
 /** Where a catalog item's revisions live (its id is a project id). */

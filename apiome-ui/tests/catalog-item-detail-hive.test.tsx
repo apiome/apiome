@@ -395,9 +395,19 @@ describe('the Overview pane', () => {
     await renderDetail({
       ...ITEM,
       summary: { services: null, operations: null, types: null, channels: null },
+      parsed: [],
     });
     expect(screen.getByTestId('catalog-detail-summary')).toHaveTextContent(/not been captured/i);
     expect(screen.queryByTestId('catalog-detail-surface-bar')).not.toBeInTheDocument();
+  });
+
+  it('does not say "not captured" above a parsed model it is already listing (#7128)', async () => {
+    await renderDetail({
+      ...ITEM,
+      summary: { services: null, operations: null, types: null, channels: null },
+    });
+    expect(screen.getByTestId('catalog-detail-summary')).not.toHaveTextContent(/not been captured/i);
+    expect(screen.getAllByTestId('catalog-detail-parsed-entity').length).toBeGreaterThan(0);
   });
 
   it('prints the quality band in the grade vocabulary beside the captured letter', async () => {

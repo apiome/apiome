@@ -97,6 +97,7 @@ import type { ShortcutBinding } from '@lib/shortcuts';
 import { isFeatureReleased } from '@lib/feature-release';
 import { Page, PageBody } from '../../../components/shell/pageChrome';
 import { cn } from '@lib/utils';
+import { useOverflowEdges } from '@/app/components/ui/useOverflowEdges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import { Segmented, SegmentedItem } from '../../../components/ui/Segmented';
 import { Checkbox } from '../../../components/ui/Checkbox';
@@ -435,6 +436,8 @@ function formatRevisionTimestampUtc(iso: string | undefined): string {
 const Versions = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // The main tab strip scrolls rather than wraps (#6263); this fades the edge that hides tabs (#7128).
+  const headerTabsOverflowRef = useOverflowEdges<HTMLDivElement>();
   const { data: session } = useAuthSession();
   const { conflict, setPushConflictFrom409, clearPushConflict } = usePushConflictBanner();
   const [versionsPullBannerLoading, setVersionsPullBannerLoading] = useState(false);
@@ -3619,9 +3622,10 @@ const Versions = () => {
      Versions first-row budget, so tabs that do not fit scroll sideways instead. */
   const headerTabs = selectedProjectId ? (
     <div
+      ref={headerTabsOverflowRef}
       role="tablist"
       aria-label="Versions main view"
-      className={tabListClass('underline', { scroll: true })}
+      className={cn(tabListClass('underline', { scroll: true }), 'overflow-fade')}
       data-testid="versions-main-tab"
     >
       <button

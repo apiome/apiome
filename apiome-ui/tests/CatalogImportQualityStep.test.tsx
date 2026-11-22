@@ -360,13 +360,18 @@ describe('CatalogImportQualityStep — ranked findings', () => {
     expect(rows[0]).toHaveTextContent('warning');
     expect(rows[0]).toHaveTextContent('graphql-type-description');
     expect(rows[1]).toHaveTextContent('#2');
-    expect(rows[1]).toHaveTextContent('Pet.id');
+    // The location is the source line the raw viewer resolves, not the model path (#7128),
+    // which stays available as the location's tooltip.
+    const location = within(rows[1]).getByTestId('import-quality-finding-location');
+    expect(location).toHaveTextContent('Line 6');
+    expect(location).not.toHaveTextContent('Pet.id');
+    expect(location).toHaveAttribute('title', 'Pet.id');
   });
 
   it('links each finding to its source location in the raw viewer', async () => {
     await renderStep(buildReport());
     // Finding 1 → `Query` on line 1.
-    expect(screen.getAllByTestId('import-quality-finding')[0]).toHaveTextContent('line 1');
+    expect(screen.getAllByTestId('import-quality-finding')[0]).toHaveTextContent('Line 1');
     expect(screen.getByTestId('import-quality-raw-line-active')).toHaveTextContent('type Query {');
 
     // Selecting finding 2 (`Pet.id`) moves the highlight to the `id` line.

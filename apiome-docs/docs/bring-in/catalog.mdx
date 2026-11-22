@@ -57,6 +57,10 @@ The tiles are the **Kind** filter:
 The address names the kind (`?kind=mcp_server`, `?kind=all`), so you can share the view. You see
 only the kinds your role may view.
 
+In a window narrower than about 1,200 px, the tiles sit on **one row** that scrolls sideways, so
+the first items stay in view. A fade at the row's edge means more tiles are past it: **scroll the
+row** (or press <Kbd keys="Tab"/> through it) to reach them.
+
 <Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
 
 ### Home callouts
@@ -152,7 +156,7 @@ Eight tabs follow, and a ninth, **Workflows**, for an Arazzo item:
 
 | Tab | Shows |
 | --- | --- |
-| **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot. An entity Apiome inferred or synthesized carries a badge, and a **Provenance** filter narrows the entities to one kind — see [Declared, inferred and synthesized](./inference-provenance.mdx). A source that carries its own tests, such as a [SoapUI project](./soapui-import.md), adds a **Declared tests** group |
+| **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot. Until the surface counts are captured, the card says so, unless the parsed model below already lists the item's entities. An entity Apiome inferred or synthesized carries a badge, and a **Provenance** filter narrows the entities to one kind — see [Declared, inferred and synthesized](./inference-provenance.mdx). A source that carries its own tests, such as a [SoapUI project](./soapui-import.md), adds a **Declared tests** group |
 | **Format details** | The payload's native structure in its own vocabulary — see [Catalog format details](./catalog-format-details.md) |
 | **Source & code** | The raw imported source, read-only, with **“Download raw source”** |
 | **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item), **Secret scrub** (what intake redacted — see [Secrets in collections and captures](./collection-secret-scrubbing.md)) and **Routing**, why the import stored it in the catalog. Under them, the **Live refresh** card re-checks a GraphQL or gRPC item against its live endpoint — see [Keep a catalog item fresh](./catalog-refresh.mdx) |

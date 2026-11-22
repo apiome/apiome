@@ -1,0 +1,33 @@
+---
+slug: catalog-and-projects-polish
+title: "Catalog and Projects: eight small fixes on the core journey"
+description: "Import, catalog item, Convert and Versions screens fixed after the Catalog and Projects audit."
+authors: [apiome]
+---
+
+The Catalog and Projects usability audit left eight small defects on the path from import to
+publish. Each one is fixed.
+
+{/* truncate */}
+
+## What changed
+
+- **The catalog fits a smaller window.** In a window narrower than about 1,200 px, the kind tiles
+  sit on one row that scrolls sideways, so the first items stay in view at 1024 × 768.
+- **The Versions tabs show there are more.** When the tab row is too narrow, a fade at its edge
+  shows more tabs past it, instead of a label cut off mid-word.
+- **Import to catalog ends on your item.** The last step links to the new item with **“Open the
+  catalog item”**, and keeps one button, **“Done”**. **Close** did the same thing and is gone.
+- **No "not captured" over a model you can see.** A new catalog item no longer says its summary
+  has not been captured while its **Operations** are listed right below.
+- **The Quality step opens on finding #1.** The findings list no longer opens scrolled past the
+  finding it has selected.
+- **Findings name the line you wrote.** A finding's location is the line in your source, the one
+  the source pane beside it highlights, not Apiome's internal model path.
+- **Convert lists only real gaps.** *What OpenAPI favors but is missing* no longer lists **Source
+  OpenAPI version** for a source that is not OpenAPI.
+- **The row menu keeps the page readable.** While a version's **Actions** menu is open, screen
+  readers can still reach the header, the status strip and the overview.
+
+See [Import to catalog](/bring-in/import-wizard#import-to-catalog), [Kinds](/bring-in/catalog#kinds)
+and [Versions](/build/versions).

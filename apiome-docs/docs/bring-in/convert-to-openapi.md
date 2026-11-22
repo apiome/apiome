@@ -46,7 +46,8 @@ flowchart LR
 3. The dialog has three tabs — **Summary**, **Projection graph**, **Conversion**:
    - **Summary** lists *What the source provides* and *What OpenAPI favors but is
      missing*, with coverage badges (`from source`, `inferred`, `partial`, `missing`,
-     `no OpenAPI form`).
+     `no OpenAPI form`). **Source OpenAPI version** appears only for an OpenAPI 3.2 source,
+     which is written as OpenAPI 3.1. Other sources don't list it.
    - **Projection graph** is the per-construct evidence (next section).
    - **Conversion** shows the OpenAPI document the conversion would create. The **Fill cheap
      gaps** fields (**Title**, **Version**, **Servers**) are on **Summary**.

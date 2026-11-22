@@ -41858,6 +41858,44 @@ a.apx-name:focus-visible,
 }
 
 /* ===========================================================================
+   OVERFLOW FADE (#7128) — a sideways-scrolling strip fades the edge that
+   hides content, so a clipped last tab reads as "scroll for more". The
+   attributes are kept current by `ui/useOverflowEdges`. Mask only: no
+   colour, so it follows every theme.
+   =========================================================================== */
+.overflow-fade {
+  --overflow-fade-size: var(--space-8);
+  scrollbar-width: thin;
+}
+
+.overflow-fade[data-overflow-end] {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--overflow-fade-size)), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - var(--overflow-fade-size)), transparent);
+}
+
+.overflow-fade[data-overflow-start] {
+  -webkit-mask-image: linear-gradient(to left, black calc(100% - var(--overflow-fade-size)), transparent);
+  mask-image: linear-gradient(to left, black calc(100% - var(--overflow-fade-size)), transparent);
+}
+
+.overflow-fade[data-overflow-start][data-overflow-end] {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--overflow-fade-size),
+    black calc(100% - var(--overflow-fade-size)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--overflow-fade-size),
+    black calc(100% - var(--overflow-fade-size)),
+    transparent
+  );
+}
+
+/* ===========================================================================
    CATALOG KINDS (CDG-5.1, #5979) — the catalog home's kind tiles (which are
    the Kind facet), the three callouts, and the cross-kind entity list.
    `.cat-kinds*` / `.cat-entities*`. Tokens only.
@@ -41871,6 +41909,22 @@ a.apx-name:focus-visible,
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: var(--space-2);
+}
+
+/* Below ~1200 px the twelve tiles wrapped to two or three rows and pushed the
+   first catalog item under the fold at 1024 x 768 (#7128): there they become
+   one row that scrolls sideways, with the same edge fade the Versions tabs
+   use. */
+@media (max-width: 74.9375rem) {
+  .cat-kinds__tiles {
+    display: flex;
+    overflow-x: auto;
+    padding-block-end: var(--space-1);
+  }
+
+  .cat-kinds__tiles > .cat-kinds__tile {
+    flex: 0 0 9rem;
+  }
 }
 
 .cat-kinds__tile {

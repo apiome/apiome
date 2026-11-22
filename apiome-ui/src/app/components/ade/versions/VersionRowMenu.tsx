@@ -104,7 +104,12 @@ export function VersionRowMenu({ version, context, onAction, busy = false }: Ver
   const label = versionLabel(version);
 
   return (
-    <DropdownMenu.Root>
+    /* Non-modal (#7128): a modal Radix menu sets `aria-hidden` on every sibling of its portal —
+       the page header, the status strip, the overview — while their buttons and links stay
+       focusable, which axe reports as `aria-hidden-focus`. A row menu needs no focus trap:
+       focus still moves into it on open, arrow keys rove it, and Escape or a click outside
+       closes it and returns focus to the trigger. */
+    <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
         <Button
           variant="ghost"
