@@ -44,7 +44,9 @@ connector run links to its connector.
 1. **Click “Add repository”** (or press <Kbd keys="N"/>).
 2. Under **Where does the repository live?** choose:
    - **Linked account** — pick from your connected GitHub, GitLab or Bitbucket account. Browsing a
-     provider's repositories works for GitHub only; **Manage linked accounts →** connects one.
+     provider's repositories works for GitHub only; **Manage linked accounts →** connects one. To
+     register a GitLab, Bitbucket or Azure DevOps repository through a linked account, use the API
+     (see [Register through a linked account with the API](#register-through-a-linked-account-with-the-api)).
    - **Public Git URL** — paste an **HTTPS URL** such as
      `https://github.com/apiome/apiome.git` and **click “Test”**.
 3. **Click “Continue”.** Apiome says **Repository registered.** and starts its first scan.
@@ -60,6 +62,37 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 <Screenshot id="repository-add-url" alt="Add a repository with Public Git URL: an HTTPS URL, Test and Continue" />
 
 <Screenshot id="repository-add-linked" alt="Add a repository with a linked GitHub account: choose a repository from the account" />
+
+### Register through a linked account with the API
+
+`POST /v1/tenants/{tenant}/repositories` registers a repository through any linked account whose host
+Apiome can reach. Apiome reads the repository from its host with that account's token, so a private
+repository registers too, and [export delivery](../ship/deliver-an-export-to-git.md) can later push with
+the same account.
+
+```bash
+curl -X POST "$APIOME/v1/tenants/acme/repositories" \
+  -H "Authorization: Bearer $APIOME_TOKEN" -H "Content-Type: application/json" \
+  -d '{"source": "linked_account", "linkedAccountId": "<linked account id>",
+       "repositoryFullName": "acme/platform/orders-specs"}'
+```
+
+The linked account decides the host, and `repositoryFullName` takes that host's spelling:
+
+| Linked account | Host | `repositoryFullName` | Stored provider |
+| --- | --- | --- | --- |
+| GitHub | github.com | `owner/repo` | `github` |
+| GitLab | gitlab.com | `group/project` or `group/subgroup/project` | `gitlab` |
+| Bitbucket | Bitbucket Cloud | `workspace/repo` | `bitbucket` |
+| Microsoft | Azure DevOps (dev.azure.com) | `organization/project/repository` | `azure_devops` |
+
+The name must match the host's own spelling, letter case aside. Any other kind of linked account
+answers `400`. The request needs a signed-in user (not an API key), because the linked account
+belongs to that user.
+
+Apiome's file scan reads GitHub repositories only. A GitLab, Bitbucket or Azure DevOps repository
+registers and can receive export deliveries, but its first scan reports that the provider is not
+supported, so its **Files** tab stays empty.
 
 ## A repository's page
 
@@ -232,7 +265,8 @@ account, so it cannot receive pull requests. Every pull request PR-back opens is
 audit log as `repository.pr_back_opened`, and every update as `repository.pr_back_updated`.
 
 The same linked account can also receive **exports**: any finished export, in any format, can be
-delivered to a registered repository as a pull request or a direct commit. See
+delivered to a registered repository as a pull request or a direct commit. Export delivery also
+reaches repositories registered through a GitLab, Bitbucket or Microsoft (Azure DevOps) account. See
 [Deliver an export to a git repository](../ship/deliver-an-export-to-git.md).
 
 ## Formats a scan finds

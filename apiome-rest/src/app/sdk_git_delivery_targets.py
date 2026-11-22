@@ -50,6 +50,7 @@ __all__ = [
     "DELIVERY_ECOSYSTEMS",
     "GIT_DELIVERY_TARGET_SCHEMA_VERSION",
     "SUPPORTED_PROVIDERS",
+    "repository_name_is_valid",
     "TARGET_PATH_MAX_CHARS",
     "DeliveryTarget",
     "GitDeliveryTargetError",
@@ -105,6 +106,35 @@ _PATH_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
 #: ``owner/repo`` as GitHub spells it.
 _FULL_NAME = re.compile(r"^([A-Za-z0-9](?:[A-Za-z0-9-]{0,38}))/([A-Za-z0-9._-]{1,100})$")
+
+#: How each provider spells a registered repository's name — export git delivery (#6654) reaches
+#: past GitHub: a GitLab project path may be nested (``group/subgroup/project``), and an Azure DevOps
+#: repository lives under an organization and a project (``organization/project/repository``).
+_PROVIDER_FULL_NAMES: Dict[str, "re.Pattern[str]"] = {
+    "github": _FULL_NAME,
+    "gitlab": re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_.-]*(?:/[A-Za-z0-9_.][A-Za-z0-9_.-]*)+$"),
+    "bitbucket": re.compile(r"^[A-Za-z0-9_.-]{1,62}/[A-Za-z0-9_.-]{1,128}$"),
+    "azure_devops": re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,49}/[^/\x00-\x1f]{1,64}/[^/\x00-\x1f]{1,64}$"),
+}
+
+#: How a message names each provider.
+_PROVIDER_LABELS: Dict[str, str] = {"github": "GitHub", "gitlab": "GitLab", "bitbucket": "Bitbucket",
+                                    "azure_devops": "Azure DevOps"}
+
+
+def repository_name_is_valid(provider: Optional[str], full_name: Optional[str]) -> bool:
+    """Whether a registered name has the shape its provider uses.
+
+    Args:
+        provider: ``tenant_repositories.provider``.
+        full_name: ``tenant_repositories.repository_full_name``.
+
+    Returns:
+        ``True`` when the name matches the provider's shape (GitHub's ``owner/repo`` for any
+        provider without a rule of its own).
+    """
+    pattern = _PROVIDER_FULL_NAMES.get(str(provider or "").strip().lower(), _FULL_NAME)
+    return bool(pattern.match((full_name or "").strip()))
 
 
 class GitDeliveryTargetError(ValueError):
@@ -425,7 +455,12 @@ def normalize_base_branch(raw: Optional[str]) -> Optional[str]:
 # -------------------------------------------------------------------------------------------
 
 
-def repository_problem(row: Optional[Mapping[str, Any]], repository_ref: str = "") -> Optional[TargetProblem]:
+def repository_problem(
+    row: Optional[Mapping[str, Any]],
+    repository_ref: str = "",
+    *,
+    supported_providers: Tuple[str, ...] = SUPPORTED_PROVIDERS,
+) -> Optional[TargetProblem]:
     """Say why a registered repository cannot receive a delivery, if it cannot.
 
     Checked when a target is saved *and* when a delivery runs — a repository can be removed, or
@@ -435,6 +470,8 @@ def repository_problem(row: Optional[Mapping[str, Any]], repository_ref: str = "
         row: The ``tenant_repositories`` row (``provider``, ``repository_full_name``,
             ``linked_account_id``), or ``None`` when no live repository matched.
         repository_ref: How the caller named the repository, for the message.
+        supported_providers: The providers the calling channel can write to — SDK delivery and
+            PR-back keep the default (GitHub); export git delivery passes its own four (#6654).
 
     Returns:
         ``None`` when a delivery could proceed, otherwise the :class:`TargetProblem`.
@@ -447,27 +484,26 @@ def repository_problem(row: Optional[Mapping[str, Any]], repository_ref: str = "
         )
     full_name = str(row.get("repository_full_name") or row.get("clone_url") or repository_ref)
     provider = str(row.get("provider") or "").strip().lower()
-    if provider not in SUPPORTED_PROVIDERS:
+    if provider not in supported_providers:
         return TargetProblem(
             "sdk-git-delivery-provider-unsupported",
             f"{full_name} is hosted on {provider or 'an unknown provider'}. Git delivery opens pull "
             "requests through the repository's linked-account integration, which is available "
-            f"for {', '.join(SUPPORTED_PROVIDERS)} repositories only.",
+            f"for {', '.join(supported_providers)} repositories only.",
         )
+    label = _PROVIDER_LABELS.get(provider, provider)
     if not row.get("linked_account_id"):
         return TargetProblem(
             "sdk-git-delivery-repository-unlinked",
             f"{full_name} was registered from a public URL, so it holds no credential Apiome could "
-            "push with. Register it through a linked GitHub account that can write to it — git "
+            f"push with. Register it through a linked {label} account that can write to it — git "
             "delivery reuses that integration rather than storing a token of its own.",
         )
-    try:
-        parse_repository_full_name(row.get("repository_full_name"))
-    except ValueError:
+    if not repository_name_is_valid(provider, row.get("repository_full_name")):
         return TargetProblem(
             "sdk-git-delivery-repository-invalid",
-            f"Repository {full_name!r} has no GitHub owner/repo name on record. Re-register it "
-            "through the GitHub integration.",
+            f"Repository {full_name!r} has no {label} repository name on record. Re-register it "
+            f"through the {label} integration.",
         )
     return None
 

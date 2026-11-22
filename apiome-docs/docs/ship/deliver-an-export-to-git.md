@@ -14,17 +14,40 @@ compare the channels, see [Deliver an export](./deliver-an-export.mdx).
 
 ## Before you start
 
-- **A registered GitHub repository.** Register it through a linked GitHub account (see
+- **A repository registered through a linked account** on GitHub, GitLab, Bitbucket or Azure DevOps (see
   [Repositories](../bring-in/repositories.mdx)). The delivery pushes with that account's existing
-  credential, so the account needs write access to the repository. Apiome stores no other token for
-  delivery.
+  credential, so the account needs write access to the repository (see
+  [What each provider needs](#what-each-provider-needs)). Apiome stores no other token for delivery.
 - **The `versions:publish` permission.** Delivering writes to a repository on the workspace's behalf, the
   same permission opening a PR-back pull request or an SDK delivery needs.
 - **A completed export.** A dry run has no files to deliver, and an export whose download has expired
   has to be run again.
 
-GitHub is the only provider today. GitLab, Bitbucket and Azure DevOps repositories cannot be delivered to
-yet.
+## What each provider needs
+
+| Provider | Registered through | The pull request is | The linked account needs |
+| --- | --- | --- | --- |
+| GitHub | a GitHub account | a pull request | write access: a classic token with the `repo` scope, or a fine-grained token with write access to **Contents** and **Pull requests** |
+| GitLab (gitlab.com) | a GitLab account | a merge request | the `api` scope, and at least the **Developer** role on the project |
+| Bitbucket Cloud | a Bitbucket account | a pull request | an OAuth consumer with **Repositories: Write** and **Pull requests: Write**, and write access to the repository |
+| Azure DevOps | a Microsoft account | a pull request | a token issued for Azure DevOps with the **Code (read and write)** scope (`vso.code_write`), and **Contribute**, **Create branch** and **Contribute to pull requests** on the repository; **Force push** on `apiome/export-*` branches to rebuild them |
+
+The delivery works the same way on all four. A few things differ, because each host writes commits its
+own way:
+
+- **GitLab** has no "only if the branch has not moved" commit. In direct-commit mode Apiome checks that
+  the branch still points at the commit it read just before it writes, so the window for a concurrent
+  push is a fraction of a second rather than the whole delivery.
+- **Bitbucket** cannot move a branch to another commit. To rebuild a delivery branch, Apiome deletes it
+  and writes it again from the base branch. If Bitbucket declines the open pull request when the branch
+  is deleted, Apiome opens a new one, and the run reports the new number.
+- **Azure DevOps** keeps at most 4,000 characters of a pull request description. A longer description is
+  shortened, and the full fidelity report stays one click away through its link. Because the shortened
+  text never matches the full one, a re-delivery with nothing new reports `updated` rather than
+  `unchanged`.
+- On **GitLab, Bitbucket and Azure DevOps**, every commit Apiome writes ends with an `Apiome-Tree:` line.
+  It names the exact content Apiome committed, so a re-delivery can tell that the branch already holds
+  this export without writing anything.
 
 ## Deliver an export
 
@@ -98,12 +121,15 @@ that says what to do. The repository token never appears in the log.
 | `errorCode` | What to do |
 | --- | --- |
 | `export-git-delivery-credential-missing` | The account that registered the repository is no longer linked. Re-link it, or register the repository through an account that can write to it. |
-| `export-git-delivery-credential-rejected` | GitHub refused the token. Re-link the account. |
-| `export-git-delivery-permission-denied` | The account can read the repository but not push to it. Grant it write access. |
+| `export-git-delivery-credential-rejected` | The provider refused the token: it expired, was revoked, or (Azure DevOps) was not issued for Azure DevOps. Re-link the account. |
+| `export-git-delivery-permission-denied` | The account can read the repository but not push to it. Grant it what [its provider needs](#what-each-provider-needs). |
 | `export-git-delivery-repository-unlinked` | The repository was registered from a public URL. Register it through a linked account. |
-| `export-git-delivery-provider-unsupported` | The repository is not on GitHub. |
+| `export-git-delivery-provider-unsupported` | The repository is not on GitHub, GitLab, Bitbucket or Azure DevOps. |
+| `export-git-delivery-repository-invalid` | The repository's name on record does not have its provider's shape. Register it again through its linked account. |
+| `export-git-delivery-target-path-invalid` | `targetPath` names a file in the repository, not a directory. |
+| `export-git-delivery-tree-too-large` | The target directory holds too many files to list (Bitbucket: more than 1,000). Deliver into a dedicated directory. |
 | `export-git-delivery-base-branch-missing` | The base branch does not exist. Create it, or name another. |
-| `export-git-delivery-push-rejected` | A branch rule refused the push, or (direct-commit mode) the branch moved. |
+| `export-git-delivery-push-rejected` | A branch rule refused the push, or (direct-commit mode) the branch moved. On Azure DevOps, rebuilding a delivery branch also needs the **Force push** permission. |
 
 An unfinished job answers `409` and an expired download `410`; run the export again, then deliver it.
 

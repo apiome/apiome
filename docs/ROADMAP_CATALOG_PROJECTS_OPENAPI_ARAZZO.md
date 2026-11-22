@@ -3,7 +3,7 @@
 _Drafted 2026-11-19. Release: **RC9** (see [`RC9_PLAN.md`](RC9_PLAN.md)). Priority: **high** — these are the core of Apiome._
 _The Contracts and PactFlow release is **RC10**: [`RC10_PLAN.md`](RC10_PLAN.md)._
 
-**Umbrella:** ✅ [#7032](https://github.com/apiome/apiome/issues/7032) — Complete: all five epics are complete. The release's overview hub is `getting-started/projects-catalog-openapi-arazzo.mdx` (**Projects, Catalog, OpenAPI and Arazzo**: each part, its overview page and how they fit), listed in `helpCatalog.ts` as `projects-catalog-openapi-arazzo`; the RC9 release note is `release-notes/2026-11-21-projects-catalog-openapi-arazzo.mdx`, which links the seven part notes, with a What's new line. Adopted #6654 and #6706 stay open and are tracked on their own issues. **Issue ID prefix:** `COA`. Epics `COA-EPIC-n`, issues `COA-n.m`. **GitHub title format:** `apiome: [COA-<epic>.<issue>] <title>`.
+**Umbrella:** ✅ [#7032](https://github.com/apiome/apiome/issues/7032) — Complete: all five epics are complete. The release's overview hub is `getting-started/projects-catalog-openapi-arazzo.mdx` (**Projects, Catalog, OpenAPI and Arazzo**: each part, its overview page and how they fit), listed in `helpCatalog.ts` as `projects-catalog-openapi-arazzo`; the RC9 release note is `release-notes/2026-11-21-projects-catalog-openapi-arazzo.mdx`, which links the seven part notes, with a What's new line. Adopted ✅ #6654 is complete (export git delivery to GitLab, Bitbucket and Azure DevOps); #6706 stays open and is tracked on its own issue. **Issue ID prefix:** `COA`. Epics `COA-EPIC-n`, issues `COA-n.m`. **GitHub title format:** `apiome: [COA-<epic>.<issue>] <title>`.
 
 ## 0. Source description (request, verbatim)
 
@@ -55,7 +55,7 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 | ✅ #5870 | GVM-3.2 fix plan, apply and Overlay rendering — Complete | Governance |
 | ✅ #5871 | GVM-3.3 `apiome lint --fix` and `--dry-run` (version mode; file mode follows GOV-3.5 #4442) — Complete | Governance |
 | ✅ #5872 | GVM-3.4 CI fix suggestions (diff-action suggestion blocks, `apiome lint suggest`, gate and check-suite summaries) — Complete | Governance |
-| #6654 | MFX-38.1 follow-up: GitLab/Bitbucket/Azure DevOps export git delivery | Import/export |
+| ✅ #6654 | MFX-38.1 follow-up: GitLab/Bitbucket/Azure DevOps export git delivery — Complete (REST 1.809.0 / OpenAPI 1.633.0; `app.export_git_delivery_gitlab`, `_bitbucket`, `_azure_devops` on the shared `app.export_git_delivery_staged` base; linked-account registration in `app.repository_linked_registration`; docs `ship/deliver-an-export-to-git.md`, `bring-in/repositories.mdx`; release note `export-git-delivery-gitlab-bitbucket-azure-devops`) | Import/export |
 | #6706 | Catalog import and export demo script | Cleanup |
 
 Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Quality; unblocked by COA-1.7), #5804 (Overlays as SDK input). Decision needed: the Version Archaeology epic #1023 and Diff 0.247–0.251 (evolution timeline, change attribution, cross-project comparison, merge assistant) are Projects improvements that were moved to the Diff project on 2026-11-19; RC9 can take them.
@@ -689,7 +689,7 @@ flowchart LR
 3. **Fidelity and options:** COA-1.4 · COA-2.3 · COA-2.4 · COA-2.7 · COA-4.2 · #5879 · #5880.
 4. **Surfaces and burn-down:** COA-1.3 · COA-2.5 · COA-3.1 · COA-3.2 · COA-3.3 · governance epics #5875 and #5868 (+ #5869–#5872).
 5. **Document store (COA-EPIC-5), alongside 2–4:** COA-5.11 baseline · COA-5.1 + COA-5.2 → COA-5.3 · COA-5.9 · COA-5.12 → COA-5.4 · COA-5.5 · COA-5.7 → COA-5.6 · COA-5.13 · COA-5.14 · COA-5.8 · COA-5.10 → COA-5.15 → COA-5.11 gate. COA-5.13's parity audit can start in phase 2.
-6. **Demos and delivery:** COA-4.4 · #6706 · #6654.
+6. **Demos and delivery:** COA-4.4 · #6706 · ✅ #6654.
 7. **V2:** COA-1.6 · COA-2.6 · COA-2.8 · COA-3.4 · COA-1.7.
 
 Each issue follows AGENTS.md: OpenAPI version bump for REST changes, package bumps, docs in the same PR with regenerated screenshots, a release note, and `yarn docs:check`.

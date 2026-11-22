@@ -1,7 +1,8 @@
 """
 Tenant Git repositories: list and register (dashboard).
 
-POST requires JWT so we can verify linked GitHub accounts via ``external_auth_providers``.
+POST requires JWT so we can verify linked GitHub, GitLab, Bitbucket and Microsoft (Azure DevOps) accounts
+via ``external_auth_providers`` (#6654 added the last three).
 """
 
 from __future__ import annotations
@@ -135,6 +136,7 @@ from .repository_webhook_subscriptions import (
     describe_subscription,
     provision_repository_webhook,
 )
+from .repository_linked_registration import fetch_linked_repository, linked_repository_provider
 from .repository_validation import (
     fetch_github_repo_with_token,
     normalize_clone_url_for_dedup,
@@ -144,6 +146,14 @@ from .repository_validation import (
 )
 
 router = APIRouter(prefix="/v1/tenants", tags=["tenant-repositories"])
+
+#: How registration messages name each repository provider (#6654).
+_LINKED_LABELS: Dict[str, str] = {
+    "github": "GitHub",
+    "gitlab": "GitLab",
+    "bitbucket": "Bitbucket",
+    "azure_devops": "Azure DevOps",
+}
 
 # Importable-type preset → comma-separated globs (Repository Store README).
 _PRESET_GLOB_CSV: Dict[str, str] = {
@@ -1586,6 +1596,21 @@ async def create_tenant_repository(
     body: TenantRepositoryCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoryCreateResponse:
+    """Register a Git repository from a public clone URL or through a linked account.
+
+    A ``public_url`` registration needs only ``cloneUrl``. A ``linked_account`` registration names
+    the account (``linkedAccountId``) and the repository (``repositoryFullName``); Apiome reads the
+    repository from its host with that account's token, so private repositories register, and git
+    delivery can later push with the same credential. The account decides the host and the name's
+    shape (#6654):
+
+    * GitHub — ``owner/repo``;
+    * GitLab (gitlab.com) — ``group/project`` or ``group/subgroup/project``;
+    * Bitbucket Cloud — ``workspace/repo``;
+    * Microsoft (Azure DevOps) — ``organization/project/repository``.
+
+    Any other linked account answers 400. The name must match the host's own spelling.
+    """
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
@@ -1607,45 +1632,57 @@ async def create_tenant_repository(
         linked_id = str(body.linked_account_id).strip()
         linked_account_id = linked_id
         full_name_raw = str(body.repository_full_name).strip()
-        parts = parse_owner_repo_slash(full_name_raw)
-        if not parts:
-            raise HTTPException(
-                status_code=400,
-                detail="repository_full_name must be owner/repo",
-            )
-        owner, repo = parts
 
         row_oauth = db.get_external_auth_provider_for_user(linked_id, user_id)
         if not row_oauth:
             raise HTTPException(status_code=404, detail="linked account not found for this user")
-        provider = str(row_oauth.get("provider") or "").lower()
-        if provider != "github":
+        linked_provider = str(row_oauth.get("provider") or "").lower()
+        # GitHub, GitLab, Bitbucket and Microsoft (Azure DevOps) accounts register repositories
+        # (#6654); any other linked account has no repository host behind it.
+        repository_provider = linked_repository_provider(linked_provider)
+        if repository_provider is None:
             raise HTTPException(
                 status_code=400,
-                detail="linked repository registration is only supported for GitHub in this release",
+                detail=(
+                    "linked repository registration supports GitHub, GitLab, Bitbucket and "
+                    "Microsoft (Azure DevOps) accounts"
+                ),
+            )
+        if repository_provider == "github" and not parse_owner_repo_slash(full_name_raw):
+            raise HTTPException(
+                status_code=400,
+                detail="repository_full_name must be owner/repo",
             )
         token = row_oauth.get("access_token")
         if not token:
-            raise HTTPException(status_code=401, detail="no access token for linked account; re-link GitHub")
+            raise HTTPException(
+                status_code=401,
+                detail=f"no access token for linked account; re-link {_LINKED_LABELS[repository_provider]}",
+            )
         access_token = str(token)
 
         try:
-            meta = fetch_github_repo_with_token(str(token), owner, repo)
+            if repository_provider == "github":
+                owner, repo = parse_owner_repo_slash(full_name_raw) or ("", "")
+                meta = fetch_github_repo_with_token(str(token), owner, repo)
+            else:
+                meta = fetch_linked_repository(repository_provider, str(token), full_name_raw)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+        label = _LINKED_LABELS[repository_provider]
         api_full = str(meta.get("repository_full_name") or "")
-        if api_full.lower() != full_name_raw.lower():
+        if api_full.lower() != full_name_raw.strip("/").lower():
             raise HTTPException(
                 status_code=400,
-                detail="repository_full_name does not match GitHub metadata for this token",
+                detail=f"repository_full_name does not match {label} metadata for this token",
             )
 
         canonical_clone = str(meta.get("canonical_clone_url") or "").strip()
         if not canonical_clone:
-            raise HTTPException(status_code=500, detail="GitHub response missing clone URL")
+            raise HTTPException(status_code=500, detail=f"{label} response missing clone URL")
 
-        if body.clone_url and str(body.clone_url).strip():
+        if repository_provider == "github" and body.clone_url and str(body.clone_url).strip():
             req_clone = str(body.clone_url).strip()
             req_parts = parse_github_owner_repo_from_url(req_clone)
             can_parts = parse_github_owner_repo_from_url(canonical_clone)
@@ -1653,6 +1690,18 @@ async def create_tenant_repository(
                 raise HTTPException(
                     status_code=400,
                     detail="clone_url does not match the selected GitHub repository",
+                )
+        elif body.clone_url and str(body.clone_url).strip():
+            try:
+                same = normalize_clone_url_for_dedup(str(body.clone_url)) == normalize_clone_url_for_dedup(
+                    canonical_clone
+                )
+            except ValueError:
+                same = False
+            if not same:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"clone_url does not match the selected {label} repository",
                 )
 
     try:

@@ -1,0 +1,26 @@
+---
+slug: export-git-delivery-gitlab-bitbucket-azure-devops
+title: Deliver exports to GitLab, Bitbucket and Azure DevOps
+description: "Export git delivery now reaches GitLab, Bitbucket Cloud and Azure DevOps repositories."
+authors: [apiome]
+---
+
+A finished export can now be delivered to a **GitLab** project as a merge request, and to a **Bitbucket
+Cloud** or **Azure DevOps** repository as a pull request, as well as to GitHub. Each one can also take a
+direct commit. See [Deliver an export to a git repository](/ship/deliver-an-export-to-git).
+
+{/* truncate */}
+
+- **Register through the account you already linked:** `POST /v1/tenants/{tenant}/repositories` accepts a
+  linked GitLab, Bitbucket or Microsoft account. Name the repository the way its host does:
+  `group/subgroup/project`, `workspace/repo` or `organization/project/repository`. See
+  [Register through a linked account with the API](/bring-in/repositories#register-through-a-linked-account-with-the-api).
+- **The same delivery on every host:** the bundle lands under your path with its directory tree and the
+  delivery manifest. A re-export updates the same branch and the same pull request, and a delivery that
+  changes nothing writes nothing.
+- **Direct commits never discard work:** a commit that would not fast-forward the base branch fails, on
+  every host.
+- **Failures you can act on:** a rejected token, missing write access or a protected branch is a `failed`
+  run that says what the account needs on that host. The token never appears in the log.
+- **Not yet:** browsing a GitLab, Bitbucket or Azure DevOps account's repositories in **Add repository**,
+  and scanning their files, are still GitHub-only.

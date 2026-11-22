@@ -5,28 +5,45 @@ branch, list a directory, create a tree and a commit, move a branch, and open or
 request. :class:`GitDeliveryProvider` names exactly those, and :data:`PROVIDERS` maps a registered
 repository's ``provider`` to the client that implements them.
 
-**GitHub is the one provider today.** It is the only host Apiome can register a repository for
-through a linked account (``tenant_repositories``), and the only one with a write client
-(:class:`app.sdk_git_delivery_github.GitHubGitClient`, the SDK-4.2 and REPO-5.8 client, which works
-on the Git Data API without cloning). GitLab, Bitbucket and Azure DevOps have no write client and
-no linked-account repository registration yet; each one is a new entry here — a client implementing
-this protocol — plus registration support, without any change to the delivery pipeline.
+**Four providers.** GitHub uses :class:`app.sdk_git_delivery_github.GitHubGitClient` (the SDK-4.2
+and REPO-5.8 client, on the Git Data API without cloning). GitLab, Bitbucket Cloud and Azure DevOps
+(#6654) use :class:`app.export_git_delivery_staged.StagedGitProvider` subclasses, which stage the
+tree and the commit locally and write them in the host's one commit call
+(:mod:`app.export_git_delivery_gitlab`, :mod:`app.export_git_delivery_bitbucket`,
+:mod:`app.export_git_delivery_azure_devops`). Each is registered through a linked account of its
+own host (``tenant_repositories``); the delivery pipeline has no provider-specific branch.
 """
 
 from __future__ import annotations
 
 from typing import Any, Callable, ContextManager, Dict, List, Optional, Protocol, Tuple
 
+from .export_git_delivery_azure_devops import AzureDevOpsGitClient
+from .export_git_delivery_bitbucket import BitbucketGitClient
+from .export_git_delivery_gitlab import GitLabGitClient
 from .sdk_git_delivery_changes import ExistingEntry
 from .sdk_git_delivery_github import ClientFactory, GitHubGitClient, PullRequest, RepositoryInfo
 
 __all__ = [
     "PROVIDERS",
+    "PROVIDER_AZURE_DEVOPS",
+    "PROVIDER_BITBUCKET",
+    "PROVIDER_GITHUB",
+    "PROVIDER_GITLAB",
+    "PROVIDER_LABELS",
     "SUPPORTED_PROVIDERS",
+    "WRITE_ACCESS_HINTS",
     "GitDeliveryProvider",
     "ProviderFactory",
     "open_provider",
+    "provider_label",
 ]
+
+#: ``tenant_repositories.provider`` values a delivery can target.
+PROVIDER_GITHUB = "github"
+PROVIDER_GITLAB = "gitlab"
+PROVIDER_BITBUCKET = "bitbucket"
+PROVIDER_AZURE_DEVOPS = "azure_devops"
 
 
 class GitDeliveryProvider(Protocol):
@@ -75,6 +92,9 @@ class GitDeliveryProvider(Protocol):
     def update_pull(self, number: int, *, title: str, body: str, base: str) -> PullRequest:
         """Update a pull request's title, description and base."""
 
+    def resolve_commit(self, commit_sha: str) -> str:
+        """The host's id for a commit returned by :meth:`create_commit`, once a branch points at it."""
+
 
 #: Opens a provider client for ``(token, repository full name, HTTP client factory)``.
 ProviderFactory = Callable[[str, str, Optional[ClientFactory]], ContextManager[GitDeliveryProvider]]
@@ -84,11 +104,51 @@ def _github(token: str, full_name: str, client_factory: Optional[ClientFactory])
     return GitHubGitClient(token, full_name, client_factory=client_factory)
 
 
+def _gitlab(token: str, full_name: str, client_factory: Optional[ClientFactory]) -> ContextManager[Any]:
+    return GitLabGitClient(token, full_name, client_factory=client_factory)
+
+
+def _bitbucket(token: str, full_name: str, client_factory: Optional[ClientFactory]) -> ContextManager[Any]:
+    return BitbucketGitClient(token, full_name, client_factory=client_factory)
+
+
+def _azure_devops(token: str, full_name: str, client_factory: Optional[ClientFactory]) -> ContextManager[Any]:
+    return AzureDevOpsGitClient(token, full_name, client_factory=client_factory)
+
+
 #: ``tenant_repositories.provider`` → the client that delivers to it.
-PROVIDERS: Dict[str, ProviderFactory] = {"github": _github}
+PROVIDERS: Dict[str, ProviderFactory] = {
+    PROVIDER_GITHUB: _github,
+    PROVIDER_GITLAB: _gitlab,
+    PROVIDER_BITBUCKET: _bitbucket,
+    PROVIDER_AZURE_DEVOPS: _azure_devops,
+}
 
 #: The providers a delivery can target, in the order the API lists them.
 SUPPORTED_PROVIDERS: Tuple[str, ...] = tuple(PROVIDERS)
+
+#: How messages name each provider.
+PROVIDER_LABELS: Dict[str, str] = {
+    PROVIDER_GITHUB: "GitHub",
+    PROVIDER_GITLAB: "GitLab",
+    PROVIDER_BITBUCKET: "Bitbucket",
+    PROVIDER_AZURE_DEVOPS: "Azure DevOps",
+}
+
+#: What the linked account's token needs before a delivery can push, per provider.
+WRITE_ACCESS_HINTS: Dict[str, str] = {
+    PROVIDER_GITHUB: "Grant that account write access (and the token the `repo` scope, or Contents and Pull "
+                     "requests write access)",
+    PROVIDER_GITLAB: GitLabGitClient.WRITE_ACCESS_HINT.rstrip("."),
+    PROVIDER_BITBUCKET: BitbucketGitClient.WRITE_ACCESS_HINT.rstrip("."),
+    PROVIDER_AZURE_DEVOPS: AzureDevOpsGitClient.WRITE_ACCESS_HINT.rstrip("."),
+}
+
+
+def provider_label(provider: Optional[str]) -> str:
+    """How a message names a provider (``GitLab``); an unknown one is returned as given."""
+    key = str(provider or "").strip().lower()
+    return PROVIDER_LABELS.get(key, key or "the provider")
 
 
 def open_provider(
@@ -97,9 +157,10 @@ def open_provider(
     """Open the client for a repository's provider.
 
     Args:
-        provider: ``tenant_repositories.provider`` (``github``).
+        provider: ``tenant_repositories.provider`` (one of :data:`SUPPORTED_PROVIDERS`).
         token: The repository's linked-account token.
-        full_name: ``owner/repo``.
+        full_name: The registered name (``owner/repo``; a GitLab ``group/subgroup/project``; an Azure
+            DevOps ``organization/project/repository``).
         client_factory: How to obtain the HTTP client; injected by tests.
 
     Returns:

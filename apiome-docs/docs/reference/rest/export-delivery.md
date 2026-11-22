@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.632.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.633.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-delivery` · 18 operations
 
@@ -271,7 +271,7 @@ Operation id: `list_export_job_git_deliveries_v1_export__tenant_slug__jobs__job_
 
 **Deliver a completed export to a git repository**
 
-Writes a **completed** export job's bundle into a repository registered in this workspace through a linked GitHub account, under `targetPath` (a multi-file bundle keeps its directory tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.
+Writes a **completed** export job's bundle into a repository registered in this workspace through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure DevOps) account — on GitLab the pull request is a merge request — under `targetPath` (a multi-file bundle keeps its directory tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.
 
 **`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>` built on the latest base branch, and one pull request whose description carries the export's fidelity summary and a link to the full report. A re-export updates the same branch and pull request: `opened`, `updated`, `unchanged` (nothing written) or `up_to_date` (the base already holds it).
 
@@ -804,7 +804,7 @@ Where to deliver an export: ``POST …/jobs/{job_id}/deliveries/git``.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `repositoryId` | string | yes | A repository registered in this workspace through a linked GitHub account (`GET /v1/tenants/{tenant}/repositories`). Its linked account is the credential. |
+| `repositoryId` | string | yes | A repository registered in this workspace through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure DevOps) account (`GET /v1/tenants/{tenant}/repositories`). Its linked account is the credential. |
 | `targetPath` | string | no | Directory inside the repository the bundle is written under (`specs/orders`). Empty means the repository root. A multi-file bundle keeps its own directory tree below it. |
 | `baseBranch` | string or null | no | The branch the pull request targets (mode `pr`) or the commit lands on (mode `commit`). Empty means the repository's default branch. |
 | `mode` | enum `"pr"`, `"commit"` | no | `pr` (default): commit to a delivery branch and open — or update — one pull request. `commit`: commit straight onto the base branch, fast-forward only. |
