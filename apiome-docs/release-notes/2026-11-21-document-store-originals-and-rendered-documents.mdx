@@ -1,0 +1,58 @@
+---
+slug: document-store-originals-and-rendered-documents
+title: "The document store: originals and rendered documents in object storage"
+description: "Every import's original and every version's document are stored once and read back."
+authors: [apiome]
+---
+
+Apiome now keeps every imported **original** and every **rendered document** as an immutable
+object in a [document store](/admin/document-store): an S3-compatible bucket in production, a
+directory for development, or the database when nothing is configured. Classes, properties and
+paths stay in Postgres, where they are edited. Diffs, downloads, exports and `/v1/schema` read the
+stored bytes instead of building the document again on every request.
+
+{/* truncate */}
+
+## What changes for you
+
+- **Faster comparisons.** Both sides of a diff, a merge request's **Changes** tab and a
+  compatibility check read stored documents; a version's document is rendered once per change.
+- **The file you imported, kept.** **Download original** in a version's spec viewer and on a
+  catalog item returns it byte for byte, and **Compare** can diff two originals.
+- **One document everywhere.** **View spec**, **Compare**, the catalog's **Versions** diff and the
+  review and merge-request spec views show the document the REST server keeps, so they cannot
+  disagree.
+- **Your own bucket.** A workspace can keep its documents in a bucket it owns, when the
+  installation allows it.
+
+## For operators
+
+- Choose the backend with `APIOME_DOCUMENT_STORE` (`db`, `s3` or `filesystem`). An installation
+  that sets nothing keeps everything in the database.
+- The admin console's **Document store** page shows the backend, its health, usage and the
+  tenants on their own bucket, and tests the connection.
+- Existing sources and snapshots move into the store with a resumable, verified migration.
+- Unused objects are deleted after a grace period, and an integrity check re-hashes stored
+  objects on a schedule.
+- Docker Compose ships a local MinIO, and a nightly benchmark guards large-spec performance.
+
+## Each part
+
+| Release note | What it adds |
+| --- | --- |
+| [A document store for large files](/release-notes/document-store) | The store and its three backends. |
+| [Document records and a content stamp](/release-notes/document-records-content-stamp) | What is stored where, and when a version's document is out of date. |
+| [Every import keeps its original document](/release-notes/import-originals) | Originals stored on every import path. |
+| [Read captured sources through the store](/release-notes/read-captured-sources) | Source provenance and re-imports read the stored original. |
+| [Rendered document cache](/release-notes/rendered-document-cache) | A version's document rendered once per change. |
+| [Diff and compatibility read stored documents](/release-notes/diff-reads-stored-documents) | Diffs without regenerating. |
+| [Download and compare the original file](/release-notes/download-and-compare-originals) | **Download original** and original-to-original compare. |
+| [Move existing documents into the store](/release-notes/migrate-documents-to-store) | The migration of earlier imports. |
+| [Settings, health and admin screen](/release-notes/document-store-settings-health) | Startup checks, `/health` and the **Document store** page. |
+| [Lifecycle and integrity checks](/release-notes/document-lifecycle-integrity) | Reference counts, clean-up and re-hashing. |
+| [A local MinIO and deployment examples](/release-notes/local-minio-deployment-examples) | MinIO in Docker Compose and deployment recipes. |
+| [One OpenAPI document everywhere](/release-notes/one-openapi-document-everywhere) | The UI reads the REST server's document. |
+| [Every REST feature reads the stored document](/release-notes/every-feature-reads-stored-documents) | Lint, mocks, merge, publish and more. |
+| [Keep a workspace's documents in its own bucket](/release-notes/bring-your-own-bucket) | Per-tenant buckets. |
+
+See [Document store](/admin/document-store).

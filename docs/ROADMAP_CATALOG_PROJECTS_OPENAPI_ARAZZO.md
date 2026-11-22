@@ -68,7 +68,7 @@ Related, not adopted: #5849/#5851/#4544 (Arazzo for agents, in Agent Tool Qualit
 | ✅ COA-EPIC-2 | OpenAPI 3.2 / 3.1 fidelity and authoring — Complete | 8 |
 | ✅ COA-EPIC-3 | Import and export fidelity — Complete | 6 |
 | ✅ COA-EPIC-4 | Catalog and Projects cleanup — Complete | 4 |
-| COA-EPIC-5 | Document store: originals and rendered documents in object storage | 15 |
+| ✅ COA-EPIC-5 | Document store: originals and rendered documents in object storage — Complete | 15 |
 
 ### ✅ COA-EPIC-1 · [#7033](https://github.com/apiome/apiome/issues/7033) — Arazzo: complete, current and visible — Complete
 
@@ -415,7 +415,9 @@ All four issues of this epic are complete. The epic's overview page is `bring-in
 - **Technical Stack:** docs
 - **Documentation:** none; screenshots: n/a (no UI change)
 
-### COA-EPIC-5 · [#7076](https://github.com/apiome/apiome/issues/7076) — Document store: originals and rendered documents in object storage
+### ✅ COA-EPIC-5 · [#7076](https://github.com/apiome/apiome/issues/7076) — Document store: originals and rendered documents in object storage — Complete
+
+All fifteen issues of this epic are complete. The epic's overview page is `admin/document-store.mdx` (**Document store**: the three backends, what is stored, tenant buckets, health, migration, retention and integrity), listed in `helpCatalog.ts` as `document-store`; the RC9 overview release note is `release-notes/2026-11-21-document-store-originals-and-rendered-documents.mdx`, which links the fourteen child notes, with a What's new line. The screenshots the epic names — `admin-document-store`, `versions-download-original`, `versions-compare-originals` — shipped with COA-5.9 and COA-5.7.
 
 All of COA-EPIC-5 ships in RC9; there is no MVP / V2 split within the epic. Keep normalized data in Postgres, but store every imported **original** and every **rendered document** as an immutable object in a configurable document store: S3-compatible in production, the local filesystem for development, and the database as the zero-config fallback. Diffs, downloads, exports and `/v1/schema` then read stored bytes instead of regenerating documents on every request. The background is in §0 (Added 2026-11-19).
 
