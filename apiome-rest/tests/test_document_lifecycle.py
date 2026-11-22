@@ -530,6 +530,7 @@ def test_deleting_a_version_releases_its_documents(monkeypatch):
     auth = {"tenant_id": "t-1", "user_id": "u-1", "auth_method": "jwt"}
     fake = MagicMock()
     fake.get_version_by_id.return_value = {"project_id": "p-1", "version_id": "1.0.0"}
+    fake.get_version_core.return_value = {"project_id": "p-1", "version_id": "1.0.0"}
     fake.delete_version.return_value = (True, None)
     released = []
     monkeypatch.setattr(versions_routes, "db", fake)
@@ -555,6 +556,7 @@ def test_a_failed_delete_releases_nothing(monkeypatch):
 
     fake = MagicMock()
     fake.get_version_by_id.return_value = {"project_id": "p-1", "version_id": "1.0.0"}
+    fake.get_version_core.return_value = {"project_id": "p-1", "version_id": "1.0.0"}
     fake.delete_version.return_value = (False, "revision_locked")
     released = []
     monkeypatch.setattr(versions_routes, "db", fake)

@@ -27,10 +27,12 @@ def _auth():
 
 def _post(mdb, body):
     mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+    mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
     mdb.get_latest_version_for_project.return_value = None
     mdb.list_version_branches_for_project.return_value = []
     mdb.get_latest_revision_id_for_project.return_value = HEAD
     mdb.get_version_by_id.return_value = _version_row(HEAD)
+    mdb.get_version_core.return_value = _version_row(HEAD)
     return client.post(
         "/v1/versions/tn/proj-1",
         json={"version_id": "1.1.0", "shortMessage": "next", "baseRevisionId": HEAD, **body},
@@ -89,10 +91,12 @@ def test_missing_source_warns_and_copies_nothing():
     with patch("app.versions_routes.db") as mdb:
         mdb.create_version_push_transaction.return_value = (_version_row("rev-new"), 0)
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = HEAD
         mdb.get_version_by_id.side_effect = lambda vid, _t: _version_row(HEAD) if vid == HEAD else None
+        mdb.get_version_core.side_effect = lambda vid, _t: _version_row(HEAD) if vid == HEAD else None
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={

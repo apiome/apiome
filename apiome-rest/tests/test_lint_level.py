@@ -299,7 +299,9 @@ def _fake_level():
 @patch("app.lint_routes.db")
 def test_catalog_level_route_returns_the_level(mdb):
     mdb.get_project_by_id.return_value = {"id": "p1"}
+    mdb.get_project_core.return_value = {"id": "p1"}
     mdb.get_version_by_id.return_value = {"id": "v1", "project_id": "p1"}
+    mdb.get_version_core.return_value = {"id": "v1", "project_id": "p1"}
     with patch("app.lint_routes.evaluate_catalog_revision_level", return_value=_fake_level()) as evaluate:
         resp = client.get("/v1/versions/acme/p1/v1/lint/level?policyVersionId=pv1")
     assert resp.status_code == 200, resp.text
@@ -312,11 +314,15 @@ def test_catalog_level_route_returns_the_level(mdb):
 @patch("app.lint_routes.db")
 def test_catalog_level_route_checks_project_and_revision(mdb):
     mdb.get_project_by_id.return_value = None
+    mdb.get_project_core.return_value = None
     assert client.get("/v1/versions/acme/p1/v1/lint/level").status_code == 404
     mdb.get_project_by_id.return_value = {"id": "p1"}
+    mdb.get_project_core.return_value = {"id": "p1"}
     mdb.get_version_by_id.return_value = None
+    mdb.get_version_core.return_value = None
     assert client.get("/v1/versions/acme/p1/v1/lint/level").status_code == 404
     mdb.get_version_by_id.return_value = {"id": "v1", "project_id": "other"}
+    mdb.get_version_core.return_value = {"id": "v1", "project_id": "other"}
     assert client.get("/v1/versions/acme/p1/v1/lint/level").status_code == 400
 
 
@@ -324,7 +330,9 @@ def test_catalog_level_route_checks_project_and_revision(mdb):
 @patch("app.lint_routes.db")
 def test_catalog_level_route_maps_policy_errors(mdb, error, status):
     mdb.get_project_by_id.return_value = {"id": "p1"}
+    mdb.get_project_core.return_value = {"id": "p1"}
     mdb.get_version_by_id.return_value = {"id": "v1", "project_id": "p1"}
+    mdb.get_version_core.return_value = {"id": "v1", "project_id": "p1"}
     with patch("app.lint_routes.evaluate_catalog_revision_level", side_effect=error):
         assert client.get("/v1/versions/acme/p1/v1/lint/level").status_code == status
 

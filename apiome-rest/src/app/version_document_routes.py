@@ -114,7 +114,7 @@ def get_version_document(
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     if not is_uuid_string((version_record_id or "").strip()) or not is_uuid_string((project_id or "").strip()):
         raise _not_found(version_record_id)
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version or str(version.get("project_id")) != str(project_id):
         raise _not_found(version_record_id)
 

@@ -286,7 +286,7 @@ class _Patches:
             patch("app.export_git_delivery_routes.get_export_job_emit_result",
                   return_value=emit if emitted == "default" else emitted),
             patch("app.export_git_delivery_routes.resolve_export_download"),
-            patch("app.export_git_delivery_routes.db.get_project_by_id",
+            patch("app.export_git_delivery_routes.db.get_project_core",
                   return_value={"id": _ARTIFACT, "slug": "orders", "name": "Orders API"}),
             patch("app.export_git_delivery_routes.deliver_export", return_value=_outcome()),
             patch("app.export_git_delivery_routes.write_audit"),

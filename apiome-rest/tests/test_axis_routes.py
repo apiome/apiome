@@ -124,7 +124,13 @@ def _default_auth():
 def test_revision_axes_returns_stored_evaluation():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = {
+            "id": _REV,
+            "project_id": "proj-1",
+            "version_id": "1.0.0",
+        }
+        mdb.get_version_core.return_value = {
             "id": _REV,
             "project_id": "proj-1",
             "version_id": "1.0.0",
@@ -155,7 +161,13 @@ def test_revision_axes_returns_stored_evaluation():
 def test_revision_axes_computes_when_missing():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = {
+            "id": _REV,
+            "project_id": "proj-1",
+            "version_id": "1.0.0",
+        }
+        mdb.get_version_core.return_value = {
             "id": _REV,
             "project_id": "proj-1",
             "version_id": "1.0.0",
@@ -186,6 +198,7 @@ def test_revision_axes_computes_when_missing():
 def test_revision_axes_404s():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         assert client.get(f"/v1/versions/acme/nope/{_REV}/lint/axes").status_code == 404
 
 
@@ -233,7 +246,13 @@ def test_mcp_axes_returns_stored_evaluation():
 def test_not_assessed_never_serialized_as_zero_score():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = {
+            "id": _REV,
+            "project_id": "proj-1",
+            "version_id": "1.0.0",
+        }
+        mdb.get_version_core.return_value = {
             "id": _REV,
             "project_id": "proj-1",
             "version_id": "1.0.0",
@@ -282,7 +301,9 @@ def test_revision_axes_serializes_the_security_sub_scores():
     axes = [a if a["key"] != "security" else security_axis for a in _axes_payload()]
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = {"id": _REV, "project_id": "proj-1", "version_id": "1.0.0"}
+        mdb.get_version_core.return_value = {"id": _REV, "project_id": "proj-1", "version_id": "1.0.0"}
         mdb.get_latest_axis_evaluation_for_version.return_value = _eval_row(
             axes=axes, algorithm_version="3"
         )

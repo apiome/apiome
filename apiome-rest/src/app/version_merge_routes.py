@@ -424,7 +424,7 @@ def list_version_branches(
 ) -> List[Dict[str, Any]]:
     """List named version branches for a project (Studio BFF / git menu)."""
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return db.list_version_branches_detailed_for_project(project_id, tenant_id)
@@ -490,7 +490,7 @@ def version_branch_from_revision(
             ),
         )
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -547,7 +547,7 @@ def patch_version_branch_policy(
             status_code=403,
             detail="Only tenant administrators may change branch protection policy",
         )
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -625,7 +625,7 @@ def get_version_branch_divergence(
     """
     _ = tenant_slug  # preserved for route consistency with other version endpoints
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -748,7 +748,7 @@ def version_branch_merge_preview(
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -761,7 +761,7 @@ def version_branch_merge_preview(
     target_tip = str(tgt["tip_version_id"])
 
     for vid, label in ((source_tip, "source"), (target_tip, "target")):
-        ver = db.get_version_by_id(vid, tenant_id)
+        ver = db.get_version_core(vid, tenant_id)
         if not ver or ver["project_id"] != project_id:
             raise HTTPException(status_code=403, detail=f"{label} tip not accessible")
 
@@ -1878,7 +1878,7 @@ def get_merge_session(
 ) -> Dict[str, Any]:
     """Load persisted merge session and status transition history (#2573)."""
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -1904,7 +1904,7 @@ def list_merge_session_conflicts_route(
 ) -> Dict[str, Any]:
     """List conflict rows for a merge session (#2573)."""
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -1930,7 +1930,7 @@ def patch_merge_session_status(
     """Transition merge session status with audited events (#2573)."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 

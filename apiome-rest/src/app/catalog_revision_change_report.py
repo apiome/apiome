@@ -237,7 +237,7 @@ def _generate(
     from_label = str(baseline.get("version_id") or "—")
     to_label = str(candidate.get("version_id") or "—")
 
-    project = db.get_project_by_id(project_id, tenant_id) or {}
+    project = db.get_project_core(project_id, tenant_id) or {}
     template_row = _resolve_template_row(tenant_id, project_id)
     created_at = candidate.get("created_at")
     metadata = build_render_metadata(

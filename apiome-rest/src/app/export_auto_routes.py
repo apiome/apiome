@@ -195,7 +195,7 @@ async def create_auto_export(
     preset = await asyncio.to_thread(db.get_export_preset, tenant_id, body.preset)
     project = None
     try:
-        project = await asyncio.to_thread(db.get_project_by_id, body.project_id, tenant_id)
+        project = await asyncio.to_thread(db.get_project_core, body.project_id, tenant_id)
     except Exception:  # noqa: BLE001 - an unreadable or malformed id is an unknown project
         project = None
     errors = []

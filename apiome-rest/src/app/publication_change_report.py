@@ -87,7 +87,7 @@ def validate_manual_baseline_revision(
             status_code=400,
             detail="Baseline revision must differ from the revision being published",
         )
-    row = db.get_version_by_id(baseline_revision_id, tenant_id)
+    row = db.get_version_core(baseline_revision_id, tenant_id)
     if not row or str(row.get("project_id")) != str(project_id):
         raise HTTPException(
             status_code=400,
@@ -124,7 +124,7 @@ def build_publication_change_report_render(
         change_model, header, body, footnote, stored_baseline_id,
         requested_ghost_baseline_id (for audit if row missing), baseline_row_missing, from_label
     """
-    proj = db.get_project_by_id(project_id, tenant_id)
+    proj = db.get_project_core(project_id, tenant_id)
     project_name = (proj or {}).get("name") or "API"
 
     candidate_openapi = openapi_for_revision(candidate_version, tenant_slug, tenant_id)

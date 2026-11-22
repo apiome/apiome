@@ -102,8 +102,10 @@ def mdb():
         "app.change_report_enterprise_routes.enforce_permission"
     ):
         mock_db.get_version_by_id.return_value = _VERSION
+        mock_db.get_version_core.return_value = _VERSION
         mock_db.is_user_tenant_admin.side_effect = lambda tenant_id, user_id: user_id == "admin-b"
         mock_db.get_project_by_id.return_value = {"id": "p1", "slug": "payments"}
+        mock_db.get_project_core.return_value = {"id": "p1", "slug": "payments"}
         yield mock_db
 
 
@@ -300,18 +302,21 @@ def test_a_failed_audit_write_does_not_fail_the_approval(mdb):
 def test_unknown_version_is_404(mdb, path):
     _as(_ADMIN)
     mdb.get_version_by_id.return_value = None
+    mdb.get_version_core.return_value = None
 
     assert client.post(f"{_BASE}/{path}").status_code == 404
 
 
 def test_version_of_another_project_is_404(mdb):
     mdb.get_version_by_id.return_value = {**_VERSION, "project_id": "other"}
+    mdb.get_version_core.return_value = {**_VERSION, "project_id": "other"}
 
     assert client.post(f"{_BASE}/submit").status_code == 404
 
 
 def test_unpublished_version_is_400(mdb):
     mdb.get_version_by_id.return_value = {**_VERSION, "published": False}
+    mdb.get_version_core.return_value = {**_VERSION, "published": False}
 
     assert client.post(f"{_BASE}/submit").status_code == 400
 
@@ -406,6 +411,7 @@ def test_an_approved_report_with_no_content_is_422(mdb):
 
 def test_the_filename_is_safe_when_the_project_has_no_slug(mdb):
     mdb.get_project_by_id.return_value = {"id": "p1", "name": "Payments / EU (v2)"}
+    mdb.get_project_core.return_value = {"id": "p1", "name": "Payments / EU (v2)"}
     mdb.get_change_report_by_published_revision.return_value = _report(**_APPROVED)
 
     r = client.get(f"{_BASE}/pdf")
@@ -458,6 +464,7 @@ def rdb():
     """Patch the report routes' db (PATCH / regenerate live in version_change_report_routes)."""
     with patch("app.version_change_report_routes.db") as mock_db:
         mock_db.get_version_by_id.return_value = _VERSION
+        mock_db.get_version_core.return_value = _VERSION
         mock_db.is_user_tenant_admin.return_value = False
         yield mock_db
 
@@ -580,6 +587,7 @@ def test_changing_the_tenant_default_template_is_audited(tdb):
 def test_changing_a_project_default_template_is_audited(tdb):
     _as(_ADMIN)
     tdb.get_project_by_id.return_value = {"id": "p1", "creator_id": "someone"}
+    tdb.get_project_core.return_value = {"id": "p1", "creator_id": "someone"}
     tdb.update_project.return_value = {"id": "p1"}
 
     r = client.put(

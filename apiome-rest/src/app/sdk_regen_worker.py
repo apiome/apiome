@@ -278,7 +278,7 @@ def _load_revision(db: Any, row: Mapping[str, Any]) -> ExportSource:
             f"Version {line!r} no longer exists, so there is nothing to regenerate.",
         )
     try:
-        revision = db.get_version_by_id(version_id, tenant_id)
+        revision = db.get_version_core(version_id, tenant_id)
     except Exception as exc:  # noqa: BLE001 - a lookup fault is a transient failure
         logger.warning("SDK regen: revision lookup failed for %s", version_id, exc_info=True)
         raise _StepFailedError(

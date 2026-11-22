@@ -130,7 +130,7 @@ def resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     row = None
     if ref:
         row = (
-            db.get_project_by_id(ref, tenant_id)
+            db.get_project_core(ref, tenant_id)
             if is_uuid_string(ref)
             else db.get_project_by_slug(ref, tenant_id)
         )
@@ -156,7 +156,7 @@ def resolve_version(tenant_id: str, project_id: str, version_ref: str) -> Dict[s
     ref = (version_ref or "").strip()
     row = None
     if is_uuid_string(ref):
-        row = db.get_version_by_id(ref, tenant_id)
+        row = db.get_version_core(ref, tenant_id)
         if row is not None and str(row.get("project_id")) != str(project_id):
             row = None
     elif ref:

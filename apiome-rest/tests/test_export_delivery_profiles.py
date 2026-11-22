@@ -515,7 +515,7 @@ def test_an_object_storage_profile_records_itself_on_the_run_and_in_the_audit() 
             patch(f"{storage}.get_export_job_status", new=AsyncMock(return_value=status)), \
             patch(f"{storage}.get_export_job_emit_result",
                   return_value=EmitResult(files=[EmittedFile(path="openapi.yaml", content="openapi: 3.1.0\n")])), \
-            patch("app.export_git_delivery_routes.db.get_project_by_id", return_value={"slug": "orders"}), \
+            patch("app.export_git_delivery_routes.db.get_project_core", return_value={"slug": "orders"}), \
             patch(f"{storage}.deliver_to_object_storage", return_value=run) as deliver, \
             patch(f"{storage}.db.set_export_delivery_run_profile") as link, \
             patch(f"{storage}.write_audit") as audit:
@@ -541,7 +541,7 @@ def test_a_direct_delivery_names_no_profile() -> None:
     with patch(f"{storage}.enforce_permission"), _tenant(), \
             patch(f"{storage}.get_export_job_status", new=AsyncMock(return_value=status)), \
             patch(f"{storage}.get_export_job_emit_result", return_value=EmitResult(files=[])), \
-            patch("app.export_git_delivery_routes.db.get_project_by_id", return_value=None), \
+            patch("app.export_git_delivery_routes.db.get_project_core", return_value=None), \
             patch(f"{storage}.deliver_to_object_storage", return_value=run), \
             patch(f"{storage}.db.set_export_delivery_run_profile") as link, \
             patch(f"{storage}.write_audit") as audit:

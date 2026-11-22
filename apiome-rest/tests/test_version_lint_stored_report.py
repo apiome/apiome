@@ -219,7 +219,7 @@ def _list_row(**overrides: Any) -> Dict[str, Any]:
 def test_list_versions_carries_stored_quality_without_linting(client: TestClient):
     """The list surfaces the stored score/grade per row and never touches the lint engine."""
     rows = [_list_row(), _list_row(id=BASE_VID, quality_score=None, quality_grade=None)]
-    with patch("app.versions_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.versions_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.versions_routes.db.get_versions_for_project", return_value=rows
     ), patch("app.lint_routes.guided_lint_openapi_spec") as m_lint, patch(
         "app.lint_routes.openapi_for_revision"
@@ -281,7 +281,7 @@ def test_list_versions_carries_the_stored_security_headline_for_fifty_revisions(
         )
         for i in range(50)
     ]
-    with patch("app.versions_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.versions_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.versions_routes.db.get_versions_for_project", return_value=rows
     ) as m_list, patch("app.lint_routes.guided_lint_openapi_spec") as m_lint, patch(
         "app.lint_routes.openapi_for_revision"
@@ -344,7 +344,7 @@ def test_record_axis_evaluation_dedupes_per_algorithm_revision():
 
 def test_lint_persists_live_report_onto_the_revision(client: TestClient):
     """A never-scored revision is linted once and the report is stored on its record."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -372,7 +372,7 @@ def test_lint_persists_live_report_onto_the_revision(client: TestClient):
 def test_lint_serves_current_stored_report_without_relinting(client: TestClient):
     """A stored report whose content fingerprint still matches is served: no lint, no write."""
     stored = _stored_report(HEAD_SPEC, guide_id="g1", guide_name="House", guide_source="custom")
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch(
         "app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC
@@ -417,7 +417,7 @@ def test_lint_serves_the_security_headline_beside_the_grade(client: TestClient):
         ],
         categories=[{"name": "documentation", "score": 100}, {"name": "security", "score": 80}],
     )
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -440,7 +440,7 @@ def test_lint_serves_the_security_headline_beside_the_grade(client: TestClient):
 def test_lint_relints_and_repersists_when_content_changed(client: TestClient):
     """When the schema content changed since capture, the report is recomputed and re-stored."""
     stored = _stored_report(HEAD_SPEC)  # captured from the *old* content
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch(
         "app.lint_routes.openapi_for_revision", return_value=EDITED_SPEC
@@ -468,7 +468,7 @@ def test_lint_legacy_stored_report_without_fingerprint_is_served_as_is(client: T
     legacy = {
         k: v for k, v in _stored_report(HEAD_SPEC).items() if k != SOURCE_FINGERPRINT_KEY
     }
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch("app.lint_routes.openapi_for_revision") as m_recon, patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -483,7 +483,7 @@ def test_lint_legacy_stored_report_without_fingerprint_is_served_as_is(client: T
 def test_lint_freshness_probe_failure_serves_the_stored_report(client: TestClient):
     """If the document cannot be rebuilt for the freshness check, the stored report still serves."""
     stored = _stored_report(HEAD_SPEC)
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch(
         "app.lint_routes.openapi_for_revision", side_effect=RuntimeError("no classes table")
@@ -504,7 +504,7 @@ def test_lint_base_revision_comparison_is_never_persisted(client: TestClient):
     """A base-revision compare depends on the chosen base, so it is computed live, not stored."""
     rows = {VID: _version_row(VID), BASE_VID: _version_row(BASE_VID)}
     stored = _stored_report(HEAD_SPEC)
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", side_effect=lambda vid, tid: rows.get(vid)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -522,7 +522,7 @@ def test_lint_base_revision_comparison_is_never_persisted(client: TestClient):
 
 def test_lint_persist_failure_keeps_serving_the_live_report(client: TestClient):
     """A failed write is best-effort: the live report is returned with the prior captured values."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -549,7 +549,7 @@ def test_lint_persists_canonical_relint_for_legacy_native_imports(client: TestCl
         "findings": [],
         "categories": [],
     }
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row()
     ), patch("app.lint_routes.openapi_for_revision") as m_recon, patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -581,6 +581,7 @@ def test_push_schedules_lint_capture_for_the_new_revision(client: TestClient):
         "app.versions_routes.db"
     ) as mdb, patch("app.versions_routes.capture_version_quality_score") as m_capture:
         mdb.get_project_by_id.return_value = {"id": PID, "slug": "payments", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": PID, "slug": "payments", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = None
@@ -601,6 +602,7 @@ def test_fork_schedules_lint_capture_for_the_forked_revision(client: TestClient)
         "app.versions_routes.db"
     ) as mdb, patch("app.versions_routes.capture_version_quality_score") as m_capture:
         mdb.get_project_by_id.return_value = {"id": PID, "slug": "payments", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": PID, "slug": "payments", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.create_forked_version.return_value = {"success": True, "version": _push_row()}
         r = client.post(
@@ -658,6 +660,7 @@ def test_capture_helper_persists_fingerprinted_report():
 
     mock_db = MagicMock()
     mock_db.get_version_by_id.return_value = _version_row()
+    mock_db.get_version_core.return_value = _version_row()
     result = LintResult(
         score=88,
         grade="B",

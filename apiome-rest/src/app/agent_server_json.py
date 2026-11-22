@@ -370,7 +370,7 @@ def _runtime_url() -> str:
 def _project_name(tenant_id: str, project_id: str) -> Optional[str]:
     """The project's name, or ``None`` when it cannot be read (the title falls back)."""
     try:
-        project = db.get_project_by_id(project_id, tenant_id)
+        project = db.get_project_core(project_id, tenant_id)
     except Exception:  # noqa: BLE001 - a missing name degrades the title, not the export
         logger.warning("server.json: project %s name unavailable", project_id, exc_info=True)
         return None

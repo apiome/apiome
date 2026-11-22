@@ -43,7 +43,7 @@ def _auth():
 
 
 def test_get_merge_session_ok():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.version_merge_routes.db.get_merge_session_detail",
         return_value={"session": _SESS, "status_events": []},
     ):
@@ -56,13 +56,13 @@ def test_get_merge_session_ok():
 
 
 def test_get_merge_session_unknown_project():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value=None):
+    with patch("app.version_merge_routes.db.get_project_core", return_value=None):
         r = client.get(f"/v1/versions/acme/{PID}/merge-sessions/{SID}")
     assert r.status_code == 404
 
 
 def test_get_merge_session_not_found():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.version_merge_routes.db.get_merge_session_detail",
         return_value=None,
     ):
@@ -71,7 +71,7 @@ def test_get_merge_session_not_found():
 
 
 def test_list_merge_conflicts_ok():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.version_merge_routes.db.list_merge_session_conflicts",
         return_value=[
             {
@@ -92,7 +92,7 @@ def test_list_merge_conflicts_ok():
 
 def test_patch_merge_session_status_ok():
     updated = {**_SESS, "status": "resolving"}
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.version_merge_routes.db.update_merge_session_status",
         return_value=(True, None),
     ), patch(
@@ -108,7 +108,7 @@ def test_patch_merge_session_status_ok():
 
 
 def test_patch_merge_session_invalid_transition():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.version_merge_routes.db.update_merge_session_status",
         return_value=(False, "Cannot transition from applied to resolving"),
     ):

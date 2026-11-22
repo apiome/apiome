@@ -152,7 +152,7 @@ def _gate(
     """Run the service with every store patched.
 
     Args:
-        version_row: What ``get_version_by_id`` returns for the gated revision.
+        version_row: What ``get_version_by_id`` / ``get_version_core`` return for the gated revision.
         changelog: The stored classification, or ``None`` for "never classified".
         schedules: The tenant's schedules.
         reports: The newest-report fallback (index 0 is returned).
@@ -179,12 +179,14 @@ def _gate(
         return listed
 
     with patch(
-        "app.deploy_gate_service.db.get_project_by_id", return_value=_PROJECT_ROW
+        "app.deploy_gate_service.db.get_project_core", return_value=_PROJECT_ROW
     ), patch("app.deploy_gate_service.db.get_project_by_slug", return_value=_PROJECT_ROW), patch(
         "app.deploy_gate_service.db.list_version_changelogs_for_project",
         return_value=[{"published_revision_id": _REVISION}] if version_row else [],
     ), patch(
         "app.deploy_gate_service.db.get_version_by_id", side_effect=_version
+    ), patch(
+        "app.deploy_gate_service.db.get_version_core", side_effect=_version
     ), patch(
         "app.deploy_gate_service.db.get_version_changelog",
         side_effect=changelog_side_effect,
@@ -235,7 +237,7 @@ def _signal(report, name):
 
 def test_an_unknown_project_refuses_with_a_stable_code():
     """A pipeline branches on the code; the prose is for a human reading the log."""
-    with patch("app.deploy_gate_service.db.get_project_by_id", return_value=None), patch(
+    with patch("app.deploy_gate_service.db.get_project_core", return_value=None), patch(
         "app.deploy_gate_service.db.get_project_by_slug", return_value=None
     ):
         with pytest.raises(DeployGateError) as excinfo:
@@ -248,7 +250,7 @@ def test_an_unknown_project_refuses_with_a_stable_code():
 
 def test_a_project_with_nothing_published_has_nothing_to_promote():
     """409, not 404: the project exists, it is just not in a state that can be gated."""
-    with patch("app.deploy_gate_service.db.get_project_by_id", return_value=_PROJECT_ROW), patch(
+    with patch("app.deploy_gate_service.db.get_project_core", return_value=_PROJECT_ROW), patch(
         "app.deploy_gate_service.db.list_version_changelogs_for_project", return_value=[]
     ):
         with pytest.raises(DeployGateError) as excinfo:
@@ -261,7 +263,7 @@ def test_a_project_with_nothing_published_has_nothing_to_promote():
 
 def test_a_draft_revision_is_refused_rather_than_judged():
     """A deploy gate judges what was published; a draft has no publish to classify."""
-    with patch("app.deploy_gate_service.db.get_project_by_id", return_value=_PROJECT_ROW), patch(
+    with patch("app.deploy_gate_service.db.get_project_core", return_value=_PROJECT_ROW), patch(
         "app.deploy_gate_service.db.get_version_by_id",
         return_value={**_VERSION_ROW, "published": False},
     ):
@@ -322,7 +324,7 @@ def test_the_breaking_signal_reads_the_stored_classification_and_names_the_basel
 def test_the_consumer_signal_is_fed_the_rehydrated_stored_changelog():
     """The entry and the classified change carry the same fields, so no re-diff is needed."""
     with patch(
-        "app.deploy_gate_service.db.get_project_by_id", return_value=_PROJECT_ROW
+        "app.deploy_gate_service.db.get_project_core", return_value=_PROJECT_ROW
     ), patch(
         "app.deploy_gate_service.db.list_version_changelogs_for_project",
         return_value=[{"published_revision_id": _REVISION}],

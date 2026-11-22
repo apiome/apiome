@@ -84,7 +84,7 @@ def _require_revision(tenant_id: str, project_id: str, version_record_id: str) -
     """Resolve the revision inside the tenant and project, or raise ``404``."""
     if not is_uuid_string((version_record_id or "").strip()) or not is_uuid_string((project_id or "").strip()):
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version or str(version.get("project_id")) != str(project_id):
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     return version

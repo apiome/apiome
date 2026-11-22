@@ -853,7 +853,7 @@ async def lint_revision(
     """
     tenant_id = auth_data["tenant_id"]
 
-    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_core, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -918,11 +918,11 @@ async def lint_revision_evidence(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_core, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = await run_in_threadpool(db.get_version_by_id, version_record_id, tenant_id)
+    version = await run_in_threadpool(db.get_version_core, version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -980,11 +980,11 @@ def lint_revision_axes(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -1067,11 +1067,11 @@ def lint_revision_policy(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -1119,11 +1119,11 @@ def lint_revision_level(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -1199,7 +1199,7 @@ async def lint_revision_gate(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_core, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -1219,7 +1219,7 @@ async def lint_revision_gate(
                 status_code=400,
                 detail="baselineRevisionId must differ from the gated revision",
             )
-        baseline = await run_in_threadpool(db.get_version_by_id, baseline_id, tenant_id)
+        baseline = await run_in_threadpool(db.get_version_core, baseline_id, tenant_id)
         if not baseline:
             raise HTTPException(
                 status_code=404, detail=f"Baseline revision not found: {baseline_id}"
@@ -1321,7 +1321,7 @@ def upsert_lint_finding_decision(
         raise HTTPException(status_code=400, detail=error)
 
     if body.project_id:
-        project = db.get_project_by_id(body.project_id, tenant_id)
+        project = db.get_project_core(body.project_id, tenant_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 

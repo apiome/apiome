@@ -276,7 +276,7 @@ def importer(monkeypatch) -> Dict[str, Any]:
         lambda p, t, *a, **k: [{"version_id": v} for v in seen["labels"]],
     )
     monkeypatch.setattr(
-        "app.openapi_version_import.db.get_project_by_id",
+        "app.openapi_version_import.db.get_project_core",
         lambda p, t, **k: {"id": p, "name": "Widgets", "slug": "widgets"},
     )
     monkeypatch.setattr(

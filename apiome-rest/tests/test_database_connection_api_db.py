@@ -95,22 +95,25 @@ def test_delete_mcp_saved_search_reports_rowcount():
     conn.commit.assert_called_once()
 
 
-def test_update_mcp_endpoint_note_writes_then_reloads():
-    db, conn, cursor = _db(rowcount=1)
-    db.get_mcp_endpoint_note = MagicMock(return_value={"id": _NOTE, "body": "edited"})
+def test_update_mcp_endpoint_note_returns_the_row_in_one_statement():
+    """The UPDATE's RETURNING row is joined to the author / editor in the same statement (#7188)."""
+    db = Database()
+    db.execute_query = MagicMock(return_value=[{"id": _NOTE, "body": "edited"}])
+    db.get_mcp_endpoint_note = MagicMock()
 
     row = db.update_mcp_endpoint_note(_TENANT, _EP, _NOTE, _USER, body="edited")
 
     assert row == {"id": _NOTE, "body": "edited"}
-    sql, params = cursor.execute.call_args_list[0][0]
-    assert "UPDATE apiome.mcp_endpoint_notes" in sql
+    sql, params = db.execute_query.call_args[0]
+    assert "UPDATE apiome.mcp_endpoint_notes" in sql and "RETURNING *" in sql
     assert params == ("edited", _USER, _NOTE, _TENANT, _EP)
-    conn.commit.assert_called_once()
-    db.get_mcp_endpoint_note.assert_called_once_with(_TENANT, _EP, _NOTE)
+    db.execute_query.assert_called_once()
+    db.get_mcp_endpoint_note.assert_not_called()
 
 
 def test_update_mcp_endpoint_note_returns_none_when_nothing_matched():
-    db, _, _ = _db(rowcount=0)
+    db = Database()
+    db.execute_query = MagicMock(return_value=[])
     db.get_mcp_endpoint_note = MagicMock()
     assert db.update_mcp_endpoint_note(_TENANT, _EP, _NOTE, _USER, body="x") is None
     db.get_mcp_endpoint_note.assert_not_called()
@@ -137,7 +140,7 @@ def test_create_mcp_collection_inserts_collection_and_members():
     db, conn, cursor = _db(fetchone={"id": _COLL, "name": "Core"})
     db._next_available_collection_slug = MagicMock(return_value="core")
     db._validate_collection_endpoint_ids = MagicMock()
-    db.get_mcp_collection = MagicMock(return_value={"id": _COLL, "member_count": 2})
+    db.get_mcp_collection = MagicMock()
 
     out = db.create_mcp_collection(
         _TENANT,
@@ -149,8 +152,10 @@ def test_create_mcp_collection_inserts_collection_and_members():
         endpoint_ids=[_EP, _NOTE],
     )
 
-    assert out == {"id": _COLL, "member_count": 2}
-    assert "INSERT INTO apiome.mcp_collections" in _sql(cursor, 0)
+    # The member count is known from the inserts; no detail re-read (#7188).
+    assert out == {"id": _COLL, "name": "Core", "member_count": 2}
+    db.get_mcp_collection.assert_not_called()
+    assert "INSERT INTO apiome.mcp_collections AS c" in _sql(cursor, 0)
     assert "INSERT INTO apiome.mcp_collection_members" in _sql(cursor, 1)
     assert cursor.execute.call_count == 3  # collection + one row per endpoint
     conn.commit.assert_called_once()

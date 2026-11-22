@@ -48,7 +48,7 @@ MAX_HISTORY_TIPS = 50
 
 def _require_project(project_id: str, tenant_id: str) -> Dict[str, Any]:
     """The project, or 404."""
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return project
@@ -60,7 +60,7 @@ def _require_revision(revision_id: str, project_id: str, tenant_id: str, *, fiel
     Raises:
         HTTPException: 404 ``REVISION_NOT_FOUND``; 400 ``REVISION_PROJECT_MISMATCH``.
     """
-    row = db.get_version_by_id(revision_id, tenant_id)
+    row = db.get_version_core(revision_id, tenant_id)
     if not row:
         raise HTTPException(
             status_code=404,

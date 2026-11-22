@@ -86,11 +86,15 @@ def recorded(monkeypatch) -> Tuple[Database, _RecordingConnection]:
     monkeypatch.setattr(database, "get_class_by_id", lambda class_id, tenant_id: {"id": class_id})
     monkeypatch.setattr(database, "get_path_by_id", lambda path_id, tenant_id: {"id": path_id})
     monkeypatch.setattr(database, "get_operation_by_id", lambda operation_id, tenant_id: {"id": operation_id})
-    monkeypatch.setattr(
-        database,
-        "execute_query",
-        lambda query, params=None: [{"id": PROPERTY_ID, "class_id": CLASS_ID, "primitive_id": None}],
-    )
+
+    def execute_query(query, params=None):
+        # A write sent as one statement (the tenant guard folded in, #7188) is recorded like a
+        # cursor write; reads just answer.
+        if query.lstrip().upper().startswith(("UPDATE", "INSERT", "DELETE", "WITH")):
+            connection.statements.append((query, tuple(params or ())))
+        return [{"id": PROPERTY_ID, "class_id": CLASS_ID, "primitive_id": None}]
+
+    monkeypatch.setattr(database, "execute_query", execute_query)
     return database, connection
 
 
@@ -116,8 +120,8 @@ def _assert_in_place_update(sql: str, table: str, key_column: str) -> None:
         table: The ``apiome.<table>`` expected to be updated.
         key_column: The column the WHERE clause must key on.
     """
-    assert sql.startswith(f"UPDATE apiome.{table} SET "), sql
-    assert re.search(rf"WHERE {key_column} = %s", sql), sql
+    assert re.match(rf"UPDATE apiome\.{table}( \w+)? SET ", sql), sql
+    assert re.search(rf"WHERE (\w+\.)?{key_column} = %s", sql), sql
     set_clause = sql.split(" SET ", 1)[1].split(" WHERE ", 1)[0]
     assert "deleted_at" not in set_clause, sql
     assert not re.search(r"\b(DELETE|INSERT)\b", sql), sql
@@ -135,7 +139,7 @@ def test_renaming_or_moving_a_class_updates_its_row_by_id(recorded, updates: Dic
     database.update_class(CLASS_ID, TENANT, updates)
     sql, params = _only_write(connection)
     _assert_in_place_update(sql, "classes", "id")
-    assert params[-1] == CLASS_ID
+    assert params[-2:] == (CLASS_ID, TENANT)
 
 
 def test_renaming_a_class_property_updates_its_row_by_id(recorded):
@@ -151,7 +155,7 @@ def test_renaming_a_path_updates_its_row_by_id(recorded):
     database.update_path(PATH_ID, TENANT, {"pathname": "/clients/{id}"})
     sql, params = _only_write(connection)
     _assert_in_place_update(sql, "version_path", "id")
-    assert params == ("/clients/{id}", PATH_ID)
+    assert params == ("/clients/{id}", PATH_ID, TENANT)
 
 
 def test_changing_an_operation_method_updates_its_row_by_id(recorded):
@@ -159,7 +163,7 @@ def test_changing_an_operation_method_updates_its_row_by_id(recorded):
     database.update_operation(OPERATION_ID, TENANT, {"operation": "put"})
     sql, params = _only_write(connection)
     _assert_in_place_update(sql, "path_operation", "id")
-    assert params == ("PUT", OPERATION_ID)
+    assert params == ("PUT", OPERATION_ID, TENANT)
 
 
 def test_relabelling_an_operation_never_touches_the_operation_row(recorded):

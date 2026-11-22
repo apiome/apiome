@@ -70,6 +70,7 @@ def _auth():
 def test_get_change_report_ok():
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = _MOCK_ROW
         r = client.get("/v1/versions/tn/p1/v1/change-report")
         assert r.status_code == 200
@@ -81,6 +82,7 @@ def test_get_change_report_ok():
 def test_get_change_report_404_no_row():
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = None
         r = client.get("/v1/versions/tn/p1/v1/change-report")
         assert r.status_code == 404
@@ -89,6 +91,7 @@ def test_get_change_report_404_no_row():
 def test_get_change_report_400_unpublished():
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_DRAFT
+        mdb.get_version_core.return_value = _MOCK_VERSION_DRAFT
         r = client.get("/v1/versions/tn/p1/v1/change-report")
         assert r.status_code == 400
 
@@ -108,6 +111,10 @@ def test_patch_403_not_creator():
             **_MOCK_VERSION_PUBLISHED,
             "creator_id": "someone-else",
         }
+        mdb.get_version_core.return_value = {
+            **_MOCK_VERSION_PUBLISHED,
+            "creator_id": "someone-else",
+        }
         mdb.is_user_tenant_admin.return_value = False
         r = client.patch(
             "/v1/versions/tn/p1/v1/change-report",
@@ -120,6 +127,7 @@ def test_patch_ok():
     updated = {**_MOCK_ROW, "edited_rendered_body": "edited", "edited_by": "user-a"}
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = _MOCK_ROW
         mdb.patch_change_report_edits.return_value = updated
         mdb.is_user_tenant_admin.return_value = False
@@ -136,6 +144,7 @@ def test_patch_clear_edits():
     cleared = {**_MOCK_ROW, "edited_rendered_body": None, "edited_header_snapshot": None, "edited_footnote_snapshot": None}
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = {
             **_MOCK_ROW,
             "edited_rendered_body": "old edit",
@@ -159,6 +168,7 @@ def test_patch_null_clears_individual_field():
     after = {**_MOCK_ROW, "edited_rendered_body": None, "edited_header_snapshot": "kept hdr"}
     with patch("app.version_change_report_routes.db") as mdb:
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = {
             **_MOCK_ROW,
             "edited_rendered_body": "old edit",
@@ -191,6 +201,7 @@ def test_regenerate_ok():
 
         mres.return_value = bundled_system_template_row()
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = _MOCK_ROW
         mdb.apply_change_report_regeneration.return_value = regen_row
         mdb.is_user_tenant_admin.return_value = False
@@ -221,6 +232,7 @@ def test_regenerate_keep_user_edits():
 
         mres.return_value = bundled_system_template_row()
         mdb.get_version_by_id.return_value = _MOCK_VERSION_PUBLISHED
+        mdb.get_version_core.return_value = _MOCK_VERSION_PUBLISHED
         mdb.get_change_report_by_published_revision.return_value = existing
         mdb.apply_change_report_regeneration.return_value = regen_row
         mdb.is_user_tenant_admin.return_value = False

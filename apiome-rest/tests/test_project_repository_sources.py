@@ -124,10 +124,12 @@ class FakeSourcesDb:
     def get_project_by_id(self, project_id, tenant_id):
         """The one project, by id, in the one tenant."""
         return {"id": PROJECT, "slug": "shop"} if project_id == PROJECT and tenant_id == TENANT else None
+    get_project_core = get_project_by_id
 
     def get_version_by_id(self, version_id, tenant_id):
         """A version by revision id."""
         return self.versions.get(version_id)
+    get_version_core = get_version_by_id
 
     def get_version_by_version_id(self, project_id, label, tenant_id):
         """A version by label."""

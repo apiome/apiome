@@ -160,6 +160,7 @@ def get(url: str = URL, *, loaded: Optional[VersionFacts] = None, **kwargs):
         return_value=loaded if loaded is not None else facts(),
     ) as loader:
         mock_db.get_version_by_id.return_value = {"id": VERSION, "version_id": "2.1"}
+        mock_db.get_version_core.return_value = {"id": VERSION, "version_id": "2.1"}
         response = client.get(url, **kwargs)
     response.loader = loader  # type: ignore[attr-defined]
     return response
@@ -299,6 +300,7 @@ class TestPathScope:
             "app.consumption_index_routes.domains_store.get_domain", return_value=None
         ), patch("app.consumption_index_routes.store.load_version_facts") as loader:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(f"{URL}?domain_id={OTHER_DOMAIN}")
         assert response.status_code == 404
         loader.assert_not_called()
@@ -309,6 +311,7 @@ class TestPathScope:
             return_value={"id": DOMAIN, "version_id": "another-version"},
         ), patch("app.consumption_index_routes.store.load_version_facts") as loader:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(f"{URL}?domain_id={DOMAIN}")
         assert response.status_code == 404
         loader.assert_not_called()
@@ -403,6 +406,7 @@ class TestTenancy:
             "app.consumption_index_routes.store.load_version_facts"
         ) as loader:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             response = client.get(URL)
         assert response.status_code == 404
         loader.assert_not_called()
@@ -412,8 +416,9 @@ class TestTenancy:
             "app.consumption_index_routes.store.load_version_facts", return_value=facts()
         ):
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             client.get(URL)
-        mock_db.get_version_by_id.assert_called_once_with(VERSION, TENANT)
+        mock_db.get_version_core.assert_called_once_with(VERSION, TENANT)
 
     def test_a_token_with_no_tenant_is_a_500_not_an_unscoped_read(self):
         app.dependency_overrides[validate_authentication] = lambda: {"auth_method": "jwt"}

@@ -1,6 +1,6 @@
 """Merge preview dry-run API (#2572): counts, conflict metadata, optional merged OpenAPI."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -40,9 +40,13 @@ def _auth():
     app.dependency_overrides.clear()
 
 
+def _revision_row(vid, _tid):
+    return {"id": vid, "project_id": PID, "published": False}
+
+
 def _preview_mocks():
     return (
-        patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}),
+        patch("app.version_merge_routes.db.get_project_core", return_value={"id": PID}),
         patch(
             "app.version_merge_routes.db.get_version_branch_by_name",
             side_effect=lambda pid, tid, name: (
@@ -51,13 +55,11 @@ def _preview_mocks():
                 else {"tip_version_id": "vt", "id": "2"}
             ),
         ),
-        patch(
-            "app.version_merge_routes.db.get_version_by_id",
-            side_effect=lambda vid, tid: {
-                "id": vid,
-                "project_id": PID,
-                "published": False,
-            },
+        # Branch tips are guarded through the core lookup, the merge inputs read in full (#7188).
+        patch.multiple(
+            "app.version_merge_routes.db",
+            get_version_by_id=MagicMock(side_effect=_revision_row),
+            get_version_core=MagicMock(side_effect=_revision_row),
         ),
         patch("app.version_merge_routes.db.compute_merge_base_revision_id", return_value="vb"),
         patch("app.version_merge_routes.openapi_for_revision", return_value=SPEC),

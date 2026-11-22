@@ -149,7 +149,7 @@ def resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     ref = (project_ref or "").strip()
     row: Optional[Dict[str, Any]] = None
     if is_uuid_string(ref):
-        row = db.get_project_by_id(ref, tenant_id)
+        row = db.get_project_core(ref, tenant_id)
     if row is None and ref:
         row = db.get_project_by_slug(ref, tenant_id)
     if row is None:
@@ -317,7 +317,7 @@ def _baseline_label(tenant_id: str, row: Optional[Mapping[str, Any]]) -> Optiona
     baseline_id = (row or {}).get("baseline_revision_id")
     if not baseline_id:
         return None
-    baseline = db.get_version_by_id(str(baseline_id), tenant_id)
+    baseline = db.get_version_core(str(baseline_id), tenant_id)
     return baseline.get("version_id") if baseline else None
 
 

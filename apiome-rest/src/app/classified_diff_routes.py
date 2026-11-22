@@ -337,7 +337,7 @@ def _resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     if not ref:
         raise HTTPException(status_code=400, detail="project is required")
     if is_uuid_string(ref):
-        row = db.get_project_by_id(ref, tenant_id)
+        row = db.get_project_core(ref, tenant_id)
     else:
         row = db.get_project_by_slug(ref, tenant_id)
     if not row:

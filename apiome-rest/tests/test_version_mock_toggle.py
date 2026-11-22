@@ -64,7 +64,7 @@ def _version_row(*, published: bool = True, mock_enabled: bool = False) -> dict:
 
 def test_enable_mock_on_published_version(client: TestClient) -> None:
     row = _version_row(published=True, mock_enabled=True)
-    with patch("app.versions_routes.db.get_version_by_id", return_value=_version_row()), patch(
+    with patch("app.versions_routes.db.get_version_core", return_value=_version_row()), patch(
         "app.versions_routes.db.set_version_mock_enabled",
         return_value=row,
     ), patch("app.versions_routes.enforce_permission"):
@@ -80,7 +80,7 @@ def test_enable_mock_on_published_version(client: TestClient) -> None:
 
 def test_enable_mock_on_draft_version(client: TestClient) -> None:
     row = _version_row(published=False, mock_enabled=True)
-    with patch("app.versions_routes.db.get_version_by_id", return_value=_version_row(published=False)), patch(
+    with patch("app.versions_routes.db.get_version_core", return_value=_version_row(published=False)), patch(
         "app.versions_routes.db.set_version_mock_enabled",
         return_value=row,
     ) as toggle_mock, patch("app.versions_routes.enforce_permission"):
@@ -99,7 +99,7 @@ def test_enable_mock_on_draft_version(client: TestClient) -> None:
 
 def test_disable_mock_persists(client: TestClient) -> None:
     row = _version_row(published=True, mock_enabled=False)
-    with patch("app.versions_routes.db.get_version_by_id", return_value=_version_row(mock_enabled=True)), patch(
+    with patch("app.versions_routes.db.get_version_core", return_value=_version_row(mock_enabled=True)), patch(
         "app.versions_routes.db.set_version_mock_enabled",
         return_value=row,
     ), patch("app.versions_routes.enforce_permission"):
@@ -114,7 +114,7 @@ def test_disable_mock_persists(client: TestClient) -> None:
 
 def test_list_versions_includes_mock_base_url(client: TestClient) -> None:
     row = _version_row(published=True, mock_enabled=True)
-    with patch("app.versions_routes.db.get_project_by_id", return_value={"id": PROJECT_ID}), patch(
+    with patch("app.versions_routes.db.get_project_core", return_value={"id": PROJECT_ID}), patch(
         "app.versions_routes.db.get_versions_for_project",
         return_value=[row],
     ):

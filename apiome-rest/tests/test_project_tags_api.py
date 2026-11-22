@@ -42,6 +42,7 @@ def test_list_project_tags():
     ]
     with patch("app.project_tags_routes.db") as m:
         m.get_project_by_id.return_value = {"id": _PROJECT_ID}
+        m.get_project_core.return_value = {"id": _PROJECT_ID}
         m.get_tags_for_project.return_value = rows
         r = client.get(f"/v1/project-tags/acme/{_PROJECT_ID}")
     assert r.status_code == 200
@@ -64,6 +65,7 @@ def test_create_project_tag():
         "app.project_tags_routes.enforce_permission"
     ):
         m.get_project_by_id.return_value = {"id": _PROJECT_ID}
+        m.get_project_core.return_value = {"id": _PROJECT_ID}
         m.create_tag.return_value = created
         r = client.post(
             f"/v1/project-tags/acme/{_PROJECT_ID}",
@@ -86,7 +88,9 @@ def test_assign_tag_to_class():
         m.get_class_by_id.return_value = {"id": _CLASS_ID, "version_id": _VERSION_ID}
         m.get_tag_by_id.return_value = {"id": _TAG_ID, "project_id": _PROJECT_ID}
         m.get_project_by_id.return_value = {"id": _PROJECT_ID}
+        m.get_project_core.return_value = {"id": _PROJECT_ID}
         m.get_version_by_id.return_value = {"id": _VERSION_ID, "project_id": _PROJECT_ID}
+        m.get_version_core.return_value = {"id": _VERSION_ID, "project_id": _PROJECT_ID}
         m.assign_tag_to_class.return_value = assigned
         r = client.post(
             f"/v1/project-tags/acme/classes/{_CLASS_ID}",

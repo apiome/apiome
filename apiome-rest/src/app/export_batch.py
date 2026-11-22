@@ -125,7 +125,7 @@ def artifact_folder_name(tenant_id: str, artifact_id: str) -> str:
     try:
         from .database import db
 
-        project = db.get_project_by_id(artifact_id, tenant_id) or {}
+        project = db.get_project_core(artifact_id, tenant_id) or {}
     except Exception:  # noqa: BLE001 - a name lookup never fails an item
         logger.debug("batch export could not name artifact %s", artifact_id, exc_info=True)
         project = {}

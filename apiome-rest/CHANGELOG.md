@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.815.0] - 2026-11-22
+
+### Performance
+- **Lean version and project lookups for guards and re-reads (DBP-1.5, #7188).** OpenAPI 1.639.0 (version only; no
+  schema change). No endpoint's request, response or permissions change; the project detail response is pinned by a
+  contract test.
+  - **Core lookups:** new `Database.get_version_core(id, tenant)` and `Database.get_project_core(id, tenant, *,
+    include_deleted=False)` read one row by primary key, joined to the tenant only. The version lookup skips the
+    fork-source, upstream and creator joins and the security-axis LATERAL over `lint_axis_evaluations.axes`, and does not
+    select `metadata`, `mock_settings` or `change_log`. The project lookup skips the creator join and the `COUNT(*)` /
+    `AVG(quality_score)` over every live version of the project. A value that is not a UUID is "not found", not a 500.
+  - **Guards moved:** 120 existence and tenancy checks (44 version, 76 project) now use the core lookups, including the
+    shared resolvers (`resolve_project` / `resolve_version` in comments, consumer contracts, deploy gates and SDK
+    publishing) and the `_assert_version_in_tenant`, `_require_project` and `_require_revision` helpers. The detail
+    endpoints and every caller that returns or hands on the row keep `get_version_by_id` / `get_project_by_id`; the
+    versions rollup is still computed there, and only there.
+  - **Measured** on the DBP-1.1 scale database (median of 20 `EXPLAIN ANALYZE` runs, planning included): the version
+    lookup 0.243 ms → 0.055 ms (12 → 7 buffers), the project lookup 0.064 ms → 0.017 ms (10 → 3 buffers, one index
+    scan on `projects_pkey`). The project aggregate grows with the project's version count; the core lookup does not.
+  - **Tenant guard folded into the write:** `update_class`, `delete_class`, `update_path`, `delete_path`,
+    `update_operation`, `delete_operation` and `delete_class_property` are one `UPDATE … FROM` / `DELETE … USING`
+    statement joined to `versions` and `projects` (was a guard read plus the write). `update_project` checks the tenant
+    and the `expected_updated_at` precondition inside its `UPDATE`, and reads the project only when no row matched, to
+    tell "not found" from a conflict (409).
+  - **`RETURNING` instead of a re-read:** `create_mcp_category` / `update_mcp_category`, `create_mcp_endpoint_note` /
+    `update_mcp_endpoint_note` and `update_mcp_collection` return their row from the write itself;
+    `create_mcp_collection` knows its member count without a re-read; `revoke_mcp_api_key` writes first and reads only
+    when the key was missing or already revoked.
+  - **Fix:** `create_mcp_collection` failed on PostgreSQL (`missing FROM-clause entry for table "c"`): its `INSERT`
+    returned `c.*` columns without the alias. The insert is now `INSERT INTO apiome.mcp_collections AS c`.
+  - **Guard lint and budgets:** `tests/test_core_lookups.py` reads every module under `src/app` and fails on a full
+    lookup whose result is only tested for truthiness or read for core columns, and on a full-row caller missing from
+    its `FULL_ROW_CALLERS` list. `tests/query_budgets.json` records 1 statement for update and delete of a class, path
+    and operation (`Database.*` labels). `apiome-db plan-check` adds `rest.project_core` and `rest.version_core`.
+
 ## [1.814.0] - 2026-11-22
 
 ### Performance

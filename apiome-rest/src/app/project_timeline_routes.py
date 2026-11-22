@@ -96,7 +96,7 @@ def get_project_timeline(
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 

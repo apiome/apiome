@@ -131,7 +131,7 @@ def resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     if not ref:
         raise ConsumerValidationError(CODE_PROJECT_NOT_FOUND, "a project reference is required")
     row = (
-        db.get_project_by_id(ref, tenant_id)
+        db.get_project_core(ref, tenant_id)
         if is_uuid_string(ref)
         else db.get_project_by_slug(ref, tenant_id)
     )
@@ -170,9 +170,9 @@ def resolve_version(tenant_id: str, project_id: str, version_ref: Optional[str])
                 CODE_VERSION_NOT_FOUND,
                 "this project has no versions to resolve a contract against",
             )
-        row = db.get_version_by_id(str(latest_id), tenant_id)
+        row = db.get_version_core(str(latest_id), tenant_id)
     elif is_uuid_string(requested):
-        row = db.get_version_by_id(requested, tenant_id)
+        row = db.get_version_core(requested, tenant_id)
         if row is not None and str(row.get("project_id")) != str(project_id):
             row = None
     else:

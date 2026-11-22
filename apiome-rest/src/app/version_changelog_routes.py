@@ -68,7 +68,7 @@ def _require_project(project_id: str, tenant_id: str) -> Dict[str, Any]:
     ref = (project_id or "").strip()
     if not is_uuid_string(ref):
         raise HTTPException(status_code=400, detail=f"Invalid project id: {project_id}")
-    project = db.get_project_by_id(ref, tenant_id)
+    project = db.get_project_core(ref, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return project
@@ -138,7 +138,7 @@ def get_version_changelog(
     tenant_id = auth_data["tenant_id"]
     if not is_uuid_string((version_record_id or "").strip()):
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if str(version.get("project_id")) != str(project_id):
@@ -162,7 +162,7 @@ def get_version_changelog(
     baseline_id = str(row["baseline_revision_id"]) if row.get("baseline_revision_id") else None
     baseline_label: Optional[str] = None
     if baseline_id:
-        baseline_row = db.get_version_by_id(baseline_id, tenant_id)
+        baseline_row = db.get_version_core(baseline_id, tenant_id)
         if baseline_row:
             baseline_label = baseline_row.get("version_id")
 

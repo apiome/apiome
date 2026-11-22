@@ -384,6 +384,7 @@ def test_stored_snapshot_and_evidence_response_never_carry_raw_source():
 def test_project_history_404_when_project_unknown():
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = None
+        mock_db.get_project_core.return_value = None
         response = client.get("/v1/projects/test-tenant/proj-x/conversions")
     assert response.status_code == 404
 
@@ -391,6 +392,7 @@ def test_project_history_404_when_project_unknown():
 def test_project_history_links_rows_to_target_revisions():
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = {"id": "proj-9", "name": "Ping API (OpenAPI)"}
+        mock_db.get_project_core.return_value = {"id": "proj-9", "name": "Ping API (OpenAPI)"}
         mock_db.get_conversions_for_project.return_value = [
             _row(id="prov-2", target_version_id="ver-10", target_version_label="1.0.1",
                  reconverted=True),
@@ -414,6 +416,7 @@ def test_project_history_links_rows_to_target_revisions():
 def test_project_evidence_403_without_imports_view():
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = {"id": "proj-9"}
+        mock_db.get_project_core.return_value = {"id": "proj-9"}
         mock_db.user_has_permission.return_value = False
         response = client.get("/v1/projects/test-tenant/proj-9/conversions/prov-1/evidence")
     assert response.status_code == 403
@@ -422,6 +425,7 @@ def test_project_evidence_403_without_imports_view():
 def test_project_evidence_404_when_row_targets_another_project():
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = {"id": "proj-9"}
+        mock_db.get_project_core.return_value = {"id": "proj-9"}
         mock_db.get_conversion_provenance_by_id.return_value = _row(target_project_id="proj-other")
         response = client.get("/v1/projects/test-tenant/proj-9/conversions/prov-1/evidence")
     assert response.status_code == 404
@@ -431,6 +435,7 @@ def test_project_evidence_readable_after_source_item_deleted():
     """The converted artifact keeps its approved evidence even when the source item is gone."""
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = {"id": "proj-9"}
+        mock_db.get_project_core.return_value = {"id": "proj-9"}
         mock_db.get_conversion_provenance_by_id.return_value = _row(
             source_project_id=None, source_project_name=None
         )
@@ -446,6 +451,7 @@ def test_project_evidence_readable_after_source_item_deleted():
 def test_project_evidence_degrades_like_the_catalog_side():
     with patch("app.projects_routes.db") as mock_db:
         mock_db.get_project_by_id.return_value = {"id": "proj-9"}
+        mock_db.get_project_core.return_value = {"id": "proj-9"}
         mock_db.get_conversion_provenance_by_id.return_value = _legacy_row()
         response = client.get("/v1/projects/test-tenant/proj-9/conversions/prov-0/evidence")
     assert response.status_code == 200

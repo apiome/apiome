@@ -102,6 +102,7 @@ def audits(monkeypatch) -> List[Dict[str, Any]]:
 def projects(monkeypatch):
     known = {_PROJECT: {"id": _PROJECT, "tenant_id": _TENANT, "deleted_at": None}}
     monkeypatch.setattr(db, "get_project_by_id", lambda pid, tid: known.get(pid) if tid == _TENANT else None)
+    monkeypatch.setattr(db, "get_project_core", lambda pid, tid: known.get(pid) if tid == _TENANT else None)
     return known
 
 

@@ -137,6 +137,9 @@ def get(
         mock_db.get_version_by_id.return_value = (
             {"id": VERSION, "version_id": "2.1"} if version is None else version
         )
+        mock_db.get_version_core.return_value = (
+            {"id": VERSION, "version_id": "2.1"} if version is None else version
+        )
         search.return_value = MOCKUP_BAND if result is None else result
         return client.get(url), search
 

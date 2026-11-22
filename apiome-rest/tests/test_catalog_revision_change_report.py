@@ -62,6 +62,7 @@ def stored(monkeypatch) -> Dict[str, List[Dict[str, Any]]]:
 
     monkeypatch.setattr(db, "execute_query", _query)
     monkeypatch.setattr(db, "get_project_by_id", lambda pid, tid: {"id": pid, "name": "orders"})
+    monkeypatch.setattr(db, "get_project_core", lambda pid, tid: {"id": pid, "name": "orders"})
     monkeypatch.setattr(db, "insert_change_report_if_absent", _insert)
     monkeypatch.setattr(db, "insert_workflow_audit", _audit)
     monkeypatch.setattr(

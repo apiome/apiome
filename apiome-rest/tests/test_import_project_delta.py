@@ -218,6 +218,7 @@ class _FakeDb:
         assert tenant_id == TENANT_ID
         self.id_lookups.append(project_id)
         return self.project if self.project and self.project["id"] == project_id else None
+    get_project_core = get_project_by_id
 
     def get_latest_revision_id_for_project(self, project_id: str, tenant_id: str):
         return self.latest
@@ -230,6 +231,7 @@ class _FakeDb:
         if version_id != REVISION_ID:
             return None
         return {"id": REVISION_ID, "project_id": PROJECT_ID, "version_id": "2.4.0"}
+    get_version_core = get_version_by_id
 
 
 def _project(**overrides: Any) -> Dict[str, Any]:

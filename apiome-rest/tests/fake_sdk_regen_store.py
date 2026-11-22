@@ -267,6 +267,7 @@ class FakeRegenStore:
 
     def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         return copy.deepcopy(self.versions.get(version_id))
+    get_version_core = get_version_by_id
 
     def list_active_push_webhook_subscription_ids(self, tenant_id: str) -> List[str]:
         return list(self.webhook_subscription_ids)

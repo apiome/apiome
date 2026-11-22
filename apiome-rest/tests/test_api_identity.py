@@ -30,6 +30,7 @@ def test_get_related_artifacts():
     try:
         with patch("app.identity_routes.db") as mock_db:
             mock_db.get_project_by_id.return_value = {"id": "p1"}
+            mock_db.get_project_core.return_value = {"id": "p1"}
             mock_db.get_related_artifact_rows.return_value = [
                 {
                     "project_id": "p2",
@@ -74,6 +75,7 @@ def test_unlink_artifacts():
     try:
         with patch("app.identity_routes.db") as mock_db:
             mock_db.get_project_by_id.return_value = {"id": "p1"}
+            mock_db.get_project_core.return_value = {"id": "p1"}
             mock_db.get_identity_group_id_for_project.return_value = None
             mock_db.get_related_artifact_rows.return_value = []
             response = client.request(
@@ -264,6 +266,7 @@ def _tenant_scoped_db(projects_by_tenant):
         return {"id": project_id, "tenant_id": tenant_id} if owned else None
 
     instance.get_project_by_id = get_project_by_id  # type: ignore[method-assign]
+    instance.get_project_core = get_project_by_id  # type: ignore[method-assign]
     instance.get_identity_group_id_for_project = lambda *_a, **_k: None  # type: ignore[method-assign]
     instance._create_identity_group = (  # type: ignore[method-assign]
         lambda *args, **kwargs: writes.append(("create_group", args or kwargs)) or "group-new"

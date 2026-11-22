@@ -123,6 +123,7 @@ def store(monkeypatch) -> FakeToolsetStore:
     monkeypatch.setattr(agent_server_json.settings, "agent_mcp_protected_resource_metadata_url", "")
     monkeypatch.setattr(db, "get_tenant_slug_by_id", lambda _tenant_id: "acme")
     monkeypatch.setattr(db, "get_project_by_id", lambda *_args, **_kw: {"name": "Pet Store"})
+    monkeypatch.setattr(db, "get_project_core", lambda *_args, **_kw: {"name": "Pet Store"})
     monkeypatch.setattr(db, "write_access_audit", lambda **_fields: None)
     return FakeToolsetStore().install(monkeypatch, db)
 
@@ -230,10 +231,14 @@ def test_misconfigured_runtime_url_is_503(store, monkeypatch, url):
 
 def test_title_falls_back_without_a_project_name(store, monkeypatch):
     monkeypatch.setattr(db, "get_project_by_id", lambda *_args, **_kw: None)
+    monkeypatch.setattr(db, "get_project_core", lambda *_args, **_kw: None)
     document = _export(_create(store)["id"])
     assert document["title"] == "API 1.0.0 agent toolset"
     monkeypatch.setattr(
         db, "get_project_by_id", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("db down"))
+    )
+    monkeypatch.setattr(
+        db, "get_project_core", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("db down"))
     )
     assert _export(_create(store, label="2.0.0")["id"])["title"] == "API 2.0.0 agent toolset"
 

@@ -110,6 +110,7 @@ class TestSelectionIsMandatory:
     def test_no_selector_is_a_400_naming_both_options(self):
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(CLASSES_URL)
 
         assert response.status_code == 400
@@ -119,6 +120,7 @@ class TestSelectionIsMandatory:
     def test_an_empty_domain_value_is_no_selector_not_an_empty_folder(self):
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(CLASSES_URL, params={"domain_id": "  "})
 
         assert response.status_code == 400
@@ -126,6 +128,7 @@ class TestSelectionIsMandatory:
     def test_both_selectors_is_a_400_rather_than_a_guess(self):
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(
                 CLASSES_URL, params={"class_ids": CLASS_A, "domain_id": DOMAIN}
             )
@@ -138,6 +141,7 @@ class TestSelectionIsMandatory:
         # I get everything?".
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(PATHS_URL)
 
         assert response.status_code == 400
@@ -149,6 +153,7 @@ class TestSelectionIsMandatory:
     def test_the_classes_endpoint_points_at_the_legacy_full_version_read(self):
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(CLASSES_URL)
 
         assert "with-properties-tags" in response.json()["detail"]
@@ -160,6 +165,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page(
                 [
                     class_item(CLASS_A, "Address"),
@@ -186,6 +192,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")])
             client.get(CLASSES_URL, params={"class_ids": f"{CLASS_A},{CLASS_B}"})
 
@@ -199,6 +206,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(CLASSES_URL, params={"class_ids": ids})
 
         assert response.status_code == 400
@@ -211,6 +219,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([])
             response = client.get(CLASSES_URL, params={"class_ids": ids})
 
@@ -221,6 +230,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")])
             client.get(CLASSES_URL, params={"class_ids": [CLASS_A] * 5})
 
@@ -231,6 +241,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")])
             body = client.get(CLASSES_URL, params={"class_ids": CLASS_A}).json()
 
@@ -241,6 +252,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")], missing_ids=[CLASS_B])
             body = client.get(CLASSES_URL, params={"class_ids": [CLASS_A, CLASS_B]}).json()
 
@@ -254,6 +266,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([], missing_ids=["nope"])
             response = client.get(CLASSES_URL, params={"class_ids": "nope"})
 
@@ -282,6 +295,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([native])
             response = client.get(CLASSES_URL, params={"class_ids": CLASS_A})
 
@@ -296,6 +310,7 @@ class TestIdSelection:
             "app.scoped_catalog_routes.store.load_paths_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([path_item(PATH_A, "/customers")])
             body = client.get(PATHS_URL, params={"path_ids": PATH_A}).json()
 
@@ -311,6 +326,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page(
                 [class_item(CLASS_A, "Address")], total=40, next_offset=1
@@ -330,6 +346,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page([], total=40)
             client.get(
@@ -346,6 +363,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")], total=1)
             body = client.get(CLASSES_URL, params={"domain_id": DOMAIN}).json()
@@ -359,6 +377,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             response = client.get(
                 CLASSES_URL, params={"domain_id": DOMAIN, "cursor": "not-a-cursor"}
@@ -375,6 +394,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page([], total=1000)
             body = client.get(CLASSES_URL, params={"domain_id": DOMAIN, "limit": 5000}).json()
@@ -389,6 +409,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page([], total=0)
             client.get(CLASSES_URL, params={"domain_id": DOMAIN})
@@ -398,6 +419,7 @@ class TestDomainListing:
     def test_a_zero_limit_is_rejected_by_the_schema(self):
         with patch("app.scoped_catalog_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.get(CLASSES_URL, params={"domain_id": DOMAIN, "limit": 0})
 
         assert response.status_code == 422
@@ -409,6 +431,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([class_item(CLASS_A, "Address")], total=8)
             body = client.get(CLASSES_URL, params={"domain_id": "shared"}).json()
 
@@ -426,6 +449,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = None
             response = client.get(CLASSES_URL, params={"domain_id": DOMAIN})
 
@@ -439,6 +463,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": OTHER_VERSION}
             response = client.get(CLASSES_URL, params={"domain_id": DOMAIN})
 
@@ -452,6 +477,7 @@ class TestDomainListing:
             "app.scoped_catalog_routes.store.load_paths_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page(
                 [path_item(PATH_A, "/customers"), path_item(PATH_B, "/customers/{id}")],
@@ -470,6 +496,7 @@ class TestTenancy:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             response = client.get(CLASSES_URL, params={"class_ids": CLASS_A})
 
         assert response.status_code == 404
@@ -480,10 +507,11 @@ class TestTenancy:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([])
             client.get(CLASSES_URL, params={"class_ids": CLASS_A})
 
-        mock_db.get_version_by_id.assert_called_once_with(VERSION, TENANT)
+        mock_db.get_version_core.assert_called_once_with(VERSION, TENANT)
 
     def test_every_read_is_scoped_to_that_version(self):
         # The ids alone would appear to identify the rows; the version predicate is what stops one
@@ -492,6 +520,7 @@ class TestTenancy:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page([])
             client.get(CLASSES_URL, params={"class_ids": CLASS_A})
 
@@ -502,6 +531,7 @@ class TestTenancy:
             "app.scoped_catalog_routes.store.load_paths_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             response = client.get(PATHS_URL, params={"path_ids": PATH_A})
 
         assert response.status_code == 404
@@ -530,6 +560,7 @@ class TestAcceptance:
             "app.scoped_catalog_routes.store.load_classes_by_ids"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             load.return_value = page(
                 [
                     class_item(CLASS_A, "Address"),
@@ -552,6 +583,7 @@ class TestAcceptance:
             "app.scoped_catalog_routes.store.load_classes_by_domain"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
             load.return_value = page(
                 [class_item(CLASS_A, "Address")], total=94, next_offset=1

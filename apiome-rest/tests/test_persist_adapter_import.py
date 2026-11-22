@@ -289,6 +289,7 @@ def test_reuses_an_existing_project_when_targeted(monkeypatch) -> None:
     fake = _FakeDb()
     # get_project_by_id is only consulted for the existing-project branch.
     fake.get_project_by_id = lambda pid, tid: {"id": pid, "slug": "orders"}  # type: ignore[attr-defined]
+    fake.get_project_core = lambda pid, tid: {"id": pid, "slug": "orders"}
     monkeypatch.setattr("app.database.db", fake)
     payload = _payload()
     payload["metadata"]["existing_project_id"] = "proj-existing"

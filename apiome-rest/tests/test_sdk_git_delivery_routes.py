@@ -50,7 +50,7 @@ def _auth():
 
 def _project_lookup():
     """Answer the shared project resolver for ``_PROJECT``."""
-    return patch("app.sdk_git_delivery_routes.db.get_project_by_id", return_value=dict(_PROJECT_ROW))
+    return patch("app.sdk_git_delivery_routes.db.get_project_core", return_value=dict(_PROJECT_ROW))
 
 
 def _target_out(**fields: Any) -> GitDeliveryTargetOut:
@@ -122,7 +122,7 @@ def test_listing_targets_requires_projects_view():
 
 def test_listing_targets_for_an_unknown_project_is_404():
     with patch("app.sdk_git_delivery_routes.enforce_permission"), patch(
-        "app.sdk_git_delivery_routes.db.get_project_by_id", return_value=None
+        "app.sdk_git_delivery_routes.db.get_project_core", return_value=None
     ), patch("app.sdk_git_delivery_routes.db.get_project_by_slug", return_value=None):
         response = client.get(_TARGETS)
     assert response.status_code == 404
@@ -225,7 +225,7 @@ def _deliverable():
         patch("app.sdk_git_delivery_routes.resolve_target", return_value=_TARGET),
         patch("app.sdk_publish_routes.load_export_source", return_value=_Source()),
         patch(
-            "app.sdk_publish_routes.db.get_version_by_id",
+            "app.sdk_publish_routes.db.get_version_core",
             return_value={"id": _REVISION, "published": True},
         ),
     )
@@ -301,7 +301,7 @@ def test_an_unsupported_ecosystem_is_400():
 def test_an_unpublished_revision_cannot_be_delivered():
     target, source, _ = _deliverable()
     with patch("app.sdk_git_delivery_routes.enforce_permission"), _project_lookup(), target, source, patch(
-        "app.sdk_publish_routes.db.get_version_by_id", return_value={"id": _REVISION, "published": False}
+        "app.sdk_publish_routes.db.get_version_core", return_value={"id": _REVISION, "published": False}
     ), patch("app.sdk_git_delivery_routes.deliver") as deliver:
         response = client.post(_DELIVER, json={"ecosystem": "npm"})
     assert response.status_code == 400

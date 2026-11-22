@@ -293,6 +293,7 @@ def test_set_project_default_ok_by_creator():
         "app.change_report_template_routes.template_accessible_to_tenant", return_value=True
     ):
         mdb.get_project_by_id.return_value = {**_PROJECT_ROW, "creator_id": "admin-user"}
+        mdb.get_project_core.return_value = {**_PROJECT_ROW, "creator_id": "admin-user"}
         mdb.is_user_tenant_admin.return_value = False
         mdb.get_change_report_template_version_by_id.return_value = _TEMPLATE_FULL_ROW
         mdb.update_project.return_value = _PROJECT_ROW
@@ -309,6 +310,7 @@ def test_set_project_default_ok_by_tenant_admin():
     ):
         # Creator is someone else, but the caller is a tenant admin
         mdb.get_project_by_id.return_value = {**_PROJECT_ROW, "creator_id": "other-user"}
+        mdb.get_project_core.return_value = {**_PROJECT_ROW, "creator_id": "other-user"}
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_change_report_template_version_by_id.return_value = _TEMPLATE_FULL_ROW
         mdb.update_project.return_value = _PROJECT_ROW
@@ -323,6 +325,7 @@ def test_set_project_default_forbidden_non_creator_non_admin():
     with patch("app.change_report_template_routes.db") as mdb:
         app.dependency_overrides[validate_authentication] = lambda: _JWT_NON_ADMIN
         mdb.get_project_by_id.return_value = {**_PROJECT_ROW, "creator_id": "other-user"}
+        mdb.get_project_core.return_value = {**_PROJECT_ROW, "creator_id": "other-user"}
         mdb.is_user_tenant_admin.return_value = False
         r = client.put(
             "/v1/tenants/tn/projects/p1/change-report-template-default",
@@ -334,6 +337,7 @@ def test_set_project_default_forbidden_non_creator_non_admin():
 def test_set_project_default_project_not_found_404():
     with patch("app.change_report_template_routes.db") as mdb:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         r = client.put(
             "/v1/tenants/tn/projects/nonexistent/change-report-template-default",
             json={"templateVersionId": None},
@@ -345,6 +349,7 @@ def test_set_project_default_clear_null():
     """Passing null clears the project override (no template lookup)."""
     with patch("app.change_report_template_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {**_PROJECT_ROW, "creator_id": "admin-user"}
+        mdb.get_project_core.return_value = {**_PROJECT_ROW, "creator_id": "admin-user"}
         mdb.is_user_tenant_admin.return_value = False
         mdb.update_project.return_value = _PROJECT_ROW
         r = client.put(

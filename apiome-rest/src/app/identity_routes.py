@@ -41,7 +41,7 @@ def get_related_artifacts(
 ) -> List[RelatedArtifactRef]:
     """List artifacts linked to ``project_id`` in the same identity group."""
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return _related_for_project(tenant_id, project_id)
@@ -165,7 +165,7 @@ def unlink_artifacts(
     """Remove ``relatedProjectId`` from the shared identity group."""
     tenant_id = auth_data["tenant_id"]
     for pid in (body.project_id, body.related_project_id):
-        if not db.get_project_by_id(pid, tenant_id):
+        if not db.get_project_core(pid, tenant_id):
             raise HTTPException(status_code=404, detail=f"Project not found: {pid}")
 
     db.unlink_identity_projects(

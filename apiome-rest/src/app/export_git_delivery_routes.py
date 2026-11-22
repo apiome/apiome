@@ -190,7 +190,7 @@ def _subject(tenant_slug: str, tenant_id: str, job_id: str, result: ExportJobRes
     """What is being delivered, for the manifest, the branch and the pull request."""
     project: Optional[Dict[str, Any]] = None
     try:
-        project = db.get_project_by_id(result.artifact, tenant_id)
+        project = db.get_project_core(result.artifact, tenant_id)
     except Exception:  # noqa: BLE001 - a catalog item, or an unreadable row: name it by id
         project = None
     targets = tuple(t.target for t in (result.targets or []))

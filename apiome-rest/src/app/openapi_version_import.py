@@ -162,7 +162,7 @@ def import_openapi_as_version(
     from .import_source import get_import_source
     from .import_source_pipeline import run_adapter_import_job
 
-    project = db.get_project_by_id(project_id, tenant_id) or {}
+    project = db.get_project_core(project_id, tenant_id) or {}
     spec = stored_upload_spec(dict(format_metadata) if isinstance(format_metadata, Mapping) else None)
     options: Dict[str, Any] = dict(spec["options"]) if spec and spec.get("sourceKind") == "openapi" else {}
     slug = project.get("slug") or fallback_slug or "spec"

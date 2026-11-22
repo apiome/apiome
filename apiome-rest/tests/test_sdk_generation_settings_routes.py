@@ -76,7 +76,7 @@ def _settings(
 def _project_lookup():
     """Patch the project resolver's two accessors to answer for ``_PROJECT``."""
     return patch(
-        "app.sdk_generation_settings_routes.db.get_project_by_id",
+        "app.sdk_generation_settings_routes.db.get_project_core",
         return_value=dict(_PROJECT_ROW),
     )
 
@@ -110,7 +110,7 @@ def test_a_project_read_resolves_the_slug_into_the_pattern_context() -> None:
 
 def test_an_unknown_project_is_404() -> None:
     with patch("app.sdk_generation_settings_routes.enforce_permission"), patch(
-        "app.sdk_generation_settings_routes.db.get_project_by_id", return_value=None
+        "app.sdk_generation_settings_routes.db.get_project_core", return_value=None
     ), patch(
         "app.sdk_generation_settings_routes.db.get_project_by_slug", return_value=None
     ):

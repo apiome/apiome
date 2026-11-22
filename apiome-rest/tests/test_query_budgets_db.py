@@ -150,6 +150,89 @@ def test_document_render_cold_and_warm_stay_within_budget(ctx) -> None:
     assert warm < cold
 
 
+def test_project_detail_response_is_unchanged(ctx) -> None:
+    """The detail endpoint keeps the full row (DBP-1.5, #7188): guards moved to the core lookup,
+    this response did not — versions rollup, creator and metadata included."""
+    response = ctx["client"].get(f"/v1/projects/{ctx['tenant_slug']}/{ctx['project']}", headers=ctx["headers"])
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert set(body) == PROJECT_DETAIL_KEYS
+    assert body["id"] == ctx["project"]
+    assert body["versionsCount"] == 1
+    assert isinstance(body["metadata"], dict)
+    assert body["creator_name"] is not None or body["creator_email"] is not None
+
+
+#: The ``GET /v1/projects/{tenant}/{project}`` response keys, captured from ``main`` before
+#: DBP-1.5 (#7188) moved the guards to the core lookups.
+PROJECT_DETAIL_KEYS = frozenset(
+    {
+        "changeReportTemplateVersionId",
+        "created_at",
+        "creator_email",
+        "creator_id",
+        "creator_name",
+        "deleted_at",
+        "description",
+        "enabled",
+        "id",
+        "identityGroupId",
+        "metadata",
+        "name",
+        "owner",
+        "publishable",
+        "qualityGrade",
+        "qualityScore",
+        "relatedArtifacts",
+        "slug",
+        "tenant_id",
+        "updated_at",
+        "versionsCount",
+    }
+)
+
+
+# ─────────────────── guarded writes: the tenant guard is part of the write ───────────────────
+
+
+def _guarded_call(label: str, call: Callable[[], Any]) -> Any:
+    """Run a ``Database`` method under the recorded budget for ``label``; return its result."""
+    budget = _load_budgets()[label]
+    if os.environ.get("UPDATE_QUERY_BUDGETS") == "1":
+        with capture() as stats:
+            result = call()
+        _MEASURED[label] = stats.count
+        return result
+    with assert_max_queries(budget, label):
+        return call()
+
+
+def test_class_path_and_operation_writes_stay_within_budget(ctx) -> None:
+    """Update and delete of a class, path and operation are one statement each (#7188)."""
+    db = database_module.db
+    tenant = ctx["tenant"]
+    class_id = str(db.create_class(ctx["version"], "Pet", {"type": "object"})["id"])
+    path_id = str(db.create_path(ctx["version"], "/pets")["id"])
+    operation_id = str(db.create_operation(path_id, "get")["id"])
+    assert _guarded_call("Database.update_class", lambda: db.update_class(class_id, tenant, {"name": "Dog"}))
+    assert _guarded_call("Database.update_path", lambda: db.update_path(path_id, tenant, {"pathname": "/dogs"}))
+    assert _guarded_call(
+        "Database.update_operation", lambda: db.update_operation(operation_id, tenant, {"operation": "put"})
+    )
+    assert _guarded_call("Database.delete_operation", lambda: db.delete_operation(operation_id, tenant))
+    assert _guarded_call("Database.delete_path", lambda: db.delete_path(path_id, tenant))
+    assert _guarded_call("Database.delete_class", lambda: db.delete_class(class_id, tenant))
+    for label in (
+        "Database.update_class",
+        "Database.delete_class",
+        "Database.update_path",
+        "Database.delete_path",
+        "Database.update_operation",
+        "Database.delete_operation",
+    ):
+        assert _load_budgets()[label] == 1, label
+
+
 # ───────────────────────────── the guard itself ─────────────────────────────
 
 

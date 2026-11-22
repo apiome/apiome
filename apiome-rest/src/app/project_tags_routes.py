@@ -29,7 +29,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 
 
 def _assert_project_in_tenant(project_id: str, tenant_id: str) -> Dict[str, Any]:
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
@@ -166,7 +166,7 @@ def assign_tag_to_class(
     tag = _assert_tag_in_tenant(body.tag_id, tenant_id)
 
     class_row = db.get_class_by_id(class_id, tenant_id)
-    version = db.get_version_by_id(str(class_row["version_id"]), tenant_id)
+    version = db.get_version_core(str(class_row["version_id"]), tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
     if str(tag["project_id"]) != str(version["project_id"]):

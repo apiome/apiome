@@ -481,7 +481,7 @@ def get_project_conversion_history(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -546,7 +546,7 @@ def get_project_conversion_evidence(
 
     parsed_scope = parse_evidence_scope(scope)
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -726,7 +726,7 @@ def update_project(
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     # Check if project exists
-    existing = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    existing = db.get_project_core(project_id, auth_data['tenant_id'])
     if not existing:
         raise HTTPException(
             status_code=404,
@@ -839,7 +839,7 @@ def get_project_deletion_impact(
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id, include_deleted=True)
+    project = db.get_project_core(project_id, tenant_id, include_deleted=True)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     impact = db.get_project_deletion_impact(project_id, tenant_id) or {}
@@ -890,7 +890,7 @@ def delete_project(
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.DELETE)
     # Check if project exists (a permanent delete may also purge an already soft-deleted one)
-    existing = db.get_project_by_id(project_id, auth_data['tenant_id'], include_deleted=permanent)
+    existing = db.get_project_core(project_id, auth_data['tenant_id'], include_deleted=permanent)
     if not existing:
         raise HTTPException(
             status_code=404,
@@ -938,7 +938,7 @@ def restore_project(
 ) -> ProjectSchema:
     """Restore a soft-deleted project (clears deleted_at, sets enabled)."""
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
-    row = db.get_project_by_id(
+    row = db.get_project_core(
         project_id, auth_data['tenant_id'], include_deleted=True
     )
     if not row:

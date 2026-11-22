@@ -53,7 +53,7 @@ def _require_project(project_id: str, tenant_id: str) -> Dict[str, Any]:
     ref = (project_id or "").strip()
     if not is_uuid_string(ref):
         raise HTTPException(status_code=400, detail=f"Invalid project id: {project_id}")
-    project = db.get_project_by_id(ref, tenant_id)
+    project = db.get_project_core(ref, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return project
@@ -161,7 +161,7 @@ def get_version_agent_outputs(
 
     if not is_uuid_string((version_record_id or "").strip()):
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if str(version.get("project_id")) != str(project["id"]):

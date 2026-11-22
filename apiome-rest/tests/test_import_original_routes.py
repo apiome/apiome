@@ -47,6 +47,7 @@ class _Db(FakeDocumentDatabase):
         if version_id != _VERSION or tenant_id != _TENANT:
             return None
         return {"id": _VERSION, "project_id": "p1", "creator_id": self.creator}
+    get_version_core = get_version_by_id
 
     def record_import_snapshot(self, **kwargs):
         self.snapshots.append(kwargs)

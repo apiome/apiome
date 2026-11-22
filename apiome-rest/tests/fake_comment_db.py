@@ -135,6 +135,7 @@ class FakeCommentDb(NotificationDbMixin):
         """A project of the tenant, by id."""
         row = self.projects.get(project_id)
         return dict(row) if row and row["tenant_id"] == tenant_id else None
+    get_project_core = get_project_by_id
 
     def get_project_by_slug(self, slug: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """A project of the tenant, by slug."""
@@ -152,6 +153,7 @@ class FakeCommentDb(NotificationDbMixin):
         """A version of the tenant, by revision id."""
         row = self.versions.get(version_id)
         return dict(row) if row and self._version_in_tenant(row, tenant_id) else None
+    get_version_core = get_version_by_id
 
     def get_version_by_version_id(
         self, project_id: str, version_id_str: str, tenant_id: str

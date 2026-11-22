@@ -47,6 +47,24 @@
       ]
     },
     {
+      "name": "rest.project_core",
+      "source": "apiome-rest/src/app/database.py Database.get_project_core (project existence / tenancy guards, DBP-1.5 #7188)",
+      "sql": "SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug, p.enabled, p.change_report_template_version_id, p.publishable, p.created_at, p.updated_at, p.deleted_at FROM apiome.projects p WHERE p.id = $1 AND p.tenant_id = $2 AND p.deleted_at IS NULL",
+      "params": [
+        "scale:project:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.version_core",
+      "source": "apiome-rest/src/app/database.py Database.get_version_core (revision existence / tenancy guards, DBP-1.5 #7188)",
+      "sql": "SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description, v.visibility, v.published, v.published_at, v.published_immutable, v.mock_enabled, v.enabled, v.parent_version_id, v.merge_parent_version_id, v.forked_from_revision_id, v.upstream_project_id, v.revision_locked, v.commit_author, v.commit_message, v.external_ref, v.source_commit_sha, v.source_committed_at, v.quality_score, v.quality_grade, v.unpublish_reason, v.unpublished_at, v.unpublished_by, v.created_at, v.updated_at, p.tenant_id, p.name AS project_name, p.slug AS project_slug FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE v.id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL",
+      "params": [
+        "scale:version:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
       "name": "rest.versions_for_project",
       "source": "apiome-rest/src/app/database.py Database.get_versions_for_project (GET /v1/versions/{tenant}/{project})",
       "sql": "SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description, v.change_log, v.visibility, v.published, v.published_at, v.published_immutable, v.mock_enabled, v.mock_settings, v.enabled, v.parent_version_id, v.merge_parent_version_id, v.forked_from_revision_id, v.upstream_project_id, v.revision_locked, v.metadata, v.commit_author, v.commit_message, v.external_ref, v.source_commit_sha, v.source_committed_at, v.quality_score, v.quality_grade, sec.security_score, sec.security_grade, v.unpublish_reason, v.unpublished_at, v.unpublished_by, vf.version_id AS fork_source_version_string, pf.name AS fork_source_project_name, up.name AS upstream_project_name, v.created_at, v.updated_at, u.name as creator_name, u.email as creator_email, p.name as project_name, p.slug as project_slug FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id LEFT JOIN apiome.versions vf ON vf.id = v.forked_from_revision_id AND vf.deleted_at IS NULL LEFT JOIN apiome.projects pf ON pf.id = vf.project_id AND pf.deleted_at IS NULL LEFT JOIN apiome.projects up ON up.id = v.upstream_project_id AND up.deleted_at IS NULL LEFT JOIN apiome.users u ON v.creator_id = u.id LEFT JOIN LATERAL ( SELECT e.axes FROM apiome.lint_axis_evaluations e WHERE e.version_record_id = v.id AND e.algorithm_id = 'clx-axis-v1' ORDER BY e.evaluated_at DESC, e.id DESC LIMIT 1 ) ax ON TRUE LEFT JOIN LATERAL ( SELECT (sa.axis->>'score')::int AS security_score, sa.axis->>'grade' AS security_grade FROM jsonb_array_elements(ax.axes) AS sa(axis) WHERE sa.axis->>'key' = 'security' AND (sa.axis->>'assessed')::boolean AND sa.axis->>'score' IS NOT NULL LIMIT 1 ) sec ON TRUE WHERE v.project_id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ORDER BY v.created_at DESC",

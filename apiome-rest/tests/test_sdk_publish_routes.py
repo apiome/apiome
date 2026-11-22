@@ -60,7 +60,7 @@ def _auth():
 def _project_lookup():
     """Patch the project resolver's two accessors to answer for ``_PROJECT``."""
     return patch(
-        "app.sdk_publish_routes.db.get_project_by_id", return_value=dict(_PROJECT_ROW)
+        "app.sdk_publish_routes.db.get_project_core", return_value=dict(_PROJECT_ROW)
     )
 
 
@@ -118,7 +118,7 @@ def _publishable():
     return (
         patch("app.sdk_publish_routes.load_export_source", return_value=_Source()),
         patch(
-            "app.sdk_publish_routes.db.get_version_by_id",
+            "app.sdk_publish_routes.db.get_version_core",
             return_value={"id": _REVISION, "published": True},
         ),
     )
@@ -165,7 +165,7 @@ def test_a_credential_response_never_carries_a_token():
 
 def test_listing_a_project_that_does_not_exist_is_404():
     with patch("app.sdk_publish_routes.enforce_permission"), patch(
-        "app.sdk_publish_routes.db.get_project_by_id", return_value=None
+        "app.sdk_publish_routes.db.get_project_core", return_value=None
     ), patch("app.sdk_publish_routes.db.get_project_by_slug", return_value=None):
         response = client.get(_PROJECT_CREDS)
     assert response.status_code == 404
@@ -307,7 +307,7 @@ def test_publishing_for_real_is_the_deliberate_choice():
 def test_an_unpublished_revision_cannot_be_released():
     source, _ = _publishable()
     with patch("app.sdk_publish_routes.enforce_permission"), _project_lookup(), source, patch(
-        "app.sdk_publish_routes.db.get_version_by_id",
+        "app.sdk_publish_routes.db.get_version_core",
         return_value={"id": _REVISION, "published": False},
     ):
         response = client.post(_PUBLISH, json={"ecosystem": "npm"})

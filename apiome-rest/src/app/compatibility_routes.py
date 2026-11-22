@@ -588,7 +588,7 @@ async def create_compatibility_evidence(
     """
     await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_core, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -670,10 +670,10 @@ def list_compatibility_evidence(
     _ = tenant_slug
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
-    version = db.get_version_by_id(version_id, tenant_id)
+    version = db.get_version_core(version_id, tenant_id)
     if not version or version["project_id"] != project_id:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_id}")
 

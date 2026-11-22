@@ -1090,7 +1090,7 @@ def _record_worker_declared_dependencies(tenant_id: str, project_id: str, payloa
 
     try:
         document = yaml.safe_load(_decode_document_bytes(payload).decode("utf-8", errors="replace"))
-        project = db.get_project_by_id(project_id, tenant_id) or {}
+        project = db.get_project_core(project_id, tenant_id) or {}
     except Exception as exc:  # noqa: BLE001 - declarations must not fail a finished import
         logger.info("declared dependencies skipped project_id=%s: %s", project_id, f"{type(exc).__name__}"[:100])
         return

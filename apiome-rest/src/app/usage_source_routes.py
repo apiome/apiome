@@ -83,7 +83,7 @@ def _project_id(tenant_id: str, project_ref: str) -> str:
         HTTPException: 404 when the tenant has no such project.
     """
     ref = project_ref.strip()
-    row = db.get_project_by_id(ref, tenant_id) if is_uuid_string(ref) else db.get_project_by_slug(ref, tenant_id)
+    row = db.get_project_core(ref, tenant_id) if is_uuid_string(ref) else db.get_project_by_slug(ref, tenant_id)
     if not row:
         raise HTTPException(
             status_code=404, detail={"code": "project-not-found", "message": f"Project not found: {ref}"}
