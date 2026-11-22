@@ -29,6 +29,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 from .config import settings
+# The health check, the status page and the connection test are about the install's own store,
+# never a tenant's bucket (COA-5.15): bind the platform accessor under the name this module uses.
+from .document_store import get_platform_document_store as get_document_store
 from .document_store import (
     BACKEND_DB,
     BACKENDS,
@@ -40,7 +43,6 @@ from .document_store import (
     S3DocumentStore,
     _redact,
     build_document_store,
-    get_document_store,
     normalize_prefix,
     set_document_store,
 )
@@ -295,15 +297,19 @@ def store_health(*, force: bool = False, now: Callable[[], float] = time.time) -
     return _record(StoreHealth(ok=True, checked_at=now()))
 
 
-def health_detail(health: Optional[StoreHealth] = None) -> Dict[str, Any]:
+def health_detail(health: Optional[StoreHealth] = None, *, database: Any = None) -> Dict[str, Any]:
     """The ``document_store`` block ``GET /health`` embeds — no error text, no settings.
 
     Args:
         health: A result to report; a (cached) :func:`store_health` check when omitted.
+        database: When given, tenants whose own bucket is unavailable are counted (COA-5.15).
 
     Returns:
         ``{"status", "backend", "fallback"}``: ``status`` is ``ok``, ``degraded`` (running on the
-        ``db`` fallback) or ``unavailable`` (the store did not answer).
+        ``db`` fallback, or a tenant's own bucket is unavailable) or ``unavailable`` (the store
+        did not answer). With ``database``, also ``tenant_buckets_unavailable``: how many
+        tenants' own buckets are down. ``GET /health`` is unauthenticated, so which tenants and
+        why stay on the platform-admin ``GET /v1/ops/document-store`` (``tenantBuckets``).
     """
     result = health if health is not None else store_health()
     resolution = current_resolution()
@@ -313,7 +319,54 @@ def health_detail(health: Optional[StoreHealth] = None) -> Dict[str, Any]:
         status = "degraded"
     else:
         status = "ok"
-    return {"status": status, "backend": resolution.active_backend, "fallback": resolution.fallback}
+    detail: Dict[str, Any] = {"status": status, "backend": resolution.active_backend, "fallback": resolution.fallback}
+    if database is not None:
+        down = sum(1 for item in tenant_buckets(database) if item["unavailableSince"])
+        detail["tenant_buckets_unavailable"] = down
+        if down and status == "ok":
+            detail["status"] = "degraded"
+    return detail
+
+
+def tenant_buckets(database: Any) -> List[Dict[str, Any]]:
+    """Tenants that keep documents in their own bucket (COA-5.15, #7092), for the ops plane.
+
+    Args:
+        database: The database handle.
+
+    Returns:
+        ``{tenantId, tenantSlug, tenantName, mode, bucket, endpointUrl, moveState,
+        cleanupPending, unavailableSince, lastError}`` per tenant; empty when the lookup fails
+        (the table is missing on a database older than V408).
+    """
+    from .document_store_router import routing_active
+    from .tenant_document_store import list_tenant_stores
+
+    if not routing_active():
+        return []
+    try:
+        rows = list_tenant_stores(database)
+    except Exception:  # noqa: BLE001 - a status page still renders without the list
+        logger.warning("document store: tenant buckets could not be listed", exc_info=True)
+        return []
+    out = []
+    for row in rows:
+        since = row.get("unavailable_since")
+        out.append(
+            {
+                "tenantId": row["tenant_id"],
+                "tenantSlug": row["tenant_slug"],
+                "tenantName": row["tenant_name"],
+                "mode": row["mode"],
+                "bucket": row["bucket"],
+                "endpointUrl": row.get("endpoint_url") or None,
+                "moveState": row["move_state"],
+                "cleanupPending": bool(row["cleanup_pending"]),
+                "unavailableSince": since.isoformat() if hasattr(since, "isoformat") else since,
+                "lastError": row.get("last_error"),
+            }
+        )
+    return out
 
 
 def _settings_of(store: DocumentStore) -> Dict[str, Any]:
@@ -405,6 +458,10 @@ def describe_store(database: Any, *, store: Optional[DocumentStore] = None) -> D
     body.update(_settings_of(active))
     body["health"] = _health_view(store_health() if store is None else _check_now(active))
     body["usage"] = _usage_of(database)
+    from .tenant_document_store import tenant_buckets_allowed
+
+    body["tenantBucketsAllowed"] = tenant_buckets_allowed()
+    body["tenantBuckets"] = tenant_buckets(database)
     return body
 
 
@@ -432,7 +489,7 @@ def _ms(started: float) -> float:
     return round((time.perf_counter() - started) * 1000, 1)
 
 
-def probe_store(store: Optional[DocumentStore] = None) -> Dict[str, Any]:
+def probe_store(store: Optional[DocumentStore] = None, *, tenant_id: Optional[str] = None) -> Dict[str, Any]:
     """Write, read back and delete one probe object (``POST /v1/ops/document-store/test``).
 
     The probe is a few random bytes under the :data:`PROBE_TENANT` key segment, so it never
@@ -441,8 +498,11 @@ def probe_store(store: Optional[DocumentStore] = None) -> Dict[str, Any]:
     read leaves nothing behind. Blocking: call it from a worker thread.
 
     Args:
-        store: The store to test; the process-wide store when omitted (its cached health is
+        store: The store to test; the platform store when omitted (its cached health is
             then refreshed with the outcome).
+        tenant_id: The key segment the probe is written under; :data:`PROBE_TENANT` when
+            omitted. A tenant's own bucket is probed under the tenant's id (COA-5.15), so the
+            test exercises the exact key layout its bucket policy has to allow.
 
     Returns:
         ``{"ok", "backend", "checkedAt", "durationMs", "steps"}`` — ``steps`` lists ``write``,
@@ -450,19 +510,20 @@ def probe_store(store: Optional[DocumentStore] = None) -> Dict[str, Any]:
         could not run is ``{"ok": False, "skipped": True}``.
     """
     active = store if store is not None else get_document_store()
+    segment = tenant_id or PROBE_TENANT
     payload = f"apiome document store probe {secrets.token_hex(16)} {time.time():.3f}\n".encode("ascii")
     started = time.perf_counter()
     written: Dict[str, Any] = {}
 
     def write() -> None:
-        written["ref"] = active.put(PROBE_TENANT, payload, PROBE_MEDIA_TYPE)
+        written["ref"] = active.put(segment, payload, PROBE_MEDIA_TYPE)
 
     def read() -> None:
-        if active.get(PROBE_TENANT, written["ref"].sha256) != payload:
+        if active.get(segment, written["ref"].sha256) != payload:
             raise DocumentStoreError("The probe object was read back with different bytes.")
 
     def delete() -> None:
-        if not active.delete(PROBE_TENANT, written["ref"].sha256):
+        if not active.delete(segment, written["ref"].sha256):
             raise DocumentStoreError("The probe object was not found when it was deleted.")
 
     steps = [_step("write", write)]

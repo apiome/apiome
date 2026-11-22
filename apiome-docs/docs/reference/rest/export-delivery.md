@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.631.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.632.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-delivery` · 18 operations
 
@@ -523,7 +523,7 @@ Request body for store an s3-compatible bucket credential.
 
 **Delete a bucket credential**
 
-Removes the credential from the vault; past deliveries keep their record. Requires `projects:edit`. `404` when the workspace has no such credential.
+Removes the credential from the vault; past deliveries keep their record. Requires `projects:edit`. `404` when the workspace has no such credential. `409 storage-credential-in-use` when the workspace's document storage uses it.
 
 Operation id: `delete_storage_credential_v1_export__tenant_slug__storage_credentials__credential_id__delete`
 

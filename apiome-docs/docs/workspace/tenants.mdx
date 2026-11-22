@@ -53,8 +53,8 @@ the side; the header shows the slug, the member count and whether it is your cur
 
 <Screenshot id="tenants-drawer-members" alt="Manage Northwind, Members section: five members with their Admin and Member roles, and Add member" />
 
-**Security**, **License & plan**, **MCP settings**, **Per-key capabilities**, **Ownership** and
-**Policy history** read the *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
+**Security**, **Document storage**, **License & plan**, **MCP settings**, **Per-key capabilities**,
+**Ownership** and **Policy history** read the *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
 select it first. **Members** works for every tenant you administer. A section keeps its state while
 you look at another, so an unsaved MCP draft survives a glance at the history (the tab shows a dot
 while changes are unsaved).
@@ -103,6 +103,65 @@ earliest deadline. Members who sign in with GitHub, GitLab, Microsoft or Google 
 keys are not affected. Turning the requirement off and on again restarts every grace period; changing
 only the grace period does not. Every change is recorded in the
 [Access audit](../govern/access-audit.mdx) as `two_factor_policy.update`. Only tenant administrators can change it.
+
+### Document storage
+
+Choose where the workspace's imported originals and rendered documents are kept: in the storage
+the installation provides, or in an S3-compatible bucket you own. You need the
+`document_store:manage` permission, which the **Owner** and **Admin** roles have.
+
+<Screenshot id="tenant-document-storage" alt="Document storage: Your own bucket selected, the northwind-documents credential, the bucket northwind-api-documents with SSE-S3 encryption, and a finished move of 1,284 documents" />
+
+If the section says keeping documents in your own bucket *is not turned on for this installation*,
+ask a platform administrator to [turn it on](../admin/document-store.mdx#turn-it-on).
+
+**Use your own bucket**
+
+1. **Select “Your own bucket”.**
+2. Choose a **Storage credential** — the access key Apiome uses for the bucket. To store a new one,
+   **click “Add a credential”**, enter a **Name**, the **Access key ID** and the **Secret access
+   key** (and an **Endpoint URL** for anything other than AWS S3), then **click “Store
+   credential”**. The secret is stored encrypted and is never shown again.
+3. Enter the **Bucket**. It must already exist.
+4. Optionally set the **Folder** (default `apiome`), **Region**, **Endpoint URL**, **Addressing
+   style** and **Encryption** — **SSE-KMS** adds a **KMS key ID** field.
+5. **Click “Test bucket”.** Apiome writes a small test object, reads it back and deletes it. If a
+   step fails, the list under the button says which one and why.
+6. **Click “Save and move documents”.** The bucket is tested again; if it fails, nothing changes.
+
+New documents go to your bucket at once. Existing ones are moved in the background, and the bar
+shows how many are done. Every document stays readable while the move runs. You can close the
+drawer; the move carries on.
+
+The key needs to read, write, delete and list objects under
+`<folder>/tenants/<your workspace id>/`. Apiome does not read or write anything else in the bucket.
+
+**Delete the old copies**
+
+After a move, the moved documents still have a copy in the place they came from. They are no longer
+read from there. **Click “Delete old copies…”** and confirm to remove them. Documents that could
+not be moved are not touched.
+
+**Move back to platform storage**
+
+**Select “Platform storage”** and **click “Save and move documents”**. The documents are moved
+back the same way, and **Delete old copies…** then empties Apiome's folder in your bucket.
+
+While documents are in your bucket, **Bucket**, **Folder** and **Endpoint URL** are locked. To use
+a different bucket, move back to platform storage, delete the old copies, then set up the new one.
+You can change the credential, region, addressing style and encryption at any time.
+
+**If your bucket stops answering**
+
+A red notice at the top of the section says so, with the reason, and every owner and administrator
+gets a [notification](./notifications.mdx#document-bucket-outages). Until the bucket answers
+again:
+
+- Specs, diffs and compatibility checks still work.
+- Downloading an original, importing and uploading fail with *This workspace keeps its documents
+  in its own bucket, which is unavailable.*
+
+Fix the bucket or its policy, or choose a working credential and **click “Save changes”**.
 
 ### License & plan
 

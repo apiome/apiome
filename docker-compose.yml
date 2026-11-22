@@ -193,6 +193,10 @@ services:
       # The bundled MinIO is on the private compose network, which the SSRF guard refuses by
       # default; this lifts it for the document-store endpoint only.
       APIOME_DOCUMENT_STORE_ALLOW_PRIVATE: ${APIOME_DOCUMENT_STORE_ALLOW_PRIVATE:-true}
+      # Per-tenant buckets (COA-5.15): off unless you turn them on. The second setting lets a
+      # workspace point at a store on this private network (the bundled MinIO, for trying it out).
+      APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS: ${APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS:-false}
+      APIOME_DOCUMENT_STORE_TENANT_ALLOW_PRIVATE: ${APIOME_DOCUMENT_STORE_TENANT_ALLOW_PRIVATE:-false}
       APIOME_DOCUMENT_STORE_ACCESS_KEY_ID: ${APIOME_DOCUMENT_STORE_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-apiome}}
       APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY: ${APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-apiome_local_dev}}
     depends_on:

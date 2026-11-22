@@ -48,6 +48,7 @@ __all__ = [
     "BACKEND_DB",
     "BACKEND_FILESYSTEM",
     "BACKEND_S3",
+    "BACKEND_TENANT_S3",
     "BaseDocumentStore",
     "DbDocumentStore",
     "DocumentNotFound",
@@ -61,6 +62,7 @@ __all__ = [
     "S3DocumentStore",
     "build_document_store",
     "get_document_store",
+    "get_platform_document_store",
     "normalize_prefix",
     "object_key",
     "parse_object_uri",
@@ -71,6 +73,10 @@ BACKEND_DB = "db"
 BACKEND_S3 = "s3"
 BACKEND_FILESYSTEM = "filesystem"
 BACKENDS = (BACKEND_DB, BACKEND_S3, BACKEND_FILESYSTEM)
+#: An object held in its tenant's own bucket (COA-5.15, #7092). Never a platform setting: the
+#: platform store is one of :data:`BACKENDS`; this value only appears on ``document_objects`` rows
+#: and on the :class:`ObjectRef` of a tenant bucket (:mod:`app.tenant_document_store`).
+BACKEND_TENANT_S3 = "tenant_s3"
 
 DEFAULT_MEDIA_TYPE = "application/octet-stream"
 
@@ -140,7 +146,7 @@ class ObjectRef:
         sha256: Lower-case hex SHA-256 of the object's bytes — its identity.
         size_bytes: Length of the object in bytes.
         media_type: The media type recorded by the first write.
-        backend: ``db``, ``s3`` or ``filesystem``.
+        backend: ``db``, ``s3`` or ``filesystem``; ``tenant_s3`` for a tenant's own bucket.
         key: The object key, ``<prefix>/tenants/<tenant_id>/objects/sha256/<aa>/<hex>``.
         uri: A locator to record beside metadata: ``s3://<bucket>/<key>``, ``fs://<key>`` or
             ``db://<key>``. Never contains a credential or a host path.
@@ -991,11 +997,16 @@ def build_document_store(config: Any = None) -> BaseDocumentStore:
 
 
 _store: Optional[DocumentStore] = None
+_router: Optional[DocumentStore] = None
 _store_lock = threading.Lock()
 
 
-def get_document_store() -> DocumentStore:
-    """Return the process-wide document store, building it from the settings on first use."""
+def get_platform_document_store() -> DocumentStore:
+    """Return the install's own store, building it from the settings on first use.
+
+    For callers that must never follow a tenant to its own bucket: the health check, the
+    connection test, the migration of database copies and export download artifacts.
+    """
     global _store
     if _store is None:
         with _store_lock:
@@ -1004,9 +1015,35 @@ def get_document_store() -> DocumentStore:
     return _store
 
 
+def get_document_store() -> DocumentStore:
+    """Return the process-wide document store.
+
+    When the install allows tenant buckets, or a tenant already has one, it is the platform
+    store behind a per-tenant router (COA-5.15, #7092): a tenant that keeps its documents in its
+    own bucket is read from and written to there, every other tenant uses the platform store. See
+    :class:`app.document_store_router.TenantRoutingDocumentStore`. Otherwise it is the platform
+    store itself.
+    """
+    global _router
+    platform = get_platform_document_store()
+    from .document_store_router import TenantRoutingDocumentStore, routing_active
+
+    if not routing_active():
+        # No tenant has, or may have, its own bucket: the platform store is the whole story.
+        return platform
+    router = _router
+    if router is None or getattr(router, "platform", None) is not platform:
+
+        with _store_lock:
+            if _router is None or getattr(_router, "platform", None) is not platform:
+                _router = TenantRoutingDocumentStore(platform)
+            router = _router
+    return router
+
+
 def set_document_store(store: Optional[DocumentStore]) -> None:
-    """Replace (or, with ``None``, clear) the process-wide store — for tests and reconfiguration."""
-    global _store
+    """Replace (or, with ``None``, clear) the platform store — for tests and reconfiguration."""
+    global _store, _router
     with _store_lock:
         _store = store
-
+        _router = None

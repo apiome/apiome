@@ -514,7 +514,13 @@ class TestRoutes:
         with patch("app.ops_routes.db") as mdb:
             mdb.execute_query.return_value = [{"ok": 1}]
             body = client.get("/health").json()
-        assert body["document_store"] == {"status": "ok", "backend": "db", "fallback": False}
+        # ``tenant_buckets_unavailable`` (COA-5.15) is a count only: /health is unauthenticated.
+        assert body["document_store"] == {
+            "status": "ok",
+            "backend": "db",
+            "fallback": False,
+            "tenant_buckets_unavailable": 0,
+        }
 
     def test_health_stays_200_when_the_store_is_down(self, client):
         broken = DbDocumentStore(database=FakeBlobDatabase(fail_query=True))

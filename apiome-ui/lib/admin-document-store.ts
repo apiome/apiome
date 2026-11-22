@@ -64,6 +64,45 @@ export interface DocumentStoreStatus {
   health: DocumentStoreHealth;
   /** Null when the document index cannot be read. */
   usage: DocumentStoreUsage | null;
+  /** Whether tenants may use their own bucket (COA-5.15, #7092). Absent from an older REST. */
+  tenantBucketsAllowed?: boolean;
+  /** Tenants that have configured their own bucket, with its health. */
+  tenantBuckets?: DocumentStoreTenantBucket[];
+}
+
+/** A tenant that keeps its documents in its own bucket (COA-5.15, #7092). */
+export interface DocumentStoreTenantBucket {
+  tenantId: string;
+  tenantSlug: string;
+  tenantName: string | null;
+  /** `tenant`: documents go to the bucket. `platform`: it moved back; old copies may remain. */
+  mode: 'platform' | 'tenant';
+  bucket: string;
+  endpointUrl: string | null;
+  moveState: 'idle' | 'running' | 'completed' | 'failed';
+  cleanupPending: boolean;
+  /** When the bucket stopped answering; null while it works. */
+  unavailableSince: string | null;
+  /** Why it is unavailable, with credentials redacted. */
+  lastError: string | null;
+}
+
+/**
+ * What a tenant bucket's row says in its State column.
+ *
+ * An outage outranks everything else, then a move, then old copies awaiting cleanup.
+ *
+ * @param row - The tenant bucket.
+ * @returns The label, and whether it is a problem.
+ */
+export function tenantBucketState(row: DocumentStoreTenantBucket): { label: string; problem: boolean } {
+  if (row.unavailableSince) return { label: 'Unavailable', problem: true };
+  if (row.moveState === 'running') return { label: 'Moving documents', problem: false };
+  if (row.moveState === 'failed') return { label: 'Move incomplete', problem: true };
+  if (row.mode === 'platform') {
+    return { label: row.cleanupPending ? 'Moved back, old copies remain' : 'Moved back', problem: false };
+  }
+  return { label: row.cleanupPending ? 'In use, old copies remain' : 'In use', problem: false };
 }
 
 /** One step of the connection test. */

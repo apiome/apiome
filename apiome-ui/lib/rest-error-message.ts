@@ -24,8 +24,14 @@ export function restErrorMessage(body: unknown): string {
     if (messages.length > 0) return messages.join('; ');
   }
   if (detail && typeof detail === 'object') {
-    const { message, remediation } = detail as { message?: unknown; remediation?: unknown };
-    const parts = [message, remediation].filter(
+    const { message, remediation, errors } = detail as {
+      message?: unknown;
+      remediation?: unknown;
+      errors?: unknown;
+    };
+    // A validation refusal lists what is wrong field by field (`errors: ["bucket: …"]`).
+    const listed = Array.isArray(errors) ? errors : [];
+    const parts = [message, remediation, ...listed].filter(
       (part): part is string => typeof part === 'string' && part.trim().length > 0,
     );
     if (parts.length > 0) return parts.join(' ');

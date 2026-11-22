@@ -79,6 +79,18 @@ With a tenant selected:
 Adding someone here does not send an invitation and does not check the tenant's seat limit; inviting
 from the workspace's [Members](../workspace/members.mdx) screen does both.
 
+## Where a tenant's documents are kept
+
+Each tenant's imported originals and rendered documents go to the installation's
+[document store](./document-store.mdx) unless the tenant has chosen its own bucket. That choice is
+the tenant administrator's, under **Document storage** in the
+[manage drawer](../workspace/tenants.mdx#document-storage), and only when you have
+[turned tenant buckets on](./document-store.mdx#turn-it-on). The **Document store** page of this
+console lists the tenants that use their own bucket and whether each bucket is answering.
+
+Deleting a tenant here removes Apiome's folder for that tenant from its bucket after the grace
+period. The bucket itself, and anything else in it, is never deleted.
+
 ## With the API
 
 The admin console reads and writes the database directly through the app's server; there is no REST

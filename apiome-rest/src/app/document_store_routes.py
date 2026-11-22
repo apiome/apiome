@@ -81,6 +81,25 @@ class DocumentStoreUsage(_CamelModel):
     integrity: DocumentStoreIntegrity
 
 
+class DocumentStoreTenantBucket(_CamelModel):
+    """A tenant that keeps its documents in its own bucket (COA-5.15, #7092)."""
+
+    tenant_id: str = Field(..., alias="tenantId")
+    tenant_slug: str = Field(..., alias="tenantSlug")
+    tenant_name: Optional[str] = Field(None, alias="tenantName")
+    mode: Literal["platform", "tenant"] = Field(
+        ..., description="tenant: documents go to the bucket. platform: it moved back; the bucket may hold old copies."
+    )
+    bucket: str
+    endpoint_url: Optional[str] = Field(None, description="The service URL; null for AWS.", alias="endpointUrl")
+    move_state: Literal["idle", "running", "completed", "failed"] = Field(..., alias="moveState")
+    cleanup_pending: bool = Field(False, alias="cleanupPending")
+    unavailable_since: Optional[str] = Field(
+        None, description="When the bucket stopped answering; null while it works.", alias="unavailableSince"
+    )
+    last_error: Optional[str] = Field(None, description="Why it is unavailable (redacted).", alias="lastError")
+
+
 class DocumentStoreStatus(_CamelModel):
     """The active document store: settings (never credentials), health and usage."""
 
@@ -114,6 +133,16 @@ class DocumentStoreStatus(_CamelModel):
     )
     health: DocumentStoreHealth
     usage: Optional[DocumentStoreUsage] = Field(None, description="Null when the document index cannot be read.")
+    tenant_buckets_allowed: bool = Field(
+        False,
+        description="Whether tenants may use their own bucket (APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS).",
+        alias="tenantBucketsAllowed",
+    )
+    tenant_buckets: List[DocumentStoreTenantBucket] = Field(
+        default_factory=list,
+        description="Tenants that have configured their own bucket, with its health.",
+        alias="tenantBuckets",
+    )
 
 
 class DocumentStoreProbeStep(_CamelModel):

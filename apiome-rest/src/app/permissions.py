@@ -44,6 +44,8 @@ class Resource:
     VERIFICATION_EVIDENCE = "verification_evidence"
     CONSUMER_CONTRACTS = "consumer_contracts"
     TEAMS = "teams"
+    #: Where the tenant's documents are kept (COA-5.15, #7092). Its only action is ``manage``.
+    DOCUMENT_STORE = "document_store"
 
 
 class Action:
@@ -54,6 +56,8 @@ class Action:
     EDIT = "edit"
     DELETE = "delete"
     PUBLISH = "publish"
+    #: Change a tenant-level setting that is not content. Applies to ``document_store`` only.
+    MANAGE = "manage"
 
 
 # The canonical resource / action vocabulary. Used to validate custom-role permission grids.
@@ -74,11 +78,12 @@ RESOURCES = frozenset(
         Resource.VERIFICATION_EVIDENCE,
         Resource.CONSUMER_CONTRACTS,
         Resource.TEAMS,
+        Resource.DOCUMENT_STORE,
     }
 )
 
 ACTIONS = frozenset(
-    {Action.VIEW, Action.CREATE, Action.EDIT, Action.DELETE, Action.PUBLISH}
+    {Action.VIEW, Action.CREATE, Action.EDIT, Action.DELETE, Action.PUBLISH, Action.MANAGE}
 )
 
 

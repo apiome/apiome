@@ -30,6 +30,7 @@ from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from .auth import validate_authentication
 from .database import db
 from .document_store import DocumentStoreError, get_document_store
+from .tenant_document_store import TenantDocumentStoreUnavailable
 from .download_headers import attachment_headers
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
@@ -147,6 +148,10 @@ def _serve(
         )
     try:
         content = materialize(get_document_store(), resolved)
+    except TenantDocumentStoreUnavailable:
+        # The workspace's own bucket is down (COA-5.15): the original is unavailable, and the
+        # app-level handler answers 503 tenant-document-store-unavailable with the reason.
+        raise
     except (DocumentStoreError, ValueError) as exc:
         logger.warning(
             "original unreadable version_id=%s %s: %s", version_record_id, describe(resolved), type(exc).__name__

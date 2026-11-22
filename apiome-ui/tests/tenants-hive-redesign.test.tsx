@@ -418,7 +418,7 @@ describe('the drawer is React-owned, not a hidden div', () => {
    ------------------------------------------------------------------------- */
 
 describe('the five sections', () => {
-  it('lists all six in order, Ownership (CDG-2.5) before the history', async () => {
+  it('lists all seven in order, Document storage (COA-5.15) after Security', async () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
     try {
       await renderPage();
@@ -427,6 +427,7 @@ describe('the five sections', () => {
       expect(within(drawer).getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual([
         expect.stringContaining('Members'),
         'Security',
+        'Document storage',
         'License & plan',
         'MCP settings',
         'Per-key capabilities',
@@ -1085,6 +1086,34 @@ describe('the docs fixtures', () => {
           compliance: { enabled: 4, grace: 1, overdue: 0 },
         }) };
       }
+      // COA-5.15: the Document storage section reads the settings and the storage credentials.
+      if (url === '/api/tenant-document-store') {
+        return { status: 200, ok: true, json: async () => ({
+          allowed: true,
+          mode: 'tenant',
+          credentialId: 'cred-1',
+          credentialName: 'northwind-documents',
+          bucket: 'northwind-api-documents',
+          prefix: 'apiome',
+          region: 'eu-central-1',
+          endpointUrl: '',
+          addressingStyle: 'auto',
+          sse: 's3',
+          kmsKeyId: '',
+          health: { available: true, unavailableSince: null, error: null },
+          move: {
+            state: 'completed', target: 'tenant', total: 1284, moved: 1284, failed: 0, error: null,
+            startedAt: '2026-11-20T09:12:00Z', finishedAt: '2026-11-20T09:31:00Z',
+          },
+          cleanupPending: true,
+        }) };
+      }
+      if (url === '/api/export/storage-credentials') {
+        return respond({ credentials: [
+          { id: 'cred-1', name: 'northwind-documents', accessKeyHint: 'Q7XA', endpointUrl: null, region: 'eu-central-1' },
+          { id: 'cred-2', name: 'export-delivery', accessKeyHint: 'M2KD', endpointUrl: null, region: 'eu-central-1' },
+        ] });
+      }
       // CDG-2.5: the Ownership section reads the policy and the teams.
       if (url === '/api/ownership-policy') {
         return { status: 200, ok: true, json: async () => ({
@@ -1116,6 +1145,10 @@ describe('the docs fixtures', () => {
     selectTab(drawer, /Security/);
     await within(drawer).findByTestId('tenant-two-factor-compliance');
     writeA11yFixture('tenants-drawer-security', bodyMarkup());
+
+    selectTab(drawer, /Document storage/);
+    await within(drawer).findByTestId('tenant-storage-move');
+    writeA11yFixture('tenant-document-storage', bodyMarkup());
 
     selectTab(drawer, /License & plan/);
     await within(drawer).findByText('9 of 10 used');

@@ -1,0 +1,59 @@
+---
+slug: bring-your-own-bucket
+title: "Keep a workspace's documents in its own bucket"
+description: "A workspace can store its originals and rendered documents in an S3-compatible bucket it owns."
+authors: [apiome]
+---
+
+Until now every workspace on an installation kept its imported originals and rendered documents in
+the one store the installation is configured with. A workspace can now keep them in an
+S3-compatible bucket it owns — for its own region, encryption keys, retention rules or audit. The
+installation's store stays the default.
+
+{/* truncate */}
+
+## For workspace administrators
+
+**Manage** a tenant and open the new [**Document storage**](/workspace/tenants#document-storage)
+section.
+
+- **Choose “Your own bucket”**, pick a storage credential (or **Add a credential** on the spot),
+  name the bucket and, if you need them, the folder, region, endpoint, addressing style and
+  SSE-S3 or SSE-KMS encryption.
+- **Test bucket** writes, reads back and deletes a test object, and says which step failed.
+- **Save and move documents** sends new documents to your bucket at once and moves the existing
+  ones in the background. Each is copied, verified and only then read from the new place, so
+  nothing fails while the move runs.
+- **Delete old copies…** removes what the move left behind, after you confirm.
+- **Platform storage** moves everything back the same way.
+
+Apiome only reads and writes under its own folder in your bucket.
+
+If the bucket stops answering, the section says why, owners and administrators get a
+[notification](/workspace/notifications#document-bucket-outages), and specs, diffs and
+compatibility checks keep working — they are rendered on demand until the bucket is back.
+
+Choosing where documents go needs the new permission `document_store:manage`. The built-in
+**Owner** and **Admin** roles have it; the [permission matrix](/workspace/roles#the-permission-matrix)
+has a **Document storage** row and a **Manage** column for custom roles.
+
+## For platform administrators
+
+Tenant buckets are **off by default**. Turn them on with
+`APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS=true` on the REST server — see
+[Tenant buckets](/admin/document-store#tenant-buckets).
+
+- The admin console's **Document store** page has a **Tenant buckets** card: each tenant on its
+  own bucket, and whether the bucket is answering.
+- `GET /health` counts tenants whose bucket is down in `document_store.tenant_buckets_unavailable`.
+- A tenant's endpoint must be a public address unless you set
+  `APIOME_DOCUMENT_STORE_TENANT_ALLOW_PRIVATE=true`.
+- Deleting a tenant removes only Apiome's folder for it from its bucket, never the bucket.
+
+Apply database migration **V408** before starting the new REST server.
+
+## With the API
+
+`GET` and `PUT /v1/tenants/{tenant}/document-store`, `POST …/document-store/test` and
+`POST …/document-store/cleanup` — see the [tenants reference](/reference/rest/tenants). An
+unavailable tenant bucket answers `503` with the code `tenant-document-store-unavailable`.

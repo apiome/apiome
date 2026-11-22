@@ -31,7 +31,7 @@ from typing import Optional, Protocol, runtime_checkable
 
 from .config import settings
 from .document_store import BACKEND_DB as DOCUMENT_BACKEND_DB
-from .document_store import DocumentNotFound, DocumentStore, get_document_store, parse_object_uri
+from .document_store import DocumentNotFound, DocumentStore, get_platform_document_store, parse_object_uri
 
 BACKEND_DB = "db"
 BACKEND_OBJECT_STORE = "object_store"
@@ -211,7 +211,7 @@ class ObjectStoreExportArtifactBackend:
 
     def _store(self, size_bytes: int = 0) -> DocumentStore:
         """Return the object store, or raise when only the ``db`` document store is configured."""
-        store = self._document_store or get_document_store()
+        store = self._document_store or get_platform_document_store()
         if store.backend == DOCUMENT_BACKEND_DB:
             raise ExportArtifactStoreNotConfigured(size_bytes, settings.export_artifact_db_max_bytes)
         return store

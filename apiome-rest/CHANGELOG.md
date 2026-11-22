@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.807.0] - 2026-11-21
+
+### Added
+- **Per-tenant bring-your-own buckets for the document store — OpenAPI 1.632.0 (COA-5.15, #7092):** a workspace
+  can keep its originals and rendered documents in its own S3-compatible bucket, reached with a sealed storage
+  credential (the ones export delivery uses). The platform store stays the default.
+  - `GET` / `PUT /v1/tenants/{tenant_slug}/document-store` read and choose where documents are kept (`platform`
+    or `tenant`, with `credentialId`, `bucket`, `prefix`, `region`, `endpointUrl`, `addressingStyle`, `sse`,
+    `kmsKeyId`). `POST …/document-store/test` writes, reads back and deletes a probe object under the workspace's
+    own key layout. `POST …/document-store/cleanup` (`{"confirm": true}`) deletes the copies a move left behind.
+    All need the new permission `document_store:manage` (Owner and Admin by default).
+  - Changing `mode` starts a background move of the existing objects: each is copied, read back, checked against
+    its SHA-256 and only then re-pointed, so reads keep working throughout; the move is resumable and reports its
+    progress on `GET`. `document_objects.backend` gains `tenant_s3` for an object held in a tenant bucket.
+  - An unreachable or revoked tenant bucket answers `503 tenant-document-store-unavailable` with a redacted
+    reason. Rendered documents are rendered uncached instead; originals report unavailable. The workspace's
+    owners and administrators get one `document_store_unavailable` notification per outage,
+    `GET /v1/ops/document-store` (and its `/v1/admin` twin) lists tenant buckets with their state in
+    `tenantBuckets`, and `GET /health` counts them in `document_store.tenant_buckets_unavailable`.
+  - Off by default: `APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS=true` turns it on
+    (`403 tenant-document-store-disabled` otherwise). Tenant endpoints pass the SSRF guard;
+    `APIOME_DOCUMENT_STORE_TENANT_ALLOW_PRIVATE=true` lifts its address filter for installs whose tenants run a
+    store on the private network. Turning the first setting off later blocks changes but keeps tenants already
+    on their own bucket working.
+  - Retention, integrity runs and tenant deletion follow each object to its bucket; deleting a tenant removes
+    only Apiome's folder for that tenant from its bucket, never the bucket.
+  - `DELETE /v1/export/{tenant_slug}/storage-credentials/{credential_id}` answers
+    `409 storage-credential-in-use` for the credential the workspace's document storage uses.
+  - Export download artifacts stay on the platform store.
+  - Needs apiome-db V408.
+
 ## [1.806.0] - 2026-11-21
 
 ### Fixed

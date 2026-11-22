@@ -9286,6 +9286,17 @@ button.tfa-reset-notice__close > svg {
     color var(--dur-fast);
 }
 
+/* A cell the guard has no permission for (`document_store:view`, `projects:manage`): a quiet
+   dash where the toggle would be, so the column still reads as a column (COA-5.15, #7092). */
+.rol-perm-na {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--fg-subtle);
+  vertical-align: middle;
+}
+
 .rol-perm > svg {
   inline-size: 0.875rem;
   block-size: 0.875rem;
@@ -40885,6 +40896,100 @@ a.apx-name:focus-visible,
 /* The Security section's grace-period box (TFA-1.3, #5657): a two- or three-digit number. */
 .tnt-2fa-grace {
   max-width: 8rem;
+}
+
+/* The Document storage section (COA-5.15, #7092). `.tnt-storage-*`.
+   A two-column form that folds to one in the drawer's narrow layout; a field marked
+   `--wide` spans both columns. */
+.tnt-storage-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  /* Inline only: the block margin is the section's own rhythm between its parts. */
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.tnt-storage-field {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tnt-storage-field--wide {
+  grid-column: 1 / -1;
+}
+
+/* The two choices side by side, as selectable cards (`.ver-radio-card`). */
+.tnt-storage-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+/* A control and the button (or status) that belongs to it, on one line. */
+.tnt-storage-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-inline-size: 0;
+}
+
+.tnt-storage-inline > select {
+  flex: 1 1 14rem;
+  inline-size: auto;
+}
+
+/* The bucket test, step by step: what was tried and what came back. */
+.tnt-storage-steps {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-3);
+  list-style: none;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.tnt-storage-steps > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.tnt-storage-steps > li[data-ok='false'] {
+  color: var(--danger-fg);
+}
+
+.tnt-storage-steps__name {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* The cleanup notice: the sentence, then the button that opens the confirm. */
+.tnt-storage-cleanup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+@media (max-width: 40rem) {
+  .tnt-storage-form,
+  .tnt-storage-modes {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ===========================================================================

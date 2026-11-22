@@ -1398,6 +1398,23 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("APIOME_DOCUMENT_STORE_ALLOW_PRIVATE", "document_store_allow_private"),
     )
+    # Per-tenant bring-your-own buckets (COA-5.15, #7092). Off by default: with it off no tenant
+    # can point its documents at its own bucket or start a move, but a tenant already on its own
+    # bucket keeps reading and writing there. ``document_store_tenant_allow_private`` lifts the
+    # SSRF address filter for tenant bucket endpoints (tenants running MinIO on your own network);
+    # leave it off on a shared install, where a tenant must not reach private addresses.
+    document_store_allow_tenant_buckets: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS", "document_store_allow_tenant_buckets"
+        ),
+    )
+    document_store_tenant_allow_private: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_DOCUMENT_STORE_TENANT_ALLOW_PRIVATE", "document_store_tenant_allow_private"
+        ),
+    )
 
     # Export webhook delivery (MFX-38.2, #4329). A delivery POSTs the export result to a URL; a
     # bundle up to ``export_webhook_inline_max_bytes`` rides in the body, a larger one as a signed

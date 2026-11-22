@@ -55,7 +55,7 @@ next fifty.
 - **Unread only** shows only what you have not read; its count is your unread total.
 - **All types** or one type — **Mentions**, **Review requests**, **Review decisions**, **Resolved
   threads**, **Publishes**, **Halted auto-exports**, **Sunsets still in use**, **Sign-ins blocked
-  by the seat limit**, and the seven
+  by the seat limit**, **Document bucket outages**, and the seven
   [owner finding](#owner-findings) types — each with its unread count. Click a selected type again to clear it.
 
 The two combine: *Unread only* with *Mentions* lists the mentions you still have to read.
@@ -99,6 +99,20 @@ are in use.* **Click it** to open [Members & seats](./members.mdx), where you ca
   Every attempt is still in the access audit, as `member.provision_blocked`.
 - Once a seat is free, the person is added the next time they sign in. See
   [When the workspace is out of seats](./workspace-sso.mdx#when-the-workspace-is-out-of-seats).
+
+## Document bucket outages
+
+When your workspace keeps its documents in [its own bucket](./tenants.mdx#document-storage) and
+the bucket stops answering — it is unreachable, or its credential was revoked — every **owner and
+administrator** gets a **Document bucket outages** notification. It says why, for example
+*Apiome could not read from bucket 'northwind-api-documents' (AccessDenied)*, and never contains a
+key. **Click it** to open [Tenants](./tenants.mdx), where **Manage** → **Document storage** shows
+the same reason.
+
+- **Once per outage.** You are told when the bucket first fails, not for every failed request.
+  After it answers again, a new outage notifies again.
+- Specs and diffs keep working during an outage. See
+  [Document storage](./tenants.mdx#document-storage).
 
 ## Owner findings
 

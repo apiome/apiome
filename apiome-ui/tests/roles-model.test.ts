@@ -22,6 +22,7 @@ import {
   READ_ONLY_REASON,
   RESOURCES,
   TOTAL_CELLS,
+  cellApplies,
   cellKey,
   describeCellsOn,
   describeDirty,
@@ -118,6 +119,7 @@ describe('the permission vocabulary', () => {
       'verification_evidence',
       'consumer_contracts',
       'teams',
+      'document_store',
     ]);
     expect(ACTIONS.map((action) => action.key)).toEqual([
       'view',
@@ -125,8 +127,29 @@ describe('the permission vocabulary', () => {
       'edit',
       'delete',
       'publish',
+      'manage',
     ]);
-    expect(TOTAL_CELLS).toBe(75);
+    // 15 content resources × 5 actions, plus document_store:manage.
+    expect(TOTAL_CELLS).toBe(76);
+  });
+
+  it('gives a setting resource one action, manage, and content resources none of it (COA-5.15)', () => {
+    expect(cellApplies('document_store', 'manage')).toBe(true);
+    expect(cellApplies('document_store', 'view')).toBe(false);
+    expect(cellApplies('projects', 'manage')).toBe(false);
+    expect(cellApplies('projects', 'view')).toBe(true);
+
+    // The row toggle fills and reports only the cells that exist.
+    const filled = toggleResource(new Set(), 'document_store');
+    expect([...filled]).toEqual(['document_store:manage']);
+    expect(resourceState(filled, 'document_store')).toBe(true);
+    expect(resourceState(toggleResource(new Set(), 'projects'), 'projects')).toBe(true);
+    // "Grant view on all" never invents document_store:view.
+    expect(grantActionEverywhere(new Set(), 'view').has('document_store:view')).toBe(false);
+    // A stale or meaningless cell is dropped on save; the real one survives.
+    expect(
+      gridToPermissions(new Set(['document_store:manage', 'document_store:view', 'projects:manage']))
+    ).toEqual([{ resource: 'document_store', action: 'manage' }]);
   });
 
   it('spells a cell the way the guard does', () => {
@@ -222,7 +245,7 @@ describe('what makes a draft dirty', () => {
   });
 
   it('counts the cells that are on against the whole matrix', () => {
-    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 75 cells on');
+    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 76 cells on');
   });
 });
 
@@ -377,7 +400,8 @@ describe('editing the grid', () => {
 
   it('fills a partly granted row rather than emptying it', () => {
     const partly = toggleResource(new Set(['projects:view']), 'projects');
-    expect(partly.size).toBe(ACTIONS.length);
+    // Every action a content resource has: all but `manage`.
+    expect(partly.size).toBe(ACTIONS.length - 1);
     // A second press, now that it is full, clears it.
     expect(toggleResource(partly, 'projects').size).toBe(0);
   });
@@ -385,12 +409,13 @@ describe('editing the grid', () => {
   it('leaves other resources alone when a row is filled', () => {
     const grid = toggleResource(new Set(['versions:view']), 'projects');
     expect(grid.has('versions:view')).toBe(true);
-    expect(grid.size).toBe(ACTIONS.length + 1);
+    expect(grid.size).toBe(ACTIONS.length);
   });
 
   it('grants one action on every resource', () => {
     const grid = grantActionEverywhere(new Set(), 'view');
-    expect(grid.size).toBe(RESOURCES.length);
+    // Every resource that has a `view`: all but Document storage, which is manage-only.
+    expect(grid.size).toBe(RESOURCES.length - 1);
     expect(grid.has('billing:view')).toBe(true);
     expect(grid.has('billing:edit')).toBe(false);
   });

@@ -64,6 +64,9 @@ export const NOTIFICATION_TYPES = [
   // was taken; told to the owners, with its own `summary` and `link` (the members list).
   'seat_cap_blocked_sso',
   ...OWNER_NOTIFICATION_TYPES,
+  // COA-5.15: the workspace's own document bucket stopped answering; told to the owners and
+  // administrators once per outage, with its own `summary` and `link` (the workspaces page).
+  'document_store_unavailable',
 ] as const;
 
 /** One of the event types. */
@@ -99,6 +102,7 @@ export const NOTIFICATION_TYPE_LABELS: Readonly<Record<NotificationType, string>
   owner_trust_drift: 'MCP trust drift',
   owner_shadow_api: 'Shadow APIs',
   owner_sync_failed: 'Failed connector syncs',
+  document_store_unavailable: 'Document bucket outages',
 };
 
 /**
@@ -125,6 +129,8 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Readonly<Record<NotificationType, s
   owner_trust_drift: 'When an MCP endpoint your team owns drifts from its trust baseline.',
   owner_shadow_api: 'When a connector your team owns finds APIs the catalog does not describe.',
   owner_sync_failed: 'When a connector your team owns fails to sync.',
+  document_store_unavailable:
+    "When your workspace's own document bucket stops answering (workspace owners and administrators).",
 };
 
 /**
@@ -366,6 +372,9 @@ export function notificationSentence(row: Readonly<NotificationRow>): string {
         row.payload.summary?.trim() ||
         'Somebody signed in through single sign-on but every member seat is in use'
       );
+    case 'document_store_unavailable':
+      // Written by the document store when the workspace's bucket fails: the payload says why.
+      return row.payload.summary?.trim() || "Your workspace's document bucket is not answering";
     default:
       // Unreachable while `type` is the union, but a future sixth type written by a newer
       // apiome-rest must not render as a blank row.
@@ -470,6 +479,7 @@ export const VERSIONS_THREAD_PARAM = 'thread';
  * | `export_auto_halted` | its own `link` (Export studio's Presets tab) — an `/ade/` path only |
  * | `sunset_still_used` | its own `link` (the sunset timeline) — an `/ade/` path only |
  * | `seat_cap_blocked_sso` | its own `link` (the members list) — an `/ade/` path only |
+ * | `document_store_unavailable` | its own `link` (the workspaces page) — an `/ade/` path only |
  * | `owner_*` | the finding's own `link` — an `/ade/` path only |
  *
  * @param row - The notification.
@@ -499,6 +509,7 @@ export function notificationHref(row: Readonly<NotificationRow>): string | null 
     case 'export_auto_halted':
     case 'sunset_still_used':
     case 'seat_cap_blocked_sso':
+    case 'document_store_unavailable':
       return ownerFindingHref(row.payload.link);
     default:
       if (isOwnerNotificationType(row.type)) return ownerFindingHref(row.payload.link);

@@ -140,7 +140,7 @@ afterEach(() => {
 });
 
 describe('RolesClient (#3611)', () => {
-  it('renders the role list and a 14x5 permission matrix', async () => {
+  it('renders the role list and the permission matrix', async () => {
     renderWithDialogs(<RolesClient />);
 
     // Role names appear in the left list. "Owner" is also the editor's heading once it is
@@ -174,17 +174,18 @@ describe('RolesClient (#3611)', () => {
       expect(within(screen.getByRole('table')).getByText(label)).toBeInTheDocument();
     }
 
-    // All 5 action columns render as headers.
+    // Every action column renders as a header.
     const matrix = screen.getByRole('table');
     const headers = within(matrix).getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['Resource', 'View', 'Create', 'Edit', 'Delete', 'Publish']);
+    expect(headers).toEqual(['Resource', 'View', 'Create', 'Edit', 'Delete', 'Publish', 'Manage']);
 
-    // 15 resources x 5 actions = 75 toggle cells, plus the 15 row toggles HIVE-5.3 added —
-    // the tri-state control that grants or revokes a whole resource at once.
+    // 15 content resources x 5 actions + Document storage's Manage (COA-5.15) = 76 toggle cells,
+    // plus the 16 row toggles HIVE-5.3 added — the tri-state control that grants or revokes a
+    // whole resource at once.
     const toggles = within(matrix).getAllByRole('button');
-    expect(toggles).toHaveLength(90);
+    expect(toggles).toHaveLength(92);
     expect(toggles.filter((button) => button.getAttribute('aria-pressed') !== null)).toHaveLength(
-      90
+      92
     );
   });
 });

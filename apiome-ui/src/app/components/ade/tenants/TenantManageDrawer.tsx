@@ -6,6 +6,7 @@ import {
   Check,
   History,
   UsersRound,
+  Database,
   KeyRound,
   Lock,
   Network,
@@ -37,6 +38,7 @@ import TenantMcpKeysSection from './TenantMcpKeysSection';
 import TenantMembersSection from './TenantMembersSection';
 import TenantOwnershipPolicySection from './TenantOwnershipPolicySection';
 import TenantTwoFactorPolicySection from './TenantTwoFactorPolicySection';
+import TenantDocumentStorageSection from './TenantDocumentStorageSection';
 import { isFeatureReleased } from '@lib/feature-release';
 import {
   TENANT_MANAGE_SECTIONS,
@@ -119,6 +121,7 @@ export interface TenantManageDrawerProps {
 const SECTION_ICONS: Readonly<Record<TenantManageSection, React.ElementType>> = {
   members: Users,
   security: ShieldCheck,
+  storage: Database,
   license: BadgeCheck,
   mcp: Network,
   keys: KeyRound,
@@ -308,6 +311,11 @@ export default function TenantManageDrawer({
                     'security',
                     <TenantTwoFactorPolicySection isAdmin={tenant.isAdmin} membersPageHref={membersPageHref} />
                   )}
+              </TabsContent>
+
+              <TabsContent value="storage" forceMount className={PANEL_CLASS}>
+                {visited.has('storage') &&
+                  gated('storage', <TenantDocumentStorageSection isAdmin={tenant.isAdmin} />)}
               </TabsContent>
 
               <TabsContent value="license" forceMount className={PANEL_CLASS}>

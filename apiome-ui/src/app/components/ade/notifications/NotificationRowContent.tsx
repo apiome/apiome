@@ -16,6 +16,7 @@ import {
   Rocket,
   ShieldAlert,
   Sunset,
+  DatabaseZap,
   UserRoundX,
   type LucideIcon,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ export const NOTIFICATION_TYPE_ICONS: Readonly<Record<NotificationType, LucideIc
   export_auto_halted: PackageX,
   sunset_still_used: Sunset,
   seat_cap_blocked_sso: UserRoundX,
+  document_store_unavailable: DatabaseZap,
   owner_finding: Bug,
   owner_breaking_change: FileDiff,
   owner_verification_drift: Activity,
