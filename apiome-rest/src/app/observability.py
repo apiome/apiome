@@ -35,7 +35,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
-from . import statement_stats
+from . import authz_cache, statement_stats
 from .config import settings
 from .logging_config import bind_contextvars, clear_contextvars, get_logger
 
@@ -218,6 +218,10 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         # Count this request's SQL statements (DBP-1.1, #7184). The stats object is shared with the
         # handler's worker thread through the copied context, so its statements land here too.
         db_stats, db_token = statement_stats.begin_request()
+        # One authorization lookup per (user, tenant) per request, shared by the authentication
+        # dependency and every permission check of the handler (DBP-1.3, #7186).
+        authz_memo, authz_token = authz_cache.begin_request()
+        request.state.authz_memo = authz_memo
         start = time.monotonic()
         status_code = 500  # Assume failure until proven otherwise (covers unhandled exceptions).
         try:
@@ -231,6 +235,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             latency_ms = (time.monotonic() - start) * 1000.0
             metrics.request_finished(status_code=status_code, latency_ms=latency_ms)
             statement_stats.end_request(db_token)
+            authz_cache.end_request(authz_memo, authz_token)
             # One structured access line per request. At INFO so it is on by default; demote noisy
             # liveness probes to DEBUG so health-check polling does not flood the log.
             event = "http_request"

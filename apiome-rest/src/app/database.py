@@ -3,6 +3,7 @@ import json
 import logging
 import secrets
 import threading
+import time
 import weakref
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
@@ -21,6 +22,7 @@ from .axis_score import (
     evaluation_row,
     mcp_axis_evaluation,
 )
+from . import authz_cache
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .db_bulk import DEFAULT_PAGE_SIZE as DEFAULT_BULK_PAGE_SIZE
 from .db_bulk import bulk_insert as _bulk_insert
@@ -1860,6 +1862,13 @@ class Database:
         credential would turn it into a tenant-wide key. On a database older than V269 there is no
         ``kind`` column and no agent key, so the lookup falls back to the older queries.
 
+        A key that verified within ``API_KEY_CACHE_TTL_SECONDS`` skips bcrypt (DBP-1.3, #7186): the
+        process remembers ``sha256(key)`` → the row it matched, and re-reads only that row by
+        primary key, with the same live/enabled/expiry/tenant predicates and the stored hash it
+        verified against. A key revoked, disabled, expired or regenerated anywhere — including
+        the web app — is therefore refused on its next request, and the next presentation falls
+        back to the full prefix-and-bcrypt check.
+
         Args:
             api_key: The API key to validate
 
@@ -1868,6 +1877,14 @@ class Database:
         """
         if not api_key or len(api_key) < 12:
             return None
+
+        cached = authz_cache.get_api_key(api_key)
+        if cached is not None:
+            live = self._live_cached_api_key(cached)
+            if live is not None:
+                return live
+            # The row no longer accepts that secret (or cannot be read): verify from scratch.
+            authz_cache.forget_api_key(api_key)
 
         # Match UI format: key_prefix is first 12 characters + '...'
         key_prefix = api_key[:12] + '...'
@@ -1923,6 +1940,7 @@ class Database:
               AND t.enabled = true
               AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
         """
+        variant = "workspace_kind"
         try:
             try:
                 results = self.execute_query(query_workspace_kind, (key_prefix,))
@@ -1933,6 +1951,7 @@ class Database:
                 if getattr(root_k, "pgcode", None) == "42703" or (
                     "kind" in msg_k and "does not exist" in msg_k
                 ):
+                    variant = "with_scopes"
                     results = self.execute_query(query_with_scopes, (key_prefix,))
                 else:
                     raise
@@ -1942,16 +1961,19 @@ class Database:
             msg_l = str(e).lower()
             if pgcode == "42703" or ("scopes" in msg_l and "does not exist" in msg_l):
                 try:
+                    variant = "with_creator"
                     results = self.execute_query(query_with_creator, (key_prefix,))
                 except Exception as e2:
                     root2 = e2.__cause__ if getattr(e2, "__cause__", None) else e2
                     pgcode2 = getattr(root2, "pgcode", None)
                     msg2 = str(e2).lower()
                     if pgcode2 == "42703" or ("created_by_user_id" in msg2 and "does not exist" in msg2):
+                        variant = "legacy"
                         results = self.execute_query(query_legacy, (key_prefix,))
                     else:
                         raise
             elif pgcode == "42703" or ("created_by_user_id" in msg_l and "does not exist" in msg_l):
+                variant = "legacy"
                 results = self.execute_query(query_legacy, (key_prefix,))
             else:
                 raise
@@ -1971,26 +1993,89 @@ class Database:
                     # Pre-V177 rows / legacy SELECT: treat missing scopes as full access.
                     if api_key_data.get("scopes") is None:
                         api_key_data["scopes"] = ["*"]
-                    # Update last_used_at
-                    try:
-                        # Stamp at most once a minute per key: the stamp is a row write on every
-                        # authenticated request otherwise.
-                        update_query = (
-                            "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s "
-                            "AND (last_used_at IS NULL "
-                            "OR last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute')"
-                        )
-                        conn = self.connect()
-                        with conn.cursor() as cursor:
-                            cursor.execute(update_query, (api_key_data['id'],))
-                            conn.commit()
-                    except Exception:
-                        pass  # Don't fail if we can't update last_used_at
+                    self._stamp_api_key_last_used(api_key_data['id'])
+                    authz_cache.remember_api_key(
+                        api_key,
+                        authz_cache.ApiKeyCacheEntry(
+                            key_id=str(api_key_data['id']),
+                            key_hash=row['key_hash'],
+                            tenant_id=str(api_key_data.get('tenant_id') or '') or None,
+                            stamped_at=time.monotonic(),
+                            variant=variant,
+                        ),
+                    )
                     return api_key_data
             except (ValueError, TypeError):
                 continue
 
         return None
+
+    #: The columns ``validate_api_key`` returns, per schema generation (newest first), for the
+    #: by-id re-read of a cached key. ``kind`` is filtered only where the column exists (V269).
+    _API_KEY_LIVE_COLUMNS = {
+        "workspace_kind": ("ak.created_by_user_id, ak.scopes,", "AND ak.kind = 'workspace'"),
+        "with_scopes": ("ak.created_by_user_id, ak.scopes,", ""),
+        "with_creator": ("ak.created_by_user_id,", ""),
+        "legacy": ("", ""),
+    }
+
+    def _live_cached_api_key(self, cached: "authz_cache.ApiKeyCacheEntry") -> Optional[Dict[str, Any]]:
+        """Re-read a cached key's row by id; return ``validate_api_key``'s dict or ``None``.
+
+        ``None`` means the row no longer accepts the secret: deleted, disabled, expired, its tenant
+        disabled or deleted, its hash replaced (regenerated) — or the read failed. Writes
+        ``last_used_at`` when this process last wrote it a minute or more ago.
+
+        Args:
+            cached: What the earlier bcrypt verification remembered.
+        """
+        columns, kind_filter = self._API_KEY_LIVE_COLUMNS.get(
+            cached.variant, self._API_KEY_LIVE_COLUMNS["legacy"]
+        )
+        query = f"""
+            SELECT ak.id, ak.tenant_id, {columns} ak.expires_at, ak.enabled,
+                   t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name
+            FROM apiome.api_keys ak
+            JOIN apiome.tenants t ON ak.tenant_id = t.id
+            WHERE ak.id = %s::uuid
+              AND ak.key_hash = %s
+              {kind_filter}
+              AND ak.deleted_at IS NULL
+              AND ak.enabled = true
+              AND t.deleted_at IS NULL
+              AND t.enabled = true
+              AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
+        """
+        try:
+            rows = self.execute_query(query, (cached.key_id, cached.key_hash))
+        except Exception:
+            return None
+        if not rows:
+            return None
+        api_key_data = dict(rows[0])
+        if api_key_data.get("scopes") is None:
+            api_key_data["scopes"] = ["*"]
+        now = time.monotonic()
+        if now - cached.stamped_at >= authz_cache.API_KEY_STAMP_INTERVAL_SECONDS:
+            cached.stamped_at = now
+            self._stamp_api_key_last_used(api_key_data["id"])
+        return api_key_data
+
+    def _stamp_api_key_last_used(self, key_id: Any) -> None:
+        """Write ``api_keys.last_used_at`` for a key that just authenticated (best-effort).
+
+        Stamps at most once a minute per key: the stamp is a row write on every authenticated
+        request otherwise. A failure is swallowed — it must never fail the request.
+        """
+        try:
+            self._execute_write(
+                "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s "
+                "AND (last_used_at IS NULL "
+                "OR last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute')",
+                (key_id,),
+            )
+        except Exception:
+            pass  # Don't fail if we can't update last_used_at
 
     def get_fallback_creator_user_id_for_tenant(self, tenant_id: str) -> Optional[str]:
         """
@@ -10998,12 +11083,13 @@ class Database:
         return self._guarded_tx(work)
 
     def is_user_tenant_admin(self, tenant_id: str, user_id: str) -> bool:
-        """True if user is a tenant administrator."""
-        q = """
-            SELECT 1 FROM apiome.tenant_administrators
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid LIMIT 1
+        """True if user is a tenant administrator.
+
+        Answered from the cached authorization context (DBP-1.3, #7186), so it costs no statement
+        when authentication or a permission check already resolved the same user and tenant.
         """
-        return bool(self.execute_query(q, (tenant_id, user_id)))
+        ctx = self.get_authorization_context(user_id, tenant_id=tenant_id)
+        return bool(ctx and ctx.is_admin)
 
     # ------------------------------------------------------------------
     # Granular RBAC (#3611): roles, permissions, members, access audit
@@ -11017,13 +11103,113 @@ class Database:
 
         A tenant administrator (Owner-equivalent / legacy ``tenant_administrators``) is allowed
         everything; otherwise the user's assigned role — or the built-in Editor default for a member
-        with no explicit role — must grant ``resource:action``.
+        with no explicit role — must grant ``resource:action``. Resolved with one statement and
+        cached (:meth:`get_authorization_context`).
         """
-        if self.is_user_tenant_admin(tenant_id, user_id):
-            return True
-        return f"{resource}:{action}" in self.get_effective_permissions(
-            tenant_id, user_id
+        ctx = self.get_authorization_context(user_id, tenant_id=tenant_id)
+        return bool(ctx and ctx.allows(resource, action))
+
+    #: The authorization statement (DBP-1.3, #7186). ``{tenant_filter}`` picks the tenant by slug
+    #: (active tenants only) or by id (any tenant, as the per-table checks it replaces did).
+    #: ``permissions`` reproduces :meth:`get_effective_permissions`: the assigned roles' grants, or
+    #: — when those grant nothing — the Editor grid for a member who is not suspended.
+    _AUTHORIZATION_CONTEXT_SQL = """
+        WITH t AS (
+            SELECT id, slug, name, deleted_at IS NULL AS active
+            FROM apiome.tenants
+            WHERE {tenant_filter}
+            LIMIT 1
+        ), f AS (
+            SELECT t.*,
+                   EXISTS (
+                       SELECT 1 FROM apiome.tenant_administrators ta
+                       WHERE ta.tenant_id = t.id AND ta.user_id = %(user_id)s::uuid
+                   ) AS is_admin,
+                   EXISTS (
+                       SELECT 1 FROM apiome.tenant_users tu
+                       WHERE tu.tenant_id = t.id AND tu.user_id = %(user_id)s::uuid
+                         AND tu.status <> 'suspended'
+                   ) AS is_active_member,
+                   (
+                       SELECT array_agg(DISTINCT rp.resource::text || ':' || rp.action::text)
+                       FROM apiome.tenant_user_roles tur
+                       JOIN apiome.role_permissions rp ON rp.role_id = tur.role_id
+                       WHERE tur.tenant_id = t.id AND tur.user_id = %(user_id)s::uuid
+                   ) AS assigned
+            FROM t
         )
+        SELECT f.id::text AS tenant_id, f.slug AS tenant_slug, f.name AS tenant_name,
+               f.active AS tenant_active, f.is_admin, f.is_active_member,
+               COALESCE(
+                   f.assigned,
+                   CASE WHEN f.is_active_member THEN (
+                       SELECT array_agg(DISTINCT rp.resource::text || ':' || rp.action::text)
+                       FROM apiome.roles r
+                       JOIN apiome.role_permissions rp ON rp.role_id = r.id
+                       WHERE r.tenant_id = f.id AND r.slug = 'editor'
+                   ) END,
+                   ARRAY[]::text[]
+               ) AS permissions
+        FROM f
+    """
+
+    def get_authorization_context(
+        self,
+        user_id: Optional[str],
+        *,
+        tenant_slug: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+    ) -> Optional[authz_cache.AuthorizationContext]:
+        """Resolve a user's access to one tenant with a single statement, cached (DBP-1.3, #7186).
+
+        Returns the tenant row, whether the user is an active member and/or an administrator, and
+        the permissions their role grants. Reused from the current request's memo or the process
+        cache (``AUTH_CACHE_TTL_SECONDS``) when either holds it; see :mod:`app.authz_cache`.
+
+        Args:
+            user_id: The user (UUID text). Anything else resolves to ``None``.
+            tenant_slug: Look the tenant up by slug; only an active (not deleted) tenant matches.
+            tenant_id: Look the tenant up by id; a deleted tenant still matches, with
+                ``tenant_active`` false. Exactly one of ``tenant_slug`` and ``tenant_id`` is given.
+
+        Returns:
+            The context, or ``None`` for an unknown tenant or a malformed id.
+        """
+        if not user_id or not is_uuid_string(str(user_id)):
+            return None
+        uid = str(user_id).lower()
+        if tenant_id is not None:
+            if not is_uuid_string(str(tenant_id)):
+                return None
+            key = authz_cache.id_key(uid, str(tenant_id))
+            tenant_filter, params = "id = %(tenant)s::uuid", {"tenant": str(tenant_id)}
+        elif tenant_slug:
+            key = authz_cache.slug_key(uid, tenant_slug)
+            tenant_filter = "slug = %(tenant)s AND deleted_at IS NULL"
+            params = {"tenant": str(tenant_slug)}
+        else:
+            return None
+
+        def load() -> Optional[authz_cache.AuthorizationContext]:
+            rows = self.execute_query(
+                self._AUTHORIZATION_CONTEXT_SQL.format(tenant_filter=tenant_filter),
+                {**params, "user_id": uid},
+            )
+            if not rows:
+                return None
+            row = rows[0]
+            return authz_cache.AuthorizationContext(
+                tenant_id=str(row["tenant_id"]),
+                tenant_slug=row["tenant_slug"],
+                tenant_name=row.get("tenant_name"),
+                tenant_active=bool(row.get("tenant_active", True)),
+                user_id=uid,
+                is_admin=bool(row.get("is_admin")),
+                is_active_member=bool(row.get("is_active_member")),
+                permissions=frozenset(row.get("permissions") or ()),
+            )
+
+        return authz_cache.resolve(key, load)
 
     def _modify(self, query: str, params: tuple = None) -> int:
         """Execute a write that returns no rows (UPDATE/DELETE/INSERT-without-RETURNING).
@@ -11064,40 +11250,10 @@ class Database:
         A member with no explicit role assignment inherits the built-in **Editor** grid (any member
         could create/edit content before RBAC). A suspended member has no permissions. Tenant
         administrators are handled upstream by the guard's full-access plane and never reach here.
+        Read from :meth:`get_authorization_context` (one cached statement, DBP-1.3).
         """
-        rows = self.execute_query(
-            """
-            SELECT rp.resource, rp.action
-            FROM apiome.tenant_user_roles tur
-            JOIN apiome.role_permissions rp ON rp.role_id = tur.role_id
-            WHERE tur.tenant_id = %s::uuid AND tur.user_id = %s::uuid
-            """,
-            (tenant_id, user_id),
-        )
-        if rows:
-            return {f"{r['resource']}:{r['action']}" for r in rows}
-
-        member = self.execute_query(
-            """
-            SELECT 1 FROM apiome.tenant_users
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND status <> 'suspended'
-            LIMIT 1
-            """,
-            (tenant_id, user_id),
-        )
-        if not member:
-            return set()
-
-        editor_rows = self.execute_query(
-            """
-            SELECT rp.resource, rp.action
-            FROM apiome.roles r
-            JOIN apiome.role_permissions rp ON rp.role_id = r.id
-            WHERE r.tenant_id = %s::uuid AND r.slug = 'editor'
-            """,
-            (tenant_id,),
-        )
-        return {f"{r['resource']}:{r['action']}" for r in editor_rows}
+        ctx = self.get_authorization_context(user_id, tenant_id=tenant_id)
+        return set(ctx.permissions) if ctx else set()
 
     # ---------------------------------------------------------------------------------------
     # Two-factor admin reset (TFA-1.2, #5656)
@@ -11766,13 +11922,20 @@ class Database:
         except Exception:
             conn.rollback()
             raise
+        finally:
+            # The grid changes what every holder of the role (or, for Editor, every member
+            # without one) may do. The role's tenant is not an argument, so forget them all.
+            authz_cache.invalidate_member(None, None)
 
     def delete_role(self, tenant_id: str, role_id: str) -> int:
         """Delete a custom role (assignments cascade). Returns rows deleted."""
-        return self._modify(
-            "DELETE FROM apiome.roles WHERE id = %s::uuid AND tenant_id = %s::uuid AND is_builtin = false",
-            (role_id, tenant_id),
-        )
+        try:
+            return self._modify(
+                "DELETE FROM apiome.roles WHERE id = %s::uuid AND tenant_id = %s::uuid AND is_builtin = false",
+                (role_id, tenant_id),
+            )
+        finally:
+            authz_cache.invalidate_member(tenant_id, None)
 
     # ---- Members -----------------------------------------------------
 
@@ -11998,21 +12161,27 @@ class Database:
 
     def add_member(self, tenant_id: str, user_id: str, status: str = "active") -> None:
         """Add (or reactivate) a tenant membership with the given lifecycle status."""
-        self._modify(
-            """
-            INSERT INTO apiome.tenant_users (tenant_id, user_id, status)
-            VALUES (%s::uuid, %s::uuid, %s)
-            ON CONFLICT (tenant_id, user_id) DO UPDATE SET status = EXCLUDED.status
-            """,
-            (tenant_id, user_id, status),
-        )
+        try:
+            self._modify(
+                """
+                INSERT INTO apiome.tenant_users (tenant_id, user_id, status)
+                VALUES (%s::uuid, %s::uuid, %s)
+                ON CONFLICT (tenant_id, user_id) DO UPDATE SET status = EXCLUDED.status
+                """,
+                (tenant_id, user_id, status),
+            )
+        finally:
+            authz_cache.invalidate_member(tenant_id, user_id)
 
     def set_member_status(self, tenant_id: str, user_id: str, status: str) -> int:
         """Set a member's lifecycle status (active/pending/suspended). Returns rows updated."""
-        return self._modify(
-            "UPDATE apiome.tenant_users SET status = %s WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
-            (status, tenant_id, user_id),
-        )
+        try:
+            return self._modify(
+                "UPDATE apiome.tenant_users SET status = %s WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+                (status, tenant_id, user_id),
+            )
+        finally:
+            authz_cache.invalidate_member(tenant_id, user_id)
 
     def activate_pending_membership(self, tenant_id: str, user_id: str) -> str:
         """Activate a user's *pending* membership in a tenant (OLO-4.4, #4208).
@@ -12037,6 +12206,7 @@ class Database:
             (tenant_id, user_id),
         )
         if updated:
+            authz_cache.invalidate_member(tenant_id, user_id)
             return "activated"
         rows = self.execute_query(
             "SELECT status FROM apiome.tenant_users WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
@@ -12049,14 +12219,17 @@ class Database:
 
     def assign_member_role(self, tenant_id: str, user_id: str, role_id: str) -> None:
         """Assign (replacing any existing) a role to a tenant member."""
-        self._modify(
-            """
-            INSERT INTO apiome.tenant_user_roles (tenant_id, user_id, role_id)
-            VALUES (%s::uuid, %s::uuid, %s::uuid)
-            ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_id = EXCLUDED.role_id
-            """,
-            (tenant_id, user_id, role_id),
-        )
+        try:
+            self._modify(
+                """
+                INSERT INTO apiome.tenant_user_roles (tenant_id, user_id, role_id)
+                VALUES (%s::uuid, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_id = EXCLUDED.role_id
+                """,
+                (tenant_id, user_id, role_id),
+            )
+        finally:
+            authz_cache.invalidate_member(tenant_id, user_id)
 
     def remove_member(self, tenant_id: str, user_id: str) -> int:
         """Offboard a member: drop membership, role assignment, and any tenant-admin row."""
@@ -12081,6 +12254,8 @@ class Database:
         except Exception:
             conn.rollback()
             raise
+        finally:
+            authz_cache.invalidate_member(tenant_id, user_id)
 
     def tenant_has_feature_flag(
         self,
@@ -28777,9 +28952,26 @@ class Database:
         """
         if not secret or len(secret) < self._MCP_API_KEY_PREFIX_CHARS:
             return None
+        # DBP-1.3 (#7186): a secret that verified within API_KEY_CACHE_TTL_SECONDS skips bcrypt;
+        # its row is re-read by id (still unrevoked, unexpired, same hash) on every call.
+        cache_key = "mcp:" + secret
+        cached = authz_cache.get_api_key(cache_key)
+        if cached is not None:
+            live = self.execute_query(
+                """
+                SELECT tenant_id FROM apiome.mcp_api_keys
+                WHERE id = %s::uuid AND key_hash = %s
+                  AND revoked_at IS NULL
+                  AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+                """,
+                (cached.key_id, cached.key_hash),
+            )
+            if live:
+                return str(live[0]["tenant_id"])
+            authz_cache.forget_api_key(cache_key)
         rows = self.execute_query(
             """
-            SELECT tenant_id, key_hash
+            SELECT id, tenant_id, key_hash
             FROM apiome.mcp_api_keys
             WHERE prefix = %s
               AND revoked_at IS NULL
@@ -28789,13 +28981,24 @@ class Database:
         )
         digest = hashlib.sha256(secret.encode("utf-8")).digest()
         for row in rows or []:
-            key_hash = row.get("key_hash")
+            stored = row.get("key_hash")
+            key_hash = stored
             if isinstance(key_hash, memoryview):
                 key_hash = key_hash.tobytes()
             elif isinstance(key_hash, str):
                 key_hash = key_hash.encode("utf-8")
             try:
                 if key_hash and bcrypt.checkpw(digest, key_hash):
+                    if row.get("id") is not None:
+                        authz_cache.remember_api_key(
+                            cache_key,
+                            authz_cache.ApiKeyCacheEntry(
+                                key_id=str(row["id"]),
+                                key_hash=key_hash if isinstance(stored, memoryview) else stored,
+                                tenant_id=str(row["tenant_id"]),
+                                stamped_at=time.monotonic(),
+                            ),
+                        )
                     return str(row["tenant_id"])
             except (ValueError, TypeError):
                 continue
@@ -32428,63 +32631,52 @@ class Database:
         role — or the built-in Editor default for a member with no explicit
         role — must grant versions:edit) but runs on the transaction cursor,
         because the shared helpers commit and would break the open transaction.
+        One statement (DBP-1.3, #7186): it runs while the version row is locked,
+        so it used to hold the lock across five round trips.
         """
         if not user_id or not is_uuid_string(str(user_id)):
             return False
         cursor.execute(
             """
-            SELECT 1 FROM apiome.tenant_administrators
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid LIMIT 1
+            SELECT (
+                EXISTS (
+                    SELECT 1 FROM apiome.tenant_administrators
+                    WHERE tenant_id = %(tenant_id)s::uuid AND user_id = %(user_id)s::uuid
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM apiome.tenant_user_roles tur
+                    JOIN apiome.role_permissions rp ON rp.role_id = tur.role_id
+                    WHERE tur.tenant_id = %(tenant_id)s::uuid AND tur.user_id = %(user_id)s::uuid
+                      AND rp.resource = 'versions' AND rp.action = 'edit'
+                )
+                OR (
+                    -- No explicit role: an active member inherits the Editor grid.
+                    NOT EXISTS (
+                        SELECT 1 FROM apiome.tenant_user_roles
+                        WHERE tenant_id = %(tenant_id)s::uuid AND user_id = %(user_id)s::uuid
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM apiome.tenant_users
+                        WHERE tenant_id = %(tenant_id)s::uuid AND user_id = %(user_id)s::uuid
+                          AND status <> 'suspended'
+                    )
+                    AND EXISTS (
+                        SELECT 1
+                        FROM apiome.roles r
+                        JOIN apiome.role_permissions rp ON rp.role_id = r.id
+                        WHERE r.tenant_id = %(tenant_id)s::uuid AND r.slug = 'editor'
+                          AND rp.resource = 'versions' AND rp.action = 'edit'
+                    )
+                )
+            ) AS allowed
             """,
-            (tenant_id, user_id),
+            {"tenant_id": tenant_id, "user_id": user_id},
         )
-        if cursor.fetchone():
-            return True
-        cursor.execute(
-            """
-            SELECT 1
-            FROM apiome.tenant_user_roles tur
-            JOIN apiome.role_permissions rp ON rp.role_id = tur.role_id
-            WHERE tur.tenant_id = %s::uuid AND tur.user_id = %s::uuid
-              AND rp.resource = 'versions' AND rp.action = 'edit'
-            LIMIT 1
-            """,
-            (tenant_id, user_id),
-        )
-        if cursor.fetchone():
-            return True
-        cursor.execute(
-            """
-            SELECT 1 FROM apiome.tenant_user_roles
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid LIMIT 1
-            """,
-            (tenant_id, user_id),
-        )
-        if cursor.fetchone():
-            # Explicit roles assigned, none of them grants versions:edit.
+        row = cursor.fetchone()
+        if not row:
             return False
-        cursor.execute(
-            """
-            SELECT 1 FROM apiome.tenant_users
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND status <> 'suspended'
-            LIMIT 1
-            """,
-            (tenant_id, user_id),
-        )
-        if not cursor.fetchone():
-            return False
-        cursor.execute(
-            """
-            SELECT 1
-            FROM apiome.roles r
-            JOIN apiome.role_permissions rp ON rp.role_id = r.id
-            WHERE r.tenant_id = %s::uuid AND r.slug = 'editor'
-              AND rp.resource = 'versions' AND rp.action = 'edit'
-            LIMIT 1
-            """,
-            (tenant_id,),
-        )
-        return bool(cursor.fetchone())
+        return bool(row["allowed"] if isinstance(row, dict) else row[0])
 
     def _cursor_draft_lock_owner(self, cursor, version_id: str) -> Optional[str]:
         """The user holding an unexpired draft lock on the revision, if any."""

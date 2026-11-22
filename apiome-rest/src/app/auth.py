@@ -335,14 +335,13 @@ def validate_user_tenant_access(user_id: str, tenant_slug: str) -> Optional[Dict
         logger.warning("validate_user_tenant_access: invalid user_id=%r", user_id)
         return None
 
-    tenant = db.get_active_tenant_auth_row(tenant_slug)
-    if not tenant:
+    ctx = db.get_authorization_context(uid, tenant_slug=tenant_slug)
+    if not ctx:
         logger.warning("Tenant not found: %s", tenant_slug)
         return None
 
-    tenant_id = tenant["tenant_id"]
-    if not db.user_has_tenant_access(uid, tenant_id):
-        logger.warning("User %s does not have access to tenant %s", uid, tenant_id)
+    if not ctx.has_tenant_access:
+        logger.warning("User %s does not have access to tenant %s", uid, ctx.tenant_id)
         return None
 
     logger.debug(
@@ -350,7 +349,38 @@ def validate_user_tenant_access(user_id: str, tenant_slug: str) -> Optional[Dict
         uid,
         tenant_slug,
     )
-    return tenant
+    return ctx.tenant_row()
+
+
+def resolve_jwt_tenant_access(user_id: Any, tenant_slug: str) -> Dict[str, Any]:
+    """Resolve a signed-in user's access to ``tenant_slug``, or raise the matching HTTP error.
+
+    One authorization statement on a cold cache and none on a warm one (DBP-1.3, #7186): the
+    tenant row, membership, administrator flag and permissions come back together and are reused
+    by the request's permission checks (:meth:`app.database.Database.get_authorization_context`).
+
+    Args:
+        user_id: The JWT's ``user_id`` / ``sub`` claim.
+        tenant_slug: The tenant slug from the URL.
+
+    Returns:
+        The tenant dict (``tenant_id``, ``tenant_slug``, ``tenant_name``).
+
+    Raises:
+        HTTPException: 404 when no active tenant has the slug; 403 when the user is neither an
+            active member nor an administrator of it (or the claim is not a user id).
+    """
+    uid = normalize_user_id(user_id)
+    ctx = db.get_authorization_context(uid, tenant_slug=tenant_slug) if uid else None
+    if ctx is None and (uid is not None or not db.get_active_tenant_auth_row(tenant_slug)):
+        raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant_slug}")
+    if ctx is None or not ctx.has_tenant_access:
+        logger.warning("User %s does not have access to tenant %s", uid or user_id, tenant_slug)
+        raise HTTPException(
+            status_code=403,
+            detail=f"User does not have access to tenant: {tenant_slug}",
+        )
+    return ctx.tenant_row()
 
 
 def validate_authentication(
@@ -396,20 +426,7 @@ def validate_authentication(
                     detail="Invalid JWT token: missing user identifier"
                 )
 
-            tenant_row = db.get_active_tenant_auth_row(tenant_slug)
-            if not tenant_row:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Tenant not found: {tenant_slug}",
-                )
-
-            tenant_data = validate_user_tenant_access(user_id, tenant_slug)
-
-            if not tenant_data:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"User does not have access to tenant: {tenant_slug}"
-                )
+            tenant_data = resolve_jwt_tenant_access(user_id, tenant_slug)
 
             # Return tenant data with user information
             return {
@@ -662,14 +679,7 @@ def resolve_optional_tenant_member_auth(
                 detail="Invalid JWT token: missing user identifier",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        if not db.get_active_tenant_auth_row(tenant_slug):
-            raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant_slug}")
-        tenant_data = validate_user_tenant_access(user_id, tenant_slug)
-        if not tenant_data:
-            raise HTTPException(
-                status_code=403,
-                detail=f"User does not have access to tenant: {tenant_slug}",
-            )
+        resolve_jwt_tenant_access(user_id, tenant_slug)
         return True
 
     api_key_data = db.validate_api_key(key_header)

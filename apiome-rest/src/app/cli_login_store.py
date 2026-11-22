@@ -11,6 +11,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from . import authz_cache
+
 __all__ = [
     "approve_request",
     "collect_key",
@@ -266,4 +268,8 @@ def revoke_cli_login_key(db, key_id: str) -> Optional[bool]:
     )
     if not rows:
         return None
-    return bool(rows[0]["revoked"])
+    revoked = bool(rows[0]["revoked"])
+    if revoked:
+        # The per-request row check already refuses it; this also drops the cached verification.
+        authz_cache.invalidate_api_keys(key_id=key_id)
+    return revoked

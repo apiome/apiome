@@ -39,6 +39,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Mapping, Optional
 
+from . import authz_cache
 from .notification_fanout import NotificationDraft
 from .tenant_admins import tenant_admin_ids
 from .notifications import MAX_RECIPIENTS, TYPE_SEAT_CAP_BLOCKED_SSO
@@ -347,6 +348,10 @@ def provision_member(
     except Exception:
         conn.rollback()
         raise
+    finally:
+        # A membership may have been created or activated: the next request must see it
+        # (DBP-1.3, #7186).
+        authz_cache.invalidate_member(tenant_id, user_id)
 
 
 def _result(outcome: str, role: Optional[Mapping[str, Any]], seat_limit: Optional[int]) -> Dict[str, Any]:

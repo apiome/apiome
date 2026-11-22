@@ -21,7 +21,7 @@ still run in one place. A second copy of auth that drifted from the first would 
 the bug it replaced.
 
 The resolved slug is only a *lookup key*. Authorization is still
-``validate_user_tenant_access``, so a forged ``current_tenant_id`` buys nothing: it resolves to
+``resolve_jwt_tenant_access``, so a forged ``current_tenant_id`` buys nothing: it resolves to
 a tenant the caller is then refused access to.
 
 Scope: the Slate routers only. Changing ``validate_authentication`` itself would touch roughly
