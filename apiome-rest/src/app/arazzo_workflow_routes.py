@@ -148,7 +148,7 @@ def _find_workflow(payload: ArazzoWorkflowsResponse, workflow_id: str) -> Arazzo
 
 
 @router.get("/{tenant_slug}/versions/{version_id}")
-async def list_version_workflows(
+def list_version_workflows(
     tenant_slug: str,
     version_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -175,7 +175,7 @@ async def list_version_workflows(
 
 
 @router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}")
-async def get_version_workflow(
+def get_version_workflow(
     tenant_slug: str,
     version_id: str,
     workflow_id: str,
@@ -210,7 +210,7 @@ async def get_version_workflow(
 
 
 @router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps")
-async def list_version_workflow_steps(
+def list_version_workflow_steps(
     tenant_slug: str,
     version_id: str,
     workflow_id: str,
@@ -246,7 +246,7 @@ async def list_version_workflow_steps(
 
 
 @router.get("/{tenant_slug}/versions/{version_id}/workflows/{workflow_id}/steps/{step_id}")
-async def get_version_workflow_step(
+def get_version_workflow_step(
     tenant_slug: str,
     version_id: str,
     workflow_id: str,
@@ -280,7 +280,7 @@ async def get_version_workflow_step(
 
 
 @router.get("/{tenant_slug}/catalog/{item_id}")
-async def list_catalog_item_workflows(
+def list_catalog_item_workflows(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -314,7 +314,7 @@ async def list_catalog_item_workflows(
 
 
 @router.get("/{tenant_slug}/catalog/{item_id}/revisions/{version_id}")
-async def list_catalog_revision_workflows(
+def list_catalog_revision_workflows(
     tenant_slug: str,
     item_id: str,
     version_id: str,
@@ -353,7 +353,7 @@ async def list_catalog_revision_workflows(
 
 
 @router.get("/{tenant_slug}/operations/{path_operation_id}")
-async def get_workflow_step_operation(
+def get_workflow_step_operation(
     tenant_slug: str,
     path_operation_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -407,7 +407,7 @@ async def get_workflow_step_operation(
         "target faults are 400/404; evidence faults are 400."
     ),
 )
-async def run_version_workflow(
+def run_version_workflow(
     tenant_slug: str,
     version_id: str,
     workflow_id: str,

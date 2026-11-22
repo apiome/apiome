@@ -28,6 +28,7 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import api_check_suite_store
@@ -296,7 +297,7 @@ async def run_check_suite(
             version or an unknown commit, 422 for an invalid commit or an unbuildable draft, 403
             without ``versions:edit``.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     try:
         detail = await api_check_suite_store.run_suite(
             tenant_id=tenant_id,
@@ -305,7 +306,7 @@ async def run_check_suite(
             project_ref=project_ref,
             version_ref=version_ref,
             request=body,
-            consumers_visible=_consumers_visible(auth_data),
+            consumers_visible=await run_in_threadpool(_consumers_visible, auth_data),
         )
     except CheckSuiteError as exc:
         raise _http_error(exc) from exc
@@ -325,7 +326,7 @@ async def run_check_suite(
         "Requires `projects:view`; readable by a CI key holding `diff:read` or `lint:read`."
     ),
 )
-async def read_check_suite(
+def read_check_suite(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -367,7 +368,7 @@ async def read_check_suite(
     summary="List a version's API change check suite evaluations",
     description="Every evaluation of the version, newest first.\n\nRequires `projects:view`.",
 )
-async def list_check_suite_runs(
+def list_check_suite_runs(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -416,7 +417,7 @@ async def list_check_suite_runs(
         "check's summary points at.\n\nRequires `projects:view`."
     ),
 )
-async def read_check_suite_run(
+def read_check_suite_run(
     tenant_slug: str,
     project_ref: str,
     run_id: str,
@@ -461,7 +462,7 @@ async def read_check_suite_run(
     summary="Read the tenant's API change check suite policy",
     description=f"{_POLICY_DESCRIPTION}\n\nRequires `projects:view`.",
 )
-async def get_tenant_check_suite_policy(
+def get_tenant_check_suite_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CheckSuitePolicyOut:
@@ -488,7 +489,7 @@ async def get_tenant_check_suite_policy(
         "`governance.check_suite_policy.update`."
     ),
 )
-async def put_tenant_check_suite_policy(
+def put_tenant_check_suite_policy(
     tenant_slug: str,
     body: CheckSuitePolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -536,7 +537,7 @@ async def put_tenant_check_suite_policy(
         "administrator. Audited as `governance.check_suite_policy.clear`."
     ),
 )
-async def delete_tenant_check_suite_policy(
+def delete_tenant_check_suite_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CheckSuitePolicyOut:
@@ -572,7 +573,7 @@ async def delete_tenant_check_suite_policy(
         "`source` says which supplied it.\n\nRequires `projects:view`."
     ),
 )
-async def get_project_check_suite_policy(
+def get_project_check_suite_policy(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -600,7 +601,7 @@ async def get_project_check_suite_policy(
         "`governance.check_suite_policy.update`."
     ),
 )
-async def put_project_check_suite_policy(
+def put_project_check_suite_policy(
     tenant_slug: str,
     project_ref: str,
     body: CheckSuitePolicyPutRequest,
@@ -654,7 +655,7 @@ async def put_project_check_suite_policy(
         "administrator. Audited as `governance.check_suite_policy.clear`."
     ),
 )
-async def delete_project_check_suite_policy(
+def delete_project_check_suite_policy(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

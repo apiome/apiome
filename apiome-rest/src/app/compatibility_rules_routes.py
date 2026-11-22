@@ -95,7 +95,7 @@ def rule_out(entry: CatalogueEntry) -> CompatibilityRuleOut:
 
 
 @router.get("/rules", response_model=CompatibilityRuleCatalogueOut)
-async def get_compatibility_rules(
+def get_compatibility_rules(
     format: Optional[str] = Query(
         default=None,
         description=(

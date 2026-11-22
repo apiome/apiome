@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .analysis_telemetry import (
@@ -221,7 +222,7 @@ _CONVENTION_QUERY = Query(
 
 
 @router.get("/{tenant_slug}")
-async def list_catalog_items(
+def list_catalog_items(
     tenant_slug: str,
     include_deleted: bool = Query(
         False,
@@ -304,7 +305,7 @@ async def list_catalog_items(
 
 
 @router.get("/{tenant_slug}/facets", response_model=CatalogFacetsResponse)
-async def get_catalog_facets(
+def get_catalog_facets(
     tenant_slug: str,
     include_deleted: bool = Query(False, description="Count soft-deleted items too."),
     identity_group_id: Optional[str] = Query(
@@ -355,7 +356,7 @@ async def get_catalog_facets(
 
 
 @router.put("/{tenant_slug}/{item_id}/categories", response_model=CatalogCategoriesResponse)
-async def set_catalog_item_categories(
+def set_catalog_item_categories(
     tenant_slug: str,
     item_id: str,
     body: CatalogCategoriesUpdate,
@@ -414,7 +415,7 @@ async def set_catalog_item_categories(
 
 
 @router.get("/{tenant_slug}/{item_id}")
-async def get_catalog_item(
+def get_catalog_item(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -474,7 +475,7 @@ async def get_catalog_item(
     "/{tenant_slug}/{item_id}/analysis",
     response_model=PayloadAnalysisRecord,
 )
-async def get_catalog_item_analysis(
+def get_catalog_item_analysis(
     tenant_slug: str,
     item_id: str,
     value_visibility: Optional[str] = Query(
@@ -626,21 +627,21 @@ async def lint_catalog_item(
     """
     tenant_id = auth_data["tenant_id"]
 
-    item = db.get_catalog_item_by_id(item_id, tenant_id)
+    item = await run_in_threadpool(db.get_catalog_item_by_id, item_id, tenant_id)
     if not item:
         raise HTTPException(
             status_code=404,
             detail=f"Catalog item not found: {item_id}",
         )
 
-    revision_id = db.get_latest_revision_id_for_project(item_id, tenant_id)
+    revision_id = await run_in_threadpool(db.get_latest_revision_id_for_project, item_id, tenant_id)
     if not revision_id:
         raise HTTPException(
             status_code=404,
             detail=f"No revision to lint for catalog item: {item_id}",
         )
 
-    version = db.get_version_by_id(revision_id, tenant_id)
+    version = await run_in_threadpool(db.get_version_by_id, revision_id, tenant_id)
     if not version:
         raise HTTPException(
             status_code=404,
@@ -745,7 +746,7 @@ async def convert_catalog_item(
             detail=f"Unsupported conversion target {request.target!r}; only 'openapi' is available today.",
         )
 
-    item = db.get_catalog_item_by_id(item_id, tenant_id)
+    item = await run_in_threadpool(db.get_catalog_item_by_id, item_id, tenant_id)
     if not item:
         raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
 
@@ -753,13 +754,14 @@ async def convert_catalog_item(
     if not effective_dry_run:
         # A commit mints a Project (or a new version of the one a re-convert targets), so it needs
         # the same grant as creating a project (RC6-H5, #6212). The dry-run preview is a read.
-        enforce_permission(
+        await run_in_threadpool(
+            enforce_permission,
             db, auth_data, Resource.PROJECTS, Action.CREATE, target=f"catalog:{item_id}:convert"
         )
     defaults = _conversion_defaults(request)
 
     try:
-        source, _source_version_id = _load_conversion_source(tenant_id, item)
+        source, _source_version_id = await run_in_threadpool(_load_conversion_source, tenant_id, item)
 
         if effective_dry_run:
             preview = preview_conversion(source, defaults)
@@ -805,7 +807,7 @@ async def convert_catalog_item(
     response_model=CatalogProjectionResponse,
     summary="Page through a catalog item's conversion projection manifest",
 )
-async def get_catalog_projection(
+def get_catalog_projection(
     tenant_slug: str,
     item_id: str,
     request: CatalogProjectionRequest = CatalogProjectionRequest(),
@@ -913,7 +915,7 @@ async def get_catalog_projection(
     response_model=CatalogConversionHistoryResponse,
     summary="List a catalog item's conversion provenance history",
 )
-async def get_catalog_conversion_history(
+def get_catalog_conversion_history(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -960,7 +962,7 @@ async def get_catalog_conversion_history(
     response_model=ConversionEvidenceResponse,
     summary="Page through the stored evidence snapshot of one historical conversion",
 )
-async def get_catalog_conversion_evidence(
+def get_catalog_conversion_evidence(
     tenant_slug: str,
     item_id: str,
     provenance_id: str,
@@ -1053,7 +1055,7 @@ async def get_catalog_conversion_evidence(
 
 
 @router.get("/{tenant_slug}/{item_id}/source")
-async def get_catalog_item_source(
+def get_catalog_item_source(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1168,7 +1170,7 @@ class CatalogAnalysisMetricResponse(BaseModel):
         "surface names, and integer/duration fields — never node names, values, or source content."
     ),
 )
-async def record_catalog_analysis_metric(
+def record_catalog_analysis_metric(
     tenant_slug: str,
     request: CatalogAnalysisMetricRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

@@ -21,7 +21,7 @@ router = APIRouter(prefix="/v1/classes", tags=["classes"])
 
 
 @router.get("/{tenant_slug}")
-async def list_classes(
+def list_classes(
     tenant_slug: str,
     version_id: Optional[str] = Query(None, description="Filter by version ID"),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -67,7 +67,7 @@ async def list_classes(
 
 
 @router.get("/{tenant_slug}/{class_id}")
-async def get_class(
+def get_class(
     tenant_slug: str,
     class_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -97,7 +97,7 @@ async def get_class(
 
 
 @router.post("/{tenant_slug}")
-async def create_class(
+def create_class(
     tenant_slug: str,
     request: ClassCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -146,7 +146,7 @@ async def create_class(
 
 
 @router.put("/{tenant_slug}/{class_id}")
-async def update_class(
+def update_class(
     tenant_slug: str,
     class_id: str,
     request: ClassUpdateRequest,
@@ -207,7 +207,7 @@ async def update_class(
 
 
 @router.delete("/{tenant_slug}/{class_id}")
-async def delete_class(
+def delete_class(
     tenant_slug: str,
     class_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -238,7 +238,7 @@ async def delete_class(
 
 
 @router.get("/{tenant_slug}/{class_id}/properties")
-async def get_class_properties(
+def get_class_properties(
     tenant_slug: str,
     class_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -270,7 +270,7 @@ async def get_class_properties(
 
 
 @router.post("/{tenant_slug}/{class_id}/properties")
-async def add_property_to_class(
+def add_property_to_class(
     tenant_slug: str,
     class_id: str,
     request: Dict[str, Any],
@@ -348,7 +348,7 @@ async def add_property_to_class(
 
 
 @router.put("/{tenant_slug}/{class_id}/properties/{class_property_id}")
-async def update_class_property(
+def update_class_property(
     tenant_slug: str,
     class_id: str,
     class_property_id: str,
@@ -436,7 +436,7 @@ async def update_class_property(
 
 
 @router.delete("/{tenant_slug}/{class_id}/properties/{class_property_id}")
-async def delete_class_property(
+def delete_class_property(
     tenant_slug: str,
     class_id: str,
     class_property_id: str,
@@ -483,7 +483,7 @@ async def delete_class_property(
 
 
 @router.get("/{tenant_slug}/version/{version_id}/with-properties-tags")
-async def get_classes_with_properties_and_tags(
+def get_classes_with_properties_and_tags(
     tenant_slug: str,
     version_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -522,7 +522,7 @@ async def get_classes_with_properties_and_tags(
 
 
 @router.get("/{tenant_slug}/{class_id}/with-properties-tags")
-async def get_class_with_properties_and_tags(
+def get_class_with_properties_and_tags(
     tenant_slug: str,
     class_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)

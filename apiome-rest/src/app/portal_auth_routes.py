@@ -252,7 +252,7 @@ def exchange_magic_link(
         "the next request on. Idempotent: an unknown or already revoked session is also `204`."
     ),
 )
-async def sign_out(tenant_slug: str, authorization: Optional[str] = Header(default=None)) -> Response:
+def sign_out(tenant_slug: str, authorization: Optional[str] = Header(default=None)) -> Response:
     """Revoke the caller's session.
 
     Args:
@@ -280,7 +280,7 @@ async def sign_out(tenant_slug: str, authorization: Optional[str] = Header(defau
         "another tenant, or a reader whose membership was revoked."
     ),
 )
-async def read_me(tenant_slug: str, authorization: Optional[str] = Header(default=None)) -> ReaderProfile:
+def read_me(tenant_slug: str, authorization: Optional[str] = Header(default=None)) -> ReaderProfile:
     """Return the signed-in reader.
 
     Args:

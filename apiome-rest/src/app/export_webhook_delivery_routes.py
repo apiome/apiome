@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -340,7 +341,7 @@ async def deliver_export_job_to_webhook(
         HTTPException: 403 without ``versions:publish``; 400 for an invalid or refused destination;
             404 for an unknown job; 409 for a job that cannot be delivered; 410 for an expired artifact.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     return await perform_webhook_delivery(tenant_slug, tenant_id, job_id, body, auth_data)
@@ -369,7 +370,7 @@ async def list_export_job_webhook_deliveries(
     Returns:
         The runs, newest first.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_webhook_delivery_runs, tenant_id, job_id)

@@ -92,7 +92,7 @@ def _hit(row: Mapping[str, Any]) -> ModelSearchHit:
 
 
 @router.get("/{tenant_slug}/model", response_model=ModelSearchResponse)
-async def search_normalized_model(
+def search_normalized_model(
     tenant_slug: str,
     q: str = Query(
         ...,

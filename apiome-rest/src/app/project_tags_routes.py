@@ -51,7 +51,7 @@ def _assert_class_in_tenant(class_id: str, tenant_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/{project_id}", response_model=List[TagSchema])
-async def list_project_tags(
+def list_project_tags(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -64,7 +64,7 @@ async def list_project_tags(
 
 
 @router.post("/{tenant_slug}/{project_id}", response_model=TagSchema)
-async def create_project_tag(
+def create_project_tag(
     tenant_slug: str,
     project_id: str,
     body: TagCreateRequest,
@@ -91,7 +91,7 @@ async def create_project_tag(
 
 
 @router.patch("/{tenant_slug}/{tag_id}", response_model=TagSchema)
-async def update_project_tag(
+def update_project_tag(
     tenant_slug: str,
     tag_id: str,
     body: TagUpdateRequest,
@@ -124,7 +124,7 @@ async def update_project_tag(
 
 
 @router.delete("/{tenant_slug}/{tag_id}")
-async def delete_project_tag(
+def delete_project_tag(
     tenant_slug: str,
     tag_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -140,7 +140,7 @@ async def delete_project_tag(
 
 
 @router.get("/{tenant_slug}/classes/{class_id}", response_model=List[ClassTagSchema])
-async def list_class_tags(
+def list_class_tags(
     tenant_slug: str,
     class_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -153,7 +153,7 @@ async def list_class_tags(
 
 
 @router.post("/{tenant_slug}/classes/{class_id}", response_model=ClassTagSchema)
-async def assign_tag_to_class(
+def assign_tag_to_class(
     tenant_slug: str,
     class_id: str,
     body: ClassTagAssignRequest,
@@ -177,7 +177,7 @@ async def assign_tag_to_class(
 
 
 @router.delete("/{tenant_slug}/classes/{class_id}/{tag_id}")
-async def remove_tag_from_class(
+def remove_tag_from_class(
     tenant_slug: str,
     class_id: str,
     tag_id: str,

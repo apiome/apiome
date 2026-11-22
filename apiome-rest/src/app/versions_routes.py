@@ -16,6 +16,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.concurrency import run_in_threadpool
 
 from .api_lifecycle_store import timeline_entries as product_timeline_entries
 from .auth import get_authenticated_user_id, validate_authentication
@@ -623,7 +624,7 @@ def _resolve_expected_push_head(
 
 
 @router.get("/{tenant_slug}/sunset-timeline", response_model=SunsetTimelineResponse)
-async def get_sunset_timeline(
+def get_sunset_timeline(
     tenant_slug: str,
     project_id: Optional[str] = Query(None, alias="projectId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -754,7 +755,7 @@ def _sunset_readiness(
 
 
 @router.get("/{tenant_slug}/{project_id}")
-async def list_versions(
+def list_versions(
     tenant_slug: str,
     project_id: str,
     lifecycle: Optional[str] = Query(
@@ -844,7 +845,7 @@ async def list_versions(
         }
     },
 )
-async def get_version(
+def get_version(
     request: Request,
     response: Response,
     tenant_slug: str,
@@ -1169,7 +1170,7 @@ async def get_version(
         }
     },
 )
-async def get_version_by_version_id(
+def get_version_by_version_id(
     request: Request,
     response: Response,
     tenant_slug: str,
@@ -1456,7 +1457,7 @@ async def get_version_by_version_id(
 
 
 @router.post("/{tenant_slug}/{project_id}")
-async def create_version(
+def create_version(
     tenant_slug: str,
     project_id: str,
     request: VersionCreateRequest,
@@ -1857,7 +1858,7 @@ async def create_version(
 
 
 @router.post("/{tenant_slug}/{project_id}/fork")
-async def fork_version_from_revision(
+def fork_version_from_revision(
     tenant_slug: str,
     project_id: str,
     request: VersionForkRequest,
@@ -1965,7 +1966,7 @@ async def fork_version_from_revision(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}")
-async def update_version(
+def update_version(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -2126,7 +2127,7 @@ async def update_version(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/publish")
-async def publish_version(
+def publish_version(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -2677,7 +2678,7 @@ def _audit_breaking_publish_guardrail(
     "/{tenant_slug}/{project_id}/{version_record_id}/breaking-publish-guardrail",
     response_model=BreakingPublishGuardrailOut,
 )
-async def get_breaking_publish_guardrail(
+def get_breaking_publish_guardrail(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -2721,7 +2722,7 @@ async def get_breaking_publish_guardrail(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock")
-async def set_version_mock(
+def set_version_mock(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -2887,7 +2888,7 @@ def _scenarios_response(mock_settings: Any, version_record_id: str) -> VersionMo
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
-async def get_version_mock_scenarios(
+def get_version_mock_scenarios(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -2900,7 +2901,7 @@ async def get_version_mock_scenarios(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
-async def set_version_mock_scenarios(
+def set_version_mock_scenarios(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3033,7 +3034,7 @@ def _stored_correlation_response(mock_settings: Any, version_record_id: str) -> 
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/correlation")
-async def get_version_mock_correlation(
+def get_version_mock_correlation(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3046,7 +3047,7 @@ async def get_version_mock_correlation(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/correlation")
-async def set_version_mock_correlation(
+def set_version_mock_correlation(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3107,7 +3108,7 @@ async def set_version_mock_correlation(
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/operations")
-async def get_version_mock_operations(
+def get_version_mock_operations(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3261,13 +3262,15 @@ async def preview_version_mock(
             is exhausted; 502 when the mock runtime cannot be reached; 503 when preview is not
             configured on this deployment.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     if request.settings is not None:
         # A draft override is the caller asserting a configuration the version does not have, so it
         # is gated like an edit even though nothing is written.
-        enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+        await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.EDIT)
 
-    existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
+    existing = await run_in_threadpool(
+        _get_version_for_mock_scenarios, project_id, version_record_id, auth_data["tenant_id"]
+    )
     if not preview_is_configured():
         # Checked before any work: generating the version's OpenAPI document and building a bundle
         # only to discover there is nowhere to send them wastes the most expensive part of the call.
@@ -3275,7 +3278,7 @@ async def preview_version_mock(
     _enforce_preview_rate_limit(str(auth_data["tenant_id"]), version_record_id)
     _enforce_preview_body_size(request.request.body)
 
-    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
+    spec = await run_in_threadpool(_generated_spec_for_version, existing, tenant_slug, auth_data["tenant_id"])
     errors = validate_draft_settings(request.settings, spec)
     if errors:
         raise HTTPException(
@@ -3381,7 +3384,7 @@ def _capture_provenance_errors(proposed: Dict[str, Any], mock_settings: Any) -> 
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/fixture-packs")
-async def get_version_mock_fixture_packs(
+def get_version_mock_fixture_packs(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3394,7 +3397,7 @@ async def get_version_mock_fixture_packs(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/fixture-packs")
-async def set_version_mock_fixture_packs(
+def set_version_mock_fixture_packs(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3472,7 +3475,7 @@ def _stored_callbacks_response(mock_settings: Any, version_record_id: str) -> Ve
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/callbacks")
-async def get_version_mock_callbacks(
+def get_version_mock_callbacks(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3485,7 +3488,7 @@ async def get_version_mock_callbacks(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/callbacks")
-async def set_version_mock_callbacks(
+def set_version_mock_callbacks(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3656,7 +3659,7 @@ def _isoformat(value: Any) -> str:
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/capture-policy")
-async def get_version_mock_capture_policy(
+def get_version_mock_capture_policy(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3673,7 +3676,7 @@ async def get_version_mock_capture_policy(
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/capture-policy")
-async def set_version_mock_capture_policy(
+def set_version_mock_capture_policy(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3766,7 +3769,7 @@ async def set_version_mock_capture_policy(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{version_record_id}/mock/capture-policy")
-async def delete_version_mock_capture_policy(
+def delete_version_mock_capture_policy(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3797,7 +3800,7 @@ async def delete_version_mock_capture_policy(
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/captures")
-async def list_version_mock_captures(
+def list_version_mock_captures(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3835,7 +3838,7 @@ async def list_version_mock_captures(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/mock/captures/review")
-async def review_version_mock_captures(
+def review_version_mock_captures(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3868,7 +3871,7 @@ async def review_version_mock_captures(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/mock/captures/publish")
-async def publish_version_mock_captures(
+def publish_version_mock_captures(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -3971,7 +3974,7 @@ async def publish_version_mock_captures(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{version_record_id}/mock/captures")
-async def delete_version_mock_captures(
+def delete_version_mock_captures(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4016,7 +4019,7 @@ def _bundle_filename(project_slug: str, version_label: str) -> str:
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/bundle")
-async def get_version_mock_bundle(
+def get_version_mock_bundle(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4081,7 +4084,7 @@ async def get_version_mock_bundle(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/unpublish")
-async def unpublish_version(
+def unpublish_version(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4249,7 +4252,7 @@ def _freeze_response(existing: Dict[str, Any], body: Dict[str, Any]) -> FreezeSc
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
-async def freeze_version_schema(
+def freeze_version_schema(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4337,7 +4340,7 @@ async def freeze_version_schema(
 
 
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
-async def get_version_freeze_status(
+def get_version_freeze_status(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4359,7 +4362,7 @@ async def get_version_freeze_status(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
-async def unfreeze_version_schema(
+def unfreeze_version_schema(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -4406,7 +4409,7 @@ async def unfreeze_version_schema(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{version_record_id}")
-async def delete_version(
+def delete_version(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

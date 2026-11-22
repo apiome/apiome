@@ -16,7 +16,7 @@ router = APIRouter(prefix="/v1/openapi", tags=["openapi-change-report"])
 
 
 @router.post("/change-report", response_model=ChangeReportModel)
-async def post_openapi_change_report(
+def post_openapi_change_report(
     body: OpenApiChangeReportRequest,
     _auth: Dict[str, Any] = Depends(validate_authentication),
 ) -> ChangeReportModel:

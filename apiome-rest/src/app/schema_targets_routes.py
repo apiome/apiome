@@ -55,7 +55,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["schema-validation"])
         "resolves to material no canonical model can be rebuilt from."
     ),
 )
-async def list_targets_for_schema_ref(
+def list_targets_for_schema_ref(
     tenant_slug: str,
     schema_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

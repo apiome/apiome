@@ -819,7 +819,7 @@ async def list_export_targets(
         "again."
     ),
 )
-async def get_export_targets_fidelity(
+def get_export_targets_fidelity(
     tenant_slug: str,
     token: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -864,7 +864,7 @@ async def get_export_targets_fidelity(
         "hard-coding URLs in components."
     ),
 )
-async def get_capability_registry(
+def get_capability_registry(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CapabilityRegistrySnapshot:
@@ -897,7 +897,7 @@ async def get_capability_registry(
         "detailed fidelity panel; the same envelope is embedded in an export job result."
     ),
 )
-async def preview_export_fidelity(
+def preview_export_fidelity(
     tenant_slug: str,
     request: ExportPreviewRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -969,7 +969,7 @@ async def preview_export_fidelity(
         "two-way entity ↔ code selection."
     ),
 )
-async def preview_export_manifest(
+def preview_export_manifest(
     tenant_slug: str,
     request: ExportPreviewManifestRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1134,7 +1134,7 @@ class ExportProjectionMetricResponse(BaseModel):
         "optional integer/reason-category fields — never construct labels or source content."
     ),
 )
-async def record_projection_metric(
+def record_projection_metric(
     tenant_slug: str,
     request: ExportProjectionMetricRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1179,7 +1179,7 @@ async def record_projection_metric(
         "vocabulary — never an artifact name, source, file or option value."
     ),
 )
-async def record_studio_metric(
+def record_studio_metric(
     tenant_slug: str,
     request: StudioMetricRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1222,7 +1222,7 @@ async def record_studio_metric(
         "the *Understand export fidelity* guide, `apiome-docs/docs/ship/export-fidelity.md` (EFP-3.3)."
     ),
 )
-async def get_projection_evidence(
+def get_projection_evidence(
     tenant_slug: str,
     request: ExportProjectionEvidenceRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1625,7 +1625,7 @@ def render_emitted_document(
     ),
     response_class=Response,
 )
-async def emit_export_document(
+def emit_export_document(
     tenant_slug: str,
     request: ExportDocumentRequest,
     accept: Optional[str] = Header(None),
@@ -1711,7 +1711,7 @@ async def emit_export_document(
         "fidelity report (no artifact), the same shape ``POST …/preview`` returns."
     ),
 )
-async def dispatch_export_document(
+def dispatch_export_document(
     tenant_slug: str,
     request: ExportDispatchRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2032,7 +2032,7 @@ async def verify_export(
         "to show what a lossy conversion does."
     ),
 )
-async def roundtrip_export(
+def roundtrip_export(
     tenant_slug: str,
     request: ExportRoundtripRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

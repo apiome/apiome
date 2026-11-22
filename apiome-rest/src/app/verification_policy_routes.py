@@ -237,7 +237,7 @@ def _resolve_subject(
         "whole-spec breaking — with ``isDefault: true``."
     ),
 )
-async def get_verification_policy(
+def get_verification_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VerificationPolicyOut:
@@ -252,7 +252,7 @@ async def get_verification_policy(
     response_model=VerificationPolicyVersionListResponse,
     summary="List saved verification-policy versions",
 )
-async def list_verification_policy_versions(
+def list_verification_policy_versions(
     tenant_slug: str,
     limit: int = Query(50, ge=1, le=200),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -273,7 +273,7 @@ async def list_verification_policy_versions(
         "forward from the current version. Tenant administrators only."
     ),
 )
-async def put_verification_policy(
+def put_verification_policy(
     tenant_slug: str,
     body: VerificationPolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -358,7 +358,7 @@ async def put_verification_policy(
         "whole-spec via version changelogs (#4475); consumer-aware acknowledgment is #4479."
     ),
 )
-async def evaluate_verification_policy_route(
+def evaluate_verification_policy_route(
     tenant_slug: str,
     body: VerificationPolicyEvaluateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -400,7 +400,7 @@ async def evaluate_verification_policy_route(
     response_model=VerificationPolicyEvaluationListResponse,
     summary="List recent verification-policy evaluations",
 )
-async def list_verification_policy_evaluations_route(
+def list_verification_policy_evaluations_route(
     tenant_slug: str,
     version_record_id: Optional[str] = Query(
         None,

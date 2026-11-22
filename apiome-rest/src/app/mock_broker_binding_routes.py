@@ -35,6 +35,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -250,7 +251,7 @@ def _audit(
         + "\n\nRequires `versions:view`."
     ),
 )
-async def list_mock_broker_bindings(
+def list_mock_broker_bindings(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -305,7 +306,7 @@ async def list_mock_broker_bindings(
         503: {"description": "A credential was given and no broker encryption key is configured."},
     },
 )
-async def create_mock_broker_binding(
+def create_mock_broker_binding(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -346,7 +347,7 @@ async def create_mock_broker_binding(
         503: {"description": "No broker encryption key is configured."},
     },
 )
-async def rotate_mock_broker_binding(
+def rotate_mock_broker_binding(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -392,15 +393,16 @@ async def probe_mock_broker_binding(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> BrokerProbeResult:
     """Probe a binding, then audit the outcome."""
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
-    actor_id = _require_owner(project_id, version_record_id, auth_data)
+    actor_id = await run_in_threadpool(_require_owner, project_id, version_record_id, auth_data)
     tenant_id = str(auth_data["tenant_id"])
     row = get_binding(tenant_id, version_record_id, binding_id)
     if row is None:
         raise _not_found()
     result = await probe_binding(row)
-    _audit(
+    await run_in_threadpool(
+        _audit,
         tenant_id=tenant_id,
         action=AUDIT_TEST,
         auth_data=auth_data,
@@ -423,7 +425,7 @@ async def probe_mock_broker_binding(
     ),
     responses={404: {"description": "No such binding on this version."}},
 )
-async def delete_mock_broker_binding(
+def delete_mock_broker_binding(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

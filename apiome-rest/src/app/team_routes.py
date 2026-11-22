@@ -166,7 +166,7 @@ def _http_error(exc: TeamValidationError) -> HTTPException:
         "Deleted teams are not listed.\n\nRequires `teams:view`."
     ),
 )
-async def list_tenant_teams(
+def list_tenant_teams(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> TeamListResponse:
     """List the tenant's teams.
@@ -199,7 +199,7 @@ async def list_tenant_teams(
         "Audited as `team.create`. Requires `teams:create`."
     ),
 )
-async def create_tenant_team(
+def create_tenant_team(
     tenant_slug: str,
     body: TeamInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -236,7 +236,7 @@ async def create_tenant_team(
     summary="Read a team",
     description="One live team with its members, leads first.\n\nRequires `teams:view`.",
 )
-async def read_tenant_team(
+def read_tenant_team(
     tenant_slug: str,
     team_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -273,7 +273,7 @@ async def read_tenant_team(
         "\n\nRequires `teams:view`."
     ),
 )
-async def read_tenant_team_activity(
+def read_tenant_team_activity(
     tenant_slug: str,
     team_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -310,7 +310,7 @@ async def read_tenant_team_activity(
         "Requires `teams:edit`."
     ),
 )
-async def patch_tenant_team(
+def patch_tenant_team(
     tenant_slug: str,
     team_slug: str,
     body: TeamPatch,
@@ -352,7 +352,7 @@ async def patch_tenant_team(
         "Audited as `team.delete`. Requires `teams:delete`."
     ),
 )
-async def delete_tenant_team(
+def delete_tenant_team(
     tenant_slug: str,
     team_slug: str,
     reassign_to: Optional[str] = Query(
@@ -408,7 +408,7 @@ async def delete_tenant_team(
         "Requires `teams:edit`."
     ),
 )
-async def put_tenant_team_members(
+def put_tenant_team_members(
     tenant_slug: str,
     team_slug: str,
     body: TeamMembersInput,

@@ -83,7 +83,7 @@ def _duplicate_http() -> HTTPException:
 
 
 @router.get("/{tenant_slug}/deliveries/dead-letter", response_model=List[PushWebhookDeadLetterItem])
-async def list_push_webhook_dead_letter_deliveries(
+def list_push_webhook_dead_letter_deliveries(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[PushWebhookDeadLetterItem]:
@@ -107,7 +107,7 @@ async def list_push_webhook_dead_letter_deliveries(
 
 
 @router.get("/{tenant_slug}/deliveries/{event_id}", response_model=PushWebhookDeliveryEventDetailResponse)
-async def get_push_webhook_delivery_detail(
+def get_push_webhook_delivery_detail(
     tenant_slug: str,
     event_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -146,7 +146,7 @@ async def get_push_webhook_delivery_detail(
 
 
 @router.get("/{tenant_slug}", response_model=List[PushWebhookSubscriptionResponse])
-async def list_push_webhook_subscriptions(
+def list_push_webhook_subscriptions(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[PushWebhookSubscriptionResponse]:
@@ -157,7 +157,7 @@ async def list_push_webhook_subscriptions(
 
 
 @router.post("/{tenant_slug}", response_model=PushWebhookSubscriptionResponse)
-async def create_push_webhook_subscription(
+def create_push_webhook_subscription(
     tenant_slug: str,
     body: PushWebhookSubscriptionCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -189,7 +189,7 @@ async def create_push_webhook_subscription(
 
 
 @router.get("/{tenant_slug}/{subscription_id}", response_model=PushWebhookSubscriptionResponse)
-async def get_push_webhook_subscription(
+def get_push_webhook_subscription(
     tenant_slug: str,
     subscription_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -203,7 +203,7 @@ async def get_push_webhook_subscription(
 
 
 @router.patch("/{tenant_slug}/{subscription_id}", response_model=PushWebhookSubscriptionResponse)
-async def update_push_webhook_subscription(
+def update_push_webhook_subscription(
     tenant_slug: str,
     subscription_id: str,
     body: PushWebhookSubscriptionUpdateRequest,

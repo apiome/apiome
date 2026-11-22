@@ -369,7 +369,7 @@ def _require_jwt_user(auth_data: Dict[str, Any]) -> str:
     response_model=RepositoryPollingQuotaResponse,
     response_model_by_alias=True,
 )
-async def get_tenant_repository_polling_quota(
+def get_tenant_repository_polling_quota(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> RepositoryPollingQuotaResponse:
@@ -403,7 +403,7 @@ async def get_tenant_repository_polling_quota(
     response_model=RepositoryPollingQuotaResponse,
     response_model_by_alias=True,
 )
-async def set_tenant_repository_polling_quota(
+def set_tenant_repository_polling_quota(
     tenant_slug: str,
     payload: RepositoryPollingQuotaUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -449,7 +449,7 @@ async def set_tenant_repository_polling_quota(
     response_model=RepositoryQuotaTelemetryResponse,
     response_model_by_alias=True,
 )
-async def get_tenant_repository_quota_telemetry(
+def get_tenant_repository_quota_telemetry(
     tenant_slug: str,
     days: int = Query(
         DEFAULT_TELEMETRY_DAYS,
@@ -507,7 +507,7 @@ async def get_tenant_repository_quota_telemetry(
         }
     },
 )
-async def export_tenant_repository_audit(
+def export_tenant_repository_audit(
     tenant_slug: str,
     from_: Optional[str] = Query(
         None,
@@ -628,7 +628,7 @@ def _audit_ip_allowlist(
     response_model=RepositoryWebhookIpAllowlistResponse,
     response_model_by_alias=True,
 )
-async def get_repository_webhook_ip_allowlist(
+def get_repository_webhook_ip_allowlist(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> RepositoryWebhookIpAllowlistResponse:
@@ -661,7 +661,7 @@ async def get_repository_webhook_ip_allowlist(
     response_model=RepositoryWebhookIpAllowlistResponse,
     response_model_by_alias=True,
 )
-async def add_repository_webhook_ip_allowlist_entry(
+def add_repository_webhook_ip_allowlist_entry(
     tenant_slug: str,
     payload: RepositoryWebhookIpAllowlistEntryCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -736,7 +736,7 @@ async def add_repository_webhook_ip_allowlist_entry(
     response_model=RepositoryWebhookIpAllowlistResponse,
     response_model_by_alias=True,
 )
-async def update_repository_webhook_ip_allowlist_entry(
+def update_repository_webhook_ip_allowlist_entry(
     tenant_slug: str,
     entry_id: str,
     payload: RepositoryWebhookIpAllowlistEntryUpdate,
@@ -792,7 +792,7 @@ async def update_repository_webhook_ip_allowlist_entry(
     response_model=RepositoryWebhookIpAllowlistResponse,
     response_model_by_alias=True,
 )
-async def delete_repository_webhook_ip_allowlist_entry(
+def delete_repository_webhook_ip_allowlist_entry(
     tenant_slug: str,
     entry_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -838,7 +838,7 @@ async def delete_repository_webhook_ip_allowlist_entry(
     response_model=RepositoryWebhookIpAllowlistResponse,
     response_model_by_alias=True,
 )
-async def set_repository_webhook_ip_policy(
+def set_repository_webhook_ip_policy(
     tenant_slug: str,
     payload: RepositoryWebhookIpPolicyUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -931,7 +931,7 @@ def _lookup_allowlist_entry(tenant_id: str, entry_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/repositories", response_model=TenantRepositoriesListResponse)
-async def list_tenant_repositories(
+def list_tenant_repositories(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoriesListResponse:
@@ -958,7 +958,7 @@ async def list_tenant_repositories(
     "/{tenant_slug}/repositories/{repository_id}",
     response_model=TenantRepositoryGetResponse,
 )
-async def get_tenant_repository(
+def get_tenant_repository(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1022,7 +1022,7 @@ def _notification_preferences_response(
     response_model=RepositoryNotificationPreferencesResponse,
     response_model_by_alias=True,
 )
-async def get_tenant_repository_notification_preferences(
+def get_tenant_repository_notification_preferences(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1058,7 +1058,7 @@ async def get_tenant_repository_notification_preferences(
     response_model=RepositoryNotificationPreferencesResponse,
     response_model_by_alias=True,
 )
-async def set_tenant_repository_notification_preferences(
+def set_tenant_repository_notification_preferences(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryNotificationPreferencesUpdate,
@@ -1130,7 +1130,7 @@ async def set_tenant_repository_notification_preferences(
     "/{tenant_slug}/repositories/{repository_id}/files",
     response_model=TenantRepositoryFilesListResponse,
 )
-async def list_tenant_repository_files(
+def list_tenant_repository_files(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1316,7 +1316,7 @@ def _catalog_facets(raw: Dict[str, Any]) -> SpecCatalogFacets:
 
 
 @router.get("/{tenant_slug}/repository-files", response_model=SpecCatalogResponse)
-async def list_tenant_repository_spec_catalog(
+def list_tenant_repository_spec_catalog(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     q: Optional[str] = Query(
@@ -1430,7 +1430,7 @@ _MAX_FILE_CONTENT_BYTES = 900_000
     "/{tenant_slug}/repositories/{repository_id}/files/{file_id}/content",
     response_model=TenantRepositoryFileContentResponse,
 )
-async def get_tenant_repository_file_content(
+def get_tenant_repository_file_content(
     tenant_slug: str,
     repository_id: uuid.UUID,
     file_id: uuid.UUID,
@@ -1531,7 +1531,7 @@ async def get_tenant_repository_file_content(
     "/{tenant_slug}/repository-imports/{import_id}/spec",
     response_model=RepositoryImportSpecRead,
 )
-async def read_repository_import_spec(
+def read_repository_import_spec(
     tenant_slug: str,
     import_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1591,7 +1591,7 @@ async def read_repository_import_spec(
 
 
 @router.post("/{tenant_slug}/repositories", response_model=TenantRepositoryCreateResponse)
-async def create_tenant_repository(
+def create_tenant_repository(
     tenant_slug: str,
     body: TenantRepositoryCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1780,7 +1780,7 @@ async def create_tenant_repository(
     "/{tenant_slug}/repositories/{repository_id}",
     response_model=TenantRepositoryGetResponse,
 )
-async def update_tenant_repository(
+def update_tenant_repository(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: TenantRepositoryUpdate,
@@ -1921,7 +1921,7 @@ def _refresh_defaults_response(
     response_model=RepositoryRefreshDefaultsResponse,
     response_model_by_alias=True,
 )
-async def get_repository_refresh_defaults(
+def get_repository_refresh_defaults(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> RepositoryRefreshDefaultsResponse:
@@ -1951,7 +1951,7 @@ async def get_repository_refresh_defaults(
     response_model=RepositoryRefreshDefaultsResponse,
     response_model_by_alias=True,
 )
-async def set_repository_refresh_defaults(
+def set_repository_refresh_defaults(
     tenant_slug: str,
     payload: RepositoryRefreshDefaultsUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2121,7 +2121,7 @@ def _conflict_policy_response(
     response_model=RepositoryConflictPolicyResponse,
     response_model_by_alias=True,
 )
-async def get_repository_conflict_policy(
+def get_repository_conflict_policy(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2156,7 +2156,7 @@ async def get_repository_conflict_policy(
     response_model=RepositoryConflictPolicyResponse,
     response_model_by_alias=True,
 )
-async def set_repository_conflict_policy(
+def set_repository_conflict_policy(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryConflictPolicyUpdate,
@@ -2315,7 +2315,7 @@ def _validated_branch_rules(payload: RepositoryBranchRefreshRulesUpdate) -> List
     response_model=RepositoryBranchRefreshResponse,
     response_model_by_alias=True,
 )
-async def get_repository_branch_refresh_rules(
+def get_repository_branch_refresh_rules(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2349,7 +2349,7 @@ async def get_repository_branch_refresh_rules(
     response_model=RepositoryBranchRefreshResponse,
     response_model_by_alias=True,
 )
-async def set_repository_branch_refresh_rules(
+def set_repository_branch_refresh_rules(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryBranchRefreshRulesUpdate,
@@ -2399,7 +2399,7 @@ async def set_repository_branch_refresh_rules(
     response_model=RepositoryConflictPolicyResponse,
     response_model_by_alias=True,
 )
-async def set_repository_file_conflict_policy(
+def set_repository_file_conflict_policy(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryConflictPolicyOverrideRequest,
@@ -2477,7 +2477,7 @@ async def set_repository_file_conflict_policy(
     "/{tenant_slug}/repositories/{repository_id}/refresh/resume",
     response_model=TenantRepositoryGetResponse,
 )
-async def resume_tenant_repository_refresh(
+def resume_tenant_repository_refresh(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2531,7 +2531,7 @@ async def resume_tenant_repository_refresh(
     response_model=RepositoryWebhookStatusResponse,
     response_model_by_alias=True,
 )
-async def get_tenant_repository_webhook(
+def get_tenant_repository_webhook(
     tenant_slug: str,
     repository_id: uuid.UUID,
     limit: int = Query(
@@ -2606,7 +2606,7 @@ async def get_tenant_repository_webhook(
     response_model=RepositoryWebhookRotateResponse,
     response_model_by_alias=True,
 )
-async def rotate_tenant_repository_webhook_secret(
+def rotate_tenant_repository_webhook_secret(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryWebhookRotateRequest,
@@ -2688,7 +2688,7 @@ async def rotate_tenant_repository_webhook_secret(
     "/{tenant_slug}/repositories/{repository_id}/refresh",
     response_model=RepositoryRefreshNowResponse,
 )
-async def refresh_tenant_repository_now(
+def refresh_tenant_repository_now(
     tenant_slug: str,
     repository_id: uuid.UUID,
     payload: RepositoryRefreshNowRequest,
@@ -2820,7 +2820,7 @@ def _refresh_audit_row_to_entry(row: Dict[str, Any]) -> RefreshHistoryEntryOut:
     response_model=RefreshHistoryPageResponse,
     response_model_by_alias=True,
 )
-async def list_repository_refresh_history(
+def list_repository_refresh_history(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2927,7 +2927,7 @@ async def list_repository_refresh_history(
 
 
 @router.delete("/{tenant_slug}/repositories/{repository_id}")
-async def delete_tenant_repository(
+def delete_tenant_repository(
     tenant_slug: str,
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

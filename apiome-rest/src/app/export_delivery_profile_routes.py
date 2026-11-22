@@ -27,6 +27,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from psycopg2 import errors as pg_errors
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -307,7 +308,7 @@ async def create_delivery_profile(
     Returns:
         The stored profile.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     try:
@@ -345,7 +346,7 @@ async def list_delivery_profiles(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportDeliveryProfileListResponse:
     """List the tenant's delivery profiles."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_delivery_profiles, tenant_id, channel)
@@ -367,7 +368,7 @@ async def get_delivery_profile(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportDeliveryProfileModel:
     """Read one delivery profile."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     return profile_model(await _profile_or_404(tenant_id, profile_id))
@@ -407,7 +408,7 @@ async def update_delivery_profile(
     Returns:
         The updated profile.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _profile_or_404(tenant_id, profile_id)
@@ -451,7 +452,7 @@ async def delete_delivery_profile(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Delete one delivery profile."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _profile_or_404(tenant_id, profile_id)
@@ -478,7 +479,7 @@ async def list_delivery_profile_deliveries(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportDeliveryAttemptListResponse:
     """List one profile's delivery trail."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     await _profile_or_404(tenant_id, profile_id)
@@ -548,7 +549,7 @@ async def deliver_export_job_with_profile(
         HTTPException: 403 without ``versions:publish``; 404 for an unknown profile or job; the
             channel's own 400 / 409 / 410; 503 for a webhook secret this deployment cannot open.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     return await deliver_with_profile(tenant_slug, tenant_id, job_id, body.profile_id, auth_data)
@@ -645,7 +646,7 @@ async def list_export_job_deliveries(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportDeliveryAttemptListResponse:
     """List one export job's deliveries across channels."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_delivery_attempts, tenant_id, job_id=job_id, limit=limit)

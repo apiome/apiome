@@ -23,6 +23,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
@@ -101,8 +102,12 @@ async def record_import_original(
     if not tenant_id:
         raise HTTPException(status_code=403, detail="No tenant context for imports.")
     tenant_id = str(tenant_id)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target="import-originals")
-    version = db.get_version_by_id(body.version_id, tenant_id) if is_uuid_string(body.version_id) else None
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target="import-originals"
+    )
+    version = None
+    if is_uuid_string(body.version_id):
+        version = await run_in_threadpool(db.get_version_by_id, body.version_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {body.version_id}")
     if str(version.get("creator_id") or "") != str(actor_id):

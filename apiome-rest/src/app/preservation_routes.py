@@ -156,7 +156,7 @@ def _stored_dialect(version: Dict[str, Any]) -> str:
     response_model=PreservationEnvelopeResponse,
     response_model_by_alias=True,
 )
-async def get_preservation_envelope(
+def get_preservation_envelope(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -191,7 +191,7 @@ async def get_preservation_envelope(
     response_model=PreservationEnvelopeResponse,
     response_model_by_alias=True,
 )
-async def put_preservation_envelope(
+def put_preservation_envelope(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

@@ -79,7 +79,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "(non-empty means partial evidence)."
     ),
 )
-async def run_contract_suite_for_version(
+def run_contract_suite_for_version(
     tenant_slug: str,
     version_ref: str,
     body: ContractRunRequest,

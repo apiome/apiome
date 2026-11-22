@@ -88,7 +88,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "needs a confirmed owner to publish.\n\nRequires `teams:view`."
     ),
 )
-async def get_ownership_policy(
+def get_ownership_policy(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> OwnershipPolicy:
     """Read the policy."""
@@ -107,7 +107,7 @@ async def get_ownership_policy(
         "Audited as `ownership_policy.update`. Requires `teams:edit`."
     ),
 )
-async def put_ownership_policy(
+def put_ownership_policy(
     tenant_slug: str,
     body: OwnershipPolicyInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -135,7 +135,7 @@ async def put_ownership_policy(
         "`no-owner`).\n\nRequires `versions:view`."
     ),
 )
-async def get_owner_publish_gate(
+def get_owner_publish_gate(
     tenant_slug: str,
     project: str = Query(..., description="The project's id."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -158,7 +158,7 @@ async def get_owner_publish_gate(
         "At most 200 rows per reason; `counts` has the totals.\n\nRequires `teams:view`."
     ),
 )
-async def get_ownership_drift(
+def get_ownership_drift(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> DriftResponse:
     """Read the drift report."""

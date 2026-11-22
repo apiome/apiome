@@ -142,7 +142,7 @@ def _http_error(exc: EvidenceValidationError) -> HTTPException:
         "Requires `verification_evidence:create`."
     ),
 )
-async def create_verification_run(
+def create_verification_run(
     tenant_slug: str,
     body: VerificationRunInput,
     response: Response,
@@ -192,7 +192,7 @@ async def create_verification_run(
         "Requires `verification_evidence:view`."
     ),
 )
-async def list_verification_runs(
+def list_verification_runs(
     tenant_slug: str,
     target_id: Optional[str] = Query(default=None, description="Restrict to one target."),
     suite_digest: Optional[str] = Query(
@@ -245,7 +245,7 @@ async def list_verification_runs(
         "Requires `verification_evidence:view`."
     ),
 )
-async def read_verification_run(
+def read_verification_run(
     tenant_slug: str,
     run_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -294,7 +294,7 @@ async def read_verification_run(
         "Requires `verification_evidence:view`."
     ),
 )
-async def read_verification_run_mock_attestation(
+def read_verification_run_mock_attestation(
     tenant_slug: str,
     run_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -385,7 +385,7 @@ async def read_verification_run_mock_attestation(
         }
     },
 )
-async def export_verification_run(
+def export_verification_run(
     tenant_slug: str,
     run_id: str,
     export_format: str = Query(

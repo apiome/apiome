@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication
 from .database import db
@@ -82,7 +83,7 @@ def _map_reference_error(exc: SchemaReferenceError) -> HTTPException:
         "class must not."
     ),
 )
-async def create_schema_test_suite(
+def create_schema_test_suite(
     tenant_slug: str,
     body: SchemaTestSuiteCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -117,7 +118,7 @@ async def create_schema_test_suite(
         "(``{kind}/{artifact}`` — a version or type segment is tolerated and ignored)."
     ),
 )
-async def list_schema_test_suites(
+def list_schema_test_suites(
     tenant_slug: str,
     ref: Optional[str] = Query(default=None, description="Narrow to one artifact's suites."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -148,7 +149,7 @@ async def list_schema_test_suites(
         "from ``validity_class``, and non-payload entries are ignored."
     ),
 )
-async def import_schema_test_suite(
+def import_schema_test_suite(
     tenant_slug: str,
     body: SuiteImportRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -177,7 +178,7 @@ async def import_schema_test_suite(
     response_model=SchemaTestSuiteModel,
     summary="One suite with its payloads",
 )
-async def get_schema_test_suite(
+def get_schema_test_suite(
     tenant_slug: str,
     suite_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -201,7 +202,7 @@ async def get_schema_test_suite(
     response_model=SchemaTestSuiteModel,
     summary="Rename or re-describe a suite",
 )
-async def update_schema_test_suite(
+def update_schema_test_suite(
     tenant_slug: str,
     suite_id: str,
     body: SchemaTestSuiteUpdateRequest,
@@ -235,7 +236,7 @@ async def update_schema_test_suite(
         "put back."
     ),
 )
-async def replace_schema_test_suite_payloads(
+def replace_schema_test_suite_payloads(
     tenant_slug: str,
     suite_id: str,
     body: SuitePayloadsReplaceRequest,
@@ -264,7 +265,7 @@ async def replace_schema_test_suite_payloads(
     status_code=204,
     summary="Delete a suite and its history",
 )
-async def delete_schema_test_suite(
+def delete_schema_test_suite(
     tenant_slug: str,
     suite_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -314,7 +315,7 @@ async def run_schema_test_suite(
     Raises:
         HTTPException: 403 without ``types:view``, 404 when the suite is not visible.
     """
-    enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.TYPES, Action.VIEW)
     tenant_id = _tenant_id(auth_data)
     _ = tenant_slug
     run = await run_suite(tenant_id, suite_id, body)
@@ -329,7 +330,7 @@ async def run_schema_test_suite(
     summary="A suite's run history",
     description="Newest first. ``limit`` is clamped to 1..100.",
 )
-async def list_schema_test_suite_runs(
+def list_schema_test_suite_runs(
     tenant_slug: str,
     suite_id: str,
     limit: int = Query(default=20, ge=1, le=100),
@@ -360,7 +361,7 @@ async def list_schema_test_suite_runs(
         "regression flag, and the capped findings."
     ),
 )
-async def get_schema_test_suite_run(
+def get_schema_test_suite_run(
     tenant_slug: str,
     suite_id: str,
     run_id: str,
@@ -391,7 +392,7 @@ async def get_schema_test_suite_run(
         "<ref> --suite manifest.json``."
     ),
 )
-async def export_schema_test_suite(
+def export_schema_test_suite(
     tenant_slug: str,
     suite_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

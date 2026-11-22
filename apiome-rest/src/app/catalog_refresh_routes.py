@@ -21,6 +21,7 @@ import logging
 from typing import Any, Dict, Literal, Mapping, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from . import catalog_refresh_store as store
@@ -292,7 +293,7 @@ def _seal(credential: CatalogRefreshCredential) -> Optional[tuple]:
 
 
 @router.get("/{tenant_slug}/refresh-policy", response_model=CatalogRefreshPolicy)
-async def get_catalog_refresh_policy(
+def get_catalog_refresh_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogRefreshPolicy:
@@ -304,7 +305,7 @@ async def get_catalog_refresh_policy(
 
 
 @router.put("/{tenant_slug}/refresh-policy", response_model=CatalogRefreshPolicy)
-async def set_catalog_refresh_policy(
+def set_catalog_refresh_policy(
     tenant_slug: str,
     body: CatalogRefreshPolicy,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -328,7 +329,7 @@ async def set_catalog_refresh_policy(
 
 
 @router.get("/{tenant_slug}/{item_id}/refresh", response_model=CatalogRefreshOut, response_model_by_alias=True)
-async def get_catalog_item_refresh(
+def get_catalog_item_refresh(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -349,7 +350,7 @@ async def get_catalog_item_refresh(
 
 
 @router.put("/{tenant_slug}/{item_id}/refresh", response_model=CatalogRefreshOut, response_model_by_alias=True)
-async def put_catalog_item_refresh(
+def put_catalog_item_refresh(
     tenant_slug: str,
     item_id: str,
     body: CatalogRefreshUpdate,
@@ -417,7 +418,7 @@ async def put_catalog_item_refresh(
 
 
 @router.delete("/{tenant_slug}/{item_id}/refresh", status_code=204)
-async def delete_catalog_item_refresh(
+def delete_catalog_item_refresh(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -455,15 +456,19 @@ async def check_catalog_item_refresh(
 
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    _require_item(tenant_id, item_id)
-    actor_id = enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"catalog:{item_id}:refresh")
+    await run_in_threadpool(_require_item, tenant_id, item_id)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"catalog:{item_id}:refresh"
+    )
 
-    row = store.get_refresh_for_check(db, item_id)
+    row = await run_in_threadpool(store.get_refresh_for_check, db, item_id)
     if row is None or str(row.get("tenant_id")) != tenant_id:
         raise HTTPException(status_code=404, detail=f"Catalog item has no refresh setting: {item_id}")
     if row["cadence"] == CADENCE_OFF:
         raise _refusal(RefreshSettingsError(CODE_REFRESH_OFF, "Refresh is off for this item; choose a cadence first."))
-    if not settings.catalog_refresh_enabled or not store.get_tenant_refresh_enabled(db, tenant_id):
+    if not settings.catalog_refresh_enabled or not await run_in_threadpool(
+        store.get_tenant_refresh_enabled, db, tenant_id
+    ):
         raise _refusal(
             RefreshSettingsError(CODE_REFRESH_DISABLED, "Catalog refresh is switched off for this workspace.")
         )
@@ -480,5 +485,5 @@ async def check_catalog_item_refresh(
     detail: Dict[str, Any] = {"itemId": item_id, "status": outcome.status}
     if outcome.version_id:
         detail.update(versionId=outcome.version_id, versionLabel=outcome.version_label)
-    _audit(tenant_id, AUDIT_CHECKED, actor_id, detail)
-    return _out(item_id, store.get_refresh(db, item_id, tenant_id), tenant_enabled=True)
+    await run_in_threadpool(_audit, tenant_id, AUDIT_CHECKED, actor_id, detail)
+    return _out(item_id, await run_in_threadpool(store.get_refresh, db, item_id, tenant_id), tenant_enabled=True)

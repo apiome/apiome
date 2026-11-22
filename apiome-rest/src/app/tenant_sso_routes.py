@@ -49,6 +49,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from . import sso_provider_store as store
@@ -317,7 +318,7 @@ def _check_view(check: DnsCheck) -> SsoDomainCheckView:
     description="Every identity provider of this workspace with its domains, newest first. "
     f"Secrets are never included.\n\n{_ADMIN_ONLY}",
 )
-async def list_tenant_sso_providers(
+def list_tenant_sso_providers(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> TenantSsoProviderListResponse:
     """List this workspace's providers."""
@@ -347,15 +348,15 @@ async def create_tenant_sso_provider(
 ) -> TenantSsoProviderView:
     """Register a provider for the caller's workspace."""
     _ = tenant_slug
-    tenant_id = require_tenant_admin_session(db, auth_data)
+    tenant_id = await run_in_threadpool(require_tenant_admin_session, db, auth_data)
     try:
-        _check_default_role(tenant_id, payload.default_role_slug)
+        await run_in_threadpool(_check_default_role, tenant_id, payload.default_role_slug)
         values = await build_create_values(payload, tenant_id=tenant_id)
-        row = store.create_provider(db, values, actor=_actor(auth_data))
+        row = await run_in_threadpool(store.create_provider, db, values, actor=_actor(auth_data))
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
-    _audit(auth_data, tenant_id, AUDIT_PROVIDER_CREATED, row["slug"], protocol=row["protocol"])
-    return _tenant_view(row, tenant_id)
+    await run_in_threadpool(_audit, auth_data, tenant_id, AUDIT_PROVIDER_CREATED, row["slug"], protocol=row["protocol"])
+    return await run_in_threadpool(_tenant_view, row, tenant_id)
 
 
 @router.get(
@@ -365,7 +366,7 @@ async def create_tenant_sso_provider(
     summary="Read one SSO provider",
     description=f"One provider with its domains and how many members sign in through it.\n\n{_ADMIN_ONLY}",
 )
-async def get_tenant_sso_provider(
+def get_tenant_sso_provider(
     tenant_slug: str, provider_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> TenantSsoProviderView:
     """Read one provider of the caller's workspace."""
@@ -394,22 +395,23 @@ async def update_tenant_sso_provider(
 ) -> TenantSsoProviderView:
     """Change a provider of the caller's workspace."""
     _ = tenant_slug
-    tenant_id = require_tenant_admin_session(db, auth_data)
-    existing = _load(tenant_id, provider_id)
+    tenant_id = await run_in_threadpool(require_tenant_admin_session, db, auth_data)
+    existing = await run_in_threadpool(_load, tenant_id, provider_id)
     try:
         if "default_role_slug" in payload.model_fields_set:
-            _check_default_role(tenant_id, payload.default_role_slug)
+            await run_in_threadpool(_check_default_role, tenant_id, payload.default_role_slug)
         updates = await build_updates(existing, payload)
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
     if not updates:
-        return _tenant_view(existing, tenant_id)
-    row = store.update_provider(db, provider_id, updates, actor=_actor(auth_data))
+        return await run_in_threadpool(_tenant_view, existing, tenant_id)
+    row = await run_in_threadpool(store.update_provider, db, provider_id, updates, actor=_actor(auth_data))
     if row is None:
         raise HTTPException(
             status_code=404, detail={"error": "sso-provider-not-found", "message": "No such SSO provider."}
         )
-    _audit(
+    await run_in_threadpool(
+        _audit,
         auth_data,
         tenant_id,
         AUDIT_PROVIDER_UPDATED,
@@ -417,7 +419,7 @@ async def update_tenant_sso_provider(
         fields=audited_fields(updates),
         enabled=updates.get("enabled"),
     )
-    return _tenant_view(row, tenant_id)
+    return await run_in_threadpool(_tenant_view, row, tenant_id)
 
 
 @router.delete(
@@ -432,7 +434,7 @@ async def update_tenant_sso_provider(
         f"Audited as `sso.provider.deleted`. {_ADMIN_ONLY}"
     ),
 )
-async def delete_tenant_sso_provider(
+def delete_tenant_sso_provider(
     tenant_slug: str, provider_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> TenantSsoProviderView:
     """Remove a provider of the caller's workspace."""
@@ -470,7 +472,7 @@ async def delete_tenant_sso_provider(
         f"Audited as `sso.provider.updated`. {_ADMIN_ONLY}"
     ),
 )
-async def add_tenant_sso_domain(
+def add_tenant_sso_domain(
     tenant_slug: str,
     provider_id: str,
     payload: SsoDomainCreateRequest,
@@ -501,7 +503,7 @@ async def add_tenant_sso_domain(
         f"Audited as `sso.provider.updated`. {_ADMIN_ONLY}"
     ),
 )
-async def remove_tenant_sso_domain(
+def remove_tenant_sso_domain(
     tenant_slug: str,
     provider_id: str,
     domain: str,
@@ -556,8 +558,8 @@ async def verify_tenant_sso_domain(
 ) -> SsoDomainVerifyResponse:
     """Prove a domain by its DNS TXT challenge."""
     _ = tenant_slug
-    tenant_id = require_tenant_admin_session(db, auth_data)
-    existing = _load(tenant_id, provider_id)
+    tenant_id = await run_in_threadpool(require_tenant_admin_session, db, auth_data)
+    existing = await run_in_threadpool(_load, tenant_id, provider_id)
     try:
         normalized = normalize_domain(domain)
     except SsoConfigError as exc:
@@ -577,21 +579,24 @@ async def verify_tenant_sso_domain(
             expected=token,
             message=f"{normalized} is verified.",
         )
-        return SsoDomainVerifyResponse(provider=_tenant_view(existing, tenant_id), check=_check_view(check))
+        return SsoDomainVerifyResponse(provider=await run_in_threadpool(
+            _tenant_view, existing, tenant_id
+        ), check=_check_view(check))
 
     claimed = SsoConfigError(CODE_DOMAIN_CLAIMED, f"{normalized} is already verified for another workspace.")
-    if store.domain_verified_elsewhere(db, provider_id, normalized):
+    if await run_in_threadpool(store.domain_verified_elsewhere, db, provider_id, normalized):
         raise _refuse(claimed, 409)
 
     enforce_verify_budget(f"{provider_id}:{normalized}")
     check = await check_domain_challenge(normalized, token)
     if check.verified:
         try:
-            store.verify_domain(db, provider_id, normalized, actor=_actor(auth_data))
+            await run_in_threadpool(store.verify_domain, db, provider_id, normalized, actor=_actor(auth_data))
         except SsoConfigError as exc:
             # Lost a race: another workspace proved the same domain a moment earlier.
             raise _refuse(claimed, 409) from exc
-        _audit(
+        await run_in_threadpool(
+            _audit,
             auth_data,
             tenant_id,
             AUDIT_DOMAIN_VERIFIED,
@@ -601,7 +606,9 @@ async def verify_tenant_sso_domain(
             record_name=check.record_name,
         )
     return SsoDomainVerifyResponse(
-        provider=_tenant_view(_load(tenant_id, provider_id), tenant_id), check=_check_view(check)
+        provider=await run_in_threadpool(
+            _tenant_view, await run_in_threadpool(_load, tenant_id, provider_id), tenant_id
+        ), check=_check_view(check)
     )
 
 
@@ -643,7 +650,7 @@ def _provision_refusal(status: int, code: str, message: str) -> HTTPException:
         "verified domains is provisioned."
     ),
 )
-async def provision_tenant_sso_member(
+def provision_tenant_sso_member(
     tenant_slug: str,
     provider_id: str,
     payload: SsoProvisionRequest,

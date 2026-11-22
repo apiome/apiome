@@ -335,7 +335,7 @@ def _outcome_model(outcome: PrBackOutcome, project_id: str, version: Dict[str, A
         "Requires `imports:view`."
     ),
 )
-async def get_pr_back_settings(
+def get_pr_back_settings(
     tenant_slug: str,
     repository_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -378,7 +378,7 @@ async def get_pr_back_settings(
         422: {"description": "Invalid policy, branch, template, reviewer or project id."},
     },
 )
-async def put_pr_back_settings(
+def put_pr_back_settings(
     tenant_slug: str,
     repository_id: str,
     body: PrBackSettingsPutRequest,
@@ -459,7 +459,7 @@ async def put_pr_back_settings(
         "(`reasonCode`, `reason`).\n\nRequires `projects:view`."
     ),
 )
-async def list_pr_back_repositories(
+def list_pr_back_repositories(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -541,7 +541,7 @@ async def list_pr_back_repositories(
         409: {"description": "The project has no source file the repository can receive."},
     },
 )
-async def pr_back_project(
+def pr_back_project(
     tenant_slug: str,
     project_ref: str,
     body: PrBackRequest,

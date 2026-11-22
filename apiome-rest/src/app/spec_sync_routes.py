@@ -31,6 +31,7 @@ import asyncio
 from typing import Any, Dict, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import spec_sync_store
@@ -175,7 +176,7 @@ async def _off_loop(work: Any, *args: Any) -> Any:
         "Requires `projects:view`."
     ),
 )
-async def read_version_sync(
+def read_version_sync(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -215,7 +216,7 @@ async def read_version_sync(
         "Requires `projects:view`."
     ),
 )
-async def read_plan(
+def read_plan(
     tenant_slug: str,
     project_ref: str,
     plan_id: str,
@@ -300,7 +301,7 @@ async def compute_plan(
             the merge base has been rewritten, 422 when a side is not a readable spec document,
             403/502 when the repository cannot be read, 403 without ``versions:edit``.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     return await _off_loop(
         spec_sync_store.compute_plan, tenant_id, project_ref, version_ref, user_id, body
@@ -325,7 +326,7 @@ async def compute_plan(
         "Requires `versions:edit`."
     ),
 )
-async def resolve_conflict(
+def resolve_conflict(
     tenant_slug: str,
     project_ref: str,
     plan_id: str,

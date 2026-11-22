@@ -191,7 +191,7 @@ def _transition(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report/submit",
     response_model=VersionChangeReportOut,
 )
-async def submit_change_report_for_review(
+def submit_change_report_for_review(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -219,7 +219,7 @@ async def submit_change_report_for_review(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report/approve",
     response_model=VersionChangeReportOut,
 )
-async def approve_change_report(
+def approve_change_report(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -251,7 +251,7 @@ async def approve_change_report(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report/reject",
     response_model=VersionChangeReportOut,
 )
-async def reject_change_report(
+def reject_change_report(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -305,7 +305,7 @@ def _pdf_filename(project: Optional[Dict[str, Any]], version: Dict[str, Any]) ->
         409: {"description": "The report is not approved."},
     },
 )
-async def export_change_report_pdf(
+def export_change_report_pdf(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -402,7 +402,7 @@ def _audit_entry(row: Dict[str, Any]) -> ChangeReportAuditEntryOut:
     response_model=ChangeReportAuditPageOut,
     response_model_by_alias=True,
 )
-async def list_change_report_audit(
+def list_change_report_audit(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_change_report_enterprise),
     action: Optional[List[str]] = Query(

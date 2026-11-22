@@ -38,6 +38,7 @@ import uuid
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .archive_intake import ArchiveIntakeError, is_archive_payload, unpack_archive_members
@@ -1391,7 +1392,7 @@ async def plan_bulk_import_payload(
     # Same gate as the pre-flight and git intake: planning is the first step of the import
     # flow and writes nothing, so a caller who may not import has no use for it.
     _ = tenant_slug
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
 
     members, label, git_result = await _resolve_payload(
@@ -1490,7 +1491,7 @@ async def start_bulk_import(
     body: BulkImportStartRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> BulkImportStartResponse:
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
 
     members, label, git_result = await _resolve_payload(

@@ -23,6 +23,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -375,7 +376,9 @@ async def get_tenant_document_store(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> JSONResponse:
     """Read the tenant's document store settings."""
-    enforce_permission(db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store")
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store"
+    )
     _ = tenant_slug
     tenant_id = tenant_id_of(auth_data)
     body = await asyncio.to_thread(lambda: _view(tenant_id, load_settings(db, tenant_id)))
@@ -410,7 +413,9 @@ async def put_tenant_document_store(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
     """Change the tenant's document store settings and start the move if the mode changed."""
-    actor_id = enforce_permission(db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store")
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store"
+    )
     _ = tenant_slug
     _require_allowed()
     tenant_id = tenant_id_of(auth_data)
@@ -437,7 +442,9 @@ async def test_tenant_document_store(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
     """Probe the tenant's bucket with submitted or saved settings."""
-    enforce_permission(db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store")
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store"
+    )
     _ = tenant_slug
     _require_allowed()
     tenant_id = tenant_id_of(auth_data)
@@ -487,7 +494,9 @@ async def cleanup_tenant_document_store(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
     """Delete old copies after an explicit confirm."""
-    enforce_permission(db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store")
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.DOCUMENT_STORE, Action.MANAGE, target="document-store"
+    )
     _ = tenant_slug
     _require_allowed()
     if not body.confirm:

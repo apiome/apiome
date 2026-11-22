@@ -417,7 +417,7 @@ def _merge_session_conflict_json(r: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/{project_id}/version-branches")
-async def list_version_branches(
+def list_version_branches(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -431,7 +431,7 @@ async def list_version_branches(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches")
-async def create_version_branch(
+def create_version_branch(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchCreateRequest,
@@ -465,7 +465,7 @@ async def create_version_branch(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/from-revision")
-async def version_branch_from_revision(
+def version_branch_from_revision(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchFromRevisionRequest,
@@ -529,7 +529,7 @@ async def version_branch_from_revision(
 
 
 @router.patch("/{tenant_slug}/{project_id}/version-branches/{branch_id}")
-async def patch_version_branch_policy(
+def patch_version_branch_policy(
     tenant_slug: str,
     project_id: str,
     branch_id: str,
@@ -612,7 +612,7 @@ async def patch_version_branch_policy(
     "/{tenant_slug}/{project_id}/version-branches/{branch_id}/divergence",
     response_model=VersionBranchDivergenceResponse,
 )
-async def get_version_branch_divergence(
+def get_version_branch_divergence(
     request: Request,
     tenant_slug: str,
     project_id: str,
@@ -736,7 +736,7 @@ async def get_version_branch_divergence(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/merge-preview")
-async def version_branch_merge_preview(
+def version_branch_merge_preview(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchMergePreviewRequest,
@@ -879,7 +879,7 @@ async def version_branch_merge_preview(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/merge")
-async def version_branch_merge(
+def version_branch_merge(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchMergeRequest,
@@ -1462,7 +1462,7 @@ def _rollback_validate_branch_and_revisions(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/rollback-preview")
-async def version_branch_rollback_preview(
+def version_branch_rollback_preview(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchRollbackPreviewRequest,
@@ -1516,7 +1516,7 @@ async def version_branch_rollback_preview(
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/rollback")
-async def version_branch_rollback(
+def version_branch_rollback(
     tenant_slug: str,
     project_id: str,
     body: VersionBranchRollbackRequest,
@@ -1870,7 +1870,7 @@ async def version_branch_rollback(
 
 
 @router.get("/{tenant_slug}/{project_id}/merge-sessions/{merge_session_id}")
-async def get_merge_session(
+def get_merge_session(
     tenant_slug: str,
     project_id: str,
     merge_session_id: str,
@@ -1896,7 +1896,7 @@ async def get_merge_session(
 
 
 @router.get("/{tenant_slug}/{project_id}/merge-sessions/{merge_session_id}/conflicts")
-async def list_merge_session_conflicts_route(
+def list_merge_session_conflicts_route(
     tenant_slug: str,
     project_id: str,
     merge_session_id: str,
@@ -1920,7 +1920,7 @@ async def list_merge_session_conflicts_route(
 
 
 @router.patch("/{tenant_slug}/{project_id}/merge-sessions/{merge_session_id}")
-async def patch_merge_session_status(
+def patch_merge_session_status(
     tenant_slug: str,
     project_id: str,
     merge_session_id: str,

@@ -42,7 +42,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["project-repository-sources"])
         "Requires `projects:view`."
     ),
 )
-async def list_project_repository_sources(
+def list_project_repository_sources(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),

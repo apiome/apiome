@@ -523,7 +523,7 @@ def resolve_primitive_identity(
 
 
 @router.get("/health", response_model=RegistryHealthResponse)
-async def registry_health() -> RegistryHealthResponse:
+def registry_health() -> RegistryHealthResponse:
     """
     Health/ping for the Primitives type-registry layer (#3450).
 
@@ -673,7 +673,7 @@ _SEARCH_CURSOR_DESCRIPTION = (
     response_model=Union[List[PrimitiveSchema], PrimitiveSearchPage],
     responses={400: {"description": "Unknown `scope`, or a `cursor` this endpoint did not mint."}},
 )
-async def list_primitives(
+def list_primitives(
     tenant_slug: str,
     category: Optional[str] = Query(None, description="Filter by category"),
     q: Optional[str] = Query(None, description=_SEARCH_Q_DESCRIPTION),
@@ -769,7 +769,7 @@ async def list_primitives(
 
 
 @router.get("/{tenant_slug}/imports")
-async def list_primitive_imports(
+def list_primitive_imports(
     tenant_slug: str,
     limit: int = Query(50, ge=1, le=500, description="Max number of records to return"),
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
@@ -793,7 +793,7 @@ async def list_primitive_imports(
 
 
 @router.get("/{tenant_slug}/imports/{import_id}")
-async def get_primitive_import(
+def get_primitive_import(
     tenant_slug: str,
     import_id: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
@@ -819,7 +819,7 @@ async def get_primitive_import(
 
 
 @router.get("/{tenant_slug}/unresolved", response_model=UnresolvedRefsResponse)
-async def list_unresolved_refs(
+def list_unresolved_refs(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
 ) -> UnresolvedRefsResponse:
@@ -872,7 +872,7 @@ async def list_unresolved_refs(
 
 
 @router.get("/{tenant_slug}/{primitive_id}")
-async def get_primitive(
+def get_primitive(
     tenant_slug: str,
     primitive_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -929,7 +929,7 @@ async def get_primitive(
 
 
 @router.post("/{tenant_slug}")
-async def create_primitive(
+def create_primitive(
     tenant_slug: str,
     request: PrimitiveCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -1033,7 +1033,7 @@ async def create_primitive(
 
 
 @router.put("/{tenant_slug}/{primitive_id}")
-async def update_primitive(
+def update_primitive(
     tenant_slug: str,
     primitive_id: str,
     request: PrimitiveUpdateRequest,
@@ -1185,7 +1185,7 @@ async def update_primitive(
 
 
 @router.delete("/{tenant_slug}/{primitive_id}")
-async def delete_primitive(
+def delete_primitive(
     tenant_slug: str,
     primitive_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -2004,7 +2004,7 @@ def _normalize_resolutions(
 
 
 @router.post("/{tenant_slug}/import/review")
-async def review_import_primitives(
+def review_import_primitives(
     tenant_slug: str,
     request: PrimitiveImportRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
@@ -2048,7 +2048,7 @@ async def review_import_primitives(
 
 
 @router.post("/{tenant_slug}/import")
-async def import_primitives(
+def import_primitives(
     tenant_slug: str,
     request: PrimitiveImportRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
@@ -2195,7 +2195,7 @@ async def import_primitives(
 
 
 @router.post("/{tenant_slug}/import/stage", response_model=PrimitiveImportStageResult)
-async def stage_import(
+def stage_import(
     tenant_slug: str,
     request: PrimitiveImportStageRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)

@@ -411,7 +411,7 @@ def _apiome_version(request: Request) -> Optional[str]:
     dependencies=[Depends(_require_public_sdk_rate_limit)],
     summary="Describe the public SDK available for a published public version (no auth)",
 )
-async def get_public_sdk_info(
+def get_public_sdk_info(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -526,7 +526,7 @@ async def get_public_sdk_info(
     dependencies=[Depends(_require_public_sdk_rate_limit)],
     summary="Download the client kit for a published public version (no auth)",
 )
-async def download_public_sdk(
+def download_public_sdk(
     request: Request,
     tenant_slug: str,
     project_slug: str,

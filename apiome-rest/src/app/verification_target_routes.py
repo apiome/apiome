@@ -166,7 +166,7 @@ def _http_error(exc: TargetValidationError) -> HTTPException:
         "Requires `verification_targets:view` — the same permission a run needs to resolve one."
     ),
 )
-async def list_verification_targets(
+def list_verification_targets(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VerificationTargetListResponse:
@@ -208,7 +208,7 @@ async def list_verification_targets(
         "Requires `verification_targets:create`."
     ),
 )
-async def create_verification_target(
+def create_verification_target(
     tenant_slug: str,
     body: VerificationTargetInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -249,7 +249,7 @@ async def create_verification_target(
         "Requires `verification_targets:view`."
     ),
 )
-async def get_verification_target(
+def get_verification_target(
     tenant_slug: str,
     target_ref: str,
     include_deleted: bool = Query(
@@ -297,7 +297,7 @@ async def get_verification_target(
         "Requires `verification_targets:edit`."
     ),
 )
-async def update_verification_target(
+def update_verification_target(
     tenant_slug: str,
     target_ref: str,
     body: VerificationTargetPatch,
@@ -342,7 +342,7 @@ async def update_verification_target(
         "Requires `verification_targets:delete`."
     ),
 )
-async def delete_verification_target(
+def delete_verification_target(
     tenant_slug: str,
     target_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -395,7 +395,7 @@ async def delete_verification_target(
         "Requires `verification_targets:view`."
     ),
 )
-async def resolve_verification_target(
+def resolve_verification_target(
     tenant_slug: str,
     target_ref: str,
     body: Optional[ResolveTargetRequest] = None,
@@ -445,7 +445,7 @@ async def resolve_verification_target(
         "Requires `verification_targets:view`."
     ),
 )
-async def read_verification_target_audit(
+def read_verification_target_audit(
     tenant_slug: str,
     target_id: Optional[str] = Query(
         default=None, description="Restrict the ledger to one target's history."

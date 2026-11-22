@@ -148,7 +148,7 @@ def _row_to_entry(row: Dict[str, Any]) -> WorkflowAuditEntryOut:
     response_model=WorkflowAuditPageResponse,
     response_model_by_alias=True,
 )
-async def list_workflow_audit(
+def list_workflow_audit(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     action: Optional[List[str]] = Query(

@@ -292,7 +292,7 @@ def _name_conflict() -> HTTPException:
 
 
 @router.get("/{tenant_slug}", response_model=StyleGuideListResponse)
-async def list_style_guides(
+def list_style_guides(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StyleGuideListResponse:
@@ -316,7 +316,7 @@ async def list_style_guides(
 
 
 @router.post("/{tenant_slug}", response_model=StyleGuideOut, status_code=201)
-async def create_style_guide(
+def create_style_guide(
     tenant_slug: str,
     body: StyleGuideCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -381,7 +381,7 @@ def _transfer_http_error(exc: StyleGuideTransferError) -> HTTPException:
         },
     },
 )
-async def import_style_guide(
+def import_style_guide(
     tenant_slug: str,
     body: StyleGuideImportRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -474,7 +474,7 @@ async def import_style_guide(
 
 
 @router.get("/{tenant_slug}/{guide_id}/export", response_model=StyleGuideExportDocument)
-async def export_style_guide(
+def export_style_guide(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -507,7 +507,7 @@ async def export_style_guide(
 
 
 @router.patch("/{tenant_slug}/{guide_id}", response_model=StyleGuideOut)
-async def update_style_guide(
+def update_style_guide(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuideUpdateRequest,
@@ -563,7 +563,7 @@ async def update_style_guide(
 
 
 @router.delete("/{tenant_slug}/{guide_id}")
-async def delete_style_guide(
+def delete_style_guide(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -630,7 +630,7 @@ def _rules_view(guide: Dict[str, Any], rows: List[Dict[str, Any]]) -> StyleGuide
 
 
 @router.get("/{tenant_slug}/{guide_id}/rules", response_model=StyleGuideRulesResponse)
-async def get_style_guide_rules(
+def get_style_guide_rules(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -648,7 +648,7 @@ async def get_style_guide_rules(
 
 
 @router.put("/{tenant_slug}/{guide_id}/rules", response_model=StyleGuideRulesResponse)
-async def put_style_guide_rules(
+def put_style_guide_rules(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuideRulesPutRequest,
@@ -751,7 +751,7 @@ def _validation_http_error(exc: CustomRuleValidationError) -> HTTPException:
     "/{tenant_slug}/{guide_id}/custom-rules",
     response_model=StyleGuideCustomRulesResponse,
 )
-async def get_style_guide_custom_rules(
+def get_style_guide_custom_rules(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -777,7 +777,7 @@ async def get_style_guide_custom_rules(
         }
     },
 )
-async def put_style_guide_custom_rules(
+def put_style_guide_custom_rules(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuideCustomRulesPutRequest,
@@ -839,7 +839,7 @@ async def put_style_guide_custom_rules(
         }
     },
 )
-async def preview_style_guide_custom_rules(
+def preview_style_guide_custom_rules(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuideCustomRulesPreviewRequest,
@@ -892,7 +892,7 @@ async def preview_style_guide_custom_rules(
 
 
 @router.put("/{tenant_slug}/{guide_id}/default", response_model=StyleGuideOut)
-async def set_tenant_default(
+def set_tenant_default(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -922,7 +922,7 @@ async def set_tenant_default(
 
 
 @router.put("/{tenant_slug}/{guide_id}/assignments/projects/{project_id}")
-async def assign_project(
+def assign_project(
     tenant_slug: str,
     guide_id: str,
     project_id: str,
@@ -948,7 +948,7 @@ async def assign_project(
 
 
 @router.delete("/{tenant_slug}/assignments/projects/{project_id}")
-async def unassign_project(
+def unassign_project(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -971,7 +971,7 @@ async def unassign_project(
     "/{tenant_slug}/{guide_id}/revisions",
     response_model=StyleGuideRevisionListResponse,
 )
-async def list_style_guide_revisions(
+def list_style_guide_revisions(
     tenant_slug: str,
     guide_id: str,
     limit: int = 100,
@@ -1008,7 +1008,7 @@ async def list_style_guide_revisions(
     "/{tenant_slug}/{guide_id}/revisions/{revision_id}",
     response_model=StyleGuideRevisionDetailOut,
 )
-async def get_style_guide_revision(
+def get_style_guide_revision(
     tenant_slug: str,
     guide_id: str,
     revision_id: str,
@@ -1099,7 +1099,7 @@ def _validate_required_publish_level(
     "/{tenant_slug}/{guide_id}/policy",
     response_model=StyleGuidePolicySettingsOut,
 )
-async def get_style_guide_policy_settings(
+def get_style_guide_policy_settings(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1115,7 +1115,7 @@ async def get_style_guide_policy_settings(
     "/{tenant_slug}/{guide_id}/policy",
     response_model=StyleGuidePolicySettingsOut,
 )
-async def put_style_guide_policy_settings(
+def put_style_guide_policy_settings(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuidePolicySettingsPutRequest,
@@ -1225,7 +1225,7 @@ async def put_style_guide_policy_settings(
     "/{tenant_slug}/{guide_id}/policy-versions",
     response_model=StyleGuidePolicyVersionListResponse,
 )
-async def list_style_guide_policy_versions(
+def list_style_guide_policy_versions(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1243,7 +1243,7 @@ async def list_style_guide_policy_versions(
     "/{tenant_slug}/{guide_id}/policy-versions/{policy_version_id}",
     response_model=StyleGuidePolicyVersionOut,
 )
-async def get_style_guide_policy_version(
+def get_style_guide_policy_version(
     tenant_slug: str,
     guide_id: str,
     policy_version_id: str,
@@ -1264,7 +1264,7 @@ async def get_style_guide_policy_version(
     response_model=StyleGuidePolicyVersionOut,
     status_code=201,
 )
-async def publish_style_guide_policy_version(
+def publish_style_guide_policy_version(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1318,7 +1318,7 @@ def _ladder_response(
     "/{tenant_slug}/{guide_id}/ladder",
     response_model=StyleGuideLadderResponse,
 )
-async def get_style_guide_ladder(
+def get_style_guide_ladder(
     tenant_slug: str,
     guide_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1339,7 +1339,7 @@ async def get_style_guide_ladder(
     "/{tenant_slug}/{guide_id}/ladder",
     response_model=StyleGuideLadderResponse,
 )
-async def put_style_guide_ladder(
+def put_style_guide_ladder(
     tenant_slug: str,
     guide_id: str,
     body: StyleGuideLadderModel,

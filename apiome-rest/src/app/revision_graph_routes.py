@@ -106,7 +106,7 @@ def _window(tips: List[str], tenant_id: str, *, depth: int, limit: int) -> Revis
     response_model=RevisionHistoryWindowResponse,
     response_model_by_alias=True,
 )
-async def get_revision_ancestors(
+def get_revision_ancestors(
     tenant_slug: str,
     project_id: str,
     revision_id: str,
@@ -132,7 +132,7 @@ async def get_revision_ancestors(
     response_model=RevisionHistoryWindowResponse,
     response_model_by_alias=True,
 )
-async def get_revision_history_window(
+def get_revision_history_window(
     tenant_slug: str,
     project_id: str,
     tip: Optional[List[str]] = Query(
@@ -178,7 +178,7 @@ async def get_revision_history_window(
     response_model=RevisionMergeBaseResponse,
     response_model_by_alias=True,
 )
-async def get_revision_merge_base(
+def get_revision_merge_base(
     tenant_slug: str,
     project_id: str,
     a: str = Query(..., description="One revision id."),

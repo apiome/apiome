@@ -69,7 +69,7 @@ class McpCapabilityPresetsResponse(BaseModel):
         "fail-closed checks."
     ),
 )
-async def list_mcp_tools(
+def list_mcp_tools(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> McpToolCatalogResponse:
     """Return the shared MCP tool registry as a REST catalog."""
@@ -92,7 +92,7 @@ async def list_mcp_tools(
         "(MTG-5.1, #4785). Custom is not listed — it is a UI sentinel for non-matching drafts."
     ),
 )
-async def list_mcp_capability_presets(
+def list_mcp_capability_presets(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> McpCapabilityPresetsResponse:
     """Return the documented capability preset matrix."""

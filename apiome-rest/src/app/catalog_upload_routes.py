@@ -26,6 +26,7 @@ import logging
 from typing import Any, Dict, Literal, Mapping, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from . import catalog_upload_reconcile as reconcile
@@ -237,7 +238,7 @@ def _refusal(exc: reconcile.ReuploadError) -> HTTPException:
 
 
 @router.get("/{tenant_slug}/upload-policy", response_model=CatalogUploadPolicy, response_model_by_alias=True)
-async def get_catalog_upload_policy(
+def get_catalog_upload_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogUploadPolicy:
@@ -249,7 +250,7 @@ async def get_catalog_upload_policy(
 
 
 @router.put("/{tenant_slug}/upload-policy", response_model=CatalogUploadPolicy, response_model_by_alias=True)
-async def set_catalog_upload_policy(
+def set_catalog_upload_policy(
     tenant_slug: str,
     body: CatalogUploadPolicy,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -269,7 +270,7 @@ async def set_catalog_upload_policy(
 
 
 @router.get("/{tenant_slug}/{item_id}/upload", response_model=CatalogUploadOut, response_model_by_alias=True)
-async def get_catalog_item_upload(
+def get_catalog_item_upload(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -305,9 +306,13 @@ async def reupload_catalog_item(
     from .intake_resource_guard import resolve_guard_profile
 
     tenant_id = _tenant_id(auth_data)
-    _require_item(tenant_id, item_id)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target=f"catalog:{item_id}:reupload")
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"catalog:{item_id}:reupload")
+    await run_in_threadpool(_require_item, tenant_id, item_id)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target=f"catalog:{item_id}:reupload"
+    )
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"catalog:{item_id}:reupload"
+    )
     try:
         raw = base64.standard_b64decode(body.document_base64)
     except (binascii.Error, ValueError) as exc:
@@ -349,11 +354,11 @@ async def reupload_catalog_item(
     }
     if outcome.version_id:
         detail.update(versionId=outcome.version_id, versionLabel=outcome.version_label)
-    _audit(tenant_id, reconcile.AUDIT_REUPLOADED, actor_id, detail)
+    await run_in_threadpool(_audit, tenant_id, reconcile.AUDIT_REUPLOADED, actor_id, detail)
     return CatalogReuploadOut(
         status="changed" if outcome.changed else "unchanged",
         spec_replayed=outcome.spec_replayed,
         version_id=outcome.version_id,
         version_label=outcome.version_label,
-        upload=_upload_out(item_id, tenant_id),
+        upload=await run_in_threadpool(_upload_out, item_id, tenant_id),
     )

@@ -91,6 +91,28 @@ which is more than PostgreSQL's default of `100`. Raise `max_connections` or low
 The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`), and the public
 browse site keeps 10 more. Add those to the total.
 
+#### Request threads
+
+The REST API runs the database work of each request on a worker thread, not on the thread that
+accepts connections. One slow query or lock wait holds only its own thread: other
+requests keep being answered, and so do the `/livez`, `/readyz` and `/health` probes.
+
+`REQUEST_THREAD_POOL_SIZE` (default `40`) sets how many requests can be at work at once in one
+API instance. A request that arrives while all of them are busy waits for a free thread. Each
+working thread holds one database connection, so the API never uses more than half of
+`DB_POOL_MAX_IN_USE` for request threads. The other half stays free for background jobs, imports
+and exports. With the defaults, 40 threads fit the cap of `80` exactly.
+
+If you set `REQUEST_THREAD_POOL_SIZE` above half of `DB_POOL_MAX_IN_USE`, the API lowers it and
+logs a warning at startup that names both settings. To serve more requests at once, raise
+`DB_POOL_MAX_IN_USE` first, then check the sum above against `max_connections`.
+
+The startup log shows the size in use:
+
+```text
+request thread pool: 40 worker threads (DB_POOL_MAX_IN_USE=80)
+```
+
 #### Limits on a stuck session
 
 A statement waiting on a lock that never clears, or a transaction left open, would otherwise hold

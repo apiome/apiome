@@ -157,7 +157,7 @@ def _row_to_entry(row: Dict[str, Any]) -> RegistryAuditEntryOut:
     response_model=RegistryAuditPageResponse,
     response_model_by_alias=True,
 )
-async def list_registry_audit(
+def list_registry_audit(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
     action: Optional[List[str]] = Query(

@@ -102,7 +102,7 @@ def _config_response(row: Optional[Dict[str, Any]]) -> McpDigestConfigResponse:
 
 
 @router.get("/{tenant_slug}/digest/config", response_model=McpDigestConfigResponse)
-async def get_mcp_digest_config(
+def get_mcp_digest_config(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDigestConfigResponse:
@@ -124,7 +124,7 @@ async def get_mcp_digest_config(
 
 
 @router.put("/{tenant_slug}/digest/config", response_model=McpDigestConfigResponse)
-async def put_mcp_digest_config(
+def put_mcp_digest_config(
     tenant_slug: str,
     body: McpDigestConfigUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -155,7 +155,7 @@ async def put_mcp_digest_config(
 
 
 @router.post("/{tenant_slug}/digest/preview")
-async def preview_mcp_digest(
+def preview_mcp_digest(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:

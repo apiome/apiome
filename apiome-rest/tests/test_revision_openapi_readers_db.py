@@ -163,10 +163,8 @@ def test_a_merge_preview_of_warm_revisions_queries_no_class_or_property(ctx) -> 
         with patch.object(db, "compute_merge_base_revision_id", return_value=ctx["version"]), patch(
             "app.version_merge_routes.enforce_permission"
         ):
-            preview = asyncio.run(
-                version_branch_merge_preview(
-                    ctx["tenant_slug"], ctx["project"], body, {"tenant_id": ctx["tenant"], "user_id": ctx["user"]}
-                )
+            preview = version_branch_merge_preview(
+                ctx["tenant_slug"], ctx["project"], body, {"tenant_id": ctx["tenant"], "user_id": ctx["user"]}
             )
     finally:
         _drop_branches(ctx)

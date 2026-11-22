@@ -98,7 +98,7 @@ def _load_action(tenant_id: str, action_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/custom-actions", response_model=WorkspaceCustomActionListResponse)
-async def list_custom_actions(
+def list_custom_actions(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> WorkspaceCustomActionListResponse:
@@ -117,7 +117,7 @@ async def list_custom_actions(
     response_model=WorkspaceCustomActionOut,
     status_code=201,
 )
-async def create_custom_action(
+def create_custom_action(
     tenant_slug: str,
     body: WorkspaceCustomActionCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -156,7 +156,7 @@ async def create_custom_action(
     "/{tenant_slug}/custom-actions/{action_id}",
     response_model=WorkspaceCustomActionOut,
 )
-async def get_custom_action(
+def get_custom_action(
     tenant_slug: str,
     action_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -171,7 +171,7 @@ async def get_custom_action(
     "/{tenant_slug}/custom-actions/{action_id}",
     response_model=WorkspaceCustomActionOut,
 )
-async def update_custom_action(
+def update_custom_action(
     tenant_slug: str,
     action_id: str,
     body: WorkspaceCustomActionUpdate,
@@ -219,7 +219,7 @@ async def update_custom_action(
 
 
 @router.delete("/{tenant_slug}/custom-actions/{action_id}")
-async def delete_custom_action(
+def delete_custom_action(
     tenant_slug: str,
     action_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

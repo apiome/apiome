@@ -83,7 +83,7 @@ def _permit(auth_data: Dict[str, Any], action: str, target: str) -> Any:
 
 
 @router.get(_AGENTS, response_model=AgentList, response_model_by_alias=True, summary="List agents")
-async def list_catalog_agents(
+def list_catalog_agents(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentList:
     """The tenant's live agents with their model (and its deprecation) and owner (`consumer_contracts:view`)."""
@@ -95,7 +95,7 @@ async def list_catalog_agents(
 @router.post(
     _AGENTS, response_model=AgentOut, response_model_by_alias=True, status_code=201, summary="Register an agent"
 )
-async def create_catalog_agent(
+def create_catalog_agent(
     tenant_slug: str, body: AgentInput, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentOut:
     """Register an agent, optionally with its agent keys (`consumer_contracts:create`, plus `api_keys:view` for keys).
@@ -116,7 +116,7 @@ async def create_catalog_agent(
 
 
 @router.get(_AGENTS + "/{slug}", response_model=AgentOut, response_model_by_alias=True, summary="Read an agent")
-async def read_catalog_agent(
+def read_catalog_agent(
     tenant_slug: str, slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentOut:
     """One agent: model, owner, keys (prefix and status only), and the consumer it is per project."""
@@ -129,7 +129,7 @@ async def read_catalog_agent(
 
 
 @router.patch(_AGENTS + "/{slug}", response_model=AgentOut, response_model_by_alias=True, summary="Change an agent")
-async def update_catalog_agent(
+def update_catalog_agent(
     tenant_slug: str, slug: str, body: AgentPatch, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentOut:
     """Change an agent's name, description, runtime, model (`null` clears it) or status (`consumer_contracts:edit`).
@@ -145,7 +145,7 @@ async def update_catalog_agent(
 
 
 @router.delete(_AGENTS + "/{slug}", status_code=204, summary="Delete an agent")
-async def delete_catalog_agent(
+def delete_catalog_agent(
     tenant_slug: str, slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> Response:
     """Soft-delete an agent (`consumer_contracts:delete`); its contracts are emptied and its edges go stale."""
@@ -164,7 +164,7 @@ async def delete_catalog_agent(
     response_model_by_alias=True,
     summary="Link an agent key",
 )
-async def link_catalog_agent_key(
+def link_catalog_agent_key(
     tenant_slug: str, slug: str, key_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentOut:
     """Add an agent key to the agent and re-derive its consumers (`consumer_contracts:edit` + `api_keys:view`)."""
@@ -183,7 +183,7 @@ async def link_catalog_agent_key(
     response_model_by_alias=True,
     summary="Unlink an agent key",
 )
-async def unlink_catalog_agent_key(
+def unlink_catalog_agent_key(
     tenant_slug: str, slug: str, key_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> AgentOut:
     """Remove an agent key from the agent (`consumer_contracts:edit`); what only it allowed goes stale."""
@@ -201,7 +201,7 @@ async def unlink_catalog_agent_key(
 
 
 @router.get(_MODELS, response_model=ModelList, response_model_by_alias=True, summary="List models")
-async def list_catalog_models(
+def list_catalog_models(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ModelList:
     """The tenant's live models with their deprecation and owner (`consumer_contracts:view`)."""
@@ -213,7 +213,7 @@ async def list_catalog_models(
 @router.post(
     _MODELS, response_model=ModelOut, response_model_by_alias=True, status_code=201, summary="Register a model"
 )
-async def create_catalog_model(
+def create_catalog_model(
     tenant_slug: str, body: ModelInput, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ModelOut:
     """Register a model: provider, name and version, hosting (`api` or `self_hosted`), data handling, deprecation."""
@@ -226,7 +226,7 @@ async def create_catalog_model(
 
 
 @router.get(_MODELS + "/{slug}", response_model=ModelOut, response_model_by_alias=True, summary="Read a model")
-async def read_catalog_model(
+def read_catalog_model(
     tenant_slug: str, slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ModelOut:
     """One model with the live agents that run on it."""
@@ -239,7 +239,7 @@ async def read_catalog_model(
 
 
 @router.patch(_MODELS + "/{slug}", response_model=ModelOut, response_model_by_alias=True, summary="Change a model")
-async def update_catalog_model(
+def update_catalog_model(
     tenant_slug: str, slug: str, body: ModelPatch, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ModelOut:
     """Change a model (`consumer_contracts:edit`); `deprecatedAt` shows on every agent that runs on it."""
@@ -252,7 +252,7 @@ async def update_catalog_model(
 
 
 @router.delete(_MODELS + "/{slug}", status_code=204, summary="Delete a model")
-async def delete_catalog_model(
+def delete_catalog_model(
     tenant_slug: str, slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> Response:
     """Soft-delete a model (`consumer_contracts:delete`); agents that ran on it show no model."""

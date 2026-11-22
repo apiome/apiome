@@ -126,7 +126,7 @@ def _changelog_summary(version_record_id: str, tenant_id: str, project_id: str) 
         404: {"description": "Project or version not found in tenant."},
     },
 )
-async def get_version_agent_outputs(
+def get_version_agent_outputs(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

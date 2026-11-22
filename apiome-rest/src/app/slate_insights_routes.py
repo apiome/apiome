@@ -1620,7 +1620,7 @@ def _audit_body(row: Mapping[str, Any]) -> AuditEntryBody:
     response_model=MetricFamiliesResponse,
     response_model_by_alias=True,
 )
-async def get_metric_families(
+def get_metric_families(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> MetricFamiliesResponse:
     """Return the metric families as data, each with the question it cannot answer.
@@ -1644,7 +1644,7 @@ async def get_metric_families(
 
 
 @router.get("/insights/services", response_model=ServicesResponse, response_model_by_alias=True)
-async def get_insight_services(
+def get_insight_services(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ServicesResponse:
     """Return the billable services, their units, and what drives each number."""
@@ -1667,7 +1667,7 @@ async def get_insight_services(
     response_model=ResidencyStagesResponse,
     response_model_by_alias=True,
 )
-async def get_residency_stages(
+def get_residency_stages(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ResidencyStagesResponse:
     """Return the six processing stages and what each one's residency promise leaves uncovered.
@@ -1703,7 +1703,7 @@ async def get_residency_stages(
     response_model=InsightsLaneResponse,
     response_model_by_alias=True,
 )
-async def get_insights_lane(
+def get_insights_lane(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> InsightsLaneResponse:
@@ -1757,7 +1757,7 @@ async def get_insights_lane(
     response_model=SetInsightPolicyResponse,
     response_model_by_alias=True,
 )
-async def set_insight_policy(
+def set_insight_policy(
     environment_id: str,
     request: SetInsightPolicyRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1860,7 +1860,7 @@ async def set_insight_policy(
     response_model=WriteResidencyLaneResponse,
     response_model_by_alias=True,
 )
-async def set_residency_lane(
+def set_residency_lane(
     environment_id: str,
     stage: str,
     request: WriteResidencyLaneRequest,
@@ -2072,7 +2072,7 @@ def _write_export(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_export(
+def create_export(
     environment_id: str,
     request: WriteExportRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2089,7 +2089,7 @@ async def create_export(
     response_model=WriteExportResponse,
     response_model_by_alias=True,
 )
-async def replace_export(
+def replace_export(
     environment_id: str,
     export_id: str,
     request: WriteExportRequest,
@@ -2107,7 +2107,7 @@ async def replace_export(
     response_model=DeleteInsightResourceResponse,
     response_model_by_alias=True,
 )
-async def remove_export(
+def remove_export(
     environment_id: str,
     export_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -2270,7 +2270,7 @@ def _write_budget(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_budget(
+def create_budget(
     environment_id: str,
     request: WriteBudgetRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2287,7 +2287,7 @@ async def create_budget(
     response_model=WriteBudgetResponse,
     response_model_by_alias=True,
 )
-async def replace_budget(
+def replace_budget(
     environment_id: str,
     budget_id: str,
     request: WriteBudgetRequest,
@@ -2305,7 +2305,7 @@ async def replace_budget(
     response_model=DeleteInsightResourceResponse,
     response_model_by_alias=True,
 )
-async def remove_budget(
+def remove_budget(
     environment_id: str,
     budget_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -2441,7 +2441,7 @@ def _write_check(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_synthetic_check(
+def create_synthetic_check(
     environment_id: str,
     request: WriteCheckRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2463,7 +2463,7 @@ async def create_synthetic_check(
     response_model=WriteCheckResponse,
     response_model_by_alias=True,
 )
-async def replace_synthetic_check(
+def replace_synthetic_check(
     environment_id: str,
     check_id: str,
     request: WriteCheckRequest,
@@ -2481,7 +2481,7 @@ async def replace_synthetic_check(
     response_model=DeleteInsightResourceResponse,
     response_model_by_alias=True,
 )
-async def remove_synthetic_check(
+def remove_synthetic_check(
     environment_id: str,
     check_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -2539,7 +2539,7 @@ async def remove_synthetic_check(
     response_model_by_alias=True,
     status_code=201,
 )
-async def open_live_tail(
+def open_live_tail(
     environment_id: str,
     request: OpenTailRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2631,7 +2631,7 @@ async def open_live_tail(
     response_model=TailSessionsResponse,
     response_model_by_alias=True,
 )
-async def get_tail_sessions(
+def get_tail_sessions(
     environment_id: str,
     limit: int = Query(default=50, ge=1, le=200),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2652,7 +2652,7 @@ async def get_tail_sessions(
     response_model=CloseTailResponse,
     response_model_by_alias=True,
 )
-async def close_live_tail(
+def close_live_tail(
     environment_id: str,
     session_id: str,
     dry_run: bool = Query(default=False, alias="dryRun"),
@@ -2703,7 +2703,7 @@ async def close_live_tail(
     response_model=BudgetAlertsResponse,
     response_model_by_alias=True,
 )
-async def get_budget_alerts(
+def get_budget_alerts(
     environment_id: str,
     budget_id: Optional[str] = Query(default=None, alias="budgetId"),
     unacknowledged_only: bool = Query(default=False, alias="unacknowledgedOnly"),
@@ -2735,7 +2735,7 @@ async def get_budget_alerts(
     response_model=AcknowledgeAlertResponse,
     response_model_by_alias=True,
 )
-async def acknowledge_alert(
+def acknowledge_alert(
     environment_id: str,
     alert_id: str,
     request: AcknowledgeAlertRequest,
@@ -2793,7 +2793,7 @@ async def acknowledge_alert(
     response_model=MetricsResponse,
     response_model_by_alias=True,
 )
-async def get_metrics(
+def get_metrics(
     environment_id: str,
     families: Optional[List[str]] = Query(default=None),
     release_id: Optional[str] = Query(default=None, alias="releaseId"),
@@ -2857,7 +2857,7 @@ async def get_metrics(
     response_model=LogsResponse,
     response_model_by_alias=True,
 )
-async def get_logs(
+def get_logs(
     environment_id: str,
     levels: Optional[List[str]] = Query(default=None),
     sources: Optional[List[str]] = Query(default=None),
@@ -2898,7 +2898,7 @@ async def get_logs(
     response_model=TracesResponse,
     response_model_by_alias=True,
 )
-async def get_traces(
+def get_traces(
     environment_id: str,
     release_id: Optional[str] = Query(default=None, alias="releaseId"),
     region: Optional[str] = Query(default=None),
@@ -2934,7 +2934,7 @@ async def get_traces(
     response_model=TraceDetailResponse,
     response_model_by_alias=True,
 )
-async def get_trace_detail(
+def get_trace_detail(
     environment_id: str,
     trace_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2998,7 +2998,7 @@ def _usage_window(
     response_model=UsageResponse,
     response_model_by_alias=True,
 )
-async def get_usage(
+def get_usage(
     environment_id: str,
     services: Optional[List[str]] = Query(default=None),
     release_id: Optional[str] = Query(default=None, alias="releaseId"),
@@ -3079,7 +3079,7 @@ async def get_usage(
 
 
 @router.get("/environments/{environment_id}/insights/usage/export")
-async def export_usage(
+def export_usage(
     environment_id: str,
     services: Optional[List[str]] = Query(default=None),
     since: Optional[date] = Query(default=None),
@@ -3210,7 +3210,7 @@ async def export_usage(
     response_model=SyntheticResultsResponse,
     response_model_by_alias=True,
 )
-async def get_synthetic_results(
+def get_synthetic_results(
     environment_id: str,
     check_id: Optional[str] = Query(default=None, alias="checkId"),
     release_id: Optional[str] = Query(default=None, alias="releaseId"),
@@ -3248,7 +3248,7 @@ async def get_synthetic_results(
     response_model=AuditResponse,
     response_model_by_alias=True,
 )
-async def get_insights_audit(
+def get_insights_audit(
     environment_id: str,
     subject_kind: Optional[str] = Query(default=None, alias="subjectKind"),
     limit: int = Query(default=100, ge=1, le=500),
@@ -3270,7 +3270,7 @@ async def get_insights_audit(
 
 
 @router.get("/environments/{environment_id}/insights/audit/export")
-async def export_insights_audit(
+def export_insights_audit(
     environment_id: str,
     limit: int = Query(default=10000, ge=1, le=100000),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),

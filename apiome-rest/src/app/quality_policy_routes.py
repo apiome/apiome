@@ -157,7 +157,7 @@ def _audit(
         "a user who cannot see the policy cannot understand why a commit was refused."
     ),
 )
-async def get_quality_policy(
+def get_quality_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> QualityPolicyOut:
@@ -176,7 +176,7 @@ async def get_quality_policy(
         "is the change history: every verdict names the ``policyVersionId`` it applied."
     ),
 )
-async def list_quality_policy_versions(
+def list_quality_policy_versions(
     tenant_slug: str,
     limit: int = Query(50, ge=1, le=200, description="Maximum versions to return."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -296,7 +296,7 @@ def _validate_format_overrides(overrides: Dict[str, Any]) -> Dict[str, Any]:
         "policy body."
     ),
 )
-async def put_quality_policy(
+def put_quality_policy(
     tenant_slug: str,
     body: QualityPolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -398,7 +398,7 @@ async def put_quality_policy(
         "which the shared waiver-expiry sweep has already notified on."
     ),
 )
-async def list_quality_waivers(
+def list_quality_waivers(
     tenant_slug: str,
     scope: Optional[str] = Query(
         None, description="Restrict to 'import' or 'export'; omit for both."
@@ -434,7 +434,7 @@ async def list_quality_waivers(
         "effective role — the check is server-side, so a client cannot grant itself one."
     ),
 )
-async def create_quality_waiver(
+def create_quality_waiver(
     tenant_slug: str,
     body: QualityWaiverCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -562,7 +563,7 @@ def _load(provider_id: str) -> Dict[str, Any]:
 
 
 @admin_router.get("", response_model=SsoProviderListResponse, responses=_ERRORS)
-async def list_sso_providers(_: None = Depends(require_super_admin)) -> SsoProviderListResponse:
+def list_sso_providers(_: None = Depends(require_super_admin)) -> SsoProviderListResponse:
     """List every SSO provider with its domains, newest first. Secrets are never included."""
     return SsoProviderListResponse(providers=[_view(row) for row in store.list_providers(db)])
 
@@ -587,19 +588,21 @@ async def create_sso_provider(
             encryption is unconfigured.
     """
     try:
-        values = await build_create_values(payload, tenant_id=_require_workspace(payload.tenant_id))
-        row = store.create_provider(db, values, actor=ADMIN_ACTOR)
+        values = await build_create_values(payload, tenant_id=await run_in_threadpool(
+            _require_workspace, payload.tenant_id
+        ))
+        row = await run_in_threadpool(store.create_provider, db, values, actor=ADMIN_ACTOR)
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
     slug, protocol = values["slug"], values["protocol"]
-    _audit(slug, "created", protocol=protocol, tenant_id=values.get("tenant_id"))
+    await run_in_threadpool(_audit, slug, "created", protocol=protocol, tenant_id=values.get("tenant_id"))
     return _view(row)
 
 
 @admin_router.get(
     "/{provider_id}", response_model=SsoProviderView, responses={**_ERRORS, 404: {"description": "No such provider."}}
 )
-async def get_sso_provider(provider_id: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
+def get_sso_provider(provider_id: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
     """One SSO provider with its domains. Secrets are never included."""
     return _view(_load(provider_id))
 
@@ -622,11 +625,11 @@ async def update_sso_provider(
     (``sso-enable-incomplete`` otherwise). A provider with no verified domain may be enabled but is
     not ``routable`` until a domain is verified.
     """
-    existing = _load(provider_id)
+    existing = await run_in_threadpool(_load, provider_id)
     try:
         updates = await build_updates(existing, payload)
         if "tenant_id" in updates:
-            updates["tenant_id"] = _require_workspace(updates["tenant_id"])
+            updates["tenant_id"] = await run_in_threadpool(_require_workspace, updates["tenant_id"])
         elif updates and not existing.get("tenant_id"):
             # A provider registered before EID-1.3 with no workspace: nothing else about it can
             # change until it has one (V394's CHECK would refuse the write).
@@ -634,8 +637,11 @@ async def update_sso_provider(
     except SsoConfigError as exc:
         raise _refuse(exc) from exc
 
-    row = store.update_provider(db, provider_id, updates, actor=ADMIN_ACTOR) if updates else existing
-    _audit(
+    row = await run_in_threadpool(
+        store.update_provider, db, provider_id, updates, actor=ADMIN_ACTOR
+    ) if updates else existing
+    await run_in_threadpool(
+        _audit,
         existing["slug"],
         "updated",
         fields=audited_fields(updates),
@@ -646,7 +652,7 @@ async def update_sso_provider(
 @admin_router.delete(
     "/{provider_id}", response_model=SsoProviderView, responses={**_ERRORS, 404: {"description": "No such provider."}}
 )
-async def delete_sso_provider(provider_id: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
+def delete_sso_provider(provider_id: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
     """Remove an SSO provider and its domains. Its sealed secrets are destroyed with it.
 
     Identities already linked through it (``external_auth_providers`` rows ``sso:<slug>``) are kept,
@@ -671,7 +677,7 @@ async def delete_sso_provider(provider_id: str, _: None = Depends(require_super_
         409: {"description": "`sso-domain-claimed` or `sso-domain-exists`."},
     },
 )
-async def add_sso_domain(
+def add_sso_domain(
     provider_id: str, payload: SsoDomainCreateRequest, _: None = Depends(require_super_admin)
 ) -> SsoProviderView:
     """Attach an email domain, unverified. A domain another provider has verified is refused."""
@@ -694,7 +700,7 @@ async def add_sso_domain(
         409: {"description": "`sso-domain-claimed`: another provider has verified this domain."},
     },
 )
-async def verify_sso_domain(provider_id: str, domain: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
+def verify_sso_domain(provider_id: str, domain: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
     """Mark a domain verified on the admin's word.
 
     A workspace owner proves a domain with a DNS TXT record instead
@@ -720,7 +726,7 @@ async def verify_sso_domain(provider_id: str, domain: str, _: None = Depends(req
     response_model=SsoProviderView,
     responses={**_ERRORS, 404: {"description": "No such provider or domain."}},
 )
-async def remove_sso_domain(provider_id: str, domain: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
+def remove_sso_domain(provider_id: str, domain: str, _: None = Depends(require_super_admin)) -> SsoProviderView:
     """Detach a domain. Sign-ins from it stop routing to this IdP at once."""
     existing = _load(provider_id)
     try:
@@ -775,7 +781,7 @@ def _unseal(blob: Any, key_id: Optional[str]) -> Optional[str]:
         },
     },
 )
-async def get_resolved_sso_providers(_: None = Depends(require_internal_service)):
+def get_resolved_sso_providers(_: None = Depends(require_internal_service)):
     """Every enabled provider with a verified domain, secrets decrypted, for the sign-in resolver.
 
     A provider whose secret cannot be decrypted (rotated-away key, corrupt blob) is omitted and

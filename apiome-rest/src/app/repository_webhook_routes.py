@@ -28,6 +28,7 @@ about a tenant's repositories for the price of one request.
 from __future__ import annotations
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Request
+from fastapi.concurrency import run_in_threadpool
 
 from .database import db
 from .models import RepositoryWebhookReceiptResponse
@@ -91,7 +92,8 @@ async def ingest_repository_webhook(
     # nobody vouches for never reaches `verify_signature`. The 403 body says only that the
     # source was refused — naming the allowlist, the tenant or the matched range would turn
     # the endpoint into a probe for the deployment's network policy.
-    decision = guard_webhook_delivery(
+    decision = await run_in_threadpool(
+        guard_webhook_delivery,
         db,
         provider=key,
         raw_body=raw,
@@ -108,7 +110,8 @@ async def ingest_repository_webhook(
         )
 
     try:
-        result = ingest_webhook_delivery(
+        result = await run_in_threadpool(
+            ingest_webhook_delivery,
             db, provider=key, raw_body=raw, headers=request.headers
         )
     except WebhookRejectedError as exc:

@@ -74,7 +74,7 @@ def _require_jwt_user(auth_data: Dict[str, Any]) -> str:
     "/{tenant_slug}/{project_id}/{version_record_id}/draft-lock",
     response_model=VersionDraftLockStatusResponse,
 )
-async def get_draft_lock_status(
+def get_draft_lock_status(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -98,7 +98,7 @@ async def get_draft_lock_status(
     "/{tenant_slug}/{project_id}/{version_record_id}/draft-lock/acquire",
     response_model=VersionDraftLockResponse,
 )
-async def acquire_draft_lock(
+def acquire_draft_lock(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -146,7 +146,7 @@ async def acquire_draft_lock(
     "/{tenant_slug}/{project_id}/{version_record_id}/draft-lock/renew",
     response_model=VersionDraftLockResponse,
 )
-async def renew_draft_lock(
+def renew_draft_lock(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -194,7 +194,7 @@ async def renew_draft_lock(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/draft-lock/release", status_code=204)
-async def release_draft_lock(
+def release_draft_lock(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -225,7 +225,7 @@ async def release_draft_lock(
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/draft-lock/force-release", status_code=204)
-async def force_release_draft_lock(
+def force_release_draft_lock(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

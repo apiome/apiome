@@ -257,7 +257,7 @@ def _project_context(tenant_slug: str, project: Dict[str, Any]) -> PatternContex
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def get_project_sdk_settings(
+def get_project_sdk_settings(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -298,7 +298,7 @@ async def get_project_sdk_settings(
         422: {"description": "The settings body is not valid."},
     },
 )
-async def put_project_sdk_settings(
+def put_project_sdk_settings(
     tenant_slug: str,
     project_ref: str,
     body: SdkGenerationSettingsPutRequest,
@@ -355,7 +355,7 @@ async def put_project_sdk_settings(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def delete_project_sdk_settings(
+def delete_project_sdk_settings(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -408,7 +408,7 @@ async def delete_project_sdk_settings(
         "Requires `projects:view`."
     ),
 )
-async def get_tenant_sdk_settings(
+def get_tenant_sdk_settings(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SdkGenerationSettingsOut:
@@ -441,7 +441,7 @@ async def get_tenant_sdk_settings(
     ),
     responses={422: {"description": "The settings body is not valid."}},
 )
-async def put_tenant_sdk_settings(
+def put_tenant_sdk_settings(
     tenant_slug: str,
     body: SdkGenerationSettingsPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -492,7 +492,7 @@ async def put_tenant_sdk_settings(
         "Requires `projects:edit`. Audited as `governance.sdk_generation_settings.clear`."
     ),
 )
-async def delete_tenant_sdk_settings(
+def delete_tenant_sdk_settings(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SdkGenerationSettingsOut:

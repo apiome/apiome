@@ -221,7 +221,7 @@ def _audit(
         409: {"description": "The project has no published revision to gate."},
     },
 )
-async def get_project_deploy_gate(
+def get_project_deploy_gate(
     tenant_slug: str,
     project_ref: str,
     revision_id: Optional[str] = Query(
@@ -287,7 +287,7 @@ async def get_project_deploy_gate(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def get_project_gate_policy(
+def get_project_gate_policy(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -328,7 +328,7 @@ async def get_project_gate_policy(
         422: {"description": "The threshold body is not valid."},
     },
 )
-async def put_project_gate_policy(
+def put_project_gate_policy(
     tenant_slug: str,
     project_ref: str,
     body: DeployGatePolicyPutRequest,
@@ -385,7 +385,7 @@ async def put_project_gate_policy(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def delete_project_gate_policy(
+def delete_project_gate_policy(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -436,7 +436,7 @@ async def delete_project_gate_policy(
         "Requires `versions:view`."
     ),
 )
-async def get_tenant_gate_policy(
+def get_tenant_gate_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> DeployGatePolicyOut:
@@ -470,7 +470,7 @@ async def get_tenant_gate_policy(
     ),
     responses={422: {"description": "The threshold body is not valid."}},
 )
-async def put_tenant_gate_policy(
+def put_tenant_gate_policy(
     tenant_slug: str,
     body: DeployGatePolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -519,7 +519,7 @@ async def put_tenant_gate_policy(
         "`governance.deploy_gate_policy.clear`."
     ),
 )
-async def delete_tenant_gate_policy(
+def delete_tenant_gate_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> DeployGatePolicyOut:

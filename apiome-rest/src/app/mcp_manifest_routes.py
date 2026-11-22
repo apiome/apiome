@@ -285,7 +285,7 @@ def _observed_surface(endpoint: Dict[str, Any]):
         "are kept and reported by the surface-provenance report."
     ),
 )
-async def import_mcp_manifest(
+def import_mcp_manifest(
     tenant_slug: str,
     body: McpManifestImportRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -406,7 +406,7 @@ async def import_mcp_manifest(
         "attribution made against one remains interpretable."
     ),
 )
-async def list_mcp_endpoint_manifests(
+def list_mcp_endpoint_manifests(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     include_retired: bool = Query(
@@ -449,7 +449,7 @@ async def list_mcp_endpoint_manifests(
         "as `observed_only`, never as agreement."
     ),
 )
-async def get_mcp_surface_provenance(
+def get_mcp_surface_provenance(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

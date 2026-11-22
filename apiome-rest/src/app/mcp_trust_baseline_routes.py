@@ -199,7 +199,7 @@ def notify_trust_drift(
     response_model=None,
     status_code=201,
 )
-async def approve_trust_baseline(
+def approve_trust_baseline(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: Dict[str, Any],
@@ -284,7 +284,7 @@ async def approve_trust_baseline(
     "/{tenant_slug}/endpoints/{endpoint_id}/trust-baseline",
     response_model=None,
 )
-async def get_trust_baseline(
+def get_trust_baseline(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -304,7 +304,7 @@ async def get_trust_baseline(
     "/{tenant_slug}/endpoints/{endpoint_id}/trust-drift",
     response_model=None,
 )
-async def get_trust_drift(
+def get_trust_drift(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     notify: bool = Query(False, description="Fan out a push-webhook alert when a regression is found."),
@@ -390,7 +390,7 @@ async def get_trust_drift(
     "/{tenant_slug}/data-quality/shadowing",
     response_model=None,
 )
-async def get_shadowing_report(
+def get_shadowing_report(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:

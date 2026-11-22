@@ -82,7 +82,7 @@ def _require_project(project_id: str, tenant_id: str) -> Dict[str, Any]:
         404: {"description": "Project not found in tenant."},
     },
 )
-async def list_project_version_changelogs(
+def list_project_version_changelogs(
     tenant_slug: str,
     project_id: str,
     limit: Optional[int] = Query(
@@ -121,7 +121,7 @@ async def list_project_version_changelogs(
         404: {"description": "Version not found, or no changelog stored for this revision."},
     },
 )
-async def get_version_changelog(
+def get_version_changelog(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

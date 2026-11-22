@@ -162,7 +162,7 @@ def _tenant_id(auth_data: Mapping[str, Any]) -> str:
 
 
 @router.get("/{tenant_slug}/shadow-report", response_model=ShadowReport, response_model_by_alias=True)
-async def get_shadow_report(
+def get_shadow_report(
     tenant_slug: str,
     connector: Optional[UUID] = Query(None, description="Only this connector's inventory."),
     environment: Optional[str] = Query(None, max_length=200, description="Only inventory rows in this environment."),

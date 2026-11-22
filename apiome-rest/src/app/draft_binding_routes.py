@@ -29,6 +29,7 @@ import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import draft_binding_store
@@ -187,7 +188,7 @@ async def _off_loop(work: Any, *args: Any) -> Any:
         "Requires `projects:view`."
     ),
 )
-async def list_bindings(
+def list_bindings(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),
@@ -236,7 +237,7 @@ async def list_bindings(
         "Requires `projects:view`."
     ),
 )
-async def read_binding(
+def read_binding(
     tenant_slug: str,
     project_ref: str,
     binding_id: str,
@@ -274,7 +275,7 @@ async def read_binding(
         "Requires `projects:view`."
     ),
 )
-async def read_version_binding(
+def read_version_binding(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -350,7 +351,7 @@ async def bind_version(
         HTTPException: 404 / 403 / 502 for a repository that cannot be read, 409 for a published or
             already-bound version, 403 without ``versions:edit``.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     return await _off_loop(
         draft_binding_store.bind_draft, tenant_id, project_ref, version_ref, user_id, body
@@ -368,7 +369,7 @@ async def bind_version(
         "Requires `versions:edit`."
     ),
 )
-async def release_version_binding(
+def release_version_binding(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -431,7 +432,7 @@ async def check_version_binding(
         HTTPException: 409 when the ref has not moved, 404 when the version is not bound,
             404 / 403 / 502 when the repository cannot be read.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     return await _off_loop(
         draft_binding_store.check_for_updates, tenant_id, project_ref, version_ref, user_id
@@ -480,7 +481,7 @@ async def resolve_binding_candidate(
         HTTPException: 404 for an unknown candidate, 409 for one already settled,
             404 / 403 / 502 when applying could not read the source.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     return await _off_loop(
         draft_binding_store.resolve_candidate,

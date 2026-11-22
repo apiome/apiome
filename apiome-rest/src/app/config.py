@@ -51,11 +51,16 @@ class Settings(BaseSettings):
     #: instead of opening another one. Size it so ``db_pool_max_in_use x replicas`` stays below the
     #: server's ``max_connections`` (DBP-1.2, #7185).
     db_pool_max_in_use: int = 80
+    #: Most request handlers that may run at once on worker threads. Route handlers that touch the
+    #: database are plain ``def`` (or hop there with ``run_in_threadpool``), so this is also the
+    #: most database connections requests hold at once. Capped at half of ``db_pool_max_in_use``
+    #: so background sweeps, imports and exports keep the other half (DBP-1.4, #7187).
+    request_thread_pool_size: int = 40
     #: Seconds to wait for a new database connection before giving up (``0`` waits forever).
     db_connect_timeout_seconds: int = 10
     #: Milliseconds a statement may wait for a lock before it fails instead of hanging (``0`` = no
-    #: limit). Blocking database calls run on the server's event loop in ``async`` routes, so one
-    #: unbounded lock wait would stall every request.
+    #: limit). A lock wait holds its worker thread and connection, so an unbounded one would pin
+    #: them for good.
     db_lock_timeout_ms: int = 30000
     #: Milliseconds a connection may sit inside an open transaction doing nothing before PostgreSQL
     #: ends the session and releases its locks (``0`` = no limit).

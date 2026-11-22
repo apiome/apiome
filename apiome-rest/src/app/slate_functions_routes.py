@@ -1320,7 +1320,7 @@ def _evaluation_candidate(
 @router.get(
     "/functions/presets", response_model=FunctionPresetsResponse, response_model_by_alias=True
 )
-async def get_function_presets(
+def get_function_presets(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> FunctionPresetsResponse:
     """Return the residency postures and cache-key effects as data.
@@ -1361,7 +1361,7 @@ async def get_function_presets(
 
 
 @router.get("/functions/runtimes", response_model=RuntimesResponse, response_model_by_alias=True)
-async def get_function_runtimes(
+def get_function_runtimes(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> RuntimesResponse:
     """Return the execution runtime catalog.
@@ -1388,7 +1388,7 @@ async def get_function_runtimes(
 @router.get(
     "/functions/capabilities", response_model=CapabilitiesResponse, response_model_by_alias=True
 )
-async def get_function_capabilities(
+def get_function_capabilities(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> CapabilitiesResponse:
     """Return the runtime capability catalog, with what each grant opens and what it is unsafe for.
@@ -1423,7 +1423,7 @@ async def get_function_capabilities(
     response_model=FunctionPolicyResponse,
     response_model_by_alias=True,
 )
-async def get_function_policy(
+def get_function_policy(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> FunctionPolicyResponse:
@@ -1475,7 +1475,7 @@ async def get_function_policy(
     response_model=SetFunctionPolicyResponse,
     response_model_by_alias=True,
 )
-async def set_function_policy(
+def set_function_policy(
     environment_id: str,
     request: SetFunctionPolicyRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1696,7 +1696,7 @@ def _write_function(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_function(
+def create_function(
     environment_id: str,
     request: WriteFunctionRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1713,7 +1713,7 @@ async def create_function(
     response_model=WriteFunctionResponse,
     response_model_by_alias=True,
 )
-async def replace_function(
+def replace_function(
     environment_id: str,
     function_id: str,
     request: WriteFunctionRequest,
@@ -1734,7 +1734,7 @@ async def replace_function(
     response_model=DeleteFunctionResponse,
     response_model_by_alias=True,
 )
-async def remove_function(
+def remove_function(
     environment_id: str,
     function_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -1790,7 +1790,7 @@ async def remove_function(
     response_model_by_alias=True,
     status_code=201,
 )
-async def add_function_version(
+def add_function_version(
     environment_id: str,
     function_id: str,
     request: AddVersionRequest,
@@ -1868,7 +1868,7 @@ async def add_function_version(
     response_model=WriteFunctionResponse,
     response_model_by_alias=True,
 )
-async def set_function_rollout(
+def set_function_rollout(
     environment_id: str,
     function_id: str,
     request: RolloutRequest,
@@ -1995,7 +1995,7 @@ async def set_function_rollout(
     response_model=WriteFunctionResponse,
     response_model_by_alias=True,
 )
-async def revert_function_route(
+def revert_function_route(
     environment_id: str,
     function_id: str,
     request: RevertRequest,
@@ -2063,7 +2063,7 @@ async def revert_function_route(
     response_model=RevisionsResponse,
     response_model_by_alias=True,
 )
-async def get_function_revisions(
+def get_function_revisions(
     environment_id: str,
     function_id: str,
     limit: int = Query(default=50, ge=1, le=200),
@@ -2101,7 +2101,7 @@ async def get_function_revisions(
     response_model=SecretRefResponse,
     response_model_by_alias=True,
 )
-async def set_function_secret_ref(
+def set_function_secret_ref(
     environment_id: str,
     function_id: str,
     request: SetSecretRefRequest,
@@ -2218,7 +2218,7 @@ async def set_function_secret_ref(
     response_model=DeleteGrantResponse,
     response_model_by_alias=True,
 )
-async def remove_function_secret_ref(
+def remove_function_secret_ref(
     environment_id: str,
     function_id: str,
     ref_id: str,
@@ -2276,7 +2276,7 @@ async def remove_function_secret_ref(
     response_model=CapabilityGrantResponse,
     response_model_by_alias=True,
 )
-async def grant_function_capability(
+def grant_function_capability(
     environment_id: str,
     function_id: str,
     request: GrantCapabilityRequest,
@@ -2367,7 +2367,7 @@ async def grant_function_capability(
     response_model=DeleteGrantResponse,
     response_model_by_alias=True,
 )
-async def revoke_function_capability(
+def revoke_function_capability(
     environment_id: str,
     function_id: str,
     capability: str,
@@ -2429,7 +2429,7 @@ async def revoke_function_capability(
     response_model=EgressRuleResponse,
     response_model_by_alias=True,
 )
-async def set_function_egress_rule(
+def set_function_egress_rule(
     environment_id: str,
     function_id: str,
     request: SetEgressRuleRequest,
@@ -2533,7 +2533,7 @@ async def set_function_egress_rule(
     response_model=DeleteGrantResponse,
     response_model_by_alias=True,
 )
-async def remove_function_egress_rule(
+def remove_function_egress_rule(
     environment_id: str,
     function_id: str,
     rule_id: str,
@@ -2696,7 +2696,7 @@ def _write_variant(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_variant(
+def create_variant(
     environment_id: str,
     request: WriteVariantRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2713,7 +2713,7 @@ async def create_variant(
     response_model=WriteVariantResponse,
     response_model_by_alias=True,
 )
-async def replace_variant(
+def replace_variant(
     environment_id: str,
     variant_id: str,
     request: WriteVariantRequest,
@@ -2734,7 +2734,7 @@ async def replace_variant(
     response_model=DeleteVariantResponse,
     response_model_by_alias=True,
 )
-async def remove_variant(
+def remove_variant(
     environment_id: str,
     variant_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -2791,7 +2791,7 @@ async def remove_variant(
     response_model_by_alias=True,
     status_code=201,
 )
-async def record_function_approval(
+def record_function_approval(
     environment_id: str,
     request: ApprovalRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2858,7 +2858,7 @@ async def record_function_approval(
     response_model=SimulateResponse,
     response_model_by_alias=True,
 )
-async def simulate_function_invocation(
+def simulate_function_invocation(
     environment_id: str,
     request: SimulateCommandBody,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -3016,7 +3016,7 @@ def _invocation_body(row: Mapping[str, Any]) -> InvocationBody:
     response_model=InvocationsResponse,
     response_model_by_alias=True,
 )
-async def get_function_invocations(
+def get_function_invocations(
     environment_id: str,
     limit: int = Query(default=50, ge=1, le=200),
     function_ref: Optional[str] = Query(default=None, alias="functionRef"),
@@ -3059,7 +3059,7 @@ async def get_function_invocations(
     response_model=InvocationBody,
     response_model_by_alias=True,
 )
-async def get_function_invocation(
+def get_function_invocation(
     environment_id: str,
     invocation_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -3091,7 +3091,7 @@ async def get_function_invocation(
     response_model=AuditResponse,
     response_model_by_alias=True,
 )
-async def get_function_audit(
+def get_function_audit(
     environment_id: str,
     limit: int = Query(default=100, ge=1, le=500),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -3120,7 +3120,7 @@ async def get_function_audit(
 
 
 @router.get("/environments/{environment_id}/functions/audit/export")
-async def export_function_audit(
+def export_function_audit(
     environment_id: str,
     limit: int = Query(default=10000, ge=1, le=100000),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),

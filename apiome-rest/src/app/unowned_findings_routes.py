@@ -68,7 +68,7 @@ class UnownedFindingsResponse(BaseModel):
         "the next occurrence to the team and clears the row.\n\nRequires `teams:view`."
     ),
 )
-async def get_unowned_findings(
+def get_unowned_findings(
     tenant_slug: str,
     finding_type: Optional[FindingType] = Query(default=None, alias="type"),
     limit: int = Query(default=50, ge=1, le=200),

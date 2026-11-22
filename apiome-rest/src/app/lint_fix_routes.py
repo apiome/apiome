@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.responses import Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import validate_authentication
@@ -440,9 +441,9 @@ async def get_lint_fix_plan(
     Raises:
         HTTPException: 404 unknown revision; 422 non-OpenAPI revision or invalid options.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = str(auth_data["tenant_id"])
-    version = _version(tenant_id, project_id, version_record_id)
+    version = await run_in_threadpool(_version, tenant_id, project_id, version_record_id)
     document = await asyncio.to_thread(openapi_for_revision, version, tenant_slug, tenant_id)
     guide = resolve_style_guide(tenant_id, project_id)
     plan = await asyncio.to_thread(
@@ -460,7 +461,7 @@ async def get_lint_fix_plan(
         "versionRecordId": version_record_id,
     }
     try:
-        captured = db.get_version_quality_score(version_record_id, tenant_id) or {}
+        captured = await run_in_threadpool(db.get_version_quality_score, version_record_id, tenant_id) or {}
     except Exception:  # noqa: BLE001 - the stored report is context, never a reason to fail
         captured = {}
     stored = captured.get("quality_report")
@@ -533,11 +534,12 @@ async def apply_lint_fixes(
             nothing to apply, invalid options, or a failed import; 500 when the record cannot be
             written (the new revision is withdrawn).
     """
-    actor_id = enforce_permission(
+    actor_id = await run_in_threadpool(
+        enforce_permission,
         db, auth_data, Resource.VERSIONS, Action.EDIT, target=f"version:{version_record_id}:lint-fix"
     )
     tenant_id = str(auth_data["tenant_id"])
-    version = _version(tenant_id, project_id, version_record_id)
+    version = await run_in_threadpool(_version, tenant_id, project_id, version_record_id)
     if version.get("published"):
         raise _refuse(
             409,
@@ -576,7 +578,7 @@ async def apply_lint_fixes(
         raw=raw,
         filename="lint-fixed-openapi.json",
     )
-    projection = db.get_version_source_projection(version_record_id, tenant_id) or {}
+    projection = await run_in_threadpool(db.get_version_source_projection, version_record_id, tenant_id) or {}
     rule_ids = sorted({entry.rule_id for entry in applied})
     source_label = version.get("version_id") or version_record_id
     new_id = await asyncio.to_thread(
@@ -600,7 +602,7 @@ async def apply_lint_fixes(
     score: Optional[int] = None
     grade: Optional[str] = None
     report_fingerprint: Optional[str] = None
-    new_version = db.get_version_by_id(new_id, tenant_id)
+    new_version = await run_in_threadpool(db.get_version_by_id, new_id, tenant_id)
     if new_version:
         try:
             spec = await asyncio.to_thread(openapi_for_revision, new_version, tenant_slug, tenant_id)
@@ -639,7 +641,8 @@ async def apply_lint_fixes(
         "reportFingerprint": report_fingerprint,
     }
     try:
-        recorded = db.record_lint_fix_revision(
+        recorded = await run_in_threadpool(
+            db.record_lint_fix_revision,
             tenant_id=tenant_id,
             project_id=project_id,
             version_record_id=new_id,
@@ -653,7 +656,7 @@ async def apply_lint_fixes(
         recorded = False
     if not recorded:
         try:
-            db.delete_version(new_id, tenant_id, str(actor_id) if actor_id else None)
+            await run_in_threadpool(db.delete_version, new_id, tenant_id, str(actor_id) if actor_id else None)
         except Exception:  # noqa: BLE001
             logger.exception("lint-fix revision withdrawal failed version=%s", new_id)
         raise _refuse(

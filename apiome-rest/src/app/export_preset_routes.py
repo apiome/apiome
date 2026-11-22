@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.concurrency import run_in_threadpool
 from psycopg2 import errors as pg_errors
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -199,7 +200,7 @@ async def create_export_preset(
     Returns:
         The stored preset.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     try:
@@ -234,7 +235,7 @@ async def list_export_presets(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportPresetListResponse:
     """List the tenant's export presets."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_presets, tenant_id)
@@ -256,7 +257,7 @@ async def get_export_preset(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportPresetModel:
     """Read one export preset."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     return preset_model(await _preset_or_404(tenant_id, preset))
@@ -293,7 +294,7 @@ async def update_export_preset(
     Returns:
         The updated preset.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _preset_or_404(tenant_id, preset_id)
@@ -333,7 +334,7 @@ async def delete_export_preset(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Delete one export preset."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _preset_or_404(tenant_id, preset_id)

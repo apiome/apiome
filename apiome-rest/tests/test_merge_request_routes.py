@@ -138,7 +138,7 @@ def test_unknown_merge_request_is_404(ctx, monkeypatch):
 
 
 def test_merge_not_ready_is_409_with_blockers(ctx, monkeypatch):
-    async def refuse(*_a):
+    def refuse(*_a):
         raise MergeRequestValidationError(
             CODE_NOT_READY, "not ready", {"blockers": [{"code": "review-pending", "message": "1 reviewer(s)"}]}
         )
@@ -151,7 +151,7 @@ def test_merge_not_ready_is_409_with_blockers(ctx, monkeypatch):
 
 
 def test_merge_conflicts_are_409_with_the_session(ctx, monkeypatch):
-    async def refuse(*_a):
+    def refuse(*_a):
         raise MergeRequestValidationError(
             CODE_CONFLICTS,
             "conflicts",
@@ -166,7 +166,7 @@ def test_merge_conflicts_are_409_with_the_session(ctx, monkeypatch):
 def test_merge_forwards_the_immutability_override(ctx, monkeypatch):
     seen = {}
 
-    async def merge(tenant_slug, auth_data, actor, project_ref, mr_id, body):
+    def merge(tenant_slug, auth_data, actor, project_ref, mr_id, body):
         seen.update(
             slug=tenant_slug,
             actor=actor,
@@ -187,7 +187,7 @@ def test_merge_forwards_the_immutability_override(ctx, monkeypatch):
 
 
 def test_check_needs_only_versions_view(ctx, monkeypatch):
-    async def check(*_a):
+    def check(*_a):
         return _detail()
 
     monkeypatch.setattr(routes.merge_request_store, "check_merge_request", check)

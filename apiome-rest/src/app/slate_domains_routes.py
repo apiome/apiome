@@ -436,7 +436,7 @@ def _refuse(code: str, message: str, *, status_code: int = 400) -> HTTPException
     response_model=DomainListResponse,
     response_model_by_alias=True,
 )
-async def list_environment_domains(
+def list_environment_domains(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> DomainListResponse:
@@ -461,7 +461,7 @@ async def list_environment_domains(
     response_model_by_alias=True,
     status_code=201,
 )
-async def attach_environment_domain(
+def attach_environment_domain(
     environment_id: str,
     request: AttachDomainRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -506,7 +506,7 @@ async def attach_environment_domain(
 
 
 @router.get("/domains/{domain_id}", response_model=DomainResponse, response_model_by_alias=True)
-async def get_domain_detail(
+def get_domain_detail(
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> DomainResponse:
@@ -519,7 +519,7 @@ async def get_domain_detail(
 @router.post(
     "/domains/{domain_id}/verify", response_model=VerifyResponse, response_model_by_alias=True
 )
-async def verify_domain(
+def verify_domain(
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
     resolver: DnsResolver = Depends(get_dns_resolver),
@@ -585,7 +585,7 @@ async def verify_domain(
 @router.post(
     "/domains/{domain_id}/certificate", response_model=DomainResponse, response_model_by_alias=True
 )
-async def probe_domain_certificate(
+def probe_domain_certificate(
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
     probe: TlsProbe = Depends(get_tls_probe),
@@ -631,7 +631,7 @@ async def probe_domain_certificate(
 @router.post(
     "/domains/{domain_id}/primary", response_model=DomainResponse, response_model_by_alias=True
 )
-async def make_domain_primary(
+def make_domain_primary(
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> DomainResponse:
@@ -660,7 +660,7 @@ async def make_domain_primary(
 @router.post(
     "/domains/{domain_id}/renewal", response_model=DomainResponse, response_model_by_alias=True
 )
-async def set_domain_renewal(
+def set_domain_renewal(
     domain_id: str,
     request: RenewalRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -680,7 +680,7 @@ async def set_domain_renewal(
 
 
 @router.delete("/domains/{domain_id}", status_code=204)
-async def remove_domain(
+def remove_domain(
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> Response:
@@ -698,7 +698,7 @@ async def remove_domain(
 
 
 @router.get("/tls/authorize", response_model=AuthorizeResponse, response_model_by_alias=True)
-async def authorize_tls(
+def authorize_tls(
     domain: str = Query(description="The hostname the edge received over SNI."),
 ) -> AuthorizeResponse:
     """Answer the edge's on-demand TLS question: may this hostname be issued for?

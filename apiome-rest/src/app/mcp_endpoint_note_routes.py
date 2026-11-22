@@ -56,7 +56,7 @@ def _require_tenant_endpoint(tenant_id: str, endpoint_id: uuid.UUID) -> Dict[str
     "/{tenant_slug}/endpoints/{endpoint_id}/notes",
     response_model=McpEndpointNoteListResponse,
 )
-async def list_mcp_endpoint_notes(
+def list_mcp_endpoint_notes(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -76,7 +76,7 @@ async def list_mcp_endpoint_notes(
     "/{tenant_slug}/endpoints/{endpoint_id}/notes",
     response_model=McpEndpointNoteOut,
 )
-async def create_mcp_endpoint_note(
+def create_mcp_endpoint_note(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpEndpointNoteCreate,
@@ -104,7 +104,7 @@ async def create_mcp_endpoint_note(
     "/{tenant_slug}/endpoints/{endpoint_id}/notes/{note_id}",
     response_model=McpEndpointNoteOut,
 )
-async def get_mcp_endpoint_note(
+def get_mcp_endpoint_note(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     note_id: uuid.UUID,
@@ -124,7 +124,7 @@ async def get_mcp_endpoint_note(
     "/{tenant_slug}/endpoints/{endpoint_id}/notes/{note_id}",
     response_model=McpEndpointNoteOut,
 )
-async def update_mcp_endpoint_note(
+def update_mcp_endpoint_note(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     note_id: uuid.UUID,
@@ -158,7 +158,7 @@ async def update_mcp_endpoint_note(
 
 
 @router.delete("/{tenant_slug}/endpoints/{endpoint_id}/notes/{note_id}")
-async def delete_mcp_endpoint_note(
+def delete_mcp_endpoint_note(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     note_id: uuid.UUID,

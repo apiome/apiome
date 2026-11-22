@@ -25,6 +25,7 @@ import base64
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -282,7 +283,7 @@ async def fetch_git_import_fileset(
     # Same gate as the pre-flight: fetching a candidate fileset is the first step of the
     # import flow and writes nothing, so a caller who may not import has no use for it.
     _ = tenant_slug
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
         raise HTTPException(

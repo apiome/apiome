@@ -19,6 +19,7 @@ import logging
 from typing import Any, Dict, List, Literal, Mapping, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import url_import_store as store
@@ -207,11 +208,15 @@ async def record_url_import_route(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target="url-imports")
-    if not is_uuid_string(body.project_id) or not db.get_project_by_id(body.project_id, tenant_id):
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target="url-imports"
+    )
+    if not is_uuid_string(body.project_id) or not await run_in_threadpool(
+        db.get_project_by_id, body.project_id, tenant_id
+    ):
         raise HTTPException(status_code=404, detail=f"Project not found: {body.project_id}")
     if body.version_id:
-        version = db.get_version_by_id(body.version_id, tenant_id)
+        version = await run_in_threadpool(db.get_version_by_id, body.version_id, tenant_id)
         if not version or str(version.get("project_id")) != body.project_id:
             raise HTTPException(status_code=422, detail="versionId is not a version of this project.")
     try:
@@ -231,7 +236,7 @@ async def record_url_import_route(
         )
     except UrlImportError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return _out(store.get_spec(db, tenant_id, str(row["id"])) or row)
+    return _out(await run_in_threadpool(store.get_spec, db, tenant_id, str(row["id"])) or row)
 
 
 @router.get(
@@ -240,7 +245,7 @@ async def record_url_import_route(
     response_model_by_alias=True,
     summary="List URL imports and their refresh state",
 )
-async def list_url_imports(
+def list_url_imports(
     tenant_slug: str,
     project_id: Optional[str] = Query(default=None, alias="projectId", description="Only this project's."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -260,7 +265,7 @@ async def list_url_imports(
     response_model_by_alias=True,
     summary="Turn a URL import's refresh on or off, or set its cadence",
 )
-async def patch_url_import(
+def patch_url_import(
     tenant_slug: str,
     url_import_id: str,
     body: UrlImportSettingsPatch,

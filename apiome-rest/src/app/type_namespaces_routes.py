@@ -112,7 +112,7 @@ def _to_schema(row: Dict[str, Any]) -> TypeNamespaceSchema:
 
 
 @router.get("/{tenant_slug}/stats", response_model=RegistryCoverageStatsResponse)
-async def get_registry_coverage_stats(
+def get_registry_coverage_stats(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> RegistryCoverageStatsResponse:
@@ -133,7 +133,7 @@ async def get_registry_coverage_stats(
 
 
 @router.get("/{tenant_slug}/namespaces")
-async def list_namespaces(
+def list_namespaces(
     tenant_slug: str,
     root_status: Optional[RootStatus] = Query(
         default=None,
@@ -160,7 +160,7 @@ async def list_namespaces(
 
 
 @router.post("/{tenant_slug}/namespaces")
-async def create_namespace(
+def create_namespace(
     tenant_slug: str,
     request: TypeNamespaceCreateRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
@@ -237,7 +237,7 @@ async def create_namespace(
 
 
 @router.put("/{tenant_slug}/namespaces/{namespace_id}")
-async def update_namespace(
+def update_namespace(
     tenant_slug: str,
     namespace_id: str,
     request: TypeNamespaceUpdateRequest,
@@ -292,7 +292,7 @@ async def update_namespace(
 
 
 @router.delete("/{tenant_slug}/namespaces/{namespace_id}")
-async def delete_namespace(
+def delete_namespace(
     tenant_slug: str,
     namespace_id: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
@@ -377,7 +377,7 @@ def _settings_to_schema(row: Dict[str, Any]) -> TypeRegistrySettingsSchema:
 
 
 @router.get("/{tenant_slug}/settings", response_model=TypeRegistrySettingsSchema)
-async def get_registry_settings(
+def get_registry_settings(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> TypeRegistrySettingsSchema:
@@ -402,7 +402,7 @@ async def get_registry_settings(
 
 
 @router.put("/{tenant_slug}/settings", response_model=TypeRegistrySettingsSchema)
-async def update_registry_settings(
+def update_registry_settings(
     tenant_slug: str,
     request: TypeRegistrySettingsUpdateRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
@@ -445,7 +445,7 @@ async def update_registry_settings(
 
 
 @router.post("/{tenant_slug}/resolve", response_model=ResolveResponse)
-async def resolve_refs(
+def resolve_refs(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> ResolveResponse:

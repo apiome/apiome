@@ -66,7 +66,7 @@ def _if_none_match_hit(if_none_match: Optional[str], etag: str) -> bool:
 
 
 @router.get("/{tenant}/{slug}.svg")
-async def get_mcp_status_badge(
+def get_mcp_status_badge(
     tenant: str,
     slug: str,
     metric: str = Query(

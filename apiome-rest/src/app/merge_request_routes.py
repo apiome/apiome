@@ -165,7 +165,7 @@ _ERROR_RESPONSES: Dict[int | str, Dict[str, Any]] = {
     summary="List draft branches",
     responses={404: _ERROR_RESPONSES[404]},
 )
-async def list_draft_branches(
+def list_draft_branches(
     tenant_slug: str, project_ref: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> DraftBranchListResponse:
     """List the project's draft branches, each with the version line it was drafted off."""
@@ -183,7 +183,7 @@ async def list_draft_branches(
     summary="Create a draft branch off a version line",
     responses=_ERROR_RESPONSES,
 )
-async def create_draft_branch(
+def create_draft_branch(
     tenant_slug: str,
     project_ref: str,
     body: DraftBranchCreate,
@@ -213,7 +213,7 @@ async def create_draft_branch(
     summary="List merge requests",
     responses={404: _ERROR_RESPONSES[404]},
 )
-async def list_merge_requests(
+def list_merge_requests(
     tenant_slug: str,
     project_ref: str,
     state: Optional[MergeRequestState] = Query(default=None, description="Only requests in this state."),
@@ -239,7 +239,7 @@ async def list_merge_requests(
     summary="Open a merge request",
     responses=_ERROR_RESPONSES,
 )
-async def open_merge_request(
+def open_merge_request(
     tenant_slug: str,
     project_ref: str,
     body: MergeRequestCreate,
@@ -263,7 +263,7 @@ async def open_merge_request(
     summary="Read a merge request",
     responses={404: _ERROR_RESPONSES[404]},
 )
-async def read_merge_request(
+def read_merge_request(
     tenant_slug: str,
     project_ref: str,
     merge_request_id: str,
@@ -283,7 +283,7 @@ async def read_merge_request(
     summary="Request a review of the branch's current tip",
     responses=_ERROR_RESPONSES,
 )
-async def request_merge_request_review(
+def request_merge_request_review(
     tenant_slug: str,
     project_ref: str,
     merge_request_id: str,
@@ -308,7 +308,7 @@ async def request_merge_request_review(
     summary="Check a merge request for conflicts",
     responses=_ERROR_RESPONSES,
 )
-async def check_merge_request(
+def check_merge_request(
     tenant_slug: str,
     project_ref: str,
     merge_request_id: str,
@@ -322,7 +322,7 @@ async def check_merge_request(
     """
     tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.VIEW)
     try:
-        return await merge_request_store.check_merge_request(
+        return merge_request_store.check_merge_request(
             tenant_slug, auth_data, user_id, project_ref, merge_request_id, body or MergeRequestMerge()
         )
     except _REFUSALS as exc:
@@ -335,7 +335,7 @@ async def check_merge_request(
     summary="Merge a merge request",
     responses=_ERROR_RESPONSES,
 )
-async def merge_merge_request(
+def merge_merge_request(
     tenant_slug: str,
     project_ref: str,
     merge_request_id: str,
@@ -350,7 +350,7 @@ async def merge_merge_request(
     """
     tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
     try:
-        return await merge_request_store.merge_merge_request(
+        return merge_request_store.merge_merge_request(
             tenant_slug, auth_data, user_id, project_ref, merge_request_id, body or MergeRequestMerge()
         )
     except _REFUSALS as exc:
@@ -363,7 +363,7 @@ async def merge_merge_request(
     summary="Close a merge request without merging",
     responses=_ERROR_RESPONSES,
 )
-async def close_merge_request(
+def close_merge_request(
     tenant_slug: str,
     project_ref: str,
     merge_request_id: str,

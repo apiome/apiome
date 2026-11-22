@@ -91,7 +91,7 @@ def _parent_spec(tenant_id: str, tenant_slug: str, project_id: str, parent_versi
         "surface with the importing file alone.\n\nRequires `projects:view`."
     ),
 )
-async def get_repository_federation(
+def get_repository_federation(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -126,7 +126,7 @@ async def get_repository_federation(
         "Audited as `repository.federation_toggled`."
     ),
 )
-async def put_repository_federation(
+def put_repository_federation(
     tenant_slug: str,
     project_ref: str,
     body: FederationSettingUpdate,
@@ -176,7 +176,7 @@ async def put_repository_federation(
         "Requires `imports:create`."
     ),
 )
-async def create_federation_merge(
+def create_federation_merge(
     tenant_slug: str,
     project_ref: str,
     body: FederationMergeCreate,
@@ -229,7 +229,7 @@ async def create_federation_merge(
     summary="List a project's federation merge history",
     description="Newest first. Requires `projects:view`.",
 )
-async def list_project_federation_merges(
+def list_project_federation_merges(
     tenant_slug: str,
     project_ref: str,
     limit: int = Query(default=50, ge=1, le=store.MAX_HISTORY_LIMIT),
@@ -263,7 +263,7 @@ async def list_project_federation_merges(
         "files was the imported file, newest first. Requires `imports:view`."
     ),
 )
-async def list_repository_federation_merges(
+def list_repository_federation_merges(
     tenant_slug: str,
     repository_id: str,
     limit: int = Query(default=50, ge=1, le=store.MAX_HISTORY_LIMIT),

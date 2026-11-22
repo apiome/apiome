@@ -75,7 +75,7 @@ class ImportSourceListResponse(BaseModel):
         "and the input kinds (file/url/paste/discovery) its card/verb should use."
     ),
 )
-async def list_import_sources(
+def list_import_sources(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> ImportSourceListResponse:
     # The source list is non-tenant registry metadata: authentication is required
@@ -107,7 +107,7 @@ async def list_import_sources(
         "``version``."
     ),
 )
-async def get_format_capability_registry(
+def get_format_capability_registry(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> FormatCapabilitySnapshot:
     """Return the versioned source-format capability & parsing-limit registry snapshot.
@@ -143,7 +143,7 @@ async def get_format_capability_registry(
         "character class, or over 64 characters) is a 422 rather than an echo."
     ),
 )
-async def get_format_capability(
+def get_format_capability(
     format_key: str,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> FormatCapability:
@@ -283,7 +283,7 @@ class DetectFormatResponse(BaseModel):
         "is true and ``ambiguous_candidates`` lists the choices to prompt for."
     ),
 )
-async def detect_import_format(
+def detect_import_format(
     body: DetectFormatRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> DetectFormatResponse:

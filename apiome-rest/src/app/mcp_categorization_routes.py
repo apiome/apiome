@@ -125,7 +125,7 @@ def _label_taken(categories: List[Dict[str, Any]], label: str, *, except_slug: O
 
 
 @router.get("/{tenant_slug}/categories", response_model=McpCategoryListResponse)
-async def list_mcp_categories(
+def list_mcp_categories(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCategoryListResponse:
@@ -138,7 +138,7 @@ async def list_mcp_categories(
 
 
 @router.post("/{tenant_slug}/categories", response_model=McpCategoryResponse, status_code=201)
-async def create_mcp_category(
+def create_mcp_category(
     tenant_slug: str,
     body: McpCategoryCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -181,7 +181,7 @@ async def create_mcp_category(
 
 
 @router.get("/{tenant_slug}/categories/{slug}", response_model=McpCategoryResponse)
-async def get_mcp_category(
+def get_mcp_category(
     tenant_slug: str,
     slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -195,7 +195,7 @@ async def get_mcp_category(
 
 
 @router.patch("/{tenant_slug}/categories/{slug}", response_model=McpCategoryResponse)
-async def update_mcp_category(
+def update_mcp_category(
     tenant_slug: str,
     slug: str,
     body: McpCategoryUpdate,
@@ -235,7 +235,7 @@ async def update_mcp_category(
 
 
 @router.delete("/{tenant_slug}/categories/{slug}")
-async def delete_mcp_category(
+def delete_mcp_category(
     tenant_slug: str,
     slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -256,7 +256,7 @@ async def delete_mcp_category(
 
 
 @router.get("/{tenant_slug}/tags", response_model=McpTagVocabularyResponse)
-async def list_mcp_tag_vocabulary(
+def list_mcp_tag_vocabulary(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpTagVocabularyResponse:
@@ -275,7 +275,7 @@ async def list_mcp_tag_vocabulary(
 @router.get(
     "/{tenant_slug}/endpoints/{endpoint_id}/tags", response_model=McpEndpointTagsResponse
 )
-async def list_mcp_endpoint_tags(
+def list_mcp_endpoint_tags(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -293,7 +293,7 @@ async def list_mcp_endpoint_tags(
 @router.put(
     "/{tenant_slug}/endpoints/{endpoint_id}/tags", response_model=McpEndpointTagsResponse
 )
-async def replace_mcp_endpoint_tags(
+def replace_mcp_endpoint_tags(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpEndpointTagsBody,
@@ -319,7 +319,7 @@ async def replace_mcp_endpoint_tags(
 @router.post(
     "/{tenant_slug}/endpoints/{endpoint_id}/tags", response_model=McpEndpointTagsResponse
 )
-async def add_mcp_endpoint_tags(
+def add_mcp_endpoint_tags(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpEndpointTagsBody,
@@ -347,7 +347,7 @@ async def add_mcp_endpoint_tags(
 @router.delete(
     "/{tenant_slug}/endpoints/{endpoint_id}/tags/{tag}", response_model=McpEndpointTagsResponse
 )
-async def remove_mcp_endpoint_tag(
+def remove_mcp_endpoint_tag(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     tag: str,
@@ -403,7 +403,7 @@ def _suggestion_out(suggestions: List[CategorySuggestion]) -> List[McpCategorySu
     "/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion",
     response_model=McpEndpointCategorySuggestionResponse,
 )
-async def suggest_mcp_endpoint_category(
+def suggest_mcp_endpoint_category(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     use_llm: bool = Query(
@@ -485,7 +485,7 @@ async def suggest_mcp_endpoint_category(
     "/{tenant_slug}/category-suggestions",
     response_model=McpCategorySuggestionQueueResponse,
 )
-async def list_mcp_category_suggestions(
+def list_mcp_category_suggestions(
     tenant_slug: str,
     include_categorized: bool = Query(
         False, description="Also suggest for endpoints that already have a category."

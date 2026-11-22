@@ -410,7 +410,7 @@ def _approval_gate(
     response_model=ComponentListResponse,
     response_model_by_alias=True,
 )
-async def list_components(
+def list_components(
     tenant_slug: str,
     kind: Optional[str] = Query(default=None),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -428,7 +428,7 @@ async def list_components(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_component(
+def create_component(
     tenant_slug: str,
     body: ComponentCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -476,7 +476,7 @@ async def create_component(
     response_model=ComponentDetailBody,
     response_model_by_alias=True,
 )
-async def get_component(
+def get_component(
     tenant_slug: str,
     component_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -504,7 +504,7 @@ async def get_component(
     response_model=DeletedResponse,
     response_model_by_alias=True,
 )
-async def delete_component(
+def delete_component(
     tenant_slug: str,
     component_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -530,7 +530,7 @@ async def delete_component(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_revision(
+def create_revision(
     tenant_slug: str,
     component_id: str,
     body: RevisionCreateRequest,
@@ -566,7 +566,7 @@ async def create_revision(
     response_model=RevisionMutationResponse,
     response_model_by_alias=True,
 )
-async def update_revision(
+def update_revision(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -602,7 +602,7 @@ async def update_revision(
     response_model=PublishResponse,
     response_model_by_alias=True,
 )
-async def publish_revision(
+def publish_revision(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -646,7 +646,7 @@ async def publish_revision(
     response_model=DeletedResponse,
     response_model_by_alias=True,
 )
-async def delete_revision(
+def delete_revision(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -693,7 +693,7 @@ class ComponentUsageResponse(_CamelModel):
     response_model=ComponentUsageResponse,
     response_model_by_alias=True,
 )
-async def component_usage(
+def component_usage(
     tenant_slug: str,
     component_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -748,7 +748,7 @@ async def component_usage(
     response_model=PinListResponse,
     response_model_by_alias=True,
 )
-async def list_pins(
+def list_pins(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -781,7 +781,7 @@ async def list_pins(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_pin(
+def create_pin(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -817,7 +817,7 @@ async def create_pin(
     response_model=DeletedResponse,
     response_model_by_alias=True,
 )
-async def delete_pin(
+def delete_pin(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -843,7 +843,7 @@ async def delete_pin(
     response_model=MaterializationPreviewResponse,
     response_model_by_alias=True,
 )
-async def materialization_preview(
+def materialization_preview(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

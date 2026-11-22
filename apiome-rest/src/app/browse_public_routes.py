@@ -191,7 +191,7 @@ def _browse_project_domain_label(metadata: Any) -> str:
 
 
 @router.get("/tenants", response_model=BrowsePublicTenantsResponse)
-async def list_public_browse_tenants(
+def list_public_browse_tenants(
     search: str | None = Query(
         None,
         description="Case-insensitive substring filter on tenant name and slug.",
@@ -237,7 +237,7 @@ async def list_public_browse_tenants(
         404: {"description": "Tenant not found."},
     },
 )
-async def list_public_browse_projects(
+def list_public_browse_projects(
     tenant_slug: str,
     search: str | None = Query(
         None,
@@ -330,7 +330,7 @@ async def list_public_browse_projects(
         404: {"description": "Tenant or project not found."},
     },
 )
-async def list_public_browse_versions(
+def list_public_browse_versions(
     tenant_slug: str,
     project_slug: str,
     since: datetime | None = Query(
@@ -436,7 +436,7 @@ def _if_none_match_matches(header: str | None, etag: str) -> bool:
         404: {"description": "Tenant or project not found, or the project has no public published version."},
     },
 )
-async def get_public_browse_project_changelog_markdown(
+def get_public_browse_project_changelog_markdown(
     request: Request,
     tenant_slug: str,
     project_slug: str,

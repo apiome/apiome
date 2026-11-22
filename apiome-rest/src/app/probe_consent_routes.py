@@ -132,7 +132,7 @@ def _load_target(tenant_id: str, target_ref: str) -> VerificationTargetRecord:
         "tenant administrator. Every grant is written to the access audit."
     ),
 )
-async def grant_probe_consent(
+def grant_probe_consent(
     tenant_slug: str,
     target_ref: str,
     body: ProbeConsentGrant,
@@ -179,7 +179,7 @@ async def grant_probe_consent(
         "time. 404 when the target has none.\n\nRequires `verification_evidence:view`."
     ),
 )
-async def get_probe_consent(
+def get_probe_consent(
     tenant_slug: str,
     target_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -219,7 +219,7 @@ async def get_probe_consent(
         "Requires `verification_evidence:create`. Every revocation is written to the access audit."
     ),
 )
-async def revoke_probe_consent(
+def revoke_probe_consent(
     tenant_slug: str,
     target_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -259,7 +259,7 @@ async def revoke_probe_consent(
         "Requires `verification_evidence:view`."
     ),
 )
-async def list_security_probe_reports(
+def list_security_probe_reports(
     tenant_slug: str,
     target_id: Optional[str] = Query(default=None, description="Restrict to one target id."),
     limit: int = Query(default=50, ge=1, le=MAX_LIST_LIMIT, description="Maximum reports."),
@@ -288,7 +288,7 @@ async def list_security_probe_reports(
     summary="Read one security probe report",
     description="One report with its body.\n\nRequires `verification_evidence:view`.",
 )
-async def get_security_probe_report(
+def get_security_probe_report(
     tenant_slug: str,
     report_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

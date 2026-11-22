@@ -211,7 +211,7 @@ def enforce_comment_rate_limit(tenant_id: str, user_id: str) -> None:
         "Requires `projects:view`."
     ),
 )
-async def list_comment_threads(
+def list_comment_threads(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),
@@ -292,7 +292,7 @@ async def list_comment_threads(
         "user (shared with replies)."
     ),
 )
-async def open_comment_thread(
+def open_comment_thread(
     tenant_slug: str,
     project_ref: str,
     body: CommentThreadCreate,
@@ -328,7 +328,7 @@ async def open_comment_thread(
     summary="Read a comment thread",
     description="A thread with all of its comments, oldest first.\n\nRequires `projects:view`.",
 )
-async def read_comment_thread(
+def read_comment_thread(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,
@@ -366,7 +366,7 @@ async def read_comment_thread(
         "tenant administrator (`403 comment-forbidden` otherwise)."
     ),
 )
-async def delete_comment_thread(
+def delete_comment_thread(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,
@@ -501,7 +501,7 @@ async def reopen_comment_thread(
         "Requires `projects:view` — anyone taking part in the discussion may relink it."
     ),
 )
-async def relink_comment_thread(
+def relink_comment_thread(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,
@@ -548,7 +548,7 @@ async def relink_comment_thread(
         "Requires `projects:view`. Rate limited per user (shared with opening threads)."
     ),
 )
-async def reply_to_comment_thread(
+def reply_to_comment_thread(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,
@@ -591,7 +591,7 @@ async def reply_to_comment_thread(
         "administrator (`403 comment-forbidden` otherwise)."
     ),
 )
-async def edit_comment(
+def edit_comment(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,
@@ -637,7 +637,7 @@ async def edit_comment(
         "administrator (`403 comment-forbidden` otherwise)."
     ),
 )
-async def delete_comment(
+def delete_comment(
     tenant_slug: str,
     project_ref: str,
     thread_id: str,

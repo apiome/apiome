@@ -30,6 +30,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import project_external_ref_store as store
@@ -260,8 +261,8 @@ async def list_project_references(
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     target = f"project:{project_id}:references"
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target=target)
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=target)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW, target=target)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.VIEW, target=target)
     document, meta = await asyncio.to_thread(load_version_source, tenant_id, project_id, version)
     return await asyncio.to_thread(_view, tenant_id, project_id, document, meta, auth_data)
 
@@ -335,8 +336,8 @@ async def refresh_project_references(
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     target = f"project:{project_id}:references"
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=target)
-    actor_id = enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.VIEW, target=target)
+    actor_id = await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
     document, meta = await asyncio.to_thread(load_version_source, tenant_id, project_id, body.version)
     known = [group["url"] for group in external_ref_groups(document)]
     if body.urls is not None:
@@ -368,7 +369,8 @@ async def pin_project_reference(
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    actor_id = enforce_permission(
+    actor_id = await run_in_threadpool(
+        enforce_permission,
         db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"project:{project_id}:references"
     )
     actor = str(actor_id) if actor_id else get_authenticated_user_id(auth_data)
@@ -394,7 +396,9 @@ async def unpin_project_reference(
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"project:{project_id}:references")
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"project:{project_id}:references"
+    )
     row = await asyncio.to_thread(store.clear_pin, tenant_id=tenant_id, project_id=project_id, url=url)
     if row is None:
         raise _refuse(404, "ref-not-found", "This reference has never been refreshed.")
@@ -415,7 +419,7 @@ async def get_external_ref_policy(
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     policy = await asyncio.to_thread(load_tenant_policy, tenant_id)
-    return _policy_out(policy, can_edit=_is_admin(tenant_id, auth_data))
+    return _policy_out(policy, can_edit=await run_in_threadpool(_is_admin, tenant_id, auth_data))
 
 
 @router.put(_POLICY, response_model=ExternalRefPolicyOut, summary="Set the tenant's external $ref policy")
@@ -432,7 +436,7 @@ async def put_external_ref_policy(
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    if not _is_admin(tenant_id, auth_data):
+    if not await run_in_threadpool(_is_admin, tenant_id, auth_data):
         raise HTTPException(status_code=403, detail="Only tenant administrators can change the external $ref policy")
     raw = [pattern.strip() for pattern in body.allowlist if pattern.strip()]
     for pattern in raw:
@@ -449,7 +453,8 @@ async def put_external_ref_policy(
     before = await asyncio.to_thread(load_tenant_policy, tenant_id)
     await asyncio.to_thread(db.set_tenant_external_ref_policy, tenant_id, policy=body.mode, allowlist=patterns)
     try:
-        db.write_access_audit(
+        await run_in_threadpool(
+            db.write_access_audit,
             tenant_id=tenant_id,
             action=AUDIT_POLICY_UPDATE,
             actor_id=get_authenticated_user_id(auth_data),

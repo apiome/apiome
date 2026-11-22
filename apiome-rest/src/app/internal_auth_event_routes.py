@@ -124,7 +124,7 @@ class AuthEventAccepted(BaseModel):
         503: {"description": "Disabled: no INTERNAL_SERVICE_TOKEN configured."},
     },
 )
-async def record_auth_event(
+def record_auth_event(
     payload: AuthEventCreateRequest, _: None = Depends(require_internal_service)
 ) -> AuthEventAccepted:
     """Append one sign-in outcome to ``auth_events`` (best-effort; hashes the IP and User-Agent)."""

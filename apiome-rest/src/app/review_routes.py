@@ -153,7 +153,7 @@ def _http_error(exc: ReviewValidationError) -> HTTPException:
         "Requires `projects:view`."
     ),
 )
-async def list_reviews(
+def list_reviews(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),
@@ -202,7 +202,7 @@ async def list_reviews(
         "Requires `projects:view`."
     ),
 )
-async def read_review(
+def read_review(
     tenant_slug: str,
     project_ref: str,
     review_id: str,
@@ -240,7 +240,7 @@ async def read_review(
         "Requires `projects:view`."
     ),
 )
-async def read_version_review_status(
+def read_version_review_status(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -289,7 +289,7 @@ async def read_version_review_status(
         "Requires `versions:edit`."
     ),
 )
-async def request_review(
+def request_review(
     tenant_slug: str,
     project_ref: str,
     body: ReviewRequestCreate,
@@ -333,7 +333,7 @@ async def request_review(
         "(`403 review-not-reviewer`)."
     ),
 )
-async def record_review_decision(
+def record_review_decision(
     tenant_slug: str,
     project_ref: str,
     review_id: str,
@@ -377,7 +377,7 @@ async def record_review_decision(
         "Requires `versions:edit`."
     ),
 )
-async def re_request_review(
+def re_request_review(
     tenant_slug: str,
     project_ref: str,
     review_id: str,
@@ -421,7 +421,7 @@ async def re_request_review(
         "a tenant administrator (`403 review-forbidden`)."
     ),
 )
-async def withdraw_review(
+def withdraw_review(
     tenant_slug: str,
     project_ref: str,
     review_id: str,

@@ -184,7 +184,7 @@ def _audit(
         "Requires `api_keys:view`."
     ),
 )
-async def list_agent_keys_route(
+def list_agent_keys_route(
     tenant_slug: str,
     toolset_id: Optional[UUID] = Query(default=None, alias="toolsetId"),
     include_revoked: bool = Query(default=False, alias="includeRevoked"),
@@ -234,7 +234,7 @@ async def list_agent_keys_route(
         422: {"description": "A tool name, the name or the expiry is not acceptable."},
     },
 )
-async def create_agent_key_route(
+def create_agent_key_route(
     tenant_slug: str,
     body: AgentKeyCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -285,7 +285,7 @@ async def create_agent_key_route(
     ),
     responses={404: {"description": "No such agent key in this tenant."}},
 )
-async def get_agent_key_route(
+def get_agent_key_route(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -328,7 +328,7 @@ async def get_agent_key_route(
     ),
     responses={404: {"description": "No such agent key in this tenant."}},
 )
-async def get_agent_key_usage_route(
+def get_agent_key_usage_route(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -370,7 +370,7 @@ async def get_agent_key_usage_route(
         422: {"description": "An entry is not an MCP tool name."},
     },
 )
-async def update_agent_key_allowlist_route(
+def update_agent_key_allowlist_route(
     tenant_slug: str,
     key_id: UUID,
     body: AgentKeyAllowlistUpdate,
@@ -423,7 +423,7 @@ async def update_agent_key_allowlist_route(
     ),
     responses={404: {"description": "No such agent key in this tenant."}},
 )
-async def revoke_agent_key_route(
+def revoke_agent_key_route(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

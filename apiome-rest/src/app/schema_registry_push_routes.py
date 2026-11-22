@@ -23,6 +23,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import catalog_connector_store as store
@@ -388,7 +389,8 @@ async def push_registry_export(
             ``REGISTRY_PUSH_NO_RECORD``).
     """
     tenant_id = auth_data["tenant_id"]
-    actor_id = enforce_permission(
+    actor_id = await run_in_threadpool(
+        enforce_permission,
         db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{request.connector_id}"
     )
     options = _registry_options(request)

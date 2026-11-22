@@ -167,7 +167,7 @@ def _load_public_source(
     },
     dependencies=[Depends(_require_public_export_rate_limit)],
 )
-async def list_public_export_targets(
+def list_public_export_targets(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -214,7 +214,7 @@ async def list_public_export_targets(
     },
     dependencies=[Depends(_require_public_export_rate_limit)],
 )
-async def preview_public_export_fidelity(
+def preview_public_export_fidelity(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -280,7 +280,7 @@ async def preview_public_export_fidelity(
     },
     dependencies=[Depends(_require_public_export_rate_limit)],
 )
-async def emit_public_export_document(
+def emit_public_export_document(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,

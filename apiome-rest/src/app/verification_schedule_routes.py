@@ -126,7 +126,7 @@ def _http_error(exc: ScheduleValidationError) -> HTTPException:
         "Requires `verification_targets:view`."
     ),
 )
-async def list_verification_schedules(
+def list_verification_schedules(
     tenant_slug: str,
     version_ref: Optional[str] = Query(
         default=None, description="Restrict to one version reference."
@@ -192,7 +192,7 @@ async def list_verification_schedules(
         "Requires `verification_targets:create`."
     ),
 )
-async def create_verification_schedule(
+def create_verification_schedule(
     tenant_slug: str,
     body: VerificationScheduleInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -234,7 +234,7 @@ async def create_verification_schedule(
         "Requires `verification_targets:view`."
     ),
 )
-async def read_verification_schedule(
+def read_verification_schedule(
     tenant_slug: str,
     schedule_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -274,7 +274,7 @@ async def read_verification_schedule(
         "Requires `verification_targets:edit`."
     ),
 )
-async def update_verification_schedule(
+def update_verification_schedule(
     tenant_slug: str,
     schedule_ref: str,
     body: VerificationSchedulePatch,
@@ -323,7 +323,7 @@ async def update_verification_schedule(
         "Requires `verification_targets:delete`."
     ),
 )
-async def remove_verification_schedule(
+def remove_verification_schedule(
     tenant_slug: str,
     schedule_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -371,7 +371,7 @@ async def remove_verification_schedule(
         "Requires `verification_evidence:view` — a verification history is evidence."
     ),
 )
-async def list_verification_schedule_runs(
+def list_verification_schedule_runs(
     tenant_slug: str,
     schedule_ref: str,
     status: Optional[str] = Query(

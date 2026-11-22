@@ -651,7 +651,7 @@ def _response_from_classified(
         }
     },
 )
-async def post_classified_diff(
+def post_classified_diff(
     tenant_slug: str,
     body: ClassifiedDiffRequest,
     response: Response,

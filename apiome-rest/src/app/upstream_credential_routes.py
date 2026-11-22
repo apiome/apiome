@@ -205,7 +205,7 @@ def _audit(
         "upstream APIs.\n\n" + _WRITE_ONLY + "\n\nRequires `api_keys:view`."
     ),
 )
-async def list_upstream_credentials(
+def list_upstream_credentials(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -259,7 +259,7 @@ async def list_upstream_credentials(
         503: {"description": "No upstream-credential encryption key is configured."},
     },
 )
-async def create_upstream_credential(
+def create_upstream_credential(
     tenant_slug: str,
     toolset_id: UUID,
     body: UpstreamCredentialCreate,
@@ -318,7 +318,7 @@ async def create_upstream_credential(
         503: {"description": "No upstream-credential encryption key is configured."},
     },
 )
-async def rotate_upstream_credential(
+def rotate_upstream_credential(
     tenant_slug: str,
     toolset_id: UUID,
     credential_id: UUID,
@@ -374,7 +374,7 @@ async def rotate_upstream_credential(
     ),
     responses={404: {"description": "No such credential for this toolset."}},
 )
-async def delete_upstream_credential(
+def delete_upstream_credential(
     tenant_slug: str,
     toolset_id: UUID,
     credential_id: UUID,

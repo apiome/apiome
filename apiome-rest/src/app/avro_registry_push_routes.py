@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
@@ -129,7 +130,8 @@ async def push_avro_export(
             share a subject (``AVRO_PUSH_DUPLICATE_SUBJECT``).
     """
     tenant_id = auth_data["tenant_id"]
-    actor_id = enforce_permission(
+    actor_id = await run_in_threadpool(
+        enforce_permission,
         db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{request.connector_id}"
     )
     if (request.options or {}).get("output_syntax", "avsc") != "avsc":

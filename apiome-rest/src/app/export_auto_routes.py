@@ -26,6 +26,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from psycopg2 import errors as pg_errors
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -187,8 +188,8 @@ async def create_auto_export(
     Returns:
         The stored subscription.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     preset = await asyncio.to_thread(db.get_export_preset, tenant_id, body.preset)
@@ -237,7 +238,7 @@ async def list_auto_exports(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AutoExportSubscriptionListResponse:
     """List auto-export subscriptions."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     preset_id = None
@@ -268,7 +269,7 @@ async def update_auto_export(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AutoExportSubscriptionModel:
     """Change one auto-export subscription."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _subscription_or_404(tenant_id, subscription_id)
@@ -276,7 +277,7 @@ async def update_auto_export(
     approve_loss = existing["approve_loss"] if body.approve_loss is None else body.approve_loss
     active = existing["active"] if body.active is None else body.active
     if (active and not existing["active"]) or (approve_loss and not existing["approve_loss"]):
-        enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+        await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     row = await asyncio.to_thread(db.update_export_auto_subscription, tenant_id, subscription_id, halt_at=halt_at,
                                   approve_loss=approve_loss, active=active,
                                   actor_id=get_authenticated_user_id(auth_data))
@@ -301,7 +302,7 @@ async def delete_auto_export(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Remove one auto-export subscription."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     existing = await _subscription_or_404(tenant_id, subscription_id)
@@ -329,7 +330,7 @@ async def list_auto_export_runs(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AutoExportRunListResponse:
     """List auto-export runs."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_auto_runs, tenant_id, project_id=project_id,
@@ -358,7 +359,7 @@ async def release_auto_export_run(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AutoExportRunModel:
     """Deliver one halted auto-export anyway."""
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     run = await asyncio.to_thread(db.get_export_auto_run, tenant_id, run_id)

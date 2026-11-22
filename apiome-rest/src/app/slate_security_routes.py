@@ -906,7 +906,7 @@ def _csv_cell(value: Any) -> str:
 @router.get(
     "/security/presets", response_model=SecurityPresetsResponse, response_model_by_alias=True
 )
-async def get_security_presets(
+def get_security_presets(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> SecurityPresetsResponse:
     """Return every managed tier and safe preset as data.
@@ -965,7 +965,7 @@ async def get_security_presets(
     response_model=ManagedGroupsResponse,
     response_model_by_alias=True,
 )
-async def get_managed_group_catalog(
+def get_managed_group_catalog(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ManagedGroupsResponse:
     """Return the curated WAF group catalog.
@@ -986,7 +986,7 @@ async def get_managed_group_catalog(
     response_model=SecurityPolicyResponse,
     response_model_by_alias=True,
 )
-async def get_security_policy(
+def get_security_policy(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> SecurityPolicyResponse:
@@ -1025,7 +1025,7 @@ async def get_security_policy(
     response_model=SetPresetsResponse,
     response_model_by_alias=True,
 )
-async def set_security_presets(
+def set_security_presets(
     environment_id: str,
     request: SetPresetsRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1125,7 +1125,7 @@ async def set_security_presets(
     response_model=SetManagedGroupResponse,
     response_model_by_alias=True,
 )
-async def set_security_managed_group(
+def set_security_managed_group(
     environment_id: str,
     group_id: str,
     request: SetManagedGroupRequest,
@@ -1408,7 +1408,7 @@ def _write_rule(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_security_rule(
+def create_security_rule(
     environment_id: str,
     request: WriteRuleRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1425,7 +1425,7 @@ async def create_security_rule(
     response_model=WriteRuleResponse,
     response_model_by_alias=True,
 )
-async def replace_security_rule(
+def replace_security_rule(
     environment_id: str,
     rule_id: str,
     request: WriteRuleRequest,
@@ -1443,7 +1443,7 @@ async def replace_security_rule(
     response_model=DeleteRuleResponse,
     response_model_by_alias=True,
 )
-async def remove_security_rule(
+def remove_security_rule(
     environment_id: str,
     rule_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -1498,7 +1498,7 @@ async def remove_security_rule(
     response_model=WriteRuleResponse,
     response_model_by_alias=True,
 )
-async def set_security_rule_rollout(
+def set_security_rule_rollout(
     environment_id: str,
     rule_id: str,
     request: RolloutRequest,
@@ -1612,7 +1612,7 @@ async def set_security_rule_rollout(
     response_model=WriteRuleResponse,
     response_model_by_alias=True,
 )
-async def revert_security_rule(
+def revert_security_rule(
     environment_id: str,
     rule_id: str,
     request: RevertRequest,
@@ -1680,7 +1680,7 @@ async def revert_security_rule(
     response_model=RevisionsResponse,
     response_model_by_alias=True,
 )
-async def get_security_rule_revisions(
+def get_security_rule_revisions(
     environment_id: str,
     rule_id: str,
     limit: int = Query(default=50, ge=1, le=200),
@@ -1717,7 +1717,7 @@ async def get_security_rule_revisions(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_security_exception(
+def create_security_exception(
     environment_id: str,
     request: CreateExceptionRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1822,7 +1822,7 @@ async def create_security_exception(
     response_model=DeleteExceptionResponse,
     response_model_by_alias=True,
 )
-async def remove_security_exception(
+def remove_security_exception(
     environment_id: str,
     exception_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -1876,7 +1876,7 @@ async def remove_security_exception(
     response_model_by_alias=True,
     status_code=201,
 )
-async def record_security_approval(
+def record_security_approval(
     environment_id: str,
     request: ApprovalRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1943,7 +1943,7 @@ async def record_security_approval(
     response_model=SimulateResponse,
     response_model_by_alias=True,
 )
-async def simulate_security_request(
+def simulate_security_request(
     environment_id: str,
     request: SimulateCommandBody,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2058,7 +2058,7 @@ async def simulate_security_request(
     response_model=SecurityEventsResponse,
     response_model_by_alias=True,
 )
-async def get_security_events(
+def get_security_events(
     environment_id: str,
     limit: int = Query(default=50, ge=1, le=200),
     rule_ref: Optional[str] = Query(default=None, alias="ruleRef"),
@@ -2119,7 +2119,7 @@ def _event_body(row: Mapping[str, Any]) -> SecurityEventBody:
     response_model=SecurityEventBody,
     response_model_by_alias=True,
 )
-async def get_security_event(
+def get_security_event(
     environment_id: str,
     event_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2146,7 +2146,7 @@ async def get_security_event(
     response_model=AuditResponse,
     response_model_by_alias=True,
 )
-async def get_security_audit(
+def get_security_audit(
     environment_id: str,
     limit: int = Query(default=100, ge=1, le=500),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -2175,7 +2175,7 @@ async def get_security_audit(
 
 
 @router.get("/environments/{environment_id}/security/audit/export")
-async def export_security_audit(
+def export_security_audit(
     environment_id: str,
     limit: int = Query(default=10000, ge=1, le=100000),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),

@@ -175,7 +175,7 @@ def compose_effective_features(rows: List[Dict[str, Any]]) -> List[LicenseFeatur
         404: {"description": "Tenant not found."},
     },
 )
-async def get_tenant_license(
+def get_tenant_license(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantLicenseResponse:
