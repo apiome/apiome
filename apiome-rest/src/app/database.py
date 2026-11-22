@@ -27,7 +27,9 @@ from . import authz_cache
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .db_bulk import DEFAULT_PAGE_SIZE as DEFAULT_BULK_PAGE_SIZE
 from .db_bulk import bulk_insert as _bulk_insert
+from .db_bulk import bulk_insert_arrays as _bulk_insert_arrays
 from .db_bulk import bulk_upsert as _bulk_upsert
+from .db_bulk import new_ids as _new_ids
 from .db_cursor import rollback_quietly
 from .db_timeouts import StatementTimeout  # noqa: F401 - re-exported for callers
 from .db_timeouts import apply_statement_timeout, typed_timeout
