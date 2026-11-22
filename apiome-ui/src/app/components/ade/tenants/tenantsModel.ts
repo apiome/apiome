@@ -515,6 +515,7 @@ export function suggestTenantSlug(name: string): string {
 export type TenantManageSection =
   | 'members'
   | 'security'
+  | 'storage'
   | 'license'
   | 'mcp'
   | 'keys'
@@ -525,6 +526,7 @@ export type TenantManageSection =
 export const TENANT_MANAGE_SECTIONS: readonly TenantManageSection[] = [
   'members',
   'security',
+  'storage',
   'license',
   'mcp',
   'keys',
@@ -536,6 +538,7 @@ export const TENANT_MANAGE_SECTIONS: readonly TenantManageSection[] = [
 export const TENANT_MANAGE_SECTION_LABELS: Readonly<Record<TenantManageSection, string>> = {
   members: 'Members',
   security: 'Security',
+  storage: 'Document storage',
   license: 'License & plan',
   mcp: 'MCP settings',
   keys: 'Per-key capabilities',
@@ -573,6 +576,8 @@ export function tenantSectionLockNote(
       return `Select ${subject} as your current tenant to view or edit its ownership policy.`;
     case 'security':
       return `Select ${subject} as your current tenant to view or edit its two-factor policy.`;
+    case 'storage':
+      return `Select ${subject} as your current tenant to view or edit its document storage.`;
     default:
       // Members come from the tenant list the page already loaded, not from the
       // current-tenant proxy, so they are readable for every tenant the viewer administers.

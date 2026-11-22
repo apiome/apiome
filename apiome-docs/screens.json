@@ -1603,6 +1603,16 @@
       "data": "fixture:hive-a11y/tenants-drawer-security.html"
     },
     {
+      "id": "tenant-document-storage",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-storage-heading",
+      "data": "fixture:hive-a11y/tenant-document-storage.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/tenants/TenantDocumentStorageSection.tsx",
+        "apiome-ui/lib/tenant-document-store.ts"
+      ]
+    },
+    {
       "id": "tenants-drawer-license",
       "route": "/ade/dashboard/tenants",
       "waitFor": "#tnt-license-heading",
@@ -1865,6 +1875,20 @@
       "id": "admin-document-store",
       "route": "/admin/dashboard/document-store",
       "waitFor": "[data-testid=\"document-store-probe\"]",
+      "data": "fixture:hive-a11y/admin-document-store.html",
+      "sources": [
+        "apiome-ui/src/app/admin/dashboard/document-store",
+        "apiome-ui/lib/admin-document-store.ts"
+      ],
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-document-store-tenant-buckets",
+      "route": "/admin/dashboard/document-store",
+      "waitFor": "[data-testid=\"document-store-tenant-buckets\"]",
+      "scrollTo": "[data-testid=\"document-store-tenant-buckets\"]",
       "data": "fixture:hive-a11y/admin-document-store.html",
       "sources": [
         "apiome-ui/src/app/admin/dashboard/document-store",

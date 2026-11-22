@@ -210,7 +210,7 @@ async function renderRoles() {
 // ---------------------------------------------------------------------------------------
 
 describe('the permission matrix', () => {
-  it('draws 75 cells as toggle buttons that name themselves', async () => {
+  it('draws 76 cells as toggle buttons that name themselves', async () => {
     mockApi();
     await renderRoles();
 
@@ -218,7 +218,12 @@ describe('the permission matrix', () => {
     const cells = within(matrix)
       .getAllByRole('button')
       .filter((button) => !button.getAttribute('aria-label')?.startsWith('All '));
-    expect(cells).toHaveLength(75);
+    // 15 content resources × 5 actions, plus Document storage's one action, Manage (COA-5.15).
+    expect(cells).toHaveLength(76);
+    expect(screen.getByRole('button', { name: 'Document storage Manage' })).toBeEnabled();
+    // Cells the guard has no permission for are a dash, not a toggle.
+    expect(screen.getByTestId('role-cell-document_store-view-na')).toHaveTextContent('Not applicable');
+    expect(screen.getByTestId('role-cell-projects-manage-na')).toBeInTheDocument();
 
     // The first role is Owner, whose fixture grants `projects:view` and `versions:view`.
     expect(screen.getByRole('button', { name: 'Projects View' })).toHaveAttribute(
@@ -232,7 +237,7 @@ describe('the permission matrix', () => {
     expect(screen.getByRole('button', { name: 'Verification evidence Publish' })).toBeEnabled();
   });
 
-  it('heads five action columns and fourteen resource rows', async () => {
+  it('heads six action columns and sixteen resource rows', async () => {
     mockApi();
     await renderRoles();
 
@@ -244,8 +249,9 @@ describe('the permission matrix', () => {
       'Edit',
       'Delete',
       'Publish',
+      'Manage',
     ]);
-    expect(within(matrix).getAllByRole('rowheader')).toHaveLength(15);
+    expect(within(matrix).getAllByRole('rowheader')).toHaveLength(16);
     // The guard key is printed under each label, so a reader can match the row to the API.
     expect(within(matrix).getByText('verification_evidence')).toBeInTheDocument();
   });
@@ -275,9 +281,9 @@ describe('the permission matrix', () => {
     mockApi();
     await renderRoles();
 
-    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('2 of 75 cells on');
+    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('2 of 76 cells on');
     await userEvent.click(screen.getByRole('button', { name: 'Billing View' }));
-    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('3 of 75 cells on');
+    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('3 of 76 cells on');
   });
 
   it('grants view everywhere, and clears everything', async () => {
@@ -285,10 +291,10 @@ describe('the permission matrix', () => {
     await renderRoles();
 
     await userEvent.click(screen.getByRole('button', { name: /Grant view on all/ }));
-    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('15 of 75 cells on');
+    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('15 of 76 cells on');
 
     await userEvent.click(screen.getByRole('button', { name: /Clear all/ }));
-    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('0 of 75 cells on');
+    expect(screen.getByTestId('roles-cells-on')).toHaveTextContent('0 of 76 cells on');
   });
 });
 

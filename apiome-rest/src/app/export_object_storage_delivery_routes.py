@@ -24,6 +24,7 @@ import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from psycopg2.errors import ForeignKeyViolation
 from fastapi import APIRouter, Depends, HTTPException, Response
 from psycopg2 import errors as pg_errors
 from pydantic import BaseModel, ConfigDict, Field
@@ -273,7 +274,8 @@ async def list_storage_credentials(
     status_code=204,
     summary="Delete a bucket credential",
     description="Removes the credential from the vault; past deliveries keep their record. Requires "
-    "`projects:edit`. `404` when the workspace has no such credential.",
+    "`projects:edit`. `404` when the workspace has no such credential. `409 storage-credential-in-use` "
+    "when the workspace's document storage uses it.",
 )
 async def delete_storage_credential(
     tenant_slug: str,
@@ -284,7 +286,20 @@ async def delete_storage_credential(
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    if not await asyncio.to_thread(db.delete_export_storage_credential, tenant_id, credential_id):
+    try:
+        deleted = await asyncio.to_thread(db.delete_export_storage_credential, tenant_id, credential_id)
+    except ForeignKeyViolation:
+        # The workspace's document storage points at this credential (COA-5.15, #7092).
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "storage-credential-in-use",
+                "message": "This credential reaches the bucket the workspace keeps its documents in. "
+                "Choose another credential in Document storage, or move the documents back to the "
+                "platform store and delete the old copies, then delete it.",
+            },
+        ) from None
+    if not deleted:
         raise HTTPException(status_code=404, detail="Storage credential not found")
     write_audit(tenant_id=tenant_id, action=AUDIT_CREDENTIAL_DELETED, auth_data=auth_data, target=credential_id,
                 detail={"credentialId": credential_id})

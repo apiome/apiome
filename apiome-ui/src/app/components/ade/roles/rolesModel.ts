@@ -61,19 +61,51 @@ export const RESOURCES: readonly PermissionResource[] = [
   { key: 'verification_evidence', label: 'Verification evidence' },
   { key: 'consumer_contracts', label: 'Consumer contracts' },
   { key: 'teams', label: 'Teams' },
+  // COA-5.15 (#7092): where the workspace's documents are kept. Its only action is `manage`.
+  { key: 'document_store', label: 'Document storage' },
 ];
 
-/** The five actions, in the order the guard and the mockup both read them. */
+/**
+ * The actions, in the order the guard and the mockup both read them. `manage` is a setting, not
+ * content: it applies only to the resources in {@link MANAGE_ONLY_RESOURCES}, and they have no
+ * other action ({@link cellApplies}).
+ */
 export const ACTIONS: readonly PermissionAction[] = [
   { key: 'view', label: 'View' },
   { key: 'create', label: 'Create' },
   { key: 'edit', label: 'Edit' },
   { key: 'delete', label: 'Delete' },
   { key: 'publish', label: 'Publish' },
+  { key: 'manage', label: 'Manage' },
 ];
 
-/** How many cells a complete matrix has — 15 resources × 5 actions. */
-export const TOTAL_CELLS = RESOURCES.length * ACTIONS.length;
+/** Resources that are a workspace setting: the guard checks `manage` on them and nothing else. */
+export const MANAGE_ONLY_RESOURCES: ReadonlySet<string> = new Set(['document_store']);
+
+/**
+ * Whether the guard ever checks this action on this resource.
+ *
+ * `document_store:view` and `projects:manage` would store fine and never match anything, so the
+ * matrix draws no toggle for them and the bulk helpers skip them.
+ *
+ * @param resource The resource key.
+ * @param action The action key.
+ * @returns True when the cell is a real permission.
+ */
+export function cellApplies(resource: string, action: string): boolean {
+  return MANAGE_ONLY_RESOURCES.has(resource) ? action === 'manage' : action !== 'manage';
+}
+
+/** The actions that apply to one resource, in vocabulary order. */
+function actionsFor(resource: string): PermissionAction[] {
+  return ACTIONS.filter((action) => cellApplies(resource, action.key));
+}
+
+/**
+ * How many cells a complete matrix has — 15 content resources × 5 actions, plus `manage` on each
+ * setting resource.
+ */
+export const TOTAL_CELLS = RESOURCES.reduce((total, resource) => total + actionsFor(resource.key).length, 0);
 
 /**
  * The `resource:action` string a cell is keyed and granted by.
@@ -120,7 +152,7 @@ export function roleGrid(role: RoleRecord | null | undefined): Set<string> {
 export function gridToPermissions(grid: PermissionGrid): RolePermissionCell[] {
   const cells: RolePermissionCell[] = [];
   for (const resource of RESOURCES) {
-    for (const action of ACTIONS) {
+    for (const action of actionsFor(resource.key)) {
       if (grid.has(cellKey(resource.key, action.key))) {
         cells.push({ resource: resource.key, action: action.key });
       }
@@ -424,9 +456,10 @@ export function describeRoleMeta(role: RoleRecord): string {
  * @returns `true` when every action is granted, `false` when none is, `'mixed'` between.
  */
 export function resourceState(grid: PermissionGrid, resource: string): boolean | 'mixed' {
-  const on = ACTIONS.filter((action) => grid.has(cellKey(resource, action.key))).length;
+  const actions = actionsFor(resource);
+  const on = actions.filter((action) => grid.has(cellKey(resource, action.key))).length;
   if (on === 0) return false;
-  return on === ACTIONS.length ? true : 'mixed';
+  return on === actions.length ? true : 'mixed';
 }
 
 /**
@@ -458,7 +491,7 @@ export function toggleCell(grid: PermissionGrid, resource: string, action: strin
 export function toggleResource(grid: PermissionGrid, resource: string): Set<string> {
   const next = new Set(grid);
   const fill = resourceState(grid, resource) !== true;
-  for (const action of ACTIONS) {
+  for (const action of actionsFor(resource)) {
     const key = cellKey(resource, action.key);
     if (fill) next.add(key);
     else next.delete(key);
@@ -475,7 +508,9 @@ export function toggleResource(grid: PermissionGrid, resource: string): Set<stri
  */
 export function grantActionEverywhere(grid: PermissionGrid, action: string): Set<string> {
   const next = new Set(grid);
-  for (const resource of RESOURCES) next.add(cellKey(resource.key, action));
+  for (const resource of RESOURCES) {
+    if (cellApplies(resource.key, action)) next.add(cellKey(resource.key, action));
+  }
   return next;
 }
 

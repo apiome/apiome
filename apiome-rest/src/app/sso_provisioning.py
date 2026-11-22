@@ -40,6 +40,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 from .notification_fanout import NotificationDraft
+from .tenant_admins import tenant_admin_ids
 from .notifications import MAX_RECIPIENTS, TYPE_SEAT_CAP_BLOCKED_SSO
 
 __all__ = [
@@ -390,29 +391,7 @@ def _seats_in_use(cursor: Any, tenant_id: str) -> int:
 
 def _owner_ids(cursor: Any, tenant_id: str) -> List[str]:
     """The workspace's active owners and tenant administrators — who a blocked sign-in is told to."""
-    cursor.execute(
-        """
-        SELECT DISTINCT tu.user_id::text AS user_id
-        FROM apiome.tenant_users tu
-        JOIN apiome.users u ON u.id = tu.user_id AND u.deleted_at IS NULL
-        WHERE tu.tenant_id = %s::uuid
-          AND tu.status = 'active'
-          AND (
-              EXISTS (
-                  SELECT 1 FROM apiome.tenant_user_roles tur
-                  JOIN apiome.roles r ON r.id = tur.role_id
-                  WHERE tur.tenant_id = tu.tenant_id AND tur.user_id = tu.user_id AND r.slug = 'owner'
-              )
-              OR EXISTS (
-                  SELECT 1 FROM apiome.tenant_administrators ta
-                  WHERE ta.tenant_id = tu.tenant_id AND ta.user_id = tu.user_id
-              )
-          )
-        ORDER BY 1
-        """,
-        (tenant_id,),
-    )
-    return [str(row["user_id"]) for row in cursor.fetchall()]
+    return tenant_admin_ids(cursor, tenant_id)
 
 
 def _recently_notified(cursor: Any, tenant_id: str, user_id: str) -> bool:

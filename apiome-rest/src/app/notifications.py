@@ -40,6 +40,7 @@ __all__ = [
     "TYPE_REVIEW_DECISION",
     "TYPE_REVIEW_REQUESTED",
     "TYPE_SEAT_CAP_BLOCKED_SSO",
+    "TYPE_DOCUMENT_STORE_UNAVAILABLE",
     "TYPE_THREAD_RESOLVED",
     "TYPE_VERSION_PUBLISHED",
     "MarkReadRequest",
@@ -103,8 +104,13 @@ TYPE_SUNSET_STILL_USED = "sunset_still_used"
 #: person per 24 hours. Its payload carries its own ``summary`` and ``link``.
 TYPE_SEAT_CAP_BLOCKED_SSO = "seat_cap_blocked_sso"
 
+#: The workspace's own document bucket stopped answering (COA-5.15, #7092) — told to the workspace's
+#: owners and administrators once per outage. Its payload carries its own ``summary`` and ``link``,
+#: and never a credential.
+TYPE_DOCUMENT_STORE_UNAVAILABLE = "document_store_unavailable"
+
 #: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286, V359,
-#: V383, V394).
+#: V383, V394, V408).
 NOTIFICATION_TYPES = (
     TYPE_MENTION,
     TYPE_REVIEW_REQUESTED,
@@ -115,6 +121,7 @@ NOTIFICATION_TYPES = (
     TYPE_SUNSET_STILL_USED,
     TYPE_SEAT_CAP_BLOCKED_SSO,
     *OWNER_NOTIFICATION_TYPES,
+    TYPE_DOCUMENT_STORE_UNAVAILABLE,
 )
 
 NotificationType = Literal[
@@ -122,6 +129,7 @@ NotificationType = Literal[
     "export_auto_halted", "sunset_still_used", "seat_cap_blocked_sso",
     "owner_finding", "owner_breaking_change", "owner_verification_drift",
     "owner_gate_blocked", "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
+    "document_store_unavailable",
 ]
 
 #: Newest rows kept per user. Mirrors ``retention_cap`` in V263's pruning trigger, which is what

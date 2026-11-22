@@ -216,6 +216,7 @@ describe('applying the preference', () => {
       'owner_trust_drift',
       'owner_shadow_api',
       'owner_sync_failed',
+      'document_store_unavailable',
     ]);
   });
 });

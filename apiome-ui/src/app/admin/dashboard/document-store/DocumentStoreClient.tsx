@@ -16,11 +16,12 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, PlugZap, RefreshCw, XCircle } from 'lucide-react';
 import { extractRestErrorMessage } from '@lib/auth/admin-provider-config';
 import {
-  PROBE_STEP_LABELS,
   backendLabel,
   formatBytes,
   formatWhen,
+  PROBE_STEP_LABELS,
   settingRows,
+  tenantBucketState,
   type DocumentStoreProbeResult,
   type DocumentStoreStatus,
 } from '@lib/admin-document-store';
@@ -194,6 +195,7 @@ export default function DocumentStoreClient() {
               {(probe || probeError) && <ProbeCard probe={probe} error={probeError} />}
               <SettingsCard status={status} />
               <UsageCard status={status} />
+              <TenantBucketsCard status={status} />
             </>
           )}
         </div>
@@ -364,6 +366,81 @@ function UsageCard({ status }: { status: DocumentStoreStatus }) {
             Counts the document index: captured originals, rendered documents and frozen schemas.
           </p>
         </>
+      )}
+    </section>
+  );
+}
+
+/** Tenants that keep their documents in their own bucket (COA-5.15, #7092). */
+function TenantBucketsCard({ status }: { status: DocumentStoreStatus }) {
+  const headingId = useId();
+  const rows = status.tenantBuckets ?? [];
+  const allowed = status.tenantBucketsAllowed === true;
+  return (
+    <section aria-labelledby={headingId} className={CARD_CLASSES} data-testid="document-store-tenant-buckets">
+      <h3 id={headingId} className={CARD_TITLE_CLASSES}>
+        Tenant buckets
+      </h3>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        {allowed ? (
+          <>
+            Tenants may keep their documents in their own bucket (
+            <code className="font-mono">APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS=true</code>). A tenant administrator
+            sets it up under <span className="font-medium">Document storage</span> in the tenant settings.
+          </>
+        ) : (
+          <>
+            Tenants cannot choose their own bucket. Set{' '}
+            <code className="font-mono">APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS=true</code> and restart the REST
+            server to offer it.
+            {rows.length > 0 && ' Tenants already on their own bucket keep working.'}
+          </>
+        )}
+      </p>
+      {rows.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400" data-testid="document-store-tenant-buckets-empty">
+          No tenant uses its own bucket.
+        </p>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-md border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <tr>
+                <th scope="col" className="w-1/4 px-3 py-2 font-medium">Tenant</th>
+                <th scope="col" className="w-1/3 px-3 py-2 font-medium">Bucket</th>
+                <th scope="col" className="px-3 py-2 font-medium">State</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700 dark:divide-slate-800 dark:text-slate-200">
+              {rows.map((row) => {
+                const state = tenantBucketState(row);
+                return (
+                  <tr key={row.tenantId} data-testid="document-store-tenant-bucket-row">
+                    <td className="px-3 py-2 align-top">
+                      <span className="block">{row.tenantName || row.tenantSlug}</span>
+                      <span className="block font-mono text-xs text-slate-500 dark:text-slate-400">{row.tenantSlug}</span>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <span className="block break-all font-mono">{row.bucket}</span>
+                      {row.endpointUrl && (
+                        <span className="block break-all text-xs text-slate-500 dark:text-slate-400">{row.endpointUrl}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <span className={state.problem ? FAIL_CHIP_CLASSES : OK_CHIP_CLASSES}>{state.label}</span>
+                      {row.unavailableSince && (
+                        <span className="mt-1 block text-xs text-slate-600 dark:text-slate-400">
+                          Since {formatWhen(row.unavailableSince)}
+                          {row.lastError ? ` — ${row.lastError}` : ''}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

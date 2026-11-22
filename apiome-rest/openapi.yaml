@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.631.1
+  version: 1.632.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -12043,6 +12043,7 @@ paths:
       summary: Delete a bucket credential
       description: Removes the credential from the vault; past deliveries keep their
         record. Requires `projects:edit`. `404` when the workspace has no such credential.
+        `409 storage-credential-in-use` when the workspace's document storage uses it.
       operationId: delete_storage_credential_v1_export__tenant_slug__storage_credentials__credential_id__delete
       parameters:
       - name: tenant_slug
@@ -12072,8 +12073,8 @@ paths:
             description: Deleteabucketcredentialauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -31000,6 +31001,308 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for changethetwofactorpolicyresponse422.
+  /v1/tenants/{tenant_slug}/document-store:
+    get:
+      tags:
+      - tenants
+      summary: Read where the workspace's documents are kept
+      description: 'Whether originals and rendered documents are kept in the install''s
+        store (`platform`) or in the workspace''s own S3-compatible bucket (`tenant`),
+        the bucket settings, whether the bucket answered the last time it was used,
+        and the progress of a move. `allowed` is false when the install does not offer
+        tenant buckets. A credential is never returned — only the id and name of the
+        storage credential in use.
+
+
+        Requires `document_store:manage`.'
+      operationId: get_tenant_document_store_v1_tenants__tenant_slug__document_store_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readwheretheworkspacesdocumentsarekeptauthorization schema.
+          - type: 'null'
+            description: Readwheretheworkspacesdocumentsarekeptauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readwheretheworkspacesdocumentsarekept Xapikey schema.
+          - type: 'null'
+            description: Readwheretheworkspacesdocumentsarekept Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read where the workspace's documents
+            are kept.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDocumentStore'
+                description: Response payload for readwheretheworkspacesdocumentsarekeptresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readwheretheworkspacesdocumentsarekeptresponse422.
+    put:
+      tags:
+      - tenants
+      summary: Choose where the workspace's documents are kept
+      description: 'Set `mode` to `tenant` with a `credentialId` and `bucket` to keep
+        documents in your own bucket, or to `platform` to go back to the install''s
+        store. Fields left out keep their saved value.
+
+
+        Before a bucket is saved it must pass the same write, read and delete test as
+        `POST …/document-store/test`; a failed test answers `400 tenant-document-store-test-failed`
+        and changes nothing. The endpoint must pass the SSRF guard.
+
+
+        Changing `mode` starts a move of the existing objects in the background. New
+        documents go to the new place at once; each existing one is copied, verified
+        and only then read from the new place, so nothing fails while the move runs.
+        `GET` reports its progress. Old copies stay until `POST …/document-store/cleanup`.
+
+
+        `409 tenant-document-store-move-running` while a move runs. `409 tenant-document-store-bucket-in-use`
+        when the bucket, folder or endpoint is changed while documents are stored there.
+        `403 tenant-document-store-disabled` when the install does not offer tenant
+        buckets.
+
+
+        Audited as `document_store.settings_updated`. Requires `document_store:manage`.'
+      operationId: put_tenant_document_store_v1_tenants__tenant_slug__document_store_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Choosewheretheworkspacesdocumentsarekeptauthorization schema.
+          - type: 'null'
+            description: Choosewheretheworkspacesdocumentsarekeptauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Choosewheretheworkspacesdocumentsarekept Xapikey schema.
+          - type: 'null'
+            description: Choosewheretheworkspacesdocumentsarekept Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantDocumentStoreInput'
+              description: Request body for choosewheretheworkspacesdocumentsarekeptrequest.
+        description: Request body for choose where the workspace's documents are kept.
+      responses:
+        '200':
+          description: Successful response for choose where the workspace's documents
+            are kept.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDocumentStore'
+                description: Response payload for choosewheretheworkspacesdocumentsarekeptresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for choosewheretheworkspacesdocumentsarekeptresponse422.
+  /v1/tenants/{tenant_slug}/document-store/test:
+    post:
+      tags:
+      - tenants
+      summary: Test the workspace's bucket
+      description: 'Writes, reads back and deletes one small probe object under `<prefix>/tenants/<tenant
+        id>/objects/sha256/…` — the key layout every document uses — so a bucket policy
+        that does not allow it fails here and not during an import. Send settings in
+        the body to test them before saving; send no body to test the saved settings.
+
+
+        Answers `200` whether or not the test passed: `ok` and each step''s `error`
+        say what failed. An error never contains a credential.
+
+
+        Requires `document_store:manage`.'
+      operationId: test_tenant_document_store_v1_tenants__tenant_slug__document_store_test_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testtheworkspacesbucketauthorization schema.
+          - type: 'null'
+            description: Testtheworkspacesbucketauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testtheworkspacesbucket Xapikey schema.
+          - type: 'null'
+            description: Testtheworkspacesbucket Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/TenantDocumentStoreInput'
+              - type: 'null'
+                description: Request body for testtheworkspacesbucketrequest.
+              title: Body
+              description: Body schema.
+        description: Request body for test the workspace's bucket.
+      responses:
+        '200':
+          description: Successful response for test the workspace's bucket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDocumentStoreProbeResult'
+                description: Response payload for testtheworkspacesbucketresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for testtheworkspacesbucketresponse422.
+  /v1/tenants/{tenant_slug}/document-store/cleanup:
+    post:
+      tags:
+      - tenants
+      summary: Delete the copies a move left behind
+      description: 'After a move, every moved object still has a copy in the place it
+        came from. This deletes those copies. It needs `{"confirm": true}`; anything
+        else answers `400 tenant-document-store-confirm-required`. An object that failed
+        to move is never touched, so no document''s only copy can be deleted. In your
+        own bucket only keys under Apiome''s folder for this workspace are removed.
+
+
+        `409 tenant-document-store-move-running` while a move runs.
+
+
+        Audited as `document_store.old_copies_deleted`. Requires `document_store:manage`.'
+      operationId: cleanup_tenant_document_store_v1_tenants__tenant_slug__document_store_cleanup_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletethecopiesamoveleftbehindauthorization schema.
+          - type: 'null'
+            description: Deletethecopiesamoveleftbehindauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deletethecopiesamoveleftbehind Xapikey schema.
+          - type: 'null'
+            description: Deletethecopiesamoveleftbehind Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantDocumentStoreCleanupInput'
+              description: Request body for deletethecopiesamoveleftbehindrequest.
+        description: Request body for delete the copies a move left behind.
+      responses:
+        '200':
+          description: Successful response for delete the copies a move left behind.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDocumentStoreCleanupResult'
+                description: Response payload for deletethecopiesamoveleftbehindresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deletethecopiesamoveleftbehindresponse422.
   /v1/graph/{tenant_slug}/entities/{kind}/{entity_id}/edges:
     get:
       tags:
@@ -38782,15 +39085,15 @@ paths:
       - notifications
       summary: List the caller's notifications
       description: 'A page of the caller''s own inbox in this tenant, newest first.
-        Each row carries the event''s `type`, the `payload` its sentence and deep
-        link need, who caused it, and the project and version it points at.
+        Each row carries the event''s `type`, the `payload` its sentence and deep link
+        need, who caused it, and the project and version it points at.
 
 
         Filters combine: `unread` (only what has not been read) and `type`.
 
 
-        Reading the list never marks anything read. Requires only authentication —
-        an inbox is the caller''s own, so there is no permission to grant.'
+        Reading the list never marks anything read. Requires only authentication — an
+        inbox is the caller''s own, so there is no permission to grant.'
       operationId: list_notifications_v1_tenants__tenant_slug__notifications_get
       parameters:
       - name: tenant_slug
@@ -38831,6 +39134,7 @@ paths:
             - owner_trust_drift
             - owner_shadow_api
             - owner_sync_failed
+            - document_store_unavailable
             type: string
             description: Listthecallersnotificationstype schema.
           - type: 'null'
@@ -38870,8 +39174,8 @@ paths:
             description: Listthecallersnotificationsauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -92707,7 +93011,13 @@ paths:
         is in effect. The check is cached for 30 seconds; error details and settings
         stay on the
 
-        platform-admin ``GET /v1/ops/document-store``.
+        platform-admin ``GET /v1/ops/document-store``. ``tenant_buckets_unavailable``
+        (COA-5.15,
+
+        #7092) is how many tenants'' own buckets are down — ``status`` is ``degraded``
+        when any is;
+
+        which tenants, and why, are on ``GET /v1/ops/document-store``.
 
 
         The HTTP status reflects database readiness only: an enforcing deployment cannot
@@ -120212,6 +120522,19 @@ components:
           - type: 'null'
             description: Document Store schema.
           description: Null when the document index cannot be read.
+        tenantBucketsAllowed:
+          type: boolean
+          title: Tenantbucketsallowed
+          description: Whether tenants may use their own bucket (APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS).
+          default: false
+          example: false
+        tenantBuckets:
+          items:
+            $ref: '#/components/schemas/DocumentStoreTenantBucket'
+          type: array
+          title: Tenantbuckets
+          description: Tenants that have configured their own bucket, with its health.
+          maxItems: 1000
       type: object
       required:
       - backend
@@ -120223,6 +120546,89 @@ components:
       title: DocumentStoreStatus
       description: 'The active document store: settings (never credentials), health and
         usage.'
+    DocumentStoreTenantBucket:
+      properties:
+        tenantId:
+          type: string
+          title: Tenantid
+          description: Tenant ID.
+          example: example
+        tenantSlug:
+          type: string
+          title: Tenantslug
+          description: Tenant Slug.
+          example: example-resource
+        tenantName:
+          anyOf:
+          - type: string
+            description: Document Store Tenant Bucket schema.
+          - type: 'null'
+            description: Document Store Tenant Bucket schema.
+          title: Tenantname
+          description: Tenant Name.
+        mode:
+          type: string
+          enum:
+          - platform
+          - tenant
+          title: Mode
+          description: 'tenant: documents go to the bucket. platform: it moved back; the
+            bucket may hold old copies.'
+          example: platform
+        bucket:
+          type: string
+          title: Bucket
+          description: Bucket.
+          example: example
+        endpointUrl:
+          anyOf:
+          - type: string
+            description: Document Store Tenant Bucket schema.
+          - type: 'null'
+            description: Document Store Tenant Bucket schema.
+          title: Endpointurl
+          description: The service URL; null for AWS.
+        moveState:
+          type: string
+          enum:
+          - idle
+          - running
+          - completed
+          - failed
+          title: Movestate
+          description: Move State.
+          example: idle
+        cleanupPending:
+          type: boolean
+          title: Cleanuppending
+          default: false
+          description: Cleanup Pending.
+          example: false
+        unavailableSince:
+          anyOf:
+          - type: string
+            description: Document Store Tenant Bucket schema.
+          - type: 'null'
+            description: Document Store Tenant Bucket schema.
+          title: Unavailablesince
+          description: When the bucket stopped answering; null while it works.
+        lastError:
+          anyOf:
+          - type: string
+            description: Document Store Tenant Bucket schema.
+          - type: 'null'
+            description: Document Store Tenant Bucket schema.
+          title: Lasterror
+          description: Why it is unavailable (redacted).
+      type: object
+      required:
+      - tenantId
+      - tenantSlug
+      - mode
+      - bucket
+      - moveState
+      title: DocumentStoreTenantBucket
+      description: 'A tenant that keeps its documents in its own bucket (COA-5.15, #7092).'
     DocumentStoreUsage:
       properties:
         objects:
@@ -152513,6 +152919,7 @@ components:
           - owner_trust_drift
           - owner_shadow_api
           - owner_sync_failed
+          - document_store_unavailable
           title: Type
           description: Which kind of event this is.
           example: mention
@@ -182486,6 +182893,407 @@ components:
       - name
       title: TeamRecord
       description: A stored team.
+    TenantDocumentStore:
+      properties:
+        allowed:
+          type: boolean
+          title: Allowed
+          description: Whether this install lets workspaces use their own bucket.
+          example: false
+        mode:
+          type: string
+          enum:
+          - platform
+          - tenant
+          title: Mode
+          description: Mode.
+          example: platform
+        credentialId:
+          anyOf:
+          - type: string
+            description: Tenant Document Store schema.
+          - type: 'null'
+            description: Tenant Document Store schema.
+          title: Credentialid
+          description: Credential ID.
+        credentialName:
+          anyOf:
+          - type: string
+            description: Tenant Document Store schema.
+          - type: 'null'
+            description: Tenant Document Store schema.
+          title: Credentialname
+          description: Credential Name.
+        bucket:
+          anyOf:
+          - type: string
+            description: Tenant Document Store schema.
+          - type: 'null'
+            description: Tenant Document Store schema.
+          title: Bucket
+          description: Bucket.
+        prefix:
+          type: string
+          title: Prefix
+          default: apiome
+          description: Prefix.
+          example: example
+        region:
+          type: string
+          title: Region
+          default: ''
+          description: Region.
+          example: example
+        endpointUrl:
+          type: string
+          title: Endpointurl
+          default: ''
+          description: Endpoint URL.
+          example: example
+        addressingStyle:
+          type: string
+          enum:
+          - auto
+          - path
+          - virtual
+          title: Addressingstyle
+          default: auto
+          description: Addressing Style.
+          example: auto
+        sse:
+          type: string
+          enum:
+          - ''
+          - s3
+          - kms
+          title: Sse
+          default: ''
+          description: Sse.
+          example: ''
+        kmsKeyId:
+          type: string
+          title: Kmskeyid
+          default: ''
+          description: Kms Key ID.
+          example: example
+        health:
+          $ref: '#/components/schemas/TenantDocumentStoreHealth'
+          description: Health.
+        move:
+          $ref: '#/components/schemas/TenantDocumentStoreMove'
+          description: Move.
+        cleanupPending:
+          type: boolean
+          title: Cleanuppending
+          description: A finished move left old copies that `POST …/cleanup` deletes.
+          default: false
+          example: false
+      type: object
+      required:
+      - allowed
+      - mode
+      - health
+      - move
+      title: TenantDocumentStore
+      description: A tenant's document store settings, health and move progress. Never
+        a credential.
+    TenantDocumentStoreCleanupInput:
+      properties:
+        confirm:
+          type: boolean
+          title: Confirm
+          default: false
+          description: Confirm.
+          example: false
+      type: object
+      title: TenantDocumentStoreCleanupInput
+      description: The explicit confirm that old copies may be deleted.
+    TenantDocumentStoreCleanupResult:
+      properties:
+        checked:
+          type: integer
+          title: Checked
+          description: Checked.
+          example: 1
+        deleted:
+          type: integer
+          title: Deleted
+          description: Deleted.
+          example: 1
+      type: object
+      required:
+      - checked
+      - deleted
+      title: TenantDocumentStoreCleanupResult
+      description: What the cleanup removed.
+    TenantDocumentStoreHealth:
+      properties:
+        available:
+          type: boolean
+          title: Available
+          description: Available.
+          example: false
+        unavailableSince:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Tenant Document Store Health schema.
+          - type: 'null'
+            description: Tenant Document Store Health schema.
+          title: Unavailablesince
+          description: Unavailable Since.
+        error:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Health schema.
+          - type: 'null'
+            description: Tenant Document Store Health schema.
+          title: Error
+          description: Why it is unavailable. Never contains a credential.
+      type: object
+      required:
+      - available
+      title: TenantDocumentStoreHealth
+      description: Whether the tenant's bucket answered the last time it was used.
+    TenantDocumentStoreInput:
+      properties:
+        mode:
+          type: string
+          enum:
+          - platform
+          - tenant
+          title: Mode
+          description: '`platform` keeps documents in the install''s store; `tenant` keeps
+            them in your own bucket.'
+          example: platform
+        credentialId:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Credentialid
+          description: A storage credential of this workspace (`POST /v1/export/{tenant}/storage-credentials`).
+        bucket:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Bucket
+          description: The bucket. It must already exist.
+        prefix:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Prefix
+          description: Folder inside the bucket. Defaults to `apiome`; empty writes at
+            the root.
+        region:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Region
+          description: Signing region; empty takes the credential's.
+        endpointUrl:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Endpointurl
+          description: Service URL for a non-AWS store; empty takes the credential's.
+        addressingStyle:
+          anyOf:
+          - type: string
+            enum:
+            - auto
+            - path
+            - virtual
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Addressingstyle
+          description: Addressing Style.
+        sse:
+          anyOf:
+          - type: string
+            enum:
+            - ''
+            - s3
+            - kms
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Sse
+          description: 'Server-side encryption: empty, `s3` (SSE-S3) or `kms` (SSE-KMS).'
+        kmsKeyId:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Input schema.
+          - type: 'null'
+            description: Tenant Document Store Input schema.
+          title: Kmskeyid
+          description: The KMS key for `sse = kms`.
+      type: object
+      required:
+      - mode
+      title: TenantDocumentStoreInput
+      description: Where a tenant's documents should be kept.
+    TenantDocumentStoreMove:
+      properties:
+        state:
+          type: string
+          enum:
+          - idle
+          - running
+          - completed
+          - failed
+          title: State
+          description: State.
+          example: idle
+        target:
+          anyOf:
+          - type: string
+            enum:
+            - platform
+            - tenant
+            description: Tenant Document Store Move schema.
+          - type: 'null'
+            description: Tenant Document Store Move schema.
+          title: Target
+          description: Target.
+        total:
+          type: integer
+          title: Total
+          default: 0
+          description: Total.
+          example: 1
+        moved:
+          type: integer
+          title: Moved
+          default: 0
+          description: Moved.
+          example: 1
+        failed:
+          type: integer
+          title: Failed
+          default: 0
+          description: Failed.
+          example: 1
+        error:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Move schema.
+          - type: 'null'
+            description: Tenant Document Store Move schema.
+          title: Error
+          description: Error.
+        startedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Tenant Document Store Move schema.
+          - type: 'null'
+            description: Tenant Document Store Move schema.
+          title: Startedat
+          description: Started At.
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Tenant Document Store Move schema.
+          - type: 'null'
+            description: Tenant Document Store Move schema.
+          title: Finishedat
+          description: Finished At.
+      type: object
+      required:
+      - state
+      title: TenantDocumentStoreMove
+      description: The move of existing objects to where documents are kept now.
+    TenantDocumentStoreProbeResult:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+          description: Ok.
+          example: false
+        bucket:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Probe schema.
+          - type: 'null'
+            description: Tenant Document Store Probe schema.
+          title: Bucket
+          description: Bucket.
+        error:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Probe schema.
+          - type: 'null'
+            description: Tenant Document Store Probe schema.
+          title: Error
+          description: Why the test could not run at all.
+        steps:
+          items:
+            $ref: '#/components/schemas/TenantDocumentStoreProbeStep'
+          type: array
+          title: Steps
+          description: Steps.
+          maxItems: 1000
+      type: object
+      required:
+      - ok
+      title: TenantDocumentStoreProbeResult
+      description: The outcome of writing, reading back and deleting one probe object
+        in the bucket.
+    TenantDocumentStoreProbeStep:
+      properties:
+        name:
+          type: string
+          enum:
+          - write
+          - read
+          - delete
+          title: Name
+          description: Human-readable name.
+          example: write
+        ok:
+          type: boolean
+          title: Ok
+          description: Ok.
+          example: false
+        skipped:
+          type: boolean
+          title: Skipped
+          default: false
+          description: Skipped.
+          example: false
+        durationMs:
+          type: number
+          title: Durationms
+          default: 0.0
+          description: Duration Ms.
+          example: 1.0
+        error:
+          anyOf:
+          - type: string
+            description: Tenant Document Store Probe Step schema.
+          - type: 'null'
+            description: Tenant Document Store Probe Step schema.
+          title: Error
+          description: Error.
+      type: object
+      required:
+      - name
+      - ok
+      title: TenantDocumentStoreProbeStep
+      description: One step of the bucket test.
     TenantInfoResponse:
       properties:
         slug:

@@ -75,7 +75,7 @@ function row(overrides: Partial<NotificationRow> = {}): NotificationRow {
 }
 
 describe('the type vocabulary', () => {
-  test('is the five COL-3.1 writes, the MFX-39.4 halted auto-export, the RDG-5.3 sunset alert, the EID-1.3 seat-cap block and the seven CDG-2.3 owner findings, and nothing else passes the guard', () => {
+  test('is the five COL-3.1 writes, the MFX-39.4 halted auto-export, the RDG-5.3 sunset alert, the EID-1.3 seat-cap block, the seven CDG-2.3 owner findings and the COA-5.15 bucket outage, and nothing else passes the guard', () => {
     expect(NOTIFICATION_TYPES).toEqual([
       'mention',
       'review_requested',
@@ -92,6 +92,7 @@ describe('the type vocabulary', () => {
       'owner_trust_drift',
       'owner_shadow_api',
       'owner_sync_failed',
+      'document_store_unavailable',
     ]);
     for (const type of NOTIFICATION_TYPES) expect(isNotificationType(type)).toBe(true);
     for (const other of ['', 'Mention', 'email', null, 7, undefined]) {

@@ -101,7 +101,9 @@ async def health_check() -> JSONResponse:
     ``status`` (``ok``; ``degraded`` when running on the ``db`` fallback; ``unavailable`` when
     the store did not answer its last check), the active ``backend`` and whether a ``fallback``
     is in effect. The check is cached for 30 seconds; error details and settings stay on the
-    platform-admin ``GET /v1/ops/document-store``.
+    platform-admin ``GET /v1/ops/document-store``. ``tenant_buckets_unavailable`` (COA-5.15,
+    #7092) is how many tenants' own buckets are down — ``status`` is ``degraded`` when any is;
+    which tenants, and why, are on ``GET /v1/ops/document-store``.
 
     The HTTP status reflects database readiness only: an enforcing deployment cannot serve at
     all with a required tool missing (startup refuses), a non-enforcing one is degraded
@@ -121,7 +123,8 @@ async def health_check() -> JSONResponse:
         # not unready.
         "toolchain": toolchain_health_detail(),
         # Document store as a dependency (COA-5.9): status and backend only, no error text.
-        "document_store": await asyncio.to_thread(document_store_health_detail),
+        # ``tenant_buckets_unavailable`` (COA-5.15) counts tenants whose own bucket is down.
+        "document_store": await asyncio.to_thread(document_store_health_detail, None, database=db),
     }
     if "error" in payload:
         body["error"] = payload["error"]

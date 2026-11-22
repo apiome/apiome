@@ -57,7 +57,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from .document_store import BACKEND_DB, parse_object_uri
+from .document_store import BACKEND_DB, BACKEND_TENANT_S3, parse_object_uri
 from .export_artifact_store import content_sha256_hex
 from .original_documents import (
     ENCODING_IDENTITY,
@@ -333,6 +333,14 @@ class _Context:
         """The current store's backend name."""
         return str(getattr(self.store, "backend", BACKEND_DB))
 
+    def in_store(self, backend: Any) -> bool:
+        """Whether an object recorded with ``backend`` is in the current store.
+
+        That is the platform store's backend, or ``tenant_s3``: a tenant that keeps documents in
+        its own bucket (COA-5.15, #7092) is written there by the same store handle.
+        """
+        return str(backend) in (self.backend, BACKEND_TENANT_S3)
+
 
 def _sha256(data: bytes) -> str:
     """Lower-case hex SHA-256 of ``data``."""
@@ -548,7 +556,7 @@ def _matches_store(
     original = next((row for row in rows if row["role"] == "original"), None)
     if original is None:
         return "no-original"
-    if any(row["backend"] != ctx.backend for row in rows):
+    if any(not ctx.in_store(row["backend"]) for row in rows):
         return "original-on-another-backend"
     content = _read_back(ctx.store, tenant, original["sha256"], original["encoding"])
     if not document.members:
@@ -788,7 +796,7 @@ def _purge_frozen(ctx: _Context, key: str) -> _Outcome:
     link = _first(ctx.db, _FROZEN_LINK_SQL, (key, row["tenant_id"], row["sha256"]))
     if link is None:
         return _Outcome(SKIPPED, len(content), "not-copied")
-    if link["backend"] != ctx.backend:
+    if not ctx.in_store(link["backend"]):
         return _Outcome(SKIPPED, len(content), "object-on-another-backend")
     if _read_back(ctx.store, row["tenant_id"], link["sha256"], link["encoding"]) != content:
         return _Outcome(SKIPPED, len(content), "object-differs")
@@ -864,11 +872,12 @@ def _purge_export(ctx: _Context, key: str) -> _Outcome:
 
 # Each query returns the next page of keys after %(after)s that the step still has to do, so a
 # finished row is never selected again. %(backend)s is the current store's backend: an original
-# on another backend (written before a backend change) still needs copying.
+# on another backend (written before a backend change) still needs copying. An object in its
+# tenant's own bucket ('tenant_s3', COA-5.15) is in the current store too.
 _HAS_ORIGINAL_HERE = """
     EXISTS (SELECT 1 FROM apiome.version_documents d
             JOIN apiome.document_objects o ON o.id = d.object_id
-            WHERE d.version_id = {version} AND d.role = 'original' AND o.backend = %(backend)s)
+            WHERE d.version_id = {version} AND d.role = 'original' AND o.backend IN (%(backend)s, 'tenant_s3'))
 """
 
 _CANDIDATES: Dict[Tuple[str, str], str] = {
@@ -911,7 +920,7 @@ _CANDIDATES: Dict[Tuple[str, str], str] = {
           AND NOT EXISTS (SELECT 1 FROM apiome.version_documents d
                           JOIN apiome.document_objects o ON o.id = d.object_id
                           WHERE d.version_id = s.version_id AND d.role = 'frozen_schema'
-                            AND o.sha256 = trim(s.sha256) AND o.backend = %(backend)s)
+                            AND o.sha256 = trim(s.sha256) AND o.backend IN (%(backend)s, 'tenant_s3'))
           AND (%(tenant)s::text IS NULL OR p.tenant_id::text = %(tenant)s)
           AND s.version_id::text COLLATE "C" > %(after)s
         ORDER BY s.version_id::text COLLATE "C" LIMIT %(limit)s
@@ -923,7 +932,7 @@ _CANDIDATES: Dict[Tuple[str, str], str] = {
           AND EXISTS (SELECT 1 FROM apiome.version_documents d
                       JOIN apiome.document_objects o ON o.id = d.object_id
                       WHERE d.version_id = s.version_id AND d.role = 'frozen_schema'
-                        AND o.sha256 = trim(s.sha256) AND o.backend = %(backend)s)
+                        AND o.sha256 = trim(s.sha256) AND o.backend IN (%(backend)s, 'tenant_s3'))
           AND (%(tenant)s::text IS NULL OR p.tenant_id::text = %(tenant)s)
           AND s.version_id::text COLLATE "C" > %(after)s
         ORDER BY s.version_id::text COLLATE "C" LIMIT %(limit)s

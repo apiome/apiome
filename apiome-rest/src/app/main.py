@@ -127,6 +127,7 @@ from .openapi_generator import generate_class_openapi_spec
 from .ops_routes import health_router, ops_router
 from .document_migration_routes import router as document_migration_router
 from .document_store_health import initialize_document_store
+from .document_store_router import refresh_routing as refresh_document_store_routing
 from .document_store_routes import admin_router as document_store_admin_router
 from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
@@ -216,6 +217,9 @@ from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
 from .two_factor_policy_routes import router as two_factor_policy_router
+from .tenant_document_store import TenantDocumentStoreUnavailable
+from .tenant_document_store_routes import router as tenant_document_store_router
+from .tenant_document_store_routes import tenant_store_unavailable_handler
 from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
 from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .type_namespaces_routes import router as type_namespaces_router
@@ -260,7 +264,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.631.1",
+    version="1.632.0",
 )
 
 
@@ -511,6 +515,10 @@ app.include_router(unowned_findings_router)
 app.include_router(ownership_policy_router)
 # two_factor_policy_router: TFA-1.3 tenant two-factor requirement GET|PUT …/two-factor-policy (#5657).
 app.include_router(two_factor_policy_router)
+# tenant_document_store_router: COA-5.15 a tenant's own bucket GET|PUT …/document-store, POST …/test|cleanup (#7092).
+app.include_router(tenant_document_store_router)
+# An unreachable or revoked tenant bucket answers 503 tenant-document-store-unavailable everywhere.
+app.add_exception_handler(TenantDocumentStoreUnavailable, tenant_store_unavailable_handler)
 app.include_router(graph_router)
 # usage_ingest_router: RDG-1.2 usage ingest door POST /v1/tenants/{t}/usage/ingest (#5760).
 app.include_router(usage_ingest_router)
@@ -786,6 +794,8 @@ async def startup_event():
     # the setting to fix — unless APIOME_DOCUMENT_STORE_FALLBACK=db, which starts on the database
     # store instead and reports the fallback on /health and GET /v1/ops/document-store.
     await asyncio.to_thread(initialize_document_store, log=_startup_log)
+    # COA-5.15: tenants already on their own bucket keep resolving even with the setting off.
+    await asyncio.to_thread(refresh_document_store_routing, db)
 
     async def _webhook_delivery_sweep() -> None:
         log = logging.getLogger(__name__)

@@ -24,6 +24,7 @@ import {
   settingRows,
   type DocumentStoreProbeResult,
   type DocumentStoreStatus,
+  tenantBucketState,
 } from '../lib/admin-document-store';
 import { proxyGetDocumentStore, proxyTestDocumentStore } from '../lib/auth/admin-document-store-proxy';
 
@@ -61,6 +62,20 @@ function makeStatus(overrides: Partial<DocumentStoreStatus> = {}): DocumentStore
       ],
       integrity: { lastVerifiedAt: '2026-11-21T03:00:00Z', verifiedObjects: 12_168 },
     },
+    tenantBucketsAllowed: true,
+    tenantBuckets: [
+      {
+        tenantId: 't-northwind', tenantSlug: 'northwind', tenantName: 'Northwind', mode: 'tenant',
+        bucket: 'northwind-api-documents', endpointUrl: null, moveState: 'completed', cleanupPending: false,
+        unavailableSince: null, lastError: null,
+      },
+      {
+        tenantId: 't-globex', tenantSlug: 'globex', tenantName: 'Globex', mode: 'tenant',
+        bucket: 'globex-docs', endpointUrl: 'https://minio.globex.example', moveState: 'idle', cleanupPending: false,
+        unavailableSince: '2026-11-21T08:00:00Z',
+        lastError: "Apiome could not read from bucket 'globex-docs' (InvalidAccessKeyId).",
+      },
+    ],
     ...overrides,
   };
 }
@@ -240,6 +255,46 @@ describe('DocumentStoreClient', () => {
     mockFetch(makeStatus({ usage: null }));
     render(<DocumentStoreClient />);
     expect(await screen.findByText(/The document index could not be read/)).toBeInTheDocument();
+  });
+
+  it('lists the tenants on their own bucket, with an outage and its reason (COA-5.15)', async () => {
+    mockFetch(makeStatus());
+    render(<DocumentStoreClient />);
+    const card = await screen.findByTestId('document-store-tenant-buckets');
+    expect(within(card).getByRole('heading', { name: 'Tenant buckets' })).toBeInTheDocument();
+    const rows = within(card).getAllByTestId('document-store-tenant-bucket-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('Northwind');
+    expect(rows[0]).toHaveTextContent('northwind-api-documents');
+    expect(rows[0]).toHaveTextContent('In use');
+    expect(rows[1]).toHaveTextContent('Unavailable');
+    expect(rows[1]).toHaveTextContent('InvalidAccessKeyId');
+    expect(rows[1]).toHaveTextContent('https://minio.globex.example');
+  });
+
+  it('says when tenant buckets are off, and when nobody uses one', async () => {
+    mockFetch(makeStatus({ tenantBucketsAllowed: false, tenantBuckets: [] }));
+    render(<DocumentStoreClient />);
+    const card = await screen.findByTestId('document-store-tenant-buckets');
+    expect(card).toHaveTextContent('Tenants cannot choose their own bucket.');
+    expect(within(card).getByTestId('document-store-tenant-buckets-empty')).toHaveTextContent('No tenant uses its own bucket.');
+  });
+
+  it('names each state a tenant bucket can be in', () => {
+    const row = {
+      tenantId: 't', tenantSlug: 's', tenantName: null, mode: 'tenant' as const, bucket: 'b', endpointUrl: null,
+      moveState: 'idle' as const, cleanupPending: false, unavailableSince: null, lastError: null,
+    };
+    expect(tenantBucketState(row)).toEqual({ label: 'In use', problem: false });
+    expect(tenantBucketState({ ...row, cleanupPending: true }).label).toBe('In use, old copies remain');
+    expect(tenantBucketState({ ...row, moveState: 'running' }).label).toBe('Moving documents');
+    expect(tenantBucketState({ ...row, moveState: 'failed' })).toEqual({ label: 'Move incomplete', problem: true });
+    expect(tenantBucketState({ ...row, mode: 'platform' }).label).toBe('Moved back');
+    expect(tenantBucketState({ ...row, mode: 'platform', cleanupPending: true }).label).toBe('Moved back, old copies remain');
+    // An outage outranks a running move.
+    expect(tenantBucketState({ ...row, moveState: 'running', unavailableSince: '2026-11-21T08:00:00Z' })).toEqual({
+      label: 'Unavailable', problem: true,
+    });
   });
 
   it('runs Test connection and lists each step', async () => {

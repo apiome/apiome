@@ -1,13 +1,25 @@
 'use client';
 
 import * as React from 'react';
-import { Check, Eraser, Eye, Globe, Grid3x3, Minus, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  Check,
+  Eraser,
+  Eye,
+  Globe,
+  Grid3x3,
+  Minus,
+  Pencil,
+  Plus,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 
 import { Button } from '@/app/components/ui/Button';
 
 import {
   ACTIONS,
   RESOURCES,
+  cellApplies,
   cellKey,
   describeCellsOn,
   resourceState,
@@ -48,6 +60,7 @@ const ACTION_ICON: Readonly<Record<string, React.ComponentType<{ 'aria-hidden'?:
   edit: Pencil,
   delete: Trash2,
   publish: Globe,
+  manage: Settings2,
 };
 
 /** Props for {@link PermissionMatrix}. */
@@ -183,13 +196,24 @@ export default function PermissionMatrix({
                 </th>
                 {ACTIONS.map((action) => (
                   <td key={action.key}>
-                    <PermToggle
-                      pressed={grid.has(cellKey(resource.key, action.key))}
-                      label={`${resource.label} ${action.label}`}
-                      disabled={!editable}
-                      testId={`role-cell-${resource.key}-${action.key}`}
-                      onClick={() => onToggleCell(resource.key, action.key)}
-                    />
+                    {!cellApplies(resource.key, action.key) ? (
+                      // Not a permission the guard has: nothing to grant, so nothing to press.
+                      <span
+                        className="rol-perm-na"
+                        data-testid={`role-cell-${resource.key}-${action.key}-na`}
+                      >
+                        <span aria-hidden>–</span>
+                        <span className="sr-only">Not applicable</span>
+                      </span>
+                    ) : (
+                      <PermToggle
+                        pressed={grid.has(cellKey(resource.key, action.key))}
+                        label={`${resource.label} ${action.label}`}
+                        disabled={!editable}
+                        testId={`role-cell-${resource.key}-${action.key}`}
+                        onClick={() => onToggleCell(resource.key, action.key)}
+                      />
+                    )}
                   </td>
                 ))}
               </tr>

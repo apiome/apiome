@@ -80,17 +80,24 @@ def test_migration_adds_no_rbac_resource_no_enum_type_and_no_preferences():
 
 def test_the_type_vocabulary_matches_the_rest_models():
     """V263 created the five collaboration types; V286 (CDG-2.3) swapped the CHECK to add the seven
-    owner types, V359 (MFX-39.4) `export_auto_halted`, V383 (RDG-5.3) `sunset_still_used` and V394
-    (EID-1.3) `seat_cap_blocked_sso`. Together they are exactly the vocabulary the API knows."""
+    owner types, V359 (MFX-39.4) `export_auto_halted`, V383 (RDG-5.3) `sunset_still_used`, V394
+    (EID-1.3) `seat_cap_blocked_sso` and V408 (COA-5.15) `document_store_unavailable`. Together they
+    are exactly the vocabulary the API knows."""
     from app.notifications import (
         NOTIFICATION_TYPES,
         OWNER_NOTIFICATION_TYPES,
+        TYPE_DOCUMENT_STORE_UNAVAILABLE,
         TYPE_EXPORT_AUTO_HALTED,
         TYPE_SEAT_CAP_BLOCKED_SSO,
         TYPE_SUNSET_STILL_USED,
     )
 
-    later = {TYPE_EXPORT_AUTO_HALTED, TYPE_SUNSET_STILL_USED, TYPE_SEAT_CAP_BLOCKED_SSO}
+    later = {
+        TYPE_EXPORT_AUTO_HALTED,
+        TYPE_SUNSET_STILL_USED,
+        TYPE_SEAT_CAP_BLOCKED_SSO,
+        TYPE_DOCUMENT_STORE_UNAVAILABLE,
+    }
     statements = _statements()
     check = statements[statements.index("CHECK (type IN (") : statements.index("payload JSONB")]
     original = {fragment.split("'")[0] for fragment in check.split("'")[1::2]}
@@ -103,11 +110,15 @@ def test_the_type_vocabulary_matches_the_rest_models():
         return {fragment for fragment in check.split("'")[1::2]}
 
     assert widened("V286__owner_routing_cdg_2_3.sql") == set(NOTIFICATION_TYPES) - later
+    newest = {TYPE_DOCUMENT_STORE_UNAVAILABLE}
     assert widened("V359__export_auto_on_publish_4336.sql") == (
-        set(NOTIFICATION_TYPES) - {TYPE_SUNSET_STILL_USED, TYPE_SEAT_CAP_BLOCKED_SSO}
+        set(NOTIFICATION_TYPES) - {TYPE_SUNSET_STILL_USED, TYPE_SEAT_CAP_BLOCKED_SSO} - newest
     )
-    assert widened("V383__sunset_still_used_rdg_5_3.sql") == set(NOTIFICATION_TYPES) - {TYPE_SEAT_CAP_BLOCKED_SSO}
-    assert widened("V394__sso_jit_provisioning_5013.sql") == set(NOTIFICATION_TYPES)
+    assert widened("V383__sunset_still_used_rdg_5_3.sql") == (
+        set(NOTIFICATION_TYPES) - {TYPE_SEAT_CAP_BLOCKED_SSO} - newest
+    )
+    assert widened("V394__sso_jit_provisioning_5013.sql") == set(NOTIFICATION_TYPES) - newest
+    assert widened("V408__tenant_document_stores_7092.sql") == set(NOTIFICATION_TYPES)
 
 
 def test_the_retention_cap_matches_the_constant_the_api_advertises():

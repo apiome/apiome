@@ -454,7 +454,7 @@ describe('suggestTenantSlug', () => {
 
 describe('the drawer’s sections', () => {
   it('lists the sections, Security (TFA-1.3) after Members and Ownership (CDG-2.5) before the history', () => {
-    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'security', 'license', 'mcp', 'keys', 'ownership', 'history']);
+    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'security', 'storage', 'license', 'mcp', 'keys', 'ownership', 'history']);
   });
 
   it('needs the current tenant for everything but members', () => {

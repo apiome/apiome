@@ -38,6 +38,7 @@ from typing import Any, Callable, Dict, Optional, Sequence
 from .config import settings
 from .document_store import (
     BACKEND_DB,
+    BACKEND_TENANT_S3,
     DbDocumentStore,
     DocumentNotFound,
     DocumentStoreError,
@@ -151,9 +152,15 @@ def _audit(db: Any, **values: Any) -> None:
 
 
 def _store_for(row: Dict[str, Any], store: Any, db: Any) -> Optional[Any]:
-    """The store holding ``row``'s bytes: the active one, or the database backend; else ``None``."""
+    """The store holding ``row``'s bytes: the active one, or the database backend; else ``None``.
+
+    An object in its tenant's own bucket (``tenant_s3``, COA-5.15) is reached through the routing
+    store, which finds the tenant's bucket itself.
+    """
     backend = str(row.get("backend") or "")
     if backend == getattr(store, "backend", None):
+        return store
+    if backend == BACKEND_TENANT_S3 and hasattr(store, "tenant_store"):
         return store
     if backend == BACKEND_DB:
         return DbDocumentStore(database=db)

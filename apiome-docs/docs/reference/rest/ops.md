@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.631.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.632.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `ops` · 16 operations
 
@@ -31,7 +31,9 @@ The ``document_store`` block (COA-5.9, #7085) reports the store as a dependency:
 ``status`` (``ok``; ``degraded`` when running on the ``db`` fallback; ``unavailable`` when
 the store did not answer its last check), the active ``backend`` and whether a ``fallback``
 is in effect. The check is cached for 30 seconds; error details and settings stay on the
-platform-admin ``GET /v1/ops/document-store``.
+platform-admin ``GET /v1/ops/document-store``. ``tenant_buckets_unavailable`` (COA-5.15,
+\#7092) is how many tenants' own buckets are down — ``status`` is ``degraded`` when any is;
+which tenants, and why, are on ``GET /v1/ops/document-store``.
 
 The HTTP status reflects database readiness only: an enforcing deployment cannot serve at
 all with a required tool missing (startup refuses), a non-enforcing one is degraded
@@ -475,6 +477,8 @@ The active document store: settings (never credentials), health and usage.
 | `maxObjectBytes` | integer or null | no | db: the largest object accepted. |
 | `health` | `DocumentStoreHealth` | yes | Health. |
 | `usage` | `DocumentStoreUsage` or null | no | Null when the document index cannot be read. |
+| `tenantBucketsAllowed` | boolean | no | Whether tenants may use their own bucket (APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS). |
+| `tenantBuckets` | array of `DocumentStoreTenantBucket` | no | Tenants that have configured their own bucket, with its health. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
