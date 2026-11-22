@@ -519,6 +519,41 @@ NEXT_PUBLIC_REST_API_BASE_URL="${NEXT_PUBLIC_REST_API_BASE_URL%/}"
 if [[ "$NEXT_PUBLIC_REST_API_BASE_URL" != */v1 ]]; then
   NEXT_PUBLIC_REST_API_BASE_URL="${NEXT_PUBLIC_REST_API_BASE_URL}/v1"
 fi
+# Document store (COA-5.12, #7088): where imported originals and rendered documents are kept.
+# `db` (Postgres) needs nothing; `s3` takes any S3-compatible bucket (the bundled MinIO from
+# docker-compose.yml, AWS S3, R2, ...); `filesystem` takes a directory.
+info "Document store (originals and rendered documents)"
+while true; do
+  prompt DOCUMENT_STORE "Document store (db/s3/filesystem)" "db"
+  case "${DOCUMENT_STORE,,}" in
+    db|s3|filesystem) DOCUMENT_STORE="${DOCUMENT_STORE,,}"; break ;;
+    *) warn "Please enter 'db', 's3' or 'filesystem'." ;;
+  esac
+done
+DOCUMENT_STORE_BUCKET="" DOCUMENT_STORE_REGION="" DOCUMENT_STORE_ENDPOINT_URL=""
+DOCUMENT_STORE_ADDRESSING_STYLE="auto" DOCUMENT_STORE_ALLOW_PRIVATE="false" DOCUMENT_STORE_PATH=""
+DOCUMENT_STORE_ACCESS_KEY_ID="" DOCUMENT_STORE_SECRET_ACCESS_KEY=""
+case "$DOCUMENT_STORE" in
+  s3)
+    printf '%bThe bucket must already exist. For the bundled MinIO (docker compose up) keep the\n' "$DIM"
+    printf 'defaults; for AWS S3 clear the endpoint and set your region; for R2 use region "auto".%b\n' "$RESET"
+    prompt DOCUMENT_STORE_BUCKET "Bucket" "apiome"
+    prompt DOCUMENT_STORE_ENDPOINT_URL "S3 endpoint URL (empty for AWS S3)" "http://localhost:9000"
+    prompt DOCUMENT_STORE_REGION "Region" "us-east-1"
+    if [[ -n "$DOCUMENT_STORE_ENDPOINT_URL" ]]; then
+      DOCUMENT_STORE_ADDRESSING_STYLE="path"
+      prompt_yes_no DOCUMENT_STORE_ALLOW_PRIVATE \
+        "Is the endpoint on localhost or a private network?" "y"
+    fi
+    prompt DOCUMENT_STORE_ACCESS_KEY_ID "Access key id (empty to use an IAM role)" "apiome"
+    if [[ -n "$DOCUMENT_STORE_ACCESS_KEY_ID" ]]; then
+      prompt_secret DOCUMENT_STORE_SECRET_ACCESS_KEY "Secret access key" "apiome_local_dev"
+    fi
+    ;;
+  filesystem)
+    prompt DOCUMENT_STORE_PATH "Storage directory" "/var/lib/apiome/documents"
+    ;;
+esac
 DEFAULT_APIOME_BASE_URL="http://localhost:${REST_PORT}"
 prompt APIOME_BASE_URL "CLI REST base URL (no /v1 suffix)" "$DEFAULT_APIOME_BASE_URL"
 
@@ -639,6 +674,17 @@ DATABASE_URL=$(format_env_value "$DATABASE_URL")
 HOST=$(format_env_value "$REST_HOST")
 PORT=$(format_env_value "$REST_PORT")
 RELOAD=$(format_env_value "$REST_RELOAD")
+
+# Document store (COA-5.12): db | s3 | filesystem. Settings for the other backends are left empty.
+APIOME_DOCUMENT_STORE=$(format_env_value "$DOCUMENT_STORE")
+APIOME_DOCUMENT_STORE_BUCKET=$(format_env_value "$DOCUMENT_STORE_BUCKET")
+APIOME_DOCUMENT_STORE_REGION=$(format_env_value "$DOCUMENT_STORE_REGION")
+APIOME_DOCUMENT_STORE_ENDPOINT_URL=$(format_env_value "$DOCUMENT_STORE_ENDPOINT_URL")
+APIOME_DOCUMENT_STORE_ADDRESSING_STYLE=$(format_env_value "$DOCUMENT_STORE_ADDRESSING_STYLE")
+APIOME_DOCUMENT_STORE_ALLOW_PRIVATE=$(format_env_value "$DOCUMENT_STORE_ALLOW_PRIVATE")
+APIOME_DOCUMENT_STORE_PATH=$(format_env_value "$DOCUMENT_STORE_PATH")
+APIOME_DOCUMENT_STORE_ACCESS_KEY_ID=$(format_env_value "$DOCUMENT_STORE_ACCESS_KEY_ID")
+APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY=$(format_env_value "$DOCUMENT_STORE_SECRET_ACCESS_KEY")
 
 # JWT Authentication (must match apiome-ui BETTER_AUTH_SECRET)
 BETTER_AUTH_SECRET=$(format_env_value "$BETTER_AUTH_SECRET")

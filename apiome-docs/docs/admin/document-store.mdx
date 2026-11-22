@@ -84,6 +84,37 @@ The same variables as Garage, with the service's endpoint. For MinIO use
 `ADDRESSING_STYLE=path` and `REGION=us-east-1` unless you configured another. For R2 use
 `ENDPOINT_URL=https://<account id>.r2.cloudflarestorage.com` and `REGION=auto`.
 
+### The bundled MinIO (local development)
+
+`docker compose up` always starts a **MinIO** service (API on `localhost:9000`, web console on
+`localhost:9001`) and a one-shot `minio-init` service that creates the bucket, then exits. REST
+keeps using the database until you switch, so nothing changes by default. To use the bundled
+MinIO, add one line to the `.env` next to `docker-compose.yml` and restart:
+
+```bash
+APIOME_DOCUMENT_STORE=s3
+```
+
+Compose already points the endpoint, bucket (`apiome`), path-style addressing and credentials at
+the bundled MinIO, and allows its private address for this endpoint only. Sign in to the console at
+`http://localhost:9001` with `apiome` / `apiome_local_dev` to see the objects. To change the
+defaults set `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `APIOME_DOCUMENT_STORE_BUCKET`,
+`MINIO_API_PUBLISH_PORT` or `MINIO_CONSOLE_PUBLISH_PORT` in the same `.env`; the data lives in the
+`apiome_minio_data` volume.
+
+:::warning
+The bundled MinIO uses well-known development credentials, so the production overlay
+(`docker-compose.prod.yml`) does not start it. In production point the `APIOME_DOCUMENT_STORE_*`
+variables at AWS S3, R2 or your own MinIO; `docker-compose.prod.env.example` has a commented block
+for each.
+:::
+
+### Run the setup script
+
+`./setup.sh` asks **Document store (db/s3/filesystem)** and, for `s3`, the bucket, endpoint,
+region and keys (the defaults match the bundled MinIO), then writes them to `apiome-rest/.env`.
+Answer `db` to keep the default.
+
 ### AWS S3
 
 ```bash

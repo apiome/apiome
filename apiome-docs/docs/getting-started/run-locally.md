@@ -25,6 +25,13 @@ Panel”** on the launcher to open **Home**. The default service ports are:
 Every how-to page shows the **UI**, **REST**, and (where applicable) **CLI** way to do the same
 thing, plus a short *verify* step.
 
+## Use an S3 store (optional)
+
+`docker compose up` also starts MinIO (API `http://localhost:9000`, console `http://localhost:9001`)
+and creates its bucket. REST keeps documents in the database until you add
+`APIOME_DOCUMENT_STORE=s3` to `.env` and restart; see
+[Document store](../admin/document-store.mdx#the-bundled-minio-local-development).
+
 ## Add a Kafka broker (optional)
 
 AsyncAPI mocks can be bound to a Kafka broker. The stack doesn't include one unless you ask for it:

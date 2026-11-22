@@ -57,6 +57,14 @@ services:
   seed:
     profiles: ["dev-only"]
 
+  # The bundled MinIO is a local-development store with well-known credentials. Production points
+  # APIOME_DOCUMENT_STORE_* at AWS S3, R2 or your own MinIO (docker-compose.prod.env.example), so
+  # both services are parked behind a profile and `up` skips them.
+  minio:
+    profiles: ["dev-only"]
+  minio-init:
+    profiles: ["dev-only"]
+
   rest:
     environment:
       # Turn on REST's fail-closed production checks (insecure JWT default is refused, etc.).
@@ -68,6 +76,20 @@ services:
       APIOME_CORS_ALLOWED_ORIGINS: ${APIOME_CORS_ALLOWED_ORIGINS:?set APIOME_CORS_ALLOWED_ORIGINS to your UI origin(s), e.g. https://app.example.com}
       # Surface backup freshness on the ops dashboard (RC1-3.2 reads RC1-1.3 manifests).
       APIOME_BACKUP_DIR: /var/backups/apiome
+      # Document store (COA-5.12, #7088): the base file's local-MinIO endpoint, bucket and
+      # well-known dev keys must not carry into production, so they are replaced here and read from
+      # .env instead. `db` (the default) needs none of them; for `s3` set the bucket, region and
+      # either static keys or an IAM role. See docker-compose.prod.env.example.
+      APIOME_DOCUMENT_STORE: ${APIOME_DOCUMENT_STORE:-db}
+      APIOME_DOCUMENT_STORE_BUCKET: ${APIOME_DOCUMENT_STORE_BUCKET:-}
+      APIOME_DOCUMENT_STORE_REGION: ${APIOME_DOCUMENT_STORE_REGION:-us-east-1}
+      APIOME_DOCUMENT_STORE_ENDPOINT_URL: ${APIOME_DOCUMENT_STORE_ENDPOINT_URL:-}
+      APIOME_DOCUMENT_STORE_ADDRESSING_STYLE: ${APIOME_DOCUMENT_STORE_ADDRESSING_STYLE:-auto}
+      APIOME_DOCUMENT_STORE_ALLOW_PRIVATE: ${APIOME_DOCUMENT_STORE_ALLOW_PRIVATE:-false}
+      APIOME_DOCUMENT_STORE_ACCESS_KEY_ID: ${APIOME_DOCUMENT_STORE_ACCESS_KEY_ID:-}
+      APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY: ${APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY:-}
+      APIOME_DOCUMENT_STORE_SSE: ${APIOME_DOCUMENT_STORE_SSE:-}
+      APIOME_DOCUMENT_STORE_KMS_KEY_ID: ${APIOME_DOCUMENT_STORE_KMS_KEY_ID:-}
       # Mock broker bindings (XPC-2.1, #5735): production has no dev broker, so clear the base
       # file's `redpanda:9092` exemption — every broker host must pass the public-address check —
       # and pin the private-address escape hatch off.
