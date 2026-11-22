@@ -962,17 +962,50 @@ def _db_with(cursor: _RecordingCursor) -> Database:
     return db
 
 
+def _spy_bulk(db: Database) -> List[Dict[str, Any]]:
+    """Record ``Database.bulk_insert`` calls instead of running them."""
+    calls: List[Dict[str, Any]] = []
+
+    def _bulk_insert(table, columns, rows, returning=None, page_size=1000, **kwargs):
+        calls.append({"table": table, "columns": list(columns), "rows": list(rows), **kwargs})
+        return []
+
+    db.bulk_insert = _bulk_insert  # type: ignore[method-assign]
+    return calls
+
+
 def test_append_upserts_so_a_re_emitted_chunk_is_a_no_op() -> None:
     cursor = _RecordingCursor()
-    written = _db_with(cursor).append_tenant_repository_files(
+    db = _db_with(cursor)
+    calls = _spy_bulk(db)
+    written = db.append_tenant_repository_files(
         "11111111-1111-1111-1111-111111111111",
         "main",
         [{"path": "a.yaml", "name": "a.yaml", "detected_kind": "openapi-candidate"}],
     )
     assert written == 1
-    query, rows = cursor.executed[0]
-    assert "ON CONFLICT (repository_id, branch, path) DO UPDATE" in query
-    assert rows[0][2] == "a.yaml"
+    assert calls[0]["table"] == "apiome.tenant_repository_files"
+    assert "ON CONFLICT (repository_id, branch, path) DO UPDATE" in calls[0]["on_conflict"]
+    assert calls[0]["rows"][0][2] == "a.yaml"
+
+
+def test_append_is_one_bulk_write_and_a_repeated_path_keeps_the_last_entry() -> None:
+    """DBP-1.2 (#7185): one multi-row statement, not one per entry; duplicates cannot collide."""
+    db = _db_with(_RecordingCursor())
+    calls = _spy_bulk(db)
+    written = db.append_tenant_repository_files(
+        "r1",
+        "main",
+        [
+            {"path": "a.yaml", "name": "first"},
+            {"path": "b.yaml", "name": "b.yaml"},
+            {"path": "a.yaml", "name": "second"},
+        ],
+    )
+    assert written == 3
+    assert len(calls) == 1
+    names = {row[2]: row[3] for row in calls[0]["rows"]}
+    assert names == {"a.yaml": "second", "b.yaml": "b.yaml"}
 
 
 def test_append_of_an_empty_chunk_touches_nothing() -> None:
@@ -983,11 +1016,13 @@ def test_append_of_an_empty_chunk_touches_nothing() -> None:
 
 def test_replace_is_delete_plus_append() -> None:
     cursor = _RecordingCursor()
-    _db_with(cursor).replace_tenant_repository_files(
+    db = _db_with(cursor)
+    calls = _spy_bulk(db)
+    db.replace_tenant_repository_files(
         "11111111-1111-1111-1111-111111111111", "main", [{"path": "a.yaml", "name": "a.yaml"}]
     )
     assert "DELETE FROM apiome.tenant_repository_files" in cursor.executed[0][0]
-    assert "INSERT INTO apiome.tenant_repository_files" in cursor.executed[1][0]
+    assert calls[0]["table"] == "apiome.tenant_repository_files"
 
 
 def test_save_cursor_counts_only_no_progress_passes() -> None:

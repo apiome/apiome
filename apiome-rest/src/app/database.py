@@ -3,8 +3,10 @@ import json
 import logging
 import secrets
 import threading
+import weakref
+from contextlib import contextmanager
 from datetime import date, datetime, timezone
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Sequence, Set, Tuple
 
 import bcrypt
 import numpy as np
@@ -20,7 +22,12 @@ from .axis_score import (
     mcp_axis_evaluation,
 )
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
+from .db_bulk import DEFAULT_PAGE_SIZE as DEFAULT_BULK_PAGE_SIZE
+from .db_bulk import bulk_insert as _bulk_insert
+from .db_bulk import bulk_upsert as _bulk_upsert
 from .db_cursor import rollback_quietly
+from .db_timeouts import StatementTimeout  # noqa: F401 - re-exported for callers
+from .db_timeouts import apply_statement_timeout, typed_timeout
 from .draft_bindings import (
     AUDIT_BOUND as AUDIT_BINDING_BOUND,
     AUDIT_CANDIDATE_RAISED as AUDIT_BINDING_CANDIDATE_RAISED,
@@ -427,23 +434,100 @@ def _same_instant(stored: Any, expected: datetime) -> bool:
 #: ``Database.update_version_tag`` default: keep the tag's message unchanged (#3265).
 _UNSET_TAG_MESSAGE: Any = object()
 
+class ConnectionPoolExhausted(psycopg2.OperationalError):
+    """The process already has ``settings.db_pool_max_in_use`` database connections in use.
+
+    Raised by :meth:`Database.connect` instead of opening one more connection past the cap
+    (DBP-1.2, #7185). Subclasses ``psycopg2.OperationalError`` so handlers that already treat a
+    failed connect as "database unavailable" treat this the same way.
+
+    Attributes:
+        in_use: Connections in use when the request was refused.
+        limit: The cap.
+    """
+
+    def __init__(self, in_use: int, limit: int) -> None:
+        super().__init__(
+            f"apiome-rest already has {in_use} database connections in use, the most "
+            f"DB_POOL_MAX_IN_USE ({limit}) allows. Raise the cap only if "
+            "db_pool_max_in_use x REST replicas stays below PostgreSQL's max_connections; "
+            "otherwise look for threads or sweeps holding connections they no longer need."
+        )
+        self.in_use = in_use
+        self.limit = limit
+
+
+class _InUseCounter:
+    """Connections leased to threads (or checked out) across every :class:`Database` in the process.
+
+    The per-handle pools only bound *idle* connections; this bounds the ones in use, so a burst of
+    threads cannot open more connections than PostgreSQL will accept (DBP-1.2, #7185).
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.count = 0
+
+    def take(self) -> None:
+        """Count one more connection in use.
+
+        Raises:
+            ConnectionPoolExhausted: The cap (``settings.db_pool_max_in_use``, ``0`` = none) is reached.
+        """
+        limit = int(settings.db_pool_max_in_use)
+        with self._lock:
+            if limit > 0 and self.count >= limit:
+                raise ConnectionPoolExhausted(self.count, limit)
+            self.count += 1
+
+    def give(self) -> None:
+        """Count one connection fewer in use."""
+        with self._lock:
+            self.count = max(0, self.count - 1)
+
+
+#: The process-wide in-use count behind ``settings.db_pool_max_in_use``.
+_IN_USE = _InUseCounter()
+
+
+def connections_in_use() -> int:
+    """How many database connections the process has leased or checked out right now."""
+    return _IN_USE.count
+
+
 class _ThreadConnection:
     """One thread's lease on a pooled connection.
 
     Lives in a ``threading.local``; when the thread ends the lease is collected and hands the
     connection back to the owning :class:`Database` pool instead of closing it, so the short-lived
     worker threads the server spins up under load reuse connections rather than reconnecting.
+    A lease counts towards ``settings.db_pool_max_in_use`` until it is given back, once.
     """
 
-    __slots__ = ("pool", "conn")
+    __slots__ = ("pool", "conn", "__weakref__")
 
     def __init__(self, pool: "_ConnectionPool", conn: Any):
         self.pool = pool
         self.conn = conn
 
+    def give_back(self, close: bool = False) -> None:
+        """Return the connection to the pool (or close it) and stop counting it; idempotent.
+
+        Args:
+            close: Close the connection instead of pooling it.
+        """
+        conn, self.conn = self.conn, None
+        if conn is None:
+            return
+        _IN_USE.give()
+        if close:
+            _close_quietly(conn)
+        else:
+            self.pool.release(conn)
+
     def __del__(self):
         try:
-            self.pool.release(self.conn)
+            self.give_back()
         except Exception:
             pass
 
@@ -537,6 +621,10 @@ def _connection_options(database_url: str) -> Dict[str, Any]:
     return kwargs
 
 
+#: Connections the pgvector adapter is registered on (``Database.vector_ready``, DBP-1.2).
+_VECTOR_READY: "weakref.WeakKeyDictionary[Any, bool]" = weakref.WeakKeyDictionary()
+
+
 class Database:
     """Database connection and query manager.
 
@@ -563,6 +651,13 @@ class Database:
             state = self.__dict__.setdefault("_conn_state_value", (threading.local(), _ConnectionPool()))
         return state
 
+    def _leases(self) -> "weakref.WeakSet[_ThreadConnection]":
+        """Every live lease this handle has handed out, for :meth:`release_connections`."""
+        leases = self.__dict__.get("_leases_value")
+        if leases is None:
+            leases = self.__dict__.setdefault("_leases_value", weakref.WeakSet())
+        return leases
+
     @property
     def connection(self):
         """The pinned connection if one is set, else the calling thread's connection (or ``None``)."""
@@ -576,8 +671,60 @@ class Database:
     def connection(self, value) -> None:
         self.__dict__["_pinned_connection"] = value
 
+    @staticmethod
+    def _open_connection() -> Any:
+        """Open a new connection with the service's cursor class and session settings.
+
+        Raises:
+            psycopg2.OperationalError: The server refused it; a missing database gets a message
+                saying how to create and migrate it.
+        """
+        try:
+            return psycopg2.connect(
+                settings.effective_database_url,
+                # Counts each statement for the request's statement budget (DBP-1.1, #7184).
+                cursor_factory=CountingDictCursor,
+                **_connection_options(settings.effective_database_url),
+            )
+        except psycopg2.OperationalError as e:
+            err_s = str(e).lower()
+            if "does not exist" in err_s and "database" in err_s:
+                db_name = settings.postgres_db
+                raise psycopg2.OperationalError(
+                    f"{e}\n\n"
+                    "PostgreSQL has no database with that name yet. Create it, then apply migrations "
+                    "from apiome-db/scripts (see apiome-db/docs/README.md). Example:\n"
+                    f"  psql -U {settings.postgres_user} -h {settings.postgres_host} "
+                    f"-p {settings.postgres_port} -c 'CREATE DATABASE {db_name};'\n"
+                    "If you use DATABASE_URL, the database name is the path segment after the last '/'."
+                ) from e
+            raise
+
+    def _borrow(self, pool: _ConnectionPool) -> Any:
+        """An idle pooled connection or a new one, counted as in use.
+
+        Raises:
+            ConnectionPoolExhausted: The process is at ``settings.db_pool_max_in_use``.
+            psycopg2.OperationalError: A new connection could not be opened.
+        """
+        _IN_USE.take()
+        try:
+            conn = pool.acquire()
+            return conn if conn is not None else self._open_connection()
+        except BaseException:
+            _IN_USE.give()
+            raise
+
     def connect(self):
-        """Return the calling thread's database connection, opening or borrowing one if needed."""
+        """Return the calling thread's database connection, opening or borrowing one if needed.
+
+        Before handing it out, brings its ``statement_timeout`` in line with the caller's context
+        (:func:`app.db_timeouts.long_statements`).
+
+        Raises:
+            ConnectionPoolExhausted: The thread needs a connection and the process already has
+                ``settings.db_pool_max_in_use`` in use.
+        """
         pinned = self.__dict__.get("_pinned_connection")
         if pinned is not None:
             if not pinned.closed:
@@ -585,31 +732,17 @@ class Database:
             self.__dict__["_pinned_connection"] = None
         local, pool = self._conn_state()
         lease = getattr(local, "lease", None)
-        if lease is not None and not lease.conn.closed:
+        if lease is not None and lease.conn is not None and not lease.conn.closed:
+            apply_statement_timeout(lease.conn)
             return lease.conn
-        conn = pool.acquire()
-        if conn is None:
-            try:
-                conn = psycopg2.connect(
-                    settings.effective_database_url,
-                    # Counts each statement for the request's statement budget (DBP-1.1, #7184).
-                    cursor_factory=CountingDictCursor,
-                    **_connection_options(settings.effective_database_url),
-                )
-            except psycopg2.OperationalError as e:
-                err_s = str(e).lower()
-                if "does not exist" in err_s and "database" in err_s:
-                    db_name = settings.postgres_db
-                    raise psycopg2.OperationalError(
-                        f"{e}\n\n"
-                        "PostgreSQL has no database with that name yet. Create it, then apply migrations "
-                        "from apiome-db/scripts (see apiome-db/docs/README.md). Example:\n"
-                        f"  psql -U {settings.postgres_user} -h {settings.postgres_host} "
-                        f"-p {settings.postgres_port} -c 'CREATE DATABASE {db_name};'\n"
-                        "If you use DATABASE_URL, the database name is the path segment after the last '/'."
-                    ) from e
-                raise
-        local.lease = _ThreadConnection(pool, conn)
+        if lease is not None:
+            # The connection died under the lease (or was given back): stop counting it.
+            lease.give_back(close=True)
+        conn = self._borrow(pool)
+        lease = _ThreadConnection(pool, conn)
+        local.lease = lease
+        self._leases().add(lease)
+        apply_statement_timeout(conn)
         return conn
 
     def close(self):
@@ -621,49 +754,334 @@ class Database:
             return
         local, pool = self._conn_state()
         lease = getattr(local, "lease", None)
-        if lease is not None and not lease.conn.closed:
-            lease.conn.close()
+        if lease is not None:
+            lease.give_back(close=True)
+            local.lease = None
         pool.close_idle()
 
-    def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
-        """Execute a SELECT query and return results.
+    def release_connections(self, this_thread_only: bool = False) -> int:
+        """Give every connection this handle has leased back to its idle pool, without closing them.
 
-        Commits on success so the shared connection returns to IDLE. Leaving
-        reads in "idle in transaction" holds locks, blocks VACUUM, and causes
-        subsequent writers that toggle ``conn.autocommit`` to crash with
-        ``set_session cannot be used inside a transaction``.
+        For a long-lived handle a background sweep keeps across ticks (DBP-1.2, #7185): the sweep
+        calls this when a tick ends, so the executor threads the tick ran on stop holding a
+        connection each and the next tick reuses the pooled one instead of reconnecting. Session
+        advisory locks a tick forgot to release are dropped (``pg_advisory_unlock_all``), as
+        closing the connection used to do. Call it only when no thread is using the handle.
+
+        Args:
+            this_thread_only: Release only the calling thread's connection, for a handle that
+                several threads share at once (each releases its own when its work ends).
+
+        Returns:
+            How many connections went back to the pool.
+        """
+        released = 0
+        if this_thread_only:
+            own = getattr(self._conn_state()[0], "lease", None)
+            leases = [own] if own is not None else []
+        else:
+            leases = list(self._leases())
+        for lease in leases:
+            conn = lease.conn
+            if conn is None:
+                continue
+            if not conn.closed and isinstance(conn, psycopg2.extensions.connection):
+                try:
+                    if conn.info.transaction_status != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
+                        conn.rollback()
+                    conn.autocommit = True
+                    with conn.cursor(cursor_factory=psycopg2.extensions.cursor) as cursor:
+                        cursor.execute("SELECT pg_advisory_unlock_all()")
+                except psycopg2.Error:
+                    lease.give_back(close=True)
+                    continue
+            lease.give_back()
+            released += 1
+        return released
+
+    def checkout(self) -> Any:
+        """Borrow a connection that belongs to no thread, for work that hops threads.
+
+        A session advisory lock taken on one thread and released on another must stay on one
+        connection (:class:`app.db_advisory_lock.SessionAdvisoryLock`). The connection counts
+        towards ``settings.db_pool_max_in_use`` until :meth:`checkin`.
+
+        Returns:
+            An open connection, idle (no transaction open).
+
+        Raises:
+            ConnectionPoolExhausted: The process is at the cap.
+        """
+        pinned = self.__dict__.get("_pinned_connection")
+        if pinned is not None and not pinned.closed:
+            return pinned
+        conn = self._borrow(self._conn_state()[1])
+        apply_statement_timeout(conn)
+        return conn
+
+    def checkin(self, conn: Any) -> None:
+        """Return a connection from :meth:`checkout` to the idle pool.
+
+        Args:
+            conn: The connection :meth:`checkout` returned.
+        """
+        if conn is None or conn is self.__dict__.get("_pinned_connection"):
+            return
+        _IN_USE.give()
+        self._conn_state()[1].release(conn)
+
+    def _in_read_tx(self) -> bool:
+        """Whether the calling thread is inside :meth:`read_tx` on this handle."""
+        return bool(getattr(self._conn_state()[0], "read_tx_depth", 0))
+
+    @contextmanager
+    def read_tx(self) -> Iterator["Database"]:
+        """Run several reads against one snapshot: ``REPEATABLE READ, READ ONLY``.
+
+        ``execute_query`` normally runs each read on its own (autocommit), so two reads in a row
+        can see different data. Inside this block they share one transaction and one snapshot,
+        and ``execute_query`` joins it instead of committing. The whole block costs a ``BEGIN``
+        and a ``COMMIT`` on top of its reads. Nested blocks join the outer one. A write inside
+        fails (the transaction is read only).
+
+        Example::
+
+            with db.read_tx():
+                project = db.execute_query("SELECT …", (pid,))
+                versions = db.execute_query("SELECT …", (pid,))
+
+        Yields:
+            This handle.
+        """
+        local = self._conn_state()[0]
+        depth = int(getattr(local, "read_tx_depth", 0))
+        if depth:
+            local.read_tx_depth = depth + 1
+            try:
+                yield self
+            finally:
+                local.read_tx_depth = depth
+            return
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        real = isinstance(conn, psycopg2.extensions.connection)
+        if real:
+            # psycopg2 puts these into the BEGIN it sends, so they cost no extra round trip.
+            conn.set_session(isolation_level="REPEATABLE READ", readonly=True)
+        local.read_tx_depth = 1
+        try:
+            yield self
+        except BaseException:
+            rollback_quietly(conn)
+            raise
+        else:
+            conn.commit()
+        finally:
+            local.read_tx_depth = 0
+            if not conn.closed:
+                if real:
+                    rollback_quietly(conn)
+                    conn.set_session(isolation_level="DEFAULT", readonly="DEFAULT")
+                conn.autocommit = prev_autocommit
+
+    def _autocommit_eligible(self, conn: Any) -> bool:
+        """Whether one statement on ``conn`` can run in autocommit (no BEGIN, no COMMIT).
+
+        True for a pooled psycopg2 connection that is idle and not in :meth:`read_tx`. A pinned
+        connection (the DB test harnesses' single-transaction connection), a test double, or a
+        connection already inside a transaction keeps the old behaviour.
+        """
+        if not isinstance(conn, psycopg2.extensions.connection):
+            return False
+        if conn is self.__dict__.get("_pinned_connection") or self._in_read_tx():
+            return False
+        try:
+            return conn.info.transaction_status == psycopg2.extensions.TRANSACTION_STATUS_IDLE
+        except Exception:
+            return False
+
+    def _run_statement(self, query: str, params: Optional[tuple], fetch: bool) -> Any:
+        """Run one statement the way ``execute_query`` / ``_execute_write`` promise.
+
+        * Idle pooled connection: the statement runs in autocommit, so PostgreSQL gets exactly one
+          statement: no ``BEGIN`` before it, no ``COMMIT`` after (DBP-1.2, #7185). psycopg2 2.9
+          flips ``autocommit`` client-side, without a round trip.
+        * Inside :meth:`read_tx`: the statement joins that transaction.
+        * Otherwise (a transaction some caller left open, a pinned connection, a test double):
+          the statement runs and is committed, as before.
+
+        Args:
+            query: The SQL.
+            params: Its parameters.
+            fetch: Return ``fetchall()`` (``True``) or the affected row count (``False``).
+
+        Raises:
+            StatementTimeout: The statement ran past ``statement_timeout``.
         """
         conn = self.connect()
+        if self._autocommit_eligible(conn):
+            previous = conn.autocommit
+            conn.autocommit = True
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    return cursor.fetchall() if fetch else cursor.rowcount
+            except Exception as e:
+                timeout = typed_timeout(e)
+                if timeout is not e:
+                    raise timeout from e
+                raise
+            finally:
+                if not conn.closed:
+                    conn.autocommit = previous
+        joined = self._in_read_tx()
         try:
             with conn.cursor() as cursor:
                 cursor.execute(query, params)
-                rows = cursor.fetchall()
-            conn.commit()
-            return rows
+                result = cursor.fetchall() if fetch else cursor.rowcount
+            if not joined:
+                conn.commit()
+            return result
         except Exception as e:
-            rollback_quietly(conn)
-            raise e
+            if not joined:
+                rollback_quietly(conn)
+            timeout = typed_timeout(e)
+            if timeout is not e:
+                raise timeout from e
+            raise
+
+    def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
+        """Execute one statement that returns rows (a SELECT, or a write with ``RETURNING``).
+
+        On an idle pooled connection the statement runs in autocommit: PostgreSQL receives just
+        the statement, with no ``BEGIN``/``COMMIT`` around it, and the connection stays IDLE (no
+        "idle in transaction" holding locks or blocking VACUUM). Inside :meth:`read_tx` it joins
+        the snapshot; on a connection some caller left inside a transaction it commits, as it
+        always has.
+
+        Raises:
+            StatementTimeout: The statement ran past ``statement_timeout``.
+        """
+        return self._run_statement(query, params, fetch=True)
 
     def _execute_write(self, query: str, params: tuple = None) -> int:
         """Execute a single write statement that returns no rows.
 
         ``execute_query`` unconditionally ``fetchall()``s, which psycopg2 refuses on a
         plain INSERT/UPDATE/DELETE ("no results to fetch") — a write without a
-        ``RETURNING`` clause must come through here instead.
+        ``RETURNING`` clause must come through here instead. Runs in autocommit like
+        ``execute_query``: one statement, committed on its own.
 
         Returns:
             The statement's affected row count.
+
+        Raises:
+            StatementTimeout: The statement ran past ``statement_timeout``.
         """
+        return self._run_statement(query, params, fetch=False)
+
+    def bulk_insert(
+        self,
+        table: str,
+        columns: Sequence[str],
+        rows: Sequence[Sequence[Any]],
+        returning: Optional[Sequence[str]] = None,
+        page_size: int = DEFAULT_BULK_PAGE_SIZE,
+        *,
+        on_conflict: Optional[str] = None,
+        template: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Insert many rows with one statement per ``page_size`` rows, in one transaction.
+
+        See :func:`app.db_bulk.bulk_insert` for the arguments. All pages commit together or not
+        at all; a caller already inside a transaction keeps it open (the insert joins it).
+
+        Returns:
+            The ``returning`` rows as dicts.
+        """
+        return self._bulk(lambda cursor: _bulk_insert(
+            cursor, table, columns, rows, returning=returning, page_size=page_size,
+            on_conflict=on_conflict, template=template,
+        ))
+
+    def bulk_upsert(
+        self,
+        table: str,
+        columns: Sequence[Tuple[str, str]],
+        rows: Sequence[Sequence[Any]],
+        *,
+        conflict_columns: Sequence[str],
+        update_columns: Optional[Sequence[str]] = None,
+        returning: Optional[Sequence[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Upsert many rows with one ``unnest`` statement. See :func:`app.db_bulk.bulk_upsert`.
+
+        Returns:
+            The ``returning`` rows as dicts.
+        """
+        return self._bulk(lambda cursor: _bulk_upsert(
+            cursor, table, columns, rows, conflict_columns=conflict_columns,
+            update_columns=update_columns, returning=returning,
+        ))
+
+    def _bulk(self, work: Callable[[Any], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Run a bulk write on the thread's connection and commit it (unless a caller owns the tx)."""
         conn = self.connect()
+        info = getattr(conn, "info", None)
+        owns = info is None or info.transaction_status == psycopg2.extensions.TRANSACTION_STATUS_IDLE
         try:
             with conn.cursor() as cursor:
-                cursor.execute(query, params)
-                affected = cursor.rowcount
-            conn.commit()
-            return affected
+                result = work(cursor)
+            if owns:
+                conn.commit()
+            return result
         except Exception as e:
-            rollback_quietly(conn)
-            raise e
+            if owns:
+                rollback_quietly(conn)
+            timeout = typed_timeout(e)
+            if timeout is not e:
+                raise timeout from e
+            raise
+
+    def vector_ready(self, conn: Any) -> None:
+        """Register the pgvector adapter on ``conn``, once per connection.
+
+        ``register_vector`` looks the ``vector`` type up in the catalog. It used to run before
+        every semantic query; now it runs the first time a connection needs it and is remembered
+        for the connection's life (DBP-1.2, #7185). The lookup runs in autocommit, so it leaves
+        no transaction open. A failure is not remembered: the next call tries again, so a
+        database that gains the extension later starts working without a restart.
+
+        Args:
+            conn: The connection the vector query is about to run on.
+
+        Raises:
+            Exception: Whatever importing pgvector or ``register_vector`` raised (the caller logs
+                it and skips the semantic step).
+        """
+        try:
+            if _VECTOR_READY.get(conn):
+                return
+        except TypeError:
+            pass
+        from pgvector.psycopg2 import register_vector
+
+        flip = (
+            isinstance(conn, psycopg2.extensions.connection)
+            and not conn.autocommit
+            and conn.info.transaction_status == psycopg2.extensions.TRANSACTION_STATUS_IDLE
+        )
+        try:
+            if flip:
+                conn.autocommit = True
+            register_vector(conn)
+        finally:
+            if flip and not conn.closed:
+                conn.autocommit = False
+        try:
+            _VECTOR_READY[conn] = True
+        except TypeError:
+            pass
 
     def _begin_tx(self, conn) -> bool:
         """Flush any dangling transaction, then enter manual-commit mode.
@@ -21747,45 +22165,44 @@ class Database:
         """
         if not files:
             return 0
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.executemany(
-                    """
-                    INSERT INTO apiome.tenant_repository_files (
-                        repository_id, branch, path, name, ext, size_bytes, blob_sha,
-                        detected_kind, commit_sha, committed_at
-                    ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s::timestamptz)
-                    ON CONFLICT (repository_id, branch, path) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        ext = EXCLUDED.ext,
-                        size_bytes = EXCLUDED.size_bytes,
-                        blob_sha = EXCLUDED.blob_sha,
-                        detected_kind = EXCLUDED.detected_kind,
-                        commit_sha = EXCLUDED.commit_sha,
-                        committed_at = EXCLUDED.committed_at
-                    """,
-                    [
-                        (
-                            repository_id,
-                            branch,
-                            f["path"],
-                            f["name"],
-                            f.get("ext"),
-                            f.get("size_bytes"),
-                            f.get("blob_sha"),
-                            f.get("detected_kind"),
-                            f.get("commit_sha"),
-                            f.get("committed_at"),
-                        )
-                        for f in files
-                    ],
+        # One multi-row statement per page instead of one statement per entry (DBP-1.2, #7185).
+        # A chunk that names a path twice keeps the last entry, as one upsert per row did; a
+        # single INSERT … ON CONFLICT cannot touch the same row twice.
+        latest: Dict[str, Dict[str, Any]] = {}
+        for f in files:
+            latest[f["path"]] = f
+        self.bulk_insert(
+            "apiome.tenant_repository_files",
+            [
+                "repository_id", "branch", "path", "name", "ext", "size_bytes", "blob_sha",
+                "detected_kind", "commit_sha", "committed_at",
+            ],
+            [
+                (
+                    repository_id,
+                    branch,
+                    f["path"],
+                    f["name"],
+                    f.get("ext"),
+                    f.get("size_bytes"),
+                    f.get("blob_sha"),
+                    f.get("detected_kind"),
+                    f.get("commit_sha"),
+                    f.get("committed_at"),
                 )
-                conn.commit()
-                return len(files)
-        except Exception as e:
-            conn.rollback()
-            raise e
+                for f in latest.values()
+            ],
+            template="(%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s::timestamptz)",
+            on_conflict="""ON CONFLICT (repository_id, branch, path) DO UPDATE SET
+                name = EXCLUDED.name,
+                ext = EXCLUDED.ext,
+                size_bytes = EXCLUDED.size_bytes,
+                blob_sha = EXCLUDED.blob_sha,
+                detected_kind = EXCLUDED.detected_kind,
+                commit_sha = EXCLUDED.commit_sha,
+                committed_at = EXCLUDED.committed_at""",
+        )
+        return len(files)
 
     def replace_tenant_repository_files(
         self, repository_id: str, branch: str, files: List[Dict[str, Any]]
@@ -23121,9 +23538,7 @@ class Database:
         vector = np.array(query_embedding, dtype=np.float32)
         conn = self.connect()
         try:
-            from pgvector.psycopg2 import register_vector
-
-            register_vector(conn)
+            self.vector_ready(conn)
         except Exception as exc:
             _logger.warning(
                 "[mcp-cap-search] pgvector adapter unavailable (%s); semantic search skipped",
@@ -23190,9 +23605,7 @@ class Database:
         vector = np.array(embedding, dtype=np.float32)
         conn = self.connect()
         try:
-            from pgvector.psycopg2 import register_vector
-
-            register_vector(conn)
+            self.vector_ready(conn)
         except Exception as exc:
             _logger.warning(
                 "[mcp-cap-search] pgvector adapter unavailable (%s); item embedding not stored for "
@@ -29128,9 +29541,7 @@ class Database:
         vector = np.array(embedding, dtype=np.float32)
         conn = self.connect()
         try:
-            from pgvector.psycopg2 import register_vector
-
-            register_vector(conn)
+            self.vector_ready(conn)
         except Exception as exc:
             _logger.warning(
                 "[mcp-similar] pgvector adapter unavailable (%s); capability embedding not stored for "

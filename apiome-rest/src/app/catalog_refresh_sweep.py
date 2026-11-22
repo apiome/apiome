@@ -32,6 +32,7 @@ from typing import Any, Callable, Dict, Optional
 
 from . import catalog_refresh_store
 from .catalog_refresh import TRIGGER_SWEEP, RefreshSettingsError, endpoint_host, run_refresh_check
+from .db_advisory_lock import SessionAdvisoryLock
 
 _logger = logging.getLogger(__name__)
 
@@ -88,10 +89,6 @@ def _host_for(row: Dict[str, Any]) -> str:
         return str(row["endpoint"])
 
 
-def _try_lock(db: Any) -> bool:
-    """Take the sweep's session advisory lock; ``False`` when another tick holds it."""
-    rows = db.execute_query("SELECT pg_try_advisory_lock(hashtext(%s)) AS locked", (SWEEP_LOCK_KEY,))
-    return bool(rows and rows[0].get("locked"))
 
 
 async def _digests(db: Any, send_digests: Optional[Callable[[Any], int]]) -> None:
@@ -104,11 +101,6 @@ async def _digests(db: Any, send_digests: Optional[Callable[[Any], int]]) -> Non
             _logger.info("catalog refresh sweep sent %d drift digest(s)", sent)
     except Exception:  # noqa: BLE001 - digests never fail the tick
         _logger.warning("catalog drift digest pass failed", exc_info=True)
-
-
-def _unlock(db: Any) -> None:
-    """Release the sweep's session advisory lock."""
-    db.execute_query("SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked", (SWEEP_LOCK_KEY,))
 
 
 async def process_catalog_refresh_sweep(
@@ -139,7 +131,10 @@ async def process_catalog_refresh_sweep(
         _logger.info("catalog refresh sweep halted: APIOME_CATALOG_REFRESH_ENABLED is off")
         return 0
 
-    if not await asyncio.to_thread(_try_lock, db):
+    # The lock is taken and released on one dedicated connection: the two calls run on different
+    # worker threads, which hold different pooled connections (DBP-1.2, #7185).
+    lock = SessionAdvisoryLock(db, SWEEP_LOCK_KEY)
+    if not await asyncio.to_thread(lock.acquire):
         return None
     try:
         due = await asyncio.to_thread(store.list_due, db, limit=MAX_ITEMS_PER_TICK)
@@ -174,4 +169,4 @@ async def process_catalog_refresh_sweep(
         await _digests(db, send_digests)
         return len(due)
     finally:
-        await asyncio.to_thread(_unlock, db)
+        await asyncio.to_thread(lock.release)

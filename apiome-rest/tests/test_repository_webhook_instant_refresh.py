@@ -407,13 +407,16 @@ def test_no_paths_is_a_no_op() -> None:
     assert db.locks == [] and db.audits == []
 
 
-def test_the_background_task_uses_and_closes_its_own_connection(monkeypatch) -> None:
+def test_the_background_task_shares_one_handle_and_releases_its_connection(monkeypatch) -> None:
+    """DBP-1.2 (#7185): every push reuses one handle; the thread's connection goes back to its pool."""
     db = _RefreshDb()
-    closed: List[bool] = []
-    db.close = lambda: closed.append(True)  # type: ignore[attr-defined]
-    monkeypatch.setattr("app.database.Database", lambda: db)
+    released: List[bool] = []
+    db.release_connections = lambda this_thread_only=False: released.append(this_thread_only)  # type: ignore[attr-defined]
+    monkeypatch.setattr(instant, "_instant_db", db)
     instant.run_instant_refresh(tenant_id=_TENANT, repository_id=_REPO_ID, branch="main", paths=("api/openapi.yaml",))
-    assert [job["path"] for job in db.enqueued] == ["api/openapi.yaml"] and closed == [True]
+    instant.run_instant_refresh(tenant_id=_TENANT, repository_id=_REPO_ID, branch="main", paths=("api/openapi.yaml",))
+    assert [job["path"] for job in db.enqueued][:1] == ["api/openapi.yaml"]
+    assert released == [True, True]
 
 
 # ===========================================================================

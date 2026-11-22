@@ -83,6 +83,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
+from .db_timeouts import long_statements
 from .delivery_error_taxonomy import delivery_error_fields
 from .emitter import EmitResult
 from .export_delivery_gate import (
@@ -2229,13 +2230,16 @@ async def _drive_export_job(job_id: str) -> None:
     else:
         pipeline = _drive_export_job_inner(job_id)
     timeout = export_job_timeout_seconds()
-    try:
-        await asyncio.wait_for(pipeline, timeout=timeout)
-    except asyncio.TimeoutError:
-        await _fail_timed_out(job_id, timeout)
-    finally:
-        _record_terminal_export_metrics(job_id)
-    await _deliver_completed_job(job_id)
+    # Exports read whole versions: their statements run under the long ceiling, not the 30 s
+    # request one (DBP-1.2, #7185). The task wait_for starts inherits it, as do its to_thread calls.
+    with long_statements():
+        try:
+            await asyncio.wait_for(pipeline, timeout=timeout)
+        except asyncio.TimeoutError:
+            await _fail_timed_out(job_id, timeout)
+        finally:
+            _record_terminal_export_metrics(job_id)
+        await _deliver_completed_job(job_id)
 
 
 async def _deliver_completed_job(job_id: str) -> None:

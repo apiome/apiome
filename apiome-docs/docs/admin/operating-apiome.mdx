@@ -65,13 +65,28 @@ The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET`
 ### Database connections
 
 The REST API gives each worker thread its own database connection, so concurrent requests run
-their queries side by side. One API instance holds at most about 41 connections (40 worker threads
-plus one), and background jobs open a few more for the length of each run. Size PostgreSQL's
-`max_connections` for that, multiplied by the number of API instances you run.
+their queries side by side. When a worker thread ends, its connection goes back to a pool for the
+next thread. `DB_POOL_MAX_IDLE` (default `10`) sets how many idle connections the pool keeps; the
+rest are closed.
 
-When a worker thread ends, its connection goes back to a pool for the next thread.
-`DB_POOL_MAX_IDLE` (default `10`) sets how many idle connections the pool keeps; the rest are
-closed.
+Each background job (webhook delivery, repository refresh, usage roll-up and the others) keeps one
+handle for as long as the API runs. Its connection goes back to the pool between runs, so a job
+does not reconnect every time it runs.
+
+`DB_POOL_MAX_IN_USE` (default `80`) caps the connections one API instance can have in use at once,
+counting worker threads and background jobs together. A request that needs a connection past the
+cap fails at once with `503` and error type `database_busy`, instead of opening another connection.
+The log line names the setting.
+
+To size it, keep this sum below PostgreSQL's `max_connections`, minus what other clients and
+superuser sessions need:
+
+`DB_POOL_MAX_IN_USE` × REST API instances + `DB_POOL_MAX` × web app instances + 10 × browse
+site instances
+
+With the defaults, two API instances and one of each app need 80 × 2 + 10 + 10 = 180 connections,
+which is more than PostgreSQL's default of `100`. Raise `max_connections` or lower
+`DB_POOL_MAX_IN_USE`.
 
 The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`), and the public
 browse site keeps 10 more. Add those to the total.
@@ -88,7 +103,8 @@ limits on every connection they open, so a stuck session ends with an error inst
 | `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | REST API | `300000` | How long a connection may sit in an open transaction before PostgreSQL ends the session and releases its locks. |
 | `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | Web app | `60000` | The same, for the web app's connections. |
 | `DB_CONNECT_TIMEOUT_SECONDS` | REST API | `10` | How long to wait for a new connection to PostgreSQL. |
-| `DB_STATEMENT_TIMEOUT_MS` | REST API | `0` (off) | How long one statement may run. Off by default because imports run long statements. |
+| `DB_STATEMENT_TIMEOUT_MS` | REST API | `30000` | How long one statement may run on a request. A statement that runs longer fails, and the request answers `503` with error type `statement_timeout`. |
+| `DB_LONG_STATEMENT_TIMEOUT_MS` | REST API | `1800000` | How long one statement may run in an import, an export, a document migration or a background job. |
 | `DB_POOL_CONNECTION_TIMEOUT_MS` | Web app | `10000` | How long a request waits for a free connection when all of the pool's are in use. |
 
 `0` turns a limit off. The REST API skips its session limits when `DATABASE_URL` already carries
@@ -347,8 +363,9 @@ The REST API counts the SQL statements each request runs, and the time they take
 | `db_statements` | Statements the request sent to PostgreSQL. |
 | `db_time_ms` | Their total time, in milliseconds. |
 
-The count covers the statements the code sends. The `BEGIN` and `COMMIT` that the database driver
-adds around them are not counted.
+The count covers the statements the code sends. A single read or write is sent on its own, with no
+`BEGIN` or `COMMIT` around it. Where several statements must succeed or fail together, the
+`BEGIN` and `COMMIT` around them are not counted.
 
 | Setting | Service | Default | What it does |
 | --- | --- | --- | --- |

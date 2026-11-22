@@ -22,6 +22,7 @@ from app import url_import_refresh_sweep as sweep
 from app import url_import_store
 from app.refresh_source import RefreshSourceError
 from app.url_import_refresh import UrlImportError, checksum_bytes
+from tests.advisory_lock_fakes import LockingDbMixin
 
 _TENANT = "11111111-1111-4111-8111-111111111111"
 _PROJECT = "22222222-2222-4222-8222-222222222222"
@@ -195,7 +196,7 @@ class _Store:
         )
 
 
-class _DB:
+class _DB(LockingDbMixin):
     """Answers only the advisory lock queries."""
 
     def __init__(self, locked: bool = True) -> None:

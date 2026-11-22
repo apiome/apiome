@@ -36,6 +36,7 @@ from typing import Any, Awaitable, Callable, Dict, Mapping, Optional, Tuple
 import httpx
 
 from . import url_import_store as store
+from .db_advisory_lock import SessionAdvisoryLock
 from .refresh_source import ERROR_CLASS_UNEXPECTED, RefreshSourceError
 from .url_import_refresh import (
     REASON_BASELINE,
@@ -292,8 +293,11 @@ async def process_url_import_refresh_sweep(
 
         schedule = schedule or schedule_spec_import
         job_status = job_status or get_spec_import_status
+    # One dedicated connection holds the lock from take to release; the two calls run on
+    # different worker threads, which hold different pooled connections (DBP-1.2, #7185).
+    lock = SessionAdvisoryLock(db, SWEEP_LOCK_KEY)
     try:
-        locked = await asyncio.to_thread(_try_lock, db)
+        locked = await asyncio.to_thread(lock.acquire)
     except Exception:  # noqa: BLE001 - a tick never raises
         _logger.warning("url import refresh: could not take the sweep lock", exc_info=True)
         return {}
@@ -319,19 +323,10 @@ async def process_url_import_refresh_sweep(
         _logger.warning("url import refresh sweep failed", exc_info=True)
     finally:
         try:
-            await asyncio.to_thread(_unlock, db)
+            await asyncio.to_thread(lock.release)
         except Exception:  # noqa: BLE001
             _logger.warning("url import refresh: could not release the sweep lock", exc_info=True)
     return counts
-
-
-def _try_lock(db: Any) -> bool:
-    rows = db.execute_query("SELECT pg_try_advisory_lock(hashtext(%s)) AS locked", (SWEEP_LOCK_KEY,))
-    return bool(rows and rows[0].get("locked"))
-
-
-def _unlock(db: Any) -> None:
-    db.execute_query("SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked", (SWEEP_LOCK_KEY,))
 
 
 async def _fail(db: Any, row: Mapping[str, Any], reason: str, error: str) -> str:
