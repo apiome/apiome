@@ -1,0 +1,54 @@
+---
+title: Projects, Catalog, OpenAPI and Arazzo
+description: "The core of Apiome in RC9: where each part lives and its overview page."
+sidebar_position: 12
+tags: [projects, catalog, openapi, arazzo, overview]
+---
+
+**Projects** and the **Catalog** are the core of Apiome: you bring APIs in, edit them, version
+them, publish them and export them. The two specifications Apiome supports most deeply are
+**OpenAPI** (3.2, 3.1, 3.0 and Swagger 2.0) and **Arazzo** (1.0 and 1.1). RC9 made each of these
+work end to end. This page is the map: what each part does and the overview page that explains it.
+
+## The parts at a glance
+
+| Part | What it gives you | Overview page |
+| --- | --- | --- |
+| **Catalog and Projects** | Every import lands in one of two places: OpenAPI becomes a project you edit, every other format becomes a catalog item in its own format. Both paths read a document the same way | [Catalog and Projects](../bring-in/catalog-and-projects.mdx) |
+| **OpenAPI** | Imports keep every construct, each document is checked against the schema for its own version, versions can be upgraded and overlaid, and exports are bundled, dereferenced or split | [OpenAPI in Apiome](../build/openapi.mdx) |
+| **Arazzo** | Import a workflow with the API files it calls, read it as steps and a graph on the **Workflows** tab, validate it, compare revisions, export it back and run it against a mock or a deployment | [Arazzo in Apiome](../build/arazzo.mdx) |
+| **Arazzo and Overlay governance** | Workflows and overlays are linted, fixed, placed on the same maturity ladder and checked on export like the APIs they sit beside | [Arazzo and Overlay governance](../govern/arazzo-and-overlay-governance.mdx) |
+| **Auto-fix** | Lint findings with a deterministic fix are applied as a new revision from **Versions**, **Lint posture** or `apiome lint --fix`, and suggested in pull request comments | [Auto-fix](../build/auto-fix.md) |
+| **Import and export fidelity** | Every loss a conversion makes is reported, scalars keep their exact type, and every export reads back and is checked against its format | [Import and export fidelity](../ship/import-and-export-fidelity.mdx) |
+| **Document store** | Every import's original and every version's document are stored once and read back, so diffs and downloads do not rebuild them | [Document store](../admin/document-store.mdx) |
+
+## How the parts fit
+
+1. **Bring an API in.** An OpenAPI or Swagger file becomes a project; an Arazzo workflow comes in
+   with the OpenAPI and AsyncAPI files it calls; any other format becomes a catalog item. The file
+   you imported is kept as its **original** in the document store.
+2. **Read and check it.** Each document is checked against the schema for the version it declares.
+   An Arazzo workflow shows its steps on the **Workflows** tab, with every step resolved to the
+   operation it calls.
+3. **Improve it.** Edit the project's classes, properties and paths, upgrade it to a newer OpenAPI
+   version, change what it exports with overlays, and apply the lint fixes that are ready.
+4. **Version and compare.** Cut a version and compare it with another. Changes to OpenAPI and
+   Arazzo are graded by what their callers depend on, and both sides are read from the document
+   store instead of being rebuilt.
+5. **Publish and export.** Publish the version, then export it at any OpenAPI or Arazzo version, or
+   in another format. The fidelity report names everything the target cannot hold.
+
+## Where to start
+
+- **You edit OpenAPI.** Start with [OpenAPI in Apiome](../build/openapi.mdx), then
+  [Projects](../build/projects.mdx).
+- **You document workflows.** Start with [Arazzo in Apiome](../build/arazzo.mdx), then
+  [Arazzo workflows](../build/arazzo-workflows.mdx).
+- **You bring in other formats.** Start with [Catalog and Projects](../bring-in/catalog-and-projects.mdx),
+  then [Import and export fidelity](../ship/import-and-export-fidelity.mdx).
+- **You run the installation.** Start with [Document store](../admin/document-store.mdx).
+
+## Not yet available
+
+- **Export delivery to GitLab, Bitbucket or Azure DevOps.** Git delivery still supports GitHub
+  only ([Deliver an export to a git repository](../ship/deliver-an-export-to-git.md)).

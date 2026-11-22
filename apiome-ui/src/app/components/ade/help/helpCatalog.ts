@@ -1052,6 +1052,23 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['workflow', 'lint', 'maturity ladder', 'fix', 'export'],
   },
   {
+    id: 'projects-catalog-openapi-arazzo',
+    title: 'Projects, Catalog, OpenAPI and Arazzo',
+    summary: 'The core of Apiome in RC9: where each part lives and its overview page.',
+    page: 'apiome-docs/docs/getting-started/projects-catalog-openapi-arazzo.mdx',
+    section: 'reference',
+    keywords: [
+      'overview',
+      'rc9',
+      'map',
+      'swagger',
+      'workflows',
+      'overlays',
+      'fidelity',
+      'document store',
+    ],
+  },
+  {
     id: 'catalog-and-projects',
     title: 'Catalog and Projects',
     summary: 'Where an import lands, how the two paths agree, and the journey through both.',
