@@ -169,6 +169,9 @@ def get(url: str = SUMMARY_URL, *, domains=None, version: Optional[Dict[str, Any
         mock_db.get_version_by_id.return_value = (
             {"id": VERSION, "version_id": "2.1"} if version is None else version
         )
+        mock_db.get_version_core.return_value = (
+            {"id": VERSION, "version_id": "2.1"} if version is None else version
+        )
         load.return_value = MOCKUP_TREE if domains is None else domains
         return client.get(url), load
 
@@ -234,6 +237,7 @@ class TestTenancy:
             "app.workspace_summary_routes.store.load_version_summary"
         ) as load:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             response = client.get(f"/v1/workspace/acme/version/{OTHER_VERSION}/summary")
 
         assert response.status_code == 404
@@ -244,10 +248,11 @@ class TestTenancy:
             "app.workspace_summary_routes.store.load_version_summary"
         ) as load:
             mock_db.get_version_by_id.return_value = {"id": VERSION, "version_id": "2.1"}
+            mock_db.get_version_core.return_value = {"id": VERSION, "version_id": "2.1"}
             load.return_value = []
             client.get(SUMMARY_URL)
 
-        mock_db.get_version_by_id.assert_called_once_with(VERSION, TENANT)
+        mock_db.get_version_core.assert_called_once_with(VERSION, TENANT)
 
     def test_a_token_without_a_tenant_is_a_500_not_a_cross_tenant_read(self):
         app.dependency_overrides[validate_authentication] = lambda: {"auth_method": "jwt"}

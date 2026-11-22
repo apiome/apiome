@@ -43,7 +43,7 @@ def list_properties(
         List of properties for the project
     """
     # Validate project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,
@@ -87,7 +87,7 @@ def get_property(
         The property details
     """
     # Validate project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,
@@ -150,7 +150,7 @@ def create_property(
         )
 
     # Validate project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,
@@ -204,7 +204,7 @@ def update_property(
     """
     enforce_permission(db, auth_data, Resource.PROPERTIES, Action.EDIT)
     # Validate project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,
@@ -308,7 +308,7 @@ def delete_property(
     """
     enforce_permission(db, auth_data, Resource.PROPERTIES, Action.DELETE)
     # Validate project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,

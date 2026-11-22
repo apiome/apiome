@@ -48,7 +48,7 @@ def _items_request(*items, targets=("openapi",), **kwargs) -> ExportJobStartRequ
 
 
 async def _run_items(request):
-    with patch("app.database.db.get_project_by_id", side_effect=lambda pid, _t: _NAMES.get(pid)):
+    with patch("app.database.db.get_project_core", side_effect=lambda pid, _t: _NAMES.get(pid)):
         return await _run(request, load=_load)
 
 
@@ -142,7 +142,7 @@ async def test_an_unknown_item_fails_only_its_items():
 
 
 async def test_a_name_lookup_failure_falls_back_to_the_artifact_id():
-    with patch("app.database.db.get_project_by_id", side_effect=RuntimeError("db down")):
+    with patch("app.database.db.get_project_core", side_effect=RuntimeError("db down")):
         _job_id, status = await _run(_items_request({"artifact": "art-pets"}), load=_load)
     assert status["state"] == "completed", status["error"]
     assert status["result"]["batch"]["items"][0]["directory"].startswith("art-pets/")

@@ -46,10 +46,12 @@ def test_push_blocks_immutable_published_base(auth_client):
     }
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "p1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "p1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = "1.0.0"
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = tip
         mdb.get_version_by_id.return_value = head_ver
+        mdb.get_version_core.return_value = head_ver
         mdb.is_user_tenant_admin.return_value = False
         mdb.insert_workflow_audit.side_effect = lambda *a, **k: None
         r = auth_client.post(
@@ -102,10 +104,12 @@ def test_push_allows_immutable_override_tenant_admin(auth_client):
 
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "p1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "p1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = "1.0.0"
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = tip
         mdb.get_version_by_id.return_value = head_ver
+        mdb.get_version_core.return_value = head_ver
         mdb.is_user_tenant_admin.return_value = True
         mdb.create_version_push_transaction.return_value = (new_row, 0)
         mdb.insert_workflow_audit.side_effect = _audit
@@ -157,8 +161,10 @@ def test_merge_blocks_immutable_tips(auth_client):
 
     with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = proj
+        mdb.get_project_core.return_value = proj
         mdb.get_version_branch_by_name.side_effect = branch_by_name
         mdb.get_version_by_id.side_effect = gv
+        mdb.get_version_core.side_effect = gv
         mdb.is_user_tenant_admin.return_value = False
         mdb.insert_workflow_audit.side_effect = lambda *a, **k: None
         r = auth_client.post(
@@ -204,8 +210,10 @@ def test_merge_preview_blocks_immutable_tips(auth_client):
 
     with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = proj
+        mdb.get_project_core.return_value = proj
         mdb.get_version_branch_by_name.side_effect = branch_by_name
         mdb.get_version_by_id.side_effect = gv
+        mdb.get_version_core.side_effect = gv
         mdb.compute_merge_base_revision_id.return_value = "b0"
         mdb.is_user_tenant_admin.return_value = False
         mdb.insert_workflow_audit.side_effect = lambda *a, **k: None
@@ -264,8 +272,10 @@ def test_merge_preview_override_does_not_write_audit(auth_client):
         "app.version_merge_routes.openapi_for_revision", return_value=SPEC
     ):
         mdb.get_project_by_id.return_value = proj
+        mdb.get_project_core.return_value = proj
         mdb.get_version_branch_by_name.side_effect = branch_by_name
         mdb.get_version_by_id.side_effect = gv
+        mdb.get_version_core.side_effect = gv
         mdb.compute_merge_base_revision_id.return_value = "vb"
         mdb.is_user_tenant_admin.return_value = True
         mdb.insert_workflow_audit.side_effect = lambda *a, **k: audit_calls.append((a, k))

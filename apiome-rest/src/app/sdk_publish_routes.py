@@ -341,7 +341,7 @@ def resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     ref = (project_ref or "").strip()
     row: Optional[Dict[str, Any]] = None
     if is_uuid_string(ref):
-        row = db.get_project_by_id(ref, tenant_id)
+        row = db.get_project_core(ref, tenant_id)
     if row is None and ref:
         row = db.get_project_by_slug(ref, tenant_id)
     if row is None:
@@ -395,7 +395,7 @@ def load_published_source(
             detail={"code": f"{code_prefix}-source-unavailable", "message": str(exc)},
         ) from exc
 
-    revision = db.get_version_by_id(source.version_record_id, tenant_id)
+    revision = db.get_version_core(source.version_record_id, tenant_id)
     if not revision or not revision.get("published"):
         raise HTTPException(
             status_code=400,

@@ -192,6 +192,7 @@ class _FakeDb:
 
     def get_project_by_id(self, project_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         return {"id": _PROJECT, "slug": "petstore"} if project_id == _PROJECT else None
+    get_project_core = get_project_by_id
 
     def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         return {
@@ -200,6 +201,7 @@ class _FakeDb:
             "published": True,
             "version_id": "1.0.0",
         }
+    get_version_core = get_version_by_id
 
 
 @pytest.fixture(autouse=True)

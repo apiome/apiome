@@ -212,11 +212,11 @@ async def record_url_import_route(
         enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target="url-imports"
     )
     if not is_uuid_string(body.project_id) or not await run_in_threadpool(
-        db.get_project_by_id, body.project_id, tenant_id
+        db.get_project_core, body.project_id, tenant_id
     ):
         raise HTTPException(status_code=404, detail=f"Project not found: {body.project_id}")
     if body.version_id:
-        version = await run_in_threadpool(db.get_version_by_id, body.version_id, tenant_id)
+        version = await run_in_threadpool(db.get_version_core, body.version_id, tenant_id)
         if not version or str(version.get("project_id")) != body.project_id:
             raise HTTPException(status_code=422, detail="versionId is not a version of this project.")
     try:

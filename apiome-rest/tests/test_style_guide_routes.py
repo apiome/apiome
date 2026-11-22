@@ -651,7 +651,7 @@ def test_preview_custom_rules_returns_violations():
     with patch(
         "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
     ), patch(
-        "app.style_guide_routes.db.get_project_by_id",
+        "app.style_guide_routes.db.get_project_core",
         return_value={"id": PROJECT_ID, "name": "Payments"},
     ), patch(
         "app.style_guide_routes.db.get_version_by_id", return_value=version

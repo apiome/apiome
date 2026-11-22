@@ -42,7 +42,7 @@ def _project(tenant_id: str, ref: str) -> Dict[str, Any]:
     value = (ref or "").strip()
     row = None
     if value:
-        row = db.get_project_by_id(value, tenant_id) if is_uuid_string(value) else db.get_project_by_slug(value, tenant_id)
+        row = db.get_project_core(value, tenant_id) if is_uuid_string(value) else db.get_project_by_slug(value, tenant_id)
     if not row:
         raise HTTPException(status_code=404, detail={"code": "sdk-compat-project-not-found", "message": "No such project."})
     return row
@@ -63,7 +63,7 @@ def _changelog(tenant_id: str, project_id: str, revision_id: str) -> Optional[Ch
     baseline_id = row.get("baseline_revision_id")
     if baseline_id:
         try:
-            baseline = db.get_version_by_id(str(baseline_id), tenant_id)
+            baseline = db.get_version_core(str(baseline_id), tenant_id)
         except Exception:  # noqa: BLE001
             baseline = None
         baseline_label = (baseline or {}).get("version_id")

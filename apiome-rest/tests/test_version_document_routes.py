@@ -40,6 +40,7 @@ class _Db(FakeDatabase):
         if version_id != VERSION or tenant_id != TENANT:
             return None
         return {"id": version_id, "project_id": PROJECT, "published": False}
+    get_version_core = get_version_by_id
 
 
 @pytest.fixture

@@ -62,6 +62,9 @@ def test_get_version_resolve_returns_final_revision_and_headers():
         mdb.get_version_by_id.side_effect = lambda vid, tid: (
             va if vid == "rev-a" else vb if vid == "rev-b" else None
         )
+        mdb.get_version_core.side_effect = lambda vid, tid: (
+            va if vid == "rev-a" else vb if vid == "rev-b" else None
+        )
         mdb.resolve_successor_revision_chain.return_value = ("rev-b", ["rev-b"], "resolved", None)
         mdb.insert_version_protection_audit = MagicMock()
         r = client.get(
@@ -80,6 +83,7 @@ def test_get_version_successor_cycle_409():
     va = _min_version("rev-a", "1.0.0", {"successorRevisionId": "rev-b"})
     with patch("app.versions_routes.db") as mdb:
         mdb.get_version_by_id.return_value = va
+        mdb.get_version_core.return_value = va
         mdb.resolve_successor_revision_chain.return_value = ("rev-a", ["rev-b"], "cycle", None)
         r = client.get(
             "/v1/versions/tn/proj-1/rev-a?successorResolution=resolve",
@@ -93,6 +97,9 @@ def test_get_version_redirect_307():
     vb = _min_version("rev-b", "1.0.1", {})
     with patch("app.versions_routes.db") as mdb:
         mdb.get_version_by_id.side_effect = lambda vid, tid: (
+            va if vid == "rev-a" else vb if vid == "rev-b" else None
+        )
+        mdb.get_version_core.side_effect = lambda vid, tid: (
             va if vid == "rev-a" else vb if vid == "rev-b" else None
         )
         mdb.resolve_successor_revision_chain.return_value = ("rev-b", ["rev-b"], "resolved", None)
@@ -110,12 +117,13 @@ def test_resolve_successor_chain_unit():
     from app.database import Database
 
     db = Database()
-    with patch.object(db, "get_version_by_id") as gv, patch.object(
+    with patch.object(db, "get_version_by_id") as gv, patch.object(db, "get_version_core") as gc, patch.object(
         db, "revision_has_protected_named_ref", return_value=False
     ):
         a = _min_version("a", "1.0.0", {"successorRevisionId": "b"})
         b = _min_version("b", "1.0.1", {})
         gv.side_effect = lambda vid, tid: a if vid == "a" else b if vid == "b" else None
+        gc.side_effect = gv.side_effect  # successors are guarded through the core lookup (#7188)
         final, hops, status, miss = db.resolve_successor_revision_chain("a", "test-tenant-id", "proj-1")
     assert final == "b"
     assert hops == ["b"]
@@ -127,12 +135,13 @@ def test_resolve_successor_chain_cycle():
     from app.database import Database
 
     db = Database()
-    with patch.object(db, "get_version_by_id") as gv, patch.object(
+    with patch.object(db, "get_version_by_id") as gv, patch.object(db, "get_version_core") as gc, patch.object(
         db, "revision_has_protected_named_ref", return_value=False
     ):
         a = _min_version("a", "1.0.0", {"successorRevisionId": "b"})
         b = _min_version("b", "1.0.1", {"successorRevisionId": "a"})
         gv.side_effect = lambda vid, tid: a if vid == "a" else b if vid == "b" else None
+        gc.side_effect = gv.side_effect  # successors are guarded through the core lookup (#7188)
         final, hops, status, miss = db.resolve_successor_revision_chain("a", "test-tenant-id", "proj-1")
     assert status == "cycle"
     assert miss is None

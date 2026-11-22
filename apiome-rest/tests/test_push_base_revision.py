@@ -61,6 +61,7 @@ def _version_row(rid: str = "rev-new"):
 def test_post_create_missing_base_revision_id_validation_error():
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={"version_id": "1.0.0", "shortMessage": "ok"},
@@ -71,6 +72,7 @@ def test_post_create_missing_base_revision_id_validation_error():
 def test_post_create_invalid_base_when_empty_project():
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = None
@@ -90,10 +92,12 @@ def test_post_create_stale_base_409():
     head = "00000000-0000-0000-0000-000000000099"
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = head
         mdb.get_version_by_id.return_value = _version_row(head)
+        mdb.get_version_core.return_value = _version_row(head)
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={
@@ -111,6 +115,7 @@ def test_post_create_stale_base_409():
 def test_post_create_branch_name_required_multi_branch():
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = [
             {"id": "b1", "tip_version_id": "t1", "name": "main"},
@@ -132,6 +137,7 @@ def test_post_create_success_first_revision_bootstrap():
     row = _version_row()
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
+        mdb.get_project_core.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
         mdb.list_version_branches_for_project.return_value = []
         mdb.get_latest_revision_id_for_project.return_value = None

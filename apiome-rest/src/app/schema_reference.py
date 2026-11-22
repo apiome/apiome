@@ -476,7 +476,7 @@ def _load_artifact(
     # slug would raise a database error rather than simply missing.
     if is_uuid_string(identifier):
         row = (
-            db.get_project_by_id(identifier, tenant_id)
+            db.get_project_core(identifier, tenant_id)
             if publishable
             else db.get_catalog_item_by_id(identifier, tenant_id)
         )

@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import re
 import secrets
 import threading
 import time
@@ -416,6 +417,12 @@ class PropertyUpdateConflict(Exception):
     def __init__(self, current_updated_at: Any) -> None:
         super().__init__("The property changed since it was read")
         self.current_updated_at = current_updated_at
+
+
+#: Any well-formed UUID, whatever its version or variant bits. ``get_project_core`` uses it to
+#: answer "not found" for a slug or other non-UUID id (which would otherwise make PostgreSQL raise)
+#: while still looking up every id ``get_project_by_id`` would find (DBP-1.5, #7188).
+_UUID_SHAPE_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 
 
 def _same_instant(stored: Any, expected: datetime) -> bool:
@@ -1579,13 +1586,22 @@ class Database:
         tenant_id: str,
         updates: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """Update an existing class, ensuring it belongs to the tenant."""
-        import json
+        """Update an existing class, ensuring it belongs to the tenant.
 
-        # First verify the class belongs to the tenant
-        existing = self.get_class_by_id(class_id, tenant_id)
-        if not existing:
-            return None
+        The tenant guard is part of the ``UPDATE`` (``FROM versions JOIN projects``), so a class
+        in another tenant, or a missing one, matches no row: one statement, no separate guard
+        read (DBP-1.5, #7188).
+
+        Args:
+            class_id: The class to update.
+            tenant_id: The tenant that must own the class's project.
+            updates: Fields to set; a key set to ``None`` is left unchanged.
+
+        Returns:
+            The updated class, the current class when ``updates`` sets nothing, or ``None`` when
+            the class is not in the tenant.
+        """
+        import json
 
         # Build dynamic update query
         update_fields = []
@@ -1609,51 +1625,41 @@ class Database:
 
         if not update_fields:
             # Nothing to update, return current class
-            return existing
+            return self.get_class_by_id(class_id, tenant_id)
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(class_id)
+        params.extend([class_id, tenant_id])
 
         query = f"""
-            UPDATE apiome.classes
+            UPDATE apiome.classes c
             SET {', '.join(update_fields)}
-            WHERE id = %s AND deleted_at IS NULL
-            RETURNING id, version_id, name, description, schema, enabled, canvas_metadata,
-                      created_at, updated_at
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE c.id = %s AND c.version_id = v.id AND p.tenant_id = %s
+              AND c.deleted_at IS NULL
+            RETURNING c.id, c.version_id, c.name, c.description, c.schema, c.enabled,
+                      c.canvas_metadata, c.created_at, c.updated_at
         """
-
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, tuple(params))
-                result = cursor.fetchone()
-                conn.commit()
-                return result
-        except Exception as e:
-            conn.rollback()
-            raise e
+        results = self.execute_query(query, tuple(params))
+        return results[0] if results else None
 
     def delete_class(self, class_id: str, tenant_id: str) -> bool:
-        """Delete a class (soft delete), ensuring it belongs to the tenant."""
-        # First verify the class belongs to the tenant
-        existing = self.get_class_by_id(class_id, tenant_id)
-        if not existing:
-            return False
+        """Delete a class (soft delete), ensuring it belongs to the tenant.
 
-        query = """
-            UPDATE apiome.classes
-            SET deleted_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND deleted_at IS NULL
+        One statement: the tenant guard is part of the ``UPDATE`` (DBP-1.5, #7188).
+
+        Returns:
+            ``True`` when a live class in the tenant was deleted, ``False`` otherwise.
         """
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (class_id,))
-                conn.commit()
-                return cursor.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            raise e
+        query = """
+            UPDATE apiome.classes c
+            SET deleted_at = CURRENT_TIMESTAMP
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE c.id = %s AND c.version_id = v.id AND p.tenant_id = %s
+              AND c.deleted_at IS NULL
+        """
+        return self._execute_write(query, (class_id, tenant_id)) > 0
 
     def add_property_to_class(
         self,
@@ -1820,36 +1826,25 @@ class Database:
         class_id: str,
         tenant_id: str
     ) -> bool:
-        """Delete a class property, ensuring it belongs to the class and tenant."""
-        # First verify the class property belongs to a class that belongs to the tenant
-        verify_query = """
-            SELECT cp.id
-            FROM apiome.class_properties cp
-            JOIN apiome.classes c ON cp.class_id = c.id
+        """Delete a class property, ensuring it belongs to the class and tenant.
+
+        One statement: the class / tenant guard is part of the ``DELETE`` (DBP-1.5, #7188).
+
+        Returns:
+            ``True`` when the property was deleted, ``False`` when it is not on that class in the
+            tenant.
+        """
+        query = """
+            DELETE FROM apiome.class_properties cp
+            USING apiome.classes c
             JOIN apiome.versions v ON c.version_id = v.id
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE cp.id = %s
+              AND cp.class_id = c.id
               AND c.id = %s
               AND p.tenant_id = %s
         """
-        verify_result = self.execute_query(verify_query, (class_property_id, class_id, tenant_id))
-        if not verify_result:
-            return False
-
-        query = """
-            DELETE FROM apiome.class_properties
-            WHERE id = %s
-        """
-
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (class_property_id,))
-                conn.commit()
-                return cursor.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            raise e
+        return self._execute_write(query, (class_property_id, class_id, tenant_id)) > 0
 
     def validate_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:
         """
@@ -8638,6 +8633,45 @@ class Database:
         results = self.execute_query(query, (project_id, tenant_id))
         return results[0] if results else None
 
+    #: Columns :meth:`get_project_core` returns: every scalar ``projects`` column, without the
+    #: ``metadata`` JSONB, the creator join or the per-project versions rollup (DBP-1.5, #7188).
+    _PROJECT_CORE_COLUMNS = """
+            p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
+            p.enabled, p.change_report_template_version_id, p.publishable,
+            p.created_at, p.updated_at, p.deleted_at
+    """
+
+    def get_project_core(
+        self, project_id: str, tenant_id: str, *, include_deleted: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Primary-key lookup of a project in a tenant, for existence and tenancy guards (#7188).
+
+        One index probe on ``projects``: no creator join and no aggregate over the project's
+        versions. Use it wherever a caller only needs to know the project exists in the tenant
+        (or reads one of :attr:`_PROJECT_CORE_COLUMNS`); keep :meth:`get_project_by_id` for
+        responses that show ``metadata``, ``creator_name``/``creator_email``, ``versions_count``
+        or the mean quality score/grade.
+
+        Args:
+            project_id: The project's UUID. A value that is not UUID-shaped is "not found", never
+                an error.
+            tenant_id: The tenant that must own the project.
+            include_deleted: Also match a soft-deleted project (``deleted_at`` set).
+
+        Returns:
+            The project's core columns, or ``None`` when no such project is in the tenant.
+        """
+        if not project_id or not _UUID_SHAPE_RE.match(str(project_id).strip()):
+            return None
+        deleted_clause = "" if include_deleted else "AND p.deleted_at IS NULL"
+        query = f"""
+            SELECT {self._PROJECT_CORE_COLUMNS}
+            FROM apiome.projects p
+            WHERE p.id = %s AND p.tenant_id = %s {deleted_clause}
+        """
+        results = self.execute_query(query, (project_id, tenant_id))
+        return results[0] if results else None
+
     def get_project_by_slug(self, slug: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific project by slug, ensuring it belongs to the tenant."""
         query = """
@@ -9128,20 +9162,17 @@ class Database:
 
         Raises:
             ProjectUpdateConflict: When ``expected_updated_at`` no longer matches.
+
+        The tenant guard and the ``expected_updated_at`` precondition are both part of the
+        ``UPDATE``, so a write that changes something is one statement; only a write that matches
+        no row reads the project again, to tell "not found" from a conflict (DBP-1.5, #7188).
         """
         import json
 
-        # First verify the project belongs to the tenant
-        existing = self.get_project_by_id(project_id, tenant_id)
-        if not existing:
-            return None
-        if expected_updated_at is not None:
-            if expected_updated_at.tzinfo is None:
-                # The API serializes timestamps in UTC; a naive value means UTC, never the
-                # database session's zone.
-                expected_updated_at = expected_updated_at.replace(tzinfo=timezone.utc)
-            if not _same_instant(existing.get("updated_at"), expected_updated_at):
-                raise ProjectUpdateConflict(existing.get("updated_at"))
+        if expected_updated_at is not None and expected_updated_at.tzinfo is None:
+            # The API serializes timestamps in UTC; a naive value means UTC, never the
+            # database session's zone.
+            expected_updated_at = expected_updated_at.replace(tzinfo=timezone.utc)
 
         # Build dynamic update query
         update_fields = []
@@ -9167,7 +9198,12 @@ class Database:
             params.append(updates['change_report_template_version_id'])
 
         if not update_fields:
-            # Nothing to update, return current project
+            # Nothing to update: return the current project (after the precondition check).
+            existing = self.get_project_by_id(project_id, tenant_id)
+            if existing and expected_updated_at is not None and not _same_instant(
+                existing.get("updated_at"), expected_updated_at
+            ):
+                raise ProjectUpdateConflict(existing.get("updated_at"))
             return existing
 
         # Always update updated_at
@@ -9176,8 +9212,8 @@ class Database:
         params.extend([project_id, tenant_id])
         precondition = ""
         if expected_updated_at is not None:
-            # Re-checked inside the write: a change between the read above and this statement
-            # matches no row instead of being overwritten.
+            # Checked inside the write: a project changed since the caller read it matches no
+            # row instead of being overwritten.
             precondition = "AND updated_at = %s"
             params.append(expected_updated_at)
         query = f"""
@@ -9199,7 +9235,7 @@ class Database:
             conn.rollback()
             raise e
         if result is None and expected_updated_at is not None:
-            current = self.get_project_by_id(project_id, tenant_id)
+            current = self.get_project_core(project_id, tenant_id)
             if current:
                 raise ProjectUpdateConflict(current.get("updated_at"))
         return result
@@ -9567,6 +9603,54 @@ class Database:
         results = self.execute_query(query, (version_id, tenant_id))
         return results[0] if results else None
 
+    #: Columns :meth:`get_version_core` returns: every scalar ``versions`` column except the
+    #: ``metadata`` / ``mock_settings`` JSONB and ``change_log`` text, plus the owning project's
+    #: tenant, name and slug (DBP-1.5, #7188).
+    _VERSION_CORE_COLUMNS = """
+            v.id, v.project_id, v.creator_id, v.version_id, v.description,
+            v.visibility, v.published, v.published_at, v.published_immutable,
+            v.mock_enabled, v.enabled, v.parent_version_id, v.merge_parent_version_id,
+            v.forked_from_revision_id, v.upstream_project_id, v.revision_locked,
+            v.commit_author, v.commit_message, v.external_ref,
+            v.source_commit_sha, v.source_committed_at,
+            v.quality_score, v.quality_grade,
+            v.unpublish_reason, v.unpublished_at, v.unpublished_by,
+            v.created_at, v.updated_at,
+            p.tenant_id, p.name AS project_name, p.slug AS project_slug
+    """
+
+    def get_version_core(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Primary-key lookup of a live version in a tenant, for existence and tenancy guards (#7188).
+
+        Joins the version to its project for the tenant check and nothing else: no fork-source,
+        upstream or creator joins and no security-axis LATERAL. Use it wherever a caller only
+        needs to know the version exists in the tenant (or reads one of
+        :attr:`_VERSION_CORE_COLUMNS`); keep :meth:`get_version_by_id` for responses that show
+        ``metadata``, ``mock_settings``, ``change_log``, the security headline, the fork source,
+        the upstream project name or the creator.
+
+        Args:
+            version_id: The version record's UUID. A non-UUID value is "not found", never an error.
+            tenant_id: The tenant that must own the version's project.
+
+        Returns:
+            The version's core columns, or ``None`` when the version (or its project) is missing,
+            soft-deleted or in another tenant.
+        """
+        if not version_id or not is_uuid_string(str(version_id)):
+            return None
+        query = f"""
+            SELECT {self._VERSION_CORE_COLUMNS}
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+        """
+        results = self.execute_query(query, (version_id, tenant_id))
+        return results[0] if results else None
+
     def get_version_by_version_id(self, project_id: str, version_id_str: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific version by version_id string (e.g., '1.0.0'), ensuring it belongs to tenant."""
         query = """
@@ -9758,7 +9842,7 @@ class Database:
             if succ in visited:
                 return current, hops, "cycle", None
 
-            nxt = self.get_version_by_id(succ, tenant_id)
+            nxt = self.get_version_core(succ, tenant_id)
             if not nxt:
                 return current, hops, "missing_target", succ
             if str(nxt.get("project_id")) != project_id:
@@ -9937,7 +10021,7 @@ class Database:
         Create a new version in target_project_id as a fork of source_revision_id (cross-project).
         Copies classes from the source revision. Sets fork lineage columns; parent_version_id stays NULL (new root in target project).
         """
-        source = self.get_version_by_id(source_revision_id, tenant_id)
+        source = self.get_version_core(source_revision_id, tenant_id)
         if not source:
             return {"success": False, "error": "Source revision not found or not accessible"}
 
@@ -9948,12 +10032,12 @@ class Database:
                 "error": "Fork requires a different target project than the source. Use “Branch from here” for named branches within the same project.",
             }
 
-        target = self.get_project_by_id(target_project_id, tenant_id)
+        target = self.get_project_core(target_project_id, tenant_id)
         if not target:
             return {"success": False, "error": "Target project not found"}
 
         upstream = upstream_project_id if upstream_project_id else src_project_id
-        up_proj = self.get_project_by_id(upstream, tenant_id)
+        up_proj = self.get_project_core(upstream, tenant_id)
         if not up_proj:
             return {"success": False, "error": "Upstream project not found or not accessible"}
 
@@ -10052,7 +10136,7 @@ class Database:
         succ_id = succ.strip()
         if succ_id == version_record_id:
             raise ValueError("successorRevisionId cannot reference the same revision")
-        other = self.get_version_by_id(succ_id, tenant_id)
+        other = self.get_version_core(succ_id, tenant_id)
         if not other or str(other.get("project_id")) != project_id:
             raise ValueError("successorRevisionId must reference another revision in the same project")
 
@@ -13235,7 +13319,7 @@ class Database:
         Soft delete a version. Returns (True, None) on success, or (False, error_code).
         error_code: not_found | forbidden | revision_locked
         """
-        existing = self.get_version_by_id(version_record_id, tenant_id)
+        existing = self.get_version_core(version_record_id, tenant_id)
         if not existing:
             return False, "not_found"
 
@@ -13740,12 +13824,20 @@ class Database:
         tenant_id: str,
         updates: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """Update a path, ensuring it belongs to the tenant."""
-        # Verify path belongs to tenant
-        existing = self.get_path_by_id(path_id, tenant_id)
-        if not existing:
-            return None
+        """Update a path, ensuring it belongs to the tenant.
 
+        The tenant guard is part of the ``UPDATE`` (``FROM versions JOIN projects``): one
+        statement, no separate guard read (DBP-1.5, #7188).
+
+        Args:
+            path_id: The ``version_path`` row to update.
+            tenant_id: The tenant that must own the path's project.
+            updates: ``pathname`` (ignored when ``None``) and/or ``metadata`` (``None`` → ``{}``).
+
+        Returns:
+            The updated path, the current path when ``updates`` sets nothing, or ``None`` when
+            the path is not in the tenant.
+        """
         update_fields = []
         params = []
 
@@ -13757,46 +13849,38 @@ class Database:
             params.append(json.dumps(updates['metadata']) if updates['metadata'] else '{}')
 
         if not update_fields:
-            return existing
+            return self.get_path_by_id(path_id, tenant_id)
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(path_id)
+        params.extend([path_id, tenant_id])
 
         query = f"""
-            UPDATE apiome.version_path
+            UPDATE apiome.version_path vp
             SET {', '.join(update_fields)}
-            WHERE id = %s
-            RETURNING id, version_id, pathname, metadata, created_at, updated_at
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE vp.id = %s AND vp.version_id = v.id AND p.tenant_id = %s
+            RETURNING vp.id, vp.version_id, vp.pathname, vp.metadata,
+                      vp.created_at, vp.updated_at
         """
-
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, tuple(params))
-                result = cursor.fetchone()
-                conn.commit()
-                return result
-        except Exception as e:
-            conn.rollback()
-            raise e
+        results = self.execute_query(query, tuple(params))
+        return results[0] if results else None
 
     def delete_path(self, path_id: str, tenant_id: str) -> bool:
-        """Delete a path, ensuring it belongs to the tenant."""
-        # Verify path belongs to tenant
-        existing = self.get_path_by_id(path_id, tenant_id)
-        if not existing:
-            return False
+        """Delete a path, ensuring it belongs to the tenant.
 
-        query = "DELETE FROM apiome.version_path WHERE id = %s"
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (path_id,))
-                conn.commit()
-                return cursor.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            raise e
+        One statement: the tenant guard is part of the ``DELETE`` (DBP-1.5, #7188).
+
+        Returns:
+            ``True`` when a path in the tenant was deleted, ``False`` otherwise.
+        """
+        query = """
+            DELETE FROM apiome.version_path vp
+            USING apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE vp.id = %s AND vp.version_id = v.id AND p.tenant_id = %s
+        """
+        return self._execute_write(query, (path_id, tenant_id)) > 0
 
     def get_path_canvas(self, version_id: str, path_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -13958,11 +14042,21 @@ class Database:
         tenant_id: str,
         updates: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """Update an operation, ensuring it belongs to the tenant."""
-        existing = self.get_operation_by_id(operation_id, tenant_id)
-        if not existing:
-            return None
+        """Update an operation, ensuring it belongs to the tenant.
 
+        The tenant guard is part of the ``UPDATE`` (``FROM version_path JOIN versions JOIN
+        projects``): one statement, no separate guard read (DBP-1.5, #7188).
+
+        Args:
+            operation_id: The ``path_operation`` row to update.
+            tenant_id: The tenant that must own the operation's project.
+            updates: ``operation`` (upper-cased; ignored when ``None``) and/or ``metadata``
+                (``None`` → ``{}``).
+
+        Returns:
+            The updated operation, the current operation when ``updates`` sets nothing, or
+            ``None`` when the operation is not in the tenant.
+        """
         update_fields = []
         params = []
 
@@ -13974,45 +14068,40 @@ class Database:
             params.append(json.dumps(updates['metadata']) if updates['metadata'] else '{}')
 
         if not update_fields:
-            return existing
+            return self.get_operation_by_id(operation_id, tenant_id)
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(operation_id)
+        params.extend([operation_id, tenant_id])
 
         query = f"""
-            UPDATE apiome.path_operation
+            UPDATE apiome.path_operation po
             SET {', '.join(update_fields)}
-            WHERE id = %s
-            RETURNING id, version_path_id, operation, metadata, created_at, updated_at
+            FROM apiome.version_path vp
+            JOIN apiome.versions v ON vp.version_id = v.id
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE po.id = %s AND po.version_path_id = vp.id AND p.tenant_id = %s
+            RETURNING po.id, po.version_path_id, po.operation, po.metadata,
+                      po.created_at, po.updated_at
         """
-
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, tuple(params))
-                result = cursor.fetchone()
-                conn.commit()
-                return result
-        except Exception as e:
-            conn.rollback()
-            raise e
+        results = self.execute_query(query, tuple(params))
+        return results[0] if results else None
 
     def delete_operation(self, operation_id: str, tenant_id: str) -> bool:
-        """Delete an operation, ensuring it belongs to the tenant."""
-        existing = self.get_operation_by_id(operation_id, tenant_id)
-        if not existing:
-            return False
+        """Delete an operation, ensuring it belongs to the tenant.
 
-        query = "DELETE FROM apiome.path_operation WHERE id = %s"
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (operation_id,))
-                conn.commit()
-                return cursor.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            raise e
+        One statement: the tenant guard is part of the ``DELETE`` (DBP-1.5, #7188).
+
+        Returns:
+            ``True`` when an operation in the tenant was deleted, ``False`` otherwise.
+        """
+        query = """
+            DELETE FROM apiome.path_operation po
+            USING apiome.version_path vp
+            JOIN apiome.versions v ON vp.version_id = v.id
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE po.id = %s AND po.version_path_id = vp.id AND p.tenant_id = %s
+        """
+        return self._execute_write(query, (operation_id, tenant_id)) > 0
 
     # ==================== Operation Description CRUD ====================
 
@@ -15193,7 +15282,7 @@ class Database:
         if not src:
             return {"success": False, "error": "sourceRevisionId is required", "code": "INVALID_INPUT"}
 
-        ver = self.get_version_by_id(src, tenant_id)
+        ver = self.get_version_core(src, tenant_id)
         if not ver or str(ver["project_id"]) != str(project_id):
             return {
                 "success": False,
@@ -16227,7 +16316,7 @@ class Database:
             raise ValueError("Cannot link a project to itself")
 
         for pid in (project_id_a, project_id_b):
-            if not self.get_project_by_id(pid, tenant_id):
+            if not self.get_project_core(pid, tenant_id):
                 raise ValueError(f"Project not found: {pid}")
 
         group_a = self.get_identity_group_id_for_project(tenant_id, project_id_a)
@@ -17163,7 +17252,7 @@ class Database:
         """
         Insert merge session in ``preview``, conflict rows, and initial status event (#2573).
         """
-        proj = self.get_project_by_id(project_id, tenant_id)
+        proj = self.get_project_core(project_id, tenant_id)
         if not proj:
             return None
 
@@ -24083,12 +24172,14 @@ class Database:
     #: Columns of a category row as the API projects it: ``builtin`` marks the shared vocabulary
     #: (``tenant_id IS NULL``) and ``endpoint_count`` tallies the tenant's live endpoints filed
     #: under the slug (``mcp_endpoints.category`` matched case-insensitively).
-    _MCP_CATEGORY_SELECT = """
+    _MCP_CATEGORY_COLUMNS = """
         SELECT c.id, c.tenant_id, c.slug, c.label, c.description, c.sort_order,
                (c.tenant_id IS NULL) AS builtin, c.created_at, c.updated_at,
                (SELECT COUNT(*)::int FROM apiome.mcp_endpoints ce
                  WHERE ce.tenant_id = %s::uuid AND ce.deleted_at IS NULL
                    AND lower(ce.category) = c.slug) AS endpoint_count
+    """
+    _MCP_CATEGORY_SELECT = _MCP_CATEGORY_COLUMNS + """
         FROM apiome.mcp_categories c
     """
 
@@ -24155,13 +24246,21 @@ class Database:
         Returns:
             The created category row.
         """
-        q = """
-            INSERT INTO apiome.mcp_categories
-                (tenant_id, slug, label, description, sort_order, created_by)
-            VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
+        # One statement: the inserted row is projected through the category columns (#7188).
+        q = f"""
+            WITH c AS (
+                INSERT INTO apiome.mcp_categories
+                    (tenant_id, slug, label, description, sort_order, created_by)
+                VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
+                RETURNING *
+            )
+            {self._MCP_CATEGORY_COLUMNS}
+            FROM c
         """
-        self._execute_write(q, (tenant_id, slug, label, description, sort_order, user_id))
-        return self.get_mcp_category(tenant_id, slug) or {}
+        rows = self.execute_query(
+            q, (tenant_id, slug, label, description, sort_order, user_id, tenant_id)
+        )
+        return dict(rows[0]) if rows else {}
 
     def update_mcp_category(
         self, tenant_id: str, slug: str, fields: Dict[str, Any]
@@ -24182,14 +24281,19 @@ class Database:
         sets = [f"{k} = %s" for k in allowed if k in fields]
         params: List[Any] = [fields[k] for k in allowed if k in fields]
         sets.append("updated_at = CURRENT_TIMESTAMP")
+        # One statement: the updated row is projected through the category columns (#7188).
         q = f"""
-            UPDATE apiome.mcp_categories
-            SET {", ".join(sets)}
-            WHERE tenant_id = %s::uuid AND slug = %s
+            WITH c AS (
+                UPDATE apiome.mcp_categories
+                SET {", ".join(sets)}
+                WHERE tenant_id = %s::uuid AND slug = %s
+                RETURNING *
+            )
+            {self._MCP_CATEGORY_COLUMNS}
+            FROM c
         """
-        if self._execute_write(q, (*params, tenant_id, slug)) == 0:
-            return None
-        return self.get_mcp_category(tenant_id, slug)
+        rows = self.execute_query(q, (*params, tenant_id, slug, tenant_id))
+        return dict(rows[0]) if rows else None
 
     def delete_mcp_category(self, tenant_id: str, slug: str) -> bool:
         """Delete a tenant-defined category (MCAT-9.3); built-ins never match.
@@ -24394,11 +24498,15 @@ class Database:
         uu.name AS updated_by_name, uu.email AS updated_by_email
     """
 
-    _MCP_ENDPOINT_NOTE_FROM = """
-        FROM apiome.mcp_endpoint_notes n
+    #: Author / editor joins on a note row aliased ``n`` (a table or a ``RETURNING`` CTE).
+    _MCP_ENDPOINT_NOTE_JOINS = """
         LEFT JOIN apiome.users cu ON cu.id = n.created_by
         LEFT JOIN apiome.users uu ON uu.id = n.updated_by
     """
+
+    _MCP_ENDPOINT_NOTE_FROM = """
+        FROM apiome.mcp_endpoint_notes n
+    """ + _MCP_ENDPOINT_NOTE_JOINS
 
     def list_mcp_endpoint_notes(
         self, tenant_id: str, endpoint_id: str
@@ -24434,16 +24542,20 @@ class Database:
         body: str,
     ) -> Dict[str, Any]:
         """Insert a cataloger note on an endpoint (MCAT-22.3)."""
-        q = """
-            INSERT INTO apiome.mcp_endpoint_notes
-                (tenant_id, endpoint_id, body, created_by)
-            VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
-            RETURNING id
+        # One statement: the inserted note joined to its author (#7188).
+        q = f"""
+            WITH n AS (
+                INSERT INTO apiome.mcp_endpoint_notes
+                    (tenant_id, endpoint_id, body, created_by)
+                VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                RETURNING *
+            )
+            SELECT {self._MCP_ENDPOINT_NOTE_COLUMNS}
+            FROM n
+            {self._MCP_ENDPOINT_NOTE_JOINS}
         """
         rows = self.execute_query(q, (tenant_id, endpoint_id, body, user_id))
-        note_id = str(rows[0]["id"]) if rows else ""
-        row = self.get_mcp_endpoint_note(tenant_id, endpoint_id, note_id)
-        return row if row is not None else {}
+        return dict(rows[0]) if rows else {}
 
     def update_mcp_endpoint_note(
         self,
@@ -24455,15 +24567,20 @@ class Database:
         body: str,
     ) -> Optional[Dict[str, Any]]:
         """Update a cataloger note and record the editor (MCAT-22.3)."""
-        q = """
-            UPDATE apiome.mcp_endpoint_notes
-            SET body = %s, updated_by = %s::uuid, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s::uuid AND tenant_id = %s::uuid AND endpoint_id = %s::uuid
+        # One statement: the updated note joined to its author and editor (#7188).
+        q = f"""
+            WITH n AS (
+                UPDATE apiome.mcp_endpoint_notes
+                SET body = %s, updated_by = %s::uuid, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid AND tenant_id = %s::uuid AND endpoint_id = %s::uuid
+                RETURNING *
+            )
+            SELECT {self._MCP_ENDPOINT_NOTE_COLUMNS}
+            FROM n
+            {self._MCP_ENDPOINT_NOTE_JOINS}
         """
-        updated = self._execute_write(q, (body, user_id, note_id, tenant_id, endpoint_id)) > 0
-        if not updated:
-            return None
-        return self.get_mcp_endpoint_note(tenant_id, endpoint_id, note_id)
+        rows = self.execute_query(q, (body, user_id, note_id, tenant_id, endpoint_id))
+        return dict(rows[0]) if rows else None
 
     def delete_mcp_endpoint_note(
         self, tenant_id: str, endpoint_id: str, note_id: str
@@ -24593,7 +24710,7 @@ class Database:
                 self._validate_collection_endpoint_ids(cur, tenant_id, endpoint_ids)
                 cur.execute(
                     f"""
-                    INSERT INTO apiome.mcp_collections
+                    INSERT INTO apiome.mcp_collections AS c
                         (tenant_id, name, slug, description, is_published, created_by)
                     VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
                     RETURNING {self._MCP_COLLECTION_COLUMNS}
@@ -24617,8 +24734,10 @@ class Database:
             raise
         finally:
             conn.autocommit = prev_autocommit
-        enriched = self.get_mcp_collection(tenant_id, collection_id)
-        return enriched if enriched is not None else row
+        # Every member insert succeeded inside the transaction, so the count is known without a
+        # re-read (#7188).
+        row["member_count"] = len(endpoint_ids)
+        return row
 
     def update_mcp_collection(
         self,
@@ -24652,16 +24771,17 @@ class Database:
             return self.get_mcp_collection(tenant_id, collection_id)
         fields.append("updated_at = CURRENT_TIMESTAMP")
         params.extend([collection_id, tenant_id])
+        # One statement: RETURNING carries the member count the detail read would add (#7188).
         q = f"""
-            UPDATE apiome.mcp_collections
+            UPDATE apiome.mcp_collections c
             SET {", ".join(fields)}
-            WHERE id = %s::uuid AND tenant_id = %s::uuid
-            RETURNING {self._MCP_COLLECTION_COLUMNS}
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid
+            RETURNING {self._MCP_COLLECTION_COLUMNS},
+                      (SELECT COUNT(*)::int FROM apiome.mcp_collection_members m
+                        WHERE m.collection_id = c.id) AS member_count
         """
         rows = self.execute_query(q, tuple(params))
-        if not rows:
-            return None
-        return self.get_mcp_collection(tenant_id, collection_id)
+        return dict(rows[0]) if rows else None
 
     def delete_mcp_collection(self, tenant_id: str, collection_id: str) -> bool:
         """Delete a curated collection and its memberships (MCAT-22.4)."""
@@ -29178,11 +29298,8 @@ class Database:
             or not is_uuid_string(str(key_id))
         ):
             return None
-        existing = self.get_mcp_api_key(tenant_id, key_id)
-        if existing is None:
-            return None
-        if existing.get("revoked_at") is not None:
-            return existing
+        # Write first (#7188): a live key is revoked in one statement; only a key the UPDATE
+        # did not match (missing, or already revoked) is read back.
         rows = self.execute_query(
             f"""
             UPDATE apiome.mcp_api_keys
@@ -29195,7 +29312,6 @@ class Database:
             (tenant_id, key_id),
         )
         if not rows:
-            # Race: another writer revoked between SELECT and UPDATE.
             return self.get_mcp_api_key(tenant_id, key_id)
         return self._normalize_mcp_api_key_row(rows[0])
 

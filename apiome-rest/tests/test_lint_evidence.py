@@ -457,7 +457,9 @@ def _revision_rows():
 def test_revision_evidence_lists_runs_and_coverage():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = _revision_rows()
+        mdb.get_version_core.return_value = _revision_rows()
         mdb.get_version_source_projection.return_value = None
         mdb.list_lint_evidence_runs_for_version.return_value = [
             _evidence_row(raw_artifact_ref="s3://bucket/raw.json")
@@ -488,7 +490,9 @@ def test_revision_evidence_lists_runs_and_coverage():
 def test_revision_evidence_redacts_raw_artifact_reference():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = _revision_rows()
+        mdb.get_version_core.return_value = _revision_rows()
         mdb.get_version_source_projection.return_value = None
         mdb.list_lint_evidence_runs_for_version.return_value = [
             _evidence_row(raw_artifact_ref="s3://bucket/raw.json")
@@ -504,7 +508,9 @@ def test_revision_evidence_never_displays_missing_scan_as_clean():
     """A never-scored revision has zero runs — coverage must read not_run, not passed."""
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = _revision_rows()
+        mdb.get_version_core.return_value = _revision_rows()
         mdb.get_version_source_projection.return_value = None
         mdb.list_lint_evidence_runs_for_version.return_value = []
         r = client.get(f"/v1/versions/acme/proj-1/{_REV}/lint/evidence")
@@ -520,17 +526,22 @@ def test_revision_evidence_never_displays_missing_scan_as_clean():
 def test_revision_evidence_404s():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         assert client.get(f"/v1/versions/acme/nope/{_REV}/lint/evidence").status_code == 404
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = None
+        mdb.get_version_core.return_value = None
         assert client.get(f"/v1/versions/acme/proj-1/{_REV}/lint/evidence").status_code == 404
 
 
 def test_revision_evidence_rejects_cross_project_revision():
     with patch("app.lint_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
+        mdb.get_project_core.return_value = {"id": "proj-1"}
         mdb.get_version_by_id.return_value = {"id": _REV, "project_id": "other-project"}
+        mdb.get_version_core.return_value = {"id": _REV, "project_id": "other-project"}
         r = client.get(f"/v1/versions/acme/proj-1/{_REV}/lint/evidence")
     assert r.status_code == 400
 

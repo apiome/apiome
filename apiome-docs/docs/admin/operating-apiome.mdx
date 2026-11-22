@@ -426,6 +426,24 @@ The count covers the statements the code sends. A single read or write is sent o
 To find the heaviest endpoints, filter the access log for high `db_statements`. A request that runs
 hundreds of statements is usually a loop that issues one query per row.
 
+#### Project and version checks
+
+Most endpoints that name a project or a version first check that it exists in your workspace. That
+check reads one row by its primary key and nothing else. The extra work happens only where the
+response shows it:
+
+| Response | What it adds to the check |
+| --- | --- |
+| Project detail, `GET /v1/projects/{tenant}/{project}` | The number of live versions, their mean quality score and grade, and the creator. |
+| Version detail, `GET /v1/versions/{tenant}/{project}/{version}` | The security score, the fork source, the upstream project, the creator, and the version's metadata. |
+
+Editing or deleting a class, a path or an operation is one statement: the workspace check is part
+of the `UPDATE` or `DELETE`, so `db_statements` counts it once. A project's own write is one
+statement too. It checks the workspace and the `expectedUpdatedAt` you sent in the same `UPDATE`,
+and reads the project again only to report a conflict.
+
+Both checks are in the plan check below, as `rest.project_core` and `rest.version_core`.
+
 ### Turn on pg_stat_statements and auto_explain
 
 `pg_stat_statements` keeps running totals for every distinct statement. `auto_explain` writes the

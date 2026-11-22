@@ -1509,7 +1509,7 @@ def persist_adapter_import(
     version_description = version_meta.get("description")
 
     if existing_project_id:
-        existing = db.get_project_by_id(str(existing_project_id), tenant_id)
+        existing = db.get_project_core(str(existing_project_id), tenant_id)
         project_id = str(existing_project_id)
         project_slug = (existing or {}).get("slug")
     else:

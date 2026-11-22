@@ -46,6 +46,7 @@ def test_workflow_audit_offset_mode():
         mdb.count_workflow_audit_filtered.return_value = 2
         mdb.search_workflow_audit.return_value = [_sample_row()]
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
+        mdb.get_project_core.return_value = {"id": _PROJECT_ID}
         r = client.get(
             f"/v1/versions/t/workflow-audit?limit=1&offset=0&projectId={_PROJECT_ID}"
         )
@@ -68,6 +69,7 @@ def test_workflow_audit_offset_mode():
 def test_workflow_audit_project_not_found():
     with patch("app.workflow_audit_routes.db") as mdb:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         r = client.get(
             f"/v1/versions/t/workflow-audit?projectId={_PROJECT_ID}"
         )

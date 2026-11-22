@@ -337,6 +337,11 @@ def test_on_publish_entrypoint_fans_out_with_changelog():
             "published": True,
             "version_id": "2.0.0",
         }
+        mdb.get_version_core.return_value = {
+            "id": REVISION,
+            "published": True,
+            "version_id": "2.0.0",
+        }
         mdb.get_version_changelog.return_value = _changelog_row()
         mdb.list_active_push_webhook_subscription_filters.return_value = _subs(
             ("aaaaaaaa-0000-0000-0000-000000000001", "breaking"),
@@ -361,6 +366,7 @@ def test_on_publish_entrypoint_fans_out_with_changelog():
 def test_on_publish_entrypoint_skips_unpublished_revision():
     with patch("app.publish_notifications.default_db") as mdb:
         mdb.get_version_by_id.return_value = {"id": REVISION, "published": False}
+        mdb.get_version_core.return_value = {"id": REVISION, "published": False}
         notify_version_published_on_publish(
             tenant_id=TENANT,
             project_id=PROJECT,
@@ -373,6 +379,7 @@ def test_on_publish_entrypoint_skips_unpublished_revision():
 def test_on_publish_entrypoint_skips_missing_revision():
     with patch("app.publish_notifications.default_db") as mdb:
         mdb.get_version_by_id.return_value = None
+        mdb.get_version_core.return_value = None
         notify_version_published_on_publish(
             tenant_id=TENANT,
             project_id=PROJECT,
@@ -387,6 +394,11 @@ def test_on_publish_entrypoint_notifies_even_when_changelog_lookup_fails():
     # state cannot be read (fail-safe), and the entrypoint never raises.
     with patch("app.publish_notifications.default_db") as mdb:
         mdb.get_version_by_id.return_value = {
+            "id": REVISION,
+            "published": True,
+            "version_id": "2.0.0",
+        }
+        mdb.get_version_core.return_value = {
             "id": REVISION,
             "published": True,
             "version_id": "2.0.0",
@@ -412,6 +424,7 @@ def test_on_publish_entrypoint_notifies_even_when_changelog_lookup_fails():
 def test_on_publish_entrypoint_never_raises():
     with patch("app.publish_notifications.default_db") as mdb:
         mdb.get_version_by_id.side_effect = RuntimeError("total db failure")
+        mdb.get_version_core.side_effect = RuntimeError("total db failure")
         notify_version_published_on_publish(
             tenant_id=TENANT,
             project_id=PROJECT,

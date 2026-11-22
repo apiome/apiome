@@ -54,6 +54,7 @@ def authed():
 def test_impact_reports_the_counts_and_whether_the_project_is_archived(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = {**_PROJECT, "deleted_at": "2026-10-01T00:00:00Z"}
+        mock_db.get_project_core.return_value = {**_PROJECT, "deleted_at": "2026-10-01T00:00:00Z"}
         mock_db.get_project_deletion_impact.return_value = _IMPACT
         response = client.get("/v1/projects/acme/p-1/deletion-impact")
     assert response.status_code == 200
@@ -64,12 +65,13 @@ def test_impact_reports_the_counts_and_whether_the_project_is_archived(authed) -
         "deleted": True,
         **_IMPACT,
     }
-    assert mock_db.get_project_by_id.call_args.kwargs == {"include_deleted": True}
+    assert mock_db.get_project_core.call_args.kwargs == {"include_deleted": True}
 
 
 def test_impact_404_for_an_unknown_project(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = None
+        mock_db.get_project_core.return_value = None
         response = client.get("/v1/projects/acme/nope/deletion-impact")
     assert response.status_code == 404
 
@@ -92,29 +94,32 @@ def test_impact_requires_projects_view(authed) -> None:
 def test_delete_is_still_a_soft_delete_by_default(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _PROJECT
+        mock_db.get_project_core.return_value = _PROJECT
         mock_db.delete_project.return_value = True
         response = client.delete("/v1/projects/acme/p-1")
     assert response.status_code == 200
     assert response.json()["permanent"] is False
     mock_db.delete_project.assert_called_once_with("p-1", "tenant-1")
     mock_db.permanently_delete_project.assert_not_called()
-    assert mock_db.get_project_by_id.call_args.kwargs == {"include_deleted": False}
+    assert mock_db.get_project_core.call_args.kwargs == {"include_deleted": False}
 
 
 def test_permanent_delete_removes_the_project_even_when_archived(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = {**_PROJECT, "deleted_at": "2026-10-01T00:00:00Z"}
+        mock_db.get_project_core.return_value = {**_PROJECT, "deleted_at": "2026-10-01T00:00:00Z"}
         mock_db.permanently_delete_project.return_value = True
         response = client.delete("/v1/projects/acme/p-1", params={"permanent": "true"})
     assert response.status_code == 200
     assert response.json() == {"message": "Project 'Payments' permanently deleted", "permanent": True}
-    assert mock_db.get_project_by_id.call_args.kwargs == {"include_deleted": True}
+    assert mock_db.get_project_core.call_args.kwargs == {"include_deleted": True}
     mock_db.delete_project.assert_not_called()
 
 
 def test_a_blocked_permanent_delete_is_a_409_naming_the_table(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _PROJECT
+        mock_db.get_project_core.return_value = _PROJECT
         mock_db.permanently_delete_project.side_effect = ProjectDeleteBlocked("source_change_audit")
         response = client.delete("/v1/projects/acme/p-1", params={"permanent": "true"})
     assert response.status_code == 409
@@ -127,6 +132,7 @@ def test_a_blocked_permanent_delete_is_a_409_naming_the_table(authed) -> None:
 def test_permanent_delete_404s(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = None
+        mock_db.get_project_core.return_value = None
         response = client.delete("/v1/projects/acme/p-1", params={"permanent": "true"})
     assert response.status_code == 404
 

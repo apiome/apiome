@@ -212,7 +212,7 @@ def list_workflow_audit(
     until_dt = _parse_iso_datetime("until", until)
 
     if pid is not None:
-        proj = db.get_project_by_id(pid, tid)
+        proj = db.get_project_core(pid, tid)
         if not proj:
             raise HTTPException(status_code=404, detail=f"Project not found: {pid}")
 

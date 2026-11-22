@@ -25,7 +25,7 @@ ACCESSORS = (
     "insert_mock_broker_binding",
     "rotate_mock_broker_binding",
     "delete_mock_broker_binding",
-    "get_version_by_id",
+    "get_version_core",
     "user_owns_version_mock_settings",
 )
 
@@ -92,8 +92,8 @@ class FakeBrokerStore:
 
     # -- version lookups ---------------------------------------------------------------------
 
-    def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
-        self.calls.append("get_version_by_id")
+    def get_version_core(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        self.calls.append("get_version_core")
         if str(tenant_id) != self.tenant_id or str(version_id) not in self.versions:
             return None
         return {"id": str(version_id), "project_id": self.versions[str(version_id)]}

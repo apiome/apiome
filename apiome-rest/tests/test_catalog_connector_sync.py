@@ -443,6 +443,7 @@ def test_default_importer_adds_a_revision_to_a_live_catalog_item_only(monkeypatc
     }
     monkeypatch.setattr("app.import_source_pipeline.run_adapter_import_job", _fake_run)
     monkeypatch.setattr("app.database.db.get_project_by_id", lambda pid, tid: projects.get(pid))
+    monkeypatch.setattr("app.database.db.get_project_core", lambda pid, tid: projects.get(pid))
     monkeypatch.setattr("app.database.db.get_version_by_version_id", lambda pid, label, tid: None)
     connector = {"id": "c1", "tenant_id": TENANT, "kind": "kong-admin", "name": "P", "created_by": ACTOR}
     document = FetchedDocument(content=b"{}", filename="o.json")
@@ -493,6 +494,9 @@ def test_default_importer_writes_a_change_report_when_it_adds_a_revision(monkeyp
     monkeypatch.setattr(
         "app.database.db.get_project_by_id", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
     )
+    monkeypatch.setattr(
+        "app.database.db.get_project_core", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
+    )
     monkeypatch.setattr("app.database.db.get_version_by_version_id", _version_by_label)
     monkeypatch.setattr(
         "app.catalog_revision_change_report.generate_catalog_revision_change_report",
@@ -532,6 +536,9 @@ def test_default_importer_links_a_revision_another_environment_already_imported(
     monkeypatch.setattr("app.import_source_pipeline.run_adapter_import_job", _fake_run)
     monkeypatch.setattr(
         "app.database.db.get_project_by_id", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
+    )
+    monkeypatch.setattr(
+        "app.database.db.get_project_core", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
     )
     monkeypatch.setattr(
         "app.database.db.get_version_by_version_id", lambda pid, label, tid: {"id": "v"} if label == "5" else None

@@ -228,6 +228,7 @@ def test_a_worker_import_records_its_documents_declarations(monkeypatch, encodin
     text = json.dumps(document) if encoding == "json" else "openapi: 3.1.0\nx-apiome-depends-on: [payments]\n"
     payload = {"document_base64": base64.b64encode(text.encode()).decode()}
     monkeypatch.setattr(db, "get_project_by_id", lambda pid, tid: {"id": pid, "publishable": False})
+    monkeypatch.setattr(db, "get_project_core", lambda pid, tid: {"id": pid, "publishable": False})
     calls: List[tuple] = []
     with patch("app.declared_dependency_store.record_spec_dependencies", side_effect=lambda *a: calls.append(a)):
         spec_import_engine._record_worker_declared_dependencies(_TENANT, _PROJECT, payload)
@@ -243,6 +244,7 @@ def test_an_unreadable_worker_document_records_nothing(monkeypatch, payload) -> 
     from app.database import db
 
     monkeypatch.setattr(db, "get_project_by_id", lambda pid, tid: {"id": pid, "publishable": True})
+    monkeypatch.setattr(db, "get_project_core", lambda pid, tid: {"id": pid, "publishable": True})
     with patch("app.declared_dependency_store.record_spec_dependencies") as record:
         spec_import_engine._record_worker_declared_dependencies(_TENANT, _PROJECT, payload)
     record.assert_not_called()

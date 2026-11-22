@@ -78,6 +78,7 @@ def _compile(
         return_value=revision if revision is not None else _revision(),
     ), patch("app.contract_suite_service.db") as database:
         database.get_version_by_id.return_value = row
+        database.get_version_core.return_value = row
         return compile_version_contract_suite(reference, request, tenant_id=_TENANT)
 
 
@@ -158,12 +159,12 @@ def test_compiling_writes_nothing() -> None:
     with patch(
         "app.contract_suite_service.resolve_revision_model", return_value=_revision()
     ), patch("app.contract_suite_service.db") as database:
-        database.get_version_by_id.return_value = {"published": True}
+        database.get_version_core.return_value = {"published": True}
         compile_version_contract_suite(
             "project/petstore/1.0.0", ContractSuiteCompileRequest(), tenant_id=_TENANT
         )
-    assert [call[0] for call in database.mock_calls] == ["get_version_by_id"]
-    database.get_version_by_id.assert_called_once_with(_REVISION, _TENANT)
+    assert [call[0] for call in database.mock_calls] == ["get_version_core"]
+    database.get_version_core.assert_called_once_with(_REVISION, _TENANT)
 
 
 def _graphql_revision(sdl: str) -> ResolvedRevisionModel:

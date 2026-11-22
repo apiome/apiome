@@ -57,7 +57,7 @@ def test_from_revision_invalid_branch_name():
 
 
 def test_from_revision_project_not_found():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value=None):
+    with patch("app.version_merge_routes.db.get_project_core", return_value=None):
         r = client.post(
             "/v1/versions/acme/00000000-0000-0000-0000-0000000000a1/version-branches/from-revision",
             json={"sourceRevisionId": "00000000-0000-0000-0000-000000000001", "branchName": "feature/x"},
@@ -97,7 +97,7 @@ def test_from_revision_success():
         "created_at": None,
         "updated_at": None,
     }
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": "p1"}):
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": "p1"}):
         with patch(
             "app.version_merge_routes.db.create_version_branch_from_revision",
             return_value={
@@ -121,7 +121,7 @@ def test_from_revision_success():
 
 
 def test_from_revision_conflict():
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": "p1"}):
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": "p1"}):
         with patch(
             "app.version_merge_routes.db.create_version_branch_from_revision",
             return_value={
@@ -171,7 +171,7 @@ def test_from_revision_idempotent_replay():
         "created_at": None,
         "updated_at": None,
     }
-    with patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": "p1"}):
+    with patch("app.version_merge_routes.db.get_project_core", return_value={"id": "p1"}):
         with patch(
             "app.version_merge_routes.db.create_version_branch_from_revision",
             return_value={

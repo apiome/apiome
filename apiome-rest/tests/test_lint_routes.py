@@ -52,7 +52,7 @@ def _version_row(vid: str):
 
 
 def test_lint_returns_score_and_findings():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint")
@@ -70,7 +70,7 @@ def test_lint_returns_score_and_findings():
 
 
 def test_lint_is_deterministic_for_fixed_input():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         a = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
@@ -84,7 +84,7 @@ def test_lint_is_deterministic_for_fixed_input():
 def test_lint_returns_category_score_rollup():
     # MFI-25.6 (#4091): the report carries a `categories[{name, score}]` array with 0-100 scores,
     # driving the UI's category bars with real values. The in-spec categories are always present.
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         body = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
@@ -107,7 +107,7 @@ def test_lint_returns_category_score_rollup():
 
 def test_lint_with_base_revision_adds_compatibility_category():
     # A base comparison that surfaces a breaking change adds a compatibility category bar.
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id",
         side_effect=lambda vid, _tid: _version_row(vid),
     ), patch(
@@ -122,13 +122,13 @@ def test_lint_with_base_revision_adds_compatibility_category():
 
 
 def test_lint_project_not_found():
-    with patch("app.lint_routes.db.get_project_by_id", return_value=None):
+    with patch("app.lint_routes.db.get_project_core", return_value=None):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint")
     assert r.status_code == 404
 
 
 def test_lint_revision_not_found():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=None
     ):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint")
@@ -137,7 +137,7 @@ def test_lint_revision_not_found():
 
 def test_lint_revision_wrong_project():
     other = {"id": VID, "project_id": "different", "version_id": "1.0.0", "metadata": None}
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=other
     ):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint")
@@ -146,7 +146,7 @@ def test_lint_revision_wrong_project():
 
 def test_lint_with_base_revision_folds_compatibility():
     rows = {VID: _version_row(VID), BASE_VID: _version_row(BASE_VID)}
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", side_effect=lambda vid, tid: rows.get(vid)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint?baseRevisionId={BASE_VID}")
@@ -158,7 +158,7 @@ def test_lint_with_base_revision_folds_compatibility():
 
 
 def test_lint_base_revision_must_differ():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint?baseRevisionId={VID}")
@@ -180,7 +180,7 @@ def _captured(score, grade, fingerprint, *, quality_report=None):
 
 def test_lint_surfaces_captured_score_when_current():
     """When the persisted fingerprint matches the live recompute, the score is not stale."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         # First read the live fingerprint (no captured score), then claim it as the stored one.
@@ -202,7 +202,7 @@ def test_lint_surfaces_captured_score_when_current():
 
 def test_lint_flags_stale_captured_score():
     """A persisted fingerprint that differs from the live recompute marks the score stale."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -216,7 +216,7 @@ def test_lint_flags_stale_captured_score():
 
 def test_lint_no_captured_score_is_not_stale():
     """A never-scored version surfaces null captured fields and is not stale."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score", return_value=_captured(None, None, None)
@@ -231,7 +231,7 @@ def test_lint_no_captured_score_is_not_stale():
 def test_lint_base_revision_comparison_never_stale():
     """A base-revision compare folds in extra findings, so it never flags the captured score."""
     rows = {VID: _version_row(VID), BASE_VID: _version_row(BASE_VID)}
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", side_effect=lambda vid, tid: rows.get(vid)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -264,7 +264,7 @@ def test_lint_serves_stored_quality_report_without_recompute():
         ],
         "categories": [{"name": "documentation", "score": 40}],
     }
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision") as m_recon, patch(
         "app.lint_routes.db.get_version_quality_score",
@@ -283,7 +283,7 @@ def test_lint_serves_stored_quality_report_without_recompute():
 
 def test_lint_captured_read_failure_does_not_break_live_report():
     """A failure reading the persisted score degrades gracefully to no captured score."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_version_quality_score", side_effect=RuntimeError("no db")
@@ -422,7 +422,7 @@ def test_lint_rules_catalog_is_deterministic():
 
 def test_lint_report_findings_attributable_to_rule_catalog():
     # Acceptance: every violation the lint report emits carries a registered rule id.
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         report = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
@@ -447,7 +447,7 @@ def test_lint_rules_requires_authentication():
 
 def test_lint_reports_the_fallback_guide_when_nothing_is_assigned():
     """With no resolvable guide the report is scored (and labelled) by the in-code defaults."""
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
         body = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
@@ -470,7 +470,7 @@ def test_lint_scores_under_the_assigned_style_guide():
         }
     ]
 
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
     ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
         "app.lint_routes.db.get_assigned_style_guide", return_value=guide_row

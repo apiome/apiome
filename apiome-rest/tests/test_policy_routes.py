@@ -120,7 +120,9 @@ def test_upsert_waiver_persists(mdb):
 @patch("app.lint_routes.db")
 def test_lint_policy_route_returns_evaluation(mdb):
     mdb.get_project_by_id.return_value = {"id": "p1", "tenant_id": "t1"}
+    mdb.get_project_core.return_value = {"id": "p1", "tenant_id": "t1"}
     mdb.get_version_by_id.return_value = {"id": "v1", "project_id": "p1"}
+    mdb.get_version_core.return_value = {"id": "v1", "project_id": "p1"}
 
     from app.models import (
         LintPolicyEvaluationOut,

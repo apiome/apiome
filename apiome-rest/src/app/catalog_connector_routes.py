@@ -698,7 +698,7 @@ def link_connector_item(
     actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
     _require_connector(tenant_id, connector_id)
     item = _require_item(tenant_id, connector_id, item_id)
-    target = db.get_project_by_id(str(body.catalog_item_id), tenant_id)
+    target = db.get_project_core(str(body.catalog_item_id), tenant_id)
     if not target or target.get("deleted_at"):
         raise _refusal(ConnectorError(CODE_NOT_FOUND, "Catalog item or Project not found."))
     shadow_api_store.link_item(db, str(item_id), project_id=str(body.catalog_item_id), actor_id=actor_id)

@@ -226,7 +226,7 @@ def enforce_publish_prechecks(
             result = CompatibilityCheckEngine.run(base_spec, head_spec, rules)
 
             if result.overall == "breaking" and not bool(request.allow_breaking):
-                proj = db.get_project_by_id(project_id, tenant_id)
+                proj = db.get_project_core(project_id, tenant_id)
                 proj_slug = str((proj or {}).get("slug") or project_id)
                 from_label = str(base_row.get("version_id") or baseline_revision_id)
                 to_label = str(existing.get("version_id") or version_record_id)

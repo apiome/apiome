@@ -268,7 +268,11 @@ def mdb():
         patch("app.revision_graph_routes.enforce_permission") as permission,
     ):
         mock_db.get_project_by_id.return_value = {"id": _PROJECT}
+        mock_db.get_project_core.return_value = {"id": _PROJECT}
         mock_db.get_version_by_id.side_effect = lambda rid, tenant: (
+            {"id": rid, "project_id": _PROJECT} if rid in DAG else None
+        )
+        mock_db.get_version_core.side_effect = lambda rid, tenant: (
             {"id": rid, "project_id": _PROJECT} if rid in DAG else None
         )
         mock_db.fetch_revision_closure.return_value = list(DAG.values())
@@ -301,11 +305,13 @@ class TestRoutes:
         response = client.get(_url("ghost/ancestors"))
         assert response.status_code == 404 and response.json()["detail"]["code"] == "REVISION_NOT_FOUND"
         mdb.get_version_by_id.side_effect = lambda rid, tenant: {"id": rid, "project_id": "other"}
+        mdb.get_version_core.side_effect = lambda rid, tenant: {"id": rid, "project_id": "other"}
         response = client.get(_url("m/ancestors"))
         assert response.status_code == 400 and response.json()["detail"]["code"] == "REVISION_PROJECT_MISMATCH"
 
     def test_unknown_project(self, mdb: MagicMock) -> None:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         assert client.get(_url("m/ancestors")).status_code == 404
 
     def test_history_with_named_tips(self, mdb: MagicMock) -> None:
@@ -344,6 +350,7 @@ class TestRoutes:
     def test_merge_base_disjoint(self, mdb: MagicMock) -> None:
         two_roots = _graph({"a": [], "r": []})
         mdb.get_version_by_id.side_effect = lambda rid, tenant: {"id": rid, "project_id": _PROJECT}
+        mdb.get_version_core.side_effect = lambda rid, tenant: {"id": rid, "project_id": _PROJECT}
         mdb.fetch_revision_closure.return_value = list(two_roots.values())
         body = client.get(_url("revision-graph/merge-base"), params={"a": "a", "b": "r"}).json()
         assert body == {"a": "a", "b": "r", "mergeBase": None, "candidates": [], "disjoint": True}

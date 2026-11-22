@@ -56,6 +56,7 @@ def authed():
 def test_the_precondition_is_passed_to_the_write(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _ROW
+        mock_db.get_project_core.return_value = _ROW
         mock_db.update_project.return_value = {**_ROW, "name": "Payments v2"}
         response = client.put(
             "/v1/projects/acme/p-1",
@@ -69,6 +70,7 @@ def test_the_precondition_is_passed_to_the_write(authed) -> None:
 def test_without_a_precondition_nothing_changes(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _ROW
+        mock_db.get_project_core.return_value = _ROW
         mock_db.update_project.return_value = _ROW
         response = client.put("/v1/projects/acme/p-1", json={"description": "x"})
     assert response.status_code == 200
@@ -79,6 +81,7 @@ def test_a_stale_precondition_is_a_409_with_the_current_timestamp(authed) -> Non
     newer = datetime(2026, 10, 16, 13, 0, tzinfo=timezone.utc)
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _ROW
+        mock_db.get_project_core.return_value = _ROW
         mock_db.update_project.side_effect = ProjectUpdateConflict(newer)
         response = client.put(
             "/v1/projects/acme/p-1",
@@ -94,6 +97,7 @@ def test_a_stale_precondition_is_a_409_with_the_current_timestamp(authed) -> Non
 def test_a_malformed_precondition_is_a_422(authed) -> None:
     with patch("app.projects_routes.db") as mock_db, patch("app.projects_routes.enforce_permission"):
         mock_db.get_project_by_id.return_value = _ROW
+        mock_db.get_project_core.return_value = _ROW
         response = client.put("/v1/projects/acme/p-1", json={"expectedUpdatedAt": "yesterday"})
     assert response.status_code == 422
 
@@ -139,6 +143,7 @@ def _database(existing_rows: List[Optional[Dict[str, Any]]], update_row) -> tupl
     database = Database.__new__(Database)
     reads = iter(existing_rows)
     database.get_project_by_id = lambda *_args, **_kwargs: next(reads)  # type: ignore[method-assign]
+    database.get_project_core = lambda *_args, **_kwargs: next(reads)  # type: ignore[method-assign]
     cursor = _Cursor(update_row)
     database.connect = lambda: _Conn(cursor)  # type: ignore[method-assign]
     return database, cursor
@@ -160,24 +165,32 @@ def test_a_naive_precondition_is_read_as_utc() -> None:
     assert cursor.executed[0][1][-1] == _UPDATED
 
 
-def test_a_stale_read_conflicts_before_writing() -> None:
-    database, cursor = _database([_ROW], _ROW)
+def test_a_stale_precondition_conflicts_without_overwriting() -> None:
+    """The precondition is checked by the UPDATE itself (#7188): a stale one matches no row, and
+    only then is the project read, to report its current ``updated_at``."""
+    stale = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    database, cursor = _database([_ROW], None)
     with pytest.raises(ProjectUpdateConflict) as exc:
-        database.update_project(
-            "p-1", "tenant-1", {"name": "v2"}, expected_updated_at=datetime(2026, 1, 1, tzinfo=timezone.utc)
-        )
+        database.update_project("p-1", "tenant-1", {"name": "v2"}, expected_updated_at=stale)
     assert exc.value.current_updated_at == _UPDATED
-    assert cursor.executed == []
+    [(sql, params)] = cursor.executed
+    assert sql.startswith("UPDATE apiome.projects") and "AND updated_at = %s" in sql
+    assert params[-1] == stale
 
 
-def test_a_change_between_read_and_write_conflicts() -> None:
+def test_a_change_after_the_callers_read_conflicts() -> None:
     newer = {**_ROW, "updated_at": datetime(2026, 10, 16, 13, 0, tzinfo=timezone.utc)}
-    # The read sees the expected timestamp; the guarded UPDATE matches nothing; the re-read
-    # finds the newer row.
-    database, _cursor = _database([_ROW, newer], None)
+    # The guarded UPDATE matches nothing; the one read afterwards finds the newer row.
+    database, _cursor = _database([newer], None)
     with pytest.raises(ProjectUpdateConflict) as exc:
         database.update_project("p-1", "tenant-1", {"name": "v2"}, expected_updated_at=_UPDATED)
     assert exc.value.current_updated_at == newer["updated_at"]
+
+
+def test_a_changing_update_reads_nothing_first() -> None:
+    database, cursor = _database([], {**_ROW, "name": "v2"})
+    assert database.update_project("p-1", "tenant-1", {"name": "v2"}, expected_updated_at=_UPDATED)["name"] == "v2"
+    assert len(cursor.executed) == 1
 
 
 def test_a_precondition_with_nothing_to_update_still_checks() -> None:

@@ -573,7 +573,7 @@ def _push_stale_head_detail(*, tenant_id: str, head_revision_id: str) -> Dict[st
     409 body for optimistic push conflicts (#2566).
     P0-05 UI: read ``code`` == ``STALE_HEAD``, ``currentHeadRevisionId``, ``currentHead`` (subset).
     """
-    head_ver = db.get_version_by_id(head_revision_id, tenant_id)
+    head_ver = db.get_version_core(head_revision_id, tenant_id)
     out: Dict[str, Any] = {
         "message": "Branch tip does not match baseRevisionId (stale head or wrong base).",
         "code": "STALE_HEAD",
@@ -635,7 +635,7 @@ def get_sunset_timeline(
     """
     tid = auth_data["tenant_id"]
     if project_id:
-        proj = db.get_project_by_id(project_id, tid)
+        proj = db.get_project_core(project_id, tid)
         if not proj:
             raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -799,7 +799,7 @@ def list_versions(
         List of versions for the project
     """
     # Verify project belongs to tenant
-    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
         raise HTTPException(
             status_code=404,
@@ -1697,7 +1697,7 @@ def create_version(
             )
         if request.source_version_id and request.source_version_id.strip():
             copy_source_id = request.source_version_id.strip()
-            source_version = db.get_version_by_id(copy_source_id, tenant_id)
+            source_version = db.get_version_core(copy_source_id, tenant_id)
             if not source_version:
                 copy_warning = f"Source version not found: {copy_source_id}"
                 copy_source_id = None
@@ -2731,7 +2731,7 @@ def set_version_mock(
 ) -> VersionSchema:
     """Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
-    existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
+    existing = db.get_version_core(version_record_id, auth_data["tenant_id"])
     if not existing:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if existing["project_id"] != project_id:
@@ -4431,7 +4431,7 @@ def delete_version(
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.DELETE)
     # Check if version exists
-    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    existing = db.get_version_core(version_record_id, auth_data['tenant_id'])
     if not existing:
         raise HTTPException(
             status_code=404,

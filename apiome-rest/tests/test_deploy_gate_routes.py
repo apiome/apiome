@@ -303,7 +303,7 @@ def test_clearing_a_policy_that_was_never_saved_is_not_audited():
 def test_an_unknown_project_is_a_404_on_the_policy_routes_too():
     """The policy surface resolves the same subject the gate does, through the same resolver."""
     with patch("app.deploy_gate_routes.enforce_permission", return_value="u"), patch(
-        "app.deploy_gate_service.db.get_project_by_id", return_value=None
+        "app.deploy_gate_service.db.get_project_core", return_value=None
     ), patch("app.deploy_gate_service.db.get_project_by_slug", return_value=None):
         response = client.get(_POLICY)
     assert response.status_code == 404

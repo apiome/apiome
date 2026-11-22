@@ -239,7 +239,7 @@ class _Patches:
             patch("app.export_webhook_delivery_routes.get_export_job_status",
                   new=AsyncMock(return_value=status or _status())),
             patch("app.export_webhook_delivery_routes.resolve_export_download", return_value=download or _download()),
-            patch("app.export_git_delivery_routes.db.get_project_by_id",
+            patch("app.export_git_delivery_routes.db.get_project_core",
                   return_value={"id": _ARTIFACT, "slug": "orders", "name": "Orders API"}),
             patch("app.export_webhook_delivery_routes.start_delivery", return_value=_row()),
             patch("app.export_webhook_delivery_routes.write_audit"),

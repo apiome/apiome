@@ -113,7 +113,9 @@ def fake_db():
     """A MagicMock db with the accessors the route uses, patched into the route module."""
     db = MagicMock()
     db.get_project_by_id.return_value = _project()
+    db.get_project_core.return_value = _project()
     db.get_version_by_id.return_value = _version()
+    db.get_version_core.return_value = _version()
     with patch("app.snippet_routes.db", db), patch(
         "app.snippet_routes.load_canonical_api", return_value=_canonical()
     ):
@@ -214,6 +216,7 @@ def test_invalid_project_id_is_400(fake_db) -> None:
 
 def test_unknown_project_is_404(fake_db) -> None:
     fake_db.get_project_by_id.return_value = None
+    fake_db.get_project_core.return_value = None
     resp = client.get(f"{_BASE}/getPet", params={"lang": "curl"})
     assert resp.status_code == 404
 
@@ -227,6 +230,7 @@ def test_non_uuid_version_is_404(fake_db) -> None:
 
 def test_unknown_version_is_404(fake_db) -> None:
     fake_db.get_version_by_id.return_value = None
+    fake_db.get_version_core.return_value = None
     resp = client.get(f"{_BASE}/getPet", params={"lang": "curl"})
     assert resp.status_code == 404
 
@@ -235,12 +239,16 @@ def test_cross_project_version_is_404(fake_db) -> None:
     fake_db.get_version_by_id.return_value = _version(
         project_id="33333333-3333-4333-8333-333333333333"
     )
+    fake_db.get_version_core.return_value = _version(
+        project_id="33333333-3333-4333-8333-333333333333"
+    )
     resp = client.get(f"{_BASE}/getPet", params={"lang": "curl"})
     assert resp.status_code == 404
 
 
 def test_unpublished_version_is_400(fake_db) -> None:
     fake_db.get_version_by_id.return_value = _version(published=False)
+    fake_db.get_version_core.return_value = _version(published=False)
     resp = client.get(f"{_BASE}/getPet", params={"lang": "curl"})
     assert resp.status_code == 400
     assert "published" in resp.json()["detail"]

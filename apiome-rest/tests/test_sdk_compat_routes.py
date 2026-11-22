@@ -35,12 +35,14 @@ class FakeDb:
 
     def get_project_by_id(self, project_id: str, tenant_id: str):
         return {"id": PROJECT, "slug": "widgets"} if project_id == PROJECT else None
+    get_project_core = get_project_by_id
 
     def get_version_changelog(self, revision_id: str, tenant_id: str, project_id: str):
         return self.changelog
 
     def get_version_by_id(self, revision_id: str, tenant_id: str):
         return {"version_id": "0.9.0"} if revision_id == BASELINE else None
+    get_version_core = get_version_by_id
 
 
 @pytest.fixture

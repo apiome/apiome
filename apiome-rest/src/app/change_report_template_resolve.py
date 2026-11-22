@@ -37,7 +37,7 @@ def resolve_effective_change_report_template(
             )
         return row
 
-    proj = db.get_project_by_id(project_id, tenant_id)
+    proj = db.get_project_core(project_id, tenant_id)
     if not proj:
         raise HTTPException(status_code=404, detail="project not found")
     pid = proj.get("change_report_template_version_id")

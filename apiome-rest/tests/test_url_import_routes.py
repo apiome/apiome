@@ -74,7 +74,19 @@ def _setup(monkeypatch):
     )
     monkeypatch.setattr(
         db,
+        "get_project_core",
+        lambda project_id, tenant_id, **kw: (
+            {"id": project_id} if tenant_id == _TENANT and project_id in (_PROJECT, _OTHER_PROJECT) else None
+        ),
+    )
+    monkeypatch.setattr(
+        db,
         "get_version_by_id",
+        lambda version_id, tenant_id: {"id": version_id, "project_id": _PROJECT} if version_id == _VERSION else None,
+    )
+    monkeypatch.setattr(
+        db,
+        "get_version_core",
         lambda version_id, tenant_id: {"id": version_id, "project_id": _PROJECT} if version_id == _VERSION else None,
     )
     yield

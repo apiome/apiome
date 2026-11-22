@@ -62,6 +62,7 @@ class _Db(FakeDocumentDatabase):
         if self.versions.get(version_id) != tenant_id:
             return None
         return {"id": version_id, "project_id": PROJECT}
+    get_version_core = get_version_by_id
 
     def get_version_original_facts(self, *, tenant_id, version_id):
         return self.facts.get(version_id) if self.versions.get(version_id) == tenant_id else None

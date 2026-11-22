@@ -210,7 +210,7 @@ def _source_info(
     revision_id = coordinates.get("revision_id")
     published: Optional[bool] = None
     if revision_id:
-        row = db.get_version_by_id(str(revision_id), tenant_id)
+        row = db.get_version_core(str(revision_id), tenant_id)
         if row is not None:
             published = bool(row.get("published"))
 

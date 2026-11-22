@@ -71,6 +71,7 @@ def state(monkeypatch) -> _State:
     monkeypatch.setattr(db, "get_version_source_projection", lambda rev, tenant: st.row)
     monkeypatch.setattr(db, "get_versions_for_project", lambda p, t, *a, **k: [{"version_id": v} for v in st.labels])
     monkeypatch.setattr(db, "get_project_by_id", lambda p, t, **k: {"id": p, "name": "Pets", "slug": "pets"})
+    monkeypatch.setattr(db, "get_project_core", lambda p, t, **k: {"id": p, "name": "Pets", "slug": "pets"})
     monkeypatch.setattr(
         db,
         "insert_workflow_audit",

@@ -107,7 +107,7 @@ async def record_import_original(
     )
     version = None
     if is_uuid_string(body.version_id):
-        version = await run_in_threadpool(db.get_version_by_id, body.version_id, tenant_id)
+        version = await run_in_threadpool(db.get_version_core, body.version_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {body.version_id}")
     if str(version.get("creator_id") or "") != str(actor_id):

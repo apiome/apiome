@@ -168,7 +168,7 @@ def get_version_change_report(
     """
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = db.get_version_core(version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if version["project_id"] != project_id:

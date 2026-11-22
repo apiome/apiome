@@ -88,6 +88,7 @@ class TestListDomains:
     def test_it_appends_the_virtual_shared_bucket_last(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.list_domains.return_value = [
                 domain_row(),
                 domain_row(slug="billing", name="billing", sort_order=1),
@@ -108,6 +109,7 @@ class TestListDomains:
     def test_real_domains_are_not_flagged_virtual(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.list_domains.return_value = [domain_row()]
             mock_store.shared_bucket.side_effect = _real_shared_bucket
             body = client.get(f"/v1/domains/acme/version/{VERSION}").json()
@@ -121,6 +123,7 @@ class TestListDomains:
         # `billing`.
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.list_domains.return_value = [
                 domain_row(sort_order=0),
                 domain_row(slug="billing", name="billing", sort_order=9),
@@ -135,6 +138,7 @@ class TestListDomains:
     def test_a_version_with_no_domains_is_all_shared(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.list_domains.return_value = []
             mock_store.shared_bucket.side_effect = _real_shared_bucket
             body = client.get(f"/v1/domains/acme/version/{VERSION}").json()
@@ -145,17 +149,19 @@ class TestListDomains:
     def test_another_tenants_version_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             response = client.get(f"/v1/domains/acme/version/{VERSION}")
 
         assert response.status_code == 404
         # The tenant is what scopes the lookup, not a separate authorization step.
-        mock_db.get_version_by_id.assert_called_once_with(VERSION, TENANT)
+        mock_db.get_version_core.assert_called_once_with(VERSION, TENANT)
 
 
 class TestCreateDomain:
     def test_it_creates_and_returns_201(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.next_sort_order.return_value = 3
             mock_store.create_domain.return_value = domain_row(sort_order=3)
             mock_store.slugify.side_effect = _real_slugify
@@ -171,6 +177,7 @@ class TestCreateDomain:
     def test_an_explicit_sort_order_wins_over_the_computed_one(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.create_domain.return_value = domain_row(sort_order=0)
             mock_store.slugify.side_effect = _real_slugify
             mock_store.is_valid_slug.side_effect = _real_is_valid_slug
@@ -184,6 +191,7 @@ class TestCreateDomain:
     def test_a_blank_name_is_rejected(self, name: str):
         with patch("app.domains_routes.db") as mock_db:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             response = client.post(f"/v1/domains/acme/version/{VERSION}", json={"name": name})
 
         assert response.status_code == 400
@@ -192,6 +200,7 @@ class TestCreateDomain:
     def test_a_name_that_yields_no_slug_is_rejected(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.slugify.side_effect = _real_slugify
             response = client.post(f"/v1/domains/acme/version/{VERSION}", json={"name": "!!!"})
 
@@ -202,6 +211,7 @@ class TestCreateDomain:
     def test_a_malformed_or_reserved_slug_is_rejected(self, slug: str):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.is_valid_slug.side_effect = _real_is_valid_slug
             response = client.post(
                 f"/v1/domains/acme/version/{VERSION}", json={"name": "Anything", "slug": slug}
@@ -214,6 +224,7 @@ class TestCreateDomain:
         # memberships as one folder.
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.slugify.side_effect = _real_slugify
             response = client.post(f"/v1/domains/acme/version/{VERSION}", json={"name": "Shared"})
 
@@ -222,6 +233,7 @@ class TestCreateDomain:
     def test_a_duplicate_is_a_409(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.next_sort_order.return_value = 0
             mock_store.slugify.side_effect = _real_slugify
             mock_store.is_valid_slug.side_effect = _real_is_valid_slug
@@ -237,6 +249,7 @@ class TestUpdateDomain:
     def test_it_renames(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.update_domain.return_value = domain_row(name="Customer accounts")
             response = client.patch(f"/v1/domains/acme/{DOMAIN}", json={"name": "Customer accounts"})
@@ -250,6 +263,7 @@ class TestUpdateDomain:
     def test_a_blank_rename_is_rejected(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             response = client.patch(f"/v1/domains/acme/{DOMAIN}", json={"name": "   "})
 
@@ -258,6 +272,7 @@ class TestUpdateDomain:
     def test_an_explicit_slug_is_validated(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.is_valid_slug.side_effect = _real_is_valid_slug
             response = client.patch(f"/v1/domains/acme/{DOMAIN}", json={"slug": "shared"})
@@ -267,6 +282,7 @@ class TestUpdateDomain:
     def test_another_tenants_domain_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             mock_store.get_domain.return_value = domain_row()
             response = client.patch(f"/v1/domains/acme/{DOMAIN}", json={"name": "Mine now"})
 
@@ -276,6 +292,7 @@ class TestUpdateDomain:
     def test_a_deleted_domain_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = None
             response = client.patch(f"/v1/domains/acme/{DOMAIN}", json={"name": "Ghost"})
 
@@ -286,6 +303,7 @@ class TestDeleteDomain:
     def test_it_reports_what_moved_to_shared(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.count_members.return_value = {"class_count": 3, "path_count": 4}
             mock_store.delete_domain.return_value = domain_row(deleted_at="2026-08-04T00:00:00Z")
@@ -305,6 +323,7 @@ class TestDeleteDomain:
         calls = []
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.count_members.side_effect = lambda *a, **k: (
                 calls.append("count") or {"class_count": 1, "path_count": 0}
@@ -322,6 +341,7 @@ class TestDeleteDomain:
             "app.domains_routes.enforce_permission"
         ) as mock_enforce:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.count_members.return_value = {"class_count": 0, "path_count": 0}
             mock_store.delete_domain.return_value = domain_row()
@@ -334,6 +354,7 @@ class TestDeleteDomain:
     def test_deleting_twice_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_domain.return_value = domain_row()
             mock_store.count_members.return_value = {"class_count": 0, "path_count": 0}
             mock_store.delete_domain.return_value = None
@@ -345,6 +366,7 @@ class TestDeleteDomain:
 class TestAssignment:
     def _member_patches(self, mock_store, mock_db, *, member, version_id=VERSION):
         mock_db.get_version_by_id.return_value = {"id": version_id}
+        mock_db.get_version_core.return_value = {"id": version_id}
         mock_store.get_class.return_value = member
         mock_store.get_path.return_value = member
         mock_store.get_domain.return_value = domain_row()
@@ -412,6 +434,7 @@ class TestAssignment:
     def test_a_missing_class_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_class.return_value = None
             response = client.put(f"/v1/domains/acme/classes/{CLASS}", json={"domain_id": None})
 
@@ -420,6 +443,7 @@ class TestAssignment:
     def test_a_missing_path_is_not_found(self):
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.get_path.return_value = None
             response = client.put(f"/v1/domains/acme/paths/{PATH}", json={"domain_id": None})
 
@@ -429,6 +453,7 @@ class TestAssignment:
         member = {"id": CLASS, "version_id": VERSION, "name": "Customer", "domain_id": None}
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = None
+            mock_db.get_version_core.return_value = None
             mock_store.get_class.return_value = member
             response = client.put(f"/v1/domains/acme/classes/{CLASS}", json={"domain_id": None})
 
@@ -454,6 +479,7 @@ class TestAcceptance:
 
         with patch("app.domains_routes.db") as mock_db, patch("app.domains_routes.store") as mock_store:
             mock_db.get_version_by_id.return_value = {"id": VERSION}
+            mock_db.get_version_core.return_value = {"id": VERSION}
             mock_store.slugify.side_effect = _real_slugify
             mock_store.is_valid_slug.side_effect = _real_is_valid_slug
             mock_store.resolve_domain_id.side_effect = _real_resolve_domain_id

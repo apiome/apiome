@@ -860,7 +860,7 @@ def preview_style_guide_custom_rules(
     except CustomRuleValidationError as exc:
         raise _validation_http_error(exc) from exc
 
-    project = db.get_project_by_id(body.project_id, tenant_id)
+    project = db.get_project_core(body.project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 

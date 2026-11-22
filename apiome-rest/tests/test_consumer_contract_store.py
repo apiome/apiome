@@ -185,6 +185,7 @@ def test_an_empty_project_reference_refuses(fake_db) -> None:
 def test_an_omitted_version_resolves_to_the_projects_latest(fake_db) -> None:
     fake_db.get_latest_revision_id_for_project.return_value = _VERSION
     fake_db.get_version_by_id.return_value = {"id": _VERSION, "version_id": "2.0.0"}
+    fake_db.get_version_core.return_value = {"id": _VERSION, "version_id": "2.0.0"}
     assert resolve_version(_TENANT, _PROJECT, None)["version_id"] == "2.0.0"
 
 
@@ -197,6 +198,7 @@ def test_a_project_with_no_versions_refuses_by_name(fake_db) -> None:
 
 def test_a_version_from_another_project_does_not_resolve(fake_db) -> None:
     fake_db.get_version_by_id.return_value = {"id": _VERSION, "project_id": "other"}
+    fake_db.get_version_core.return_value = {"id": _VERSION, "project_id": "other"}
     with pytest.raises(ConsumerValidationError) as caught:
         resolve_version(_TENANT, _PROJECT, _VERSION)
     assert caught.value.code == "consumer-version-not-found"

@@ -201,7 +201,7 @@ def _resolve_subject(
             )
         project_slug = body.project_slug
         if not project_slug and project_id:
-            proj = db.get_project_by_id(project_id, tenant_id)
+            proj = db.get_project_core(project_id, tenant_id)
             project_slug = str((proj or {}).get("slug") or "")
         if not project_slug:
             raise HTTPException(status_code=422, detail="Could not resolve project slug")
@@ -216,7 +216,7 @@ def _resolve_subject(
             project_id = str(version.get("project_id") or "") or None
 
     if version_record_id and not project_id:
-        version = db.get_version_by_id(version_record_id, tenant_id)
+        version = db.get_version_core(version_record_id, tenant_id)
         if not version:
             raise HTTPException(
                 status_code=422,

@@ -53,7 +53,7 @@ def _auth():
 
 def _project_lookup():
     """Answer the shared project resolver for ``_PROJECT``."""
-    return patch("app.sdk_regen_routes.db.get_project_by_id", return_value=dict(_PROJECT_ROW))
+    return patch("app.sdk_regen_routes.db.get_project_core", return_value=dict(_PROJECT_ROW))
 
 
 def _subscription(**fields: Any) -> RegenSubscriptionOut:
@@ -255,7 +255,7 @@ def test_unsubscribing_needs_projects_edit_and_audits_only_a_real_delete():
 
 def test_an_unknown_project_is_404():
     with patch("app.sdk_regen_routes.enforce_permission"), patch(
-        "app.sdk_regen_routes.db.get_project_by_id", return_value=None
+        "app.sdk_regen_routes.db.get_project_core", return_value=None
     ), patch("app.sdk_regen_routes.db.get_project_by_slug", return_value=None):
         response = client.get(_SUBSCRIPTIONS)
     assert response.status_code == 404

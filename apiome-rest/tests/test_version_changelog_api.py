@@ -112,6 +112,7 @@ def test_get_version_changelog_ok(auth_override):
 
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.side_effect = _get_version
+        mdb.get_version_core.side_effect = _get_version
         mdb.get_version_changelog.return_value = row
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
 
@@ -155,6 +156,7 @@ def test_get_version_changelog_initial_publication_marker(auth_override):
     }
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = version
+        mdb.get_version_core.return_value = version
         mdb.get_version_changelog.return_value = row
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 200
@@ -168,6 +170,7 @@ def test_get_version_changelog_initial_publication_marker(auth_override):
 def test_get_version_changelog_version_missing_404(auth_override):
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = None
+        mdb.get_version_core.return_value = None
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 404
 
@@ -183,6 +186,7 @@ def test_get_version_changelog_wrong_project_404(auth_override):
     version = {"id": REVISION_ID, "project_id": str(uuid4()), "published": True}
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = version
+        mdb.get_version_core.return_value = version
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 404
     mdb.get_version_changelog.assert_not_called()
@@ -192,6 +196,7 @@ def test_get_version_changelog_unpublished_400(auth_override):
     version = {"id": REVISION_ID, "project_id": PROJECT_ID, "published": False}
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = version
+        mdb.get_version_core.return_value = version
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 400
 
@@ -200,6 +205,7 @@ def test_get_version_changelog_no_row_404(auth_override):
     version = {"id": REVISION_ID, "project_id": PROJECT_ID, "published": True}
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = version
+        mdb.get_version_core.return_value = version
         mdb.get_version_changelog.return_value = None
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 404
@@ -222,6 +228,7 @@ def test_get_version_changelog_failed_row_exposes_error(auth_override):
     }
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_version_by_id.return_value = version
+        mdb.get_version_core.return_value = version
         mdb.get_version_changelog.return_value = row
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/{REVISION_ID}/changelog")
     assert r.status_code == 200
@@ -278,6 +285,7 @@ def test_list_project_changelogs_ok_and_pending_rows(auth_override):
     ]
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_project_by_id.return_value = project
+        mdb.get_project_core.return_value = project
         mdb.list_version_changelogs_for_project.return_value = rows
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/changelogs")
 
@@ -302,6 +310,7 @@ def test_list_project_changelogs_passes_limit(auth_override):
     project = {"id": PROJECT_ID, "slug": "payments-api"}
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_project_by_id.return_value = project
+        mdb.get_project_core.return_value = project
         mdb.list_version_changelogs_for_project.return_value = []
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/changelogs?limit=25")
     assert r.status_code == 200
@@ -315,6 +324,7 @@ def test_list_project_changelogs_limit_bounds_422(auth_override):
     project = {"id": PROJECT_ID, "slug": "payments-api"}
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_project_by_id.return_value = project
+        mdb.get_project_core.return_value = project
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/changelogs?limit=0")
     assert r.status_code == 422
 
@@ -322,6 +332,7 @@ def test_list_project_changelogs_limit_bounds_422(auth_override):
 def test_list_project_changelogs_project_missing_404(auth_override):
     with patch("app.version_changelog_routes.db") as mdb:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         r = client.get(f"/v1/versions/acme/{PROJECT_ID}/changelogs")
     assert r.status_code == 404
 

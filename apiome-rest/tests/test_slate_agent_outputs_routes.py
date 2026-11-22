@@ -98,7 +98,9 @@ def fake_db():
     """A MagicMock db with the accessors the route uses, patched into the route module."""
     db = MagicMock()
     db.get_project_by_id.return_value = _project()
+    db.get_project_core.return_value = _project()
     db.get_version_by_id.return_value = _version()
+    db.get_version_core.return_value = _version()
     db.get_latest_version_for_project.return_value = "1.0.65"
     db.get_version_changelog.return_value = None
     with patch("app.slate_agent_outputs_routes.db", db), patch(
@@ -175,6 +177,7 @@ def test_if_none_match_weak_and_wildcard(fake_db) -> None:
 
 def test_private_portal_withholds_content(fake_db) -> None:
     fake_db.get_version_by_id.return_value = _version(visibility="private")
+    fake_db.get_version_core.return_value = _version(visibility="private")
     catalog = client.get(_BASE, params={"output": "catalog"}).json()
     assert catalog["contentWithheld"] is True
     assert "operations" not in catalog
@@ -189,24 +192,28 @@ def test_private_portal_withholds_content(fake_db) -> None:
 
 def test_unpublished_revision_is_400(fake_db) -> None:
     fake_db.get_version_by_id.return_value = _version(published=False)
+    fake_db.get_version_core.return_value = _version(published=False)
     resp = client.get(_BASE)
     assert resp.status_code == 400
 
 
 def test_version_in_wrong_project_is_404(fake_db) -> None:
     fake_db.get_version_by_id.return_value = _version(project_id="99999999-9999-4999-8999-999999999999")
+    fake_db.get_version_core.return_value = _version(project_id="99999999-9999-4999-8999-999999999999")
     resp = client.get(_BASE)
     assert resp.status_code == 404
 
 
 def test_unknown_version_is_404(fake_db) -> None:
     fake_db.get_version_by_id.return_value = None
+    fake_db.get_version_core.return_value = None
     resp = client.get(_BASE)
     assert resp.status_code == 404
 
 
 def test_unknown_project_is_404(fake_db) -> None:
     fake_db.get_project_by_id.return_value = None
+    fake_db.get_project_core.return_value = None
     resp = client.get(_BASE)
     assert resp.status_code == 404
 

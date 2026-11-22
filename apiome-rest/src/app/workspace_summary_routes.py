@@ -77,7 +77,7 @@ def _assert_version_in_tenant(version_id: str, tenant_id: str) -> Dict[str, Any]
     Raises:
         HTTPException: 404 when the version does not exist in this tenant.
     """
-    version = db.get_version_by_id(version_id, tenant_id)
+    version = db.get_version_core(version_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
     return version

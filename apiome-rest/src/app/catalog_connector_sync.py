@@ -436,7 +436,7 @@ def import_document_as_catalog_item(
     parent_version_id: Optional[str] = None
     prior = item_row.get("project_id")
     if prior:
-        project = db.get_project_by_id(str(prior), tenant_id)
+        project = db.get_project_core(str(prior), tenant_id)
         if project and not project.get("deleted_at") and project.get("publishable") is False:
             existing_project_id = str(prior)
             if item_row.get("imported_revision"):

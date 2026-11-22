@@ -403,7 +403,7 @@ def test_subscribing_needs_edit_and_publish(auth) -> None:
         patch(f"{_ROUTES}.enforce_permission") as guard,
         _tenant(),
         patch(f"{_ROUTES}.db.get_export_preset", return_value={"id": _PRESET, "name": "nightly"}),
-        patch(f"{_ROUTES}.db.get_project_by_id", return_value={"id": _PROJECT}),
+        patch(f"{_ROUTES}.db.get_project_core", return_value={"id": _PROJECT}),
         patch(f"{_ROUTES}.db.insert_export_auto_subscription", return_value=_sub_row(halt_at="warn")) as insert,
         patch(f"{_ROUTES}.write_audit") as audit,
     ):
@@ -423,7 +423,7 @@ def test_subscribe_refusals(auth) -> None:
         patch(f"{_ROUTES}.enforce_permission"),
         _tenant(),
         patch(f"{_ROUTES}.db.get_export_preset", return_value=None),
-        patch(f"{_ROUTES}.db.get_project_by_id", return_value=None),
+        patch(f"{_ROUTES}.db.get_project_core", return_value=None),
     ):
         response = client.post("/v1/export/acme/auto-exports", json={"projectId": _PROJECT, "preset": "x"})
     assert response.status_code == 400 and len(response.json()["detail"]["errors"]) == 2
@@ -431,7 +431,7 @@ def test_subscribe_refusals(auth) -> None:
         patch(f"{_ROUTES}.enforce_permission"),
         _tenant(),
         patch(f"{_ROUTES}.db.get_export_preset", return_value={"id": _PRESET, "name": "nightly"}),
-        patch(f"{_ROUTES}.db.get_project_by_id", return_value={"id": _PROJECT}),
+        patch(f"{_ROUTES}.db.get_project_core", return_value={"id": _PROJECT}),
         patch(f"{_ROUTES}.db.insert_export_auto_subscription", side_effect=pg_errors.UniqueViolation()),
     ):
         assert (

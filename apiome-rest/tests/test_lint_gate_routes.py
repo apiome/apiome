@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -109,10 +109,12 @@ def _gate_patches(
         return evidence_rows
 
     return [
-        patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}),
-        patch(
-            "app.lint_routes.db.get_version_by_id",
-            side_effect=lambda vid, _tid: _version_row(vid),
+        patch("app.lint_routes.db.get_project_core", return_value={"id": PID}),
+        # The gated revision is read in full, the baseline through the core lookup (#7188).
+        patch.multiple(
+            "app.lint_routes.db",
+            get_version_by_id=MagicMock(side_effect=lambda vid, _tid: _version_row(vid)),
+            get_version_core=MagicMock(side_effect=lambda vid, _tid: _version_row(vid)),
         ),
         patch("app.lint_gate.resolve_policy_pack", return_value=dict(PACK)),
         patch("app.lint_gate.db.list_lint_evidence_runs_for_version", side_effect=list_runs),
@@ -203,12 +205,12 @@ def test_gate_baseline_compare_marks_regressions():
 
 
 def test_gate_baseline_must_belong_to_project():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
-        "app.lint_routes.db.get_version_by_id",
-        side_effect=lambda vid, _tid: (
-            {"id": vid, "project_id": "other-project"} if vid == BASE_VID else _version_row(vid)
-        ),
-    ):
+    def _row(vid, _tid):
+        return {"id": vid, "project_id": "other-project"} if vid == BASE_VID else _version_row(vid)
+
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", side_effect=_row
+    ), patch("app.lint_routes.db.get_version_core", side_effect=_row):
         r = client.get(
             f"/v1/versions/acme/{PID}/{VID}/lint/gate?baselineRevisionId={BASE_VID}"
         )
@@ -217,7 +219,7 @@ def test_gate_baseline_must_belong_to_project():
 
 
 def test_gate_baseline_must_differ_from_head():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id",
         side_effect=lambda vid, _tid: _version_row(vid),
     ):
@@ -397,11 +399,11 @@ def test_gate_artifacts_never_leak_protected_content():
 
 
 def test_gate_404s():
-    with patch("app.lint_routes.db.get_project_by_id", return_value=None):
+    with patch("app.lint_routes.db.get_project_core", return_value=None):
         r = client.get(f"/v1/versions/acme/{PID}/{VID}/lint/gate")
     assert r.status_code == 404
 
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id",
         side_effect=lambda vid, _tid: _version_row(vid),
     ), patch(
@@ -412,7 +414,7 @@ def test_gate_404s():
 
 
 def test_gate_409_without_style_guide():
-    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+    with patch("app.lint_routes.db.get_project_core", return_value={"id": PID}), patch(
         "app.lint_routes.db.get_version_by_id",
         side_effect=lambda vid, _tid: _version_row(vid),
     ), patch(

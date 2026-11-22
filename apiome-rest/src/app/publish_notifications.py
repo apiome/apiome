@@ -322,7 +322,7 @@ def notify_version_published_on_publish(
     db = default_db
 
     try:
-        version = db.get_version_by_id(published_revision_id, tenant_id)
+        version = db.get_version_core(published_revision_id, tenant_id)
         if not version or not version.get("published"):
             return
         version_label = _clean_str(version.get("version_id"))

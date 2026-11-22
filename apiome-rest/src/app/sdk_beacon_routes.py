@@ -100,7 +100,7 @@ def _project(tenant_id: str, ref: str) -> Dict[str, Any]:
     value = (ref or "").strip()
     row = None
     if value:
-        row = db.get_project_by_id(value, tenant_id) if is_uuid_string(value) else db.get_project_by_slug(value, tenant_id)
+        row = db.get_project_core(value, tenant_id) if is_uuid_string(value) else db.get_project_by_slug(value, tenant_id)
     if not row:
         raise HTTPException(
             status_code=404, detail={"code": "usage-project-not-found", "message": "no such project in this tenant"}

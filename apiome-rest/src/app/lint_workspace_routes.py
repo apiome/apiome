@@ -330,7 +330,7 @@ def bulk_decision_action(
                     "Permission denied: lint_findings:publish is required for this transition"
                 )
         if item_error is None and item.project_id:
-            project = db.get_project_by_id(item.project_id, tenant_id)
+            project = db.get_project_core(item.project_id, tenant_id)
             if not project:
                 item_error = "Project not found"
 

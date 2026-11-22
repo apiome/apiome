@@ -153,7 +153,7 @@ def _resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     ref = (project_ref or "").strip()
     row: Optional[Dict[str, Any]] = None
     if is_uuid_string(ref):
-        row = db.get_project_by_id(ref, tenant_id)
+        row = db.get_project_core(ref, tenant_id)
     if row is None and ref:
         row = db.get_project_by_slug(ref, tenant_id)
     if row is None:

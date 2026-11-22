@@ -66,7 +66,7 @@ def list_version_tags(
 ) -> List[VersionTagSchema]:
     """List all tags for a project."""
     tenant_id = _tenant_id(auth_data)
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     rows = db.list_version_tags_for_project(project_id, tenant_id)
@@ -83,7 +83,7 @@ def create_version_tag(
     """Create a tag pointing at an existing schema revision."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     tenant_id = _tenant_id(auth_data)
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     if not _valid_tag_name(body.name):
@@ -142,7 +142,7 @@ def patch_version_tag(
     """Move a tag to another revision, set its immutable lock / protection policy, and/or its message."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = _tenant_id(auth_data)
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     uid = get_authenticated_user_id(auth_data)
@@ -232,7 +232,7 @@ def delete_version_tag(
     """Delete a tag (not allowed when immutable; protected tags require admin)."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.DELETE)
     tenant_id = _tenant_id(auth_data)
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     uid = get_authenticated_user_id(auth_data)

@@ -197,7 +197,7 @@ def put_project_change_report_template_default(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="project not found")
     if str(project.get("creator_id") or "") != user_id and not db.is_user_tenant_admin(tenant_id, user_id):

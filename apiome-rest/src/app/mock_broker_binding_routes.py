@@ -137,7 +137,7 @@ class BrokerBindingListResponse(BaseModel):
 
 def _version(project_id: str, version_record_id: str, tenant_id: str) -> Dict[str, Any]:
     """Return the version row, 404ing when it is not in this tenant and project."""
-    existing = db.get_version_by_id(version_record_id, tenant_id)
+    existing = db.get_version_core(version_record_id, tenant_id)
     if not existing or str(existing.get("project_id")) != project_id:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     return existing

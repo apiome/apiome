@@ -282,6 +282,7 @@ def mdb():
         patch("app.project_timeline_routes.get_authenticated_user_id", return_value=U[6]),
     ):
         mock_db.get_project_by_id.return_value = {"id": _PROJECT}
+        mock_db.get_project_core.return_value = {"id": _PROJECT}
         mock_db.is_user_tenant_admin.return_value = False
         mock_db.list_project_timeline.return_value = [_row()]
         mock_db.permission = permission
@@ -342,6 +343,7 @@ class TestRoute:
 
     def test_unknown_project_is_404(self, mdb: MagicMock) -> None:
         mdb.get_project_by_id.return_value = None
+        mdb.get_project_core.return_value = None
         assert client.get(_URL).status_code == 404
         mdb.list_project_timeline.assert_not_called()
 
@@ -364,6 +366,7 @@ def tag_db():
         patch("app.version_tags_routes.get_authenticated_user_id", return_value=U[6]),
     ):
         mock_db.get_project_by_id.return_value = {"id": _PROJECT}
+        mock_db.get_project_core.return_value = {"id": _PROJECT}
         mock_db.is_user_tenant_admin.return_value = False
         yield mock_db
     app.dependency_overrides.pop(validate_authentication, None)
