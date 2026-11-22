@@ -285,7 +285,8 @@ async def perform_git_delivery(
     summary="Deliver a completed export to a git repository",
     description=(
         "Writes a **completed** export job's bundle into a repository registered in this workspace "
-        "through a linked GitHub account, under `targetPath` (a multi-file bundle keeps its directory "
+        "through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure DevOps) account — on GitLab the pull "
+        "request is a merge request — under `targetPath` (a multi-file bundle keeps its directory "
         "tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.\n\n"
         "**`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>` built on the latest "
         "base branch, and one pull request whose description carries the export's fidelity summary and a "

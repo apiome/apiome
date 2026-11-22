@@ -4,7 +4,8 @@ One entry point, :func:`deliver_export`, that takes a completed export job's bun
 request and writes the bundle into a registered repository — as a **pull request** (``mode=pr``,
 the default) or a **direct commit** (``mode=commit``). The rules live in
 :mod:`app.export_git_delivery` (files, manifest, branch, words); the provider calls behind
-:mod:`app.export_git_delivery_providers` (GitHub today); what lives here is the order, what each
+:mod:`app.export_git_delivery_providers` (GitHub, GitLab, Bitbucket and Azure DevOps); what lives here
+is the order, what each
 outcome means, and the run row (``export_git_delivery_runs``, V354).
 
 It is the SDK-4.2 delivery sequence (:mod:`app.sdk_git_delivery_pipeline`) applied to an export:
@@ -44,7 +45,13 @@ from .export_git_delivery import (
     pull_request_body,
     pull_request_title,
 )
-from .export_git_delivery_providers import SUPPORTED_PROVIDERS, GitDeliveryProvider, open_provider
+from .export_git_delivery_providers import (
+    SUPPORTED_PROVIDERS,
+    WRITE_ACCESS_HINTS,
+    GitDeliveryProvider,
+    open_provider,
+    provider_label,
+)
 from .repository_webhook_rotation import resolve_linked_account_token
 from .sdk_git_delivery_changes import FILE_MODE, ChangeSet, join_repo_path, manifest_paths, plan_changes
 from .sdk_git_delivery_github import (
@@ -177,7 +184,7 @@ def _resolve_repository(tenant_id: str, repository_id: str) -> Dict[str, Any]:
         logger.warning("Repository lookup failed for %s", repository_id, exc_info=True)
         raise _DeliveryError(ERROR_INTERNAL, "The target repository could not be read. Try again.",
                              retryable=True) from exc
-    problem = repository_problem(row, repository_id)
+    problem = repository_problem(row, repository_id, supported_providers=SUPPORTED_PROVIDERS)
     if problem:
         raise _DeliveryError(export_code(problem.code), problem.message.replace("delivery target", "delivery"))
     provider = str((row or {}).get("provider") or "").strip().lower()
@@ -194,7 +201,8 @@ def _resolve_token(repository: Dict[str, Any]) -> str:
         name = repository.get("repository_full_name") or repository.get("id")
         raise _DeliveryError(
             ERROR_CREDENTIAL_MISSING,
-            f"The GitHub account that registered {name} is no longer linked, or holds no token, so "
+            f"The {provider_label(repository.get('provider'))} account that registered {name} is no longer "
+            "linked, or holds no token, so "
             "there is no credential to push with. Re-link that account — or re-register the repository "
             "through an account that can write to it — then deliver again.",
         )
@@ -238,7 +246,8 @@ def _execute(
     log.add("resolve", f"Delivering export job {subject.job_id} ({subject.target}, {len(files)} file(s)) to "
             f"{progress.repository_full_name} with the repository's linked-account credential.")
 
-    with open_provider(repository.get("provider") or "github", token, progress.repository_full_name,
+    provider_key = str(repository.get("provider") or "github").strip().lower()
+    with open_provider(provider_key, token, progress.repository_full_name,
                        client_factory=client_factory) as provider:
         info = provider.get_repository()
         progress.repository_full_name = info.full_name
@@ -248,9 +257,8 @@ def _execute(
         if not info.can_push:
             raise _DeliveryError(
                 ERROR_PERMISSION_DENIED,
-                f"The linked account can read {info.full_name} but cannot push to it. Grant that account "
-                "write access (and the token the `repo` scope, or Contents and Pull requests write "
-                "access), then deliver again.",
+                f"The linked account can read {info.full_name} but cannot push to it. "
+                f"{WRITE_ACCESS_HINTS.get(provider_key, 'Grant that account write access')}, then deliver again.",
             )
 
         base = request.base_branch or info.default_branch
@@ -291,6 +299,7 @@ def _commit(provider: GitDeliveryProvider, subject: DeliverySubject, changes: Ch
     commit = provider.create_commit(commit_message(subject), tree, [base_sha])
     try:
         provider.update_branch(base, commit, force=False)
+        commit = provider.resolve_commit(commit)
     except GitProviderError as exc:
         raise _DeliveryError(
             export_code(exc.code),
@@ -328,15 +337,17 @@ def _pull_request(provider: GitDeliveryProvider, owner: str, subject: DeliverySu
     head_tree = provider.get_commit_tree_sha(branch_sha) if branch_sha else None
     pushed = head_tree != new_tree
     if pushed:
-        commit = provider.create_commit(commit_message(subject), new_tree, [base_sha])
-        progress.commit_sha = commit
+        staged = provider.create_commit(commit_message(subject), new_tree, [base_sha])
         if branch_sha:
-            provider.update_branch(branch, commit, force=True)
+            provider.update_branch(branch, staged, force=True)
+            commit = progress.commit_sha = provider.resolve_commit(staged)
             log.add("push", f"Force-updated {branch} to {commit[:12]} on top of {base}.")
-        elif provider.create_branch(branch, commit):
+        elif provider.create_branch(branch, staged):
+            commit = progress.commit_sha = provider.resolve_commit(staged)
             log.add("push", f"Created {branch} at {commit[:12]} on top of {base}.")
         else:
-            provider.update_branch(branch, commit, force=True)
+            provider.update_branch(branch, staged, force=True)
+            commit = progress.commit_sha = provider.resolve_commit(staged)
             log.add("push", f"{branch} was created by a concurrent delivery; force-updated it to {commit[:12]}.",
                     level="warn")
     else:

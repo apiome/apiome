@@ -326,7 +326,7 @@ def test_a_removed_repository_is_a_failed_run() -> None:
 
 
 def test_a_repository_on_another_provider_is_refused() -> None:
-    outcome, _ = _deliver(_github(), repository=_repository(provider="gitlab"))
+    outcome, _ = _deliver(_github(), repository=_repository(provider="gitea"))
     assert outcome.error_code == "export-git-delivery-provider-unsupported"
 
 

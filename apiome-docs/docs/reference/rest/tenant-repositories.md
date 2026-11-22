@@ -47,6 +47,21 @@ Operation id: `list_tenant_repositories_v1_tenants__tenant_slug__repositories_ge
 
 **Create Tenant Repository**
 
+Register a Git repository from a public clone URL or through a linked account.
+
+A ``public_url`` registration needs only ``cloneUrl``. A ``linked_account`` registration names
+the account (``linkedAccountId``) and the repository (``repositoryFullName``); Apiome reads the
+repository from its host with that account's token, so private repositories register, and git
+delivery can later push with the same credential. The account decides the host and the name's
+shape (#6654):
+
+* GitHub — ``owner/repo``;
+* GitLab (gitlab.com) — ``group/project`` or ``group/subgroup/project``;
+* Bitbucket Cloud — ``workspace/repo``;
+* Microsoft (Azure DevOps) — ``organization/project/repository``.
+
+Any other linked account answers 400. The name must match the host's own spelling.
+
 Operation id: `create_tenant_repository_v1_tenants__tenant_slug__repositories_post`
 
 **Parameters**

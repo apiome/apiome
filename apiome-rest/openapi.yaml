@@ -11173,26 +11173,26 @@ paths:
       tags:
       - export-delivery
       summary: Deliver a completed export to a git repository
-      description: 'Writes a **completed** export job''s bundle into a repository
-        registered in this workspace through a linked GitHub account, under `targetPath`
-        (a multi-file bundle keeps its directory tree), with a delivery manifest at
-        `<targetPath>/.apiome/export-delivery.json`.
+      description: 'Writes a **completed** export job''s bundle into a repository registered
+        in this workspace through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure
+        DevOps) account — on GitLab the pull request is a merge request — under `targetPath`
+        (a multi-file bundle keeps its directory tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.
 
 
-        **`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>`
-        built on the latest base branch, and one pull request whose description carries
-        the export''s fidelity summary and a link to the full report. A re-export
-        updates the same branch and pull request: `opened`, `updated`, `unchanged`
-        (nothing written) or `up_to_date` (the base already holds it).
+        **`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>` built
+        on the latest base branch, and one pull request whose description carries the export''s
+        fidelity summary and a link to the full report. A re-export updates the same branch
+        and pull request: `opened`, `updated`, `unchanged` (nothing written) or `up_to_date`
+        (the base already holds it).
 
 
-        **`mode: commit`**: one commit straight onto the base branch, fast-forward
-        only — `committed`, or `failed` when the branch moved or is protected.
+        **`mode: commit`**: one commit straight onto the base branch, fast-forward only
+        — `committed`, or `failed` when the branch moved or is protected.
 
 
-        **Failures are runs.** A missing or revoked credential, a token without write
-        access or a refused push answers `200` with `status: failed`, a stable `errorCode`
-        and an actionable log.
+        **Failures are runs.** A missing or revoked credential, a token without write access
+        or a refused push answers `200` with `status: failed`, a stable `errorCode` and
+        an actionable log.
 
 
         Requires `versions:publish`. Audited as `export.git_delivery`.'
@@ -79194,6 +79194,35 @@ paths:
       tags:
       - tenant-repositories
       summary: Create Tenant Repository
+      description: 'Register a Git repository from a public clone URL or through a linked
+        account.
+
+
+        A ``public_url`` registration needs only ``cloneUrl``. A ``linked_account`` registration
+        names
+
+        the account (``linkedAccountId``) and the repository (``repositoryFullName``);
+        Apiome reads the
+
+        repository from its host with that account''s token, so private repositories register,
+        and git
+
+        delivery can later push with the same credential. The account decides the host
+        and the name''s
+
+        shape (#6654):
+
+
+        * GitHub — ``owner/repo``;
+
+        * GitLab (gitlab.com) — ``group/project`` or ``group/subgroup/project``;
+
+        * Bitbucket Cloud — ``workspace/repo``;
+
+        * Microsoft (Azure DevOps) — ``organization/project/repository``.
+
+
+        Any other linked account answers 400. The name must match the host''s own spelling.'
       operationId: create_tenant_repository_v1_tenants__tenant_slug__repositories_post
       parameters:
       - name: tenant_slug
@@ -79215,8 +79244,8 @@ paths:
             description: Create Tenant Repositoryauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -131819,9 +131848,9 @@ components:
         repositoryId:
           type: string
           title: Repositoryid
-          description: A repository registered in this workspace through a linked
-            GitHub account (`GET /v1/tenants/{tenant}/repositories`). Its linked account
-            is the credential.
+          description: A repository registered in this workspace through a linked GitHub, GitLab,
+            Bitbucket or Microsoft (Azure DevOps) account (`GET /v1/tenants/{tenant}/repositories`).
+            Its linked account is the credential.
           example: example
         targetPath:
           type: string

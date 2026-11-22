@@ -29,6 +29,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **EDI and HL7 v2 guide planning is linear:** segment IDs are allocated from a cursor over the fallback candidates,
   picking exactly the IDs the full scan did. Guide fidelity on an 1 800-record spec drops from about 8 s to under 1 s.
 
+## [1.809.0] - 2026-11-22
+
+### Added
+- **Export git delivery to GitLab, Bitbucket and Azure DevOps — OpenAPI 1.633.0 (#6654):** `POST
+  /v1/export/{tenant}/jobs/{job_id}/deliveries/git` now delivers to repositories on **GitLab** (gitlab.com, as a
+  merge request), **Bitbucket Cloud** and **Azure DevOps** (as pull requests), as well as GitHub, in both `pr` and
+  `commit` mode. The request and the run are unchanged.
+  - New write clients behind `app.export_git_delivery_providers.PROVIDERS` (`gitlab`, `bitbucket`, `azure_devops`):
+    GitLab's Commits API, Bitbucket's `/src` form and Azure DevOps' Pushes and Refs APIs. They stage the tree and
+    commit locally and write them in the host's one commit call; every commit carries an `Apiome-Tree:` trailer so
+    an unchanged re-delivery is still `unchanged`. A direct commit only fast-forwards on every host.
+  - Refusals map to the existing `export-git-delivery-*` codes (`credential-rejected`, `permission-denied`,
+    `push-rejected`, `pull-request-refused`, `target-path-invalid`, `tree-too-large`, …) with the token redacted,
+    and the messages name what the account needs on that host.
+  - Linked-account registration (`POST /v1/tenants/{tenant_slug}/repositories`, `source: linked_account`) accepts
+    GitLab (`group[/subgroup]/project`), Bitbucket (`workspace/repo`) and Microsoft accounts (Azure DevOps,
+    `organization/project/repository`, stored as provider `azure_devops`); any other account still answers `400`.
+    The operation now has a description listing the accepted names.
+  - SDK delivery and PR-back still support GitHub only: `repository_problem` takes the channel's providers.
+
 ## [1.808.0] - 2026-11-21
 
 ### Fixed
