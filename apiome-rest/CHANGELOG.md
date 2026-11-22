@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.806.0] - 2026-11-21
+
+### Fixed
+- **Database sessions that could hang the API — OpenAPI 1.631.1 (no schema change):**
+  - Every connection is opened with a connect timeout, TCP keepalives, a `lock_timeout` and an
+    `idle_in_transaction_session_timeout`, and names itself `apiome-rest` in `pg_stat_activity`. A statement
+    blocked on a lock now fails after `DB_LOCK_TIMEOUT_MS` (default 30 s) instead of waiting forever — on an
+    `async` route that wait stalled every request. New settings: `DB_CONNECT_TIMEOUT_SECONDS` (10),
+    `DB_LOCK_TIMEOUT_MS` (30000), `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` (300000) and `DB_STATEMENT_TIMEOUT_MS`
+    (0, off). They are skipped when `DATABASE_URL` carries its own `options`.
+  - 85 store functions (domains, version overlays, Arazzo workflows and the Slate stores) ran statements and
+    returned without ending the transaction, leaving their thread's pooled connection idle in a transaction
+    with its locks and snapshot held. They now use `app.db_cursor.db_cursor`, which commits or rolls back the
+    transaction it starts and leaves a caller's open transaction alone. The seven Slate domain writes
+    (`attach_domain`, `record_verification`, `record_certificate`, `record_certificate_error`, `set_primary`,
+    `set_auto_renew`, `detach_domain`) were among them: they were only saved when a later query on the same
+    connection happened to commit.
+  - `execute_query` no longer replaces a query's error with `InterfaceError: connection already closed` when
+    the rollback fails on a dead connection.
+
 ## [1.805.0] - 2026-11-21
 
 ### Changed

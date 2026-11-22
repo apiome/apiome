@@ -36,6 +36,8 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "SlateCachePolicyConflictError",
     "SlateCacheStoreError",
@@ -136,8 +138,7 @@ def get_policy(
     Returns:
         The policy row, or None when the lane has none yet or belongs to another tenant.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -344,8 +345,7 @@ def list_rules(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Dict
     Returns:
         Rule rows ordered by ``ordinal``, each carrying a ``tags`` list.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         rules = _fetch_all(
             cursor,
             """
@@ -577,8 +577,7 @@ def rules_for_tag(
     Returns:
         Rule rows in precedence order.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -612,8 +611,7 @@ def routes_for_release(db: _DbLike, *, release_id: str) -> List[str]:
     Returns:
         Route strings, deduplicated by the table's UNIQUE (release_id, route).
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         rows = _fetch_all(
             cursor,
             """
@@ -646,8 +644,7 @@ def routes_for_host(
     Returns:
         Route strings, or an empty list when the host is not on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         known = _fetch_one(
             cursor,
             """
@@ -841,8 +838,7 @@ def list_purges(
     Returns:
         Purge rows, most recent first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         if scope_kind:
             return _fetch_all(
                 cursor,
@@ -941,8 +937,7 @@ def list_audit(
     Returns:
         Audit rows, most recent first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """

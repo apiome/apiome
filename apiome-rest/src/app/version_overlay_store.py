@@ -23,6 +23,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from .db_cursor import db_cursor
 from .database import db
 from .export_overlay import ExportOverlay, ExportOverlayError, ExportOverlayReport
 from .export_source import ExportSource, ExportSourceError, load_export_source
@@ -172,8 +173,7 @@ def list_overlays(tenant_id: str, version_record_id: str) -> List[StoredOverlay]
     Returns:
         The chain rows, ``position`` ascending; empty when the revision has none.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _select_chain(cursor, tenant_id, version_record_id)
 
 
@@ -536,8 +536,7 @@ def get_render(tenant_id: str, version_record_id: str) -> Optional[Dict[str, Any
         ``{source_fingerprint, resolved_fingerprint, overlays, findings, changes, rendered_by,
         rendered_at}`` or ``None``.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         cursor.execute(
             """
             SELECT source_fingerprint, resolved_fingerprint, overlay_fingerprints, findings, changes,

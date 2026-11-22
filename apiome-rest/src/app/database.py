@@ -20,6 +20,7 @@ from .axis_score import (
     mcp_axis_evaluation,
 )
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
+from .db_cursor import rollback_quietly
 from .draft_bindings import (
     AUDIT_BOUND as AUDIT_BINDING_BOUND,
     AUDIT_CANDIDATE_RAISED as AUDIT_BINDING_CANDIDATE_RAISED,
@@ -499,6 +500,42 @@ def _close_quietly(conn: Any) -> None:
         pass
 
 
+def _connection_options(database_url: str) -> Dict[str, Any]:
+    """Connection keywords that keep one stuck session from hanging the server.
+
+    Without them a statement waits on a lock forever, a transaction left open keeps its locks
+    forever, and a connection whose peer vanished is only noticed when TCP gives up. Session
+    settings are skipped when the database URL carries its own ``options``.
+
+    Args:
+        database_url: The URL the connection is opened with.
+
+    Returns:
+        Keyword arguments for ``psycopg2.connect``.
+    """
+    kwargs: Dict[str, Any] = {
+        "application_name": "apiome-rest",
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 3,
+    }
+    if int(settings.db_connect_timeout_seconds) > 0:
+        kwargs["connect_timeout"] = int(settings.db_connect_timeout_seconds)
+    session = [
+        f"-c {name}={int(value)}"
+        for name, value in (
+            ("lock_timeout", settings.db_lock_timeout_ms),
+            ("idle_in_transaction_session_timeout", settings.db_idle_in_transaction_timeout_ms),
+            ("statement_timeout", settings.db_statement_timeout_ms),
+        )
+        if int(value) > 0
+    ]
+    if session and "options=" not in (database_url or ""):
+        kwargs["options"] = " ".join(session)
+    return kwargs
+
+
 class Database:
     """Database connection and query manager.
 
@@ -555,6 +592,7 @@ class Database:
                 conn = psycopg2.connect(
                     settings.effective_database_url,
                     cursor_factory=RealDictCursor,
+                    **_connection_options(settings.effective_database_url),
                 )
             except psycopg2.OperationalError as e:
                 err_s = str(e).lower()
@@ -601,7 +639,7 @@ class Database:
             conn.commit()
             return rows
         except Exception as e:
-            conn.rollback()
+            rollback_quietly(conn)
             raise e
 
     def _execute_write(self, query: str, params: tuple = None) -> int:
@@ -622,7 +660,7 @@ class Database:
             conn.commit()
             return affected
         except Exception as e:
-            conn.rollback()
+            rollback_quietly(conn)
             raise e
 
     def _begin_tx(self, conn) -> bool:
@@ -921,6 +959,7 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(tags_query, tuple(class_ids))
                 tags = cursor.fetchall()
+            conn.commit()  # end the read transaction so the connection is not left idle in it
         except Exception as e:
             conn.rollback()
             raise e
@@ -2807,7 +2846,7 @@ class Database:
                 cursor.execute(query, (primitive_id,))
                 conn.commit()
         except Exception:
-            pass  # Don't fail if we can't increment usage
+            rollback_quietly(conn)  # Don't fail if we can't increment usage
 
     # ============== Unresolved-$ref detection, flags & counts (#3457) ==============
     #
@@ -23112,7 +23151,9 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(q, params)
                 columns = [desc[0] for desc in cursor.description]
-                return [dict(zip(columns, row)) for row in cursor.fetchall()]
+                found = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            conn.commit()  # end the read transaction so the connection is not left idle in it
+            return found
         except Exception as exc:
             conn.rollback()
             code = getattr(exc, "pgcode", None) or getattr(exc, "code", None)

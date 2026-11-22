@@ -20,6 +20,18 @@ jest.mock('../lib/db/db', () => ({
   query: jest.fn(),
 }));
 
+// A transaction checks one client out (`withTransaction`). Unless a test installs its own client,
+// route that client's statements to whatever `query` mock the pool carries at that moment, so a
+// test scripts them the way it scripts pool-level queries. Reinstalled before every test because
+// some tests replace `connect` with a scripted client of their own.
+beforeEach(() => {
+  const db = require('../lib/db/db');
+  db.connect = async () => ({
+    query: (...args: any[]) => db.query(...args),
+    release: () => undefined,
+  });
+});
+
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),

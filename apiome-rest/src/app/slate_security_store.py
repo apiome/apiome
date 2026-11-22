@@ -45,6 +45,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "EVIDENCE_ALLOWED_KEYS",
     "SlateSecurityPolicyConflictError",
@@ -281,8 +283,7 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     Returns:
         The policy row, or None when the lane has none yet or belongs to another tenant.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -520,8 +521,7 @@ def list_managed_groups(
     Returns:
         Override rows in catalog-id order.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -632,8 +632,7 @@ def list_rules(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Dict
         Rule rows ordered by ``ordinal``. The order is the evaluation order, and V188's
         ``UNIQUE (environment_id, ordinal)`` is what makes it total rather than a set with ties.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -660,8 +659,7 @@ def get_rule(
     Returns:
         The rule row, or None when it is not on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -1047,8 +1045,7 @@ def list_revisions(
         Revision rows, newest first. Scoped by tenant rather than by environment so a deleted
         rule's history is still readable, which is the case a revert cares about most.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1079,8 +1076,7 @@ def last_simulated_at(db: _DbLike, *, tenant_id: str, rule_id: str) -> Optional[
         The timestamp of the most recent revision whose body was in simulate mode, or None when
         the rule has never run in simulate.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             """
@@ -1277,8 +1273,7 @@ def list_exceptions(db: _DbLike, *, tenant_id: str, environment_id: str) -> List
     Returns:
         Exception rows.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1452,8 +1447,7 @@ def list_approvals(
         clauses.append("digest = %s")
         params.append(digest)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1681,8 +1675,7 @@ def list_events(
             params.append(value)
     params.append(limit)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1710,8 +1703,7 @@ def get_event(
     Returns:
         The event row, or None when it is not on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -1800,8 +1792,7 @@ def list_audit(
     Returns:
         Audit rows, most recent first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """

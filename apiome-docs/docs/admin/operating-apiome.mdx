@@ -73,6 +73,43 @@ When a worker thread ends, its connection goes back to a pool for the next threa
 `DB_POOL_MAX_IDLE` (default `10`) sets how many idle connections the pool keeps; the rest are
 closed.
 
+The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`), and the public
+browse site keeps 10 more. Add those to the total.
+
+#### Limits on a stuck session
+
+A statement waiting on a lock that never clears, or a transaction left open, would otherwise hold
+its connection for good and stall everything behind it. Both the REST API and the web app set
+limits on every connection they open, so a stuck session ends with an error instead:
+
+| Setting | Service | Default | What it limits |
+| --- | --- | --- | --- |
+| `DB_LOCK_TIMEOUT_MS` | REST API, web app | `30000` | How long a statement waits for a lock before it fails. |
+| `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | REST API | `300000` | How long a connection may sit in an open transaction before PostgreSQL ends the session and releases its locks. |
+| `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | Web app | `60000` | The same, for the web app's connections. |
+| `DB_CONNECT_TIMEOUT_SECONDS` | REST API | `10` | How long to wait for a new connection to PostgreSQL. |
+| `DB_STATEMENT_TIMEOUT_MS` | REST API | `0` (off) | How long one statement may run. Off by default because imports run long statements. |
+| `DB_POOL_CONNECTION_TIMEOUT_MS` | Web app | `10000` | How long a request waits for a free connection when all of the pool's are in use. |
+
+`0` turns a limit off. The REST API skips its session limits when `DATABASE_URL` already carries
+an `options` parameter, so yours win.
+
+If the app stops responding, look at what the sessions are doing. Each service names its
+connections (`apiome-rest`, `apiome-ui`, `apiome-browse`):
+
+```sql
+SELECT pid, application_name, state, wait_event_type, wait_event,
+       now() - xact_start AS in_transaction_for,
+       pg_blocking_pids(pid) AS blocked_by,
+       left(query, 80) AS query
+  FROM pg_stat_activity
+ WHERE datname = current_database() AND state <> 'idle'
+ ORDER BY xact_start;
+```
+
+A row whose `state` is `idle in transaction` and whose `pid` appears in other rows' `blocked_by` is
+the session holding everyone up; `SELECT pg_terminate_backend(<pid>);` ends it.
+
 ### Domains, sign-in redirects and the session cookie
 
 The web app and Studio share one sign-in. Two things follow from the hostnames you deploy them on:

@@ -10,6 +10,7 @@ import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
 import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 import { upsertCredentialAccountPassword } from './credential-account';
+import { withTransaction } from './with-transaction';
 import {
   KEYS_SETTING as TOKEN_KEYS_SETTING,
   sealToken,
@@ -1080,10 +1081,9 @@ export async function bulkApplyEditsToGroupClasses(
 
     if (typeof options.topLevelPropertyReadOnly === 'boolean') {
       const ro = options.topLevelPropertyReadOnly;
-      await connectionPool.query('BEGIN');
-      try {
+      await withTransaction(async (client) => {
         for (const classId of validIds) {
-          const props = await connectionPool.query(
+          const props = await client.query(
             `SELECT id, data FROM apiome.class_properties WHERE class_id = $1 AND parent_id IS NULL`,
             [classId]
           );
@@ -1099,17 +1099,13 @@ export async function bulkApplyEditsToGroupClasses(
             }
             if (ro) data.readOnly = true;
             else delete data.readOnly;
-            await connectionPool.query(`UPDATE apiome.class_properties SET data = $1 WHERE id = $2`, [
+            await client.query(`UPDATE apiome.class_properties SET data = $1 WHERE id = $2`, [
               JSON.stringify(data),
               p.id,
             ]);
           }
         }
-        await connectionPool.query('COMMIT');
-      } catch (e) {
-        await connectionPool.query('ROLLBACK');
-        throw e;
-      }
+      });
     }
 
     return JSON.stringify({ success: true });
@@ -1932,26 +1928,23 @@ export async function batchUpdateClassCanvasMetadata(updates: Array<{
       return JSON.stringify({ success: true, updatedCount: 0 });
     }
 
-    let updatedCount = 0;
-
-    // Use a transaction for batch updates
-    await connectionPool.query('BEGIN');
-
-    for (const update of updates) {
-      const result = await connectionPool.query(
-        `UPDATE apiome.classes
-         SET canvas_metadata = $1, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $2 AND deleted_at IS NULL`,
-        [update.canvasMetadata ? JSON.stringify(update.canvasMetadata) : null, update.classId]
-      );
-      updatedCount += result.rowCount;
-    }
-
-    await connectionPool.query('COMMIT');
+    // One transaction on one client: every statement has to run where the BEGIN did.
+    const updatedCount = await withTransaction(async (client) => {
+      let count = 0;
+      for (const update of updates) {
+        const result = await client.query(
+          `UPDATE apiome.classes
+           SET canvas_metadata = $1, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $2 AND deleted_at IS NULL`,
+          [update.canvasMetadata ? JSON.stringify(update.canvasMetadata) : null, update.classId]
+        );
+        count += result.rowCount;
+      }
+      return count;
+    });
 
     return JSON.stringify({ success: true, updatedCount });
   } catch (error: any) {
-    await connectionPool.query('ROLLBACK');
     console.error('Error batch updating class canvas metadata:', error);
     return JSON.stringify({ success: false, error: error.message });
   }
@@ -5702,89 +5695,89 @@ export async function updateClassPositionInGroup(
  */
 export async function syncGroupsForVersion(versionId: string, groups: any[], nodePositions?: Record<string, { x: number; y: number }>) {
   try {
-    // Start a transaction
-    await connectionPool.query('BEGIN');
+    // One transaction on one client: every statement has to run where the BEGIN did.
+    const idMapping = await withTransaction(async (client) => {
 
-    // Delete all existing groups for this version (cascades to group_classes)
-    await connectionPool.query(
-      `DELETE FROM apiome.groups WHERE version_id = $1`,
-      [versionId]
-    );
+      // Delete all existing groups for this version (cascades to group_classes)
+      await client.query(
+        `DELETE FROM apiome.groups WHERE version_id = $1`,
+        [versionId]
+      );
 
-    // Track mapping from client ID to database ID for returning
-    const idMapping: Record<string, string> = {};
+      // Track mapping from client ID to database ID for returning
+      const idMapping: Record<string, string> = {};
 
-    const sortedGroups = sortGroupsParentsBeforeChildren(groups);
+      const sortedGroups = sortGroupsParentsBeforeChildren(groups);
 
-    // Insert new groups (parents before children so parent_group_id resolves)
-    for (const group of sortedGroups) {
-      const position = group.position || { x: 0, y: 0 };
-      const dimensions = group.dimensions || { width: 200, height: 200 };
+      // Insert new groups (parents before children so parent_group_id resolves)
+      for (const group of sortedGroups) {
+        const position = group.position || { x: 0, y: 0 };
+        const dimensions = group.dimensions || { width: 200, height: 200 };
 
-      const parentClientId = group.parentId || null;
-      let parentDbId: string | null = null;
-      if (parentClientId) {
-        parentDbId = idMapping[parentClientId] || null;
-        if (!parentDbId) {
-          await connectionPool.query('ROLLBACK');
-          return errorResponse(
-            `Sync: parent group id ${parentClientId} not found or out of order for child ${group.id || group.name}`
+        const parentClientId = group.parentId || null;
+        let parentDbId: string | null = null;
+        if (parentClientId) {
+          parentDbId = idMapping[parentClientId] || null;
+          if (!parentDbId) {
+            // Throwing rolls the transaction back; the catch below turns it into the error response.
+            throw new Error(
+              `Sync: parent group id ${parentClientId} not found or out of order for child ${group.id || group.name}`
+            );
+          }
+        }
+
+        const isCollapsed = group.isCollapsed === true;
+
+        // Let database generate UUID - don't use client-side ID
+        const groupResult = await client.query(
+          `INSERT INTO apiome.groups 
+           (version_id, name, description, color, position_x, position_y, width, height, 
+            z_index, opacity, border_style, metadata, parent_group_id, is_collapsed)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+           RETURNING id`,
+          [
+            versionId,
+            group.name || 'Untitled Group',
+            group.description || null,
+            group.color || '#3B82F6',
+            position.x,
+            position.y,
+            dimensions.width,
+            dimensions.height,
+            group.zIndex || 0,
+            group.opacity ?? 1.0,
+            group.borderStyle || group.styleOptions?.borderStyle || 'dashed',
+            JSON.stringify(buildGroupMetadataForSync(group as Record<string, unknown>)),
+            parentDbId,
+            isCollapsed
+          ]
+        );
+
+        const newGroupId = groupResult.rows[0].id;
+        idMapping[group.id] = newGroupId;
+
+        // Insert group classes with positions
+        const nodeIds = group.nodeIds || [];
+        for (let i = 0; i < nodeIds.length; i++) {
+          const nodeId = nodeIds[i];
+          const nodePos = nodePositions?.[nodeId] || null;
+
+          await client.query(
+            `INSERT INTO apiome.group_classes (group_id, class_id, position_x, position_y, sort_order)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (group_id, class_id) DO UPDATE SET
+               position_x = EXCLUDED.position_x,
+               position_y = EXCLUDED.position_y,
+               sort_order = EXCLUDED.sort_order`,
+            [newGroupId, nodeId, nodePos?.x ?? null, nodePos?.y ?? null, i]
           );
         }
       }
 
-      const isCollapsed = group.isCollapsed === true;
-
-      // Let database generate UUID - don't use client-side ID
-      const groupResult = await connectionPool.query(
-        `INSERT INTO apiome.groups 
-         (version_id, name, description, color, position_x, position_y, width, height, 
-          z_index, opacity, border_style, metadata, parent_group_id, is_collapsed)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-         RETURNING id`,
-        [
-          versionId,
-          group.name || 'Untitled Group',
-          group.description || null,
-          group.color || '#3B82F6',
-          position.x,
-          position.y,
-          dimensions.width,
-          dimensions.height,
-          group.zIndex || 0,
-          group.opacity ?? 1.0,
-          group.borderStyle || group.styleOptions?.borderStyle || 'dashed',
-          JSON.stringify(buildGroupMetadataForSync(group as Record<string, unknown>)),
-          parentDbId,
-          isCollapsed
-        ]
-      );
-
-      const newGroupId = groupResult.rows[0].id;
-      idMapping[group.id] = newGroupId;
-
-      // Insert group classes with positions
-      const nodeIds = group.nodeIds || [];
-      for (let i = 0; i < nodeIds.length; i++) {
-        const nodeId = nodeIds[i];
-        const nodePos = nodePositions?.[nodeId] || null;
-
-        await connectionPool.query(
-          `INSERT INTO apiome.group_classes (group_id, class_id, position_x, position_y, sort_order)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (group_id, class_id) DO UPDATE SET
-             position_x = EXCLUDED.position_x,
-             position_y = EXCLUDED.position_y,
-             sort_order = EXCLUDED.sort_order`,
-          [newGroupId, nodeId, nodePos?.x ?? null, nodePos?.y ?? null, i]
-        );
-      }
-    }
-
-    await connectionPool.query('COMMIT');
+      return idMapping;
+    });
     return successResponse({ synced: true, count: groups.length, idMapping });
   } catch (error: any) {
-    await connectionPool.query('ROLLBACK');
     console.error('Error syncing groups for version:', error);
     return errorResponse(error.message);
   }

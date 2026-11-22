@@ -37,6 +37,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from urllib.parse import unquote
 
+from .db_cursor import db_cursor
 from .canonical_model import CanonicalApi, Operation, Service
 
 __all__ = [
@@ -788,8 +789,7 @@ def load_arazzo_workflows(
         Workflow rows in declaration order, each with its steps in ``order_index`` order.
         Empty when the version has no live workflows.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         cursor.execute(
             """
             SELECT id, workflow_id, summary, description, inputs, outputs, ordinal, extras

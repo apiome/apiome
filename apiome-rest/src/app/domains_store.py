@@ -29,6 +29,8 @@ import re
 import uuid as _uuid
 from typing import Any, Dict, List, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "DOMAIN_COLUMNS",
     "SHARED_DOMAIN_ID",
@@ -266,8 +268,7 @@ def get_domain(db: _DbLike, *, domain_id: str, include_deleted: bool = False) ->
         return None
 
     predicate = "" if include_deleted else " AND deleted_at IS NULL"
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             f"SELECT {DOMAIN_COLUMNS} FROM apiome.domains WHERE id = %s::uuid{predicate}",
@@ -289,8 +290,7 @@ def list_domains(db: _DbLike, *, version_id: str) -> List[Dict[str, Any]]:
     Returns:
         The rows, in the order the workspace tree draws them.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -313,8 +313,7 @@ def next_sort_order(db: _DbLike, *, version_id: str) -> int:
     Returns:
         One past the highest live ``sort_order``, or 0 when the version has no domains.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             """
@@ -361,8 +360,7 @@ def count_members(db: _DbLike, *, domain_id: Optional[str], version_id: str) -> 
         """
         params = (version_id, domain_id)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         classes = _fetch_one(cursor, class_query, params) or {}
         paths = _fetch_one(cursor, path_query, params) or {}
     return {
@@ -384,8 +382,7 @@ def get_class(db: _DbLike, *, class_id: str) -> Optional[Dict[str, Any]]:
     if not _is_uuid(class_id):
         return None
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -410,8 +407,7 @@ def get_path(db: _DbLike, *, path_id: str) -> Optional[Dict[str, Any]]:
     if not _is_uuid(path_id):
         return None
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
