@@ -26,6 +26,7 @@ import uuid
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import get_authenticated_user_id, validate_authentication, validate_session_credentials
 from .config import settings
@@ -136,7 +137,7 @@ def _load_transcript(version_id: str) -> Optional[ProtocolTranscript]:
 
 
 @router.get("/probes/catalog", response_model=None)
-async def get_mcp_probe_catalog(
+def get_mcp_probe_catalog(
     profile: Optional[str] = Query(
         default=None, description="Restrict the probe list to this profile's probes."
     ),
@@ -173,7 +174,7 @@ async def get_mcp_probe_catalog(
     response_model=None,
     status_code=201,
 )
-async def enroll_probe_target(
+def enroll_probe_target(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: Dict[str, Any],
@@ -211,7 +212,7 @@ async def enroll_probe_target(
 
 
 @router.get("/{tenant_slug}/endpoints/{endpoint_id}/probe-targets", response_model=None)
-async def list_probe_targets(
+def list_probe_targets(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -227,7 +228,7 @@ async def list_probe_targets(
     "/{tenant_slug}/endpoints/{endpoint_id}/probe-targets/{target_id}",
     response_model=None,
 )
-async def retire_probe_target(
+def retire_probe_target(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     target_id: uuid.UUID,
@@ -274,8 +275,8 @@ async def run_probe(
     refuses; 503 when active probing is requested but this deployment has no probe runner configured.
     """
     _ = tenant_slug
-    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
-    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    endpoint = await run_in_threadpool(_require_tenant_endpoint, auth_data, endpoint_id)
+    version = await run_in_threadpool(db.get_mcp_endpoint_version, str(endpoint_id), str(version_id))
     if version is None:
         raise HTTPException(status_code=404, detail="MCP endpoint version not found")
 
@@ -285,13 +286,13 @@ async def run_probe(
     except UnknownProfileError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    items = db.get_mcp_capability_items(str(version_id))
+    items = await run_in_threadpool(db.get_mcp_capability_items, str(version_id))
     surface = reconstruct_surface(version, items)
 
     # --- Passive: read-only, no consent, no audit row (it sends nothing). ---
     if not profile.sends_requests:
         report = run_passive_probes(
-            surface, _load_transcript(str(version_id)), target_endpoint_id=str(endpoint_id)
+            surface, await run_in_threadpool(_load_transcript, str(version_id)), target_endpoint_id=str(endpoint_id)
         )
         return report.as_dict()
 
@@ -442,7 +443,7 @@ def _record_refusal(tenant_id, endpoint_id, version, profile_id, consent, limits
 
 
 @router.get("/{tenant_slug}/endpoints/{endpoint_id}/probe-runs", response_model=None)
-async def list_probe_runs(
+def list_probe_runs(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     limit: int = Query(default=50, ge=1, le=200),

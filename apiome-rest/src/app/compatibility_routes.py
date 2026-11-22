@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication
 from .compatibility_engine import (
@@ -290,9 +291,9 @@ async def check_revision_compatibility(
     Each side is the revision's rendered OpenAPI document from the document store (COA-5.6);
     ``X-Apiome-Document-Cache`` reports ``hit`` or ``miss`` per side, on the 409 replies too.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
@@ -309,8 +310,8 @@ async def check_revision_compatibility(
             detail="baseRevisionId and headRevisionId must differ",
         )
 
-    base_ver = db.get_version_by_id(base_id, tenant_id)
-    head_ver = db.get_version_by_id(head_id, tenant_id)
+    base_ver = await run_in_threadpool(db.get_version_by_id, base_id, tenant_id)
+    head_ver = await run_in_threadpool(db.get_version_by_id, head_id, tenant_id)
     if not base_ver:
         raise HTTPException(status_code=404, detail=f"Revision not found: {base_id}")
     if not head_ver:
@@ -324,7 +325,7 @@ async def check_revision_compatibility(
 
     try:
         compat_policy = effective_policy(
-            resolve_policy(db, tenant_id, project_id),
+            await run_in_threadpool(resolve_policy, db, tenant_id, project_id),
             mode=body.mode,
             transitive=body.transitive,
             category=body.category,
@@ -332,7 +333,8 @@ async def check_revision_compatibility(
     except PolicyValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    baselines, truncated = transitive_baselines(
+    baselines, truncated = await run_in_threadpool(
+        transitive_baselines,
         db,
         tenant_id=tenant_id,
         project_id=project_id,
@@ -340,7 +342,8 @@ async def check_revision_compatibility(
         base_label=str(base_ver["version_id"]),
         transitive=compat_policy.transitive,
     )
-    pairs, evaluations, specs, cache_header = _compare_baselines(
+    pairs, evaluations, specs, cache_header = await run_in_threadpool(
+        _compare_baselines,
         tenant_slug=tenant_slug,
         tenant_id=tenant_id,
         base_ver=base_ver,
@@ -583,15 +586,16 @@ async def create_compatibility_evidence(
     Emits normalized JSON by default. Pass ``?format=sarif`` or ``?format=junit``
     (or matching ``Accept``) for CI-compatible artifacts.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
     base_id = (body.base_revision_id or "").strip()
     head_id = (body.head_revision_id or "").strip()
-    base_ver, head_ver = _resolve_revision_pair(
+    base_ver, head_ver = await run_in_threadpool(
+        _resolve_revision_pair,
         tenant_id=tenant_id,
         project_id=project_id,
         base_id=base_id,
@@ -651,7 +655,7 @@ async def create_compatibility_evidence(
     "/{tenant_slug}/{project_id}/{version_id}/compatibility/evidence",
     response_model=None,
 )
-async def list_compatibility_evidence(
+def list_compatibility_evidence(
     tenant_slug: str,
     project_id: str,
     version_id: str,

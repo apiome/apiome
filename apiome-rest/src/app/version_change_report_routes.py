@@ -154,7 +154,7 @@ def _can_edit_change_report(version: Dict[str, Any], user_id: Optional[str], ten
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report",
     response_model=VersionChangeReportOut,
 )
-async def get_version_change_report(
+def get_version_change_report(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -194,7 +194,7 @@ async def get_version_change_report(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report",
     response_model=VersionChangeReportOut,
 )
-async def patch_version_change_report(
+def patch_version_change_report(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -303,7 +303,7 @@ async def patch_version_change_report(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report/regenerate",
     response_model=VersionChangeReportOut,
 )
-async def regenerate_version_change_report(
+def regenerate_version_change_report(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -393,7 +393,7 @@ async def regenerate_version_change_report(
     "/{tenant_slug}/{project_id}/{version_record_id}/change-report/publish-preview",
     response_model=VersionPublishChangeReportPreviewOut,
 )
-async def preview_change_report_for_publish(
+def preview_change_report_for_publish(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

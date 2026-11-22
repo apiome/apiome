@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication
 from .database import db
@@ -98,7 +99,7 @@ async def validate_instance_against_schema(
     """
     # ``types:view`` rather than a write action: this reads a schema and checks a payload
     # against it. A caller who may not see types has no business validating against them.
-    enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.TYPES, Action.VIEW)
     tenant_id = auth_data.get("tenant_id")
     if not tenant_id:
         raise HTTPException(status_code=403, detail="No tenant context for this credential.")

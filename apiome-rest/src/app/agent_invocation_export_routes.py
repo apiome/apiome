@@ -72,7 +72,7 @@ _MEDIA = {"jsonl": "application/x-ndjson; charset=utf-8", "csv": "text/csv; char
         410: {"description": f"`{CODE_DAY_PAST_RETENTION}`: the day is past the plan's retention."},
     },
 )
-async def export_agent_invocations(
+def export_agent_invocations(
     tenant_slug: str,
     day: date = Query(..., description="The UTC day to export, `YYYY-MM-DD`."),
     format: ExportFormat = Query(default="jsonl", description="`jsonl` or `csv`."),  # noqa: A002 - the documented name

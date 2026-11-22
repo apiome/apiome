@@ -133,7 +133,7 @@ def _feed_response(
 
 
 @router.get("/{tenant}/{slug}")
-async def get_mcp_endpoint_change_feed(
+def get_mcp_endpoint_change_feed(
     request: Request,
     tenant: str,
     slug: str,
@@ -197,7 +197,7 @@ async def get_mcp_endpoint_change_feed(
 
 
 @router.get("/{tenant}")
-async def get_mcp_catalog_change_feed(
+def get_mcp_catalog_change_feed(
     request: Request,
     tenant: str,
     format: str = Query(

@@ -132,7 +132,7 @@ class ResolvedProviderConfigResponse(BaseModel):
         503: {"description": "Resolved read path disabled (no INTERNAL_SERVICE_TOKEN configured)."},
     },
 )
-async def get_resolved_auth_providers(
+def get_resolved_auth_providers(
     _: None = Depends(require_internal_service),
 ) -> ResolvedProviderConfigResponse:
     """Return decrypted DB provider config for the login-time merge resolver (OLO-8.5).

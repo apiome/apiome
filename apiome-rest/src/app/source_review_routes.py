@@ -285,7 +285,7 @@ def _raise_apply_conflict(error: SourceApplyConflictError) -> None:
     response_model=SourceReviewResponse,
     response_model_by_alias=True,
 )
-async def review_source_changes(
+def review_source_changes(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -318,7 +318,7 @@ async def review_source_changes(
     response_model=SourceApplyResponse,
     response_model_by_alias=True,
 )
-async def apply_source_changes(
+def apply_source_changes(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

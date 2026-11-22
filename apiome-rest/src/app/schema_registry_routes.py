@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Mapping, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -242,7 +243,7 @@ def _version_out(subject: str, row: Mapping[str, Any], *, text: Optional[str] = 
 
 
 @router.get(_BASE + "/config", response_model=RegistryConfig, response_model_by_alias=True)
-async def get_registry_config(
+def get_registry_config(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> RegistryConfig:
     """Return the tenant's registry defaults (``imports:view``)."""
@@ -253,7 +254,7 @@ async def get_registry_config(
 
 
 @router.put(_BASE + "/config", response_model=RegistryConfig, response_model_by_alias=True)
-async def put_registry_config(
+def put_registry_config(
     tenant_slug: str,
     body: RegistryConfigUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -271,7 +272,7 @@ async def put_registry_config(
 
 
 @router.get(_BASE + "/subjects", response_model=SubjectList, response_model_by_alias=True)
-async def list_schema_subjects(
+def list_schema_subjects(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> SubjectList:
     """List the tenant's live subjects (``imports:view``); deleted subjects are left out."""
@@ -283,7 +284,7 @@ async def list_schema_subjects(
 
 
 @router.get(_BASE + "/subjects/{subject}", response_model=SubjectOut, response_model_by_alias=True)
-async def get_schema_subject(
+def get_schema_subject(
     tenant_slug: str, subject: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> SubjectOut:
     """Return one live subject (``imports:view``)."""
@@ -297,7 +298,7 @@ async def get_schema_subject(
 
 
 @router.put(_BASE + "/subjects/{subject}", response_model=SubjectOut, response_model_by_alias=True)
-async def put_schema_subject(
+def put_schema_subject(
     tenant_slug: str,
     subject: str,
     body: SubjectSettings,
@@ -323,7 +324,7 @@ async def put_schema_subject(
 
 
 @router.delete(_BASE + "/subjects/{subject}", response_model=List[int])
-async def delete_schema_subject(
+def delete_schema_subject(
     tenant_slug: str, subject: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[int]:
     """Soft-delete a subject and its versions (``imports:delete``); returns the deleted versions.
@@ -343,7 +344,7 @@ async def delete_schema_subject(
 @router.get(
     _BASE + "/subjects/{subject}/versions", response_model=SubjectVersionList, response_model_by_alias=True
 )
-async def list_schema_subject_versions(
+def list_schema_subject_versions(
     tenant_slug: str, subject: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> SubjectVersionList:
     """List a subject's live versions, oldest first (``imports:view``)."""
@@ -371,13 +372,15 @@ async def get_schema_subject_version(
     """Return one version (a number or ``latest``) with its schema text (``imports:view``)."""
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"subject:{subject}")
-    row = _require_subject(tenant_id, subject)
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"subject:{subject}"
+    )
+    row = await run_in_threadpool(_require_subject, tenant_id, subject)
     if version == "latest":
-        versions = store.list_versions(db, str(row["id"]))
+        versions = await run_in_threadpool(store.list_versions, db, str(row["id"]))
         found = versions[-1] if versions else None
     elif version.isdigit() and int(version) >= 1:
-        found = store.get_version(db, str(row["id"]), int(version))
+        found = await run_in_threadpool(store.get_version, db, str(row["id"]), int(version))
     else:
         raise _http(SchemaRegistryError("version-invalid", "A version is a positive integer or `latest`."))
     if found is None:
@@ -406,7 +409,9 @@ async def register_schema_version(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target=f"subject:{subject}")
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target=f"subject:{subject}"
+    )
     try:
         row = await asyncio.to_thread(
             register_schema,
@@ -442,7 +447,9 @@ async def attach_catalog_item_to_subject(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"subject:{subject}")
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"subject:{subject}"
+    )
     try:
         row = await asyncio.to_thread(
             attach_catalog_item,
@@ -467,8 +474,10 @@ async def get_schema_by_id(
     """Resolve a schema id (``imports:view``) — it keeps resolving after its subjects are deleted."""
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"schema:{schema_id}")
-    row = store.get_schema_by_id(db, tenant_id, schema_id)
+    await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"schema:{schema_id}"
+    )
+    row = await run_in_threadpool(store.get_schema_by_id, db, tenant_id, schema_id)
     if row is None:
         raise _http(SchemaRegistryError("schema-not-found", f"Schema id {schema_id} not found.", status_code=404))
     text = await asyncio.to_thread(schema_text, db, row["version_record_id"])

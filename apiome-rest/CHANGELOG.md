@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.814.0] - 2026-11-22
+
+### Performance
+- **Blocking database work moved off the event loop (DBP-1.4, #7187).** OpenAPI 1.638.0 (version only; no schema
+  change). The database layer is synchronous, and almost every route was `async def`, so each query ran on the event
+  loop and one slow query or lock wait stalled every other request in the process, health checks included. No
+  endpoint's request, response or permissions change.
+  - **Plain `def` handlers:** the 980 route handlers that never awaited are now plain `def`, so FastAPI runs them on
+    the request thread pool. That covers usage reads, document render, the list endpoints, import and export reads and
+    the MCP catalog. `merge_request_store.check_merge_request` / `merge_merge_request` and the merge routes they call
+    are synchronous too.
+  - **Thread hops in the rest:** the 122 handlers that must stay `async` (they read an upload, call a subprocess or the
+    network, or stream) now make each blocking call through `await run_in_threadpool(...)`: direct `db.<method>` calls,
+    calls that take the `db` handle such as `enforce_permission`, and same-module helpers that reach `db`. Usage ingest
+    (`POST /v1/tenants/{tenant}/usage/ingest`) is one of them.
+  - **Probes:** `/livez` stays on the event loop. `/readyz` and `/health` run their database round-trip on the event
+    loop's own executor, not the request thread pool, so they answer even when every request thread is busy.
+  - **Thread pool size:** new `REQUEST_THREAD_POOL_SIZE` (default `40`) sets how many requests one instance works on at
+    once. Each working thread holds one connection, so the size is capped at half of `DB_POOL_MAX_IN_USE` (default
+    `80`); the other half stays free for background sweeps, imports and exports. Startup logs the size in use, and a
+    warning when the configured size was lowered (`app.request_threads`).
+  - **Lint in the test suite:** `tests/test_event_loop_db_lint.py` reads every module under `src/app` and fails on an
+    `async def` route handler that never awaits, or that touches `db` outside a thread hop. Its allowlist holds four
+    entries, each with its reason. The same file holds the acceptance test: with one request held inside a 5-second
+    query, `/livez`, `/readyz` and a project list answer in under 2 seconds.
+  - **Thread safety:** handlers now run side by side on worker threads. Per-request state (statement counts, the
+    authorization memo, the statement-timeout override) already travels with the request's context, and each thread has
+    its own connection.
+
 ## [1.813.0] - 2026-11-22
 
 ### Performance

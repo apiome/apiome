@@ -34,6 +34,7 @@ import logging
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -251,7 +252,7 @@ def _connection_body(row: Dict[str, Any]) -> ConnectionBody:
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_git_connection(
+def create_git_connection(
     request: CreateConnectionRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ConnectionBody:
@@ -278,7 +279,7 @@ async def create_git_connection(
     response_model=ConnectionListResponse,
     response_model_by_alias=True,
 )
-async def list_git_connections(
+def list_git_connections(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ConnectionListResponse:
     """List the tenant's git provider connections, without their secrets."""
@@ -293,7 +294,7 @@ async def list_git_connections(
     response_model=CleanupResponse,
     response_model_by_alias=True,
 )
-async def cleanup_previews(
+def cleanup_previews(
     connection_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> CleanupResponse:
@@ -356,7 +357,8 @@ async def receive_git_event(
             detail={"code": "missing_repository", "message": "No repository in payload."},
         )
 
-    connections = find_connections_by_repo(
+    connections = await run_in_threadpool(
+        find_connections_by_repo,
         db, provider="github", repo_full_name=repo_full_name
     )
     if not connections:
@@ -394,14 +396,15 @@ async def receive_git_event(
             status_code=400, detail={"code": exc.code, "message": str(exc)}
         )
 
-    build, created = ingest_preview_event(
+    build, created = await run_in_threadpool(
+        ingest_preview_event,
         db,
         connection,
         event,
         delivery_id=x_github_delivery,
         ttl_hours=settings.slate_preview_default_ttl_hours,
     )
-    full = get_preview(db, tenant_id=str(connection["tenant_id"]), build_id=str(build["id"]))
+    full = await run_in_threadpool(get_preview, db, tenant_id=str(connection["tenant_id"]), build_id=str(build["id"]))
     return EventReceiptResponse(
         accepted=True,
         created=created,
@@ -417,7 +420,7 @@ async def receive_git_event(
     response_model=PreviewListResponse,
     response_model_by_alias=True,
 )
-async def list_git_previews(
+def list_git_previews(
     connection_id: Optional[str] = Query(
         default=None, alias="connectionId", description="Restrict to one connection's previews."
     ),
@@ -436,7 +439,7 @@ async def list_git_previews(
     response_model=PreviewBody,
     response_model_by_alias=True,
 )
-async def get_git_preview(
+def get_git_preview(
     build_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> PreviewBody:
@@ -457,7 +460,7 @@ async def get_git_preview(
     response_model=PreviewBody,
     response_model_by_alias=True,
 )
-async def record_preview_checks(
+def record_preview_checks(
     build_id: str,
     request: RecordChecksRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -485,7 +488,7 @@ async def record_preview_checks(
     response_model=PreviewBody,
     response_model_by_alias=True,
 )
-async def retry_preview_build(
+def retry_preview_build(
     build_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> PreviewBody:

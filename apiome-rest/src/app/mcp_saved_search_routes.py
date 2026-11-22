@@ -90,7 +90,7 @@ def _normalize_update(body: McpSavedSearchUpdate) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/saved-searches", response_model=McpSavedSearchListResponse)
-async def list_mcp_saved_searches(
+def list_mcp_saved_searches(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpSavedSearchListResponse:
@@ -106,7 +106,7 @@ async def list_mcp_saved_searches(
 
 
 @router.post("/{tenant_slug}/saved-searches", response_model=McpSavedSearchOut)
-async def create_mcp_saved_search(
+def create_mcp_saved_search(
     tenant_slug: str,
     body: McpSavedSearchCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -135,7 +135,7 @@ async def create_mcp_saved_search(
 
 
 @router.get("/{tenant_slug}/saved-searches/{search_id}", response_model=McpSavedSearchOut)
-async def get_mcp_saved_search(
+def get_mcp_saved_search(
     tenant_slug: str,
     search_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -151,7 +151,7 @@ async def get_mcp_saved_search(
 
 
 @router.patch("/{tenant_slug}/saved-searches/{search_id}", response_model=McpSavedSearchOut)
-async def update_mcp_saved_search(
+def update_mcp_saved_search(
     tenant_slug: str,
     search_id: uuid.UUID,
     body: McpSavedSearchUpdate,
@@ -182,7 +182,7 @@ async def update_mcp_saved_search(
 
 
 @router.delete("/{tenant_slug}/saved-searches/{search_id}")
-async def delete_mcp_saved_search(
+def delete_mcp_saved_search(
     tenant_slug: str,
     search_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -201,7 +201,7 @@ async def delete_mcp_saved_search(
     "/{tenant_slug}/saved-searches/{search_id}/run",
     response_model=McpSavedSearchRunResponse,
 )
-async def run_mcp_saved_search(
+def run_mcp_saved_search(
     tenant_slug: str,
     search_id: uuid.UUID,
     limit: int = Query(500, ge=1, le=500),

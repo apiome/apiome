@@ -600,7 +600,7 @@ def _clear_credential(
     summary="List the workspace's package-registry credentials",
     description=_CREDENTIAL_DESCRIPTION + "\n\nRequires `projects:view`.",
 )
-async def list_tenant_registry_credentials(
+def list_tenant_registry_credentials(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> RegistryCredentialListResponse:
@@ -636,7 +636,7 @@ async def list_tenant_registry_credentials(
         503: {"description": "No credential-encryption key is configured on this deployment."},
     },
 )
-async def put_tenant_registry_credential(
+def put_tenant_registry_credential(
     tenant_slug: str,
     ecosystem: str,
     body: RegistryCredentialPutRequest,
@@ -677,7 +677,7 @@ async def put_tenant_registry_credential(
         "Requires `projects:edit`. Audited as `governance.sdk_registry_credential.clear`."
     ),
 )
-async def delete_tenant_registry_credential(
+def delete_tenant_registry_credential(
     tenant_slug: str,
     ecosystem: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -721,7 +721,7 @@ async def delete_tenant_registry_credential(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def list_project_registry_credentials(
+def list_project_registry_credentials(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -762,7 +762,7 @@ async def list_project_registry_credentials(
         503: {"description": "No credential-encryption key is configured on this deployment."},
     },
 )
-async def put_project_registry_credential(
+def put_project_registry_credential(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -807,7 +807,7 @@ async def put_project_registry_credential(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def delete_project_registry_credential(
+def delete_project_registry_credential(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -880,7 +880,7 @@ async def delete_project_registry_credential(
         503: {"description": "No credential-encryption key is configured on this deployment."},
     },
 )
-async def publish_project_sdk(
+def publish_project_sdk(
     tenant_slug: str,
     project_ref: str,
     body: SdkPublishRequest,
@@ -964,7 +964,7 @@ async def publish_project_sdk(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def list_project_publish_runs(
+def list_project_publish_runs(
     tenant_slug: str,
     project_ref: str,
     ecosystem: Optional[str] = Query(
@@ -1017,7 +1017,7 @@ async def list_project_publish_runs(
     ),
     responses={404: {"description": "Project or run not found in this tenant."}},
 )
-async def get_project_publish_run(
+def get_project_publish_run(
     tenant_slug: str,
     project_ref: str,
     run_id: str,

@@ -280,7 +280,7 @@ def _settings(toolset: AgentToolsetOut) -> Dict[str, Any]:
         "version's toolset.\n\nRequires `api_keys:view`."
     ),
 )
-async def list_agent_toolsets_route(
+def list_agent_toolsets_route(
     tenant_slug: str,
     version_id: Optional[UUID] = Query(default=None, alias="versionId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -325,7 +325,7 @@ async def list_agent_toolsets_route(
         422: {"description": "The version's operations could not be read."},
     },
 )
-async def create_agent_toolset_route(
+def create_agent_toolset_route(
     tenant_slug: str,
     body: AgentToolsetCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -373,7 +373,7 @@ async def create_agent_toolset_route(
     description="The toolset's settings and every tool row.\n\nRequires `api_keys:view`.",
     responses={404: {"description": "No such agent toolset in this tenant."}},
 )
-async def get_agent_toolset_route(
+def get_agent_toolset_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -415,7 +415,7 @@ async def get_agent_toolset_route(
         422: {"description": "The body changes nothing."},
     },
 )
-async def update_agent_toolset_route(
+def update_agent_toolset_route(
     tenant_slug: str,
     toolset_id: UUID,
     body: AgentToolsetUpdate,
@@ -466,7 +466,7 @@ async def update_agent_toolset_route(
     ),
     responses={404: {"description": "No such agent toolset in this tenant."}},
 )
-async def delete_agent_toolset_route(
+def delete_agent_toolset_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -518,7 +518,7 @@ async def delete_agent_toolset_route(
     ),
     responses={404: {"description": "No such agent toolset in this tenant."}},
 )
-async def list_agent_toolset_tools_route(
+def list_agent_toolset_tools_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -562,7 +562,7 @@ async def list_agent_toolset_tools_route(
         422: {"description": "A write operation was enabled without `confirmWriteOp: true`."},
     },
 )
-async def update_agent_toolset_tool_route(
+def update_agent_toolset_tool_route(
     tenant_slug: str,
     toolset_id: UUID,
     tool_id: UUID,
@@ -630,7 +630,7 @@ _ENRICHMENT_WHAT_IT_IS = (
         422: {"description": "The version's operations could not be read."},
     },
 )
-async def get_agent_toolset_enrichment_route(
+def get_agent_toolset_enrichment_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -671,7 +671,7 @@ async def get_agent_toolset_enrichment_route(
     ),
     responses={404: {"description": "No such agent toolset in this tenant."}},
 )
-async def get_agent_toolset_enrichment_overlay_route(
+def get_agent_toolset_enrichment_overlay_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -742,7 +742,7 @@ async def run_agent_toolset_enrichment_route(
         HTTPException: 403 without ``api_keys:edit``; 404 when the toolset does not exist; 422 when
             its version cannot be read or ``operations`` is invalid.
     """
-    actor_id = enforce_permission(db, auth_data, Resource.API_KEYS, Action.EDIT)
+    actor_id = await run_in_threadpool(enforce_permission, db, auth_data, Resource.API_KEYS, Action.EDIT)
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     try:
@@ -751,7 +751,8 @@ async def run_agent_toolset_enrichment_route(
         )
     except AgentToolsetError as exc:
         raise _refusal(exc) from exc
-    _audit(
+    await run_in_threadpool(
+        _audit,
         tenant_id=tenant_id,
         action=AUDIT_ENRICHMENT_RUN,
         auth_data=auth_data,
@@ -785,7 +786,7 @@ async def run_agent_toolset_enrichment_route(
         422: {"description": "A blank or over-long edit, or an edit with `reject`."},
     },
 )
-async def review_agent_toolset_enrichment_route(
+def review_agent_toolset_enrichment_route(
     tenant_slug: str,
     toolset_id: UUID,
     proposal_id: UUID,
@@ -851,7 +852,7 @@ async def review_agent_toolset_enrichment_route(
         422: {"description": "The version's operations could not be read or compiled."},
     },
 )
-async def compile_agent_toolset_route(
+def compile_agent_toolset_route(
     tenant_slug: str,
     toolset_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -936,7 +937,7 @@ async def export_agent_toolset_server_json_route(
         HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist; 422 when
             it cannot be compiled; 503 when the runtime URL is misconfigured.
     """
-    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.API_KEYS, Action.VIEW)
     tenant_id = _tenant_id(auth_data)
     try:
         document = await run_in_threadpool(
@@ -980,7 +981,7 @@ async def export_agent_access_server_json_route(
     Raises:
         HTTPException: 403 without ``api_keys:view``; 503 when the runtime URL is misconfigured.
     """
-    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.API_KEYS, Action.VIEW)
     tenant_id = _tenant_id(auth_data)
     try:
         document = await run_in_threadpool(

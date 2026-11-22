@@ -82,7 +82,7 @@ class OverlayLintResponse(BaseModel):
 
 
 @router.post("/overlay", response_model=OverlayLintResponse, response_model_by_alias=True)
-async def lint_overlay(
+def lint_overlay(
     body: OverlayLintRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> OverlayLintResponse:

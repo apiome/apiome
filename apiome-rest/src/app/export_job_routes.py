@@ -280,7 +280,7 @@ async def get_export_job_status(
     ),
     response_class=StreamingResponse,
 )
-async def download_export_job_artifact(
+def download_export_job_artifact(
     tenant_slug: str,
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

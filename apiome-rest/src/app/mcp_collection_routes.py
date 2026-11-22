@@ -109,7 +109,7 @@ def _normalize_update(body: McpCollectionUpdate) -> Dict[str, Any]:
 
 
 @router.get("/{tenant_slug}/collections", response_model=McpCollectionListResponse)
-async def list_mcp_collections(
+def list_mcp_collections(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCollectionListResponse:
@@ -124,7 +124,7 @@ async def list_mcp_collections(
 
 
 @router.post("/{tenant_slug}/collections", response_model=McpCollectionOut)
-async def create_mcp_collection(
+def create_mcp_collection(
     tenant_slug: str,
     body: McpCollectionCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -156,7 +156,7 @@ async def create_mcp_collection(
 
 
 @router.get("/{tenant_slug}/collections/{collection_id}", response_model=McpCollectionOut)
-async def get_mcp_collection(
+def get_mcp_collection(
     tenant_slug: str,
     collection_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -172,7 +172,7 @@ async def get_mcp_collection(
 
 
 @router.patch("/{tenant_slug}/collections/{collection_id}", response_model=McpCollectionOut)
-async def update_mcp_collection(
+def update_mcp_collection(
     tenant_slug: str,
     collection_id: uuid.UUID,
     body: McpCollectionUpdate,
@@ -208,7 +208,7 @@ async def update_mcp_collection(
 
 
 @router.delete("/{tenant_slug}/collections/{collection_id}")
-async def delete_mcp_collection(
+def delete_mcp_collection(
     tenant_slug: str,
     collection_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -226,7 +226,7 @@ async def delete_mcp_collection(
     "/{tenant_slug}/collections/{collection_id}/members",
     response_model=McpCollectionOut,
 )
-async def replace_mcp_collection_members(
+def replace_mcp_collection_members(
     tenant_slug: str,
     collection_id: uuid.UUID,
     body: McpCollectionMembersReplace,
@@ -257,7 +257,7 @@ async def replace_mcp_collection_members(
     "/{tenant_slug}/collections/{collection_id}/members",
     response_model=McpCollectionOut,
 )
-async def add_mcp_collection_members(
+def add_mcp_collection_members(
     tenant_slug: str,
     collection_id: uuid.UUID,
     body: McpCollectionMembersAdd,
@@ -287,7 +287,7 @@ async def add_mcp_collection_members(
 
 
 @router.delete("/{tenant_slug}/collections/{collection_id}/members/{endpoint_id}")
-async def remove_mcp_collection_member(
+def remove_mcp_collection_member(
     tenant_slug: str,
     collection_id: uuid.UUID,
     endpoint_id: uuid.UUID,

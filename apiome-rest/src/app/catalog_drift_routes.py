@@ -241,7 +241,7 @@ def _settings_out(row: Optional[Mapping[str, Any]]) -> CatalogDriftSettingsOut:
 
 
 @router.get("/{tenant_slug}/drift-notifications", response_model=CatalogDriftSettingsOut, response_model_by_alias=True)
-async def get_catalog_drift_settings(
+def get_catalog_drift_settings(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogDriftSettingsOut:
@@ -253,7 +253,7 @@ async def get_catalog_drift_settings(
 
 
 @router.put("/{tenant_slug}/drift-notifications", response_model=CatalogDriftSettingsOut, response_model_by_alias=True)
-async def put_catalog_drift_settings(
+def put_catalog_drift_settings(
     tenant_slug: str,
     body: CatalogDriftSettings,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -280,7 +280,7 @@ async def put_catalog_drift_settings(
 
 
 @router.get("/{tenant_slug}/{item_id}/drift", response_model=CatalogDriftEventList, response_model_by_alias=True)
-async def list_catalog_item_drift(
+def list_catalog_item_drift(
     tenant_slug: str,
     item_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -298,7 +298,7 @@ async def list_catalog_item_drift(
     response_model=CatalogDriftEvent,
     response_model_by_alias=True,
 )
-async def dismiss_catalog_item_drift(
+def dismiss_catalog_item_drift(
     tenant_slug: str,
     item_id: str,
     event_id: str,

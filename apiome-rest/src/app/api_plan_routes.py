@@ -106,7 +106,7 @@ def _http_error(exc: ValueError) -> HTTPException:
         "Requires `projects:view`."
     ),
 )
-async def list_product_plans(
+def list_product_plans(
     tenant_slug: str, product_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ApiPlanListResponse:
     """List a product's plans.
@@ -149,7 +149,7 @@ async def list_product_plans(
         "Audited as `api_product.plan.create`. Requires `projects:edit`."
     ),
 )
-async def create_product_plan(
+def create_product_plan(
     tenant_slug: str,
     product_slug: str,
     body: ApiPlanInput,
@@ -187,7 +187,7 @@ async def create_product_plan(
         "Requires `projects:view`."
     ),
 )
-async def read_product_plan(
+def read_product_plan(
     tenant_slug: str,
     product_slug: str,
     plan_slug: str,
@@ -236,7 +236,7 @@ async def read_product_plan(
         "`projects:edit`."
     ),
 )
-async def patch_product_plan(
+def patch_product_plan(
     tenant_slug: str,
     product_slug: str,
     plan_slug: str,
@@ -284,7 +284,7 @@ async def patch_product_plan(
         "Audited as `api_product.plan.migrate` (not on a dry run). Requires `projects:edit`."
     ),
 )
-async def migrate_product_plan(
+def migrate_product_plan(
     tenant_slug: str,
     product_slug: str,
     plan_slug: str,
@@ -326,7 +326,7 @@ async def migrate_product_plan(
         "Audited as `api_product.plan.delete`. Requires `projects:edit`."
     ),
 )
-async def delete_product_plan(
+def delete_product_plan(
     tenant_slug: str,
     product_slug: str,
     plan_slug: str,

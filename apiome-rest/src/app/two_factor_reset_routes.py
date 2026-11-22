@@ -196,7 +196,7 @@ def _perform(
         422: {"description": "Reason missing or out of range, or the confirmation does not match."},
     },
 )
-async def admin_reset_two_factor(
+def admin_reset_two_factor(
     user_id: str,
     payload: TwoFactorResetRequest,
     _: None = Depends(require_super_admin),
@@ -241,7 +241,7 @@ async def admin_reset_two_factor(
         422: {"description": "Reason missing or out of range, or the confirmation does not match."},
     },
 )
-async def member_reset_two_factor(
+def member_reset_two_factor(
     tenant_slug: str,
     user_id: str,
     payload: TwoFactorResetRequest,

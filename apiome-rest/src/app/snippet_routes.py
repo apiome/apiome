@@ -329,7 +329,7 @@ def _cached_json_response(
     },
     summary="Render a usage snippet for one operation of a published revision",
 )
-async def get_version_operation_snippet(
+def get_version_operation_snippet(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -422,7 +422,7 @@ async def get_version_operation_snippet(
     dependencies=[Depends(_require_public_snippet_rate_limit)],
     summary="Render a usage snippet for one operation of a published public version (no auth)",
 )
-async def get_public_operation_snippet(
+def get_public_operation_snippet(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,

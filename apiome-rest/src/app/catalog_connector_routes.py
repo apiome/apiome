@@ -62,6 +62,7 @@ from typing import Any, Dict, Mapping, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 
 from . import catalog_connector_store as store
 from . import shadow_api_store
@@ -251,7 +252,7 @@ def _audit(tenant_id: str, action: str, actor_id: Optional[str], detail: Dict[st
 
 
 @router.get(_BASE, response_model=ConnectorListResponse, response_model_by_alias=True)
-async def list_connectors(
+def list_connectors(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ConnectorListResponse:
@@ -287,7 +288,7 @@ async def dry_run_connector_route(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target="connectors")
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target="connectors")
     try:
         scope = validate_scope(body.scope)
         base_url = connector_base_url_from_settings(body.base_url) if body.base_url else None
@@ -318,7 +319,7 @@ async def dry_run_connector_route(
 
 
 @router.get("/{tenant_slug}/refresh-runs", response_model=RefreshRunPage, response_model_by_alias=True)
-async def list_refresh_runs(
+def list_refresh_runs(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     connector: Optional[UUID] = Query(None, description="Only this connector's runs."),
@@ -389,14 +390,17 @@ async def create_connector(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target="connectors")
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target="connectors"
+    )
     try:
         name = validate_name(body.name)
         scope = validate_scope(body.scope)
         base_url = connector_base_url_from_settings(body.base_url) if body.base_url else None
         validate_connector_scope(body.kind, scope, base_url)
         await asyncio.to_thread(check_connector_connection, {"kind": body.kind, "scope": scope, "base_url": base_url})
-        row = store.create_connector(
+        row = await run_in_threadpool(
+            store.create_connector,
             db,
             tenant_id,
             kind=body.kind,
@@ -410,12 +414,14 @@ async def create_connector(
         )
     except ConnectorError as exc:
         raise _refusal(exc) from exc
-    _audit(tenant_id, AUDIT_CREATE, actor_id, {"connectorId": str(row["id"]), "kind": body.kind, "name": name})
+    await run_in_threadpool(
+        _audit, tenant_id, AUDIT_CREATE, actor_id, {"connectorId": str(row["id"]), "kind": body.kind, "name": name}
+    )
     return _connector_out(row)
 
 
 @router.get(_BASE + "/{connector_id}", response_model=ConnectorOut, response_model_by_alias=True)
-async def get_connector(
+def get_connector(
     tenant_slug: str,
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -441,8 +447,10 @@ async def update_connector(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
-    existing = _require_connector(tenant_id, connector_id)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}"
+    )
+    existing = await run_in_threadpool(_require_connector, tenant_id, connector_id)
     sent = body.model_dump(exclude_unset=True)
     changes: Dict[str, Any] = {}
     try:
@@ -469,13 +477,14 @@ async def update_connector(
                 if sent[field_name] is None:
                     raise ConnectorError(CODE_INVALID, f"{field_name} cannot be cleared.")
                 changes[field_name] = sent[field_name]
-        row = store.update_connector(db, tenant_id, str(connector_id), changes)
+        row = await run_in_threadpool(store.update_connector, db, tenant_id, str(connector_id), changes)
     except ConnectorError as exc:
         raise _refusal(exc) from exc
     if row is None:
         raise _refusal(ConnectorError(CODE_NOT_FOUND, "Connector not found."))
     if changes:
-        _audit(
+        await run_in_threadpool(
+            _audit,
             tenant_id,
             AUDIT_UPDATE,
             actor_id,
@@ -485,7 +494,7 @@ async def update_connector(
 
 
 @router.delete(_BASE + "/{connector_id}", status_code=204)
-async def delete_connector(
+def delete_connector(
     tenant_slug: str,
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -520,15 +529,17 @@ async def sync_connector(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
-    connector = _require_connector(tenant_id, connector_id)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}"
+    )
+    connector = await run_in_threadpool(_require_connector, tenant_id, connector_id)
     try:
         result = await asyncio.to_thread(
             run_connector_sync, db, connector, trigger=TRIGGER_MANUAL, actor_id=actor_id
         )
     except ConnectorError as exc:
         raise _refusal(exc) from exc
-    rows = store.list_runs(db, tenant_id, str(connector_id), limit=1, offset=0)
+    rows = await run_in_threadpool(store.list_runs, db, tenant_id, str(connector_id), limit=1, offset=0)
     run = next((r for r in rows if str(r["id"]) == result.run_id), None)
     if run is None:
         raise HTTPException(status_code=500, detail="The run finished but could not be read back.")
@@ -536,7 +547,7 @@ async def sync_connector(
 
 
 @router.get(_BASE + "/{connector_id}/items", response_model=ConnectorItemPage, response_model_by_alias=True)
-async def list_connector_items(
+def list_connector_items(
     tenant_slug: str,
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -562,7 +573,7 @@ async def list_connector_items(
 
 
 @router.get(_BASE + "/{connector_id}/runs", response_model=ConnectorRunPage, response_model_by_alias=True)
-async def list_connector_runs(
+def list_connector_runs(
     tenant_slug: str,
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -588,7 +599,7 @@ async def list_connector_runs(
     response_model=ConnectorCredentialsOut,
     response_model_by_alias=True,
 )
-async def put_connector_credentials(
+def put_connector_credentials(
     tenant_slug: str,
     connector_id: UUID,
     body: ConnectorCredentialsPut,
@@ -669,7 +680,7 @@ def _reload_item(tenant_id: str, connector_id: UUID, item_id: UUID) -> Connector
 @router.post(
     _BASE + "/{connector_id}/items/{item_id}/link", response_model=ConnectorItemOut, response_model_by_alias=True
 )
-async def link_connector_item(
+def link_connector_item(
     tenant_slug: str,
     connector_id: UUID,
     item_id: UUID,
@@ -709,7 +720,7 @@ async def link_connector_item(
 @router.post(
     _BASE + "/{connector_id}/items/{item_id}/ignore", response_model=ConnectorItemOut, response_model_by_alias=True
 )
-async def ignore_connector_item(
+def ignore_connector_item(
     tenant_slug: str,
     connector_id: UUID,
     item_id: UUID,
@@ -743,7 +754,7 @@ async def ignore_connector_item(
 @router.post(
     _BASE + "/{connector_id}/items/{item_id}/unignore", response_model=ConnectorItemOut, response_model_by_alias=True
 )
-async def unignore_connector_item(
+def unignore_connector_item(
     tenant_slug: str,
     connector_id: UUID,
     item_id: UUID,
@@ -783,9 +794,11 @@ async def import_connector_item(
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
-    connector = _require_connector(tenant_id, connector_id)
-    item = _require_item(tenant_id, connector_id, item_id)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}"
+    )
+    connector = await run_in_threadpool(_require_connector, tenant_id, connector_id)
+    item = await run_in_threadpool(_require_item, tenant_id, connector_id, item_id)
     try:
         result = await asyncio.to_thread(
             run_connector_sync,
@@ -797,7 +810,7 @@ async def import_connector_item(
         )
     except ConnectorError as exc:
         raise _refusal(exc) from exc
-    rows = store.list_runs(db, tenant_id, str(connector_id), limit=1, offset=0)
+    rows = await run_in_threadpool(store.list_runs, db, tenant_id, str(connector_id), limit=1, offset=0)
     run = next((r for r in rows if str(r["id"]) == result.run_id), None)
     if run is None:
         raise HTTPException(status_code=500, detail="The run finished but could not be read back.")

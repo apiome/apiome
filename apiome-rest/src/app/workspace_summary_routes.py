@@ -144,7 +144,7 @@ def _domain(domain: Dict[str, Any]) -> WorkspaceDomainSummary:
 
 
 @router.get("/{tenant_slug}/version/{version_id}/summary", response_model=WorkspaceSummary)
-async def get_workspace_summary(
+def get_workspace_summary(
     tenant_slug: str,
     version_id: str,
     member_limit: Optional[int] = Query(None, ge=0, description=_MEMBER_LIMIT_DESCRIPTION),

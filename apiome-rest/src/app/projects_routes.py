@@ -61,7 +61,7 @@ PROJECT_DOMAIN_CATEGORY_IDS: List[str] = [
 
 
 @router.get("/domains")
-async def list_project_domain_categories_global() -> Dict[str, List[str]]:
+def list_project_domain_categories_global() -> Dict[str, List[str]]:
     """
     Allowlist of ``domainCategory`` ids for project metadata.
 
@@ -72,7 +72,7 @@ async def list_project_domain_categories_global() -> Dict[str, List[str]]:
 
 
 @router.get("/{tenant_slug}/domains")
-async def list_project_domain_categories_for_tenant(tenant_slug: str) -> Dict[str, List[str]]:
+def list_project_domain_categories_for_tenant(tenant_slug: str) -> Dict[str, List[str]]:
     """
     Same allowlist under the tenant-scoped URL shape expected by the CLI.
 
@@ -84,7 +84,7 @@ async def list_project_domain_categories_for_tenant(tenant_slug: str) -> Dict[st
 
 
 @router.get("/{tenant_slug}")
-async def list_projects(
+def list_projects(
     tenant_slug: str,
     include_deleted: bool = Query(
         False,
@@ -161,7 +161,7 @@ def _is_uuid(value: str) -> bool:
 
 
 @router.get("/{tenant_slug}/recently-viewed")
-async def list_recently_viewed_projects(
+def list_recently_viewed_projects(
     tenant_slug: str,
     limit: int = Query(
         RECENTLY_VIEWED_DEFAULT_LIMIT,
@@ -195,7 +195,7 @@ async def list_recently_viewed_projects(
 
 
 @router.delete("/{tenant_slug}/recently-viewed", status_code=204)
-async def clear_recently_viewed_projects(
+def clear_recently_viewed_projects(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> None:
@@ -214,7 +214,7 @@ async def clear_recently_viewed_projects(
 
 
 @router.post("/{tenant_slug}/{project_id}/views")
-async def record_project_view(
+def record_project_view(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -258,7 +258,7 @@ PROJECT_PIN_LIMIT = 8
 
 
 @router.get("/{tenant_slug}/pinned")
-async def list_pinned_projects(
+def list_pinned_projects(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> PinnedProjectsResponse:
@@ -285,7 +285,7 @@ async def list_pinned_projects(
 
 
 @router.put("/{tenant_slug}/{project_id}/pin")
-async def pin_project(
+def pin_project(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -338,7 +338,7 @@ async def pin_project(
 
 
 @router.delete("/{tenant_slug}/{project_id}/pin", status_code=204)
-async def unpin_project(
+def unpin_project(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -369,7 +369,7 @@ TIME_SPENT_MAX_PROJECTS = 50
 
 
 @router.get("/{tenant_slug}/time-spent")
-async def get_time_spent(
+def get_time_spent(
     tenant_slug: str,
     days: int = Query(
         7,
@@ -413,7 +413,7 @@ async def get_time_spent(
 
 
 @router.get("/{tenant_slug}/{project_id}")
-async def get_project(
+def get_project(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -457,7 +457,7 @@ async def get_project(
     response_model=ProjectConversionHistoryResponse,
     summary="List the conversions that produced a Project",
 )
-async def get_project_conversion_history(
+def get_project_conversion_history(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -497,7 +497,7 @@ async def get_project_conversion_history(
     response_model=ConversionEvidenceResponse,
     summary="Page through the stored evidence snapshot of one conversion of this Project",
 )
-async def get_project_conversion_evidence(
+def get_project_conversion_evidence(
     tenant_slug: str,
     project_id: str,
     provenance_id: str,
@@ -582,7 +582,7 @@ async def get_project_conversion_evidence(
 
 
 @router.get("/{tenant_slug}/by-slug/{project_slug}")
-async def get_project_by_slug(
+def get_project_by_slug(
     tenant_slug: str,
     project_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -612,7 +612,7 @@ async def get_project_by_slug(
 
 
 @router.post("/{tenant_slug}")
-async def create_project(
+def create_project(
     tenant_slug: str,
     request: ProjectCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -700,7 +700,7 @@ async def create_project(
 
 
 @router.put("/{tenant_slug}/{project_id}")
-async def update_project(
+def update_project(
     tenant_slug: str,
     project_id: str,
     request: ProjectUpdateRequest,
@@ -815,7 +815,7 @@ async def update_project(
 
 
 @router.get("/{tenant_slug}/{project_id}/deletion-impact")
-async def get_project_deletion_impact(
+def get_project_deletion_impact(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -858,7 +858,7 @@ async def get_project_deletion_impact(
 
 
 @router.delete("/{tenant_slug}/{project_id}")
-async def delete_project(
+def delete_project(
     tenant_slug: str,
     project_id: str,
     permanent: bool = Query(
@@ -931,7 +931,7 @@ async def delete_project(
 
 
 @router.post("/{tenant_slug}/{project_id}/restore")
-async def restore_project(
+def restore_project(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -990,7 +990,7 @@ def _tags_out(project_id: str, tags: List[Dict[str, Any]]) -> ProjectOpenApiTags
 
 
 @router.get("/{tenant_slug}/{project_id}/openapi-tags", response_model=ProjectOpenApiTagsOut)
-async def get_project_openapi_tags(
+def get_project_openapi_tags(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1011,7 +1011,7 @@ async def get_project_openapi_tags(
 
 
 @router.put("/{tenant_slug}/{project_id}/openapi-tags", response_model=ProjectOpenApiTagsOut)
-async def replace_project_openapi_tags(
+def replace_project_openapi_tags(
     tenant_slug: str,
     project_id: str,
     request: ProjectOpenApiTagsUpdateRequest,

@@ -122,7 +122,7 @@ def _format_created(value: Any) -> Optional[str]:
         },
     },
 )
-async def provision_first_tenant(
+def provision_first_tenant(
     payload: FirstTenantProvisionRequest,
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> FirstTenantProvisionResponse:
@@ -239,7 +239,7 @@ def _normalize_tenant_id(value: Any) -> Optional[str]:
         },
     },
 )
-async def activate_membership(
+def activate_membership(
     payload: MembershipActivationRequest,
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> MembershipActivationResponse:
@@ -359,7 +359,7 @@ def _clean_wizard_text(value: Optional[str]) -> Optional[str]:
         429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
     },
 )
-async def get_wizard_state(
+def get_wizard_state(
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ):
     """Return the caller's saved onboarding-wizard state, or 204 when none.
@@ -396,7 +396,7 @@ async def get_wizard_state(
         429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
     },
 )
-async def put_wizard_state(
+def put_wizard_state(
     payload: WizardStateUpsertRequest,
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> Response:
@@ -437,7 +437,7 @@ async def put_wizard_state(
         429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
     },
 )
-async def delete_wizard_state(
+def delete_wizard_state(
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> Response:
     """Clear the caller's saved wizard state (called once the wizard completes).

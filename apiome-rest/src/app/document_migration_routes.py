@@ -137,7 +137,7 @@ def _run(options: MigrationOptions) -> None:
 
 
 @router.post("/document-migration", status_code=202)
-async def start_document_migration(
+def start_document_migration(
     request: DocumentMigrationRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
@@ -167,7 +167,7 @@ async def start_document_migration(
 
 
 @router.get("/document-migration")
-async def document_migration_status(
+def document_migration_status(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
     """The document migration's status (COA-5.8, #7084). Platform-admin only.

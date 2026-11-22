@@ -72,7 +72,7 @@ def with_replacement(row: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
 
 
 @router.post("/{tenant_slug}/{primitive_id}/deprecate", response_model=PrimitiveSchema)
-async def deprecate_primitive(
+def deprecate_primitive(
     tenant_slug: str,
     primitive_id: str,
     request: PrimitiveDeprecateRequest,
@@ -141,7 +141,7 @@ async def deprecate_primitive(
 
 
 @router.delete("/{tenant_slug}/{primitive_id}/deprecate", response_model=PrimitiveSchema)
-async def restore_primitive(
+def restore_primitive(
     tenant_slug: str,
     primitive_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

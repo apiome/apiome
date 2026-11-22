@@ -307,7 +307,7 @@ def _spec_index(tenant_id: str, tenant_slug: str, version_row: Dict[str, Any]) -
         "Requires `consumer_contracts:view`."
     ),
 )
-async def list_project_consumers(
+def list_project_consumers(
     tenant_slug: str,
     project_ref: str,
     team: Optional[str] = Query(
@@ -368,7 +368,7 @@ async def list_project_consumers(
         "Requires `consumer_contracts:create`."
     ),
 )
-async def register_consumer(
+def register_consumer(
     tenant_slug: str,
     project_ref: str,
     body: ConsumerInput,
@@ -416,7 +416,7 @@ async def register_consumer(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def read_consumer(
+def read_consumer(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -466,7 +466,7 @@ async def read_consumer(
         "Requires `consumer_contracts:edit`."
     ),
 )
-async def patch_consumer(
+def patch_consumer(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -519,7 +519,7 @@ async def patch_consumer(
         "only — removing a consumer removes a signal that guards other people's changes."
     ),
 )
-async def delete_consumer(
+def delete_consumer(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -583,7 +583,7 @@ async def delete_consumer(
         "Requires `consumer_contracts:edit`."
     ),
 )
-async def declare_contract(
+def declare_contract(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -669,7 +669,7 @@ async def declare_contract(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def read_contract(
+def read_contract(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -717,7 +717,7 @@ async def read_contract(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def list_contract_revisions(
+def list_contract_revisions(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -770,7 +770,7 @@ async def list_contract_revisions(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def read_available_surface(
+def read_available_surface(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(
@@ -871,7 +871,7 @@ def _consumers_visible(auth_data: Dict[str, Any]) -> bool:
         "and `consumers_visible: false`."
     ),
 )
-async def read_consumer_usage(
+def read_consumer_usage(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(
@@ -935,7 +935,7 @@ async def read_consumer_usage(
         "Requires `consumer_contracts:create`."
     ),
 )
-async def import_pact_contract(
+def import_pact_contract(
     tenant_slug: str,
     project_ref: str,
     body: PactImportRequest,

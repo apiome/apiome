@@ -300,7 +300,7 @@ def _config_response(tenant_id: str, environment_id: str) -> CdnConfigResponse:
     response_model=CdnConfigResponse,
     response_model_by_alias=True,
 )
-async def get_cdn_config(
+def get_cdn_config(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> CdnConfigResponse:
@@ -316,7 +316,7 @@ async def get_cdn_config(
     response_model=CdnConfigResponse,
     response_model_by_alias=True,
 )
-async def save_cdn_config(
+def save_cdn_config(
     environment_id: str,
     request: SaveCdnProviderRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -399,7 +399,7 @@ def _vault_refusal() -> Dict[str, Any]:
     response_model=CdnDetachResponse,
     response_model_by_alias=True,
 )
-async def detach_cdn(
+def detach_cdn(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> CdnDetachResponse:
@@ -428,7 +428,7 @@ async def detach_cdn(
     response_model=CdnDispatchHistoryResponse,
     response_model_by_alias=True,
 )
-async def get_cdn_dispatches(
+def get_cdn_dispatches(
     environment_id: str,
     limit: int = Query(default=20, ge=1, le=100),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),

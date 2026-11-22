@@ -59,7 +59,7 @@ router = APIRouter(prefix="/v1/formats", tags=["formats"])
         "static reference data — identical for every tenant — and safe to cache by ``version``."
     ),
 )
-async def get_format_matrix(
+def get_format_matrix(
     paradigm: Optional[ApiParadigm] = Query(
         default=None,
         description="Return only formats in this paradigm (``rest``, ``rpc``, ``event``, "

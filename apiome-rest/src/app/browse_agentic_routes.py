@@ -156,7 +156,7 @@ def _tenant(tenant_slug: str) -> Dict[str, Any]:
     responses={200: {"content": {"application/json": {}}}, **_RESPONSES},
     dependencies=[Depends(_require_rate_limit)],
 )
-async def get_tenant_agents_json(
+def get_tenant_agents_json(
     tenant_slug: str,
     site_url: Optional[str] = Query(None, description=_SITE_URL_DESCRIPTION),
 ) -> Response:
@@ -198,7 +198,7 @@ async def get_tenant_agents_json(
     responses={200: {"content": {"text/plain": {}}}, **_RESPONSES},
     dependencies=[Depends(_require_rate_limit)],
 )
-async def get_tenant_llms_txt(
+def get_tenant_llms_txt(
     tenant_slug: str,
     site_url: Optional[str] = Query(None, description=_SITE_URL_DESCRIPTION),
 ) -> Response:

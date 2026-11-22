@@ -32,6 +32,7 @@ import asyncio
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from .analysis_telemetry import analysis_telemetry
@@ -81,7 +82,9 @@ def _readiness_payload() -> tuple[int, Dict[str, Any]]:
 @health_router.get("/readyz")
 async def readiness() -> JSONResponse:
     """Readiness probe: 200 when the database is reachable, 503 otherwise."""
-    status_code, payload = _readiness_payload()
+    # The round-trip runs on the event loop's own executor (``asyncio.to_thread``), not the request
+    # thread pool, so the probe still answers when every request thread is busy (#7187).
+    status_code, payload = await asyncio.to_thread(_readiness_payload)
     return JSONResponse(status_code=status_code, content=payload)
 
 
@@ -110,7 +113,8 @@ async def health_check() -> JSONResponse:
     deliberately, and a store outage fails the writes that need it without making the server
     unready.
     """
-    status_code, payload = _readiness_payload()
+    # Off the request thread pool, like ``/readyz``: a probe must not queue behind requests.
+    status_code, payload = await asyncio.to_thread(_readiness_payload)
     # Preserve the historical key shape while reporting the same readiness signal.
     body = {
         "status": "healthy" if status_code == 200 else "unhealthy",
@@ -167,14 +171,14 @@ def _backup_payload() -> Dict[str, Any]:
 
 
 @ops_router.get("/metrics")
-async def ops_metrics(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
+def ops_metrics(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
     """Operational request metrics (request rate, error rate, latency). Platform-admin only."""
     enforce_platform_admin(db, auth_data)
     return JSONResponse(content=_metrics_payload())
 
 
 @ops_router.get("/import-export")
-async def ops_import_export(
+def ops_import_export(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> JSONResponse:
     """Import/export pipeline observability aggregates (IXH-6.6). Platform-admin only.
@@ -200,21 +204,21 @@ async def ops_import_export(
 
 
 @ops_router.get("/backups")
-async def ops_backups(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
+def ops_backups(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
     """Latest backup status (from RC1-1.3 manifests). Platform-admin only."""
     enforce_platform_admin(db, auth_data)
     return JSONResponse(content=_backup_payload())
 
 
 @ops_router.get("/status")
-async def ops_status(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
+def ops_status(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
     """Combined metrics + backup status — one call backing the dashboard. Platform-admin only."""
     enforce_platform_admin(db, auth_data)
     return JSONResponse(content={"metrics": _metrics_payload(), "backups": _backup_payload()})
 
 
 @ops_router.get("/mcp-discovery-sweep")
-async def ops_mcp_discovery_sweep(
+def ops_mcp_discovery_sweep(
     limit: int = Query(
         default=DEFAULT_RUN_LIMIT,
         ge=1,
@@ -260,7 +264,7 @@ async def ops_toolchain(
     (MFI-5.3) every tool subprocess runs under (no-network default, rlimit clamps, input/output
     caps).
     """
-    enforce_platform_admin(db, auth_data)
+    await run_in_threadpool(enforce_platform_admin, db, auth_data)
     availability = probe_all()
     tools = [a.model_dump() for a in availability]
     by_key = {t["key"]: t for t in tools}
@@ -307,7 +311,7 @@ async def ops_toolchain(
 
 
 @ops_router.get("/dashboard", response_class=HTMLResponse)
-async def ops_dashboard(
+def ops_dashboard(
     request: Request,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> HTMLResponse:

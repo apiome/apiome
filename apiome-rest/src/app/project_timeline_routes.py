@@ -72,7 +72,7 @@ def _event_out(event: TimelineEvent) -> ProjectTimelineEventOut:
     response_model=ProjectTimelineResponse,
     response_model_by_alias=True,
 )
-async def get_project_timeline(
+def get_project_timeline(
     tenant_slug: str,
     project_id: str,
     revision_id: Optional[str] = Query(

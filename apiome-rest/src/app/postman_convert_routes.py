@@ -135,7 +135,7 @@ def convert_postman_to_openapi(
         "``imports:create``."
     ),
 )
-async def postman_to_openapi(
+def postman_to_openapi(
     tenant_slug: str,
     body: PostmanToOpenApiRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

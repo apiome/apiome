@@ -29,6 +29,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -188,7 +189,7 @@ async def preflight_import_candidate(
     # Gated on ``imports:create`` rather than a view action: pre-flight is the first step of
     # the import flow, and a caller who may not import has no use for its verdict. It writes
     # nothing itself.
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     return await run_import_preflight(
         body, tenant_id=tenant_id, tenant_slug=tenant_slug, user_id=user_id
@@ -232,7 +233,7 @@ async def preview_import_manifest(
 ) -> ImportPreviewManifestResponse:
     # Same gate as the pre-flight (IXH-2.1): the manifest is the first step of the import
     # flow, and a caller who may not import has no use for it. It writes nothing itself.
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     try:
         return await run_import_preview_manifest(
@@ -265,7 +266,7 @@ async def preview_import_manifest(
         "project has no revision yet. Nothing is persisted."
     ),
 )
-async def preview_project_delta(
+def preview_project_delta(
     tenant_slug: str,
     body: ProjectDeltaRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -322,7 +323,7 @@ async def inventory_import_bundle(
 ) -> ImportBundleInventoryResponse:
     # Same gate as the pre-flight and the preview manifest: this is a step of the import
     # flow, and a caller who may not import has no use for it. It writes nothing itself.
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     try:
         return await run_import_bundle_inventory(
@@ -384,7 +385,7 @@ async def start_spec_import_json(
     body: SpecImportStartJsonRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportJobAccepted:
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     try:
         raw = base64.standard_b64decode(body.document_base64)
@@ -425,7 +426,7 @@ async def start_spec_import_multipart(
     ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportJobAccepted:
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     try:
         meta = SpecImportStartMetadata.model_validate_json(metadata)
@@ -514,7 +515,7 @@ async def cancel_spec_import_job(
     # NB: return a Response (not `-> None`) — under `from __future__ import annotations`
     # FastAPI evaluates a `None` return annotation to NoneType and asserts that a 204
     # cannot carry a body. Mirrors the draft-lock release routes.
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.DELETE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.DELETE)
     _ = auth_data
     await engine_cancel_spec_import_job(tenant_slug, job_id)
     return Response(status_code=204)
@@ -530,7 +531,7 @@ async def commit_spec_import_job(
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportCommitResponse:
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = auth_data
     return await engine_commit_spec_import_job(tenant_slug, job_id)
 
@@ -545,6 +546,6 @@ async def rollback_spec_import_job(
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportRollbackResponse:
-    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = auth_data
     return await engine_rollback_spec_import_job(tenant_slug, job_id)

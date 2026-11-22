@@ -109,7 +109,7 @@ _KIND_HELP = (
         "(`gateway_tag`, `codeowners`, `spec_extension`, …) and `source_ref`.\n\n" + _KIND_HELP
     ),
 )
-async def get_entity_owner(
+def get_entity_owner(
     tenant_slug: str,
     kind: str,
     entity_id: str,
@@ -141,7 +141,7 @@ async def get_entity_owner(
         "Audited as `owner.assign`. " + _KIND_HELP
     ),
 )
-async def put_entity_owner(
+def put_entity_owner(
     tenant_slug: str,
     kind: str,
     entity_id: str,
@@ -173,7 +173,7 @@ async def put_entity_owner(
         "becomes a suggestion again.\n\nAudited as `owner.remove`. " + _KIND_HELP
     ),
 )
-async def delete_entity_owner(
+def delete_entity_owner(
     tenant_slug: str,
     kind: str,
     entity_id: str,
@@ -204,7 +204,7 @@ async def delete_entity_owner(
         "(`confirmed_by`, `confirmed_at`).\n\nAudited as `owner.confirm`. " + _KIND_HELP
     ),
 )
-async def confirm_entity_owner(
+def confirm_entity_owner(
     tenant_slug: str,
     kind: str,
     entity_id: str,
@@ -238,7 +238,7 @@ async def confirm_entity_owner(
         "Needs `edit` on every kind in the list. Audited as one `owner.bulk_assign`."
     ),
 )
-async def bulk_assign_entity_owner(
+def bulk_assign_entity_owner(
     tenant_slug: str,
     body: BulkAssignInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

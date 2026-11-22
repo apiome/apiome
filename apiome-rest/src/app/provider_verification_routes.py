@@ -95,7 +95,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "(400/404/422); target resolution faults are 400/404; evidence faults are 400."
     ),
 )
-async def verify_provider_for_version(
+def verify_provider_for_version(
     tenant_slug: str,
     version_ref: str,
     body: ProviderVerificationRequest,
@@ -159,7 +159,7 @@ async def verify_provider_for_version(
         "`outcome` for what is currently drifting."
     ),
 )
-async def list_provider_verifications(
+def list_provider_verifications(
     tenant_slug: str,
     version_ref: Optional[str] = Query(
         default=None, description="Restrict to one version reference."
@@ -211,7 +211,7 @@ async def list_provider_verifications(
         "the id of the immutable evidence run the report was read from."
     ),
 )
-async def read_provider_verification(
+def read_provider_verification(
     tenant_slug: str,
     report_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

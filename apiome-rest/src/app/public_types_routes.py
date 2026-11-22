@@ -66,7 +66,7 @@ def _not_found(schema_path: str) -> HTTPException:
         404: {"description": "No publicly servable type at this path."},
     },
 )
-async def get_public_type(schema_path: str) -> Response:
+def get_public_type(schema_path: str) -> Response:
     """Serve the JSON Schema document a registry ``$id`` names.
 
     ``schema_path`` is everything after ``/types/`` — namespace plus type-name slug, e.g.

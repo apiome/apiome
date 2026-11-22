@@ -29,6 +29,7 @@ import logging
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import validate_authentication
@@ -235,11 +236,20 @@ async def plan_openapi_upgrade(
     tenant_id = str(auth_data["tenant_id"])
     meta: Dict[str, Any] = {}
     if body.project_id:
-        enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"project:{body.project_id}:upgrade")
+        await run_in_threadpool(
+            enforce_permission,
+            db,
+            auth_data,
+            Resource.IMPORTS,
+            Action.VIEW,
+            target=f"project:{body.project_id}:upgrade",
+        )
         document, meta = await asyncio.to_thread(load_version_source, tenant_id, body.project_id, body.version)
         origin: str = meta["origin"]
     else:
-        enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="openapi-upgrade:document")
+        await run_in_threadpool(
+            enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW, target="openapi-upgrade:document"
+        )
         document = _parse_text(body.document_text or "", "document")
         origin = "request"
     plan = await asyncio.to_thread(_plan, document, body.target)
@@ -331,8 +341,10 @@ async def apply_openapi_upgrade(
     """
     tenant_id = str(auth_data["tenant_id"])
     target = f"project:{body.project_id}:upgrade"
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target=target)
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target=target
+    )
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
     document, meta = await asyncio.to_thread(load_version_source, tenant_id, body.project_id, body.version)
     plan = await asyncio.to_thread(_plan, document, body.target)
     if plan.already_current:
@@ -373,7 +385,9 @@ async def apply_openapi_upgrade(
         "changeCount": len(plan.changes),
     }
     try:
-        db.insert_workflow_audit(tenant_id, None, None, AUDIT_APPLIED, "success", actor_id, detail)
+        await run_in_threadpool(
+            db.insert_workflow_audit, tenant_id, None, None, AUDIT_APPLIED, "success", actor_id, detail
+        )
     except Exception:  # noqa: BLE001 — an audit failure never fails the request.
         logger.exception("openapi upgrade audit write failed project=%s", body.project_id)
     return UpgradeApplyResponse(

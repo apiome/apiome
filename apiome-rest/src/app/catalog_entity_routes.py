@@ -165,7 +165,7 @@ def _envelope(row: Mapping[str, Any]) -> CatalogEntity:
 
 
 @router.get("/{tenant_slug}/entities", response_model=CatalogEntityPage, response_model_by_alias=True)
-async def list_catalog_entities(
+def list_catalog_entities(
     tenant_slug: str,
     kind_filter: Optional[List[str]] = Query(
         None, alias="kind", description="Only these kinds (repeat the parameter, or comma-separate)."
@@ -201,7 +201,7 @@ async def list_catalog_entities(
 
 
 @router.get("/{tenant_slug}/entities/summary", response_model=CatalogEntitySummary, response_model_by_alias=True)
-async def summarize_catalog_entities(
+def summarize_catalog_entities(
     tenant_slug: str,
     team: Optional[str] = Query(None, max_length=128, description="Count only entities this team owns."),
     q: Optional[str] = Query(None, max_length=200, description="Count only entities matching this text."),
@@ -268,7 +268,7 @@ async def summarize_catalog_entities(
     response_model=CatalogFactsOut,
     response_model_by_alias=True,
 )
-async def read_catalog_entity_facts(
+def read_catalog_entity_facts(
     tenant_slug: str,
     kind_key: str,
     entity_id: str,

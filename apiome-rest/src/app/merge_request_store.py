@@ -804,7 +804,7 @@ def _supersede_session(tenant_id: str, project_id: str, session_id: Optional[str
         db.update_merge_session_status(session_id, project_id, tenant_id, "aborted", actor)
 
 
-async def _run_merge_session(
+def _run_merge_session(
     *,
     tenant_slug: str,
     tenant_id: str,
@@ -827,7 +827,7 @@ async def _run_merge_session(
 
     if not row.get("source_branch_id") or not row.get("target_branch_id"):
         raise MergeRequestValidationError(CODE_BRANCH_NOT_FOUND, "a branch of this merge request no longer exists")
-    preview = await version_branch_merge_preview(
+    preview = version_branch_merge_preview(
         tenant_slug,
         project_id,
         VersionBranchMergePreviewRequest(
@@ -850,7 +850,7 @@ async def _run_merge_session(
     return preview
 
 
-async def check_merge_request(
+def check_merge_request(
     tenant_slug: str,
     auth_data: Dict[str, Any],
     actor_id: Optional[str],
@@ -876,7 +876,7 @@ async def check_merge_request(
     project_id = str(_project(tenant_id, project_ref)["id"])
     row = _mr_row(project_id, merge_request_id)
     _require_open(row)
-    await _run_merge_session(
+    _run_merge_session(
         tenant_slug=tenant_slug,
         tenant_id=tenant_id,
         project_id=project_id,
@@ -888,7 +888,7 @@ async def check_merge_request(
     return get_merge_request(tenant_id, project_id, str(row["id"]))
 
 
-async def merge_merge_request(
+def merge_merge_request(
     tenant_slug: str,
     auth_data: Dict[str, Any],
     actor_id: Optional[str],
@@ -946,7 +946,7 @@ async def merge_merge_request(
             {"blockers": [b.model_dump() for b in review_blockers]},
         )
 
-    preview = await _run_merge_session(
+    preview = _run_merge_session(
         tenant_slug=tenant_slug,
         tenant_id=tenant_id,
         project_id=project_id,
@@ -965,7 +965,7 @@ async def merge_merge_request(
 
     db.update_merge_session_status(session_id, project_id, tenant_id, "resolving", actor)
     try:
-        result = await version_branch_merge(
+        result = version_branch_merge(
             tenant_slug,
             project_id,
             VersionBranchMergeRequest(

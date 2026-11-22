@@ -279,13 +279,16 @@ async def list_registry_servers(
     Returns:
         A ``ServerList`` (``servers`` + ``metadata.count`` / ``metadata.nextCursor``).
     """
-    private = caller_sees_private(tenant_slug, authorization=authorization, x_api_key=x_api_key)
+    private = await run_in_threadpool(
+        caller_sees_private, tenant_slug, authorization=authorization, x_api_key=x_api_key
+    )
     try:
         after_slug = decode_cursor(cursor) if cursor else None
     except InvalidCursorError as exc:
         raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
-    rows = db.list_mcp_registry_endpoints(
+    rows = await run_in_threadpool(
+        db.list_mcp_registry_endpoints,
         tenant_slug,
         include_private=private,
         limit=limit + 1,
@@ -330,11 +333,13 @@ async def list_registry_server_versions(
     Returns:
         A ``ServerList`` with the server's current version; ``404`` when the caller cannot see it.
     """
-    private = caller_sees_private(tenant_slug, authorization=authorization, x_api_key=x_api_key)
+    private = await run_in_threadpool(
+        caller_sees_private, tenant_slug, authorization=authorization, x_api_key=x_api_key
+    )
     if _is_runtime_name(tenant_slug, server_name):
         body = server_list([await _runtime_entry_or_404(tenant_slug, private=private)], None)
         return _json(body, private=private, etag=body_etag(body))
-    row = _server_row(tenant_slug, server_name, private=private)
+    row = await run_in_threadpool(_server_row, tenant_slug, server_name, private=private)
     body = server_list(await _entries([row]), None)
     return _json(body, private=private, etag=body_etag(body))
 
@@ -369,14 +374,16 @@ async def get_registry_server_version(
         The ``ServerResponse``; ``304`` when unchanged; ``404`` for an unknown or hidden server
         or a version that is not the one served.
     """
-    private = caller_sees_private(tenant_slug, authorization=authorization, x_api_key=x_api_key)
+    private = await run_in_threadpool(
+        caller_sees_private, tenant_slug, authorization=authorization, x_api_key=x_api_key
+    )
     wanted = unquote(version)
     if _is_runtime_name(tenant_slug, server_name):
         entry = await _runtime_entry_or_404(tenant_slug, private=private)
         if wanted != "latest" and wanted != entry["server"]["version"]:
             raise HTTPException(status_code=404, detail="Server version not found")
     else:
-        row = _server_row(tenant_slug, server_name, private=private)
+        row = await run_in_threadpool(_server_row, tenant_slug, server_name, private=private)
         if wanted != "latest" and wanted != entry_version(row):
             raise HTTPException(status_code=404, detail="Server version not found")
         entry = (await _entries([row]))[0]
@@ -395,7 +402,7 @@ async def get_registry_server_version(
 
 @registry_router.get("/{tenant_slug}/v0.1/schema")
 @router.get("/{tenant_slug}/mcp-registry/v0.1/schema")
-async def get_registry_schema_version(tenant_slug: str) -> JSONResponse:
+def get_registry_schema_version(tenant_slug: str) -> JSONResponse:
     """Return the registry API and ``server.json`` schema versions this registry serves (CDG-4.1).
 
     Anonymous and tenant-independent in content (the tenant segment only mirrors the other routes'

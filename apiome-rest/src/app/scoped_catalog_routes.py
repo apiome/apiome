@@ -242,7 +242,7 @@ def _page(
 
 
 @router.get("/{tenant_slug}/version/{version_id}/classes", response_model=ScopedCatalogPage)
-async def get_scoped_classes(
+def get_scoped_classes(
     tenant_slug: str,
     version_id: str,
     class_ids: Optional[List[str]] = Query(None, description=_IDS_DESCRIPTION),
@@ -291,7 +291,7 @@ async def get_scoped_classes(
 
 
 @router.get("/{tenant_slug}/version/{version_id}/paths", response_model=ScopedCatalogPage)
-async def get_scoped_paths(
+def get_scoped_paths(
     tenant_slug: str,
     version_id: str,
     path_ids: Optional[List[str]] = Query(None, description=_IDS_DESCRIPTION),

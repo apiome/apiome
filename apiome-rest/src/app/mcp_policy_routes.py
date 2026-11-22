@@ -230,7 +230,7 @@ def _validate_put_tools(tools: List[TenantMcpPolicyTool]) -> None:
         "default_mode=all with an empty tools list (MTG-3.1, #4775)."
     ),
 )
-async def get_tenant_mcp_policy(
+def get_tenant_mcp_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantMcpPolicyResponse:
@@ -249,7 +249,7 @@ async def get_tenant_mcp_policy(
         "tool-enablement snapshots (MTG-5.2, #4786). Tenant members may read."
     ),
 )
-async def list_tenant_mcp_policy_history(
+def list_tenant_mcp_policy_history(
     tenant_slug: str,
     limit: int = Query(50, ge=1, le=200, description="Max change rows to return."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -285,7 +285,7 @@ async def list_tenant_mcp_policy_history(
         "append a policy change audit row (MTG-5.2, #4786)."
     ),
 )
-async def put_tenant_mcp_policy(
+def put_tenant_mcp_policy(
     tenant_slug: str,
     body: TenantMcpPolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

@@ -71,7 +71,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["schema-validation"])
         "derived from."
     ),
 )
-async def synthesize_payloads_for_schema(
+def synthesize_payloads_for_schema(
     tenant_slug: str,
     schema_ref: str,
     body: SchemaSynthesisRequest,

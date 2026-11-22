@@ -71,7 +71,7 @@ def _format_created(value: Any) -> Optional[str]:
 
 
 @router.get("/me", response_model=TenantsMeResponse)
-async def list_my_tenants(
+def list_my_tenants(
     session: Dict[str, Any] = Depends(validate_session_credentials),
     limit: int = Query(_DEFAULT_LIMIT, ge=1, le=_MAX_PAGE),
     offset: int = Query(0, ge=0),
@@ -141,7 +141,7 @@ async def list_my_tenants(
         404: {"description": "Tenant not found."},
     },
 )
-async def verify_tenant_access(
+def verify_tenant_access(
     tenant_slug: str,
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> Response:
@@ -151,7 +151,7 @@ async def verify_tenant_access(
 
 
 @router.get("/{tenant_slug}", response_model=TenantInfoResponse)
-async def get_tenant_info(
+def get_tenant_info(
     tenant_slug: str,
     session: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> TenantInfoResponse:

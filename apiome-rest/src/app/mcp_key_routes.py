@@ -325,7 +325,7 @@ def _preview_for(
         "(MTG-3.2, #4776)."
     ),
 )
-async def list_mcp_api_keys(
+def list_mcp_api_keys(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpApiKeyListResponse:
@@ -347,7 +347,7 @@ async def list_mcp_api_keys(
         "administrators only (MTG-3.2, #4776)."
     ),
 )
-async def create_mcp_api_key(
+def create_mcp_api_key(
     tenant_slug: str,
     body: McpApiKeyCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -379,7 +379,7 @@ async def create_mcp_api_key(
         "Tenant administrators only (MTG-3.2, #4776)."
     ),
 )
-async def get_mcp_api_key(
+def get_mcp_api_key(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -403,7 +403,7 @@ async def get_mcp_api_key(
         "administrators only (MTG-3.2, #4776)."
     ),
 )
-async def patch_mcp_api_key(
+def patch_mcp_api_key(
     tenant_slug: str,
     key_id: UUID,
     body: McpApiKeyPatchRequest,
@@ -450,7 +450,7 @@ async def patch_mcp_api_key(
     ),
     response_class=Response,
 )
-async def revoke_mcp_api_key(
+def revoke_mcp_api_key(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -475,7 +475,7 @@ async def revoke_mcp_api_key(
         "Tenant administrators only."
     ),
 )
-async def regenerate_mcp_api_key(
+def regenerate_mcp_api_key(
     tenant_slug: str,
     key_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -507,7 +507,7 @@ async def regenerate_mcp_api_key(
         "administrators only (MTG-3.3, #4777)."
     ),
 )
-async def put_mcp_api_key_capabilities(
+def put_mcp_api_key_capabilities(
     tenant_slug: str,
     key_id: UUID,
     body: McpKeyCapabilitiesRequest,
@@ -546,7 +546,7 @@ async def put_mcp_api_key_capabilities(
         "administrators only (MTG-3.3, #4777)."
     ),
 )
-async def preview_mcp_api_key_capabilities(
+def preview_mcp_api_key_capabilities(
     tenant_slug: str,
     key_id: UUID,
     body: McpKeyCapabilitiesRequest,

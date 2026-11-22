@@ -38,6 +38,7 @@ from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
 
 import psycopg2
 from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -358,7 +359,7 @@ def _load_openapi_source(tenant_id: str, project_id: str, version_record_id: str
 
 
 @router.get(_BASE, response_model=VersionOverlayChainOut)
-async def list_version_overlays(
+def list_version_overlays(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -430,7 +431,7 @@ def _render_preview(
 
 
 @router.get(f"{_BASE}/preview", response_model=VersionOverlayPreviewOut)
-async def preview_version_overlays(
+def preview_version_overlays(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -499,7 +500,7 @@ def _chain_with_draft(
 
 
 @router.post(f"{_BASE}/preview", response_model=VersionOverlayPreviewOut)
-async def preview_version_overlay_draft(
+def preview_version_overlay_draft(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -563,12 +564,14 @@ async def apply_version_overlays(
             ``version-exists`` or ``QUALITY_POLICY_BLOCKED``; 422 when the source is not OpenAPI,
             the chain cannot be applied, or the import fails (``overlay-apply-import-failed``).
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.VIEW)
     target = f"project:{project_id}:overlays-apply"
-    actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE, target=target)
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
+    actor_id = await run_in_threadpool(
+        enforce_permission, db, auth_data, Resource.IMPORTS, Action.CREATE, target=target
+    )
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT, target=target)
     tenant_id = str(auth_data["tenant_id"])
-    version = _version(tenant_id, project_id, version_record_id)
+    version = await run_in_threadpool(_version, tenant_id, project_id, version_record_id)
     stored = version_overlay_store.list_overlays(tenant_id, version_record_id)
     if not stored:
         raise HTTPException(
@@ -599,7 +602,7 @@ async def apply_version_overlays(
         raw=raw,
         filename="overlaid-openapi.json",
     )
-    projection = db.get_version_source_projection(version_record_id, tenant_id) or {}
+    projection = await run_in_threadpool(db.get_version_source_projection, version_record_id, tenant_id) or {}
     names = ", ".join(row.name for row in sorted(stored, key=lambda r: r.position))
     source_label = version.get("version_id") or version_record_id
     new_id = await asyncio.to_thread(
@@ -627,7 +630,9 @@ async def apply_version_overlays(
         "resolvedFingerprint": preview.resolved_fingerprint,
     }
     try:
-        db.insert_workflow_audit(tenant_id, None, None, AUDIT_OVERLAYS_APPLIED, "success", actor_id, detail)
+        await run_in_threadpool(
+            db.insert_workflow_audit, tenant_id, None, None, AUDIT_OVERLAYS_APPLIED, "success", actor_id, detail
+        )
     except Exception:  # noqa: BLE001 — an audit failure never fails the request.
         logger.exception("overlay apply audit write failed project=%s", project_id)
     return VersionOverlayApplyOut(
@@ -641,7 +646,7 @@ async def apply_version_overlays(
 
 
 @router.post(_BASE, response_model=VersionOverlayOut, status_code=201)
-async def add_version_overlay(
+def add_version_overlay(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -696,7 +701,7 @@ async def add_version_overlay(
 
 
 @router.put(f"{_BASE}/{{overlay_id}}", response_model=VersionOverlayOut)
-async def replace_version_overlay(
+def replace_version_overlay(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -743,7 +748,7 @@ async def replace_version_overlay(
 
 
 @router.delete(f"{_BASE}/{{overlay_id}}", status_code=204)
-async def delete_version_overlay(
+def delete_version_overlay(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

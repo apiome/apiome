@@ -110,7 +110,7 @@ def _auth_tenant(auth_data: Dict[str, Any]) -> str:
         "Stale edges come last with `stale: true`.\n\nRequires `projects:view`."
     ),
 )
-async def get_entity_edges(
+def get_entity_edges(
     tenant_slug: str,
     kind: str,
     entity_id: str,
@@ -265,7 +265,7 @@ def _dependencies_response(result: Dict[str, Any]) -> DependenciesResponse:
         "(`unresolved`).\n\n" + _DEPENDENCY_HELP
     ),
 )
-async def get_entity_dependencies(
+def get_entity_dependencies(
     tenant_slug: str,
     kind: str,
     entity: str,
@@ -292,7 +292,7 @@ async def get_entity_dependencies(
         "Audited as `graph.dependencies.update`.\n\n" + _DEPENDENCY_HELP
     ),
 )
-async def put_entity_dependencies(
+def put_entity_dependencies(
     tenant_slug: str,
     kind: str,
     entity: str,
@@ -432,7 +432,7 @@ class BlastRadiusResponse(BaseModel):
         "Requires `projects:view`."
     ),
 )
-async def post_blast_radius(
+def post_blast_radius(
     tenant_slug: str,
     body: BlastRadiusInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -497,7 +497,7 @@ class GraphEntityPage(BaseModel):
         "`truncated` is true when more match.\n\nRequires `projects:view`."
     ),
 )
-async def get_graph_entities(
+def get_graph_entities(
     tenant_slug: str,
     q: Optional[str] = Query(None, max_length=200, description="Substring of the name or slug."),
     kind: Optional[List[str]] = Query(None, description="Node kinds to keep."),
@@ -558,7 +558,7 @@ _EXPORT_MEDIA_TYPES = {"json": "application/json", "dot": "text/vnd.graphviz"}
         400: {"description": "`graph-invalid`: an unknown format, kind, provenance or entity, or a bad depth."},
     },
 )
-async def export_graph_route(
+def export_graph_route(
     tenant_slug: str,
     format: str = Query("json", description="`json` or `dot`."),
     kind: Optional[List[str]] = Query(None, description="Keep edges with an end of these node kinds."),

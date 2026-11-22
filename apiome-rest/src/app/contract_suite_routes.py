@@ -83,7 +83,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["contract-assurance"])
         "resolves to material no canonical model can be rebuilt from."
     ),
 )
-async def compile_contract_suite_for_version(
+def compile_contract_suite_for_version(
     tenant_slug: str,
     version_ref: str,
     body: ContractSuiteCompileRequest,

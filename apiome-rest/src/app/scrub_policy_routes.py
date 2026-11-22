@@ -176,7 +176,7 @@ def _validate_format_overrides(overrides: Dict[str, Any]) -> Dict[str, Any]:
         "user who cannot see the policy cannot understand why."
     ),
 )
-async def get_secret_scrub_policy(
+def get_secret_scrub_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SecretScrubPolicyOut:
@@ -196,7 +196,7 @@ async def get_secret_scrub_policy(
         "governed it."
     ),
 )
-async def list_secret_scrub_policy_versions(
+def list_secret_scrub_policy_versions(
     tenant_slug: str,
     limit: int = Query(50, ge=1, le=200, description="Maximum versions to return."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -222,7 +222,7 @@ async def list_secret_scrub_policy_versions(
         "``alwaysEnforcedFormats`` stay enforced unless a per-format override says otherwise."
     ),
 )
-async def put_secret_scrub_policy(
+def put_secret_scrub_policy(
     tenant_slug: str,
     body: SecretScrubPolicyPutRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

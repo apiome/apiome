@@ -113,7 +113,7 @@ def _project_id(tenant_id: str, project_ref: str) -> str:
         409: {"description": "The named source belongs to another project, or is not a `har` source."},
     },
 )
-async def resolve_har_usage_source(
+def resolve_har_usage_source(
     tenant_slug: str,
     body: HarSourceRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

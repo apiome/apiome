@@ -95,7 +95,7 @@ def _assert_version_in_tenant(version_id: str, tenant_id: str) -> Dict[str, Any]
     response_model=WorkspacePropertySearch,
     responses={404: {"description": "Version not found in this tenant."}},
 )
-async def search_workspace_properties(
+def search_workspace_properties(
     tenant_slug: str,
     version_id: str,
     q: Optional[str] = Query(None, description=_QUERY_DESCRIPTION),

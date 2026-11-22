@@ -457,7 +457,7 @@ def _subscription_missing(ecosystem: str) -> HTTPException:
     description=_SUBSCRIPTION_DESCRIPTION + "\n\nRequires `projects:view`.",
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def list_regen_subscriptions(
+def list_regen_subscriptions(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -500,7 +500,7 @@ async def list_regen_subscriptions(
         422: {"description": "An invalid ecosystem, delivery mode or option."},
     },
 )
-async def put_regen_subscription(
+def put_regen_subscription(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -572,7 +572,7 @@ async def put_regen_subscription(
         422: {"description": "The ecosystem is not one a subscription can name."},
     },
 )
-async def patch_regen_subscription(
+def patch_regen_subscription(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -635,7 +635,7 @@ async def patch_regen_subscription(
         422: {"description": "The ecosystem is not one a subscription can name."},
     },
 )
-async def delete_regen_subscription(
+def delete_regen_subscription(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -717,7 +717,7 @@ def _runs_with_jobs(
         422: {"description": "An unknown job status filter."},
     },
 )
-async def list_regen_runs(
+def list_regen_runs(
     tenant_slug: str,
     project_ref: str,
     status: Optional[str] = Query(
@@ -775,7 +775,7 @@ async def list_regen_runs(
     description="The run and every job in it.\n\nRequires `versions:view`.",
     responses={404: {"description": "Project or run not found in this tenant."}},
 )
-async def get_regen_run(
+def get_regen_run(
     tenant_slug: str,
     project_ref: str,
     run_id: str,
@@ -830,7 +830,7 @@ async def get_regen_run(
         409: {"description": "The job is not dead-lettered, or its subscription is not active."},
     },
 )
-async def retry_regen_job(
+def retry_regen_job(
     tenant_slug: str,
     project_ref: str,
     job_id: str,

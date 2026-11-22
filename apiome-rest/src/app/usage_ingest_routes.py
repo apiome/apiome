@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
@@ -283,7 +284,8 @@ async def ingest_usage(
             raise UsageIngestError(
                 400, CODE_SOURCE_REQUIRED, f"name the usage source with the {SOURCE_HEADER} header or source_id"
             )
-        outcome = ingest_batch(
+        outcome = await run_in_threadpool(
+            ingest_batch,
             db,
             tenant_id=tenant_id,
             source_ref=source_ref,

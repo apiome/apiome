@@ -47,7 +47,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         "joining, plus the grace period.\n\nRequires `members:view`."
     ),
 )
-async def get_two_factor_policy(
+def get_two_factor_policy(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> TwoFactorPolicy:
     """Read the policy."""
@@ -68,7 +68,7 @@ async def get_two_factor_policy(
         "Audited as `two_factor_policy.update`. Requires `members:edit`."
     ),
 )
-async def put_two_factor_policy(
+def put_two_factor_policy(
     tenant_slug: str,
     body: TwoFactorPolicyInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

@@ -59,7 +59,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 
 
 @router.get("/{tenant_slug}/{project_id}", response_model=List[VersionTagSchema])
-async def list_version_tags(
+def list_version_tags(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -74,7 +74,7 @@ async def list_version_tags(
 
 
 @router.post("/{tenant_slug}/{project_id}", response_model=VersionTagSchema)
-async def create_version_tag(
+def create_version_tag(
     tenant_slug: str,
     project_id: str,
     body: VersionTagCreateRequest,
@@ -132,7 +132,7 @@ async def create_version_tag(
 
 
 @router.patch("/{tenant_slug}/{project_id}/{tag_id}", response_model=VersionTagSchema)
-async def patch_version_tag(
+def patch_version_tag(
     tenant_slug: str,
     project_id: str,
     tag_id: str,
@@ -223,7 +223,7 @@ async def patch_version_tag(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{tag_id}")
-async def delete_version_tag(
+def delete_version_tag(
     tenant_slug: str,
     project_id: str,
     tag_id: str,

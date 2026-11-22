@@ -68,7 +68,7 @@ def _assert_template_assignable(tenant_id: str, template_version_id: Optional[st
 
 
 @router.get("/{tenant_slug}/change-report-template-versions", response_model=list[ChangeReportTemplateVersionSummary])
-async def list_change_report_template_versions(
+def list_change_report_template_versions(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> list[ChangeReportTemplateVersionSummary]:
@@ -91,7 +91,7 @@ async def list_change_report_template_versions(
     "/{tenant_slug}/change-report-template-versions",
     response_model=ChangeReportTemplateVersionOut,
 )
-async def create_change_report_template_version(
+def create_change_report_template_version(
     tenant_slug: str,
     body: ChangeReportTemplateVersionCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -155,7 +155,7 @@ async def create_change_report_template_version(
 
 
 @router.put("/{tenant_slug}/change-report-template-default")
-async def put_tenant_change_report_template_default(
+def put_tenant_change_report_template_default(
     tenant_slug: str,
     body: ChangeReportTemplateDefaultPut,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -182,7 +182,7 @@ async def put_tenant_change_report_template_default(
 
 
 @router.put("/{tenant_slug}/projects/{project_id}/change-report-template-default")
-async def put_project_change_report_template_default(
+def put_project_change_report_template_default(
     tenant_slug: str,
     project_id: str,
     body: ChangeReportTemplateDefaultPut,

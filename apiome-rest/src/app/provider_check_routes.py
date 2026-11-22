@@ -35,6 +35,7 @@ import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import provider_check_store
@@ -164,7 +165,7 @@ def _http_error(exc: ProviderCheckValidationError) -> HTTPException:
         "Requires `projects:view`."
     ),
 )
-async def list_checks(
+def list_checks(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),
@@ -232,7 +233,7 @@ async def list_checks(
         "Requires `projects:view`."
     ),
 )
-async def read_check(
+def read_check(
     tenant_slug: str,
     project_ref: str,
     check_id: str,
@@ -269,7 +270,7 @@ async def read_check(
         "Requires `projects:view`."
     ),
 )
-async def list_version_checks(
+def list_version_checks(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
@@ -364,7 +365,7 @@ async def record_check(
         HTTPException: 404 for an unknown project, version or unbound draft, 409 when the binding
             was released, 422 for an invalid check name, 403 without ``versions:edit``.
     """
-    tenant_id, user_id = _caller(auth_data, Resource.VERSIONS, Action.EDIT)
+    tenant_id, user_id = await run_in_threadpool(_caller, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     try:
         # The publish reaches a provider over the network, so it runs on a worker thread rather

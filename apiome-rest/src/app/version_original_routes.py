@@ -203,7 +203,7 @@ _REDIRECT = Query(
     response_class=StreamingResponse,
     responses=_RESPONSES,
 )
-async def get_version_original(
+def get_version_original(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -239,7 +239,7 @@ async def get_version_original(
     response_class=StreamingResponse,
     responses=_RESPONSES,
 )
-async def get_version_original_part(
+def get_version_original_part(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

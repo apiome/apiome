@@ -304,7 +304,7 @@ def _owned_export_mock(mock_id: str, tenant_id: str) -> Dict[str, Any]:
         "an enabled one can state the terms before the user clicks Start."
     ),
 )
-async def get_export_mock_capability(
+def get_export_mock_capability(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportMockCapabilityResponse:
@@ -348,7 +348,7 @@ async def get_export_mock_capability(
         "the engine can serve (the capability endpoint's ``supportedTargets``) are accepted."
     ),
 )
-async def provision_export_mock(
+def provision_export_mock(
     tenant_slug: str,
     request: Request,
     payload: ExportMockProvisionRequest,
@@ -472,7 +472,7 @@ async def provision_export_mock(
         "appear here."
     ),
 )
-async def list_export_mocks(
+def list_export_mocks(
     tenant_slug: str,
     request: Request,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -504,7 +504,7 @@ async def list_export_mocks(
         "Studio polls while a mock is live, and how it learns the mock has expired."
     ),
 )
-async def get_export_mock(
+def get_export_mock(
     tenant_slug: str,
     mock_id: str,
     request: Request,
@@ -542,7 +542,7 @@ async def get_export_mock(
         "of a mock that expires in minutes, not a durable audit trail."
     ),
 )
-async def get_export_mock_requests(
+def get_export_mock_requests(
     tenant_slug: str,
     mock_id: str,
     limit: int = Query(default=50, ge=1, le=500, description="Most entries to return."),
@@ -599,7 +599,7 @@ async def get_export_mock_requests(
         "resolving immediately, and the workspace's concurrency budget is freed."
     ),
 )
-async def destroy_export_mock(
+def destroy_export_mock(
     tenant_slug: str,
     mock_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

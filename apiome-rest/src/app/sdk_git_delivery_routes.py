@@ -326,7 +326,7 @@ def _ecosystem_or_400(ecosystem: str) -> str:
     "Requires `projects:view`.",
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def list_git_delivery_targets(
+def list_git_delivery_targets(
     tenant_slug: str,
     project_ref: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -375,7 +375,7 @@ async def list_git_delivery_targets(
         },
     },
 )
-async def put_git_delivery_target(
+def put_git_delivery_target(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -446,7 +446,7 @@ async def put_git_delivery_target(
         422: {"description": "The ecosystem is not one git delivery supports."},
     },
 )
-async def delete_git_delivery_target(
+def delete_git_delivery_target(
     tenant_slug: str,
     project_ref: str,
     ecosystem: str,
@@ -517,7 +517,7 @@ async def delete_git_delivery_target(
         404: {"description": "Project, version or delivery target not found."},
     },
 )
-async def deliver_project_sdk(
+def deliver_project_sdk(
     tenant_slug: str,
     project_ref: str,
     body: SdkGitDeliveryRequest,
@@ -622,7 +622,7 @@ async def deliver_project_sdk(
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
-async def list_git_delivery_runs(
+def list_git_delivery_runs(
     tenant_slug: str,
     project_ref: str,
     ecosystem: Optional[str] = Query(
@@ -676,7 +676,7 @@ async def list_git_delivery_runs(
     ),
     responses={404: {"description": "Project or run not found in this tenant."}},
 )
-async def get_git_delivery_run(
+def get_git_delivery_run(
     tenant_slug: str,
     project_ref: str,
     run_id: str,

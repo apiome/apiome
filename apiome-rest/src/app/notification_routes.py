@@ -100,7 +100,7 @@ def _http_error(exc: NotificationValidationError) -> HTTPException:
         "the caller's own, so there is no permission to grant."
     ),
 )
-async def list_notifications(
+def list_notifications(
     tenant_slug: str,
     unread: bool = Query(default=False, description="Only unread notifications."),
     type: Optional[NotificationType] = Query(default=None, description="Only this event type."),
@@ -143,7 +143,7 @@ async def list_notifications(
         "Requires only authentication."
     ),
 )
-async def unread_notification_count(
+def unread_notification_count(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> UnreadCount:
@@ -177,7 +177,7 @@ async def unread_notification_count(
         "Requires only authentication."
     ),
 )
-async def mark_notifications_read(
+def mark_notifications_read(
     tenant_slug: str,
     body: MarkReadRequest = Body(default_factory=MarkReadRequest),
     auth_data: Dict[str, Any] = Depends(validate_authentication),

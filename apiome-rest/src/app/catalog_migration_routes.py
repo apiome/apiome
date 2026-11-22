@@ -79,7 +79,7 @@ def _permit(auth_data: Dict[str, Any], action: str, target: str) -> Any:
 
 
 @router.get(_RUNS, response_model=MigrationRunList, response_model_by_alias=True, summary="List import reports")
-async def list_catalog_migrations(
+def list_catalog_migrations(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> MigrationRunList:
     """Every Backstage and Compass import report, most recently updated first (`imports:view`).
@@ -99,7 +99,7 @@ async def list_catalog_migrations(
     status_code=201,
     summary="Import a Compass export",
 )
-async def import_compass_export(
+def import_compass_export(
     tenant_slug: str, body: CompassUploadInput, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> MigrationRun:
     """Stage an Atlassian Compass export (`imports:create`).
@@ -125,7 +125,7 @@ async def import_compass_export(
 @router.get(
     _RUNS + "/{run_id}", response_model=MigrationRun, response_model_by_alias=True, summary="Read an import report"
 )
-async def read_catalog_migration(
+def read_catalog_migration(
     tenant_slug: str, run_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> MigrationRun:
     """One report: counts, suggestions (teams, then components) and unmapped fields (`imports:view`)."""
@@ -143,7 +143,7 @@ async def read_catalog_migration(
     response_model_by_alias=True,
     summary="Accept a suggestion",
 )
-async def accept_catalog_migration_suggestion(
+def accept_catalog_migration_suggestion(
     tenant_slug: str,
     suggestion_id: str,
     body: AcceptInput,
@@ -181,7 +181,7 @@ async def accept_catalog_migration_suggestion(
     response_model_by_alias=True,
     summary="Dismiss a suggestion",
 )
-async def dismiss_catalog_migration_suggestion(
+def dismiss_catalog_migration_suggestion(
     tenant_slug: str, suggestion_id: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> MigrationSuggestion:
     """Dismiss a suggestion (`imports:create`); later scans and uploads keep it dismissed."""
@@ -196,7 +196,7 @@ async def dismiss_catalog_migration_suggestion(
 @router.get(
     _COMPONENTS + "/{slug}", response_model=ComponentOut, response_model_by_alias=True, summary="Read a component"
 )
-async def read_catalog_component(
+def read_catalog_component(
     tenant_slug: str, slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ComponentOut:
     """An accepted Backstage or Compass component, system or domain (`imports:view`).

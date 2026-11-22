@@ -36,6 +36,7 @@ import binascii
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, Response
 
 from . import schema_registry_store as store
@@ -284,7 +285,7 @@ def _choice(body: Dict[str, Any], field: str, allowed: tuple, code: str) -> str:
 
 
 @router.get("/{tenant}/subjects")
-async def confluent_list_subjects(
+def confluent_list_subjects(
     tenant: str,
     deleted: bool = Query(False, description="Include soft-deleted subjects."),
     auth_data: Dict[str, Any] = Depends(registry_auth),
@@ -295,7 +296,7 @@ async def confluent_list_subjects(
 
 
 @router.get("/{tenant}/subjects/{subject}/versions")
-async def confluent_list_versions(
+def confluent_list_versions(
     tenant: str, subject: str, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """List a subject's live version numbers (Confluent ``GET /subjects/{s}/versions``)."""
@@ -318,19 +319,21 @@ async def confluent_register(
     without compatibility rules with ``42290``.
     """
     tenant_id = _tenant_id(auth_data)
-    actor_id = _permit(auth_data, Action.CREATE, f"subject:{subject}")
+    actor_id = await run_in_threadpool(_permit, auth_data, Action.CREATE, f"subject:{subject}")
     args = _schema_args(body)
     try:
         row = await asyncio.to_thread(
             register_schema, db, tenant_id=tenant_id, actor_id=actor_id, subject=subject, **args
         )
     except SchemaRegistryError as exc:
-        record_registry_audit(
+        await run_in_threadpool(
+            record_registry_audit,
             db, auth_data, ACTION_SUBJECT_REGISTER, "failure", namespace=subject, detail={"code": exc.code}
         )
         raise ConfluentRegistryError.from_registry(exc) from exc
     if row.get("created"):
-        record_registry_audit(
+        await run_in_threadpool(
+            record_registry_audit,
             db,
             auth_data,
             ACTION_SUBJECT_REGISTER,
@@ -350,7 +353,7 @@ async def confluent_lookup(
 ) -> JSONResponse:
     """Find the version of a subject that holds a schema (Confluent ``POST /subjects/{s}``)."""
     tenant_id = _tenant_id(auth_data)
-    _permit(auth_data, Action.VIEW, f"subject:{subject}")
+    await run_in_threadpool(_permit, auth_data, Action.VIEW, f"subject:{subject}")
     args = _schema_args(body)
     try:
         found = await asyncio.to_thread(
@@ -376,8 +379,8 @@ async def confluent_get_version(
     tenant: str, subject: str, version: str, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """Return one version (``latest`` and ``-1`` work) (Confluent ``GET /subjects/{s}/versions/{v}``)."""
-    _permit(auth_data, Action.VIEW, f"subject:{subject}")
-    row = _version_row(_tenant_id(auth_data), subject, version)
+    await run_in_threadpool(_permit, auth_data, Action.VIEW, f"subject:{subject}")
+    row = await run_in_threadpool(_version_row, _tenant_id(auth_data), subject, version)
     text = await asyncio.to_thread(schema_text, db, row["version_record_id"])
     return _ok({"subject": subject, "id": int(row["schema_id"]), "version": int(row["version"]),
                 **_schema_body(row, text)})
@@ -388,14 +391,14 @@ async def confluent_get_version_schema(
     tenant: str, subject: str, version: str, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> Response:
     """Return only the schema text of one version (Confluent ``…/versions/{v}/schema``)."""
-    _permit(auth_data, Action.VIEW, f"subject:{subject}")
-    row = _version_row(_tenant_id(auth_data), subject, version)
+    await run_in_threadpool(_permit, auth_data, Action.VIEW, f"subject:{subject}")
+    row = await run_in_threadpool(_version_row, _tenant_id(auth_data), subject, version)
     text = await asyncio.to_thread(schema_text, db, row["version_record_id"])
     return Response(content=text or "", media_type=CONFLUENT_MEDIA_TYPE)
 
 
 @router.delete("/{tenant}/subjects/{subject}")
-async def confluent_delete_subject(
+def confluent_delete_subject(
     tenant: str,
     subject: str,
     permanent: bool = Query(False, description="Hard-delete a subject that was soft-deleted first."),
@@ -432,7 +435,7 @@ async def confluent_delete_subject(
 
 
 @router.get("/{tenant}/schemas/types")
-async def confluent_schema_types(
+def confluent_schema_types(
     tenant: str,
     details: bool = Query(False, description="Label each type with what it can be registered under."),
     auth_data: Dict[str, Any] = Depends(registry_auth),
@@ -472,14 +475,14 @@ async def confluent_schema_by_id(
     tenant: str, schema_id: int, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """Return a schema by id — it resolves after its subjects are deleted (Confluent ``/schemas/ids/{id}``)."""
-    _permit(auth_data, Action.VIEW, f"schema:{schema_id}")
-    row = _schema_by_id(_tenant_id(auth_data), schema_id)
+    await run_in_threadpool(_permit, auth_data, Action.VIEW, f"schema:{schema_id}")
+    row = await run_in_threadpool(_schema_by_id, _tenant_id(auth_data), schema_id)
     text = await asyncio.to_thread(schema_text, db, row["version_record_id"])
     return _ok(_schema_body(row, text))
 
 
 @router.get("/{tenant}/schemas/ids/{schema_id}/subjects")
-async def confluent_schema_subjects(
+def confluent_schema_subjects(
     tenant: str, schema_id: int, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """List the live subjects holding a schema id (Confluent ``/schemas/ids/{id}/subjects``)."""
@@ -489,7 +492,7 @@ async def confluent_schema_subjects(
 
 
 @router.get("/{tenant}/schemas/ids/{schema_id}/versions")
-async def confluent_schema_versions(
+def confluent_schema_versions(
     tenant: str, schema_id: int, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """List the live subject versions holding a schema id (Confluent ``/schemas/ids/{id}/versions``)."""
@@ -502,14 +505,14 @@ async def confluent_schema_versions(
 
 
 @router.get("/{tenant}/config")
-async def confluent_get_config(tenant: str, auth_data: Dict[str, Any] = Depends(registry_auth)) -> JSONResponse:
+def confluent_get_config(tenant: str, auth_data: Dict[str, Any] = Depends(registry_auth)) -> JSONResponse:
     """Return the tenant's default compatibility level (Confluent ``GET /config``)."""
     _permit(auth_data, Action.VIEW, "schema-registry")
     return _ok({"compatibilityLevel": store.get_config(db, _tenant_id(auth_data))["compatibility_level"]})
 
 
 @router.put("/{tenant}/config")
-async def confluent_put_config(
+def confluent_put_config(
     tenant: str, body: Dict[str, Any] = Body(...), auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """Set the tenant's default compatibility level (Confluent ``PUT /config``)."""
@@ -521,7 +524,7 @@ async def confluent_put_config(
 
 
 @router.get("/{tenant}/config/{subject}")
-async def confluent_get_subject_config(
+def confluent_get_subject_config(
     tenant: str,
     subject: str,
     defaultToGlobal: bool = Query(False, description="Fall back to the tenant default."),  # noqa: N803
@@ -539,7 +542,7 @@ async def confluent_get_subject_config(
 
 
 @router.put("/{tenant}/config/{subject}")
-async def confluent_put_subject_config(
+def confluent_put_subject_config(
     tenant: str,
     subject: str,
     body: Dict[str, Any] = Body(...),
@@ -560,14 +563,14 @@ async def confluent_put_subject_config(
 
 
 @router.get("/{tenant}/mode")
-async def confluent_get_mode(tenant: str, auth_data: Dict[str, Any] = Depends(registry_auth)) -> JSONResponse:
+def confluent_get_mode(tenant: str, auth_data: Dict[str, Any] = Depends(registry_auth)) -> JSONResponse:
     """Return the tenant's default mode (Confluent ``GET /mode``)."""
     _permit(auth_data, Action.VIEW, "schema-registry")
     return _ok({"mode": store.get_config(db, _tenant_id(auth_data))["mode"]})
 
 
 @router.put("/{tenant}/mode")
-async def confluent_put_mode(
+def confluent_put_mode(
     tenant: str, body: Dict[str, Any] = Body(...), auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """Set the tenant's default mode, ``READWRITE`` or ``READONLY`` (Confluent ``PUT /mode``)."""
@@ -579,7 +582,7 @@ async def confluent_put_mode(
 
 
 @router.get("/{tenant}/mode/{subject}")
-async def confluent_get_subject_mode(
+def confluent_get_subject_mode(
     tenant: str, subject: str, auth_data: Dict[str, Any] = Depends(registry_auth)
 ) -> JSONResponse:
     """Return a subject's mode (Confluent ``GET /mode/{s}``)."""
@@ -588,7 +591,7 @@ async def confluent_get_subject_mode(
 
 
 @router.put("/{tenant}/mode/{subject}")
-async def confluent_put_subject_mode(
+def confluent_put_subject_mode(
     tenant: str,
     subject: str,
     body: Dict[str, Any] = Body(...),

@@ -39,7 +39,7 @@ router = APIRouter(prefix="/v1/paths", tags=["paths"])
 # ==================== Path CRUD ====================
 
 @router.get("/{tenant_slug}/{version_id}")
-async def list_paths(
+def list_paths(
     tenant_slug: str,
     version_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -68,7 +68,7 @@ async def list_paths(
 
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}")
-async def get_path(
+def get_path(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -103,7 +103,7 @@ async def get_path(
 
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/canvas")
-async def get_path_canvas(
+def get_path_canvas(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -130,7 +130,7 @@ async def get_path_canvas(
 
 
 @router.put("/{tenant_slug}/{version_id}/{path_id}/canvas")
-async def put_path_canvas(
+def put_path_canvas(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -157,7 +157,7 @@ async def put_path_canvas(
 
 
 @router.post("/{tenant_slug}/{version_id}")
-async def create_path(
+def create_path(
     tenant_slug: str,
     version_id: str,
     request: PathCreateRequest,
@@ -206,7 +206,7 @@ async def create_path(
 
 
 @router.put("/{tenant_slug}/{version_id}/{path_id}")
-async def update_path(
+def update_path(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -246,7 +246,7 @@ async def update_path(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}")
-async def delete_path(
+def delete_path(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -278,7 +278,7 @@ async def delete_path(
 # ==================== Operation CRUD ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/operations")
-async def list_operations(
+def list_operations(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -297,7 +297,7 @@ async def list_operations(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/operations")
-async def create_operation(
+def create_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -330,7 +330,7 @@ async def create_operation(
 
 
 @router.put("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}")
-async def update_operation(
+def update_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -352,7 +352,7 @@ async def update_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}")
-async def delete_operation(
+def delete_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -373,7 +373,7 @@ async def delete_operation(
 # ==================== Operation Description ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/description")
-async def get_operation_description(
+def get_operation_description(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -393,7 +393,7 @@ async def get_operation_description(
 
 
 @router.put("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/description")
-async def update_operation_description(
+def update_operation_description(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -423,7 +423,7 @@ async def update_operation_description(
 # ==================== Shared Parameters ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/parameters")
-async def list_shared_parameters(
+def list_shared_parameters(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -441,7 +441,7 @@ async def list_shared_parameters(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/parameters")
-async def create_shared_parameter(
+def create_shared_parameter(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -468,7 +468,7 @@ async def create_shared_parameter(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/parameters/{parameter_id}/link")
-async def link_parameter_to_operation(
+def link_parameter_to_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -489,7 +489,7 @@ async def link_parameter_to_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/parameters/{parameter_id}/link")
-async def unlink_parameter_from_operation(
+def unlink_parameter_from_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -506,7 +506,7 @@ async def unlink_parameter_from_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/parameters/{parameter_id}")
-async def delete_shared_parameter(
+def delete_shared_parameter(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -527,7 +527,7 @@ async def delete_shared_parameter(
 # ==================== Shared Request Bodies ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/request-bodies")
-async def list_shared_request_bodies(
+def list_shared_request_bodies(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -545,7 +545,7 @@ async def list_shared_request_bodies(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/request-bodies")
-async def create_shared_request_body(
+def create_shared_request_body(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -570,7 +570,7 @@ async def create_shared_request_body(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/request-bodies/{request_body_id}/content-types")
-async def add_request_body_content_type(
+def add_request_body_content_type(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -595,7 +595,7 @@ async def add_request_body_content_type(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/request-bodies/{request_body_id}/content-types/{media_type}/copy-from-class")
-async def copy_class_to_request_body_inline_schema(
+def copy_class_to_request_body_inline_schema(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -623,7 +623,7 @@ async def copy_class_to_request_body_inline_schema(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/request-body/{request_body_id}/link")
-async def link_request_body_to_operation(
+def link_request_body_to_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -646,7 +646,7 @@ async def link_request_body_to_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/request-body/link")
-async def unlink_request_body_from_operation(
+def unlink_request_body_from_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -662,7 +662,7 @@ async def unlink_request_body_from_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/request-bodies/{request_body_id}")
-async def delete_shared_request_body(
+def delete_shared_request_body(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -683,7 +683,7 @@ async def delete_shared_request_body(
 # ==================== Shared Responses ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/responses")
-async def list_shared_responses(
+def list_shared_responses(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -701,7 +701,7 @@ async def list_shared_responses(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/responses")
-async def create_shared_response(
+def create_shared_response(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -728,7 +728,7 @@ async def create_shared_response(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/responses/{response_id}/content-types")
-async def add_response_content_type(
+def add_response_content_type(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -752,7 +752,7 @@ async def add_response_content_type(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/responses/{response_id}/content-types/{media_type}/copy-from-class")
-async def copy_class_to_response_inline_schema(
+def copy_class_to_response_inline_schema(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -778,7 +778,7 @@ async def copy_class_to_response_inline_schema(
 
 
 @router.post("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/responses/{response_id}/link")
-async def link_response_to_operation(
+def link_response_to_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -801,7 +801,7 @@ async def link_response_to_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/operations/{operation_id}/responses/{response_id}/link")
-async def unlink_response_from_operation(
+def unlink_response_from_operation(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -818,7 +818,7 @@ async def unlink_response_from_operation(
 
 
 @router.delete("/{tenant_slug}/{version_id}/{path_id}/responses/{response_id}")
-async def delete_shared_response(
+def delete_shared_response(
     tenant_slug: str,
     version_id: str,
     path_id: str,
@@ -839,7 +839,7 @@ async def delete_shared_response(
 # ==================== Full Path with Operations Data ====================
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}/full")
-async def get_path_full(
+def get_path_full(
     tenant_slug: str,
     version_id: str,
     path_id: str,

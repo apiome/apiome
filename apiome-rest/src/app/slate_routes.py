@@ -58,6 +58,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -508,7 +509,7 @@ def _environment_domains(environment_id: str) -> List[Dict[str, Any]]:
 
 
 @router.get("/sites", response_model=SiteListResponse, response_model_by_alias=True)
-async def list_managed_sites(
+def list_managed_sites(
     project_id: Optional[str] = Query(
         default=None, alias="projectId", description="Restrict to one project's sites."
     ),
@@ -561,7 +562,7 @@ async def list_managed_sites(
     response_model=ReleaseListResponse,
     response_model_by_alias=True,
 )
-async def list_site_releases(
+def list_site_releases(
     site_id: str,
     environment_id: Optional[str] = Query(
         default=None,
@@ -587,7 +588,7 @@ async def list_site_releases(
 @router.get(
     "/releases/{release_id}", response_model=ReleaseBody, response_model_by_alias=True
 )
-async def get_release_detail(
+def get_release_detail(
     release_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ReleaseBody:
@@ -609,7 +610,7 @@ async def get_release_detail(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_site_release(
+def create_site_release(
     site_id: str,
     request: CreateReleaseRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -695,7 +696,7 @@ async def create_site_release(
     response_model=EnvironmentResponse,
     response_model_by_alias=True,
 )
-async def get_environment_state(
+def get_environment_state(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> EnvironmentResponse:
@@ -833,9 +834,9 @@ async def promote_release(
     A refused promotion still records an audit entry naming the reason, so an operator can
     later see what was attempted and why it was stopped.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = auth_data["tenant_id"]
-    environment = _require_environment(tenant_id, environment_id)
+    environment = await run_in_threadpool(_require_environment, tenant_id, environment_id)
 
     if not request.release_id:
         raise HTTPException(
@@ -843,7 +844,7 @@ async def promote_release(
             detail={"code": "release_required", "message": "releaseId is required to promote."},
         )
 
-    release = get_release(db, tenant_id=tenant_id, release_id=request.release_id)
+    release = await run_in_threadpool(get_release, db, tenant_id=tenant_id, release_id=request.release_id)
     if not release:
         raise HTTPException(
             status_code=404,
@@ -851,7 +852,7 @@ async def promote_release(
         )
 
     release = {**release, "signature_verified": _artifact_signature_verified(release)}
-    evidence = _release_evidence(str(release["id"]))
+    evidence = await run_in_threadpool(_release_evidence, str(release["id"]))
     active_id = environment.get("active_release_id")
 
     try:
@@ -859,12 +860,13 @@ async def promote_release(
             release=release,
             environment=environment,
             approvals=evidence["approvals"],
-            active_regions=_region_rows(tenant_id, str(active_id) if active_id else None),
+            active_regions=await run_in_threadpool(_region_rows, tenant_id, str(active_id) if active_id else None),
             require_approval=request.require_approval,
         )
     except SlateReleaseRefusedError as exc:
         if not request.dry_run:
-            append_audit(
+            await run_in_threadpool(
+                append_audit,
                 db,
                 tenant_id=tenant_id,
                 release_id=str(release["id"]),
@@ -902,11 +904,11 @@ async def rollback_environment(
     Deliberately does not consult approval freshness: requiring fresh sign-off to *stop*
     serving a bad release would make the approval policy an outage amplifier.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = auth_data["tenant_id"]
-    environment = _require_environment(tenant_id, environment_id)
+    environment = await run_in_threadpool(_require_environment, tenant_id, environment_id)
 
-    target = find_rollback_target(db, tenant_id=tenant_id, environment_id=environment_id)
+    target = await run_in_threadpool(find_rollback_target, db, tenant_id=tenant_id, environment_id=environment_id)
     if target is not None:
         target = {**target, "signature_verified": _artifact_signature_verified(target)}
 
@@ -915,7 +917,8 @@ async def rollback_environment(
     except SlateReleaseRefusedError as exc:
         active_id = environment.get("active_release_id")
         if not request.dry_run and active_id:
-            append_audit(
+            await run_in_threadpool(
+                append_audit,
                 db,
                 tenant_id=tenant_id,
                 release_id=str(active_id),
@@ -942,7 +945,7 @@ async def rollback_environment(
     response_model=RetentionResponse,
     response_model_by_alias=True,
 )
-async def run_retention(
+def run_retention(
     site_id: str,
     environment_id: str = Query(
         alias="environmentId", description="Environment whose history to sweep."

@@ -359,7 +359,7 @@ def _if_none_match_hit(if_none_match: Optional[str], etag: str) -> bool:
         404: {"description": "Version, or scoped domain, not found in this tenant."},
     },
 )
-async def get_consumption_index(
+def get_consumption_index(
     tenant_slug: str,
     version_id: str,
     domain_id: Optional[str] = Query(None, description=_DOMAIN_DESCRIPTION),

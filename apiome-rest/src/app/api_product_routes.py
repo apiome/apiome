@@ -142,7 +142,7 @@ def _http_error(exc: ApiProductValidationError) -> HTTPException:
         "member count. Deleted products are not listed.\n\nRequires `projects:view`."
     ),
 )
-async def list_tenant_products(
+def list_tenant_products(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ApiProductListResponse:
     """List the tenant's products.
@@ -178,7 +178,7 @@ async def list_tenant_products(
         "Audited as `api_product.create`. Requires `projects:create`."
     ),
 )
-async def create_tenant_product(
+def create_tenant_product(
     tenant_slug: str,
     body: ApiProductInput,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -215,7 +215,7 @@ async def create_tenant_product(
         "`portal_ready` is true when every member is published.\n\nRequires `projects:view`."
     ),
 )
-async def read_tenant_product(
+def read_tenant_product(
     tenant_slug: str,
     product_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -259,7 +259,7 @@ async def read_tenant_product(
         "`projects:edit`."
     ),
 )
-async def patch_tenant_product(
+def patch_tenant_product(
     tenant_slug: str,
     product_slug: str,
     body: ApiProductPatch,
@@ -298,7 +298,7 @@ async def patch_tenant_product(
         "Audited as `api_product.delete`. Requires `projects:delete`."
     ),
 )
-async def delete_tenant_product(
+def delete_tenant_product(
     tenant_slug: str,
     product_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -334,7 +334,7 @@ async def delete_tenant_product(
         "means today, with whether it is published.\n\nRequires `projects:view`."
     ),
 )
-async def list_tenant_product_members(
+def list_tenant_product_members(
     tenant_slug: str,
     product_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -374,7 +374,7 @@ async def list_tenant_product_members(
         "Audited as `api_product.member.add`. Requires `projects:edit`."
     ),
 )
-async def add_tenant_product_member(
+def add_tenant_product_member(
     tenant_slug: str,
     product_slug: str,
     body: ApiProductMemberInput,
@@ -412,7 +412,7 @@ async def add_tenant_product_member(
         "untouched.\n\nAudited as `api_product.member.remove`. Requires `projects:edit`."
     ),
 )
-async def remove_tenant_product_member(
+def remove_tenant_product_member(
     tenant_slug: str,
     product_slug: str,
     member_id: str,

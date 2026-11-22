@@ -66,6 +66,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Mapping, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -620,7 +621,7 @@ def _policy_for(tenant_id: str, environment: Mapping[str, Any], actor: tuple) ->
 
 
 @router.get("/cache/presets", response_model=PresetsResponse, response_model_by_alias=True)
-async def get_cache_presets(
+def get_cache_presets(
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> PresetsResponse:
     """Return the four presets as data.
@@ -662,7 +663,7 @@ async def get_cache_presets(
     response_model=CachePolicyResponse,
     response_model_by_alias=True,
 )
-async def get_cache_policy(
+def get_cache_policy(
     environment_id: str,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> CachePolicyResponse:
@@ -706,7 +707,7 @@ async def get_cache_policy(
     response_model=SetPresetResponse,
     response_model_by_alias=True,
 )
-async def set_cache_preset(
+def set_cache_preset(
     environment_id: str,
     request: SetPresetRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -948,7 +949,7 @@ def _refuse_ordinal_conflict(
     response_model_by_alias=True,
     status_code=201,
 )
-async def create_cache_rule(
+def create_cache_rule(
     environment_id: str,
     request: WriteRuleRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -965,7 +966,7 @@ async def create_cache_rule(
     response_model=WriteRuleResponse,
     response_model_by_alias=True,
 )
-async def replace_cache_rule(
+def replace_cache_rule(
     environment_id: str,
     rule_id: str,
     request: WriteRuleRequest,
@@ -983,7 +984,7 @@ async def replace_cache_rule(
     response_model=DeleteRuleResponse,
     response_model_by_alias=True,
 )
-async def remove_cache_rule(
+def remove_cache_rule(
     environment_id: str,
     rule_id: str,
     expected_policy_version: int = Query(alias="expectedPolicyVersion"),
@@ -1041,7 +1042,7 @@ async def remove_cache_rule(
     response_model=TraceResponse,
     response_model_by_alias=True,
 )
-async def trace_cache_request(
+def trace_cache_request(
     environment_id: str,
     request: TraceCommandBody,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
@@ -1222,15 +1223,16 @@ async def purge_cache(
     refusing to purge during an incident is precisely the event that needs to be in the
     timeline afterwards.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = auth_data["tenant_id"]
-    environment = _require_environment(tenant_id, environment_id)
+    environment = await run_in_threadpool(_require_environment, tenant_id, environment_id)
     actor_id, actor_name = _actor(auth_data)
-    policy = _policy_for(tenant_id, environment, (actor_id, actor_name))
+    policy = await run_in_threadpool(_policy_for, tenant_id, environment, (actor_id, actor_name))
     edge_attached = bool(policy.get("edge_attached"))
 
     try:
-        routes, basis, basis_release = _resolve_purge_routes(
+        routes, basis, basis_release = await run_in_threadpool(
+            _resolve_purge_routes,
             tenant_id=tenant_id,
             environment_id=environment_id,
             environment=environment,
@@ -1249,7 +1251,8 @@ async def purge_cache(
             raise SlateCacheRefusedError(CacheRefusal.of("purge-estimate-changed"))
     except SlateCacheRefusedError as exc:
         if not request.dry_run:
-            record_purge(
+            await run_in_threadpool(
+                record_purge,
                 db,
                 tenant_id=tenant_id,
                 environment_id=environment_id,
@@ -1268,7 +1271,8 @@ async def purge_cache(
                 refusal_reason=exc.refusal.reason,
                 edge_attached=edge_attached,
             )
-            append_audit(
+            await run_in_threadpool(
+                append_audit,
                 db,
                 tenant_id=tenant_id,
                 environment_id=environment_id,
@@ -1284,12 +1288,12 @@ async def purge_cache(
 
     cdn_outcome: Optional[CdnPurgeOutcome] = None
     provider_row = (
-        get_cdn_provider(db, tenant_id=tenant_id, environment_id=environment_id)
+        await run_in_threadpool(get_cdn_provider, db, tenant_id=tenant_id, environment_id=environment_id)
         if edge_attached and not request.dry_run
         else None
     )
     if provider_row:
-        hosts = verified_hosts(db, tenant_id=tenant_id, environment_id=environment_id)
+        hosts = await run_in_threadpool(verified_hosts, db, tenant_id=tenant_id, environment_id=environment_id)
         if plan.scope_kind == "host":
             hosts = [host for host in hosts if host == plan.scope_value.strip().lower()]
         cdn_outcome = await send_purge(
@@ -1316,7 +1320,8 @@ async def purge_cache(
         outcome = "dispatched"
     else:
         outcome = "recorded"
-    written = record_purge(
+    written = await run_in_threadpool(
+        record_purge,
         db,
         tenant_id=tenant_id,
         environment_id=environment_id,
@@ -1338,7 +1343,8 @@ async def purge_cache(
 
     purge_id = str(written["id"]) if written.get("id") else None
     if cdn_outcome is not None and provider_row:
-        dispatch = record_cdn_dispatch(
+        dispatch = await run_in_threadpool(
+            record_cdn_dispatch,
             db,
             tenant_id=tenant_id,
             environment_id=environment_id,
@@ -1361,7 +1367,8 @@ async def purge_cache(
         )
 
     if not request.dry_run:
-        append_audit(
+        await run_in_threadpool(
+            append_audit,
             db,
             tenant_id=tenant_id,
             environment_id=environment_id,
@@ -1430,7 +1437,7 @@ def _delivery(
     response_model=PurgeHistoryResponse,
     response_model_by_alias=True,
 )
-async def get_purge_history(
+def get_purge_history(
     environment_id: str,
     limit: int = Query(default=50, ge=1, le=200),
     scope_kind: Optional[str] = Query(default=None, alias="scopeKind"),
@@ -1475,7 +1482,7 @@ async def get_purge_history(
     response_model=AuditResponse,
     response_model_by_alias=True,
 )
-async def get_cache_audit(
+def get_cache_audit(
     environment_id: str,
     limit: int = Query(default=100, ge=1, le=500),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),

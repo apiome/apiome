@@ -150,7 +150,7 @@ def _project_id(tenant_id: str, project_ref: str) -> str:
         "Requires `projects:view`."
     ),
 )
-async def get_usage_retention(
+def get_usage_retention(
     tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> UsageRetentionResponse:
     """Read the retention.
@@ -180,7 +180,7 @@ async def get_usage_retention(
     ),
     responses={422: {"description": "`usage-retention-above-cap`, or a value below 1."}},
 )
-async def put_usage_retention(
+def put_usage_retention(
     tenant_slug: str, body: RetentionUpdate, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> UsageRetentionResponse:
     """Store the workspace's own retention.
@@ -285,7 +285,7 @@ def _export_stream(tenant_id: str, project_id: str, *, since: Any, until: Any, f
         }
     },
 )
-async def export_usage(
+def export_usage(
     tenant_slug: str,
     project_ref: str,
     format: ExportFormat = Query(default="csv", description="`csv` or `json`."),  # noqa: A002 - the documented name
@@ -366,7 +366,7 @@ def _source_settings(source: UsageSourceOut) -> Dict[str, Any]:
         "Requires `projects:view`."
     ),
 )
-async def list_usage_sources(
+def list_usage_sources(
     tenant_slug: str, project_ref: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> UsageSourceList:
     """List sources and toolsets.
@@ -411,7 +411,7 @@ async def list_usage_sources(
         },
     },
 )
-async def patch_usage_source(
+def patch_usage_source(
     tenant_slug: str,
     project_ref: str,
     source_id: str,
@@ -497,7 +497,7 @@ async def patch_usage_source(
         422: {"description": "`usage-body-samples-invalid` or `usage-body-samples-acknowledgement-required`."},
     },
 )
-async def patch_toolset_body_samples(
+def patch_toolset_body_samples(
     tenant_slug: str,
     toolset_id: UUID,
     body: BodySampleWindow,

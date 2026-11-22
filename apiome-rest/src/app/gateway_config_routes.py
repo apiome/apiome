@@ -40,7 +40,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
     response_model_by_alias=True,
     summary="List gateway configs",
 )
-async def list_tenant_gateway_configs(
+def list_tenant_gateway_configs(
     tenant_slug: str,
     connector: Optional[str] = Query(None, max_length=64, description="Only this connector's environments."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -58,7 +58,7 @@ async def list_tenant_gateway_configs(
     response_model_by_alias=True,
     summary="Read a gateway config",
 )
-async def read_tenant_gateway_config(
+def read_tenant_gateway_config(
     tenant_slug: str, ref: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> GatewayConfigOut:
     """One gateway config, by slug or id, with the APIs its environment serves (`imports:view`).

@@ -43,7 +43,7 @@ router = APIRouter(prefix="/v1/tenants", tags=["agent-access"])
         f"`days` is 1–{MAX_DAYS} (default {DEFAULT_DAYS}). Requires `api_keys:view`."
     ),
 )
-async def get_agent_usage_route(
+def get_agent_usage_route(
     tenant_slug: str,
     days: int = Query(default=DEFAULT_DAYS, ge=1, le=MAX_DAYS),
     auth_data: Dict[str, Any] = Depends(validate_authentication),

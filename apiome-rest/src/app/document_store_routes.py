@@ -24,6 +24,7 @@ import asyncio
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -184,7 +185,7 @@ async def ops_document_store(auth_data: Dict[str, Any] = Depends(validate_authen
     Settings come from the server environment and are read-only here; credentials are never
     returned — ``credentials`` only says whether static keys or boto3's default chain are used.
     """
-    enforce_platform_admin(db, auth_data)
+    await run_in_threadpool(enforce_platform_admin, db, auth_data)
     return await _status()
 
 
@@ -195,7 +196,7 @@ async def ops_test_document_store(auth_data: Dict[str, Any] = Depends(validate_a
     Answers ``200`` whether or not the test passed; ``ok`` and each step's ``error`` say what
     failed.
     """
-    enforce_platform_admin(db, auth_data)
+    await run_in_threadpool(enforce_platform_admin, db, auth_data)
     return await _probe()
 
 

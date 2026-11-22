@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -174,7 +175,7 @@ def _validated_pairs(cells: List[PermissionCell]) -> List[tuple]:
 
 
 @router.get("/{tenant_slug}/permissions/me")
-async def get_my_permissions(
+def get_my_permissions(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
@@ -199,7 +200,7 @@ async def get_my_permissions(
 
 
 @router.get("/{tenant_slug}/roles")
-async def list_roles(
+def list_roles(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[Dict[str, Any]]:
@@ -211,7 +212,7 @@ async def list_roles(
 
 
 @router.get("/{tenant_slug}/roles/{role_id}")
-async def get_role(
+def get_role(
     tenant_slug: str,
     role_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -226,7 +227,7 @@ async def get_role(
 
 
 @router.post("/{tenant_slug}/roles")
-async def create_role(
+def create_role(
     tenant_slug: str,
     request: RoleWriteRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -258,7 +259,7 @@ async def create_role(
 
 
 @router.put("/{tenant_slug}/roles/{role_id}")
-async def update_role(
+def update_role(
     tenant_slug: str,
     role_id: str,
     request: RoleWriteRequest,
@@ -298,7 +299,7 @@ async def update_role(
 
 
 @router.post("/{tenant_slug}/roles/{role_id}/duplicate")
-async def duplicate_role(
+def duplicate_role(
     tenant_slug: str,
     role_id: str,
     request: RoleDuplicateRequest,
@@ -334,7 +335,7 @@ async def duplicate_role(
 
 
 @router.delete("/{tenant_slug}/roles/{role_id}", status_code=204)
-async def delete_role(
+def delete_role(
     tenant_slug: str,
     role_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -364,7 +365,7 @@ async def delete_role(
 
 
 @router.get("/{tenant_slug}/members")
-async def list_members(
+def list_members(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[Dict[str, Any]]:
@@ -376,7 +377,7 @@ async def list_members(
 
 
 @router.get("/{tenant_slug}/members/export")
-async def export_members(
+def export_members(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StreamingResponse:
@@ -397,6 +398,47 @@ async def export_members(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{tenant_slug}-members.csv"'},
     )
+
+
+def _member_import_report(tenant_id: str, content: bytes) -> Dict[str, Any]:
+    """Classify the rows of an uploaded member CSV against the tenant, without writing anything.
+
+    Blocking (it queries the database), so the import route runs it in the thread pool.
+
+    Args:
+        tenant_id: The tenant the members would join.
+        content: The uploaded CSV bytes, already checked against the size limit.
+
+    Returns:
+        The dry-run report body of ``POST /{tenant_slug}/members/import``.
+
+    Raises:
+        HTTPException: 400 when the bytes cannot be read as the member CSV.
+    """
+    try:
+        rows = parse_import_csv(content)
+    except MemberCsvError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    db.ensure_builtin_roles(tenant_id)
+    seats_free: Optional[int] = None
+    if settings.license_enforcement_enabled:
+        seats_free = member_seats_free(tenant_id)
+    report = classify_import(
+        rows,
+        roles=db.list_roles(tenant_id),
+        member_emails={normalize_email(m["email"]) for m in db.list_members(tenant_id) if m.get("email")},
+        accounts=db.get_users_by_emails([r.email for r in rows if is_valid_email(r.email)]),
+        seats_free=seats_free,
+    )
+    return {
+        "dry_run": True,
+        "total": len(report),
+        "max_rows": MAX_IMPORT_ROWS,
+        "seats_free": seats_free,
+        "counts": count_outcomes(report),
+        "rows": report,
+    }
 
 
 @router.post("/{tenant_slug}/members/import")
@@ -427,7 +469,7 @@ async def import_members(
     :raises HTTPException: 400 when ``dryRun`` is false or the file cannot be read as CSV,
         413 when it is over 1 MiB.
     """
-    enforce_permission(db, auth_data, Resource.MEMBERS, Action.CREATE)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.MEMBERS, Action.CREATE)
     if not dry_run:
         raise HTTPException(
             status_code=400,
@@ -439,35 +481,12 @@ async def import_members(
     content = await file.read(MAX_IMPORT_BYTES + 1)
     if len(content) > MAX_IMPORT_BYTES:
         raise HTTPException(status_code=413, detail="The file is larger than the 1 MiB limit.")
-    try:
-        rows = parse_import_csv(content)
-    except MemberCsvError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
-
-    tenant_id = auth_data["tenant_id"]
-    db.ensure_builtin_roles(tenant_id)
-    seats_free: Optional[int] = None
-    if settings.license_enforcement_enabled:
-        seats_free = member_seats_free(tenant_id)
-    report = classify_import(
-        rows,
-        roles=db.list_roles(tenant_id),
-        member_emails={normalize_email(m["email"]) for m in db.list_members(tenant_id) if m.get("email")},
-        accounts=db.get_users_by_emails([r.email for r in rows if is_valid_email(r.email)]),
-        seats_free=seats_free,
-    )
-    return {
-        "dry_run": True,
-        "total": len(report),
-        "max_rows": MAX_IMPORT_ROWS,
-        "seats_free": seats_free,
-        "counts": count_outcomes(report),
-        "rows": report,
-    }
+    # The classification reads roles, members and accounts: keep it off the event loop (#7187).
+    return await run_in_threadpool(_member_import_report, auth_data["tenant_id"], content)
 
 
 @router.post("/{tenant_slug}/members")
-async def invite_member(
+def invite_member(
     tenant_slug: str,
     request: MemberInviteRequest,
     auth_data: Dict[str, Any] = Depends(require_member_seat),
@@ -512,7 +531,7 @@ async def invite_member(
 
 
 @router.patch("/{tenant_slug}/members/{user_id}")
-async def update_member(
+def update_member(
     tenant_slug: str,
     user_id: str,
     request: MemberUpdateRequest,
@@ -569,7 +588,7 @@ async def update_member(
 
 
 @router.post("/{tenant_slug}/members/{user_id}/resend-invite")
-async def resend_member_invite(
+def resend_member_invite(
     tenant_slug: str,
     user_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -615,7 +634,7 @@ async def resend_member_invite(
 
 
 @router.delete("/{tenant_slug}/members/{user_id}", status_code=204)
-async def offboard_member(
+def offboard_member(
     tenant_slug: str,
     user_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -685,7 +704,7 @@ def _parse_audit_since(since: Optional[str]) -> Optional[datetime]:
 
 
 @router.get("/{tenant_slug}/audit")
-async def list_audit(
+def list_audit(
     tenant_slug: str,
     filter: str = Query("all"),
     since: Optional[str] = Query(None),
@@ -714,7 +733,7 @@ async def list_audit(
 
 
 @router.get("/{tenant_slug}/audit/export")
-async def export_audit(
+def export_audit(
     tenant_slug: str,
     filter: str = Query("all"),
     since: Optional[str] = Query(None),
@@ -761,7 +780,7 @@ async def export_audit(
 
 
 @platform_router.post("/access-overrides", status_code=201)
-async def record_platform_override(
+def record_platform_override(
     request: PlatformOverrideRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> Dict[str, Any]:

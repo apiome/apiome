@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from psycopg2 import errors as pg_errors
 
@@ -306,7 +307,7 @@ def _require_actor(auth_data: Dict[str, Any]) -> str:
     "/{tenant_slug}/browse",
     response_model=McpBrowseResponse,
 )
-async def browse_mcp_endpoints(
+def browse_mcp_endpoints(
     tenant_slug: str,
     team: Optional[str] = Query(
         default=None,
@@ -352,7 +353,7 @@ async def browse_mcp_endpoints(
     "/{tenant_slug}/data-quality/duplicates",
     response_model=McpDuplicateReportResponse,
 )
-async def list_mcp_duplicate_report(
+def list_mcp_duplicate_report(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDuplicateReportResponse:
@@ -378,7 +379,7 @@ async def list_mcp_duplicate_report(
     "/{tenant_slug}/data-quality/freshness",
     response_model=McpFreshnessReportResponse,
 )
-async def list_mcp_freshness_report(
+def list_mcp_freshness_report(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpFreshnessReportResponse:
@@ -485,7 +486,8 @@ async def search_mcp_catalog(
         )
 
     if scope == "endpoint":
-        rows = db.search_mcp_endpoints_fts(
+        rows = await run_in_threadpool(
+            db.search_mcp_endpoints_fts,
             tenant_id,
             query,
             host=host_filter,
@@ -497,7 +499,8 @@ async def search_mcp_catalog(
             offset=offset,
         )
     else:
-        rows = db.search_mcp_capability_items(
+        rows = await run_in_threadpool(
+            db.search_mcp_capability_items,
             tenant_id,
             query,
             item_type=scope,  # None searches every capability kind
@@ -593,7 +596,7 @@ _MCP_CAPABILITY_DIRECTORY_DIRECTIONS = frozenset({"asc", "desc"})
     "/{tenant_slug}/capabilities",
     response_model=McpCapabilityDirectoryResponse,
 )
-async def list_mcp_capability_directory(
+def list_mcp_capability_directory(
     tenant_slug: str,
     name: Optional[str] = Query(
         None,
@@ -674,7 +677,7 @@ async def list_mcp_capability_directory(
     "/{tenant_slug}/capabilities/search",
     response_model=McpCrossServerCapabilitySearchResponse,
 )
-async def cross_server_capability_search(
+def cross_server_capability_search(
     tenant_slug: str,
     q: str = Query(
         ...,
@@ -792,7 +795,7 @@ async def cross_server_capability_search(
     "/{tenant_slug}/facets",
     response_model=McpFacetedSearchResponse,
 )
-async def faceted_mcp_catalog_search(
+def faceted_mcp_catalog_search(
     tenant_slug: str,
     grade: Optional[List[str]] = Query(
         None, description="Grade facet: A-F letters (any case) and/or 'ungraded'. Repeatable."
@@ -897,7 +900,7 @@ async def faceted_mcp_catalog_search(
     "/{tenant_slug}/endpoints",
     response_model=McpEndpointListResponse,
 )
-async def list_mcp_endpoints(
+def list_mcp_endpoints(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpEndpointListResponse:
@@ -915,7 +918,7 @@ async def list_mcp_endpoints(
     "/{tenant_slug}/endpoints/{endpoint_id}",
     response_model=McpEndpointResponse,
 )
-async def get_mcp_endpoint(
+def get_mcp_endpoint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -934,7 +937,7 @@ async def get_mcp_endpoint(
     response_model=McpEndpointResponse,
     status_code=201,
 )
-async def create_mcp_endpoint(
+def create_mcp_endpoint(
     tenant_slug: str,
     body: McpEndpointCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -992,7 +995,7 @@ async def create_mcp_endpoint(
     "/{tenant_slug}/endpoints/{endpoint_id}",
     response_model=McpEndpointResponse,
 )
-async def update_mcp_endpoint(
+def update_mcp_endpoint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpEndpointUpdate,
@@ -1048,7 +1051,7 @@ async def update_mcp_endpoint(
     "/{tenant_slug}/endpoints/{endpoint_id}",
     response_model=McpEndpointDeleteResponse,
 )
-async def delete_mcp_endpoint(
+def delete_mcp_endpoint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1213,7 +1216,7 @@ def _publish_response(
         503: {"description": "APIOME_MCP_PUBLISH_MIN_GRADE is misconfigured."},
     },
 )
-async def publish_mcp_endpoint(
+def publish_mcp_endpoint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1257,7 +1260,7 @@ async def publish_mcp_endpoint(
     response_model=McpEndpointPublishResponse,
     responses={404: {"description": "The endpoint is not the caller's tenant's."}},
 )
-async def unpublish_mcp_endpoint(
+def unpublish_mcp_endpoint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1312,7 +1315,7 @@ async def discover_mcp_endpoint(
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    endpoint = db.get_mcp_endpoint(tenant_id, str(endpoint_id))
+    endpoint = await run_in_threadpool(db.get_mcp_endpoint, tenant_id, str(endpoint_id))
     if not endpoint:
         raise HTTPException(status_code=404, detail="MCP endpoint not found")
 
@@ -1328,7 +1331,7 @@ async def discover_mcp_endpoint(
     "/{tenant_slug}/endpoints/{endpoint_id}/discover",
     response_model=McpDiscoveryJobListResponse,
 )
-async def list_mcp_discovery_jobs(
+def list_mcp_discovery_jobs(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1350,7 +1353,7 @@ async def list_mcp_discovery_jobs(
     "/{tenant_slug}/endpoints/{endpoint_id}/discover/{job_id}",
     response_model=McpDiscoveryJobResponse,
 )
-async def get_mcp_discovery_job(
+def get_mcp_discovery_job(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     job_id: uuid.UUID,
@@ -1381,7 +1384,7 @@ async def get_mcp_discovery_job(
     "/{tenant_slug}/endpoints/{endpoint_id}/jobs",
     response_model=McpDiscoveryJobStatusListResponse,
 )
-async def list_mcp_endpoint_jobs(
+def list_mcp_endpoint_jobs(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1406,7 +1409,7 @@ async def list_mcp_endpoint_jobs(
     "/{tenant_slug}/endpoints/{endpoint_id}/jobs/{job_id}",
     response_model=McpDiscoveryJobStatusResponse,
 )
-async def get_mcp_endpoint_job(
+def get_mcp_endpoint_job(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     job_id: uuid.UUID,
@@ -1462,7 +1465,7 @@ def _require_tenant_endpoint(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions",
     response_model=McpEndpointVersionListResponse,
 )
-async def list_mcp_endpoint_versions(
+def list_mcp_endpoint_versions(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -1488,7 +1491,7 @@ async def list_mcp_endpoint_versions(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/compare",
     response_model=McpVersionCompareResponse,
 )
-async def compare_mcp_endpoint_versions(
+def compare_mcp_endpoint_versions(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     base: uuid.UUID = Query(..., description="The base (from) version id."),
@@ -1556,7 +1559,7 @@ async def compare_mcp_endpoint_versions(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}",
     response_model=McpEndpointVersionResponse,
 )
-async def get_mcp_endpoint_version(
+def get_mcp_endpoint_version(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -1586,7 +1589,7 @@ async def get_mcp_endpoint_version(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/changes",
     response_model=McpVersionChangesResponse,
 )
-async def get_mcp_endpoint_version_changes(
+def get_mcp_endpoint_version_changes(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -1700,7 +1703,7 @@ def _recompute_mcp_conformance(
 
 
 @mcp_endpoints_router.get("/lint/rules", response_model=McpSurfaceLintRulesResponse)
-async def get_mcp_surface_lint_rules(
+def get_mcp_surface_lint_rules(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> McpSurfaceLintRulesResponse:
     """Return the MCP surface-lint rule catalog with CLX-4.3 transparency metadata.
@@ -1740,7 +1743,7 @@ async def get_mcp_surface_lint_rules(
 
 
 @mcp_endpoints_router.get("/conformance/rules", response_model=McpConformanceRulesResponse)
-async def get_mcp_conformance_rules(
+def get_mcp_conformance_rules(
     profile: Optional[str] = Query(
         default=None,
         description="Restrict the catalog to the rules this profile evaluates.",
@@ -1780,7 +1783,7 @@ async def get_mcp_conformance_rules(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/conformance",
     response_model=None,
 )
-async def get_mcp_endpoint_version_conformance(
+def get_mcp_endpoint_version_conformance(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -1925,7 +1928,7 @@ async def _build_posture_context(
 
 
 @mcp_endpoints_router.get("/trust-posture/rules", response_model=McpPostureRulesResponse)
-async def get_mcp_trust_posture_rules(
+def get_mcp_trust_posture_rules(
     profile: Optional[str] = Query(
         default=None,
         description="Restrict the catalog to the rules this profile evaluates.",
@@ -1966,7 +1969,7 @@ async def get_mcp_trust_posture_rules(
     response_model=McpSourceResponse,
     status_code=201,
 )
-async def link_mcp_endpoint_source(
+def link_mcp_endpoint_source(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpSourceLinkRequest,
@@ -2007,7 +2010,7 @@ async def link_mcp_endpoint_source(
     "/{tenant_slug}/endpoints/{endpoint_id}/sources",
     response_model=McpSourceListResponse,
 )
-async def list_mcp_endpoint_sources(
+def list_mcp_endpoint_sources(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     include_retired: bool = Query(
@@ -2031,7 +2034,7 @@ async def list_mcp_endpoint_sources(
     "/{tenant_slug}/endpoints/{endpoint_id}/sources/{source_id}",
     response_model=McpSourceResponse,
 )
-async def retire_mcp_endpoint_source(
+def retire_mcp_endpoint_source(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     source_id: uuid.UUID,
@@ -2056,7 +2059,7 @@ async def retire_mcp_endpoint_source(
     response_model=McpSbomOut,
     status_code=201,
 )
-async def attach_mcp_source_sbom(
+def attach_mcp_source_sbom(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     source_id: uuid.UUID,
@@ -2164,8 +2167,8 @@ async def get_mcp_endpoint_version_trust_posture(
     404 when the endpoint or version is not the caller's tenant's; 400 on an unknown profile.
     """
     _ = tenant_slug
-    _require_tenant_endpoint(auth_data, endpoint_id)
-    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    await run_in_threadpool(_require_tenant_endpoint, auth_data, endpoint_id)
+    version = await run_in_threadpool(db.get_mcp_endpoint_version, str(endpoint_id), str(version_id))
     if version is None:
         raise HTTPException(status_code=404, detail="MCP endpoint version not found")
 
@@ -2201,7 +2204,7 @@ async def get_mcp_endpoint_version_trust_posture(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint",
     response_model=McpLintReportResponse,
 )
-async def get_mcp_endpoint_version_lint(
+def get_mcp_endpoint_version_lint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2245,7 +2248,7 @@ async def get_mcp_endpoint_version_lint(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint",
     response_model=McpLintReportResponse,
 )
-async def recompute_mcp_endpoint_version_lint(
+def recompute_mcp_endpoint_version_lint(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2288,7 +2291,7 @@ async def recompute_mcp_endpoint_version_lint(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/evidence",
     response_model=LintEvidenceResponse,
 )
-async def get_mcp_endpoint_version_lint_evidence(
+def get_mcp_endpoint_version_lint_evidence(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2333,12 +2336,12 @@ async def get_mcp_endpoint_version_lint_axes(
     the caller's tenant's.
     """
     _ = tenant_slug
-    _require_tenant_endpoint(auth_data, endpoint_id)
-    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    await run_in_threadpool(_require_tenant_endpoint, auth_data, endpoint_id)
+    version = await run_in_threadpool(db.get_mcp_endpoint_version, str(endpoint_id), str(version_id))
     if version is None:
         raise HTTPException(status_code=404, detail="MCP endpoint version not found")
 
-    stored = db.get_latest_axis_evaluation_for_mcp_version(str(version_id))
+    stored = await run_in_threadpool(db.get_latest_axis_evaluation_for_mcp_version, str(version_id))
     if stored:
         return LintAxesResponse(
             evaluation=lint_axis_evaluation_out_from_row(
@@ -2350,7 +2353,7 @@ async def get_mcp_endpoint_version_lint_axes(
 
     from .axis_score import evaluation_row, mcp_axis_evaluation
 
-    score_row = db.get_mcp_version_score(str(version_id)) or {}
+    score_row = await run_in_threadpool(db.get_mcp_version_score, str(version_id)) or {}
     report = score_row.get("report") if isinstance(score_row.get("report"), dict) else {}
     if not report and score_row.get("score") is not None:
         report = {
@@ -2370,9 +2373,10 @@ async def get_mcp_endpoint_version_lint_axes(
     conformance_report = None
     posture_report = None
     try:
-        conformance_report = _recompute_mcp_conformance(
+        conformance_report = (await run_in_threadpool(
+            _recompute_mcp_conformance,
             version, profile=None, fail_on="error", min_score=None
-        ).report_dict()
+        )).report_dict()
     except Exception:  # noqa: BLE001 - an unscannable snapshot leaves the protocol axis a gap
         pass
     try:
@@ -2387,7 +2391,8 @@ async def get_mcp_endpoint_version_lint_axes(
         posture_report=posture_report,
     )
     try:
-        db.record_axis_evaluation(
+        await run_in_threadpool(
+            db.record_axis_evaluation,
             evaluation_row(
                 evaluation,
                 subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
@@ -2413,7 +2418,7 @@ async def get_mcp_endpoint_version_lint_axes(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/policy",
     response_model=LintPolicyResponse,
 )
-async def get_mcp_endpoint_version_lint_policy(
+def get_mcp_endpoint_version_lint_policy(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2450,7 +2455,7 @@ async def get_mcp_endpoint_version_lint_policy(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/level",
     response_model=LintLevelResponse,
 )
-async def get_mcp_endpoint_version_lint_level(
+def get_mcp_endpoint_version_lint_level(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2491,7 +2496,7 @@ async def get_mcp_endpoint_version_lint_level(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/gate",
     response_model=None,
 )
-async def get_mcp_endpoint_version_lint_gate(
+def get_mcp_endpoint_version_lint_gate(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
@@ -2598,7 +2603,7 @@ async def get_mcp_endpoint_version_lint_gate(
     "/{tenant_slug}/endpoints/{endpoint_id}/credentials",
     response_model=McpCredentialStatusResponse,
 )
-async def get_mcp_endpoint_credentials(
+def get_mcp_endpoint_credentials(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2623,7 +2628,7 @@ async def get_mcp_endpoint_credentials(
     "/{tenant_slug}/endpoints/{endpoint_id}/credentials",
     response_model=McpCredentialStatusResponse,
 )
-async def set_mcp_endpoint_credentials(
+def set_mcp_endpoint_credentials(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: McpCredentialUpsert,
@@ -2672,7 +2677,7 @@ async def set_mcp_endpoint_credentials(
     "/{tenant_slug}/endpoints/{endpoint_id}/credentials",
     response_model=McpCredentialDeleteResponse,
 )
-async def clear_mcp_endpoint_credentials(
+def clear_mcp_endpoint_credentials(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -2742,7 +2747,7 @@ async def start_mcp_endpoint_oauth(
     is not configured.
     """
     _ = tenant_slug
-    _require_tenant_endpoint(auth_data, endpoint_id)
+    await run_in_threadpool(_require_tenant_endpoint, auth_data, endpoint_id)
     try:
         started = await asyncio.to_thread(
             start_authorization,
@@ -3160,7 +3165,7 @@ async def test_mcp_endpoint_capability(
     ``completed=False`` with the classified ``error``, so "the tool is down" is data, not a 5xx.
     """
     _ = tenant_slug
-    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    endpoint = await run_in_threadpool(_require_tenant_endpoint, auth_data, endpoint_id)
 
     version_id = endpoint.get("current_version_id")
     if not version_id:
@@ -3169,7 +3174,7 @@ async def test_mcp_endpoint_capability(
             detail="endpoint has no discovered surface yet; run discovery before testing",
         )
 
-    item = _resolve_test_capability(str(version_id), body.item_type, body.item_name)
+    item = await run_in_threadpool(_resolve_test_capability, str(version_id), body.item_type, body.item_name)
 
     # Safety gate: a destructive / open-world tool must be explicitly confirmed before it fires.
     danger_hints = _confirmation_required_hints(item)
@@ -3202,7 +3207,8 @@ async def test_mcp_endpoint_capability(
     )
 
     # Record the dispatched call (redacted) — best-effort, so a log failure never fails the response.
-    invocation_id = _log_test_invocation(
+    invocation_id = await run_in_threadpool(
+        _log_test_invocation,
         endpoint_id=str(endpoint_id),
         version_id=str(version_id),
         body=body,
@@ -3238,7 +3244,7 @@ async def test_mcp_endpoint_capability(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/surface",
     response_model=McpInsightSurfaceResponse,
 )
-async def get_mcp_endpoint_insight_surface(
+def get_mcp_endpoint_insight_surface(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: Optional[uuid.UUID] = Query(
@@ -3290,7 +3296,7 @@ async def get_mcp_endpoint_insight_surface(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/graph",
     response_model=McpInsightGraphResponse,
 )
-async def get_mcp_endpoint_insight_graph(
+def get_mcp_endpoint_insight_graph(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: Optional[uuid.UUID] = Query(
@@ -3343,7 +3349,7 @@ async def get_mcp_endpoint_insight_graph(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/evolution",
     response_model=McpInsightEvolutionResponse,
 )
-async def get_mcp_endpoint_insight_evolution(
+def get_mcp_endpoint_insight_evolution(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -3394,7 +3400,7 @@ async def get_mcp_endpoint_insight_evolution(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/digest",
     response_model=McpEndpointDigestResponse,
 )
-async def get_mcp_endpoint_digest(
+def get_mcp_endpoint_digest(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -3462,7 +3468,7 @@ async def get_mcp_endpoint_digest(
     "/{tenant_slug}/endpoints/{endpoint_id}/views",
     response_model=McpEndpointViewResponse,
 )
-async def record_mcp_endpoint_view(
+def record_mcp_endpoint_view(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     body: Optional[McpEndpointViewMarkRequest] = None,
@@ -3511,7 +3517,7 @@ async def record_mcp_endpoint_view(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/reliability",
     response_model=McpInsightReliabilityResponse,
 )
-async def get_mcp_endpoint_insight_reliability(
+def get_mcp_endpoint_insight_reliability(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -3555,7 +3561,7 @@ async def get_mcp_endpoint_insight_reliability(
     "/{tenant_slug}/endpoints/{endpoint_id}/uptime",
     response_model=McpEndpointUptimeResponse,
 )
-async def get_mcp_endpoint_uptime(
+def get_mcp_endpoint_uptime(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     window_hours: int = Query(
@@ -3602,7 +3608,7 @@ async def get_mcp_endpoint_uptime(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/trust",
     response_model=McpInsightTrustResponse,
 )
-async def get_mcp_endpoint_insight_trust(
+def get_mcp_endpoint_insight_trust(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -3775,7 +3781,7 @@ def _report_trust_profile(
 
 
 @mcp_endpoints_router.get("/{tenant_slug}/endpoints/{endpoint_id}/report")
-async def export_mcp_endpoint_report(
+def export_mcp_endpoint_report(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     format: str = Query(
@@ -3996,7 +4002,7 @@ def _iter_inventory_records(tenant_id: str, published_only: bool):
 
 
 @mcp_endpoints_router.get("/{tenant_slug}/endpoints:export")
-async def export_mcp_catalog_inventory(
+def export_mcp_catalog_inventory(
     tenant_slug: str,
     format: str = Query(
         "csv",
@@ -4122,7 +4128,7 @@ def _cohort_member_axis_values(member: Dict[str, Any]) -> Dict[str, Optional[flo
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/percentile",
     response_model=McpInsightPercentileResponse,
 )
-async def get_mcp_endpoint_insight_percentile(
+def get_mcp_endpoint_insight_percentile(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -4196,7 +4202,7 @@ SIMILAR_SERVERS_LIMIT = 10
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/similar",
     response_model=McpSimilarServersResponse,
 )
-async def get_mcp_endpoint_similar(
+def get_mcp_endpoint_similar(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -4255,7 +4261,7 @@ async def get_mcp_endpoint_similar(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/similar/reindex",
     response_model=McpSimilarReindexResponse,
 )
-async def reindex_mcp_endpoint_similar(
+def reindex_mcp_endpoint_similar(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -4404,7 +4410,7 @@ def _mcp_digest_response(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/summary",
     response_model=McpServerDigestResponse,
 )
-async def get_mcp_endpoint_summary(
+def get_mcp_endpoint_summary(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -4436,7 +4442,7 @@ async def get_mcp_endpoint_summary(
     "/{tenant_slug}/endpoints/{endpoint_id}/insight/summary/generate",
     response_model=McpServerDigestGenerateResponse,
 )
-async def generate_mcp_endpoint_summary(
+def generate_mcp_endpoint_summary(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -4525,7 +4531,7 @@ async def generate_mcp_endpoint_summary(
     "/{tenant_slug}/insight/catalog",
     response_model=McpInsightCatalogResponse,
 )
-async def get_mcp_catalog_insight(
+def get_mcp_catalog_insight(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpInsightCatalogResponse:

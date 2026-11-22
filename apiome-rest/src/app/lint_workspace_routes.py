@@ -125,7 +125,7 @@ def _query_filters(
 
 
 @router.get("/findings", response_model=LintWorkspaceFindingsResponse)
-async def list_workspace_findings(
+def list_workspace_findings(
     severity: Optional[str] = Query(default=None, description="CSV of error,warning,info"),
     state: Optional[str] = Query(
         default=None, description="CSV of effective decision states"
@@ -185,7 +185,7 @@ async def list_workspace_findings(
 
 
 @router.get("/summary", response_model=LintWorkspaceSummaryResponse)
-async def workspace_summary(
+def workspace_summary(
     project_id: Optional[str] = Query(default=None, alias="projectId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceSummaryResponse:
@@ -197,7 +197,7 @@ async def workspace_summary(
 
 
 @router.get("/trends", response_model=LintWorkspaceTrendsResponse)
-async def workspace_trends(
+def workspace_trends(
     days: int = Query(default=30, ge=1, le=365),
     project_id: Optional[str] = Query(default=None, alias="projectId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -216,7 +216,7 @@ async def workspace_trends(
 
 
 @router.get("/quality-ranks", response_model=QualityRankSeriesResponse)
-async def workspace_quality_ranks(
+def workspace_quality_ranks(
     days: int = Query(default=30, ge=1, le=MAX_WINDOW_DAYS),
     scope: Optional[str] = Query(
         default=None, description="import | export (both when omitted)"
@@ -259,7 +259,7 @@ async def workspace_quality_ranks(
 
 
 @router.post("/decisions/bulk", response_model=LintWorkspaceBulkDecisionResponse)
-async def bulk_decision_action(
+def bulk_decision_action(
     body: LintWorkspaceBulkDecisionRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceBulkDecisionResponse:
@@ -449,7 +449,7 @@ def _normalized_view_fields(
 
 
 @router.get("/views", response_model=LintWorkspaceSavedViewListResponse)
-async def list_workspace_saved_views(
+def list_workspace_saved_views(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceSavedViewListResponse:
     """List the caller's saved workspace views (pinned first, then newest)."""
@@ -463,7 +463,7 @@ async def list_workspace_saved_views(
 
 
 @router.post("/views", response_model=LintWorkspaceSavedViewOut, status_code=201)
-async def create_workspace_saved_view(
+def create_workspace_saved_view(
     body: LintWorkspaceSavedViewCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceSavedViewOut:
@@ -496,7 +496,7 @@ async def create_workspace_saved_view(
 
 
 @router.patch("/views/{view_id}", response_model=LintWorkspaceSavedViewOut)
-async def update_workspace_saved_view(
+def update_workspace_saved_view(
     view_id: uuid.UUID,
     body: LintWorkspaceSavedViewUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -531,7 +531,7 @@ async def update_workspace_saved_view(
 
 
 @router.delete("/views/{view_id}")
-async def delete_workspace_saved_view(
+def delete_workspace_saved_view(
     view_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, bool]:

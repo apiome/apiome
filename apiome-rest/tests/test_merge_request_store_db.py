@@ -16,7 +16,6 @@ Acceptance:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 from typing import Any, Dict, Iterator, Tuple
@@ -180,7 +179,7 @@ def _approve(w, review_id, who="rex"):
 
 
 def _merge(w, mr_id):
-    return asyncio.run(store.merge_merge_request("acme", _auth(w), w["rita"], w["project"], mr_id, MergeRequestMerge()))
+    return store.merge_merge_request("acme", _auth(w), w["rita"], w["project"], mr_id, MergeRequestMerge())
 
 
 def test_a_draft_branch_has_its_own_revision_so_edits_leave_the_line_alone(world):
@@ -266,10 +265,10 @@ def test_check_supersedes_the_previous_session(world):
     w, cur = world
     branch = _draft(w)
     mr = _open(w, branch)
-    first = asyncio.run(
+    first = (
         store.check_merge_request("acme", _auth(w), w["rita"], w["project"], mr.merge_request.id, MergeRequestMerge())
     )
-    second = asyncio.run(
+    second = (
         store.check_merge_request("acme", _auth(w), w["rita"], w["project"], mr.merge_request.id, MergeRequestMerge())
     )
     assert first.merge_session["id"] != second.merge_session["id"]

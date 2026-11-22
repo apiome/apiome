@@ -202,7 +202,7 @@ def _policy_view(row: Optional[Mapping[str, Any]]) -> SignupPolicyView:
         403: {"description": "Super-admin session invalid or expired."},
     },
 )
-async def get_signup_policy(_: None = Depends(require_super_admin)) -> SignupPolicyView:
+def get_signup_policy(_: None = Depends(require_super_admin)) -> SignupPolicyView:
     """Read the installation sign-up policy (SGN-1.4).
 
     Reads the stored row directly rather than the cached policy, so the admin console always shows
@@ -223,7 +223,7 @@ async def get_signup_policy(_: None = Depends(require_super_admin)) -> SignupPol
         422: {"description": "Unknown mode, or an invalid or over-long email-domain list."},
     },
 )
-async def update_signup_policy(
+def update_signup_policy(
     payload: SignupPolicyUpdateRequest,
     _: None = Depends(require_super_admin),
 ) -> SignupPolicyView:
@@ -295,7 +295,7 @@ MAX_BLOCKED_ATTEMPTS_LIMIT = 200
         403: {"description": "Super-admin session invalid or expired."},
     },
 )
-async def list_blocked_signup_attempts(
+def list_blocked_signup_attempts(
     limit: int = Query(
         DEFAULT_BLOCKED_ATTEMPTS_LIMIT,
         ge=1,

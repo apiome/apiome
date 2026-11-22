@@ -188,7 +188,7 @@ def _assert_target_domain(domain_id: Optional[str], version_id: str, tenant_id: 
 
 
 @router.get("/{tenant_slug}/version/{version_id}", response_model=List[DomainSchema])
-async def list_domains(
+def list_domains(
     tenant_slug: str,
     version_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -211,7 +211,7 @@ async def list_domains(
 
 
 @router.post("/{tenant_slug}/version/{version_id}", response_model=DomainSchema, status_code=201)
-async def create_domain(
+def create_domain(
     tenant_slug: str,
     version_id: str,
     body: DomainCreateRequest,
@@ -243,7 +243,7 @@ async def create_domain(
 
 
 @router.patch("/{tenant_slug}/{domain_id}", response_model=DomainSchema)
-async def update_domain(
+def update_domain(
     tenant_slug: str,
     domain_id: str,
     body: DomainUpdateRequest,
@@ -277,7 +277,7 @@ async def update_domain(
 
 
 @router.delete("/{tenant_slug}/{domain_id}")
-async def delete_domain(
+def delete_domain(
     tenant_slug: str,
     domain_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -315,7 +315,7 @@ async def delete_domain(
 
 
 @router.put("/{tenant_slug}/classes/{class_id}", response_model=DomainMemberSchema)
-async def assign_class_domain(
+def assign_class_domain(
     tenant_slug: str,
     class_id: str,
     body: DomainAssignmentRequest,
@@ -349,7 +349,7 @@ async def assign_class_domain(
 
 
 @router.put("/{tenant_slug}/paths/{path_id}", response_model=DomainMemberSchema)
-async def assign_path_domain(
+def assign_path_domain(
     tenant_slug: str,
     path_id: str,
     body: DomainAssignmentRequest,

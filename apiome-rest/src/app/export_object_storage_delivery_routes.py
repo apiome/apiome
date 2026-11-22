@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 
 from psycopg2.errors import ForeignKeyViolation
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.concurrency import run_in_threadpool
 from psycopg2 import errors as pg_errors
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -210,7 +211,7 @@ async def create_storage_credential(
     Returns:
         The stored credential's description.
     """
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     try:
@@ -262,7 +263,7 @@ async def list_storage_credentials(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StorageCredentialListResponse:
     """List the tenant's storage credentials."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_storage_credentials, tenant_id)
@@ -283,7 +284,7 @@ async def delete_storage_credential(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Delete one storage credential."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.EDIT)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     try:
@@ -457,7 +458,7 @@ async def deliver_export_job_to_object_storage(
     Returns:
         The run — whatever its outcome.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     return await perform_object_storage_delivery(tenant_slug, tenant_id, job_id, body, auth_data)
@@ -476,7 +477,7 @@ async def list_export_job_object_storage_deliveries(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportObjectStorageDeliveryRunListResponse:
     """List one export job's object-storage deliveries."""
-    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     rows = await asyncio.to_thread(db.list_export_object_storage_delivery_runs, tenant_id, job_id)

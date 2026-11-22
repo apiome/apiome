@@ -80,7 +80,7 @@ def _not_found(version_record_id: str) -> HTTPException:
     response_class=StreamingResponse,
     responses=_RESPONSES,
 )
-async def get_version_document(
+def get_version_document(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

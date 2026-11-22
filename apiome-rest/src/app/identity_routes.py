@@ -34,7 +34,7 @@ def _related_for_project(tenant_id: str, project_id: str) -> List[RelatedArtifac
 
 
 @router.get("/{tenant_slug}/projects/{project_id}/related")
-async def get_related_artifacts(
+def get_related_artifacts(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -48,7 +48,7 @@ async def get_related_artifacts(
 
 
 @router.get("/{tenant_slug}/projects/{project_id}/suggestions")
-async def get_identity_suggestions(
+def get_identity_suggestions(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -79,7 +79,7 @@ async def get_identity_suggestions(
     response_model=ZosConnectBindingResponse,
     response_model_by_alias=True,
 )
-async def get_zosconnect_binding(
+def get_zosconnect_binding(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -131,7 +131,7 @@ async def get_zosconnect_binding(
 
 
 @router.post("/{tenant_slug}/link")
-async def link_artifacts(
+def link_artifacts(
     tenant_slug: str,
     body: LinkArtifactsRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -157,7 +157,7 @@ async def link_artifacts(
 
 
 @router.delete("/{tenant_slug}/link")
-async def unlink_artifacts(
+def unlink_artifacts(
     tenant_slug: str,
     body: UnlinkArtifactsRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import Any, Dict, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication
 from .database import db
@@ -101,7 +102,7 @@ async def list_export_runs(
     Returns:
         One page of runs with their deliveries, and the total matching.
     """
-    tenant_id = _tenant(tenant_slug, auth_data)
+    tenant_id = await run_in_threadpool(_tenant, tenant_slug, auth_data)
     page = await asyncio.to_thread(
         lambda: db.list_export_runs(
             tenant_id,
@@ -150,7 +151,7 @@ async def list_export_run_actors(
     Returns:
         The actors, most recent first.
     """
-    tenant_id = _tenant(tenant_slug, auth_data)
+    tenant_id = await run_in_threadpool(_tenant, tenant_slug, auth_data)
     rows = await asyncio.to_thread(db.list_export_run_actors, tenant_id)
     return ExportRunActorsResponse(
         actors=[ExportRunActor(actor_id=r["actor_id"], actor_label=r["actor_label"]) for r in rows]
@@ -182,7 +183,7 @@ async def get_export_run(
     Raises:
         HTTPException: 404 when the run is not in this tenant's history.
     """
-    tenant_id = _tenant(tenant_slug, auth_data)
+    tenant_id = await run_in_threadpool(_tenant, tenant_slug, auth_data)
     row = await asyncio.to_thread(db.get_export_run, tenant_id, job_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Export run not found")

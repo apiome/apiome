@@ -129,7 +129,7 @@ def _owning_element(pointer: str, elements: List[ElementProvenanceOut]) -> Optio
         f"original import text (at most {EXCERPT_MAX_LINES} lines).\n\nRequires `projects:view`."
     ),
 )
-async def get_source_provenance(
+def get_source_provenance(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,

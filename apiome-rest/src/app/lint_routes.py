@@ -14,6 +14,7 @@ import asyncio
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication, validate_session_credentials
 from .axis_score import catalog_axis_evaluation
@@ -98,7 +99,7 @@ rules_router = APIRouter(prefix="/v1/lint", tags=["lint"])
 
 
 @rules_router.get("/rules", response_model=LintRuleCatalogResponse)
-async def list_lint_rules(
+def list_lint_rules(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> LintRuleCatalogResponse:
     """
@@ -155,7 +156,7 @@ async def list_lint_rules(
 
 
 @rules_router.get("/external-adapters", response_model=ExternalLintAdaptersResponse)
-async def list_external_lint_adapters(
+def list_external_lint_adapters(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> ExternalLintAdaptersResponse:
     """Discover Spectral / Vacuum / Redocly OpenAPI validation packs (CLX-2.2 / #4852)."""
@@ -182,7 +183,7 @@ _FORMAT_CAPABILITIES_DOCS = "apiome-rest/docs/format_lint_capabilities.md"
 
 
 @rules_router.get("/format-capabilities", response_model=FormatLintCapabilitiesResponse)
-async def list_format_lint_capabilities(
+def list_format_lint_capabilities(
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> FormatLintCapabilitiesResponse:
     """Publish the per-format lint capability matrix (CLX-2.4 / #4854).
@@ -214,7 +215,7 @@ async def list_format_lint_capabilities(
         }
     },
 )
-async def validate_custom_rules(
+def validate_custom_rules(
     payload: CustomRulesValidateRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> CustomRulesValidateResponse:
@@ -268,7 +269,7 @@ async def validate_custom_rules(
         }
     },
 )
-async def import_spectral_ruleset_document(
+def import_spectral_ruleset_document(
     payload: SpectralImportRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> SpectralImportResponse:
@@ -363,7 +364,7 @@ async def import_spectral_ruleset_document(
         }
     },
 )
-async def import_schematron_document(
+def import_schematron_document(
     payload: SchematronImportRequest,
     auth_data: Dict[str, Any] = Depends(validate_session_credentials),
 ) -> SchematronImportResponse:
@@ -852,11 +853,11 @@ async def lint_revision(
     """
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = await run_in_threadpool(db.get_version_by_id, version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -874,7 +875,7 @@ async def lint_revision(
                 status_code=400,
                 detail="baseRevisionId must differ from the linted revision",
             )
-        base_version = db.get_version_by_id(base_id, tenant_id)
+        base_version = await run_in_threadpool(db.get_version_by_id, base_id, tenant_id)
         if not base_version:
             raise HTTPException(status_code=404, detail=f"Base revision not found: {base_id}")
         if base_version["project_id"] != project_id:
@@ -917,11 +918,11 @@ async def lint_revision_evidence(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = await run_in_threadpool(db.get_version_by_id, version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -930,7 +931,7 @@ async def lint_revision_evidence(
             detail="Revision does not belong to the specified project",
         )
 
-    source_projection = db.get_version_source_projection(version_record_id, tenant_id)
+    source_projection = await run_in_threadpool(db.get_version_source_projection, version_record_id, tenant_id)
     raw_format = (
         source_projection.get("source_format")
         if isinstance(source_projection, dict)
@@ -949,7 +950,7 @@ async def lint_revision_evidence(
     except Exception:  # noqa: BLE001 — evidence must never break the read path
         pass
 
-    rows = db.list_lint_evidence_runs_for_version(version_record_id, tenant_id)
+    rows = await run_in_threadpool(db.list_lint_evidence_runs_for_version, version_record_id, tenant_id)
     return lint_evidence_response_from_rows(
         SUBJECT_CATALOG_REVISION,
         version_record_id,
@@ -962,7 +963,7 @@ async def lint_revision_evidence(
     "/{tenant_slug}/{project_id}/{version_record_id}/lint/axes",
     response_model=LintAxesResponse,
 )
-async def lint_revision_axes(
+def lint_revision_axes(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -1046,7 +1047,7 @@ async def lint_revision_axes(
     "/{tenant_slug}/{project_id}/{version_record_id}/lint/policy",
     response_model=LintPolicyResponse,
 )
-async def lint_revision_policy(
+def lint_revision_policy(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -1096,7 +1097,7 @@ async def lint_revision_policy(
     "/{tenant_slug}/{project_id}/{version_record_id}/lint/level",
     response_model=LintLevelResponse,
 )
-async def lint_revision_level(
+def lint_revision_level(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
@@ -1198,11 +1199,11 @@ async def lint_revision_gate(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    project = db.get_project_by_id(project_id, tenant_id)
+    project = await run_in_threadpool(db.get_project_by_id, project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    version = db.get_version_by_id(version_record_id, tenant_id)
+    version = await run_in_threadpool(db.get_version_by_id, version_record_id, tenant_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
     if version["project_id"] != project_id:
@@ -1218,7 +1219,7 @@ async def lint_revision_gate(
                 status_code=400,
                 detail="baselineRevisionId must differ from the gated revision",
             )
-        baseline = db.get_version_by_id(baseline_id, tenant_id)
+        baseline = await run_in_threadpool(db.get_version_by_id, baseline_id, tenant_id)
         if not baseline:
             raise HTTPException(
                 status_code=404, detail=f"Baseline revision not found: {baseline_id}"
@@ -1274,7 +1275,7 @@ async def lint_revision_gate(
 
 
 @decisions_router.get("", response_model=LintFindingDecisionListResponse)
-async def list_lint_finding_decisions(
+def list_lint_finding_decisions(
     project_id: Optional[str] = Query(default=None, alias="projectId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintFindingDecisionListResponse:
@@ -1286,7 +1287,7 @@ async def list_lint_finding_decisions(
 
 
 @decisions_router.get("/{decision_id}", response_model=LintFindingDecisionOut)
-async def get_lint_finding_decision(
+def get_lint_finding_decision(
     decision_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintFindingDecisionOut:
@@ -1299,7 +1300,7 @@ async def get_lint_finding_decision(
 
 
 @decisions_router.post("", response_model=LintFindingDecisionOut, status_code=201)
-async def upsert_lint_finding_decision(
+def upsert_lint_finding_decision(
     body: LintFindingDecisionUpsertRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintFindingDecisionOut:
@@ -1361,7 +1362,7 @@ async def upsert_lint_finding_decision(
     "/{decision_id}/events",
     response_model=list[LintFindingDecisionEventOut],
 )
-async def list_lint_finding_decision_events(
+def list_lint_finding_decision_events(
     decision_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> list[LintFindingDecisionEventOut]:

@@ -66,6 +66,7 @@ from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
 from .database import ConnectionPoolExhausted, StatementTimeout, db
 from .sweep_runtime import async_sweep_tick, close_sweep_databases, sweep_database, sweep_tick
+from .request_threads import configure_request_thread_pool
 from .deploy_gate_routes import router as deploy_gate_router
 from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
 from .domains_routes import router as domains_router
@@ -265,7 +266,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.637.0",
+    version="1.638.0",
 )
 
 
@@ -787,6 +788,9 @@ async def startup_event():
     """Connect to database on startup."""
     db.connect()
     _startup_log = logging.getLogger("uvicorn.error")
+    # Request handlers that touch the database run on worker threads; keep that pool below the
+    # connection cap (DBP-1.4, #7187).
+    configure_request_thread_pool(_startup_log)
     # Fail fast in production if the JWT secret is missing (refuses the insecure default).
     settings.effective_jwt_secret
     try:
@@ -1648,7 +1652,7 @@ def validate_private_access(version: Dict[str, Any], tenant_slug: str, api_key: 
 
 
 @app.get("/")
-async def root():
+def root():
     """Root endpoint."""
     return {
         "message": "Apiome REST API",
@@ -1711,7 +1715,7 @@ async def root():
         503: {"description": "The version is frozen and its stored document cannot be read."},
     },
 )
-async def get_version_openapi_spec(
+def get_version_openapi_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -1803,7 +1807,7 @@ async def get_version_openapi_spec(
 
 
 @app.get("/v1/schema/{tenant_slug}/{project_slug}/{version_slug}/{class_name}")
-async def get_class_openapi_spec(
+def get_class_openapi_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -1887,7 +1891,7 @@ async def get_class_openapi_spec(
 
 
 @app.get("/v1/swagger/{tenant_slug}/{project_slug}/{version_slug}", response_class=HTMLResponse)
-async def get_swagger_ui(
+def get_swagger_ui(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -1986,7 +1990,7 @@ async def get_swagger_ui(
 
 
 @app.get("/v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}")
-async def get_version_arazzo_spec(
+def get_version_arazzo_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -2076,7 +2080,7 @@ async def get_version_arazzo_spec(
 
 
 @app.get("/v1/arazzo/{tenant_slug}/{project_slug}/{version_slug}/{class_name}")
-async def get_class_arazzo_spec(
+def get_class_arazzo_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -2171,7 +2175,7 @@ async def get_class_arazzo_spec(
 
 
 @app.get("/v1/json/{tenant_slug}/{project_slug}/{version_slug}")
-async def get_version_jsonschema_spec(
+def get_version_jsonschema_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
@@ -2253,7 +2257,7 @@ async def get_version_jsonschema_spec(
 
 
 @app.get("/v1/json/{tenant_slug}/{project_slug}/{version_slug}/{class_name}")
-async def get_class_jsonschema_spec(
+def get_class_jsonschema_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,

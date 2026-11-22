@@ -269,8 +269,6 @@ def test_the_route_helpers_read_a_warm_revision_without_loading_rows(db, store, 
 
 def test_a_source_apply_writes_the_new_document_through(db, store) -> None:
     """The route stores the applied revision's document before it answers."""
-    import asyncio
-
     import app.source_review_routes as routes
 
     body = routes.SourceApplyRequest(
@@ -287,7 +285,7 @@ def test_a_source_apply_writes_the_new_document_through(db, store) -> None:
     ), patch.object(routes, "_parse_candidate", return_value={}), patch.object(
         routes, "_stored_dialect", return_value="3.1"
     ), patch.object(routes, "get_authenticated_user_id", return_value="user-1"):
-        asyncio.run(routes.apply_source_changes("acme", "project-1", VERSION, body, {"tenant_id": TENANT}))
+        routes.apply_source_changes("acme", "project-1", VERSION, body, {"tenant_id": TENANT})
 
     assert len(db.documents) == 1
     db.calls.clear()
@@ -296,8 +294,6 @@ def test_a_source_apply_writes_the_new_document_through(db, store) -> None:
 
 
 def test_a_source_apply_that_changed_nothing_renders_nothing(db, store) -> None:
-    import asyncio
-
     import app.source_review_routes as routes
 
     body = routes.SourceApplyRequest(
@@ -311,6 +307,6 @@ def test_a_source_apply_that_changed_nothing_renders_nothing(db, store) -> None:
     ), patch.object(routes, "_parse_candidate", return_value={}), patch.object(
         routes, "_stored_dialect", return_value="3.1"
     ), patch.object(routes, "get_authenticated_user_id", return_value="user-1"):
-        asyncio.run(routes.apply_source_changes("acme", "project-1", VERSION, body, {"tenant_id": TENANT}))
+        routes.apply_source_changes("acme", "project-1", VERSION, body, {"tenant_id": TENANT})
 
     assert db.documents == {} and db.renders() == 0

@@ -373,7 +373,7 @@ def _target_or_409(tenant_id: str, component_id: str, target_revision_id: str) -
     response_model=GovernancePolicyResponse,
     response_model_by_alias=True,
 )
-async def get_governance_policy(
+def get_governance_policy(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> GovernancePolicyResponse:
@@ -414,7 +414,7 @@ def _approval_response(tenant_id: str, revision: Dict[str, Any]) -> ApprovalResp
     response_model=ApprovalResponse,
     response_model_by_alias=True,
 )
-async def get_revision_approval(
+def get_revision_approval(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -431,7 +431,7 @@ async def get_revision_approval(
     response_model=ApprovalResponse,
     response_model_by_alias=True,
 )
-async def record_revision_approval(
+def record_revision_approval(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -491,7 +491,7 @@ async def record_revision_approval(
     response_model_by_alias=True,
     status_code=201,
 )
-async def schedule_deprecation(
+def schedule_deprecation(
     tenant_slug: str,
     component_id: str,
     revision_id: str,
@@ -553,7 +553,7 @@ async def schedule_deprecation(
     "/{tenant_slug}/components/{component_id}/deprecations/{deprecation_id}",
     response_model=Dict[str, bool],
 )
-async def cancel_deprecation(
+def cancel_deprecation(
     tenant_slug: str,
     component_id: str,
     deprecation_id: str,
@@ -581,7 +581,7 @@ async def cancel_deprecation(
     response_model=DeprecationListResponse,
     response_model_by_alias=True,
 )
-async def list_deprecations(
+def list_deprecations(
     tenant_slug: str,
     component_id: Optional[str] = Query(default=None, alias="componentId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -613,7 +613,7 @@ async def list_deprecations(
     response_model=UpgradePreviewResponse,
     response_model_by_alias=True,
 )
-async def preview_upgrade(
+def preview_upgrade(
     tenant_slug: str,
     component_id: str,
     body: UpgradePreviewRequest,
@@ -686,7 +686,7 @@ async def preview_upgrade(
     response_model=UpgradeResponse,
     response_model_by_alias=True,
 )
-async def execute_upgrade(
+def execute_upgrade(
     tenant_slug: str,
     component_id: str,
     body: UpgradeRequest,
@@ -749,7 +749,7 @@ async def execute_upgrade(
     response_model_by_alias=True,
     responses={200: {"content": {"text/csv": {}}}},
 )
-async def export_audit(
+def export_audit(
     tenant_slug: str,
     format: Literal["json", "csv"] = Query(default="json"),
     since: Optional[datetime] = Query(default=None),

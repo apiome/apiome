@@ -274,7 +274,7 @@ def _instance_to_response(instance: Dict[str, Any], request: Request) -> MockIns
 
 
 @router.post("/{tenant_slug}", response_model=MockInstanceResponse, status_code=201)
-async def provision_mock(
+def provision_mock(
     tenant_slug: str,
     request: Request,
     payload: MockProvisionRequest,
@@ -354,7 +354,7 @@ async def provision_mock(
 
 
 @router.get("/{tenant_slug}", response_model=List[MockInstanceResponse])
-async def list_mocks(
+def list_mocks(
     tenant_slug: str,
     request: Request,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -366,7 +366,7 @@ async def list_mocks(
 
 
 @router.get("/{tenant_slug}/usage", response_model=MockUsageResponse)
-async def get_mock_usage(
+def get_mock_usage(
     tenant_slug: str,
     days: int = 30,
     project_slug: Optional[str] = None,
@@ -408,7 +408,7 @@ async def get_mock_usage(
 
 
 @router.get("/{tenant_slug}/{mock_id}", response_model=MockInstanceResponse)
-async def get_mock(
+def get_mock(
     tenant_slug: str,
     mock_id: str,
     request: Request,
@@ -423,7 +423,7 @@ async def get_mock(
 
 
 @router.put("/{tenant_slug}/{mock_id}/active-scenario", response_model=MockInstanceResponse)
-async def switch_active_scenario(
+def switch_active_scenario(
     tenant_slug: str,
     mock_id: str,
     request: Request,
@@ -457,7 +457,7 @@ async def switch_active_scenario(
 
 
 @router.delete("/{tenant_slug}/{mock_id}", status_code=204)
-async def destroy_mock(
+def destroy_mock(
     tenant_slug: str,
     mock_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),

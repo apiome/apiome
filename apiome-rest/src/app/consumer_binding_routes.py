@@ -157,7 +157,7 @@ def attach_runtime_summaries(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def list_consumer_bindings(
+def list_consumer_bindings(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -211,7 +211,7 @@ async def list_consumer_bindings(
         503: {"description": "`consumer-binding-key-unavailable`: no envelope master key is configured."},
     },
 )
-async def create_consumer_binding(
+def create_consumer_binding(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -268,7 +268,7 @@ async def create_consumer_binding(
         "Requires `consumer_contracts:delete`."
     ),
 )
-async def delete_consumer_binding(
+def delete_consumer_binding(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -342,7 +342,7 @@ class BindingsDeletedResponse(BaseModel):
     ),
     responses={400: {"description": "`anonymous` cannot be erased."}},
 )
-async def delete_consumer_bindings(
+def delete_consumer_bindings(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -412,7 +412,7 @@ async def delete_consumer_bindings(
         "Requires `consumer_contracts:view`."
     ),
 )
-async def read_consumer_runtime(
+def read_consumer_runtime(
     tenant_slug: str,
     project_ref: str,
     consumer_ref: str,
@@ -485,7 +485,7 @@ class SuggestionListResponse(BaseModel):
         "Requires `consumer_contracts:view`."
     ),
 )
-async def list_consumer_suggestions(
+def list_consumer_suggestions(
     tenant_slug: str,
     project_ref: str,
     days: int = Query(default=DEFAULT_WINDOW_DAYS, ge=1, le=MAX_RUNTIME_DAYS, description="Window in UTC days."),
@@ -536,7 +536,7 @@ async def list_consumer_suggestions(
         409: {"description": "`consumer-slug-taken`, `consumer-slug-reserved` or `consumer-binding-exists`."},
     },
 )
-async def register_consumer_suggestion(
+def register_consumer_suggestion(
     tenant_slug: str,
     project_ref: str,
     suggestion_id: str,

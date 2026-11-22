@@ -21,7 +21,7 @@ router = APIRouter(prefix="/v1/properties", tags=["properties"])
 
 
 @router.get("/{tenant_slug}/{project_id}")
-async def list_properties(
+def list_properties(
     tenant_slug: str,
     project_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication)
@@ -65,7 +65,7 @@ async def list_properties(
 
 
 @router.get("/{tenant_slug}/{project_id}/{property_id}")
-async def get_property(
+def get_property(
     tenant_slug: str,
     project_id: str,
     property_id: str,
@@ -115,7 +115,7 @@ async def get_property(
 
 
 @router.post("/{tenant_slug}/{project_id}")
-async def create_property(
+def create_property(
     tenant_slug: str,
     project_id: str,
     request: ProjectPropertyCreateRequest,
@@ -178,7 +178,7 @@ async def create_property(
 
 
 @router.put("/{tenant_slug}/{project_id}/{property_id}")
-async def update_property(
+def update_property(
     tenant_slug: str,
     project_id: str,
     property_id: str,
@@ -279,7 +279,7 @@ async def update_property(
 
 
 @router.delete("/{tenant_slug}/{project_id}/{property_id}")
-async def delete_property(
+def delete_property(
     tenant_slug: str,
     project_id: str,
     property_id: str,

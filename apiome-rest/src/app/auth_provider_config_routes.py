@@ -357,7 +357,7 @@ def _provider_view(
         403: {"description": "Super-admin session invalid or expired."},
     },
 )
-async def list_auth_providers(
+def list_auth_providers(
     _: None = Depends(require_super_admin),
 ) -> ProviderConfigListResponse:
     """List every registry provider with its masked stored config (OLO-8.4).
@@ -388,7 +388,7 @@ async def list_auth_providers(
         503: {"description": "A secret was supplied but secret encryption is not configured."},
     },
 )
-async def update_auth_provider(
+def update_auth_provider(
     provider_id: str,
     payload: ProviderConfigUpdateRequest,
     _: None = Depends(require_super_admin),
@@ -493,7 +493,7 @@ async def update_auth_provider(
         404: {"description": "Unknown provider id (not in the registry)."},
     },
 )
-async def delete_auth_provider(
+def delete_auth_provider(
     provider_id: str,
     _: None = Depends(require_super_admin),
 ) -> ProviderConfigView:
