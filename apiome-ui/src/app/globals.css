@@ -17051,7 +17051,35 @@ button.tfa-reset-notice__close > svg {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
-/* ---- The Originals tab (COA-5.7, #7083) ---------------------------------- */
+/* A long rendered diff is windowed (COA-5.13, #7089): only the rows near the
+   viewport are mounted, so every row is one non-wrapping line of one fixed height
+   and the pane scrolls sideways for long lines. */
+.vdlg-diff--windowed {
+  overflow-x: auto;
+}
+
+.vdlg-diff--windowed .vdlg-diff__line,
+.vdlg-diff--windowed .vdlg-diff__fold {
+  box-sizing: border-box;
+  block-size: var(--space-5);
+  line-height: var(--space-5);
+  padding-block: 0;
+  white-space: pre;
+  inline-size: max-content;
+  min-inline-size: 100%;
+}
+
+/* The compare view's Rendered / Original switch, and what stands in for the diff
+   when both revisions have the same document. */
+.vdlg-compare__identical {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-block-size: min(32vh, 16rem);
+}
+
+/* ---- The Original view of the Diff tab (COA-5.7, #7083) ---------------------------------- */
 /* A text diff of the two imported files. Rows are windowed, so each one is a single,
    non-wrapping line of one fixed height; the pane scrolls sideways for long lines. */
 .vdlg-origdiff {
@@ -24704,6 +24732,18 @@ button.cid-orb:focus-visible {
    header/body/footer stack. */
 .cid-panel {
   padding: var(--card-pad);
+}
+
+/* Versions tab: the two ticked revisions have the same document (equal digests),
+   so the place the diff would take says so instead (COA-5.13, #7089). */
+.cid-versions-identical {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
 }
 
 .cid-panel__head {

@@ -78,9 +78,21 @@ const mockBuildSpec = jest.fn(async () =>
 const mockGetClasses = jest.fn(async (): Promise<string> => '[]');
 const mockGetPropsBatch = jest.fn(async (): Promise<string> => '{}');
 
+/** The digest each read reports; `null` (no digest) makes the page diff the two texts. */
+const mockSpecDigest: string | null = null;
+
+// COA-5.13 (#7089): the page reads a revision's document from apiome-rest through this module.
+jest.mock('@/app/utils/revision-document', () => ({
+  ...jest.requireActual<typeof import('@/app/utils/revision-document')>('@/app/utils/revision-document'),
+  loadRevisionDocument: async (...args: unknown[]) => ({
+    text: await mockBuildSpec(...(args as [])),
+    sha256: mockSpecDigest,
+    notModified: false,
+  }),
+}));
+
 jest.mock('@lib/db/helper-actions', () => ({
   deleteVersion: (...args: unknown[]) => mockDeleteVersion(...(args as [])),
-  buildOpenApiSpecJsonForVersion: (...args: unknown[]) => mockBuildSpec(...(args as [])),
   getClassesForVersion: (...args: unknown[]) => mockGetClasses(...(args as [])),
   getPropertiesForClass: async () => '[]',
   getPropertiesForClassesBatch: (...args: unknown[]) => mockGetPropsBatch(...(args as [])),

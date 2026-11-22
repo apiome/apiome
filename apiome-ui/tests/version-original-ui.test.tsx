@@ -6,8 +6,11 @@
  * diffs the two files (counts, line numbers, an identical pair) and says which side has no
  * stored original instead of diffing against nothing.
  *
- * The docs screenshot fixtures (`versions-download-original`, `versions-compare-originals`) are
- * written when `ORIGINALS_FIXTURE_DUMP=1`:
+ * COA-5.13 (#7089) turned the Originals tab into a **Rendered / Original** switch on the Diff tab;
+ * the fixtures below draw that switch above the panel, as the page does.
+ *
+ * The docs screenshot fixtures (`versions-download-original`, `versions-compare`,
+ * `versions-compare-originals`) are written when `ORIGINALS_FIXTURE_DUMP=1`:
  *
  *     ORIGINALS_FIXTURE_DUMP=1 npx jest tests/version-original-ui.test.tsx
  */
@@ -43,6 +46,14 @@ import SpecViewerDialog from '../src/app/components/ade/versions/SpecViewerDialo
 import type { Version } from '../src/app/components/ade/versions/versionsModel';
 import DownloadOriginalButton from '../src/app/components/ade/versions/DownloadOriginalButton';
 import OriginalsDiffPanel from '../src/app/components/ade/versions/OriginalsDiffPanel';
+import { WindowedDiffRows } from '../src/app/components/ade/versions/WindowedDiffRows';
+import { Segmented, SegmentedItem } from '../src/app/components/ui/Segmented';
+import {
+  VERSION_CHANGE_TONE,
+  VERSION_DIFF_LEGEND,
+  buildVersionDiffRows,
+} from '../src/app/components/ade/version-dialogs/versionDialogsModel';
+import { diffLines } from 'diff';
 import {
   filenameFromDisposition,
   originalErrorMessage,
@@ -215,11 +226,89 @@ describe('docs fixtures', () => {
       `      enum: [placed, paid, shipped${extra ? ', refunded' : ''}]`,
     ].join('\n') + '\n';
 
-  test('the Originals tab', async () => {
+  /** The Diff tab's first row, as the Versions page draws it: the switch, the legend, the pair. */
+  const legendRow = (source: 'rendered' | 'original') => (
+    <div className="vdlg-compare__legend-row">
+      <Segmented value={source} onValueChange={() => undefined} size="sm" aria-label="What to compare">
+        <SegmentedItem value="rendered">Rendered</SegmentedItem>
+        <SegmentedItem value="original">Original</SegmentedItem>
+      </Segmented>
+      <div className="vdlg-legend">
+        {VERSION_DIFF_LEGEND.map((entry) => (
+          <span key={entry.change} className="vdlg-legend__item">
+            <span className="vdlg-legend__swatch" data-tone={VERSION_CHANGE_TONE[entry.change]} aria-hidden />
+            {entry.label}
+          </span>
+        ))}
+      </div>
+      <div className="hive-quiet">v1.0.0 → v1.1.0</div>
+    </div>
+  );
+  const tabPanelStyle = { blockSize: '52rem', display: 'flex', flexDirection: 'column' } as const;
+
+  /** The document apiome-rest renders for a revision: OpenAPI 3.2, compact, re-printed by the UI. */
+  const rendered = (title: string, extra: boolean) =>
+    JSON.stringify(
+      {
+        openapi: '3.2.0',
+        info: { title: 'orders API', version: extra ? '1.1.0' : '1.0.0', description: title },
+        paths: {
+          '/orders': { get: { operationId: 'listOrders', responses: { '200': { description: 'OK' } } } },
+          ...(extra
+            ? { '/orders/{id}/refunds': { post: { operationId: 'refundOrder', responses: { '202': { description: 'Accepted' } } } } }
+            : {}),
+        },
+        components: {
+          schemas: {
+            Order: {
+              type: 'object',
+              title: 'Order',
+              properties: {
+                id: { type: 'string', format: 'uuid', description: 'Identifier' },
+                status: { $ref: '#/components/schemas/OrderStatus' },
+              },
+              required: ['id'],
+            },
+            OrderStatus: {
+              type: 'string',
+              title: 'OrderStatus',
+              enum: extra ? ['placed', 'paid', 'shipped', 'refunded'] : ['placed', 'paid', 'shipped'],
+            },
+          },
+        },
+      },
+      null,
+      2,
+    );
+
+  test('the Diff tab on Rendered', () => {
+    const parts = diffLines(rendered('Orders', false), rendered('Orders', true));
+    const { container } = render(
+      <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff" style={tabPanelStyle}>
+        {legendRow('rendered')}
+        <div className="vdlg-diff" data-testid="compare-diff" data-changes-only>
+          <WindowedDiffRows
+            rows={buildVersionDiffRows(parts, 'unified', true)}
+            showLineNo={false}
+            className="vdlg-diff__scroll"
+            testId="compare-diff-rows"
+          />
+        </div>
+      </div>,
+    );
+    const rows = screen.getByTestId('compare-diff-rows');
+    expect(rows.querySelector('[data-change="added"]')).not.toBeNull();
+    expect(rows).toHaveTextContent('refundOrder');
+    expect(rows).toHaveTextContent('unchanged lines');
+    dump('compare-rendered', container.innerHTML);
+  });
+
+  test('the Diff tab on Original', async () => {
     replies[V1] = file(spec('Orders', false), 'orders.yaml');
     replies[V2] = file(spec('Orders API', true), 'orders.yaml');
     const { container } = render(
-      <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff" style={{ blockSize: '52rem', display: 'flex', flexDirection: 'column' }}>
+      <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff" style={tabPanelStyle}>
+        {legendRow('original')}
         <OriginalsDiffPanel
           base={{ projectId: PROJECT, versionId: V1, label: 'v1.0.0' }}
           head={{ projectId: PROJECT, versionId: V2, label: 'v1.1.0' }}

@@ -21,6 +21,8 @@ Stage names are ``<operation>-<cold|warm>`` or ``<operation>-<small|large>-<cold
 * ``diff`` — read both revisions' documents through the cache, parse, and run
   :func:`app.change_taxonomy.classify_openapi_changes` (the classified diff, COA-5.6).
 * ``compat`` — the same reads, then :class:`app.compatibility_engine.CompatibilityCheckEngine`.
+* ``compare`` — what the UI's Compare view fetches (COA-5.13): the members' documents of the base
+  and the head (``GET /v1/versions/…/document``, :data:`KIND_OPENAPI_MEMBERS`), each read whole.
 * ``export`` — the head's document from the cache, loaded as the export source
   (:func:`app.catalog_conversion.build_conversion_source`) and emitted as OpenAPI 3.1.
 
@@ -69,7 +71,7 @@ from app.compatibility_engine import CompatibilityCheckEngine
 from app.document_store import FilesystemDocumentStore
 from app.emitter import load_builtin_emitters
 from app.export_service import emit_canonical
-from app.rendered_documents import KIND_OPENAPI, rendered_document
+from app.rendered_documents import KIND_OPENAPI, KIND_OPENAPI_MEMBERS, rendered_document
 from scale_benchmark import (
     BUDGETS_PATH,
     FixtureMeasurement,
@@ -120,6 +122,8 @@ STAGES: Tuple[str, ...] = (
     "schema-warm",
     *(f"diff-{size}-{temp}" for size in CHANGE_SIZES for temp in ("cold", "warm")),
     *(f"compat-{size}-{temp}" for size in CHANGE_SIZES for temp in ("cold", "warm")),
+    "compare-cold",
+    "compare-warm",
     "export-cold",
     "export-warm",
 )
@@ -413,11 +417,22 @@ def _read_spec(db: _Database, store: FilesystemDocumentStore, label: str) -> Dic
     return document.json()
 
 
-def _read_bytes(db: _Database, store: FilesystemDocumentStore, label: str) -> bytes:
-    """Read one revision's rendered document whole (what ``GET /v1/schema`` streams)."""
-    document = rendered_document(db.ids[label], KIND_OPENAPI, tenant_id=TENANT, database=db, store=store)
+def _read_bytes(
+    db: _Database, store: FilesystemDocumentStore, label: str, kind: str = KIND_OPENAPI
+) -> bytes:
+    """Read one revision's rendered document whole.
+
+    ``KIND_OPENAPI`` is what ``GET /v1/schema`` streams; ``KIND_OPENAPI_MEMBERS`` is what
+    ``GET /v1/versions/…/document`` streams to the UI.
+    """
+    document = rendered_document(db.ids[label], kind, tenant_id=TENANT, database=db, store=store)
     assert document is not None, f"revision {label!r} did not render"
     return document.content()
+
+
+def _read_compare_sides(db: _Database, store: FilesystemDocumentStore) -> int:
+    """Read the two members' documents the UI's Compare view fetches; return their total size."""
+    return sum(len(_read_bytes(db, store, label, KIND_OPENAPI_MEMBERS)) for label in ("base", "small"))
 
 
 def _export(db: _Database, store: FilesystemDocumentStore, label: str) -> int:
@@ -461,6 +476,7 @@ def benchmark_large_spec(fixture: LargeSpecFixture) -> LargeSpecMeasurement:
         def warm_up() -> None:
             for label in _REVISIONS:
                 _read_bytes(db, store, label)
+                _read_bytes(db, store, label, KIND_OPENAPI_MEMBERS)
 
         def stage(name: str, prepare: Callable[[], None], call: Callable[[], Any]) -> Any:
             renders: List[int] = []
@@ -498,6 +514,9 @@ def benchmark_large_spec(fixture: LargeSpecFixture) -> LargeSpecMeasurement:
             verdict = stage(f"compat-{size}-cold", cold, compat)
             stage(f"compat-{size}-warm", warm_up, compat)
             detail[f"compat_{size}_findings"] = len(verdict.findings)
+
+        stage("compare-cold", cold, lambda: _read_compare_sides(db, store))
+        detail["compare_bytes"] = stage("compare-warm", warm_up, lambda: _read_compare_sides(db, store))
 
         if fixture.export:
             emitted = stage("export-cold", cold, lambda: _export(db, store, "small"))

@@ -26,7 +26,6 @@ jest.mock('@lib/auth/server-session', () => ({
 
 jest.mock('@lib/db/helper', () => ({
   getTenantById: jest.fn(),
-  buildOpenApiSpecJsonForVersion: jest.fn(),
 }));
 
 jest.mock('@lib/rest-auth', () => ({
@@ -43,7 +42,7 @@ jest.mock('@lib/db/review-project', () => ({
 
 import { NextRequest } from 'next/server';
 import { getAuthSession } from '@lib/auth/server-session';
-import { buildOpenApiSpecJsonForVersion, getTenantById } from '@lib/db/helper';
+import { getTenantById } from '@lib/db/helper';
 import { resolveReviewProject } from '@lib/db/review-project';
 import { GET as readReview } from '@/app/api/reviews/[reviewId]/route';
 import { POST as decide } from '@/app/api/reviews/[reviewId]/decision/route';
@@ -53,7 +52,6 @@ import { GET as readSpec } from '@/app/api/reviews/[reviewId]/spec/route';
 const mockSession = getAuthSession as unknown as jest.Mock;
 const mockTenant = getTenantById as unknown as jest.Mock;
 const mockProject = resolveReviewProject as unknown as jest.Mock;
-const mockBuildSpec = buildOpenApiSpecJsonForVersion as unknown as jest.Mock;
 
 const REVIEW_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const PROJECT_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -97,7 +95,7 @@ const REVISIONS = [
   { id: NEW_BASE, version_id: '1.1.0', published: true, published_at: '2026-06-01T00:00:00Z' },
 ];
 
-type Reply = { status: number; body: unknown };
+type Reply = { status: number; body: unknown; headers?: Record<string, string> };
 
 /**
  * Stub upstream fetch with a responder.
@@ -107,12 +105,13 @@ type Reply = { status: number; body: unknown };
  */
 function mockRest(reply: (url: URL, init?: RequestInit) => Reply): jest.Mock {
   const fetchMock = jest.fn(async (input: unknown, init?: RequestInit) => {
-    const { status, body } = reply(new URL(String(input)), init);
+    const { status, body, headers = {} } = reply(new URL(String(input)), init);
     const text = JSON.stringify(body);
+    const sent: Record<string, string> = { 'content-type': 'application/json', ...headers };
     return {
       ok: status >= 200 && status < 300,
       status,
-      headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json' : null) },
+      headers: { get: (name: string) => sent[name.toLowerCase()] ?? null },
       json: async () => JSON.parse(text),
       text: async () => text,
     };
@@ -132,6 +131,15 @@ function restStack(overrides: Record<string, Reply> = {}) {
     if (overrides[url.pathname]) return overrides[url.pathname];
     if (url.pathname === REVIEW_PATH) return { status: 200, body: restReview() };
     if (url.pathname === VERSIONS_PATH) return { status: 200, body: REVISIONS };
+    // COA-5.13 (#7089): a revision's document, as apiome-rest keeps it in the document store.
+    const document = /^\/v1\/versions\/acme\/([^/]+)\/([^/]+)\/document$/.exec(url.pathname);
+    if (document && document[1] === PROJECT_ID) {
+      return {
+        status: 200,
+        body: { openapi: '3.2.0', info: { title: document[2] } },
+        headers: { 'x-apiome-content-sha256': `sha-${document[2]}` },
+      };
+    }
     if (url.pathname === CLASSIFIED_PATH) {
       return {
         status: 200,
@@ -178,7 +186,6 @@ beforeEach(() => {
   mockSession.mockResolvedValue({ user: USER } as never);
   mockTenant.mockResolvedValue({ id: USER.current_tenant_id, slug: 'acme' } as never);
   mockProject.mockResolvedValue(PROJECT as never);
-  mockBuildSpec.mockResolvedValue('{"openapi":"3.1.0"}' as never);
 });
 
 describe('who is asking about which review', () => {
@@ -355,8 +362,11 @@ describe('GET /api/reviews/[reviewId]/changes', () => {
   });
 });
 
+/** The apiome-rest path of a revision's rendered document. */
+const documentPath = (versionId: string) => `/v1/versions/acme/${PROJECT_ID}/${versionId}/document`;
+
 describe('GET /api/reviews/[reviewId]/spec', () => {
-  test("builds the version under review's document, as the Versions screen does", async () => {
+  test("reads the version under review's document from apiome-rest, with its digest", async () => {
     const fetchMock = mockRest(restStack());
     const res = await readSpec(request('/spec'), context());
     expect(await res.json()).toEqual({
@@ -364,33 +374,58 @@ describe('GET /api/reviews/[reviewId]/spec', () => {
       side: 'head',
       versionId: HEAD,
       versionLabel: '2.0.0',
-      spec: '{"openapi":"3.1.0"}',
+      // Two-space indented, as the spec viewer and the plain diff show it.
+      spec: JSON.stringify({ openapi: '3.2.0', info: { title: HEAD } }, null, 2),
+      sha256: `sha-${HEAD}`,
     });
-    expect(upstreamPaths(fetchMock)).toEqual([REVIEW_PATH, VERSIONS_PATH]);
-    expect(mockBuildSpec).toHaveBeenCalledWith(
-      { id: HEAD, version_id: '2.0.0', shortMessage: 'Adds owners', project_id: PROJECT_ID },
-      'Pets API',
-      { contact: 'team@acme.io' }
-    );
+    // The review and the version list are read first; only then the document.
+    expect(upstreamPaths(fetchMock)).toEqual([REVIEW_PATH, VERSIONS_PATH, documentPath(HEAD)]);
+    const [, init] = fetchMock.mock.calls[2] as [unknown, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer test-token');
   });
 
-  test("builds the baseline's document for the plain diff", async () => {
-    mockRest(restStack());
+  test("reads the baseline's document for the plain diff", async () => {
+    const fetchMock = mockRest(restStack());
     const json = (await (await readSpec(request('/spec?side=base'), context())).json()) as Record<string, unknown>;
-    expect(json).toMatchObject({ success: true, side: 'base', versionId: NEW_BASE, versionLabel: '1.1.0' });
+    expect(json).toMatchObject({
+      success: true,
+      side: 'base',
+      versionId: NEW_BASE,
+      versionLabel: '1.1.0',
+      sha256: `sha-${NEW_BASE}`,
+    });
+    expect(upstreamPaths(fetchMock)).toContain(documentPath(NEW_BASE));
   });
 
-  test('404s the baseline when nothing is published, without building anything', async () => {
-    mockRest(restStack({ [VERSIONS_PATH]: { status: 200, body: [REVISIONS[0]] } }));
+  test('404s the baseline when nothing is published, without reading any document', async () => {
+    const fetchMock = mockRest(restStack({ [VERSIONS_PATH]: { status: 200, body: [REVISIONS[0]] } }));
     const res = await readSpec(request('/spec?side=base'), context());
     expect(res.status).toBe(404);
-    expect(mockBuildSpec).not.toHaveBeenCalled();
+    expect(upstreamPaths(fetchMock).some((path) => path.endsWith('/document'))).toBe(false);
   });
 
-  test('never builds a document before the review read succeeds', async () => {
-    mockRest(restStack({ [REVIEW_PATH]: { status: 403, body: { detail: 'Forbidden' } } }));
+  test('never reads a document before the review read succeeds', async () => {
+    const fetchMock = mockRest(restStack({ [REVIEW_PATH]: { status: 403, body: { detail: 'Forbidden' } } }));
     const res = await readSpec(request('/spec'), context());
     expect(res.status).toBe(403);
-    expect(mockBuildSpec).not.toHaveBeenCalled();
+    expect(upstreamPaths(fetchMock)).toEqual([REVIEW_PATH]);
+  });
+
+  test("keeps apiome-rest's refusal of the document, with its code", async () => {
+    mockRest(
+      restStack({
+        [documentPath(HEAD)]: {
+          status: 502,
+          body: { detail: { code: 'document-unreadable', message: 'The document store did not return the document.' } },
+        },
+      })
+    );
+    const res = await readSpec(request('/spec'), context());
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({
+      success: false,
+      error: 'The document store did not return the document.',
+      code: 'document-unreadable',
+    });
   });
 });

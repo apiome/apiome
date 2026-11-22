@@ -413,6 +413,17 @@
       ]
     },
     {
+      "id": "versions-compare",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/compare-rendered.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/WindowedDiffRows.tsx",
+        "apiome-ui/src/app/components/ade/version-dialogs/versionDialogsModel.ts",
+        "apiome-ui/tests/version-original-ui.test.tsx"
+      ]
+    },
+    {
       "id": "versions-compare-originals",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",
@@ -1026,6 +1037,16 @@
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-catalog-item/tab-versions.html"
+    },
+    {
+      "id": "catalog-item-versions-identical",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/tab-versions-identical.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogVersionsPanel.tsx",
+        "apiome-ui/tests/catalog-versions-panel.test.tsx"
+      ]
     },
     {
       "id": "published-api-key-dialog",

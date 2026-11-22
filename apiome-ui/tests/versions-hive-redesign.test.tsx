@@ -108,9 +108,21 @@ const mockBuildSpec = jest.fn(async () =>
 const mockGetClasses = jest.fn(async (): Promise<string> => '[]');
 const mockGetPropsBatch = jest.fn(async (): Promise<string> => '{}');
 
+/** The digest each read reports; `null` (no digest) makes the page diff the two texts. */
+let mockSpecDigest: string | null = null;
+
+// COA-5.13 (#7089): the page reads a revision's document from apiome-rest through this module.
+jest.mock('@/app/utils/revision-document', () => ({
+  ...jest.requireActual<typeof import('@/app/utils/revision-document')>('@/app/utils/revision-document'),
+  loadRevisionDocument: async (...args: unknown[]) => ({
+    text: await mockBuildSpec(...(args as [])),
+    sha256: mockSpecDigest,
+    notModified: false,
+  }),
+}));
+
 jest.mock('@lib/db/helper-actions', () => ({
   deleteVersion: (...args: unknown[]) => mockDeleteVersion(...(args as [])),
-  buildOpenApiSpecJsonForVersion: (...args: unknown[]) => mockBuildSpec(...(args as [])),
   getClassesForVersion: (...args: unknown[]) => mockGetClasses(...(args as [])),
   getPropertiesForClass: async () => '[]',
   getPropertiesForClassesBatch: (...args: unknown[]) => mockGetPropsBatch(...(args as [])),
@@ -646,6 +658,50 @@ describe('a pending or failed read inside a Versions dialog (RC6-H3, #6210)', ()
     fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.queryByTestId('compare-error')).toBeNull());
     expect(await screen.findByRole('tab', { name: /diff view/i })).toBeInTheDocument();
+  });
+
+  it('Compare (COA-5.13): both documents are read from REST by project and revision id', async () => {
+    window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
+    mockBuildSpec.mockClear();
+    await renderVersions();
+    expect(await screen.findByTestId('compare-diff')).toBeInTheDocument();
+    const reads = (mockBuildSpec.mock.calls as unknown as string[][]).map(([, versionId]) => versionId);
+    expect(reads.sort()).toEqual([HEAD_ID, V231_ID].sort());
+    for (const [projectId] of mockBuildSpec.mock.calls as unknown as string[][]) expect(projectId).toBeTruthy();
+  });
+
+  it('Compare (COA-5.13): equal digests skip the text diff and say the documents are identical', async () => {
+    mockSpecDigest = 'a'.repeat(64);
+    try {
+      window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
+      await renderVersions();
+      const identical = await screen.findByTestId('compare-identical');
+      expect(identical).toHaveTextContent('Identical documents');
+      expect(screen.queryByTestId('compare-diff')).toBeNull();
+      // Nothing to lay out or fold: the diff's switches are not offered.
+      expect(screen.queryByTestId('compare-changes-only')).toBeNull();
+      expect(screen.getByTestId('compare-source-original')).toBeInTheDocument();
+    } finally {
+      mockSpecDigest = null;
+    }
+  });
+
+  it('Compare (COA-5.13): Rendered / Original switches the Diff tab to the imported files and back', async () => {
+    window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
+    await renderVersions();
+    expect(await screen.findByTestId('compare-diff')).toBeInTheDocument();
+    expect(screen.getByTestId('compare-source-rendered')).toHaveAttribute('aria-checked', 'true');
+    // The Originals tab of COA-5.7 is now this switch.
+    expect(screen.queryByRole('tab', { name: /originals/i })).toBeNull();
+
+    fireEvent.click(screen.getByTestId('compare-source-original'));
+    await waitFor(() => expect(screen.queryByTestId('compare-diff')).toBeNull());
+    expect(screen.queryByTestId('compare-changes-only')).toBeNull();
+    expect(screen.getByTestId('compare-source-original')).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(screen.getByTestId('compare-source-rendered'));
+    expect(await screen.findByTestId('compare-diff')).toBeInTheDocument();
+    expect(screen.getByTestId('compare-changes-only')).toBeInTheDocument();
   });
 
   it('Compare: the Canvas tab is not offered, and the Diff View shows only changes by default', async () => {

@@ -60,7 +60,7 @@ __all__ = [
 ]
 
 #: ``version_documents.role`` values that can be rendered again from the revision.
-ROLES_RENDERED = frozenset({"rendered_openapi", "rendered_canonical"})
+ROLES_RENDERED = frozenset({"rendered_openapi", "rendered_openapi_members", "rendered_canonical"})
 
 #: Audit events (``document_lifecycle_events.event``).
 EVENT_PURGED = "object_purged"

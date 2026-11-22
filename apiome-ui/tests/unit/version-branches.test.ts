@@ -25,11 +25,6 @@ jest.mock('../../lib/db/plan-entitlements', () => ({
   getPlanBlockMessageForNewVersion: jest.fn(async () => null),
 }));
 
-// Mock OpenAPI generation used by buildOpenApiSpecJsonForVersion
-jest.mock('../../src/app/utils/openapi', () => ({
-  generateOpenApiSpec: jest.fn(() => '{}'),
-}));
-
 import { isValidVersionBranchName, suggestBranchNameFromRevision } from '../../lib/version-branch-utils';
 import {
   listVersionBranches,

@@ -1,15 +1,5 @@
 import { sanitizeTeamParam } from '@lib/owners';
 import { validatePassword } from '@lib/auth/password-policy';
-import { generateOpenApiSpec } from '@/app/utils/openapi';
-import { STUDIO_EXPORT_OPENAPI_VERSION } from '@/app/utils/openapi-versions';
-import { generatePathsForOpenAPI, type PathInfo } from '../utils/openapi-paths-generator';
-import { buildDocumentTags, isOpenApi32, metadataWithoutTags, readStoredTags } from '../utils/openapi-32-authoring';
-import { loadPathsForOpenAPIExport } from './helper-paths-export';
-import {
-  getSecuritySchemesForVersion,
-  securitySchemesToOpenAPI,
-} from './helper-security-schemes';
-import { getServersForVersion, serversToOpenAPI } from './helper-version-servers';
 import { isValidVersionBranchName } from '../version-branch-utils';
 import { isValidVersionTagName } from '../version-tag-utils';
 import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
@@ -5252,35 +5242,6 @@ type CanvasNoteRow = {
   attachedToClassId?: string | null;
 };
 
-/** Extracts and sanitizes noteNode entries from a layout `nodes` payload. */
-function extractCanvasNotesFromLayoutNodes(nodesPayload: unknown): CanvasNoteRow[] {
-  const nodes = Array.isArray(nodesPayload) ? nodesPayload : [];
-  const notes: CanvasNoteRow[] = [];
-  for (const raw of nodes) {
-    if (!raw || typeof raw !== 'object') continue;
-    const n = raw as any;
-    if (n.type !== CANVAS_NOTE_NODE_TYPE || typeof n.id !== 'string' || !n.id) continue;
-    const data = n.data && typeof n.data === 'object' ? n.data : {};
-    const x = typeof n.position?.x === 'number' && Number.isFinite(n.position.x) ? n.position.x : 0;
-    const y = typeof n.position?.y === 'number' && Number.isFinite(n.position.y) ? n.position.y : 0;
-    const width = typeof n.dimensions?.width === 'number' && n.dimensions.width > 0 ? n.dimensions.width : undefined;
-    const height = typeof n.dimensions?.height === 'number' && n.dimensions.height > 0 ? n.dimensions.height : undefined;
-    notes.push({
-      id: n.id,
-      kind: data.kind === 'callout' ? 'callout' : 'sticky',
-      text: typeof data.text === 'string' ? data.text : '',
-      color: typeof data.color === 'string' && data.color ? data.color : 'amber',
-      position: { x, y },
-      ...(width !== undefined && height !== undefined ? { dimensions: { width, height } } : {}),
-      attachedToClassId:
-        typeof data.attachedToClassId === 'string' && data.attachedToClassId
-          ? data.attachedToClassId
-          : null,
-    });
-  }
-  return notes;
-}
-
 /** Maps a note row to a layout `nodes` entry (mapNodesForLayoutSave shape). */
 function canvasNoteToLayoutNode(note: CanvasNoteRow) {
   return {
@@ -5295,26 +5256,6 @@ function canvasNoteToLayoutNode(note: CanvasNoteRow) {
       attachedToClassId: note.attachedToClassId ?? null,
     },
   };
-}
-
-/**
- * Reads canvas notes for a version from its default canvas layout
- * (user-specific default first, then the shared default).
- *
- * @returns JSON `{ success, notes: CanvasNoteRow[] }`
- */
-export async function getCanvasNotesForVersion(versionId: string, userId?: string) {
-  try {
-    const layoutRes = JSON.parse(await getDefaultCanvasLayout(versionId, userId));
-    if (!layoutRes.success) {
-      return errorResponse(layoutRes.error || 'Failed to load default canvas layout');
-    }
-    const notes = layoutRes.layout ? extractCanvasNotesFromLayoutNodes(layoutRes.layout.nodes) : [];
-    return successResponse({ notes });
-  } catch (error: any) {
-    console.error('Error fetching canvas notes for version:', error);
-    return errorResponse(error.message);
-  }
 }
 
 /**
@@ -6237,153 +6178,6 @@ export async function importPrimitivesFromSchema(
     console.error('Error importing primitives from schema:', error);
     return JSON.stringify({ success: false, error: error.message });
   }
-}
-
-export type BuildOpenApiSpecForVersionOptions = {
-  projectName?: string | null;
-  versionLabel?: string;
-  description?: string | null;
-  openapiVersion?: string;
-  /**
-   * Embed canvas sticky notes / callouts as x-apiome-note / x-apiome-canvas
-   * extensions (#2394 DUX-2.1). Defaults to true; notes come from the
-   * version's default canvas layout for the session user.
-   */
-  includeCanvasAnnotations?: boolean;
-  /**
-   * The project's metadata: `info` fields, plus the tag list kept under `x-apiome-tag-taxonomy`,
-   * which is written as the document's `tags` (with `summary` / `parent` / `kind` for 3.2, #7048).
-   */
-  metadata?: {
-    summary?: string;
-    termsOfService?: string;
-    contact?: { name?: string; url?: string; email?: string };
-    license?: { name?: string; identifier?: string; url?: string };
-    [key: string]: unknown;
-  };
-};
-
-export type BuildOpenApiSpecForVersionResult = {
-  specJson: string;
-  pathsObject: Record<string, unknown>;
-};
-
-/**
- * Single source of truth for OpenAPI export by version: schemas, paths, servers, and security schemes.
- */
-export async function buildOpenApiSpecForVersion(
-  versionId: string,
-  options: BuildOpenApiSpecForVersionOptions = {}
-): Promise<BuildOpenApiSpecForVersionResult> {
-  const classesRaw = await getClassesWithPropertiesAndTags(versionId);
-  const classesWithProperties = JSON.parse(classesRaw);
-  const openapiVersion = options.openapiVersion ?? STUDIO_EXPORT_OPENAPI_VERSION;
-  const is32 = isOpenApi32(openapiVersion);
-
-  let pathsObject: Record<string, unknown> = {};
-  try {
-    const pathsResult = await loadPathsForOpenAPIExport(versionId);
-    const pathsData = JSON.parse(pathsResult) as {
-      success?: boolean;
-      paths?: PathInfo[];
-      error?: string;
-    };
-    if (pathsData.success && pathsData.paths && pathsData.paths.length > 0) {
-      pathsObject = generatePathsForOpenAPI(pathsData.paths, { openapiVersion }) as Record<string, unknown>;
-    } else if (pathsData.success) {
-      console.warn('[buildOpenApiSpecForVersion] Paths loaded successfully but array is empty');
-    } else {
-      console.error('[buildOpenApiSpecForVersion] Failed to load paths:', pathsData.error);
-    }
-  } catch (error) {
-    console.error('[buildOpenApiSpecForVersion] Exception while loading paths:', error);
-  }
-
-  let securitySchemes: Record<string, unknown> = {};
-  try {
-    const schemes = await getSecuritySchemesForVersion(versionId);
-    if (schemes.length > 0) {
-      securitySchemes = (await securitySchemesToOpenAPI(schemes)) as Record<string, unknown>;
-    }
-  } catch (error) {
-    console.error('[buildOpenApiSpecForVersion] Exception while loading security schemes:', error);
-  }
-
-  let servers: Array<{ url: string; description?: string }> = [];
-  try {
-    const serverList = await getServersForVersion(versionId);
-    if (serverList.length > 0) {
-      servers = await serversToOpenAPI(serverList);
-    }
-  } catch (error) {
-    console.error('[buildOpenApiSpecForVersion] Exception while loading servers:', error);
-  }
-
-  // Canvas annotations (#2394): load notes from the default canvas layout and
-  // re-key class attachments from IDs to names for portable export.
-  let canvasAnnotations: Array<Record<string, unknown>> | undefined;
-  if (options.includeCanvasAnnotations !== false) {
-    try {
-      const session = await getAuthSession();
-      const sessionUserId = (session?.user as any)?.user_id as string | undefined;
-      const notesRes = JSON.parse(await getCanvasNotesForVersion(versionId, sessionUserId));
-      if (notesRes.success && Array.isArray(notesRes.notes) && notesRes.notes.length > 0) {
-        const classNameById = new Map<string, string>(
-          classesWithProperties.map((cls: { id: string; name: string }) => [cls.id, cls.name])
-        );
-        canvasAnnotations = notesRes.notes.map((note: any) => {
-          const { attachedToClassId, ...rest } = note;
-          const attachedTo = attachedToClassId ? classNameById.get(attachedToClassId) : undefined;
-          return { ...rest, ...(attachedTo ? { attachedTo } : {}) };
-        });
-      }
-    } catch (error) {
-      console.error('[buildOpenApiSpecForVersion] Exception while loading canvas notes:', error);
-    }
-  }
-
-  const hasSecuritySchemes = Object.keys(securitySchemes).length > 0;
-  const specJson = await generateOpenApiSpec(
-    classesWithProperties,
-    {
-      projectName: options.projectName ?? undefined,
-      version: options.versionLabel ?? '1.0.0',
-      description: options.description ?? undefined,
-      openapiVersion,
-      servers: servers.length > 0 ? servers : undefined,
-      tags: buildDocumentTags(readStoredTags(options.metadata), is32),
-      security: hasSecuritySchemes
-        ? Object.keys(securitySchemes).map((name) => ({ [name]: [] }))
-        : undefined,
-      externalDocs: undefined,
-      canvasAnnotations: canvasAnnotations as any,
-      metadata: metadataWithoutTags(options.metadata),
-    },
-    pathsObject,
-    hasSecuritySchemes ? securitySchemes : undefined
-  );
-
-  return { specJson, pathsObject };
-}
-
-export async function buildOpenApiSpecJsonForVersion(
-  versionRow: {
-    id: string;
-    version_id: string;
-    description?: string | null;
-    shortMessage?: string | null;
-    project_id: string;
-  },
-  projectName: string | null,
-  metadata?: BuildOpenApiSpecForVersionOptions['metadata']
-): Promise<string> {
-  const { specJson } = await buildOpenApiSpecForVersion(versionRow.id, {
-    projectName,
-    versionLabel: versionRow.version_id,
-    description: versionRow.shortMessage || versionRow.description || undefined,
-    metadata,
-  });
-  return specJson;
 }
 
 export async function assertProjectInTenant(projectId: string, tenantId: string): Promise<boolean> {

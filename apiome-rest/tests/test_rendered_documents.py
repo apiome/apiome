@@ -25,10 +25,13 @@ from app.rendered_documents import (
     CANONICAL_GENERATOR_VERSION,
     KIND_CANONICAL,
     KIND_OPENAPI,
+    KIND_OPENAPI_MEMBERS,
+    MEMBERS_OPENAPI_VERSION,
     OPENAPI_GENERATOR,
     ROLE_FROZEN_SCHEMA,
     ROLE_RENDERED_CANONICAL,
     ROLE_RENDERED_OPENAPI,
+    ROLE_RENDERED_OPENAPI_MEMBERS,
     etag_for,
     etag_matches,
     iter_stream,
@@ -68,6 +71,9 @@ class FakeDatabase:
         self.objects: Dict[str, Dict[str, Any]] = {}
         self.documents: Dict[Tuple[Any, ...], str] = {}
         self.canonical: Any = None
+        self.paths: List[Dict[str, Any]] = []
+        self.operations: Dict[str, List[Dict[str, Any]]] = {}
+        self.descriptions: Dict[str, Dict[str, Any]] = {}
         self.render_delay = 0.0
         self.fail_find = False
         self.fail_set = False
@@ -117,6 +123,21 @@ class FakeDatabase:
         return {class_id: list(self.properties.get(class_id, [])) for class_id in class_ids}
 
     def get_paths_for_version(self, version_id: str) -> list:
+        return list(self.paths)
+
+    def get_operations_for_path(self, path_id: str) -> list:
+        return list(self.operations.get(path_id, []))
+
+    def get_operation_description(self, operation_id: str) -> Optional[Dict[str, Any]]:
+        return self.descriptions.get(operation_id)
+
+    def get_parameters_for_operation(self, operation_id: str) -> list:
+        return []
+
+    def get_request_body_for_operation(self, operation_id: str) -> None:
+        return None
+
+    def get_responses_for_operation(self, operation_id: str) -> list:
         return []
 
     def get_security_schemes_for_version(self, version_id: str) -> list:
@@ -169,7 +190,7 @@ def test_a_miss_renders_stores_and_records_the_document(db, store) -> None:
     assert store.get(TENANT, document.sha256) == content
     [(key, object_id)] = db.documents.items()
     assert key[:4] == (VERSION, ROLE_RENDERED_OPENAPI, 0, OPENAPI_GENERATOR)
-    assert key[4] == document.generator_version and key[4].startswith("1+")
+    assert key[4] == document.generator_version and key[4].startswith("2+")
     assert db.objects[object_id]["encoding"] == "identity"
     assert db.objects[object_id]["media_type"] == "application/json"
 
@@ -242,11 +263,11 @@ def test_a_project_change_misses_although_the_stamp_did_not_move(db, store, fiel
 
 def test_a_generator_version_bump_misses_and_deletes_nothing(db, store, monkeypatch) -> None:
     before = _get(db, store)
-    monkeypatch.setattr(rendered, "OPENAPI_GENERATOR_VERSION", "2")
+    monkeypatch.setattr(rendered, "OPENAPI_GENERATOR_VERSION", "next")
 
     after = _get(db, store)
 
-    assert after.cached is False and after.generator_version.startswith("2+")
+    assert after.cached is False and after.generator_version.startswith("next+")
     assert len(db.documents) == 2 and store.exists(TENANT, before.sha256)
     # Same rows, same generator code: the bytes are one object, referenced by both rows.
     assert after.sha256 == before.sha256 and len(db.objects) == 1
@@ -400,6 +421,65 @@ def test_warming_never_raises(db, store, monkeypatch) -> None:
     monkeypatch.setattr(rendered, "build_live_spec", explode)
     assert warm_rendered_documents(TENANT, VERSION, database=db, store=store) == 0
     assert warm_rendered_documents(TENANT, "no-such-version", database=db, store=store) == 0
+
+
+# ───────────────────────────── the members' document (COA-5.13) ─────────────────────────────
+
+
+def _with_a_private_operation(db: FakeDatabase) -> None:
+    """Give the revision ``GET /orders`` (public) and ``DELETE /orders`` (marked private)."""
+    db.paths = [{"id": "path-1", "pathname": "/orders"}]
+    db.operations = {"path-1": [{"id": "op-1", "operation": "get"}, {"id": "op-2", "operation": "delete"}]}
+    db.descriptions = {
+        "op-1": {"summary": "List orders", "operation_id": "listOrders", "x_private": False},
+        "op-2": {"summary": "Purge orders", "operation_id": "purgeOrders", "x_private": True},
+    }
+
+
+def test_the_members_document_is_openapi_32_and_keeps_private_operations(db, store) -> None:
+    _with_a_private_operation(db)
+
+    members = _get(db, store, KIND_OPENAPI_MEMBERS).json()
+    public = _get(db, store).json()
+
+    assert members["openapi"] == MEMBERS_OPENAPI_VERSION == "3.2.0"
+    assert sorted(members["paths"]["/orders"]) == ["delete", "get"]
+    assert members["paths"]["/orders"]["delete"]["x-private"] is True
+    assert members["paths"]["/orders"]["get"]["operationId"] == "listOrders"
+    assert public["openapi"] == "3.1.0"
+    assert sorted(public["paths"]["/orders"]) == ["get"]
+
+
+def test_the_members_document_is_cached_under_its_own_role(db, store) -> None:
+    public = _get(db, store)
+    members = _get(db, store, KIND_OPENAPI_MEMBERS)
+
+    assert members.cached is False and members.stored is True and members.sha256 != public.sha256
+    roles = sorted(key[1] for key in db.documents)
+    assert roles == [ROLE_RENDERED_OPENAPI, ROLE_RENDERED_OPENAPI_MEMBERS]
+    [members_key] = [key for key in db.documents if key[1] == ROLE_RENDERED_OPENAPI_MEMBERS]
+    assert members_key[3] == OPENAPI_GENERATOR
+    assert members_key[4] == members.generator_version and members_key[4].startswith("3.2.0+2+")
+
+    db.calls.clear()
+    again = _get(db, store, KIND_OPENAPI_MEMBERS)
+    assert again.cached is True and db.renders() == 0 and again.content() == members.content()
+    assert _get(db, store).cached is True  # the public document is untouched
+
+
+def test_an_edit_renders_the_members_document_again(db, store) -> None:
+    before = _get(db, store, KIND_OPENAPI_MEMBERS)
+    db.context["content_stamp"] = 1
+    db.classes[0]["description"] = "A changed order"
+
+    after = _get(db, store, KIND_OPENAPI_MEMBERS)
+
+    assert after.cached is False and after.sha256 != before.sha256
+
+
+def test_publishing_does_not_warm_the_members_document(db, store) -> None:
+    warm_rendered_documents(TENANT, VERSION, database=db, store=store)
+    assert [key[1] for key in db.documents] == [ROLE_RENDERED_OPENAPI]
 
 
 # ───────────────────────────── HTTP validators ─────────────────────────────

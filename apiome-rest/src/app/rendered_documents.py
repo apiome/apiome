@@ -4,10 +4,11 @@ A revision's OpenAPI document is generated from its normalized rows: classes, pr
 servers, security schemes and pins. Generating it reads every one of those rows, so a large
 revision is slow to render. This module renders a document once and keeps the bytes:
 
-* :func:`rendered_document` returns a revision's document of one kind (:data:`KIND_OPENAPI` or
-  :data:`KIND_CANONICAL`). It looks the document up in ``version_documents`` by revision, role,
-  content stamp, generator and generator version. On a miss it renders, writes the bytes to the
-  document store (:mod:`app.document_store`), records them, and returns them.
+* :func:`rendered_document` returns a revision's document of one kind (:data:`KIND_OPENAPI`,
+  :data:`KIND_OPENAPI_MEMBERS` or :data:`KIND_CANONICAL`). It looks the document up in
+  ``version_documents`` by revision, role, content stamp, generator and generator version. On a
+  miss it renders, writes the bytes to the document store (:mod:`app.document_store`), records
+  them, and returns them.
 * The **content stamp** (``versions.content_stamp``, COA-5.2) moves on every edit of the
   revision, so an edited revision misses and is rendered again. The earlier row and object are
   left in place for the lifecycle job (COA-5.10).
@@ -21,6 +22,12 @@ revision is slow to render. This module renders a document once and keeps the by
   harmless, because the bytes are the same object and the row is an upsert.
 * The cache never fails a read. When the store or the database cannot keep the document, the
   rendered bytes are returned without being recorded.
+
+There are two OpenAPI kinds (COA-5.13, #7089). :data:`KIND_OPENAPI` is the public document
+``GET /v1/schema`` serves: OpenAPI 3.1, without the operations marked ``x-private``.
+:data:`KIND_OPENAPI_MEMBERS` is the document the UI shows a workspace member
+(``GET /v1/versions/…/document``): OpenAPI 3.2, with those operations kept. Each has its own
+``version_documents`` role, so the lifecycle job never treats one as a stale copy of the other.
 
 Frozen schemas (#3214) use the same store: :func:`store_frozen_schema` writes a frozen version's
 bytes as its ``frozen_schema`` object and :func:`open_frozen_schema` reads them back.
@@ -48,12 +55,15 @@ __all__ = [
     "CANONICAL_GENERATOR_VERSION",
     "KIND_CANONICAL",
     "KIND_OPENAPI",
+    "KIND_OPENAPI_MEMBERS",
+    "MEMBERS_OPENAPI_VERSION",
     "MEDIA_TYPE",
     "OPENAPI_GENERATOR",
     "OPENAPI_GENERATOR_VERSION",
     "ROLE_FROZEN_SCHEMA",
     "ROLE_RENDERED_CANONICAL",
     "ROLE_RENDERED_OPENAPI",
+    "ROLE_RENDERED_OPENAPI_MEMBERS",
     "RenderedDocument",
     "etag_for",
     "etag_matches",
@@ -66,17 +76,24 @@ __all__ = [
 
 #: The document kinds :func:`rendered_document` renders.
 KIND_OPENAPI = "openapi"
+KIND_OPENAPI_MEMBERS = "openapi_members"
 KIND_CANONICAL = "canonical"
 
 #: ``version_documents.role`` values written here.
 ROLE_RENDERED_OPENAPI = "rendered_openapi"
+ROLE_RENDERED_OPENAPI_MEMBERS = "rendered_openapi_members"
 ROLE_RENDERED_CANONICAL = "rendered_canonical"
 ROLE_FROZEN_SCHEMA = "frozen_schema"
 
 #: Generator names and versions recorded with a rendered row. Bump a version whenever the
 #: generator's output for unchanged rows changes; rows of the old version then stop matching.
 OPENAPI_GENERATOR = "apiome-openapi"
-OPENAPI_GENERATOR_VERSION = "1"
+#: Version 2 (COA-5.13, #7089): property descriptions from the row's column, ``operationId``,
+#: every security scheme type, a parent's ``required`` flag on an object property with children,
+#: and no ``type: object`` forced on a composed schema.
+OPENAPI_GENERATOR_VERSION = "2"
+#: The OpenAPI version the members' document declares (the UI's studio export version).
+MEMBERS_OPENAPI_VERSION = "3.2.0"
 CANONICAL_GENERATOR = "apiome-canonical"
 CANONICAL_GENERATOR_VERSION = "1"
 
@@ -95,7 +112,7 @@ class RenderedDocument:
     Attributes:
         tenant_id: The owning tenant.
         version_id: The revision (``versions.id``).
-        kind: :data:`KIND_OPENAPI` or :data:`KIND_CANONICAL`.
+        kind: :data:`KIND_OPENAPI`, :data:`KIND_OPENAPI_MEMBERS` or :data:`KIND_CANONICAL`.
         sha256: Lower-case hex SHA-256 of the document's bytes; also its object identity.
         size_bytes: Length of the document.
         content_stamp: The revision's content stamp the document was rendered at.
@@ -266,6 +283,25 @@ def _render_openapi(database: Any, tenant_id: str, context: Mapping[str, Any]) -
     return render_spec_bytes(spec)
 
 
+def _members_generator_version(context: Mapping[str, Any]) -> str:
+    """The members' document version: the generator's, the OpenAPI version, the project digest."""
+    return f"{MEMBERS_OPENAPI_VERSION}+{_openapi_generator_version(context)}"
+
+
+def _render_openapi_members(database: Any, tenant_id: str, context: Mapping[str, Any]) -> Optional[bytes]:
+    """Generate the document a workspace member reads: OpenAPI 3.2, private operations kept."""
+    spec, _counts = build_live_spec(
+        database,
+        context,
+        str(context.get("tenant_slug") or ""),
+        str(context.get("project_slug") or ""),
+        str(context.get("version_id") or ""),
+        openapi_version=MEMBERS_OPENAPI_VERSION,
+        include_private=True,
+    )
+    return render_spec_bytes(spec)
+
+
 def _render_canonical(database: Any, tenant_id: str, context: Mapping[str, Any]) -> Optional[bytes]:
     """Serialize the revision's canonical model; ``None`` when it has no canonical artifact."""
     from .canonical_persistence import dump_canonical_tree  # noqa: PLC0415 - heavy, rarely needed
@@ -280,6 +316,9 @@ def _render_canonical(database: Any, tenant_id: str, context: Mapping[str, Any])
 
 _KINDS: Dict[str, _Kind] = {
     KIND_OPENAPI: _Kind(ROLE_RENDERED_OPENAPI, OPENAPI_GENERATOR, _openapi_generator_version, _render_openapi),
+    KIND_OPENAPI_MEMBERS: _Kind(
+        ROLE_RENDERED_OPENAPI_MEMBERS, OPENAPI_GENERATOR, _members_generator_version, _render_openapi_members
+    ),
     KIND_CANONICAL: _Kind(
         ROLE_RENDERED_CANONICAL,
         CANONICAL_GENERATOR,
@@ -287,6 +326,11 @@ _KINDS: Dict[str, _Kind] = {
         _render_canonical,
     ),
 }
+
+
+#: The kinds rendered when a revision is published. The members' document is rendered when a
+#: member first opens it, so publishing does not pay for a document nobody may read.
+_WARMED_KINDS: Tuple[str, ...] = (KIND_OPENAPI, KIND_CANONICAL)
 
 
 # ───────────────────────────── store access ─────────────────────────────
@@ -424,7 +468,8 @@ def rendered_document(
 
     Args:
         revision: The revision's ``versions.id``, or a row that carries it as ``id``.
-        kind: :data:`KIND_OPENAPI` (the document ``GET /v1/schema`` serves) or
+        kind: :data:`KIND_OPENAPI` (the document ``GET /v1/schema`` serves),
+            :data:`KIND_OPENAPI_MEMBERS` (the document a workspace member reads) or
             :data:`KIND_CANONICAL` (the canonical model as JSON).
         tenant_id: The tenant that must own the revision.
         database: The database layer; the process-wide one when omitted.
@@ -469,7 +514,7 @@ def rendered_document(
 
 
 def warm_rendered_documents(tenant_id: str, version_id: str, *, database: Any = None, store: Any = None) -> int:
-    """Render and store every kind of a revision's document, never raising.
+    """Render and store a revision's public OpenAPI and canonical documents, never raising.
 
     Called when a revision is published, so the first reader of a published revision is served
     stored bytes.
@@ -484,7 +529,7 @@ def warm_rendered_documents(tenant_id: str, version_id: str, *, database: Any = 
         The number of kinds that are stored after the call.
     """
     stored = 0
-    for kind in _KINDS:
+    for kind in _WARMED_KINDS:
         try:
             document = rendered_document(version_id, kind, tenant_id=tenant_id, database=database, store=store)
         except Exception as exc:  # noqa: BLE001 - warming is best effort

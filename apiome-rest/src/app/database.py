@@ -31246,9 +31246,9 @@ class Database:
     def delete_stale_rendered_documents(self, *, cutoff: Any, limit: int = 500) -> List[str]:
         """Drop rendered documents a newer render of the same revision and kind has replaced.
 
-        A ``rendered_openapi`` / ``rendered_canonical`` link is stale when a newer link of the same
-        role exists for its revision (a later content stamp or generator) and it was written at
-        or before ``cutoff``. The objects it pointed to are recounted by V406's trigger.
+        A rendered link (``rendered_openapi``, ``rendered_openapi_members``,
+        ``rendered_canonical``) is stale when a newer link of the same role exists for its
+        revision (a later content stamp or generator) and it was written at or before ``cutoff``. The objects it pointed to are recounted by V406's trigger.
 
         Returns:
             The ``document_objects.id`` the dropped links pointed to.
@@ -31259,7 +31259,7 @@ class Database:
             WHERE d.id IN (
                 SELECT s.id
                 FROM apiome.version_documents s
-                WHERE s.role IN ('rendered_openapi', 'rendered_canonical')
+                WHERE s.role IN ('rendered_openapi', 'rendered_openapi_members', 'rendered_canonical')
                   AND s.created_at <= %s
                   AND EXISTS (
                       SELECT 1 FROM apiome.version_documents n
@@ -31422,7 +31422,7 @@ class Database:
                 cursor.execute(
                     """
                     SELECT 1 FROM apiome.version_documents
-                    WHERE object_id = %s::uuid AND role NOT IN ('rendered_openapi', 'rendered_canonical')
+                    WHERE object_id = %s::uuid AND role NOT IN ('rendered_openapi', 'rendered_openapi_members', 'rendered_canonical')
                     LIMIT 1
                     """,
                     (object_id,),
@@ -31707,7 +31707,8 @@ class Database:
         Args:
             tenant_id: The tenant that must own the object.
             version_id: The revision (``versions.id``).
-            role: ``rendered_openapi``, ``rendered_canonical`` or ``frozen_schema``.
+            role: ``rendered_openapi``, ``rendered_openapi_members``, ``rendered_canonical`` or
+                ``frozen_schema``.
             content_stamp: The stamp a rendered document was rendered at; ``None`` for a frozen schema.
             generator: The generator of a rendered document; ``None`` for a frozen schema.
             generator_version: Its version; ``None`` for a frozen schema.
@@ -31750,7 +31751,8 @@ class Database:
         Args:
             tenant_id: The tenant that must own both the revision and the object.
             version_id: The revision (``versions.id``).
-            role: ``rendered_openapi``, ``rendered_canonical`` or ``frozen_schema``.
+            role: ``rendered_openapi``, ``rendered_openapi_members``, ``rendered_canonical`` or
+                ``frozen_schema``.
             object_id: ``document_objects.id`` of the stored document.
             content_stamp: The stamp a rendered document was rendered at.
             generator: The generator of a rendered document.

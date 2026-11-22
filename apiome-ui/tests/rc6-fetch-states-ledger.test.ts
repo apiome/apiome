@@ -369,7 +369,7 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
     id: 'D15',
     surface: 'View spec dialog',
     source: 'src/app/ade/dashboard/versions/page.tsx',
-    needle: 'await buildOpenApiSpecJsonForVersion(',
+    needle: 'await loadRevisionDocument(version.project_id, version.id)',
     pending: { file: 'versions-hive-redesign.test.tsx', title: 'View spec: a code skeleton while the spec builds' },
     failed: { file: 'versions-hive-redesign.test.tsx', title: 'View spec: a code skeleton while the spec builds, then an error with a retry' },
   },

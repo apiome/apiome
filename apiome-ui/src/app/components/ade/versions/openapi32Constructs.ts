@@ -2,7 +2,7 @@
  * The OpenAPI 3.2 constructs in a revision's generated document (COA-2.5, #7048), as the spec
  * viewer lists them above the code.
  *
- * Reads the JSON text the screen builds (`buildOpenApiSpecJsonForVersion`) and lists what a 3.2
+ * Reads the JSON text the screen shows (`loadRevisionDocument`) and lists what a 3.2
  * document adds: operations declared with `query` or `additionalOperations`, the tag hierarchy
  * (`parent` / `summary` / `kind`), streaming media types (`itemSchema`) and `in: querystring`
  * parameters. A document that does not declare `openapi: 3.2.x` has none of them, so the summary is

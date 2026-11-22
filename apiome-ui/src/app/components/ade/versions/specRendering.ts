@@ -2,7 +2,7 @@
  * How a version's OpenAPI document is rendered for reading — shared by the Versions screen's spec
  * viewer (HIVE-6.2, #5313) and the review page's Spec tab (COL-2.2, #4518).
  *
- * The document is built as JSON text (`buildOpenApiSpecJsonForVersion`); these helpers only read
+ * The document arrives as JSON text (`loadRevisionDocument`); these helpers only read
  * that text, the chosen rendering and the names, so both surfaces show and name it identically.
  */
 

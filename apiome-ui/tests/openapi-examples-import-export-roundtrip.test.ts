@@ -1,14 +1,19 @@
 /**
- * OpenAPI example round-trip: examples/openapi → import pipeline → export.
+ * OpenAPI example round-trip: examples/openapi → import pipeline → class schemas.
  *
- * Uses the same steps as a database import for schema data: YAML document is
- * normalized with `openApiImporter.normalize()` (as in importClassesToVersion),
- * class/property rows are flattened to the shape returned by getClassesForVersion /
- * getPropertiesForClass, then generateOpenApiSpec runs (as in buildOpenApiSpecJsonForVersion).
+ * Uses the same steps as a database import for schema data: the YAML document is normalized with
+ * `openApiImporter.normalize()` (as in importClassesToVersion), the class/property rows are
+ * flattened to the shape returned by getClassesForVersion / getPropertiesForClass, and each class's
+ * schema is rebuilt from those rows with `buildClassSchema`.
  *
- * A live Postgres project is not created here because importClassesToVersion
- * creates library properties via authenticated HTTP to the Next API; this suite
- * validates import/export parity of that pipeline without that coupling.
+ * The UI no longer generates whole OpenAPI documents (COA-5.13, #7089): a revision's document is
+ * rendered by apiome-rest alone, whose own corpus round-trip covers paths, servers and security
+ * schemes. What stays here is what the import pipeline itself must not lose: every field of every
+ * imported schema.
+ *
+ * A live Postgres project is not created here because importClassesToVersion creates library
+ * properties via authenticated HTTP to the Next API; this suite validates the pipeline without
+ * that coupling.
  */
 
 import * as fs from 'fs';
@@ -16,8 +21,7 @@ import * as path from 'path';
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import YAML from 'yaml';
 
-import { generateOpenApiSpec } from '../src/app/utils/openapi';
-import { STUDIO_EXPORT_OPENAPI_VERSION } from '../src/app/utils/openapi-versions';
+import { buildClassSchema } from '../src/app/utils/openapi';
 import { parseOpenAPISpec } from '../src/app/utils/openapi-import';
 import { isOpenAPI30, convertOpenAPI30ToOpenAPI31 } from '../src/app/utils/openapi30-converter';
 import { openApiImporter } from '../lib/importers';
@@ -189,7 +193,7 @@ function formatGitHubIssueBody(params: {
     `## Bug: OpenAPI import/export parity — \`${params.exampleFile}\``,
     '',
     '### What to fix',
-    'Export after import (normalize → DB-shaped classes → generateOpenApiSpec) must preserve every field from the source document (subset rule: no omissions; extra OpenAPI 3.2 fields on generated are OK).',
+    'Schemas rebuilt after import (normalize → DB-shaped classes → buildClassSchema) must preserve every field of the source schemas (subset rule: no omissions; extra fields on the rebuilt schema are OK).',
     '',
     '### Differences',
     diffLines || '(none)',
@@ -255,51 +259,14 @@ describe('OpenAPI examples import/export round-trip (examples/openapi)', () => {
     });
 
     const classesForGen = normalizedClassesToGeneratorRows(norm.classes);
-    const info = (doc.info || {}) as Record<string, unknown>;
-    const paths = (doc.paths || {}) as Record<string, unknown>;
-    const comps = (doc.components || {}) as Record<string, unknown>;
-    const securitySchemes = (comps.securitySchemes || undefined) as Record<string, unknown> | undefined;
-
-    const generatedJson = await generateOpenApiSpec(
-      classesForGen,
-      {
-        projectName: typeof info.title === 'string' ? info.title : basename,
-        version: typeof info.version === 'string' ? info.version : '1.0.0',
-        description: typeof info.description === 'string' ? info.description : undefined,
-        openapiVersion: STUDIO_EXPORT_OPENAPI_VERSION,
-        servers: Array.isArray(doc.servers) ? (doc.servers as Array<{ url: string; description?: string }>) : undefined,
-        tags: Array.isArray(doc.tags) ? (doc.tags as Array<{ name: string; description?: string }>) : undefined,
-        security: Array.isArray(doc.security) ? (doc.security as Array<Record<string, string[]>>) : undefined,
-        externalDocs:
-          doc.externalDocs && typeof doc.externalDocs === 'object'
-            ? (doc.externalDocs as { url: string; description?: string })
-            : undefined,
+    const generated: Record<string, unknown> = {
+      components: {
+        schemas: Object.fromEntries(
+          classesForGen.map((cls: { name: string }) => [cls.name, buildClassSchema(cls)])
+        ),
       },
-      paths,
-      securitySchemes
-    );
-
-    const generated = JSON.parse(generatedJson) as Record<string, unknown>;
+    };
     const mismatches: SubsetMismatch[] = [];
-
-    if (doc.info) {
-      assertSourceSubsetOfGenerated(doc.info, generated.info, 'info', mismatches);
-    }
-    if (doc.servers) {
-      assertSourceSubsetOfGenerated(doc.servers, generated.servers, 'servers', mismatches);
-    }
-    if (doc.tags) {
-      assertSourceSubsetOfGenerated(doc.tags, generated.tags, 'tags', mismatches);
-    }
-    if (doc.security) {
-      assertSourceSubsetOfGenerated(doc.security, generated.security, 'security', mismatches);
-    }
-    if (doc.externalDocs) {
-      assertSourceSubsetOfGenerated(doc.externalDocs, generated.externalDocs, 'externalDocs', mismatches);
-    }
-    if (doc.paths && typeof doc.paths === 'object' && Object.keys(doc.paths as object).length > 0) {
-      assertSourceSubsetOfGenerated(doc.paths, generated.paths, 'paths', mismatches);
-    }
 
     const sourceComponents = (doc.components || {}) as Record<string, unknown>;
     const genComponents = (generated.components || {}) as Record<string, unknown>;
@@ -327,26 +294,9 @@ describe('OpenAPI examples import/export round-trip (examples/openapi)', () => {
       assertSourceSubsetOfGenerated(sSch, gSch, `components.schemas.${srcKey}`, mismatches);
     }
 
-    if (sourceComponents.securitySchemes && typeof sourceComponents.securitySchemes === 'object') {
-      assertSourceSubsetOfGenerated(
-        sourceComponents.securitySchemes,
-        genComponents.securitySchemes,
-        'components.securitySchemes',
-        mismatches
-      );
-    }
-
     if (mismatches.length > 0) {
-      const sourceSlice = stableStringify({
-        info: doc.info,
-        paths: doc.paths,
-        components: doc.components,
-      });
-      const genSlice = stableStringify({
-        info: generated.info,
-        paths: generated.paths,
-        components: generated.components,
-      });
+      const sourceSlice = stableStringify({ schemas: sourceSchemas });
+      const genSlice = stableStringify({ schemas: genSchemas });
       const issue = formatGitHubIssueBody({
         exampleFile: basename,
         mismatches,

@@ -1026,8 +1026,6 @@ export function CatalogItemDetailClient({
           />
           <CatalogVersionsPanel
             itemId={item.id}
-            itemName={item.name}
-            itemMetadata={item.metadata}
             active={activeTab === 'versions'}
             onCountChange={setVersionsCount}
             requestedPair={driftPair}

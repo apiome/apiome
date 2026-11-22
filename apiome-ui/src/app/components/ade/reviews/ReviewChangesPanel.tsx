@@ -11,7 +11,9 @@
  *   classified diff is unavailable, with a notice saying why.
  *
  * Loading is lazy twice over: the tab's pane only mounts when the Changes tab is first shown, and
- * the two documents behind the plain diff are only built when the plain diff is first shown.
+ * the two documents behind the plain diff are only read when the plain diff is first shown. They
+ * are the documents apiome-rest keeps in the document store (COA-5.13, #7089); each comes with its
+ * digest, and when the two digests are equal the documents are the same and no diff is computed.
  *
  * The merge request page (COL-4.3, #4527) reuses the panel by pointing `routeBase` at its own
  * routes, which answer the same `/changes` and `/spec?side=` shapes, and naming its baseline (the
@@ -30,6 +32,7 @@ import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { JsonDiffViewer } from '@/app/components/ui/code/JsonDiffViewer';
 import { formatVersionWithPrefix } from '@/app/utils/version-display';
 import { countsSummary, severityBadgeVariant, severityLabel } from '@lib/version-changelog';
+import { sameDocumentDigest } from '@lib/revision-document-text';
 import {
   changeCountText,
   groupReviewChanges,
@@ -80,7 +83,9 @@ export function ReviewChangesPanel({
   const routeBase = routeBaseProp ?? `/api/reviews/${encodeURIComponent(reviewId)}`;
   const [changes, setChanges] = React.useState<Loaded<ReviewChangesPayload>>({ status: 'loading' });
   const [view, setView] = React.useState<DiffView>('classified');
-  const [documents, setDocuments] = React.useState<Loaded<{ base: string; head: string }>>({ status: 'loading' });
+  const [documents, setDocuments] = React.useState<Loaded<{ base: string; head: string; identical: boolean }>>({
+    status: 'loading',
+  });
   const documentsRequested = React.useRef(false);
 
   // The comparison.
@@ -110,7 +115,7 @@ export function ReviewChangesPanel({
   const effectiveView: DiffView = payload?.classifiedError ? 'plain' : view;
   const wantsDocuments = Boolean(payload?.baseline) && effectiveView === 'plain';
 
-  // The two documents behind the plain diff, built the first time the plain diff is shown.
+  // The two documents behind the plain diff, read the first time the plain diff is shown.
   React.useEffect(() => {
     if (!wantsDocuments || documentsRequested.current) return undefined;
     documentsRequested.current = true;
@@ -118,30 +123,33 @@ export function ReviewChangesPanel({
     (async () => {
       try {
         const [base, head] = await Promise.all([
-          getEnvelope<{ spec: string }>(`${routeBase}/spec?side=base`),
-          getEnvelope<{ spec: string }>(`${routeBase}/spec?side=head`),
+          getEnvelope<{ spec: string; sha256: string | null }>(`${routeBase}/spec?side=base`),
+          getEnvelope<{ spec: string; sha256: string | null }>(`${routeBase}/spec?side=head`),
         ]);
         if (cancelled) return;
         if (!base.success || typeof base.spec !== 'string' || !head.success || typeof head.spec !== 'string') {
           setDocuments({
             status: 'error',
-            message: base.error || head.error || 'Could not build the documents to compare.',
+            message: base.error || head.error || 'Could not read the documents to compare.',
           });
           return;
         }
-        setDocuments({ status: 'ready', data: { base: base.spec, head: head.spec } });
+        setDocuments({
+          status: 'ready',
+          data: { base: base.spec, head: head.spec, identical: sameDocumentDigest(base.sha256, head.sha256) },
+        });
       } catch (error) {
         if (!cancelled) {
           setDocuments({
             status: 'error',
-            message: error instanceof Error ? error.message : 'Could not build the documents to compare.',
+            message: error instanceof Error ? error.message : 'Could not read the documents to compare.',
           });
         }
       }
     })();
     return () => {
       cancelled = true;
-      // An interrupted build is asked for again the next time the plain diff is shown.
+      // An interrupted read is asked for again the next time the plain diff is shown.
       documentsRequested.current = false;
     };
   }, [wantsDocuments, routeBase]);
@@ -185,7 +193,17 @@ export function ReviewChangesPanel({
 
   let body: React.ReactNode;
   if (effectiveView === 'plain') {
-    if (documents.status === 'ready') {
+    if (documents.status === 'ready' && documents.data.identical) {
+      // Equal digests: the same bytes on both sides, so there is nothing to diff.
+      body = (
+        <EmptyState
+          icon={<GitCompareArrows />}
+          title="Identical documents"
+          description={`This version's document is the same as ${baselineName}, byte for byte.`}
+          data-testid="review-plain-diff-identical"
+        />
+      );
+    } else if (documents.status === 'ready') {
       body = (
         <div className="rvw-diff" data-testid="review-plain-diff">
           <JsonDiffViewer original={documents.data.base} modified={documents.data.head} />
@@ -200,7 +218,7 @@ export function ReviewChangesPanel({
     } else {
       body = (
         <LoadingState
-          message="Building both documents…"
+          message="Reading both documents…"
           detail={<ColdRenderNote />}
           minHeightClassName="rvw-min-h"
           data-testid="review-plain-diff-loading"

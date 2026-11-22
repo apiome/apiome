@@ -65,8 +65,15 @@ def build_live_spec(
     tenant_slug: str,
     project_slug: str,
     version_slug: str,
+    *,
+    openapi_version: str = "3.1.0",
+    include_private: bool = False,
 ) -> Tuple[Dict[str, Any], SpecCounts]:
-    """Generate the OpenAPI 3.1 document ``/v1/schema`` serves for an unfrozen version.
+    """Generate a version's OpenAPI document from its rows.
+
+    With the defaults this is the OpenAPI 3.1 document ``/v1/schema`` serves for an unfrozen
+    version. The document workspace members read (COA-5.13, #7089) passes ``3.2.0`` and
+    ``include_private=True``.
 
     Args:
         db: Database handle (``get_classes_for_version``, ``get_properties_for_classes``).
@@ -75,6 +82,8 @@ def build_live_spec(
         tenant_slug: Tenant slug used in the document's URLs.
         project_slug: Project slug.
         version_slug: Version slug as requested (e.g. ``2.1.0``).
+        openapi_version: The OpenAPI version the document declares.
+        include_private: Keep the operations marked ``x-private``.
 
     Returns:
         The document and its :class:`SpecCounts`.
@@ -90,6 +99,8 @@ def build_live_spec(
         version_db_id=version["id"],
         revision_metadata=version.get("metadata"),
         project_metadata=version.get("project_metadata"),
+        openapi_version=openapi_version,
+        include_private=include_private,
     )
     counts = SpecCounts(
         classes=len(classes),

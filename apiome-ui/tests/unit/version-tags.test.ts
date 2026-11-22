@@ -24,10 +24,6 @@ jest.mock('../../lib/version-merge', () => ({
   mergePreviewFromSpecs: jest.fn(),
 }));
 
-jest.mock('../../src/app/utils/openapi', () => ({
-  generateOpenApiSpec: jest.fn(() => '{}'),
-}));
-
 import { isValidVersionTagName } from '../../lib/version-tag-utils';
 import {
   listVersionTags,

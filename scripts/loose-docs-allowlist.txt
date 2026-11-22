@@ -57,6 +57,7 @@ apiome-rest/docs/catalog_analysis_guardrails.md
 apiome-rest/docs/catalog_parsed_model.md
 apiome-rest/docs/change_taxonomy.md
 apiome-rest/docs/changelog_generator.md
+apiome-rest/docs/coa-5-13-generator-parity.md
 apiome-rest/docs/comments.md
 apiome-rest/docs/component_library.md
 apiome-rest/docs/consumer_contracts.md

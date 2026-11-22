@@ -8,7 +8,7 @@
  * lossy targets, recent exports), and Close · Download original · Copy · Download in the footer
  * with the file name beside Download ("Download original" is COA-5.7's stored import file).
  *
- * The spec is built by the screen (`buildOpenApiSpecJsonForVersion`) and handed in as text;
+ * The spec is read by the screen from apiome-rest (`loadRevisionDocument`) and handed in as text;
  * this owns the two renderings, the clipboard and the download — three things that read only
  * the text, the format and the names, and so belong beside them rather than in the screen.
  *

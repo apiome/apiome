@@ -62,7 +62,6 @@ jest.mock('../lib/db/helper', () => {
     'getClassesForVersion',
     'getPropertiesForClass',
     'getPropertiesForClassesBatch',
-    'buildOpenApiSpecJsonForVersion',
     'getDefaultCanvasLayout',
     'getEffectiveDefaultLayoutName',
     'getNamedCanvasLayout',
@@ -166,8 +165,7 @@ describe('guarded actions', () => {
       ...CASES.map(([name]) => name),
       ...PASS_THROUGH,
       'importProjectFromOpenAPI',
-      'buildOpenApiSpecJsonForVersion',
-    ]);
+      ]);
     expect(Object.keys(actions).filter((name) => !covered.has(name))).toEqual([]);
   });
 });
@@ -211,29 +209,5 @@ describe('canvas layout reads', () => {
   test('check membership of the version’s workspace', async () => {
     await actions.getDefaultCanvasLayout('ver-1');
     expect(guard.requireTenantMember).toHaveBeenCalledWith('tenant-of-version');
-  });
-});
-
-describe('buildOpenApiSpecJsonForVersion', () => {
-  const row = { id: 'ver-1', version_id: '1.0.0', project_id: 'proj-1' };
-
-  test('builds for a member when the row’s project is the version’s', async () => {
-    await expect(actions.buildOpenApiSpecJsonForVersion(row, 'Pets')).resolves.toBe(
-      'helper:buildOpenApiSpecJsonForVersion'
-    );
-    expect(guard.requireTenantMember).toHaveBeenCalledWith('tenant-of-version');
-  });
-
-  test('throws for a non-member', async () => {
-    verdict = 'Not found';
-    await expect(actions.buildOpenApiSpecJsonForVersion(row, 'Pets')).rejects.toThrow('Not found');
-    expect(helper.buildOpenApiSpecJsonForVersion).not.toHaveBeenCalled();
-  });
-
-  test('throws when the row names another project', async () => {
-    await expect(
-      actions.buildOpenApiSpecJsonForVersion({ ...row, project_id: 'proj-other' }, 'Pets')
-    ).rejects.toThrow('Not found');
-    expect(helper.buildOpenApiSpecJsonForVersion).not.toHaveBeenCalled();
   });
 });

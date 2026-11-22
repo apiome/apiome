@@ -27,14 +27,54 @@ def _build_children_index(properties: List[Dict[str, Any]]) -> DefaultDict[Optio
     return index
 
 
-def _clean_description(data: Dict[str, Any]) -> None:
-    """Normalize description if it's null; optionally copy from title."""
-    if 'description' in data and data['description'] is None:
-        # Remove null descriptions to keep output clean
+def _clean_description(data: Dict[str, Any], column: Any = None) -> None:
+    """Settle a property's description.
+
+    The ``class_properties.description`` column wins over a description inside the property's
+    JSON. Without either, the JSON's ``title`` is used; a null description is removed.
+
+    Args:
+        data: The property schema being built; changed in place.
+        column: The property row's ``description`` column, if the row carries one.
+    """
+    if isinstance(column, str) and column:
+        data['description'] = column
+        return
+    if data.get('description') is None:
         data.pop('description', None)
-        # If title exists, optionally set it as description for readability
-        if 'title' in data and data['title']:
+        if data.get('title'):
             data['description'] = data['title']
+
+
+def _required_on_parent(prop: Dict[str, Any]) -> bool:
+    """Report whether a property's own stored JSON marks it required on its parent.
+
+    Read from the stored JSON, not from the built schema: an object property with nested children
+    has its ``required`` replaced by the list of its required children.
+    """
+    data = parse_json_field(prop.get('data'))
+    return isinstance(data, dict) and data.get('required') is True
+
+
+def _collect_children(
+    children: List[Dict[str, Any]], children_index: DefaultDict[Optional[str], List[Dict[str, Any]]]
+) -> tuple:
+    """Build the schemas of a property's children.
+
+    Returns:
+        ``(properties, required)``: the child schemas by name, and the names of the children
+        that are required on their parent.
+    """
+    nested_props: Dict[str, Any] = {}
+    nested_required: List[str] = []
+    for child in children:
+        child_schema = _build_property_schema(child, children_index)
+        if child_schema.get('required') is True or _required_on_parent(child):
+            nested_required.append(child['name'])
+        if isinstance(child_schema.get('required'), bool):
+            child_schema.pop('required', None)
+        nested_props[child['name']] = child_schema
+    return nested_props, nested_required
 
 
 def _build_property_schema(prop: Dict[str, Any], children_index: DefaultDict[Optional[str], List[Dict[str, Any]]]) -> Dict[str, Any]:
@@ -47,23 +87,13 @@ def _build_property_schema(prop: Dict[str, Any], children_index: DefaultDict[Opt
     # Exclude internal DB id from the OpenAPI property definition
     prop_schema.pop('id', None)
 
-    _clean_description(prop_schema)
+    _clean_description(prop_schema, prop.get('description'))
 
     # Inline object children if this is an object without $ref
     if prop_schema.get('type') == 'object' and '$ref' not in prop_schema:
         children = children_index.get(prop.get('id'), [])
         if children:
-            nested_props: Dict[str, Any] = {}
-            nested_required: List[str] = []
-            for child in children:
-                child_schema = _build_property_schema(child, children_index)
-                # Move required flag to parent's required array
-                if child_schema.get('required') is True:
-                    nested_required.append(child['name'])
-                    child_schema.pop('required', None)
-                elif child_schema.get('required') is False:
-                    child_schema.pop('required', None)
-                nested_props[child['name']] = child_schema
+            nested_props, nested_required = _collect_children(children, children_index)
             if nested_props:
                 prop_schema['properties'] = nested_props
             if nested_required:
@@ -81,16 +111,7 @@ def _build_property_schema(prop: Dict[str, Any], children_index: DefaultDict[Opt
         items = prop_schema.get('items')
         # Only inline if items is not a $ref and is (or will be) an object
         if isinstance(items, dict) and '$ref' not in items and (items.get('type') == 'object' or children):
-            nested_props: Dict[str, Any] = {}
-            nested_required: List[str] = []
-            for child in children:
-                child_schema = _build_property_schema(child, children_index)
-                if child_schema.get('required') is True:
-                    nested_required.append(child['name'])
-                    child_schema.pop('required', None)
-                elif child_schema.get('required') is False:
-                    child_schema.pop('required', None)
-                nested_props[child['name']] = child_schema
+            nested_props, nested_required = _collect_children(children, children_index)
             merged_items = dict(items)
             merged_items.pop('id', None)
             merged_items['type'] = 'object'
@@ -119,9 +140,12 @@ def build_class_openapi_schema(class_data: Dict[str, Any], properties: List[Dict
     schema_without_props.pop('required', None)
     schema_without_props.pop('id', None)
 
-    # Base object schema
+    # A composed schema (allOf / anyOf / oneOf) is not made an object: its branches say what it
+    # is, and ``type: object`` beside ``oneOf`` of scalars would reject every value. The stored
+    # schema's own ``type`` is kept either way.
+    composed = any(schema_without_props.get(key) for key in ("allOf", "anyOf", "oneOf"))
     schema: Dict[str, Any] = {
-        "type": "object",
+        **({} if composed else {"type": "object"}),
         "title": class_name,
         **({"description": class_data['description']} if class_data.get('description') else {}),
         **schema_without_props,
@@ -130,20 +154,7 @@ def build_class_openapi_schema(class_data: Dict[str, Any], properties: List[Dict
 
     # Build children index and process only top-level properties (parent_id is null)
     children_index = _build_children_index(properties)
-    top_level_props = children_index.get(None, [])
-
-    required: List[str] = []
-
-    for prop in top_level_props:
-        prop_name = prop['name']
-        prop_schema = _build_property_schema(prop, children_index)
-        # Move property-level required flag to class required
-        if prop_schema.get('required') is True:
-            required.append(prop_name)
-            prop_schema.pop('required', None)
-        elif prop_schema.get('required') is False:
-            prop_schema.pop('required', None)
-        schema['properties'][prop_name] = prop_schema
+    schema['properties'], required = _collect_children(children_index.get(None, []), children_index)
 
     # Add required if any
     if required:
@@ -212,15 +223,63 @@ def _load_paths_for_version(version_id: str) -> List[Dict[str, Any]]:
 
 
 def _security_schemes_from_rows(scheme_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build ``components.securitySchemes`` from ``version_security_scheme`` rows.
+
+    Every scheme type a version can store is written: ``apiKey``, ``http``, ``oauth2``,
+    ``openIdConnect``, ``mutualTLS`` and ``custom`` (whose stored JSON is the scheme). A row that
+    lacks what its type requires (an ``http`` row with no scheme, an ``oauth2`` row with no flows,
+    an ``openIdConnect`` row with no URL) is left out, since the scheme would not be valid.
+
+    Args:
+        scheme_rows: Rows with ``scheme_name``, ``scheme_type``, ``in_location``, ``param_name``,
+            ``http_scheme``, ``description`` and ``data``.
+
+    Returns:
+        The schemes by name, in row order.
+    """
     security_schemes: Dict[str, Any] = {}
     for row in scheme_rows:
-        if row.get("scheme_type") == "apiKey":
-            security_schemes[row["scheme_name"]] = {
+        name = row["scheme_name"]
+        scheme_type = row.get("scheme_type")
+        data = parse_json_field(row.get("data"))
+        data = data if isinstance(data, dict) else {}
+        described = {"description": row["description"]} if row.get("description") else {}
+        if scheme_type == "apiKey":
+            security_schemes[name] = {
                 "type": "apiKey",
-                "name": row.get("param_name") or row["scheme_name"],
+                "name": row.get("param_name") or name,
                 "in": row.get("in_location") or "header",
-                **({"description": row["description"]} if row.get("description") else {}),
+                **described,
             }
+        elif scheme_type == "http" and row.get("http_scheme"):
+            scheme: Dict[str, Any] = {"type": "http", "scheme": row["http_scheme"], **described}
+            if data.get("bearerFormat"):
+                scheme["bearerFormat"] = data["bearerFormat"]
+            security_schemes[name] = scheme
+        elif scheme_type == "oauth2":
+            flows = data.get("flows")
+            if isinstance(flows, dict) and flows:
+                security_schemes[name] = {"type": "oauth2", "flows": flows, **described}
+        elif scheme_type == "openIdConnect":
+            url = data.get("openIdConnectUrl")
+            if isinstance(url, str) and url.strip():
+                security_schemes[name] = {
+                    "type": "openIdConnect",
+                    "openIdConnectUrl": url.strip(),
+                    **described,
+                }
+        elif scheme_type == "mutualTLS":
+            security_schemes[name] = {"type": "mutualTLS", **described}
+        elif scheme_type == "custom":
+            declared = data.get("type")
+            scheme = {"type": declared.strip() if isinstance(declared, str) and declared.strip() else "apiKey"}
+            description = row.get("description") or data.get("description")
+            if description:
+                scheme["description"] = description
+            for key, value in data.items():
+                if key not in ("type", "description") and value is not None:
+                    scheme[key] = value
+            security_schemes[name] = scheme
     return security_schemes
 
 
@@ -286,6 +345,7 @@ def generate_openapi_spec(
     server_rows: Optional[List[Dict[str, Any]]] = None,
     component_pin_rows: Optional[List[Dict[str, Any]]] = None,
     openapi_version: str = "3.1.0",
+    include_private: bool = False,
 ) -> Dict[str, Any]:
     """Generate a complete OpenAPI specification for all classes in a version.
 
@@ -294,6 +354,10 @@ def generate_openapi_spec(
     ``in: querystring`` parameters and the tags' ``summary`` / ``parent`` / ``kind`` — where 3.1
     carries them on ``x-apiome-*`` stashes or leaves them out (#7048, see
     :mod:`app.paths_generator`).
+
+    ``include_private`` (default ``False``) keeps the operations marked ``x-private``, each
+    carrying ``x-private: true``. The public document leaves them out; the document workspace
+    members read (COA-5.13, #7089) keeps them.
     """
     is32 = is_openapi_32(openapi_version)
 
@@ -309,7 +373,7 @@ def generate_openapi_spec(
     description = project_description if project_description and project_description.strip() else "No description provided"
 
     # Load paths for this version if version_db_id is provided
-    # exclude_private=True so operations marked x-private are hidden from Swagger
+    # Operations marked x-private are hidden from Swagger unless include_private asks for them
     paths: Dict[str, Any] = {}
     resolved_paths_data: List[Dict[str, Any]] = []
     if paths_data is not None:
@@ -323,7 +387,7 @@ def generate_openapi_spec(
     if resolved_paths_data:
         paths = generate_paths_for_openapi(
             resolved_paths_data,
-            options={"exclude_private": True, "openapi_version": openapi_version},
+            options={"exclude_private": not include_private, "openapi_version": openapi_version},
         )
 
     # Load security schemes (API Key header/query/cookie, etc.)

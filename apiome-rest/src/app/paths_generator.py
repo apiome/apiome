@@ -434,8 +434,10 @@ def build_operation_for_openapi(operation: Dict[str, Any], options: Optional[Dic
             result['summary'] = description['summary']
         if options.get('includeDescriptions', True) and description.get('description'):
             result['description'] = description['description']
-        if description.get('operationId'):
-            result['operationId'] = description['operationId']
+        # operationId: camelCase (OpenAPI) or snake_case (the database column).
+        operation_id = description.get('operationId') or description.get('operation_id')
+        if operation_id:
+            result['operationId'] = operation_id
         if description.get('tags'):
             tags = parse_json_field(description['tags'])
             if tags and isinstance(tags, list):
