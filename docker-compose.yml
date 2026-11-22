@@ -30,6 +30,18 @@ services:
     # schema requires (V001 `CREATE EXTENSION vector`; embedding columns/HNSW indexes in V062/V102).
     # Plain `postgres:16-bookworm` lacks it and fails the first migration.
     image: pgvector/pgvector:pg16-bookworm
+    # Slow-query visibility (DBP-1.1, #7184): pg_stat_statements collects per-statement totals (run
+    # `CREATE EXTENSION IF NOT EXISTS pg_stat_statements` once to read them) and auto_explain logs the
+    # plan of any statement slower than POSTGRES_AUTO_EXPLAIN_MIN_DURATION (`-1` turns it off). See
+    # apiome-docs/docs/admin/operating-apiome.mdx, "Find slow queries".
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements,auto_explain
+      - -c
+      - pg_stat_statements.track=top
+      - -c
+      - auto_explain.log_min_duration=${POSTGRES_AUTO_EXPLAIN_MIN_DURATION:-1s}
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apiome_local_dev}

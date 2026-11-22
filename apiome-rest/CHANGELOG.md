@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.811.0] - 2026-11-22
+
+### Performance
+- **Scale benchmark database, query-count budgets and slow-query visibility (DBP-1.1, #7184):** the groundwork every
+  other PostgreSQL performance ticket measures against. OpenAPI 1.635.0 (version only; no schema change).
+  - **Statement counter:** every connection the API opens counts its SQL statements and their time per request
+    (`app.statement_stats`). Each `http_request` access-log line now carries `db_statements` and `db_time_ms`.
+    `APIOME_DB_STATEMENT_SERVER_TIMING=true` also sends `Server-Timing: db;dur=…;desc="N statements"` (off by default),
+    and `APIOME_DB_STATEMENT_WARN_THRESHOLD=<n>` logs a request with more than `n` statements at WARNING (off by default).
+  - **Statement budgets:** `assert_max_queries(n)` fails a test whose block runs more than `n` statements and lists
+    them. `tests/test_query_budgets_db.py` holds six hot endpoints (project list and detail, version list and detail,
+    the revision document cold and warm) to the counts recorded in `tests/query_budgets.json`, authentication included.
+  - **Scale database and nightly plan check:** `apiome-db seed --profile scale` and `apiome-db plan-check` build the
+    benchmark database and hold the hot queries to their plans every night (`apiome-db-scale.yml`).
+
 ## [1.810.0] - 2026-11-22
 
 ### Added

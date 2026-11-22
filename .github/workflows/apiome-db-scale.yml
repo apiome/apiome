@@ -1,0 +1,170 @@
+name: Apiome DB Scale Plan Check
+
+# DBP-1.1 (#7184): build the scale benchmark database and hold the hot queries to their plans.
+#
+# 1. Start PostgreSQL (pgvector image, as docker-compose.yml) with pg_stat_statements and
+#    auto_explain loaded, on a random free port.
+# 2. Migrate, then `apiome-db seed --profile scale` (20k projects, 200k versions, 1M classes,
+#    3.1M class properties …). The step has a 10-minute budget; a second run must find every step
+#    complete (idempotency).
+# 3. `apiome-db plan-check`: EXPLAIN (ANALYZE, BUFFERS) every query in
+#    apiome-db/plan-check/hot-queries.json; fail on a sequential scan of a table above the row
+#    threshold or a blown time budget. The per-query report goes to the job summary.
+# 4. Self-test: plan-check on plan-check/broken-query.json must fail.
+# 5. REST statement budgets (apiome-rest/tests/test_query_budgets_db.py) on the scale database.
+# 6. Summarize the slowest statements from pg_stat_statements.
+#
+# Nightly rather than per PR: the build takes minutes and plan timings are only comparable on the
+# same runner. Run it by hand (workflow_dispatch) to measure a branch before and after a change.
+
+on:
+  schedule:
+    # 05:30 UTC, after the REST suite (03:00) and the REST scale benchmarks (04:15), so the three
+    # never share the self-hosted runner.
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+    inputs:
+      scale_factor:
+        description: 'Multiplier for every row count (1 = the audit volume).'
+        required: false
+        default: '1'
+
+jobs:
+  plan-check:
+    name: Scale database plan check
+    runs-on: self-hosted
+    timeout-minutes: 45
+    env:
+      POSTGRES_DB: apiome_scale
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PG_CONTAINER: apiome-db-scale-pg-${{ github.run_id }}-${{ github.run_attempt }}
+      SCALE_FACTOR: ${{ inputs.scale_factor || '1' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Start PostgreSQL with pg_stat_statements and auto_explain
+        run: |
+          set -euo pipefail
+          pick_free_port() {
+            python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+          }
+          started=""
+          for attempt in $(seq 1 10); do
+            port="$(pick_free_port)"
+            echo "Attempt ${attempt}: starting postgres on host port ${port}"
+            # Memory is capped so the job stays within the shared runner's limits.
+            if docker run -d \
+                --name "$PG_CONTAINER" \
+                --memory 4g --shm-size 512m \
+                -e POSTGRES_DB="$POSTGRES_DB" \
+                -e POSTGRES_USER="$POSTGRES_USER" \
+                -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+                -p "${port}:5432" \
+                --health-cmd "pg_isready -U postgres -d $POSTGRES_DB" \
+                --health-interval 5s --health-timeout 5s --health-retries 20 \
+                pgvector/pgvector:pg16-bookworm \
+                -c shared_preload_libraries=pg_stat_statements,auto_explain \
+                -c pg_stat_statements.track=all \
+                -c auto_explain.log_min_duration=250ms \
+                -c auto_explain.log_analyze=on \
+                -c shared_buffers=512MB \
+                -c maintenance_work_mem=256MB \
+                -c max_wal_size=4GB >/dev/null 2>docker-run.err; then
+              echo "POSTGRES_PORT=${port}" >> "$GITHUB_ENV"
+              echo "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${port}/${POSTGRES_DB}" >> "$GITHUB_ENV"
+              started="yes"
+              break
+            fi
+            cat docker-run.err || true
+            docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+            sleep 1
+          done
+          [ -n "$started" ] || { echo "Failed to start PostgreSQL" >&2; exit 1; }
+          for i in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "$PG_CONTAINER" 2>/dev/null || echo unknown)"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 2
+          done
+          docker logs "$PG_CONTAINER" || true
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Install dependencies and build apiome-db
+        run: |
+          yarn install --immutable
+          yarn workspace apiome-db build
+
+      - name: Migrate
+        run: node apiome-db/dist/cli.js migrate --database-url "$DATABASE_URL"
+
+      - name: Enable pg_stat_statements
+        run: docker exec "$PG_CONTAINER" psql -U postgres -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements'
+
+      - name: Seed the scale profile (10-minute budget)
+        timeout-minutes: 10
+        run: node apiome-db/dist/cli.js seed --profile scale --scale-factor "$SCALE_FACTOR" --database-url "$DATABASE_URL"
+
+      - name: Re-run the seed (must be idempotent and fast)
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          out="$(node apiome-db/dist/cli.js seed --profile scale --scale-factor "$SCALE_FACTOR" --database-url "$DATABASE_URL" --json)"
+          echo "$out" | node -e '
+            const r = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            const ran = r.steps.filter((s) => s.status !== "skipped");
+            if (ran.length) { console.error("Not idempotent; these steps ran again:", ran.map((s) => s.name)); process.exit(1); }
+            console.log(`All ${r.steps.length} steps already complete (${r.totalMs} ms).`);'
+
+      - name: Reset pg_stat_statements
+        run: docker exec "$PG_CONTAINER" psql -U postgres -d "$POSTGRES_DB" -c 'SELECT pg_stat_statements_reset()'
+
+      - name: Plan check
+        run: node apiome-db/dist/cli.js plan-check --database-url "$DATABASE_URL" --markdown "$GITHUB_STEP_SUMMARY"
+
+      - name: Plan check self-test (a deliberately broken query must fail)
+        run: |
+          if node apiome-db/dist/cli.js plan-check --queries apiome-db/plan-check/broken-query.json --database-url "$DATABASE_URL"; then
+            echo "plan-check passed a query that scans every class; the check is not working" >&2
+            exit 1
+          fi
+          echo "plan-check failed the broken query, as it must."
+
+      # Python comes from uv, not actions/setup-python (see apiome-rest-test.yml).
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: REST statement budgets on the scale database
+        working-directory: apiome-rest
+        run: |
+          uv sync
+          uv run pytest tests/test_query_budgets_db.py -v -p no:cacheprovider
+
+      - name: Slowest statements (pg_stat_statements)
+        if: always()
+        run: |
+          {
+            echo '### Slowest statements during the plan check and REST budgets'
+            echo ''
+            echo '```'
+            docker exec "$PG_CONTAINER" psql -U postgres -d "$POSTGRES_DB" -P pager=off -c \
+              "SELECT calls, round(mean_exec_time::numeric, 2) AS mean_ms, round(total_exec_time::numeric, 1) AS total_ms, left(regexp_replace(query, '\s+', ' ', 'g'), 120) AS query FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 15" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true

@@ -58,6 +58,27 @@ with `--dir` or `APIOME_DB_SEED_DIR`), creating a runnable local fixture:
 Seeds are **never** run automatically (not wired into the Docker entrypoint or compose) and the
 command refuses under `NODE_ENV=production` without `--force`.
 
+### Scale profile and plan check (DBP-1.1)
+
+`apiome-db seed --profile scale` builds a large, deterministic benchmark database on a **scratch**
+database (migrate it first): 200 tenants, 20,000 projects (5,000 in the skewed tenant
+`scale-large`), 200,000 versions, 1,000,000 classes (20,000 in one version), 3,100,000 class
+properties, 600,000 paths, 1,200,000 operations, MCP endpoints, versions and capability items,
+usage rows and audit rows. `--scale-factor <n>` multiplies every count. Each table is filled by one
+`INSERT … SELECT generate_series(…)` statement ([`src/seed-scale.ts`](./src/seed-scale.ts)); ids are
+`md5('apiome-scale:<kind>:<n>')::uuid`, so a run is reproducible, and a re-run skips every step whose
+last row exists. The bulk revision-content steps insert with `session_replication_role = replica`
+(no user triggers) when the role may set it; seeded users cannot sign in. About two minutes at
+factor 1 on a laptop.
+
+`apiome-db plan-check` runs every query in [`plan-check/hot-queries.json`](./plan-check/hot-queries.json)
+with `EXPLAIN (ANALYZE, BUFFERS)` in a rolled-back transaction and fails when a plan sequentially
+scans a table above `rowThreshold` estimated rows or exceeds its `budgetMs`. Parameters written
+`scale:<kind>:<n>` resolve to seeded ids. A query the audit found slow carries `known` (the ticket that
+fixes it) and is reported without failing; remove `known` in the fixing PR.
+[`plan-check/broken-query.json`](./plan-check/broken-query.json) is a deliberately broken query that
+the check must fail. Both run nightly in `.github/workflows/apiome-db-scale.yml`.
+
 ## Admin CLI
 
 ### Security model
@@ -115,6 +136,9 @@ migrate status [--scripts-dir <path>]       List applied / pending migrations
 repair [--scripts-dir <path>]               Realign flyway_schema_history checksums; drop failed rows
 clean [--force]                             Drop the apiome schema + history (destructive; guarded)
 seed [--dir <path>] [--dry-run] [--force]   Load dev seed data (development only)
+seed --profile scale [--scale-factor <n>]   Build the scale benchmark database (scratch databases only)
+plan-check [--queries <file>] [--row-threshold <n>] [--runs <n>] [--only <names>] [--markdown <file>]
+                                            EXPLAIN ANALYZE the hot queries; fail on large seq scans / slow plans
 
 users create   --name --email (--password | --password-stdin | --random-password)
                                             [--unverified] [--disabled]

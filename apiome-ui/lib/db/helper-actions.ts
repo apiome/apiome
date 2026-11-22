@@ -40,6 +40,7 @@ import {
   type Refusal,
 } from '../auth/action-guard';
 import * as helper from './helper';
+import { runWithStatementStats, warnIfOverThreshold } from './statement-stats';
 
 /**
  * The refusal in the helpers' result shape.
@@ -55,12 +56,17 @@ function refuse(error: string): string {
  * Run `action` when `check` allowed it; otherwise return the refusal.
  *
  * @param check The guard's verdict.
- * @param action The helper call to make when allowed.
+ * @param action The helper call to make when allowed; its SQL statements are counted, and a warning
+ *   is logged above `DB_STATEMENT_WARN_THRESHOLD`.
  * @returns The helper's result, or the refusal as JSON.
  */
 async function guarded<T>(check: Promise<Refusal>, action: () => Promise<T>): Promise<T | string> {
   const refusal = await check;
-  return refusal ? refuse(refusal) : action();
+  if (refusal) return refuse(refusal);
+  // Count the action's SQL statements and log when they pass DB_STATEMENT_WARN_THRESHOLD (DBP-1.1).
+  const { result, stats } = await runWithStatementStats(action);
+  warnIfOverThreshold(stats, 'a workspace server action');
+  return result;
 }
 
 // ---- The caller's own account -------------------------------------------------------------------

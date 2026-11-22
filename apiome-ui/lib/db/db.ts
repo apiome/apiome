@@ -1,6 +1,8 @@
 // `pg` is a CommonJS module; like the other lib/db consumers it is pulled in with `require`.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { Pool } = require('pg');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { instrumentClient } = require('./statement-stats');
 
 if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'production') {
   console.warn(
@@ -54,6 +56,12 @@ const connectionPool = new Pool({
 // pool has already discarded the client, so logging is all there is to do.
 connectionPool.on('error', (error: Error) => {
   console.error('[apiome-ui/db] idle database client error:', error.message);
+});
+
+// Count every statement each pooled client runs (DBP-1.1, #7184): `pool.query` and checked-out
+// clients both go through the client's `query`. See lib/db/statement-stats.ts.
+connectionPool.on('connect', (client: { query: (...args: unknown[]) => unknown }) => {
+  instrumentClient(client);
 });
 
 module.exports = connectionPool;

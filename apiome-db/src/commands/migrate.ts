@@ -9,6 +9,7 @@ import {
   repairHistory,
 } from "../migrate.js";
 import { applySeeds, defaultSeedDir } from "../seed.js";
+import { applyScaleSeed, resolveScaleParams, type ScaleStepResult } from "../seed-scale.js";
 import type { OutputMode } from "../output.js";
 import { note, printRecord, printRows } from "../output.js";
 import { CliError } from "../errors.js";
@@ -139,10 +140,18 @@ export async function runClean(
   printRecord(mode, { cleaned: true, ...result });
 }
 
+/** The seed profiles `apiome-db seed --profile` accepts. */
+export const SEED_PROFILES = ["dev", "scale"] as const;
+export type SeedProfile = (typeof SEED_PROFILES)[number];
+
 export type SeedOptions = {
   seedDir?: string;
   dryRun?: boolean;
   force?: boolean;
+  /** `dev` (default): the SQL fixtures in seed/dev/. `scale`: the generated large database. */
+  profile?: string;
+  /** `scale` only: multiplier for every row count (default 1, the audit volume). */
+  scaleFactor?: number;
 };
 
 export async function runSeed(
@@ -154,6 +163,24 @@ export async function runSeed(
     throw new CliError("Refusing to load dev seed data: NODE_ENV=production.", {
       hint: "Seed data is for development only. Pass --force to override.",
     });
+  }
+
+  const profile = opts.profile ?? "dev";
+  if (!(SEED_PROFILES as readonly string[]).includes(profile)) {
+    throw new CliError(`Unknown seed profile "${profile}".`, {
+      exitCode: 2,
+      hint: `Use one of: ${SEED_PROFILES.join(", ")}.`,
+    });
+  }
+  if (profile === "scale") {
+    if (opts.seedDir) {
+      throw new CliError("--dir applies to the dev profile only.", { exitCode: 2 });
+    }
+    await runScaleSeed(client, opts, mode);
+    return;
+  }
+  if (opts.scaleFactor !== undefined) {
+    throw new CliError("--scale-factor applies to --profile scale only.", { exitCode: 2 });
   }
 
   const seedDir = opts.seedDir ?? defaultSeedDir();
@@ -170,4 +197,27 @@ export async function runSeed(
   }
   note(result.dryRun ? `Dry run: would apply from ${seedDir}:` : `Applied seed data from ${seedDir}:`);
   for (const f of result.applied) note(`  ${f}`);
+}
+
+/** `apiome-db seed --profile scale`: build the large benchmark database (DBP-1.1, #7184). */
+async function runScaleSeed(client: pg.Client, opts: SeedOptions, mode: OutputMode): Promise<void> {
+  const params = resolveScaleParams(opts.scaleFactor ?? 1);
+  const progress = (step: ScaleStepResult): void => {
+    if (mode.json) return;
+    const what =
+      step.status === "planned"
+        ? `would insert up to ${step.rows.toLocaleString("en-US")} rows`
+        : step.status === "skipped"
+          ? "already complete"
+          : `inserted ${step.inserted.toLocaleString("en-US")} rows in ${(step.ms / 1000).toFixed(1)} s`;
+    note(`  ${step.name.padEnd(22)} ${what}`);
+  };
+  if (!mode.json) note(opts.dryRun ? "Dry run: scale profile steps:" : "Applying the scale seed profile:");
+  const result = await applyScaleSeed(client, params, { dryRun: opts.dryRun, onStep: progress });
+  if (mode.json) {
+    printRecord(mode, result);
+    return;
+  }
+  if (result.note) note(result.note);
+  if (!result.dryRun) note(`Scale seed done in ${(result.totalMs / 1000).toFixed(1)} s.`);
 }

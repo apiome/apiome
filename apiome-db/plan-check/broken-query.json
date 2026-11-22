@@ -1,0 +1,15 @@
+{
+  "$comment": "A deliberately broken query: the uuid cast stops the primary-key index from being used, so it scans every class. The nightly job runs this list and expects plan-check to fail (DBP-1.1, #7184).",
+  "rowThreshold": 10000,
+  "defaultBudgetMs": 50,
+  "queries": [
+    {
+      "name": "broken.class_by_text_id",
+      "source": "apiome-db/plan-check/broken-query.json (self-test)",
+      "sql": "SELECT id, name FROM apiome.classes WHERE id::text = $1",
+      "params": [
+        "scale:class:12345"
+      ]
+    }
+  ]
+}
