@@ -902,6 +902,71 @@ def _fetch_all(cursor: Any, query: str, params: Sequence[Any]) -> List[Dict[str,
     return [_as_dict(r) for r in rows]
 
 
+#: Explicit column lists for the child tables :func:`load_canonical_api` reads (no ``SELECT *``).
+_OPERATION_COLUMNS = (
+    "id, key, name, kind, streaming, http_method, http_path, channel_ref, description, "
+    "deprecated, parameters, tags, ordinal, extras"
+)
+_MESSAGE_COLUMNS = (
+    "key, role, name, payload, payload_schema, headers, content_types, status_code, description, "
+    "ordinal, extras"
+)
+_FIELD_COLUMNS = (
+    "key, name, type_ref, field_number, default_value, constraints, description, deprecated, "
+    "ordinal, extras"
+)
+_SKILL_COLUMNS = (
+    "key, skill_id, name, description, tags, examples, input_modes, output_modes, security, "
+    "operation_ref, ordinal, extras"
+)
+
+
+def _children_by_parent(
+    cursor: Any,
+    table: str,
+    columns: str,
+    parent_column: str,
+    tenant_id: str,
+    version_id: str,
+    *,
+    skip: bool = False,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Read every live row of a canonical child table for a revision, grouped by parent.
+
+    One statement for the whole revision instead of one per parent row (DBP-1.6, #7189), on the
+    ``idx_api_*_version_id`` index. Within a parent, rows keep the per-parent order
+    (``ordinal``, then ``key``).
+
+    Args:
+        cursor: An open dict-row cursor.
+        table: The child table in ``apiome`` (a constant of this module, never user input).
+        columns: The columns to return (a constant of this module).
+        parent_column: The foreign key to group by (``service_id``, ``operation_id``, …).
+        tenant_id: Owning tenant UUID.
+        version_id: The revision (``versions.id``).
+        skip: Return ``{}`` without a statement (the parent table had no rows).
+
+    Returns:
+        ``{parent_id: [row, …]}``; the grouping column is not part of the rows.
+    """
+    if skip:
+        return {}
+    rows = _fetch_all(
+        cursor,
+        f"""
+        SELECT {parent_column} AS loader_parent_id, {columns}
+        FROM apiome.{table}
+        WHERE tenant_id = %s::uuid AND version_id = %s::uuid AND deleted_at IS NULL
+        ORDER BY ordinal ASC, key ASC
+        """,
+        (tenant_id, version_id),
+    )
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.pop("loader_parent_id")), []).append(row)
+    return grouped
+
+
 def load_canonical_api(
     db: _DbLike,
     *,
@@ -924,7 +989,10 @@ def load_canonical_api(
             arts = _fetch_all(
                 cursor,
                 """
-                SELECT * FROM apiome.api_artifacts
+                SELECT id, schema_version, paradigm, format, protocol, identity_name,
+                       identity_namespace, identity_id, source_version, title, description,
+                       servers, extras, raw
+                FROM apiome.api_artifacts
                 WHERE tenant_id = %s::uuid AND version_id = %s::uuid AND deleted_at IS NULL
                 LIMIT 1
                 """,
@@ -939,36 +1007,29 @@ def load_canonical_api(
             services_rows = _fetch_all(
                 cursor,
                 """
-                SELECT * FROM apiome.api_services
+                SELECT id, key, name, description, ordinal, extras
+                FROM apiome.api_services
                 WHERE artifact_id = %s::uuid AND deleted_at IS NULL
                 ORDER BY ordinal ASC, key ASC
                 """,
                 (artifact_id,),
             )
+            # Child rows are read once per table for the whole revision (DBP-1.6, #7189) and
+            # grouped by parent; rows whose parent is not part of the live artifact are ignored.
+            ops_by_service = _children_by_parent(
+                cursor, "api_operations", _OPERATION_COLUMNS, "service_id", tenant_id, version_id,
+                skip=not services_rows,
+            )
+            msgs_by_operation = _children_by_parent(
+                cursor, "api_messages", _MESSAGE_COLUMNS, "operation_id", tenant_id, version_id,
+                skip=not ops_by_service,
+            )
             services: List[Dict[str, Any]] = []
             for svc in services_rows:
-                service_id = str(svc["id"])
-                op_rows = _fetch_all(
-                    cursor,
-                    """
-                    SELECT * FROM apiome.api_operations
-                    WHERE service_id = %s::uuid AND deleted_at IS NULL
-                    ORDER BY ordinal ASC, key ASC
-                    """,
-                    (service_id,),
-                )
+                op_rows = ops_by_service.get(str(svc["id"]), [])
                 operations: List[Dict[str, Any]] = []
                 for op in op_rows:
-                    operation_id = str(op["id"])
-                    msg_rows = _fetch_all(
-                        cursor,
-                        """
-                        SELECT * FROM apiome.api_messages
-                        WHERE operation_id = %s::uuid AND deleted_at IS NULL
-                        ORDER BY ordinal ASC, key ASC
-                        """,
-                        (operation_id,),
-                    )
+                    msg_rows = msgs_by_operation.get(str(op["id"]), [])
                     operations.append(
                         {
                             "key": op["key"],
@@ -1016,7 +1077,8 @@ def load_canonical_api(
             channel_rows = _fetch_all(
                 cursor,
                 """
-                SELECT * FROM apiome.api_channels
+                SELECT key, address, name, description, protocol, parameters, bindings, ordinal, extras
+                FROM apiome.api_channels
                 WHERE artifact_id = %s::uuid AND deleted_at IS NULL
                 ORDER BY ordinal ASC, key ASC
                 """,
@@ -1040,24 +1102,21 @@ def load_canonical_api(
             type_rows = _fetch_all(
                 cursor,
                 """
-                SELECT * FROM apiome.api_types
+                SELECT id, key, name, kind, namespace, description, deprecated, enum_values,
+                       union_members, aliased, key_type, value_type, constraints, ordinal, extras
+                FROM apiome.api_types
                 WHERE artifact_id = %s::uuid AND deleted_at IS NULL
                 ORDER BY ordinal ASC, key ASC
                 """,
                 (artifact_id,),
             )
+            fields_by_type = _children_by_parent(
+                cursor, "api_fields", _FIELD_COLUMNS, "type_id", tenant_id, version_id,
+                skip=not type_rows,
+            )
             types: List[Dict[str, Any]] = []
             for ty in type_rows:
-                type_id = str(ty["id"])
-                field_rows = _fetch_all(
-                    cursor,
-                    """
-                    SELECT * FROM apiome.api_fields
-                    WHERE type_id = %s::uuid AND deleted_at IS NULL
-                    ORDER BY ordinal ASC, key ASC
-                    """,
-                    (type_id,),
-                )
+                field_rows = fields_by_type.get(str(ty["id"]), [])
                 types.append(
                     {
                         "key": ty["key"],
@@ -1095,23 +1154,22 @@ def load_canonical_api(
             agent_rows = _fetch_all(
                 cursor,
                 """
-                SELECT * FROM apiome.api_agent_descriptors
+                SELECT id, key, name, description, agent_version, url, protocol, protocol_version,
+                       provider, capabilities, default_input_modes, default_output_modes,
+                       security_schemes, security, service_ref, ordinal, extras
+                FROM apiome.api_agent_descriptors
                 WHERE artifact_id = %s::uuid AND deleted_at IS NULL
                 ORDER BY ordinal ASC, key ASC
                 """,
                 (artifact_id,),
             )
+            skills_by_agent = _children_by_parent(
+                cursor, "api_agent_skills", _SKILL_COLUMNS, "agent_id", tenant_id, version_id,
+                skip=not agent_rows,
+            )
             agents: List[Dict[str, Any]] = []
             for ag in agent_rows:
-                skill_rows = _fetch_all(
-                    cursor,
-                    """
-                    SELECT * FROM apiome.api_agent_skills
-                    WHERE agent_id = %s::uuid AND deleted_at IS NULL
-                    ORDER BY ordinal ASC, key ASC
-                    """,
-                    (str(ag["id"]),),
-                )
+                skill_rows = skills_by_agent.get(str(ag["id"]), [])
                 agents.append(
                     {
                         **{k: ag.get(k) for k in (

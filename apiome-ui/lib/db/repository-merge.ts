@@ -219,12 +219,18 @@ async function loadLegacyImportSource(
  *
  * @param parentVersionId - The parent version.
  * @param pathnames - The carried pathnames.
+ * @param client - The caller's query target (the import's transaction client). The read runs on
+ *   it instead of checking out another pool connection while the caller holds one (DBP-1.6, #7189).
  * @returns The parsed paths (in pathname order); empty when there is nothing to carry.
  * @throws Error when the parent's paths cannot be read — a merge never silently drops paths.
  */
-export async function loadCarriedPaths(parentVersionId: string, pathnames: readonly string[]): Promise<ParsedPath[]> {
+export async function loadCarriedPaths(
+  parentVersionId: string,
+  pathnames: readonly string[],
+  client?: Queryable,
+): Promise<ParsedPath[]> {
   if (pathnames.length === 0) return [];
-  const loaded = JSON.parse(await loadPathsForOpenAPIExport(parentVersionId)) as {
+  const loaded = JSON.parse(await loadPathsForOpenAPIExport(parentVersionId, client)) as {
     success?: boolean;
     paths?: PathInfo[];
     error?: string;

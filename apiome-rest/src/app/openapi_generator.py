@@ -168,7 +168,18 @@ def build_class_openapi_schema(class_data: Dict[str, Any], properties: List[Dict
 
 
 def _load_paths_for_version(version_id: str) -> List[Dict[str, Any]]:
-    """Load all paths with full operation details for a version."""
+    """Load all paths with full operation details for a version.
+
+    Six statements at most, whatever the size of the spec (DBP-1.6, #7189): see
+    :meth:`app.database.Database.load_paths_for_version`.
+
+    Args:
+        version_id: The revision (``versions.id``).
+
+    Returns:
+        The paths in the shape :func:`app.paths_generator.generate_paths_for_openapi` reads;
+        empty when the database is not available.
+    """
     # Import db here to avoid circular imports and allow tests to run
     try:
         from .database import db
@@ -178,48 +189,7 @@ def _load_paths_for_version(version_id: str) -> List[Dict[str, Any]]:
     if db is None:
         return []
 
-    paths_data = db.get_paths_for_version(version_id)
-    paths: List[Dict[str, Any]] = []
-
-    for path_row in paths_data:
-        operations_data = db.get_operations_for_path(path_row['id'])
-        operations: List[Dict[str, Any]] = []
-
-        for op_row in operations_data:
-            # Get operation description
-            op_description = db.get_operation_description(op_row['id'])
-
-            # Get parameters
-            parameters = db.get_parameters_for_operation(op_row['id'])
-
-            # Get request body
-            request_body = db.get_request_body_for_operation(op_row['id'])
-
-            # Get responses
-            responses = db.get_responses_for_operation(op_row['id'])
-
-            operation = {
-                'id': op_row['id'],
-                'operation': op_row['operation'],
-                # Carries the declared method token of a QUERY / custom-method operation (#7048).
-                'metadata': op_row.get('metadata'),
-                'description': op_description,
-                'parameters': parameters,
-                'requestBody': request_body,
-                'responses': responses,
-            }
-            operations.append(operation)
-
-        path = {
-            'id': path_row['id'],
-            'pathname': path_row['pathname'],
-            'summary': path_row.get('summary'),
-            'description': path_row.get('description'),
-            'operations': operations,
-        }
-        paths.append(path)
-
-    return paths
+    return db.load_paths_for_version(version_id)
 
 
 def _security_schemes_from_rows(scheme_rows: List[Dict[str, Any]]) -> Dict[str, Any]:

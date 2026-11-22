@@ -253,7 +253,9 @@ def _get(path: str, **headers: str) -> Any:
             patch("app.browse_agentic_routes.load_public_export_source", return_value=_Source(travel)) as load:
         db.get_tenant_row_by_slug.side_effect = lambda slug: _TENANT if slug == "acme" else None
         db.list_public_browse_projects_for_tenant.return_value = _PROJECTS
-        db.list_public_browse_versions_for_project.side_effect = lambda tenant_id, slug: _VERSIONS[slug]
+        db.list_browse_versions_for_projects.side_effect = (
+            lambda tenant_id, slugs, public: {slug: _VERSIONS[slug] for slug in slugs}
+        )
         response = client.get(path, headers=headers)
     response.db, response.load = db, load  # type: ignore[attr-defined]
     return response
@@ -273,6 +275,9 @@ def test_the_agents_json_route_lists_the_public_slice_of_one_tenant() -> None:
     db.list_public_browse_projects_for_tenant.assert_called_once_with("t-1", require_published=True)
     assert not db.list_member_browse_projects_for_tenant.called
     assert not db.list_member_browse_versions_for_project.called
+    # One query for every project's public versions (DBP-1.6, #7189).
+    db.list_browse_versions_for_projects.assert_called_once()
+    assert db.list_browse_versions_for_projects.call_args.kwargs == {"public": True}
     response.load.assert_called_once_with("acme", "travel", "2.4.0")  # only the agent artifact is loaded
 
 
@@ -311,7 +316,9 @@ def test_an_agent_whose_source_cannot_be_loaded_is_listed_by_page_only() -> None
                   side_effect=ExportSourceError("no source", status_code=422)):
         db.get_tenant_row_by_slug.return_value = _TENANT
         db.list_public_browse_projects_for_tenant.return_value = _PROJECTS
-        db.list_public_browse_versions_for_project.side_effect = lambda tenant_id, slug: _VERSIONS[slug]
+        db.list_browse_versions_for_projects.side_effect = (
+            lambda tenant_id, slugs, public: {slug: _VERSIONS[slug] for slug in slugs}
+        )
         document = json.loads(client.get("/v1/browse/tenants/acme/agents.json").text)
     assert document["a2a"] == []
     assert "Travel Concierge" in [a["name"] for a in document[APIS_KEY]]

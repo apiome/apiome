@@ -347,6 +347,13 @@ def _wire_db(mdb, endpoint=None, tools=None):
     mdb.get_mcp_capability_items.return_value = [
         {"item_type": "tool", **t} for t in (tools if tools is not None else fixture["tools"])
     ]
+    # The queue's batched reads (DBP-1.6, #7189) answer from the same rows.
+    mdb.get_mcp_endpoint_versions_by_ids.side_effect = lambda pairs: {
+        version_id: dict(mdb.get_mcp_endpoint_version.return_value, id=version_id) for _, version_id in pairs
+    }
+    mdb.get_mcp_capability_items_for_versions.side_effect = lambda ids: {
+        version_id: list(mdb.get_mcp_capability_items.return_value) for version_id in ids
+    }
 
 
 def _assert_no_writes(mdb):
@@ -464,6 +471,11 @@ def test_queue_lists_uncategorized_only_by_default():
     assert [i["endpoint_id"] for i in body["items"]] == ["e1", "e3"]
     assert body["items"][0]["suggested_category"] == "databases"
     mdb.list_mcp_endpoints.assert_called_once_with(_TENANT)
+    # One read for the snapshots and one for their tools, not two per endpoint (DBP-1.6, #7189).
+    mdb.get_mcp_endpoint_versions_by_ids.assert_called_once()
+    mdb.get_mcp_capability_items_for_versions.assert_called_once()
+    mdb.get_mcp_endpoint_version.assert_not_called()
+    mdb.get_mcp_capability_items.assert_not_called()
     _assert_no_writes(mdb)
 
 

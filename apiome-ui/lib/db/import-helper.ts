@@ -413,7 +413,7 @@ async function prepareImportMerge(
   const parentPathnames = (
     await client.query('SELECT pathname FROM apiome.version_path WHERE version_id = $1', [parentVersionId])
   ).rows.map((r: { pathname: string }) => String(r.pathname));
-  const parentPaths = await loadCarriedPaths(parentVersionId, parentPathnames);
+  const parentPaths = await loadCarriedPaths(parentVersionId, parentPathnames, client);
   const pathPlan = planMergePaths(parentPaths, incomingPaths, strategy);
   const parentSchemeNames = new Set<string>(
     (
@@ -569,6 +569,7 @@ async function prepareRepositoryMerge(
     carriedPaths = await loadCarriedPaths(
       parentVersionId,
       plan.carried.filter((e) => e.kind === 'path').map((e) => e.key),
+      q,
     );
   }
 

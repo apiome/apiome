@@ -861,9 +861,8 @@ def materialization_preview(
     version = _version_or_404(tenant_id, project_id, version_record_id)
 
     classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, List[Dict[str, Any]]] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
+    # Every class's properties in one query (DBP-1.6, #7189).
+    all_properties = db.get_properties_for_classes([class_data["id"] for class_data in classes])
     # The document without its pins is not a stored state, so it is rendered without the cache.
     document = render_uncached(
         reason=REASON_COMPONENT_PINS_OVERRIDE,

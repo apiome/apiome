@@ -27,7 +27,7 @@ def _get(path):
     try:
         with patch("app.classes_routes.db") as mock_db:
             mock_db.get_version_for_tenant.return_value = {"id": "v1"}
-            mock_db.get_versions_for_tenant.return_value = [{"id": "v1"}]
+            mock_db.get_classes_for_tenant.return_value = [_row("Charge"), _row("Refund")]
             mock_db.get_classes_for_tenant_version.return_value = [
                 _row("Charge", property_count=11, tags=[_TAG]),
                 _row("Refund", property_count=0, tags=[]),
@@ -51,4 +51,8 @@ def test_the_version_list_returns_counts_and_tags() -> None:
 def test_the_unfiltered_list_does_not_ask_for_the_summary() -> None:
     response, mock_db = _get("/v1/classes/acme")
     assert response.status_code == 200, response.text
-    mock_db.get_classes_for_tenant_version.assert_called_once_with("tenant-1", "v1")
+    # One tenant-wide query, not one per version (DBP-1.6, #7189).
+    mock_db.get_classes_for_tenant.assert_called_once_with("tenant-1")
+    mock_db.get_classes_for_tenant_version.assert_not_called()
+    mock_db.get_versions_for_tenant.assert_not_called()
+    assert [c["name"] for c in response.json()] == ["Charge", "Refund"]

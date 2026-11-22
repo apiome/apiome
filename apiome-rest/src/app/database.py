@@ -1547,6 +1547,34 @@ class Database:
         """
         return self.execute_query(query, (version_id, tenant_id))
 
+    def get_classes_for_tenant(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Every live class of every live version of the tenant, in one query (DBP-1.6, #7189).
+
+        The rows and order of :meth:`get_versions_for_tenant` followed by
+        :meth:`get_classes_for_tenant_version` for each version: versions by project name then
+        version label, and each version's classes by name.
+
+        Args:
+            tenant_id: The tenant.
+
+        Returns:
+            Class rows (``id``, ``version_id``, ``name``, ``description``, ``schema``,
+            ``enabled``, ``created_at``, ``updated_at``).
+        """
+        query = """
+            SELECT c.id, c.version_id, c.name, c.description, c.schema, c.enabled,
+                   c.created_at, c.updated_at
+            FROM apiome.classes c
+            JOIN apiome.versions v ON c.version_id = v.id
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND c.deleted_at IS NULL
+            ORDER BY p.name, v.version_id, v.id, c.name ASC
+        """
+        return self.execute_query(query, (tenant_id,))
+
     def create_class(
         self,
         version_id: str,
@@ -2770,6 +2798,42 @@ class Database:
             ORDER BY pathname
         """
         return self.execute_query(query, (version_id,))
+
+    def load_paths_for_version(self, version_id: str) -> List[Dict[str, Any]]:
+        """A revision's paths with every operation's details, in at most six statements.
+
+        The set-based loader of DBP-1.6 (#7189), in place of :meth:`get_paths_for_version` plus
+        the per-operation reads below. See
+        :func:`app.path_operation_loader.load_paths_for_version` for the shape.
+
+        Args:
+            version_id: The revision (``versions.id``).
+
+        Returns:
+            The paths by pathname, each with its operations.
+        """
+        from .path_operation_loader import load_paths_for_version
+
+        return load_paths_for_version(self.execute_query, version_id)
+
+    def get_operations_with_details_for_path(self, version_path_id: str) -> List[Dict[str, Any]]:
+        """One path's operations, each with description, parameters, request body and responses.
+
+        At most five statements, whatever the number of operations (DBP-1.6, #7189); the same
+        rows the per-operation reads below return. See
+        :func:`app.path_operation_loader.load_operations_with_details`.
+
+        Args:
+            version_path_id: The path (``version_path.id``).
+
+        Returns:
+            The operations in method order; empty when the path has none.
+        """
+        from .path_operation_loader import load_operations_with_details
+
+        return load_operations_with_details(self.execute_query, path_id=version_path_id).get(
+            str(version_path_id), []
+        )
 
     def get_operations_for_path(self, version_path_id: str) -> List[Dict[str, Any]]:
         """Get all operations for a specific path."""
@@ -16559,6 +16623,38 @@ class Database:
         rows = self.execute_query(query, (tenant_id, project_id))
         return [str(r["key"]) for r in rows if r.get("key")]
 
+    def get_operation_keys_for_projects(
+        self, tenant_id: str, project_ids: Sequence[str]
+    ) -> Dict[str, List[str]]:
+        """:meth:`get_operation_keys_for_project` for several projects in one query (DBP-1.6, #7189).
+
+        Args:
+            tenant_id: The tenant the projects must belong to.
+            project_ids: The projects (``projects.id``); ids that are not UUIDs are skipped.
+
+        Returns:
+            ``{project_id: [distinct operation keys]}`` with an entry (possibly empty) for every
+            id given.
+        """
+        grouped: Dict[str, List[str]] = {str(pid): [] for pid in project_ids}
+        wanted = [pid for pid in grouped if is_uuid_string(pid)]
+        if not wanted:
+            return grouped
+        query = """
+            SELECT DISTINCT p.id::text AS project_id, o.key
+            FROM apiome.api_operations o
+            JOIN apiome.api_services s ON s.id = o.service_id
+            JOIN apiome.api_artifacts a ON a.id = s.artifact_id
+            JOIN apiome.versions v ON v.id = a.version_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE p.tenant_id = %s AND p.id = ANY(%s::uuid[])
+              AND v.deleted_at IS NULL AND o.key IS NOT NULL
+        """
+        for row in self.execute_query(query, (tenant_id, wanted)):
+            if row.get("key"):
+                grouped[str(row["project_id"])].append(str(row["key"]))
+        return grouped
+
     def persist_canonical_api(
         self,
         *,
@@ -26371,6 +26467,33 @@ class Database:
         """
         return self.execute_query(q, (version_id,))
 
+    def get_mcp_capability_items_for_versions(
+        self, version_ids: Sequence[str]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """:meth:`get_mcp_capability_items` for several snapshots in one query (DBP-1.6, #7189).
+
+        Args:
+            version_ids: The snapshots; non-UUID ids read as empty.
+
+        Returns:
+            ``{version_id: [capability rows in discovery order]}`` with an entry (possibly empty)
+            for every id given.
+        """
+        grouped: Dict[str, List[Dict[str, Any]]] = {str(vid): [] for vid in version_ids}
+        wanted = [vid for vid in grouped if is_uuid_string(vid)]
+        if not wanted:
+            return grouped
+        q = """
+            SELECT version_id, item_type, name, title, description, input_schema,
+                   output_schema, annotations, uri, uri_template, raw, ordinal
+            FROM apiome.mcp_capability_items
+            WHERE version_id = ANY(%s::uuid[])
+            ORDER BY version_id, item_type ASC, ordinal ASC
+        """
+        for row in self.execute_query(q, (wanted,)):
+            grouped[str(row["version_id"])].append(row)
+        return grouped
+
     # The per-change-type tally a version-history row carries, computed by joining the
     # snapshot to its ``mcp_version_changes`` and counting each direction (plus a total).
     # Defined once so the list and single-version reads stay byte-identical.
@@ -26448,6 +26571,46 @@ class Database:
         """
         rows = self.execute_query(q, (endpoint_id, version_id))
         return dict(rows[0]) if rows else None
+
+    def get_mcp_endpoint_versions_by_ids(
+        self, pairs: Sequence[Tuple[str, str]]
+    ) -> Dict[str, Dict[str, Any]]:
+        """:meth:`get_mcp_endpoint_version` for several snapshots in one query (DBP-1.6, #7189).
+
+        Each snapshot is still scoped to its endpoint: a ``(endpoint_id, version_id)`` pair whose
+        version belongs to another endpoint is simply absent.
+
+        Args:
+            pairs: ``(endpoint_id, version_id)`` pairs; pairs with a non-UUID id are skipped.
+
+        Returns:
+            ``{version_id: snapshot row}`` (the columns of :meth:`get_mcp_endpoint_version`).
+        """
+        wanted = [
+            (str(endpoint_id), str(version_id))
+            for endpoint_id, version_id in pairs
+            if is_uuid_string(str(endpoint_id)) and is_uuid_string(str(version_id))
+        ]
+        if not wanted:
+            return {}
+        q = f"""
+            SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
+                   v.server_name, v.server_title, v.server_version, v.instructions,
+                   v.capabilities, v.surface_fingerprint, v.server_branding,
+                   v.discovery_trigger, v.discovery_job_id,
+                   v.discovered_at, v.created_at,
+                   s.score, s.grade, s.scored_at,
+                   {self._MCP_VERSION_CHANGE_COUNTS}
+            FROM apiome.mcp_endpoint_versions v
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
+            LEFT JOIN apiome.mcp_version_changes c ON c.version_id = v.id
+            WHERE (v.endpoint_id, v.id) IN (
+                SELECT * FROM unnest(%s::uuid[], %s::uuid[])
+            )
+            GROUP BY v.id, s.score, s.grade, s.scored_at
+        """
+        rows = self.execute_query(q, ([e for e, _ in wanted], [v for _, v in wanted]))
+        return {str(row["id"]): dict(row) for row in rows}
 
     def get_mcp_version_changes(self, version_id: str) -> List[Dict[str, Any]]:
         """Fetch the stored ``previous → this`` diff rows for a version, in stable order.
@@ -27189,6 +27352,34 @@ class Database:
         )
         return [dict(r) for r in rows]
 
+    def get_newest_live_mcp_endpoint_sources(
+        self, endpoint_ids: Sequence[str]
+    ) -> Dict[str, Dict[str, Any]]:
+        """Each endpoint's newest unretired source, in one query (DBP-1.6, #7189).
+
+        The first row :meth:`list_mcp_endpoint_sources` returns for each endpoint (with
+        ``include_retired=False``).
+
+        Args:
+            endpoint_ids: The endpoints; non-UUID ids are skipped.
+
+        Returns:
+            ``{endpoint_id: source row}``; an endpoint without a live source has no key.
+        """
+        wanted = [str(eid) for eid in endpoint_ids if is_uuid_string(str(eid))]
+        if not wanted:
+            return {}
+        rows = self.execute_query(
+            f"""
+            SELECT DISTINCT ON (endpoint_id) {self._MCP_SOURCE_COLUMNS}
+            FROM apiome.mcp_endpoint_sources
+            WHERE endpoint_id = ANY(%s::uuid[]) AND retired_at IS NULL
+            ORDER BY endpoint_id, created_at DESC
+            """,
+            (wanted,),
+        )
+        return {str(row["endpoint_id"]): dict(row) for row in rows}
+
     def get_mcp_endpoint_source(
         self, endpoint_id: str, source_id: str
     ) -> Optional[Dict[str, Any]]:
@@ -27452,6 +27643,31 @@ class Database:
             ),
         )
         return str(rows[0]["id"]) if rows else None
+
+    def get_latest_mcp_source_sboms(self, source_ids: Sequence[str]) -> Dict[str, Dict[str, Any]]:
+        """:meth:`get_latest_mcp_source_sbom` for several sources in one query (DBP-1.6, #7189).
+
+        Args:
+            source_ids: The sources; non-UUID ids are skipped.
+
+        Returns:
+            ``{source_id: SBOM row}``; a source without an inventory has no key.
+        """
+        wanted = [str(sid) for sid in source_ids if is_uuid_string(str(sid))]
+        if not wanted:
+            return {}
+        rows = self.execute_query(
+            """
+            SELECT DISTINCT ON (source_id)
+                   id, source_id, subject_digest, sbom_format, sbom_spec_version, origin,
+                   components, component_count, sbom_fingerprint, scanned_manifests, created_at
+            FROM apiome.mcp_source_sboms
+            WHERE source_id = ANY(%s::uuid[])
+            ORDER BY source_id, (origin = 'operator_supplied') DESC, created_at DESC
+            """,
+            (wanted,),
+        )
+        return {str(row["source_id"]): dict(row) for row in rows}
 
     def get_latest_mcp_source_sbom(
         self, source_id: str, *, subject_digest: Optional[str] = None
@@ -30899,6 +31115,69 @@ class Database:
         """
         return [dict(r) for r in self.execute_query(q, (tenant_id, project_slug, int(limit)))]
 
+    @staticmethod
+    def _browse_versions_query(*, public: bool, project_filter: str, since_clause: str) -> str:
+        """The published-versions read shared by the browse version listings.
+
+        Args:
+            public: Only ``visibility = 'public'`` versions (the anonymous slice).
+            project_filter: The predicate on ``p.slug`` (``= %s`` or ``= ANY(%s)``).
+            since_clause: An optional ``published_at`` filter.
+
+        Returns:
+            The SQL; each row also carries ``browse_project_slug`` (the project's slug).
+        """
+        visibility = "AND v.visibility = 'public'" if public else ""
+        return f"""
+            SELECT
+                v.id::text AS id,
+                v.version_id AS version_id,
+                v.published_at,
+                v.description,
+                v.change_log,
+                v.protocol,
+                v.source_format,
+                cr.change_model_json,
+                COALESCE(
+                    (
+                        SELECT array_agg(t.name ORDER BY t.name)
+                        FROM apiome.version_tags t
+                        WHERE t.project_id = p.id
+                          AND t.version_id = v.id
+                    ),
+                    ARRAY[]::text[]
+                ) AS tags,
+                p.slug AS browse_project_slug
+            FROM apiome.versions v
+            INNER JOIN apiome.projects p ON v.project_id = p.id
+            LEFT JOIN apiome.change_reports cr
+              ON cr.published_revision_id = v.id
+             AND cr.tenant_id = p.tenant_id
+             AND cr.project_id = p.id
+            WHERE p.tenant_id = %s
+              AND p.slug {project_filter}
+              AND p.deleted_at IS NULL
+              AND v.deleted_at IS NULL
+              AND v.published IS TRUE
+              {visibility}
+              {since_clause}
+        """
+
+    def _browse_versions(
+        self, tenant_id: str, project_slug: str, *, public: bool, since: Optional[datetime]
+    ) -> List[Dict[str, Any]]:
+        """One project's published versions (see :meth:`_browse_versions_query`)."""
+        params: List[Any] = [tenant_id, project_slug]
+        since_clause = ""
+        if since is not None:
+            since_clause = " AND v.published_at IS NOT NULL AND v.published_at >= %s"
+            params.append(since)
+        query = self._browse_versions_query(public=public, project_filter="= %s", since_clause=since_clause)
+        rows = self.execute_query(query, tuple(params))
+        for row in rows:
+            row.pop("browse_project_slug", None)
+        return rows
+
     def list_public_browse_versions_for_project(
         self,
         tenant_id: str,
@@ -30912,46 +31191,7 @@ class Database:
         ``since`` filters on ``published_at`` (inclusive); rows with null ``published_at`` are excluded when
         ``since`` is set.
         """
-        params: List[Any] = [tenant_id, project_slug]
-        since_clause = ""
-        if since is not None:
-            since_clause = " AND v.published_at IS NOT NULL AND v.published_at >= %s"
-            params.append(since)
-
-        query = f"""
-            SELECT
-                v.id::text AS id,
-                v.version_id AS version_id,
-                v.published_at,
-                v.description,
-                v.change_log,
-                v.protocol,
-                v.source_format,
-                cr.change_model_json,
-                COALESCE(
-                    (
-                        SELECT array_agg(t.name ORDER BY t.name)
-                        FROM apiome.version_tags t
-                        WHERE t.project_id = p.id
-                          AND t.version_id = v.id
-                    ),
-                    ARRAY[]::text[]
-                ) AS tags
-            FROM apiome.versions v
-            INNER JOIN apiome.projects p ON v.project_id = p.id
-            LEFT JOIN apiome.change_reports cr
-              ON cr.published_revision_id = v.id
-             AND cr.tenant_id = p.tenant_id
-             AND cr.project_id = p.id
-            WHERE p.tenant_id = %s
-              AND p.slug = %s
-              AND p.deleted_at IS NULL
-              AND v.deleted_at IS NULL
-              AND v.published IS TRUE
-              AND v.visibility = 'public'
-              {since_clause}
-        """
-        return self.execute_query(query, tuple(params))
+        return self._browse_versions(tenant_id, project_slug, public=True, since=since)
 
     def list_member_browse_versions_for_project(
         self,
@@ -30961,45 +31201,32 @@ class Database:
         since: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
         """Published versions for any visibility (tenant member directory)."""
-        params: List[Any] = [tenant_id, project_slug]
-        since_clause = ""
-        if since is not None:
-            since_clause = " AND v.published_at IS NOT NULL AND v.published_at >= %s"
-            params.append(since)
+        return self._browse_versions(tenant_id, project_slug, public=False, since=since)
 
-        query = f"""
-            SELECT
-                v.id::text AS id,
-                v.version_id AS version_id,
-                v.published_at,
-                v.description,
-                v.change_log,
-                v.protocol,
-                v.source_format,
-                cr.change_model_json,
-                COALESCE(
-                    (
-                        SELECT array_agg(t.name ORDER BY t.name)
-                        FROM apiome.version_tags t
-                        WHERE t.project_id = p.id
-                          AND t.version_id = v.id
-                    ),
-                    ARRAY[]::text[]
-                ) AS tags
-            FROM apiome.versions v
-            INNER JOIN apiome.projects p ON v.project_id = p.id
-            LEFT JOIN apiome.change_reports cr
-              ON cr.published_revision_id = v.id
-             AND cr.tenant_id = p.tenant_id
-             AND cr.project_id = p.id
-            WHERE p.tenant_id = %s
-              AND p.slug = %s
-              AND p.deleted_at IS NULL
-              AND v.deleted_at IS NULL
-              AND v.published IS TRUE
-              {since_clause}
+    def list_browse_versions_for_projects(
+        self, tenant_id: str, project_slugs: Sequence[str], *, public: bool
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Published versions of several projects in one query (DBP-1.6, #7189).
+
+        The batched form of :meth:`list_public_browse_versions_for_project` (``public=True``) and
+        :meth:`list_member_browse_versions_for_project` (``public=False``): the same rows, keyed
+        by project slug.
+
+        Args:
+            tenant_id: The tenant.
+            project_slugs: The projects' slugs.
+            public: Only public versions (the anonymous slice).
+
+        Returns:
+            ``{slug: [version rows]}`` with an entry (possibly empty) for every slug given.
         """
-        return self.execute_query(query, tuple(params))
+        grouped: Dict[str, List[Dict[str, Any]]] = {str(slug): [] for slug in project_slugs}
+        if not grouped:
+            return grouped
+        query = self._browse_versions_query(public=public, project_filter="= ANY(%s)", since_clause="")
+        for row in self.execute_query(query, (tenant_id, list(grouped))):
+            grouped[str(row.pop("browse_project_slug"))].append(row)
+        return grouped
 
     # ------------------------------------------------------------------
     # Mock Server instances (#3615, RC1-2.2)
@@ -32808,131 +33035,14 @@ class Database:
         return str(owner) if owner else None
 
     def _cursor_paths_data(self, cursor, version_id: str) -> List[Dict[str, Any]]:
-        """In-transaction replica of ``openapi_generator._load_paths_for_version``."""
-        cursor.execute(
-            """
-            SELECT id, pathname,
-                   metadata->>'summary' as summary,
-                   metadata->>'description' as description
-            FROM apiome.version_path
-            WHERE version_id = %s
-            ORDER BY pathname
-            """,
-            (version_id,),
-        )
-        path_rows = cursor.fetchall()
-        paths: List[Dict[str, Any]] = []
-        for path_row in path_rows:
-            cursor.execute(
-                """
-                SELECT id, version_path_id, operation, metadata, created_at, updated_at
-                FROM apiome.path_operation
-                WHERE version_path_id = %s
-                ORDER BY CASE operation
-                    WHEN 'GET' THEN 1 WHEN 'POST' THEN 2 WHEN 'PUT' THEN 3
-                    WHEN 'PATCH' THEN 4 WHEN 'DELETE' THEN 5 ELSE 6
-                END
-                """,
-                (path_row["id"],),
-            )
-            op_rows = cursor.fetchall()
-            operations: List[Dict[str, Any]] = []
-            for op_row in op_rows:
-                cursor.execute(
-                    """
-                    SELECT id, summary, description, operation_id,
-                           metadata->'tags' as tags,
-                           (metadata->>'deprecated')::boolean as deprecated,
-                           (metadata->>'x-private')::boolean as x_private,
-                           metadata->'external_docs' as external_docs,
-                           metadata
-                    FROM apiome.path_operation_description
-                    WHERE path_operation_id = %s
-                    LIMIT 1
-                    """,
-                    (op_row["id"],),
-                )
-                desc_rows = cursor.fetchall()
-                cursor.execute(
-                    """
-                    SELECT spp.id, spp.name, spp.in_location, spp.summary, spp.description, spp.data
-                    FROM apiome.shared_path_parameter spp
-                    INNER JOIN apiome.path_operation_parameter_link popl
-                        ON spp.id = popl.shared_path_parameter_id
-                    WHERE popl.path_operation_id = %s
-                    ORDER BY CASE spp.in_location
-                        WHEN 'path' THEN 1 WHEN 'query' THEN 2 WHEN 'header' THEN 3 ELSE 4
-                    END, spp.name
-                    """,
-                    (op_row["id"],),
-                )
-                parameters = cursor.fetchall()
-                cursor.execute(
-                    """
-                    SELECT rb.id, rb.name, rb.description, rb.required,
-                        COALESCE(json_agg(json_build_object(
-                            'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id,
-                            'class_name', c.name, 'inline_schema', rbc.inline_schema,
-                            'encoding', rbc.encoding, 'examples', rbc.examples,
-                            'item_schema', rbc.item_schema
-                        )) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types
-                    FROM apiome.shared_path_request_body rb
-                    INNER JOIN apiome.path_operation_request_body_link link
-                        ON rb.id = link.shared_path_request_body_id
-                    LEFT JOIN apiome.shared_path_request_body_content rbc
-                        ON rb.id = rbc.shared_path_request_body_id
-                    LEFT JOIN apiome.classes c ON rbc.class_id = c.id
-                    WHERE link.path_operation_id = %s
-                    GROUP BY rb.id
-                    """,
-                    (op_row["id"],),
-                )
-                request_bodies = cursor.fetchall()
-                cursor.execute(
-                    """
-                    SELECT spr.id, spr.status_code, spr.description, spr.data,
-                           spr.class_id, c.name as class_name, spr.inline_schema,
-                           COALESCE(json_agg(json_build_object(
-                               'id', rc.id, 'media_type', rc.media_type, 'class_id', rc.class_id,
-                               'class_name', rc_class.name, 'inline_schema', rc.inline_schema,
-                               'examples', rc.examples, 'item_schema', rc.item_schema
-                           )) FILTER (WHERE rc.id IS NOT NULL), '[]') as content_types
-                    FROM apiome.shared_path_response spr
-                    INNER JOIN apiome.path_operation_response_link porl
-                        ON spr.id = porl.shared_path_response_id
-                    LEFT JOIN apiome.classes c ON spr.class_id = c.id
-                    LEFT JOIN apiome.shared_path_response_content rc
-                        ON spr.id = rc.shared_path_response_id
-                    LEFT JOIN apiome.classes rc_class ON rc.class_id = rc_class.id
-                    WHERE porl.path_operation_id = %s
-                    GROUP BY spr.id, spr.status_code, spr.description, spr.data,
-                             spr.class_id, c.name, spr.inline_schema
-                    ORDER BY spr.status_code
-                    """,
-                    (op_row["id"],),
-                )
-                responses = cursor.fetchall()
-                operations.append(
-                    {
-                        "id": op_row["id"],
-                        "operation": op_row["operation"],
-                        "metadata": op_row.get("metadata"),
-                        "description": desc_rows[0] if desc_rows else None,
-                        "parameters": parameters,
-                        "requestBody": request_bodies[0] if request_bodies else None,
-                        "responses": responses,
-                    }
-                )
-            paths.append(
-                {
-                    "id": path_row["id"],
-                    "pathname": path_row["pathname"],
-                    "summary": path_row.get("summary"),
-                    "description": path_row.get("description"),
-                    "operations": operations,
-                }
-            )
-        return paths
+        """In-transaction twin of :meth:`load_paths_for_version`, on the caller's cursor.
+
+        Six statements at most (DBP-1.6, #7189), read inside the transaction that holds the
+        revision's row lock, so the optimistic check sees exactly the rows the apply replaces.
+        """
+        from .path_operation_loader import cursor_fetch, load_paths_for_version
+
+        return load_paths_for_version(cursor_fetch(cursor), version_id)
 
     def _cursor_current_merged_document(
         self,
@@ -32966,19 +33076,23 @@ class Database:
             (version_id,),
         )
         classes = cursor.fetchall()
-        all_properties: Dict[str, List[Dict[str, Any]]] = {}
-        for class_row in classes:
+        # Every class's properties in one statement (DBP-1.6, #7189); within a class, the same
+        # order the per-class read used.
+        all_properties: Dict[Any, List[Dict[str, Any]]] = {row["id"]: [] for row in classes}
+        if classes:
+            by_text = {str(class_id): class_id for class_id in all_properties}
             cursor.execute(
                 """
                 SELECT cp.id, cp.class_id, cp.property_id, cp.name, cp.description,
                        cp.data, cp.parent_id, cp.primitive_id, cp.primitive_ref
                 FROM apiome.class_properties cp
-                WHERE cp.class_id = %s
+                WHERE cp.class_id = ANY(%s::uuid[])
                 ORDER BY cp.parent_id NULLS FIRST, cp.name ASC
                 """,
-                (class_row["id"],),
+                (list(by_text),),
             )
-            all_properties[class_row["id"]] = cursor.fetchall()
+            for prop in cursor.fetchall():
+                all_properties[by_text[str(prop["class_id"])]].append(prop)
         cursor.execute(
             """
             SELECT id, version_id, scheme_name, scheme_type, in_location,
@@ -42235,6 +42349,35 @@ class Database:
         )
         return [dict(row) for row in rows]
 
+    def list_comments_for_threads(self, thread_ids: Sequence[str]) -> Dict[str, List[Dict[str, Any]]]:
+        """:meth:`list_comments` for several threads in one query (DBP-1.6, #7189).
+
+        The caller scopes every thread before reading its comments.
+
+        Args:
+            thread_ids: The threads; ids that are not UUIDs read as empty.
+
+        Returns:
+            ``{thread_id: [comment rows, oldest first]}`` with an entry (possibly empty) for every
+            id given.
+        """
+        grouped: Dict[str, List[Dict[str, Any]]] = {str(tid): [] for tid in thread_ids}
+        wanted = [tid for tid in grouped if is_uuid_string(tid)]
+        if not wanted:
+            return grouped
+        rows = self.execute_query(
+            f"""
+            SELECT {self._COMMENT_COLUMNS}
+            FROM apiome.comments c
+            WHERE c.thread_id = ANY(%s::uuid[])
+            ORDER BY c.created_at ASC, c.id ASC
+            """,
+            (wanted,),
+        )
+        for row in rows:
+            grouped[str(row["thread_id"])].append(dict(row))
+        return grouped
+
     def get_comment(self, *, thread_id: str, comment_id: str) -> Optional[Dict[str, Any]]:
         """Read one comment of a thread (COL-1.1, #4513).
 
@@ -46139,7 +46282,9 @@ class Database:
             SELECT c.id, c.name, c.kind, c.description, c.owner_id,
                    c.created_by, c.created_at, c.updated_at,
                    COUNT(r.id) AS revision_count,
-                   COUNT(r.id) FILTER (WHERE r.state = 'published') AS published_count
+                   COUNT(r.id) FILTER (WHERE r.state = 'published') AS published_count,
+                   ARRAY_REMOVE(ARRAY_AGG(r.revision) FILTER (WHERE r.state = 'published'), NULL)
+                       AS published_revisions
             FROM apiome.operational_components c
             LEFT JOIN apiome.operational_component_revisions r ON r.component_id = c.id
             WHERE c.tenant_id = %s AND c.deleted_at IS NULL"""
@@ -46153,15 +46298,11 @@ class Database:
         )
         from .component_library import parse_semver
 
+        # The published revisions come with the summary row (DBP-1.6, #7189), not one query
+        # per component.
         for row in rows:
-            published = self.execute_query(
-                """
-                SELECT revision FROM apiome.operational_component_revisions
-                WHERE component_id = %s::uuid AND state = 'published'
-                """,
-                (str(row["id"]),),
-            )
-            revisions = [p["revision"] for p in published if parse_semver(p.get("revision"))]
+            published = row.pop("published_revisions", None) or []
+            revisions = [revision for revision in published if parse_semver(revision)]
             row["head_revision"] = (
                 max(revisions, key=parse_semver) if revisions else None
             )

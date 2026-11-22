@@ -282,7 +282,8 @@ class _RecordingDb:
 
     It understands exactly the statement shapes :mod:`app.canonical_persistence` issues —
     ``INSERT INTO apiome.<table> (cols) … RETURNING id``, ``UPDATE … SET deleted_at``, and
-    ``SELECT * FROM apiome.<table> WHERE <parent>_id = %s`` — which is enough to prove the agent
+    ``SELECT <columns> FROM apiome.<table> WHERE <column> = %s::uuid [AND …]`` (the per-revision
+    child reads group on ``loader_parent_id``) — which is enough to prove the agent
     rows are written and read back through the real SQL code path.
     """
 
@@ -327,14 +328,20 @@ class _RecordingDb:
             self.tables.setdefault(table, []).append(row)
             self._result = [{"id": row["id"]}]
             return
-        select = re.match(r"SELECT \* FROM apiome\.(\w+) WHERE (\w+) = %s::uuid", q)
-        if select:
-            table, column = select.group(1), select.group(2)
+        select = re.match(r"SELECT (.+?) FROM apiome\.(\w+) WHERE (.+?)(?: ORDER BY .*| LIMIT .*)?$", q)
+        if select and select.group(1) != "id":
+            columns, table, where = select.groups()
+            conditions = list(zip(re.findall(r"(\w+) = %s::uuid", where), params))
             rows = [
                 r for r in self.tables.get(table, [])
-                if str(r.get(column)) == str(params[0]) and r.get("deleted_at") is None
+                if all(str(r.get(col)) == str(value) for col, value in conditions)
+                and r.get("deleted_at") is None
             ]
-            self._result = sorted(rows, key=lambda r: (r.get("ordinal") or 0, r.get("key") or ""))
+            parent = re.match(r"(\w+) AS loader_parent_id", columns)
+            self._result = [
+                {**r, **({"loader_parent_id": r.get(parent.group(1))} if parent else {})}
+                for r in sorted(rows, key=lambda r: (r.get("ordinal") or 0, r.get("key") or ""))
+            ]
             return
         # UPDATE … soft-delete statements and the live-artifact SELECT id: nothing live yet.
         self._result = []

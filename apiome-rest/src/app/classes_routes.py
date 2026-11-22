@@ -52,16 +52,8 @@ def list_classes(
             )
         classes = db.get_classes_for_tenant_version(auth_data['tenant_id'], version_id, with_summary=True)
     else:
-        # Get all classes across all versions for the tenant
-        # We'll need to get all versions first, then all classes for each
-        versions = db.get_versions_for_tenant(auth_data['tenant_id'])
-        classes = []
-        for version in versions:
-            version_classes = db.get_classes_for_tenant_version(
-                auth_data['tenant_id'],
-                version['id']
-            )
-            classes.extend(version_classes)
+        # Every class of every live version of the tenant, in one query (DBP-1.6, #7189)
+        classes = db.get_classes_for_tenant(auth_data['tenant_id'])
 
     return [ClassSchema(**c) for c in classes]
 

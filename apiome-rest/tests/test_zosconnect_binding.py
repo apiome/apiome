@@ -228,7 +228,9 @@ def test_the_route_serves_the_binding(authed):
         ]
         db.get_cobol_record_holders.return_value = [peers[0], peers[1]]
         db.get_identity_suggestion_candidates.return_value = [_row("api", "Inventory API", "openapi-3.0")]
-        db.get_operation_keys_for_project.return_value = ["GET /items/{sku}/stock"]
+        db.get_operation_keys_for_projects.side_effect = lambda tid, pids: {
+            pid: ["GET /items/{sku}/stock"] for pid in pids
+        }
         response = client.get(_URL)
     assert response.status_code == 200
     body = response.json()

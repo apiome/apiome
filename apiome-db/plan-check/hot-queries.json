@@ -116,6 +116,31 @@
       ]
     },
     {
+      "name": "rest.operations_for_version",
+      "source": "apiome-rest/src/app/path_operation_loader.py load_operations_with_details (document render, source apply; DBP-1.6 #7189)",
+      "sql": "SELECT po.id, po.version_path_id, po.operation, po.metadata, po.created_at, po.updated_at FROM apiome.path_operation po INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id WHERE vp.version_id = $1 ORDER BY po.version_path_id, CASE po.operation WHEN 'GET' THEN 1 WHEN 'POST' THEN 2 WHEN 'PUT' THEN 3 WHEN 'PATCH' THEN 4 WHEN 'DELETE' THEN 5 ELSE 6 END",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "rest.operation_responses_for_version",
+      "source": "apiome-rest/src/app/path_operation_loader.py load_operations_with_details, responses (DBP-1.6 #7189)",
+      "sql": "SELECT porl.path_operation_id AS loader_path_operation_id, spr.id, spr.status_code, spr.description, spr.data, spr.class_id, c.name as class_name, spr.inline_schema, COALESCE(json_agg(json_build_object('id', rc.id, 'media_type', rc.media_type, 'class_id', rc.class_id, 'class_name', rc_class.name, 'inline_schema', rc.inline_schema, 'examples', rc.examples, 'item_schema', rc.item_schema) ORDER BY rc.ctid) FILTER (WHERE rc.id IS NOT NULL), '[]') as content_types FROM apiome.shared_path_response spr INNER JOIN apiome.path_operation_response_link porl ON spr.id = porl.shared_path_response_id INNER JOIN apiome.path_operation po ON po.id = porl.path_operation_id INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id LEFT JOIN apiome.classes c ON spr.class_id = c.id LEFT JOIN apiome.shared_path_response_content rc ON spr.id = rc.shared_path_response_id LEFT JOIN apiome.classes rc_class ON rc.class_id = rc_class.id WHERE vp.version_id = $1 GROUP BY porl.path_operation_id, spr.id, spr.status_code, spr.description, spr.data, spr.class_id, c.name, spr.inline_schema ORDER BY porl.path_operation_id, spr.status_code",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "rest.canonical_operations_for_version",
+      "source": "apiome-rest/src/app/canonical_persistence.py load_canonical_api, _children_by_parent (DBP-1.6 #7189)",
+      "sql": "SELECT service_id AS loader_parent_id, id, key, name, kind, streaming, http_method, http_path, channel_ref, description, deprecated, parameters, tags, ordinal, extras FROM apiome.api_operations WHERE tenant_id = $1::uuid AND version_id = $2::uuid AND deleted_at IS NULL ORDER BY ordinal ASC, key ASC",
+      "params": [
+        "scale:tenant:0",
+        "scale:version:1"
+      ]
+    },
+    {
       "name": "rest.revision_closure",
       "source": "apiome-rest/src/app/database.py Database.fetch_revision_closure (merge preview, revision graph)",
       "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id::text = ANY($1) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN closure c ON v.id = c.parent_version_id OR v.id = c.merge_parent_version_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) SELECT id::text AS id, parent_version_id::text AS parent_version_id, merge_parent_version_id::text AS merge_parent_version_id, created_at, version_id FROM closure",

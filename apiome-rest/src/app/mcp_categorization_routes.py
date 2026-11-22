@@ -394,6 +394,38 @@ def _endpoint_surface(
     return version, server, tools
 
 
+def _endpoint_surfaces(
+    endpoints: List[Dict[str, Any]],
+) -> List[Tuple[Optional[Dict[str, Any]], Dict[str, Any], List[Dict[str, Any]]]]:
+    """:func:`_endpoint_surface` for many endpoints, in two statements (DBP-1.6, #7189).
+
+    Args:
+        endpoints: The catalog entries.
+
+    Returns:
+        ``(version, server, tools)`` per endpoint, in the order given.
+    """
+    pairs = [
+        (str(endpoint["id"]), str(endpoint["current_version_id"]))
+        for endpoint in endpoints
+        if endpoint.get("current_version_id")
+    ]
+    versions = db.get_mcp_endpoint_versions_by_ids(pairs) if pairs else {}
+    items = db.get_mcp_capability_items_for_versions(list(versions)) if versions else {}
+    surfaces = []
+    for endpoint in endpoints:
+        server: Dict[str, Any] = {"name": endpoint.get("name")}
+        version_id = endpoint.get("current_version_id")
+        version = versions.get(str(version_id)) if version_id else None
+        if version is None:
+            surfaces.append((None, server, []))
+            continue
+        for key in ("server_name", "server_title", "instructions"):
+            server[key] = version.get(key)
+        surfaces.append((version, server, tools_from_capability_items(items.get(str(version["id"]), []))))
+    return surfaces
+
+
 def _suggestion_out(suggestions: List[CategorySuggestion]) -> List[McpCategorySuggestionOut]:
     """Project heuristic :class:`CategorySuggestion` values onto the wire model."""
     return [McpCategorySuggestionOut.model_validate(s.as_dict()) for s in suggestions]
@@ -511,8 +543,9 @@ def list_mcp_category_suggestions(
     ]
 
     items: List[McpCategorySuggestionQueueItemOut] = []
-    for endpoint in endpoints[:limit]:
-        _, server, tools = _endpoint_surface(endpoint)
+    page = endpoints[:limit]
+    # Every listed endpoint's snapshot and tools in two statements (DBP-1.6, #7189).
+    for endpoint, (_, server, tools) in zip(page, _endpoint_surfaces(page)):
         suggestions = suggest_categories(server, tools, categories)
         items.append(
             McpCategorySuggestionQueueItemOut(

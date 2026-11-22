@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.816.0] - 2026-11-22
+
+### Performance
+- **Batch loaders for paths, operations and the canonical model (DBP-1.6, #7189).** OpenAPI 1.640.0 (version only;
+  no schema change). No endpoint's request, response or permissions change. A corpus test reads every valid import
+  corpus document with the old and the new loaders and requires identical output.
+  - **One path loader:** new `app.path_operation_loader` reads a version's paths, operations, descriptions,
+    parameters, request bodies and responses with one statement per table (6 in all), assembled in Python. It
+    replaces the `1 + P + 4·O` loop in the four places that had it: the OpenAPI generator's path load (document
+    render, `versions_routes`, the compatibility engine, the URL-import refresh sweep), `GET
+    /v1/paths/{tenant}/{version}/{path}/full` (Studio canvas), and the source-apply read on the transaction's cursor
+    (`_cursor_paths_data`, `_cursor_current_merged_document`). New `Database.load_paths_for_version` and
+    `Database.get_operations_with_details_for_path`. Content types keep the order the per-operation reads returned
+    (physical order, now asked for with `ORDER BY ctid` inside `json_agg`).
+  - **Source apply:** `_cursor_current_merged_document` reads every class's properties in one statement instead of
+    one per class, while the version's row lock is held.
+  - **Canonical model:** `load_canonical_api` reads each child table (`api_operations`, `api_messages`, `api_fields`,
+    `api_agent_skills`) once for the version, by `version_id`, and groups the rows by parent; every read names its
+    columns instead of `SELECT *`. 8 statements, whatever the size (was one per service, operation, type and agent).
+  - **Per-item loops batched:** the public JSON Schema endpoint and the component materialization preview use
+    `get_properties_for_classes`; `GET /v1/classes/{tenant}` without `version_id` uses new
+    `get_classes_for_tenant`; xRegistry and `agents.json` / `llms.txt` use new `list_browse_versions_for_projects`;
+    identity suggestions and the z/OS Connect binding use new `get_operation_keys_for_projects`; the MCP Registry
+    listing reads every server's snapshot, capability items, newest source and SBOM in four statements (was about
+    four per server) through new `get_mcp_endpoint_versions_by_ids`, `get_mcp_capability_items_for_versions`,
+    `get_newest_live_mcp_endpoint_sources` and `get_latest_mcp_source_sboms`; the MCP category suggestion queue uses
+    the first two; consumer feedback uses new `list_comments_for_threads`; `list_operational_components` aggregates
+    the published revisions in its summary query.
+  - **Measured** on the DBP-1.1 scale database: a 1,000-operation spec's path load 4,251 → 6 statements (529 → 27
+    ms); its canonical load 1,007 → 8 statements (90 → 62 ms); the 20,000-class version's properties 19,000 → 1
+    statement (4.6 s → 0.39 s); the source-apply read of the 20,000-class version 19,033 → 12 statements (2.5 s →
+    0.54 s), of the 1,000-operation spec 4,257 → 12 (389 → 81 ms).
+  - **Budgets:** `tests/query_budgets.json` records the same count at 10 and at 1,000 operations for
+    `Database.load_paths_for_version` (6), `GET /v1/paths/{tenant}/{version}/{path}/full` (6),
+    `Database._cursor_current_merged_document` (11), `load_canonical_api` (8) and the cold document render (19).
+    `apiome-db plan-check` adds `rest.operations_for_version`, `rest.operation_responses_for_version` and
+    `rest.canonical_operations_for_version`.
+  - **UI:** the paths export loader (`loadPathsForOpenAPIExport`, used by repository merges) reads with the same six
+    statements and runs on the caller's transaction client instead of checking out another pool connection;
+    referenced classes read their properties in one statement; the relationship graph uses the batched property read;
+    feature entitlements resolve every flag in one statement.
+
 ## [1.815.0] - 2026-11-22
 
 ### Performance

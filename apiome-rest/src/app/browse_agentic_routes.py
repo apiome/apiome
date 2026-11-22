@@ -111,9 +111,13 @@ def published_artifacts(tenant_slug: str, tenant_id: str) -> List[PublishedArtif
     """
     artifacts: List[PublishedArtifact] = []
     projects = db.list_public_browse_projects_for_tenant(tenant_id, require_published=True)
+    # Every project's public versions in one query (DBP-1.6, #7189).
+    versions_by_slug = db.list_browse_versions_for_projects(
+        tenant_id, [str(project["slug"]) for project in projects], public=True
+    )
     for project in sorted(projects, key=lambda row: (str(row.get("name") or "").lower(), str(row["slug"]))):
         slug = str(project["slug"])
-        versions = _sort_versions_semver_desc(db.list_public_browse_versions_for_project(tenant_id, slug))
+        versions = _sort_versions_semver_desc(versions_by_slug.get(slug, []))
         if not versions:
             continue
         latest = str(project.get("latest_version") or "")
