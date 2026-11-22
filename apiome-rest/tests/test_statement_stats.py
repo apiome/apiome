@@ -235,4 +235,5 @@ def test_the_pool_opens_connections_with_the_counting_cursor() -> None:
 
     from app import database
 
-    assert "cursor_factory=CountingDictCursor" in inspect.getsource(database.Database.connect)
+    # New connections are opened in one place since DBP-1.2 (#7185).
+    assert "cursor_factory=CountingDictCursor" in inspect.getsource(database.Database._open_connection)

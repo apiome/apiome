@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
 from .database import db
+from .db_timeouts import long_statements
 from .document_migration import (
     MAX_BATCH_SIZE,
     MAX_WORKERS,
@@ -124,7 +125,9 @@ _state = _RunState()
 def _run(options: MigrationOptions) -> None:
     """Thread body: run the step and keep its report (or error) for the status endpoint."""
     try:
-        report = run_document_migration(db, get_document_store(), options)
+        # Copies every legacy document: the long statement ceiling applies (DBP-1.2, #7185).
+        with long_statements():
+            report = run_document_migration(db, get_document_store(), options)
         _state.report, _state.error = report.as_dict(), None
     except (MigrationRefused, MigrationBusy) as exc:
         _state.report, _state.error = None, str(exc)

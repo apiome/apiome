@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     #: Idle database connections kept for reuse. Each thread that touches the database holds one
     #: connection while it lives, so connections in use are bounded by the server's worker threads.
     db_pool_max_idle: int = 10
+    #: Most database connections one process may have in use at once, across every ``Database``
+    #: handle (``0`` = no cap). Past it ``Database.connect`` raises ``ConnectionPoolExhausted``
+    #: instead of opening another one. Size it so ``db_pool_max_in_use x replicas`` stays below the
+    #: server's ``max_connections`` (DBP-1.2, #7185).
+    db_pool_max_in_use: int = 80
     #: Seconds to wait for a new database connection before giving up (``0`` waits forever).
     db_connect_timeout_seconds: int = 10
     #: Milliseconds a statement may wait for a lock before it fails instead of hanging (``0`` = no
@@ -55,8 +60,13 @@ class Settings(BaseSettings):
     #: Milliseconds a connection may sit inside an open transaction doing nothing before PostgreSQL
     #: ends the session and releases its locks (``0`` = no limit).
     db_idle_in_transaction_timeout_ms: int = 300000
-    #: Milliseconds one statement may run (``0`` = no limit, the default: imports run long statements).
-    db_statement_timeout_ms: int = 0
+    #: Milliseconds one statement may run on a request connection (``0`` = no limit). Imports,
+    #: exports, migrations and background sweeps run under ``db_long_statement_timeout_ms`` instead
+    #: (``app.db_timeouts.long_statements``, DBP-1.2, #7185).
+    db_statement_timeout_ms: int = 30000
+    #: Milliseconds one statement may run inside ``long_statements()``: imports, exports, document
+    #: migrations and background sweeps (``0`` = no limit).
+    db_long_statement_timeout_ms: int = 1800000
 
     host: str = "0.0.0.0"
     port: int = 8000

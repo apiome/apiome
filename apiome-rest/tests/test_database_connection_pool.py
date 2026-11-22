@@ -155,13 +155,15 @@ def test_new_connections_carry_timeouts_and_keepalives(monkeypatch) -> None:
     assert kwargs["application_name"] == "apiome-rest"
     assert "-c lock_timeout=30000" in kwargs["options"]
     assert "-c idle_in_transaction_session_timeout=300000" in kwargs["options"]
-    assert "statement_timeout" not in kwargs["options"].replace("idle_in_transaction_session_timeout", "")
+    # Request connections get a statement ceiling by default (DBP-1.2, #7185).
+    assert "-c statement_timeout=30000" in kwargs["options"]
 
 
 def test_a_zero_timeout_is_left_unset(monkeypatch) -> None:
     monkeypatch.setattr(database_module.settings, "db_connect_timeout_seconds", 0)
     monkeypatch.setattr(database_module.settings, "db_lock_timeout_ms", 0)
     monkeypatch.setattr(database_module.settings, "db_idle_in_transaction_timeout_ms", 0)
+    monkeypatch.setattr(database_module.settings, "db_statement_timeout_ms", 0)
     kwargs = _connect_kwargs(monkeypatch)
     assert "connect_timeout" not in kwargs
     assert "options" not in kwargs

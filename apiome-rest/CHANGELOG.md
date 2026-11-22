@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.812.0] - 2026-11-22
+
+### Performance
+- **Connection layer: autocommit reads, statement timeout, bulk-write helper, long-lived sweep connections (DBP-1.2,
+  #7185).** OpenAPI 1.636.0 (version only; no schema change).
+  - **One statement per read:** `execute_query` and `_execute_write` run in autocommit when the connection is idle, so
+    PostgreSQL receives the statement alone, without psycopg2's implicit `BEGIN` before it and `COMMIT` after it.
+    Multi-statement writers (`_begin_tx`, `_guarded_tx`, `db_cursor`, raw cursors) keep their transactions.
+    `Database.read_tx()` runs several reads against one `REPEATABLE READ, READ ONLY` snapshot.
+  - **Statement timeout:** `DB_STATEMENT_TIMEOUT_MS` now defaults to `30000` (was `0`, off). A statement past it raises
+    `StatementTimeout` (a `psycopg2.errors.QueryCanceled`), which a request answers as `503` with error type
+    `statement_timeout`. Imports, exports, document migrations, the Compass catalog import and every background sweep
+    run under `long_statements()`, which uses `DB_LONG_STATEMENT_TIMEOUT_MS` (default `1800000`).
+  - **Bulk writes:** `Database.bulk_insert(table, columns, rows, returning=None, page_size=1000)` sends one
+    `execute_values` statement per page. `Database.bulk_upsert(...)` sends one `INSERT … SELECT FROM unnest(…)
+    ON CONFLICT` statement. The repository file walk's per-row `executemany` now uses `bulk_insert`.
+  - **pgvector:** the adapter is registered once per connection (`Database.vector_ready`), not before every
+    semantic query.
+  - **Sweeps:** each of the 18 lifespan sweeps and the push-webhook instant refresh keeps one `Database` across ticks.
+    Its connection goes back to the pool between ticks (and forgotten session advisory locks are dropped), so a
+    tick no longer reconnects. The catalog-refresh and URL-import-refresh sweeps take and release their advisory
+    lock on one dedicated connection (`SessionAdvisoryLock`): before, the release could run on another pooled
+    connection and leave the lock held.
+  - **Connection cap:** `DB_POOL_MAX_IN_USE` (default `80`, `0` = none) caps the connections one instance has in use.
+    Past it, `connect()` raises `ConnectionPoolExhausted` and a request answers `503 database_busy`. Sizing rule:
+    `DB_POOL_MAX_IN_USE` × REST replicas < `max_connections` (see *Operating Apiome*).
+
 ## [1.811.0] - 2026-11-22
 
 ### Performance

@@ -39,6 +39,7 @@ from .catalog_migration_models import (
 )
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .db_timeouts import long_statements
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/tenants", tags=["catalog-migrations"])
@@ -112,9 +113,11 @@ async def import_compass_export(
     _ = tenant_slug
     actor = _permit(auth_data, Action.CREATE, "catalog-migrations")
     try:
-        return store.import_compass_export(
-            _tenant_id(auth_data), body.filename, body.content.encode("utf-8"), actor=actor
-        )
+        # An import: the long statement ceiling applies, not the 30 s request one (DBP-1.2, #7185).
+        with long_statements():
+            return store.import_compass_export(
+                _tenant_id(auth_data), body.filename, body.content.encode("utf-8"), actor=actor
+            )
     except MigrationError as exc:
         raise _http(exc) from exc
 

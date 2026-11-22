@@ -20,12 +20,13 @@ from app import catalog_refresh
 from app.catalog_refresh import DiscoveryResult, register_discovery_runner
 from app.catalog_refresh_sweep import AsyncHostPoliteness, process_catalog_refresh_sweep
 from app.config import settings
+from tests.advisory_lock_fakes import LockingDbMixin
 
 _TENANT = "11111111-1111-4111-8111-111111111111"
 _OTHER_TENANT = "44444444-4444-4444-8444-444444444444"
 
 
-class _LockDb:
+class _LockDb(LockingDbMixin):
     """Answers the sweep's advisory-lock queries; ``locked=False`` simulates another holder."""
 
     def __init__(self, locked: bool = True) -> None:
@@ -149,6 +150,8 @@ def test_the_lock_is_released_after_the_tick(store, calls):
     db = _LockDb()
     _tick(store, db)
     assert "pg_advisory_unlock" in db.queries[-1]
+    # Taken and released on one checked-out connection, which went back (DBP-1.2, #7185).
+    assert db.checked_out == 0
 
 
 def test_concurrency_never_exceeds_the_cap(store, monkeypatch):

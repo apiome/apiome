@@ -158,12 +158,16 @@ def test_replace_tenant_repository_files_persists_commit_recency() -> None:
             "committed_at": "2026-06-20T10:00:00Z",
         }
     ]
+    bulk: List[Any] = []
+    db.bulk_insert = lambda table, columns, rows, **kw: bulk.append((table, list(columns), list(rows))) or []
     db.replace_tenant_repository_files("11111111-1111-1111-1111-111111111111", "main", files)
 
-    insert = next(q for q in cursor.executed if "INSERT INTO apiome.tenant_repository_files" in q[0])
-    assert "commit_sha, committed_at" in insert[0]
+    # The rows go in as one bulk insert since DBP-1.2 (#7185).
+    table, columns, rows = bulk[0]
+    assert table == "apiome.tenant_repository_files"
+    assert columns[-2:] == ["commit_sha", "committed_at"]
     # The per-row tuple includes the two new trailing values.
-    row_tuple = insert[1][0]
+    row_tuple = rows[0]
     assert row_tuple[-2] == "tip1"
     assert row_tuple[-1] == "2026-06-20T10:00:00Z"
 

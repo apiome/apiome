@@ -30,6 +30,7 @@ sweep does not walk the repository again for the push it already handled.
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any, Iterable, NamedTuple, Optional, Tuple
 
 _logger = logging.getLogger(__name__)
@@ -233,28 +234,49 @@ def refresh_pushed_files(
     )
 
 
+_instant_db: Any = None
+_instant_db_lock = threading.Lock()
+
+
+def _instant_refresh_db() -> Any:
+    """The one ``Database`` every instant refresh shares, so a push does not open a connection.
+
+    Built on first use; each refresh thread leases its own pooled connection from it and gives
+    it back when the refresh ends.
+    """
+    global _instant_db
+    with _instant_db_lock:
+        if _instant_db is None:
+            from .sweep_runtime import sweep_database
+
+            _instant_db = sweep_database()
+        return _instant_db
+
+
 def run_instant_refresh(*, tenant_id: str, repository_id: str, branch: str, paths: Tuple[str, ...]) -> None:
     """Run :func:`refresh_pushed_files` on its own database connection (the webhook's background task).
 
     The webhook answers the provider first — a branch rescan can outlast a provider's delivery
     timeout — then this runs in a worker thread, as the sweeps do.
     """
-    from .database import Database
+    from .db_timeouts import long_statements
 
-    thread_db = Database()
+    thread_db = _instant_refresh_db()
     try:
-        result = refresh_pushed_files(
-            thread_db, tenant_id=tenant_id, repository_id=repository_id, branch=branch, paths=paths
-        )
-        _logger.info(
-            "instant refresh repository_id=%s branch=%s files=%d enqueued=%d reason=%s",
-            repository_id,
-            branch,
-            len(paths),
-            result.enqueued,
-            result.reason,
-        )
+        with long_statements():
+            result = refresh_pushed_files(
+                thread_db, tenant_id=tenant_id, repository_id=repository_id, branch=branch, paths=paths
+            )
+            _logger.info(
+                "instant refresh repository_id=%s branch=%s files=%d enqueued=%d reason=%s",
+                repository_id,
+                branch,
+                len(paths),
+                result.enqueued,
+                result.reason,
+            )
     except Exception:  # noqa: BLE001 - a background task has nobody to raise to
         _logger.exception("instant refresh task failed repository_id=%s", repository_id)
     finally:
-        thread_db.close()
+        # Back to the shared handle's pool, not closed: the next push reuses it (DBP-1.2, #7185).
+        thread_db.release_connections(this_thread_only=True)

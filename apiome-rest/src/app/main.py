@@ -64,7 +64,8 @@ from .consumer_binding_routes import router as consumer_binding_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
 from .contract_suite_routes import router as contract_suite_router
-from .database import Database, db
+from .database import ConnectionPoolExhausted, StatementTimeout, db
+from .sweep_runtime import async_sweep_tick, close_sweep_databases, sweep_database, sweep_tick
 from .deploy_gate_routes import router as deploy_gate_router
 from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
 from .domains_routes import router as domains_router
@@ -264,7 +265,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.635.0",
+    version="1.636.0",
 )
 
 
@@ -363,6 +364,41 @@ async def validation_exception_handler(
         request_id=_request_id_of(request),
     )
     return JSONResponse(status_code=422, content=envelope)
+
+
+def _database_busy_response(request: Request, *, message: str, error_type: str, exc: Exception) -> JSONResponse:
+    """A ``503`` envelope with ``Retry-After`` for a database that is busy rather than broken."""
+    request_id = _request_id_of(request)
+    _error_log.bind(request_id=request_id).warning(error_type, path=request.url.path, error=str(exc)[:200])
+    envelope = build_error_envelope(
+        status_code=503, message=message, detail=message, error_type=error_type, request_id=request_id
+    )
+    headers = {"Retry-After": "5"}
+    if request_id:
+        headers[settings.request_id_header] = request_id
+    return JSONResponse(status_code=503, content=envelope, headers=headers)
+
+
+@app.exception_handler(StatementTimeout)
+async def statement_timeout_handler(request: Request, exc: StatementTimeout) -> JSONResponse:
+    """A statement ran past ``DB_STATEMENT_TIMEOUT_MS`` (DBP-1.2, #7185): ``503 statement_timeout``."""
+    return _database_busy_response(
+        request,
+        message="The database took too long to answer this request. Try again shortly.",
+        error_type="statement_timeout",
+        exc=exc,
+    )
+
+
+@app.exception_handler(ConnectionPoolExhausted)
+async def connection_pool_exhausted_handler(request: Request, exc: ConnectionPoolExhausted) -> JSONResponse:
+    """Every allowed connection is in use (``DB_POOL_MAX_IN_USE``, DBP-1.2): ``503 database_busy``."""
+    return _database_busy_response(
+        request,
+        message="The service is at its database connection limit. Try again shortly.",
+        error_type="database_busy",
+        exc=exc,
+    )
 
 
 @app.exception_handler(Exception)
@@ -799,13 +835,14 @@ async def startup_event():
 
     async def _webhook_delivery_sweep() -> None:
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(15)
             try:
                 def _run_in_thread() -> int:
-                    """Run delivery with a dedicated, thread-local DB connection."""
-                    thread_db = Database()
-                    try:
+                    """Run delivery on the sweep's long-lived handle (one pooled connection across ticks)."""
+                    with sweep_tick(sweep_db) as thread_db:
                         made = process_due_push_webhook_deliveries(thread_db)
                         # Export webhook deliveries (MFX-38.2) retry on the same tick and backoff; a
                         # fault in one queue never starves the other.
@@ -814,8 +851,6 @@ async def startup_event():
                         except Exception:
                             log.exception("export webhook delivery sweep")
                         return made
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_in_thread)
             except asyncio.CancelledError:
@@ -825,18 +860,17 @@ async def startup_event():
 
     async def _repository_file_scan_sweep() -> None:
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(5)
             try:
 
                 def _run_scan() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .repository_file_scan import process_next_repository_file_scan_job
 
                         return process_next_repository_file_scan_job(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_scan)
             except asyncio.CancelledError:
@@ -857,13 +891,14 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.refresh_min_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
 
                 def _run_refresh() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .repository_refresh_sweep import (
                             process_repository_refresh_sweep,
                         )
@@ -878,8 +913,6 @@ async def startup_event():
                         except Exception:
                             log.exception("catalog connector sweep")
                         return enqueued
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_refresh)
             except asyncio.CancelledError:
@@ -898,16 +931,15 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.refresh_min_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
                 from .url_import_refresh_sweep import process_url_import_refresh_sweep
 
-                thread_db = Database()
-                try:
+                async with async_sweep_tick(sweep_db) as thread_db:
                     await process_url_import_refresh_sweep(thread_db)
-                finally:
-                    thread_db.close()
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -926,20 +958,19 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.repository_quality_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
 
                 def _run_quality() -> Any:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .repository_quality_sweep import (
                             process_repository_spec_quality_batch,
                         )
 
                         return process_repository_spec_quality_batch(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_quality)
             except asyncio.CancelledError:
@@ -964,6 +995,8 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.mcp_discovery_min_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
@@ -972,11 +1005,8 @@ async def startup_event():
                 # The due-selection read runs on a dedicated connection (like the other
                 # sweeps) so it never contends with request handlers on the shared `db`.
                 # The dispatched discovery runs use the engine's own (global) handle.
-                thread_db = Database()
-                try:
+                async with async_sweep_tick(sweep_db) as thread_db:
                     await process_mcp_discovery_sweep(thread_db)
-                finally:
-                    thread_db.close()
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -995,16 +1025,15 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.mcp_health_min_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
                 from .mcp_health_sweep import process_mcp_health_sweep
 
-                thread_db = Database()
-                try:
+                async with async_sweep_tick(sweep_db) as thread_db:
                     await process_mcp_health_sweep(thread_db)
-                finally:
-                    thread_db.close()
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -1019,16 +1048,15 @@ async def startup_event():
         checks, so the next tick starts only after this one drains.
         """
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
                 from .catalog_refresh_sweep import process_catalog_refresh_sweep
 
-                thread_db = Database()
-                try:
+                async with async_sweep_tick(sweep_db) as thread_db:
                     await process_catalog_refresh_sweep(thread_db)
-                finally:
-                    thread_db.close()
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -1047,20 +1075,19 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.mcp_digest_min_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
 
                 def _run_digest() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .mcp_catalog_digest_sweep import (
                             process_mcp_catalog_digest_sweep,
                         )
 
                         return process_mcp_catalog_digest_sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_digest)
             except asyncio.CancelledError:
@@ -1077,18 +1104,17 @@ async def startup_event():
         from .catalog_graph import SWEEP_INTERVAL_SECONDS
 
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(SWEEP_INTERVAL_SECONDS)
             try:
 
                 def _run_graph() -> None:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .catalog_graph import sweep
 
                         sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_graph)
             except asyncio.CancelledError:
@@ -1106,18 +1132,17 @@ async def startup_event():
         from .config import settings
 
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(interval_seconds)
             try:
 
                 def _run_usage() -> None:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .usage_sweep import run_usage_sweep_with_settings
 
                         run_usage_sweep_with_settings(thread_db, settings)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_usage)
             except asyncio.CancelledError:
@@ -1136,20 +1161,19 @@ async def startup_event():
         sweeps.
         """
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(300)
             try:
 
                 def _run_expiry() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .lint_waiver_expiry_sweep import (
                             process_lint_waiver_expiry_sweep,
                         )
 
                         return process_lint_waiver_expiry_sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_expiry)
             except asyncio.CancelledError:
@@ -1173,20 +1197,19 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.verification_schedule_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
 
                 def _run_schedules() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .verification_schedule_sweep import (
                             process_verification_schedule_sweep,
                         )
 
                         return process_verification_schedule_sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_schedules)
             except asyncio.CancelledError:
@@ -1203,20 +1226,19 @@ async def startup_event():
         history. Concurrent replicas are safe — the claim is the lock.
         """
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(300)
             try:
 
                 def _run_retention() -> dict:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .async_job_retention_sweep import (
                             process_async_job_retention_sweep,
                         )
 
                         return process_async_job_retention_sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_retention)
             except asyncio.CancelledError:
@@ -1232,18 +1254,17 @@ async def startup_event():
         run at a time across replicas (the job's advisory lock); the first run waits one interval.
         """
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(interval)
             try:
 
                 def _run_lifecycle() -> dict:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .document_lifecycle import run_document_lifecycle
 
                         return run_document_lifecycle(thread_db).as_dict()
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_lifecycle)
             except asyncio.CancelledError:
@@ -1261,20 +1282,19 @@ async def startup_event():
         Runs on a dedicated DB connection like the other sweeps.
         """
         log = logging.getLogger(__name__)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(300)
             try:
 
                 def _run_secret_sweep() -> dict:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .repository_webhook_secret_sweep import (
                             process_repository_webhook_secret_sweep,
                         )
 
                         return process_repository_webhook_secret_sweep(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_secret_sweep)
             except asyncio.CancelledError:
@@ -1300,19 +1320,18 @@ async def startup_event():
         # Enough of a delay that startup is not competing with an outbound fetch, short
         # enough that a new deployment is populated in the first minute.
         await asyncio.sleep(20)
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             try:
 
                 def _run_ip_refresh() -> Any:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .repository_webhook_ip_allowlist import (
                             refresh_due_provider_ip_ranges,
                         )
 
                         return refresh_due_provider_ip_ranges(thread_db)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_ip_refresh)
             except asyncio.CancelledError:
@@ -1358,18 +1377,17 @@ async def startup_event():
 
         log = logging.getLogger(__name__)
         tick_seconds = max(1, int(settings.sdk_regen_interval_seconds))
+        # One handle for every tick: its connection is reused, not reopened (DBP-1.2).
+        sweep_db = sweep_database()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
 
                 def _run_regen() -> int:
-                    thread_db = Database()
-                    try:
+                    with sweep_tick(sweep_db) as thread_db:
                         from .sdk_regen_worker import process_sdk_regen_sweep
 
                         return process_sdk_regen_sweep(thread_db, apiome_version=app.version)
-                    finally:
-                        thread_db.close()
 
                 await asyncio.to_thread(_run_regen)
             except asyncio.CancelledError:
@@ -1583,6 +1601,7 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _export_auto_task = None
+    close_sweep_databases()
     db.close()
 
 

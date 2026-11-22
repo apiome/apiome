@@ -23,6 +23,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence
 from fastapi import HTTPException
 
 from .config import settings
+from .db_timeouts import long_statements
 from .import_source import (
     ImportSource,
     available_import_sources,
@@ -750,7 +751,10 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
         bind_contextvars(request_id=rec.correlation_id, import_job_id=job_id)
         rec.started_monotonic = time.monotonic()
     try:
-        await _drive_job_inner(job_id, payload)
+        # Imports write whole specs: their statements run under the long ceiling, not the 30 s
+        # request one (DBP-1.2, #7185); the context follows the pipeline's to_thread calls.
+        with long_statements():
+            await _drive_job_inner(job_id, payload)
     finally:
         _record_terminal_import_metrics(job_id, payload)
         cleanup_intake_tempfile(payload.get("document_path"))
