@@ -1,0 +1,22 @@
+---
+slug: local-minio-deployment-examples
+title: "A local MinIO and deployment examples for the document store"
+description: "docker compose up starts MinIO with its bucket; production env examples cover AWS S3 and R2."
+authors: [apiome]
+---
+
+The [document store](/admin/document-store) can now run against S3 with no setup on a development
+machine, and production installs have copy-paste examples for their own bucket.
+
+{/* truncate */}
+
+- **MinIO in Compose:** `docker compose up` starts MinIO (API `localhost:9000`, console
+  `localhost:9001`) and a `minio-init` service that creates the `apiome` bucket. Add
+  `APIOME_DOCUMENT_STORE=s3` to `.env` to use it. Without that line the store stays `db`.
+- **Production examples:** `docker-compose.prod.env.example` has blocks for AWS S3, Cloudflare R2
+  and your own MinIO. The production overlay does not start the bundled MinIO and clears its
+  development endpoint and keys.
+- **Setup prompts:** `./setup.sh` asks which document store to use and, for `s3`, the bucket,
+  endpoint, region and keys.
+
+See [The bundled MinIO](/admin/document-store#the-bundled-minio-local-development).

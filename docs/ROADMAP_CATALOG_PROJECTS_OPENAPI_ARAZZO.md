@@ -451,7 +451,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| COA-5.12 · [#7088](https://github.com/apiome/apiome/issues/7088) | Local MinIO and deployment examples | MinIO in `docker-compose.yml`, prod env example and `get-apiome` prompts for the store | `enhancement`, `devops` | Y | S | deploy, docker-compose |
 | COA-5.13 · [#7089](https://github.com/apiome/apiome/issues/7089) | UI reads revision documents from REST, not its own generator | Versions view/compare, Catalog diff and MR/review spec views fetch cached documents from REST; retire the Next.js `buildOpenApiSpecForVersion` path after a parity audit | `enhancement`, `ui`, `rest`, `performance` | N | L | apiome-ui, apiome-rest |
 | COA-5.14 · [#7090](https://github.com/apiome/apiome/issues/7090) | Every REST feature reads revision documents through the store | Lint, mock, Swagger UI, merge/rollback, publish, change reports, PR-back, reviews, source workspace, contracts, blast radius, governance, sync and export use the rendered-document service; an architecture test forbids direct generation | `enhancement`, `rest`, `performance` | Y | L | apiome-rest |
 | COA-5.15 · [#7092](https://github.com/apiome/apiome/issues/7092) | Per-tenant bring-your-own buckets | A tenant can point its originals and rendered documents at its own S3-compatible bucket, using a sealed tenant storage credential; the platform store stays the default | `enhancement`, `rest`, `ui`, `security` | Y | L | apiome-rest, apiome-ui, apiome-db |
@@ -620,7 +619,7 @@ flowchart LR
 - **Shipped:** `tests/large_spec_benchmark.py` + opt-in `tests/test_large_spec_benchmark.py` (nightly `apiome-rest-large-spec.yml`, 05:15 UTC). Four synthetic revision families — GitHub-, Stripe- and Azure-shaped and a ~50 MB stress one — each with a base and a small- and a large-change head, run through cold and warm `schema`, classified `diff`, `compat` and `export` stages (wall-clock and tracemalloc peak, measured in separate passes). Held to the committed baseline `tests/scale/large_spec_budgets.json` (shared margin rules with the IXH-1.5 scale suite) and to the targets warm diff < 2 s / warm schema < 200 ms (not enforced on the 50 MB fixture); a warm stage that runs the generator fails. The per-PR `tests/test_large_spec_harness.py` keeps the machinery honest.
 - **Documentation:** none (internal); screenshots: n/a.
 
-**COA-5.12 · #7088 Local MinIO and deployment examples**
+**✅ COA-5.12 · #7088 Local MinIO and deployment examples — Complete**
 - **Problem:** Developers and self-hosters need a bucket to run the S3 backend.
 - **Solution/Scope:**
 - MinIO service (and bucket-init) in `docker-compose.yml`, wired by `docker-compose.env.example`; prod examples for AWS S3 and R2 in `docker-compose.prod.env.example`; `deploy/get-apiome` asks for the store.
@@ -628,6 +627,7 @@ flowchart LR
 - `docker compose up` gives a working `s3` store; the default stays `db` when unset.
 - **Parallelism/Dependencies:** After COA-5.1.
 - **Technical Stack:** Docker Compose, shell.
+- **Shipped:** `minio` + one-shot `minio-init` (bucket) in `docker-compose.yml`, always started and pre-wired (endpoint, bucket, path style, allow-private, root key); `APIOME_DOCUMENT_STORE` stays `db` unless set to `s3`. `docker-compose.prod.yml` parks both behind `dev-only`, clears the dev endpoint/keys and passes the `APIOME_DOCUMENT_STORE_*` variables through; `docker-compose.prod.env.example` has AWS S3, R2 and own-MinIO blocks. The `get-apiome` prompt is `setup.sh` (no installer script prompts for stack config): it asks db / s3 / filesystem and writes `apiome-rest/.env`. Docs: `admin/document-store.mdx`, `getting-started/run-locally.md`, `admin/operating-apiome.mdx`; release note `local-minio-deployment-examples`.
 - **Documentation:** `getting-started` install page, `admin/document-store.mdx`; screenshots: n/a; release note.
 
 **COA-5.13 · #7089 UI reads revision documents from REST, not its own generator**

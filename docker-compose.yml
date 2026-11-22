@@ -11,9 +11,16 @@
 #   rest      apiome-rest FastAPI service on :8000 (depends on migrate + seed).
 #   mcp       apiome-mcp HTTP service on :8765 (depends on migrate + seed).
 #   mock      apiome-mock HTTP service on :8775 (depends on migrate + seed).
+#   minio     MinIO (S3-compatible object storage) on :9000, console on :9001, persistent volume.
+#   minio-init  One-shot: creates the document-store bucket in MinIO, then exits.
 #   redpanda  Opt-in single-node Redpanda (Kafka API) for AsyncAPI mocks, profile `broker` only:
 #               docker compose --profile broker up --build --wait
 #             Off by default; no service depends on it (XPC-2.1, #5735).
+#
+# Document store (COA-5.12, #7088): rest keeps imported originals and rendered documents in
+# `APIOME_DOCUMENT_STORE` = db (default, nothing to set up) | s3 | filesystem. MinIO is always
+# started and pre-wired, so a working S3 store is one line in `.env`:
+#   APIOME_DOCUMENT_STORE=s3
 #
 # Override secrets via environment or a `.env` file (see docker-compose.env.example).
 
@@ -172,12 +179,31 @@ services:
       # before the upgrade still read, but a sealed token reads as "no token". Production inherits
       # it. The ACTIVE_KEY_VERSION override is not passed through, for the reason given above.
       APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS: ${APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS:-}
+      # ── Document store (COA-5.12, #7088) ────────────────────────────────────────────────────
+      # `db` (default) keeps objects in Postgres; set APIOME_DOCUMENT_STORE=s3 to use the bundled
+      # MinIO (the defaults below point at it), or any S3-compatible service by overriding them.
+      # `filesystem` needs APIOME_DOCUMENT_STORE_PATH on a mounted volume.
+      APIOME_DOCUMENT_STORE: ${APIOME_DOCUMENT_STORE:-db}
+      APIOME_DOCUMENT_STORE_PREFIX: ${APIOME_DOCUMENT_STORE_PREFIX:-apiome}
+      APIOME_DOCUMENT_STORE_PATH: ${APIOME_DOCUMENT_STORE_PATH:-}
+      APIOME_DOCUMENT_STORE_BUCKET: ${APIOME_DOCUMENT_STORE_BUCKET:-apiome}
+      APIOME_DOCUMENT_STORE_REGION: ${APIOME_DOCUMENT_STORE_REGION:-us-east-1}
+      APIOME_DOCUMENT_STORE_ENDPOINT_URL: ${APIOME_DOCUMENT_STORE_ENDPOINT_URL:-http://minio:9000}
+      APIOME_DOCUMENT_STORE_ADDRESSING_STYLE: ${APIOME_DOCUMENT_STORE_ADDRESSING_STYLE:-path}
+      # The bundled MinIO is on the private compose network, which the SSRF guard refuses by
+      # default; this lifts it for the document-store endpoint only.
+      APIOME_DOCUMENT_STORE_ALLOW_PRIVATE: ${APIOME_DOCUMENT_STORE_ALLOW_PRIVATE:-true}
+      APIOME_DOCUMENT_STORE_ACCESS_KEY_ID: ${APIOME_DOCUMENT_STORE_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-apiome}}
+      APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY: ${APIOME_DOCUMENT_STORE_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-apiome_local_dev}}
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
       seed:
+        condition: service_completed_successfully
+      # The bucket must exist before REST can write to it when APIOME_DOCUMENT_STORE=s3.
+      minio-init:
         condition: service_completed_successfully
     # Readiness probe (#3617): /readyz verifies the database is reachable (503 otherwise), so
     # orchestration only marks `rest` healthy once it can actually serve traffic. /livez exists for
@@ -190,6 +216,49 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+    networks:
+      - apiome-mcp
+
+  # MinIO: S3-compatible object storage for the document store (COA-5.12, #7088). Inside the stack
+  # it is `minio:9000`; from the host the API is localhost:9000 and the web console localhost:9001
+  # (sign in with MINIO_ROOT_USER / MINIO_ROOT_PASSWORD). REST only uses it when
+  # APIOME_DOCUMENT_STORE=s3. The dev credentials below are local-only defaults.
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-apiome}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-apiome_local_dev}
+    volumes:
+      - apiome_minio_data:/data
+    ports:
+      - "${MINIO_API_PUBLISH_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PUBLISH_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks:
+      - apiome-mcp
+
+  # One-shot bucket creation (idempotent: --ignore-existing). Runs after MinIO is healthy, then exits.
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing "local/$$APIOME_DOCUMENT_STORE_BUCKET"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-apiome}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-apiome_local_dev}
+      APIOME_DOCUMENT_STORE_BUCKET: ${APIOME_DOCUMENT_STORE_BUCKET:-apiome}
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
     networks:
       - apiome-mcp
 
@@ -305,6 +374,7 @@ services:
 
 volumes:
   apiome_postgres_data:
+  apiome_minio_data:
 
 networks:
   apiome-mcp:

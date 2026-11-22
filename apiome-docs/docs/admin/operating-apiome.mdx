@@ -22,6 +22,8 @@ beside it (`yarn dev` in development, its own image in production).
 | `rest` | `apiome-rest`, the REST API | `8000` (`APIOME_REST_HTTP_PORT`) |
 | `mcp` | `apiome-mcp`, the MCP server | `8765` (`APIOME_MCP_HTTP_PORT`) |
 | `mock` | `apiome-mock`, the mock runtime | `8775` (`APIOME_MOCK_HTTP_PORT`) |
+| `minio` | S3-compatible object storage for the [document store](./document-store.mdx#the-bundled-minio-local-development); used only when `APIOME_DOCUMENT_STORE=s3` (never in production) | `9000`, console `9001` (`MINIO_API_PUBLISH_PORT`, `MINIO_CONSOLE_PUBLISH_PORT`) |
+| `minio-init` | Creates the document-store bucket in MinIO, then exits (never in production) | — |
 | `redpanda` | Optional single-node Kafka broker for AsyncAPI mocks; only with `--profile broker` | `19092` (`APIOME_DEV_BROKER_HOST_PORT`) |
 
 Production applies
