@@ -83,8 +83,13 @@ re-lint. Linting runs only on *version changes* and *imports*:
   publish precheck stores the report it computes.
 - **Content edits** — the stored report carries a fingerprint of the OpenAPI document it was
   scored from. When you next open the report after editing classes/properties, the server
-  rebuilds the document, sees the fingerprint no longer matches, re-lints **once**, and stores
-  the new report. Opening it again is a plain read.
+  reads the version's document, sees the fingerprint no longer matches, re-lints **once**, and
+  stores the new report. Opening it again is a plain read.
+
+The server does not generate the document for this check. It reads the version's
+[stored document](../admin/document-store.mdx#rendered-documents), which is rendered once per
+change of the version. Lint fixes, a `baseRevisionId` comparison and the publish precheck read
+the same stored document.
 
 The versions list (`GET /v1/versions/{tenant_slug}/{project_id}`) carries each revision's
 stored `qualityScore` / `qualityGrade`, so the Versions screen renders every badge from the

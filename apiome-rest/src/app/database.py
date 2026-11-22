@@ -32226,13 +32226,13 @@ class Database:
         Returns:
             ``(merged_document, current_fingerprint, live_claim_rows)``.
         """
-        from .openapi_generator import generate_openapi_spec
         from .preservation_envelope import (
             PreservationClaim,
             PreservationEnvelope,
             apply_envelope,
             semantic_fingerprint,
         )
+        from .rendered_documents import REASON_SOURCE_APPLY, render_uncached
 
         version_id = str(version_row["id"])
         cursor.execute(
@@ -32280,13 +32280,16 @@ class Database:
         )
         server_rows = cursor.fetchall()
         paths_data = self._cursor_paths_data(cursor, version_id)
-        canonical = generate_openapi_spec(
-            tenant_slug,
-            str(version_row.get("project_slug") or version_row["project_id"]),
-            str(version_row["version_id"]),
-            classes,
-            all_properties,
-            version_row.get("project_description"),
+        # Read on the transaction's cursor under the row lock, so the optimistic check sees exactly
+        # the rows the apply will replace; the cache reads through another connection.
+        canonical = render_uncached(
+            reason=REASON_SOURCE_APPLY,
+            tenant_slug=tenant_slug,
+            project_slug=str(version_row.get("project_slug") or version_row["project_id"]),
+            version_label=str(version_row["version_id"]),
+            classes=classes,
+            all_properties=all_properties,
+            project_description=version_row.get("project_description"),
             revision_metadata=version_row.get("metadata"),
             project_metadata=version_row.get("project_metadata"),
             paths_data=paths_data,

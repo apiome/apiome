@@ -131,7 +131,6 @@ from .models import (
     VersionUnpublishResponse,
     VersionUpdateRequest,
 )
-from .openapi_generator import generate_openapi_spec
 from .publication_change_report import (
     generate_change_report_on_publish,
     validate_manual_baseline_revision,
@@ -141,7 +140,7 @@ from .publication_changelog import generate_version_changelog_on_publish
 from .project_timeline import publish_audit_detail
 from .publish_notifications import notify_version_published_on_publish
 from .original_documents import legacy_source_columns_kept
-from .rendered_documents import store_frozen_schema, warm_rendered_documents
+from .rendered_documents import revision_openapi, store_frozen_schema, warm_rendered_documents
 from .spec_snapshot import (
     CODE_ALREADY_FROZEN,
     CODE_NOT_FROZEN,
@@ -2759,23 +2758,19 @@ async def set_version_mock(
     return _version_schema_response(updated, tenant_slug)
 
 
-def _generated_spec_for_version(version: Dict[str, Any], tenant_slug: str) -> Dict[str, Any]:
-    """Generate the version's OpenAPI document (same path as /v1/schema) for validation."""
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, List[Dict[str, Any]]] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
-    return generate_openapi_spec(
-        tenant_slug,
-        str(version.get("project_slug") or version["project_id"]),
-        str(version["version_id"]),
-        classes,
-        all_properties,
-        version.get("project_description"),
-        version_db_id=version["id"],
-        revision_metadata=version.get("metadata"),
-        project_metadata=version.get("project_metadata"),
-    )
+def _generated_spec_for_version(
+    version: Dict[str, Any], tenant_slug: str, tenant_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """Read the version's OpenAPI document (the one /v1/schema serves) for validation.
+
+    The document comes from the rendered document cache (COA-5.14, #7090).
+
+    Args:
+        version: The tenant-scoped version row.
+        tenant_slug: Tenant slug.
+        tenant_id: The owning tenant; ``None`` renders without the cache.
+    """
+    return revision_openapi(version, tenant_slug, tenant_id, database=db)
 
 
 def _get_version_for_mock_scenarios(
@@ -2966,7 +2961,7 @@ async def set_version_mock_scenarios(
         if uses_graphql_coordinates(request.scenarios, request.chaos)
         else frozenset()
     )
-    spec = _generated_spec_for_version(existing, tenant_slug)
+    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
     channel_operations = (
         _channel_operations_for_version(existing, auth_data["tenant_id"])
         if uses_channel_keys(request.scenarios)
@@ -3084,7 +3079,7 @@ async def set_version_mock_correlation(
             detail="Mock settings require user authentication (JWT token or API key with attribution)",
         )
 
-    spec = _generated_spec_for_version(existing, tenant_slug)
+    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
     errors = validate_mock_correlation(request.correlation, spec)
     if errors:
         raise HTTPException(
@@ -3151,7 +3146,7 @@ async def get_version_mock_operations(
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
-    spec = _generated_spec_for_version(existing, tenant_slug)
+    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
     return VersionMockOperationsResponse.model_validate(
         catalogue_payload(spec, existing.get("mock_settings"))
     )
@@ -3280,7 +3275,7 @@ async def preview_version_mock(
     _enforce_preview_rate_limit(str(auth_data["tenant_id"]), version_record_id)
     _enforce_preview_body_size(request.request.body)
 
-    spec = _generated_spec_for_version(existing, tenant_slug)
+    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
     errors = validate_draft_settings(request.settings, spec)
     if errors:
         raise HTTPException(
@@ -3521,7 +3516,7 @@ async def set_version_mock_callbacks(
         name: spec.model_dump(by_alias=True, exclude_none=True)
         for name, spec in request.callbacks.items()
     }
-    spec = _generated_spec_for_version(existing, tenant_slug)
+    spec = _generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"])
     errors = validate_mock_callbacks(proposed, spec)
     if errors:
         raise HTTPException(
@@ -4075,7 +4070,7 @@ async def get_version_mock_bundle(
             published=bool(existing.get("published")),
             protocol="openapi",
         ),
-        spec=_generated_spec_for_version(existing, tenant_slug),
+        spec=_generated_spec_for_version(existing, tenant_slug, auth_data["tenant_id"]),
         mock_settings=existing.get("mock_settings"),
         secret=settings.mock_bundle_signing_secret,
     )

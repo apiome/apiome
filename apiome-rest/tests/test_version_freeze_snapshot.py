@@ -55,7 +55,7 @@ def test_the_live_spec_counts_classes_properties_and_paths() -> None:
     db.get_classes_for_version.return_value = [{"id": "c1"}, {"id": "c2"}]
     db.get_properties_for_classes.return_value = {"c1": [{"name": "a"}, {"name": "b"}], "c2": [{"name": "c"}]}
     with patch(
-        "app.spec_snapshot.generate_openapi_spec",
+        "app.rendered_documents.generate_openapi_spec",
         return_value={"paths": {"/charges": {}, "/refunds": {}, "/x": {}}},
     ):
         spec, counts = build_live_spec(db, {"id": "v1"}, "acme", "payments", "2.1.0")

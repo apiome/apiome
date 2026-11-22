@@ -10,6 +10,10 @@ store (COA-5.5, :mod:`app.rendered_documents`), rendered only on a miss. Two sid
 digests are equal are the same document, so :func:`same_document` lets a caller answer "no
 changes" without classifying, and :func:`document_cache_header` reports ``hit`` / ``miss`` per
 side in ``X-Apiome-Document-Cache``.
+
+Since COA-5.14 (#7090) :func:`openapi_for_revision` reads the same cache, so every other feature
+that needs a stored revision's document (lint, merge, publish, reviews, contracts, sync, export)
+stops generating it per request.
 """
 
 from __future__ import annotations
@@ -24,15 +28,21 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 from fastapi import HTTPException
 
 from .database import db
-from .openapi_generator import generate_openapi_spec
-from .rendered_documents import KIND_OPENAPI, rendered_document
+from .rendered_documents import (
+    KIND_OPENAPI,
+    REASON_COMPONENT_PINS_OVERRIDE,
+    RenderedDocument,
+    build_live_spec,
+    load_classes_and_properties,
+    render_uncached,
+    rendered_document,
+)
 from .schema_compatibility import (
     CompatibilityFinding,
     CompatibilityRules,
     Overall,
     analyze_schema_compatibility,
 )
-from .spec_snapshot import load_classes_and_properties
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +175,21 @@ def compat_audit_detail(
     }
 
 
+def _cached_openapi(version: Mapping[str, Any], tenant_id: str) -> Optional[RenderedDocument]:
+    """Read a revision's rendered OpenAPI document from the cache, never raising.
+
+    Returns:
+        The document, or ``None`` when the cache cannot serve the revision (no live row in the
+        tenant) or its render through the cache failed; the caller then renders directly, which
+        raises the real error, if any.
+    """
+    try:
+        return rendered_document(str(version["id"]), KIND_OPENAPI, tenant_id=str(tenant_id), database=db)
+    except Exception as exc:  # noqa: BLE001 - the direct path raises the real error, if any
+        logger.warning("rendered OpenAPI not read version_id=%s: %s", version.get("id"), type(exc).__name__)
+        return None
+
+
 def openapi_for_revision(
     version: Dict[str, Any],
     tenant_slug: str,
@@ -172,28 +197,60 @@ def openapi_for_revision(
     *,
     component_pin_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
-    """
-    Build the OpenAPI spec for a persisted revision.
+    """Return the OpenAPI document of a persisted revision.
 
-    Shared helper used by the compatibility API and push/merge audit pipelines.
-    Extracted from ``compatibility_routes`` to avoid cross-router coupling.
+    Since COA-5.14 (#7090) this reads the revision's rendered document from the document store
+    (:func:`app.rendered_documents.rendered_document`), so a warm revision issues no class,
+    property or path query. The reading keeps the document too, so the first read of a revision
+    that was just written (a committed merge) stores it for the next one. When the cache cannot
+    serve the revision the document is generated from its rows.
 
-    ``component_pin_rows`` replaces the version's stored component-library pins when given
-    (DCW-3.4: the bulk-upgrade preview builds the document as it would read after the upgrade);
-    ``None`` reads the stored pins, as before.
+    Args:
+        version: The revision row (needs ``id``, ``project_id``, ``version_id``, ``metadata``).
+        tenant_slug: Tenant slug.
+        tenant_id: The tenant that owns the revision.
+        component_pin_rows: Component-library pins to render with instead of the stored ones
+            (DCW-3.4: the bulk-upgrade preview reads the document as it would be after the
+            upgrade). That state is not stored, so it is rendered without the cache. ``None``
+            reads the stored revision.
+
+    Returns:
+        The OpenAPI document; the caller owns it.
+
+    Raises:
+        HTTPException: 404 when the revision's project is gone and the document must be generated.
     """
+    if component_pin_rows is None:
+        document = _cached_openapi(version, tenant_id)
+        if document is not None:
+            return document.json()
     project = db.get_project_by_id(version["project_id"], tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found for revision")
+    if component_pin_rows is None:
+        spec, _counts = build_live_spec(
+            db,
+            {
+                "id": version["id"],
+                "metadata": version.get("metadata"),
+                "project_description": project.get("description"),
+                "project_metadata": project.get("metadata"),
+            },
+            tenant_slug,
+            project["slug"],
+            version["version_id"],
+        )
+        return spec
     # One query per table, not one per class (COA-5.5, #7081).
     classes, all_properties = load_classes_and_properties(db, version["id"])
-    return generate_openapi_spec(
-        tenant_slug,
-        project["slug"],
-        version["version_id"],
-        classes,
-        all_properties,
-        project.get("description"),
+    return render_uncached(
+        reason=REASON_COMPONENT_PINS_OVERRIDE,
+        tenant_slug=tenant_slug,
+        project_slug=project["slug"],
+        version_label=version["version_id"],
+        classes=classes,
+        all_properties=all_properties,
+        project_description=project.get("description"),
         version_db_id=version["id"],
         revision_metadata=version.get("metadata"),
         project_metadata=project.get("metadata"),
@@ -236,11 +293,7 @@ def read_revision_openapi(version: Dict[str, Any], tenant_slug: str, tenant_id: 
     Returns:
         The document, its digest when it went through the cache, and whether it was a hit.
     """
-    try:
-        document = rendered_document(str(version["id"]), KIND_OPENAPI, tenant_id=str(tenant_id), database=db)
-    except Exception as exc:  # noqa: BLE001 - the direct path below raises the real error, if any
-        logger.warning("rendered OpenAPI not read version_id=%s: %s", version.get("id"), type(exc).__name__)
-        document = None
+    document = _cached_openapi(version, tenant_id)
     if document is None:
         spec = openapi_for_revision(version, tenant_slug, tenant_id)
         return RevisionOpenApi(spec=spec, sha256=None, cache=CACHE_MISS)

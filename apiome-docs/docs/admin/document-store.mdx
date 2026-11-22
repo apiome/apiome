@@ -467,6 +467,38 @@ request's **Changes** tab, the published version's changelog and transitive chec
 responses say `hit` or `miss` per side in the `X-Apiome-Document-Cache` header. See
 [Which documents are compared](../govern/compatibility-modes.md#which-documents-are-compared).
 
+### Which features read the stored document
+
+Every REST feature that needs a stored version's OpenAPI document reads the published document
+from the store. The web app, the CLI and the MCP server reach these features through the REST
+server, so they all gain from it.
+
+| Area | Features |
+| --- | --- |
+| Quality | Lint report, lint fixes, quality capture, style-guide lint |
+| Mocks and docs | Mock start, mock scenarios and **Try it**, Swagger UI |
+| Versions | Merge preview, merge, rollback check, publish prechecks, the breaking-change guardrail, change reports and changelogs |
+| Review | Reviews, pull requests back to a repository, repository federation |
+| Source workspace | Provenance, preservation, source review, source apply |
+| Governance | Consumer contracts, blast radius, component governance |
+| Moving specs | Spec sync, import delta, export and conversion |
+
+A write that replaces a version's content in one step stores the new document straight away: a
+**merge** and an applied **source change**. The next reader gets stored bytes.
+
+Four renders do not use the store, because what they render is not a stored version:
+
+| Render | Why it is not stored |
+| --- | --- |
+| The component bulk-upgrade preview | It shows the version with pins it does not have yet. |
+| The component materialization preview | It renders the version without its pins. |
+| The document a source change would produce | The change is not written yet. |
+| The current document inside a source apply | It is read inside the apply's own database transaction, so the check and the write see the same rows. |
+
+Two more readers keep generating. A **freeze** generates the document it stores, because it also
+counts the classes, properties and paths. The URL-import refresh check generates a copy without
+the project's name, which it uses only to tell whether a version was edited since its import.
+
 ### Frozen schemas
 
 [Freezing a version](../ship/publish-a-version.md#freeze-a-versions-schema) keeps its OpenAPI

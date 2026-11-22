@@ -1279,6 +1279,8 @@ async def version_branch_merge(
         },
     )
     try:
+        # Reading the merged revision through the cache also stores its document (COA-5.14,
+        # #7090), so the first reader of the merge result is served stored bytes.
         new_spec = openapi_for_revision(full, tenant_slug, tenant_id)
         pre_merge_target_spec = openapi_for_revision(tgt_ver, tenant_slug, tenant_id)
         post_merge = CompatibilityCheckEngine.run(

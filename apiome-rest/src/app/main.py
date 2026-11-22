@@ -123,7 +123,7 @@ from .notification_routes import router as notification_router
 from .observability import ObservabilityMiddleware, build_error_envelope
 from .onboarding_routes import router as onboarding_router
 from .openapi_enrichment import enrich_openapi_spec
-from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
+from .openapi_generator import generate_class_openapi_spec
 from .ops_routes import health_router, ops_router
 from .document_migration_routes import router as document_migration_router
 from .document_store_health import initialize_document_store
@@ -205,6 +205,7 @@ from .rendered_documents import (
     iter_stream,
     open_frozen_schema,
     rendered_document,
+    revision_openapi,
 )
 from .spec_sync_routes import router as spec_sync_router
 from .style_guide_routes import router as style_guide_router
@@ -259,7 +260,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.630.1",
+    version="1.631.1",
 )
 
 
@@ -1896,27 +1897,14 @@ async def get_swagger_ui(
     # Validate access for private versions (header or query param)
     validate_private_access(version, tenant_slug, x_api_key or api_key)
 
-    # Get all classes for this version
-    classes = db.get_classes_for_version(version['id'])
-
-    # Get properties for each class
-    all_properties = {}
-    for class_data in classes:
-        class_id = class_data['id']
-        properties = db.get_properties_for_class(class_id)
-        all_properties[class_id] = properties
-
-    # Generate OpenAPI specification with paths
-    openapi_spec = generate_openapi_spec(
+    # The document /v1/schema serves, read through the rendered document cache (COA-5.14, #7090)
+    openapi_spec = revision_openapi(
+        version,
         tenant_slug,
-        project_slug,
-        version_slug,
-        classes,
-        all_properties,
-        version.get('project_description'),
-        version_db_id=version['id'],  # Pass version database ID to load paths
-        revision_metadata=version.get('metadata'),
-        project_metadata=version.get('project_metadata'),
+        version.get('tenant_id'),
+        database=db,
+        project_slug=project_slug,
+        version_label=version_slug,
     )
 
     # Create a custom Swagger UI HTML page with the spec embedded

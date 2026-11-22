@@ -42,6 +42,11 @@ curl -H 'X-Mock-Scenario: quota-exceeded' https://mock.apiome.dev/acme/payments-
 
 The **Mock** cell's sparkline counts the requests over 30 days.
 
+A mock starts from the version's [stored OpenAPI
+document](../admin/document-store.mdx#rendered-documents): the same bytes `GET /v1/schema` serves.
+Publishing a version stores that document, so starting a mock, saving its scenarios and
+**Try it** do not generate it again.
+
 ## Query a GraphQL mock
 
 <Route path="/ade/dashboard/published" />
