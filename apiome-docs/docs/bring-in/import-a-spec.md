@@ -38,6 +38,11 @@ Which importer handles a document is decided by the server, from the format it n
   than forcing it into the OpenAPI shape, so what you get back is what you put in. Catalog items
   are searchable, diffable and convertible; they are not publishable until converted.
 
+Start in the wrong place and you are not stuck: when **Import to catalog** detects OpenAPI or
+Swagger in a source you pasted, uploaded or fetched from a URL, **click “Continue in Projects”**
+and the Projects importer opens on **Analyze** with that source already loaded. See [An OpenAPI
+source in Import to catalog](./import-wizard.mdx#an-openapi-source-in-import-to-catalog).
+
 Both importers read the same import-source registry, so a format is offered as soon as its adapter
 is registered — the file pickers derive their `accept` lists from it rather than hard-coding one.
 An unrecognized file extension is **not** rejected: the bytes are sent to content detection, and

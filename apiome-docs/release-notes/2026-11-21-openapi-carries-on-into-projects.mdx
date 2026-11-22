@@ -1,0 +1,27 @@
+---
+slug: openapi-carries-on-into-projects
+title: "OpenAPI in Import to catalog carries on into Projects"
+description: "Continue in Projects hands an OpenAPI source from Import to catalog to the Projects importer."
+authors: [apiome]
+---
+
+**Import to catalog** recognized an OpenAPI or Swagger source and routed it to **Projects**, but
+then left **Continue** disabled. You had to open Projects and paste or upload the same source again.
+
+{/* truncate */}
+
+## What changed
+
+- **One click to Projects.** For a source you pasted, uploaded or fetched from a URL, the **Detect &
+  route** step's button now reads **“Continue in Projects”**. Click it and the Projects importer
+  opens on **Analyze** with the source already loaded.
+- **Finish where you are.** **Continue** to **Preview**, then **click “Import →”** to create the
+  project. You stay on the Catalog page the whole time.
+- **Back keeps the source.** **Back** from **Analyze** opens the **Clipboard**, **File Upload** or
+  **URL Import** intake you started from, with the source still loaded. A URL source keeps its
+  auto-refresh.
+
+A **Git Repository** selection or an archive still links to **Open Projects**, because there is
+no single document to hand over.
+
+See [An OpenAPI source in Import to catalog](/bring-in/import-wizard#an-openapi-source-in-import-to-catalog).

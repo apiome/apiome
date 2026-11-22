@@ -777,17 +777,27 @@ export interface CatalogImportFooterState {
   destination: CatalogImportDestination;
   /** Everything the catalog commit needs is present. */
   canStoreCatalog: boolean;
+  /**
+   * A source routed to Projects can be handed to the Projects importer (COA-4.3b, #7127): the
+   * detect step's primary then reads **Continue in Projects** and is enabled.
+   */
+  handsOffToProjects?: boolean;
 }
+
+/** The detect step's primary when an OpenAPI source is handed to the Projects importer (#7127). */
+export const CONTINUE_IN_PROJECTS_LABEL = 'Continue in Projects';
 
 /**
  * The Catalog importer's footer for a state.
  *
  * Three rules, and each one is a thing the JSX used to decide in a different place:
  *
- *   - **Continue is refused, not hidden.** A document that routes to Projects, or one whose
- *     adapter is missing in this runtime, leaves the button drawn and disabled — a footer that
- *     loses its forward verb between steps reads as a layout jump, and the routing card above
- *     is what says *why*.
+ *   - **Continue is refused, not hidden.** A document whose adapter is missing in this runtime,
+ *     or one that routes to Projects but cannot be handed there (an archive or a repository
+ *     selection), leaves the button drawn and disabled — a footer that loses its forward verb
+ *     between steps reads as a layout jump, and the routing card above is what says *why*. A
+ *     Projects route that *can* be handed off swaps the verb for **Continue in Projects**
+ *     (#7127).
  *   - **Cancel says what closing costs.** *Cancel* while nothing has been written, *Close*
  *     once the item is in the catalog.
  *   - **Back exists everywhere except the first and last stops**, and is refused while a
@@ -819,6 +829,14 @@ export function catalogImportFooterFor(state: CatalogImportFooterState): ImportF
   }
 
   if (step === 'detect') {
+    if (destination === 'project' && state.handsOffToProjects) {
+      return {
+        back: { label: '← Back', disabled: false },
+        cancel,
+        primary: { label: CONTINUE_IN_PROJECTS_LABEL, disabled: false },
+        keepAnyway: null,
+      };
+    }
     return {
       back: { label: '← Back', disabled: false },
       cancel,
