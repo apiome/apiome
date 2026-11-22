@@ -68,8 +68,8 @@ from .models import (
     MockUsageDailyRollup,
     MockUsageResponse,
 )
-from .openapi_generator import generate_openapi_spec
 from .rate_limit import FixedWindowRateLimiter
+from .rendered_documents import revision_openapi
 
 logger = logging.getLogger(__name__)
 
@@ -226,21 +226,18 @@ def _instance_seed(instance: Dict[str, Any]) -> int:
 def _build_spec_for_version(
     version: Dict[str, Any], tenant_slug: str, project_slug: str, version_slug: str
 ) -> Dict[str, Any]:
-    """Generate the OpenAPI document for a published version (same path as /v1/schema)."""
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, List[Dict[str, Any]]] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
-    return generate_openapi_spec(
+    """Read a published version's OpenAPI document: the one ``/v1/schema`` serves.
+
+    The document comes from the rendered document cache (COA-5.14, #7090), so starting a mock
+    from a warm version queries no class, property or path row.
+    """
+    return revision_openapi(
+        version,
         tenant_slug,
-        project_slug,
-        version_slug,
-        classes,
-        all_properties,
-        version.get("project_description"),
-        version_db_id=version["id"],
-        revision_metadata=version.get("metadata"),
-        project_metadata=version.get("project_metadata"),
+        version.get("tenant_id"),
+        database=db,
+        project_slug=project_slug,
+        version_label=version_slug,
     )
 
 

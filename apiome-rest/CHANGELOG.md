@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.805.0] - 2026-11-21
+
+### Changed
+- **Every REST feature reads a revision's OpenAPI document through the document store — OpenAPI 1.631.0
+  (COA-5.14, #7090).** `app/rendered_documents.py` is now the only module that calls the generator.
+  `openapi_for_revision` reads the rendered document cache (COA-5.5) and generates only when the cache
+  cannot serve the revision, so its callers stop regenerating: lint report and lint fixes, quality capture,
+  style-guide lint, merge preview / merge / rollback check, publish prechecks and the breaking-change
+  guardrail, publication change reports, PR-back, reviews, source provenance, consumer contracts, blast
+  radius, component governance, repository federation, spec sync, import delta, export and conversion.
+  The routes that called the generator themselves read through the new
+  `rendered_documents.revision_openapi`: mock start, mock scenario validation and Try it
+  (`_generated_spec_for_version`), Swagger UI, preservation and source review. On a warm revision none of
+  them queries a class, property or path row to build the document.
+- States that are not a stored revision are rendered through the new
+  `rendered_documents.render_uncached(reason=…)` and never stored: the component bulk-upgrade preview and
+  the materialization preview (`REASON_COMPONENT_PINS_OVERRIDE`), and a source apply's predicted document
+  and its in-transaction read of the current rows (`REASON_SOURCE_APPLY`). The merge preview needs none: it
+  merges three stored documents.
+- A committed merge stores the merged revision's document when it reads it for the compatibility audit,
+  and `POST …/source-apply` calls the new `rendered_documents.write_through` after a successful apply, so
+  the next read of either is warm.
+- `build_live_spec`, `load_classes_and_properties`, `SpecCounts`, `render_spec_bytes` and `sha256_hex`
+  moved from `app/spec_snapshot.py` to `app/rendered_documents.py`; `spec_snapshot` re-exports them. Two
+  callers keep `build_live_spec`: a freeze (it needs the counts) and the URL-import divergence guard (its
+  content identity names no project).
+- Preservation, source review and the mock scenario routes used to generate their document from a row
+  without the project's description and metadata. They now read the document `GET /v1/schema` serves, so
+  `info.description`, `tags` and `x-metadata` are present.
+- `tests/test_rendered_document_architecture.py` fails on any `generate_openapi_spec` reference outside
+  `rendered_documents.py` and `openapi_generator.py`, pins the four `render_uncached` call sites and the
+  callers of `build_live_spec`, and checks that a stored revision's canonical model is rebuilt only by
+  `build_conversion_source` (captured source through `revision_source`, parse through the per-digest model
+  cache — unchanged since COA-5.4). `tests/test_revision_openapi_readers_db.py` holds the query-count
+  tests for lint, mock start, merge preview and publish.
+
+### Fixed
+- A source review and the apply that follows it now fingerprint the same document. The review built its
+  base without the project's description and metadata while the apply's transaction included them, so
+  for a project with either, the apply answered `409 STALE_BASE` although nothing had changed.
+
+### Known limits
+- The publish prechecks still read the class list once for the "every class has a description" gate.
+  That is the gate's own query; the document is not generated.
+
 ## [1.804.0] - 2026-11-21
 
 ### Added

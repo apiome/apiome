@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .openapi_generator import generate_openapi_spec
+from .rendered_documents import REASON_SOURCE_APPLY, render_uncached
 from .source_change_review import diff_documents
 
 __all__ = [
@@ -760,7 +760,7 @@ def regenerate_document(
 ) -> Dict[str, Any]:
     """Predict the canonical document the generator will emit from a plan.
 
-    Feeds :func:`app.openapi_generator.generate_openapi_spec` with rows shaped
+    Feeds the generator (:func:`app.rendered_documents.render_uncached`) with rows shaped
     exactly like the database read-back (same ordering, same column names),
     so the prediction and the eventual export cannot disagree.
     """
@@ -811,13 +811,15 @@ def regenerate_document(
         }
         for server in sorted(writes.servers, key=lambda s: (s.sort_order, s.url))
     ]
-    return generate_openapi_spec(
-        tenant_slug,
-        project_slug,
-        version_string,
-        class_rows,
-        all_properties,
-        project_description,
+    # The document of a change that is not written yet: no stored revision has it.
+    return render_uncached(
+        reason=REASON_SOURCE_APPLY,
+        tenant_slug=tenant_slug,
+        project_slug=project_slug,
+        version_label=version_string,
+        classes=class_rows,
+        all_properties=all_properties,
+        project_description=project_description,
         revision_metadata=revision_metadata,
         project_metadata=project_metadata,
         paths_data=_paths_data_from_writes(writes, class_names),

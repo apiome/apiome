@@ -44,7 +44,6 @@ from pydantic.alias_generators import to_camel
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import SourceApplyConflictError, db
-from .openapi_generator import generate_openapi_spec
 from .openapi_validator import validate_openapi_document
 from .permissions import Action, Resource, enforce_permission
 from .preservation_envelope import (
@@ -52,6 +51,7 @@ from .preservation_envelope import (
     PreservationEnvelope,
     apply_envelope,
 )
+from .rendered_documents import revision_openapi, write_through
 from .safe_oas_parse import safe_oas_parse
 from .source_change_review import (
     RefIntegrityError,
@@ -203,35 +203,29 @@ def _parse_candidate(source_text: str, source_format: str) -> Dict[str, Any]:
     return document
 
 
-def _generated_canonical_document(version: Dict[str, Any], tenant_slug: str) -> Dict[str, Any]:
-    """The revision's canonical OpenAPI document, generated server-side.
+def _generated_canonical_document(
+    version: Dict[str, Any], tenant_slug: str, tenant_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """The revision's canonical OpenAPI document, rendered server-side.
 
-    Same generation path as export and the preservation envelope, so the
-    review always classifies against what the server would actually emit —
-    never against a client-supplied document.
+    The same document export and the preservation envelope use, read through
+    the rendered document cache (COA-5.14, #7090), so the review always
+    classifies against what the server would actually emit — never against a
+    client-supplied document.
+
+    Args:
+        version: The tenant-scoped version row.
+        tenant_slug: Tenant slug.
+        tenant_id: The owning tenant; ``None`` renders without the cache.
     """
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, List[Dict[str, Any]]] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
-    return generate_openapi_spec(
-        tenant_slug,
-        str(version.get("project_slug") or version["project_id"]),
-        str(version["version_id"]),
-        classes,
-        all_properties,
-        version.get("project_description"),
-        version_db_id=version["id"],
-        revision_metadata=version.get("metadata"),
-        project_metadata=version.get("project_metadata"),
-    )
+    return revision_openapi(version, tenant_slug, tenant_id, database=db)
 
 
 def _current_merged_document(
     version: Dict[str, Any], tenant_id: str, tenant_slug: str, project_id: str, dialect: str
 ) -> Dict[str, Any]:
     """Canonical + live preservation envelope: what the source editor edits."""
-    canonical = _generated_canonical_document(version, tenant_slug)
+    canonical = _generated_canonical_document(version, tenant_slug, tenant_id)
     claim_rows = db.get_preservation_claims(tenant_id, project_id, str(version["id"]))
     envelope = PreservationEnvelope(
         dialect=dialect,
@@ -355,6 +349,10 @@ async def apply_source_changes(
         )
     except SourceApplyConflictError as error:
         _raise_apply_conflict(error)
+    if result.get("applied"):
+        # COA-5.14 (#7090): store the document of the new content now, so the reload that
+        # follows an apply — and every reader after it — is served stored bytes.
+        write_through(tenant_id, str(version["id"]), database=db)
     counts = result.get("counts")
     return SourceApplyResponse(
         applied=bool(result.get("applied")),

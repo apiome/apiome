@@ -39,6 +39,19 @@ controls in the web app are switched off**. See [Turning on the Git-like control
 | Revert, reset | Move a branch back to an earlier revision | **Rollback branch to this revision…** | Switched off |
 | Branch protection | Lock a revision against deletion | **Lock revision (delete policy)** | Switched off |
 
+## Diffs, merges and rollbacks read stored documents
+
+Comparing two versions, previewing a merge, merging and checking a rollback all need each
+version's OpenAPI document. Apiome renders a version's document once per change and keeps it in
+the [document store](../admin/document-store.mdx#rendered-documents), so these read stored bytes:
+
+- A **merge preview** reads three stored documents: the merge base and the two branch tips.
+- A **merge** stores the document of the new version as part of the merge, so the first person to
+  open the result does not wait for it.
+- A **rollback check** reads the branch tip and the version you roll back to.
+
+The first read after an edit renders the document again, which takes longer for a large version.
+
 ## What is not like Git
 
 - **No push or pull.** A project lives in Apiome, not in a clone. To bring changes in from a Git
