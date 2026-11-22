@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.808.0] - 2026-11-21
+
+### Fixed
+- **Readable description and slug for a converted project (COA-4.3d, #7129):** **Convert to OpenAPI Project** now
+  describes the new project as `Converted from the RAML catalog item “Bookstore API”.` (or reuses the item's own
+  description when it has one) and slugs it as the item's slug plus `-openapi`, with a short suffix only when
+  that slug is already taken. No UUID appears in either, so download file names read cleanly. Existing converted
+  projects are untouched. The response shape is unchanged (OpenAPI version not bumped).
+
 ## [1.807.0] - 2026-11-21
 
 ### Added
