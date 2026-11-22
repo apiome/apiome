@@ -104,8 +104,9 @@ class GitDeliveryRequest(BaseModel):
 
     repository_id: str = Field(
         alias="repositoryId",
-        description="A repository registered in this workspace through a linked GitHub account "
-        "(`GET /v1/tenants/{tenant}/repositories`). Its linked account is the credential.",
+        description="A repository registered in this workspace through a linked GitHub, GitLab, Bitbucket or "
+        "Microsoft (Azure DevOps) account (`GET /v1/tenants/{tenant}/repositories`). Its linked account is the "
+        "credential.",
     )
     target_path: str = Field(
         default="",

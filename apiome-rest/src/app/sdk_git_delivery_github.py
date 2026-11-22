@@ -692,6 +692,21 @@ class GitHubGitClient:
         )
         return str((response.json() or {}).get("sha") or "")
 
+    def resolve_commit(self, commit_sha: str) -> str:
+        """The id a commit carries once a branch points at it — export delivery's provider protocol (#6654).
+
+        GitHub names a commit when :meth:`create_commit` writes it, so this is the id itself; hosts
+        that write the commit only when the branch moves (GitLab, Bitbucket, Azure DevOps) answer
+        with the id they gave it.
+
+        Args:
+            commit_sha: A commit returned by :meth:`create_commit`.
+
+        Returns:
+            ``commit_sha``.
+        """
+        return commit_sha
+
     def create_branch(self, branch: str, commit_sha: str) -> bool:
         """Create a branch at a commit.
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.632.0",
+    "version": "1.633.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15287,7 +15287,7 @@
           "export-delivery"
         ],
         "summary": "Deliver a completed export to a git repository",
-        "description": "Writes a **completed** export job's bundle into a repository registered in this workspace through a linked GitHub account, under `targetPath` (a multi-file bundle keeps its directory tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.\n\n**`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>` built on the latest base branch, and one pull request whose description carries the export's fidelity summary and a link to the full report. A re-export updates the same branch and pull request: `opened`, `updated`, `unchanged` (nothing written) or `up_to_date` (the base already holds it).\n\n**`mode: commit`**: one commit straight onto the base branch, fast-forward only \u2014 `committed`, or `failed` when the branch moved or is protected.\n\n**Failures are runs.** A missing or revoked credential, a token without write access or a refused push answers `200` with `status: failed`, a stable `errorCode` and an actionable log.\n\nRequires `versions:publish`. Audited as `export.git_delivery`.",
+        "description": "Writes a **completed** export job's bundle into a repository registered in this workspace through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure DevOps) account \u2014 on GitLab the pull request is a merge request \u2014 under `targetPath` (a multi-file bundle keeps its directory tree), with a delivery manifest at `<targetPath>/.apiome/export-delivery.json`.\n\n**`mode: pr`** (default): a commit on `apiome/export-<artifact>-<target>` built on the latest base branch, and one pull request whose description carries the export's fidelity summary and a link to the full report. A re-export updates the same branch and pull request: `opened`, `updated`, `unchanged` (nothing written) or `up_to_date` (the base already holds it).\n\n**`mode: commit`**: one commit straight onto the base branch, fast-forward only \u2014 `committed`, or `failed` when the branch moved or is protected.\n\n**Failures are runs.** A missing or revoked credential, a token without write access or a refused push answers `200` with `status: failed`, a stable `errorCode` and an actionable log.\n\nRequires `versions:publish`. Audited as `export.git_delivery`.",
         "operationId": "deliver_export_job_to_git_v1_export__tenant_slug__jobs__job_id__deliveries_git_post",
         "parameters": [
           {
@@ -107922,6 +107922,7 @@
           "tenant-repositories"
         ],
         "summary": "Create Tenant Repository",
+        "description": "Register a Git repository from a public clone URL or through a linked account.\n\nA ``public_url`` registration needs only ``cloneUrl``. A ``linked_account`` registration names\nthe account (``linkedAccountId``) and the repository (``repositoryFullName``); Apiome reads the\nrepository from its host with that account's token, so private repositories register, and git\ndelivery can later push with the same credential. The account decides the host and the name's\nshape (#6654):\n\n* GitHub \u2014 ``owner/repo``;\n* GitLab (gitlab.com) \u2014 ``group/project`` or ``group/subgroup/project``;\n* Bitbucket Cloud \u2014 ``workspace/repo``;\n* Microsoft (Azure DevOps) \u2014 ``organization/project/repository``.\n\nAny other linked account answers 400. The name must match the host's own spelling.",
         "operationId": "create_tenant_repository_v1_tenants__tenant_slug__repositories_post",
         "parameters": [
           {
@@ -176468,7 +176469,7 @@
           "repositoryId": {
             "type": "string",
             "title": "Repositoryid",
-            "description": "A repository registered in this workspace through a linked GitHub account (`GET /v1/tenants/{tenant}/repositories`). Its linked account is the credential.",
+            "description": "A repository registered in this workspace through a linked GitHub, GitLab, Bitbucket or Microsoft (Azure DevOps) account (`GET /v1/tenants/{tenant}/repositories`). Its linked account is the credential.",
             "example": "example"
           },
           "targetPath": {
