@@ -19,10 +19,10 @@ export type RecentExport = {
   targetKey: string;
   /** Human label of the target, shown as the row title, e.g. `"Protobuf"`. */
   targetLabel: string;
-  /** Fidelity tier of the conversion at export time (MFX-2.5). */
-  tier: ExportFidelityTier;
-  /** Share of constructs carried faithfully, 0–100, at export time. */
-  preservedPercent: number;
+  /** Fidelity tier of the conversion at export time (MFX-2.5); null when it was not scored yet. */
+  tier: ExportFidelityTier | null;
+  /** Share of constructs carried faithfully, 0–100, at export time; null when not scored yet. */
+  preservedPercent: number | null;
   /** Filename of the emitted document. */
   filename: string;
   /**
@@ -78,9 +78,9 @@ export function isRecentExport(v: unknown): v is RecentExport {
     v.targetKey.length > 0 &&
     typeof v.targetLabel === 'string' &&
     v.targetLabel.length > 0 &&
-    FIDELITY_TIERS.includes(v.tier as ExportFidelityTier) &&
-    typeof v.preservedPercent === 'number' &&
-    Number.isFinite(v.preservedPercent) &&
+    (v.tier === null || FIDELITY_TIERS.includes(v.tier as ExportFidelityTier)) &&
+    (v.preservedPercent === null ||
+      (typeof v.preservedPercent === 'number' && Number.isFinite(v.preservedPercent))) &&
     typeof v.filename === 'string' &&
     // `options` is optional (older records predate MFX-41.3); when present it must be an object.
     (v.options === undefined || v.options === null || isPlainObject(v.options)) &&
@@ -166,5 +166,6 @@ export function recordRecentExport(
 export function fidelityBadgeLabel(
   entry: Pick<RecentExport, 'tier' | 'preservedPercent'>,
 ): string {
+  if (entry.tier === null || entry.preservedPercent === null) return 'fidelity not scored';
   return entry.tier === 'lossless' ? 'lossless' : `${entry.preservedPercent}% fidelity`;
 }

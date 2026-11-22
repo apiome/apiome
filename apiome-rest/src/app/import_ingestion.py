@@ -22,6 +22,7 @@ import yaml
 
 from .intake_resource_guard import (
     IntakeLimitError,
+    guard_alias_expansion,
     guard_document_text,
     guard_parsed_document,
 )
@@ -132,12 +133,15 @@ def _remember_failure(text: str, exc: Exception) -> None:
 
 def _parse_document_uncached(text: str, *, source_label: Optional[str]) -> Dict[str, Any]:
     """:func:`parse_document`'s body, without the failure memo."""
-    guard_document_text(text, source_label=source_label)
+    # Strict JSON has no YAML anchors or aliases, so the alias-expansion scan (a pure-Python walk
+    # of the whole token stream, seconds on a multi-megabyte spec) runs only before a YAML parse.
+    guard_document_text(text, source_label=source_label, scan_aliases=False)
 
     parsed: Any
     try:
         parsed = json.loads(text)
     except (json.JSONDecodeError, ValueError):
+        guard_alias_expansion(text, source_label=source_label)
         try:
             parsed = yaml.safe_load(text)
         except yaml.YAMLError as exc:

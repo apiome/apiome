@@ -933,8 +933,9 @@ export function ExportStudio({
           onGenerated?.({
             targetKey: targetCard.key,
             targetLabel: targetCard.entry.descriptor.label,
-            tier: targetCard.entry.fidelity.tier,
-            preservedPercent: targetCard.entry.fidelity.preserved_percent,
+            tier: (targetCard.entry.fidelity ?? verifyResult?.fidelity?.summary)?.tier ?? null,
+            preservedPercent:
+              (targetCard.entry.fidelity ?? verifyResult?.fidelity?.summary)?.preserved_percent ?? null,
             filename: emittedFilename,
             options: job.params.options,
           });
@@ -957,7 +958,7 @@ export function ExportStudio({
       }
     };
     // `jobStatus` is derived from `job`; depending on `job` alone keeps this to one run per job id.
-  }, [job, jobStatus, artifact, selected, cards, onGenerated, downloadAttempt]);
+  }, [job, jobStatus, artifact, selected, cards, onGenerated, downloadAttempt, verifyResult]);
 
   // MFX-46.3: an Avro, JSON Schema or Protobuf export can also be registered on a schema registry.
   const registryFormat = selected ? registryFormatFor(selected.key, selected.entry.descriptor.format) : null;

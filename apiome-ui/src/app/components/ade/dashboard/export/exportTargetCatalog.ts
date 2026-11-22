@@ -84,8 +84,11 @@ export interface ExportTargetEntry {
   options_schema: Record<string, unknown>;
   /** Validated default option values for this target (MFX-1.4). */
   default_options: Record<string, unknown>;
-  /** Per-source fidelity badge for exporting the requested source to this target. */
-  fidelity: TargetFidelitySummary;
+  /**
+   * Per-source fidelity badge for exporting the requested source to this target. Null while a
+   * large source is still being scored (`fidelity_status: 'pending'`); the card shows "Scoring…".
+   */
+  fidelity: TargetFidelitySummary | null;
 }
 
 /** The full `GET /api/export/targets` response (mirrors REST `ExportTargetsResponse`). */
@@ -100,6 +103,10 @@ export interface ExportTargetsResponse {
   version_label?: string | null;
   /** Every registered target with its per-source fidelity, sorted by target key. */
   targets: ExportTargetEntry[];
+  /** `pending` while the badges are still being scored in the background; `ready` otherwise. */
+  fidelity_status?: 'ready' | 'pending';
+  /** While pending: the token polled at `GET /api/export/targets/fidelity/{token}`. */
+  fidelity_token?: string | null;
 }
 
 /** A renderable target card: the entry plus its resolved icon component. */
@@ -217,6 +224,9 @@ export function filterSameFormatTargets(
   );
 }
 
+/** The badge of a target whose fidelity is still being scored (a large source, deferred list). */
+export const SCORING_LABEL = 'Scoring…';
+
 /** Human label for a fidelity tier, as printed on the card badge. */
 export function tierLabel(tier: ExportFidelityTier): string {
   return tier;
@@ -255,7 +265,7 @@ export interface FidelityPreSummary {
  */
 export function fidelityPreSummary(cards: ExportTargetCard[]): FidelityPreSummary {
   const byTier = (tier: ExportFidelityTier) =>
-    cards.filter((card) => card.entry.fidelity.tier === tier);
+    cards.filter((card) => card.entry.fidelity?.tier === tier);
   return {
     best: byTier('lossless'),
     lossy: [...byTier('lossy'), ...byTier('types-only')],

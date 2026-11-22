@@ -42,16 +42,19 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import re
 import time
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import yaml
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import __version__ as APIOME_VERSION
+from .api_plans import PLANS_EXTRAS_KEY
 from .auth import validate_authentication
 from .capability_registry import REGISTRY_VERSION, CapabilityRegistrySnapshot, registry_snapshot
 from .download_headers import attachment_headers
@@ -120,7 +123,9 @@ from .export_service import (
     resolve_emit_format,
     resolve_emitter,
 )
-from .export_source import ExportSourceError, load_export_source
+from .export_source import ExportSource, ExportSourceError, load_export_source
+from .export_fidelity_jobs import fidelity_jobs
+from .export_targets_cache import build_targets_cache_key, targets_cache
 from .export_validation import validate_emitted_artifact
 from .export_validation_gate import EmittedValidationReport, build_validation_report
 from .lossiness import LossinessSeverity
@@ -131,6 +136,7 @@ from .studio_telemetry import StudioMetricRequest, StudioMetricResponse, normali
 from .transcoding_guards import TranscodeGuard, TranscodeGuardError, classify_transcode
 
 router = APIRouter(prefix="/v1/export", tags=["export"])
+_logger = logging.getLogger(__name__)
 
 #: The tenant-scoped export surface. ``/v1/export/{tenant_slug}/…`` is the historical shape of
 #: the fidelity endpoints above; the pre-flight (IXH-2.4) is the export twin of
@@ -163,8 +169,9 @@ class ExportTargetFidelity(BaseModel):
     default_options: Dict[str, Any] = Field(
         description="Validated default option values for this target (MFX-1.4).",
     )
-    fidelity: TargetFidelity = Field(
-        description="Cheap tier + preserved-% badge for exporting the requested source here.",
+    fidelity: Optional[TargetFidelity] = Field(
+        description="Cheap tier + preserved-% badge for exporting the requested source here. "
+        "Null only in a ``fidelity=deferred`` response whose scores are still pending.",
     )
 
 
@@ -185,6 +192,30 @@ class ExportTargetsResponse(BaseModel):
         default_factory=list,
         description="Every registered target with its per-source fidelity, sorted by target key.",
     )
+    fidelity_status: Literal["ready", "pending"] = Field(
+        default="ready",
+        description="``ready`` when every target carries its fidelity badge; ``pending`` when a "
+        "``fidelity=deferred`` request is still scoring them (poll ``fidelity_token``).",
+    )
+    fidelity_token: Optional[str] = Field(
+        default=None,
+        description="While ``pending``: the token to poll at ``GET …/targets/fidelity/{token}``.",
+    )
+
+
+class ExportTargetsFidelityStatus(BaseModel):
+    """The state of a deferred targets list's scoring job."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["pending", "ready", "failed"] = Field(
+        description="``pending`` while scoring; ``ready`` with ``targets``; ``failed`` with ``error``.",
+    )
+    targets: Optional[List[ExportTargetFidelity]] = Field(
+        default=None,
+        description="When ``ready``: every target with its fidelity badge, as the targets list returns it.",
+    )
+    error: Optional[str] = Field(default=None, description="When ``failed``: why scoring stopped.")
 
 
 class ExportPreviewRequest(BaseModel):
@@ -548,6 +579,58 @@ class ExportVerifyResponse(BaseModel):
 # ===========================================================================
 
 
+def _listed_targets(api: Any) -> List[Tuple[Any, Any, EmitterDescriptor]]:
+    """The targets a reader can use, each with its descriptor marked for this source.
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        ``(target view, emitter class, descriptor)`` per target, in registry (key) order. The
+        descriptor is unavailable, with the reason, when the target cannot export this source.
+    """
+    # Imported here: ``format_matrix`` pulls in the import-source registry, which this module's
+    # import graph does not otherwise need.
+    from .format_matrix import INTERNAL_FORMAT_KEYS
+
+    rows: List[Tuple[Any, Any, EmitterDescriptor]] = []
+    for target in describe_emit_targets():
+        # Internal machinery (the no-op ``sample`` SPI example) is not a format a reader can use:
+        # the Export dialog and ``apiome export targets`` never offer it (RC6-H4, #6211).
+        if target.descriptor.key in INTERNAL_FORMAT_KEYS:
+            continue
+        emitter_cls = get_emitter(target.descriptor.format)
+        if emitter_cls is None:  # pragma: no cover - registry/describe are always in sync
+            continue
+        descriptor = target.descriptor
+        # A target that cannot export *this* source (a source-bound format, RC6-H4) is listed as
+        # unavailable with the reason, so the dialog draws it disabled instead of failing later.
+        try:
+            unsupported = emitter_cls.source_unsupported_reason(api)
+        except Exception as exc:  # noqa: BLE001 — one target's failure must not fail the whole list
+            _logger.warning("source check for target %s failed: %s", descriptor.key, exc, exc_info=True)
+            unsupported = f"{descriptor.label} cannot be produced from this source: {exc}"
+        rows.append((target, emitter_cls, _unavailable(descriptor, unsupported)))
+    return rows
+
+
+def _unavailable(descriptor: EmitterDescriptor, reason: Optional[str]) -> EmitterDescriptor:
+    """``descriptor`` marked unavailable with ``reason``, or unchanged when there is no reason."""
+    if reason and descriptor.available:
+        return descriptor.model_copy(update={"available": False, "unavailable_reason": reason})
+    return descriptor
+
+
+def _entry(target: Any, descriptor: EmitterDescriptor, fidelity: Optional[TargetFidelity]) -> ExportTargetFidelity:
+    return ExportTargetFidelity(
+        descriptor=descriptor,
+        capability_profile=target.capability_profile,
+        options_schema=target.options_schema,
+        default_options=target.default_options,
+        fidelity=fidelity,
+    )
+
+
 def build_target_fidelity_entries(api: Any) -> List[ExportTargetFidelity]:
     """Enumerate every registered export target with its per-source fidelity badge.
 
@@ -562,35 +645,96 @@ def build_target_fidelity_entries(api: Any) -> List[ExportTargetFidelity]:
         One :class:`ExportTargetFidelity` per registered target a reader can use, in registry
         (key) order — internal targets (:data:`app.format_matrix.INTERNAL_FORMAT_KEYS`) excluded.
     """
-    # Imported here: ``format_matrix`` pulls in the import-source registry, which this module's
-    # import graph does not otherwise need.
-    from .format_matrix import INTERNAL_FORMAT_KEYS
-
     entries: List[ExportTargetFidelity] = []
-    for target in describe_emit_targets():
-        # Internal machinery (the no-op ``sample`` SPI example) is not a format a reader can use:
-        # the Export dialog and ``apiome export targets`` never offer it (RC6-H4, #6211).
-        if target.descriptor.key in INTERNAL_FORMAT_KEYS:
-            continue
-        emitter_cls = get_emitter(target.descriptor.format)
-        if emitter_cls is None:  # pragma: no cover - registry/describe are always in sync
-            continue
-        descriptor = target.descriptor
-        # A target that cannot export *this* source (a source-bound format, RC6-H4) is listed as
-        # unavailable with the reason, so the dialog draws it disabled instead of failing later.
-        unsupported = emitter_cls.source_unsupported_reason(api)
-        if unsupported and descriptor.available:
-            descriptor = descriptor.model_copy(update={"available": False, "unavailable_reason": unsupported})
-        entries.append(
-            ExportTargetFidelity(
-                descriptor=descriptor,
-                capability_profile=target.capability_profile,
-                options_schema=target.options_schema,
-                default_options=target.default_options,
-                fidelity=build_target_fidelity(api, emitter_cls),
-            )
-        )
+    for target, emitter_cls, descriptor in _listed_targets(api):
+        try:
+            fidelity = build_target_fidelity(api, emitter_cls)
+        except Exception as exc:  # noqa: BLE001 — one target's failure must not fail the whole list
+            # The export would fail the same way, so the target is listed as unavailable with the
+            # reason instead of turning the whole list into a 500 (an HL7 v2 guide of a spec with
+            # more records than its 1 296 site-defined segment IDs, for one).
+            _logger.warning("fidelity prediction for target %s failed: %s", descriptor.key, exc, exc_info=True)
+            descriptor = _unavailable(descriptor, f"{descriptor.label} cannot be produced from this source: {exc}")
+            fidelity = _UNKNOWN_FIDELITY
+        entries.append(_entry(target, descriptor, fidelity))
     return entries
+
+
+def build_unscored_entries(api: Any) -> List[ExportTargetFidelity]:
+    """Every target :func:`build_target_fidelity_entries` lists, without the fidelity badge.
+
+    What the deferred ``/targets`` mode answers with at once (milliseconds, not seconds); the
+    scored list follows from ``/targets/fidelity/{token}``. A target whose prediction later fails
+    is still listed available here and becomes unavailable in the scored list.
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        The targets, in registry order, each with ``fidelity`` ``None``.
+    """
+    return [_entry(target, descriptor, None) for target, _cls, descriptor in _listed_targets(api)]
+
+
+#: The badge of a target whose prediction failed. Its card is unavailable, so the badge is not shown.
+_UNKNOWN_FIDELITY = TargetFidelity(
+    tier=ExportFidelityTier.LOSSY,
+    preserved_percent=0,
+    total=0,
+    preserved=0,
+    dropped=0,
+    approximated=0,
+    synthesized=0,
+)
+
+
+def _targets_for_source(
+    tenant_id: str, artifact: str, version: Optional[str], deferred: bool
+) -> Tuple[ExportSource, List[ExportTargetFidelity], Optional[str]]:
+    """Load the export source and its targets list, scoring it on the background pool.
+
+    A list cached for the same content is returned as it is. Otherwise the list is scored by
+    :func:`app.export_fidelity_jobs.fidelity_jobs` — waited for, or (``deferred``) returned
+    unscored with the job's token for the client to poll.
+
+    Args:
+        tenant_id: The caller's tenant.
+        artifact: The artifact (project) id.
+        version: The revision (UUID or label), or ``None`` for the latest.
+        deferred: Return the unscored list and a token instead of waiting for the scores.
+
+    Returns:
+        ``(source, entries, token)``: the loaded :class:`~app.export_source.ExportSource`, its
+        targets, and the scoring job's token when the entries are unscored (else ``None``).
+
+    Raises:
+        ExportSourceError: When the source cannot be loaded.
+    """
+    source = load_export_source(tenant_id, artifact, version)
+    key = build_targets_cache_key(
+        tenant_id=tenant_id,
+        version_record_id=source.version_record_id,
+        source_text=source.source_text,
+        source_format=source.source_format,
+        plans=source.api.extras.get(PLANS_EXTRAS_KEY),
+        apiome_version=APIOME_VERSION,
+        registry=[(t.descriptor.key, t.descriptor.available) for t in describe_emit_targets()],
+    )
+    if key is None:
+        # Not identifiable by content (no source text): nothing to cache or poll by, so score here.
+        return source, build_target_fidelity_entries(source.api), None
+    entries = targets_cache().get(key)
+    if entries is not None:
+        return source, entries, None
+    api = source.api
+
+    def score() -> List[ExportTargetFidelity]:
+        return build_target_fidelity_entries(api)
+
+    if deferred:
+        token = fidelity_jobs().submit(key, tenant_id, score)
+        return source, build_unscored_entries(api), token
+    return source, fidelity_jobs().wait(key, tenant_id, score), None
 
 
 # ===========================================================================
@@ -607,7 +751,10 @@ def build_target_fidelity_entries(api: Any) -> List[ExportTargetFidelity]:
         "(descriptor + capability profile + options) with a cheap per-target fidelity badge "
         "(tier + preserved-%), computed from the prediction engine without emitting an "
         "artifact. Drives the export dialog's card badges (MFX-6.1) and the version pre-summary "
-        "(MFX-6.5)."
+        "(MFX-6.5). Scoring a large source takes seconds: with ``fidelity=deferred`` the list "
+        "comes back at once with ``fidelity`` null on every target, ``fidelity_status`` "
+        "``pending`` and a ``fidelity_token``; poll ``GET …/targets/fidelity/{token}`` for the "
+        "scored list. A list already scored for the same content is returned scored in either mode."
     ),
 )
 async def list_export_targets(
@@ -617,14 +764,20 @@ async def list_export_targets(
         None,
         description="Revision UUID, version label (``1.0.0``), or omitted for the latest revision.",
     ),
+    fidelity: Literal["inline", "deferred"] = Query(
+        "inline",
+        description="``inline`` (default) waits for every target's fidelity badge; ``deferred`` "
+        "returns the targets at once and scores them in the background.",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportTargetsResponse:
-    """Return every export target with its per-source fidelity badge.
+    """Return every export target with its per-source fidelity badge (or, deferred, without it).
 
     Args:
         tenant_slug: The tenant slug (scopes the artifact lookup).
         artifact: The artifact (project) id whose source model fidelity is measured against.
         version: The revision to measure (UUID or label); the latest revision when omitted.
+        fidelity: ``inline`` to wait for the badges, ``deferred`` to poll for them.
         auth_data: Authenticated tenant context (JWT or API key).
 
     Returns:
@@ -635,12 +788,13 @@ async def list_export_targets(
             reconstructable source; 400 when the source format cannot be adapted.
     """
     tenant_id = auth_data["tenant_id"]
+    # Loading the source is CPU-bound too (about a second on a large spec): off the event loop.
     try:
-        source = load_export_source(tenant_id, artifact, version)
+        source, entries, token = await run_in_threadpool(
+            _targets_for_source, tenant_id, artifact, version, fidelity == "deferred"
+        )
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
-
-    entries = build_target_fidelity_entries(source.api)
 
     return ExportTargetsResponse(
         artifact=source.artifact_id,
@@ -648,7 +802,52 @@ async def list_export_targets(
         version_record_id=source.version_record_id,
         version_label=source.version_label,
         targets=entries,
+        fidelity_status="pending" if token else "ready",
+        fidelity_token=token,
     )
+
+
+@router.get(
+    "/{tenant_slug}/targets/fidelity/{token}",
+    response_model=ExportTargetsFidelityStatus,
+    summary="Poll a deferred targets list for its fidelity badges",
+    description=(
+        "The scoring job a ``fidelity=deferred`` targets request started. ``pending`` while it "
+        "runs; ``ready`` with the scored ``targets`` (the same shape as the targets list); "
+        "``failed`` with an ``error``. 404 ``fidelity-job-unknown`` when this server has no such "
+        "job for the caller — it expired, or another REST worker started it: request the targets "
+        "again."
+    ),
+)
+async def get_export_targets_fidelity(
+    tenant_slug: str,
+    token: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ExportTargetsFidelityStatus:
+    """Return the state of a deferred targets list's scoring job.
+
+    Args:
+        tenant_slug: The tenant slug.
+        token: The ``fidelity_token`` of a deferred targets response.
+        auth_data: Authenticated tenant context; only the tenant that started the job can read it.
+
+    Returns:
+        The job's state, with the scored targets once ready.
+
+    Raises:
+        HTTPException: 404 ``fidelity-job-unknown`` when there is no such job for the caller.
+    """
+    state = fidelity_jobs().status(token, auth_data["tenant_id"])
+    if state is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "fidelity-job-unknown",
+                "message": "That fidelity scoring job is not known here. Request the targets list again.",
+            },
+        )
+    status, targets, error = state
+    return ExportTargetsFidelityStatus(status=status, targets=targets, error=error)
 
 
 @router.get(

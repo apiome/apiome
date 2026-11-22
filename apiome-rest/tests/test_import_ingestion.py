@@ -49,6 +49,34 @@ def test_parse_document_invalid_text_raises():
         parse_document("{ not: valid: : :")
 
 
+def test_parse_document_json_skips_the_yaml_alias_scan():
+    """Strict JSON has no aliases, so the slow YAML event walk is not run for it."""
+    with patch("app.import_ingestion.guard_alias_expansion") as alias_scan:
+        doc = parse_document('{"openapi": "3.1.0", "paths": {}}')
+    assert doc["openapi"] == "3.1.0"
+    alias_scan.assert_not_called()
+
+
+def test_parse_document_yaml_runs_the_alias_scan():
+    with patch("app.import_ingestion.guard_alias_expansion") as alias_scan:
+        parse_document("openapi: 3.1.0\npaths: {}\n")
+    alias_scan.assert_called_once()
+
+
+def test_parse_document_still_rejects_a_yaml_alias_bomb():
+    """The scan still guards YAML — including a flow document that looks like JSON but is not."""
+    from app.intake_resource_guard import IntakeLimitError
+
+    bomb = ["a: &a [x, x, x, x, x, x, x, x, x, x]"]
+    for level in range(1, 9):
+        refs = ", ".join([f"*{chr(96 + level)}"] * 10)
+        bomb.append(f"{chr(97 + level)}: &{chr(97 + level)} [{refs}]")
+    with pytest.raises(IntakeLimitError, match="aliases expand too far"):
+        parse_document("\n".join(bomb) + "\n")
+    with pytest.raises(IntakeLimitError, match="aliases expand too far"):
+        parse_document("{" + ", ".join(line for line in bomb) + "}")
+
+
 # ===========================================================================
 # ingest_source — paste / file
 # ===========================================================================

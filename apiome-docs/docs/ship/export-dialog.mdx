@@ -41,6 +41,14 @@ acknowledgement. A lossless conversion shows a quiet line instead of the warning
 offers and what its check rejects are on [Export a spec](./export-a-spec.md#in-the-app-the-export-dialog);
 what the badges and the report mean is on [Understand export fidelity](./export-fidelity.md).
 
+On a large source (a spec with thousands of schemas) the cards appear first and each badge reads
+**“Scoring…”** for a few seconds while Apiome measures every format; the badges then fill in
+without a reload. You can pick a card while it is scoring: the **Fidelity** step shows the same
+measurement for the one format you chose, and until it has, the dialog asks for the
+acknowledgement as if the conversion were lossy. A format that turns out not to work for the
+source is greyed out with the reason once scoring finishes. Opening the dialog again for the same
+version is quick, because the scores are kept for ten minutes.
+
 <Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
 
 <Screenshot id="export-dialog-fidelity" alt="The Export dialog's fidelity report for Protobuf: what is kept, approximated and dropped, and the acknowledgement" />

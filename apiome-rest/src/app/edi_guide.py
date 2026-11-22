@@ -50,9 +50,10 @@ from __future__ import annotations
 
 import itertools
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from .canonical_model import CanonicalApi, CanonicalField, Constraints, Type, TypeKind, TypeRef
 from .cobolcopybook_plan import record_types
@@ -238,6 +239,7 @@ class _SegmentIds:
         self._rule = re.compile(rule) if rule else None
         #: Prefix of every allocated ID (``Z`` for HL7 site-defined segments); imported IDs are claimed as they are.
         self._prefix = prefix
+        self._fallback_cache: Dict[Tuple[str, ...], _Fallback] = {}
 
     def claim(self, segment_id: str) -> bool:
         """Take ``segment_id`` as is (an imported one); ``False`` when it is taken or breaks the ID rule."""
@@ -247,10 +249,39 @@ class _SegmentIds:
         return True
 
     def allocate(self, name: str) -> str:
-        """A new ID for ``name``: its initials and consonants first, then its letters, then a digit."""
+        """A new ID for ``name``: its initials and consonants first, then its letters, then a digit.
+
+        The candidates are tried in a fixed order and the first free one is taken. The order has two
+        parts: a short one spelled from ``name`` (:meth:`_name_candidates`), then — under an ID rule
+        or a prefix — long fallbacks that do not depend on the name beyond its first letter
+        (:meth:`_fallbacks`). The fallbacks are scanned from a cursor: an ID is only ever taken,
+        never freed, so one found taken stays taken and is not checked again. That keeps a guide of
+        thousands of records linear instead of re-walking ~18 000 fallbacks per segment, and picks
+        exactly the ID a full scan would.
+
+        Args:
+            name: The record or field name the ID is spelled from.
+
+        Returns:
+            The claimed segment ID.
+
+        Raises:
+            ValueError: When every candidate is taken (an HL7 ``Z`` prefix leaves 1 296 IDs).
+        """
         letters = re.sub(r"[^A-Za-z0-9]", "", name).upper() or "SEG"
         if not letters[0].isalpha():
             letters = f"S{letters}"
+        for candidate in self._name_candidates(name, letters):
+            if len(candidate) >= 2 and self.claim(candidate):
+                return candidate
+        for fallback in self._fallbacks(letters[0]):
+            found = fallback.take(self.claim)
+            if found is not None:
+                return found
+        raise ValueError(f"No free segment ID left for {name!r}")
+
+    def _name_candidates(self, name: str, letters: str) -> List[str]:
+        """The candidates spelled from ``name``, prefixed when the allocator has a prefix."""
         words = [w for w in re.split(r"(?<=[a-z0-9])(?=[A-Z])|[^A-Za-z0-9]+", name) if w]
         initials = "".join(w[0] for w in words).upper()
         consonants = letters[0] + re.sub(r"[AEIOU]", "", letters[1:])
@@ -258,23 +289,65 @@ class _SegmentIds:
         candidates += [letters[0] + a + b for a in letters[1:] for b in letters[2:]]
         candidates += [letters[:2] + str(d) for d in range(1, 10)]
         candidates += [letters[0] + str(d) + str(e) for d in range(10) for e in range(10)]
+        if not self._prefix:
+            return candidates
+        # Keep the name's letters after the prefix (OrderLine → ZOR).
+        width = 3 - len(self._prefix)
+        stems = [letters[:width], initials[:width], consonants[:width], *(c[:width] for c in candidates)]
+        return [self._prefix + stem for stem in stems if len(stem) == width]
+
+    def _fallbacks(self, first: str) -> List["_Fallback"]:
+        """The name-independent candidates after :meth:`_name_candidates`, in order, built once each."""
+        fallbacks: List[_Fallback] = []
         if self._rule is not None:
             # An ID rule may forbid digits (EDIFACT tags are letters): fall back to every letter pair.
-            alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            first = letters[0] if letters[0].isalpha() else "S"
-            candidates += [first + a + b for a in alphabet for b in alphabet]
-            candidates += [a + b + c for a in alphabet for b in alphabet for c in alphabet]
+            fallbacks.append(self._fallback(("first", first), (first + a + b for a in _ALPHABET for b in _ALPHABET)))
+            every = (a + b + c for a in _ALPHABET for b in _ALPHABET for c in _ALPHABET)
+            fallbacks.append(self._fallback(("any",), every))
         if self._prefix:
-            # Keep the name's letters after the prefix (OrderLine → ZOR), then every letter or digit pair.
+            # Then every letter or digit pair after the prefix.
             width = 3 - len(self._prefix)
-            alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-            stems = [letters[: width], initials[:width], consonants[:width], *(c[:width] for c in candidates)]
-            pairs = ["".join(p) for p in itertools.product(alnum, repeat=width)]
-            candidates = [self._prefix + stem for stem in [*stems, *pairs] if len(stem) == width]
-        for candidate in candidates:
-            if len(candidate) >= 2 and self.claim(candidate):
+            fallbacks.append(self._fallback(("pairs",), ("".join(p) for p in itertools.product(_ALNUM, repeat=width))))
+        return fallbacks
+
+    def _fallback(self, key: Tuple[str, ...], ids: Iterator[str]) -> "_Fallback":
+        """The cached :class:`_Fallback` for ``key``; ``ids`` are bare IDs, cut and prefixed here."""
+        cached = self._fallback_cache.get(key)
+        if cached is None:
+            if self._prefix and key != ("pairs",):
+                width = 3 - len(self._prefix)
+                ids = (self._prefix + c[:width] for c in ids if len(c[:width]) == width)
+            elif self._prefix:
+                ids = (self._prefix + c for c in ids)
+            cached = self._fallback_cache[key] = _Fallback(ids)
+        return cached
+
+
+#: The letters fallback IDs are spelled from, and the letters and digits after a prefix.
+_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+_ALNUM = _ALPHABET + "0123456789"
+
+
+class _Fallback:
+    """A fixed run of candidate IDs, scanned from where the last scan stopped.
+
+    Sound because a :class:`_SegmentIds` only adds IDs: one that was taken, or broke the ID rule,
+    when the cursor passed it still is. Duplicates are dropped up front — a repeat can never be the
+    first free candidate when its earlier copy was not.
+    """
+
+    def __init__(self, ids: Iterator[str]) -> None:
+        self._ids = [i for i in dict.fromkeys(ids) if len(i) >= 2]
+        self._next = 0
+
+    def take(self, claim: Callable[[str], bool]) -> Optional[str]:
+        """Claim the next free ID with ``claim``, or ``None`` when none is left."""
+        while self._next < len(self._ids):
+            candidate = self._ids[self._next]
+            self._next += 1
+            if claim(candidate):
                 return candidate
-        raise ValueError(f"No free segment ID left for {name!r}")
+        return None
 
 
 class _Planner:
@@ -286,8 +359,8 @@ class _Planner:
         self._losses = losses
         self._ids = _SegmentIds(options.reserved_ids, options.segment_id_rule, options.allocated_id_prefix)
         self._by_key = {t.key: t for t in api.types if t.key}
-        names = [t.name for t in api.types]
-        self._by_name = {t.name: t for t in api.types if t.name and names.count(t.name) == 1}
+        names = Counter(t.name for t in api.types)
+        self._by_name = {t.name: t for t in api.types if t.name and names[t.name] == 1}
         self.segments: Dict[str, GuideSegment] = {}
         self._segment_of: Dict[str, List[str]] = {}
         self._noted: Set[Tuple[str, str]] = set()

@@ -5,8 +5,9 @@ import { restErrorCode } from '@lib/rest-error-message';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/export/targets?artifact=…&version=… — list export targets with per-source fidelity
- * (MFX-6.1, #3855).
+ * GET /api/export/targets?artifact=…&version=…[&fidelity=deferred] — list export targets with
+ * per-source fidelity (MFX-6.1, #3855). With `fidelity=deferred` the list comes back unscored with a
+ * `fidelity_token`; `GET /api/export/targets/fidelity/{token}` returns the scored list.
  *
  * Proxies REST `GET /v1/export/{tenant_slug}/targets` (MFX-2.5), which enumerates every
  * registered emitter (descriptor + capability profile + options schema) with a cheap fidelity
@@ -31,6 +32,8 @@ export async function GET(request: NextRequest) {
     const params = new URLSearchParams({ artifact });
     const version = request.nextUrl.searchParams.get('version');
     if (version) params.set('version', version);
+    // `deferred` returns the targets at once and scores them in the background (poll the token).
+    if (request.nextUrl.searchParams.get('fidelity') === 'deferred') params.set('fidelity', 'deferred');
 
     const { data, error, status, detail } = await proxyRestGet(
       ctx.user,
