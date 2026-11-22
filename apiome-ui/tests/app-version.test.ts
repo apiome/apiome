@@ -23,14 +23,14 @@ describe('app-version', () => {
     return mod!;
   }
 
-  test('an unstamped build shows the semver and RC9', () => {
+  test('an unstamped build shows the semver and RC10', () => {
     const { APP_VERSION_BADGE, APP_RELEASE_CANDIDATE } = load();
-    expect(APP_RELEASE_CANDIDATE).toBe('RC9');
-    expect(APP_VERSION_BADGE).toBe(`v${packageJson.version} RC9`);
+    expect(APP_RELEASE_CANDIDATE).toBe('RC10');
+    expect(APP_VERSION_BADGE).toBe(`v${packageJson.version} RC10`);
   });
 
   test('a blank build label still reads as unstamped', () => {
-    expect(load('   ').APP_VERSION_BADGE).toBe(`v${packageJson.version} RC9`);
+    expect(load('   ').APP_VERSION_BADGE).toBe(`v${packageJson.version} RC10`);
   });
 
   test('a CI build label wins', () => {
