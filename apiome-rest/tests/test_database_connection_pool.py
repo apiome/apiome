@@ -131,3 +131,144 @@ def test_a_subclass_that_skips_init_still_connects(opened) -> None:
             pass
 
     assert _Bare().connect() is opened[0]
+
+
+# ── Connection options: nothing may wait forever ────────────────────────────────────────────────
+
+
+def _connect_kwargs(monkeypatch) -> dict:
+    seen = {}
+
+    def _connect(*_args, **kwargs):
+        seen.update(kwargs)
+        return _FakeConnection()
+
+    monkeypatch.setattr(database_module.psycopg2, "connect", _connect)
+    Database().connect()
+    return seen
+
+
+def test_new_connections_carry_timeouts_and_keepalives(monkeypatch) -> None:
+    kwargs = _connect_kwargs(monkeypatch)
+    assert kwargs["connect_timeout"] == 10
+    assert kwargs["keepalives"] == 1
+    assert kwargs["application_name"] == "apiome-rest"
+    assert "-c lock_timeout=30000" in kwargs["options"]
+    assert "-c idle_in_transaction_session_timeout=300000" in kwargs["options"]
+    assert "statement_timeout" not in kwargs["options"].replace("idle_in_transaction_session_timeout", "")
+
+
+def test_a_zero_timeout_is_left_unset(monkeypatch) -> None:
+    monkeypatch.setattr(database_module.settings, "db_connect_timeout_seconds", 0)
+    monkeypatch.setattr(database_module.settings, "db_lock_timeout_ms", 0)
+    monkeypatch.setattr(database_module.settings, "db_idle_in_transaction_timeout_ms", 0)
+    kwargs = _connect_kwargs(monkeypatch)
+    assert "connect_timeout" not in kwargs
+    assert "options" not in kwargs
+
+
+def test_a_url_with_its_own_options_keeps_them() -> None:
+    kwargs = database_module._connection_options("postgresql://u:p@h/db?options=-c%20lock_timeout%3D5")
+    assert "options" not in kwargs
+
+
+# ── db_cursor: a helper ends the transaction it starts ──────────────────────────────────────────
+
+
+class _TxConnection(_FakeConnection):
+    """A fake that tracks its transaction state the way psycopg2 does."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.info = type("Info", (), {"transaction_status": psycopg2.extensions.TRANSACTION_STATUS_IDLE})()
+        self.commits = 0
+        self.rollbacks = 0
+
+    def cursor(self):
+        conn = self
+
+        class _Cursor:
+            def __enter__(self):
+                conn.info.transaction_status = psycopg2.extensions.TRANSACTION_STATUS_INTRANS
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+        return _Cursor()
+
+    def commit(self) -> None:
+        self.commits += 1
+        self.info.transaction_status = psycopg2.extensions.TRANSACTION_STATUS_IDLE
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
+        self.info.transaction_status = psycopg2.extensions.TRANSACTION_STATUS_IDLE
+
+
+class _Handle:
+    def __init__(self, conn) -> None:
+        self.conn = conn
+
+    def connect(self):
+        return self.conn
+
+
+def test_db_cursor_commits_the_transaction_it_started() -> None:
+    from app.db_cursor import db_cursor
+
+    conn = _TxConnection()
+
+    def read():
+        with db_cursor(_Handle(conn)):
+            return "rows"
+
+    assert read() == "rows"
+    assert (conn.commits, conn.rollbacks) == (1, 0)
+    assert conn.info.transaction_status == psycopg2.extensions.TRANSACTION_STATUS_IDLE
+
+
+def test_db_cursor_rolls_back_when_the_block_raises() -> None:
+    from app.db_cursor import db_cursor
+
+    conn = _TxConnection()
+    with pytest.raises(ValueError):
+        with db_cursor(_Handle(conn)):
+            raise ValueError("boom")
+    assert (conn.commits, conn.rollbacks) == (0, 1)
+
+
+def test_db_cursor_leaves_a_callers_open_transaction_alone() -> None:
+    from app.db_cursor import db_cursor
+
+    conn = _TxConnection()
+    conn.info.transaction_status = psycopg2.extensions.TRANSACTION_STATUS_INTRANS
+    with db_cursor(_Handle(conn)):
+        pass
+    with pytest.raises(ValueError):
+        with db_cursor(_Handle(conn)):
+            raise ValueError("boom")
+    assert (conn.commits, conn.rollbacks) == (0, 0)
+
+
+def test_a_failed_rollback_does_not_hide_the_query_error(opened) -> None:
+    db = Database()
+    conn = db.connect()
+
+    class _Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def execute(self, *_args):
+            raise psycopg2.OperationalError("server closed the connection unexpectedly")
+
+    def _dead_rollback():
+        raise psycopg2.InterfaceError("connection already closed")
+
+    conn.cursor = lambda: _Cursor()
+    conn.rollback = _dead_rollback
+    with pytest.raises(psycopg2.OperationalError, match="server closed"):
+        db.execute_query("SELECT 1")

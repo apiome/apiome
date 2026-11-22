@@ -63,6 +63,8 @@ from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
 from app.slate_insights import EVIDENCE_KEYS, SPAN_ATTRIBUTE_KEYS, redact_evidence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "SlateInsightPolicyConflictError",
     "SlateInsightStoreError",
@@ -216,8 +218,7 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     Returns:
         The policy row, or None when the lane has never had one.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -449,8 +450,7 @@ def list_residency_lanes(
         The ordering matters: the surface renders them as a path, and an alphabetical list would
         put cache storage before ingress.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -659,8 +659,7 @@ def list_metric_series(
         params.append(until)
 
     params.append(max(1, min(int(limit), 5000)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -809,8 +808,7 @@ def list_logs(
         params.append(f"%{query}%")
 
     params.append(max(1, min(int(limit), 1000)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -940,8 +938,7 @@ def list_traces(
         params.append(int(min_duration_ms))
 
     params.append(max(1, min(int(limit), 500)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -975,8 +972,7 @@ def get_trace(
     Raises:
         SlateInsightStoreError: When no such trace exists on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         trace = _fetch_one(
             cursor,
             """
@@ -1244,8 +1240,7 @@ def list_tail_sessions(
     Returns:
         Session rows, newest first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1272,8 +1267,7 @@ def list_exports(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Di
     Returns:
         Export rows, ordered by label.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1421,8 +1415,7 @@ def list_synthetic_checks(
     Returns:
         Check rows, ordered by label.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1589,8 +1582,7 @@ def list_synthetic_results(
         clauses.append("annotation_kind IS NOT NULL")
 
     params.append(max(1, min(int(limit), 1000)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1727,8 +1719,7 @@ def list_usage(
         params.append(until)
 
     params.append(max(1, min(int(limit), 5000)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1848,8 +1839,7 @@ def list_budgets(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Di
     Returns:
         Budget rows, ordered by label.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -2010,8 +2000,7 @@ def list_budget_alerts(
         clauses.append("acknowledged_at IS NULL")
 
     params.append(max(1, min(int(limit), 500)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -2249,8 +2238,7 @@ def list_audit(
         params.append(subject_kind)
 
     params.append(max(1, min(int(limit), 1000)))
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""

@@ -61,6 +61,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
+from .db_cursor import db_cursor
 from .auth import get_authenticated_user_id
 from .slate_auth import validate_slate_authentication
 from .config import settings
@@ -424,8 +425,7 @@ def _region_rows(tenant_id: str, release_id: Optional[str]) -> List[Dict[str, An
     """Load per-region activation rows for a release, or an empty list."""
     if not release_id:
         return []
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         cursor.execute(
             """
             SELECT region_id, label, status, reported_at
@@ -447,8 +447,7 @@ def _release_evidence(release_id: str) -> Dict[str, Any]:
     Returns:
         A mapping of evidence collections keyed for :func:`_release_body`.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
 
         def rows(query: str) -> List[Dict[str, Any]]:
             cursor.execute(query, (release_id,))
@@ -491,8 +490,7 @@ def _release_evidence(release_id: str) -> Dict[str, Any]:
 
 def _environment_domains(environment_id: str) -> List[Dict[str, Any]]:
     """Load the domain inventory for a lane."""
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         cursor.execute(
             """
             SELECT host, is_primary, tls_status, verification_status,

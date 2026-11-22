@@ -35,6 +35,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
 from .slate_releases import ActivationPlan
 
 __all__ = [
@@ -235,8 +236,7 @@ def list_sites(
     Returns:
         Site rows, each with an ``environments`` list, newest first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         if project_id:
             sites = _fetch_all(
                 cursor,
@@ -284,8 +284,7 @@ def get_environment(
     Returns:
         The environment row joined with its site's retention and SLO policy, or None.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -504,8 +503,7 @@ def get_release(db: _DbLike, *, tenant_id: str, release_id: str) -> Optional[Dic
     Returns:
         The release row joined to its artifact, or None.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             _RELEASE_SELECT + " WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid",
@@ -533,8 +531,7 @@ def list_releases(
     Returns:
         Release rows joined to their artifacts, newest first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         if environment_id:
             return _fetch_all(
                 cursor,
@@ -571,8 +568,7 @@ def find_rollback_target(
     Returns:
         The rollback target release joined to its artifact, or None.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             _RELEASE_SELECT

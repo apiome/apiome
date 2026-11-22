@@ -51,6 +51,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "EVIDENCE_ALLOWED_KEYS",
     "SlateFunctionPolicyConflictError",
@@ -300,8 +302,7 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     Returns:
         The policy row, or None when the lane has none yet or belongs to another tenant.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -590,8 +591,7 @@ def list_functions(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[
         ``UNIQUE (environment_id, ordinal)`` is what makes it total rather than a set with ties —
         which is what makes a simulation of the lane reproducible.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -618,8 +618,7 @@ def get_function(
     Returns:
         The function row, or None when it is not on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -1011,8 +1010,7 @@ def list_revisions(
         Revision rows, newest first. Scoped by tenant rather than by environment so a deleted
         function's history is still readable, which is the case a revert cares about most.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1043,8 +1041,7 @@ def last_simulated_at(db: _DbLike, *, tenant_id: str, function_id: str) -> Optio
         The timestamp of the most recent revision whose body was in simulate mode, or None when
         the function has never run in simulate.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             """
@@ -1241,8 +1238,7 @@ def list_versions(
     Returns:
         Version rows, newest revision first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -1412,8 +1408,7 @@ def list_secret_refs(
         clauses.append("function_id = %s::uuid")
         params.append(function_id)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1587,8 +1582,7 @@ def list_capabilities(
         clauses.append("function_id = %s::uuid")
         params.append(function_id)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1770,8 +1764,7 @@ def list_egress_rules(
         clauses.append("function_id = %s::uuid")
         params.append(function_id)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -1962,8 +1955,7 @@ def list_variants(
         clauses.append("function_id = %s::uuid")
         params.append(function_id)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -2176,8 +2168,7 @@ def list_approvals(
         clauses.append("digest = %s")
         params.append(digest)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -2418,8 +2409,7 @@ def list_invocations(
             params.append(value)
     params.append(limit)
 
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -2447,8 +2437,7 @@ def get_invocation(
     Returns:
         The invocation row, or None when it is not on this lane.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -2538,8 +2527,7 @@ def list_audit(
     Returns:
         Audit rows, most recent first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """

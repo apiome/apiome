@@ -46,6 +46,17 @@ class Settings(BaseSettings):
     #: Idle database connections kept for reuse. Each thread that touches the database holds one
     #: connection while it lives, so connections in use are bounded by the server's worker threads.
     db_pool_max_idle: int = 10
+    #: Seconds to wait for a new database connection before giving up (``0`` waits forever).
+    db_connect_timeout_seconds: int = 10
+    #: Milliseconds a statement may wait for a lock before it fails instead of hanging (``0`` = no
+    #: limit). Blocking database calls run on the server's event loop in ``async`` routes, so one
+    #: unbounded lock wait would stall every request.
+    db_lock_timeout_ms: int = 30000
+    #: Milliseconds a connection may sit inside an open transaction doing nothing before PostgreSQL
+    #: ends the session and releases its locks (``0`` = no limit).
+    db_idle_in_transaction_timeout_ms: int = 300000
+    #: Milliseconds one statement may run (``0`` = no limit, the default: imports run long statements).
+    db_statement_timeout_ms: int = 0
 
     host: str = "0.0.0.0"
     port: int = 8000

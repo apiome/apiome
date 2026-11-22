@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "SlateCdnStoreError",
     "delete_provider",
@@ -73,8 +75,7 @@ def get_provider(
     Returns:
         The provider row, or None when the lane has no CDN.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -360,8 +361,7 @@ def verified_hosts(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[
     Returns:
         Hostnames, canonical first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         rows = _fetch_all(
             cursor,
             """
@@ -470,8 +470,7 @@ def list_dispatches(
     Returns:
         Dispatch rows.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """

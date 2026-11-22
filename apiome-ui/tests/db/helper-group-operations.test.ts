@@ -142,12 +142,16 @@ describe('duplicateClassesInGroup', () => {
 
 describe('bulkApplyEditsToGroupClasses', () => {
   let mockDb: any;
+  let mockClient: any;
 
   beforeEach(() => {
     jest.resetModules();
     mockDb = require('../../lib/db/db');
     mockDb.query = jest.fn();
-    mockDb.connect = jest.fn();
+    // The readOnly transaction runs on one checked-out client; route its statements to the same
+    // `query` mock so each test scripts them in order.
+    mockClient = { query: (...args: any[]) => mockDb.query(...args), release: jest.fn() };
+    mockDb.connect = jest.fn().mockResolvedValue(mockClient);
   });
 
   test('returns success for empty classIds', async () => {
@@ -212,6 +216,9 @@ describe('bulkApplyEditsToGroupClasses', () => {
     const calls = mockDb.query.mock.calls.map((c: any[]) => c[0]);
     expect(calls).toContain('BEGIN');
     expect(calls).toContain('COMMIT');
+    // One client for the whole transaction, handed back afterwards.
+    expect(mockDb.connect).toHaveBeenCalledTimes(1);
+    expect(mockClient.release).toHaveBeenCalledTimes(1);
 
     // Verify readOnly was set in the UPDATE
     const updateCall = mockDb.query.mock.calls.find(

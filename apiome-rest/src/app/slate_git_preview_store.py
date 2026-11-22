@@ -32,6 +32,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 
+from .db_cursor import db_cursor
 from .mcp_credential_crypto import (
     credential_encryption_configured,
     seal_credential_payload,
@@ -227,8 +228,7 @@ def get_connection(
     A scope miss returns ``None`` — the route turns that into a 404, so a cross-tenant probe
     cannot confirm a connection exists.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             "SELECT " + _CONNECTION_PUBLIC_SELECT + """
@@ -241,8 +241,7 @@ def get_connection(
 
 def list_connections(db: _DbLike, *, tenant_id: str) -> List[Dict[str, Any]]:
     """List a tenant's connections (public projection), newest first."""
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             "SELECT " + _CONNECTION_PUBLIC_SELECT + """
@@ -264,8 +263,7 @@ def find_connections_by_repo(
     single function that returns ``webhook_secret_enc``; the caller decrypts it in memory to
     verify and never returns it to a client.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             """
@@ -538,8 +536,7 @@ def get_preview(
     db: _DbLike, *, tenant_id: str, build_id: str
 ) -> Optional[Dict[str, Any]]:
     """Load one preview with its changed pages and alias pointer, scoped to the tenant."""
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         build = _fetch_one(
             cursor,
             """
@@ -561,8 +558,7 @@ def list_previews(
     db: _DbLike, *, tenant_id: str, connection_id: Optional[str] = None, limit: int = 50
 ) -> List[Dict[str, Any]]:
     """List a tenant's previews, newest first, optionally scoped to one connection."""
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         rows = _fetch_all(
             cursor,
             """

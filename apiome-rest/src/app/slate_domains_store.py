@@ -27,6 +27,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Protocol, Sequence
 
+from .db_cursor import db_cursor
+
 __all__ = [
     "DOMAIN_COLUMNS",
     "SlateDomainConflictError",
@@ -144,8 +146,7 @@ def get_environment_scope(
     Returns:
         ``{"id", "site_id", "tenant_id", "kind", "name"}``, or None.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             """
@@ -168,8 +169,7 @@ def list_domains(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Di
     Returns:
         The rows, primary first then alphabetical — the order the inventory is displayed in.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -193,8 +193,7 @@ def get_domain(db: _DbLike, *, tenant_id: str, domain_id: str) -> Optional[Dict[
     Returns:
         The row, or None.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             f"""
@@ -221,8 +220,7 @@ def get_domain_by_host(db: _DbLike, *, host: str) -> Optional[Dict[str, Any]]:
     Returns:
         The row, or None when no site claims the host.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
             f"""
@@ -250,8 +248,7 @@ def list_renewal_candidates(
     Returns:
         The rows, soonest expiry first.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
             f"""
@@ -305,8 +302,7 @@ def attach_domain(
     Raises:
         SlateDomainConflictError: When the hostname is already attached anywhere.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         if is_primary:
             cursor.execute(
                 """
@@ -389,8 +385,7 @@ def record_verification(
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
     moment = checked_at or _now()
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             f"""
@@ -461,8 +456,7 @@ def record_certificate(
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
     moment = checked_at or _now()
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             f"""
@@ -526,8 +520,7 @@ def record_certificate_error(
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
     moment = checked_at or _now()
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             f"""
@@ -564,8 +557,7 @@ def set_primary(db: _DbLike, *, tenant_id: str, domain_id: str) -> Dict[str, Any
     Raises:
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         target = _fetch_one(
             cursor,
             """
@@ -621,8 +613,7 @@ def set_auto_renew(db: _DbLike, *, tenant_id: str, domain_id: str, enabled: bool
     Raises:
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             f"""
@@ -656,8 +647,7 @@ def detach_domain(db: _DbLike, *, tenant_id: str, domain_id: str) -> Dict[str, A
     Raises:
         SlateDomainStoreError: ``domain_not_found`` when no row matched.
     """
-    conn = db.connect()
-    with conn.cursor() as cursor:
+    with db_cursor(db) as cursor:
         row = _fetch_one(
             cursor,
             f"""
