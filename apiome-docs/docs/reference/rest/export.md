@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 18 operations."
+description: "REST endpoints tagged export: 19 operations."
 sidebar_position: 34
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.633.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.634.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 18 operations
+Tag: `export` · 19 operations
 
 ## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
 
@@ -412,7 +412,7 @@ Request body for record a privacy-safe export studio usage event.
 
 **List export targets with per-source fidelity**
 
-For the given source artifact/version, enumerate every registered export target (descriptor + capability profile + options) with a cheap per-target fidelity badge (tier + preserved-%), computed from the prediction engine without emitting an artifact. Drives the export dialog's card badges (MFX-6.1) and the version pre-summary (MFX-6.5).
+For the given source artifact/version, enumerate every registered export target (descriptor + capability profile + options) with a cheap per-target fidelity badge (tier + preserved-%), computed from the prediction engine without emitting an artifact. Drives the export dialog's card badges (MFX-6.1) and the version pre-summary (MFX-6.5). Scoring a large source takes seconds: with ``fidelity=deferred`` the list comes back at once with ``fidelity`` null on every target, ``fidelity_status`` ``pending`` and a ``fidelity_token``; poll ``GET …/targets/fidelity/{token}`` for the scored list. A list already scored for the same content is returned scored in either mode.
 
 Operation id: `list_export_targets_v1_export__tenant_slug__targets_get`
 
@@ -423,6 +423,7 @@ Operation id: `list_export_targets_v1_export__tenant_slug__targets_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `artifact` | query | string | yes | The artifact (project) id to export. |
 | `version` | query | string or null | no | Revision UUID, version label (``1.0.0``), or omitted for the latest revision. |
+| `fidelity` | query | enum `"inline"`, `"deferred"` | no | ``inline`` (default) waits for every target's fidelity badge; ``deferred`` returns the targets at once and scores them in the background. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -431,6 +432,30 @@ Operation id: `list_export_targets_v1_export__tenant_slug__targets_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list export targets with per-source fidelity. | `application/json` [`ExportTargetsResponse`](#schema-exporttargetsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/targets/fidelity/{token}` {#get-export-targets-fidelity-v1-export-tenant-slug-targets-fidelity-token-get}
+
+**Poll a deferred targets list for its fidelity badges**
+
+The scoring job a ``fidelity=deferred`` targets request started. ``pending`` while it runs; ``ready`` with the scored ``targets`` (the same shape as the targets list); ``failed`` with an ``error``. 404 ``fidelity-job-unknown`` when this server has no such job for the caller — it expired, or another REST worker started it: request the targets again.
+
+Operation id: `get_export_targets_fidelity_v1_export__tenant_slug__targets_fidelity__token__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `token` | path | string | yes | Path parameter identifying the token segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for poll a deferred targets list for its fidelity badges. | `application/json` [`ExportTargetsFidelityStatus`](#schema-exporttargetsfidelitystatus) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/export/{tenant_slug}/verify` {#verify-export-v1-export-tenant-slug-verify-post}
@@ -872,6 +897,16 @@ A page of the tenant's export history.
 | `limit` | integer | no | Limit. |
 | `offset` | integer | no | Offset. |
 
+### `ExportTargetsFidelityStatus` {#schema-exporttargetsfidelitystatus}
+
+The state of a deferred targets list's scoring job.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `status` | enum `"pending"`, `"ready"`, `"failed"` | yes | ``pending`` while scoring; ``ready`` with ``targets``; ``failed`` with ``error``. |
+| `targets` | array of `ExportTargetFidelity` or null | no | When ``ready``: every target with its fidelity badge, as the targets list returns it. |
+| `error` | string or null | no | When ``failed``: why scoring stopped. |
+
 ### `ExportTargetsResponse` {#schema-exporttargetsresponse}
 
 The per-target fidelity list for one source revision (MFX-2.5).
@@ -883,6 +918,8 @@ The per-target fidelity list for one source revision (MFX-2.5).
 | `version_record_id` | string | yes | The resolved revision (``versions.id``). |
 | `version_label` | string or null | no | The resolved revision's version label (e.g. ``1.0.0``). |
 | `targets` | array of `ExportTargetFidelity` | no | Every registered target with its per-source fidelity, sorted by target key. |
+| `fidelity_status` | enum `"ready"`, `"pending"` | no | ``ready`` when every target carries its fidelity badge; ``pending`` when a ``fidelity=deferred`` request is still scoring them (poll ``fidelity_token``). |
+| `fidelity_token` | string or null | no | While ``pending``: the token to poll at ``GET …/targets/fidelity/{token}``. |
 
 ### `ExportToolCheckRequest` {#schema-exporttoolcheckrequest}
 

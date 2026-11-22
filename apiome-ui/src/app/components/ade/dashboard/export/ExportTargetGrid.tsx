@@ -4,6 +4,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Badge } from '../../../ui/Badge';
 import {
   tierTone,
+  SCORING_LABEL,
   tierLabel,
   type ExportDialect,
   type ExportTargetCard,
@@ -188,7 +189,7 @@ export function ExportTargetGrid({
                     title={cardTitle(card, target)}
                     className="vdlg-export__target"
                     data-selected={isSelected || undefined}
-                    data-tier={card.entry.fidelity.tier}
+                    data-tier={card.entry.fidelity?.tier ?? 'scoring'}
                   >
                     {/* The compact tile (facelift "voids", PROPOSALS_FACELIFT.md §2): the format's
                         glyph in a hex tile, the name and paradigm beside it, the readiness band
@@ -223,12 +224,23 @@ export function ExportTargetGrid({
                         <span />
                         <span />
                       </span>
-                      <Badge
-                        variant={tierTone(card.entry.fidelity.tier)}
-                        className="vdlg-export__target-tier"
-                      >
-                        {tierLabel(card.entry.fidelity.tier)}
-                      </Badge>
+                      {card.entry.fidelity ? (
+                        <Badge
+                          variant={tierTone(card.entry.fidelity.tier)}
+                          className="vdlg-export__target-tier"
+                        >
+                          {tierLabel(card.entry.fidelity.tier)}
+                        </Badge>
+                      ) : (
+                        // A large source lists its targets before their badges are scored.
+                        <Badge
+                          variant="neutral"
+                          className="vdlg-export__target-tier"
+                          data-testid={`export-target-scoring-${card.key}`}
+                        >
+                          {SCORING_LABEL}
+                        </Badge>
+                      )}
                     </span>
                     {isSelected && dialect && (
                       <Badge

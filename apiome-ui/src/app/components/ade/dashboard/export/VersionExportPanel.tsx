@@ -225,7 +225,7 @@ export function VersionExportPanel({
                   </Link>
                 </span>
                 <span className="vdlg-export__recent-meta">
-                  <Badge variant={tierTone(entry.tier)}>{fidelityBadgeLabel(entry)}</Badge>
+                  <Badge variant={entry.tier ? tierTone(entry.tier) : 'neutral'}>{fidelityBadgeLabel(entry)}</Badge>
                   <span className="hive-quiet">
                     {formatRelativeTime(new Date(entry.exportedAt).toISOString()) ?? ''}
                   </span>
@@ -309,10 +309,14 @@ function TargetBadgeRow({ label, cards, artifact, version, artifactLabel }: Targ
                 origin: 'versions',
               })}
               data-testid="version-export-target-chip"
-              title={`Export to ${card.entry.descriptor.label} — ${card.entry.fidelity.preserved_percent}% preserved`}
+              title={
+                card.entry.fidelity
+                  ? `Export to ${card.entry.descriptor.label} — ${card.entry.fidelity.preserved_percent}% preserved`
+                  : `Export to ${card.entry.descriptor.label}`
+              }
               className="vdlg-export__chip"
             >
-              <Badge variant={tierTone(card.entry.fidelity.tier)}>
+              <Badge variant={card.entry.fidelity ? tierTone(card.entry.fidelity.tier) : 'neutral'}>
                 {card.entry.descriptor.label}
               </Badge>
             </Link>

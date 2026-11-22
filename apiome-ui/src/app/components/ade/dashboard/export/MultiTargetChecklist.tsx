@@ -2,7 +2,7 @@
 
 import { Badge } from '../../../ui/Badge';
 import { MAX_EXPORT_PAIRS } from './exportBatchJob';
-import { tierLabel, tierTone, type ExportTargetCard } from './exportTargetCatalog';
+import { SCORING_LABEL, tierLabel, tierTone, type ExportTargetCard } from './exportTargetCatalog';
 
 /** Props for {@link MultiTargetChecklist}. */
 export interface MultiTargetChecklistProps {
@@ -55,9 +55,13 @@ export function MultiTargetChecklist({
                   onChange={() => onToggle(card.key)}
                 />
                 <span className="xstd-multi__name">{descriptor.label}</span>
-                <Badge variant={tierTone(fidelity.tier)}>
-                  {tierLabel(fidelity.tier)} · {fidelity.preserved_percent}%
-                </Badge>
+                {fidelity ? (
+                  <Badge variant={tierTone(fidelity.tier)}>
+                    {tierLabel(fidelity.tier)} · {fidelity.preserved_percent}%
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral">{SCORING_LABEL}</Badge>
+                )}
               </label>
             </li>
           );

@@ -400,6 +400,22 @@ so nothing needs to be cleared.
 Memory use grows with both settings and with the number of REST workers. Lower them on a small
 host.
 
+### Scoring the export targets
+
+The Export dialog and the Export Studio show a fidelity badge on every format. Working those out
+reads the parsed model once per format, which takes several seconds on a spec with thousands of
+schemas. REST does that work on a small pool of background threads, so other requests keep being
+answered while it runs, and keeps each finished list for ten minutes per version.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `APIOME_EXPORT_FIDELITY_WORKERS` | `2` | How many lists one REST worker scores at the same time. Requests beyond that wait their turn. |
+
+`GET /v1/export/{tenant}/targets?fidelity=deferred` returns the formats at once with
+`fidelity_status: "pending"` and a `fidelity_token`; `GET /v1/export/{tenant}/targets/fidelity/{token}`
+returns the scored list when it is ready. Without `fidelity=deferred` the request waits for the
+scores, as it always has.
+
 ## Large export downloads
 
 A finished export keeps its download for `APIOME_EXPORT_ARTIFACT_RETENTION_HOURS` (24 by default).

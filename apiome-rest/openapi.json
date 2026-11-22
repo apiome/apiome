@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.633.0",
+    "version": "1.634.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -104143,7 +104143,7 @@
           "export"
         ],
         "summary": "List export targets with per-source fidelity",
-        "description": "For the given source artifact/version, enumerate every registered export target (descriptor + capability profile + options) with a cheap per-target fidelity badge (tier + preserved-%), computed from the prediction engine without emitting an artifact. Drives the export dialog's card badges (MFX-6.1) and the version pre-summary (MFX-6.5).",
+        "description": "For the given source artifact/version, enumerate every registered export target (descriptor + capability profile + options) with a cheap per-target fidelity badge (tier + preserved-%), computed from the prediction engine without emitting an artifact. Drives the export dialog's card badges (MFX-6.1) and the version pre-summary (MFX-6.5). Scoring a large source takes seconds: with ``fidelity=deferred`` the list comes back at once with ``fidelity`` null on every target, ``fidelity_status`` ``pending`` and a ``fidelity_token``; poll ``GET \u2026/targets/fidelity/{token}`` for the scored list. A list already scored for the same content is returned scored in either mode.",
         "operationId": "list_export_targets_v1_export__tenant_slug__targets_get",
         "parameters": [
           {
@@ -104187,6 +104187,22 @@
               "title": "Version"
             },
             "description": "Revision UUID, version label (``1.0.0``), or omitted for the latest revision."
+          },
+          {
+            "name": "fidelity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "inline",
+                "deferred"
+              ],
+              "type": "string",
+              "description": "``inline`` (default) waits for every target's fidelity badge; ``deferred`` returns the targets at once and scores them in the background.",
+              "default": "inline",
+              "title": "Fidelity"
+            },
+            "description": "``inline`` (default) waits for every target's fidelity badge; ``deferred`` returns the targets at once and scores them in the background."
           },
           {
             "name": "authorization",
@@ -104248,6 +104264,104 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for listexporttargetswithpersourcefidelityresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/targets/fidelity/{token}": {
+      "get": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Poll a deferred targets list for its fidelity badges",
+        "description": "The scoring job a ``fidelity=deferred`` targets request started. ``pending`` while it runs; ``ready`` with the scored ``targets`` (the same shape as the targets list); ``failed`` with an ``error``. 404 ``fidelity-job-unknown`` when this server has no such job for the caller \u2014 it expired, or another REST worker started it: request the targets again.",
+        "operationId": "get_export_targets_fidelity_v1_export__tenant_slug__targets_fidelity__token__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token",
+              "description": "Token schema."
+            },
+            "description": "Path parameter identifying the token segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Polladeferredtargetslistforitsfidelitybaauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Polladeferredtargetslistforitsfidelitybaauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Polladeferredtargetslistforitsfidelityba Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Polladeferredtargetslistforitsfidelityba Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for poll a deferred targets list for its fidelity badges.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportTargetsFidelityStatus",
+                  "description": "Response payload for polladeferredtargetslistforitsfidelitybaresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for polladeferredtargetslistforitsfidelitybaresponse422."
                 }
               }
             }
@@ -172061,8 +172175,16 @@
             "description": "Validated default option values for this target (MFX-1.4)."
           },
           "fidelity": {
-            "$ref": "#/components/schemas/TargetFidelity",
-            "description": "Cheap tier + preserved-% badge for exporting the requested source here."
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetFidelity"
+              },
+              {
+                "type": "null",
+                "description": "Export Target Fidelity schema."
+              }
+            ],
+            "description": "Cheap tier + preserved-% badge for exporting the requested source here. Null only in a ``fidelity=deferred`` response whose scores are still pending."
           }
         },
         "additionalProperties": false,
@@ -172076,6 +172198,59 @@
         ],
         "title": "ExportTargetFidelity",
         "description": "One registered target's descriptor + options + its per-source fidelity badge (MFX-2.5).\n\nThe union of the emitter registry's public view (descriptor, capability profile, options\nschema + defaults \u2014 MFX-1.1/1.4) and the cheap fidelity summary for the requested source\n(:class:`~app.export_fidelity.TargetFidelity` \u2014 tier + preserved-%), so a single\n``/export/targets`` call gives the export dialog everything a target card needs."
+      },
+      "ExportTargetsFidelityStatus": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "failed"
+            ],
+            "title": "Status",
+            "description": "``pending`` while scoring; ``ready`` with ``targets``; ``failed`` with ``error``.",
+            "example": "pending"
+          },
+          "targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExportTargetFidelity"
+                },
+                "type": "array",
+                "description": "Export Targets Fidelity schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Targets Fidelity schema."
+              }
+            ],
+            "title": "Targets",
+            "description": "When ``ready``: every target with its fidelity badge, as the targets list returns it."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Targets Fidelity schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Targets Fidelity schema."
+              }
+            ],
+            "title": "Error",
+            "description": "When ``failed``: why scoring stopped."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ExportTargetsFidelityStatus",
+        "description": "The state of a deferred targets list's scoring job."
       },
       "ExportTargetsResponse": {
         "properties": {
@@ -172127,6 +172302,31 @@
             "title": "Targets",
             "description": "Every registered target with its per-source fidelity, sorted by target key.",
             "maxItems": 1000
+          },
+          "fidelity_status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "pending"
+            ],
+            "title": "Fidelity Status",
+            "description": "``ready`` when every target carries its fidelity badge; ``pending`` when a ``fidelity=deferred`` request is still scoring them (poll ``fidelity_token``).",
+            "default": "ready",
+            "example": "ready"
+          },
+          "fidelity_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for export targets."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for export targets."
+              }
+            ],
+            "title": "Fidelity Token",
+            "description": "While ``pending``: the token to poll at ``GET \u2026/targets/fidelity/{token}``."
           }
         },
         "additionalProperties": false,

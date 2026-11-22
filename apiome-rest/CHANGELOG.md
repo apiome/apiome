@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.810.0] - 2026-11-22
+
+### Added
+- **Deferred scoring of the export targets list:** `GET /v1/export/{tenant}/targets?fidelity=deferred` returns every
+  target at once with `fidelity` null, `fidelity_status: "pending"` and a `fidelity_token`, and scores the targets on a
+  bounded background pool (`APIOME_EXPORT_FIDELITY_WORKERS`, default 2). `GET /v1/export/{tenant}/targets/fidelity/{token}`
+  returns `pending`, `ready` with the scored list, or `failed`; a token is visible only to the tenant that started it,
+  and an unknown one is `404 fidelity-job-unknown`. The default (`fidelity=inline`) still waits for the scores. OpenAPI
+  1.634.0.
+- **Targets list cache:** a scored list is kept per worker for ten minutes, keyed by the source's content, its plans,
+  the Apiome version and the registered targets, so reopening the Export screen does not score again.
+
+### Changed
+- **The targets request no longer blocks the server:** loading the source and scoring it run off the event loop.
+
+### Fixed
+- **One failing target no longer fails the whole list:** a target whose prediction raises (an HL7 v2 segment guide of a
+  spec with more records than its 1 296 site-defined segment IDs) is listed unavailable with the reason.
+- **Large JSON documents parse in a fraction of the time:** the YAML alias-expansion scan runs only on text that is not
+  strict JSON (strict JSON has no aliases). A 9 MB OpenAPI document reads in 0.5 s instead of 3.5 s.
+- **EDI and HL7 v2 guide planning is linear:** segment IDs are allocated from a cursor over the fallback candidates,
+  picking exactly the IDs the full scan did. Guide fidelity on an 1 800-record spec drops from about 8 s to under 1 s.
+
 ## [1.809.0] - 2026-11-22
 
 ### Added

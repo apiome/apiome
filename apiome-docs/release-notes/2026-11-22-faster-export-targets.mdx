@@ -1,0 +1,29 @@
+---
+slug: faster-export-targets
+title: "Export screen in seconds for large specs"
+description: "Large specs list their export formats at once and score them in the background."
+authors: [apiome]
+---
+
+Opening the [Export dialog](/ship/export-dialog) or the Export Studio on a spec with thousands of
+schemas no longer waits for every format to be measured. The formats appear at once, and each
+fidelity badge fills in as soon as it is ready.
+
+{/* truncate */}
+
+- **Formats first, badges after:** each card reads **Scoring…** until its badge is known. You can
+  pick a format meanwhile; until its fidelity is known the dialog asks for the acknowledgement as
+  if the conversion were lossy.
+- **Reopening is quick:** the scores are kept for ten minutes per version, so the next open takes
+  about a second.
+- **The rest of Apiome keeps responding:** the scores are worked out on a small pool of
+  background threads (`APIOME_EXPORT_FIDELITY_WORKERS`, two by default). See
+  [Scoring the export targets](/admin/document-store#scoring-the-export-targets).
+- **One format can no longer break the list:** a format that cannot be built from the spec, such as
+  an HL7 v2 segment guide for a spec with more records than HL7 v2 has segment IDs for, is greyed
+  out with the reason.
+- **Faster reads of large JSON specs:** a 9 MB OpenAPI document is read in about half a second
+  instead of three and a half.
+
+For scripts and the CLI nothing changes: `GET /v1/export/{tenant}/targets` still waits for the
+scores unless you add `fidelity=deferred`.

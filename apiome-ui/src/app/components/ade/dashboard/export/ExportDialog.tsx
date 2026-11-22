@@ -73,10 +73,10 @@ export interface ExportedArtifactSummary {
   targetKey: string;
   /** Human label of the emitted target, e.g. `"Protobuf"`. */
   targetLabel: string;
-  /** Fidelity tier of the conversion (MFX-2.5). */
-  tier: ExportFidelityTier;
-  /** Share of constructs carried faithfully, 0–100. */
-  preservedPercent: number;
+  /** Fidelity tier of the conversion (MFX-2.5); null when it was not scored yet. */
+  tier: ExportFidelityTier | null;
+  /** Share of constructs carried faithfully, 0–100; null when it was not scored yet. */
+  preservedPercent: number | null;
   /** Filename of the emitted document. */
   filename: string;
   /**
@@ -439,8 +439,9 @@ export function ExportDialog({
       onExported?.({
         targetKey: selected.key,
         targetLabel: selected.entry.descriptor.label,
-        tier: selected.entry.fidelity.tier,
-        preservedPercent: selected.entry.fidelity.preserved_percent,
+        // A large source may still be scoring its cards: the preview's summary is the same badge.
+        tier: (selected.entry.fidelity ?? preview?.fidelity.summary)?.tier ?? null,
+        preservedPercent: (selected.entry.fidelity ?? preview?.fidelity.summary)?.preserved_percent ?? null,
         filename,
         options: changedOptions(optionValues, selected.entry.default_options),
       });
@@ -450,7 +451,7 @@ export function ExportDialog({
     } finally {
       setExporting(false);
     }
-  }, [artifact, onExported, optionValues, selected, version]);
+  }, [artifact, onExported, optionValues, preview, selected, version]);
 
   /** Download the previewed document as its single file (MFX-6.3). */
   const handleDownloadFile = useCallback(() => {
@@ -511,10 +512,13 @@ export function ExportDialog({
   }, [acknowledged, artifact, emitted, multiFile, optionValues, selected, version]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
-  const fidelity = selected?.entry.fidelity ?? null;
+  // The card's badge, or — while a large source is still scoring its cards — the preview's summary
+  // of the same conversion.
+  const fidelity = selected?.entry.fidelity ?? preview?.fidelity.summary ?? null;
   // Lossy conversions gate the download behind the explicit "Export anyway" acknowledgement
-  // (MFX-6.2). Driven by the coarse tier so the gate never depends on the preview fetch.
-  const needsAck = fidelity ? requiresExportAcknowledgement(fidelity.tier) : false;
+  // (MFX-6.2). Driven by the coarse tier so the gate never depends on the preview fetch; with no
+  // tier known yet the gate stays on, so an unscored lossy export can never skip it.
+  const needsAck = fidelity ? requiresExportAcknowledgement(fidelity.tier) : selected != null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? handleClose() : undefined)}>

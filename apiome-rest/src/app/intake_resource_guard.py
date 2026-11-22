@@ -55,6 +55,7 @@ __all__ = [
     "IntakeLimits",
     "IntakeLimitError",
     "effective_intake_limits",
+    "guard_alias_expansion",
     "guard_document_size",
     "guard_document_text",
     "guard_expansion_ratio",
@@ -510,6 +511,7 @@ def guard_document_text(
     *,
     source_label: Optional[str] = None,
     limits: Optional[Union[IntakeLimits, GuardProfile]] = None,
+    scan_aliases: bool = True,
 ) -> None:
     """Run every pre-parse guard over raw document text.
 
@@ -520,6 +522,9 @@ def guard_document_text(
         text: Raw document text.
         source_label: Optional label used to make errors specific.
         limits: Override bounds; defaults to :func:`effective_intake_limits`.
+        scan_aliases: ``False`` skips the YAML alias-expansion scan. Only for text the caller
+            parses as strict JSON, which has no anchors or aliases; text that is not JSON must
+            go through :func:`guard_alias_expansion` before a YAML parse.
 
     Raises:
         IntakeLimitError: For an oversized, over-expanding, or too-deep document.
@@ -539,6 +544,30 @@ def guard_document_text(
             limit_value=bounds.max_depth,
         )
 
+    if scan_aliases:
+        guard_alias_expansion(text, source_label=source_label, limits=bounds)
+
+
+def guard_alias_expansion(
+    text: str,
+    *,
+    source_label: Optional[str] = None,
+    limits: Optional[Union[IntakeLimits, GuardProfile]] = None,
+) -> None:
+    """Reject YAML text whose aliases expand past ``max_alias_cost`` (anti billion-laughs).
+
+    The scan walks the whole YAML event stream in pure Python — seconds on a multi-megabyte
+    document — so it runs only on text that will be parsed as YAML.
+
+    Args:
+        text: Raw document text.
+        source_label: Optional label used to make errors specific.
+        limits: Override bounds; defaults to :func:`effective_intake_limits`.
+
+    Raises:
+        IntakeLimitError: When the alias-expansion cost exceeds the limit.
+    """
+    bounds = _bounds(limits)
     _documents, alias_cost, scan_failed = yaml_alias_expansion_cost(
         text, bounds.max_alias_cost
     )
