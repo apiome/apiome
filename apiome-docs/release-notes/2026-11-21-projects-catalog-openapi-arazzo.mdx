@@ -1,0 +1,49 @@
+---
+slug: projects-catalog-openapi-arazzo
+title: "RC9: Projects, Catalog, OpenAPI and Arazzo"
+description: "The core of Apiome, end to end: imports, OpenAPI, Arazzo, fidelity and stored documents."
+authors: [apiome]
+---
+
+RC9 is the release for the core of Apiome: **Projects** and the **Catalog**, with **OpenAPI 3.2 /
+3.1** and **Arazzo 1.1** first and catalog import and export held to what they promise. Its five
+parts are complete. The new [Projects, Catalog, OpenAPI and Arazzo](/getting-started/projects-catalog-openapi-arazzo)
+page shows how they fit and links the overview page for each.
+
+{/* truncate */}
+
+## What changes for you
+
+- **Arazzo you can see and run.** Import a workflow with the OpenAPI and AsyncAPI files it calls,
+  read its steps and graph on the **Workflows** tab, validate it, compare revisions, export it as
+  1.0 or 1.1 and run it against a mock or a deployment.
+- **OpenAPI that keeps everything.** Imports keep every construct, each document is checked
+  against the schema for its own version, the 3.2 additions show in Projects, and versions can be
+  upgraded, overlaid and checked for external and circular `$ref`s.
+- **Exports that say what they lose.** Every conversion names what changes, scalars keep their
+  exact type, and every export imports back and is checked against its format.
+- **One answer from both import paths.** A document reads the same whether it comes in through
+  **Projects** or the **Catalog**, and the docs match the code.
+- **Documents stored once.** Every import's original and every version's document are kept in the
+  document store, so diffs are faster and **Download original** returns the file you imported.
+- **Workflows and overlays governed.** Arazzo workflows and OpenAPI Overlays are linted, fixed and
+  placed on the maturity ladder, and lint fixes can be applied as a new revision.
+
+## Each part
+
+| Release note | What it adds |
+| --- | --- |
+| [Arazzo: complete, current and visible](/release-notes/arazzo-complete-current-visible) | Arazzo 1.0 and 1.1 from import to a run against a target. |
+| [OpenAPI 3.2 / 3.1: fidelity and authoring](/release-notes/openapi-fidelity-and-authoring) | Lossless OpenAPI round trips, validation, upgrades, overlays and references. |
+| [Import and export fidelity](/release-notes/import-and-export-fidelity) | Every loss reported, exact scalars, every export read back and checked. |
+| [Catalog and Projects cleanup](/release-notes/catalog-and-projects-cleanup) | Docs that match the code, one result from both import paths. |
+| [The document store](/release-notes/document-store-originals-and-rendered-documents) | Originals and rendered documents in object storage. |
+| [Arazzo and Overlay governance](/release-notes/arazzo-and-overlay-governance) | Lint, fixes, the maturity ladder and export checks for workflows and overlays. |
+| [Deterministic auto-fix, end to end](/release-notes/deterministic-auto-fix) | Plan and apply lint fixes from the app, the CLI and CI. |
+
+## Still to come
+
+Export delivery to GitLab, Bitbucket and Azure DevOps repositories; git delivery supports GitHub
+today.
+
+See [Projects, Catalog, OpenAPI and Arazzo](/getting-started/projects-catalog-openapi-arazzo).

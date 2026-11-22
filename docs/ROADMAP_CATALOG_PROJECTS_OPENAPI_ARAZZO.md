@@ -1,9 +1,9 @@
-# Roadmap — Catalog, Projects, OpenAPI and Arazzo (RC9)
+# ✅ Roadmap — Catalog, Projects, OpenAPI and Arazzo (RC9) — Complete
 
 _Drafted 2026-11-19. Release: **RC9** (see [`RC9_PLAN.md`](RC9_PLAN.md)). Priority: **high** — these are the core of Apiome._
 _The Contracts and PactFlow release is **RC10**: [`RC10_PLAN.md`](RC10_PLAN.md)._
 
-**Umbrella:** [#7032](https://github.com/apiome/apiome/issues/7032). **Issue ID prefix:** `COA`. Epics `COA-EPIC-n`, issues `COA-n.m`. **GitHub title format:** `apiome: [COA-<epic>.<issue>] <title>`.
+**Umbrella:** ✅ [#7032](https://github.com/apiome/apiome/issues/7032) — Complete: all five epics are complete. The release's overview hub is `getting-started/projects-catalog-openapi-arazzo.mdx` (**Projects, Catalog, OpenAPI and Arazzo**: each part, its overview page and how they fit), listed in `helpCatalog.ts` as `projects-catalog-openapi-arazzo`; the RC9 release note is `release-notes/2026-11-21-projects-catalog-openapi-arazzo.mdx`, which links the seven part notes, with a What's new line. Adopted #6654 and #6706 stay open and are tracked on their own issues. **Issue ID prefix:** `COA`. Epics `COA-EPIC-n`, issues `COA-n.m`. **GitHub title format:** `apiome: [COA-<epic>.<issue>] <title>`.
 
 ## 0. Source description (request, verbatim)
 
@@ -47,7 +47,7 @@ A team can (1) import an Arazzo 1.0/1.1 workflow with the OpenAPI/AsyncAPI files
 
 | Issue | Title | Epic |
 | --- | --- | --- |
-| #5875 | GVM-EPIC-4 Arazzo and Overlay governance | Governance |
+| ✅ #5875 | GVM-EPIC-4 Arazzo and Overlay governance — Complete | Governance |
 | ✅ #5879 | GVM-4.4 Arazzo 1.1 validation rules — Complete | Governance |
 | ✅ #5880 | GVM-4.5 Arazzo and Overlay in the ladder, fixes and CLI — Complete | Governance |
 | ✅ #5868 | GVM-EPIC-3 Deterministic auto-fix (GVM-3.1–3.6) — Complete | Governance |
