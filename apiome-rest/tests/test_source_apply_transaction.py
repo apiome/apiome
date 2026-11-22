@@ -132,7 +132,8 @@ def _routes(
     *,
     version=_VERSION_ROW,
     lock_rows=(),
-    admin_rows=({"ok": 1},),
+    # The versions:edit probe is one statement returning ``allowed`` (DBP-1.3, #7186).
+    admin_rows=({"allowed": True},),
     audit_rows=(),
 ):
     return [

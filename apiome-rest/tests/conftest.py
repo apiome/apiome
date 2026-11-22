@@ -458,6 +458,24 @@ def _no_stored_overlay_chain_by_default(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _fresh_authz_cache():
+    """Start every test with empty authorization and API-key caches (DBP-1.3, #7186).
+
+    The caches are process-wide, so a context or key resolved in one test would otherwise be
+    served to a later test that seeds different members, roles or keys (often with raw SQL,
+    which does not invalidate them).
+    """
+    try:
+        from app import authz_cache
+    except Exception:
+        yield
+        return
+    authz_cache.invalidate_all()
+    yield
+    authz_cache.invalidate_all()
+
+
+@pytest.fixture(autouse=True)
 def _fresh_canonical_model_cache():
     """Start every test with an empty canonical-model cache (COA-5.4, #7080).
 

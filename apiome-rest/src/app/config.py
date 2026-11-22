@@ -67,6 +67,17 @@ class Settings(BaseSettings):
     #: Milliseconds one statement may run inside ``long_statements()``: imports, exports, document
     #: migrations and background sweeps (``0`` = no limit).
     db_long_statement_timeout_ms: int = 1800000
+    #: Seconds a user's resolved tenant access, administrator flag and permissions are reused
+    #: across requests on one API instance (``0`` = resolve on every request). Changes made
+    #: through this instance apply at once; changes made elsewhere (the web app, another
+    #: instance) apply within this many seconds (DBP-1.3, #7186).
+    auth_cache_ttl_seconds: float = 30.0
+    #: Seconds a verified API key skips its bcrypt check on one API instance (``0`` = verify on
+    #: every request). The key's row is still checked on every request, so a revoked, disabled,
+    #: expired or regenerated key is refused on its next request either way (DBP-1.3, #7186).
+    api_key_cache_ttl_seconds: float = 60.0
+    #: Most entries each of the two caches above keeps before dropping the oldest.
+    auth_cache_max_entries: int = 10000
 
     host: str = "0.0.0.0"
     port: int = 8000

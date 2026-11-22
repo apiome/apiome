@@ -25,6 +25,7 @@ import jwt
 import pytest
 from fastapi.testclient import TestClient
 
+from app.authz_cache import AuthorizationContext
 from app.config import settings
 from app.main import app
 
@@ -72,14 +73,25 @@ def tenant_lookup() -> Iterator[None]:
     def by_slug(slug: str) -> Dict[str, Any] | None:
         return {"acme": TENANT_ROW, "other": OTHER_TENANT_ROW}.get(slug)
 
+    def context(user_id: str, *, tenant_slug: str | None = None, tenant_id: str | None = None):
+        row = by_slug(tenant_slug) if tenant_slug else by_id(str(tenant_id))
+        if row is None:
+            return None
+        # The user belongs to acme only. `other` exists but is not theirs.
+        return AuthorizationContext(
+            tenant_id=row["tenant_id"],
+            tenant_slug=row["tenant_slug"],
+            tenant_name=row["tenant_name"],
+            tenant_active=True,
+            user_id=user_id,
+            is_admin=False,
+            is_active_member=row["tenant_id"] == TENANT_ID,
+        )
+
     with (
         patch("app.slate_auth.db.get_active_tenant_auth_row_by_id", side_effect=by_id),
         patch("app.auth.db.get_active_tenant_auth_row", side_effect=by_slug),
-        # The user belongs to acme only. `other` exists but is not theirs.
-        patch(
-            "app.auth.db.user_has_tenant_access",
-            side_effect=lambda user_id, tenant_id: tenant_id == TENANT_ID,
-        ),
+        patch("app.auth.db.get_authorization_context", side_effect=context),
     ):
         yield
 

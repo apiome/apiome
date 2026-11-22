@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.813.0] - 2026-11-22
+
+### Performance
+- **Authentication and permission resolution in one cached query (DBP-1.3, #7186).** OpenAPI 1.637.0 (version only;
+  no schema change). Which requests are allowed or denied does not change.
+  - **One statement:** `Database.get_authorization_context(user_id, tenant_slug=… | tenant_id=…)` returns the tenant
+    row, the membership status, the administrator flag and the effective permission set together. JWT authentication,
+    `enforce_permission` / `has_permission`, `is_user_tenant_admin` and `get_effective_permissions` all read it. A JWT
+    request with a permission check now runs 1 authorization statement on a cold cache (was 5–8) and 0 on a warm one.
+    The hot-endpoint budgets in `tests/query_budgets.json` drop by 2–3 statements each (project list 4 → 2, document
+    warm 8 → 5).
+  - **Caches:** a per-request memo (`request.state.authz_memo`, started by the observability middleware), plus a process
+    cache keyed by (user, tenant) for `AUTH_CACHE_TTL_SECONDS` (default `30`, `0` = off). Member, role, role-grid and
+    SSO-provisioning writes made through the API invalidate it at once. Changes made in the web app or on another
+    instance apply within the TTL. `AUTH_CACHE_MAX_ENTRIES` (default `10000`) bounds each cache.
+  - **API keys:** a key that verified within `API_KEY_CACHE_TTL_SECONDS` (default `60`, `0` = off) skips bcrypt. The
+    process keeps `sha256(key)` → the matched row and re-reads only that row by primary key, with the stored hash it
+    verified against. A key deleted, disabled, expired or regenerated anywhere, or whose tenant is disabled, is
+    refused on its next request. The `last_used_at` write is skipped while this process wrote it under a minute ago.
+    The MCP registry's MCP-key check (`resolve_mcp_api_key_tenant_id`) is cached the same way.
+  - **Edit-permission probe:** the five sequential `SELECT 1` probes `_cursor_actor_can_edit_versions` ran while
+    holding a version row lock are one `EXISTS` expression.
+
 ## [1.812.0] - 2026-11-22
 
 ### Performance
