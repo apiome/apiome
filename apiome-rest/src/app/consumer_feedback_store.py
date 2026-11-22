@@ -156,7 +156,9 @@ def _render(rows: List[Mapping[str, Any]]) -> List[FeedbackThread]:
     operations = db.get_operation_coordinates(
         [str(row["anchor_id"]) for row in rows if row.get("anchor_type") == "operation"]
     )
-    return [_feedback_thread(row, db.list_comments(thread_id=str(row["id"])), operations) for row in rows]
+    # Every thread's comments in one query (DBP-1.6, #7189).
+    comments = db.list_comments_for_threads([str(row["id"]) for row in rows]) if rows else {}
+    return [_feedback_thread(row, comments.get(str(row["id"]), []), operations) for row in rows]
 
 
 def list_feedback(tenant_id: str, project_slug: str, version_label: str, reader_id: str) -> List[FeedbackThread]:

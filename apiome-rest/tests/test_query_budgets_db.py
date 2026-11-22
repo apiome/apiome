@@ -233,6 +233,132 @@ def test_class_path_and_operation_writes_stay_within_budget(ctx) -> None:
         assert _load_budgets()[label] == 1, label
 
 
+# ─────────── set-based loaders: the same count at 10 and at 1,000 operations (#7189) ───────────
+
+
+def _spec(operations: int) -> Dict[str, Any]:
+    """An OpenAPI document with ``operations`` operations, four per path (GET, POST, PUT, DELETE).
+
+    Each operation has a description, a path parameter and two responses with content; POST and
+    PUT have a request body. Content refers to the ``Thing`` schema or is inline.
+    """
+    methods = ["get", "post", "put", "delete"]
+    paths: Dict[str, Dict[str, Any]] = {}
+    thing = {"schema": {"$ref": "#/components/schemas/Thing"}}
+    header = {"X-Request-Id": {"schema": {"type": "string"}}}
+    for i in range(operations):
+        operation: Dict[str, Any] = {
+            "operationId": f"op{i}",
+            "summary": f"Operation {i}",
+            "tags": ["things"],
+            "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "string"}}],
+            # Each response carries a header: the write plan stores it as the response's ``data``,
+            # which ``check_response_schema_defined`` wants when the class is on the content.
+            "responses": {
+                code: {"description": text, "headers": header, "content": {"application/json": content}}
+                for code, text, content in (("200", "OK", thing), ("404", "Missing", {"schema": {"type": "object"}}))
+            },
+        }
+        if methods[i % 4] in ("post", "put"):
+            operation["requestBody"] = {"content": {"application/json": thing, "application/xml": thing}}
+        paths.setdefault(f"/things{i // 4:04d}/{{id}}", {})[methods[i % 4]] = operation
+    return {
+        "openapi": "3.1.0",
+        "info": {"title": "Things", "version": "1.0.0"},
+        "components": {"schemas": {"Thing": {"type": "object", "properties": {"id": {"type": "string"}}}}},
+        "paths": paths,
+    }
+
+
+def _revision_with(ctx: Dict[str, Any], operations: int) -> Dict[str, Any]:
+    """A new revision holding :func:`_spec` as relational rows and as its canonical model."""
+    from app.canonical_persistence import persist_canonical_api
+    from app.openapi_normalizer import OpenApiNormalizer
+    from app.source_change_apply import build_canonical_writes
+
+    db = database_module.db
+    spec = _spec(operations)
+    version = str(db.create_version(ctx["project"], ctx["user"], f"{operations}.0.0")["id"])
+    conn = ctx["conn"]
+    with conn.cursor() as cur:
+        db._cursor_write_canonical_rows(cur, ctx["project"], version, build_canonical_writes(spec))
+    conn.commit()
+    persist_canonical_api(
+        db, tenant_id=ctx["tenant"], creator_id=ctx["user"], version_id=version,
+        model=OpenApiNormalizer().normalize(spec),
+    )
+    paths = db.get_paths_for_version(version)
+    return {"version": version, "path": str(paths[0]["id"]), "paths": len(paths)}
+
+
+_SIZES = (10, 1000)
+
+
+def test_revision_loads_run_the_same_statements_at_10_and_1000_operations(ctx) -> None:
+    """Document render, the canvas path read, the source-apply read and the canonical load (#7189)."""
+    from app.canonical_persistence import load_canonical_api
+
+    db = database_module.db
+    conn = ctx["conn"]
+    tenant, slug = ctx["tenant"], ctx["tenant_slug"]
+    # Warm the per-process authentication lookups, so the first measured request is not the one
+    # that pays for them.
+    assert _get(ctx, f"/v1/projects/{slug}")().status_code == 200
+    try:
+        for size in _SIZES:
+            rev = _revision_with(ctx, size)
+            version = rev["version"]
+            paths = _guarded_call(
+                f"Database.load_paths_for_version ({size:,} operations)",
+                lambda: db.load_paths_for_version(version),
+            )
+            assert sum(len(p["operations"]) for p in paths) == size
+            _guarded(
+                ctx,
+                f"GET /v1/paths/{{tenant}}/{{version}}/{{path}}/full ({size:,} operations)",
+                _get(ctx, f"/v1/paths/{slug}/{version}/{rev['path']}/full"),
+            )
+            _guarded(
+                ctx,
+                f"GET /v1/versions/{{tenant}}/{{project}}/{{version}}/document (cold, {size:,} operations)",
+                _get(ctx, f"/v1/versions/{slug}/{ctx['project']}/{version}/document"),
+            )
+            with conn.cursor() as cur:
+                row = db._source_apply_version_row(cur, tenant, ctx["project"], version)
+                merged, _fingerprint, _claims = _guarded_call(
+                    f"Database._cursor_current_merged_document ({size:,} operations)",
+                    lambda: db._cursor_current_merged_document(cur, tenant, slug, row, "openapi"),
+                )
+            conn.rollback()
+            assert len(merged["paths"]) == rev["paths"]
+            api = _guarded_call(
+                f"load_canonical_api ({size:,} operations)",
+                lambda: load_canonical_api(db, tenant_id=tenant, version_id=version),
+            )
+            assert sum(len(service.operations) for service in api.services) == size
+    finally:
+        conn.rollback()
+        with conn.cursor() as cur:
+            # Paths before classes: deleting a class nulls its content rows' class_id.
+            cur.execute(
+                "DELETE FROM apiome.version_path WHERE version_id IN "
+                "(SELECT id FROM apiome.versions WHERE project_id = %s::uuid)",
+                (ctx["project"],),
+            )
+        conn.commit()
+
+    budgets = _load_budgets()
+    for family in (
+        "Database.load_paths_for_version",
+        "GET /v1/paths/{tenant}/{version}/{path}/full",
+        "Database._cursor_current_merged_document",
+        "load_canonical_api",
+    ):
+        assert budgets[f"{family} (10 operations)"] == budgets[f"{family} (1,000 operations)"], family
+    cold = "GET /v1/versions/{tenant}/{project}/{version}/document (cold, %s operations)"
+    assert budgets[cold % "10"] == budgets[cold % "1,000"]
+
+
 # ───────────────────────────── the guard itself ─────────────────────────────
 
 

@@ -111,12 +111,15 @@ def test_identity_suggestions_never_auto_link():
                     "identity_namespace": None,
                 }
             ]
-            mock_db.get_operation_keys_for_project.side_effect = [
-                {"GetUser", "ListUsers"},
-                {"GetUser", "ListUsers"},
-            ]
+            mock_db.get_operation_keys_for_projects.return_value = {
+                "p1": ["GetUser", "ListUsers"],
+                "p2": ["GetUser", "ListUsers"],
+            }
             response = client.get("/v1/identity/test-tenant/projects/p1/suggestions")
         assert response.status_code == 200
+        # The anchor's and the candidates' keys in one query (DBP-1.6, #7189).
+        mock_db.get_operation_keys_for_projects.assert_called_once_with("test-tenant-id", ["p1", "p2"])
+        mock_db.get_operation_keys_for_project.assert_not_called()
         suggestions = response.json()
         assert len(suggestions) >= 1
         assert suggestions[0]["projectId"] == "p2"

@@ -97,14 +97,14 @@ def _published(tenant_id: str, *, member: bool) -> List[Tuple[Dict[str, Any], Di
         projects = db.list_member_browse_projects_for_tenant(tenant_id, require_published=True)
     else:
         projects = db.list_public_browse_projects_for_tenant(tenant_id, require_published=True)
+    ordered = sorted(projects, key=lambda row: str(row["slug"]))
+    # Every project's versions in one query (DBP-1.6, #7189).
+    versions_by_slug = db.list_browse_versions_for_projects(
+        tenant_id, [str(project["slug"]) for project in ordered], public=not member
+    )
     chosen = []
-    for project in sorted(projects, key=lambda row: str(row["slug"])):
-        slug = str(project["slug"])
-        if member:
-            versions = db.list_member_browse_versions_for_project(tenant_id, slug)
-        else:
-            versions = db.list_public_browse_versions_for_project(tenant_id, slug)
-        row = _latest(project, versions)
+    for project in ordered:
+        row = _latest(project, versions_by_slug.get(str(project["slug"]), []))
         if row is not None:
             chosen.append((project, row))
     return chosen

@@ -158,8 +158,10 @@ describe('loadCarriedPaths', () => {
         ],
       }),
     );
-    const paths = await loadCarriedPaths('v1', ['/users']);
-    expect(mockLoad).toHaveBeenCalledWith('v1');
+    const client = scripted([]);
+    const paths = await loadCarriedPaths('v1', ['/users'], client);
+    // The read runs on the caller's client, not another pool checkout (DBP-1.6, #7189).
+    expect(mockLoad).toHaveBeenCalledWith('v1', client);
     expect(paths.map((p) => p.path)).toEqual(['/users']);
     expect(paths[0].operations).toHaveLength(1);
   });

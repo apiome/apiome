@@ -331,7 +331,7 @@ class TestMaterializationPreview:
             mdb.get_classes_for_version.return_value = [
                 {"id": "cls-1", "name": "Pet", "description": None, "schema": "{}"}
             ]
-            mdb.get_properties_for_class.return_value = []
+            mdb.get_properties_for_classes.return_value = {"cls-1": []}
             mdb.get_materializable_pins_for_version.return_value = [
                 {
                     "kind": "schema",

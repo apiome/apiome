@@ -122,23 +122,26 @@ class FakeDatabase:
         self.calls.append("properties")
         return {class_id: list(self.properties.get(class_id, [])) for class_id in class_ids}
 
-    def get_paths_for_version(self, version_id: str) -> list:
-        return list(self.paths)
-
-    def get_operations_for_path(self, path_id: str) -> list:
-        return list(self.operations.get(path_id, []))
-
-    def get_operation_description(self, operation_id: str) -> Optional[Dict[str, Any]]:
-        return self.descriptions.get(operation_id)
-
-    def get_parameters_for_operation(self, operation_id: str) -> list:
-        return []
-
-    def get_request_body_for_operation(self, operation_id: str) -> None:
-        return None
-
-    def get_responses_for_operation(self, operation_id: str) -> list:
-        return []
+    def load_paths_for_version(self, version_id: str) -> list:
+        """The set-based path loader (DBP-1.6, #7189): paths with their operations' details."""
+        return [
+            {
+                **path,
+                "operations": [
+                    {
+                        "id": op["id"],
+                        "operation": op["operation"],
+                        "metadata": op.get("metadata"),
+                        "description": self.descriptions.get(op["id"]),
+                        "parameters": [],
+                        "requestBody": None,
+                        "responses": [],
+                    }
+                    for op in self.operations.get(path["id"], [])
+                ],
+            }
+            for path in self.paths
+        ]
 
     def get_security_schemes_for_version(self, version_id: str) -> list:
         return []

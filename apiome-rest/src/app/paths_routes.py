@@ -853,31 +853,8 @@ def get_path_full(
     if not path:
         raise HTTPException(status_code=404, detail=f"Path not found: {path_id}")
 
-    operations_data = db.get_operations_for_path(path_id)
-    operations = []
-
-    for op in operations_data:
-        op_id = op['id']
-
-        # Get operation description
-        description = db.get_operation_description(op_id)
-
-        # Get parameters
-        parameters = db.get_parameters_for_operation(op_id)
-
-        # Get request body
-        request_body = db.get_request_body_for_operation(op_id)
-
-        # Get responses
-        responses = db.get_responses_for_operation(op_id)
-
-        operations.append({
-            **op,
-            'description': description,
-            'parameters': parameters,
-            'requestBody': request_body,
-            'responses': responses
-        })
+    # Five statements at most, whatever the number of operations (DBP-1.6, #7189).
+    operations = db.get_operations_with_details_for_path(path_id)
 
     return {
         **path,

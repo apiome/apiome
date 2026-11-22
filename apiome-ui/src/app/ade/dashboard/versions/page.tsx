@@ -184,7 +184,6 @@ import { useDialog } from '../../../components/providers/DialogProvider';
 import {
   deleteVersion,
   getClassesForVersion,
-  getPropertiesForClass,
   getPropertiesForClassesBatch,
   getTenantsAdministratedByUser
 } from '../../../../../lib/db/helper-actions';
@@ -1983,11 +1982,11 @@ const Versions = () => {
     try {
       const classesResult = await getClassesForVersion(version.id);
       const classesData = JSON.parse(classesResult) as Array<{ id: string; name: string }>;
-      const classesWithProperties = await Promise.all(classesData.map(async (cls) => {
-        const propsResult = await getPropertiesForClass(cls.id);
-        return { ...cls, properties: JSON.parse(propsResult) };
-      }));
-      setRelationshipGraphClasses(classesWithProperties);
+      // Every class's properties in one batch query, not one per class (DBP-1.6, #7189).
+      const byClass = JSON.parse(
+        await getPropertiesForClassesBatch(classesData.map((cls) => cls.id))
+      ) as Record<string, Array<{ id: string; name: string; data: unknown }>>;
+      setRelationshipGraphClasses(classesData.map((cls) => ({ ...cls, properties: byClass[cls.id] ?? [] })));
     } catch {
       setRelationshipGraphClasses([]);
     } finally {

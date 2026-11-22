@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Header, HTTPException, Query, Response
@@ -45,7 +45,7 @@ from .agent_server_json import (
 )
 from .auth import decode_jwt, resolve_optional_tenant_member_auth
 from .database import db
-from .mcp_catalog_routes import _build_posture_context
+from .mcp_catalog_routes import PostureEvidence, _build_posture_context, load_posture_evidence
 from .mcp_feed_routes import _if_none_match_hit
 from .mcp_registry import (
     DEFAULT_PAGE_LIMIT,
@@ -140,26 +140,75 @@ def caller_sees_private(
     return _mcp_key_admits(tenant_slug, key_header)
 
 
-async def _trust_posture(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+async def _trust_posture(
+    row: Dict[str, Any],
+    version: Optional[Dict[str, Any]],
+    evidence: Optional[PostureEvidence],
+) -> Optional[Dict[str, Any]]:
     """Recompute the current snapshot's trust-posture summary offline, or ``None`` on failure.
 
     A posture failure must not take the listing down, so any error is logged and the entry carries
     ``trustPosture: null``.
+
+    Args:
+        row: The registry endpoint row.
+        version: Its current snapshot (from :func:`_load_snapshots`), or ``None``.
+        evidence: The snapshot's posture evidence, or ``None`` to read it here.
     """
+    if not version:
+        return None
     try:
-        version = db.get_mcp_endpoint_version(str(row["id"]), str(row["current_version_id"]))
-        if not version:
-            return None
-        context = await _build_posture_context(str(row["id"]), version, scan_vulnerabilities=False)
+        context = await _build_posture_context(
+            str(row["id"]), version, scan_vulnerabilities=False, evidence=evidence
+        )
         return trust_posture_summary(run_trust_posture(context).report_dict())
     except Exception:  # noqa: BLE001 — a posture failure degrades one field, not the page
         logger.exception("mcp_registry: trust posture failed for endpoint %s", row.get("id"))
         return None
 
 
+def _load_snapshots(
+    rows: List[Dict[str, Any]],
+) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, PostureEvidence]]:
+    """Every listed endpoint's current snapshot and posture evidence, in four statements.
+
+    One query per kind of row, whatever the page size (DBP-1.6, #7189); it used to be about
+    four per listed server.
+
+    Args:
+        rows: The registry endpoint rows.
+
+    Returns:
+        ``({endpoint_id: snapshot}, {endpoint_id: evidence})``; an endpoint with no current
+        snapshot has neither. A failed read is logged and yields empty maps, so every entry
+        carries ``trustPosture: null`` instead of the listing failing.
+    """
+    pairs = [(str(row["id"]), str(row["current_version_id"])) for row in rows if row.get("current_version_id")]
+    if not pairs:
+        return {}, {}
+    try:
+        by_version = db.get_mcp_endpoint_versions_by_ids(pairs)
+        snapshots = {
+            endpoint_id: by_version[version_id] for endpoint_id, version_id in pairs if version_id in by_version
+        }
+        return snapshots, load_posture_evidence(list(snapshots.items()))
+    except Exception:  # noqa: BLE001 — a posture failure degrades one field, not the page
+        logger.exception("mcp_registry: trust posture evidence failed for %d endpoints", len(pairs))
+        return {}, {}
+
+
 async def _entries(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Build a ``ServerResponse`` for each row, in order."""
-    return [build_server_response(row, trust_posture=await _trust_posture(row)) for row in rows]
+    snapshots, evidence = await run_in_threadpool(_load_snapshots, rows)
+    return [
+        build_server_response(
+            row,
+            trust_posture=await _trust_posture(
+                row, snapshots.get(str(row["id"])), evidence.get(str(row["id"]))
+            ),
+        )
+        for row in rows
+    ]
 
 
 def _json(body: Any, *, private: bool, etag: Optional[str] = None) -> JSONResponse:

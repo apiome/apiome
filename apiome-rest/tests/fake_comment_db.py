@@ -360,6 +360,10 @@ class FakeCommentDb(NotificationDbMixin):
         """A thread's comments, oldest first."""
         return [self._comment_view(c) for c in self._thread_comments(thread_id)]
 
+    def list_comments_for_threads(self, thread_ids: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+        """Several threads' comments, oldest first, keyed by thread (DBP-1.6, #7189)."""
+        return {str(tid): self.list_comments(thread_id=str(tid)) for tid in thread_ids}
+
     def get_comment(self, *, thread_id: str, comment_id: str) -> Optional[Dict[str, Any]]:
         """One comment of a thread."""
         row = self.comments.get(comment_id)

@@ -60,11 +60,14 @@ def get_identity_suggestions(
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
     candidates = db.get_identity_suggestion_candidates(tenant_id, project_id, limit=50)
-    anchor_ops = set(db.get_operation_keys_for_project(tenant_id, project_id))
-    candidate_ops: Dict[str, set[str]] = {}
-    for row in candidates:
-        pid = str(row["project_id"])
-        candidate_ops[pid] = set(db.get_operation_keys_for_project(tenant_id, pid))
+    # The anchor's and every candidate's operation keys in one query (DBP-1.6, #7189).
+    keys = db.get_operation_keys_for_projects(
+        tenant_id, [project_id, *(str(row["project_id"]) for row in candidates)]
+    )
+    anchor_ops = set(keys.get(project_id, []))
+    candidate_ops: Dict[str, set[str]] = {
+        str(row["project_id"]): set(keys.get(str(row["project_id"]), [])) for row in candidates
+    }
 
     return rank_identity_suggestions(
         anchor=anchor,
@@ -118,13 +121,18 @@ def get_zosconnect_binding(
     for row in db.get_cobol_record_holders(tenant_id, list(binding.get("structures") or [])):
         peers[str(row["project_id"])] = dict(row)
     # OpenAPI side: the linked items and the suggestion candidates, by their operation keys.
+    rest_peers = []
     for row in related + list(db.get_identity_suggestion_candidates(tenant_id, project_id, limit=50)):
         pid = str(row["project_id"])
         if pid == project_id or row.get("source_format") == "zosconnect":
             continue
         entry = peers.setdefault(pid, dict(row))
         if (row.get("protocol") or "").lower() in ("rest", "http"):
-            entry["operations"] = set(db.get_operation_keys_for_project(tenant_id, pid))
+            rest_peers.append((pid, entry))
+    # Every REST peer's operation keys in one query (DBP-1.6, #7189).
+    keys = db.get_operation_keys_for_projects(tenant_id, [pid for pid, _ in rest_peers]) if rest_peers else {}
+    for pid, entry in rest_peers:
+        entry["operations"] = set(keys.get(pid, []))
     for pid, entry in peers.items():
         entry["linked"] = pid in linked_ids
     return ZosConnectBindingResponse(**resolve_binding(binding, peers.values()))

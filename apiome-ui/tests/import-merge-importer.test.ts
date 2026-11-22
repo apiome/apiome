@@ -248,7 +248,8 @@ describe('importer: merge strategies (#591, #592)', () => {
     expect(mockCreateClassTx.mock.calls[0][3]).toBe('Stored pet');
     expect(mockCopyClassesTx).toHaveBeenCalledWith(mockClient, PARENT, NEW, ['Owner']);
     expect(mockCopySecuritySchemesTx).toHaveBeenCalledWith(mockClient, PARENT, NEW);
-    expect(mockLoadCarriedPaths).toHaveBeenCalledWith(PARENT, ['/pets', '/owners']);
+    // The parent's paths are read on the import's own client (DBP-1.6, #7189).
+    expect(mockLoadCarriedPaths).toHaveBeenCalledWith(PARENT, ['/pets', '/owners'], mockClient);
 
     const [versionId, paths, schemes] = mockImportPaths.mock.calls[0] as [
       string,

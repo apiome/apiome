@@ -22,6 +22,7 @@ import logging
 import re
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -1870,11 +1871,63 @@ def _active_source_link(endpoint_id: str):
     return link_from_row(row), row
 
 
+@dataclass(frozen=True)
+class PostureEvidence:
+    """What the database holds for one snapshot's trust posture.
+
+    Attributes:
+        items: The snapshot's capability rows (discovery order).
+        source_row: The endpoint's newest live source, or ``None``.
+        sbom_row: That source's latest SBOM, or ``None``.
+    """
+
+    items: List[Dict[str, Any]]
+    source_row: Optional[Dict[str, Any]]
+    sbom_row: Optional[Dict[str, Any]]
+
+
+def _posture_evidence_for(endpoint_id: str, version: Dict[str, Any]) -> PostureEvidence:
+    """One snapshot's evidence, read with the single-row lookups."""
+    items = db.get_mcp_capability_items(str(version["id"]))
+    _, source_row = _active_source_link(endpoint_id)
+    sbom_row = db.get_latest_mcp_source_sbom(str(source_row["id"])) if source_row is not None else None
+    return PostureEvidence(items=list(items), source_row=source_row, sbom_row=sbom_row)
+
+
+def load_posture_evidence(snapshots: List[Tuple[str, Dict[str, Any]]]) -> Dict[str, PostureEvidence]:
+    """The evidence of many snapshots in three statements, whatever their number (DBP-1.6, #7189).
+
+    The same rows :func:`_posture_evidence_for` reads one snapshot at a time: the capability
+    items, each endpoint's newest live source and that source's latest SBOM.
+
+    Args:
+        snapshots: ``(endpoint_id, snapshot row)`` pairs.
+
+    Returns:
+        ``{endpoint_id: PostureEvidence}``.
+    """
+    if not snapshots:
+        return {}
+    items = db.get_mcp_capability_items_for_versions([str(version["id"]) for _, version in snapshots])
+    sources = db.get_newest_live_mcp_endpoint_sources([endpoint_id for endpoint_id, _ in snapshots])
+    sboms = db.get_latest_mcp_source_sboms([str(row["id"]) for row in sources.values()]) if sources else {}
+    evidence: Dict[str, PostureEvidence] = {}
+    for endpoint_id, version in snapshots:
+        source_row = sources.get(str(endpoint_id))
+        evidence[str(endpoint_id)] = PostureEvidence(
+            items=list(items.get(str(version["id"]), [])),
+            source_row=source_row,
+            sbom_row=sboms.get(str(source_row["id"])) if source_row is not None else None,
+        )
+    return evidence
+
+
 async def _build_posture_context(
     endpoint_id: str,
     version: Dict[str, Any],
     *,
     scan_vulnerabilities: bool = True,
+    evidence: Optional[PostureEvidence] = None,
 ) -> PostureContext:
     """Assemble a :class:`PostureContext` for one snapshot from what the database holds.
 
@@ -1896,16 +1949,21 @@ async def _build_posture_context(
 
     ``scan_vulnerabilities=False`` skips the lookup even when it is enabled, for read paths that must
     never call out (the anonymous MCP Registry API, AAU-5.3); the dependency rules then skip.
-    """
-    items = db.get_mcp_capability_items(str(version["id"]))
-    surface = reconstruct_surface(version, items)
 
-    source, source_row = _active_source_link(endpoint_id)
+    ``evidence`` is what :func:`load_posture_evidence` read for many snapshots at once (the
+    registry listing, DBP-1.6 #7189); without it this snapshot's evidence is read here.
+    """
+    if evidence is None:
+        evidence = _posture_evidence_for(endpoint_id, version)
+    surface = reconstruct_surface(version, evidence.items)
+
+    source_row = evidence.source_row
+    source = link_from_row(source_row) if source_row is not None else None
 
     inventory = None
     vulnerabilities = None
     if source_row is not None:
-        sbom_row = db.get_latest_mcp_source_sbom(str(source_row["id"]))
+        sbom_row = evidence.sbom_row
         if sbom_row is not None:
             from .mcp_sbom import inventory_from_row
 

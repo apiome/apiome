@@ -266,7 +266,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.639.0",
+    version="1.640.0",
 )
 
 
@@ -2220,12 +2220,8 @@ def get_version_jsonschema_spec(
     # Get all classes for this version
     classes = db.get_classes_for_version(version['id'])
 
-    # Get properties for each class
-    all_properties = {}
-    for class_data in classes:
-        class_id = class_data['id']
-        properties = db.get_properties_for_class(class_id)
-        all_properties[class_id] = properties
+    # Every class's properties in one query (DBP-1.6, #7189)
+    all_properties = db.get_properties_for_classes([class_data['id'] for class_data in classes])
 
     # Generate JSON Schema specification
     jsonschema_spec = generate_jsonschema_spec(

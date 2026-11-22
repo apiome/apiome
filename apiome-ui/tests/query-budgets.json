@@ -1,7 +1,9 @@
 {
-  "$comment": "SQL statement budgets for UI server actions (DBP-1.1, #7184), enforced by tests/query-budgets.test.ts. Lower a budget in the PR that cuts statements (DBP-1.9 for the import, DBP-1.15 for session and Home).",
+  "$comment": "SQL statement budgets for UI server actions (DBP-1.1, #7184), enforced by tests/query-budgets.test.ts. Lower a budget in the PR that cuts statements (DBP-1.9 for the import, DBP-1.15 for session and Home; DBP-1.6 set the paths export at six statements).",
   "budgets": {
     "getClassesForVersion server action": 3,
-    "importOpenAPIPathsAndSecurity (query-and-additional.yaml)": 24
+    "importOpenAPIPathsAndSecurity (query-and-additional.yaml)": 24,
+    "loadPathsForOpenAPIExport (10 operations)": 6,
+    "loadPathsForOpenAPIExport (1,000 operations)": 6
   }
 }

@@ -239,7 +239,9 @@ def _public(path: str, *, versions: Optional[Dict[str, Any]] = None, hidden: tup
             patch("app.xregistry_routes.load_export_source") as member:
         db.get_tenant_row_by_slug.side_effect = lambda slug: _TENANT if slug == "acme" else None
         db.list_public_browse_projects_for_tenant.return_value = _PROJECTS
-        db.list_public_browse_versions_for_project.side_effect = lambda tid, slug: (versions or _VERSIONS)[slug]
+        db.list_browse_versions_for_projects.side_effect = (
+            lambda tid, slugs, public: {slug: (versions or _VERSIONS)[slug] for slug in slugs}
+        )
         response = client.get(path, headers=headers)
     response.db, response.public, response.member = db, public, member  # type: ignore[attr-defined]
     return response
@@ -356,7 +358,7 @@ def _member(path: str, *, authenticated: bool = True) -> Any:
             patch("app.xregistry_routes.load_public_export_source") as public:
         db.get_tenant_row_by_slug.side_effect = lambda slug: _TENANT if slug == "acme" else None
         db.list_member_browse_projects_for_tenant.return_value = _PROJECTS
-        db.list_member_browse_versions_for_project.side_effect = lambda tid, slug: _VERSIONS[slug]
+        db.list_browse_versions_for_projects.side_effect = lambda tid, slugs, public: {s: _VERSIONS[s] for s in slugs}
         db.get_project_by_slug.side_effect = lambda slug, tid: {"id": f"id-{slug}", "slug": slug}
         response = client.get(path)
     app.dependency_overrides.pop(validate_authentication, None)

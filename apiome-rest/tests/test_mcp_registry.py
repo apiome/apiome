@@ -282,7 +282,7 @@ def catalog():
         ]
     )
 
-    async def _posture(_row):
+    async def _posture(_row, *_evidence):
         return _POSTURE
 
     with patch("app.mcp_registry_routes.db") as mdb, patch(
@@ -472,26 +472,73 @@ def test_trust_posture_is_computed_offline_and_degrades_to_null():
     from app import mcp_registry_routes
 
     row = _row("alpha")
+    version = {"id": row["current_version_id"]}
+    evidence = object()
     report = MagicMock()
     report.report_dict.return_value = {"score": 80, "grade": "B", "gate": {"passed": True}}
+    seen = []
 
     async def _context(*args, **kwargs):
-        assert kwargs == {"scan_vulnerabilities": False}
+        seen.append(kwargs)
         return object()
 
-    with patch.object(mcp_registry_routes, "db") as mdb, patch.object(
-        mcp_registry_routes, "_build_posture_context", _context
-    ), patch.object(mcp_registry_routes, "run_trust_posture", return_value=report):
-        mdb.get_mcp_endpoint_version.return_value = {"id": row["current_version_id"]}
-        assert asyncio.run(mcp_registry_routes._trust_posture(row)) == {
+    with patch.object(mcp_registry_routes, "_build_posture_context", _context), patch.object(
+        mcp_registry_routes, "run_trust_posture", return_value=report
+    ) as run:
+        assert asyncio.run(mcp_registry_routes._trust_posture(row, version, evidence)) == {
             "score": 80,
             "grade": "B",
             "gatePassed": True,
         }
-        mdb.get_mcp_endpoint_version.return_value = None
-        assert asyncio.run(mcp_registry_routes._trust_posture(row)) is None
-        mdb.get_mcp_endpoint_version.side_effect = RuntimeError("db down")
-        assert asyncio.run(mcp_registry_routes._trust_posture(row)) is None
+        assert seen == [{"scan_vulnerabilities": False, "evidence": evidence}]
+        assert asyncio.run(mcp_registry_routes._trust_posture(row, None, None)) is None
+        run.side_effect = RuntimeError("engine down")
+        assert asyncio.run(mcp_registry_routes._trust_posture(row, version, evidence)) is None
+
+
+def test_the_listing_reads_every_snapshot_and_its_evidence_in_four_statements():
+    """DBP-1.6 (#7189): one query per kind of row, not about four per listed server."""
+    from app import mcp_registry_routes
+
+    rows = [
+        _row(name, current_version_id=f"33333333-3333-3333-3333-{i:012d}")
+        for i, name in enumerate(("alpha", "bravo", "charlie"))
+    ]
+    rows.append({**_row("delta"), "current_version_id": None})
+    with patch("app.mcp_registry_routes.db") as rdb, patch("app.mcp_catalog_routes.db") as cdb:
+        rdb.get_mcp_endpoint_versions_by_ids.side_effect = lambda pairs: {
+            v: {"id": v, "endpoint_id": e} for e, v in pairs if e != rows[1]["id"]
+        }
+        cdb.get_mcp_capability_items_for_versions.side_effect = lambda ids: {i: [{"name": "t"}] for i in ids}
+        cdb.get_newest_live_mcp_endpoint_sources.side_effect = lambda ids: {ids[0]: {"id": "src-1"}}
+        cdb.get_latest_mcp_source_sboms.return_value = {"src-1": {"id": "sbom-1"}}
+        snapshots, evidence = mcp_registry_routes._load_snapshots(rows)
+
+    rdb.get_mcp_endpoint_versions_by_ids.assert_called_once_with(
+        [(str(r["id"]), str(r["current_version_id"])) for r in rows[:3]]
+    )
+    rdb.get_mcp_endpoint_version.assert_not_called()
+    for method in ("get_mcp_capability_items_for_versions", "get_newest_live_mcp_endpoint_sources",
+                   "get_latest_mcp_source_sboms"):
+        getattr(cdb, method).assert_called_once()
+    cdb.get_mcp_capability_items.assert_not_called()
+    cdb.list_mcp_endpoint_sources.assert_not_called()
+    # bravo's snapshot is not its endpoint's; delta has none.
+    assert set(snapshots) == {str(rows[0]["id"]), str(rows[2]["id"])}
+    first = evidence[str(rows[0]["id"])]
+    assert first.items == [{"name": "t"}] and first.source_row == {"id": "src-1"}
+    assert first.sbom_row == {"id": "sbom-1"}
+    third = evidence[str(rows[2]["id"])]
+    assert third.source_row is None and third.sbom_row is None
+
+
+def test_a_failed_evidence_read_degrades_every_posture_to_null():
+    from app import mcp_registry_routes
+
+    with patch("app.mcp_registry_routes.db") as rdb:
+        rdb.get_mcp_endpoint_versions_by_ids.side_effect = RuntimeError("db down")
+        assert mcp_registry_routes._load_snapshots([_row("alpha")]) == ({}, {})
+    assert mcp_registry_routes._load_snapshots([]) == ({}, {})
 
 
 # --------------------------------------------------------------------------- database
