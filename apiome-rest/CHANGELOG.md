@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.803.0] - 2026-11-21
+
+### Added
+- **Large-spec performance benchmark and nightly gate — OpenAPI 1.629.0 (COA-5.11, #7087):**
+  `tests/large_spec_benchmark.py` builds four synthetic OpenAPI revision families (GitHub-, Stripe- and
+  Azure-shaped, and a ~50 MB stress revision), each with a base and a small- and a large-change head, as
+  the class and property rows the generator reads, and runs them through the real rendered-document cache
+  (`rendered_document`, filesystem store). Cold and warm wall-clock and peak memory (separate passes, so
+  tracemalloc does not inflate latency) are recorded for `schema`, the classified `diff`, `compat` and
+  `export` stages (the 50 MB fixture skips export: the intake limit refuses a source over 10 MiB). The
+  opt-in `tests/test_large_spec_benchmark.py` (`RUN_LARGE_SPEC_SUITE=1` / `--large-spec`) holds every stage
+  to the committed baseline `tests/scale/large_spec_budgets.json` (`--update-large-spec-budgets` refreshes
+  it), enforces the targets warm diff < 2 s and warm schema < 200 ms on the public-API-sized fixtures, and
+  fails when a warm stage runs the generator. Nightly at 05:15 UTC via
+  `.github/workflows/apiome-rest-large-spec.yml` (report artifact `reports/large-spec-benchmark.json`);
+  `tests/test_large_spec_harness.py` covers the machinery on every PR. `scale_benchmark.ceiling_breaches`
+  takes optional ceilings. No endpoint changes.
+
 ## [1.802.0] - 2026-11-21
 
 ### Added

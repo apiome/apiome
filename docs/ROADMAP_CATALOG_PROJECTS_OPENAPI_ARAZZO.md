@@ -451,7 +451,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| COA-5.11 · [#7087](https://github.com/apiome/apiome/issues/7087) | Large-spec performance benchmark and gate | Benchmark diff, schema and export on large specs before/after; nightly gate with agreed latency targets | `enhancement`, `performance`, `testing` | Y | S | apiome-rest |
 | COA-5.12 · [#7088](https://github.com/apiome/apiome/issues/7088) | Local MinIO and deployment examples | MinIO in `docker-compose.yml`, prod env example and `get-apiome` prompts for the store | `enhancement`, `devops` | Y | S | deploy, docker-compose |
 | COA-5.13 · [#7089](https://github.com/apiome/apiome/issues/7089) | UI reads revision documents from REST, not its own generator | Versions view/compare, Catalog diff and MR/review spec views fetch cached documents from REST; retire the Next.js `buildOpenApiSpecForVersion` path after a parity audit | `enhancement`, `ui`, `rest`, `performance` | N | L | apiome-ui, apiome-rest |
 | COA-5.14 · [#7090](https://github.com/apiome/apiome/issues/7090) | Every REST feature reads revision documents through the store | Lint, mock, Swagger UI, merge/rollback, publish, change reports, PR-back, reviews, source workspace, contracts, blast radius, governance, sync and export use the rendered-document service; an architecture test forbids direct generation | `enhancement`, `rest`, `performance` | Y | L | apiome-rest |
@@ -608,7 +607,7 @@ flowchart LR
 - **Technical Stack:** Python, SQL.
 - **Documentation:** `admin/document-store.mdx` (retention and integrity), `admin/admin-tenants.mdx` (deletion); screenshots: n/a; release note.
 
-**COA-5.11 · #7087 Large-spec performance benchmark and gate**
+**✅ COA-5.11 · #7087 Large-spec performance benchmark and gate — Complete**
 - **Problem:** There is no measurement of diff, schema or export latency on very large specs, so the gain cannot be shown or protected.
 - **Solution/Scope:**
 - Fixtures: large public OpenAPI specs (e.g. GitHub REST, Stripe, Azure) plus a synthetic 50 MB spec; pairs of revisions with small and large changes.
@@ -618,6 +617,7 @@ flowchart LR
 - Baseline recorded on `main` before COA-5.5 merges; nightly gate active by the end of the epic.
 - **Parallelism/Dependencies:** Baseline first (any time); gate after COA-5.6.
 - **Technical Stack:** pytest-benchmark or a script, GitHub Actions nightly.
+- **Shipped:** `tests/large_spec_benchmark.py` + opt-in `tests/test_large_spec_benchmark.py` (nightly `apiome-rest-large-spec.yml`, 05:15 UTC). Four synthetic revision families — GitHub-, Stripe- and Azure-shaped and a ~50 MB stress one — each with a base and a small- and a large-change head, run through cold and warm `schema`, classified `diff`, `compat` and `export` stages (wall-clock and tracemalloc peak, measured in separate passes). Held to the committed baseline `tests/scale/large_spec_budgets.json` (shared margin rules with the IXH-1.5 scale suite) and to the targets warm diff < 2 s / warm schema < 200 ms (not enforced on the 50 MB fixture); a warm stage that runs the generator fails. The per-PR `tests/test_large_spec_harness.py` keeps the machinery honest.
 - **Documentation:** none (internal); screenshots: n/a.
 
 **COA-5.12 · #7088 Local MinIO and deployment examples**
