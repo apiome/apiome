@@ -431,6 +431,42 @@ export function locateFindingLine(path: string, source: string): number | null {
 }
 
 /**
+ * The location a finding row shows (#7128).
+ *
+ * A finding's `path` is often the canonical model path (`services.<title> <timestamp>.operations.
+ * GET /books/{bookId}.messages…`) — an internal coordinate the user never wrote. The raw viewer
+ * beside the list already resolves it to a line of the source the user did write, so the row
+ * shows that line. Only when no line could be resolved does it fall back to the path (still
+ * better than nothing), and an empty path is the document root.
+ *
+ * @param path The finding's path (JSON pointer, model path, or empty).
+ * @param line The 1-based source line {@link locateFindingLine} resolved, or `null`.
+ * @returns The label, e.g. `Line 42`, `/paths/~1pets/get` or `document root`.
+ */
+export function findingLocationLabel(path: string, line: number | null): string {
+  if (line !== null) return `Line ${line.toLocaleString()}`;
+  return path || 'document root';
+}
+
+/**
+ * Scroll `container` so `target` sits in its vertical middle, without scrolling anything else.
+ *
+ * `Element.scrollIntoView` scrolls *every* scrollable ancestor — inside the import wizard that
+ * includes the dialog body, which opened the quality step scrolled past finding #1 (#7128). This
+ * moves only the one viewport that owns the line.
+ *
+ * @param container The scrolling element (the raw source viewer).
+ * @param target A descendant of `container` to centre.
+ */
+export function centerWithinScroller(container: HTMLElement, target: HTMLElement): void {
+  const containerRect = container.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const offset =
+    targetRect.top - containerRect.top - (container.clientHeight - targetRect.height) / 2;
+  container.scrollTop = Math.max(0, container.scrollTop + offset);
+}
+
+/**
  * A recorded waiver: a user committed an import that policy would have blocked.
  *
  * The ledger is server-side (IXH-2.3): {@link recordImportQualityWaiver} POSTs the record to

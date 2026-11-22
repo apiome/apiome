@@ -89,7 +89,13 @@ function mockFetch(starts: StartCall[]): jest.Mock {
     if (url.includes('/api/catalog/import/')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ success: true, state: 'completed', events: [] }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            state: 'completed',
+            events: [],
+            result: { project_id: 'proj-26-2' },
+          }),
       });
     }
     // The import start (`POST /api/catalog/import`).
@@ -154,6 +160,17 @@ describe('CatalogImportDialog — URL + paste intake (MFI-26.2)', () => {
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1), { timeout: 3000 });
     expect(screen.getByText(/Stored in the catalog/i)).toBeInTheDocument();
+    // The done step links the new item and keeps one dismiss button, not Close + Done (#7128).
+    expect(screen.getByTestId('catalog-import-open-item')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/catalog/proj-26-2',
+    );
+    // The footer's verbs (the dialog's own corner X stays, as on every dialog).
+    const footerVerbs = screen
+      .getByRole('button', { name: /^done$/i })
+      .closest('.imp-wizard__foot')!
+      .querySelectorAll('button');
+    expect(Array.from(footerVerbs).map((button) => button.textContent)).toEqual(['Done']);
 
     const metadata = startMetadata(starts);
     expect(metadata.source_kind).toBe('graphql');

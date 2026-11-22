@@ -57,6 +57,8 @@ import {
   buildImportQualityWaiver,
   decidePreflightGate,
   fetchImportPreflight,
+  centerWithinScroller,
+  findingLocationLabel,
   locateFindingLine,
   preflightSeverityTally,
   preflightThresholdComparison,
@@ -276,9 +278,12 @@ function FindingRow({
           </span>
         </div>
         <div className="truncate text-sm text-fg">{finding.message}</div>
-        <div className="truncate font-mono text-2xs text-fg-muted">
-          {finding.path || 'document root'}
-          {line !== null ? ` · line ${line}` : ''}
+        <div
+          className="truncate font-mono text-2xs text-fg-muted"
+          title={finding.path || undefined}
+          data-testid="import-quality-finding-location"
+        >
+          {findingLocationLabel(finding.path, line)}
         </div>
       </button>
     </li>
@@ -325,6 +330,7 @@ export function CatalogImportQualityStep({
   const listRef = useRef<HTMLDivElement | null>(null);
   const rowRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const lineRef = useRef<HTMLLIElement | null>(null);
+  const rawViewerRef = useRef<HTMLDivElement | null>(null);
   // A commit must fire at most once per mount, even if auto-advance and a re-render race.
   const committed = useRef(false);
 
@@ -510,7 +516,11 @@ export function CatalogImportQualityStep({
 
   // Bring the linked source line into view whenever the selection changes.
   useEffect(() => {
-    lineRef.current?.scrollIntoView({ block: 'center' });
+    // Only the raw viewer scrolls: `scrollIntoView` would also scroll the wizard body and open
+    // the step past finding #1 (#7128).
+    if (rawViewerRef.current && lineRef.current) {
+      centerWithinScroller(rawViewerRef.current, lineRef.current);
+    }
   }, [selectedLine]);
 
   const virtualized = findings.length > FINDINGS_VIRTUALIZE_ABOVE;
@@ -812,6 +822,7 @@ export function CatalogImportQualityStep({
                       Source{selectedLine !== null ? ` · line ${selectedLine}` : ''}
                     </div>
                     <div
+                      ref={rawViewerRef}
                       className="h-[380px] overflow-auto rounded-lg border border-border bg-subtle"
                       data-testid="import-quality-raw-viewer"
                     >

@@ -26,6 +26,9 @@ The header holds **“Compare”** (needs two versions), **“Import”**, **Mor
 When other people have the project open, their avatars appear at the top of the page; see
 [Presence and soft locks](./presence-and-soft-locks.mdx).
 
+The tabs sit on one row under the header. When the window is too narrow for all of them, the row
+scrolls sideways, and a fade at its edge shows that more tabs are past it.
+
 The dialogs are on [Version dialogs](./version-dialogs.mdx). Keyboard paths are on
 [Keyboard](../workspace/keyboard.md).
 
@@ -117,6 +120,10 @@ see [Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and
 | **Schedule sunset (EOL)…** | Deprecates the version and sets its end-of-life date |
 | **Edit** | Changes lifecycle, notes and sunset metadata |
 | **Publish** / **Unpublish** | Publishes the version, or takes it back after a confirmation. Unpublishing moves the version's tags back to the previous published version and notifies webhook subscribers — see [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version) |
+
+**Use the arrow keys** to move through the **Actions** menu. <Kbd keys="Esc"/> or a click outside
+closes it and puts focus back on the row's `⋯` button. While it is open, screen readers can still
+reach the rest of the page.
 
 Git-like actions (branch, fork, tag, freeze, lock, delete) and **More actions → Merge branches…** also live here when <Flag
 name="FEATURE_GITLIKE"/> is on — it is off in every shipped build. See [Git-like

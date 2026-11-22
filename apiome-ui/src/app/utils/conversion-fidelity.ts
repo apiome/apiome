@@ -123,7 +123,29 @@ export const PROVIDED_COVERAGES: readonly Coverage[] = ['present', 'inferred'];
 /** Coverage tags that land in the "What OpenAPI favors but is missing" column. */
 export const MISSING_COVERAGES: readonly Coverage[] = ['missing', 'partial', 'n/a'];
 
-/** Split a checklist into the two preview columns: what the spec will contain vs. what it lacks. */
+/** The checklist key for the "OpenAPI 3.2 source emitted as 3.1" note (REST `fidelity.py`). */
+export const SOURCE_OPENAPI_VERSION_KEY = 'source.openapi-version';
+
+/**
+ * Whether a checklist row is a note about the source rather than a construct OpenAPI favors.
+ *
+ * The fidelity report always carries a *Source OpenAPI version* row; for any source that is not
+ * OpenAPI 3.2 it is `n/a` with "source is not OpenAPI 3.2". Under *What OpenAPI favors but is
+ * missing* that reads as a gap in, say, a GraphQL schema, which it is not (#7128) — so the
+ * `n/a` form of that row is left out of both columns. The 3.2 → 3.1 `partial` form is a real
+ * downgrade and stays.
+ *
+ * @param item A row off the fidelity report.
+ * @returns `true` when the row says nothing about this conversion.
+ */
+export function isIrrelevantSourceNote(item: ChecklistItem): boolean {
+  return item.key === SOURCE_OPENAPI_VERSION_KEY && item.coverage === 'n/a';
+}
+
+/**
+ * Split a checklist into the two preview columns: what the spec will contain vs. what it lacks.
+ * Rows that say nothing about this conversion ({@link isIrrelevantSourceNote}) are left out.
+ */
 export function partitionChecklist(items: ChecklistItem[]): {
   provided: ChecklistItem[];
   missing: ChecklistItem[];
@@ -131,6 +153,7 @@ export function partitionChecklist(items: ChecklistItem[]): {
   const provided: ChecklistItem[] = [];
   const missing: ChecklistItem[] = [];
   for (const item of items) {
+    if (isIrrelevantSourceNote(item)) continue;
     if (PROVIDED_COVERAGES.includes(item.coverage)) provided.push(item);
     else missing.push(item);
   }

@@ -174,7 +174,8 @@ twice is served from cache and says so in `cache.hit`.
 
 The wizard runs this for you. Its steps are **Source → Detect & route → Options → Quality →
 Import**: the **Quality** step shows the grade orb and score, the error/warning/info tally, the
-ranked findings (each links to its line in the source pane beside the list), and the style guide
+ranked findings (each names its line in the source pane beside the list, and selecting it scrolls
+that pane to the line), and the style guide
 that scored them. Nothing is written to the catalog until you confirm there — **Cancel** and
 **Back** leave no trace.
 

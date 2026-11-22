@@ -185,14 +185,16 @@ export function ImportWizardFooter({
         ) : null}
       </div>
       <div className="imp-wizard__foot-trail">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          disabled={footer.cancel.disabled}
-          title={footer.cancel.disabled ? IMPORT_FOOTER_DISABLED_REASON.cancel : undefined}
-        >
-          {footer.cancel.label}
-        </Button>
+        {footer.cancel.hidden ? null : (
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={footer.cancel.disabled}
+            title={footer.cancel.disabled ? IMPORT_FOOTER_DISABLED_REASON.cancel : undefined}
+          >
+            {footer.cancel.label}
+          </Button>
+        )}
         {extra}
         {footer.keepAnyway && onKeepAnyway ? (
           <Button

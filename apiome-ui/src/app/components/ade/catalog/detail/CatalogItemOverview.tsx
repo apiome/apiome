@@ -132,6 +132,10 @@ export function CatalogItemOverview({
   const hasAnyCount = CATALOG_SURFACE_TILES.some(
     (tile) => typeof summary[tile.key as SurfaceKey] === 'number',
   );
+  // A fresh item can have its parsed model (the group cards below) before its summary counts
+  // are captured. "Not captured yet" above a card listing three operations reads as a
+  // contradiction (#7128), so the note only shows when there is nothing parsed either.
+  const hasParsedEntities = parsed.some((group) => group.entities.length > 0);
 
   return (
     <>
@@ -195,8 +199,8 @@ export function CatalogItemOverview({
                     </div>
                   ) : null}
                 </>
-              ) : (
-                <p className="cid-note">
+              ) : hasParsedEntities ? null : (
+                <p className="cid-note" data-testid="catalog-detail-summary-missing">
                   The normalized-content summary has not been captured for this item yet.
                 </p>
               )}

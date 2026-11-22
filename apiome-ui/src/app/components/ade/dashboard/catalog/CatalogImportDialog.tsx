@@ -50,8 +50,10 @@ import {
   catalogImportFooterFor,
   catalogRoutingTone,
   projectsHandoffFor,
+  storedCatalogItemId,
   type ProjectsImportHandoff,
 } from '../../import';
+import { catalogItemHrefForId } from '../../catalog/catalogModel';
 import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils/openapi-analyzer';
 import { generateSlug } from '../../../../utils/slug';
 import { odataMetadataUrlForServiceDocument } from '../../../../utils/odata-service-url';
@@ -256,6 +258,9 @@ export function CatalogImportDialog({
   const [formatsOpen, setFormatsOpen] = useState(false);
   const [sourceMethod, setSourceMethod] = useState<SourceMethod>('file');
   const [state, setState] = useState<ImportState>('idle');
+  // The catalog item a finished single-source import produced (its id is the project id), so
+  // the done step can link to it instead of being a dead end (#7128). `null` until it lands.
+  const [storedItemId, setStoredItemId] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const [content, setContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
@@ -457,6 +462,7 @@ export function CatalogImportDialog({
     setAlternateIntake(null);
     setCompassRun(null);
     setState('idle');
+    setStoredItemId(null);
     setFileName('');
     setContent('');
     setUrlInput('');
@@ -808,6 +814,7 @@ export function CatalogImportDialog({
         const jobState: string | undefined = pollData?.state;
         if (jobState && terminal.has(jobState)) {
           if (jobState === 'completed') {
+            setStoredItemId(storedCatalogItemId(pollData));
             setState('done');
             onSuccess?.();
             return;
@@ -1570,6 +1577,16 @@ export function CatalogImportDialog({
                     Stored in the catalog in its original format. Use{' '}
                     <strong>Convert to OpenAPI</strong> when ready.
                   </p>
+                  {storedItemId ? (
+                    <Link
+                      href={catalogItemHrefForId(storedItemId)}
+                      className="cat-imp-link"
+                      onClick={handleClose}
+                      data-testid="catalog-import-open-item"
+                    >
+                      Open the catalog item
+                    </Link>
+                  ) : null}
                 </>
               ) : (
                 <>

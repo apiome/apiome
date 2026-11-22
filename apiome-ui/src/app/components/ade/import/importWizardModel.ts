@@ -192,6 +192,11 @@ export interface ImportFooterAction {
   label: string;
   /** Whether it is offered at all. */
   disabled: boolean;
+  /**
+   * Not drawn at all. Only the dismiss slot uses it: a finished step whose primary already
+   * closes the wizard would otherwise show two buttons that do the same thing (#7128).
+   */
+  hidden?: boolean;
 }
 
 /** The footer of one step: what sits left, and what sits right. */
@@ -863,13 +868,32 @@ export function catalogImportFooterFor(state: CatalogImportFooterState): ImportF
     };
   }
 
-  // `import`: the commit is running or has landed. There is nowhere back to.
+  // `import`: the commit is running or has landed. There is nowhere back to. Once it has
+  // landed, **Close** and **Done** would do the same thing, so only **Done** is drawn (#7128).
   return {
     back: null,
-    cancel,
+    cancel: done ? { ...cancel, hidden: true } : cancel,
     primary: done ? { label: 'Done', disabled: false } : null,
     keepAnyway: null,
   };
+}
+
+/**
+ * The catalog item a completed store-raw import job produced (#7128).
+ *
+ * The job's poll payload reports the produced ids under `result`; a catalog item's id is its
+ * project id. Anything malformed reads as "unknown", and the done step then simply omits its
+ * link rather than pointing somewhere wrong.
+ *
+ * @param pollData The parsed `GET /api/catalog/import/{jobId}` body (untrusted shape).
+ * @returns The new item's id, or `null` when the payload does not name one.
+ */
+export function storedCatalogItemId(pollData: unknown): string | null {
+  if (!pollData || typeof pollData !== 'object') return null;
+  const result = (pollData as { result?: unknown }).result;
+  if (!result || typeof result !== 'object') return null;
+  const id = (result as { project_id?: unknown }).project_id;
+  return typeof id === 'string' && id.trim() ? id : null;
 }
 
 /** What the Catalog importer needs to know to offer its **Dry run** (MFI-26.4, #4097). */

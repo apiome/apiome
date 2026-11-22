@@ -13,6 +13,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useOverflowEdges } from '@/app/components/ui/useOverflowEdges';
 import {
   ALL_CATALOG_KINDS,
   CATALOG_CALLOUTS,
@@ -42,10 +43,17 @@ export function CatalogKindsPanel({ summary, selected, onSelect }: CatalogKindsP
     ...summary.kinds.map((entry) => ({ kind: entry.kind, label: entry.pluralLabel, count: entry.count })),
   ];
   const callouts = CATALOG_CALLOUTS.filter((callout) => summary.callouts[callout.key] !== null);
+  // Below ~1200 px the tiles are one sideways-scrolling row (#7128); fade the edge that hides some.
+  const tilesOverflowRef = useOverflowEdges<HTMLDivElement>();
 
   return (
     <section className="cat-kinds" aria-label="Catalog kinds" data-testid="catalog-kinds">
-      <div className="cat-kinds__tiles" role="group" aria-label="Kind">
+      <div
+        ref={tilesOverflowRef}
+        className="cat-kinds__tiles overflow-fade"
+        role="group"
+        aria-label="Kind"
+      >
         {tiles.map((tile) => (
           <button
             key={tile.kind}
