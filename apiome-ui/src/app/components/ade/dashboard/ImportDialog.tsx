@@ -72,6 +72,8 @@ import {
   type ImportArrayChoice,
   type ImportMergeChoice,
   type ImportWizardStep,
+  projectsIntakeSourceFor,
+  type ProjectsImportHandoff,
 } from '../import';
 
 interface ImportDialogProps {
@@ -93,6 +95,14 @@ interface ImportDialogProps {
   /** Called once initialSource has been applied so the parent can clear it. */
   onConsumeInitialSource?: () => void;
   /**
+   * A source handed over from **Import to catalog** (COA-4.3b, #7127). When set, the dialog loads
+   * it into the matching intake (Clipboard, File or URL) and runs Analyze, so it opens on the
+   * analysis step without the user pasting or uploading it again.
+   */
+  initialHandoff?: ProjectsImportHandoff | null;
+  /** Called once initialHandoff has been applied so the parent can clear it. */
+  onConsumeInitialHandoff?: () => void;
+  /**
    * Which importer surface this dialog serves (MFI-23.12). `projects` offers the native
    * OpenAPI/Swagger intake; `catalog` offers the alternative (non-OpenAPI) formats; `all` (default)
    * shows every source card. Drives which source cards the grid lists.
@@ -112,6 +122,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   onReturnToNewProjectAI,
   initialSource,
   onConsumeInitialSource,
+  initialHandoff,
+  onConsumeInitialHandoff,
   variant = 'all',
 }) => {
   const [currentStep, setCurrentStep] = useState<ImportWizardStep>('source');
@@ -263,6 +275,44 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       })
       .finally(() => setIsAnalyzing(false));
   }, [open, initialLLMSpec, onConsumeInitialLLMSpec]);
+
+  // COA-4.3b (#7127): a source handed over from Import to catalog. It is loaded into the intake it
+  // came in through — so Back from Analyze shows that intake with the source still in hand — and
+  // analyzed straight away, the same way the AI Design Chat hand-off above is.
+  useEffect(() => {
+    if (!open || !initialHandoff) return;
+    onConsumeInitialHandoff?.();
+    const { text, filename, method, url } = initialHandoff;
+    const source = projectsIntakeSourceFor(method);
+    const metadata = extractFileMetadata(text);
+    setSelectedSource(source);
+    if (source === 'clipboard') {
+      setClipboardContent(text);
+      setClipboardFilename(filename);
+    } else if (source === 'url') {
+      setUrlContent(text);
+      setUrlFilename(filename);
+      setUrlMetadata(metadata);
+      // Recorded like a URL fetched here, so the imported version keeps its auto-refresh (RAR-6.1).
+      setUrlSource(url ? { url, authenticated: false, contentType: null } : null);
+    } else {
+      setSelectedFile(new File([text], filename));
+      setFileMetadata(metadata);
+    }
+    setCurrentStep('file-upload');
+    setErrorMessage(null);
+    setIsAnalyzing(true);
+    analyzeSpecification(text, filename)
+      .then((result) => {
+        analyzedSourceRef.current = { content: text, filename };
+        setAnalysisResult(result);
+        setCurrentStep('analysis');
+      })
+      .catch((err) => {
+        setErrorMessage(err instanceof Error ? err.message : 'Analysis failed');
+      })
+      .finally(() => setIsAnalyzing(false));
+  }, [open, initialHandoff, onConsumeInitialHandoff]);
 
   // When opened with a pre-selected source, jump straight to it.
   useEffect(() => {

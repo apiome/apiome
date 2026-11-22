@@ -830,6 +830,16 @@
       ]
     },
     {
+      "id": "catalog-import-routing-projects",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-import-routing-handoff\"]",
+      "data": "fixture:hive-import-wizard/catalog-routing-projects.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogImportDialog.tsx",
+        "apiome-ui/src/app/components/ade/import/importWizardModel.ts"
+      ]
+    },
+    {
       "id": "import-wizard-running",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",

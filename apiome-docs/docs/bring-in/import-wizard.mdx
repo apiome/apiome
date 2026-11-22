@@ -335,9 +335,9 @@ Options → Quality → Import**.
    can import it that way. No format has one yet: import a GraphQL schema or a `.proto` file
    through **File Upload**, **URL Import** or **Clipboard Paste**.
 2. **Detect & route** — Apiome names the format it detected (**Auto-detected: GraphQL**) and where
-   it goes. OpenAPI and Swagger are routed to Projects: this dialog does not import them, so
-   **click “Open Projects”** on the routing card and use **Import** there. Choose **Import as
-   format** if the detection is ambiguous.
+   it goes. Choose **Import as format** if the detection is ambiguous. OpenAPI and Swagger are
+   routed to **Projects**: see [An OpenAPI source in Import to
+   catalog](#an-openapi-source-in-import-to-catalog) below.
 3. **Options** — for JSON Schema, choose to keep it in the catalog for later conversion or to use it
    as types. **Skip the quality step for clean imports** saves a step. **Click “Dry run”** to see
    what **Import** would do without saving anything — see [Dry run a catalog
@@ -345,6 +345,28 @@ Options → Quality → Import**.
 4. **Quality** — a pre-flight lint. **“Import”** when it is clean, or **“Import anyway”**.
 5. **Import** — the item is stored in its original format. Use **Convert to OpenAPI** when you are
    ready.
+
+### An OpenAPI source in Import to catalog
+
+**Import to catalog** stores catalog items only, so it does not import OpenAPI or Swagger itself.
+When the source you pasted, uploaded or fetched from a URL is OpenAPI or Swagger, the **Routing
+decision → Projects** card says so and the footer button reads **“Continue in Projects”**:
+
+1. **Click “Continue in Projects”.** The catalog dialog closes and the [Projects
+   importer](#import-specification) opens on its **Analyze** step with the same source already
+   loaded — you do not paste or upload it again.
+2. **Click “Continue”** to **Preview**, choose the schemas, then **click “Import →”**. The import
+   creates the project, the same as an import started from the Projects page.
+
+**Back** from **Analyze** opens the intake the source came in through — **Clipboard**, **File
+Upload** or **URL Import** — with the source still in hand. A source fetched from a URL keeps its
+auto-refresh, as if you had fetched it in the Projects importer.
+
+A **Git Repository** selection or an archive has no single document to hand over. For those,
+**Continue** stays disabled and the routing card offers **“Open Projects”** instead; use
+**Import** there.
+
+<Screenshot id="catalog-import-routing-projects" alt="Import to catalog's Detect and route step for an OpenAPI file: Routing decision → Projects, the note that Continue in Projects opens the Projects importer with this source loaded, and the Continue in Projects button" />
 
 ### Keep a URL catalog item up to date
 

@@ -49,6 +49,8 @@ import {
   catalogImportDryRunFor,
   catalogImportFooterFor,
   catalogRoutingTone,
+  projectsHandoffFor,
+  type ProjectsImportHandoff,
 } from '../../import';
 import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils/openapi-analyzer';
 import { generateSlug } from '../../../../utils/slug';
@@ -96,6 +98,13 @@ interface CatalogImportDialogProps {
   onClose: () => void;
   onSuccess?: () => void;
   onJsonSchemaAsCurrent?: (payload: JsonSchemaHandoffPayload) => void;
+  /**
+   * Hand an OpenAPI or Swagger source to the Projects importer (COA-4.3b, #7127). When set, a
+   * pasted, uploaded or URL-fetched source routed to Projects gets **Continue in Projects** on the
+   * detect step instead of a disabled Continue; the dialog closes once the payload is handed over.
+   * Without it (or for an archive / repository selection) the routing card links to Projects.
+   */
+  onOpenApiToProjects?: (payload: ProjectsImportHandoff) => void;
 }
 
 export interface JsonSchemaHandoffPayload {
@@ -236,6 +245,7 @@ export function CatalogImportDialog({
   onClose,
   onSuccess,
   onJsonSchemaAsCurrent,
+  onOpenApiToProjects,
 }: CatalogImportDialogProps) {
   // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
   // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
@@ -380,6 +390,21 @@ export function CatalogImportDialog({
   const canStoreCatalog = routing.destination === 'catalog' && adapter !== null && !adapterUnavailable;
   const canContinueFromDetect =
     routing.destination === 'catalog' || routing.destination === 'json-schema-choice';
+  // The Projects hand-off (#7127): what the detect step's Continue in Projects would pass along, or
+  // null when this source cannot be handed off (no handler, an archive, a repository selection).
+  const projectsHandoff = useMemo<ProjectsImportHandoff | null>(
+    () =>
+      onOpenApiToProjects
+        ? projectsHandoffFor({
+            destination: routing.destination,
+            method: sourceMethod,
+            text: content,
+            label: fileName,
+            format: effectiveFormat,
+          })
+        : null,
+    [content, effectiveFormat, fileName, onOpenApiToProjects, routing.destination, sourceMethod],
+  );
   // Whether the options step has anything for the user to decide. Only the JSON Schema fork does
   // (Catalog vs Types/Projects); catalog imports are stored verbatim with no knobs, so the step
   // renders the "no options" card instead of an empty panel.
@@ -939,6 +964,7 @@ export function CatalogImportDialog({
     adapterUnavailable,
     destination: routing.destination,
     canStoreCatalog,
+    handsOffToProjects: projectsHandoff !== null,
   });
 
   // The Options step's Dry run button. The JSON Schema → Catalog choice commits through the
@@ -957,11 +983,19 @@ export function CatalogImportDialog({
     setStep((current) => (current === 'options' ? 'detect' : 'source'));
   }, []);
 
+  /** Hand the source to the Projects importer and close this dialog (#7127). */
+  const handleHandOffToProjects = useCallback(() => {
+    if (!projectsHandoff) return;
+    onOpenApiToProjects?.(projectsHandoff);
+    handleClose();
+  }, [handleClose, onOpenApiToProjects, projectsHandoff]);
+
   const handlePrimary = useCallback(() => {
-    if (step === 'detect') setStep('options');
+    if (step === 'detect' && routing.destination === 'project') handleHandOffToProjects();
+    else if (step === 'detect') setStep('options');
     else if (step === 'options') handleContinueFromOptions();
     else if (step === 'import') handleClose();
-  }, [handleClose, handleContinueFromOptions, step]);
+  }, [handleClose, handleContinueFromOptions, handleHandOffToProjects, routing.destination, step]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? handleClose() : undefined)}>
@@ -1193,7 +1227,7 @@ export function CatalogImportDialog({
                   <dt>Catalog only</dt>
                   <dd>{supportedLabel} stay non-publishable until explicit Convert.</dd>
                   <dt>Projects</dt>
-                  <dd>OpenAPI and Swagger create publishable Project versions.</dd>
+                  <dd>OpenAPI and Swagger continue in the Projects importer and create publishable Project versions.</dd>
                   <dt>JSON Schema asks first</dt>
                   <dd>Choose Catalog for later conversion or Types/Projects as current schema.</dd>
                 </dl>
@@ -1346,10 +1380,18 @@ export function CatalogImportDialog({
                 <div>
                   <div className="cat-imp-routing__title">Routing decision → {routing.label}</div>
                   <div className="cat-imp-routing__body">{routing.description}</div>
-                  {routing.destination === 'project' && (
-                    // This dialog stores catalog items only; an OpenAPI source has to go through the
-                    // Projects importer, and Continue stays disabled here. Say so and link there
-                    // rather than leave a dead end (#7060).
+                  {routing.destination === 'project' && projectsHandoff && (
+                    // This dialog stores catalog items only, so an OpenAPI source carries on in the
+                    // Projects importer with the source already loaded (#7127).
+                    <div className="cat-imp-routing__note" data-testid="catalog-import-routing-handoff">
+                      <strong>Continue in Projects</strong> opens the Projects importer with this
+                      source loaded, at its Analyze step.
+                    </div>
+                  )}
+                  {routing.destination === 'project' && !projectsHandoff && (
+                    // No single document to hand over (an archive or a repository selection), so
+                    // Continue stays disabled. Say so and link there rather than leave a dead end
+                    // (#7060).
                     <div className="cat-imp-routing__note" data-testid="catalog-import-routing-projects">
                       This dialog does not import it. Use <strong>Import</strong> on the Projects page.{' '}
                       <Link href={PROJECTS_ROUTE} className="cat-imp-link" onClick={handleClose}>

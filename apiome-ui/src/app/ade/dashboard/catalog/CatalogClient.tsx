@@ -89,6 +89,8 @@ import {
 import PrimitiveImportDialog, {
   type PrimitiveImportInitialSource,
 } from '../primitives/PrimitiveImportDialog';
+import ImportDialog from '@/app/components/ade/dashboard/ImportDialog';
+import type { ProjectsImportHandoff } from '@/app/components/ade/import';
 import {
   CATALOG_FACETS,
   CATALOG_FACET_LABELS,
@@ -541,6 +543,11 @@ export default function CatalogClient() {
   const [driftAlertsOpen, setDriftAlertsOpen] = React.useState(false);
   const [primitiveSource, setPrimitiveSource] =
     React.useState<PrimitiveImportInitialSource | null>(null);
+  // COA-4.3b (#7127): an OpenAPI source Import to catalog routed to Projects carries on in the
+  // Projects importer, opened here with the source loaded. `projectsHandoff` is the payload until
+  // the importer consumes it; `projectsImportOpen` keeps the importer open after that.
+  const [projectsHandoff, setProjectsHandoff] = React.useState<ProjectsImportHandoff | null>(null);
+  const [projectsImportOpen, setProjectsImportOpen] = React.useState(false);
 
   const openImport = React.useCallback(() => setImportOpen(true), []);
   // E1-6: an export of an item with no captured source offers Re-import, which lands here with
@@ -1523,6 +1530,26 @@ export default function CatalogClient() {
               label: payload.label,
             });
           }}
+          onOpenApiToProjects={(payload: ProjectsImportHandoff) => {
+            setProjectsHandoff(payload);
+            setProjectsImportOpen(true);
+          }}
+        />
+      ) : null}
+
+      {currentTenantId && currentUserId ? (
+        <ImportDialog
+          open={projectsImportOpen}
+          onClose={() => {
+            setProjectsImportOpen(false);
+            setProjectsHandoff(null);
+          }}
+          onSuccess={() => toast.success('Imported into Projects.')}
+          tenantId={currentTenantId}
+          userId={currentUserId}
+          variant="projects"
+          initialHandoff={projectsHandoff}
+          onConsumeInitialHandoff={() => setProjectsHandoff(null)}
         />
       ) : null}
 

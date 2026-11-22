@@ -18,3 +18,4 @@ export * from './McpImportDonePanel';
 export * from './RecentImportJobsDrawer';
 export { RecentImportsList, RECENT_IMPORTS_SHOWN } from './RecentImportsList';
 export * from './ImportChangesPanel';
+export * from './projectsImportHandoff';
