@@ -81,6 +81,24 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         ),
     )
     parser.addoption(
+        "--large-spec",
+        action="store_true",
+        default=False,
+        help=(
+            "Run the COA-5.11 large-spec benchmark suite (tests/test_large_spec_benchmark.py), "
+            "skipped by default. RUN_LARGE_SPEC_SUITE=1 does the same."
+        ),
+    )
+    parser.addoption(
+        "--update-large-spec-budgets",
+        action="store_true",
+        default=False,
+        help=(
+            "Rewrite the committed large-spec budgets (tests/scale/large_spec_budgets.json) "
+            "from this run instead of asserting against them."
+        ),
+    )
+    parser.addoption(
         "--update-scale-budgets",
         action="store_true",
         default=False,
@@ -93,6 +111,8 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 #: Test module holding the opt-in IXH-1.5 scale benchmark suite (#5091).
 _SCALE_SUITE_MODULE = "test_scale_corpus.py"
+#: Test module holding the opt-in COA-5.11 large-spec benchmark suite (#7087).
+_LARGE_SPEC_SUITE_MODULE = "test_large_spec_benchmark.py"
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list) -> None:
@@ -110,14 +130,30 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list) -> None:
     """
     from scale_corpus_spec import scale_suite_enabled
 
-    if scale_suite_enabled(config):
-        return
-    skip = pytest.mark.skip(
-        reason="scale suite is opt-in: run with --scale or RUN_SCALE_SUITE=1"
+    optional = (
+        (_SCALE_SUITE_MODULE, scale_suite_enabled(config), "scale suite is opt-in: run with --scale or RUN_SCALE_SUITE=1"),
+        (
+            _LARGE_SPEC_SUITE_MODULE,
+            _large_spec_enabled(config),
+            "large-spec suite is opt-in: run with --large-spec or RUN_LARGE_SPEC_SUITE=1",
+        ),
     )
-    for item in items:
-        if item.nodeid.split("::", 1)[0].endswith(_SCALE_SUITE_MODULE):
-            item.add_marker(skip)
+    for module, enabled, reason in optional:
+        if enabled:
+            continue
+        skip = pytest.mark.skip(reason=reason)
+        for item in items:
+            if item.nodeid.split("::", 1)[0].endswith(module):
+                item.add_marker(skip)
+
+
+def _large_spec_enabled(config: pytest.Config) -> bool:
+    """Whether the COA-5.11 large-spec suite is enabled (env var or ``--large-spec``).
+
+    Decided here rather than through ``large_spec_benchmark`` for the same reason as the scale
+    suite: that module imports the service, and this runs on every pytest invocation.
+    """
+    return os.environ.get("RUN_LARGE_SPEC_SUITE") == "1" or bool(config.getoption("--large-spec", default=False))
 
 
 @pytest.fixture(autouse=True)

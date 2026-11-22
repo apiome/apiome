@@ -733,7 +733,12 @@ def compare(
     return regressions, problems
 
 
-def ceiling_breaches(measurements: List[FixtureMeasurement]) -> List[Breach]:
+def ceiling_breaches(
+    measurements: List[FixtureMeasurement],
+    *,
+    max_seconds: float = ABSOLUTE_STAGE_SECONDS,
+    max_peak_bytes: int = ABSOLUTE_STAGE_PEAK_BYTES,
+) -> List[Breach]:
     """Return stage metrics over the absolute ceilings.
 
     Independent of any baseline, so a fresh checkout with no usable budgets still
@@ -741,6 +746,10 @@ def ceiling_breaches(measurements: List[FixtureMeasurement]) -> List[Breach]:
 
     Args:
         measurements: One entry per fixture.
+        max_seconds: Wall-clock ceiling per stage (the scale suite's by default; the
+            large-spec suite, COA-5.11, passes its own — a 50 MB document is not a
+            scale-corpus fixture).
+        max_peak_bytes: Peak-allocation ceiling per stage.
 
     Returns:
         The breaches, in fixture then stage order.
@@ -748,23 +757,23 @@ def ceiling_breaches(measurements: List[FixtureMeasurement]) -> List[Breach]:
     breaches: List[Breach] = []
     for measurement in measurements:
         for name, stage in measurement.stages.items():
-            if stage.wall_ms > ABSOLUTE_STAGE_SECONDS * 1000.0:
+            if stage.wall_ms > max_seconds * 1000.0:
                 breaches.append(
                     Breach(
                         fixture=measurement.name,
                         stage=name,
                         metric="wall_ms",
-                        limit=ABSOLUTE_STAGE_SECONDS * 1000.0,
+                        limit=max_seconds * 1000.0,
                         measured=round(stage.wall_ms, 1),
                     )
                 )
-            if stage.peak_bytes > ABSOLUTE_STAGE_PEAK_BYTES:
+            if stage.peak_bytes > max_peak_bytes:
                 breaches.append(
                     Breach(
                         fixture=measurement.name,
                         stage=name,
                         metric="peak_bytes",
-                        limit=float(ABSOLUTE_STAGE_PEAK_BYTES),
+                        limit=float(max_peak_bytes),
                         measured=float(stage.peak_bytes),
                     )
                 )
