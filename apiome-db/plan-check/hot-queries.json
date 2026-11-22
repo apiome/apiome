@@ -1,0 +1,164 @@
+{
+  "$comment": "Hot queries for apiome-db plan-check (DBP-1.1, #7184). Parameters 'scale:<kind>:<n>' resolve to seeded ids. A query the audit found slow carries 'known' with the ticket that fixes it: its violations are reported, not failed. Remove 'known' in the fixing PR.",
+  "rowThreshold": 10000,
+  "defaultBudgetMs": 50,
+  "queries": [
+    {
+      "name": "rest.tenant_auth_row",
+      "source": "apiome-rest/src/app/database.py Database.get_active_tenant_auth_row (every authenticated request)",
+      "sql": "SELECT id::text AS tenant_id, slug AS tenant_slug, name AS tenant_name FROM apiome.tenants WHERE slug = $1 AND deleted_at IS NULL LIMIT 1",
+      "params": [
+        "scale-large"
+      ]
+    },
+    {
+      "name": "rest.user_has_tenant_access.1",
+      "source": "apiome-rest/src/app/database.py Database.user_has_tenant_access (every authenticated request)",
+      "sql": "SELECT 1 FROM apiome.tenant_users WHERE user_id = $1::uuid AND tenant_id = $2::uuid AND status <> 'suspended' LIMIT 1",
+      "params": [
+        "scale:user:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.user_has_tenant_access.2",
+      "source": "apiome-rest/src/app/database.py Database.user_has_tenant_access (every authenticated request)",
+      "sql": "SELECT 1 FROM apiome.tenant_administrators WHERE user_id = $1::uuid AND tenant_id = $2::uuid LIMIT 1",
+      "params": [
+        "scale:user:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.projects_for_tenant",
+      "source": "apiome-rest/src/app/database.py Database.get_projects_for_tenant (GET /v1/projects/{tenant})",
+      "sql": "SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug, p.enabled, p.metadata, p.change_report_template_version_id, p.publishable, p.created_at, p.updated_at, p.deleted_at, u.name as creator_name, u.email as creator_email, COALESCE(qs.versions_count, 0) AS versions_count, qs.quality_score, CASE WHEN qs.quality_score IS NULL THEN NULL WHEN qs.quality_score >= 90 THEN 'A' WHEN qs.quality_score >= 80 THEN 'B' WHEN qs.quality_score >= 70 THEN 'C' WHEN qs.quality_score >= 60 THEN 'D' ELSE 'F' END AS quality_grade , own.entity_owner FROM apiome.projects p LEFT JOIN apiome.users u ON p.creator_id = u.id LEFT JOIN LATERAL ( SELECT COUNT(*)::int AS versions_count, ROUND(AVG(v.quality_score))::int AS quality_score FROM apiome.versions v WHERE v.project_id = p.id AND v.deleted_at IS NULL ) qs ON TRUE LEFT JOIN LATERAL ( SELECT jsonb_build_object( 'team', jsonb_build_object('id', ot.id::text, 'slug', ot.slug, 'name', ot.name), 'status', eo.status, 'source', eo.source ) AS entity_owner FROM apiome.entity_owners eo JOIN apiome.teams ot ON ot.id = eo.team_id AND ot.deleted_at IS NULL WHERE eo.tenant_id = p.tenant_id AND eo.entity_id = p.id AND eo.entity_kind IN ('project', 'catalog_item') ORDER BY (eo.status = 'confirmed') DESC, eo.created_at, eo.id LIMIT 1 ) own ON TRUE WHERE p.tenant_id = $1 AND p.deleted_at IS NULL ORDER BY p.created_at DESC",
+      "params": [
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.project_by_id",
+      "source": "apiome-rest/src/app/database.py Database.get_project_by_id (GET /v1/projects/{tenant}/{project})",
+      "sql": "SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug, p.enabled, p.metadata, p.change_report_template_version_id, p.publishable, p.created_at, p.updated_at, p.deleted_at, u.name as creator_name, u.email as creator_email, COALESCE(qs.versions_count, 0) AS versions_count, qs.quality_score, CASE WHEN qs.quality_score IS NULL THEN NULL WHEN qs.quality_score >= 90 THEN 'A' WHEN qs.quality_score >= 80 THEN 'B' WHEN qs.quality_score >= 70 THEN 'C' WHEN qs.quality_score >= 60 THEN 'D' ELSE 'F' END AS quality_grade FROM apiome.projects p LEFT JOIN apiome.users u ON p.creator_id = u.id LEFT JOIN LATERAL ( SELECT COUNT(*)::int AS versions_count, ROUND(AVG(v.quality_score))::int AS quality_score FROM apiome.versions v WHERE v.project_id = p.id AND v.deleted_at IS NULL ) qs ON TRUE WHERE p.id = $1 AND p.tenant_id = $2 AND p.deleted_at IS NULL",
+      "params": [
+        "scale:project:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.versions_for_project",
+      "source": "apiome-rest/src/app/database.py Database.get_versions_for_project (GET /v1/versions/{tenant}/{project})",
+      "sql": "SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description, v.change_log, v.visibility, v.published, v.published_at, v.published_immutable, v.mock_enabled, v.mock_settings, v.enabled, v.parent_version_id, v.merge_parent_version_id, v.forked_from_revision_id, v.upstream_project_id, v.revision_locked, v.metadata, v.commit_author, v.commit_message, v.external_ref, v.source_commit_sha, v.source_committed_at, v.quality_score, v.quality_grade, sec.security_score, sec.security_grade, v.unpublish_reason, v.unpublished_at, v.unpublished_by, vf.version_id AS fork_source_version_string, pf.name AS fork_source_project_name, up.name AS upstream_project_name, v.created_at, v.updated_at, u.name as creator_name, u.email as creator_email, p.name as project_name, p.slug as project_slug FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id LEFT JOIN apiome.versions vf ON vf.id = v.forked_from_revision_id AND vf.deleted_at IS NULL LEFT JOIN apiome.projects pf ON pf.id = vf.project_id AND pf.deleted_at IS NULL LEFT JOIN apiome.projects up ON up.id = v.upstream_project_id AND up.deleted_at IS NULL LEFT JOIN apiome.users u ON v.creator_id = u.id LEFT JOIN LATERAL ( SELECT e.axes FROM apiome.lint_axis_evaluations e WHERE e.version_record_id = v.id AND e.algorithm_id = 'clx-axis-v1' ORDER BY e.evaluated_at DESC, e.id DESC LIMIT 1 ) ax ON TRUE LEFT JOIN LATERAL ( SELECT (sa.axis->>'score')::int AS security_score, sa.axis->>'grade' AS security_grade FROM jsonb_array_elements(ax.axes) AS sa(axis) WHERE sa.axis->>'key' = 'security' AND (sa.axis->>'assessed')::boolean AND sa.axis->>'score' IS NOT NULL LIMIT 1 ) sec ON TRUE WHERE v.project_id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ORDER BY v.created_at DESC",
+      "params": [
+        "scale:project:0",
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "rest.classes_for_version",
+      "source": "apiome-rest/src/app/database.py Database.get_classes_for_version (document render); reads the 20,000-class version",
+      "sql": "SELECT id, version_id, name, description, schema, enabled FROM apiome.classes WHERE version_id = $1 AND deleted_at IS NULL ORDER BY name ASC",
+      "params": [
+        "scale:version:0"
+      ],
+      "budgetMs": 100
+    },
+    {
+      "name": "rest.class_by_name",
+      "source": "apiome-rest/src/app/database.py Database.get_class_by_name",
+      "sql": "SELECT id, version_id, name, description, schema, enabled FROM apiome.classes WHERE version_id = $1 AND name = $2 AND deleted_at IS NULL",
+      "params": [
+        "scale:version:0",
+        "Class100"
+      ]
+    },
+    {
+      "name": "rest.properties_for_class",
+      "source": "apiome-rest/src/app/database.py Database.get_properties_for_class (document render, per class)",
+      "sql": "SELECT cp.id, cp.class_id, cp.property_id, cp.name, cp.description, cp.data, cp.parent_id, cp.primitive_id, cp.primitive_ref, p.id as property_source_id, p.name as property_source_name, p.data as property_source_data FROM apiome.class_properties cp LEFT JOIN apiome.properties p ON cp.property_id = p.id WHERE cp.class_id = $1 ORDER BY cp.parent_id NULLS FIRST, cp.name ASC",
+      "params": [
+        "scale:class:0"
+      ]
+    },
+    {
+      "name": "rest.paths_for_version",
+      "source": "apiome-rest/src/app/database.py Database.get_paths_for_version (document render)",
+      "sql": "SELECT id, pathname, metadata->>'summary' as summary, metadata->>'description' as description FROM apiome.version_path WHERE version_id = $1 ORDER BY pathname",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "rest.operations_for_path",
+      "source": "apiome-rest/src/app/database.py Database.get_operations_for_path (document render, per path)",
+      "sql": "SELECT id, version_path_id, operation, metadata, created_at, updated_at FROM apiome.path_operation WHERE version_path_id = $1 ORDER BY CASE operation WHEN 'GET' THEN 1 WHEN 'POST' THEN 2 WHEN 'PUT' THEN 3 WHEN 'PATCH' THEN 4 WHEN 'DELETE' THEN 5 ELSE 6 END",
+      "params": [
+        "scale:path:1"
+      ]
+    },
+    {
+      "name": "rest.revision_closure",
+      "source": "apiome-rest/src/app/database.py Database.fetch_revision_closure (merge preview, revision graph)",
+      "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id::text = ANY($1) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN closure c ON v.id = c.parent_version_id OR v.id = c.merge_parent_version_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) SELECT id::text AS id, parent_version_id::text AS parent_version_id, merge_parent_version_id::text AS merge_parent_version_id, created_at, version_id FROM closure",
+      "params": [
+        "scale-ids:version:9-9",
+        "scale:tenant:0",
+        "scale:tenant:0"
+      ],
+      "known": {
+        "issue": "#7193",
+        "reason": "v.id::text = ANY(...) cannot use the versions primary key (DBP-1.10; graph walk in DBP-1.14, #7197)"
+      }
+    },
+    {
+      "name": "ui.dashboard_stats",
+      "source": "apiome-ui/lib/db/helper.ts getDashboardStats (Home)",
+      "sql": "SELECT (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_users WHERE user_id = $1) as total_tenants, (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_administrators WHERE user_id = $1) as admin_tenants, (SELECT COUNT(DISTINCT p.id) FROM apiome.projects p WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL) as total_projects, (SELECT COUNT(*) FROM apiome.projects WHERE creator_id = $1 AND deleted_at IS NULL) as created_projects, (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND v.deleted_at IS NULL) as total_versions, (SELECT COUNT(*) FROM apiome.versions WHERE creator_id = $1 AND deleted_at IS NULL) as created_versions, (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND v.published = true AND v.deleted_at IS NULL) as published_versions, (SELECT COUNT(DISTINCT c.id) FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_classes, (SELECT COUNT(DISTINCT pr.id) FROM apiome.properties pr JOIN apiome.projects p ON pr.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND pr.deleted_at IS NULL) as total_properties, (SELECT COUNT(DISTINCT cp.id) FROM apiome.class_properties cp JOIN apiome.classes c ON cp.class_id = c.id JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_class_properties, (SELECT MAX(created_at) FROM (SELECT created_at FROM apiome.projects WHERE creator_id = $1 UNION ALL SELECT created_at FROM apiome.versions WHERE creator_id = $1 UNION ALL SELECT c.created_at FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id WHERE v.creator_id = $1 AND c.deleted_at IS NULL) activities) as last_activity",
+      "params": [
+        "scale:user:0"
+      ],
+      "known": {
+        "issue": "#7198",
+        "reason": "eleven counting subqueries over the whole tenant on every Home render (DBP-1.15)"
+      }
+    },
+    {
+      "name": "ui.import_class_lookup",
+      "source": "apiome-ui/lib/db/import-openapi-paths-security.ts (import paths and security)",
+      "sql": "SELECT id, name FROM apiome.classes WHERE version_id = $1",
+      "params": [
+        "scale:version:0"
+      ],
+      "known": {
+        "issue": "#7193",
+        "reason": "no deleted_at IS NULL, so the partial (version_id, name) index does not apply (DBP-1.10)"
+      }
+    },
+    {
+      "name": "mcp.capability_items_for_version",
+      "source": "apiome-rest MCP catalog capability listing (mcp_capability_items by version)",
+      "sql": "SELECT id, item_type, name, raw FROM apiome.mcp_capability_items WHERE version_id = $1 ORDER BY ordinal",
+      "params": [
+        "scale:mcp_version:0"
+      ]
+    },
+    {
+      "name": "usage.project_daily_30d",
+      "source": "apiome-rest usage index reads (usage_daily by project and day range)",
+      "sql": "SELECT day, sum(calls) AS calls FROM apiome.usage_daily WHERE tenant_id = $1 AND project_id = $2 AND day >= date '2026-06-01' AND day < date '2026-07-01' GROUP BY day ORDER BY day",
+      "params": [
+        "scale:tenant:0",
+        "scale:project:0"
+      ]
+    },
+    {
+      "name": "audit.workflow_recent",
+      "source": "apiome-rest workflow audit listing (newest 50 for a tenant)",
+      "sql": "SELECT id, action, outcome, created_at FROM apiome.workflow_audit WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 50",
+      "params": [
+        "scale:tenant:0"
+      ]
+    }
+  ]
+}

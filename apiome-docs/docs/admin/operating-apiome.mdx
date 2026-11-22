@@ -332,6 +332,105 @@ the indexes yourself before you deploy:
 If a concurrent build fails it leaves an invalid index behind: drop it and run the statement again
 before you deploy.
 
+## Find slow queries
+
+Three tools show where database time goes: a statement counter in the apps, PostgreSQL's
+`pg_stat_statements`, and `auto_explain`.
+
+### Statements per request
+
+The REST API counts the SQL statements each request runs, and the time they take. Every
+`http_request` line of its access log carries two fields:
+
+| Field | What it is |
+| --- | --- |
+| `db_statements` | Statements the request sent to PostgreSQL. |
+| `db_time_ms` | Their total time, in milliseconds. |
+
+The count covers the statements the code sends. The `BEGIN` and `COMMIT` that the database driver
+adds around them are not counted.
+
+| Setting | Service | Default | What it does |
+| --- | --- | --- | --- |
+| `APIOME_DB_STATEMENT_WARN_THRESHOLD` | REST API | `0` (off) | Logs a request that runs more statements than this at `WARNING`. |
+| `APIOME_DB_STATEMENT_SERVER_TIMING` | REST API | `false` | Also sends the count and time to the caller as a `Server-Timing: db;dur=…;desc="N statements"` response header. Leave it off on a public deployment: it describes the server's internals. |
+| `DB_STATEMENT_WARN_THRESHOLD` | Web app | `0` (off) | Logs a workspace server action that runs more statements than this. |
+
+To find the heaviest endpoints, filter the access log for high `db_statements`. A request that runs
+hundreds of statements is usually a loop that issues one query per row.
+
+### Turn on pg_stat_statements and auto_explain
+
+`pg_stat_statements` keeps running totals for every distinct statement. `auto_explain` writes the
+plan of every statement slower than a threshold to the PostgreSQL log. Both must be loaded when
+PostgreSQL starts.
+
+**Self-hosted (Docker Compose).** The `postgres` service loads both. Set the `auto_explain` threshold
+in `.env`:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `POSTGRES_AUTO_EXPLAIN_MIN_DURATION` | `1s` | Logs the plan of any statement slower than this. `-1` turns it off. |
+
+Then create the extension once, so you can read the statistics:
+
+```bash
+docker compose exec postgres psql -U postgres -d apiome \
+  -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements'
+```
+
+Recreate the `postgres` container (`docker compose up -d postgres`) after you change the threshold.
+
+**Your own or a managed PostgreSQL.** Set these server parameters, through a parameter group or
+flags if your provider manages the server, and restart:
+
+```text
+shared_preload_libraries = 'pg_stat_statements,auto_explain'
+pg_stat_statements.track = top
+auto_explain.log_min_duration = 1s
+```
+
+Then run `CREATE EXTENSION IF NOT EXISTS pg_stat_statements;` as a role that may create
+extensions. Many managed services load `pg_stat_statements` already. Leave
+`auto_explain.log_analyze` off in production: it times every plan node of every statement, not only
+the slow ones.
+
+To see the statements that cost the most in total:
+
+```sql
+SELECT calls,
+       round(mean_exec_time::numeric, 2)  AS mean_ms,
+       round(total_exec_time::numeric, 1) AS total_ms,
+       left(regexp_replace(query, '\s+', ' ', 'g'), 120) AS query
+  FROM pg_stat_statements
+ ORDER BY total_exec_time DESC
+ LIMIT 20;
+```
+
+`SELECT pg_stat_statements_reset();` starts the totals again, for example before you measure a
+change.
+
+### Benchmark against a large database
+
+Plans that are fine on a small database can be slow on a large one. `apiome-db` builds a large
+benchmark database and checks the hot queries' plans against it. Use a scratch database, never a
+live one:
+
+1. **Create and migrate** an empty database: `apiome-db migrate --database-url <scratch-url>`.
+2. **Build the scale profile**: `apiome-db seed --profile scale --database-url <scratch-url>`. It
+   writes 20,000 projects, 200,000 versions, 1,000,000 classes and 3,100,000 class properties,
+   with one tenant of 5,000 projects and one version of 20,000 classes. Expect a few minutes.
+   `--scale-factor 0.1` builds a tenth. The rows are the same on every run, and a second run skips
+   the steps that are complete.
+3. **Check the plans**: `apiome-db plan-check --database-url <scratch-url>`. It runs every query in
+   `apiome-db/plan-check/hot-queries.json` with `EXPLAIN (ANALYZE, BUFFERS)` and prints each query's
+   time and plan. It fails when a plan scans a table of more than 10,000 rows sequentially, or when
+   a query runs over its time budget. A query already known to be slow is listed with the ticket
+   that fixes it and does not fail the check.
+
+The same database runs every night in CI (`Apiome DB Scale Plan Check`). The job also holds the
+REST API's hot endpoints to their recorded statement counts.
+
 ## Repair items with no captured source
 
 Exports, conversions and the schema test bench are built from the source file each catalog revision

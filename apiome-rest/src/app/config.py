@@ -2606,6 +2606,21 @@ class Settings(BaseSettings):
         default="X-Request-ID",
         validation_alias=AliasChoices("APIOME_REQUEST_ID_HEADER", "request_id_header"),
     )
+    # Statement counter (DBP-1.1, #7184). Every access-log line carries ``db_statements`` and
+    # ``db_time_ms`` for the request.
+    #
+    # db_statement_server_timing  also send them to the client as a ``Server-Timing: db`` response
+    #               header (off by default: query counts and times describe the server's internals).
+    # db_statement_warn_threshold log the access line at WARNING when a request runs more than
+    #               this many statements (``0`` or less = never).
+    db_statement_server_timing: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("APIOME_DB_STATEMENT_SERVER_TIMING", "db_statement_server_timing"),
+    )
+    db_statement_warn_threshold: int = Field(
+        default=0,
+        validation_alias=AliasChoices("APIOME_DB_STATEMENT_WARN_THRESHOLD", "db_statement_warn_threshold"),
+    )
 
     # Backup status surfacing (RC1-3.2 reads RC1-1.3 manifests, #3617/#3613). The ops dashboard
     # scans this directory for ``*.manifest.json`` sidecars to report the latest backup per scope.

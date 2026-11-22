@@ -57,6 +57,7 @@ from .provider_checks import (
     STATE_PENDING as CHECK_STATE_PENDING,
 )
 from .push_webhook_crypto import encrypt_signing_secret
+from .statement_stats import CountingDictCursor
 from .spec_sync import (
     AUDIT_CONFLICT_RESOLVED as AUDIT_SYNC_CONFLICT_RESOLVED,
     AUDIT_PLANNED as AUDIT_SYNC_PLANNED,
@@ -591,7 +592,8 @@ class Database:
             try:
                 conn = psycopg2.connect(
                     settings.effective_database_url,
-                    cursor_factory=RealDictCursor,
+                    # Counts each statement for the request's statement budget (DBP-1.1, #7184).
+                    cursor_factory=CountingDictCursor,
                     **_connection_options(settings.effective_database_url),
                 )
             except psycopg2.OperationalError as e:

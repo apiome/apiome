@@ -16,6 +16,7 @@ import { runInteractiveRepl } from "./lib/interactive/repl.js";
 import * as apikeys from "./commands/apikeys.js";
 import * as backup from "./commands/backup.js";
 import * as migrate from "./commands/migrate.js";
+import * as planCheck from "./commands/plan-check.js";
 import * as tenants from "./commands/tenants.js";
 import * as users from "./commands/users.js";
 import { type ConnectionOptions, describeConnection, withClient } from "./db.js";
@@ -177,16 +178,49 @@ program
 
 program
   .command("seed")
-  .description("Load dev seed data (sample user/tenant/license/API key) — development only")
+  .description("Load dev seed data (sample user/tenant/license/API key), or the scale benchmark database")
+  .option("--profile <name>", "dev (sample fixtures) or scale (large benchmark database)", "dev")
+  .option("--scale-factor <n>", "scale profile: multiply every row count (1 = 20k projects, 1M classes)")
   .option("--dir <path>", "Seed directory of *.sql files (default: package seed/dev/)")
-  .option("--dry-run", "List seed files without applying them", false)
+  .option("--dry-run", "List seed files (or scale steps) without applying them", false)
   .option("--force", "Allow seeding even when NODE_ENV=production", false)
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;
     await withClient(connectionOf(g), (client) =>
       migrate.runSeed(
         client,
-        { seedDir: opts.dir, dryRun: Boolean(opts.dryRun), force: Boolean(opts.force) },
+        {
+          seedDir: opts.dir,
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          profile: opts.profile,
+          scaleFactor: opts.scaleFactor === undefined ? undefined : Number(opts.scaleFactor),
+        },
+        modeOf(g),
+      ),
+    );
+  });
+
+program
+  .command("plan-check")
+  .description("EXPLAIN ANALYZE the hot queries on the scale database; fail on large seq scans or slow plans")
+  .option("--queries <file>", "Query list JSON (default: package plan-check/hot-queries.json)")
+  .option("--row-threshold <n>", "Fail a sequential scan of a table above this many estimated rows")
+  .option("--runs <n>", "Executions per query; the fastest counts", "2")
+  .option("--only <names>", "Comma-separated query names to run")
+  .option("--markdown <file>", "Append the Markdown report to this file (e.g. $GITHUB_STEP_SUMMARY)")
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      planCheck.runPlanCheckCommand(
+        client,
+        {
+          queries: opts.queries,
+          rowThreshold: opts.rowThreshold === undefined ? undefined : Number(opts.rowThreshold),
+          runs: Number(opts.runs),
+          only: opts.only ? String(opts.only).split(",").map((s: string) => s.trim()).filter(Boolean) : undefined,
+          markdown: opts.markdown,
+        },
         modeOf(g),
       ),
     );

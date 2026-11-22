@@ -35,6 +35,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
+from . import statement_stats
 from .config import settings
 from .logging_config import bind_contextvars, clear_contextvars, get_logger
 
@@ -214,16 +215,22 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         )
 
         metrics.request_started()
+        # Count this request's SQL statements (DBP-1.1, #7184). The stats object is shared with the
+        # handler's worker thread through the copied context, so its statements land here too.
+        db_stats, db_token = statement_stats.begin_request()
         start = time.monotonic()
         status_code = 500  # Assume failure until proven otherwise (covers unhandled exceptions).
         try:
             response = await call_next(request)
             status_code = response.status_code
             response.headers[header_name] = request_id
+            if settings.db_statement_server_timing:
+                response.headers.append("Server-Timing", server_timing_value(db_stats))
             return response
         finally:
             latency_ms = (time.monotonic() - start) * 1000.0
             metrics.request_finished(status_code=status_code, latency_ms=latency_ms)
+            statement_stats.end_request(db_token)
             # One structured access line per request. At INFO so it is on by default; demote noisy
             # liveness probes to DEBUG so health-check polling does not flood the log.
             event = "http_request"
@@ -231,16 +238,37 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
                 status_code=status_code,
                 duration_ms=round(latency_ms, 3),
                 client=request.client.host if request.client else None,
+                db_statements=db_stats.count,
+                db_time_ms=round(db_stats.total_ms, 3),
             )
             if request.url.path in _LOW_NOISE_PATHS:
                 log.debug(event)
             elif status_code >= 500:
                 log.error(event)
-            elif status_code >= 400:
+            elif status_code >= 400 or _over_statement_threshold(db_stats.count):
                 log.warning(event)
             else:
                 log.info(event)
             clear_contextvars()
+
+
+def server_timing_value(stats: statement_stats.StatementStats) -> str:
+    """The ``Server-Timing`` entry for a request's database work (DBP-1.1, #7184).
+
+    Args:
+        stats: The request's statement counter.
+
+    Returns:
+        For example ``db;dur=12.345;desc="7 statements"``.
+    """
+    noun = "statement" if stats.count == 1 else "statements"
+    return f'db;dur={stats.total_ms:.3f};desc="{stats.count} {noun}"'
+
+
+def _over_statement_threshold(count: int) -> bool:
+    """Whether a request's statement count is above ``db_statement_warn_threshold`` (``0`` = off)."""
+    threshold = int(settings.db_statement_warn_threshold or 0)
+    return threshold > 0 and count > threshold
 
 
 # Liveness/readiness probes are polled frequently; log them at DEBUG to keep the access log signal
