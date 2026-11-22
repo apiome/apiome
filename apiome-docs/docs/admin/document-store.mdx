@@ -23,6 +23,10 @@ Apiome writes four kinds of object to the store:
 - **Export downloads larger than the database threshold** (see
   [Large export downloads](#large-export-downloads)).
 
+Diffs, downloads, exports and `/v1/schema` read these stored objects instead of building the
+document again on every request. When you allow it, a workspace can keep its own originals and
+rendered documents in a bucket it owns instead (see [Tenant buckets](#tenant-buckets)).
+
 ## How objects are stored
 
 Every object is named by the SHA-256 of its bytes, inside the owning tenant's folder:
