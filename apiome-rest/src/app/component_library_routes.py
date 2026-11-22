@@ -38,6 +38,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .component_governance_service import (
+    assess_revision_approval,
+    find_revision,
+    resolve_component_policy,
+)
 from .component_library import (
     COMPONENT_KINDS,
     materialize_pinned_components,
@@ -46,15 +51,10 @@ from .component_library import (
     validate_component_name,
     validate_component_payload,
 )
-from .component_governance_service import (
-    assess_revision_approval,
-    find_revision,
-    resolve_component_policy,
-)
 from .component_usage import head_payloads, transitive_dependents
 from .database import ComponentLibraryConflictError, db
-from .openapi_generator import generate_openapi_spec
 from .permissions import Action, Resource, enforce_permission
+from .rendered_documents import REASON_COMPONENT_PINS_OVERRIDE, render_uncached
 
 router = APIRouter(prefix="/v1/component-library", tags=["component-library"])
 
@@ -864,13 +864,15 @@ async def materialization_preview(
     all_properties: Dict[str, List[Dict[str, Any]]] = {}
     for class_data in classes:
         all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
-    document = generate_openapi_spec(
-        tenant_slug,
-        str(version.get("project_slug") or version["project_id"]),
-        str(version["version_id"]),
-        classes,
-        all_properties,
-        version.get("project_description"),
+    # The document without its pins is not a stored state, so it is rendered without the cache.
+    document = render_uncached(
+        reason=REASON_COMPONENT_PINS_OVERRIDE,
+        tenant_slug=tenant_slug,
+        project_slug=str(version.get("project_slug") or version["project_id"]),
+        version_label=str(version["version_id"]),
+        classes=classes,
+        all_properties=all_properties,
+        project_description=version.get("project_description"),
         version_db_id=version["id"],
         revision_metadata=version.get("metadata"),
         project_metadata=version.get("project_metadata"),

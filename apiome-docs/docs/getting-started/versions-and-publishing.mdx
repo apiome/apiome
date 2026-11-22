@@ -54,6 +54,11 @@ You need a role that can do this: a **Viewer** sees neither **New version** nor 
 The version is now read-only. To change it, cut a new version — or choose **Unpublish** from its
 **Actions** menu.
 
+The publish gates read the version's [stored OpenAPI
+document](../admin/document-store.mdx#rendered-documents) and the one of the version they compare
+it with. If you opened the draft's spec, lint report or compare view before publishing, the
+gates do not generate the document again.
+
 ## With the CLI or the API
 
 - REST: `POST /v1/versions/{tenant}/{project}` cuts a version; `POST

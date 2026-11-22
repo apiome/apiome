@@ -1,0 +1,53 @@
+---
+slug: every-feature-reads-stored-documents
+title: "Every REST feature reads a version's stored document"
+description: "Lint, mocks, merges, publish gates and the source workspace stop regenerating OpenAPI documents."
+authors: [apiome]
+---
+
+A version's OpenAPI document is generated from its classes, properties and paths. The REST server
+already kept that document in the [document store](/admin/document-store#rendered-documents) for
+`GET /v1/schema` and for comparisons. Everything else still generated it on every request. Now
+every REST feature that needs a stored version's document reads the stored one.
+
+{/* truncate */}
+
+## What gets faster
+
+On a version that has not changed since its document was stored, these no longer read the
+version's classes, properties and paths to build the document:
+
+- the **lint report**, lint fixes and the publish gates;
+- starting a **mock**, saving mock scenarios and **Try it**;
+- **Swagger UI**;
+- a **merge preview**, a merge and a rollback check;
+- reviews, change reports and changelogs;
+- the source workspace: provenance, preservation, source review and source apply;
+- consumer contracts, blast radius, component governance, spec sync, import delta and export.
+
+The web app, the CLI and the MCP server reach all of these through the REST server, so nothing
+changes in how you use them. The gain is largest on big versions.
+
+A **merge** and an applied **source change** store the new document as part of the write, so the
+first reader afterwards does not wait for it.
+
+## What changes in a response
+
+Four source-workspace and mock routes used to build their document without the project's
+description and metadata. They now read the same document as `GET /v1/schema`, so
+`info.description`, `tags` and `x-metadata` appear in:
+
+- the document a **source review** and a **preservation** check compare against;
+- the document mock scenario validation and **Try it** read.
+
+A source review and the apply that follows it now fingerprint the same document. Before, a project
+with a description could be refused with `STALE_BASE` on apply although nothing had changed.
+
+If you have a source review open while the server is upgraded, review the change again before
+you apply it.
+
+## For operators
+
+No migration and no new setting. The list of features, and the four previews that are still
+generated on purpose, is on [Which features read the stored
+document](/admin/document-store#which-features-read-the-stored-document).

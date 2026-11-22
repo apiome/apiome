@@ -6,7 +6,9 @@ version's live classes, properties and paths. Freezing stores the exact response
 later class edits never change what consumers download. Since COA-5.5 (#7081) the bytes are a
 document store object (:func:`app.rendered_documents.store_frozen_schema`) and the row keeps the
 metadata; an unfrozen version is served from the rendered document cache
-(:func:`app.rendered_documents.rendered_document`), which generates through this module.
+(:func:`app.rendered_documents.rendered_document`). The render itself moved to
+:mod:`app.rendered_documents` with COA-5.14 (#7090); the first three names below are re-exported
+from there.
 
 * :func:`load_classes_and_properties` — a version's classes and all their properties, in two
   queries (COA-5.5, #7081);
@@ -19,12 +21,17 @@ metadata; an unfrozen version is served from the rendered document cache
 
 from __future__ import annotations
 
-import hashlib
-import json
-from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple
 
-from .openapi_generator import generate_openapi_spec
+# The render itself lives in the module that owns rendering (COA-5.14, #7090); the names stay
+# importable from here.
+from .rendered_documents import (  # noqa: F401 - re-exported
+    SpecCounts,
+    build_live_spec,
+    load_classes_and_properties,
+    render_spec_bytes,
+    sha256_hex,
+)
 
 #: ``detail.code`` values the freeze routes return.
 CODE_NOT_PUBLISHED = "version_not_published"
@@ -32,94 +39,6 @@ CODE_ALREADY_FROZEN = "already_frozen"
 CODE_NOT_FROZEN = "not_frozen"
 CODE_DOWNLOADED = "snapshot_downloaded"
 CODE_FORCE_REQUIRES_ADMIN = "force_unfreeze_requires_admin"
-
-
-@dataclass(frozen=True)
-class SpecCounts:
-    """What a version's OpenAPI document holds."""
-
-    classes: int
-    properties: int
-    paths: int
-
-
-def load_classes_and_properties(db: Any, version_id: Any) -> Tuple[List[Dict[str, Any]], Dict[Any, Any]]:
-    """Load a version's classes and every class's properties: one query per table.
-
-    Args:
-        db: Database handle (``get_classes_for_version``, ``get_properties_for_classes``).
-        version_id: The version (``versions.id``).
-
-    Returns:
-        ``(classes, all_properties)`` where ``all_properties`` maps each class id to its property
-        rows, in the order :func:`app.openapi_generator.generate_openapi_spec` expects.
-    """
-    classes = db.get_classes_for_version(version_id)
-    all_properties = db.get_properties_for_classes([class_data["id"] for class_data in classes])
-    return classes, all_properties
-
-
-def build_live_spec(
-    db: Any,
-    version: Mapping[str, Any],
-    tenant_slug: str,
-    project_slug: str,
-    version_slug: str,
-    *,
-    openapi_version: str = "3.1.0",
-    include_private: bool = False,
-) -> Tuple[Dict[str, Any], SpecCounts]:
-    """Generate a version's OpenAPI document from its rows.
-
-    With the defaults this is the OpenAPI 3.1 document ``/v1/schema`` serves for an unfrozen
-    version. The document workspace members read (COA-5.13, #7089) passes ``3.2.0`` and
-    ``include_private=True``.
-
-    Args:
-        db: Database handle (``get_classes_for_version``, ``get_properties_for_classes``).
-        version: The version row from ``get_version_by_slugs`` (needs ``id``, ``metadata``,
-            ``project_description``, ``project_metadata``).
-        tenant_slug: Tenant slug used in the document's URLs.
-        project_slug: Project slug.
-        version_slug: Version slug as requested (e.g. ``2.1.0``).
-        openapi_version: The OpenAPI version the document declares.
-        include_private: Keep the operations marked ``x-private``.
-
-    Returns:
-        The document and its :class:`SpecCounts`.
-    """
-    classes, all_properties = load_classes_and_properties(db, version["id"])
-    spec = generate_openapi_spec(
-        tenant_slug,
-        project_slug,
-        version_slug,
-        classes,
-        all_properties,
-        version.get("project_description"),
-        version_db_id=version["id"],
-        revision_metadata=version.get("metadata"),
-        project_metadata=version.get("project_metadata"),
-        openapi_version=openapi_version,
-        include_private=include_private,
-    )
-    counts = SpecCounts(
-        classes=len(classes),
-        properties=sum(len(props or []) for props in all_properties.values()),
-        paths=len(spec.get("paths") or {}),
-    )
-    return spec, counts
-
-
-def render_spec_bytes(spec: Any) -> bytes:
-    """The response body ``JSONResponse(content=spec)`` sends — compact UTF-8 JSON."""
-    return json.dumps(
-        spec, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":")
-    ).encode("utf-8")
-
-
-def sha256_hex(content: bytes) -> str:
-    """Lower-case hex SHA-256 of ``content``."""
-    return hashlib.sha256(content).hexdigest()
 
 
 def snapshot_url(tenant_slug: str, project_slug: str, version_label: str) -> str:

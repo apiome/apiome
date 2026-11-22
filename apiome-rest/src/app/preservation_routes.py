@@ -29,7 +29,6 @@ from pydantic.alias_generators import to_camel
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
-from .openapi_generator import generate_openapi_spec
 from .permissions import Action, Resource, enforce_permission
 from .preservation_envelope import (
     ENVELOPE_VERSION,
@@ -41,6 +40,7 @@ from .preservation_envelope import (
     semantic_fingerprint,
     validate_envelope,
 )
+from .rendered_documents import revision_openapi
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
@@ -88,28 +88,21 @@ class PreservationValidationErrorBody(_CamelModel):
     errors: List[EnvelopeError]
 
 
-def _generated_canonical_document(version: Dict[str, Any], tenant_slug: str) -> Dict[str, Any]:
-    """The revision's canonical OpenAPI document, generated server-side.
+def _generated_canonical_document(
+    version: Dict[str, Any], tenant_slug: str, tenant_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """The revision's canonical OpenAPI document, rendered server-side.
 
-    Same generation path as ``/v1/schema`` (classes + properties + paths rows),
-    so collision checks always run against what export would actually emit —
-    never against a client-supplied document.
+    The same document ``/v1/schema`` serves, read through the rendered document
+    cache (COA-5.14, #7090), so collision checks always run against what export
+    would actually emit — never against a client-supplied document.
+
+    Args:
+        version: The tenant-scoped version row.
+        tenant_slug: Tenant slug.
+        tenant_id: The owning tenant; ``None`` renders without the cache.
     """
-    classes = db.get_classes_for_version(version["id"])
-    all_properties: Dict[str, List[Dict[str, Any]]] = {}
-    for class_data in classes:
-        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
-    return generate_openapi_spec(
-        tenant_slug,
-        str(version.get("project_slug") or version["project_id"]),
-        str(version["version_id"]),
-        classes,
-        all_properties,
-        version.get("project_description"),
-        version_db_id=version["id"],
-        revision_metadata=version.get("metadata"),
-        project_metadata=version.get("project_metadata"),
-    )
+    return revision_openapi(version, tenant_slug, tenant_id, database=db)
 
 
 def _version_or_404(tenant_id: str, project_id: str, version_record_id: str) -> Dict[str, Any]:
@@ -180,7 +173,7 @@ async def get_preservation_envelope(
         raise HTTPException(status_code=500, detail=str(ve)) from ve
 
     dialect = _stored_dialect(version)
-    canonical = _generated_canonical_document(version, tenant_slug)
+    canonical = _generated_canonical_document(version, tenant_slug, tenant_id)
     merged, merge_errors = apply_envelope(canonical, _envelope_from_rows(dialect, rows))
     # A stored envelope that no longer merges cleanly (canonical drift) still
     # reads back; the fingerprint then covers the canonical document alone.
@@ -239,7 +232,7 @@ async def put_preservation_envelope(
             for claim in body.claims
         ],
     )
-    canonical = _generated_canonical_document(version, tenant_slug)
+    canonical = _generated_canonical_document(version, tenant_slug, tenant_id)
     report = validate_envelope(envelope, canonical)
     if not report.ok:
         raise HTTPException(
