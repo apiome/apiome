@@ -105,7 +105,7 @@ describe('parseRecentlyShipped', () => {
     const shipped = fs.readFileSync(path.join(__dirname, '..', 'public', 'WHATS_NEW.md'), 'utf8');
     const entries = parseRecentlyShipped(shipped);
 
-    // A release candidate's notes start again when it opens (RC9 opened with one entry), so the
+    // A release candidate's notes start again when it opens (RC10 opened with one entry), so the
     // card shows between one entry and its limit.
     expect(entries.length).toBeGreaterThanOrEqual(1);
     expect(entries.length).toBeLessThanOrEqual(RECENTLY_SHIPPED_LIMIT);

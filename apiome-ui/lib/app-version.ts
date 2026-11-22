@@ -29,14 +29,14 @@ export const APP_BUILD_LABEL: string | undefined =
   process.env.NEXT_PUBLIC_APP_BUILD_LABEL?.trim() || undefined;
 
 /**
- * The release candidate this build belongs to, e.g. `RC9`. Bump it when the next release
- * candidate opens (RC9 opens with the Projects, Catalog, OpenAPI and Arazzo work).
+ * The release candidate this build belongs to, e.g. `RC10`. Bump it when the next release
+ * candidate opens (RC10 opens with the Pact contract testing and contract agreements work).
  */
-export const APP_RELEASE_CANDIDATE = 'RC9';
+export const APP_RELEASE_CANDIDATE = 'RC10';
 
 /**
  * What the reader sees: the CI stamp when there is one, otherwise `v<semver> <RC>`
- * (`v0.482.0 RC9`).
+ * (`v0.482.0 RC10`).
  *
  * The mockups print the older, unnumbered `RC` suffix (`docs/mockups/assets/hive.js`,
  * `v0.241.0 RC`).
