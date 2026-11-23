@@ -33,7 +33,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
 from .blast_radius import BlastRadiusRequest, blast_radius
-from .catalog_graph import MAX_READ_LIMIT, GraphValidationError, list_edges
+from .catalog_graph import MAX_READ_LIMIT, GraphValidationError, decode_edge_cursor, list_edges
 from .consumer_contract_store import actor_from_auth
 from .database import db
 from .declared_dependencies import MAX_DECLARED, DependencyValidationError
@@ -44,6 +44,13 @@ from .graph_export import FORMATS as EXPORT_FORMATS
 from .graph_export import MAX_DEPTH as MAX_EXPORT_DEPTH
 from .graph_export import export_graph, render_dot, render_json
 from .graph_nodes import MAX_SEARCH_LIMIT, node_labels_with_owners, search_entities
+from .keyset_pagination import (
+    InvalidCursor,
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+)
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
 
@@ -85,10 +92,20 @@ class GraphEdgePage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     edges: List[GraphEdge] = Field(default_factory=list)
-    total: int = Field(description="How many edges match the filters.")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many edges match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     truncated: bool = Field(description="True when more edges match than this page holds.")
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 def _auth_tenant(auth_data: Dict[str, Any]) -> str:
@@ -107,7 +124,9 @@ def _auth_tenant(auth_data: Dict[str, Any]) -> str:
         "The entity's edges in the catalog dependency graph. `direction` is `out` (edges from the "
         "entity, the default) or `in` (edges to it); `kind` and `provenance` filter and may repeat. "
         f"`limit` is 1–{MAX_READ_LIMIT} (default 100); `truncated` is true when more edges match. "
-        "Stale edges come last with `stale: true`.\n\nRequires `projects:view`."
+        "Stale edges come last with `stale: true`.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "The `total` is counted only when `include_total` is set.\n\nRequires `projects:view`."
     ),
 )
 def get_entity_edges(
@@ -117,22 +136,49 @@ def get_entity_edges(
     direction: str = Query("out", description="`out` or `in`."),
     edge_kind: Optional[List[str]] = Query(None, alias="kind", description="Edge kinds to keep."),
     provenance: Optional[List[str]] = Query(None, description="Provenances to keep."),
-    limit: int = Query(100, ge=1, le=MAX_READ_LIMIT),
-    offset: int = Query(0, ge=0),
+    # The dependencies panel reads up to 500 edges per direction in one request, so this list
+    # keeps its own maximum above the usual 200 (#7196).
+    limit: int = limit_query(100, maximum=MAX_READ_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     labels: bool = Query(False, description="Add each end's name, slug and owner team."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> GraphEdgePage:
     """Read one page of an entity's edges.
 
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes the read).
+        kind: The entity's node kind.
+        entity_id: The entity.
+        direction: ``out`` or ``in``.
+        edge_kind: Edge kinds to keep.
+        provenance: Provenances to keep.
+        limit: Page size.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matching edges.
+        offset: Rows to skip (deprecated).
+        labels: Add each end's name, slug and owner team.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page, whether another follows, and the total when asked for.
+
     Raises:
-        HTTPException: 400 ``graph-invalid`` for a bad id, kind, direction or filter; 403 without
-            ``projects:view`` or a tenant context.
+        HTTPException: 400 for a malformed cursor, or ``graph-invalid`` for a bad id, kind,
+            direction or filter; 403 without ``projects:view`` or a tenant context.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
     _ = tenant_slug
     tenant_id = _auth_tenant(auth_data)
     if not is_uuid_string(entity_id):
         raise HTTPException(status_code=400, detail={"code": "graph-invalid", "message": "entity_id must be an id"})
+    after: Optional[List[Any]] = None
+    if cursor is not None and cursor.strip():
+        try:
+            after = decode_edge_cursor(cursor)
+        except InvalidCursor as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid cursor: {exc}") from exc
     try:
         page = list_edges(
             db,
@@ -144,6 +190,8 @@ def get_entity_edges(
             provenances=tuple(provenance or ()),
             limit=limit,
             offset=offset,
+            cursor=after,
+            include_total=include_total,
         )
     except GraphValidationError as exc:
         raise HTTPException(status_code=400, detail={"code": exc.code, "message": str(exc)}) from exc
@@ -157,7 +205,9 @@ def get_entity_edges(
         total=page.total,
         truncated=page.truncated,
         limit=limit,
-        offset=offset,
+        offset=0 if after is not None else offset,
+        has_more=page.truncated,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -494,7 +544,9 @@ class GraphEntityPage(BaseModel):
         "Every entity that has at least one edge, most connected first, with its name, owner team "
         "and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` "
         "(each repeatable) and `team` (owner team slug). `limit` is 1–2000 (default 200); "
-        "`truncated` is true when more match.\n\nRequires `projects:view`."
+        "`truncated` is true when more match. The order is a computed rank (edge count), which "
+        "no cursor can continue, so this list pages by `offset` (at most 10,000)."
+        "\n\nRequires `projects:view`."
     ),
 )
 def get_graph_entities(
@@ -503,11 +555,34 @@ def get_graph_entities(
     kind: Optional[List[str]] = Query(None, description="Node kinds to keep."),
     team: Optional[str] = Query(None, max_length=128, description="Owner team slug."),
     provenance: Optional[List[str]] = Query(None, description="Only count edges of these provenances."),
-    limit: int = Query(200, ge=1, le=MAX_SEARCH_LIMIT),
-    offset: int = Query(0, ge=0),
+    # The tenant graph page draws the whole graph from one request of 2,000 entities, so this
+    # list keeps its own maximum above the usual 200 (#7196).
+    limit: int = limit_query(200, maximum=MAX_SEARCH_LIMIT),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> GraphEntityPage:
-    """Search the graph's entities."""
+    """Search the graph's entities.
+
+    The entities are ranked in memory by how connected they are, so the list pages by ``offset``
+    and its ``total`` is the length of that ranking, not a separate count.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes the read).
+        q: Substring of the name or slug.
+        kind: Node kinds to keep.
+        team: Owner team slug.
+        provenance: Only count edges of these provenances.
+        limit: Page size.
+        offset: Entities to skip (deprecated).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of entities.
+
+    Raises:
+        HTTPException: 400 ``graph-invalid`` for an unknown filter; 403 without ``projects:view``
+            or a tenant context.
+    """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
     _ = tenant_slug
     try:

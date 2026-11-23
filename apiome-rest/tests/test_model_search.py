@@ -314,6 +314,9 @@ def test_route_requires_q_and_bounds_paging(authed) -> None:
     assert client.get("/v1/search/test-tenant/model").status_code == 422
     assert client.get("/v1/search/test-tenant/model", params={"q": "x", "limit": 101}).status_code == 422
     assert client.get("/v1/search/test-tenant/model", params={"q": "x", "offset": -1}).status_code == 422
+    # Relevance order has no cursor, so the offset is bounded instead (#7196).
+    too_deep = {"q": "x", "offset": 10_001}
+    assert client.get("/v1/search/test-tenant/model", params=too_deep).status_code == 422
 
 
 def test_route_requires_authentication() -> None:

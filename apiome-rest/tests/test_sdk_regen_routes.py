@@ -21,6 +21,7 @@ from app.auth import validate_authentication
 from app.main import app
 from app.permissions import Action, Resource
 from app.sdk_regen_subscriptions import RegenSubscriptionError, RegenSubscriptionOut
+from tests.keyset_paging_fakes import keyset_rows, stamps, walk
 
 client = TestClient(app)
 
@@ -286,10 +287,11 @@ def test_the_history_links_each_publish_to_its_jobs_packages_and_pull_requests()
     ), patch(
         "app.sdk_regen_routes.db.list_sdk_regen_jobs_for_runs", return_value=[_job(), retrying]
     ) as jobs:
-        response = client.get(_RUNS, params={"limit": 10})
+        response = client.get(_RUNS, params={"limit": 10, "include_total": "true"})
     assert response.status_code == 200
     assert _guards(guard) == [(Resource.VERSIONS, Action.VIEW)]
-    assert runs.call_args.kwargs == {"job_status": None, "limit": 10, "offset": 0}
+    # One row more than the page is read, to learn whether another page follows (#7196).
+    assert runs.call_args.kwargs == {"job_status": None, "limit": 11, "offset": 0, "cursor": None}
     jobs.assert_called_once_with(_MOCK_AUTH["tenant_id"], [_RUN])
 
     body = response.json()
@@ -332,7 +334,7 @@ def test_the_dead_letter_is_the_history_filtered_by_status_and_each_job_says_how
     ) as runs, patch("app.sdk_regen_routes.db.count_sdk_regen_runs", return_value=1) as count, patch(
         "app.sdk_regen_routes.db.list_sdk_regen_jobs_for_runs", return_value=[dead]
     ):
-        response = client.get(_RUNS, params={"status": "DEAD_LETTER"})
+        response = client.get(_RUNS, params={"status": "DEAD_LETTER", "include_total": "true"})
     assert response.status_code == 200
     assert runs.call_args.kwargs["job_status"] == "dead_letter"
     assert count.call_args.kwargs == {"job_status": "dead_letter"}
@@ -446,3 +448,40 @@ def test_every_route_is_in_the_openapi_document():
     assert "get" in paths[f"{base}/sdk-regen-runs"]
     assert "get" in paths[f"{base}/sdk-regen-runs/{{run_id}}"]
     assert "post" in paths[f"{base}/sdk-regen-jobs/{{job_id}}/retry"]
+
+
+# --------------------------------------------------------------------------------------------
+# Keyset paging (DBP-1.13, #7196)
+# --------------------------------------------------------------------------------------------
+
+
+def _regen_history(count: int = 5) -> list:
+    return [
+        {"id": f"00000000-0000-4000-8000-{index:012d}", "project_id": _PROJECT, "created_at": stamp}
+        for index, stamp in enumerate(stamps(count))
+    ]
+
+
+def test_the_regen_history_pages_by_cursor_to_the_end_without_duplicates():
+    rows = _regen_history()
+    with patch("app.sdk_regen_routes.enforce_permission"), _project_lookup(), patch(
+        "app.sdk_regen_routes.db.list_sdk_regen_runs", side_effect=keyset_rows(rows, "created_at")
+    ), patch(
+        "app.sdk_regen_routes.db.count_sdk_regen_runs", side_effect=AssertionError("counted")
+    ), patch(
+        "app.sdk_regen_routes.db.list_sdk_regen_jobs_for_runs", return_value=[]
+    ):
+        first = client.get(_RUNS, params={"limit": 2}).json()
+        seen = walk(lambda params: client.get(_RUNS, params=params), "runs",
+                    has_more_key="hasMore", next_cursor_key="nextCursor")
+    assert first["total"] is None and first["hasMore"] is True and first["nextCursor"]
+    ids = [run["runId"] for run in seen]
+    assert ids == sorted((row["id"] for row in rows), reverse=True)
+    assert len(ids) == len(set(ids)) == 5
+
+
+def test_a_malformed_regen_history_cursor_is_a_400_and_the_page_size_is_capped():
+    with patch("app.sdk_regen_routes.enforce_permission"), _project_lookup():
+        assert client.get(_RUNS, params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get(_RUNS, params={"limit": 201}).status_code == 422
+        assert client.get(_RUNS, params={"offset": 10_001}).status_code == 422

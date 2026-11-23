@@ -623,7 +623,7 @@ def _sandbox_serving(result):
     return (
         patch("app.mock_routes.sandbox_is_configured", return_value=True),
         patch("app.mock_routes.request_sandbox_serve", _serve),
-        patch("app.mock_routes.db.touch_mock_instance"),
+        patch("app.mock_routes.activity_buffer"),
     )
 
 
@@ -646,6 +646,7 @@ def test_a_request_to_the_mock_round_trips_with_a_schema_shaped_body_and_is_logg
     }
     guards = _sandbox_serving(served_payload)
     with (
+        patch("app.mock_routes.db.get_mock_serving_row", return_value=row),
         patch("app.mock_routes.db.get_mock_instance", return_value=row),
         guards[0],
         guards[1],
@@ -684,6 +685,7 @@ def test_an_unmatched_request_is_logged_as_unmatched():
     }
     guards = _sandbox_serving(served_payload)
     with (
+        patch("app.mock_routes.db.get_mock_serving_row", return_value=row),
         patch("app.mock_routes.db.get_mock_instance", return_value=row),
         guards[0],
         guards[1],
@@ -702,7 +704,10 @@ def test_an_unmatched_request_is_logged_as_unmatched():
 def test_an_expired_mock_stops_serving_and_says_so():
     """The TTL is the teardown: the same URL answers 410 Gone once it lapses."""
     expired = _row(spec=_SERVED_SPEC, expires_at=datetime.now(timezone.utc) - timedelta(minutes=1))
-    with patch("app.mock_routes.db.get_mock_instance", return_value=expired):
+    with (
+        patch("app.mock_routes.db.get_mock_serving_row", return_value=expired),
+        patch("app.mock_routes.db.get_mock_instance", return_value=expired),
+    ):
         response = client.get(f"/v1/mock/{MOCK_ID}/widgets")
     assert response.status_code == 410
     assert "expired" in response.json()["detail"]

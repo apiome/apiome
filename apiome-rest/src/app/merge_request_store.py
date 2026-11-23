@@ -34,6 +34,7 @@ import psycopg2
 from . import review_store
 from .approval_publish_gate import assess_approval_gate
 from .database import db
+from .keyset_pagination import Page, capped_count_sql, keyset_before, page_of, time_id_key
 from .merge_requests import (
     BLOCKER_APPROVAL_POLICY,
     BLOCKER_CHANGES_REQUESTED,
@@ -427,30 +428,58 @@ def _mr_row(project_id: str, merge_request_id: str) -> Dict[str, Any]:
 
 
 def list_merge_requests(
-    tenant_id: str, project_ref: str, *, state: Optional[str] = None, limit: int = 50, offset: int = 0
-) -> Tuple[List[MergeRequestRecord], int]:
+    tenant_id: str,
+    project_ref: str,
+    *,
+    state: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
+    include_total: bool = False,
+) -> Tuple[Page[MergeRequestRecord], Optional[int]]:
     """List a project's merge requests, most recently active first.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
         state: Only requests in this state.
         limit: Page size (capped at :data:`MAX_LIST_LIMIT`).
-        offset: Requests to skip.
+        offset: Requests to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(updated_at, id)`` of the last request already seen.
+        include_total: Also count the matches (capped); off by default.
 
     Returns:
-        The page of records and the total matching the filter.
+        The page, and the capped total when ``include_total`` (else ``None``).
+
+    Raises:
+        MergeRequestValidationError: For an unknown project.
     """
     project_id = str(_project(tenant_id, project_ref)["id"])
     where = "mr.project_id = %s::uuid" + (" AND mr.state = %s" if state else "")
     params: Tuple[Any, ...] = (project_id, state) if state else (project_id,)
+    page_limit = max(1, min(limit, MAX_LIST_LIMIT))
+    after_sql, after_params = keyset_before("mr.updated_at", "mr.id", cursor)
     rows = db.execute_query(
-        f"SELECT {_MR_COLUMNS} FROM apiome.merge_requests mr WHERE {where} "
+        f"SELECT {_MR_COLUMNS} FROM apiome.merge_requests mr WHERE {where}{after_sql} "
         "ORDER BY mr.updated_at DESC, mr.id DESC LIMIT %s OFFSET %s",
-        params + (max(1, min(limit, MAX_LIST_LIMIT)), max(0, offset)),
+        params + tuple(after_params) + (page_limit + 1, 0 if cursor else max(0, offset)),
     )
-    total = db.execute_query(f"SELECT count(*) AS n FROM apiome.merge_requests mr WHERE {where}", params)
-    return [_record(row) for row in rows], int(total[0]["n"]) if total else 0
+    page = page_of(rows, page_limit, time_id_key("updated_at"))
+    total: Optional[int] = None
+    if include_total:
+        counted = db.execute_query(capped_count_sql(f"FROM apiome.merge_requests mr WHERE {where}"), params)
+        total = int(counted[0]["total"]) if counted else 0
+    return (
+        Page(
+            items=[_record(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def _review_detail(tenant_id: str, project_id: str, review_id: Optional[str]) -> Optional[ReviewDetail]:

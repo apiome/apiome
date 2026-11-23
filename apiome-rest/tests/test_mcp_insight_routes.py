@@ -20,6 +20,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from app.mcp_insight_aggregation import discovery_aggregate, invocation_aggregate
 from app.auth import validate_authentication
 from app.main import app
 
@@ -345,8 +346,8 @@ def test_reliability_aggregates_discovery_and_invocation():
     ]
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = job_rows
-        mdb.list_mcp_invocation_stats.return_value = call_rows
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate(job_rows)
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate(call_rows)
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -369,8 +370,8 @@ def test_reliability_aggregates_discovery_and_invocation():
 def test_reliability_empty_history_is_zeroes_not_500():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -418,8 +419,8 @@ def test_reliability_health_timeline_and_availability_match_seeded_jobs():
     ]
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = timeline_rows
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -450,8 +451,8 @@ def test_reliability_health_flags_quarantined_endpoint():
     }
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = quarantined
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = [
             _timeline_row("j1", "failed", error_code="connect_error"),
@@ -469,8 +470,8 @@ def test_reliability_health_flags_quarantined_endpoint():
 def test_reliability_health_empty_history_is_empty_timeline_not_500():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -502,8 +503,8 @@ def test_reliability_tools_percentiles_and_error_rates_match_fixture():
     ]
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = tool_rows
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -527,8 +528,8 @@ def test_reliability_tools_percentiles_and_error_rates_match_fixture():
 def test_reliability_tools_empty_history_is_no_data_not_500():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
-        mdb.list_mcp_discovery_job_stats.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_discovery_job_reliability.return_value = discovery_aggregate([])
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
@@ -570,11 +571,13 @@ def test_trust_profile_computes_all_five_axes():
         mdb.get_mcp_version_changes_for_endpoint.return_value = [
             {"version_id": _V2, "change_type": "added", "item_type": "tool", "item_name": "wipe"},
         ]
-        mdb.list_mcp_invocation_stats.return_value = [
-            {"is_error": False, "latency_ms": 100},
-            {"is_error": True, "latency_ms": 200},
-            {"is_error": False, "latency_ms": 150},
-        ]
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate(
+            [
+                {"is_error": False, "latency_ms": 100},
+                {"is_error": True, "latency_ms": 200},
+                {"is_error": False, "latency_ms": 150},
+            ]
+        )
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
     assert r.status_code == 200
     body = r.json()
@@ -617,7 +620,7 @@ def test_trust_profile_partial_gaps_excluded_from_overall():
         mdb.get_mcp_endpoint_credentials.return_value = {"auth_type": "bearer"}
         mdb.get_mcp_evolution_series.return_value = []
         mdb.get_mcp_version_changes_for_endpoint.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
     assert r.status_code == 200
     axes = {a["key"]: a for a in r.json()["profile"]["axes"]}
@@ -637,7 +640,7 @@ def test_trust_profile_never_discovered_is_all_gaps_not_500():
         mdb.get_mcp_endpoint_credentials.return_value = None
         mdb.get_mcp_evolution_series.return_value = []
         mdb.get_mcp_version_changes_for_endpoint.return_value = []
-        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.get_mcp_invocation_reliability.return_value = invocation_aggregate([])
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
     assert r.status_code == 200
     body = r.json()
@@ -806,7 +809,7 @@ def _cohort_member(endpoint_id, version_id, *, score, grade, auth_type, tools, i
     """A row shaped like one entry of ``get_mcp_category_cohort``.
 
     ``version`` + ``items`` reconstruct the surface for the safety/documentation axes; ``score`` /
-    ``grade`` drive the grade axis; ``invocation_stats`` drive the latency axis. A ``version_id`` of
+    ``grade`` drive the grade axis; ``invocation_reliability`` drives the latency axis. A ``version_id`` of
     ``None`` models a never-discovered member (surface-derived axes become gaps).
     """
     version = _version_row(version_id, 1) if version_id else None
@@ -821,7 +824,7 @@ def _cohort_member(endpoint_id, version_id, *, score, grade, auth_type, tools, i
         "auth_type": auth_type,
         "version": version,
         "items": items if version_id else [],
-        "invocation_stats": invocations,
+        "invocation_reliability": invocation_aggregate(invocations),
     }
 
 

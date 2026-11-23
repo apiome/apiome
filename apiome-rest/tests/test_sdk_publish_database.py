@@ -8,6 +8,7 @@ schema question, and is asserted against the real schema rather than here.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from app.database import db
@@ -216,3 +217,19 @@ def test_a_non_uuid_revision_is_stored_as_null_rather_than_refusing() -> None:
             package_version="1.4.0",
         )
     assert cursor.execute.call_args.args[1][2] is None
+
+
+def test_list_sdk_publish_runs_continues_after_a_cursor_without_an_offset() -> None:
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    with patch.object(db, "execute_query", return_value=[]) as query:
+        db.list_sdk_publish_runs(_TENANT, _PROJECT, ecosystem="npm", limit=10, offset=20, cursor=(stamp, _RUN))
+    sql, params = query.call_args.args
+    assert "(started_at, id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY started_at DESC, id DESC" in sql
+    assert params == (_TENANT, _PROJECT, "npm", stamp, _RUN, 10, 0)
+
+
+def test_count_sdk_publish_runs_stops_at_the_cap() -> None:
+    with patch.object(db, "execute_query", return_value=[{"total": 3}]) as query:
+        assert db.count_sdk_publish_runs(_TENANT, _PROJECT) == 3
+    assert "LIMIT 10000" in query.call_args.args[0]

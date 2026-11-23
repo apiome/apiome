@@ -11,6 +11,7 @@ The SQL text itself is exercised separately against a scratch database built fro
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, List, Optional
 
 import psycopg2
@@ -400,3 +401,32 @@ def test_a_binding_of_another_project_cannot_be_settled_through_it(monkeypatch):
         is None
     )
     assert len(conn.statements) == 1
+
+
+# ---------------------------------------------------------------------------------------------
+# Keyset paging (DBP-1.13, #7196)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_the_binding_list_continues_after_a_cursor_without_an_offset(monkeypatch):
+    conn = ScriptedConnection([[]])
+    database = database_with(monkeypatch, conn)
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+
+    database.list_draft_bindings(
+        tenant_id=TENANT, project_id=PROJECT, limit=10, offset=20, cursor=(stamp, BINDING)
+    )
+
+    sql, params = conn.statements[0]
+    assert "(b.created_at, b.id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY b.created_at DESC, b.id DESC" in sql
+    assert params[-4:] == (stamp, BINDING, 10, 0)
+
+
+def test_the_binding_count_stops_at_the_cap(monkeypatch):
+    conn = ScriptedConnection([[{"total": 3}]])
+    database = database_with(monkeypatch, conn)
+
+    assert database.count_draft_bindings(tenant_id=TENANT, project_id=PROJECT) == 3
+    sql, _params = conn.statements[0]
+    assert "LIMIT 10000" in sql

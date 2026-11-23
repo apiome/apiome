@@ -27,6 +27,7 @@ from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import limit_query, offset_query
 from .lint_workspace import (
     ACTION_PUBLISH,
     BULK_ITEM_CAP,
@@ -149,8 +150,8 @@ def list_workspace_findings(
     ),
     q: Optional[str] = Query(default=None, description="Free-text search"),
     sort: Optional[str] = Query(default=None, description="severity | newest | rule | subject"),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    limit: int = limit_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceFindingsResponse:
     """Cross-catalog findings queue over the latest evidence per subject (CLX-4.1, #4859).

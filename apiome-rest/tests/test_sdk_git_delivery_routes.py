@@ -20,6 +20,7 @@ from app.main import app
 from app.permissions import Action, Resource
 from app.sdk_git_delivery_pipeline import RUN_STATUS_FAILED, RUN_STATUS_OPENED, DeliveryOutcome
 from app.sdk_git_delivery_targets import DeliveryTarget, GitDeliveryTargetError, GitDeliveryTargetOut
+from tests.keyset_paging_fakes import keyset_rows, stamps, walk
 
 client = TestClient(app)
 
@@ -339,10 +340,13 @@ def test_listing_runs_requires_versions_view_and_pages():
     with patch("app.sdk_git_delivery_routes.enforce_permission") as guard, _project_lookup(), patch(
         "app.sdk_git_delivery_routes.db.list_sdk_git_delivery_runs", return_value=[_row()]
     ) as listing, patch("app.sdk_git_delivery_routes.db.count_sdk_git_delivery_runs", return_value=9):
-        response = client.get(_RUNS, params={"ecosystem": "NPM", "limit": 5, "offset": 5})
+        response = client.get(
+            _RUNS, params={"ecosystem": "NPM", "limit": 5, "offset": 5, "include_total": "true"}
+        )
     assert response.status_code == 200
     assert [call.args[2:] for call in guard.call_args_list] == [(Resource.VERSIONS, Action.VIEW)]
-    assert listing.call_args.kwargs == {"ecosystem": "npm", "limit": 5, "offset": 5}
+    # One row more than the page is read, to learn whether another page follows (#7196).
+    assert listing.call_args.kwargs == {"ecosystem": "npm", "limit": 6, "offset": 5, "cursor": None}
     body = response.json()
     assert (body["total"], body["limit"], body["offset"]) == (9, 5, 5)
     assert body["runs"][0]["pullRequestNumber"] == 3
@@ -371,3 +375,38 @@ def test_reading_a_run_belonging_to_another_project_is_404():
         response = client.get(f"{_RUNS}/{_RUN}")
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "sdk-git-delivery-run-not-found"
+
+
+# --------------------------------------------------------------------------------------------
+# Keyset paging (DBP-1.13, #7196)
+# --------------------------------------------------------------------------------------------
+
+
+def _delivery_history(count: int = 5) -> list:
+    return [
+        {"id": f"00000000-0000-4000-8000-{index:012d}", "project_id": _PROJECT, "started_at": stamp}
+        for index, stamp in enumerate(stamps(count))
+    ]
+
+
+def test_the_delivery_history_pages_by_cursor_to_the_end_without_duplicates():
+    rows = _delivery_history()
+    with patch("app.sdk_git_delivery_routes.enforce_permission"), _project_lookup(), patch(
+        "app.sdk_git_delivery_routes.db.list_sdk_git_delivery_runs", side_effect=keyset_rows(rows, "started_at")
+    ), patch(
+        "app.sdk_git_delivery_routes.db.count_sdk_git_delivery_runs", side_effect=AssertionError("counted")
+    ):
+        first = client.get(_RUNS, params={"limit": 2}).json()
+        seen = walk(lambda params: client.get(_RUNS, params=params), "runs",
+                    has_more_key="hasMore", next_cursor_key="nextCursor")
+    assert first["total"] is None and first["hasMore"] is True and first["nextCursor"]
+    ids = [run["runId"] for run in seen]
+    assert ids == sorted((row["id"] for row in rows), reverse=True)
+    assert len(ids) == len(set(ids)) == 5
+
+
+def test_a_malformed_delivery_history_cursor_is_a_400_and_the_page_size_is_capped():
+    with patch("app.sdk_git_delivery_routes.enforce_permission"), _project_lookup():
+        assert client.get(_RUNS, params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get(_RUNS, params={"limit": 201}).status_code == 422
+        assert client.get(_RUNS, params={"offset": 10_001}).status_code == 422

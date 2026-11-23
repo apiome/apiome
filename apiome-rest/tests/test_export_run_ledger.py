@@ -314,7 +314,7 @@ def test_the_listing_filters_needs_projects_view_and_attaches_deliveries(_authed
             "/v1/export/acme/runs",
             params={"artifact": "proj-1", "target": "protobuf", "actor": _USER, "state": "completed",
                     "channel": "git", "validation": "valid", "decision": "allow", "limit": 20,
-                    "finished_after": "2026-11-01T00:00:00Z"},
+                    "finished_after": "2026-11-01T00:00:00Z", "include_total": "true"},
         )
     assert response.status_code == 200, response.text
     assert [call.args[2:] for call in guard.call_args_list] == [(Resource.PROJECTS, Action.VIEW)]
@@ -396,22 +396,54 @@ class _Recording(Database):
 
     def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:  # type: ignore[override]
         self.queries.append((" ".join(query.split()), params))
-        return [{"total": 0}] if "COUNT(*)" in query else []
+        return [{"total": 0}] if "count(*)" in query else []
 
 
 def test_every_listing_query_is_scoped_to_the_tenant_and_parameterized() -> None:
     database = _Recording()
     page = database.list_export_runs(_TENANT, artifact_id="proj-1", target="protobuf", actor_id=_USER,
                                      state="failed", channel="git", validation_verdict="invalid",
-                                     delivery_decision="block", limit=500, offset=-3)
-    assert page == {"runs": [], "total": 0, "limit": 200, "offset": 0}
+                                     delivery_decision="block", limit=500, offset=-3, include_total=True)
+    assert page == {"runs": [], "total": 0, "limit": 200, "offset": 0, "has_more": False}
     count_sql, params = database.queries[0]
-    assert count_sql.startswith("SELECT COUNT(*)::int AS total FROM apiome.export_run_ledger l WHERE l.tenant_id")
+    # The count stops at the cap instead of reading every match (#7196).
+    assert count_sql.startswith(
+        "SELECT count(*)::int AS total FROM (SELECT 1 FROM apiome.export_run_ledger l WHERE l.tenant_id"
+    )
+    assert count_sql.endswith("LIMIT 10000) capped")
     assert params == (_TENANT, "proj-1", "failed", "invalid", "block", "protobuf", _USER)
     assert "string_to_array(l.target, ',')" in count_sql
     assert "EXISTS (SELECT 1 FROM apiome.export_git_delivery_runs d" in count_sql
     list_sql, list_params = database.queries[1]
-    assert "ORDER BY l.finished_at DESC, l.job_id DESC" in list_sql and list_params[-2:] == (200, 0)
+    # One row more than the page, to learn whether another page follows.
+    assert "ORDER BY l.finished_at DESC, l.job_id DESC" in list_sql and list_params[-2:] == (201, 0)
+
+
+def test_the_listing_does_not_count_unless_asked_and_continues_after_a_cursor() -> None:
+    database = _Recording()
+    page = database.list_export_runs(_TENANT, state="failed", limit=10, offset=40, cursor=(_FINISHED, "job-9"))
+    assert page == {"runs": [], "total": None, "limit": 10, "offset": 0, "has_more": False}
+    [(sql, params)] = database.queries  # no count query
+    assert "(l.finished_at, l.job_id) < (%s, %s)" in sql
+    assert params == (_TENANT, "failed", _FINISHED, "job-9", 11, 0)
+
+
+class _Ledger(_Recording):
+    """A recording Database that answers the listing with ``rows``."""
+
+    def __init__(self, rows: List[Dict[str, Any]]) -> None:  # noqa: D107 - no connection
+        super().__init__()
+        self.rows = rows
+
+    def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:  # type: ignore[override]
+        super().execute_query(query, params)
+        return list(self.rows)
+
+
+def test_the_listing_reports_a_further_page_from_the_look_ahead_row() -> None:
+    database = _Ledger([{"job_id": f"job-{index}", "finished_at": _FINISHED} for index in range(3)])
+    page = database.list_export_runs(_TENANT, limit=2)
+    assert [run["job_id"] for run in page["runs"]] == ["job-0", "job-1"] and page["has_more"] is True
 
 
 def test_never_delivered_means_no_run_in_any_channel() -> None:
@@ -479,3 +511,58 @@ def test_the_migration_keeps_history_per_tenant_and_outlives_the_account() -> No
         "-- Rollback notes",
     ):
         assert fragment in text, fragment
+
+
+# ===========================================================================
+# Keyset paging (DBP-1.13, #7196)
+# ===========================================================================
+
+
+def _paged_ledger(rows: List[Dict[str, Any]]):
+    """A ``db.list_export_runs`` stand-in paging ``rows`` the way the SQL does."""
+    ordered = sorted(rows, key=lambda row: (row["finished_at"], row["job_id"]), reverse=True)
+
+    def listing(_tenant: str, *, limit: int, offset: int = 0, cursor: Any = None, include_total: bool = False,
+                **_: Any) -> Dict[str, Any]:
+        matching = ordered
+        if cursor is not None:
+            matching = [row for row in ordered if (row["finished_at"], row["job_id"]) < tuple(cursor)]
+            offset = 0
+        window = matching[offset : offset + limit + 1]
+        return {"runs": window[:limit], "total": len(ordered) if include_total else None, "limit": limit,
+                "offset": offset, "has_more": len(window) > limit}
+
+    return listing
+
+
+def test_the_listing_pages_by_cursor_to_the_end_without_duplicates(_authed: None) -> None:
+    rows = [
+        {**_stored(job_id=f"job-{index}"), "finished_at": datetime(2026, 11, 1 + index // 2, tzinfo=timezone.utc)}
+        for index in range(5)
+    ]
+    seen: List[str] = []
+    cursor = None
+    with patch("app.export_run_routes.enforce_permission"), \
+            patch("app.export_run_routes.db.get_tenant_row_by_slug", return_value={"id": _TENANT}), \
+            patch("app.export_run_routes.db.list_export_runs", side_effect=_paged_ledger(rows)), \
+            patch("app.export_run_routes.db.list_export_run_deliveries", return_value=[]):
+        for _ in range(4):
+            params = {"limit": 2, **({"cursor": cursor} if cursor else {})}
+            body = client.get("/v1/export/acme/runs", params=params).json()
+            assert body["total"] is None  # not counted unless asked for
+            seen += [run["job_id"] for run in body["runs"]]
+            cursor = body["next_cursor"]
+            if not body["has_more"]:
+                break
+        counted = client.get("/v1/export/acme/runs", params={"include_total": "true"}).json()
+    assert cursor is None
+    assert seen == ["job-4", "job-3", "job-2", "job-1", "job-0"]
+    assert counted["total"] == 5 and counted["has_more"] is False
+
+
+def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(_authed: None) -> None:
+    with patch("app.export_run_routes.enforce_permission"), \
+            patch("app.export_run_routes.db.get_tenant_row_by_slug", return_value={"id": _TENANT}):
+        assert client.get("/v1/export/acme/runs", params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get("/v1/export/acme/runs", params={"limit": 201}).status_code == 422
+        assert client.get("/v1/export/acme/runs", params={"offset": 10_001}).status_code == 422

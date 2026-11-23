@@ -30,6 +30,14 @@ from .export_run_ledger import (
     run_detail,
     run_summary,
 )
+from .keyset_pagination import (
+    cursor_query,
+    encode_time_id_cursor,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of
 
@@ -58,7 +66,9 @@ def _tenant(tenant_slug: str, auth_data: Dict[str, Any]) -> str:
         "preserved %, validation and lint verdicts, delivery decision and every delivery. Filter by "
         "`artifact`, `target`, `actor`, `state`, `channel` (`git`, `webhook`, `object-storage`, `none`), "
         "`validation`, `decision` and `finished_after` / `finished_before`. Runs are kept for the job "
-        "history window (90 days by default). Requires `projects:view`."
+        "history window (90 days by default). Pages by `cursor`: pass the previous page's `next_cursor` "
+        "until `has_more` is false; the `total` is counted only when `include_total` is set. Requires "
+        "`projects:view`."
     ),
 )
 async def list_export_runs(
@@ -79,8 +89,10 @@ async def list_export_runs(
     ),
     finished_after: Optional[datetime] = Query(None, description="Inclusive lower bound on when the run ended."),
     finished_before: Optional[datetime] = Query(None, description="Inclusive upper bound on when the run ended."),
-    limit: int = Query(50, ge=1, le=200, description="Page size (default 50, max 200)."),
-    offset: int = Query(0, ge=0, description="Runs to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> ExportRunListResponse:
     """List the tenant's export history.
 
@@ -97,11 +109,18 @@ async def list_export_runs(
         finished_after: Lower date bound.
         finished_before: Upper date bound.
         limit: Page size.
-        offset: Runs to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Runs to skip (deprecated).
 
     Returns:
-        One page of runs with their deliveries, and the total matching.
+        One page of runs with their deliveries, whether another follows, and the total when asked for.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 403 without ``projects:view``; 404 for a tenant that
+            is not the caller's.
     """
+    after = parse_time_id_cursor(cursor)
     tenant_id = await run_in_threadpool(_tenant, tenant_slug, auth_data)
     page = await asyncio.to_thread(
         lambda: db.list_export_runs(
@@ -117,17 +136,24 @@ async def list_export_runs(
             finished_before=finished_before,
             limit=limit,
             offset=offset,
+            cursor=after,
+            include_total=include_total,
         )
     )
-    rows = page.get("runs") or []
+    rows = (page.get("runs") or [])[:limit]
+    has_more = bool(page.get("has_more")) and bool(rows)
     deliveries = deliveries_by_job(
         await asyncio.to_thread(db.list_export_run_deliveries, tenant_id, [r["job_id"] for r in rows])
     )
     return ExportRunListResponse(
         runs=[run_summary(row, deliveries.get(row["job_id"], [])) for row in rows],
-        total=int(page.get("total") or 0),
+        total=int(page.get("total") or 0) if include_total else None,
         limit=int(page.get("limit") or limit),
-        offset=int(page.get("offset") or 0),
+        offset=0 if after else int(page.get("offset") or 0),
+        has_more=has_more,
+        next_cursor=(
+            encode_time_id_cursor(rows[-1]["finished_at"], rows[-1]["job_id"]) if has_more else None
+        ),
     )
 
 

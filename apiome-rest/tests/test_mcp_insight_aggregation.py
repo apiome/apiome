@@ -1143,3 +1143,97 @@ def test_build_tool_examples_filters_to_named_tools_in_order():
 def test_build_tool_examples_empty_surface():
     assert build_tool_examples([]) == []
     assert build_tool_examples([_cap_item("resource", "r")]) == []
+
+
+# --- SQL-side aggregation (DBP-1.13, #7196) ---------------------------------------------------
+
+
+def test_the_row_based_aggregators_are_the_aggregate_builders_composed():
+    from app.mcp_insight_aggregation import (
+        compute_discovery_reliability,
+        compute_invocation_reliability,
+        discovery_aggregate,
+        discovery_reliability_from_aggregate,
+        invocation_aggregate,
+        invocation_reliability_from_aggregate,
+    )
+
+    jobs = [
+        {"state": "completed", "duration_ms": 100.0},
+        {"state": "completed", "duration_ms": 250.5},
+        {"state": "failed", "duration_ms": None},
+        {"state": "running", "duration_ms": None},
+        {"state": "paused", "duration_ms": 10.0},
+    ]
+    calls = [
+        {"is_error": False, "latency_ms": 10},
+        {"is_error": True, "latency_ms": None},
+        {"is_error": False, "latency_ms": 40},
+    ]
+    assert discovery_reliability_from_aggregate(discovery_aggregate(jobs)) == (
+        compute_discovery_reliability(jobs)
+    )
+    assert invocation_reliability_from_aggregate(invocation_aggregate(calls)) == (
+        compute_invocation_reliability(calls)
+    )
+    aggregate = discovery_aggregate(jobs)
+    assert (aggregate["job_count"], aggregate["completed_count"], aggregate["failed_count"]) == (5, 2, 1)
+    assert aggregate["latency_count"] == 3  # the unknown state still contributes its duration
+
+
+def test_an_empty_or_missing_aggregate_reads_as_no_history():
+    from app.mcp_insight_aggregation import (
+        discovery_reliability_from_aggregate,
+        invocation_reliability_from_aggregate,
+    )
+
+    for row in ({}, {"call_count": 0, "error_count": 0, "latency_count": 0, "avg_ms": None}):
+        reliability = invocation_reliability_from_aggregate(row)
+        assert (reliability.call_count, reliability.error_rate) == (0, 0.0)
+        assert reliability.latency.count == 0 and reliability.latency.p95_ms is None
+    assert discovery_reliability_from_aggregate({}).success_rate == 0.0
+
+
+def test_an_aggregate_row_from_sql_types_is_rounded_like_the_python_one():
+    from decimal import Decimal
+
+    from app.mcp_insight_aggregation import latency_stats_from_aggregate
+
+    stats = latency_stats_from_aggregate(
+        {
+            "latency_count": 3,
+            "avg_ms": Decimal("33.33333"),
+            "min_ms": 10.0,
+            "max_ms": 50,
+            "p50_ms": 40.004,
+            "p95_ms": 49.0,
+            "p99_ms": 49.8,
+        }
+    )
+    assert stats.as_dict() == {
+        "count": 3,
+        "avg_ms": 33.33,
+        "min_ms": 10.0,
+        "max_ms": 50.0,
+        "p50_ms": 40.0,
+        "p95_ms": 49.0,
+        "p99_ms": 49.8,
+    }
+
+
+def test_the_sql_aggregates_name_every_column_the_builders_read():
+    from app.mcp_insight_aggregation import (
+        LATENCY_AGGREGATE_KEYS,
+        discovery_aggregate_sql,
+        invocation_aggregate_sql,
+    )
+
+    discovery = discovery_aggregate_sql("duration")
+    for column in ("job_count", "queued_count", "running_count", "completed_count", "failed_count"):
+        assert f"AS {column}" in discovery
+    invocation = invocation_aggregate_sql()
+    assert "count(*) FILTER (WHERE is_error)::int AS error_count" in invocation
+    for sql in (discovery, invocation):
+        for column in LATENCY_AGGREGATE_KEYS:
+            assert f"AS {column}" in sql
+    assert "percentile_cont(0.95) WITHIN GROUP (ORDER BY (latency_ms)::double precision)" in invocation

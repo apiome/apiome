@@ -35,6 +35,7 @@ __all__ = [
     "HAS_MORE_HEADER",
     "MAX_OFFSET",
     "MAX_PAGE_LIMIT",
+    "MAX_REVISION_PAGE_LIMIT",
     "NEXT_CURSOR_HEADER",
     "TOTAL_CAP",
     "InvalidCursor",
@@ -47,6 +48,7 @@ __all__ = [
     "encode_key_cursor",
     "encode_time_id_cursor",
     "include_total_query",
+    "keyset_after",
     "keyset_before",
     "limit_query",
     "offset_query",
@@ -61,6 +63,9 @@ __all__ = [
 DEFAULT_PAGE_LIMIT = 50
 #: The hard maximum page size of every list endpoint.
 MAX_PAGE_LIMIT = 200
+#: The maximum page size of the lists that hold one revision's parts (its classes, its paths):
+#: clients read these whole, so the page is large enough that most revisions fit in one.
+MAX_REVISION_PAGE_LIMIT = 1000
 #: The deepest ``offset`` a deprecated offset request may ask for.
 MAX_OFFSET = 10_000
 #: ``include_total`` stops counting here; a total equal to the cap means "at least this many".
@@ -75,7 +80,7 @@ _MAX_CURSOR_LENGTH = 2048
 T = TypeVar("T")
 
 
-class InvalidCursor(ValueError):
+class InvalidCursor(ValueError):  # noqa: N818 - a refusal, named for what it refuses
     """The cursor is not one this service issued for this list."""
 
 
@@ -321,6 +326,31 @@ def keyset_before(
         return "", []
     stamp, row_id = cursor
     return f" AND ({timestamp_sql}, {id_sql}) < (%s, %s{id_cast})", [stamp, row_id]
+
+
+def keyset_after(
+    columns_sql: Sequence[str],
+    values: Optional[Sequence[Any]],
+    *,
+    casts: Optional[Sequence[str]] = None,
+) -> Tuple[str, List[Any]]:
+    """The predicate that continues an all-ascending list after a cursor.
+
+    Args:
+        columns_sql: The ``ORDER BY`` expressions, in order, as the query names them. Trusted SQL.
+        values: The cursor's values for those expressions (:func:`decode_key_cursor`), or ``None``
+            for page one.
+        casts: A cast per value (``"::uuid"``, or ``""``); none by default.
+
+    Returns:
+        ``(sql, params)``: ``" AND (…) > (…)"`` with its parameters, or ``("", [])`` without a
+        cursor.
+    """
+    if values is None:
+        return "", []
+    applied = list(casts) if casts is not None else [""] * len(columns_sql)
+    placeholders = ", ".join(f"%s{cast}" for cast in applied)
+    return f" AND ({', '.join(columns_sql)}) > ({placeholders})", list(values)
 
 
 def capped_count_sql(from_and_where_sql: str, *, cap: int = TOTAL_CAP) -> str:

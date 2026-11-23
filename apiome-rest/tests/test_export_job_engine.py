@@ -66,6 +66,7 @@ from app.export_job_engine import (
 )
 from app.export_source import ExportSource, ExportSourceError
 from app.export_validation import EmittedArtifactValidation
+from app.keyset_pagination import decode_time_id_cursor
 from app.models import ImportPreflightPolicy
 
 TENANT_SLUG = "acme"
@@ -510,10 +511,13 @@ async def test_list_is_tenant_scoped_and_summarized():
         await _wait_terminal(accepted.job_id)
         await _wait_terminal(other.job_id, tenant_slug="other-tenant")
 
-        listing = await list_export_jobs(TENANT_SLUG)
+        listing = await list_export_jobs(TENANT_SLUG, include_total=True)
+        uncounted = await list_export_jobs(TENANT_SLUG)
 
     assert [j.job_id for j in listing.jobs] == [accepted.job_id]
     assert listing.total == 1
+    # The total is counted only on request; has_more comes from the look-ahead row (#7196).
+    assert uncounted.total is None and uncounted.has_more is False and uncounted.next_cursor is None
     assert listing.limit == 50
     assert listing.offset == 0
     row = listing.jobs[0]
@@ -532,10 +536,17 @@ async def test_list_export_jobs_paginates_and_filters_state():
         await _wait_terminal(first.job_id)
         await _wait_terminal(second.job_id)
 
-        page = await list_export_jobs(TENANT_SLUG, limit=1, offset=0)
-        filtered = await list_export_jobs(TENANT_SLUG, state="completed")
-        empty = await list_export_jobs(TENANT_SLUG, state="failed")
+        page = await list_export_jobs(TENANT_SLUG, limit=1, offset=0, include_total=True)
+        filtered = await list_export_jobs(TENANT_SLUG, state="completed", include_total=True)
+        empty = await list_export_jobs(TENANT_SLUG, state="failed", include_total=True)
+        rest = await list_export_jobs(
+            TENANT_SLUG, limit=1, offset=5, cursor=decode_time_id_cursor(page.next_cursor)
+        )
 
+    # Keyset paging (#7196): the cursor continues after the first page and ignores the offset.
+    assert page.has_more is True and rest.has_more is False and rest.next_cursor is None
+    assert {page.jobs[0].job_id, rest.jobs[0].job_id} == {first.job_id, second.job_id}
+    assert rest.offset == 0 and rest.total is None
     assert page.total == 2
     assert page.limit == 1
     assert len(page.jobs) == 1

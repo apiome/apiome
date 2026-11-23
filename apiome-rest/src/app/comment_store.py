@@ -57,6 +57,7 @@ from .comments import (
     CommentValidationError,
 )
 from .database import db
+from .keyset_pagination import Page, page_of, time_id_key
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
@@ -95,7 +96,9 @@ class ThreadFilters:
         mentions_me: Only threads with a comment mentioning the viewer.
         origin: Only ``internal`` or only ``consumer`` threads (COL-4.4, #4528).
         limit: Page size.
-        offset: Threads to skip.
+        offset: Threads to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(last_activity_at, id)`` of the last thread already seen (#7196).
+        include_total: Also count the matches (capped); off by default.
     """
 
     version: Optional[str] = None
@@ -106,6 +109,8 @@ class ThreadFilters:
     origin: Optional[str] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
+    include_total: bool = False
 
 
 # ---------------------------------------------------------------------------------------------
@@ -437,17 +442,20 @@ def _mention_notifier(
 
 def list_threads(
     tenant_id: str, project_ref: str, filters: ThreadFilters, viewer_id: str
-) -> Tuple[List[CommentThreadSummary], int]:
+) -> Tuple[Page[CommentThreadSummary], Optional[int]]:
     """List a project's threads, most recently active first.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
-        filters: What to narrow to.
+        filters: What to narrow to, and where the page starts.
         viewer_id: The caller, for ``mentions_me``.
 
     Returns:
-        The page of summaries and the total matching the filters.
+        The page, and the capped total when ``filters.include_total`` (else ``None``).
 
     Raises:
         CommentValidationError: For an unknown project or version, or a malformed ``anchor_id``.
@@ -473,9 +481,19 @@ def list_threads(
         "mentioned_user_id": viewer_id if filters.mentions_me else None,
         "origin": filters.origin,
     }
-    rows = db.list_comment_threads(**scope, limit=filters.limit, offset=filters.offset)
-    total = db.count_comment_threads(**scope)
-    return [_summary(row) for row in rows], total
+    rows = db.list_comment_threads(
+        **scope, limit=filters.limit + 1, offset=filters.offset, cursor=filters.cursor
+    )
+    page = page_of(rows, filters.limit, time_id_key("last_activity_at"))
+    total = db.count_comment_threads(**scope) if filters.include_total else None
+    return (
+        Page(
+            items=[_summary(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def get_thread(tenant_id: str, project_ref: str, thread_id: str) -> CommentThreadDetail:

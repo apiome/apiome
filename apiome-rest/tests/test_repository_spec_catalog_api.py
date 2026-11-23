@@ -236,7 +236,8 @@ def test_filters_reach_the_dao_normalized() -> None:
     assert kwargs["sort"] == "recent"
     assert kwargs["all_branches"] is True
     assert kwargs["importable_only"] is False
-    assert kwargs["limit"] == 25
+    # One row past the page: `has_more` without a count (#7196).
+    assert kwargs["limit"] == 26
     assert kwargs["offset"] == 50
     assert kwargs["include_facets"] is True
 
@@ -314,7 +315,7 @@ def test_a_non_uuid_repository_filter_is_rejected_by_validation() -> None:
     mdb.tenant_repository_spec_catalog.assert_not_called()
 
 
-@pytest.mark.parametrize("limit", [0, 501])
+@pytest.mark.parametrize("limit", [0, 201])
 def test_the_page_size_bounds_are_enforced_at_the_edge(limit: int) -> None:
     with patch("app.tenant_repositories_routes.db") as mdb:
         r = client.get(_URL, params={"limit": limit})
@@ -369,3 +370,82 @@ def test_a_repository_with_no_name_falls_back_to_its_id() -> None:
         r = client.get(_URL, params={"include_facets": "true"})
 
     assert r.json()["facets"]["repositories"][0]["label"] == _REPO_ID
+
+
+# --- keyset paging (#7196) ----------------------------------------------------------------
+
+
+def _catalog_of(rows):
+    """A DAO stand-in that pages ``rows`` by path, honouring ``limit`` and the decoded cursor."""
+    ordered = sorted(rows, key=lambda row: (row["path"], row["id"]))
+
+    def dao(_tenant, *, limit=50, offset=0, cursor=None, include_total=True, sort="path", **_):
+        matching = ordered
+        if cursor is not None:
+            matching = [row for row in ordered if [row["path"], row["id"]] > list(cursor)]
+            offset = 0
+        return _page(
+            rows=matching[offset : offset + limit],
+            catalog_total=len(ordered) if include_total else None,
+            match_count=len(ordered) if include_total else None,
+            offset=offset,
+            sort=sort,
+        )
+
+    return dao
+
+
+def _specs(count):
+    return [
+        _row(id=f"990e8400-e29b-41d4-a716-{index:012d}", path=f"specs/{index // 2}.yaml")
+        for index in range(count)
+    ]
+
+
+def test_the_catalog_pages_by_cursor_to_the_end() -> None:
+    from tests.keyset_paging_fakes import walk
+
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.tenant_repository_spec_catalog.side_effect = _catalog_of(_specs(5))
+        seen = walk(lambda params: client.get(_URL, params={"sort": "path", **params}), "specs")
+
+    ids = [spec["id"] for spec in seen]
+    assert len(ids) == len(set(ids)) == 5
+    assert ids == sorted(ids)
+
+
+def test_the_counts_are_not_computed_unless_asked_for() -> None:
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.tenant_repository_spec_catalog.side_effect = _catalog_of(_specs(1))
+        body = client.get(_URL).json()
+        assert mdb.tenant_repository_spec_catalog.call_args.kwargs["include_total"] is False
+        counted = client.get(_URL, params={"include_total": "true"}).json()
+
+    assert body["catalog_total"] is None and body["match_count"] is None
+    assert body["has_more"] is False and body["next_cursor"] is None
+    assert counted["catalog_total"] == 1 and counted["match_count"] == 1
+
+
+def test_a_malformed_cursor_is_a_400() -> None:
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        r = client.get(_URL, params={"cursor": "not-a-cursor"})
+
+    assert r.status_code == 400
+    mdb.tenant_repository_spec_catalog.assert_not_called()
+
+
+def test_a_cursor_from_another_sort_is_a_400() -> None:
+    """Continuing a `path` listing with `sort=recent` would skip or repeat rows silently."""
+    from app.repository_spec_catalog import encode_spec_cursor
+
+    token = encode_spec_cursor("path", _row())
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        r = client.get(_URL, params={"cursor": token, "sort": "recent"})
+
+    assert r.status_code == 400
+    mdb.tenant_repository_spec_catalog.assert_not_called()
+
+
+def test_the_offset_has_a_hard_maximum() -> None:
+    with patch("app.tenant_repositories_routes.db"):
+        assert client.get(_URL, params={"offset": 10_001}).status_code == 422

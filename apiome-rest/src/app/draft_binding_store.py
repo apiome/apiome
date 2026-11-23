@@ -31,7 +31,7 @@ the same transaction.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple
 
 from fastapi import HTTPException
 
@@ -71,6 +71,7 @@ from .draft_bindings import (
     source_digest,
 )
 from .git_intake import GitFilesetResult, GitIntakeError, GitSelector, fetch_git_fileset
+from .keyset_pagination import Page, page_of, time_id_key
 
 __all__ = [
     "BindingFilters",
@@ -118,13 +119,17 @@ class BindingFilters:
         active: ``True`` for active bindings only, ``False`` for released ones only, ``None`` for
             both.
         limit: Page size.
-        offset: Bindings to skip.
+        offset: Bindings to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(created_at, id)`` of the last binding already seen (#7196).
+        include_total: Also count the matches (capped); off by default.
     """
 
     version: Optional[str] = None
     active: Optional[bool] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
+    include_total: bool = False
 
 
 @dataclass(frozen=True)
@@ -474,8 +479,11 @@ def get_binding(tenant_id: str, project_ref: str, binding_id: str) -> DraftBindi
 
 def list_bindings(
     tenant_id: str, project_ref: str, filters: BindingFilters
-) -> Tuple[List[DraftBindingRecord], int]:
+) -> Tuple[Page[DraftBindingRecord], Optional[int]]:
     """List a project's bindings, active and released.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
@@ -483,7 +491,7 @@ def list_bindings(
         filters: What to narrow to and how to page.
 
     Returns:
-        ``(page, total)``.
+        ``(page, total)``; the total is capped, and ``None`` unless ``filters.include_total``.
 
     Raises:
         DraftBindingValidationError: ``binding-project-not-found``, or ``binding-version-not-found``
@@ -499,13 +507,26 @@ def list_bindings(
         project_id=project_id,
         version_id=version_id,
         active=filters.active,
-        limit=filters.limit,
+        limit=filters.limit + 1,
         offset=filters.offset,
+        cursor=filters.cursor,
     )
-    total = db.count_draft_bindings(
-        tenant_id=tenant_id, project_id=project_id, version_id=version_id, active=filters.active
+    page = page_of(rows, filters.limit, time_id_key())
+    total = (
+        db.count_draft_bindings(
+            tenant_id=tenant_id, project_id=project_id, version_id=version_id, active=filters.active
+        )
+        if filters.include_total
+        else None
     )
-    return [_binding_record(row) for row in rows], total
+    return (
+        Page(
+            items=[_binding_record(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def version_binding_status(

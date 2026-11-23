@@ -181,7 +181,7 @@ def test_the_ledger_interleaves_git_and_connector_runs(store):
     store.add_git_run(_TENANT, status="failed", error_message="clone failed")
     store.add_git_run(_OTHER_TENANT)
     with patch("app.catalog_connector_routes.enforce_permission", return_value=_ACTOR) as guard:
-        body = client.get(f"{_BASE}/refresh-runs").json()
+        body = client.get(f"{_BASE}/refresh-runs", params={"include_total": "true"}).json()
     assert guard.call_args.args[2:] == (Resource.IMPORTS, Action.VIEW)
     assert body["total"] == 3
     assert [r["source"] for r in body["runs"]] == ["git", "connector", "git"]
@@ -200,10 +200,93 @@ def test_the_ledger_filters_by_connector_and_source(store):
     connector = store.add_connector(_TENANT, kind="kong-admin", name="Prod Kong")
     store.add_git_run(_TENANT)
     store.start_run(db, _TENANT, connector["id"], trigger="scheduled", created_by=None)
-    only = client.get(f"{_BASE}/refresh-runs?connector={connector['id']}").json()
+    only = client.get(f"{_BASE}/refresh-runs?connector={connector['id']}&include_total=true").json()
     assert [r["source"] for r in only["runs"]] == ["connector"] and only["total"] == 1
     git = client.get(f"{_BASE}/refresh-runs?source=git").json()
     assert [r["source"] for r in git["runs"]] == ["git"]
     assert client.get(f"{_BASE}/refresh-runs?source=ftp").status_code == 400
     missing = "77777777-7777-4777-8777-777777777777"
     assert client.get(f"{_BASE}/refresh-runs?connector={missing}").status_code == 404
+
+
+# --- keyset paging of the ledger (#7196) ----------------------------------------------------
+
+
+def test_the_ledger_pages_by_cursor_to_the_end_without_counting(store, monkeypatch):
+    from tests.keyset_paging_fakes import walk
+
+    connector = store.add_connector(_TENANT, kind="kong-admin", name="Prod Kong")
+    store.add_git_run(_TENANT)
+    store.start_run(db, _TENANT, connector["id"], trigger="manual", created_by=_ACTOR)
+    for _ in range(3):
+        store.add_git_run(_TENANT)
+    monkeypatch.setattr(
+        store, "count_refresh_runs", lambda *a, **k: pytest.fail("counted without include_total")
+    )
+    seen = walk(
+        lambda params: client.get(f"{_BASE}/refresh-runs", params=params),
+        "runs",
+        has_more_key="hasMore",
+        next_cursor_key="nextCursor",
+    )
+    ids = [run["id"] for run in seen]
+    assert len(ids) == len(set(ids)) == 5
+    assert [run["source"] for run in seen] == ["git", "git", "git", "connector", "git"]
+    first = client.get(f"{_BASE}/refresh-runs").json()
+    assert first["total"] is None and first["hasMore"] is False and first["nextCursor"] is None
+
+
+def test_the_ledger_refuses_a_malformed_cursor_and_oversized_pages(store):
+    assert client.get(f"{_BASE}/refresh-runs", params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(f"{_BASE}/refresh-runs", params={"limit": 201}).status_code == 422
+    assert client.get(f"{_BASE}/refresh-runs", params={"offset": 10_001}).status_code == 422
+
+
+class _Recorder:
+    """Stands in for the database, recording each statement the store issues."""
+
+    def __init__(self):
+        self.calls = []
+
+    def execute_query(self, sql, params=()):
+        self.calls.append((sql, tuple(params)))
+        return [{"total": 4}] if "capped" in sql else []
+
+
+def test_the_store_continues_each_list_after_its_cursor():
+    from datetime import datetime, timezone
+
+    from app import catalog_connector_store as real
+
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    run_id = "55555555-5555-4555-8555-555555555555"
+    rec = _Recorder()
+    real.list_refresh_runs(
+        rec, _TENANT, connector_id=None, source="git", limit=11, offset=40, cursor=(stamp, run_id)
+    )
+    sql, params = rec.calls[-1]
+    assert "(j.created_at, j.id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY j.created_at DESC, j.id DESC" in sql
+    assert params[-4:] == (stamp, run_id, 11, 0)
+
+    real.list_runs(rec, _TENANT, run_id, limit=11, offset=40, cursor=(stamp, run_id))
+    sql, params = rec.calls[-1]
+    assert "(j.created_at, j.id) < (%s, %s::uuid)" in sql and params[-4:] == (stamp, run_id, 11, 0)
+
+    real.list_items(rec, run_id, status="imported", limit=11, offset=40, cursor=["orders", "o-1"])
+    sql, params = rec.calls[-1]
+    # The predicate compares the very expressions the list is ordered by.
+    assert "(lower(COALESCE(i.remote_name, i.remote_id)), i.remote_id) > (%s, %s)" in sql
+    assert "ORDER BY lower(COALESCE(i.remote_name, i.remote_id)), i.remote_id" in sql
+    assert params == (run_id, "imported", "orders", "o-1", 11, 0)
+
+
+def test_the_store_counts_stop_at_the_cap():
+    from app import catalog_connector_store as real
+
+    rec = _Recorder()
+    assert real.count_refresh_runs(rec, _TENANT, connector_id=None, source=None) == 4
+    assert real.count_runs(rec, _TENANT, _TENANT) == 4
+    assert real.count_items(rec, _TENANT, status="imported") == 4
+    assert all("LIMIT 10000" in sql for sql, _ in rec.calls)
+    assert [sql.count("%s") for sql, _ in rec.calls] == [len(params) for _, params in rec.calls]

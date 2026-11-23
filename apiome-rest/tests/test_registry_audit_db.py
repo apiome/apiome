@@ -16,10 +16,12 @@ _NOW = datetime(2026, 6, 23, 12, 0, 0, tzinfo=timezone.utc)
 
 def test_count_registry_audit_filtered_scopes_to_tenant():
     db = Database()
-    db.execute_query = MagicMock(return_value=[{"cnt": 7}])
+    db.execute_query = MagicMock(return_value=[{"total": 7}])
     out = db.count_registry_audit_filtered(_TENANT)
     assert out == 7
     sql, params = db.execute_query.call_args[0]
+    # The count stops reading at the cap (#7196).
+    assert "LIMIT 10000" in sql
     assert "FROM apiome.registry_audit ra" in sql
     assert "ra.tenant_id = %s" in sql
     assert params == (_TENANT,)

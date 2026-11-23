@@ -109,6 +109,17 @@ from .catalog_connectors import (
     validate_scope,
 )
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    encode_key_cursor,
+    include_total_query,
+    limit_query,
+    offset_query,
+    page_of,
+    parse_key_cursor,
+    parse_time_id_cursor,
+    time_id_key,
+)
 from .permissions import Action, Resource, enforce_permission
 from .redacted_validation_route import RedactedValidationRoute
 
@@ -324,14 +335,19 @@ def list_refresh_runs(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     connector: Optional[UUID] = Query(None, description="Only this connector's runs."),
     source: Optional[str] = Query(None, description="git | connector (both when omitted)."),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> RefreshRunPage:
     """The refresh ledger: Git refresh jobs and connector runs, interleaved newest first (``imports:view``).
 
     Each run says its ``source`` — ``git`` (with the repository, branch and path) or ``connector`` (with
     the connector's name and kind) — so one list can badge both. ``connector`` narrows it to one
     connector (a 404 for an unknown one).
+
+    Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+    ``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
@@ -342,11 +358,34 @@ def list_refresh_runs(
     connector_id = str(connector) if connector else None
     if connector is not None:
         _require_connector(tenant_id, connector)
-    rows = store.list_refresh_runs(
-        db, tenant_id, connector_id=connector_id, source=source_f, limit=limit, offset=offset
+    after = parse_time_id_cursor(cursor)
+    # One row past the page answers "is there more?" without counting (#7196).
+    page = page_of(
+        store.list_refresh_runs(
+            db,
+            tenant_id,
+            connector_id=connector_id,
+            source=source_f,
+            limit=limit + 1,
+            offset=offset,
+            cursor=after,
+        ),
+        limit,
+        time_id_key(),
     )
-    total = store.count_refresh_runs(db, tenant_id, connector_id=connector_id, source=source_f)
-    return RefreshRunPage(runs=[_ledger_out(r) for r in rows], total=total, limit=limit, offset=offset)
+    total = (
+        store.count_refresh_runs(db, tenant_id, connector_id=connector_id, source=source_f)
+        if include_total
+        else None
+    )
+    return RefreshRunPage(
+        runs=[_ledger_out(r) for r in page.items],
+        total=total,
+        limit=limit,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def _ledger_out(row: Mapping[str, Any]) -> RefreshRunOut:
@@ -552,13 +591,18 @@ def list_connector_items(
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     status: Optional[str] = Query(None, description="discovered | imported | ignored | missing"),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> ConnectorItemPage:
     """List the remote APIs a connector has seen (``imports:view``).
 
     ``catalogItemId`` links an imported API to its catalog item. An API that left the inventory
     is ``missing``; it is never deleted.
+
+    Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+    ``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
@@ -567,9 +611,26 @@ def list_connector_items(
     status_f = (status or "").strip() or None
     if status_f is not None and status_f not in ITEM_STATUSES:
         raise HTTPException(status_code=400, detail=f"Invalid status: expected one of {list(ITEM_STATUSES)}")
-    rows = store.list_items(db, str(connector_id), status=status_f, limit=limit, offset=offset)
-    total = store.count_items(db, str(connector_id), status=status_f)
-    return ConnectorItemPage(items=[_item_out(r) for r in rows], total=total, limit=limit, offset=offset)
+    after = parse_key_cursor(cursor, 2)
+    if after is not None and not all(isinstance(value, str) for value in after):
+        raise HTTPException(status_code=400, detail="Invalid cursor: not an inventory cursor")
+    # One row past the page answers "is there more?" without counting (#7196).
+    page = page_of(
+        store.list_items(
+            db, str(connector_id), status=status_f, limit=limit + 1, offset=offset, cursor=after
+        ),
+        limit,
+        lambda row: encode_key_cursor([row["sort_key"], row["remote_id"]]),
+    )
+    total = store.count_items(db, str(connector_id), status=status_f) if include_total else None
+    return ConnectorItemPage(
+        items=[_item_out(r) for r in page.items],
+        total=total,
+        limit=limit,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.get(_BASE + "/{connector_id}/runs", response_model=ConnectorRunPage, response_model_by_alias=True)
@@ -577,21 +638,41 @@ def list_connector_runs(
     tenant_slug: str,
     connector_id: UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> ConnectorRunPage:
     """List a connector's sync runs, newest first (``imports:view``).
 
     Runs are rows of the same refresh ledger Git refresh jobs use (``refreshSource:
     "connector"``), and their pulls count against the same tenant quota.
+
+    Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+    ``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"connector:{connector_id}")
     _require_connector(tenant_id, connector_id)
-    rows = store.list_runs(db, tenant_id, str(connector_id), limit=limit, offset=offset)
-    total = store.count_runs(db, tenant_id, str(connector_id))
-    return ConnectorRunPage(runs=[_run_out(r) for r in rows], total=total, limit=limit, offset=offset)
+    after = parse_time_id_cursor(cursor)
+    # One row past the page answers "is there more?" without counting (#7196).
+    page = page_of(
+        store.list_runs(
+            db, tenant_id, str(connector_id), limit=limit + 1, offset=offset, cursor=after
+        ),
+        limit,
+        time_id_key(),
+    )
+    total = store.count_runs(db, tenant_id, str(connector_id)) if include_total else None
+    return ConnectorRunPage(
+        runs=[_run_out(r) for r in page.items],
+        total=total,
+        limit=limit,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.put(

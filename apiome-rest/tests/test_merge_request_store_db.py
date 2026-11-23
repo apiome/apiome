@@ -321,5 +321,6 @@ def test_close_withdraws_the_review_and_frees_the_branch(world):
     assert review_store.get_review(w["tenant"], w["project"], mr.review.review.id).review.closed_at is not None
     reopened = _open(w, branch)
     assert reopened.merge_request.id != mr.merge_request.id
-    records, total = store.list_merge_requests(w["tenant"], w["project"], state="open")
-    assert total == 1 and records[0].id == reopened.merge_request.id
+    page, total = store.list_merge_requests(w["tenant"], w["project"], state="open", include_total=True)
+    assert total == 1 and page.items[0].id == reopened.merge_request.id
+    assert page.has_more is False and page.next_cursor is None

@@ -32,6 +32,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import merge_request_store
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .merge_requests import (
     CODE_ALREADY_OPEN,
     CODE_BRANCH_EXISTS,
@@ -96,9 +103,19 @@ class MergeRequestListResponse(BaseModel):
         default_factory=list, description="Merge requests, most recently active first."
     )
     count: int = Field(description="How many merge requests this page holds.")
-    total: int = Field(description="How many merge requests match the filter in all.")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many merge requests match the filter, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 # ---------------------------------------------------------------------------------------------
@@ -211,25 +228,65 @@ def create_draft_branch(
     _PROJECT + "/merge-requests",
     response_model=MergeRequestListResponse,
     summary="List merge requests",
+    description=(
+        "A page of the project's merge requests, most recently active first.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "The `total` is counted only when `include_total` is set."
+    ),
     responses={404: _ERROR_RESPONSES[404]},
 )
 def list_merge_requests(
     tenant_slug: str,
     project_ref: str,
     state: Optional[MergeRequestState] = Query(default=None, description="Only requests in this state."),
-    limit: int = Query(default=50, ge=1, le=merge_request_store.MAX_LIST_LIMIT),
-    offset: int = Query(default=0, ge=0),
+    limit: int = limit_query(maximum=merge_request_store.MAX_LIST_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> MergeRequestListResponse:
-    """List the project's merge requests, most recently active first."""
+    """List the project's merge requests, most recently active first.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_ref: Project slug or id.
+        state: Only requests in this state.
+        limit: Page size.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Requests to skip (deprecated).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page, whether another follows, and the total when asked for.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project, 403 without
+            ``versions:view``.
+    """
     tenant_id, _ = _caller(auth_data, Resource.VERSIONS, Action.VIEW)
+    after = parse_time_id_cursor(cursor)
     try:
-        records, total = merge_request_store.list_merge_requests(
-            tenant_id, project_ref, state=state, limit=limit, offset=offset
+        page, total = merge_request_store.list_merge_requests(
+            tenant_id,
+            project_ref,
+            state=state,
+            limit=limit,
+            offset=offset,
+            cursor=after,
+            include_total=include_total,
         )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
-    return MergeRequestListResponse(merge_requests=records, count=len(records), total=total, limit=limit, offset=offset)
+    return MergeRequestListResponse(
+        merge_requests=page.items,
+        count=len(page.items),
+        total=total,
+        limit=limit,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

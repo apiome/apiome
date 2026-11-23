@@ -38,6 +38,7 @@ from .database import db
 from .draft_binding_store import resolve_project as _resolve_binding_project
 from .draft_binding_store import resolve_version as _resolve_binding_version
 from .draft_bindings import DraftBindingValidationError, normalize_ref
+from .keyset_pagination import Page, page_of, time_id_key
 from .provider_checks import (
     CODE_BINDING_NOT_FOUND,
     CODE_BINDING_RELEASED,
@@ -102,7 +103,8 @@ class CheckFilters:
         commit_sha: Only checks about this commit.
         state: Only checks in this normalized state.
         limit: Page size.
-        offset: Checks to skip.
+        offset: Checks to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(created_at, id)`` of the last check already seen (#7196).
     """
 
     version: Optional[str] = None
@@ -110,6 +112,7 @@ class CheckFilters:
     state: Optional[str] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
 
 
 @dataclass(frozen=True)
@@ -582,16 +585,18 @@ def publish_check(
 
 def list_checks(
     tenant_id: str, project_ref: str, filters: CheckFilters
-) -> Tuple[List[CheckRunRecord], Optional[str]]:
+) -> Tuple[Page[CheckRunRecord], Optional[str]]:
     """List a project's check runs, newest first.
+
+    Reads one row more than the page to learn whether another page exists (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
-        filters: What to narrow to.
+        filters: What to narrow to, and where the page starts.
 
     Returns:
-        ``(checks, version_id)`` — the page, and the version the filter resolved to when one was
+        ``(page, version_id)`` — the page, and the version the filter resolved to when one was
         named, so a caller can echo what it actually filtered on.
 
     Raises:
@@ -609,10 +614,19 @@ def list_checks(
         version_id=version_id,
         commit_sha=filters.commit_sha,
         state=filters.state,
-        limit=filters.limit,
+        limit=filters.limit + 1,
         offset=filters.offset,
+        cursor=filters.cursor,
     )
-    return [_check_record(row) for row in rows], version_id
+    page = page_of(rows, filters.limit, time_id_key())
+    return (
+        Page(
+            items=[_check_record(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        version_id,
+    )
 
 
 def get_check(tenant_id: str, project_ref: str, check_id: str) -> CheckRunDetail:

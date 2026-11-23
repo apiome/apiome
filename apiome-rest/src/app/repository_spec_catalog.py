@@ -21,7 +21,14 @@ parameters, so literal percent signs must be doubled. That is why the ILIKE patt
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+from .keyset_columns import (
+    SortColumn,
+    decode_columns_cursor,
+    encode_columns_cursor,
+    keyset_after_columns,
+)
 
 # --- Format families ---------------------------------------------------------------------
 
@@ -140,6 +147,87 @@ def normalize_sort(sort: Optional[str]) -> str:
     """
     key = (sort or "").strip().lower()
     return key if key in SPEC_SORT_SQL else DEFAULT_SPEC_SORT
+
+
+# --- Keyset paging (#7196) ----------------------------------------------------------------
+
+
+_PATH_COLUMN = SortColumn("f.path", "text", ("path",))
+_ID_COLUMN = SortColumn("f.id", "uuid", ("id",))
+
+#: Sort key → the columns of its :data:`SPEC_SORT_SQL` clause, in order. The two must describe
+#: the same ordering: a page is continued with a predicate built from these columns, so a
+#: mismatch would skip or repeat rows.
+SPEC_SORT_COLUMNS: Dict[str, Tuple[SortColumn, ...]] = {
+    "path": (_PATH_COLUMN, _ID_COLUMN),
+    "repository": (
+        SortColumn("r.repository_full_name", "text", ("repository_full_name",), nullable=True),
+        _PATH_COLUMN,
+        _ID_COLUMN,
+    ),
+    "format": (
+        SortColumn("(" + SPEC_FORMAT_SQL + ")", "text", ("format_key",)),
+        _PATH_COLUMN,
+        _ID_COLUMN,
+    ),
+    "status": (
+        SortColumn("(" + SPEC_STATUS_RANK_SQL + ")", "int", ("status_rank",)),
+        _PATH_COLUMN,
+        _ID_COLUMN,
+    ),
+    "recent": (
+        SortColumn(
+            "COALESCE(imp.created_at, f.created_at)",
+            "time",
+            ("last_imported_at", "discovered_at"),
+            descending=True,
+            nullable=True,
+        ),
+        _ID_COLUMN,
+    ),
+}
+
+
+def encode_spec_cursor(sort_key: str, row: Mapping[str, Any]) -> str:
+    """The cursor that continues a catalog page after ``row``.
+
+    Args:
+        sort_key: The ordering the page was read in (a :data:`SPEC_SORT_COLUMNS` key).
+        row: The last row of the page, as the catalog query returned it.
+
+    Returns:
+        An opaque cursor carrying the sort key and the row's sort values.
+    """
+    return encode_columns_cursor(sort_key, SPEC_SORT_COLUMNS[sort_key], row)
+
+
+def decode_spec_cursor(token: Any, sort_key: str) -> List[Any]:
+    """Read a catalog cursor for the ordering the request asked for.
+
+    Args:
+        token: The ``cursor`` query parameter.
+        sort_key: The request's (normalized) sort key.
+
+    Returns:
+        The sort values of the last row already seen, one per :data:`SPEC_SORT_COLUMNS` column.
+
+    Raises:
+        InvalidCursor: The token is malformed, or was issued for a different ``sort``.
+    """
+    return decode_columns_cursor(token, sort_key, SPEC_SORT_COLUMNS[sort_key])
+
+
+def spec_keyset_after(sort_key: str, values: Optional[Sequence[Any]]) -> Tuple[str, List[Any]]:
+    """The predicate that continues a catalog ordering after a cursor.
+
+    Args:
+        sort_key: A :data:`SPEC_SORT_COLUMNS` key.
+        values: The values from :func:`decode_spec_cursor`, or ``None`` for page one.
+
+    Returns:
+        ``(sql, params)``: ``" AND (…)"`` with its parameters, or ``("", [])`` without a cursor.
+    """
+    return keyset_after_columns(SPEC_SORT_COLUMNS[sort_key], values)
 
 
 def normalize_format(fmt: Optional[str]) -> Optional[str]:

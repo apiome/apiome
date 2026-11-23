@@ -68,7 +68,10 @@ def test_per_repo_history_ok():
         mdb.get_tenant_repository.return_value = {"id": _REPO_ID}
         mdb.count_repository_refresh_audit.return_value = 1
         mdb.search_repository_refresh_audit.return_value = [_audit_row()]
-        r = client.get(f"/v1/tenants/acme/repositories/{_REPO_ID}/refresh-history")
+        r = client.get(
+            f"/v1/tenants/acme/repositories/{_REPO_ID}/refresh-history",
+            params={"include_total": "true"},
+        )
     assert r.status_code == 200
     body = r.json()
     assert body["pagination"]["total"] == 1
@@ -153,14 +156,15 @@ def test_unknown_repository_is_404():
 
 
 def test_pagination_reports_next_offset():
-    rows = [_audit_row(id=f"{i:032x}") for i in range(2)]
+    # Three rows for a page of two: the extra row is what says "there is more" (#7196).
+    rows = [_audit_row(id=f"{i:032x}") for i in range(3)]
     with patch("app.tenant_repositories_routes.db") as mdb:
         mdb.get_tenant_repository.return_value = {"id": _REPO_ID}
         mdb.count_repository_refresh_audit.return_value = 5
         mdb.search_repository_refresh_audit.return_value = rows
         r = client.get(
             f"/v1/tenants/acme/repositories/{_REPO_ID}/refresh-history",
-            params={"limit": 2, "offset": 0},
+            params={"limit": 2, "offset": 0, "include_total": "true"},
         )
     assert r.status_code == 200
     pag = r.json()["pagination"]
@@ -179,3 +183,54 @@ def test_limit_over_max_is_422():
             params={"limit": 9999},
         )
     assert r.status_code == 422
+
+
+# --- Keyset paging (#7196) ---------------------------------------------------
+
+_HISTORY = f"/v1/tenants/acme/repositories/{_REPO_ID}/refresh-history"
+
+
+def test_history_pages_by_cursor_to_the_end():
+    from tests.keyset_paging_fakes import keyset_rows, stamps
+
+    rows = [
+        _audit_row(id=f"aaaaaaaa-bbbb-cccc-dddd-{index:012d}", created_at=stamp)
+        for index, stamp in enumerate(stamps(5))
+    ]
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = {"id": _REPO_ID}
+        mdb.search_repository_refresh_audit.side_effect = keyset_rows(rows)
+        seen, cursor = [], None
+        for _ in range(10):
+            params = {"limit": 2, **({"cursor": cursor} if cursor else {})}
+            body = client.get(_HISTORY, params=params).json()
+            seen += [item["id"] for item in body["items"]]
+            cursor = body["pagination"]["nextCursor"]
+            if not body["pagination"]["hasMore"]:
+                break
+        mdb.count_repository_refresh_audit.assert_not_called()
+    assert cursor is None
+    assert len(seen) == len(set(seen)) == 5
+    assert seen == sorted(seen, reverse=True)
+
+
+def test_history_total_is_not_counted_unless_asked():
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = {"id": _REPO_ID}
+        mdb.search_repository_refresh_audit.return_value = [_audit_row()]
+        pag = client.get(_HISTORY).json()["pagination"]
+        mdb.count_repository_refresh_audit.assert_not_called()
+    assert pag["total"] is None
+    assert pag["hasMore"] is False and pag["nextCursor"] is None
+
+
+def test_history_malformed_cursor_is_400():
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = {"id": _REPO_ID}
+        assert client.get(_HISTORY, params={"cursor": "not-a-cursor"}).status_code == 400
+
+
+def test_history_page_size_and_offset_have_hard_maximums():
+    with patch("app.tenant_repositories_routes.db"):
+        assert client.get(_HISTORY, params={"limit": 201}).status_code == 422
+        assert client.get(_HISTORY, params={"offset": 10_001}).status_code == 422

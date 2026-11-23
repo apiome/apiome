@@ -45,6 +45,7 @@ from app.consumer_impact import ConsumerImpactReport
 from app.main import app
 from tests.api_check_suite_doubles import Evidence, Provider, install_evidence
 from tests.fake_suite_db import FakeSuiteDb
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -317,6 +318,17 @@ def test_a_versions_evaluations_are_listed_newest_first(fake, provider, act_as, 
     page = client.get(f"{UNBOUND_SUITE}/runs").json()
     assert [run["id"] for run in page["runs"]] == [second, first]
     assert page["count"] == 2
+    assert page["has_more"] is False and page["next_cursor"] is None
+
+    # Keyset paging (#7196): follow next_cursor to the end, seeing every evaluation once.
+    seen = walk(lambda params: client.get(f"{UNBOUND_SUITE}/runs", params=params), "runs", limit=1)
+    assert [run["id"] for run in seen] == [second, first]
+
+
+def test_a_malformed_runs_cursor_is_a_400_and_the_page_size_is_capped(fake, provider, act_as, evidence):
+    assert client.get(f"{UNBOUND_SUITE}/runs", params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(f"{UNBOUND_SUITE}/runs", params={"limit": 201}).status_code == 422
+    assert client.get(f"{UNBOUND_SUITE}/runs", params={"offset": 10_001}).status_code == 422
 
 
 def test_an_evaluation_is_not_readable_through_another_project(fake, provider, act_as):

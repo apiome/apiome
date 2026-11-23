@@ -36,6 +36,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from . import schema_suite_store as store
 from .config import settings
+from .keyset_pagination import Page, page_of, time_id_key
 from .schema_instance_service import (
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_XML,
@@ -900,13 +901,36 @@ def _result_model(row: Dict[str, Any]) -> SuiteRunResultModel:
 
 
 def list_runs(
-    tenant_id: str, suite_id: str, *, limit: int = 20, offset: int = 0
-) -> Optional[List[SuiteRunSummaryModel]]:
-    """A suite's run history, newest first; ``None`` when the suite is not visible."""
+    tenant_id: str,
+    suite_id: str,
+    *,
+    limit: int = 20,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
+) -> Optional[Page[SuiteRunSummaryModel]]:
+    """A page of a suite's run history, newest first.
+
+    Reads one row more than the page to learn whether another page exists (#7196).
+
+    Args:
+        tenant_id: Tenant scope.
+        suite_id: The suite whose history is read.
+        limit: Page size.
+        offset: Runs to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen.
+
+    Returns:
+        The page; ``None`` when the suite is not visible.
+    """
     if store.get_suite(tenant_id, suite_id) is None:
         return None
-    rows = store.list_runs(tenant_id, suite_id, limit=limit, offset=offset)
-    return [_run_summary_from_row(row) for row in rows]
+    rows = store.list_runs(tenant_id, suite_id, limit=limit + 1, offset=offset, cursor=cursor)
+    page = page_of(rows, limit, time_id_key())
+    return Page(
+        items=[_run_summary_from_row(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_run_detail(

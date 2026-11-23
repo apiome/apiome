@@ -20,6 +20,13 @@ from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+    set_page_headers,
+)
 from .permissions import Action, Resource, enforce_permission
 from .schema_reference import SchemaReferenceError
 from .schema_suite_service import (
@@ -328,27 +335,49 @@ async def run_schema_test_suite(
     "/{tenant_slug}/schema-suites/{suite_id}/runs",
     response_model=List[SuiteRunSummaryModel],
     summary="A suite's run history",
-    description="Newest first. ``limit`` is clamped to 1..100.",
+    description=(
+        "Newest first. ``limit`` is at most 100. Pages by `cursor`: the `X-Has-More` response "
+        "header says whether another page exists, and `X-Next-Cursor` carries the `cursor` that "
+        "reads it."
+    ),
 )
 def list_schema_test_suite_runs(
     tenant_slug: str,
     suite_id: str,
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    response: Response,
+    limit: int = limit_query(20, maximum=100),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[SuiteRunSummaryModel]:
     """Read run history.
 
+    Args:
+        tenant_slug: The tenant in the URL.
+        suite_id: The suite whose history is read.
+        response: The response, for the paging headers.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        offset: Runs to skip (deprecated).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of runs, newest first; paging state is in the response headers.
+
     Raises:
-        HTTPException: 403 without ``types:view``, 404 when the suite is not visible.
+        HTTPException: 400 for a malformed cursor, 403 without ``types:view``, 404 when the suite
+            is not visible.
     """
     enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
     tenant_id = _tenant_id(auth_data)
     _ = tenant_slug
-    runs = list_runs(tenant_id, suite_id, limit=limit, offset=offset)
-    if runs is None:
+    page = list_runs(
+        tenant_id, suite_id, limit=limit, offset=offset, cursor=parse_time_id_cursor(cursor)
+    )
+    if page is None:
         raise HTTPException(status_code=404, detail="Test suite not found.")
-    return runs
+    set_page_headers(response, page)
+    return page.items
 
 
 @router.get(

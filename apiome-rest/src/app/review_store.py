@@ -37,6 +37,7 @@ from . import comment_store, notification_store
 from .comments import CommentValidationError
 from .compatibility_engine import openapi_for_revision
 from .database import db
+from .keyset_pagination import Page, page_of, time_id_key
 from .review_lifecycle import (
     DECISION_PENDING,
     STATE_IN_REVIEW,
@@ -108,7 +109,9 @@ class ReviewFilters:
         state: Only reviews in this state.
         open: ``True`` for open reviews only, ``False`` for withdrawn ones only, ``None`` for both.
         limit: Page size.
-        offset: Reviews to skip.
+        offset: Reviews to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(updated_at, id)`` of the last review already seen (#7196).
+        include_total: Also count the matches (capped); off by default.
     """
 
     version: Optional[str] = None
@@ -116,6 +119,8 @@ class ReviewFilters:
     open: Optional[bool] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
+    include_total: bool = False
 
 
 # ---------------------------------------------------------------------------------------------
@@ -419,16 +424,19 @@ def _require_actor(actor_id: str) -> str:
 
 def list_reviews(
     tenant_id: str, project_ref: str, filters: ReviewFilters
-) -> Tuple[List[ReviewRecord], int]:
+) -> Tuple[Page[ReviewRecord], Optional[int]]:
     """List a project's reviews, most recently active first.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
-        filters: What to narrow to.
+        filters: What to narrow to, and where the page starts.
 
     Returns:
-        The page of records and the total matching the filters.
+        The page, and the capped total when ``filters.include_total`` (else ``None``).
 
     Raises:
         ReviewValidationError: For an unknown project or version.
@@ -445,9 +453,19 @@ def list_reviews(
         "state": filters.state,
         "open_only": filters.open,
     }
-    rows = db.list_reviews(**scope, limit=filters.limit, offset=filters.offset)
-    total = db.count_reviews(**scope)
-    return [_review_record(row) for row in rows], total
+    rows = db.list_reviews(
+        **scope, limit=filters.limit + 1, offset=filters.offset, cursor=filters.cursor
+    )
+    page = page_of(rows, filters.limit, time_id_key("updated_at"))
+    total = db.count_reviews(**scope) if filters.include_total else None
+    return (
+        Page(
+            items=[_review_record(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def get_review(tenant_id: str, project_ref: str, review_id: str) -> ReviewDetail:

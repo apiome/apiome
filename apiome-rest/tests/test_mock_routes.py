@@ -160,7 +160,7 @@ def _serving(result: Dict[str, Any] | Exception):
     with ExitStack() as stack:
         stack.enter_context(patch("app.mock_routes.sandbox_is_configured", return_value=True))
         stack.enter_context(patch("app.mock_routes.request_sandbox_serve", sandbox))
-        stack.enter_context(patch("app.mock_routes.db.touch_mock_instance"))
+        stack.enter_context(patch("app.mock_routes.activity_buffer"))
         yield sandbox
 
 
@@ -306,7 +306,7 @@ def test_destroy_mock():
 def test_data_plane_forwards_the_request_to_the_one_engine():
     """The data plane decides nothing: it projects the request and returns what the engine served."""
     mid = "00000000-0000-0000-0000-0000000000b1"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(_served()) as sandbox:
             r = client.get(f"/v1/mock/{mid}/pets/7?limit=2&limit=3")
 
@@ -328,7 +328,7 @@ def test_data_plane_forwards_the_request_to_the_one_engine():
 
 def test_data_plane_forwards_the_request_body():
     mid = "00000000-0000-0000-0000-0000000000b9"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(_served(status=201, operation="POST /pets")) as sandbox:
             r = client.post(f"/v1/mock/{mid}/pets", json={"name": "Nym"})
 
@@ -340,7 +340,7 @@ def test_data_plane_refuses_a_body_larger_than_the_hop_will_carry(monkeypatch):
     """The engine reads a body only for predicates and templates; a huge one would be carried to be ignored."""
     mid = "00000000-0000-0000-0000-0000000000c2"
     monkeypatch.setattr("app.mock_routes.settings.mock_sandbox_max_body_bytes", 16)
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(_served()) as sandbox:
             r = client.post(f"/v1/mock/{mid}/pets", content=b"x" * 32)
 
@@ -351,7 +351,7 @@ def test_data_plane_refuses_a_body_larger_than_the_hop_will_carry(monkeypatch):
 def test_data_plane_does_not_forward_this_connections_framing_headers():
     """`host` names a server the engine is not, and `content-length` describes a re-encoded body."""
     mid = "00000000-0000-0000-0000-0000000000c3"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(_served(operation="POST /pets")) as sandbox:
             client.post(f"/v1/mock/{mid}/pets", json={"name": "Nym"})
 
@@ -366,7 +366,7 @@ def test_data_plane_carries_the_instance_seed():
     """apiome-mock takes a seed per request, so a stored one has to ride along on every call."""
     mid = "00000000-0000-0000-0000-0000000000ba"
     row = _instance_row(id=mid, config={"scenarios": [], "active_scenario": "happy-path", "seed": 99})
-    with patch("app.mock_routes.db.get_mock_instance", return_value=row):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=row):
         with _serving(_served()) as sandbox:
             client.get(f"/v1/mock/{mid}/pets")
 
@@ -380,7 +380,7 @@ def test_data_plane_rebuilds_a_text_body_and_drops_framing_headers():
         encoding="text",
         headers={"content-type": "text/plain", "content-length": "999", "X-Mock-Scenario": "slow"},
     )
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(served):
             r = client.get(f"/v1/mock/{mid}/pets")
 
@@ -393,7 +393,7 @@ def test_data_plane_rebuilds_a_text_body_and_drops_framing_headers():
 def test_data_plane_rebuilds_an_empty_body():
     mid = "00000000-0000-0000-0000-0000000000bc"
     served = _served(status=204, body=None, encoding="empty", operation="DELETE /pets/{petId}")
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(served):
             r = client.delete(f"/v1/mock/{mid}/pets/1")
 
@@ -404,7 +404,7 @@ def test_data_plane_rebuilds_an_empty_body():
 def test_data_plane_rebuilds_a_binary_body():
     mid = "00000000-0000-0000-0000-0000000000bd"
     served = _served(body=base64.b64encode(b"\x00\xff").decode(), encoding="base64")
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(served):
             r = client.get(f"/v1/mock/{mid}/pets")
 
@@ -414,7 +414,7 @@ def test_data_plane_rebuilds_a_binary_body():
 def test_data_plane_reports_an_unmatched_operation():
     mid = "00000000-0000-0000-0000-0000000000b3"
     served = _served(status=404, operation=None, schema_valid=None, body={"title": "Not Found"})
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(served):
             r = client.get(f"/v1/mock/{mid}/widgets")
 
@@ -424,7 +424,7 @@ def test_data_plane_reports_an_unmatched_operation():
 
 
 def test_data_plane_missing_instance_404():
-    with patch("app.mock_routes.db.get_mock_instance", return_value=None):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=None):
         r = client.get("/v1/mock/00000000-0000-0000-0000-0000000000b4/pets")
     assert r.status_code == 404
 
@@ -434,7 +434,7 @@ def test_data_plane_expired_returns_410():
     expired = _instance_row(
         id=mid, expires_at=datetime.now(timezone.utc) - timedelta(hours=1)
     )
-    with patch("app.mock_routes.db.get_mock_instance", return_value=expired):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=expired):
         r = client.get(f"/v1/mock/{mid}/pets")
     assert r.status_code == 410
 
@@ -443,7 +443,7 @@ def test_data_plane_forwards_the_scenario_header():
     """Scenario selection is the engine's decision; this plane only has to carry the header."""
     mid = "00000000-0000-0000-0000-0000000000b6"
     served = _served(status=500, scenario="server-error", body={"error": {"code": "internal_error"}})
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(served) as sandbox:
             r = client.get(f"/v1/mock/{mid}/pets/1", headers={"X-Mock-Scenario": "server-error"})
 
@@ -456,7 +456,7 @@ def test_data_plane_per_instance_rate_limit():
     """The rate limit is the sandbox's, so it is enforced before the request ever leaves."""
     mid = "00000000-0000-0000-0000-0000000000b7"
     row = _instance_row(id=mid, rate_limit_per_minute=2)
-    with patch("app.mock_routes.db.get_mock_instance", return_value=row):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=row):
         with _serving(_served(operation="GET /pets")) as sandbox:
             statuses = [client.get(f"/v1/mock/{mid}/pets").status_code for _ in range(3)]
 
@@ -467,7 +467,7 @@ def test_data_plane_per_instance_rate_limit():
 def test_data_plane_without_a_configured_engine_is_503():
     """There is no local engine to fall back to, and pretending otherwise is the failure MSC-2.2 removes."""
     mid = "00000000-0000-0000-0000-0000000000be"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)), patch(
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)), patch(
         "app.mock_routes.sandbox_is_configured", return_value=False
     ):
         r = client.get(f"/v1/mock/{mid}/pets")
@@ -478,7 +478,7 @@ def test_data_plane_without_a_configured_engine_is_503():
 
 def test_data_plane_unreachable_engine_is_502():
     mid = "00000000-0000-0000-0000-0000000000bf"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(MockSandboxError("connection refused")):
             r = client.get(f"/v1/mock/{mid}/pets")
 
@@ -487,7 +487,7 @@ def test_data_plane_unreachable_engine_is_502():
 
 def test_data_plane_forwards_a_refusal_about_the_callers_payload():
     mid = "00000000-0000-0000-0000-0000000000c0"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(MockSandboxRejected(422, "too many headers")):
             r = client.get(f"/v1/mock/{mid}/pets")
 
@@ -498,7 +498,7 @@ def test_data_plane_forwards_a_refusal_about_the_callers_payload():
 def test_data_plane_hides_a_deployment_side_refusal():
     """A rejected service token is nothing the caller can act on, so it must not be shown."""
     mid = "00000000-0000-0000-0000-0000000000c1"
-    with patch("app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)):
+    with patch("app.mock_routes.db.get_mock_serving_row", return_value=_instance_row(id=mid)):
         with _serving(MockSandboxRejected(403, "Internal service token is not valid.")):
             r = client.get(f"/v1/mock/{mid}/pets")
 

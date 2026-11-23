@@ -29,7 +29,7 @@ Per-domain counts for the tree badges are DUW-1.3, and the schema↔path consump
 turns these two reads into combined-lens edges is DUW-1.4. Neither is here.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -38,6 +38,7 @@ from . import scoped_catalog_store as store
 from .auth import validate_authentication
 from .database import db
 from .export_projection import decode_page_cursor, encode_page_cursor
+from .keyset_pagination import MAX_OFFSET, InvalidCursor, decode_key_cursor
 from .models import ScopedCatalogPage
 
 router = APIRouter(prefix="/v1/workspace", tags=["workspace"])
@@ -187,27 +188,44 @@ def _assert_domain_in_version(domain_id: Optional[str], version_id: str) -> None
         raise HTTPException(status_code=404, detail="Domain not found in this version")
 
 
-def _decode_offset(cursor: Optional[str]) -> int:
-    """Turn an opaque page cursor into a start offset.
+def _decode_cursor(cursor: Optional[str]) -> Tuple[Optional[Tuple[str, str]], int]:
+    """Turn an opaque page cursor into where the page starts.
 
-    Uses the cursor codec :mod:`app.export_projection` defines and every other paginated surface
-    here already speaks, so a client needs one cursor format for the whole API.
+    A domain listing pages by keyset (#7196): its cursor names the last item seen as
+    ``(sort value, id)``. A client still holding a cursor issued before that — an encoded offset,
+    the :mod:`app.export_projection` codec — keeps working for the rest of its walk: the two
+    forms cannot be confused (one decodes to a JSON object, the other to a bare integer), and
+    the page that answers an offset cursor hands back a keyset cursor.
 
     Args:
         cursor: The token from a previous response's ``next_cursor``, or None for the first page.
 
     Returns:
-        The offset to start at.
+        ``(after, offset)``: ``after`` is the keyset position or None; ``offset`` is non-zero
+        only for an old offset cursor.
 
     Raises:
-        HTTPException: 400 when the token is not one this API issued.
+        HTTPException: 400 when the token is not one this API issued, or is an offset cursor
+            deeper than the offset cap.
     """
     if not cursor:
-        return 0
+        return None, 0
     try:
-        return decode_page_cursor(cursor)
+        sort_value, item_id = decode_key_cursor(cursor, 2)
+        if not isinstance(sort_value, str) or "\x00" in sort_value:
+            raise InvalidCursor("bad sort value")
+        if not isinstance(item_id, str) or not store._is_uuid(item_id):
+            raise InvalidCursor("bad id")
+        return (sort_value, item_id), 0
+    except InvalidCursor:
+        pass
+    try:
+        offset = decode_page_cursor(cursor)
     except ValueError:
         raise HTTPException(status_code=400, detail="Malformed cursor") from None
+    if offset > MAX_OFFSET:
+        raise HTTPException(status_code=400, detail="Malformed cursor")
+    return None, offset
 
 
 def _page(
@@ -235,9 +253,8 @@ def _page(
         scope=scope,
         domain_id=domain_id,
         missing_ids=result.missing_ids,
-        next_cursor=(
-            encode_page_cursor(result.next_offset) if result.next_offset is not None else None
-        ),
+        next_cursor=result.next_cursor
+        or (encode_page_cursor(result.next_offset) if result.next_offset is not None else None),
     )
 
 
@@ -255,7 +272,8 @@ def get_scoped_classes(
 
     Requesting three ids returns those three classes and nothing else, whatever the version
     contains. Requesting a domain returns one page of that folder plus ``total``, so the workspace
-    can decide whether hydrating the rest fits its node budget before asking for it.
+    can decide whether hydrating the rest fits its node budget before asking for it. A domain
+    listing pages by cursor: pass ``next_cursor`` back until it is null.
     """
     tenant_id = _tenant_id(auth_data)
     _assert_version_in_tenant(version_id, tenant_id)
@@ -280,12 +298,14 @@ def get_scoped_classes(
 
     _assert_domain_in_version(selection["domain"], version_id)
     page_size = store.clamp_page_size(limit)
+    after, offset = _decode_cursor(cursor)
     result = store.load_classes_by_domain(
         db,
         version_id=version_id,
         domain_id=selection["domain"],
         limit=page_size,
-        offset=_decode_offset(cursor),
+        offset=offset,
+        after=after,
     )
     return _page(result, scope="domain", domain_id=selection["domain"], limit=page_size)
 
@@ -308,7 +328,8 @@ def get_scoped_paths(
     when it declares none. Parameters, request bodies and the responses *themselves*
     (descriptions, schemas, content types, examples) stay with the per-path endpoint: those are
     inspector-sized data for one selected operation, whereas a status code is a label the paths
-    lens draws on every lane (private-suite#2583).
+    lens draws on every lane (private-suite#2583). A domain listing pages by cursor: pass
+    ``next_cursor`` back until it is null.
     """
     tenant_id = _tenant_id(auth_data)
     _assert_version_in_tenant(version_id, tenant_id)
@@ -331,11 +352,13 @@ def get_scoped_paths(
 
     _assert_domain_in_version(selection["domain"], version_id)
     page_size = store.clamp_page_size(limit)
+    after, offset = _decode_cursor(cursor)
     result = store.load_paths_by_domain(
         db,
         version_id=version_id,
         domain_id=selection["domain"],
         limit=page_size,
-        offset=_decode_offset(cursor),
+        offset=offset,
+        after=after,
     )
     return _page(result, scope="domain", domain_id=selection["domain"], limit=page_size)

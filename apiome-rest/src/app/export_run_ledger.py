@@ -323,9 +323,20 @@ class ExportRunListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     runs: List[ExportRunSummary]
-    total: int = Field(0, ge=0, description="Runs matching the filters (not just this page).")
+    total: Optional[int] = Field(
+        None,
+        ge=0,
+        description=(
+            "Runs matching the filters (not just this page), counted up to 10,000. Present only when "
+            "the request set `include_total`."
+        ),
+    )
     limit: int = Field(50, ge=1, le=200)
-    offset: int = Field(0, ge=0)
+    offset: int = Field(0, ge=0, description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class ExportRunActor(BaseModel):

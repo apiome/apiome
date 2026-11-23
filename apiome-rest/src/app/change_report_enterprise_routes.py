@@ -45,6 +45,7 @@ from .change_report_audit import (
 from .change_report_pdf import pdf_sha256, render_change_report_pdf
 from .database import db
 from .feature_gating import require_change_report_enterprise
+from .keyset_pagination import encode_time_id_cursor
 from .models import (
     ChangeReportAuditEntryOut,
     ChangeReportAuditPageOut,
@@ -54,7 +55,6 @@ from .models import (
 from .permissions import Action, Resource, enforce_permission
 from .registry_audit_routes import (
     _decode_cursor,
-    _encode_cursor,
     _optional_uuid_param,
     _parse_iso_datetime,
 )
@@ -478,7 +478,7 @@ def list_change_report_audit(
     )
     page = rows[:limit]
     next_cursor = (
-        _encode_cursor(page[-1]["created_at"], str(page[-1]["id"]))
+        encode_time_id_cursor(page[-1]["created_at"], str(page[-1]["id"]))
         if len(rows) > limit and page
         else None
     )

@@ -79,21 +79,29 @@ def test_a_malformed_read_is_graph_invalid_before_any_query(kwargs) -> None:
 
 
 def test_a_page_reports_truncation_and_flags_stale_edges() -> None:
-    db = _Rows([_edge(), _edge(id="e2", stale_since="2026-10-01T00:00:00+00:00")])
-    page = list_edges(db, _TENANT, "consumer", _ENTITY, limit=2)
+    # Three rows for a page of two: the extra row is what says more edges match (#7196).
+    db = _Rows(
+        [_edge(), _edge(id="e2", stale_since="2026-10-01T00:00:00+00:00"), _edge(id="e3")],
+        [{"total": 3}],
+    )
+    page = list_edges(db, _TENANT, "consumer", _ENTITY, limit=2, include_total=True)
     assert (page.total, page.truncated) == (3, True)
     assert [edge["stale"] for edge in page.edges] == [False, True]
-    assert "total" not in page.edges[0]
+    assert page.next_cursor
     sql, params = db.calls[0]
     assert "from_kind = ANY" in sql and params[1] == ["consumer"]
+    assert "count(*) OVER ()" not in sql and params[-2:] == (3, 0)
+    assert "LIMIT 10000" in db.calls[1][0]
 
 
 def test_a_projects_row_matches_either_node_kind_and_filters_apply() -> None:
-    db = _Rows([_edge(total=1)])
+    db = _Rows([_edge()])
     page = list_edges(
         db, _TENANT, "catalog_item", _ENTITY, direction="in", edge_kinds=("consumes",), provenances=("derived",)
     )
-    assert (page.total, page.truncated) == (1, False)
+    # Nothing is counted unless the read asks for a total.
+    assert (page.total, page.truncated, page.next_cursor) == (None, False, None)
+    assert len(db.calls) == 1
     sql, params = db.calls[0]
     assert "to_kind = ANY" in sql and params[1] == ["project", "catalog_item"]
     assert params[3] == ["consumes"] and params[4] == ["derived"]
@@ -101,9 +109,41 @@ def test_a_projects_row_matches_either_node_kind_and_filters_apply() -> None:
 
 def test_paging_past_the_end_still_counts() -> None:
     db = _Rows([], [{"total": 4}])
-    page = list_edges(db, _TENANT, "project", _ENTITY, offset=10)
+    page = list_edges(db, _TENANT, "project", _ENTITY, offset=10, include_total=True)
     assert (page.edges, page.total, page.truncated) == ([], 4, False)
     assert "count(*)" in db.calls[1][0]
+
+
+def test_a_cursor_continues_the_edge_order_without_an_offset() -> None:
+    from app.catalog_graph import decode_edge_cursor
+
+    first = list_edges(_Rows([_edge(pointer=None), _edge(id="e2")]), _TENANT, "consumer", _ENTITY, limit=1)
+    after = decode_edge_cursor(first.next_cursor)
+    assert after == [False, "consumes", "project", _TENANT, _ENTITY, None, "e1"]
+
+    db = _Rows([])
+    list_edges(db, _TENANT, "consumer", _ENTITY, limit=5, offset=40, cursor=after)
+    sql, params = db.calls[0]
+    assert (
+        "ORDER BY (stale_since IS NOT NULL) ASC, edge_kind ASC, to_kind ASC, to_id::text ASC, "
+        "from_id::text ASC, pointer ASC NULLS FIRST, id::text ASC"
+    ) in sql
+    # Current edges come first, so a stale edge is "after" any current one.
+    assert "((stale_since IS NOT NULL) > %s::boolean)" in sql
+    # A NULL pointer sorts first: every edge with a pointer follows it, then the id breaks ties.
+    assert "from_id::text = %s AND pointer IS NOT NULL" in sql
+    assert "pointer IS NULL AND id::text > %s" in sql
+    assert sql.count("%s") == len(params)
+    assert params[-2:] == (6, 0)
+
+
+def test_a_cursor_from_another_list_is_refused() -> None:
+    from app.catalog_graph import decode_edge_cursor
+    from app.keyset_pagination import InvalidCursor, encode_key_cursor
+
+    for token in ("nope", encode_key_cursor(["edges", 1, 2]), encode_key_cursor(["other"] + [None] * 7)):
+        with pytest.raises(InvalidCursor):
+            decode_edge_cursor(token)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -300,8 +340,54 @@ def test_the_route_reads_one_page_with_its_filters(client, monkeypatch) -> None:
     assert seen == {
         "tenant": _TENANT, "kind": "project", "entity": _ENTITY, "direction": "in",
         "edge_kinds": ("consumes", "served_by"), "provenances": ("derived",), "limit": 1, "offset": 2,
+        "cursor": None, "include_total": False,
     }
     assert asked == ["projects:view"]
+    assert body["has_more"] is True
+
+
+def test_the_route_pages_edges_by_cursor_to_the_end(client, monkeypatch) -> None:
+    from tests.keyset_paging_fakes import walk
+
+    http, _asked = client
+    stored = sorted(
+        ({**{k: v for k, v in _edge().items() if k != "total"}, "id": f"e{index}",
+          "pointer": None if index == 0 else f"/paths/{index // 2}",
+          "stale_since": "2026-10-01T00:00:00+00:00" if index == 4 else None}
+         for index in range(5)),
+        key=lambda e: (e["stale_since"] is not None, e["pointer"] is not None, e["pointer"] or "", e["id"]),
+    )
+
+    class _Edges:
+        """Answers the page query from rows in memory, honouring the cursor's last edge id."""
+
+        counted = 0
+
+        def execute_query(self, sql: str, params: Any = ()) -> List[Dict[str, Any]]:
+            if "capped" in sql:
+                _Edges.counted += 1
+                return [{"total": len(stored)}]
+            rows = stored
+            if "id::text > %s" in sql:
+                last_id = params[-3]
+                rows = stored[[e["id"] for e in stored].index(last_id) + 1:]
+            return [dict(row) for row in rows[params[-1]: params[-1] + params[-2]]]
+
+    monkeypatch.setattr(routes, "db", _Edges())
+    monkeypatch.setattr(routes, "enforce_permission", lambda *a, **k: None)
+    seen = walk(lambda params: http.get(_URL, params=params), "edges")
+    assert [edge["id"] for edge in seen] == [edge["id"] for edge in stored]
+    assert _Edges.counted == 0
+    body = http.get(_URL, params={"include_total": "true"}).json()
+    assert body["total"] == 5 and _Edges.counted == 1
+    assert http.get(_URL).json()["total"] is None
+
+
+def test_the_route_refuses_a_malformed_cursor_and_oversized_pages(client) -> None:
+    http, _asked = client
+    assert http.get(_URL, params={"cursor": "not-a-cursor"}).status_code == 400
+    assert http.get(_URL, params={"limit": MAX_READ_LIMIT + 1}).status_code == 422
+    assert http.get(_URL, params={"offset": 10_001}).status_code == 422
 
 
 def test_the_route_refuses_bad_input(client, monkeypatch) -> None:
@@ -388,6 +474,8 @@ def test_the_entity_search_route(client, monkeypatch) -> None:
                     "provenances": ("declared",), "limit": 1, "offset": 0}
     assert asked == ["projects:view"]
     assert http.get("/v1/graph/acme/entities", params={"limit": 2001}).status_code == 422
+    # A computed rank has no cursor, so the offset is bounded instead (#7196).
+    assert http.get("/v1/graph/acme/entities", params={"offset": 10_001}).status_code == 422
 
 
 @pytest.mark.parametrize("kwargs", [{"kinds": ("galaxy",)}, {"provenances": ("rumoured",)}, {"limit": 0}])

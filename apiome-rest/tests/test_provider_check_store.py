@@ -15,6 +15,7 @@ import httpx
 import pytest
 
 from app import comment_store, draft_binding_store, git_import_routes, provider_check_store
+from app.keyset_pagination import decode_time_id_cursor
 from app.provider_check_store import CheckFilters
 from app.provider_checks import (
     CODE_BINDING_NOT_FOUND,
@@ -455,7 +456,16 @@ def test_a_projects_checks_come_back_newest_first(fake, provider):
     _record(fake, provider, name="apiome/one")
     _record(fake, provider, name="apiome/two")
     checks, _version = provider_check_store.list_checks(TENANT, "pets", CheckFilters())
-    assert [check.name for check in checks] == ["apiome/two", "apiome/one"]
+    assert [check.name for check in checks.items] == ["apiome/two", "apiome/one"]
+    assert checks.has_more is False and checks.next_cursor is None
+
+    # Keyset paging (#7196): the cursor of page one continues at the next-older check.
+    first, _version = provider_check_store.list_checks(TENANT, "pets", CheckFilters(limit=1))
+    assert [check.name for check in first.items] == ["apiome/two"] and first.has_more is True
+    rest, _version = provider_check_store.list_checks(
+        TENANT, "pets", CheckFilters(limit=1, cursor=decode_time_id_cursor(first.next_cursor))
+    )
+    assert [check.name for check in rest.items] == ["apiome/one"] and rest.has_more is False
 
 
 def test_the_list_narrows_by_version_commit_and_state(fake, provider):
@@ -465,17 +475,17 @@ def test_the_list_narrows_by_version_commit_and_state(fake, provider):
     by_state, _ = provider_check_store.list_checks(
         TENANT, "pets", CheckFilters(state=STATE_FAIL)
     )
-    assert [check.name for check in by_state] == ["apiome/two"]
+    assert [check.name for check in by_state.items] == ["apiome/two"]
 
     by_commit, _ = provider_check_store.list_checks(
         TENANT, "pets", CheckFilters(commit_sha=COMMIT_ONE)
     )
-    assert [check.name for check in by_commit] == ["apiome/one"]
+    assert [check.name for check in by_commit.items] == ["apiome/one"]
 
     by_version, version_id = provider_check_store.list_checks(
         TENANT, "pets", CheckFilters(version="1.0.0")
     )
-    assert len(by_version) == 2
+    assert len(by_version.items) == 2
     assert version_id == VERSION
 
 

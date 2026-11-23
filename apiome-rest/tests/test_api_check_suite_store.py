@@ -62,6 +62,7 @@ from app.api_check_suite import (
 from app.api_check_suite_evidence import Classification
 from app.consumer_impact import ConsumerImpactReport
 from app.export_source import ExportSourceError
+from app.keyset_pagination import decode_time_id_cursor
 from app.provider_checks import (
     AUDIT_CHECK_RECORDED,
     CODE_BINDING_RELEASED,
@@ -588,6 +589,16 @@ def test_a_versions_evaluations_list_newest_first(fake, provider, evidence):
     assert api_check_suite_store.list_runs(TENANT, "acme", "pets", "3.0.0", limit=1, offset=1).runs[
         0
     ].id == first.id
+    assert page.has_more is False and page.next_cursor is None
+
+    # Keyset paging (#7196): the cursor of page one continues at the next-older evaluation.
+    head = api_check_suite_store.list_runs(TENANT, "acme", "pets", "3.0.0", limit=1)
+    assert [run.id for run in head.runs] == [second.id] and head.has_more is True
+    tail = api_check_suite_store.list_runs(
+        TENANT, "acme", "pets", "3.0.0", limit=1, offset=7, cursor=decode_time_id_cursor(head.next_cursor)
+    )
+    assert [run.id for run in tail.runs] == [first.id]
+    assert tail.has_more is False and tail.next_cursor is None and tail.offset == 0
 
 
 # ---------------------------------------------------------------------------------------------

@@ -9,13 +9,22 @@ role, member status, and license tier for the tenant switcher (OLO-6.2, #4219).
 
 from __future__ import annotations
 
+import uuid
 from datetime import date, datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from .auth import normalize_user_id, validate_session_credentials
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    encode_key_cursor,
+    limit_query,
+    offset_query,
+    page_of,
+    parse_key_cursor,
+)
 from .models import TenantInfoResponse, TenantMembershipSchema, TenantsMeResponse
 
 router = APIRouter(prefix="/v1/tenants", tags=["tenants"])
@@ -58,6 +67,22 @@ def _authorize_tenant_access_row(tenant_slug: str, session: Dict[str, Any]) -> D
     return row
 
 
+def _is_uuid(value: str) -> bool:
+    """Whether a cursor's id is a UUID, so a forged one never reaches SQL.
+
+    Args:
+        value: The id carried by the cursor.
+
+    Returns:
+        True when it parses as a UUID.
+    """
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        return False
+    return True
+
+
 def _format_created(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -73,11 +98,16 @@ def _format_created(value: Any) -> Optional[str]:
 @router.get("/me", response_model=TenantsMeResponse)
 def list_my_tenants(
     session: Dict[str, Any] = Depends(validate_session_credentials),
-    limit: int = Query(_DEFAULT_LIMIT, ge=1, le=_MAX_PAGE),
-    offset: int = Query(0, ge=0),
+    limit: int = limit_query(_DEFAULT_LIMIT, maximum=_MAX_PAGE),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
 ) -> TenantsMeResponse:
     """
     Tenants accessible to the caller, enriched for the tenant switcher (OLO-6.2, #4219).
+
+    Ordered by slug. Pages by ``cursor``: pass the previous page's ``next_cursor`` until
+    ``has_more`` is false. ``total`` is the caller's own membership count — a list one user
+    bounds — so it is always present.
 
     - JWT: all memberships for the user, each carrying the effective RBAC role slug
       (V119 assignment; legacy administrators read as ``owner``; Editor default),
@@ -86,6 +116,12 @@ def list_my_tenants(
     - API key: the key's tenant only (single-item list) with role ``member`` and
       the tenant's license plan.
     """
+    after: Optional[List[Any]] = parse_key_cursor(cursor, 2)
+    if after is not None and not (
+        isinstance(after[0], str) and isinstance(after[1], str) and _is_uuid(after[1])
+    ):
+        raise HTTPException(status_code=400, detail="Invalid cursor: not a tenant-list cursor")
+
     if session.get("auth_method") == "api_key":
         slug = session.get("tenant_slug")
         name = session.get("tenant_name") or ""
@@ -108,15 +144,23 @@ def list_my_tenants(
                 ),
             )
         ]
-        items = all_items[offset : offset + limit]
-        return TenantsMeResponse(items=items, total=len(all_items), limit=limit, offset=offset)
+        # One tenant, so there is never a second page whatever the cursor says.
+        items = [] if after is not None else all_items[offset : offset + limit]
+        return TenantsMeResponse(
+            items=items, total=len(all_items), limit=limit, offset=0 if after is not None else offset
+        )
 
     user_id = session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Missing user identifier")
 
     total = db.count_tenants_for_user(str(user_id))
-    rows = db.list_tenants_for_user_page(str(user_id), limit, offset)
+    # One row past the page answers "is there more?" (#7196).
+    page = page_of(
+        db.list_tenants_for_user_page(str(user_id), limit + 1, offset, cursor=after),
+        limit,
+        lambda row: encode_key_cursor([row["slug"], row["id"]]),
+    )
     items = [
         TenantMembershipSchema(
             id=str(r["id"]),
@@ -127,9 +171,16 @@ def list_my_tenants(
             license_name=r.get("license_name"),
             license_type=r.get("license_type"),
         )
-        for r in rows
+        for r in page.items
     ]
-    return TenantsMeResponse(items=items, total=total, limit=limit, offset=offset)
+    return TenantsMeResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=0 if after is not None else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 @router.head(
     "/{tenant_slug}",

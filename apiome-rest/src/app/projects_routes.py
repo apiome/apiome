@@ -7,10 +7,19 @@ All endpoints are tenant-scoped and require authentication via JWT token or API 
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Response
 from typing import Optional, List, Dict, Any
 
 from .database import ProjectDeleteBlocked, ProjectUpdateConflict, db
+from .project_list_paging import PROJECT_CURSOR_SIZE, project_row_cursor
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    page_of,
+    parse_key_cursor,
+    set_page_headers,
+)
 from .api_identity_service import build_related_artifact_refs
 from .conversion_evidence import evidence_response, parse_evidence_scope, provenance_entry
 from .models import (
@@ -86,6 +95,7 @@ def list_project_domain_categories_for_tenant(tenant_slug: str) -> Dict[str, Lis
 @router.get("/{tenant_slug}")
 def list_projects(
     tenant_slug: str,
+    response: Response,
     include_deleted: bool = Query(
         False,
         description="When true, include soft-deleted projects (active projects listed first).",
@@ -95,10 +105,16 @@ def list_projects(
         max_length=128,
         description="Only projects whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
     ),
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[ProjectSchema]:
     """
-    List all projects for a tenant.
+    List a tenant's projects, newest first, one page at a time.
+
+    The body is a JSON array. At most ``limit`` projects (200 at most) are returned; the
+    ``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+    ``cursor`` of the next page (#7196).
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -106,17 +122,29 @@ def list_projects(
 
     Args:
         tenant_slug: The tenant slug
+        response: The outgoing response (paging headers are set on it).
         include_deleted: Include rows with deleted_at set (for trash / restore flows).
+        team: Only projects owned by this team.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        List of projects for the tenant
+        One page of the tenant's projects.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     projects = db.get_projects_for_tenant(
-        auth_data['tenant_id'], include_deleted=include_deleted, team=team
+        auth_data['tenant_id'],
+        include_deleted=include_deleted,
+        team=team,
+        limit=limit + 1,
+        cursor=parse_key_cursor(cursor, PROJECT_CURSOR_SIZE),
     )
-
-    return [ProjectSchema(**p) for p in projects]
+    page = page_of(projects, limit, project_row_cursor)
+    set_page_headers(response, page)
+    return [ProjectSchema(**p) for p in page.items]
 
 
 # --- Recently viewed projects (#510) ----------------------------------------------------

@@ -776,6 +776,7 @@ _usage_sweep_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
+_mock_activity_flush_task: asyncio.Task | None = None
 _document_lifecycle_task: asyncio.Task | None = None
 _repository_webhook_secret_task: asyncio.Task | None = None
 _repository_webhook_ip_range_task: asyncio.Task | None = None
@@ -1250,6 +1251,33 @@ async def startup_event():
             except Exception:
                 log.exception("async job retention sweep")
 
+    async def _mock_activity_flush_sweep() -> None:
+        """Write the mock data plane's buffered request counts every few seconds (#7196).
+
+        Served requests are counted in memory (:mod:`app.mock_data_plane`) so the data plane does
+        not write a row per request; each tick adds the counts in one ``UPDATE``. An idle tick
+        (nothing served) touches neither a thread nor the database.
+        """
+        from .mock_data_plane import ACTIVITY_FLUSH_SECONDS, activity_buffer, flush_activity
+
+        log = logging.getLogger(__name__)
+        sweep_db = sweep_database()
+        while True:
+            await asyncio.sleep(ACTIVITY_FLUSH_SECONDS)
+            if not len(activity_buffer):
+                continue
+            try:
+
+                def _flush() -> int:
+                    with sweep_tick(sweep_db) as thread_db:
+                        return flush_activity(thread_db)
+
+                await asyncio.to_thread(_flush)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("mock activity flush sweep")
+
     async def _document_lifecycle_sweep(interval: int) -> None:
         """Run the document lifecycle job every ``interval`` seconds (COA-5.10, #7086).
 
@@ -1431,6 +1459,10 @@ async def startup_event():
     _verification_schedule_task = asyncio.create_task(_verification_schedule_sweep())
     global _async_job_retention_task
     _async_job_retention_task = asyncio.create_task(_async_job_retention_sweep())
+
+    global _mock_activity_flush_task
+    if settings.mock_server_enabled:
+        _mock_activity_flush_task = asyncio.create_task(_mock_activity_flush_sweep())
     global _document_lifecycle_task
     if int(settings.document_lifecycle_interval_seconds) > 0:
         _document_lifecycle_task = asyncio.create_task(
@@ -1557,6 +1589,18 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _verification_schedule_task = None
+    global _mock_activity_flush_task
+    if _mock_activity_flush_task is not None:
+        _mock_activity_flush_task.cancel()
+        try:
+            await _mock_activity_flush_task
+        except asyncio.CancelledError:
+            pass
+        _mock_activity_flush_task = None
+        # Whatever was served since the last tick is written before the connection closes.
+        from .mock_data_plane import flush_activity
+
+        await asyncio.to_thread(flush_activity, db)
     global _async_job_retention_task
     if _async_job_retention_task is not None:
         _async_job_retention_task.cancel()

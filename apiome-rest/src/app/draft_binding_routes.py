@@ -58,6 +58,13 @@ from .draft_bindings import (
     SyncCandidateResolve,
     VersionBindingStatus,
 )
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .permissions import Action, Resource, enforce_permission
 
 __all__ = ["STATUS_BY_CODE", "router"]
@@ -97,9 +104,19 @@ class BindingListResponse(BaseModel):
         default_factory=list, description="Bindings, newest first."
     )
     count: int = Field(description="How many bindings this page holds.")
-    total: int = Field(description="How many bindings match the filters in all.")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many bindings match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     limit: int = Field(description="The page size used.")
-    offset: int = Field(description="The offset used.")
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 # ---------------------------------------------------------------------------------------------
@@ -185,6 +202,8 @@ async def _off_loop(work: Any, *args: Any) -> Any:
         "are their history.\n\n"
         "Filters combine: `version` (revision id or version label) and `active` (`true` for the "
         "live bindings, `false` for released ones).\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "The `total` is counted only when `include_total` is set.\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -195,8 +214,10 @@ def list_bindings(
     active: Optional[bool] = Query(
         default=None, description="Active (`true`) or released (`false`) bindings only."
     ),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Bindings to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> BindingListResponse:
     """List a project's bindings.
@@ -207,24 +228,40 @@ def list_bindings(
         version: Only this version's bindings.
         active: Only active or only released bindings.
         limit: Page size.
-        offset: Bindings to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Bindings to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page and the total.
+        The page, whether another follows, and the total when asked for.
 
     Raises:
-        HTTPException: 404 for an unknown project or version, 403 without ``projects:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project or version, 403
+            without ``projects:view``.
     """
     tenant_id, _user_id = _caller(auth_data, Resource.PROJECTS, Action.VIEW)
     _ = tenant_slug
-    filters = BindingFilters(version=version, active=active, limit=limit, offset=offset)
+    filters = BindingFilters(
+        version=version,
+        active=active,
+        limit=limit,
+        offset=offset,
+        cursor=parse_time_id_cursor(cursor),
+        include_total=include_total,
+    )
     try:
-        bindings, total = draft_binding_store.list_bindings(tenant_id, project_ref, filters)
+        page, total = draft_binding_store.list_bindings(tenant_id, project_ref, filters)
     except DraftBindingValidationError as exc:
         raise _http_error(exc) from exc
     return BindingListResponse(
-        bindings=bindings, count=len(bindings), total=total, limit=limit, offset=offset
+        bindings=page.items,
+        count=len(page.items),
+        total=total,
+        limit=limit,
+        offset=0 if filters.cursor else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

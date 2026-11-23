@@ -91,9 +91,12 @@ def test_a_list_row_carries_its_opening_comment(fake):
     detail = comment_store.create_thread(TENANT, "pets", request, AUTHOR)
     comment_store.add_comment(TENANT, "pets", detail.thread.id, "second", AUTHOR)
 
-    threads, total = comment_store.list_threads(TENANT, "pets", comment_store.ThreadFilters(), AUTHOR)
+    page, total = comment_store.list_threads(
+        TENANT, "pets", comment_store.ThreadFilters(include_total=True), AUTHOR
+    )
     assert total == 1
-    (summary,) = threads
+    assert page.has_more is False and page.next_cursor is None
+    (summary,) = page.items
     assert summary.comment_count == 2
     assert summary.root_comment is not None
     assert summary.root_comment.body == "first @ada"

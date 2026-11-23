@@ -16,6 +16,7 @@ The SQL text itself was exercised against a scratch database built from the real
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 
 import psycopg2
 import pytest
@@ -239,3 +240,30 @@ def test_ids_that_are_not_uuids_never_reach_the_database(monkeypatch):
         **scoped, review_id=REVIEW, expected_round=1, user_id=BOB, decision="pending", note=None
     ) is None
     assert database.withdraw_review(**common, review_id=REVIEW, actor_id=ALICE) is False
+
+
+# ---------------------------------------------------------------------------------------------
+# Keyset paging (DBP-1.13, #7196)
+# ---------------------------------------------------------------------------------------------
+
+
+def test_the_review_list_continues_after_a_cursor_without_an_offset(monkeypatch):
+    conn = ScriptedConnection([[]])
+    database = database_with(monkeypatch, conn)
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+
+    database.list_reviews(tenant_id=TENANT, project_id=PROJECT, limit=10, offset=20, cursor=(stamp, REVIEW))
+
+    sql, params = conn.statements[0]
+    assert "(r.updated_at, r.id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY r.updated_at DESC, r.id DESC" in sql
+    assert params[-4:] == (stamp, REVIEW, 10, 0)
+
+
+def test_the_review_count_stops_at_the_cap(monkeypatch):
+    conn = ScriptedConnection([[{"total": 3}]])
+    database = database_with(monkeypatch, conn)
+
+    assert database.count_reviews(tenant_id=TENANT, project_id=PROJECT) == 3
+    sql, _params = conn.statements[0]
+    assert "LIMIT 10000" in sql

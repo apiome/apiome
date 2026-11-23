@@ -1,6 +1,7 @@
 """Shared pytest fixtures for apiome-rest tests."""
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -264,9 +265,11 @@ def _in_memory_async_job_store(monkeypatch):
         state=None,
         created_after=None,
         created_before=None,
+        cursor=None,
+        include_total=False,
     ):
         page_limit = max(1, min(int(limit), 200))
-        page_offset = max(0, int(offset))
+        page_offset = 0 if cursor else max(0, int(offset))
         rows = [dict(r) for r in store.values() if _matches(r, tenant_slug, kind)]
         if state is not None and str(state).strip():
             want = str(state).strip()
@@ -275,12 +278,19 @@ def _in_memory_async_job_store(monkeypatch):
         _ = (created_after, created_before)
         rows.sort(key=lambda r: r.get("job_id") or "", reverse=True)
         total = len(rows)
-        page = rows[page_offset : page_offset + page_limit]
+        # Every fake row shares one created_at, so the keyset order is the job_id order (#7196).
+        epoch = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        for row in rows:
+            row.setdefault("created_at", epoch)
+        if cursor is not None:
+            rows = [r for r in rows if (r["created_at"], r.get("job_id") or "") < tuple(cursor)]
+        window = rows[page_offset : page_offset + page_limit + 1]
         return {
-            "jobs": page,
-            "total": total,
+            "jobs": window[:page_limit],
+            "total": total if include_total else None,
             "limit": page_limit,
             "offset": page_offset,
+            "has_more": len(window) > page_limit,
         }
 
     def _request_cancel(job_id, tenant_slug, kind):

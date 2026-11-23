@@ -167,13 +167,19 @@ class FakeReviewDb(FakeCommentDb):
             if open_only is False and row["closed_at"] is None:
                 continue
             rows.append(row)
-        rows.sort(key=lambda r: r["id"])
-        rows.sort(key=lambda r: r["updated_at"], reverse=True)
+        rows.sort(key=lambda r: (r["updated_at"], r["id"]), reverse=True)
         return rows
 
-    def list_reviews(self, *, limit: int = 50, offset: int = 0, **filters: Any) -> List[Dict[str, Any]]:
+    def list_reviews(
+        self, *, limit: int = 50, offset: int = 0, cursor: Any = None, **filters: Any
+    ) -> List[Dict[str, Any]]:
         """A page of reviews."""
-        return [self._review_view(row) for row in self._filtered_reviews(**filters)[offset : offset + limit]]
+        rows = self._filtered_reviews(**filters)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            rows = [row for row in rows if (row["updated_at"], row["id"]) < tuple(cursor)]
+            offset = 0
+        return [self._review_view(row) for row in rows[offset : offset + limit]]
 
     def count_reviews(self, **filters: Any) -> int:
         """How many reviews match the filters."""

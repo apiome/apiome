@@ -421,3 +421,66 @@ def test_get_repository_file_content_not_found():
         mdb.get_tenant_repository_file_row.return_value = None
         r = client.get(f"/v1/tenants/acme/repositories/{rid}/files/{fid}/content")
     assert r.status_code == 404
+
+
+# --- Keyset paging of the file list (#7196) ----------------------------------
+
+
+def _files_dao(paths):
+    """A DAO stand-in paging ``paths`` in order, honouring ``limit`` and the path cursor."""
+    ordered = sorted(paths)
+
+    def dao(*_, limit, offset=0, cursor=None, include_total=True, **__):
+        matching = [path for path in ordered if cursor is None or path > cursor]
+        offset = 0 if cursor is not None else offset
+        total = len(ordered) if include_total else None
+        return {
+            "indexed_total": total,
+            "match_count": total,
+            "importable_match_count": total,
+            "limit": limit,
+            "offset": offset,
+            "rows": [
+                {"id": f"990e8400-e29b-41d4-a716-{ordered.index(path):012d}", "path": path}
+                for path in matching[offset : offset + limit]
+            ],
+        }
+
+    return dao
+
+
+def test_list_repository_files_pages_by_cursor_to_the_end():
+    from tests.keyset_paging_fakes import walk
+
+    url = f"/v1/tenants/acme/repositories/{_LIST_ROW['id']}/files"
+    paths = [f"specs/{name}.yaml" for name in "edcba"]
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = _LIST_ROW
+        mdb.tenant_repository_files_stats_and_page.side_effect = _files_dao(paths)
+        mdb.list_tenant_repository_file_branches.return_value = ["main"]
+        seen = walk(lambda params: client.get(url, params=params), "files")
+    assert [row["path"] for row in seen] == sorted(paths)
+
+
+def test_list_repository_files_counts_only_when_asked():
+    url = f"/v1/tenants/acme/repositories/{_LIST_ROW['id']}/files"
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = _LIST_ROW
+        mdb.tenant_repository_files_stats_and_page.side_effect = _files_dao(["a.yaml"])
+        mdb.list_tenant_repository_file_branches.return_value = ["main"]
+        body = client.get(url).json()
+        counted = client.get(url, params={"include_total": "true"}).json()
+    assert body["indexed_total"] is None
+    assert body["match_count"] is None and body["importable_match_count"] is None
+    assert body["has_more"] is False and body["next_cursor"] is None
+    assert counted["indexed_total"] == 1 and counted["match_count"] == 1
+
+
+def test_list_repository_files_bad_cursor_and_bounds():
+    url = f"/v1/tenants/acme/repositories/{_LIST_ROW['id']}/files"
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = _LIST_ROW
+        assert client.get(url, params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get(url, params={"limit": 201}).status_code == 422
+        assert client.get(url, params={"offset": 10_001}).status_code == 422
+        mdb.tenant_repository_files_stats_and_page.assert_not_called()

@@ -167,6 +167,12 @@ def test_findings_rejects_unknown_filter_values():
     assert resp2.status_code == 400
 
 
+def test_findings_page_size_and_offset_have_hard_maximums():
+    """The queue pages in memory by offset, so both bounds are enforced at the edge (#7196)."""
+    assert client.get("/v1/lint/workspace/findings", params={"limit": 201}).status_code == 422
+    assert client.get("/v1/lint/workspace/findings", params={"offset": 10_001}).status_code == 422
+
+
 @patch("app.lint_workspace.db")
 def test_findings_empty_tenant_returns_empty_page(mdb):
     mdb.list_latest_lint_evidence_runs_for_tenant.return_value = []

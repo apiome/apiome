@@ -224,7 +224,9 @@ def _partition_export_mocks(tenant_id: str) -> Tuple[List[Dict[str, Any]], List[
     """
     live: List[Dict[str, Any]] = []
     expired: List[Dict[str, Any]] = []
-    for row in db.list_mock_instances(tenant_id):
+    # Only this surface's own rows are read (#7196): the origin filter runs in SQL, so a tenant's
+    # hosted mocks and their specs are not loaded to be discarded here.
+    for row in db.list_mock_instances(tenant_id, origin=EXPORT_MOCK_ORIGIN):
         if not instance_is_export_mock(row):
             continue
         (expired if mock_instance_is_expired(row) else live).append(row)

@@ -2157,9 +2157,24 @@ class SpecImportJobListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jobs: List[SpecImportJobListItem]
-    total: int = Field(0, ge=0, description="Total jobs matching the filter (not just this page).")
+    total: Optional[int] = Field(
+        None,
+        ge=0,
+        description=(
+            "Total jobs matching the filter (not just this page), counted up to 10,000. Present only "
+            "when the request set `include_total`."
+        ),
+    )
     limit: int = Field(50, ge=1, le=200, description="Page size applied to this response.")
-    offset: int = Field(0, ge=0, description="Number of matching jobs skipped before this page.")
+    offset: int = Field(
+        0,
+        ge=0,
+        description="Number of matching jobs skipped before this page (deprecated; `0` when paging by cursor).",
+    )
+    has_more: bool = Field(False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class SpecImportJobAccepted(BaseModel):
@@ -6026,6 +6041,18 @@ class VersionMockCapturesResponse(BaseModel):
     )
     counts: Dict[str, int] = Field(
         default_factory=dict, description="Live capture counts by review state."
+    )
+    has_more: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("hasMore", "has_more"),
+        serialization_alias="hasMore",
+        description="Whether another page exists.",
+    )
+    next_cursor: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("nextCursor", "next_cursor"),
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` to read the next page; null on the last page.",
     )
 
 
@@ -11224,11 +11251,17 @@ class WorkflowAuditPaginationOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     limit: int
-    total: int
+    total: Optional[int] = Field(
+        None,
+        description=(
+            "How many rows match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     has_more: bool = Field(serialization_alias="hasMore")
     offset: Optional[int] = Field(
         None,
-        description="Effective offset for this page (offset mode only).",
+        description="Effective offset for this page (offset mode only; deprecated).",
     )
     next_offset: Optional[int] = Field(
         None,
@@ -11282,11 +11315,17 @@ class RegistryAuditPaginationOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     limit: int
-    total: int
+    total: Optional[int] = Field(
+        None,
+        description=(
+            "How many rows match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     has_more: bool = Field(serialization_alias="hasMore")
     offset: Optional[int] = Field(
         None,
-        description="Effective offset for this page (offset mode only).",
+        description="Effective offset for this page (offset mode only; deprecated).",
     )
     next_offset: Optional[int] = Field(
         None,
@@ -11360,18 +11399,29 @@ class RefreshHistoryEntryOut(BaseModel):
 
 
 class RefreshHistoryPaginationOut(BaseModel):
-    """Offset pagination metadata for the refresh-history list."""
+    """Cursor (and deprecated offset) pagination metadata for the refresh-history list."""
 
     model_config = ConfigDict(populate_by_name=True)
 
     limit: int
-    total: int
+    total: Optional[int] = Field(
+        None,
+        description=(
+            "How many rows match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     offset: int
     has_more: bool = Field(serialization_alias="hasMore")
     next_offset: Optional[int] = Field(
         None,
         serialization_alias="nextOffset",
-        description="Pass as offset for the next page when hasMore is true.",
+        description="Pass as offset for the next page when hasMore is true (offset mode).",
+    )
+    next_cursor: Optional[str] = Field(
+        None,
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` to read the next page; null on the last page.",
     )
 
 
@@ -12891,12 +12941,31 @@ class TenantRepositoryFilesListResponse(BaseModel):
     success: bool = True
     branch: str
     branches: List[str]
-    indexed_total: int
-    match_count: int
-    importable_match_count: int
+    indexed_total: Optional[int] = Field(
+        default=None,
+        description=(
+            "Files indexed on the branch before path filters. Present only when the request "
+            "set `include_total`."
+        ),
+    )
+    match_count: Optional[int] = Field(
+        default=None,
+        description="Files matching the filters. Present only when the request set `include_total`.",
+    )
+    importable_match_count: Optional[int] = Field(
+        default=None,
+        description=(
+            "Matching files of an importable kind. Present only when the request set "
+            "`include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
     files: List[TenantRepositoryFileRow]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class TenantRepositoryFileContentResponse(BaseModel):
@@ -13006,14 +13075,30 @@ class SpecCatalogResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     success: bool = True
-    catalog_total: int = Field(
-        ge=0, description="Specs in the catalog before any search or filter is applied."
+    catalog_total: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Specs in the catalog before any search or filter is applied. Present only when the "
+            "request set `include_total`."
+        ),
     )
-    match_count: int = Field(ge=0, description="Specs matching the current search and filters.")
+    match_count: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Specs matching the current search and filters. Present only when the request set "
+            "`include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
     sort: str
     specs: List[SpecCatalogRow] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
     facets: Optional[SpecCatalogFacets] = Field(
         default=None,
         description="Filter options; present only when the request set `include_facets=true`.",
@@ -13072,7 +13157,11 @@ class TenantsMeResponse(BaseModel):
     items: List[TenantMembershipSchema]
     total: int
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class TenantInfoResponse(BaseModel):
@@ -17317,9 +17406,13 @@ class McpFacetedSearchResponse(BaseModel):
     total: int = 0
     count: int = 0
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
     endpoints: List[McpBrowseEndpointOut] = Field(default_factory=list)
     facets: McpCatalogFacetsOut = Field(default_factory=McpCatalogFacetsOut)
+    has_more: bool = Field(default=False, description="Whether another page of endpoints exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 def _facet_buckets(rows: Any, *, null_label: str) -> List[McpCatalogBucketOut]:
@@ -17573,10 +17666,20 @@ class McpCapabilityDirectoryResponse(BaseModel):
 
     success: bool = True
     limit: int
-    offset: int
-    total: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many capabilities match the filters, counted up to 10,000. Present only when "
+            "the request set `include_total`."
+        ),
+    )
     count: int
     items: List[McpCapabilityDirectoryEntry] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 def mcp_capability_directory_entry_from_row(row: Dict[str, Any]) -> McpCapabilityDirectoryEntry:
@@ -17609,11 +17712,25 @@ def mcp_capability_directory_entry_from_row(row: Dict[str, Any]) -> McpCapabilit
 def mcp_capability_directory_response_from_rows(
     *,
     rows: Sequence[Dict[str, Any]],
-    total: int,
+    total: Optional[int],
     limit: int,
     offset: int,
+    has_more: bool = False,
+    next_cursor: Optional[str] = None,
 ) -> McpCapabilityDirectoryResponse:
-    """Project directory DB rows onto the wire envelope."""
+    """Project directory DB rows onto the wire envelope.
+
+    Args:
+        rows: The page's rows.
+        total: The capped match count, or ``None`` when the request did not ask for it.
+        limit: The page size used.
+        offset: The offset used.
+        has_more: Whether another page exists.
+        next_cursor: The cursor of the next page, when there is one.
+
+    Returns:
+        The response envelope.
+    """
     items = [mcp_capability_directory_entry_from_row(r) for r in rows]
     return McpCapabilityDirectoryResponse(
         success=True,
@@ -17622,6 +17739,8 @@ def mcp_capability_directory_response_from_rows(
         total=total,
         count=len(items),
         items=items,
+        has_more=has_more,
+        next_cursor=next_cursor,
     )
 
 

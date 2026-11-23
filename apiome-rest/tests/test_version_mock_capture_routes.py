@@ -23,6 +23,8 @@ from app.mock_capture import (
 )
 from fastapi.testclient import TestClient
 
+from tests.keyset_paging_fakes import keyset_rows, stamps, walk
+
 TENANT = "acme-corp"
 PROJECT_ID = "proj-1"
 VERSION_ID = "ver-1"
@@ -332,7 +334,42 @@ class TestListCaptures:
         ):
             client.get(CAPTURES_URL, params={"state": "approved", "limit": 5})
         assert lister.call_args.kwargs["review_state"] == "approved"
-        assert lister.call_args.kwargs["limit"] == 5
+        # One row more than the page is read, to learn whether another page follows (#7196).
+        assert lister.call_args.kwargs["limit"] == 6
+        assert lister.call_args.kwargs["cursor"] is None
+
+    def test_the_queue_pages_by_cursor_to_the_end_without_duplicates(self, client: TestClient) -> None:
+        rows = [
+            _capture_row(id=f"00000000-0000-4000-8000-{index:012d}", captured_at=stamp)
+            for index, stamp in enumerate(stamps(5))
+        ]
+        with (
+            patch("app.versions_routes.db.get_version_by_id", return_value=_version_row()),
+            patch("app.versions_routes.enforce_permission"),
+            patch(
+                "app.versions_routes.db.list_mock_capture_exchanges",
+                side_effect=keyset_rows(rows, "captured_at"),
+            ),
+            patch("app.versions_routes.db.count_mock_capture_exchanges", return_value={"pending": 5}),
+        ):
+            seen = walk(
+                lambda params: client.get(CAPTURES_URL, params=params),
+                "captures",
+                has_more_key="hasMore",
+                next_cursor_key="nextCursor",
+            )
+        ids = [capture["id"] for capture in seen]
+        assert ids == sorted((row["id"] for row in rows), reverse=True)
+        assert len(ids) == len(set(ids)) == 5
+
+    def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(self, client: TestClient) -> None:
+        with (
+            patch("app.versions_routes.db.get_version_by_id", return_value=_version_row()),
+            patch("app.versions_routes.enforce_permission"),
+        ):
+            assert client.get(CAPTURES_URL, params={"cursor": "not-a-cursor"}).status_code == 400
+            assert client.get(CAPTURES_URL, params={"limit": 201}).status_code == 422
+            assert client.get(CAPTURES_URL, params={"offset": 10_001}).status_code == 422
 
     def test_an_unknown_state_is_rejected(self, client: TestClient) -> None:
         with (

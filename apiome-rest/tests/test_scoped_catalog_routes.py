@@ -29,6 +29,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.export_projection import decode_page_cursor, encode_page_cursor
+from app.keyset_pagination import encode_key_cursor
 from app.main import app
 from app.scoped_catalog_store import (
     DEFAULT_PAGE_SIZE,
@@ -354,7 +355,60 @@ class TestDomainListing:
                 params={"domain_id": DOMAIN, "cursor": encode_page_cursor(25)},
             )
 
+        # A cursor issued before #7196 is an encoded offset; it still continues the walk.
         assert load.call_args.kwargs["offset"] == 25
+        assert load.call_args.kwargs["after"] is None
+
+    def test_a_keyset_cursor_continues_after_the_named_item(self):
+        with patch("app.scoped_catalog_routes.db") as mock_db, patch(
+            "app.scoped_catalog_routes.domains_store"
+        ) as mock_domains, patch(
+            "app.scoped_catalog_routes.store.load_classes_by_domain"
+        ) as load:
+            mock_db.get_version_core.return_value = {"id": VERSION}
+            mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
+            token = encode_key_cursor(["Address", CLASS_A])
+            load.return_value = page([class_item(CLASS_A, "Customer")], total=40)._replace(
+                next_cursor=token
+            )
+            body = client.get(CLASSES_URL, params={"domain_id": DOMAIN, "cursor": token}).json()
+
+        assert load.call_args.kwargs["after"] == ("Address", CLASS_A)
+        assert load.call_args.kwargs["offset"] == 0
+        # The store's keyset cursor is handed back verbatim.
+        assert body["next_cursor"] == token
+
+    def test_a_keyset_cursor_with_a_non_uuid_id_is_a_400(self):
+        with patch("app.scoped_catalog_routes.db") as mock_db, patch(
+            "app.scoped_catalog_routes.domains_store"
+        ) as mock_domains, patch(
+            "app.scoped_catalog_routes.store.load_classes_by_domain"
+        ) as load:
+            mock_db.get_version_core.return_value = {"id": VERSION}
+            mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
+            response = client.get(
+                CLASSES_URL,
+                params={"domain_id": DOMAIN, "cursor": encode_key_cursor(["Address", "nope"])},
+            )
+
+        assert response.status_code == 400
+        load.assert_not_called()
+
+    def test_an_offset_cursor_past_the_cap_is_a_400(self):
+        with patch("app.scoped_catalog_routes.db") as mock_db, patch(
+            "app.scoped_catalog_routes.domains_store"
+        ) as mock_domains, patch(
+            "app.scoped_catalog_routes.store.load_classes_by_domain"
+        ) as load:
+            mock_db.get_version_core.return_value = {"id": VERSION}
+            mock_domains.get_domain.return_value = {"id": DOMAIN, "version_id": VERSION}
+            response = client.get(
+                CLASSES_URL,
+                params={"domain_id": DOMAIN, "cursor": encode_page_cursor(10_001)},
+            )
+
+        assert response.status_code == 400
+        load.assert_not_called()
 
     def test_the_last_page_has_no_cursor(self):
         with patch("app.scoped_catalog_routes.db") as mock_db, patch(

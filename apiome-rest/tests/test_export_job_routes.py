@@ -278,6 +278,40 @@ def test_list_returns_summary_rows():
     # Summary rows never carry the event log or the fidelity envelope.
     assert "events" not in jobs[0]
     assert "result" not in jobs[0]
+    # Nothing is counted unless asked for (#7196).
+    body = listing.json()
+    assert body["total"] is None and body["has_more"] is False and body["next_cursor"] is None
+
+
+def test_list_pages_by_cursor_to_the_end_without_duplicates():
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        submitted = []
+        for _ in range(3):
+            r = client.post(
+                "/v1/export/acme/jobs",
+                json={"artifact": "artifact-1", "target": "openapi", "dry_run": True},
+            )
+            submitted.append(r.json()["job_id"])
+            _wait_terminal(submitted[-1])
+
+        seen, cursor = [], None
+        for _ in range(4):
+            params = {"limit": 2, **({"cursor": cursor} if cursor else {})}
+            body = client.get("/v1/export/acme/jobs", params=params).json()
+            seen += [job["job_id"] for job in body["jobs"]]
+            cursor = body["next_cursor"]
+            if not body["has_more"]:
+                break
+        counted = client.get("/v1/export/acme/jobs", params={"include_total": "true"}).json()
+    assert cursor is None
+    assert sorted(seen) == sorted(submitted) and len(set(seen)) == 3
+    assert counted["total"] == 3
+
+
+def test_list_rejects_a_malformed_cursor_and_caps_the_page():
+    assert client.get("/v1/export/acme/jobs", params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get("/v1/export/acme/jobs", params={"limit": 201}).status_code == 422
+    assert client.get("/v1/export/acme/jobs", params={"offset": 10_001}).status_code == 422
 
 
 def test_job_is_tenant_scoped():

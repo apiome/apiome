@@ -336,14 +336,20 @@ class FakeCommentDb(NotificationDbMixin):
             ):
                 continue
             rows.append(row)
-        rows.sort(key=lambda r: r["id"])
-        rows.sort(key=lambda r: r["last_activity_at"], reverse=True)
+        rows.sort(key=lambda r: (r["last_activity_at"], r["id"]), reverse=True)
         return rows
 
-    def list_comment_threads(self, *, limit: int = 50, offset: int = 0, **filters: Any) -> List[Dict[str, Any]]:
+    def list_comment_threads(
+        self, *, limit: int = 50, offset: int = 0, cursor: Any = None, **filters: Any
+    ) -> List[Dict[str, Any]]:
         """A page of threads with their opening comment as ``root_*`` columns."""
         page = []
-        for row in self._filtered_threads(**filters)[offset : offset + limit]:
+        matching = self._filtered_threads(**filters)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            matching = [row for row in matching if (row["last_activity_at"], row["id"]) < tuple(cursor)]
+            offset = 0
+        for row in matching[offset : offset + limit]:
             view = self._thread_view(row)
             comments = self._thread_comments(row["id"])
             root = self._comment_view(comments[0]) if comments else {}

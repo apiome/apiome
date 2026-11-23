@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import psycopg2
 import psycopg2.errors
@@ -211,11 +211,29 @@ def prune_runs_over_cap(suite_id: str) -> int:
 
 
 def list_runs(
-    tenant_id: str, suite_id: str, *, limit: int = 20, offset: int = 0
+    tenant_id: str,
+    suite_id: str,
+    *,
+    limit: int = 20,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
 ) -> List[Dict[str, Any]]:
-    """A suite's run history, newest first; degrades to ``[]`` on a DB fault."""
+    """A suite's run history, newest first; degrades to ``[]`` on a DB fault.
+
+    Args:
+        tenant_id: Tenant scope.
+        suite_id: The suite whose history is read.
+        limit: Rows to read.
+        offset: Runs to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen (#7196).
+
+    Returns:
+        The run rows.
+    """
     try:
-        return db.list_schema_test_suite_runs(tenant_id, suite_id, limit=limit, offset=offset)
+        return db.list_schema_test_suite_runs(
+            tenant_id, suite_id, limit=limit, offset=offset, cursor=cursor
+        )
     except psycopg2.Error:
         logger.exception("Listing runs for suite %s failed", suite_id)
         return []

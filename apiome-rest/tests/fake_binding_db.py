@@ -223,9 +223,14 @@ class FakeBindingDb(FakeCommentDb):
         active: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Any = None,
     ) -> List[Dict[str, Any]]:
         """A page of a project's bindings, newest first."""
         rows = self._filtered_bindings(tenant_id, project_id, version_id, active)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            rows = [row for row in rows if (row["created_at"], row["id"]) < tuple(cursor)]
+            offset = 0
         return [self._binding_view(row) for row in rows[offset : offset + limit]]
 
     def count_draft_bindings(

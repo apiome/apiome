@@ -122,13 +122,22 @@ def test_openapi_lists_spec_import_paths_and_operations():
 
 
 def test_list_spec_import_jobs_empty():
-    r = client.get("/v1/tenants/acme/imports")
+    r = client.get("/v1/tenants/acme/imports", params={"include_total": "true"})
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["jobs"] == []
     assert body["total"] == 0
+    assert body["has_more"] is False and body["next_cursor"] is None
+    # The total is counted only on request (#7196).
+    assert client.get("/v1/tenants/acme/imports").json()["total"] is None
     assert body["limit"] == 50
     assert body["offset"] == 0
+
+
+def test_list_spec_import_jobs_rejects_a_malformed_cursor_and_caps_the_page():
+    assert client.get("/v1/tenants/acme/imports", params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get("/v1/tenants/acme/imports", params={"limit": 201}).status_code == 422
+    assert client.get("/v1/tenants/acme/imports", params={"offset": 10_001}).status_code == 422
 
 
 def test_list_spec_import_jobs_includes_started_job(spec_import_fake_worker):
@@ -146,7 +155,7 @@ def test_list_spec_import_jobs_includes_started_job(spec_import_fake_worker):
     assert started.status_code == 202, started.text
     job_id = started.json()["job_id"]
 
-    listed = client.get("/v1/tenants/acme/imports?limit=10&offset=0")
+    listed = client.get("/v1/tenants/acme/imports?limit=10&offset=0&include_total=true")
     assert listed.status_code == 200, listed.text
     payload = listed.json()
     rows = payload["jobs"]

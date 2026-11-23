@@ -68,6 +68,7 @@ from .draft_binding_store import read_source
 from .draft_binding_store import resolve_project as _resolve_binding_project
 from .draft_binding_store import resolve_version as _resolve_binding_version
 from .draft_bindings import DraftBindingValidationError
+from .keyset_pagination import page_of, time_id_key
 from .provider_checks import (
     CODE_BINDING_RELEASED,
     OUTCOME_DISPATCHED,
@@ -928,9 +929,12 @@ def list_runs(
     commit_sha: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
     consumers_visible: bool = True,
 ) -> CheckSuiteRunList:
     """A version's evaluations, newest first.
+
+    Reads one row more than the page to learn whether another page exists (#7196).
 
     Args:
         tenant_id: The caller's tenant.
@@ -939,11 +943,12 @@ def list_runs(
         version_ref: Revision id or version label.
         commit_sha: Only evaluations reported against this commit.
         limit: Page size.
-        offset: Evaluations to skip.
+        offset: Evaluations to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last evaluation already seen.
         consumers_visible: Whether the caller may read consumer contracts.
 
     Returns:
-        The page.
+        The page and whether another follows.
 
     Raises:
         CheckSuiteError: For an unknown project or version, or an invalid commit.
@@ -952,14 +957,24 @@ def list_runs(
     version = _resolve_version(tenant_id, str(project["id"]), version_ref)
     commit = _normalize_commit(commit_sha) if (commit_sha or "").strip() else None
     page = max(1, min(int(limit), RUN_LIST_LIMIT))
+    skipped = 0 if cursor else max(0, int(offset))
     rows = db.list_check_suite_runs(
         tenant_id=tenant_id,
         version_id=str(version["id"]),
         commit_sha=commit,
-        limit=page,
-        offset=max(0, int(offset)),
+        limit=page + 1,
+        offset=skipped,
+        cursor=cursor,
     )
-    records = [record_from_row(row, tenant_slug) for row in rows]
+    window = page_of(rows, page, time_id_key())
+    records = [record_from_row(row, tenant_slug) for row in window.items]
     if not consumers_visible:
         records = [redact_consumers(record, tenant_slug) for record in records]
-    return CheckSuiteRunList(runs=records, count=len(records), limit=page, offset=max(0, int(offset)))
+    return CheckSuiteRunList(
+        runs=records,
+        count=len(records),
+        limit=page,
+        offset=skipped,
+        has_more=window.has_more,
+        next_cursor=window.next_cursor,
+    )
