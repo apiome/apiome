@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `lint` · 16 operations
 
@@ -357,9 +357,10 @@ Operation id: `lint_revision_axes_v1_versions__tenant_slug___project_id___versio
 
 Return the immutable lint evidence recorded for a schema revision (CLX-1.1, #4848).
 
-Lists every evidence run captured for the revision — provenance (scanner, adapter,
-profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
-coverage summary in which a scanner that never ran reads as ``not_run`` (never as clean).
+Lists the newest ``limit`` evidence runs captured for the revision (200 at most, #7196) —
+provenance (scanner, adapter, profile, fingerprints), outcome, normalized findings, and
+coverage — plus a per-scanner coverage summary, computed over those runs, in which a
+scanner that never ran reads as ``not_run`` (never as clean).
 Raw output artifacts are access-controlled: responses expose only their availability,
 never the storage reference or command metadata. Evidence is read-only by design; rows
 are written at score-capture time and are immutable.
@@ -373,6 +374,7 @@ Operation id: `lint_revision_evidence_v1_versions__tenant_slug___project_id___ve
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
 | `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `limit` | query | integer | no | Page size. At most 200. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

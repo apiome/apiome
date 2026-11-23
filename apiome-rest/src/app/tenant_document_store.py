@@ -250,16 +250,21 @@ def load_settings(db: Any, tenant_id: str) -> Optional[TenantStoreSettings]:
     return _from_row(row) if row else None
 
 
-def list_tenant_stores(db: Any) -> List[Dict[str, Any]]:
+def list_tenant_stores(db: Any, *, limit: Optional[int] = None) -> List[Dict[str, Any]]:
     """Every tenant that has configured its own bucket, for the ops health check and admin screen.
+
+    Args:
+        db: Database handle.
+        limit: Rows to read; ``None`` reads them all (the health check counts every bucket).
 
     Returns:
         ``{tenant_id, tenant_slug, tenant_name, mode, bucket, endpoint_url, move_state,
         cleanup_pending, unavailable_since, last_error}`` per live tenant, ordered by slug.
     """
+    limit_sql, params = ("LIMIT %s", (int(limit),)) if limit is not None else ("", ())
     with db_cursor(db) as cursor:
         cursor.execute(
-            """
+            f"""
             SELECT s.tenant_id::text AS tenant_id, t.slug AS tenant_slug, t.name AS tenant_name,
                    s.mode, s.bucket, s.endpoint_url, s.move_state, s.cleanup_pending,
                    s.unavailable_since, s.last_error
@@ -267,7 +272,9 @@ def list_tenant_stores(db: Any) -> List[Dict[str, Any]]:
               JOIN apiome.tenants t ON t.id = s.tenant_id AND t.deleted_at IS NULL
              WHERE s.bucket IS NOT NULL
              ORDER BY t.slug
-            """
+             {limit_sql}
+            """,
+            params,
         )
         return [dict(row) for row in cursor.fetchall()]
 

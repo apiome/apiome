@@ -121,7 +121,7 @@ def test_unresolved_endpoint_aggregates_counts_and_breakdown():
     ]
     # The aggregates are scoped to the token tenant, not the URL slug.
     mdb.count_unresolved_refs.assert_called_once_with("t1")
-    mdb.get_primitives_with_unresolved_refs.assert_called_once_with("t1")
+    mdb.get_primitives_with_unresolved_refs.assert_called_once_with("t1", limit=1001, cursor=None)
 
 
 def test_unresolved_endpoint_empty_when_all_resolved():
@@ -139,6 +139,8 @@ def test_unresolved_endpoint_empty_when_all_resolved():
         "unresolved_ref_count": 0,
         "affected_primitive_count": 0,
         "primitives": [],
+        "has_more": False,
+        "next_cursor": None,
     }
 
 

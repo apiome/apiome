@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `schema-registry` · 32 operations
 
@@ -660,6 +660,9 @@ Operation id: `get_schema_by_id_v1_tenants__tenant_slug__schema_registry_schemas
 
 List the tenant's live subjects (``imports:view``); deleted subjects are left out.
 
+One page of at most ``limit`` subjects (1,000 at most), by name; pass ``nextCursor`` as
+``cursor`` until ``hasMore`` is false (#7196).
+
 Operation id: `list_schema_subjects_v1_tenants__tenant_slug__schema_registry_subjects_get`
 
 **Parameters**
@@ -667,6 +670,8 @@ Operation id: `list_schema_subjects_v1_tenants__tenant_slug__schema_registry_sub
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -797,6 +802,9 @@ Request body for attach catalog item to subject.
 
 List a subject's live versions, oldest first (``imports:view``).
 
+One page of at most ``limit`` versions (1,000 at most); pass ``nextCursor`` as ``cursor``
+until ``hasMore`` is false (#7196).
+
 Operation id: `list_schema_subject_versions_v1_tenants__tenant_slug__schema_registry_subjects__subject__versions_get`
 
 **Parameters**
@@ -805,6 +813,8 @@ Operation id: `list_schema_subject_versions_v1_tenants__tenant_slug__schema_regi
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `subject` | path | string | yes | Path parameter identifying the subject segment. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -966,6 +976,8 @@ The tenant's live subjects, by name.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `subjects` | array of [`SubjectOut`](#schema-subjectout) | yes | Subjects. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `SubjectOut` {#schema-subjectout}
 
@@ -1004,6 +1016,8 @@ A subject's live versions, oldest first.
 | --- | --- | --- | --- |
 | `subject` | string | yes | Subject. |
 | `versions` | array of [`SubjectVersionOut`](#schema-subjectversionout) | yes | Versions. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `SubjectVersionOut` {#schema-subjectversionout}
 

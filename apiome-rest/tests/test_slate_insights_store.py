@@ -612,7 +612,8 @@ class TestHonestyLiteralsOnUsage:
             unit="requests",
             amount=3.5,
         )
-        query, _ = conn.statements[0]
+        # What is written, not what is read back: RETURNING names every column of the row.
+        query = conn.statements[0][0].split("RETURNING")[0]
         assert "cache_savings_amount" not in query
 
     def test_there_is_no_cache_savings_keyword_to_pass_either(self) -> None:
@@ -738,7 +739,8 @@ class TestHonestyLiteralsOnTailSessions:
         """The one path by which this module could otherwise claim a stream it never had."""
         db, conn = db_with({"id": SESSION, "stream_state": "closed"})
         close_tail_session(db, tenant_id=TENANT, environment_id=ENV, session_id=SESSION)
-        query, _ = conn.statements[0]
+        # What is written, not what is read back: RETURNING names every column of the row.
+        query = conn.statements[0][0].split("RETURNING")[0]
         assert "events_delivered" not in query
         assert "stream_state = 'closed'" in query
 
@@ -1144,7 +1146,8 @@ class TestPolicyLifecycle:
             actor_name="a",
             actor_key="a",
         )
-        insert = conn.statements[1][0]
+        # What is written, not what is read back: RETURNING names every column of the row.
+        insert = conn.statements[1][0].split("RETURNING")[0]
         assert "metric_retention_days" not in insert
         assert "log_retention_days" not in insert
         assert "trace_retention_days" not in insert
@@ -1200,7 +1203,8 @@ class TestPolicyLifecycle:
             actor_name="a",
             actor_key="a",
         )
-        assert "edge_attached" not in conn.statements[0][0]
+        # The row comes back whole, so RETURNING names the column; the write itself must not.
+        assert "edge_attached" not in conn.statements[0][0].split("RETURNING")[0]
 
     def test_a_policy_write_carries_every_retention_column(self) -> None:
         db, conn = db_with(policy_row())
@@ -2200,8 +2204,9 @@ class TestFilterBuilders:
         db, conn = db_with([])
         list_logs(db, tenant_id=TENANT, environment_id=ENV)
         query, params = conn.statements[0]
+        filters = query.split(" WHERE ", 1)[1]  # the select list names every column
         for column in ("level = ", "source = ", "release_id", "trace_ref", "ILIKE"):
-            assert column not in query
+            assert column not in filters
         assert len(params) == 3
 
     def test_every_log_filter_appears_when_supplied(self) -> None:
@@ -2237,8 +2242,9 @@ class TestFilterBuilders:
         db, conn = db_with([])
         list_traces(db, tenant_id=TENANT, environment_id=ENV)
         query, params = conn.statements[0]
+        filters = query.split(" WHERE ", 1)[1]  # the select list names every column
         for column in ("release_id", "route = ", "duration_ms >="):
-            assert column not in query
+            assert column not in filters
         assert len(params) == 3
 
     def test_every_trace_filter_appears_when_supplied(self) -> None:
@@ -2317,8 +2323,9 @@ class TestFilterBuilders:
         db, conn = db_with([])
         list_budget_alerts(db, tenant_id=TENANT, environment_id=ENV)
         query, params = conn.statements[0]
-        assert "budget_id" not in query
-        assert "acknowledged_at" not in query
+        filters = query.split(" WHERE ", 1)[1]  # the select list names every column
+        assert "budget_id" not in filters
+        assert "acknowledged_at" not in filters
         assert len(params) == 3
 
     def test_budget_alerts_can_be_narrowed_to_one_budget_and_to_the_unacknowledged(self) -> None:
@@ -2347,8 +2354,9 @@ class TestFilterBuilders:
         db, conn = db_with([])
         list_synthetic_results(db, tenant_id=TENANT, environment_id=ENV)
         query, params = conn.statements[0]
-        assert "check_id" not in query
-        assert "annotation_kind" not in query
+        filters = query.split(" WHERE ", 1)[1]  # the select list names every column
+        assert "check_id" not in filters
+        assert "annotation_kind" not in filters
         assert len(params) == 3
 
     def test_synthetic_results_can_be_narrowed_to_the_annotated(self) -> None:
@@ -2378,7 +2386,8 @@ class TestFilterBuilders:
         db, conn = db_with([])
         list_audit(db, tenant_id=TENANT, environment_id=ENV)
         query, params = conn.statements[0]
-        assert "subject_kind" not in query
+        # The select list names every column; it is the filter that must be absent.
+        assert "subject_kind" not in query.split(" WHERE ", 1)[1]
         assert len(params) == 3
 
     def test_the_audit_can_be_narrowed_to_one_subject_kind(self) -> None:

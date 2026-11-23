@@ -78,7 +78,8 @@ class TestSaveProvider:
         save(db, sealed=None, purge_on_deploy=False)
         update = conn.statements[0]
         assert update[0].startswith("UPDATE apiome.slate_cdn_providers")
-        assert "credential_ciphertext" not in update[0]
+        # The row comes back whole, so RETURNING names the column; the SET list must not.
+        assert "credential_ciphertext" not in update[0].split("RETURNING")[0]
         assert "tenant_id = %s::uuid" in update[0]
         assert "credential kept" in conn.statements[2][1][6]
         assert "purge on deploy off" in conn.statements[2][1][6]

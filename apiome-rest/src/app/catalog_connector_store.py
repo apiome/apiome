@@ -30,9 +30,12 @@ from .catalog_connectors import (
     STATUS_PAUSED,
     ConnectorError,
 )
+from .keyset_lists import by_name
 from .keyset_pagination import capped_count_sql, keyset_after, keyset_before
 from .refresh_source import RefreshCandidate
 
+#: Functions only: the test double replaces every name listed here (``CONNECTORS_ORDER`` is a
+#: constant routes read from this module directly).
 __all__ = [
     "count_items",
     "count_refresh_runs",
@@ -102,16 +105,30 @@ def _name_taken(exc: Exception) -> bool:
 # ---------------------------------------------------------------------------------------
 
 
-def list_connectors(db: Any, tenant_id: str) -> List[Dict[str, Any]]:
-    """The tenant's live connectors, by name."""
+#: The order of the connector list: by name (#7196).
+CONNECTORS_ORDER = by_name("catalog-connectors", "lower(c.name)", "c.id", name_field="name_key")
+
+
+def list_connectors(
+    db: Any, tenant_id: str, *, limit: Optional[int] = None, cursor: Optional[Sequence[Any]] = None
+) -> List[Dict[str, Any]]:
+    """The tenant's live connectors, by name.
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        limit: Rows to read; ``None`` reads every connector (#7196).
+        cursor: :data:`CONNECTORS_ORDER` values of the last connector already seen.
+    """
+    after_sql, after_params, limit_sql, limit_params = CONNECTORS_ORDER.window(limit, cursor)
     return db.execute_query(
         f"""
-        SELECT {_CONNECTOR_COLUMNS}
+        SELECT {_CONNECTOR_COLUMNS}, lower(c.name) AS name_key
         FROM apiome.catalog_connectors c
-        WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL
-        ORDER BY lower(c.name), c.id
+        WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL{after_sql}
+        ORDER BY {CONNECTORS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
 
 

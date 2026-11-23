@@ -32,13 +32,15 @@ matching the saved-search rule) holding VERSIONS/EDIT, the same gate the domain 
 reorganizing what everyone sees.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from . import workspace_custom_action_store as store
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import CUSTOM_ACTIONS_ORDER
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .models import (
     WorkspaceCustomActionCreate,
     WorkspaceCustomActionListResponse,
@@ -100,15 +102,38 @@ def _load_action(tenant_id: str, action_id: str) -> Dict[str, Any]:
 @router.get("/{tenant_slug}/custom-actions", response_model=WorkspaceCustomActionListResponse)
 def list_custom_actions(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> WorkspaceCustomActionListResponse:
-    """List the tenant's live custom actions, alphabetically by name."""
+    """List the tenant's live custom actions, alphabetically by name.
+
+    One page of at most ``limit`` actions (1,000 at most); pass the page's ``nextCursor`` as
+    ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of actions and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
+    """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
-    rows = store.list_actions(db, tenant_id=tenant_id)
+    rows = store.list_actions(
+        db, tenant_id=tenant_id, limit=limit + 1, cursor=CUSTOM_ACTIONS_ORDER.parse(cursor)
+    )
+    page = CUSTOM_ACTIONS_ORDER.page(rows, limit)
     return WorkspaceCustomActionListResponse(
         success=True,
-        actions=[workspace_custom_action_out_from_row(row) for row in rows],
+        actions=[workspace_custom_action_out_from_row(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

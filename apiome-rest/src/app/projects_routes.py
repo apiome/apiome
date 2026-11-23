@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Response
 from typing import Optional, List, Dict, Any
 
 from .database import ProjectDeleteBlocked, ProjectUpdateConflict, db
+from .authoring_list_orders import PROJECT_CONVERSIONS_ORDER
 from .project_list_paging import PROJECT_CURSOR_SIZE, project_row_cursor
 from .keyset_pagination import (
     MAX_PAGE_LIMIT,
@@ -488,6 +489,8 @@ def get_project(
 def get_project_conversion_history(
     tenant_slug: str,
     project_id: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ProjectConversionHistoryResponse:
     """Return the conversion-provenance rows that produced this Project, newest first (CPDO-3.3).
@@ -498,25 +501,37 @@ def get_project_conversion_history(
     Empty for projects that were never a conversion target. Requires authentication + tenant
     scoping only, like every other project read.
 
+    One page of at most ``limit`` rows (200 at most); pass the page's ``nextCursor`` as ``cursor``
+    while ``hasMore`` is true (#7196).
+
     Args:
         tenant_slug: The tenant slug.
         project_id: The (target) project ID.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
         The :class:`~app.models.ProjectConversionHistoryResponse`, newest first.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
     """
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
+    after = PROJECT_CONVERSIONS_ORDER.parse(cursor)
 
     project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    rows = db.get_conversions_for_project(tenant_id, project_id)
+    rows = db.get_conversions_for_project(tenant_id, project_id, limit=limit + 1, cursor=after)
+    page = PROJECT_CONVERSIONS_ORDER.page(rows, limit)
     return ProjectConversionHistoryResponse(
         project_id=project_id,
-        conversions=[provenance_entry(row) for row in rows],
+        conversions=[provenance_entry(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

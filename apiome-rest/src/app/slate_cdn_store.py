@@ -62,6 +62,22 @@ def _fetch_one(cursor: Any, query: str, params: Sequence[Any]) -> Optional[Dict[
     return None if row is None else dict(row)
 
 
+#: Every ``slate_cdn_providers`` column, credential columns included — the store hands the row to
+#: the service whole and the service decides what leaves the process.
+_PROVIDER_COLUMNS = (
+    "id, tenant_id, site_id, environment_id, provider, target, auth_header_name, "
+    "credential_ciphertext, credential_key_version, purge_on_deploy, created_at, updated_at, "
+    "updated_by_actor_id, updated_by_actor_name"
+)
+
+#: Every ``slate_cdn_purge_dispatches`` column — a dispatch is recorded and listed whole.
+_DISPATCH_COLUMNS = (
+    "id, tenant_id, environment_id, release_id, cache_purge_id, trigger, provider, mode, "
+    "url_count, sample_urls, status, http_status, error_code, error_message, actor_id, "
+    "actor_name, dispatched_at"
+)
+
+
 def get_provider(
     db: _DbLike, *, tenant_id: str, environment_id: str
 ) -> Optional[Dict[str, Any]]:
@@ -78,8 +94,8 @@ def get_provider(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_PROVIDER_COLUMNS}
               FROM apiome.slate_cdn_providers
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -129,13 +145,13 @@ def save_provider(
             if sealed_credential is None:
                 written = _fetch_one(
                     cursor,
-                    """
+                    f"""
                     UPDATE apiome.slate_cdn_providers
                        SET provider = %s, target = %s, auth_header_name = %s,
                            purge_on_deploy = %s, updated_at = CURRENT_TIMESTAMP,
                            updated_by_actor_id = %s, updated_by_actor_name = %s
                      WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
-                    RETURNING *
+                    RETURNING {_PROVIDER_COLUMNS}
                     """,
                     (
                         provider,
@@ -158,7 +174,7 @@ def save_provider(
                 ciphertext, key_version = sealed_credential
                 written = _fetch_one(
                     cursor,
-                    """
+                    f"""
                     INSERT INTO apiome.slate_cdn_providers
                         (tenant_id, site_id, environment_id, provider, target, auth_header_name,
                          credential_ciphertext, credential_key_version, purge_on_deploy,
@@ -175,7 +191,7 @@ def save_provider(
                            updated_by_actor_id = EXCLUDED.updated_by_actor_id,
                            updated_by_actor_name = EXCLUDED.updated_by_actor_name
                      WHERE apiome.slate_cdn_providers.tenant_id = EXCLUDED.tenant_id
-                    RETURNING *, (xmax = 0) AS inserted
+                    RETURNING {_PROVIDER_COLUMNS}, (xmax = 0) AS inserted
                     """,
                     (
                         tenant_id,
@@ -423,13 +439,13 @@ def record_dispatch(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_cdn_purge_dispatches
                     (tenant_id, environment_id, release_id, cache_purge_id, trigger, provider,
                      mode, url_count, sample_urls, status, http_status, error_code,
                      error_message, actor_id, actor_name)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING {_DISPATCH_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -473,8 +489,8 @@ def list_dispatches(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_DISPATCH_COLUMNS}
               FROM apiome.slate_cdn_purge_dispatches
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY dispatched_at DESC

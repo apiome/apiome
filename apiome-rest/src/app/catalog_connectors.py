@@ -262,6 +262,8 @@ class ConnectorListResponse(BaseModel):
     connectors: List[ConnectorOut]
     kinds: List[str]
     syncable_kinds: List[str] = Field(serialization_alias="syncableKinds")
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class ConnectorItemOut(BaseModel):

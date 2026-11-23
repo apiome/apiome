@@ -21,6 +21,7 @@ from fastapi.concurrency import run_in_threadpool
 from .auth import validate_authentication
 from .database import db
 from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
     cursor_query,
     limit_query,
     offset_query,
@@ -53,6 +54,7 @@ from .schema_suite_service import (
     run_suite,
     update_suite,
 )
+from .tenant_list_paging import SCHEMA_SUITES_ORDER
 
 __all__ = ["router"]
 
@@ -122,26 +124,46 @@ def create_schema_test_suite(
         "Suites for the authenticated tenant, newest first, each carrying its newest run "
         "summary — including the ``regression`` flag the version and catalog detail surfaces "
         "badge on. ``ref`` narrows to the suites attached to one artifact "
-        "(``{kind}/{artifact}`` — a version or type segment is tolerated and ignored)."
+        "(``{kind}/{artifact}`` — a version or type segment is tolerated and ignored).\n\n"
+        "At most ``limit`` suites (1,000 at most). The `X-Has-More` response header says whether "
+        "another page exists, and `X-Next-Cursor` carries the `cursor` that reads it."
     ),
 )
 def list_schema_test_suites(
     tenant_slug: str,
+    response: Response,
     ref: Optional[str] = Query(default=None, description="Narrow to one artifact's suites."),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[SchemaTestSuiteModel]:
-    """List suites, optionally narrowed to one artifact.
+    """List suites, optionally narrowed to one artifact, one page at a time.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        response: The response, for the paging headers.
+        ref: Narrow to one artifact's suites.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of suites, newest first; paging state is in the response headers.
 
     Raises:
-        HTTPException: 400 for a malformed ``ref``, 403 without ``types:view``.
+        HTTPException: 400 for a malformed ``ref`` or cursor, 403 without ``types:view``.
     """
     enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
+    after = SCHEMA_SUITES_ORDER.parse(cursor)
     tenant_id = _tenant_id(auth_data)
     _ = tenant_slug
     try:
-        return list_suites(tenant_id, ref=ref)
+        suites = list_suites(tenant_id, ref=ref, limit=limit + 1, cursor=after)
     except SchemaReferenceError as exc:
         raise _map_reference_error(exc) from exc
+    page = SCHEMA_SUITES_ORDER.page(suites, limit)
+    set_page_headers(response, page)
+    return page.items
 
 
 @router.post(

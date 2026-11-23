@@ -13,6 +13,8 @@ from urllib.parse import unquote
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import UNRESOLVED_PRIMITIVES_ORDER
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .feature_gating import require_primitives_registry
 from .database import db
 from .permissions import enforce_permission, Resource, Action
@@ -821,6 +823,8 @@ def get_primitive_import(
 @router.get("/{tenant_slug}/unresolved", response_model=UnresolvedRefsResponse)
 def list_unresolved_refs(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(require_primitives_registry)
 ) -> UnresolvedRefsResponse:
     """Report the tenant's unresolved relative-``$ref`` edges and counts (#3457).
@@ -834,20 +838,32 @@ def list_unresolved_refs(
     Registered before ``GET /{tenant_slug}/{primitive_id}`` so the literal ``unresolved``
     path is matched here rather than being captured as a primitive id.
 
+    ``primitives`` is one page of at most ``limit`` primitives (1,000 at most); read the
+    next with the ``next_cursor`` of this one while ``has_more`` is true (#7196). The two
+    counts always cover the whole tenant.
+
     Args:
         tenant_slug: The tenant slug.
+        limit: Page size.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
         ``UnresolvedRefsResponse`` with the total unresolved-edge count, the number of
-        affected primitives, and the per-primitive unresolved-edge breakdown.
+        affected primitives, and one page of the per-primitive unresolved-edge breakdown.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     tenant_id = auth_data['tenant_id']
+    after = UNRESOLVED_PRIMITIVES_ORDER.parse(cursor)
     counts = db.count_unresolved_refs(tenant_id)
-    rows = db.get_primitives_with_unresolved_refs(tenant_id)
+    page = UNRESOLVED_PRIMITIVES_ORDER.page(
+        db.get_primitives_with_unresolved_refs(tenant_id, limit=limit + 1, cursor=after), limit
+    )
 
     primitives: List[UnresolvedRefPrimitive] = []
-    for row in rows:
+    for row in page.items:
         unresolved = [
             edge for edge in (row.get('refs') or [])
             if edge.get('status') == 'unresolved'
@@ -868,6 +884,8 @@ def list_unresolved_refs(
         unresolved_ref_count=counts['unresolved_ref_count'],
         affected_primitive_count=counts['affected_primitive_count'],
         primitives=primitives,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

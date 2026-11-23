@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mcp-catalog` · 98 operations
 
@@ -242,6 +242,10 @@ Each endpoint carries its manual ``tags``, and the ``category`` / ``tag`` facets
 MCAT-9.3) narrow the list: the two facets AND together, values within one facet OR, and
 ``uncategorized`` / ``untagged`` select endpoints with none.
 
+The view pages over endpoints in name order (#7196): at most ``limit`` endpoints (1,000 at
+most) are grouped per response, ``has_more`` says whether more exist and ``next_cursor``
+reads them. A host's group — and the counts — describe the endpoints of that page.
+
 Operation id: `browse_mcp_endpoints_v1_mcp__tenant_slug__browse_get`
 
 **Parameters**
@@ -252,6 +256,8 @@ Operation id: `browse_mcp_endpoints_v1_mcp__tenant_slug__browse_get`
 | `team` | query | string or null | no | Only endpoints whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
 | `category` | query | array of string or null | no | Category facet: stored category values such as a category slug (case-insensitive) and/or 'uncategorized'. Repeatable; values OR. |
 | `tag` | query | array of string or null | no | Tag facet: manual tags and/or 'untagged'. Repeatable; values OR. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -274,6 +280,10 @@ second read. ``name`` matches item name or title case-insensitively (substring);
 ``endpoint_id``, and the usual host/category/grade/visibility filters compose (ANDed). Like
 every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug.
 
+Pages by ``cursor``: pass the previous page's ``next_cursor`` (with the same ``sort`` and
+``direction``) until ``has_more`` is false. ``total`` is counted, up to 10,000, only when
+``include_total`` is set (#7196).
+
 Operation id: `list_mcp_capability_directory_v1_mcp__tenant_slug__capabilities_get`
 
 **Parameters**
@@ -290,8 +300,10 @@ Operation id: `list_mcp_capability_directory_v1_mcp__tenant_slug__capabilities_g
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
 | `sort` | query | enum `"server"`, `"name"`, `"type"` | no | Sort column: server (default), name, or type. |
 | `direction` | query | enum `"asc"`, `"desc"` | no | Sort direction: asc (default) or desc. |
-| `limit` | query | integer | no | Maximum items to return. |
-| `offset` | query | integer | no | Items to skip (pagination). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -322,6 +334,9 @@ relevance desc, then ordinal. ``visibility`` and tenant scoping are enforced lik
 search route — only the caller's own catalog is searched. An empty or whitespace-only query, or
 a query that matches nothing, returns ``groups: []`` (not an error).
 
+Groups are ranked by relevance over at most 200 keyword and 200 semantic matches, so this list
+pages by ``offset`` and ``limit`` within that bounded set; no cursor applies (#7196).
+
 Operation id: `cross_server_capability_search_v1_mcp__tenant_slug__capabilities_search_get`
 
 **Parameters**
@@ -335,8 +350,8 @@ Operation id: `cross_server_capability_search_v1_mcp__tenant_slug__capabilities_
 | `category` | query | string or null | no | Filter to endpoints in this category (case-insensitive). |
 | `grade` | query | string or null | no | Filter to endpoints whose current snapshot earned this A-F grade. |
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
-| `limit` | query | integer | no | Maximum server groups to return. |
-| `offset` | query | integer | no | Server groups to skip (pagination). |
+| `limit` | query | integer | no | Page size. At most 100. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -353,6 +368,9 @@ Operation id: `cross_server_capability_search_v1_mcp__tenant_slug__capabilities_
 
 List the category lookup: built-in categories plus the tenant's own, with endpoint counts.
 
+One page of at most ``limit`` categories (1,000 at most); pass ``next_cursor`` as ``cursor``
+until ``has_more`` is false (#7196).
+
 Operation id: `list_mcp_categories_v1_mcp__tenant_slug__categories_get`
 
 **Parameters**
@@ -360,6 +378,8 @@ Operation id: `list_mcp_categories_v1_mcp__tenant_slug__categories_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -522,6 +542,9 @@ Operation id: `list_mcp_category_suggestions_v1_mcp__tenant_slug__category_sugge
 
 List curated collections for the caller's tenant.
 
+One page of at most ``limit`` collections (1,000 at most), most recently changed first;
+pass ``next_cursor`` as ``cursor`` until ``has_more`` is false (#7196).
+
 Operation id: `list_mcp_collections_v1_mcp__tenant_slug__collections_get`
 
 **Parameters**
@@ -529,6 +552,8 @@ Operation id: `list_mcp_collections_v1_mcp__tenant_slug__collections_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -742,6 +767,11 @@ fingerprints do not prove they are distinct), or an identical current ``surface_
 Published endpoints in other tenants that match the same keys are returned as cross-tenant hints.
 The report is advisory only — nothing is merged automatically.
 
+The groups are computed in memory, so the report pages by ``limit`` + ``offset`` (not by
+cursor) and scans at most 5,000 of the tenant's endpoints and 5,000 published endpoints of
+other tenants (#7196). ``group_count`` / ``flagged_endpoint_count`` describe the whole
+report; at most ``limit`` cross-tenant hints are returned.
+
 Operation id: `list_mcp_duplicate_report_v1_mcp__tenant_slug__data_quality_duplicates_get`
 
 **Parameters**
@@ -749,6 +779,8 @@ Operation id: `list_mcp_duplicate_report_v1_mcp__tenant_slug__data_quality_dupli
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -770,6 +802,10 @@ failing streak. Each flagged row carries a ``last_known_good_at`` anchor from th
 snapshot (when one exists) plus the live cadence/backoff fields from ``mcp_endpoints``.
 Healthy, in-cadence endpoints are omitted.
 
+The flags are computed in memory, so the report pages by ``limit`` + ``offset`` (not by
+cursor) over at most 5,000 of the tenant's endpoints (#7196). ``flagged_endpoint_count``
+describes the whole report.
+
 Operation id: `list_mcp_freshness_report_v1_mcp__tenant_slug__data_quality_freshness_get`
 
 **Parameters**
@@ -777,6 +813,8 @@ Operation id: `list_mcp_freshness_report_v1_mcp__tenant_slug__data_quality_fresh
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -901,7 +939,10 @@ Operation id: `preview_mcp_digest_v1_mcp__tenant_slug__digest_preview_post`
 
 **List Mcp Endpoints**
 
-List every catalog endpoint owned by the caller's tenant (newest first).
+List the catalog endpoints owned by the caller's tenant, newest first, one page at a time.
+
+At most ``limit`` endpoints (1,000 at most); pass ``next_cursor`` as ``cursor`` until
+``has_more`` is false (#7196). A malformed cursor is a ``400``.
 
 Operation id: `list_mcp_endpoints_v1_mcp__tenant_slug__endpoints_get`
 
@@ -910,6 +951,8 @@ Operation id: `list_mcp_endpoints_v1_mcp__tenant_slug__endpoints_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1177,6 +1220,9 @@ Operation id: `clear_mcp_endpoint_credentials_v1_mcp__tenant_slug__endpoints__en
 
 List an endpoint's discovery jobs, newest first; 404 when not the tenant's endpoint.
 
+At most ``limit`` jobs (200 at most); pass ``next_cursor`` as ``cursor`` until ``has_more``
+is false (#7196). A malformed cursor is a ``400``.
+
 Operation id: `list_mcp_discovery_jobs_v1_mcp__tenant_slug__endpoints__endpoint_id__discover_get`
 
 **Parameters**
@@ -1185,6 +1231,8 @@ Operation id: `list_mcp_discovery_jobs_v1_mcp__tenant_slug__endpoints__endpoint_
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1292,6 +1340,8 @@ Operation id: `get_mcp_endpoint_digest_v1_mcp__tenant_slug__endpoints__endpoint_
 
 Return the endpoint's per-version evolution series (oldest snapshot first).
 
+The series covers the endpoint's ``limit`` most recent snapshots (1,000 at most, #7196).
+
 One point per discovery snapshot carrying its capability ``type_counts``, quality
 ``score`` / ``grade``, the ``change_counts`` (churn by direction) it introduced, and the
 ``severity_counts`` (V2-MCP-30.3) classifying that churn as breaking / additive / review —
@@ -1307,6 +1357,7 @@ Operation id: `get_mcp_endpoint_insight_evolution_v1_mcp__tenant_slug__endpoints
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 1000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1452,6 +1503,7 @@ Operation id: `get_mcp_endpoint_similar_v1_mcp__tenant_slug__endpoints__endpoint
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 10. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1645,6 +1697,9 @@ List an endpoint's discovery-job status snapshots, newest first.
 404 when the endpoint is not the caller's tenant's (so an unknown id never
 discloses another tenant's jobs as an empty list).
 
+At most ``limit`` jobs (200 at most); pass ``next_cursor`` as ``cursor`` until ``has_more``
+is false (#7196). A malformed cursor is a ``400``.
+
 Operation id: `list_mcp_endpoint_jobs_v1_mcp__tenant_slug__endpoints__endpoint_id__jobs_get`
 
 **Parameters**
@@ -1653,6 +1708,8 @@ Operation id: `list_mcp_endpoint_jobs_v1_mcp__tenant_slug__endpoints__endpoint_i
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1697,6 +1754,9 @@ Operation id: `get_mcp_endpoint_job_v1_mcp__tenant_slug__endpoints__endpoint_id_
 
 List cataloger notes for an endpoint (newest first).
 
+One page of at most ``limit`` notes (200 at most); pass ``next_cursor`` as ``cursor`` until
+``has_more`` is false (#7196).
+
 Operation id: `list_mcp_endpoint_notes_v1_mcp__tenant_slug__endpoints__endpoint_id__notes_get`
 
 **Parameters**
@@ -1705,6 +1765,8 @@ Operation id: `list_mcp_endpoint_notes_v1_mcp__tenant_slug__endpoints__endpoint_
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1967,6 +2029,9 @@ Operation id: `export_mcp_endpoint_report_v1_mcp__tenant_slug__endpoints__endpoi
 
 List an endpoint's linked sources, newest first. 404 when the endpoint is not the caller's.
 
+At most ``limit`` sources (1,000 at most); pass ``nextCursor`` as ``cursor`` until
+``hasMore`` is false (#7196). A malformed cursor is a ``400``.
+
 Operation id: `list_mcp_endpoint_sources_v1_mcp__tenant_slug__endpoints__endpoint_id__sources_get`
 
 **Parameters**
@@ -1976,6 +2041,8 @@ Operation id: `list_mcp_endpoint_sources_v1_mcp__tenant_slug__endpoints__endpoin
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
 | `includeRetired` | query | boolean | no | Include retired source links (kept for historical evidence). |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -2343,6 +2410,9 @@ identity and fingerprint, the quality score/grade (when scored), and the per-dir
 tally of changes it introduced. ``is_current`` marks the snapshot the endpoint currently
 points at. 404 when the endpoint is not the caller's tenant's.
 
+At most ``limit`` snapshots (200 at most); pass ``next_cursor`` as ``cursor`` until
+``has_more`` is false (#7196). A malformed cursor is a ``400``.
+
 Operation id: `list_mcp_endpoint_versions_v1_mcp__tenant_slug__endpoints__endpoint_id__versions_get`
 
 **Parameters**
@@ -2351,6 +2421,8 @@ Operation id: `list_mcp_endpoint_versions_v1_mcp__tenant_slug__endpoints__endpoi
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -2593,6 +2665,9 @@ Operation id: `get_mcp_endpoint_version_lint_axes_v1_mcp__tenant_slug__endpoints
 
 Return the immutable lint evidence recorded for a version snapshot (CLX-1.1, #4848).
 
+Reads the snapshot's ``limit`` most recent evidence runs (200 at most, #7196); the coverage
+summary describes those runs.
+
 Lists every evidence run captured for the snapshot — provenance (scanner, adapter,
 profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
 coverage summary in which a scanner that never ran reads as ``not_run`` (never as clean).
@@ -2609,6 +2684,7 @@ Operation id: `get_mcp_endpoint_version_lint_evidence_v1_mcp__tenant_slug__endpo
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
 | `version_id` | path | string (uuid) | yes | Version identifier or semantic version label, depending on the route. |
+| `limit` | query | integer | no | Page size. At most 200. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -2858,6 +2934,10 @@ so the search only ever spans the caller's own catalog, and ``visibility`` narro
 caller's *own* private/public endpoints. A filter combination matching nothing returns an
 empty page with zeroed counts, not an error; an invalid facet value is a ``422``.
 
+The endpoint page is ordered by name and pages by ``cursor``: pass the previous page's
+``next_cursor`` until ``has_more`` is false. ``total`` and the facet counts always describe
+the whole match, not the page (#7196).
+
 Operation id: `faceted_mcp_catalog_search_v1_mcp__tenant_slug__facets_get`
 
 **Parameters**
@@ -2874,8 +2954,9 @@ Operation id: `faceted_mcp_catalog_search_v1_mcp__tenant_slug__facets_get`
 | `health` | query | array of string or null | no | Discovery-health facet: healthy / failing / undiscovered / disabled / quarantined. Repeatable. |
 | `tag` | query | array of string or null | no | Tag facet: manual tags (case-insensitive) and/or 'untagged'. Repeatable. |
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
-| `limit` | query | integer | no | Maximum endpoints to return. |
-| `offset` | query | integer | no | Endpoints to skip (pagination). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -2958,6 +3039,9 @@ Request body for complete mcp endpoint oauth.
 
 List the caller's saved catalog searches (pinned first, then newest).
 
+One page of at most ``limit`` searches (1,000 at most); pass ``next_cursor`` as ``cursor``
+until ``has_more`` is false (#7196).
+
 Operation id: `list_mcp_saved_searches_v1_mcp__tenant_slug__saved_searches_get`
 
 **Parameters**
@@ -2965,6 +3049,8 @@ Operation id: `list_mcp_saved_searches_v1_mcp__tenant_slug__saved_searches_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -3135,6 +3221,9 @@ Federated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the f
 carries the MCP registry's matches (:func:`_federate_with_registry`), each labeled
 ``source = "registry"``; local hits stay ``source = "local"``.
 
+Hits are ordered by relevance, which no cursor can continue, so this list pages by ``offset``
+(at most 10,000) and ``limit`` (at most 200) and counts nothing (#7196).
+
 Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 
 **Parameters**
@@ -3149,8 +3238,8 @@ Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 | `grade` | query | string or null | no | Filter to endpoints whose current snapshot earned this A-F grade. |
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
 | `tag` | query | string or null | no | Filter to endpoints carrying this manual tag (case-insensitive). |
-| `limit` | query | integer | no | Maximum hits to return. |
-| `offset` | query | integer | no | Hits to skip (pagination). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `include_registry` | query | boolean | no | Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names match, on the first page only (offset=0). Registry matches come back in registry_hits, after the local hits, minus any the caller already has (deduped by registry server name or remote URL). |
 | `registry_limit` | query | integer | no | Maximum registry entries to ask the registry for (include_registry=true). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
@@ -3169,6 +3258,9 @@ Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 
 List every tag in use across the tenant's live endpoints, busiest first.
 
+The order is a computed count, so the list pages by ``limit`` (1,000 at most) and ``offset``
+rather than by cursor; ``has_more`` says whether more tags follow (#7196).
+
 Operation id: `list_mcp_tag_vocabulary_v1_mcp__tenant_slug__tags_get`
 
 **Parameters**
@@ -3176,6 +3268,8 @@ Operation id: `list_mcp_tag_vocabulary_v1_mcp__tenant_slug__tags_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `offset` | query | integer | no | Tags to skip. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -3259,6 +3353,8 @@ Response envelope for the private browse view — endpoints grouped by host (MCA
 | `host_count` | integer | yes | Number of host. |
 | `endpoint_count` | integer | yes | Number of endpoint. |
 | `groups` | array of `McpBrowseHostGroup` | yes | Groups. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
 
 ### `McpCapabilityDirectoryResponse` {#schema-mcpcapabilitydirectoryresponse}
 
@@ -3268,10 +3364,12 @@ Paginated capability directory envelope (MCAT-21.4).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
-| `total` | integer | yes | Total. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `total` | integer or null | no | How many capabilities match the filters, counted up to 10,000. Present only when the request set `include_total`. |
 | `count` | integer | yes | Number of count. |
 | `items` | array of `McpCapabilityDirectoryEntry` | no | Items. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpCategoryCreate` {#schema-mcpcategorycreate}
 
@@ -3294,6 +3392,8 @@ Envelope for the category lookup list (MCAT-9.3).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `categories` | array of `McpCategoryOut` | no | Categories. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpCategoryResponse` {#schema-mcpcategoryresponse}
 
@@ -3348,6 +3448,8 @@ Envelope for listing curated collections.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `collections` | array of [`McpCollectionOut`](#schema-mcpcollectionout) | no | Collections. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpCollectionMembersAdd` {#schema-mcpcollectionmembersadd}
 
@@ -3505,6 +3607,8 @@ Response envelope listing an endpoint's discovery jobs (newest first).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `jobs` | array of `McpDiscoveryJobOut` | yes | Jobs. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
 
 ### `McpDiscoveryJobResponse` {#schema-mcpdiscoveryjobresponse}
 
@@ -3524,6 +3628,8 @@ Response envelope listing an endpoint's discovery-job snapshots (newest first).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `jobs` | array of `McpDiscoveryJobStatus` | yes | Jobs. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
 
 ### `McpDiscoveryJobStatusResponse` {#schema-mcpdiscoveryjobstatusresponse}
 
@@ -3546,6 +3652,7 @@ Advisory duplicate review list for the caller's catalog.
 | `flagged_endpoint_count` | integer | yes | Number of flagged endpoint. |
 | `groups` | array of `McpDuplicateGroup` | yes | Groups. |
 | `cross_tenant_hints` | array of `McpDuplicateCrossTenantHint` | no | Cross Tenant Hints. |
+| `has_more` | boolean | no | Whether more. |
 
 ### `McpEndpointCategorySuggestionResponse` {#schema-mcpendpointcategorysuggestionresponse}
 
@@ -3653,6 +3760,8 @@ McpEndpointListResponse schema.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `endpoints` | array of `McpEndpointOut` | yes | Endpoints. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
 
 ### `McpEndpointNoteCreate` {#schema-mcpendpointnotecreate}
 
@@ -3670,6 +3779,8 @@ Envelope for a cataloger-notes list.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `notes` | array of [`McpEndpointNoteOut`](#schema-mcpendpointnoteout) | no | Notes. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpEndpointNoteOut` {#schema-mcpendpointnoteout}
 
@@ -3839,6 +3950,8 @@ Response envelope for an endpoint's version history (newest first).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `versions` | array of `McpEndpointVersionSummary` | yes | Versions. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
 
 ### `McpEndpointVersionResponse` {#schema-mcpendpointversionresponse}
 
@@ -3889,9 +4002,11 @@ zero total, empty buckets — never an error.
 | `total` | integer | no | Total. |
 | `count` | integer | no | Number of count. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
 | `endpoints` | array of `McpBrowseEndpointOut` | no | Endpoints. |
 | `facets` | `McpCatalogFacetsOut` | no | Facets. |
+| `has_more` | boolean | no | Whether another page of endpoints exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpFreshnessReportResponse` {#schema-mcpfreshnessreportresponse}
 
@@ -3903,6 +4018,7 @@ Freshness report over the caller's catalog — only non-fresh endpoints are list
 | `default_cadence_seconds` | integer | yes | Default Cadence Seconds. |
 | `flagged_endpoint_count` | integer | yes | Number of flagged endpoint. |
 | `endpoints` | array of `McpFreshnessEndpointOut` | yes | Endpoints. |
+| `has_more` | boolean | no | Whether more. |
 
 ### `McpInsightCatalogResponse` {#schema-mcpinsightcatalogresponse}
 
@@ -4166,6 +4282,8 @@ Envelope for listing saved searches.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `searches` | array of [`McpSavedSearchOut`](#schema-mcpsavedsearchout) | no | Searches. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpSavedSearchOut` {#schema-mcpsavedsearchout}
 
@@ -4373,6 +4491,8 @@ An endpoint's linked source associations (CLX-3.2, #4856).
 | `success` | boolean | no | Success. |
 | `endpointId` | string | yes | Endpoint ID. |
 | `sources` | array of `McpSourceOut` | yes | Sources. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `McpSourceResponse` {#schema-mcpsourceresponse}
 
@@ -4403,6 +4523,7 @@ Every tag in use across the tenant's live endpoints, busiest first (MCAT-9.3).
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `tags` | array of `McpTagUsageOut` | no | Associated tag labels. |
+| `has_more` | boolean | no | Whether more tags follow this page. |
 
 ### `McpVersionChangesResponse` {#schema-mcpversionchangesresponse}
 

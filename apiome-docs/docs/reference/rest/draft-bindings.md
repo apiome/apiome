@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `draft-bindings` · 7 operations
 
@@ -20,6 +20,8 @@ Tag: `draft-bindings` · 7 operations
 A page of the project's bindings, newest first — active ones and the released rows that are their history.
 
 Filters combine: `version` (revision id or version label) and `active` (`true` for the live bindings, `false` for released ones).
+
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. The `total` is counted only when `include_total` is set.
 
 Requires `projects:view`.
 
@@ -33,8 +35,10 @@ Operation id: `list_bindings_v1_tenants__tenant_slug__projects__project_ref__bin
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `version` | query | string or null | no | Revision id or version label. |
 | `active` | query | boolean or null | no | Active (`true`) or released (`false`) bindings only. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Bindings to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -242,9 +246,11 @@ A page of a project's bindings.
 | --- | --- | --- | --- |
 | `bindings` | array of [`DraftBindingRecord`](#schema-draftbindingrecord) | no | Bindings, newest first. |
 | `count` | integer | yes | How many bindings this page holds. |
-| `total` | integer | yes | How many bindings match the filters in all. |
+| `total` | integer or null | no | How many bindings match the filters, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | The page size used. |
-| `offset` | integer | yes | The offset used. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `DraftBindingCreate` {#schema-draftbindingcreate}
 

@@ -52,7 +52,7 @@ def test_list_endpoint_notes():
     assert body["success"] is True
     assert len(body["notes"]) == 1
     assert body["notes"][0]["body"] == _ROW["body"]
-    mdb.list_mcp_endpoint_notes.assert_called_once_with("t1", _EP)
+    mdb.list_mcp_endpoint_notes.assert_called_once_with("t1", _EP, limit=201, cursor=None)
 
 
 def test_create_endpoint_note():

@@ -65,15 +65,19 @@ from .api_products import (
 )
 from .consumer_contract_store import ConsumerActor
 from .database import db
+from .keyset_lists import ListOrder, SortColumn
+from .keyset_pagination import Page
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
+    "PRODUCTS_ORDER",
     "add_member",
     "create_product",
     "delete_product",
     "get_product",
     "list_members",
     "list_products",
+    "page_products",
     "remove_member",
     "update_product",
 ]
@@ -499,16 +503,54 @@ def list_products(tenant_id: str) -> List[ApiProductRecord]:
     """
     if not is_uuid_string(tenant_id):
         return []
-    rows = db.execute_query(
+    return [_record(dict(row)) for row in _product_rows(tenant_id, None, None)]
+
+
+#: The order of the product list: by name; a slug is unique among a tenant's live products (#7196).
+PRODUCTS_ORDER = ListOrder(
+    "api-products",
+    (
+        SortColumn("lower(ap.name)", "text", ("name_key",)),
+        SortColumn("ap.slug", "text", ("slug",)),
+    ),
+)
+
+
+def _product_rows(tenant_id: str, limit: Optional[int], cursor: Optional[Sequence[Any]]) -> List[Any]:
+    """The live product rows of a tenant in :data:`PRODUCTS_ORDER`, whole or one window of it."""
+    after_sql, after_params, limit_sql, limit_params = PRODUCTS_ORDER.window(limit, cursor)
+    return db.execute_query(
         f"""
-        SELECT {_PRODUCT_COLUMNS}
+        SELECT {_PRODUCT_COLUMNS}, lower(ap.name) AS name_key
         {_PRODUCT_FROM}
-        WHERE ap.tenant_id = %s::uuid AND ap.deleted_at IS NULL
-        ORDER BY lower(ap.name), ap.slug
+        WHERE ap.tenant_id = %s::uuid AND ap.deleted_at IS NULL{after_sql}
+        ORDER BY {PRODUCTS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
-    return [_record(dict(row)) for row in rows]
+
+
+def page_products(
+    tenant_id: str, *, limit: int, cursor: Optional[Sequence[Any]] = None
+) -> Page[ApiProductRecord]:
+    """One page of the tenant's live products, by name (#7196).
+
+    Args:
+        tenant_id: The caller's tenant.
+        limit: Page size.
+        cursor: :data:`PRODUCTS_ORDER` values of the last product already seen.
+
+    Returns:
+        The page (no member lists); empty for a non-UUID tenant.
+    """
+    if not is_uuid_string(tenant_id):
+        return Page(items=[], has_more=False, next_cursor=None)
+    page = PRODUCTS_ORDER.page([dict(row) for row in _product_rows(tenant_id, limit + 1, cursor)], limit)
+    return Page(
+        items=[_record(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_product(tenant_id: str, slug: str) -> ApiProductRecord:

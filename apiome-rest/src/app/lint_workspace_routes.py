@@ -27,7 +27,7 @@ from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
-from .keyset_pagination import limit_query, offset_query
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query, offset_query
 from .lint_workspace import (
     ACTION_PUBLISH,
     BULK_ITEM_CAP,
@@ -69,8 +69,9 @@ from .quality_rank_telemetry import (
     STAGE_COMMITTED,
     STAGE_PREFLIGHT,
     build_quality_rank_series,
-    load_quality_rank_observations,
+    load_quality_rank_rollup,
 )
+from .tenant_list_paging import LINT_SAVED_VIEWS_ORDER
 
 router = APIRouter(prefix="/v1/lint/workspace", tags=["lint-workspace"])
 
@@ -190,9 +191,13 @@ def workspace_summary(
     project_id: Optional[str] = Query(default=None, alias="projectId"),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceSummaryResponse:
-    """Tenant-wide posture rollup: grades, axes, coverage gaps, finding/waiver counts."""
+    """Tenant-wide posture rollup: grades, axes, coverage gaps, finding/waiver counts.
+
+    The rollup only counts findings, so it reads each one as its fingerprint, severity and
+    category — never the finding bodies (#7196).
+    """
     tenant_id = str(auth_data["tenant_id"])
-    index = build_workspace_index(tenant_id, project_id=project_id)
+    index = build_workspace_index(tenant_id, project_id=project_id, summary_only=True)
     summary = build_summary(index)
     return LintWorkspaceSummaryResponse(**summary)
 
@@ -240,7 +245,9 @@ def workspace_quality_ranks(
     shows up beside the specs feeding it.
 
     The window is bounded (``days`` ≤ 180, matching the retention default) and the response
-    describes at most 24 format groups, stating ``truncated`` when it dropped any.
+    describes at most 24 format groups, stating ``truncated`` when it dropped any. The
+    observations are bucketed per format and day in SQL (#7196), so the read does not grow with
+    import/export traffic.
     """
     tenant_id = str(auth_data["tenant_id"])
     if scope is not None and scope not in (SCOPE_IMPORT, SCOPE_EXPORT):
@@ -252,11 +259,13 @@ def workspace_quality_ranks(
             status_code=400, detail="stage must be preflight or committed"
         )
     now = datetime.now(timezone.utc)
-    since = now - timedelta(days=days)
-    rows = load_quality_rank_observations(
+    # The series' first day, from its first instant: the SQL rollup then aggregates exactly the
+    # days the series reports (score drift included).
+    since = (now - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    rollup = load_quality_rank_rollup(
         tenant_id, since=since, project_id=project_id, scope=scope, stage=stage
     )
-    return QualityRankSeriesResponse(**build_quality_rank_series(rows, days=days, now=now))
+    return QualityRankSeriesResponse(**build_quality_rank_series(rollup, days=days, now=now))
 
 
 @router.post("/decisions/bulk", response_model=LintWorkspaceBulkDecisionResponse)
@@ -451,13 +460,26 @@ def _normalized_view_fields(
 
 @router.get("/views", response_model=LintWorkspaceSavedViewListResponse)
 def list_workspace_saved_views(
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintWorkspaceSavedViewListResponse:
-    """List the caller's saved workspace views (pinned first, then newest)."""
+    """List the caller's saved workspace views (pinned first, then newest), one page at a time.
+
+    At most ``limit`` views (1,000 at most); pass ``nextCursor`` as ``cursor`` until ``hasMore``
+    is false (#7196). A malformed cursor is a ``400``.
+    """
+    after = LINT_SAVED_VIEWS_ORDER.parse(cursor)
     tenant_id = str(auth_data["tenant_id"])
     user_id = _require_user_id(auth_data)
-    rows = db.list_lint_workspace_saved_views(tenant_id, user_id)
+    page = LINT_SAVED_VIEWS_ORDER.page(
+        db.list_lint_workspace_saved_views(tenant_id, user_id, limit=limit + 1, cursor=after),
+        limit,
+    )
+    rows = page.items
     return LintWorkspaceSavedViewListResponse(
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         views=[lint_workspace_saved_view_out_from_row(r) for r in rows],
         count=len(rows),
     )

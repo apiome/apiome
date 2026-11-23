@@ -8,6 +8,7 @@ All endpoints are tenant-scoped and require authentication via JWT token or API 
 from fastapi import APIRouter, HTTPException, Query, Depends, Response
 from typing import Optional, List, Dict, Any
 
+from .authoring_list_orders import CLASSES_WITH_PARTS_ORDER
 from .database import db
 from .keyset_pagination import (
     MAX_REVISION_PAGE_LIMIT,
@@ -525,29 +526,42 @@ def delete_class_property(
 def get_classes_with_properties_and_tags(
     tenant_slug: str,
     version_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[Dict[str, Any]]:
     """
-    Get all classes for a version with their properties and tags.
+    Get the classes of a version with their properties and tags, one page at a time.
 
-    Deprecated for canvas hydration (DUW-1.2, private-suite#2569). This read has no LIMIT: it
-    returns every class of the version with every property and every tag, which is why a large
-    catalog makes the designer canvas choke. Surfaces that need a *selection* — the unified
-    workspace and anything else hydrating what a user picked — must use
-    ``GET /v1/workspace/{tenant_slug}/version/{version_id}/classes`` with ``class_ids`` or
-    ``domain_id`` instead. It stays here, unchanged, for the surfaces that genuinely do need the
+    Deprecated for canvas hydration (DUW-1.2, private-suite#2569): it returns whole classes with
+    every property and every tag, which is why a large catalog makes the designer canvas choke.
+    Surfaces that need a *selection* — the unified workspace and anything else hydrating what a
+    user picked — must use ``GET /v1/workspace/{tenant_slug}/version/{version_id}/classes`` with
+    ``class_ids`` or ``domain_id`` instead. It stays for the surfaces that genuinely do need the
     whole version (exports, scoring, readiness sweeps).
+
+    The body is a JSON array of at most ``limit`` classes (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
 
     Supports authentication via JWT token or API key.
 
     Args:
         tenant_slug: The tenant slug
         version_id: The version ID
+        response: The outgoing response (paging headers are set on it)
+        limit: Page size
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``)
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        List of classes with properties and tags
+        One page of classes with properties and tags
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the version is unknown.
     """
+    after = CLASSES_WITH_PARTS_ORDER.parse(cursor)
     # Verify version belongs to tenant
     version = db.get_version_for_tenant(auth_data['tenant_id'], version_id)
     if not version:
@@ -556,8 +570,12 @@ def get_classes_with_properties_and_tags(
             detail=f"Version not found: {version_id}"
         )
 
-    classes = db.get_classes_with_properties_and_tags_for_version(version_id)
-    return classes
+    classes = db.get_classes_with_properties_and_tags_for_version(
+        version_id, limit=limit + 1, cursor=after
+    )
+    page = CLASSES_WITH_PARTS_ORDER.page(classes, limit)
+    set_page_headers(response, page)
+    return page.items
 
 
 @router.get("/{tenant_slug}/{class_id}/with-properties-tags")

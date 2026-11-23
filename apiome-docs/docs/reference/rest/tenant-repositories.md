@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `tenant-repositories` · 32 operations
 
@@ -21,10 +21,16 @@ List the tenant's registered repositories, each with its REPO-6.5 health badge.
 
 Args:
     tenant_slug: Tenant slug from the path (scoping comes from the token).
+    limit: Page size (1,000 at most).
+    cursor: Where the page starts (``next_cursor`` of the previous page).
     auth_data: Authenticated principal; supplies the tenant scope.
 
 Returns:
-    Every live repository for the tenant, newest registration first.
+    One page of the tenant's live repositories, newest registration first, and whether
+    another follows (#7196).
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
 
 Operation id: `list_tenant_repositories_v1_tenants__tenant_slug__repositories_get`
 
@@ -33,6 +39,8 @@ Operation id: `list_tenant_repositories_v1_tenants__tenant_slug__repositories_ge
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -412,6 +420,10 @@ Request body for set repository file conflict policy.
 
 **List Tenant Repository Files**
 
+List the indexed files of one repository branch, ordered by path.
+
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. `indexed_total`, `match_count` and `importable_match_count` each scan the whole branch index, so they are returned only when `include_total` is set.
+
 Operation id: `list_tenant_repository_files_v1_tenants__tenant_slug__repositories__repository_id__files_get`
 
 **Parameters**
@@ -428,8 +440,10 @@ Operation id: `list_tenant_repository_files_v1_tenants__tenant_slug__repositorie
 | `skip_vendor` | query | boolean | no | Query parameter: skip vendor. |
 | `include_hidden` | query | boolean | no | Query parameter: include hidden. |
 | `path_prefix` | query | string or null | no | Query parameter: path prefix. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -614,30 +628,9 @@ Request body for refresh tenant repository now.
 
 **List Repository Refresh History**
 
-List refresh-cycle audit history for a repository (RAR-5.3, #3534).
+List the refresh-cycle audit history of a repository, newest first; add `path` for one file's history.
 
-Each refresh cycle records who/what triggered it, the freshness decision, the
-outcome (new-version / unchanged / diverged / failed), and the change-report and
-version links. The history is queryable **per repo** (this endpoint) and **per
-file** (add ``?path=``). Newest first.
-
-Args:
-    tenant_slug: Tenant slug from the path (scoping comes from the token).
-    repository_id: The repository whose refresh history to list.
-    path: Optional file path for per-file history.
-    branch: Optional branch scope.
-    trigger: Optional trigger filter.
-    outcome: Optional outcome filter.
-    since: Optional inclusive ISO-8601 lower bound on ``createdAt``.
-    until: Optional inclusive ISO-8601 upper bound on ``createdAt``.
-    limit: Page size (1..200).
-    offset: Page offset.
-
-Returns:
-    A paginated, newest-first page of refresh-cycle entries.
-
-Raises:
-    HTTPException: 404 when the repository does not belong to the tenant.
+Pages by `cursor`: pass `pagination.nextCursor` until `pagination.hasMore` is false. `pagination.total` is counted (up to 10,000) only when `include_total` is set.
 
 Operation id: `list_repository_refresh_history_v1_tenants__tenant_slug__repositories__repository_id__refresh_history_get`
 
@@ -653,8 +646,10 @@ Operation id: `list_repository_refresh_history_v1_tenants__tenant_slug__reposito
 | `outcome` | query | string or null | no | Filter by outcome: new-version \| unchanged \| diverged \| failed. |
 | `since` | query | string or null | no | Inclusive lower bound on createdAt (ISO 8601). |
 | `until` | query | string or null | no | Inclusive upper bound on createdAt (ISO 8601). |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -880,6 +875,10 @@ The per-repository Files listing answers "what is in this repo"; this answers "w
 this spec live" across the whole tenant. Search, filtering, ordering and pagination are all
 evaluated in SQL so the response carries only the requested page.
 
+Pages by ``cursor``: pass the previous page's ``next_cursor`` (with the same ``sort``) until
+``has_more`` is false. ``catalog_total`` and ``match_count`` scan the whole catalog, so they
+are returned only when ``include_total`` is set.
+
 Args:
     tenant_slug: Present for URL symmetry only — the tenant is always taken from the
         authenticated token, never from the path.
@@ -892,16 +891,20 @@ Args:
     importable_only: Whether to hide indexed files that are not spec candidates.
     all_branches: Whether to list non-default branches.
     sort: Ordering key.
-    limit: Page size (1..500).
-    offset: Rows to skip.
+    limit: Page size (1..200).
+    cursor: Where the page starts (``next_cursor`` of the previous page, read with the
+        same ``sort``).
+    include_total: Also count the catalog and the matches.
+    offset: Rows to skip (deprecated).
     include_facets: Whether to compute filter options.
 
 Returns:
-    One page of catalog rows plus the total and matched counts.
+    One page of catalog rows, whether another follows, and the total and matched counts
+    when asked for.
 
 Raises:
-    HTTPException: 400 when a filter names an unknown format or status, or the search term
-        is unusable.
+    HTTPException: 400 when a filter names an unknown format or status, the search term
+        is unusable, or the cursor is malformed or belongs to a different sort.
 
 Operation id: `list_tenant_repository_spec_catalog_v1_tenants__tenant_slug__repository_files_get`
 
@@ -918,8 +921,10 @@ Operation id: `list_tenant_repository_spec_catalog_v1_tenants__tenant_slug__repo
 | `importable_only` | query | boolean | no | Restrict to files classified as an importable spec type. |
 | `all_branches` | query | boolean | no | List every tracked branch. Off by default so each spec appears once, on its repository's default branch. |
 | `sort` | query | string or null | no | `repository` (default), `path`, `format`, `status`, `recent`. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `include_facets` | query | boolean | no | Also return the filter dropdown options. Request it once when the page mounts; paging and re-filtering do not need it. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -1709,12 +1714,14 @@ A server-paginated page of the tenant-wide discovered-specs catalog.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
-| `catalog_total` | integer | yes | Specs in the catalog before any search or filter is applied. |
-| `match_count` | integer | yes | Specs matching the current search and filters. |
+| `catalog_total` | integer or null | no | Specs in the catalog before any search or filter is applied. Present only when the request set `include_total`. |
+| `match_count` | integer or null | no | Specs matching the current search and filters. Present only when the request set `include_total`. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
 | `sort` | string | yes | Sort. |
 | `specs` | array of `SpecCatalogRow` | no | Specs. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 | `facets` | `SpecCatalogFacets` or null | no | Filter options; present only when the request set `include_facets=true`. |
 
 ### `TenantRepositoriesListResponse` {#schema-tenantrepositorieslistresponse}
@@ -1725,6 +1732,8 @@ TenantRepositoriesListResponse schema.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `repositories` | array of `TenantRepositoryRecord` | yes | Repositories. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `TenantRepositoryCreate` {#schema-tenantrepositorycreate}
 
@@ -1771,12 +1780,14 @@ TenantRepositoryFilesListResponse schema.
 | `success` | boolean | no | Success. |
 | `branch` | string | yes | Branch. |
 | `branches` | array of string | yes | Branches. |
-| `indexed_total` | integer | yes | Indexed Total. |
-| `match_count` | integer | yes | Number of match. |
-| `importable_match_count` | integer | yes | Number of importable match. |
+| `indexed_total` | integer or null | no | Files indexed on the branch before path filters. Present only when the request set `include_total`. |
+| `match_count` | integer or null | no | Files matching the filters. Present only when the request set `include_total`. |
+| `importable_match_count` | integer or null | no | Matching files of an importable kind. Present only when the request set `include_total`. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
 | `files` | array of `TenantRepositoryFileRow` | yes | Files. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `TenantRepositoryGetResponse` {#schema-tenantrepositorygetresponse}
 

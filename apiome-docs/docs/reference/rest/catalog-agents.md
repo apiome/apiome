@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-agents` · 12 operations
 
@@ -19,6 +19,9 @@ Tag: `catalog-agents` · 12 operations
 
 The tenant's live agents with their model (and its deprecation) and owner (`consumer_contracts:view`).
 
+By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+is false. A malformed cursor is a 400.
+
 Operation id: `list_catalog_agents_v1_tenants__tenant_slug__catalog_agents_get`
 
 **Parameters**
@@ -26,6 +29,8 @@ Operation id: `list_catalog_agents_v1_tenants__tenant_slug__catalog_agents_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -206,6 +211,9 @@ Operation id: `unlink_catalog_agent_key_v1_tenants__tenant_slug__catalog_agents_
 
 The tenant's live models with their deprecation and owner (`consumer_contracts:view`).
 
+By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+is false. A malformed cursor is a 400.
+
 Operation id: `list_catalog_models_v1_tenants__tenant_slug__catalog_models_get`
 
 **Parameters**
@@ -213,6 +221,8 @@ Operation id: `list_catalog_models_v1_tenants__tenant_slug__catalog_models_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -352,6 +362,8 @@ The tenant's live agents.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `agents` | array of [`AgentOut`](#schema-agentout) | yes | Agents. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page. |
 
 ### `AgentOut` {#schema-agentout}
 
@@ -415,6 +427,8 @@ The tenant's live models.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `models` | array of [`ModelOut`](#schema-modelout) | yes | Models. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page. |
 
 ### `ModelOut` {#schema-modelout}
 

@@ -110,6 +110,7 @@ from .catalog_connectors import (
 )
 from .database import db
 from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
     cursor_query,
     encode_key_cursor,
     include_total_query,
@@ -265,20 +266,28 @@ def _audit(tenant_id: str, action: str, actor_id: Optional[str], detail: Dict[st
 @router.get(_BASE, response_model=ConnectorListResponse, response_model_by_alias=True)
 def list_connectors(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ConnectorListResponse:
     """List the tenant's catalog connectors (``imports:view``).
 
-    Also returns every connector kind and the kinds this deployment can sync.
+    Also returns every connector kind and the kinds this deployment can sync. By name, at most
+    1,000 a page: pass the previous page's ``nextCursor`` as ``cursor`` until ``hasMore`` is false;
+    a malformed cursor is a 400.
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target="connectors")
-    rows = store.list_connectors(db, tenant_id)
+    after = store.CONNECTORS_ORDER.parse(cursor)
+    rows = store.list_connectors(db, tenant_id, limit=limit + 1, cursor=after)
+    page = store.CONNECTORS_ORDER.page(rows, limit)
     return ConnectorListResponse(
-        connectors=[_connector_out(r) for r in rows],
+        connectors=[_connector_out(r) for r in page.items],
         kinds=list(KINDS),
         syncable_kinds=syncable_kinds(),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

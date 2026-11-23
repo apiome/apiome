@@ -21,6 +21,7 @@ from . import gateway_config_store as store
 from .auth import validate_authentication
 from .database import db
 from .gateway_configs import GatewayConfigList, GatewayConfigOut
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/tenants", tags=["gateway-configs"])
@@ -43,13 +44,28 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 def list_tenant_gateway_configs(
     tenant_slug: str,
     connector: Optional[str] = Query(None, max_length=64, description="Only this connector's environments."),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> GatewayConfigList:
     """Every live gateway config: one per (connector, environment), with its API count, auth and
-    rate-limit posture, declared losses and push-back target (`imports:view`)."""
+    rate-limit posture, declared losses and push-back target (`imports:view`).
+
+    By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+    is false. A malformed cursor is a 400.
+    """
     _ = tenant_slug
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target="gateway-configs")
-    return GatewayConfigList(gateway_configs=store.list_gateway_configs(db, _tenant_id(auth_data), connector))
+    page = store.page_gateway_configs(
+        db,
+        _tenant_id(auth_data),
+        connector,
+        limit=limit,
+        cursor=store.GATEWAY_CONFIGS_ORDER.parse(cursor),
+    )
+    return GatewayConfigList(
+        gateway_configs=page.items, has_more=page.has_more, next_cursor=page.next_cursor
+    )
 
 
 @router.get(

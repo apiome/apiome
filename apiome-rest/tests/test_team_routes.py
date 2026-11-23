@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from app import team_routes
 from app.auth import validate_authentication
+from app.keyset_pagination import Page
 from app.main import app
 from app.teams import (
     CODE_MEMBER_NOT_IN_TENANT,
@@ -81,6 +82,9 @@ class _FakeStore:
 
     def list_teams(self, tenant_id: str) -> List[TeamRecord]:
         return [self._record(s, with_members=False) for s in sorted(self.teams)]
+
+    def page_teams(self, tenant_id: str, *, limit: int, cursor: Any = None) -> Page:
+        return Page(items=self.list_teams(tenant_id)[:limit], has_more=False, next_cursor=None)
 
     def get_team(self, tenant_id: str, slug: str) -> TeamRecord:
         return self._record(self._live(slug))
@@ -148,7 +152,7 @@ def store(monkeypatch) -> _FakeStore:
     """Route every store call to a fresh fake."""
     fake = _FakeStore()
     for name in (
-        "list_teams",
+        "page_teams",
         "get_team",
         "create_team",
         "update_team",

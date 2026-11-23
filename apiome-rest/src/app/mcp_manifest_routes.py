@@ -40,6 +40,7 @@ from pydantic import BaseModel, Field
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import MAX_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_discovery_engine import reconstruct_surface
 from .mcp_manifest_attach import (
     ADDED_VIA_IMPORT,
@@ -51,6 +52,7 @@ from .mcp_manifest_parser import McpManifestParseError, parse_mcp_manifest
 from .mcp_manifest_store import declared_manifest, surface_from_manifest_row
 from .mcp_surface_provenance import build_surface_provenance
 from .models import MCP_ENDPOINT_TRANSPORTS, McpEndpointOut, mcp_endpoint_out_from_row
+from .tenant_list_orders import MCP_ENDPOINT_MANIFESTS_ORDER
 
 router = APIRouter(prefix="/v1/mcp", tags=["mcp-manifest"])
 
@@ -170,6 +172,10 @@ class McpDeclaredManifestListResponse(BaseModel):
     success: bool = Field(default=True, description="Always true for a 2xx response.")
     manifests: List[McpDeclaredManifestOut] = Field(
         default_factory=list, description="Declarations, newest first."
+    )
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
     )
 
 
@@ -412,6 +418,8 @@ def list_mcp_endpoint_manifests(
     include_retired: bool = Query(
         default=False, description="Include superseded declarations."
     ),
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDeclaredManifestListResponse:
     """List the declarations attached to one endpoint.
@@ -420,18 +428,29 @@ def list_mcp_endpoint_manifests(
         tenant_slug: Informational; scoping comes from the validated token.
         endpoint_id: The endpoint to read.
         include_retired: Whether superseded declarations are included.
+        limit: Page size (200 at most).
+        cursor: Where the page starts (``next_cursor`` of the previous page).
         auth_data: The validated authentication context.
 
     Returns:
-        The declarations, newest first.
+        One page of the declarations, newest first, and whether another follows (#7196).
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     _ = tenant_slug
+    after = MCP_ENDPOINT_MANIFESTS_ORDER.parse(cursor)
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
-    rows = db.list_mcp_endpoint_manifests(
-        str(endpoint["id"]), include_retired=include_retired
+    page = MCP_ENDPOINT_MANIFESTS_ORDER.page(
+        db.list_mcp_endpoint_manifests(
+            str(endpoint["id"]), include_retired=include_retired, limit=limit + 1, cursor=after
+        ),
+        limit,
     )
     return McpDeclaredManifestListResponse(
-        manifests=[McpDeclaredManifestOut.from_row(row) for row in rows]
+        manifests=[McpDeclaredManifestOut.from_row(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

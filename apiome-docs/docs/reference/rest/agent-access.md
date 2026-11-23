@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `agent-access` · 26 operations
 
@@ -80,6 +80,8 @@ Responses carry metadata only (name, prefix, toolset, allowlist, status, timesta
 
 Newest first. `toolsetId` narrows the list to one toolset's keys; revoked keys are left out unless `includeRevoked=true`.
 
+At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false.
+
 Requires `api_keys:view`.
 
 Operation id: `list_agent_keys_route_v1_tenants__tenant_slug__agent_keys_get`
@@ -91,6 +93,8 @@ Operation id: `list_agent_keys_route_v1_tenants__tenant_slug__agent_keys_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `toolsetId` | query | string (uuid) or null | no | Query parameter: toolset id. |
 | `includeRevoked` | query | boolean | no | Query parameter: include revoked. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -273,6 +277,8 @@ Operation id: `list_agent_toolsets_route_v1_tenants__tenant_slug__agent_toolsets
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `versionId` | query | string (uuid) or null | no | Query parameter: version id. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -871,6 +877,8 @@ Attributes:
 | --- | --- | --- | --- |
 | `schemaVersion` | string | no | Schema Version. |
 | `keys` | array of [`AgentKeyOut`](#schema-agentkeyout) | yes | Keys. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `AgentKeyOut` {#schema-agentkeyout}
 
@@ -1036,11 +1044,15 @@ A tenant's toolsets, described.
 Attributes:
     schema_version: The projection's shape.
     toolsets: One entry per toolset, newest first.
+    has_more: Whether another page exists.
+    next_cursor: Pass as ``cursor`` to read the next page; ``None`` on the last page.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `schemaVersion` | string | no | Schema Version. |
 | `toolsets` | array of [`AgentToolsetOut`](#schema-agenttoolsetout) | yes | Toolsets. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `AgentToolsetOut` {#schema-agenttoolsetout}
 

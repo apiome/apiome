@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `slate` · 17 operations
 
@@ -369,6 +369,9 @@ This is how the Release Center resolves a project to a site and its lanes; it wo
 terms of a project and a version, not a site id. An empty list is a legitimate answer
 meaning "this project is not hosted", which is different from an error.
 
+One page of at most ``limit`` sites (1,000 at most), newest first; pass ``nextCursor`` as
+``cursor`` until ``hasMore`` is false (#7196).
+
 Operation id: `list_managed_sites_v1_slate_sites_get`
 
 **Parameters**
@@ -376,6 +379,8 @@ Operation id: `list_managed_sites_v1_slate_sites_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `projectId` | query | string or null | no | Restrict to one project's sites. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `tenantSlug` | query | string or null | no | Tenant slug. Optional: the Slate routes read tenancy from the credential, so a browser call carrying a session JWT does not need to name a tenant in the URL. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -682,6 +687,8 @@ The tenant's managed sites.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `sites` | array of `SiteBody` | yes | Sites. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `VerifyResponse` {#schema-verifyresponse}
 

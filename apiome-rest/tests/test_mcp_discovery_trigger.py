@@ -195,7 +195,7 @@ def test_list_discovery_jobs_ok():
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP_UUID}/discover")
     assert r.status_code == 200
     assert len(r.json()["jobs"]) == 1
-    mdb.list_mcp_discovery_jobs.assert_called_once_with("t1", _EP_UUID)
+    mdb.list_mcp_discovery_jobs.assert_called_once_with("t1", _EP_UUID, limit=201, cursor=None)
 
 
 def test_list_discovery_jobs_endpoint_not_found_404():

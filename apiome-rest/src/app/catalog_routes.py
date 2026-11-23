@@ -79,6 +79,7 @@ from .keyset_pagination import (
     set_page_headers,
 )
 from .project_list_paging import PROJECT_CURSOR_SIZE, project_row_cursor
+from .tenant_config_list_orders import CONVERSIONS_BY_SOURCE_ORDER
 from .lint_routes import build_lint_report
 from .models import (
     CatalogCategoriesResponse,
@@ -1001,9 +1002,14 @@ def get_catalog_projection(
 def get_catalog_conversion_history(
     tenant_slug: str,
     item_id: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogConversionHistoryResponse:
-    """Return a catalog item's full conversion history, newest first (CPDO-3.3).
+    """Return a catalog item's conversion history, newest first, one page at a time (CPDO-3.3).
+
+    At most 200 rows a page (#7196): pass the previous page's ``nextCursor`` as ``cursor`` until
+    ``hasMore`` is false; a malformed cursor is a 400.
 
     One entry per convert/re-convert from the append-only ``conversion_provenance`` ledger: the
     target Project + revision it produced, the fidelity outcome, the converter tool versions, the
@@ -1026,17 +1032,21 @@ def get_catalog_conversion_history(
         The :class:`~app.models.CatalogConversionHistoryResponse`, newest first.
     """
     _ = tenant_slug
+    after = CONVERSIONS_BY_SOURCE_ORDER.parse(cursor)
     tenant_id = auth_data["tenant_id"]
 
     item = db.get_catalog_item_by_id(item_id, tenant_id)
     if not item:
         raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
 
-    rows = db.get_conversions_for_source(tenant_id, item_id)
+    rows = db.get_conversions_for_source(tenant_id, item_id, limit=limit + 1, cursor=after)
+    page = CONVERSIONS_BY_SOURCE_ORDER.page(rows, limit)
     return CatalogConversionHistoryResponse(
         item_id=item_id,
         current_source_hash=current_source_digest(item),
-        conversions=[provenance_entry(row) for row in rows],
+        conversions=[provenance_entry(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

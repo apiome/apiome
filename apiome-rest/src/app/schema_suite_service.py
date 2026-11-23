@@ -30,7 +30,7 @@ from __future__ import annotations
 import logging
 import posixpath
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -622,7 +622,11 @@ def create_suite(
 
 
 def list_suites(
-    tenant_id: str, *, ref: Optional[str] = None
+    tenant_id: str,
+    *,
+    ref: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[SchemaTestSuiteModel]:
     """Suites for the tenant, optionally narrowed to one stable reference's artifact.
 
@@ -631,6 +635,8 @@ def list_suites(
         ref: A suite reference in the create-form grammar; when given, only suites attached
             to its ``kind``/``artifact`` are returned (the type segment does not narrow,
             since one artifact's suites all feed the same surfaces).
+        limit: Suites to read; ``None`` reads them all.
+        cursor: Where the page starts (``SCHEMA_SUITES_ORDER``, #7196).
 
     Returns:
         The suites, each with its newest run summary.
@@ -638,7 +644,9 @@ def list_suites(
     ref_kind = ref_artifact = None
     if ref:
         ref_kind, ref_artifact, _ = parse_suite_reference(ref)
-    rows = store.list_suites(tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact)
+    rows = store.list_suites(
+        tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact, limit=limit, cursor=cursor
+    )
     return [
         _suite_model(
             row,

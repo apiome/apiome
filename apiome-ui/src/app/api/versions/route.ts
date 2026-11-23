@@ -15,7 +15,7 @@ import {
   type VersionLineageRow,
 } from '@lib/version-lineage';
 import { getJwtSigningSecret } from '@lib/rest-auth';
-import { fetchAllPages } from '@/lib/rest-paged-list';
+import { fetchAllPages } from '@lib/rest-paged-list';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 

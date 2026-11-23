@@ -32,6 +32,7 @@ from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
 from .keyset_pagination import (
     MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
     cursor_query,
     limit_query,
     offset_query,
@@ -207,6 +208,10 @@ from . import version_overlay_store
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
 logger = logging.getLogger(__name__)
+
+#: How many deprecated revisions the sunset timeline reads and sorts at most (#7196); its sort
+#: date comes from revision metadata, so it cannot be ordered — or cut — in SQL.
+SUNSET_TIMELINE_SCAN_CAP = 10_000
 
 
 _DEFAULT_COMMIT_METADATA_MAX_CHARS = 10_000
@@ -637,11 +642,39 @@ def _resolve_expected_push_head(
 def get_sunset_timeline(
     tenant_slug: str,
     project_id: Optional[str] = Query(None, alias="projectId"),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = Query(
+        default=0,
+        ge=0,
+        le=SUNSET_TIMELINE_SCAN_CAP,
+        description=(
+            "Entries to skip. The timeline is ordered by a date computed from each revision's "
+            f"metadata, so it pages by offset; at most {SUNSET_TIMELINE_SCAN_CAP:,}."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SunsetTimelineResponse:
     """
     Aggregate deprecation and sunset dates across projects (#508).
     Must be registered before ``/{tenant_slug}/{project_id}`` so ``sunset-timeline`` is not parsed as a project id.
+
+    ``entries`` is one page of at most ``limit`` revisions (1,000 at most), soonest sunset
+    first; ``hasMore`` says whether the timeline continues at ``offset + limit`` (#7196). The
+    order is computed from revision metadata, so the timeline is sorted in memory over at most
+    10,000 deprecated revisions and pages by ``offset`` rather than by cursor.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: Narrow to one project.
+        limit: Page size.
+        offset: Entries to skip.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of timeline entries, whether more follow, and the product timeline.
+
+    Raises:
+        HTTPException: 404 when ``projectId`` names an unknown project.
     """
     tid = auth_data["tenant_id"]
     if project_id:
@@ -649,7 +682,7 @@ def get_sunset_timeline(
         if not proj:
             raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    rows = db.list_sunset_timeline_entries(tid, project_id)
+    rows = db.list_sunset_timeline_entries(tid, project_id, limit=SUNSET_TIMELINE_SCAN_CAP)
     decorated: List[tuple] = []
     for row in rows:
         meta = row.get("metadata")
@@ -684,6 +717,8 @@ def get_sunset_timeline(
     decorated.sort(
         key=lambda x: (x[0], (x[1].get("project_name") or ""), (x[1].get("version_id") or ""))
     )
+    has_more = len(decorated) > offset + limit
+    decorated = decorated[offset : offset + limit]
 
     entries: List[SunsetTimelineEntryOut] = []
     for _, row, t_status, life, norm, msg, succ_str, warns in decorated:
@@ -707,7 +742,11 @@ def get_sunset_timeline(
 
     readiness = _sunset_readiness(tid, auth_data, [(entry.revision_id, entry.project_id) for entry in entries])
     entries = [entry.model_copy(update={"still_used": readiness.get(entry.revision_id)}) for entry in entries]
-    return SunsetTimelineResponse(entries=entries, products=_product_timeline(tid, auth_data, project_id))
+    return SunsetTimelineResponse(
+        entries=entries,
+        products=_product_timeline(tid, auth_data, project_id),
+        has_more=has_more,
+    )
 
 
 def _product_timeline(tenant_id: str, auth_data: Dict[str, Any], project_id: Optional[str]) -> List[Any]:

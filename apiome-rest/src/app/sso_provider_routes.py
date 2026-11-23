@@ -56,6 +56,7 @@ from .auth_provider_secret_crypto import (
     unseal_provider_secret,
 )
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .sso_domain_verification import challenge_record_name
 from .sso_metadata import (
     CODE_DOMAIN_CLAIMED,
@@ -74,6 +75,7 @@ from .sso_metadata import (
     provider_identity_kind,
     saml_config_from_metadata,
 )
+from .sso_provider_store import PROVIDERS_ORDER, ROUTABLE_PROVIDERS_ORDER
 from .sso_provisioning import get_tenant
 
 #: A provider was written without a workspace, or with one that does not exist (EID-1.3).
@@ -149,6 +151,10 @@ class SsoProviderListResponse(BaseModel):
     """Payload of ``GET /v1/admin/sso/providers``."""
 
     providers: List[SsoProviderView] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class SsoProviderCreateRequest(BaseModel):
@@ -235,6 +241,10 @@ class ResolvedSsoProviderResponse(BaseModel):
 
     providers: List[ResolvedSsoProvider] = Field(default_factory=list)
     fingerprint: str = Field(..., description="Changes whenever any routable provider changes; secret-free hash.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -563,9 +573,24 @@ def _load(provider_id: str) -> Dict[str, Any]:
 
 
 @admin_router.get("", response_model=SsoProviderListResponse, responses=_ERRORS)
-def list_sso_providers(_: None = Depends(require_super_admin)) -> SsoProviderListResponse:
-    """List every SSO provider with its domains, newest first. Secrets are never included."""
-    return SsoProviderListResponse(providers=[_view(row) for row in store.list_providers(db)])
+def list_sso_providers(
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    _: None = Depends(require_super_admin),
+) -> SsoProviderListResponse:
+    """List SSO providers with their domains, newest first. Secrets are never included.
+
+    One page of at most ``limit`` providers (1,000 at most); pass ``next_cursor`` as ``cursor``
+    until ``has_more`` is false (#7196).
+    """
+    page = PROVIDERS_ORDER.page(
+        store.list_providers(db, limit=limit + 1, cursor=PROVIDERS_ORDER.parse(cursor)), limit
+    )
+    return SsoProviderListResponse(
+        providers=[_view(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @admin_router.post(
@@ -781,14 +806,26 @@ def _unseal(blob: Any, key_id: Optional[str]) -> Optional[str]:
         },
     },
 )
-def get_resolved_sso_providers(_: None = Depends(require_internal_service)):
+def get_resolved_sso_providers(
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    _: None = Depends(require_internal_service),
+):
     """Every enabled provider with a verified domain, secrets decrypted, for the sign-in resolver.
+
+    One page of at most ``limit`` providers (1,000 at most), by slug; ``has_more`` and
+    ``next_cursor`` say whether and where the list continues, and ``fingerprint`` covers the
+    providers of this page (#7196).
 
     A provider whose secret cannot be decrypted (rotated-away key, corrupt blob) is omitted and
     logged secret-free, so one bad row cannot take sign-in down for every other provider.
     """
+    after = ROUTABLE_PROVIDERS_ORDER.parse(cursor)
     try:
-        rows = store.list_routable_with_secrets(db)
+        page = ROUTABLE_PROVIDERS_ORDER.page(
+            store.list_routable_with_secrets(db, limit=limit + 1, cursor=after), limit
+        )
+        rows = page.items
     except Exception as exc:  # noqa: BLE001 — degrade to "no SSO", never a 500 with a trace
         logger.warning("could not read SSO providers: %s", type(exc).__name__)
         return JSONResponse(status_code=503, content={"detail": "SSO providers are unavailable."})
@@ -821,4 +858,9 @@ def get_resolved_sso_providers(_: None = Depends(require_internal_service)):
                 sp_private_key=sp_private_key,
             )
         )
-    return ResolvedSsoProviderResponse(providers=providers, fingerprint=_fingerprint(providers))
+    return ResolvedSsoProviderResponse(
+        providers=providers,
+        fingerprint=_fingerprint(providers),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )

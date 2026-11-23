@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `provider-checks` · 4 operations
 
@@ -22,6 +22,8 @@ A page of the project's normalized check verdicts, newest first. Each is one of 
 Filters combine: `version` (revision id or version label), `commit_sha`, and `state`.
 
 No repository credential appears anywhere in the response.
+
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.
 
 Requires `projects:view`.
 
@@ -36,8 +38,9 @@ Operation id: `list_checks_v1_tenants__tenant_slug__projects__project_ref__check
 | `version` | query | string or null | no | Revision id or version label. |
 | `commit_sha` | query | string or null | no | Only checks about this commit. |
 | `state` | query | string or null | no | Only checks in this state: pending, pass, fail, skipped. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Check runs to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -81,6 +84,8 @@ Operation id: `read_check_v1_tenants__tenant_slug__projects__project_ref__checks
 
 The checks recorded against this version's binding, newest first.
 
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.
+
 Requires `projects:view`.
 
 Operation id: `list_version_checks_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_checks_get`
@@ -93,8 +98,9 @@ Operation id: `list_version_checks_v1_tenants__tenant_slug__projects__project_re
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `version_ref` | path | string | yes | Path parameter identifying the version ref segment. |
 | `commit_sha` | query | string or null | no | Only checks about this commit. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Check runs to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -157,7 +163,9 @@ A page of a project's check runs.
 | `checks` | array of `CheckRunRecord` | no | Check runs, newest first. |
 | `count` | integer | yes | How many check runs this page holds. |
 | `limit` | integer | yes | The page size used. |
-| `offset` | integer | yes | The offset used. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 | `providers` | array of string | no | Providers a verdict can be published to through the status adapter. |
 
 ### `CheckRunDetail` {#schema-checkrundetail}

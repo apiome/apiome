@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import url_import_store as store
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
 from .url_import_refresh import UrlImportError
@@ -132,6 +133,8 @@ class UrlImportList(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     url_imports: List[UrlImportOut] = Field(alias="urlImports")
+    has_more: bool = Field(default=False, alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, alias="nextCursor")
 
 
 def _iso(value: Any) -> Optional[str]:
@@ -248,15 +251,28 @@ async def record_url_import_route(
 def list_url_imports(
     tenant_slug: str,
     project_id: Optional[str] = Query(default=None, alias="projectId", description="Only this project's."),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> UrlImportList:
-    """List the tenant's URL imports, newest first, with when each was last checked and refreshed."""
+    """List the tenant's URL imports, newest first, with when each was last checked and refreshed.
+
+    At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is
+    false. A malformed cursor is a 400.
+    """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target="url-imports")
+    after = store.SPECS_ORDER.parse(cursor)
     if project_id is not None and not is_uuid_string(project_id):
         return UrlImportList(url_imports=[])
-    return UrlImportList(url_imports=[_out(row) for row in store.list_specs(db, tenant_id, project_id=project_id)])
+    rows = store.list_specs(db, tenant_id, project_id=project_id, limit=limit + 1, cursor=after)
+    page = store.SPECS_ORDER.page(rows, limit)
+    return UrlImportList(
+        url_imports=[_out(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.patch(

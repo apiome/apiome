@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mock-server` · 25 operations
 
@@ -318,7 +318,25 @@ Operation id: `serve_mock_path_options_v1_mock__mock_id___sub_path__options`
 
 **List Mocks**
 
-List the tenant's mock instances, newest first.
+List the tenant's mock instances, newest first, one page at a time.
+
+The body is a JSON array of at most ``limit`` instances (200 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    request: The inbound request, for the instances' base URLs.
+    response: The outgoing response (paging headers are set on it).
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+    auth_data: The authenticated principal.
+
+Returns:
+    One page of instances.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the mock server is disabled.
 
 Operation id: `list_mocks_v1_mocks__tenant_slug__get`
 
@@ -327,6 +345,8 @@ Operation id: `list_mocks_v1_mocks__tenant_slug__get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

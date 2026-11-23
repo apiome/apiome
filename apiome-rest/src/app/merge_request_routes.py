@@ -33,6 +33,7 @@ from . import merge_request_store
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
     cursor_query,
     include_total_query,
     limit_query,
@@ -92,6 +93,10 @@ class DraftBranchListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     branches: List[DraftBranchRecord] = Field(default_factory=list, description="Newest first.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class MergeRequestListResponse(BaseModel):
@@ -183,14 +188,29 @@ _ERROR_RESPONSES: Dict[int | str, Dict[str, Any]] = {
     responses={404: _ERROR_RESPONSES[404]},
 )
 def list_draft_branches(
-    tenant_slug: str, project_ref: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    project_ref: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> DraftBranchListResponse:
-    """List the project's draft branches, each with the version line it was drafted off."""
+    """List the project's draft branches, each with the version line it was drafted off.
+
+    One page of at most ``limit`` branches (1,000 at most), newest first; pass ``next_cursor`` as
+    ``cursor`` until ``has_more`` is false (#7196).
+    """
     tenant_id, _ = _caller(auth_data, Resource.VERSIONS, Action.VIEW)
+    after = merge_request_store.DRAFT_BRANCHES_ORDER.parse(cursor)
     try:
-        return DraftBranchListResponse(branches=merge_request_store.list_draft_branches(tenant_id, project_ref))
+        branches = merge_request_store.list_draft_branches(
+            tenant_id, project_ref, limit=limit + 1, cursor=after
+        )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
+    page = merge_request_store.DRAFT_BRANCHES_ORDER.page(branches, limit)
+    return DraftBranchListResponse(
+        branches=page.items, has_more=page.has_more, next_cursor=page.next_cursor
+    )
 
 
 @router.post(

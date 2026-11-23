@@ -303,3 +303,5 @@ class GatewayConfigList(_CamelModel):
     """The tenant's live gateway configs."""
 
     gateway_configs: List[GatewayConfigOut]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(default=None, description="Pass as `cursor` to read the next page.")

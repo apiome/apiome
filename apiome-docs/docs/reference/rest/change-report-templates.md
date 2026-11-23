@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `change-report-templates` · 4 operations
 
@@ -49,6 +49,9 @@ Request body for put tenant change report template default.
 
 List system templates and templates owned by this tenant (ids + semver; not full bodies).
 
+The body is a JSON array of at most ``limit`` templates (1,000 at most). ``X-Has-More`` says
+whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
+
 Operation id: `list_change_report_template_versions_v1_tenants__tenant_slug__change_report_template_versions_get`
 
 **Parameters**
@@ -56,6 +59,8 @@ Operation id: `list_change_report_template_versions_v1_tenants__tenant_slug__cha
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

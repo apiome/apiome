@@ -12,7 +12,7 @@ import { getTenantById } from '@lib/db/helper';
 import { isProjectPublishable, type PublishableProjectLike } from '@/app/utils/catalog-publishable';
 import { getJwtSigningSecret } from '@lib/rest-auth';
 import { TEAM_PARAM, withTeamParam } from '@lib/owners';
-import { fetchAllPages } from '@/lib/rest-paged-list';
+import { fetchAllPages } from '@lib/rest-paged-list';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 

@@ -87,7 +87,7 @@ def test_list_endpoints_scoped_to_token_tenant():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.list_mcp_endpoints.return_value = []
         client.get("/v1/mcp/some-other-slug/endpoints")
-        mdb.list_mcp_endpoints.assert_called_once_with("t1")
+        mdb.list_mcp_endpoints.assert_called_once_with("t1", limit=1001, cursor=None)
 
 
 def test_list_endpoints_requires_authentication():

@@ -63,6 +63,23 @@ _LIMIT_DESCRIPTION = (
 )
 
 
+def _page_size_query() -> Any:
+    """The ``limit`` parameter of a domain listing.
+
+    A larger value is clamped rather than refused (see ``store.clamp_page_size``), so the bound
+    is documented in the schema instead of enforced by validation (#7196).
+
+    Returns:
+        A FastAPI ``Query`` default.
+    """
+    return Query(
+        None,
+        ge=1,
+        description=_LIMIT_DESCRIPTION,
+        json_schema_extra={"maximum": store.MAX_PAGE_SIZE},
+    )
+
+
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
     """The caller's tenant, or a 500 when the token carried none."""
     tid = auth_data.get("tenant_id")
@@ -264,7 +281,7 @@ def get_scoped_classes(
     version_id: str,
     class_ids: Optional[List[str]] = Query(None, description=_IDS_DESCRIPTION),
     domain_id: Optional[str] = Query(None, description=_DOMAIN_DESCRIPTION),
-    limit: Optional[int] = Query(None, ge=1, description=_LIMIT_DESCRIPTION),
+    limit: Optional[int] = _page_size_query(),
     cursor: Optional[str] = Query(None, description="Opaque token from a previous next_cursor."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ScopedCatalogPage:
@@ -316,7 +333,7 @@ def get_scoped_paths(
     version_id: str,
     path_ids: Optional[List[str]] = Query(None, description=_IDS_DESCRIPTION),
     domain_id: Optional[str] = Query(None, description=_DOMAIN_DESCRIPTION),
-    limit: Optional[int] = Query(None, ge=1, description=_LIMIT_DESCRIPTION),
+    limit: Optional[int] = _page_size_query(),
     cursor: Optional[str] = Query(None, description="Opaque token from a previous next_cursor."),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ScopedCatalogPage:

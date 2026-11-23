@@ -39,8 +39,10 @@ from .export_presets import (
     normalize_update,
     preset_profile_ids,
 )
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of, write_audit
+from .tenant_config_list_orders import EXPORT_PRESETS_ORDER
 
 router = APIRouter(prefix="/v1/export", tags=["export-presets"])
 
@@ -87,6 +89,8 @@ class ExportPresetListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     presets: List[ExportPresetModel] = Field(default_factory=list)
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 def preset_model(row: Dict[str, Any]) -> ExportPresetModel:
@@ -228,18 +232,27 @@ async def create_export_preset(
     response_model=ExportPresetListResponse,
     response_model_by_alias=True,
     summary="List the workspace's export presets",
-    description="Every export preset, by name. Requires `projects:view`.",
+    description="Every export preset, by name. At most 1,000 a page: pass the previous page's "
+    "`nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.",
 )
 async def list_export_presets(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportPresetListResponse:
-    """List the tenant's export presets."""
+    """List one page of the tenant's export presets (400 for a malformed cursor)."""
     await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
+    after = EXPORT_PRESETS_ORDER.parse(cursor)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    rows = await asyncio.to_thread(db.list_export_presets, tenant_id)
-    return ExportPresetListResponse(presets=[preset_model(row) for row in rows])
+    rows = await asyncio.to_thread(db.list_export_presets, tenant_id, limit=limit + 1, cursor=after)
+    page = EXPORT_PRESETS_ORDER.page(rows, limit)
+    return ExportPresetListResponse(
+        presets=[preset_model(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.get(

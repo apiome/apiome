@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `owners` · 10 operations
 
@@ -277,6 +277,8 @@ Operation id: `get_owner_publish_gate_v1_tenants__tenant_slug__ownership_policy_
 
 Findings that reached no team because their entity has no confirmed owner — never dropped, kept here, newest first. One row per entity and finding type, with `occurrences` and the latest `payload`. Assigning an owner (`PUT /v1/tenants/{tenant}/owners/{kind}/{id}`) routes the next occurrence to the team and clears the row.
 
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. The `total` is counted only when `include_total` is set.
+
 Requires `teams:view`.
 
 Operation id: `get_unowned_findings_v1_tenants__tenant_slug__unowned_findings_get`
@@ -287,8 +289,10 @@ Operation id: `get_unowned_findings_v1_tenants__tenant_slug__unowned_findings_ge
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `type` | query | enum `"owner_finding"`, `"owner_breaking_change"`, `"owner_verification_drift"`, `"owner_gate_blocked"`, `"owner_trust_drift"`, `"owner_shadow_api"`, … or null | no | Query parameter: type. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -401,4 +405,6 @@ A page of the report.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `items` | array of `UnownedFinding` | no | Items. |
-| `total` | integer | yes | Total. |
+| `total` | integer or null | no | How many findings match, counted up to 10,000. Present only when the request set `include_total`. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |

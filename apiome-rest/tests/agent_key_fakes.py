@@ -146,6 +146,8 @@ class FakeAgentKeyStore:
         *,
         toolset_id: Optional[str] = None,
         include_revoked: bool = False,
+        limit: Optional[int] = None,
+        cursor: Any = None,
     ) -> List[Dict[str, Any]]:
         self.calls.append("list_agent_keys")
         rows = [
@@ -156,8 +158,15 @@ class FakeAgentKeyStore:
             and (toolset_id is None or row["toolset_id"] == str(toolset_id))
             and (include_revoked or row["revoked_at"] is None)
         ]
+        rows.sort(key=lambda row: str(row["id"]))
         rows.sort(key=lambda row: row["created_at"], reverse=True)
-        return [self._metadata(row) for row in rows]
+        ordered = [self._metadata(row) for row in rows]
+        if limit is None and cursor is None:
+            return ordered
+        from app.tenant_config_list_orders import AGENT_KEYS_ORDER
+        from tests.keyset_paging_fakes import ordered_rows
+
+        return ordered_rows(AGENT_KEYS_ORDER, ordered)(limit=limit, cursor=cursor)
 
     def get_agent_key(self, tenant_id: str, key_id: str) -> Optional[Dict[str, Any]]:
         self.calls.append("get_agent_key")

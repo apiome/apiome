@@ -58,6 +58,8 @@ from .consumer_contract import SOURCE_AGENT, UnresolvedInteraction, contract_poi
 from .consumer_contract_store import ConsumerActor, ConsumerValidationError
 from .database import db
 from .entity_owners import owner_envelope_join, owner_ref_from_value
+from .keyset_lists import by_name
+from .keyset_pagination import Page
 from .revision_deprecation import is_uuid_string
 
 logger = logging.getLogger(__name__)
@@ -168,6 +170,29 @@ def _model_out(row: Dict[str, Any], agents: Optional[List[AgentRef]] = None) -> 
     )
 
 
+#: The order of the model list: by name (#7196).
+MODELS_ORDER = by_name("catalog-models", "lower(m.name)", "m.id", name_field="name_key")
+
+#: The order of the agent list: by name (#7196).
+AGENTS_ORDER = by_name("catalog-agents", "lower(a.name)", "a.id", name_field="name_key")
+
+
+def _model_rows(tenant_id: str, limit: Optional[int], cursor: Optional[Sequence[Any]]) -> List[Dict[str, Any]]:
+    """The tenant's live model rows in :data:`MODELS_ORDER`, whole or one window of it."""
+    after_sql, after_params, limit_sql, limit_params = MODELS_ORDER.window(limit, cursor)
+    rows = db.execute_query(
+        f"""
+        SELECT {_MODEL_COLUMNS}, own.entity_owner, lower(m.name) AS name_key
+        FROM apiome.catalog_models m
+        {owner_envelope_join(("model",), "m.id", "m.tenant_id")}
+        WHERE m.tenant_id = %s::uuid AND m.deleted_at IS NULL{after_sql}
+        ORDER BY {MODELS_ORDER.order_by}{limit_sql}
+        """,
+        (tenant_id, *after_params, *limit_params),
+    )
+    return [dict(row) for row in rows or []]
+
+
 def list_models(tenant_id: str) -> List[ModelOut]:
     """The tenant's live models, by name, with their owners.
 
@@ -177,17 +202,26 @@ def list_models(tenant_id: str) -> List[ModelOut]:
     Returns:
         The models.
     """
-    rows = db.execute_query(
-        f"""
-        SELECT {_MODEL_COLUMNS}, own.entity_owner
-        FROM apiome.catalog_models m
-        {owner_envelope_join(("model",), "m.id", "m.tenant_id")}
-        WHERE m.tenant_id = %s::uuid AND m.deleted_at IS NULL
-        ORDER BY lower(m.name), m.id
-        """,
-        (tenant_id,),
+    return [_model_out(row) for row in _model_rows(tenant_id, None, None)]
+
+
+def page_models(tenant_id: str, *, limit: int, cursor: Optional[Sequence[Any]] = None) -> Page[ModelOut]:
+    """One page of the tenant's live models, by name (#7196).
+
+    Args:
+        tenant_id: The tenant.
+        limit: Page size.
+        cursor: :data:`MODELS_ORDER` values of the last model already seen.
+
+    Returns:
+        The page.
+    """
+    page = MODELS_ORDER.page(_model_rows(tenant_id, limit + 1, cursor), limit)
+    return Page(
+        items=[_model_out(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
-    return [_model_out(dict(row)) for row in rows or []]
 
 
 def _model_row(tenant_id: str, slug: str) -> Dict[str, Any]:
@@ -440,20 +474,45 @@ def agent_consumers(agent_id: str) -> List[AgentConsumerRef]:
     return [AgentConsumerRef(**dict(row)) for row in rows or []]
 
 
-def list_agents(tenant_id: str) -> List[AgentOut]:
-    """The tenant's live agents, by name, with model and owner (keys and consumers on the detail read)."""
+def _agent_rows(tenant_id: str, limit: Optional[int], cursor: Optional[Sequence[Any]]) -> List[Dict[str, Any]]:
+    """The tenant's live agent rows in :data:`AGENTS_ORDER`, whole or one window of it."""
+    after_sql, after_params, limit_sql, limit_params = AGENTS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
-        SELECT {_AGENT_COLUMNS}, own.entity_owner
+        SELECT {_AGENT_COLUMNS}, own.entity_owner, lower(a.name) AS name_key
         FROM apiome.catalog_agents a
         {_AGENT_MODEL_JOIN}
         {owner_envelope_join(("agent",), "a.id", "a.tenant_id")}
-        WHERE a.tenant_id = %s::uuid AND a.deleted_at IS NULL
-        ORDER BY lower(a.name), a.id
+        WHERE a.tenant_id = %s::uuid AND a.deleted_at IS NULL{after_sql}
+        ORDER BY {AGENTS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
-    return [_agent_out(dict(row)) for row in rows or []]
+    return [dict(row) for row in rows or []]
+
+
+def list_agents(tenant_id: str) -> List[AgentOut]:
+    """The tenant's live agents, by name, with model and owner (keys and consumers on the detail read)."""
+    return [_agent_out(row) for row in _agent_rows(tenant_id, None, None)]
+
+
+def page_agents(tenant_id: str, *, limit: int, cursor: Optional[Sequence[Any]] = None) -> Page[AgentOut]:
+    """One page of the tenant's live agents, by name (#7196).
+
+    Args:
+        tenant_id: The tenant.
+        limit: Page size.
+        cursor: :data:`AGENTS_ORDER` values of the last agent already seen.
+
+    Returns:
+        The page.
+    """
+    page = AGENTS_ORDER.page(_agent_rows(tenant_id, limit + 1, cursor), limit)
+    return Page(
+        items=[_agent_out(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_agent(tenant_id: str, slug: str) -> AgentOut:

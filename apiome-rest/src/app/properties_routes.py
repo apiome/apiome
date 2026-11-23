@@ -5,10 +5,17 @@ Provides CRUD endpoints for managing project properties (library properties).
 All endpoints are tenant-scoped and require authentication via JWT token or API key.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import List, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, Query, Response
+from typing import List, Dict, Any, Optional
 
+from .authoring_list_orders import PROJECT_PROPERTIES_ORDER
 from .database import PropertyUpdateConflict, PropertyUsedInPublishedVersion, db
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .models import (
     ProjectPropertySchema,
     ProjectPropertyCreateRequest,
@@ -24,11 +31,18 @@ router = APIRouter(prefix="/v1/properties", tags=["properties"])
 def list_properties(
     tenant_slug: str,
     project_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[ProjectPropertySchema]:
     """
-    List all properties for a project, each with ``used_by`` (the class names that use it, across the
-    project's live versions) and ``used_by_count`` (#3223).
+    List the properties of a project by name, each with ``used_by`` (the class names that use it,
+    across the project's live versions) and ``used_by_count`` (#3223).
+
+    The body is a JSON array of at most ``limit`` properties (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -37,11 +51,18 @@ def list_properties(
     Args:
         tenant_slug: The tenant slug
         project_id: The project ID
+        response: The outgoing response (paging headers are set on it)
+        limit: Page size
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``)
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        List of properties for the project
+        One page of the project's properties
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
     """
+    after = PROJECT_PROPERTIES_ORDER.parse(cursor)
     # Validate project belongs to tenant
     project = db.get_project_core(project_id, auth_data['tenant_id'])
     if not project:
@@ -50,7 +71,14 @@ def list_properties(
             detail=f"Project not found: {project_id}"
         )
 
-    properties = db.get_properties_for_project(project_id, with_usage=True)
+    page = PROJECT_PROPERTIES_ORDER.page(
+        db.get_properties_for_project(
+            project_id, with_usage=True, limit=limit + 1, cursor=after
+        ),
+        limit,
+    )
+    set_page_headers(response, page)
+    properties = page.items
 
     # Parse JSON data if it's a string
     for prop in properties:

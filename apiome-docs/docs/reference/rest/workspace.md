@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `workspace` · 10 operations
 
@@ -19,6 +19,21 @@ Tag: `workspace` · 10 operations
 
 List the tenant's live custom actions, alphabetically by name.
 
+One page of at most ``limit`` actions (1,000 at most); pass the page's ``nextCursor`` as
+``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of actions and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
+
 Operation id: `list_custom_actions_v1_workspace__tenant_slug__custom_actions_get`
 
 **Parameters**
@@ -26,6 +41,8 @@ Operation id: `list_custom_actions_v1_workspace__tenant_slug__custom_actions_get
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -155,7 +172,8 @@ Classes with their properties and tags, scoped to a selection or a domain folder
 
 Requesting three ids returns those three classes and nothing else, whatever the version
 contains. Requesting a domain returns one page of that folder plus ``total``, so the workspace
-can decide whether hydrating the rest fits its node budget before asking for it.
+can decide whether hydrating the rest fits its node budget before asking for it. A domain
+listing pages by cursor: pass ``next_cursor`` back until it is null.
 
 Operation id: `get_scoped_classes_v1_workspace__tenant_slug__version__version_id__classes_get`
 
@@ -228,7 +246,8 @@ and ``response_codes`` — the status codes it declares, as strings, in ascendin
 when it declares none. Parameters, request bodies and the responses *themselves*
 (descriptions, schemas, content types, examples) stay with the per-path endpoint: those are
 inspector-sized data for one selected operation, whereas a status code is a label the paths
-lens draws on every lane (private-suite#2583).
+lens draws on every lane (private-suite#2583). A domain listing pages by cursor: pass
+``next_cursor`` back until it is null.
 
 Operation id: `get_scoped_paths_v1_workspace__tenant_slug__version__version_id__paths_get`
 
@@ -395,6 +414,8 @@ Envelope for listing a tenant's custom palette actions.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `actions` | array of [`WorkspaceCustomActionOut`](#schema-workspacecustomactionout) | no | Actions. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `WorkspaceCustomActionOut` {#schema-workspacecustomactionout}
 

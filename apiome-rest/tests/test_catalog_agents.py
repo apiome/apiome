@@ -39,6 +39,7 @@ from app.catalog_agents import (
 from app.catalog_graph import _FAMILY_SQL
 from app.consumer_contract import SOURCE_AGENT, contract_pointers
 from app.consumer_contract_store import ConsumerActor, ConsumerRecord
+from app.keyset_pagination import Page
 from app.main import app
 from app.permissions import Resource
 
@@ -319,7 +320,8 @@ def test_models_list_and_change(authed) -> None:
     client, permit = authed
     model = ModelOut(id="m-1", slug="claude", name="Claude", provider="Anthropic", model_name="claude",
                      hosting="api", deprecated=False)
-    with patch("app.catalog_agent_routes.store.list_models", return_value=[model]), patch(
+    page = Page(items=[model], has_more=False, next_cursor=None)
+    with patch("app.catalog_agent_routes.store.page_models", return_value=page), patch(
         "app.catalog_agent_routes.store.update_model", return_value=model
     ) as update:
         assert client.get("/v1/tenants/acme/catalog-models").json()["models"][0]["slug"] == "claude"

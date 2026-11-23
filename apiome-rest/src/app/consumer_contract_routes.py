@@ -70,8 +70,10 @@ from .consumer_contract_store import (
 from .consumer_surface import SpecIndex, resolve_selection
 from .consumer_usage import ConsumerUsageResponse, project_consumer_usage
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query, page_of
 from .pact_contract_import import import_pact, pact_consumer_name, parse_pact_document
 from .permissions import Action, Resource, enforce_permission, has_permission
+from .tenant_config_list_orders import CONSUMERS_ORDER
 
 __all__ = ["router"]
 
@@ -104,6 +106,10 @@ class ConsumerListResponse(BaseModel):
         default_factory=list, description="The project's consumers, newest first."
     )
     count: int = Field(description="How many consumers were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class ConsumerDetailResponse(BaseModel):
@@ -304,6 +310,8 @@ def _spec_index(tenant_id: str, tenant_slug: str, version_row: Dict[str, Any]) -
         "registration look like it failed.\n\n"
         "Each row's `runtime` counts its declared-and-used, declared-unused and used-undeclared "
         "operations over `runtime_days`, from the traffic its bindings attribute.\n\n"
+        "At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` "
+        "is false.\n\n"
         "Requires `consumer_contracts:view`."
     ),
 )
@@ -321,37 +329,51 @@ def list_project_consumers(
         le=395,
         description="Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8).",
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ConsumerListResponse:
-    """List the project's consumers with their current contracts.
+    """List one page of the project's consumers with their current contracts.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what actually scopes it).
         project_ref: Project slug or id.
         team: Only consumers owned by this team.
         runtime_days: The window of each row's runtime counts.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        The consumer summaries.
+        The consumer summaries of the page and whether another follows.
 
     Raises:
-        HTTPException: 404 for an unknown project, 403 without ``consumer_contracts:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project, 403 without
+            ``consumer_contracts:view``.
     """
     enforce_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW)
+    after = CONSUMERS_ORDER.parse(cursor)
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     try:
         project = resolve_project(tenant_id, project_ref)
-        summaries = list_consumer_summaries(tenant_id, str(project["id"]), team=team)
+        rows = list_consumer_summaries(
+            tenant_id, str(project["id"]), team=team, limit=limit + 1, cursor=after
+        )
+        page = page_of(rows, limit, lambda summary: CONSUMERS_ORDER.cursor_of(summary.consumer))
     except ConsumerValidationError as exc:
         raise _http_error(exc) from exc
     # RDG-1.8: each row carries its declared-versus-observed counts. Imported here because the
     # binding routes import this module's helpers.
     from .consumer_binding_routes import attach_runtime_summaries
 
-    summaries = attach_runtime_summaries(tenant_id, str(project["id"]), summaries, days=runtime_days)
-    return ConsumerListResponse(consumers=summaries, count=len(summaries))
+    summaries = attach_runtime_summaries(tenant_id, str(project["id"]), page.items, days=runtime_days)
+    return ConsumerListResponse(
+        consumers=summaries,
+        count=len(summaries),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

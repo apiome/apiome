@@ -27,13 +27,14 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import psycopg2
 
 from . import review_store
 from .approval_publish_gate import assess_approval_gate
 from .database import db
+from .keyset_lists import ListOrder, SortColumn
 from .keyset_pagination import Page, capped_count_sql, keyset_before, page_of, time_id_key
 from .merge_requests import (
     BLOCKER_APPROVAL_POLICY,
@@ -243,12 +244,31 @@ def _read_draft(project_id: str, branch_id: str) -> DraftBranchRecord:
     return _draft_record(rows[0])
 
 
-def list_draft_branches(tenant_id: str, project_ref: str) -> List[DraftBranchRecord]:
+#: The draft-branch list's ordering: newest first, then by name (#7196).
+DRAFT_BRANCHES_ORDER = ListOrder(
+    "draft-branches",
+    (
+        SortColumn("b.created_at", "time", ("created_at",), descending=True),
+        SortColumn("b.name", "text", ("name",)),
+        SortColumn("b.id", "uuid", ("id",)),
+    ),
+)
+
+
+def list_draft_branches(
+    tenant_id: str,
+    project_ref: str,
+    *,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[DraftBranchRecord]:
     """List a project's draft branches, newest first.
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
+        limit: Rows to read; ``None`` reads every draft branch.
+        cursor: :data:`DRAFT_BRANCHES_ORDER` values of the last branch already seen (#7196).
 
     Returns:
         The draft branches.
@@ -257,16 +277,17 @@ def list_draft_branches(tenant_id: str, project_ref: str) -> List[DraftBranchRec
         MergeRequestValidationError: ``mr-project-not-found``.
     """
     project_id = str(_project(tenant_id, project_ref)["id"])
+    after_sql, after_params, limit_sql, limit_params = DRAFT_BRANCHES_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {_DRAFT_COLUMNS}
         FROM apiome.version_branches b
         JOIN apiome.versions v ON v.id = b.tip_version_id
         LEFT JOIN apiome.version_branches base ON base.id = b.draft_of_branch_id
-        WHERE b.project_id = %s::uuid AND b.draft_of_branch_id IS NOT NULL
-        ORDER BY b.created_at DESC, b.name ASC
+        WHERE b.project_id = %s::uuid AND b.draft_of_branch_id IS NOT NULL{after_sql}
+        ORDER BY {DRAFT_BRANCHES_ORDER.order_by}{limit_sql}
         """,
-        (project_id,),
+        (project_id, *after_params, *limit_params),
     )
     return [_draft_record(row) for row in rows]
 

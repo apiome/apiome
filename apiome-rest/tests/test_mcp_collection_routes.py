@@ -61,7 +61,7 @@ def test_list_collections():
     body = res.json()
     assert body["success"] is True
     assert body["collections"][0]["slug"] == "geo-tools"
-    mdb.list_mcp_collections.assert_called_once_with("t1")
+    mdb.list_mcp_collections.assert_called_once_with("t1", limit=1001, cursor=None)
 
 
 def test_create_collection():

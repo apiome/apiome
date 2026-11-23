@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import OrderedDict
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .entity_owners import owner_envelope_join, owner_ref_from_value
 from .gateway_configs import (
@@ -34,6 +34,8 @@ from .gateway_configs import (
     posture_from_api,
     push_back,
 )
+from .keyset_lists import by_name
+from .keyset_pagination import Page
 from .revision_deprecation import is_uuid_string
 
 logger = logging.getLogger(__name__)
@@ -185,6 +187,31 @@ def _out(row: Mapping[str, Any], apis: Optional[List[GatewayServedApi]] = None) 
     )
 
 
+#: The order of the gateway-config list: by name (#7196).
+GATEWAY_CONFIGS_ORDER = by_name("gateway-configs", "lower(g.name)", "g.id", name_field="name_key")
+
+
+def _gateway_config_rows(
+    db: Any, tenant_id: str, connector_id: Optional[str], limit: Optional[int], cursor: Optional[Sequence[Any]]
+) -> List[Dict[str, Any]]:
+    """The tenant's live gateway-config rows in :data:`GATEWAY_CONFIGS_ORDER`, whole or one window."""
+    connector = connector_id if connector_id and is_uuid_string(connector_id) else None
+    after_sql, after_params, limit_sql, limit_params = GATEWAY_CONFIGS_ORDER.window(limit, cursor)
+    rows = db.execute_query(
+        f"""
+        SELECT {_COLUMNS}, own.entity_owner, lower(g.name) AS name_key
+        FROM apiome.catalog_gateway_configs g
+        JOIN apiome.catalog_connectors c ON c.id = g.connector_id AND c.deleted_at IS NULL
+        {owner_envelope_join(("gateway_config",), "g.id", "g.tenant_id")}
+        WHERE g.tenant_id = %s::uuid AND g.deleted_at IS NULL
+          AND (%s::uuid IS NULL OR g.connector_id = %s::uuid){after_sql}
+        ORDER BY {GATEWAY_CONFIGS_ORDER.order_by}{limit_sql}
+        """,
+        (tenant_id, connector, connector, *after_params, *limit_params),
+    )
+    return [dict(row) for row in rows or []]
+
+
 def list_gateway_configs(db: Any, tenant_id: str, connector_id: Optional[str] = None) -> List[GatewayConfigOut]:
     """The tenant's live gateway configs (optionally one connector's), by name.
 
@@ -193,20 +220,34 @@ def list_gateway_configs(db: Any, tenant_id: str, connector_id: Optional[str] = 
         tenant_id: The tenant.
         connector_id: Only this connector's environments.
     """
-    connector = connector_id if connector_id and is_uuid_string(connector_id) else None
-    rows = db.execute_query(
-        f"""
-        SELECT {_COLUMNS}, own.entity_owner
-        FROM apiome.catalog_gateway_configs g
-        JOIN apiome.catalog_connectors c ON c.id = g.connector_id AND c.deleted_at IS NULL
-        {owner_envelope_join(("gateway_config",), "g.id", "g.tenant_id")}
-        WHERE g.tenant_id = %s::uuid AND g.deleted_at IS NULL
-          AND (%s::uuid IS NULL OR g.connector_id = %s::uuid)
-        ORDER BY lower(g.name), g.id
-        """,
-        (tenant_id, connector, connector),
+    return [_out(row) for row in _gateway_config_rows(db, tenant_id, connector_id, None, None)]
+
+
+def page_gateway_configs(
+    db: Any,
+    tenant_id: str,
+    connector_id: Optional[str] = None,
+    *,
+    limit: int,
+    cursor: Optional[Sequence[Any]] = None,
+) -> Page[GatewayConfigOut]:
+    """One page of the tenant's live gateway configs, by name (#7196).
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        connector_id: Only this connector's environments.
+        limit: Page size.
+        cursor: :data:`GATEWAY_CONFIGS_ORDER` values of the last config already seen.
+    """
+    page = GATEWAY_CONFIGS_ORDER.page(
+        _gateway_config_rows(db, tenant_id, connector_id, limit + 1, cursor), limit
     )
-    return [_out(dict(row)) for row in rows or []]
+    return Page(
+        items=[_out(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_gateway_config(db: Any, tenant_id: str, ref: str) -> Optional[GatewayConfigOut]:

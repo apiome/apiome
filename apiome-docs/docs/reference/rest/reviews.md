@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `reviews` · 7 operations
 
@@ -20,6 +20,8 @@ Tag: `reviews` · 7 operations
 A page of the project's reviews, most recently active first, each with the tally of its current round.
 
 Filters combine: `version` (revision id or version label), `state` (`in_review`, `approved`, `changes_requested`), and `open` (`true` for open reviews, `false` for withdrawn ones).
+
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. The `total` is counted only when `include_total` is set.
 
 Requires `projects:view`.
 
@@ -34,8 +36,10 @@ Operation id: `list_reviews_v1_tenants__tenant_slug__projects__project_ref__revi
 | `version` | query | string or null | no | Revision id or version label. |
 | `state` | query | enum `"in_review"`, `"approved"`, `"changes_requested"` or null | no | Review state. |
 | `open` | query | boolean or null | no | Open (`true`) or withdrawn (`false`) reviews only. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Reviews to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -273,9 +277,11 @@ A page of a project's reviews.
 | --- | --- | --- | --- |
 | `reviews` | array of `ReviewRecord` | no | Reviews, most recently active first. |
 | `count` | integer | yes | How many reviews this page holds. |
-| `total` | integer | yes | How many reviews match the filters in all. |
+| `total` | integer or null | no | How many reviews match the filters, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | The page size used. |
-| `offset` | integer | yes | The offset used. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ReviewReRequest` {#schema-reviewrerequest}
 

@@ -42,7 +42,8 @@ def test_settings_upsert_keeps_the_last_digest_time():
     store.put_settings(db, _TENANT, DriftSettings(delivery="daily_digest"), actor_id="u-1")
     sql, params = db.calls[0]
     assert "ON CONFLICT (tenant_id) DO UPDATE" in sql
-    assert "last_digest_at" not in sql.split("DO UPDATE SET")[1]
+    # The row comes back whole, so the RETURNING list names the column; the update must not.
+    assert "last_digest_at" not in sql.split("DO UPDATE SET")[1].split("RETURNING")[0]
     assert params == (_TENANT, True, True, False, "daily_digest", True, False, "u-1")
 
 

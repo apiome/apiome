@@ -35,7 +35,9 @@ class FakeCommentDb(NotificationDbMixin):
     Attributes:
         grants: ``None`` grants every ``(resource, action)``; a set grants only its members.
         admins: ``(tenant_id, user_id)`` pairs that administer their tenant.
-        member_reads: How many times the mentionable-member list was read.
+        member_reads: How many times mentionable members were read, narrowly or in full.
+        full_member_reads: How many times the whole member list was read.
+        mention_lookups: The handles of each narrow member lookup (#7196).
     """
 
     def __init__(self) -> None:
@@ -51,7 +53,9 @@ class FakeCommentDb(NotificationDbMixin):
         self.threads: Dict[str, Dict[str, Any]] = {}
         self.comments: Dict[str, Dict[str, Any]] = {}
         self.member_reads = 0
-        self._now = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+        self.full_member_reads = 0
+        self.mention_lookups: List[List[str]] = []
+        self._now =datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
         NotificationDbMixin.__init__(self)
 
     # -----------------------------------------------------------------------------------------
@@ -505,4 +509,37 @@ class FakeCommentDb(NotificationDbMixin):
     def list_comment_mention_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
         """The mentionable members."""
         self.member_reads += 1
+        self.full_member_reads += 1
         return [dict(member) for member in self.members]
+
+    def find_comment_mention_candidates(
+        self, tenant_id: str, handles: Any
+    ) -> List[Dict[str, Any]]:
+        """The members a handle could name — the same superset the SQL predicate keeps."""
+        self.member_reads += 1
+        self.mention_lookups.append(list(handles))
+
+        def in_order(handle: str, name: str) -> bool:
+            position = 0
+            for char in handle:
+                position = name.find(char, position) + 1
+                if position == 0:
+                    return False
+            return True
+
+        matched = []
+        for member in self.members:
+            email = str(member.get("email") or "").lower()
+            name = str(member.get("name") or "").lower()
+            if any(
+                handle in (email, email.split("@", 1)[0])
+                or ("@" not in handle and in_order(handle, name))
+                for handle in handles
+            ):
+                matched.append(dict(member))
+        return matched
+
+    def filter_mentionable_member_ids(self, tenant_id: str, user_ids: Any) -> List[str]:
+        """Which of the given ids are mentionable members."""
+        wanted = {str(user_id) for user_id in user_ids}
+        return [str(m["user_id"]) for m in self.members if str(m["user_id"]) in wanted]

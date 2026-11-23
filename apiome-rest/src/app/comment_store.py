@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from . import notification_store
-from .comment_mentions import MentionCandidate, resolve_mentions
+from .comment_mentions import MentionCandidate, extract_mention_handles, resolve_mentions
 from .comments import (
     ANCHOR_VERSION,
     CODE_ANCHOR_NOT_FOUND,
@@ -263,6 +263,11 @@ def _require_body(body: str) -> str:
     return body
 
 
+#: The most distinct handles one narrow member lookup carries; a body with more falls back to
+#: reading the member list.
+MAX_MENTION_LOOKUP_HANDLES = 100
+
+
 def resolve_body_mentions(tenant_id: str, body: str) -> List[str]:
     """Resolve a body's ``@name`` tokens to tenant member ids.
 
@@ -271,18 +276,28 @@ def resolve_body_mentions(tenant_id: str, body: str) -> List[str]:
         body: The Markdown body.
 
     Returns:
-        The mentioned member ids, in order of first mention. The member list is only read when the
-        body contains a mention token at all.
+        The mentioned member ids, in order of first mention. Members are only read when the body
+        contains a mention token at all, and then only those a handle in the body could name —
+        never the tenant's whole member list (#7196).
     """
     if "@" not in (body or ""):
         return []
+    handles = extract_mention_handles(body)
+    if not handles:
+        return []
+    if len(handles) > MAX_MENTION_LOOKUP_HANDLES:
+        # More distinct handles than a narrow lookup should carry in one predicate; a body like
+        # that is rare enough to read the member list for.
+        rows = db.list_comment_mention_candidates(tenant_id)
+    else:
+        rows = db.find_comment_mention_candidates(tenant_id, handles)
     members = [
         MentionCandidate(
             user_id=str(row.get("user_id") or ""),
             name=row.get("name"),
             email=row.get("email"),
         )
-        for row in db.list_comment_mention_candidates(tenant_id)
+        for row in rows
     ]
     return resolve_mentions(body, members).user_ids
 

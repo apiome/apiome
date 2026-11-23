@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `lint-decisions` · 4 operations
 
@@ -19,6 +19,21 @@ Tag: `lint-decisions` · 4 operations
 
 List finding remediation / waiver decisions for the tenant (CLX-1.3, #4850).
 
+Most recently changed first, one page of at most ``limit`` decisions (1,000 at most); pass
+the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    project_id: Narrow to one project's decisions plus the tenant-wide ones.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of decisions and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
+
 Operation id: `list_lint_finding_decisions_v1_lint_decisions_get`
 
 **Parameters**
@@ -26,6 +41,8 @@ Operation id: `list_lint_finding_decisions_v1_lint_decisions_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `projectId` | query | string or null | no | Query parameter: project id. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -100,7 +117,24 @@ Operation id: `get_lint_finding_decision_v1_lint_decisions__decision_id__get`
 
 **List Lint Finding Decision Events**
 
-Audit history for a finding decision (CLX-1.3, #4850).
+Audit history for a finding decision, oldest first (CLX-1.3, #4850).
+
+The body is a JSON array of at most ``limit`` events (200 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
+
+Args:
+    decision_id: The decision whose history is read.
+    response: The outgoing response (paging headers are set on it).
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+    auth_data: The authenticated principal.
+
+Returns:
+    One page of events.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the decision is unknown.
 
 Operation id: `list_lint_finding_decision_events_v1_lint_decisions__decision_id__events_get`
 
@@ -109,6 +143,8 @@ Operation id: `list_lint_finding_decision_events_v1_lint_decisions__decision_id_
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `decision_id` | path | string | yes | Path parameter identifying the decision id segment. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -155,7 +191,9 @@ List of finding decisions (CLX-1.3, #4850).
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `decisions` | array of [`LintFindingDecisionOut`](#schema-lintfindingdecisionout) | no | Decisions. |
-| `count` | integer | no | Number of count. |
+| `count` | integer | no | Number of decisions in this page. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `LintFindingDecisionOut` {#schema-lintfindingdecisionout}
 

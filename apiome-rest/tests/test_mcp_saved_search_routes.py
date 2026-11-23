@@ -71,7 +71,7 @@ def test_list_saved_searches():
     assert len(body["searches"]) == 1
     assert body["searches"][0]["name"] == "Destructive ungraded"
     assert body["searches"][0]["isPinned"] is True
-    mdb.list_mcp_saved_searches.assert_called_once_with("t1", "user-1")
+    mdb.list_mcp_saved_searches.assert_called_once_with("t1", "user-1", limit=1001, cursor=None)
 
 
 def test_create_saved_search():

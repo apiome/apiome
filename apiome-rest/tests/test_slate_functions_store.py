@@ -323,7 +323,8 @@ class TestTenantScoping:
         list_revisions(db, tenant_id=TENANT, function_id=FUNCTION)
         query, _ = conn.statements[0]
         assert "tenant_id = %s::uuid" in query
-        assert "environment_id" not in query
+        # The select list names every column; it is the filter that must not scope by lane.
+        assert "environment_id" not in query.split(" WHERE ", 1)[1]
 
     def test_capabilities_can_be_narrowed_to_one_function(self) -> None:
         db, conn = db_with([])
@@ -409,7 +410,8 @@ class TestPolicyLifecycle:
             actor_name="a",
             actor_key="a",
         )
-        assert "edge_attached" not in conn.statements[1][0]
+        # The row comes back whole, so RETURNING names the column; the write itself must not.
+        assert "edge_attached" not in conn.statements[1][0].split("RETURNING")[0]
 
     def test_a_policy_write_never_names_edge_attached_either(self) -> None:
         db, conn = db_with({"policy_version": 4}, policy_row(policy_version=4))
@@ -429,7 +431,7 @@ class TestPolicyLifecycle:
             actor_name="a",
             actor_key="a",
         )
-        update = conn.statements[1][0]
+        update = conn.statements[1][0].split("RETURNING")[0]
         assert "edge_attached" not in update
         assert "region-pinned" in conn.statements[1][1]
 
@@ -1231,7 +1233,8 @@ class TestInvocationHonesty:
             denial_reason=None,
             evidence={},
         )
-        query, _ = conn.statements[0]
+        # What is written, not what is read back: RETURNING names every column of the row.
+        query = conn.statements[0][0].split("RETURNING")[0]
         assert "cpu_ms" not in query
         assert "wall_ms" not in query
         assert "memory_peak_mb" not in query

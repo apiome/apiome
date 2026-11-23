@@ -7,15 +7,23 @@ Secrets are stored hashed; API responses expose signingSecretRef only.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse, urlunparse
 
 import psycopg2.errors
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import HttpUrl, TypeAdapter
 
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
+from .tenant_list_orders import PUSH_WEBHOOK_DEAD_LETTER_ORDER, PUSH_WEBHOOK_SUBSCRIPTIONS_ORDER
 from .permissions import enforce_permission, Resource, Action
 from .models import (
     PushWebhookDeadLetterItem,
@@ -85,12 +93,27 @@ def _duplicate_http() -> HTTPException:
 @router.get("/{tenant_slug}/deliveries/dead-letter", response_model=List[PushWebhookDeadLetterItem])
 def list_push_webhook_dead_letter_deliveries(
     tenant_slug: str,
+    response: Response,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[PushWebhookDeadLetterItem]:
-    """List terminal dead-letter webhook deliveries for the tenant (#2588)."""
+    """List terminal dead-letter webhook deliveries for the tenant (#2588).
+
+    The body is a JSON array of at most ``limit`` deliveries (200 at most), most recently failed
+    first. ``X-Has-More`` says whether more exist and ``X-Next-Cursor`` carries the ``cursor``
+    of the next page (#7196).
+    """
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
-    rows = db.list_push_webhook_dead_letter_events(tenant_id)
+    page = PUSH_WEBHOOK_DEAD_LETTER_ORDER.page(
+        db.list_push_webhook_dead_letter_events(
+            tenant_id, limit + 1, cursor=PUSH_WEBHOOK_DEAD_LETTER_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    set_page_headers(response, page)
+    rows = page.items
     return [
         PushWebhookDeadLetterItem(
             id=str(r["id"]),
@@ -148,12 +171,26 @@ def get_push_webhook_delivery_detail(
 @router.get("/{tenant_slug}", response_model=List[PushWebhookSubscriptionResponse])
 def list_push_webhook_subscriptions(
     tenant_slug: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[PushWebhookSubscriptionResponse]:
+    """List the tenant's push-webhook subscriptions, newest first.
+
+    The body is a JSON array of at most ``limit`` subscriptions (1,000 at most). ``X-Has-More``
+    says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
+    """
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
-    rows = db.list_push_webhook_subscriptions(tenant_id)
-    return [_row_to_response(r) for r in rows]
+    page = PUSH_WEBHOOK_SUBSCRIPTIONS_ORDER.page(
+        db.list_push_webhook_subscriptions(
+            tenant_id, limit=limit + 1, cursor=PUSH_WEBHOOK_SUBSCRIPTIONS_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    set_page_headers(response, page)
+    return [_row_to_response(r) for r in page.items]
 
 
 @router.post("/{tenant_slug}", response_model=PushWebhookSubscriptionResponse)

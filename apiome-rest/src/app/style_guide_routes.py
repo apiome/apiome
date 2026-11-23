@@ -47,6 +47,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import (
+    STYLE_GUIDE_POLICY_VERSIONS_ORDER,
+    STYLE_GUIDE_REVISIONS_ORDER,
+    STYLE_GUIDES_ORDER,
+)
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+)
 from .approval_policy import (
     normalize_required_approvals,
     normalize_required_reviewer_role,
@@ -146,6 +157,9 @@ from .style_guide_transfer import (
 )
 
 router = APIRouter(prefix="/v1/style-guides", tags=["style-guides"])
+
+#: The largest page of a guide's revision history (the limit the list has always clamped to).
+MAX_STYLE_GUIDE_REVISION_PAGE = 500
 
 #: ``detail.code`` for mutations against the read-only builtin guide.
 READ_ONLY_CODE = "STYLE_GUIDE_READ_ONLY"
@@ -294,10 +308,29 @@ def _name_conflict() -> HTTPException:
 @router.get("/{tenant_slug}", response_model=StyleGuideListResponse)
 def list_style_guides(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StyleGuideListResponse:
-    """List the tenant's style guides with list-view rollups (rules on, assignments)."""
+    """List the tenant's style guides with list-view rollups (rules on, assignments).
+
+    Builtin guide first, then by name; one page of at most ``limit`` guides (1,000 at most).
+    Pass the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of guides and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
+    """
     tenant_id = _tenant_id(auth_data)
+    after = STYLE_GUIDES_ORDER.parse(cursor)
     db.ensure_builtin_style_guide(tenant_id)
     assignment_rows = db.list_style_guide_project_assignments(tenant_id)
     by_guide: Dict[str, List[StyleGuideProjectAssignmentOut]] = {}
@@ -308,11 +341,16 @@ def list_style_guides(
                 project_name=row["project_name"],
             )
         )
-    guides = [
-        _guide_out(row, by_guide.get(str(row["id"])))
-        for row in db.list_style_guides(tenant_id)
-    ]
-    return StyleGuideListResponse(guides=guides, count=len(guides))
+    page = STYLE_GUIDES_ORDER.page(
+        db.list_style_guides(tenant_id, limit=limit + 1, cursor=after), limit
+    )
+    guides = [_guide_out(row, by_guide.get(str(row["id"]))) for row in page.items]
+    return StyleGuideListResponse(
+        guides=guides,
+        count=len(guides),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post("/{tenant_slug}", response_model=StyleGuideOut, status_code=201)
@@ -974,7 +1012,8 @@ def unassign_project(
 def list_style_guide_revisions(
     tenant_slug: str,
     guide_id: str,
-    limit: int = 100,
+    limit: int = limit_query(100, maximum=MAX_STYLE_GUIDE_REVISION_PAGE),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StyleGuideRevisionListResponse:
     """The guide's immutable revision history, newest first (GOV-1.6, #4432).
@@ -987,20 +1026,41 @@ def list_style_guide_revisions(
     V159 migration): its current state is captured as revision 1 rather than showing an empty
     list for a guide that demonstrably exists. Readable by any tenant member — compliance
     review is not an admin-only activity.
+
+    One page of at most ``limit`` revisions (500 at most; a larger ``limit`` is now a 422
+    rather than silently clamped). Pass the page's ``nextCursor`` as ``cursor`` while
+    ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        guide_id: The guide whose history is read.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of revisions and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the guide is unknown.
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
+    after = STYLE_GUIDE_REVISIONS_ORDER.parse(cursor)
     guide = _load_guide_or_404(guide_id, tenant_id)
     ensure_guide_revision(str(guide["id"]), tenant_id)
     rows = db.list_style_guide_revisions(
-        str(guide["id"]), tenant_id, limit=max(1, min(int(limit), 500))
+        str(guide["id"]), tenant_id, limit=limit + 1, cursor=after
     )
-    revisions = [style_guide_revision_out_from_row(row) for row in rows]
+    page = STYLE_GUIDE_REVISIONS_ORDER.page(rows, limit)
+    revisions = [style_guide_revision_out_from_row(row) for row in page.items]
     return StyleGuideRevisionListResponse(
         guide_id=str(guide["id"]),
         guide_name=guide["name"],
         revisions=revisions,
         count=len(revisions),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1228,15 +1288,41 @@ def put_style_guide_policy_settings(
 def list_style_guide_policy_versions(
     tenant_slug: str,
     guide_id: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StyleGuidePolicyVersionListResponse:
-    """List immutable policy pack versions for a style guide (CLX-1.3, #4850)."""
+    """List immutable policy pack versions for a style guide, newest first (CLX-1.3, #4850).
+
+    One page of at most ``limit`` versions (200 at most); pass the page's ``nextCursor`` as
+    ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        guide_id: The guide whose policy versions are read.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of policy versions and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the guide is unknown.
+    """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
+    after = STYLE_GUIDE_POLICY_VERSIONS_ORDER.parse(cursor)
     _load_guide_or_404(guide_id, tenant_id)
-    rows = db.list_style_guide_policy_versions(guide_id, tenant_id)
-    versions = [style_guide_policy_version_out_from_row(r) for r in rows]
-    return StyleGuidePolicyVersionListResponse(versions=versions, count=len(versions))
+    rows = db.list_style_guide_policy_versions(guide_id, tenant_id, limit=limit + 1, cursor=after)
+    page = STYLE_GUIDE_POLICY_VERSIONS_ORDER.page(rows, limit)
+    versions = [style_guide_policy_version_out_from_row(r) for r in page.items]
+    return StyleGuidePolicyVersionListResponse(
+        versions=versions,
+        count=len(versions),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.get(

@@ -25,6 +25,7 @@ from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_collections import (
     CollectionValidationError,
     normalize_collection_description,
@@ -43,6 +44,7 @@ from .models import (
     mcp_collection_member_out_from_row,
     mcp_collection_out_from_row,
 )
+from .tenant_list_orders import MCP_COLLECTIONS_ORDER
 
 router = APIRouter(prefix="/v1/mcp", tags=["mcp-catalog"])
 
@@ -111,15 +113,28 @@ def _normalize_update(body: McpCollectionUpdate) -> Dict[str, Any]:
 @router.get("/{tenant_slug}/collections", response_model=McpCollectionListResponse)
 def list_mcp_collections(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCollectionListResponse:
-    """List curated collections for the caller's tenant."""
+    """List curated collections for the caller's tenant.
+
+    One page of at most ``limit`` collections (1,000 at most), most recently changed first;
+    pass ``next_cursor`` as ``cursor`` until ``has_more`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.list_mcp_collections(tenant_id)
+    page = MCP_COLLECTIONS_ORDER.page(
+        db.list_mcp_collections(
+            tenant_id, limit=limit + 1, cursor=MCP_COLLECTIONS_ORDER.parse(cursor)
+        ),
+        limit,
+    )
     return McpCollectionListResponse(
         success=True,
-        collections=[_collection_out(r) for r in rows],
+        collections=[_collection_out(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

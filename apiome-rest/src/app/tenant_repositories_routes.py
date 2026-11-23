@@ -27,7 +27,9 @@ from .auth import (
     validate_authentication,
 )
 from .database import db
+from .tenant_list_orders import TENANT_REPOSITORIES_ORDER
 from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
     cursor_query,
     include_total_query,
     limit_query,
@@ -947,24 +949,40 @@ def _lookup_allowlist_entry(tenant_id: str, entry_id: str) -> Dict[str, Any]:
 @router.get("/{tenant_slug}/repositories", response_model=TenantRepositoriesListResponse)
 def list_tenant_repositories(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoriesListResponse:
     """List the tenant's registered repositories, each with its REPO-6.5 health badge.
 
     Args:
         tenant_slug: Tenant slug from the path (scoping comes from the token).
+        limit: Page size (1,000 at most).
+        cursor: Where the page starts (``next_cursor`` of the previous page).
         auth_data: Authenticated principal; supplies the tenant scope.
 
     Returns:
-        Every live repository for the tenant, newest registration first.
+        One page of the tenant's live repositories, newest registration first, and whether
+        another follows (#7196).
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.list_tenant_repositories(tenant_id)
+    page = TENANT_REPOSITORIES_ORDER.page(
+        db.list_tenant_repositories(
+            tenant_id, limit=limit + 1, cursor=TENANT_REPOSITORIES_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    rows = page.items
     health = _repository_health_by_id(tenant_id) if rows else {}
     return TenantRepositoriesListResponse(
         success=True,
         repositories=[_row_to_record(r, health.get(str(r.get("id")))) for r in rows],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `ops` · 16 operations
 
@@ -88,6 +88,7 @@ Operation id: `admin_document_store_v1_admin_document_store_get`
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | How many `tenantBuckets` to list (by tenant slug). At most 1,000; `tenantBucketsTruncated` says whether more exist. |
 | `X-Admin-Session` | header | string or null | no | Header parameter: X Admin Session. |
 | `admin_session` | cookie | string or null | no | Cookie parameter: admin session. |
 
@@ -246,6 +247,7 @@ Operation id: `ops_document_store_v1_ops_document_store_get`
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | How many `tenantBuckets` to list (by tenant slug). At most 1,000; `tenantBucketsTruncated` says whether more exist. |
 | `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -479,6 +481,7 @@ The active document store: settings (never credentials), health and usage.
 | `usage` | `DocumentStoreUsage` or null | no | Null when the document index cannot be read. |
 | `tenantBucketsAllowed` | boolean | no | Whether tenants may use their own bucket (APIOME_DOCUMENT_STORE_ALLOW_TENANT_BUCKETS). |
 | `tenantBuckets` | array of `DocumentStoreTenantBucket` | no | Tenants that have configured their own bucket, with its health. |
+| `tenantBucketsTruncated` | boolean | no | True when more tenants have a bucket than `limit` listed. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

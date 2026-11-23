@@ -103,11 +103,23 @@ class FakeSuiteDb:
             })
         self.payloads[suite_id] = rows
 
-    def list_schema_test_suites(self, tenant_id, *, ref_kind=None, ref_artifact=None):
+    def list_schema_test_suites(
+        self, tenant_id, *, ref_kind=None, ref_artifact=None, limit=None, cursor=None
+    ):
         if not is_uuid_string(str(tenant_id)):
             return []
         out = []
-        for suite in sorted(self.suites.values(), key=lambda s: s["created_at"], reverse=True):
+        newest_first = sorted(
+            self.suites.values(), key=lambda s: (s["created_at"], str(s["id"])), reverse=True
+        )
+        if cursor is not None:
+            stamp, suite_id = cursor
+            newest_first = [
+                s for s in newest_first if (s["created_at"], str(s["id"])) < (stamp, str(suite_id))
+            ]
+        for suite in newest_first:
+            if limit is not None and len(out) >= limit:
+                break
             if suite["tenant_id"] != tenant_id:
                 continue
             if ref_kind and suite["ref_kind"] != ref_kind:

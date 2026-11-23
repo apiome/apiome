@@ -476,7 +476,7 @@ def test_listing_deleting_and_runs(auth) -> None:
     ):
         response = client.get("/v1/export/acme/auto-exports", params={"preset": "nightly"})
     assert response.json()["subscriptions"][0]["haltAt"] == "critical"
-    listing.assert_called_once_with(_TENANT, project_id=None, preset_id=_PRESET)
+    listing.assert_called_once_with(_TENANT, project_id=None, preset_id=_PRESET, limit=1001, cursor=None)
     with (
         patch(f"{_ROUTES}.enforce_permission"),
         _tenant(),

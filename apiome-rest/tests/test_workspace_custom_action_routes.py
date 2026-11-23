@@ -115,7 +115,12 @@ class TestList:
         response = client.get("/v1/workspace/acme/custom-actions")
 
         assert response.status_code == 200
-        assert response.json() == {"success": True, "actions": []}
+        assert response.json() == {
+            "success": True,
+            "actions": [],
+            "hasMore": False,
+            "nextCursor": None,
+        }
 
 
 class TestCreate:

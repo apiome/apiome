@@ -29,9 +29,6 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 from .config import settings
-# The health check, the status page and the connection test are about the install's own store,
-# never a tenant's bucket (COA-5.15): bind the platform accessor under the name this module uses.
-from .document_store import get_platform_document_store as get_document_store
 from .document_store import (
     BACKEND_DB,
     BACKENDS,
@@ -46,6 +43,10 @@ from .document_store import (
     normalize_prefix,
     set_document_store,
 )
+
+# The health check, the status page and the connection test are about the install's own store,
+# never a tenant's bucket (COA-5.15): bind the platform accessor under the name this module uses.
+from .document_store import get_platform_document_store as get_document_store
 
 logger = logging.getLogger(__name__)
 
@@ -328,11 +329,12 @@ def health_detail(health: Optional[StoreHealth] = None, *, database: Any = None)
     return detail
 
 
-def tenant_buckets(database: Any) -> List[Dict[str, Any]]:
+def tenant_buckets(database: Any, *, limit: Optional[int] = None) -> List[Dict[str, Any]]:
     """Tenants that keep documents in their own bucket (COA-5.15, #7092), for the ops plane.
 
     Args:
         database: The database handle.
+        limit: Tenants to read (by slug); ``None`` reads them all (#7196).
 
     Returns:
         ``{tenantId, tenantSlug, tenantName, mode, bucket, endpointUrl, moveState,
@@ -345,7 +347,11 @@ def tenant_buckets(database: Any) -> List[Dict[str, Any]]:
     if not routing_active():
         return []
     try:
-        rows = list_tenant_stores(database)
+        rows = (
+            list_tenant_stores(database)
+            if limit is None
+            else list_tenant_stores(database, limit=limit)
+        )
     except Exception:  # noqa: BLE001 - a status page still renders without the list
         logger.warning("document store: tenant buckets could not be listed", exc_info=True)
         return []
@@ -431,7 +437,12 @@ def _health_view(health: StoreHealth) -> Dict[str, Any]:
     return {"ok": health.ok, "checkedAt": health.checked_at, "error": health.error}
 
 
-def describe_store(database: Any, *, store: Optional[DocumentStore] = None) -> Dict[str, Any]:
+def describe_store(
+    database: Any,
+    *,
+    store: Optional[DocumentStore] = None,
+    tenant_bucket_limit: Optional[int] = None,
+) -> Dict[str, Any]:
     """The settings, health and usage of the active store (``GET /v1/ops/document-store``).
 
     Blocking (a reachability check and a database query): call it from a worker thread.
@@ -439,6 +450,8 @@ def describe_store(database: Any, *, store: Optional[DocumentStore] = None) -> D
     Args:
         database: The database handle (its ``document_store_usage`` is read).
         store: The store to describe; the process-wide store when omitted.
+        tenant_bucket_limit: At most this many ``tenantBuckets`` (by tenant slug);
+            ``tenantBucketsTruncated`` then says whether more exist. ``None`` lists them all.
 
     Returns:
         ``backend``, ``configuredBackend``, ``fallback`` / ``fallbackReason``, the non-secret
@@ -461,7 +474,14 @@ def describe_store(database: Any, *, store: Optional[DocumentStore] = None) -> D
     from .tenant_document_store import tenant_buckets_allowed
 
     body["tenantBucketsAllowed"] = tenant_buckets_allowed()
-    body["tenantBuckets"] = tenant_buckets(database)
+    if tenant_bucket_limit is None:
+        body["tenantBuckets"] = tenant_buckets(database)
+        body["tenantBucketsTruncated"] = False
+    else:
+        # One row more than the page says whether the list was cut (#7196).
+        buckets = tenant_buckets(database, limit=tenant_bucket_limit + 1)
+        body["tenantBuckets"] = buckets[:tenant_bucket_limit]
+        body["tenantBucketsTruncated"] = len(buckets) > tenant_bucket_limit
     return body
 
 

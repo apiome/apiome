@@ -332,12 +332,16 @@ class AgentList(_CamelModel):
     """The tenant's live agents."""
 
     agents: List[AgentOut]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(default=None, description="Pass as `cursor` to read the next page.")
 
 
 class ModelList(_CamelModel):
     """The tenant's live models."""
 
     models: List[ModelOut]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(default=None, description="Pass as `cursor` to read the next page.")
 
 
 def model_ref(row: Optional[Dict[str, Any]]) -> Optional[AgentModelRef]:

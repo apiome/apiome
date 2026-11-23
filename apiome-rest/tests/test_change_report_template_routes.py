@@ -115,7 +115,7 @@ def test_list_templates_scoped_to_caller_tenant():
     with patch("app.change_report_template_routes.db") as mdb:
         mdb.list_change_report_template_version_summaries.return_value = []
         client.get("/v1/tenants/some-other-slug/change-report-template-versions")
-        mdb.list_change_report_template_version_summaries.assert_called_once_with("t1")
+        mdb.list_change_report_template_version_summaries.assert_called_once_with("t1", limit=1001, cursor=None)
 
 
 # ===========================================================================

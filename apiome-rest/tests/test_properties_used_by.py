@@ -35,7 +35,9 @@ def test_the_list_returns_usage() -> None:
                 _row("legacy", [], 0),
             ]
             response = client.get("/v1/properties/acme/p1")
-            mock_db.get_properties_for_project.assert_called_once_with("p1", with_usage=True)
+            mock_db.get_properties_for_project.assert_called_once_with(
+                "p1", with_usage=True, limit=1001, cursor=None
+            )
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
     assert response.status_code == 200, response.text

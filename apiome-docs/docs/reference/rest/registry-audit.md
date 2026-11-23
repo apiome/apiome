@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `registry-audit` · 1 operation
 
@@ -17,10 +17,9 @@ Tag: `registry-audit` · 1 operation
 
 **List Registry Audit**
 
-List type-registry audit events for the tenant (newest first).
+List type-registry audit events for the tenant, newest first.
 
-Pagination: use **offset** + **limit**, or **cursor** + **limit**. Do not combine
-**cursor** with a non-zero **offset**.
+Pages by `cursor`: pass `pagination.nextCursor` until `pagination.hasMore` is false. `offset` is deprecated and cannot be combined with `cursor`. `pagination.total` is counted (up to 10,000) only when `include_total` is set.
 
 Operation id: `list_registry_audit_v1_primitives__tenant_slug__audit_get`
 
@@ -36,9 +35,10 @@ Operation id: `list_registry_audit_v1_primitives__tenant_slug__audit_get`
 | `schemaId` | query | string or null | no | Filter by the affected type's derived $id. |
 | `since` | query | string or null | no | Inclusive lower bound on createdAt (ISO 8601). |
 | `until` | query | string or null | no | Inclusive upper bound on createdAt (ISO 8601). |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
-| `cursor` | query | string or null | no | Opaque next-page token from pagination.nextCursor (cursor mode). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `access` · 19 operations
 
@@ -83,6 +83,10 @@ Operation id: `export_audit_v1_access__tenant_slug__audit_export_get`
 
 List tenant members with their role, lifecycle status, and admin flag.
 
+The body is a JSON array of at most ``limit`` members (1,000 at most), by display name.
+``X-Has-More`` says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
+
 Operation id: `list_members_v1_access__tenant_slug__members_get`
 
 **Parameters**
@@ -90,6 +94,8 @@ Operation id: `list_members_v1_access__tenant_slug__members_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -385,6 +391,9 @@ Operation id: `get_my_permissions_v1_access__tenant_slug__permissions_me_get`
 
 List the tenant's roles (built-in first) with member counts and permission grids.
 
+The body is a JSON array of at most ``limit`` roles (1,000 at most). ``X-Has-More`` says
+whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
+
 Operation id: `list_roles_v1_access__tenant_slug__roles_get`
 
 **Parameters**
@@ -392,6 +401,8 @@ Operation id: `list_roles_v1_access__tenant_slug__roles_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

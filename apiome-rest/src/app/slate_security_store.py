@@ -116,6 +116,49 @@ class SlateSecurityPolicyConflictError(Exception):
         )
 
 
+# Every column of each table, named: the store hands rows to the service layer whole, so the lists
+# are complete rather than narrowed. (``_RULE_COLUMNS`` below is a different thing — the writable
+# rule columns an upsert binds.)
+
+_POLICY_ROW_COLUMNS = (
+    "id, tenant_id, site_id, environment_id, managed_ruleset, bot_preset, rate_preset, "
+    "preset_overrides, challenge_mode, policy_version, edge_attached, edge_provider, "
+    "created_at, updated_at, updated_by_actor_id, updated_by_actor_name, managed_off_reason"
+)
+
+_MANAGED_GROUP_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, group_id, mode, reason, updated_at, actor_id, actor_name"
+)
+
+_RULE_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, ordinal, enabled, label, matcher_kind, matcher_value, "
+    "matcher_methods, matcher_hosts, conditions, action, rate_requests, rate_window_seconds, "
+    "rollout_mode, rollout_percent, expires_at, acknowledged_warnings, body_digest, revision, "
+    "created_at, updated_at, created_by_actor_id, created_by_actor_name, created_by_actor_kind"
+)
+
+_REVISION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, rule_id, revision, body, body_digest, change_kind, at, "
+    "actor_id, actor_name"
+)
+
+_EXCEPTION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, subject_kind, subject_ref, matcher_kind, matcher_value, "
+    "expires_at, reason, created_at, actor_id, actor_name"
+)
+
+_APPROVAL_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, subject_kind, subject_id, digest, author_actor_id, "
+    "author_actor_name, author_actor_key, approver_actor_id, approver_actor_name, "
+    "approver_actor_key, approved_at, note"
+)
+
+_EVENT_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, at, source, rule_kind, rule_ref, rule_label, route, method, "
+    "release_id, region, action, mitigated, edge_attached, evidence, retain_until"
+)
+
+
 def _as_dict(row: Any) -> Optional[Dict[str, Any]]:
     """Normalize a cursor row to a plain dict, preserving None."""
     return None if row is None else dict(row)
@@ -286,8 +329,8 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_POLICY_ROW_COLUMNS}
               FROM apiome.slate_security_policies
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -331,14 +374,14 @@ def ensure_policy(
         with conn.cursor() as cursor:
             created = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_security_policies
                     (tenant_id, site_id, environment_id, managed_ruleset, bot_preset,
                      rate_preset, challenge_mode, updated_by_actor_id, updated_by_actor_name)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, 'core', 'balanced', 'standard', 'managed',
                         %s, %s)
                 ON CONFLICT (environment_id) DO NOTHING
-                RETURNING *
+                RETURNING {_POLICY_ROW_COLUMNS}
                 """,
                 (tenant_id, site_id, environment_id, actor_id, actor_name),
             )
@@ -464,7 +507,7 @@ def set_presets(
             )
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_security_policies
                    SET managed_ruleset = %s,
                        bot_preset = %s,
@@ -475,7 +518,7 @@ def set_presets(
                        updated_by_actor_id = %s,
                        updated_by_actor_name = %s
                  WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_POLICY_ROW_COLUMNS}
                 """,
                 (
                     managed_ruleset,
@@ -524,8 +567,8 @@ def list_managed_groups(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_MANAGED_GROUP_ROW_COLUMNS}
               FROM apiome.slate_security_managed_groups
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY group_id
@@ -576,7 +619,7 @@ def set_managed_group(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_security_managed_groups
                     (tenant_id, environment_id, group_id, mode, reason, actor_id, actor_name)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s)
@@ -586,7 +629,7 @@ def set_managed_group(
                         updated_at = CURRENT_TIMESTAMP,
                         actor_id = EXCLUDED.actor_id,
                         actor_name = EXCLUDED.actor_name
-                RETURNING *
+                RETURNING {_MANAGED_GROUP_ROW_COLUMNS}
                 """,
                 (tenant_id, environment_id, group_id, mode, reason, actor_id, actor_name),
             )
@@ -635,8 +678,8 @@ def list_rules(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Dict
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_RULE_ROW_COLUMNS}
               FROM apiome.slate_security_rules
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY ordinal, id
@@ -662,8 +705,8 @@ def get_rule(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_RULE_ROW_COLUMNS}
               FROM apiome.slate_security_rules
              WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -776,8 +819,8 @@ def upsert_rule(
             if rule_id:
                 prior = _fetch_one(
                     cursor,
-                    """
-                    SELECT *
+                    f"""
+                    SELECT {_RULE_ROW_COLUMNS}
                       FROM apiome.slate_security_rules
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                     """,
@@ -810,7 +853,7 @@ def upsert_rule(
                            revision = revision + 1,
                            updated_at = CURRENT_TIMESTAMP
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                    RETURNING *
+                    RETURNING {_RULE_ROW_COLUMNS}
                     """,
                     (*payload, encoded_conditions, rule_id, environment_id, tenant_id),
                 )
@@ -827,7 +870,7 @@ def upsert_rule(
                         (tenant_id, environment_id, {", ".join(_RULE_COLUMNS)}, conditions,
                          created_by_actor_id, created_by_actor_name, created_by_actor_kind)
                     VALUES (%s::uuid, %s::uuid, {placeholders}, %s::jsonb, %s, %s, %s)
-                    RETURNING *
+                    RETURNING {_RULE_ROW_COLUMNS}
                     """,
                     (
                         tenant_id,
@@ -908,8 +951,8 @@ def set_rollout(
             )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_RULE_ROW_COLUMNS}
                   FROM apiome.slate_security_rules
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -933,14 +976,14 @@ def set_rollout(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_security_rules
                    SET rollout_mode = %s,
                        rollout_percent = %s,
                        revision = revision + 1,
                        updated_at = CURRENT_TIMESTAMP
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_RULE_ROW_COLUMNS}
                 """,
                 (rollout_mode, rollout_percent, rule_id, environment_id, tenant_id),
             )
@@ -993,8 +1036,8 @@ def delete_rule(
             )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_RULE_ROW_COLUMNS}
                   FROM apiome.slate_security_rules
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -1048,8 +1091,8 @@ def list_revisions(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_REVISION_ROW_COLUMNS}
               FROM apiome.slate_security_rule_revisions
              WHERE rule_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY revision DESC
@@ -1190,8 +1233,8 @@ def revert_rule(
             )
             target = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_REVISION_ROW_COLUMNS}
                   FROM apiome.slate_security_rule_revisions
                  WHERE rule_id = %s::uuid AND tenant_id = %s::uuid AND revision = %s
                 """,
@@ -1204,8 +1247,8 @@ def revert_rule(
                 )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_RULE_ROW_COLUMNS}
                   FROM apiome.slate_security_rules
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -1239,7 +1282,7 @@ def revert_rule(
                        revision = revision + 1,
                        updated_at = CURRENT_TIMESTAMP
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_RULE_ROW_COLUMNS}
                 """,
                 (
                     *[body.get(column) for column in _RULE_COLUMNS],
@@ -1276,8 +1319,8 @@ def list_exceptions(db: _DbLike, *, tenant_id: str, environment_id: str) -> List
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_EXCEPTION_ROW_COLUMNS}
               FROM apiome.slate_security_exceptions
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY expires_at
@@ -1333,12 +1376,12 @@ def create_exception(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_security_exceptions
                     (tenant_id, environment_id, subject_kind, subject_ref, matcher_kind,
                      matcher_value, expires_at, reason, actor_id, actor_name)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING {_EXCEPTION_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1451,7 +1494,7 @@ def list_approvals(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_APPROVAL_ROW_COLUMNS}
               FROM apiome.slate_security_approvals
              WHERE {" AND ".join(clauses)}
              ORDER BY approved_at DESC
@@ -1506,7 +1549,7 @@ def record_approval(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_security_approvals
                     (tenant_id, environment_id, subject_kind, subject_id, digest,
                      author_actor_id, author_actor_name, author_actor_key,
@@ -1514,7 +1557,7 @@ def record_approval(
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (subject_id, digest, approver_actor_key) DO UPDATE
                     SET note = EXCLUDED.note
-                RETURNING *
+                RETURNING {_APPROVAL_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1594,14 +1637,14 @@ def record_event(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_security_events
                     (tenant_id, environment_id, at, source, rule_kind, rule_ref, rule_label,
                      route, method, release_id, region, action, mitigated, edge_attached,
                      evidence, retain_until)
                 VALUES (%s::uuid, %s::uuid, %s, 'policy-simulation', %s, %s, %s, %s, %s, %s, %s,
                         %s, FALSE, FALSE, %s::jsonb, %s)
-                RETURNING *
+                RETURNING {_EVENT_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1679,7 +1722,7 @@ def list_events(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_EVENT_ROW_COLUMNS}
               FROM apiome.slate_security_events
              WHERE {" AND ".join(clauses)}
              ORDER BY at DESC
@@ -1706,8 +1749,8 @@ def get_event(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_EVENT_ROW_COLUMNS}
               FROM apiome.slate_security_events
              WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -1796,7 +1839,8 @@ def list_audit(
         return _fetch_all(
             cursor,
             """
-            SELECT *
+            SELECT id, tenant_id, environment_id, at, actor_id, actor_name, actor_kind,
+                   subject_kind, subject_id, summary, detail
               FROM apiome.slate_security_audit
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY at DESC

@@ -78,7 +78,7 @@ def test_list_returns_metadata_without_secret():
     assert key["scope_json"] == {"tenants": [_TENANT], "projects": []}
     assert "secret" not in key
     assert "key_hash" not in key
-    list_keys.assert_called_once_with(_TENANT)
+    list_keys.assert_called_once_with(_TENANT, limit=1001, cursor=None)
 
 
 def test_list_forbidden_for_non_admin():

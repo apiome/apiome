@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
-__all__ = ["keyset_rows", "stamps", "walk"]
+__all__ = ["check_list_paging", "keyset_rows", "ordered_rows", "stamps", "walk"]
 
 
 def stamps(count: int, *, tie_every: int = 2) -> List[datetime]:
@@ -99,3 +99,70 @@ def walk(
             return seen
         assert cursor
     raise AssertionError("the cursor never reached the end of the list")
+
+
+def ordered_rows(order: Any, rows: Sequence[Any]) -> Callable[..., List[Any]]:
+    """A ``side_effect`` that pages ``rows`` (already in list order) for a ``ListOrder`` accessor.
+
+    Args:
+        order: The list's :class:`app.keyset_lists.ListOrder`.
+        rows: Every row of the list, in the order the query returns them.
+
+    Returns:
+        A callable accepting any accessor arguments plus ``limit`` / ``cursor``; ``limit=None``
+        returns every row, as the accessors do for internal callers.
+    """
+    everything = list(rows)
+
+    def page(*_: Any, limit: Optional[int] = None, cursor: Any = None, **__: Any) -> List[Any]:
+        remaining = everything
+        if cursor is not None:
+            seen = [order.decode(order.cursor_of(row)) for row in everything]
+            position = seen.index(list(cursor))
+            remaining = everything[position + 1 :]
+        return list(remaining if limit is None else remaining[:limit])
+
+    return page
+
+
+def check_list_paging(
+    fetch: Callable[[Dict[str, Any]], Any],
+    items_key: Optional[str],
+    expected: Sequence[Any],
+    *,
+    maximum: int,
+    id_of: Callable[[Any], Any] = lambda item: item["id"],
+    has_more_key: str = "has_more",
+    next_cursor_key: str = "next_cursor",
+) -> None:
+    """The four facts every converted list endpoint must show.
+
+    A page of ``limit`` rows reports has-more and a cursor, the cursor walks the rest in order,
+    a ``limit`` over the maximum is a ``422`` and a malformed cursor is a ``400``.
+
+    Args:
+        fetch: Performs the request for the given query parameters and returns the response.
+        items_key: The body key holding the rows; ``None`` for a bare-array body (paging state
+            is then in the ``X-Has-More`` / ``X-Next-Cursor`` headers).
+        expected: The ids of every row, in list order (at least three).
+        maximum: The documented maximum ``limit``.
+        id_of: Reads the id of a served row.
+        has_more_key: The body key of the has-more flag.
+        next_cursor_key: The body key of the next cursor.
+    """
+    assert len(expected) >= 3, "paging needs at least three rows to show a middle page"
+    first = fetch({"limit": 2})
+    assert first.status_code == 200, first.text
+    if items_key is None:
+        assert first.headers["X-Has-More"] == "true"
+        assert first.headers["X-Next-Cursor"]
+        assert [id_of(item) for item in first.json()] == list(expected[:2])
+    else:
+        body = first.json()
+        assert body[has_more_key] is True
+        assert body[next_cursor_key]
+        assert [id_of(item) for item in body[items_key]] == list(expected[:2])
+    walked = walk(fetch, items_key, limit=2, has_more_key=has_more_key, next_cursor_key=next_cursor_key)
+    assert [id_of(item) for item in walked] == list(expected)
+    assert fetch({"limit": maximum + 1}).status_code == 422
+    assert fetch({"cursor": "not-a-cursor"}).status_code == 400

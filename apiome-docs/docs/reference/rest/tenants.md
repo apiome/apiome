@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `tenants` · 7 operations
 
@@ -18,6 +18,10 @@ Tag: `tenants` · 7 operations
 **List My Tenants**
 
 Tenants accessible to the caller, enriched for the tenant switcher (OLO-6.2, #4219).
+
+Ordered by slug. Pages by ``cursor``: pass the previous page's ``next_cursor`` until
+``has_more`` is false. ``total`` is the caller's own membership count — a list one user
+bounds — so it is always present.
 
 - JWT: all memberships for the user, each carrying the effective RBAC role slug
   (V119 assignment; legacy administrators read as ``owner``; Editor default),
@@ -32,8 +36,9 @@ Operation id: `list_my_tenants_v1_tenants_me_get`
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 100. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -322,4 +327,6 @@ Paginated list of tenants for the current principal (JWT user or API key tenant)
 | `items` | array of `TenantMembershipSchema` | yes | Items. |
 | `total` | integer | yes | Total. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |

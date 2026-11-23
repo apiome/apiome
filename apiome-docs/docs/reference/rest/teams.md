@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `teams` · 7 operations
 
@@ -18,6 +18,8 @@ Tag: `teams` · 7 operations
 **List teams**
 
 Every live team of the tenant, by name, with its owner links and member count. Deleted teams are not listed.
+
+At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
 
 Requires `teams:view`.
 
@@ -28,6 +30,8 @@ Operation id: `list_tenant_teams_v1_tenants__tenant_slug__teams_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -276,6 +280,8 @@ Every live team of the tenant.
 | --- | --- | --- | --- |
 | `teams` | array of [`TeamRecord`](#schema-teamrecord) | no | The teams, by name. |
 | `count` | integer | yes | How many teams were returned. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `TeamMembersInput` {#schema-teammembersinput}
 

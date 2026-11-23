@@ -240,10 +240,12 @@ def validate_reviewers(
     if requester is not None and requester in reviewers:
         raise ReviewValidationError(CODE_SELF_REVIEW, "the requester cannot review their own request")
 
+    # Only the named reviewers are looked up — never the tenant's whole member list (#7196).
     members = {
         canonical
         for canonical in (
-            _canonical_uuid(row.get("user_id")) for row in db.list_comment_mention_candidates(tenant_id)
+            _canonical_uuid(user_id)
+            for user_id in db.filter_mentionable_member_ids(tenant_id, reviewers)
         )
         if canonical is not None
     }

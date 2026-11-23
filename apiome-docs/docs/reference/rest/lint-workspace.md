@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `lint-workspace` · 9 operations
 
@@ -82,8 +82,8 @@ Operation id: `list_workspace_findings_v1_lint_workspace_findings_get`
 | `new` | query | boolean or null | no | True restricts to regressions (new since previous run) |
 | `q` | query | string or null | no | Free-text search |
 | `sort` | query | string or null | no | severity \| newest \| rule \| subject |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -111,7 +111,9 @@ ones. Export readiness ranks ride the same series, so a target whose readiness i
 shows up beside the specs feeding it.
 
 The window is bounded (``days`` ≤ 180, matching the retention default) and the response
-describes at most 24 format groups, stating ``truncated`` when it dropped any.
+describes at most 24 format groups, stating ``truncated`` when it dropped any. The
+observations are bucketed per format and day in SQL (#7196), so the read does not grow with
+import/export traffic.
 
 Operation id: `workspace_quality_ranks_v1_lint_workspace_quality_ranks_get`
 
@@ -139,6 +141,9 @@ Operation id: `workspace_quality_ranks_v1_lint_workspace_quality_ranks_get`
 **Workspace Summary**
 
 Tenant-wide posture rollup: grades, axes, coverage gaps, finding/waiver counts.
+
+The rollup only counts findings, so it reads each one as its fingerprint, severity and
+category — never the finding bodies (#7196).
 
 Operation id: `workspace_summary_v1_lint_workspace_summary_get`
 
@@ -191,7 +196,10 @@ Operation id: `workspace_trends_v1_lint_workspace_trends_get`
 
 **List Workspace Saved Views**
 
-List the caller's saved workspace views (pinned first, then newest).
+List the caller's saved workspace views (pinned first, then newest), one page at a time.
+
+At most ``limit`` views (1,000 at most); pass ``nextCursor`` as ``cursor`` until ``hasMore``
+is false (#7196). A malformed cursor is a ``400``.
 
 Operation id: `list_workspace_saved_views_v1_lint_workspace_views_get`
 
@@ -199,6 +207,8 @@ Operation id: `list_workspace_saved_views_v1_lint_workspace_views_get`
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -355,6 +365,8 @@ Envelope for listing saved workspace views (CLX-4.1, #4859).
 | --- | --- | --- | --- |
 | `views` | array of [`LintWorkspaceSavedViewOut`](#schema-lintworkspacesavedviewout) | no | Views. |
 | `count` | integer | no | Number of count. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `LintWorkspaceSavedViewOut` {#schema-lintworkspacesavedviewout}
 

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-delivery` · 18 operations
 
@@ -17,7 +17,7 @@ Tag: `export-delivery` · 18 operations
 
 **List the workspace's export delivery profiles**
 
-Every delivery profile, by name — never a secret. `channel` narrows to one channel. Requires `projects:view`.
+Every delivery profile, by name — never a secret. `channel` narrows to one channel. At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.
 
 Operation id: `list_delivery_profiles_v1_export__tenant_slug__delivery_profiles_get`
 
@@ -27,6 +27,8 @@ Operation id: `list_delivery_profiles_v1_export__tenant_slug__delivery_profiles_
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `channel` | query | enum `"git"`, `"webhook"`, `"object_storage"` or null | no | Query parameter: channel. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -468,7 +470,7 @@ Operation id: `fetch_export_webhook_bundle_v1_export__tenant_slug__jobs__job_id_
 
 **List the workspace's bucket credentials**
 
-Every storage credential, by name — never a secret. Requires `projects:view`.
+Every storage credential, by name — never a secret. At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.
 
 Operation id: `list_storage_credentials_v1_export__tenant_slug__storage_credentials_get`
 
@@ -477,6 +479,8 @@ Operation id: `list_storage_credentials_v1_export__tenant_slug__storage_credenti
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -622,6 +626,8 @@ A workspace's delivery profiles, by name.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `profiles` | array of [`ExportDeliveryProfileModel`](#schema-exportdeliveryprofilemodel) | no | Profiles. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `ExportDeliveryProfileModel` {#schema-exportdeliveryprofilemodel}
 
@@ -857,6 +863,8 @@ A workspace's storage credentials, by name.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `credentials` | array of [`StorageCredentialModel`](#schema-storagecredentialmodel) | no | Credentials. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `StorageCredentialModel` {#schema-storagecredentialmodel}
 

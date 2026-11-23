@@ -6,6 +6,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.823.0] - 2026-11-22
+
+### Performance
+- **Keyset pagination, bounded lists and narrow list projections (DBP-1.13, #7196).** OpenAPI 1.647.0. No
+  migration. Measured on the DBP-1.1 scale database.
+  - **One paging convention.** Every growing list takes `limit` (a documented maximum, 200 for most) and an opaque
+    `cursor`, and reports `has_more` / `next_cursor` (`hasMore` / `nextCursor` on camelCase responses). A page is
+    found by reading `limit + 1` rows, never by counting. See **API reference** → *Pagination*.
+  - **Totals are opt-in.** `total` is `null` unless the request sends `include_total=true`, and the count stops at
+    10,000. This applies to notifications, export history, export and import jobs, SDK publish / Git delivery /
+    regeneration runs, comment threads, reviews, merge requests, draft bindings, audit and refresh history, the
+    repository file lists, the MCP capability directory, unowned findings, graph edges and connector items / runs.
+    **A client that reads `total` must send `include_total=true`.**
+  - **`offset` is deprecated** where it existed and capped at 10,000 (the repository file lists allowed 500,000).
+    Lists whose order is a computed rank (MCP search, graph entity search, model search, the lint queue) still page
+    by `offset`, with a maximum `limit`.
+  - **Array responses page in headers.** `GET /v1/projects/{tenant}`, `/v1/versions/{tenant}/{project}`,
+    `/v1/catalog/{tenant}`, `/v1/mocks/{tenant}` (200 a page), `/v1/classes/{tenant}` and
+    `/v1/paths/{tenant}/{version}` (1,000 a page) keep their JSON array body and report `X-Has-More` and
+    `X-Next-Cursor`. **A client that needs the whole list must follow the cursor**; the `apiome` CLI and the app do.
+  - **78 more lists gain a maximum** (teams, products, repositories, connectors, MCP endpoints and their jobs,
+    versions and notes, agent toolsets and keys, consumers, schema-registry subjects, SSO providers, and others):
+    their default page is their maximum (1,000 for configuration-like collections, 200 for histories), so a
+    response changes only for a list longer than one page. A test walks the OpenAPI document and fails on any list
+    operation with neither a bounded `limit` nor a recorded reason it cannot grow.
+  - **Page 1,000 costs what page 1 does.**
+
+    | list (rows for one tenant) | `OFFSET` page 1,000 | `COUNT(*)` each page | keyset page 1 | keyset page 1,000 |
+    | --- | --- | --- | --- | --- |
+    | workflow audit (325,000) | 46.8 ms, 2,028 buffers | 13.2 ms | 0.03 ms, 7 buffers | 0.04 ms, 6 buffers |
+    | notifications (200,000) | 6.8 ms, 1,096 buffers | 9.9 ms | 0.02 ms, 4 buffers | 0.03 ms, 6 buffers |
+    | export history (101,000) | 114.6 ms, 2,845 buffers | 3.9 ms | 0.04 ms, 15 buffers | 0.24 ms, 17 buffers |
+
+  - **Project list:** a 5,000-project tenant's list went from 33 ms for every project to 1.9 ms a page.
+  - **Mock data plane:** a request to `/v1/mock/{id}/…` runs one statement that does not read the frozen `spec`
+    (0.5 ms with a 343 KiB document → 0.1 ms) and writes nothing. The spec is cached per instance for five minutes;
+    request counts are buffered and added in one `UPDATE` every five seconds and at shutdown, so `requestCount`,
+    `lastActivityAt` and the monthly quota sum can lag by that long, and a process killed without a shutdown loses
+    at most that interval's counts.
+  - **Mock list:** `GET /v1/mocks/{tenant}` no longer returns each instance's spec to count its operations (the
+    count is computed in SQL): 500 instances went from 323 ms and 168 MiB to 53 ms and 99 KiB a page. The export
+    test drive reads only its own instances.
+  - **Narrow projections:** 129 `SELECT *` / `RETURNING *` outside `database.py` name their columns (a test keeps it
+    so). The provider-verification list no longer selects each report body, the public Browse version list no
+    longer selects `change_model_json`, and the workspace lint summary reads fingerprints and severities instead of
+    whole findings. The version list still returns `metadata`, `mock_settings` and `change_log`: its response
+    exposes them.
+  - **Aggregates in SQL:** MCP discovery and invocation reliability, the category cohort's latency axis and the
+    quality-rank trend are aggregated by PostgreSQL (`count … FILTER`, `percentile_cont`) instead of fetching every
+    row; results are identical.
+  - **Mentions:** writing a comment or review looks up only the handles it mentions instead of loading every
+    member of the tenant.
+  - **Changed limits:** audit search 500 → 200, repository file lists 500 → 200, MCP facets 500 → 200, mock captures
+    500 → 200; a style-guide revision `limit` above 500 is now refused instead of clamped.
+
 ## [1.822.0] - 2026-11-22
 
 ### Performance

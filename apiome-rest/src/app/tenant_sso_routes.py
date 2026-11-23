@@ -58,6 +58,7 @@ from .auth import get_authenticated_user_id, require_tenant_admin_session, valid
 from .auth_provider_resolved_routes import require_internal_service
 from .config import settings
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .license_capacity import member_seat_limit
 from .redacted_validation_route import RedactedValidationRoute
 from .sso_domain_verification import (
@@ -79,6 +80,7 @@ from .sso_provider_routes import (
     build_updates,
     domain_conflict_status,
 )
+from .sso_provider_store import PROVIDERS_ORDER
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +131,10 @@ class TenantSsoProviderListResponse(BaseModel):
     """Payload of ``GET /v1/tenants/{t}/sso/providers``."""
 
     providers: List[TenantSsoProviderView] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class TenantSsoProviderCreateRequest(BaseModel):
@@ -319,13 +325,25 @@ def _check_view(check: DnsCheck) -> SsoDomainCheckView:
     f"Secrets are never included.\n\n{_ADMIN_ONLY}",
 )
 def list_tenant_sso_providers(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantSsoProviderListResponse:
-    """List this workspace's providers."""
+    """List this workspace's providers, one page (1,000 at most) at a time (#7196)."""
     _ = tenant_slug
     tenant_id = require_tenant_admin_session(db, auth_data)
-    rows = store.list_providers(db, tenant_id=tenant_id)
-    return TenantSsoProviderListResponse(providers=[_tenant_view(row, tenant_id) for row in rows])
+    page = PROVIDERS_ORDER.page(
+        store.list_providers(
+            db, tenant_id=tenant_id, limit=limit + 1, cursor=PROVIDERS_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    return TenantSsoProviderListResponse(
+        providers=[_tenant_view(row, tenant_id) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

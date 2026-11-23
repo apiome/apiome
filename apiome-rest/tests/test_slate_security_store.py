@@ -266,7 +266,8 @@ class TestTenantScoping:
         list_revisions(db, tenant_id=TENANT, rule_id=RULE)
         query, _ = conn.statements[0]
         assert "tenant_id = %s::uuid" in query
-        assert "environment_id" not in query
+        # The select list names every column; it is the filter that must not scope by lane.
+        assert "environment_id" not in query.split(" WHERE ", 1)[1]
 
 
 class TestPolicyLifecycle:
@@ -318,7 +319,8 @@ class TestPolicyLifecycle:
         ensure_policy(
             db, tenant_id=TENANT, site_id=SITE, environment_id=ENV, actor_id=None, actor_name="a"
         )
-        assert "edge_attached" not in conn.statements[1][0]
+        # The row comes back whole, so RETURNING names the column; the write itself must not.
+        assert "edge_attached" not in conn.statements[1][0].split("RETURNING")[0]
 
 
 class TestOptimisticConcurrency:

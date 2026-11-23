@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `properties` · 5 operations
 
@@ -17,8 +17,12 @@ Tag: `properties` · 5 operations
 
 **List Properties**
 
-List all properties for a project, each with ``used_by`` (the class names that use it, across the
-project's live versions) and ``used_by_count`` (#3223).
+List the properties of a project by name, each with ``used_by`` (the class names that use it,
+across the project's live versions) and ``used_by_count`` (#3223).
+
+The body is a JSON array of at most ``limit`` properties (1,000 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -27,10 +31,16 @@ Supports authentication via:
 Args:
     tenant_slug: The tenant slug
     project_id: The project ID
+    response: The outgoing response (paging headers are set on it)
+    limit: Page size
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``)
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    List of properties for the project
+    One page of the project's properties
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
 
 Operation id: `list_properties_v1_properties__tenant_slug___project_id__get`
 
@@ -40,6 +50,8 @@ Operation id: `list_properties_v1_properties__tenant_slug___project_id__get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

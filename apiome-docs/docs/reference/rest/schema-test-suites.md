@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `schema-test-suites` · 11 operations
 
@@ -19,6 +19,8 @@ Tag: `schema-test-suites` · 11 operations
 
 Suites for the authenticated tenant, newest first, each carrying its newest run summary — including the ``regression`` flag the version and catalog detail surfaces badge on. ``ref`` narrows to the suites attached to one artifact (``{kind}/{artifact}`` — a version or type segment is tolerated and ignored).
 
+At most ``limit`` suites (1,000 at most). The `X-Has-More` response header says whether another page exists, and `X-Next-Cursor` carries the `cursor` that reads it.
+
 Operation id: `list_schema_test_suites_v1_tenants__tenant_slug__schema_suites_get`
 
 **Parameters**
@@ -27,6 +29,8 @@ Operation id: `list_schema_test_suites_v1_tenants__tenant_slug__schema_suites_ge
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `ref` | query | string or null | no | Narrow to one artifact's suites. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -241,7 +245,7 @@ Request body for replace a suite's payload set.
 
 **A suite's run history**
 
-Newest first. ``limit`` is clamped to 1..100.
+Newest first. ``limit`` is at most 100. Pages by `cursor`: the `X-Has-More` response header says whether another page exists, and `X-Next-Cursor` carries the `cursor` that reads it.
 
 Operation id: `list_schema_test_suite_runs_v1_tenants__tenant_slug__schema_suites__suite_id__runs_get`
 
@@ -251,8 +255,9 @@ Operation id: `list_schema_test_suite_runs_v1_tenants__tenant_slug__schema_suite
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `suite_id` | path | string | yes | Path parameter identifying the suite id segment. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 100. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

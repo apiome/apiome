@@ -39,6 +39,7 @@ from app.gateway_configs import (
     posture_from_api,
     push_back,
 )
+from app.keyset_pagination import Page
 from app.main import app
 from app.permissions import Resource
 
@@ -270,7 +271,8 @@ def authed():
 
 def test_the_list_and_one_read(authed) -> None:
     client, permit = authed
-    with patch("app.gateway_config_routes.store.list_gateway_configs", return_value=[_config()]) as listing, patch(
+    page = Page(items=[_config()], has_more=False, next_cursor=None)
+    with patch("app.gateway_config_routes.store.page_gateway_configs", return_value=page) as listing, patch(
         "app.gateway_config_routes.store.get_gateway_config", return_value=_config()
     ):
         body = client.get(f"/v1/tenants/acme/gateway-configs?connector={_CONNECTOR}").json()

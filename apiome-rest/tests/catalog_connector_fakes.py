@@ -24,6 +24,7 @@ from app.catalog_connectors import (
     ConnectorError,
 )
 from app.refresh_source import RefreshCandidate
+from tests.keyset_paging_fakes import ordered_rows
 
 _FUNCTIONS = [name for name in real_store.__all__]
 
@@ -86,9 +87,13 @@ class FakeConnectorStore:
 
     # --- connectors -----------------------------------------------------------------
 
-    def list_connectors(self, db, tenant_id):
+    def list_connectors(self, db, tenant_id, *, limit=None, cursor=None):
         rows = [r for r in self.connectors.values() if r["tenant_id"] == tenant_id and r["deleted_at"] is None]
-        return [self._view(r) for r in sorted(rows, key=lambda r: r["name"].lower())]
+        ordered = [
+            {**self._view(r), "name_key": r["name"].lower()}
+            for r in sorted(rows, key=lambda r: (r["name"].lower(), str(r["id"])))
+        ]
+        return ordered_rows(real_store.CONNECTORS_ORDER, ordered)(limit=limit, cursor=cursor)
 
     def get_connector(self, db, tenant_id, connector_id):
         row = self.connectors.get(str(connector_id))
