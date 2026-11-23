@@ -61,22 +61,25 @@ def test_list_due_endpoints_builds_due_selection_sql(monkeypatch):
     assert [r["id"] for r in rows] == [_EP1, _EP2]
     q = captured["query"]
     # Only live, enabled endpoints are candidates.
-    assert "deleted_at IS NULL" in q
-    assert "enabled = TRUE" in q
-    # Never-discovered endpoints are always due; otherwise compare against the effective cadence.
-    assert "last_discovered_at IS NULL" in q
-    # Per-endpoint override falls back to the global default via COALESCE.
-    assert "COALESCE(discovery_cadence_seconds, %s)" in q
-    # Recency is evaluated in the database (no app clock).
-    assert "now() - make_interval" in q
-    # Failure handling (MCAT-5.3): quarantined endpoints and ones still inside their backoff
-    # window are excluded so a flaky/dead endpoint never wedges the sweep.
-    assert "quarantined_at IS NULL" in q
+    assert "deleted_at IS NULL AND enabled AND quarantined_at IS NULL" in q
+    # Endpoints on the global default: never-discovered ('-infinity') and overdue are one range
+    # of idx_mcp_endpoints_discovery_due_default (DBP-1.18).
+    assert "discovery_cadence_seconds IS NULL" in q
+    assert "COALESCE(last_discovered_at, '-infinity'::timestamptz)\n" in q
+    assert "<= now() - make_interval(secs => %s)" in q
+    # Failure handling (MCAT-5.3): the backoff window still holds for them; quarantined endpoints
+    # are excluded above.
     assert "next_discovery_after IS NULL OR next_discovery_after <= now()" in q
-    # Fair scheduling: oldest first, never-discovered first.
-    assert "ORDER BY last_discovered_at ASC NULLS FIRST" in q
-    # The global default cadence is the bound parameter.
-    assert captured["params"] == (3600,)
+    # Endpoints with their own cadence: the trigger-kept due instant (V426) carries the backoff.
+    assert "discovery_cadence_seconds IS NOT NULL" in q
+    assert "discovery_due_at <= now()" in q
+    assert "ORDER BY discovery_due_at" in q
+    # Fair scheduling: oldest first, never-discovered first, one batch.
+    assert "ORDER BY due_anchor ASC, created_at ASC" in q
+    # The global default cadence and the batch are the bound parameters.
+    assert captured["params"] == (3600, 500, 500, 500)
+    # The ordering helper column is not part of the endpoint row.
+    assert all("due_anchor" not in r for r in rows)
 
 
 def test_list_due_endpoints_clamps_non_positive_default_cadence(monkeypatch):
@@ -93,7 +96,7 @@ def test_list_due_endpoints_clamps_non_positive_default_cadence(monkeypatch):
 
     # A non-positive default would make make_interval(secs => 0) treat everything as due forever;
     # it is clamped up to a 1-second floor.
-    assert captured["params"] == (1,)
+    assert captured["params"] == (1, 500, 500, 500)
 
 
 # ===========================================================================
@@ -107,6 +110,7 @@ def _settings(**overrides):
         "mcp_discovery_default_cadence_seconds": 3600,
         "mcp_discovery_min_interval_seconds": 60,
         "mcp_discovery_max_concurrency": 4,
+        "mcp_discovery_max_per_tick": 500,
         "mcp_discovery_endpoint_timeout_seconds": 150,
         "mcp_discovery_quarantine_threshold": 5,
         "mcp_discovery_backoff_base_seconds": 60,
@@ -145,7 +149,7 @@ async def test_sweep_enqueues_and_runs_discovery_per_due_endpoint(monkeypatch):
 
     assert dispatched == 2
     # The global default cadence is forwarded to due-selection.
-    db.list_due_mcp_endpoints.assert_called_once_with(default_cadence_seconds=3600)
+    db.list_due_mcp_endpoints.assert_called_once_with(default_cadence_seconds=3600, limit=500)
     # Each due endpoint is enqueued under the sweep trigger...
     assert enqueued == [("t1", _EP1, "sweep"), ("t1", _EP2, "sweep")]
     # ...and its freshly-created job is driven with the configured per-endpoint timeout.

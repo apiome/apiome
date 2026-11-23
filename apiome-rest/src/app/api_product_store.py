@@ -63,6 +63,7 @@ from .api_products import (
     portal_blockers,
     resolve_slug,
 )
+from .catalog_graph import GraphScope
 from .consumer_contract_store import ConsumerActor
 from .database import db
 from .keyset_lists import ListOrder, SortColumn
@@ -482,7 +483,7 @@ def _finish(cursor: Any, tenant_id: str, slug: str, *, check_portal: bool) -> Ap
     members = _read_members(cursor, tenant_id, row["id"])
     if check_portal:
         _check_portal(row["visibility"], members)
-    db._materialize_graph(cursor, tenant_id, (_GRAPH_FAMILY,))
+    db._materialize_graph(cursor, tenant_id, (_GRAPH_FAMILY,), GraphScope.api_product(str(row["id"])))
     return _record(row, members)
 
 
@@ -779,7 +780,7 @@ def delete_product(tenant_id: str, slug: str, *, actor: ConsumerActor) -> str:
         _audit(cursor, tenant_id, actor, "api_product.delete", row["slug"], {
             "product_id": row["id"], "member_count": int(row.get("member_count") or 0),
         })
-        db._materialize_graph(cursor, tenant_id, (_GRAPH_FAMILY,))
+        db._materialize_graph(cursor, tenant_id, (_GRAPH_FAMILY,), GraphScope.api_product(str(row["id"])))
         return str(row["slug"])
 
     return _run(work)

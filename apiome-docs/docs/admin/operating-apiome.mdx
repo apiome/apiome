@@ -596,6 +596,16 @@ nothing: the backfill runs afterwards in small transactions. The indexes are sma
 database, with 15,880 snapshots and 4,000 endpoints, each is under 1 MB and builds in
 milliseconds — so there is nothing to build ahead of time.
 
+`V426` (DBP-1.18) adds the columns the background sweeps pick their work by (see
+[Background sweeps, queues and retention](#background-sweeps-queues-and-retention)): when each MCP
+server, repository and catalog digest is next due, and each server's latest uptime check. The
+columns are nullable, so no table is rewritten. The migration fills them in one pass over
+`mcp_endpoints`, `tenant_repositories` and `mcp_catalog_digest_configs` and reads
+`mcp_endpoint_health_checks` once. On the scale database with 52,000 servers, 1,000,000 checks and
+50,000 repositories that took 1.4 seconds, most of it the repositories; writes to those tables wait
+while it runs. Its nine indexes can be built ahead as above. The largest,
+`idx_mcp_discovery_jobs_terminal_endpoint`, took 0.5 seconds for 1,000,000 discovery jobs.
+
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
 project properties while it runs: about a second for each million properties. Apply it in a quiet
@@ -1084,6 +1094,7 @@ is listed. Change the sweep on the REST API:
 | `APIOME_MCP_DISCOVERY_MIN_INTERVAL` | `60` | Seconds between ticks |
 | `APIOME_MCP_DISCOVERY_DEFAULT_CADENCE` | `3600` | Seconds between discoveries of a server with no cadence of its own |
 | `APIOME_MCP_DISCOVERY_MAX_CONCURRENCY` | `4` | Servers discovered at once |
+| `APIOME_MCP_DISCOVERY_MAX_PER_TICK` | `500` | Most due servers one tick picks; the most overdue go first, and the rest wait for the next tick |
 | `APIOME_MCP_DISCOVERY_ENDPOINT_TIMEOUT` | `150` | Seconds one server's discovery may take before it is counted as `failed` |
 
 Each discovery that creates a new version also logs one `mcp.version.created` line from
@@ -1152,6 +1163,72 @@ through the same private-address guard as connectors.
 | `APIOME_MCP_REGISTRY_SEARCH_URL` | apiome-rest | `https://registry.modelcontextprotocol.io` | Registry the REST search adds (its root; empty turns it off) |
 | `APIOME_MCP_REGISTRY_SEARCH_TIMEOUT` | apiome-rest | `5` | Seconds the registry gets to answer (up to `60`). After that the search returns without it |
 | `MCP_REGISTRY_SEARCH_URL` | apiome-browse | `https://registry.modelcontextprotocol.io` | Registry the public `/mcp/search` page adds (empty turns it off). The page waits 4 seconds for it |
+
+## Background sweeps, queues and retention
+
+The REST API runs its background work — re-discovering MCP servers, checking their uptime,
+refreshing repositories, sending catalog digests, delivering webhooks, pruning old rows — as sweeps
+that wake up on a timer. Each sweep finds its work through an index and takes at most one batch
+per tick, so an idle sweep costs a few index reads however large the workspace is. Work that is
+still due when a batch is full runs on the next tick, most overdue first.
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_DISCOVERY_MAX_PER_TICK` | `500` | Most MCP servers one discovery tick picks |
+| `APIOME_MCP_HEALTH_MAX_PER_TICK` | `200` | Most MCP servers one uptime tick checks |
+| `APIOME_MCP_DIGEST_MAX_PER_TICK` | `200` | Most workspaces one catalog-digest tick sends a digest to |
+| `APIOME_REFRESH_MAX_PER_TICK` | `200` | Most repositories one auto-refresh tick picks |
+| `APIOME_REFRESH_SWEEP_CONCURRENCY` | `4` | Repositories refreshed at once. One workspace's repositories still run one after another, so its polling quota stays exact. |
+
+A repository's next refresh follows the shortest cadence of the repository and its enabled branch
+rules, and never comes sooner than `APIOME_REFRESH_MIN_INTERVAL`. Changing a cadence or a branch rule
+moves it at once.
+
+### Webhook delivery
+
+Push webhooks (the ones a workspace subscribes to) and [export webhooks](../ship/deliver-an-export-to-a-webhook.md)
+are delivered by one sweep every 15 seconds. Each tick sends what is due on a small pool of workers
+and keeps going until nothing is due, then sleeps:
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_WEBHOOK_DELIVERY_WORKERS` | `8` | Deliveries in flight at once, for each of the two queues. Each worker uses a database connection only while it records an attempt. |
+| `APIOME_WEBHOOK_DELIVERY_PER_TENANT` | `2` | Most of those one workspace may hold, so a slow receiver delays only its own workspace's deliveries |
+| `APIOME_WEBHOOK_DELIVERY_BATCH_SIZE` | `50` | Deliveries taken from the queue at a time |
+| `APIOME_WEBHOOK_DELIVERY_TICK_SECONDS` | `60` | How long one tick keeps taking new deliveries. Deliveries already started then finish, and the rest wait for the next tick. |
+
+Against a receiver that answers at once, one API instance delivered about 4,600 webhooks a minute
+with the defaults. Several replicas share the queues safely: a delivery taken by one is skipped by
+the others. A receiver that is slow or times out (30 seconds) holds at most
+`APIOME_WEBHOOK_DELIVERY_PER_TENANT` workers; raise `APIOME_WEBHOOK_DELIVERY_WORKERS` if many
+workspaces have slow receivers at once.
+
+### Catalog graph edges
+
+A change to a consumer's contract, a repository binding, a conversion or an API product updates
+only that entity's [catalog graph](../reference/rest/graph.md) edges, in the same transaction, and
+leaves unchanged edges as they are. The nightly repair sweep still re-derives every edge of every
+workspace. An edge's `last_seen_at` is the last time that sweep confirmed it or a change rewrote it.
+
+### Retention of operational rows
+
+Two kinds of operational rows are pruned on the 5-minute retention tick, in batches, so a large
+first backlog is worked off over several ticks:
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_DISCOVERY_JOB_RETENTION_DAYS` | `30` | Finished MCP discovery jobs (`completed` or `failed`) older than this are deleted. Queued and running jobs are never deleted. `0` keeps them forever. |
+| `APIOME_MCP_DISCOVERY_JOB_KEEP_PER_ENDPOINT` | `20` | Each server's newest finished jobs kept whatever their age, so a server discovered rarely keeps its history |
+| `APIOME_SLATE_RETENTION_BATCH_SIZE` | `5000` | Rows deleted at a time when Slate request data passes its retention |
+
+Slate request data — logs, traces and their spans, live-tail sessions, synthetic check results,
+security events and function invocations — is written with the date its lane's retention policy
+ends, and is deleted after that date. The Slate audit log has no retention.
+
+Retention settings elsewhere: MCP uptime checks are kept 30 days ([MCP uptime
+checks](#mcp-uptime-checks)), discovery sweep ticks 30 days ([Watch MCP
+re-discovery](#watch-mcp-re-discovery)), and async jobs, quality-rank observations and schema test
+suite runs follow their own `APIOME_*_RETENTION_DAYS` settings.
 
 ## The operator screens
 

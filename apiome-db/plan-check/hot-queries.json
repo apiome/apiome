@@ -733,6 +733,61 @@
         "scale:tenant:1",
         "scale:tenant:1"
       ]
+    },
+    {
+      "name": "sweep.due_mcp_endpoints",
+      "source": "apiome-rest/src/app/database.py Database.list_due_mcp_endpoints (MCP discovery sweep tick; idx_mcp_endpoints_discovery_due[_default], V426, DBP-1.18 #7201)",
+      "sql": "SELECT * FROM ( (SELECT id, tenant_id, created_at, COALESCE(last_discovered_at, '-infinity'::timestamptz) AS due_anchor FROM apiome.mcp_endpoints WHERE deleted_at IS NULL AND enabled AND quarantined_at IS NULL AND discovery_cadence_seconds IS NULL AND COALESCE(last_discovered_at, '-infinity'::timestamptz) <= now() - make_interval(secs => $1::int) AND (next_discovery_after IS NULL OR next_discovery_after <= now()) ORDER BY COALESCE(last_discovered_at, '-infinity'::timestamptz) LIMIT $2::int) UNION ALL (SELECT id, tenant_id, created_at, COALESCE(last_discovered_at, '-infinity'::timestamptz) FROM apiome.mcp_endpoints WHERE deleted_at IS NULL AND enabled AND quarantined_at IS NULL AND discovery_cadence_seconds IS NOT NULL AND discovery_due_at <= now() ORDER BY discovery_due_at LIMIT $2::int) ) due ORDER BY due_anchor ASC, created_at ASC LIMIT $2::int",
+      "params": [
+        86400,
+        500
+      ]
+    },
+    {
+      "name": "sweep.due_mcp_health_endpoints",
+      "source": "apiome-rest/src/app/database.py Database.list_due_mcp_health_endpoints (MCP health sweep tick; idx_mcp_endpoints_health_due, V426, DBP-1.18 #7201)",
+      "sql": "SELECT id, tenant_id FROM apiome.mcp_endpoints WHERE deleted_at IS NULL AND enabled AND transport <> 'stdio' AND COALESCE(last_health_checked_at, '-infinity'::timestamptz) <= now() - make_interval(secs => $1::int) ORDER BY COALESCE(last_health_checked_at, '-infinity'::timestamptz) ASC, created_at ASC LIMIT $2::int",
+      "params": [
+        300,
+        200
+      ]
+    },
+    {
+      "name": "sweep.due_repositories",
+      "source": "apiome-rest/src/app/database.py Database.list_due_repositories (repository auto-refresh tick; idx_tenant_repositories_refresh_due, V426, DBP-1.18 #7201)",
+      "sql": "SELECT id, tenant_id FROM apiome.tenant_repositories WHERE deleted_at IS NULL AND status IN ('ready', 'error') AND auto_refresh_enabled AND refresh_paused_at IS NULL AND refresh_due_at <= now() AND (refresh_backoff_until IS NULL OR refresh_backoff_until <= now()) AND (last_refreshed_at IS NULL OR last_refreshed_at <= now() - make_interval(secs => $1::int)) ORDER BY refresh_due_at ASC, created_at ASC LIMIT $2::int",
+      "params": [
+        60,
+        200
+      ]
+    },
+    {
+      "name": "sweep.due_mcp_catalog_digests",
+      "source": "apiome-rest/src/app/database.py Database.list_due_mcp_catalog_digests (catalog digest tick; idx_mcp_catalog_digest_configs_due[_default], V426, DBP-1.18 #7201)",
+      "sql": "SELECT c.tenant_id FROM ( (SELECT tenant_id, last_digest_at, created_at FROM apiome.mcp_catalog_digest_configs WHERE enabled AND cadence_seconds IS NULL AND COALESCE(last_digest_at, '-infinity'::timestamptz) <= now() - make_interval(secs => $1::int) ORDER BY COALESCE(last_digest_at, '-infinity'::timestamptz) LIMIT $2::int) UNION ALL (SELECT tenant_id, last_digest_at, created_at FROM apiome.mcp_catalog_digest_configs WHERE enabled AND cadence_seconds IS NOT NULL AND digest_due_at <= now() ORDER BY digest_due_at LIMIT $2::int) ) c JOIN apiome.tenants t ON t.id = c.tenant_id WHERE t.deleted_at IS NULL ORDER BY c.last_digest_at ASC NULLS FIRST, c.created_at ASC LIMIT $2::int",
+      "params": [
+        604800,
+        200
+      ]
+    },
+    {
+      "name": "sweep.export_webhook_claim_due",
+      "source": "apiome-rest/src/app/database.py Database.claim_due_export_webhook_deliveries, due branch (webhook delivery tick; idx_export_webhook_delivery_runs_due, DBP-1.18 #7201)",
+      "sql": "SELECT id FROM apiome.export_webhook_delivery_runs WHERE status IN ('pending', 'retrying') AND next_attempt_at <= CURRENT_TIMESTAMP AND NOT (tenant_id = ANY($1::uuid[])) ORDER BY next_attempt_at ASC FOR UPDATE SKIP LOCKED LIMIT $2::int",
+      "params": [
+        "{}",
+        50
+      ]
+    },
+    {
+      "name": "sweep.export_webhook_claim_stale",
+      "source": "apiome-rest/src/app/database.py Database.claim_due_export_webhook_deliveries, stale branch (webhook delivery tick; idx_export_webhook_delivery_runs_stale, DBP-1.18 #7201)",
+      "sql": "SELECT id FROM apiome.export_webhook_delivery_runs WHERE status = 'delivering' AND updated_at <= CURRENT_TIMESTAMP - make_interval(secs => $1::int) AND NOT (tenant_id = ANY($2::uuid[])) ORDER BY updated_at ASC FOR UPDATE SKIP LOCKED LIMIT $3::int",
+      "params": [
+        600,
+        "{}",
+        50
+      ]
     }
   ]
 }

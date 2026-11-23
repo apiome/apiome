@@ -69,17 +69,18 @@ def test_list_due_health_endpoints_sql(monkeypatch):
     assert [r["id"] for r in rows] == [_EP1]
     q = captured["query"]
     assert "deleted_at IS NULL" in q
-    assert "enabled = TRUE" in q
+    assert "AND enabled\n" in q
     # A stdio server has no URL to probe.
     assert "transport <> 'stdio'" in q
     # Quarantine pauses discovery, not monitoring: a down server must be seen coming back.
     where = q.split("WHERE deleted_at IS NULL", 1)[1]
     assert "quarantined_at" not in where
     assert "next_discovery_after" not in where
-    assert "apiome.mcp_endpoint_health_checks" in q
-    assert "hc.last_checked_at IS NULL" in q
+    # The stored latest probe (V426), not a max(checked_at) over every endpoint's history.
+    assert "apiome.mcp_endpoint_health_checks" not in q
+    assert "COALESCE(last_health_checked_at, '-infinity'::timestamptz)\n" in q
     assert "now() - make_interval(secs => %s)" in q
-    assert "ORDER BY hc.last_checked_at ASC NULLS FIRST" in q
+    assert "ORDER BY COALESCE(last_health_checked_at, '-infinity'::timestamptz) ASC, created_at ASC" in q
     assert "LIMIT %s" in q
     assert captured["params"] == (300, 50)
 

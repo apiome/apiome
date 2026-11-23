@@ -59,6 +59,17 @@ class FakeDatabase:
                 return copy.deepcopy(run)
         return None
 
+    def claim_due_export_webhook_deliveries(
+        self, *, limit: int, exclude_tenant_ids: Any = ()
+    ) -> List[Dict[str, Any]]:
+        claimed: List[Dict[str, Any]] = []
+        while len(claimed) < limit:
+            run = self.claim_next_due_export_webhook_delivery()
+            if run is None:
+                break
+            claimed.append(run)
+        return claimed
+
     def make_due(self, run_id: str = _RUN) -> None:
         self.runs[run_id]["next_attempt_at"] = datetime.now(timezone.utc) - timedelta(seconds=1)
 

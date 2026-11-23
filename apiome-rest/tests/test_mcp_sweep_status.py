@@ -44,6 +44,7 @@ def _settings(**overrides: Any) -> SimpleNamespace:
         "mcp_discovery_min_interval_seconds": 60,
         "mcp_discovery_default_cadence_seconds": 86400,
         "mcp_discovery_max_concurrency": 4,
+        "mcp_discovery_max_per_tick": 500,
         "mcp_discovery_endpoint_timeout_seconds": 300,
     }
     base.update(overrides)

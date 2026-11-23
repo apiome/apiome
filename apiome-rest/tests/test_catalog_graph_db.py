@@ -10,7 +10,10 @@ The acceptance criteria that only the real schema can prove:
   the consumers reachable through ``consumes`` edges whose pointer overlaps one of them;
 * a revoked consumer's edges turn stale (and the read reports them stale) instead of vanishing, and
   are purged after 30 days;
-* the producers' in-transaction hook (``soft_delete_consumer``) does this itself.
+* the producers' in-transaction hook (``soft_delete_consumer``) does this itself;
+* (DBP-1.18, #7201) an unchanged edge is not rewritten, and a consumer-contract write touches only
+  that consumer's edges — asserted by row versions (``ctid``), since one transaction's ``xmin`` is
+  shared by every row it wrote.
 
 Everything runs inside one transaction on a dedicated connection that is always rolled back, so the
 database is left exactly as it was found. Skipped when no database is reachable.
@@ -173,7 +176,8 @@ def test_materializing_twice_leaves_identical_rows(tx) -> None:
     # Across runs (a later transaction), the identity holds too: nothing is added or staled.
     _age_edges(cursor, seed["tenant"], "1 hour")
     again = materialize(db, seed["tenant"], "test")
-    assert again["consumes"] == {"current": 4, "staled": 0, "purged": 0}
+    # Nothing changed, so nothing is rewritten (DBP-1.18).
+    assert again["consumes"] == {"current": 4, "written": 0, "staled": 0, "purged": 0}
     assert len(_edges(cursor, seed["tenant"])) == len(rows)
 
 
@@ -299,3 +303,102 @@ def test_reads_are_bounded_and_report_truncation(tx) -> None:
     assert list_edges(db, seed["tenant"], "catalog_item", seed["project"], **counted).total == 4
     served = list_edges(db, seed["tenant"], "project", seed["project"], edge_kinds=("served_by",), **counted)
     assert served.total == 0
+
+
+def _row_versions(cursor: Any, tenant: str) -> Dict[Tuple[Any, ...], str]:
+    """Each edge's physical row version (``ctid``): an UPDATE always writes a new one."""
+    cursor.execute(
+        """SELECT from_id::text AS from_id, to_id::text AS to_id, edge_kind, pointer, source_ref,
+                  ctid::text AS ctid
+           FROM apiome.catalog_edges WHERE tenant_id = %s::uuid""",
+        (tenant,),
+    )
+    return {
+        (row["from_id"], row["to_id"], row["edge_kind"], row["pointer"], row["source_ref"]): row["ctid"]
+        for row in cursor.fetchall()
+    }
+
+
+def test_rederiving_an_unchanged_family_rewrites_no_row(tx) -> None:
+    _db, cursor = tx
+    seed = _seed(cursor)
+    materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    before = _row_versions(cursor, seed["tenant"])
+    again = materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    assert again["consumes"] == {"current": 4, "written": 0, "staled": 0, "purged": 0}
+    assert _row_versions(cursor, seed["tenant"]) == before
+
+
+def test_the_sweeps_confirm_all_refreshes_every_current_edge(tx) -> None:
+    _db, cursor = tx
+    seed = _seed(cursor)
+    materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    _age_edges(cursor, seed["tenant"], "1 hour")
+    confirmed = materialize_on_cursor(cursor, seed["tenant"], ("consumes",), confirm_all=True)
+    assert confirmed["consumes"]["written"] == confirmed["consumes"]["current"] == 4
+    cursor.execute(
+        "SELECT bool_and(last_seen_at = CURRENT_TIMESTAMP) AS fresh"
+        " FROM apiome.catalog_edges WHERE tenant_id = %s::uuid",
+        (seed["tenant"],),
+    )
+    assert cursor.fetchone()["fresh"] is True
+
+
+def test_a_changed_evidence_is_rewritten(tx) -> None:
+    _db, cursor = tx
+    seed = _seed(cursor)
+    materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    batch = seed["consumers"]["batch"]
+    # An edge whose stored evidence no longer matches its source is the one row rewritten.
+    cursor.execute(
+        "UPDATE apiome.catalog_edges SET evidence = '{}'::jsonb WHERE tenant_id = %s::uuid AND from_id = %s::uuid",
+        (seed["tenant"], batch),
+    )
+    counts = materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    assert counts["consumes"]["written"] == 1
+    edge = [e for e in _edges(cursor, seed["tenant"]) if e["from_id"] == batch]
+    assert [e["evidence"] for e in edge] == [{"revision": 1, "consumer_slug": "batch"}]
+
+
+def test_a_consumer_contract_write_touches_only_that_consumers_edges(tx) -> None:
+    db, cursor = tx
+    seed = _seed(cursor)
+    materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
+    before = _row_versions(cursor, seed["tenant"])
+    web = seed["consumers"]["web"]
+    others = {key: ctid for key, ctid in before.items() if key[0] != web}
+    revised = [f"/paths/~1orders/get/parameters/{name}" for name in ("page", "size")]
+
+    row = db.insert_consumer_contract(
+        tenant_id=seed["tenant"],
+        project_id=seed["project"],
+        consumer_id=web,
+        surface={},
+        surface_pointers=revised,
+        operation_count=1,
+        field_count=2,
+    )
+    assert row is not None
+
+    after = _row_versions(cursor, seed["tenant"])
+    # Every other consumer's edge is the very same row version: not read for update, not rewritten.
+    assert {key: after[key] for key in others} == others
+    # The web consumer: its old edge was staled (rewritten) and its two new edges inserted.
+    changed = {key for key, ctid in after.items() if before.get(key) != ctid}
+    assert changed == {key for key in after if key[0] == web}
+    assert len(changed) == 1 + len(revised)
+    current = [e for e in _edges(cursor, seed["tenant"]) if e["from_id"] == web and e["stale_since"] is None]
+    assert sorted(e["pointer"] for e in current) == sorted(revised)
+
+
+def test_a_scoped_rederivation_reports_only_its_nodes_edges(tx) -> None:
+    _db, cursor = tx
+    seed = _seed(cursor)
+    from app.catalog_graph import GraphScope
+
+    counts = materialize_on_cursor(
+        cursor, seed["tenant"], ("consumes",), scope=GraphScope.consumer(seed["consumers"]["mobile"])
+    )
+    assert counts["consumes"] == {"current": 2, "written": 2, "staled": 0, "purged": 0}
+    edges = _edges(cursor, seed["tenant"])
+    assert {e["from_id"] for e in edges} == {seed["consumers"]["mobile"]}

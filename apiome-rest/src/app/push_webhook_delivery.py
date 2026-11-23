@@ -21,7 +21,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, FrozenSet, List, Optional
 
 import httpx
 
@@ -279,50 +279,107 @@ def _next_retry_utc(failed_attempt_number: int, *, retry_after: Optional[int] = 
     return datetime.now(timezone.utc) + timedelta(seconds=delay)
 
 
-def process_due_push_webhook_deliveries(database: Database, max_events: int = 10) -> int:
-    """Process up to max_events due deliveries. Returns count attempted."""
-    n = 0
-    for _ in range(max_events):
-        row = database.get_next_due_push_webhook_delivery()
-        if not row:
-            break
-        try:
-            deliver_one_due_event(database, row)
-        except Exception as exc:
-            logger.exception("push webhook delivery failed for event %s", row.get("event_id"))
-            # Persist a failed attempt so the event is not stuck in 'processing' and
-            # backoff / dead-letter logic still applies.
-            try:
-                prev_attempt_count = int(row.get("attempt_count", 0))
-                attempt_number = prev_attempt_count + 1
-                err_msg = f"internal delivery error: {type(exc).__name__}: {exc}"
-                if attempt_number >= MAX_DELIVERY_ATTEMPTS:
-                    _finalize_dead_letter(
-                        database,
-                        str(row.get("event_id", "")),
-                        attempt_number,
-                        http_status=None,
-                        response_body_preview=None,
-                        error_message=err_msg,
-                        latency_ms=0,
-                        reason=err_msg,
-                    )
-                else:
-                    database.finalize_push_webhook_delivery_attempt(
-                        str(row.get("event_id", "")),
-                        attempt_number=attempt_number,
-                        http_status=None,
-                        response_body_preview=None,
-                        error_message=err_msg,
-                        latency_ms=0,
-                        new_status="retrying",
-                        new_attempt_count=attempt_number,
-                        next_retry_at=_next_retry_utc(attempt_number),
-                        last_error=_truncate(err_msg, 2000),
-                    )
-            except Exception:
-                logger.exception(
-                    "failed to persist internal-error attempt for event %s", row.get("event_id")
-                )
-        n += 1
-    return n
+def _record_internal_error(database: Database, row: Dict[str, Any], exc: BaseException) -> None:
+    """Persist a failed attempt for an event whose delivery raised, so it is not stuck in ``processing``.
+
+    Backoff and dead-letter logic still apply to it.
+
+    Args:
+        database: The delivery's database handle.
+        row: The claimed event.
+        exc: What the delivery raised.
+    """
+    logger.error("push webhook delivery failed for event %s", row.get("event_id"), exc_info=exc)
+    try:
+        prev_attempt_count = int(row.get("attempt_count", 0))
+        attempt_number = prev_attempt_count + 1
+        err_msg = f"internal delivery error: {type(exc).__name__}: {exc}"
+        if attempt_number >= MAX_DELIVERY_ATTEMPTS:
+            _finalize_dead_letter(
+                database,
+                str(row.get("event_id", "")),
+                attempt_number,
+                http_status=None,
+                response_body_preview=None,
+                error_message=err_msg,
+                latency_ms=0,
+                reason=err_msg,
+            )
+        else:
+            database.finalize_push_webhook_delivery_attempt(
+                str(row.get("event_id", "")),
+                attempt_number=attempt_number,
+                http_status=None,
+                response_body_preview=None,
+                error_message=err_msg,
+                latency_ms=0,
+                new_status="retrying",
+                new_attempt_count=attempt_number,
+                next_retry_at=_next_retry_utc(attempt_number),
+                last_error=_truncate(err_msg, 2000),
+            )
+    except Exception:
+        logger.exception("failed to persist internal-error attempt for event %s", row.get("event_id"))
+
+
+def process_due_push_webhook_deliveries(
+    database: Database,
+    max_events: Optional[int] = None,
+    *,
+    workers: Optional[int] = None,
+    per_tenant: Optional[int] = None,
+    batch_size: Optional[int] = None,
+    deadline_seconds: Optional[float] = None,
+) -> int:
+    """Deliver due events on a bounded worker pool until the queue is empty (DBP-1.18, #7201).
+
+    Events are claimed in batches and POSTed by up to ``workers`` threads at once, at most
+    ``per_tenant`` of them for one tenant, so a slow receiver never holds up the other tenants
+    (:func:`app.sweep_worker_pool.drain_keyed`). The tick keeps claiming as workers free up until
+    nothing is due or ``deadline_seconds`` pass; attempts in flight then finish.
+
+    Args:
+        database: The sweep's database handle; each worker thread borrows its own connection
+            from it and hands it back after every event.
+        max_events: The most events this call claims; ``None`` for no cap (drain).
+        workers: Events in flight at once; default ``settings.webhook_delivery_workers``.
+        per_tenant: Events of one tenant in flight at once; default
+            ``settings.webhook_delivery_per_tenant``.
+        batch_size: Events claimed per statement; default ``settings.webhook_delivery_batch_size``.
+        deadline_seconds: How long to keep claiming; default
+            ``settings.webhook_delivery_tick_seconds``.
+
+    Returns:
+        How many events were attempted.
+    """
+    from .config import settings
+    from .sweep_worker_pool import drain_keyed, thread_connection_release
+
+    budget: List[Optional[int]] = [max_events]
+
+    def _claim(limit: int, saturated: FrozenSet[str]) -> List[Dict[str, Any]]:
+        if budget[0] is not None:
+            limit = min(limit, budget[0])
+            if limit <= 0:
+                return []
+        rows = database.claim_due_push_webhook_deliveries(limit=limit, exclude_tenant_ids=sorted(saturated))
+        if budget[0] is not None:
+            budget[0] -= len(rows)
+        return rows
+
+    result = drain_keyed(
+        _claim,
+        lambda row: deliver_one_due_event(database, row),
+        lambda row: str(row.get("tenant_id") or ""),
+        workers=workers if workers is not None else settings.webhook_delivery_workers,
+        per_key=per_tenant if per_tenant is not None else settings.webhook_delivery_per_tenant,
+        batch_size=batch_size if batch_size is not None else settings.webhook_delivery_batch_size,
+        deadline_seconds=float(
+            deadline_seconds if deadline_seconds is not None else settings.webhook_delivery_tick_seconds
+        ),
+        on_error=lambda row, exc: _record_internal_error(database, row, exc),
+        after_each=thread_connection_release(database),
+        thread_name_prefix="push-webhook",
+    )
+    return result.processed
+

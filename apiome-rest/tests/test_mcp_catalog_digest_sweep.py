@@ -71,7 +71,8 @@ class FakeDB:
         self.marked = []
 
     # --- due selection / lock ---
-    def list_due_mcp_catalog_digests(self, *, default_cadence_seconds):
+    def list_due_mcp_catalog_digests(self, *, default_cadence_seconds, limit):
+        self.due_limit = limit
         return list(self._due)
 
     def try_acquire_mcp_catalog_digest_lock(self, tenant_id):

@@ -26,7 +26,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, FrozenSet, List, Optional
 
 import httpx
 
@@ -267,45 +267,90 @@ def start_delivery(
         return row
 
 
-def process_due_export_webhook_deliveries(
-    database: Database,
-    max_runs: int = 10,
-    *,
-    client_factory: ClientFactory = build_guarded_client,
-) -> int:
-    """Make the next attempt of up to ``max_runs`` due deliveries (the webhook delivery sweep's tick).
+def _record_internal_error(database: Database, run: Dict[str, Any], exc: BaseException) -> None:
+    """Record an attempt whose delivery raised, so the run is not stuck ``delivering``.
 
     Args:
-        database: A database connection for this thread.
-        max_runs: The most attempts this tick.
+        database: The delivery's database handle.
+        run: The claimed run.
+        exc: What the attempt raised.
+    """
+    logger.error("export webhook delivery %s: attempt failed internally", run.get("id"), exc_info=exc)
+    number = int(run.get("attempt_count") or 0) + 1
+    final = number >= int(run.get("max_attempts") or MAX_ATTEMPTS)
+    now = datetime.now(timezone.utc)
+    try:
+        database.record_export_webhook_delivery_attempt(
+            str(run["id"]),
+            attempt=_attempt_record(number, now, AttemptResult(http_status=None, error=type(exc).__name__)),
+            status=RUN_STATUS_FAILED if final else RUN_STATUS_RETRYING,
+            next_attempt_at=None if final else _next_attempt_at(number, None, now),
+            error_code=ERROR_INTERNAL,
+            error_message=f"internal delivery error: {type(exc).__name__}"[:_ERROR_MESSAGE_CHARS],
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("export webhook delivery %s: could not record the failure", run.get("id"))
+
+
+def process_due_export_webhook_deliveries(
+    database: Database,
+    max_runs: Optional[int] = None,
+    *,
+    client_factory: ClientFactory = build_guarded_client,
+    workers: Optional[int] = None,
+    per_tenant: Optional[int] = None,
+    batch_size: Optional[int] = None,
+    deadline_seconds: Optional[float] = None,
+) -> int:
+    """Make the next attempt of every due delivery on a bounded worker pool (the sweep's tick).
+
+    Runs are claimed in batches (:meth:`app.database.Database.claim_due_export_webhook_deliveries`)
+    and attempted by up to ``workers`` threads at once, at most ``per_tenant`` for one tenant, so a
+    slow receiver never holds up the other tenants (DBP-1.18, #7201). The tick keeps claiming until
+    nothing is due or ``deadline_seconds`` pass; attempts in flight then finish.
+
+    Args:
+        database: The sweep's database handle; each worker thread borrows its own connection from
+            it and hands it back after every run.
+        max_runs: The most attempts this call makes; ``None`` for no cap (drain).
         client_factory: Builds the HTTP client.
+        workers: Attempts in flight at once; default ``settings.webhook_delivery_workers``.
+        per_tenant: Attempts of one tenant in flight at once; default
+            ``settings.webhook_delivery_per_tenant``.
+        batch_size: Runs claimed per statement; default ``settings.webhook_delivery_batch_size``.
+        deadline_seconds: How long to keep claiming; default
+            ``settings.webhook_delivery_tick_seconds``.
 
     Returns:
         How many attempts were made.
     """
-    made = 0
-    for _ in range(max_runs):
-        run = database.claim_next_due_export_webhook_delivery()
-        if not run:
-            break
-        made += 1
-        try:
-            attempt_delivery(database, run, client_factory=client_factory)
-        except Exception as exc:  # noqa: BLE001 - record it so the run is not stuck `delivering`
-            logger.exception("export webhook delivery %s: attempt failed internally", run.get("id"))
-            number = int(run.get("attempt_count") or 0) + 1
-            final = number >= int(run.get("max_attempts") or MAX_ATTEMPTS)
-            now = datetime.now(timezone.utc)
-            try:
-                database.record_export_webhook_delivery_attempt(
-                    str(run["id"]),
-                    attempt=_attempt_record(number, now, AttemptResult(http_status=None,
-                                                                         error=type(exc).__name__)),
-                    status=RUN_STATUS_FAILED if final else RUN_STATUS_RETRYING,
-                    next_attempt_at=None if final else _next_attempt_at(number, None, now),
-                    error_code=ERROR_INTERNAL,
-                    error_message=f"internal delivery error: {type(exc).__name__}"[:_ERROR_MESSAGE_CHARS],
-                )
-            except Exception:  # noqa: BLE001
-                logger.exception("export webhook delivery %s: could not record the failure", run.get("id"))
-    return made
+    from .config import settings
+    from .sweep_worker_pool import drain_keyed, thread_connection_release
+
+    budget: List[Optional[int]] = [max_runs]
+
+    def _claim(limit: int, saturated: FrozenSet[str]) -> List[Dict[str, Any]]:
+        if budget[0] is not None:
+            limit = min(limit, budget[0])
+            if limit <= 0:
+                return []
+        runs = database.claim_due_export_webhook_deliveries(limit=limit, exclude_tenant_ids=sorted(saturated))
+        if budget[0] is not None:
+            budget[0] -= len(runs)
+        return runs
+
+    result = drain_keyed(
+        _claim,
+        lambda run: attempt_delivery(database, run, client_factory=client_factory),
+        lambda run: str(run.get("tenant_id") or ""),
+        workers=workers if workers is not None else settings.webhook_delivery_workers,
+        per_key=per_tenant if per_tenant is not None else settings.webhook_delivery_per_tenant,
+        batch_size=batch_size if batch_size is not None else settings.webhook_delivery_batch_size,
+        deadline_seconds=float(
+            deadline_seconds if deadline_seconds is not None else settings.webhook_delivery_tick_seconds
+        ),
+        on_error=lambda run, exc: _record_internal_error(database, run, exc),
+        after_each=thread_connection_release(database),
+        thread_name_prefix="export-webhook",
+    )
+    return result.processed

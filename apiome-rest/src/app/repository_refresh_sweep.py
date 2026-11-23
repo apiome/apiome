@@ -533,9 +533,17 @@ def process_repository_refresh_sweep(db: Database) -> int:
     per-tenant window rows, REPO-7.3), so quota pressure is visible both live and
     a week later without reading sweep logs line by line.
 
+    Bounded and concurrent (DBP-1.18, #7201): a tick selects at most
+    ``APIOME_REFRESH_MAX_PER_TICK`` repositories (most overdue first) and refreshes up to
+    ``APIOME_REFRESH_SWEEP_CONCURRENCY`` of them at once on worker threads, so one slow
+    provider no longer holds up every other tenant. A tenant's repositories still run one
+    after another, in the interleaved order, which keeps its quota accounting exact. Each
+    repository's lock, rescan and anchor advance stay on one worker thread, so the session
+    advisory lock is taken and released on the same connection.
+
     Args:
-        db: Database handle for this tick (one connection holds the advisory
-            locks; the caller uses a dedicated ``Database`` per tick).
+        db: Database handle for this tick; every worker thread borrows its own connection
+            from it and hands it back after each repository.
 
     Returns:
         The total number of refresh jobs enqueued this tick (0 when the global
@@ -562,77 +570,129 @@ def process_repository_refresh_sweep(db: Database) -> int:
 
     quota = load_tenant_refresh_quota_tracker(db)
 
-    enqueued_total = 0
-    for due_row in interleave_due_rows_by_tenant(db.list_due_repositories()):
-        repository_id = str(due_row["id"])
-        tenant_id = str(due_row["tenant_id"])
+    from .sweep_worker_pool import run_keyed, thread_connection_release
 
-        if quota is not None and quota.is_exhausted(tenant_id):
-            # Tenant over its polling quota (REPO-4.6): defer this repo — no
-            # lock, no anchor advance, no failure bookkeeping — so it stays due
-            # and is retried once the window rolls. The telemetry record carries
-            # the structured log line, so the deferral is visible per repo
-            # without a second hand-rolled log statement. Counting is
-            # best-effort: a telemetry problem must not change what the sweep
-            # does with the repository.
-            try:
-                polling_telemetry.record(
-                    KIND_REPOSITORY_DEFERRED,
-                    tenant_id=tenant_id,
-                    repository_id=repository_id,
-                    quota=quota.quota_for(tenant_id),
-                    remaining=0,
-                )
-            except Exception:
-                _logger.exception(
-                    "repository polling telemetry failed repository_id=%s",
-                    repository_id,
-                )
-            # Durable counterpart (REPO-7.3): deferrals are their own metric, never
-            # folded into `polls`, so "we did less work" and "the quota pushed work
-            # into a later window" stay distinguishable a week later.
-            record_quota_usage(db, tenant_id, METRIC_POLLS_DEFERRED, 1)
-            continue
+    enqueued: List[int] = []
 
-        if not db.try_acquire_repository_refresh_lock(repository_id):
-            # Another worker / overlapping tick owns this repo right now.
-            _logger.debug(
-                "repository refresh skipped (lock held) repository_id=%s",
-                repository_id,
-            )
-            continue
-
-        try:
-            result = _refresh_one_repository(
+    def _refresh(due_row: Dict[str, Any]) -> None:
+        enqueued.append(
+            _process_due_repository(
                 db,
                 due_row,
-                max_enqueues=(
-                    quota.remaining(tenant_id) if quota is not None else None
-                ),
+                quota,
+                deferred_kind=KIND_REPOSITORY_DEFERRED,
+                polling_telemetry=polling_telemetry,
+                record_quota_usage=record_quota_usage,
+                deferred_metric=METRIC_POLLS_DEFERRED,
             )
-            enqueued_total += result.enqueued
-            if quota is not None:
-                quota.consume(tenant_id, result.enqueued)
-            _record_poll_telemetry(db, quota, due_row, result)
-        except Exception as exc:
-            # A repo-level error (candidate query, branch listing, …) counts as a
-            # failed tick for the RAR-3.4 bookkeeping, like a branch rescan error.
-            result = RepositoryRefreshResult(enqueued=0, failed=True, error=str(exc))
-            _logger.exception(
-                "repository refresh sweep failed repository_id=%s", repository_id
-            )
-        try:
-            _record_refresh_outcome(db, due_row, result)
-        finally:
-            # Advance the cadence anchor each tick (success or failure) so the repo
-            # is not immediately due again, then release the lock.
-            try:
-                db.mark_repository_refreshed(repository_id)
-            except Exception:
-                _logger.exception(
-                    "repository refresh anchor advance failed repository_id=%s",
-                    repository_id,
-                )
-            db.release_repository_refresh_lock(repository_id)
+        )
 
-    return enqueued_total
+    run_keyed(
+        interleave_due_rows_by_tenant(db.list_due_repositories(limit=settings.refresh_max_per_tick)),
+        _refresh,
+        lambda row: str(row["tenant_id"]),
+        workers=max(1, int(settings.refresh_sweep_concurrency)),
+        per_key=1,
+        after_each=thread_connection_release(db),
+        thread_name_prefix="repository-refresh",
+    )
+    return sum(enqueued)
+
+
+def _process_due_repository(
+    db: Database,
+    due_row: Dict[str, Any],
+    quota: Any,
+    *,
+    deferred_kind: str,
+    polling_telemetry: Any,
+    record_quota_usage: Any,
+    deferred_metric: str,
+) -> int:
+    """Refresh one due repository on the calling worker thread (RAR-3.2; split out by DBP-1.18).
+
+    Defers it when its tenant is over quota; otherwise takes the per-repository lock, rescans,
+    records the outcome, advances the cadence anchor and releases the lock — all on this thread's
+    connection.
+
+    Args:
+        db: The tick's database handle.
+        due_row: The repository's row from ``list_due_repositories``.
+        quota: The tick's quota tracker, or ``None`` when quotas are off. Only this tenant's entry
+            is touched, and a tenant's repositories never run at the same time.
+        deferred_kind: The telemetry kind of a quota deferral.
+        polling_telemetry: The per-process telemetry recorder.
+        record_quota_usage: Writes a durable quota-window counter.
+        deferred_metric: The durable metric of a deferral.
+
+    Returns:
+        The refresh jobs enqueued for this repository (0 when deferred, locked or failed).
+    """
+    repository_id = str(due_row["id"])
+    tenant_id = str(due_row["tenant_id"])
+
+    if quota is not None and quota.is_exhausted(tenant_id):
+        # Tenant over its polling quota (REPO-4.6): defer this repo — no
+        # lock, no anchor advance, no failure bookkeeping — so it stays due
+        # and is retried once the window rolls. The telemetry record carries
+        # the structured log line, so the deferral is visible per repo
+        # without a second hand-rolled log statement. Counting is
+        # best-effort: a telemetry problem must not change what the sweep
+        # does with the repository.
+        try:
+            polling_telemetry.record(
+                deferred_kind,
+                tenant_id=tenant_id,
+                repository_id=repository_id,
+                quota=quota.quota_for(tenant_id),
+                remaining=0,
+            )
+        except Exception:
+            _logger.exception(
+                "repository polling telemetry failed repository_id=%s",
+                repository_id,
+            )
+        # Durable counterpart (REPO-7.3): deferrals are their own metric, never
+        # folded into `polls`, so "we did less work" and "the quota pushed work
+        # into a later window" stay distinguishable a week later.
+        record_quota_usage(db, tenant_id, deferred_metric, 1)
+        return 0
+
+    if not db.try_acquire_repository_refresh_lock(repository_id):
+        # Another worker / overlapping tick owns this repo right now.
+        _logger.debug(
+            "repository refresh skipped (lock held) repository_id=%s",
+            repository_id,
+        )
+        return 0
+
+    enqueued = 0
+    try:
+        result = _refresh_one_repository(
+            db,
+            due_row,
+            max_enqueues=(quota.remaining(tenant_id) if quota is not None else None),
+        )
+        enqueued = result.enqueued
+        if quota is not None:
+            quota.consume(tenant_id, result.enqueued)
+        _record_poll_telemetry(db, quota, due_row, result)
+    except Exception as exc:
+        # A repo-level error (candidate query, branch listing, …) counts as a
+        # failed tick for the RAR-3.4 bookkeeping, like a branch rescan error.
+        result = RepositoryRefreshResult(enqueued=0, failed=True, error=str(exc))
+        _logger.exception("repository refresh sweep failed repository_id=%s", repository_id)
+    try:
+        _record_refresh_outcome(db, due_row, result)
+    finally:
+        # Advance the cadence anchor each tick (success or failure) so the repo
+        # is not immediately due again, then release the lock.
+        try:
+            db.mark_repository_refreshed(repository_id)
+        except Exception:
+            _logger.exception(
+                "repository refresh anchor advance failed repository_id=%s",
+                repository_id,
+            )
+        db.release_repository_refresh_lock(repository_id)
+    return enqueued

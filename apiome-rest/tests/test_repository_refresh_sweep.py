@@ -134,7 +134,7 @@ class FakeDB:
         self._active_lineage = set()
 
     # --- due selection / lock ---
-    def list_due_repositories(self):
+    def list_due_repositories(self, limit=None):
         return list(self._due)
 
     # --- RAR-3.5 tenant quota window usage ---
@@ -206,6 +206,17 @@ class FakeDB:
             for row in self.quota_windows
             if row["metric"] == metric and row["tenant_id"] == tenant_id
         )
+
+
+@pytest.fixture(autouse=True)
+def _serial_sweep(monkeypatch):
+    """Refresh one repository at a time, so order assertions are deterministic.
+
+    The concurrent path (DBP-1.18) has its own tests at the end of this file.
+    """
+    import app.config as config
+
+    monkeypatch.setattr(config.settings, "refresh_sweep_concurrency", 1)
 
 
 @pytest.fixture(autouse=True)
@@ -1359,3 +1370,66 @@ def test_without_rules_every_branch_refreshes_as_before():
     assert [j["branch"] for j in db.enqueued] == ["main", "release/2.0", "sandbox"]
     assert all("target_version_line" not in j for j in db.enqueued)
     assert "branches_refreshed" not in db.__dict__  # no per-branch anchor without rules
+
+
+# ===========================================================================
+# DBP-1.18 (#7201): a per-tick cap and bounded concurrency across tenants
+# ===========================================================================
+
+
+def test_the_tick_asks_for_one_batch(monkeypatch):
+    import app.config as config
+
+    monkeypatch.setattr(config.settings, "refresh_max_per_tick", 7)
+    seen = []
+
+    class _Db(FakeDB):
+        def list_due_repositories(self, limit=None):
+            seen.append(limit)
+            return []
+
+    process_repository_refresh_sweep(_Db())
+    assert seen == [7]
+
+
+def test_tenants_refresh_side_by_side_but_one_tenants_repositories_in_order(monkeypatch):
+    import threading
+    import time
+
+    import app.config as config
+
+    monkeypatch.setattr(config.settings, "refresh_sweep_concurrency", 3)
+    lock = threading.Lock()
+    running = {"all": 0, "peak": 0}
+    per_tenant = {}
+    order = []
+
+    def _slow_refresh(db, due_row, *, max_enqueues=None):
+        tenant = due_row["tenant_id"]
+        with lock:
+            running["all"] += 1
+            running["peak"] = max(running["peak"], running["all"])
+            per_tenant[tenant] = per_tenant.get(tenant, 0) + 1
+            assert per_tenant[tenant] == 1, "one tenant's repositories never run at once"
+            order.append(due_row["id"])
+        time.sleep(0.1)
+        with lock:
+            running["all"] -= 1
+            per_tenant[tenant] -= 1
+        return sweep.RepositoryRefreshResult(enqueued=1, failed=False, error=None)
+
+    monkeypatch.setattr(sweep, "_refresh_one_repository", _slow_refresh)
+    monkeypatch.setattr(sweep, "_record_poll_telemetry", lambda *a, **k: None)
+    monkeypatch.setattr(sweep, "_record_refresh_outcome", lambda *a, **k: None)
+    db = FakeDB(
+        due=[{"id": f"{t}{n}", "tenant_id": t} for t in ("a", "b", "c") for n in range(2)],
+    )
+    started = time.monotonic()
+    assert process_repository_refresh_sweep(db) == 6
+    elapsed = time.monotonic() - started
+    # Three tenants side by side: two rounds of 0.1 s, not six.
+    assert running["peak"] == 3
+    assert elapsed < 0.5
+    assert [r for r in order if r.startswith("a")] == ["a0", "a1"]
+    # Every repository's lock was released and its anchor advanced.
+    assert sorted(db.released) == sorted(db.acquired) == sorted(db.refreshed)

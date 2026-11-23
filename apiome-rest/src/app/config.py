@@ -2008,6 +2008,91 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("APIOME_MCP_HEALTH_MAX_PER_TICK", "mcp_health_max_per_tick"),
     )
 
+    # Sweep batches, delivery workers and operational retention (DBP-1.18, #7201). Every sweep's
+    # due-selection is an index range scan that returns at most one batch; what is still due waits
+    # for the next tick, most overdue first.
+    #
+    # mcp_discovery_max_per_tick         The most endpoints one discovery tick selects.
+    # mcp_digest_max_per_tick            The most tenants one digest tick selects.
+    # refresh_max_per_tick               The most repositories one auto-refresh tick selects.
+    # refresh_sweep_concurrency          Repositories refreshed at once (different tenants; one
+    #                                    tenant's repositories run one after another so its polling
+    #                                    quota stays exact).
+    # webhook_delivery_workers           Webhook POSTs in flight at once (push and export queues).
+    #                                    Each worker borrows a database connection only while it
+    #                                    records an attempt; keep it well below db_pool_max_in_use.
+    # webhook_delivery_per_tenant        The most of those one tenant may hold, so a slow receiver
+    #                                    never takes every worker.
+    # webhook_delivery_batch_size        Deliveries claimed per statement.
+    # webhook_delivery_tick_seconds      How long one tick keeps claiming; it then lets the attempts
+    #                                    in flight finish and sleeps. A tick drains the due queue
+    #                                    before that whenever it can.
+    # mcp_discovery_job_retention_days   Finished discovery jobs older than this are deleted.
+    #                                    0 or below keeps them forever.
+    # mcp_discovery_job_keep_per_endpoint  Each endpoint's newest finished jobs kept regardless of age.
+    # slate_retention_batch_size         Rows deleted per statement when Slate request data passes
+    #                                    its retain_until.
+    mcp_discovery_max_per_tick: int = Field(
+        default=500,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_MAX_PER_TICK", "mcp_discovery_max_per_tick"
+        ),
+    )
+    mcp_digest_max_per_tick: int = Field(
+        default=200,
+        validation_alias=AliasChoices("APIOME_MCP_DIGEST_MAX_PER_TICK", "mcp_digest_max_per_tick"),
+    )
+    refresh_max_per_tick: int = Field(
+        default=200,
+        validation_alias=AliasChoices("APIOME_REFRESH_MAX_PER_TICK", "refresh_max_per_tick"),
+    )
+    refresh_sweep_concurrency: int = Field(
+        default=4,
+        validation_alias=AliasChoices(
+            "APIOME_REFRESH_SWEEP_CONCURRENCY", "refresh_sweep_concurrency"
+        ),
+    )
+    webhook_delivery_workers: int = Field(
+        default=8,
+        validation_alias=AliasChoices("APIOME_WEBHOOK_DELIVERY_WORKERS", "webhook_delivery_workers"),
+    )
+    webhook_delivery_per_tenant: int = Field(
+        default=2,
+        validation_alias=AliasChoices(
+            "APIOME_WEBHOOK_DELIVERY_PER_TENANT", "webhook_delivery_per_tenant"
+        ),
+    )
+    webhook_delivery_batch_size: int = Field(
+        default=50,
+        validation_alias=AliasChoices(
+            "APIOME_WEBHOOK_DELIVERY_BATCH_SIZE", "webhook_delivery_batch_size"
+        ),
+    )
+    webhook_delivery_tick_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_WEBHOOK_DELIVERY_TICK_SECONDS", "webhook_delivery_tick_seconds"
+        ),
+    )
+    mcp_discovery_job_retention_days: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_JOB_RETENTION_DAYS", "mcp_discovery_job_retention_days"
+        ),
+    )
+    mcp_discovery_job_keep_per_endpoint: int = Field(
+        default=20,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_JOB_KEEP_PER_ENDPOINT", "mcp_discovery_job_keep_per_endpoint"
+        ),
+    )
+    slate_retention_batch_size: int = Field(
+        default=5000,
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_RETENTION_BATCH_SIZE", "slate_retention_batch_size"
+        ),
+    )
+
     # MCP registry sync cadence (V2-MCP-26.3, #3709). How often the connector sweep re-syncs an
     # `mcp-registry` connector that has no cadence of its own (`refresh_interval_seconds`). Hourly by
     # default — the aggregator cadence the registry recommends — rather than the five-minute default

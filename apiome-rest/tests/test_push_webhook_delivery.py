@@ -99,7 +99,7 @@ def test_four_failures_dead_letter():
 
 def test_process_due_calls_until_empty():
     db = MagicMock()
-    db.get_next_due_push_webhook_delivery.side_effect = [_row(), None]
+    db.claim_due_push_webhook_deliveries.side_effect = [[_row()], []]
     with (
         patch("app.push_webhook_delivery.deliver_one_due_event") as d,
         patch("app.push_webhook_delivery.httpx.Client"),
@@ -107,6 +107,8 @@ def test_process_due_calls_until_empty():
         n = process_due_push_webhook_deliveries(db, max_events=10)
     assert n == 1
     d.assert_called_once()
+    # Each worker hands its thread's connection back after the event (DBP-1.18).
+    db.release_connections.assert_called_with(this_thread_only=True)
 
 
 

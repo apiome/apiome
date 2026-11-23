@@ -846,7 +846,12 @@ async def startup_event():
             await asyncio.sleep(15)
             try:
                 def _run_in_thread() -> int:
-                    """Run delivery on the sweep's long-lived handle (one pooled connection across ticks)."""
+                    """Drain both delivery queues on the sweep's long-lived handle.
+
+                    Each queue is claimed in batches and delivered on a bounded worker pool until
+                    it is empty or ``APIOME_WEBHOOK_DELIVERY_TICK_SECONDS`` pass (DBP-1.18, #7201);
+                    the loop then sleeps 15 s.
+                    """
                     with sweep_tick(sweep_db) as thread_db:
                         made = process_due_push_webhook_deliveries(thread_db)
                         # Export webhook deliveries (MFX-38.2) retry on the same tick and backoff; a
@@ -1242,8 +1247,18 @@ async def startup_event():
                         from .async_job_retention_sweep import (
                             process_async_job_retention_sweep,
                         )
+                        from .operational_retention_sweep import (
+                            process_operational_retention_sweep,
+                        )
 
-                        return process_async_job_retention_sweep(thread_db)
+                        counts = process_async_job_retention_sweep(thread_db)
+                        # Finished discovery jobs and expired Slate request data share the
+                        # tick (DBP-1.18, #7201); a fault there never stops the job reaping above.
+                        try:
+                            process_operational_retention_sweep(thread_db)
+                        except Exception:
+                            log.exception("operational retention sweep")
+                        return counts
 
                 await asyncio.to_thread(_run_retention)
             except asyncio.CancelledError:
