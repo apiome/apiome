@@ -445,6 +445,15 @@ the indexes yourself before you deploy:
 If a concurrent build fails it leaves an invalid index behind: drop it and run the statement again
 before you deploy.
 
+Some migrations replace an index with a wider one (for example `V413` to `V417`, which add the
+indexes the DBP-1.11 plan check found missing). Build the new index concurrently as above; the
+migration then only runs the `DROP INDEX IF EXISTS` of the one it replaces, which takes a brief lock
+and does not wait for a build. Built in one transaction, `V412` to `V417` took 8 seconds on a scale
+database of 200,000 versions with 200,000 to 1,000,000 rows in each table they index. Their largest
+tables are `versions`, `workflow_audit`, `slate_insight_logs`, `document_objects`,
+`version_documents` and `tenant_repository_refresh_jobs`. Plan for the `slate_insight_logs` trigram
+index, which is the slowest to build.
+
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
 project properties while it runs: about a second for each million properties. Apply it in a quiet

@@ -232,6 +232,31 @@
       "params": [
         "scale:tenant:0"
       ]
+    },
+    {
+      "name": "browse.recent_public_versions",
+      "source": "apiome-browse/lib/db/helper.ts getRecentlyPublishedVersions (browse home 'Recently published' rail; idx_versions_public_published_recent, DBP-1.11 #7194)",
+      "sql": "SELECT v.id, v.version_id, v.description, v.published_at, v.created_at, p.name AS project_name, p.slug AS project_slug, t.name AS tenant_name, t.slug AS tenant_slug FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id JOIN apiome.tenants t ON p.tenant_id = t.id WHERE v.published = true AND v.visibility = 'public' AND t.deleted_at IS NULL AND p.deleted_at IS NULL AND v.deleted_at IS NULL ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC LIMIT $1",
+      "params": [
+        8
+      ]
+    },
+    {
+      "name": "browse.latest_public_version_per_project",
+      "source": "apiome-browse/lib/cardFacts.ts latestPublicVersionJoinSql over the large tenant's projects (project rails and lists; idx_versions_project_published, DBP-1.11 #7194)",
+      "sql": "SELECT p.id, lv.id AS latest_version_id FROM apiome.projects p LEFT JOIN LATERAL ( SELECT l_v.id FROM apiome.versions l_v WHERE l_v.project_id = p.id AND l_v.published = true AND l_v.visibility = 'public' AND l_v.deleted_at IS NULL ORDER BY l_v.published_at DESC NULLS LAST, l_v.created_at DESC LIMIT 1 ) lv ON TRUE WHERE p.tenant_id = $1 AND p.deleted_at IS NULL",
+      "params": [
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "audit.project_timeline",
+      "source": "apiome-rest/src/app/database.py Database.list_project_timeline (workflow and protection ledgers of one project; idx_workflow_audit_project_created, idx_version_protection_audit_project_created, DBP-1.11 #7194)",
+      "sql": "SELECT e.id, e.source, e.action, e.created_at, v.version_id AS version_label FROM ( SELECT wa.id, 'workflow'::text AS source, wa.action, wa.version_id AS revision_id, wa.created_at FROM apiome.workflow_audit wa WHERE wa.tenant_id = $1 AND wa.project_id = $2 UNION ALL SELECT pa.id, 'protection'::text AS source, pa.action, pa.resource_id AS revision_id, pa.created_at FROM apiome.version_protection_audit pa WHERE pa.tenant_id = $1 AND pa.project_id = $2 ) e LEFT JOIN apiome.versions v ON v.id = e.revision_id AND v.project_id = $2 ORDER BY e.created_at DESC, e.id DESC LIMIT 50",
+      "params": [
+        "scale:tenant:0",
+        "scale:project:0"
+      ]
     }
   ]
 }

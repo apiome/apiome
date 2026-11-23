@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.821.0] - 2026-11-22
+
+### Performance
+- **Missing indexes for verified query shapes (DBP-1.11, #7194).** OpenAPI 1.645.0 (version only; no schema
+  change). Needs `apiome-db` V412–V417: 25 indexes, 7 of which replace an index they cover, so the schema gains 18.
+  No query text changes. Each index is used by the query named in its migration on the DBP-1.1 scale database
+  (side tables filled to 200k–1M rows):
+  - **Browse:** "Recently published" 13.6 → 0.01 ms; each project's latest public version 13.0 → 4.9 ms for the
+    large tenant (`versions`, two partial indexes). Inserting versions costs about 6% more (317.8 → 338.3 ms for
+    20,000 rows).
+  - **Audit:** project timeline 8.2 → 0.02 ms; refresh history by repository 7.2 → 0.01 ms (page) and
+    13.7 → 0.02 ms (count). The workflow, registry and access-audit tenant indexes gain `id DESC` for the keyset
+    searches.
+  - **Jobs and runs:** repository polling quota 10.3 → 0.004 ms; last refresh per import spec 2.2 → 0.09 ms;
+    MCP discovery dedupe reads only active jobs; provider checks by project in order; Export history actors read
+    an index-only scan.
+  - **Document store:** integrity sample 20.5 → 0.44 ms; unreferenced purge 29.0 → 0.09 ms; tenant store move
+    11.9 → 1.1 ms a page; stale render cleanup 11.6 → 0.42 ms.
+  - **Catalog and MCP:** consumer-contract graph re-derive 4.5 → 0.24 ms; graph-export neighbourhood hops by
+    `from_id` / `to_id`; registry dedupe by server name; joins on `mcp_endpoints.current_version_id`.
+  - **Sign-in and logs:** two-factor reset 8.3 → 0.01 ms (`verification."value"`); admin Users list
+    21.4 → 5.5 ms (`session ("userId", "updatedAt" DESC)`); lane log search 19.8 → 0.02 ms (trigram index on
+    `slate_insight_logs.message`).
+  - **Dropped after the plan check** (not used, or no measurable gain): the projects list index, the `access_audit`
+    partial index for the tenant-less chain (the widened tenant index serves it), `lint_evidence_runs` per-scanner
+    indexes, the `mcp_capability_items.name` trigram index, `classes` / `properties` recent-activity indexes, the
+    open-reviews index, `users (name, id)` and the `agent_invocations` per-key count index.
+  - **Upgrading a large database:** build the indexes first with `CREATE INDEX CONCURRENTLY` (see **Operating
+    Apiome** → *Upgrade a large database without blocking writes*).
+
 ## [1.820.0] - 2026-11-22
 
 ### Performance
