@@ -7,7 +7,7 @@ We continue to improve the platform based on your feedback with improvements and
 ## Features/Improvements
 
 - **RC10 begins** — RC9 is complete, and its notes are kept in the **Apiome RC9** release notes. The version on the launcher, in the user menu and on **Help & docs** now names the new release candidate (`RC10`). RC10 is about **contracts**: Pact Broker and PactFlow compatibility, bi-directional contract testing, and contract agreements
-- **Long lists load a page at a time** — **Export history**, the **MCP capability directory**, **Published versions**, a connector's **Items** and **Refresh runs**, and the admin **Users**, **Tenants**, **Licenses** and **Templates** lists now read one page and offer **Previous** / **Next** or **Load more**, so a workspace with thousands of rows opens as quickly as a small one. A count that would mean reading every row shows as `10,000+`
+- **Long lists load a page at a time** — **Export history**, the **MCP capability directory**, **Published versions**, a connector's **Items** and **Refresh runs**, and the admin **Users**, **Tenants**, **Licenses** and **Templates** lists now read one page and offer previous and next page arrows or **Load more**, so a workspace with thousands of rows opens as quickly as a small one. A count that would mean reading every row shows as `10,000+`
 
 ---
 
