@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Literal
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 
+from . import browse_public_cache
 from .auth import resolve_optional_tenant_member_auth
 from .browse_change_summary import browse_version_changes_summary
 from .browse_changelog_markdown import render_project_changelog_markdown
@@ -194,6 +195,7 @@ def _browse_project_domain_label(metadata: Any) -> str:
 
 @router.get("/tenants", response_model=BrowsePublicTenantsResponse)
 def list_public_browse_tenants(
+    response: Response,
     search: str | None = Query(
         None,
         description="Case-insensitive substring filter on tenant name and slug.",
@@ -212,18 +214,28 @@ def list_public_browse_tenants(
     Two of the three sorts are aggregates (project count, latest activity), so the directory
     pages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another
     window follows (#7196).
+
+    The directory is the same for every caller, so its statistics, each window and each facet
+    count are reused for ``BROWSE_PUBLIC_CACHE_TTL_SECONDS`` (default 120 s) per API instance, and
+    the response says so: ``Cache-Control: public, max-age=<that interval>``. A publish therefore
+    shows up within one interval. With the setting at ``0`` every request reads the database and
+    the response is ``no-store`` (DBP-1.16, #7199).
     """
     protocol_filter = normalize_protocol_filter(protocol)
     format_filter = normalize_format_filter(source_format)
+    search_key = search.strip() if search and search.strip() else ""
 
-    stats = db.get_public_browse_directory_stats()
-    rows = db.list_public_browse_tenants(
-        search=search,
-        sort=sort,
-        protocol=protocol_filter,
-        source_format=format_filter,
-        limit=limit + 1,
-        offset=offset,
+    stats = browse_public_cache.cached("directory-stats", db.get_public_browse_directory_stats)
+    rows = browse_public_cache.cached(
+        ("tenants", search_key, sort, protocol_filter, format_filter, limit, offset),
+        lambda: db.list_public_browse_tenants(
+            search=search,
+            sort=sort,
+            protocol=protocol_filter,
+            source_format=format_filter,
+            limit=limit + 1,
+            offset=offset,
+        ),
     )
     has_more = len(rows) > limit
     rows = rows[:limit]
@@ -233,7 +245,13 @@ def list_public_browse_tenants(
         )
         for r in rows
     ]
-    facets = _build_facets(db.get_public_browse_tenant_facets(search=search))
+    facets = _build_facets(
+        browse_public_cache.cached(
+            ("tenant-facets", search_key),
+            lambda: db.get_public_browse_tenant_facets(search=search),
+        )
+    )
+    response.headers["Cache-Control"] = browse_public_cache.cache_control_header()
     return BrowsePublicTenantsResponse(
         directory_stats=BrowseDirectoryStats.model_validate(stats),
         tenants=tenants,

@@ -146,6 +146,12 @@ describe('SQL fragments', () => {
     for (const column of CARD_FACT_COLUMNS) expect(sql).toContain(`AS ${column}`);
   });
 
+  it('reads the counts stored at publish and only counts a version that has none (DBP-1.16)', () => {
+    const sql = cardFactsJoinSql('lv.id', 'cf');
+    expect(sql).toMatch(/COALESCE\(f_v\.operation_count,\s*\(SELECT COUNT\(\*\)::int[\s\S]*?apiome\.path_operation[\s\S]*?\)\) AS operation_count/);
+    expect(sql).toMatch(/COALESCE\(f_v\.schema_count,\s*\(SELECT COUNT\(\*\)::int[\s\S]*?apiome\.classes[\s\S]*?\)\) AS schema_count/);
+  });
+
   it('reads the public SDK opt-in the way REST merges it: most specific row naming the key wins, default off', () => {
     const sql = cardFactsJoinSql('v.id');
     expect(sql).toContain("f_s.settings ? 'publicSdkEnabled'");

@@ -22,6 +22,22 @@ now; private versions for readers are coming next.
 - The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI, and
   searches across every published public specification (see [Search the public catalog](#search-the-public-catalog)).
 
+## How current the directory is {#how-current-the-directory-is}
+
+The browse app's top bar counts the **organizations**, **projects** and **versions** in the public
+directory, and its home page lists organizations, **Recently published** versions, a rail of
+projects and **New organizations**. These are refreshed **every 2 minutes**, not on every page
+view. So after you publish a version:
+
+- its own page, its project's page and [search](#search-the-public-catalog) show it at once;
+- the counts in the top bar and the home page's lists can take up to 2 minutes to include it.
+
+The same applies when you unpublish or delete: the item's page is gone at once, and the counts
+follow within 2 minutes. Whoever runs your Apiome can change the interval; see
+[What the browse site and the public directory API cache](../admin/operating-apiome.mdx#what-the-browse-site-and-the-public-directory-api-cache).
+The REST API's `GET /v1/browse/tenants` follows the same rule and says so in its `Cache-Control`
+header.
+
 ## API products {#api-products}
 
 An organization's page lists its [API products](/reference/rest/api-products) under **Products** — bundles of
@@ -94,13 +110,56 @@ version notes, tags, operations, parameters, request bodies, responses, schemas,
 and the entries of each version's classified changelog. Private and unpublished versions, and
 products that are not on the portal, never appear.
 
+Your words are matched against what each of those is *called* and how it is *described*: names,
+slugs, paths, operation ids, summaries, descriptions, notes, media types and changelog entries. The
+raw JSON stored behind a schema, a property, a parameter or an example is not searched, so a word
+that appears only inside a schema's JSON (an `enum` value, a nested field of an inline schema) does
+not match. Search for the schema or property by its name instead.
+
 ### Where to start a search
 
 | From | How |
 |---|---|
-| Any page | Press <kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd><kbd>K</kbd>) or <kbd>/</kbd>, or click the search field in the top bar. A palette shows the best matches as you type; <kbd>↑</kbd><kbd>↓</kbd> move, <kbd>↵</kbd> opens, and the first row runs the full search. |
+| Any page | Press <kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd><kbd>K</kbd>) or <kbd>/</kbd>, or click the search field in the top bar. A palette suggests matches as you type; <kbd>↑</kbd><kbd>↓</kbd> move, <kbd>↵</kbd> opens, and the first row runs the full search. See [What the palette suggests](#what-the-palette-suggests). |
 | Home | The hero search box, the **Try** examples, and the **Browse by** tiles — each tile is a search with a filter already applied. |
 | `/search` | The search box, the operator chips under it, and the **Browse everything** tiles. |
+
+### What the palette suggests {#what-the-palette-suggests}
+
+The palette answers on every keystroke, so it looks only at **names**:
+
+| It suggests | Matched on |
+|---|---|
+| Organizations, API products, projects | Name or slug |
+| Operations | Path, summary or operation id |
+| Schemas | Name |
+| Schema properties | Name |
+
+It does not look at descriptions or notes, and it does not suggest tags, parameters, request
+bodies, responses, version notes or changelog entries. **Press <kbd>↵</kbd> on the first row**
+(**Search the catalog for "…"**) to run the full search, which covers all of them.
+
+- **A name typed exactly comes first.** `Pet` puts the schema called *Pet* ahead of *PetStore* and
+  *CarpetOrder*.
+- **Counts ending in `+` are lower bounds.** The palette reads up to 40 matches of each kind, so
+  **All operations matching "order"** may show `40+`, and the first row shows the total as
+  *name matches* with a `+` when any kind reached that limit. Open the row to see them all, with
+  exact counts.
+- **A common word shows the newest.** For a word that appears in thousands of names, the palette
+  shows matches from the most recently published versions, plus a sample of the rest. The full
+  search lists every match.
+- **One or two letters** suggest organizations, API products and projects by name, and operations,
+  schemas and properties from the most recently published versions. Type a third letter to search
+  every name.
+- **Filters work here too.** `org:acme order` suggests only from *acme*, and `type:schema`
+  suggests only schemas. A `severity:`
+  filter applies to changelog entries only, so the palette suggests nothing for it: run the search.
+
+Like the results page, the palette covers each project's most recently published version.
+
+If a search takes longer than the site allows, it is stopped and the page says **This search did
+not finish.** **Click "Try again"**, or narrow the search with another word or a filter such as
+`org:`, `project:` or `type:`.
 
 ### Query language
 

@@ -98,6 +98,7 @@ describe("buildScaleSteps", () => {
       "workflow_audit",
       "access_audit",
       "version_content_counts",
+      "version_publish_counts",
     ]);
   });
 
@@ -106,12 +107,28 @@ describe("buildScaleSteps", () => {
   });
 
   it("makes every statement idempotent and set-based", () => {
-    for (const s of steps) {
+    for (const s of steps.filter((step) => !step.doneSql)) {
       expect(s.sql, s.name).toMatch(/^INSERT INTO apiome\.\w+/);
       expect(s.sql, s.name).toContain("generate_series(0, ");
       expect(s.sql, s.name).toMatch(/ON CONFLICT DO NOTHING$/);
       expect(s.sql, s.name).not.toMatch(/random\(|now\(\)|clock_timestamp|gen_random_uuid|uuid_generate/);
     }
+  });
+
+  it("fills the publish counts of existing revisions with an idempotent UPDATE (DBP-1.16)", () => {
+    const counts = steps.find((s) => s.name === "version_publish_counts");
+    expect(counts?.table).toBe("apiome.versions");
+    // 9 of every project's 10 revisions are published.
+    expect(counts?.rows).toBe(180_000);
+    expect(counts?.sql).toMatch(/^UPDATE apiome\.versions v/);
+    expect(counts?.sql).toContain("SET operation_count = COALESCE(o.operation_count, 0)");
+    expect(counts?.sql).toContain("schema_count = COALESCE(s.schema_count, 0)");
+    // Only rows that still lack a count are written, so a re-run changes nothing…
+    expect(counts?.sql).toContain("AND (v.operation_count IS NULL OR v.schema_count IS NULL)");
+    // …and the step is recognized as complete by its own check, not by a last row.
+    expect(counts?.doneSql).toContain("operation_count IS NULL OR schema_count IS NULL");
+    expect(counts?.bypassTriggers).toBe(true);
+    expect(counts?.sql).not.toMatch(/random\(|now\(\)|clock_timestamp/);
   });
 
   it("names each step's last row so a complete step can be skipped", () => {

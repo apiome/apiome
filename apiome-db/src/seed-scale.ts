@@ -27,6 +27,7 @@
  * | usage_source / usage_daily  | 5,000 / 500,000 | the large tenant's projects             |
  * | workflow_audit / access_audit | 500,000 / 200,000 |                                       |
  * | version_content_counts      | 200,000   | Home's count rollup (V423), one row per version |
+ * | versions (publish counts)   | 180,000   | operation_count / schema_count (V424), updated  |
  *
  * Every tenant slug starts with `scale-`, every email ends in `@scale.apiome.test`, and users get a
  * password value that is not a bcrypt hash, so no seeded account can sign in.
@@ -102,6 +103,8 @@ const BYPASS_TRIGGER_STEPS: ReadonlySet<string> = new Set([
   "usage_daily",
   "workflow_audit",
   "access_audit",
+  // An UPDATE of every published revision; the content-stamp trigger would compare each row.
+  "version_publish_counts",
 ]);
 
 /** JSON Schema types of each project's library properties (`properties` rows), in order. */
@@ -156,7 +159,12 @@ export type ScaleStep = {
   lastId: string;
   /** The column {@link lastId} is looked up in — `id` unless the table is keyed otherwise. */
   keyColumn?: string;
-  /** The `INSERT … SELECT` statement. */
+  /**
+   * A query returning one boolean column `done`, for a step that fills columns of existing rows
+   * and so cannot be recognized by its last row. When set it replaces the {@link lastId} check.
+   */
+  doneSql?: string;
+  /** The `INSERT … SELECT` statement (or the `UPDATE` of a step with {@link doneSql}). */
   sql: string;
   /**
    * Insert with `session_replication_role = replica`, so the table's user triggers do not fire.
@@ -401,6 +409,36 @@ export function buildScaleSteps(params: ScaleParams): ScaleStep[] {
       ON CONFLICT DO NOTHING`),
       keyColumn: "version_id",
     },
+    // The counts Browse cards read (V424, DBP-1.16 #7199). The database records them when a
+    // revision is published; the seed inserts revisions already published, before their content
+    // exists, so it fills them here — the statement the migration's backfill runs. Without it every
+    // card query in the plan check would measure the count fallback, not the stored column.
+    {
+      ...step("version_publish_counts", "apiome.versions", params.projects * (vpp - 1), "", `
+      UPDATE apiome.versions v
+         SET operation_count = COALESCE(o.operation_count, 0),
+             schema_count = COALESCE(s.schema_count, 0)
+        FROM apiome.versions pv
+        LEFT JOIN (
+          SELECT vp.version_id, COUNT(*)::int AS operation_count
+            FROM apiome.version_path vp
+            JOIN apiome.path_operation po ON po.version_path_id = vp.id
+           GROUP BY vp.version_id
+        ) o ON o.version_id = pv.id
+        LEFT JOIN (
+          SELECT c.version_id, COUNT(*)::int AS schema_count
+            FROM apiome.classes c
+           WHERE c.deleted_at IS NULL
+           GROUP BY c.version_id
+        ) s ON s.version_id = pv.id
+       WHERE v.id = pv.id
+         AND pv.published
+         AND pv.deleted_at IS NULL
+         AND (v.operation_count IS NULL OR v.schema_count IS NULL)`),
+      doneSql:
+        "SELECT NOT EXISTS (SELECT 1 FROM apiome.versions WHERE published AND deleted_at IS NULL " +
+        "AND (operation_count IS NULL OR schema_count IS NULL)) AS done",
+    },
   ];
 }
 
@@ -517,10 +555,15 @@ async function insertStep(
 }
 
 /**
- * Whether a step's rows are already there: its last row exists (by id), or — for `usage_daily`,
- * which has no id — the large tenant already holds at least the step's row count.
+ * Whether a step's rows are already there: its own `doneSql` says so, or its last row exists (by
+ * id), or — for `usage_daily`, which has no id — the large tenant already holds at least the
+ * step's row count.
  */
 async function stepComplete(client: pg.Client, s: ScaleStep): Promise<boolean> {
+  if (s.doneSql) {
+    const res = await client.query(s.doneSql);
+    return Boolean(res.rows[0]?.done);
+  }
   if (s.lastId === "") {
     const res = await client.query(
       `SELECT count(*) >= $1 AS done FROM (SELECT 1 FROM ${s.table} WHERE tenant_id = $2::uuid LIMIT $1) AS t`,

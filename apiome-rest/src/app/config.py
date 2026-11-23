@@ -83,6 +83,13 @@ class Settings(BaseSettings):
     api_key_cache_ttl_seconds: float = 60.0
     #: Most entries each of the two caches above keeps before dropping the oldest.
     auth_cache_max_entries: int = 10000
+    #: Seconds an API instance reuses the public Browse directory's statistics, tenant list and
+    #: facet counts (``GET /v1/browse/tenants``). The same number is the response's
+    #: ``Cache-Control`` ``max-age``. ``0`` reads on every request and answers ``no-store``; values
+    #: above 300 are treated as 300 (DBP-1.16, #7199).
+    browse_public_cache_ttl_seconds: float = 120.0
+    #: Most directory answers (one per distinct query) kept before the oldest is dropped.
+    browse_public_cache_max_entries: int = 512
 
     host: str = "0.0.0.0"
     port: int = 8000

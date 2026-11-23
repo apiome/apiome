@@ -42,6 +42,8 @@ export interface FacetBucket {
   value: string;
   label?: string;
   count: number;
+  /** Suggestions only: the kind reached its cap, so `count` is a floor (shown as "40+"). */
+  capped?: boolean;
 }
 
 /** One "top project" bucket. */

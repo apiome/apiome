@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.649.0",
+    "version": "1.650.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -19,7 +19,7 @@
           "browse"
         ],
         "summary": "List Public Browse Tenants",
-        "description": "The public tenant directory, one window at a time.\n\nTwo of the three sorts are aggregates (project count, latest activity), so the directory\npages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another\nwindow follows (#7196).",
+        "description": "The public tenant directory, one window at a time.\n\nTwo of the three sorts are aggregates (project count, latest activity), so the directory\npages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another\nwindow follows (#7196).\n\nThe directory is the same for every caller, so its statistics, each window and each facet\ncount are reused for ``BROWSE_PUBLIC_CACHE_TTL_SECONDS`` (default 120 s) per API instance, and\nthe response says so: ``Cache-Control: public, max-age=<that interval>``. A publish therefore\nshows up within one interval. With the setting at ``0`` every request reads the database and\nthe response is ``no-store`` (DBP-1.16, #7199).",
         "operationId": "list_public_browse_tenants_v1_browse_tenants_get",
         "parameters": [
           {
